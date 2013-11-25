@@ -53,11 +53,11 @@ endif
 ifeq ($(shell uname), Linux)
 TARA_SUBDIR := x11
 ifeq ($(UseGLUT), yes)
-DCAPP_SOURCES += glut_funcs.c
+DCAPP_SOURCES += glut_funcs.c app_launcher_stub.c
 UI_CFLAG := -I../glut/include
 UI_LFLAG := -L../glut/lib/glut -lglut
 else
-DCAPP_SOURCES += tara_funcs.c
+DCAPP_SOURCES += tara_funcs.c app_launcher_stub.c
 UI_CFLAG :=
 UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD
 LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
