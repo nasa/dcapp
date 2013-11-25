@@ -52,28 +52,32 @@ endif
 
 ifeq ($(shell uname), Linux)
 TARA_SUBDIR := x11
-ifeq ($(UseTARA), yes)
-DCAPP_SOURCES += tara_funcs.c
-GLUT_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD
-LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
-else
+ifeq ($(UseGLUT), yes)
 DCAPP_SOURCES += glut_funcs.c
-GLUT_CFLAG := -I../glut/include
-GLUT_LFLAG := -L../glut/lib/glut -lglut
+UI_CFLAG := -I../glut/include
+UI_LFLAG := -L../glut/lib/glut -lglut
+else
+DCAPP_SOURCES += tara_funcs.c
+UI_CFLAG :=
+UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD
+LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
 endif
+UI_CFLAG += -I/usr/X11R6/include
+UI_LFLAG += -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL -lGLU
 COPY_SCRIPTS :=
 else
 TARA_SUBDIR := mac
-ifeq ($(UseTARA), yes)
+ifeq ($(UseGLUT), yes)
+DCAPP_SOURCES += glut_funcs.c app_launcher_stub.c
+UI_CFLAG := -I/usr/X11R6/include
+UI_LFLAG := -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL -lGLU -lglut
+COPY_SCRIPTS :=
+else
 DCAPP_SOURCES += tara_funcs.c app_launcher.m
-GLUT_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD -framework OpenGL -framework AppKit
+UI_CFLAG :=
+UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD -framework OpenGL -framework AppKit
 COPY_SCRIPTS := mv -f $(BINDIR)/dcapp dcapp.app/Contents/MacOS; cp -f bin/launcher.py $(BINDIR)/dcapp
 LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
-else
-DCAPP_SOURCES += glut_funcs.c app_launcher_stub.c
-GLUT_CFLAG := 
-GLUT_LFLAG := -lglut
-COPY_SCRIPTS :=
 endif
 endif
 
@@ -98,8 +102,8 @@ CAN_CFLAG := -DNTCAN -I$(CANBUS_HOME)
 CAN_LFLAG := -L$(CANBUS_HOME) -Wl,-Bstatic -lntcan -Wl,-Bdynamic
 endif
 
-COMP_FLAGS := $(XML2_CFLAG) $(FTGL_CFLAG) $(FT_CFLAG) $(GLUT_CFLAG) $(CAN_CFLAG) $(TRICK_CFLAG) -I/usr/X11R6/include
-LINK_FLAGS := $(XML2_LFLAG) $(FTGL_LFLAG) $(FT_LFLAG) $(GLUT_LFLAG) $(CAN_LFLAG) $(TRICK_LFLAG) -L/usr/X11R6/lib -lGL -lGLU -lX11 -lXi -lXmu -ldl
+COMP_FLAGS := $(XML2_CFLAG) $(FTGL_CFLAG) $(FT_CFLAG) $(UI_CFLAG) $(CAN_CFLAG) $(TRICK_CFLAG)
+LINK_FLAGS := $(XML2_LFLAG) $(FTGL_LFLAG) $(FT_LFLAG) $(UI_LFLAG) $(CAN_LFLAG) $(TRICK_LFLAG) -ldl
 
 ifeq ($(shell uname), Linux)
 COMP_FLAGS += -D_GNU_SOURCE
