@@ -74,7 +74,7 @@ UI_LFLAG := -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL -lGLU -lglut
 COPY_SCRIPTS :=
 else
 DCAPP_SOURCES += tara_funcs.c app_launcher.m
-UI_CFLAG :=
+UI_CFLAG := -I/usr/X11R6/include
 UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD -framework OpenGL -framework AppKit
 COPY_SCRIPTS := mv -f $(BINDIR)/dcapp dcapp.app/Contents/MacOS; cp -f bin/launcher.py $(BINDIR)/dcapp
 LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
