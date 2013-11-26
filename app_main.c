@@ -25,13 +25,12 @@ extern int update_dyn_elements(struct node *);
 extern void SetNeedsRedraw(void);
 extern void ui_init(void);
 extern void ui_terminate(void);
-
+extern char *appLauncher(char *);
 extern int ParseXMLFile(char *);
 
 void Terminate(int);
 
-static int ProcessArgs(int, char **);
-static char *GetSpecfile(char *);
+static void ProcessArgs(int, char **);
 
 appdata AppData;
 
@@ -45,24 +44,11 @@ static struct timeval last_trickio_try, last_edgeio_try;
  *********************************************************************************/
 int main(int argc, char **argv)
 {
-    if (ProcessArgs(argc, argv))
-    {
-        user_msg("USAGE: dcapp <specfile> [-h <hostname> -p <port> -d <display>]");
-        Terminate(-1);
-    }
-
     // Set up signal handlers
     signal(SIGINT, Terminate);
     signal(SIGTERM, Terminate);
 
-    simio_initialize_parameter_list();
-    ui_init();
-
-    char *specfile = GetSpecfile(argv[1]);
-
-    if (ParseXMLFile(specfile)) Terminate(-1);
-
-    free(specfile);
+    ProcessArgs(argc, argv);
 
     AppData.DisplayPreInit(get_pointer);
     AppData.DisplayInit();
@@ -155,66 +141,62 @@ void Terminate(int flag)
     exit(flag);
 }
 
-static int ProcessArgs(int argc, char **argv)
+static void ProcessArgs(int argc, char **argv)
 {
     int i, count;
     AppData.simcomm.host = 0;
     AppData.simcomm.port = 0;
     AppData.xdisplay = 0;
     struct node *data;
-    char *name, *value;
+    char *name, *value, *specfile, *storedarg = NULL;
+    struct utsname minfo;
 
-    if (argc < 2) return (-1);
-
-    for (i=2; i<argc; i++)
+    if (argc < 2)
     {
-        if (argv[i][0] == '-' && argc > i+1)
-        {
-            if (!strcmp(argv[i], "-h")) AppData.simcomm.host = strdup(argv[i+1]);
-            if (!strcmp(argv[i], "-p")) AppData.simcomm.port = StrToInt(argv[i+1], 0);
-            if (!strcmp(argv[i], "-d")) AppData.xdisplay = strdup(argv[i+1]);
-            i++;
-        }
-        else
-        {
-            name = calloc(sizeof(argv[i]), 1);
-            value = calloc(sizeof(argv[i]), 1);
-            count = sscanf(argv[i], "%[^=]=%[^\n]", name, value);
-            if (count == 2)
-            {
-                data = NewNode(NULL, &(AppData.ArgList));
-                data->object.ppconst.name = strdup(name);
-                data->object.ppconst.value = strdup(value);
-            }
-            free(name);
-            free(value);
-        }
+        user_msg("USAGE: dcapp <specfile> [-h <hostname> -p <port> -d <display>]");
+        Terminate(-1);
     }
 
-    return 0;
-}
-
-static char *GetSpecfile(char *arg)
-{
-    struct utsname minfo;
+    simio_initialize_parameter_list();
+    ui_init();
 
     uname(&minfo);
 
-    if (strcmp(minfo.sysname, "Darwin")) return strdup(arg);
-
-    char *appsupport, *preffilename, *retval = NULL;
-    FILE *preffile;
-
-    asprintf(&appsupport, "%s/Library/Application Support/dcapp", getenv("HOME"));
-    asprintf(&preffilename, "%s/Preferences", appsupport);
-
-    if (!strncmp(arg, "-psn", 4))
+    if (strncmp(argv[1], "-psn", 4))
     {
-        /* If launched as a double-clicked application... */
+        for (i=2; i<argc; i++)
+        {
+            if (argv[i][0] == '-' && argc > i+1)
+            {
+                if (!strcmp(argv[i], "-h")) AppData.simcomm.host = strdup(argv[i+1]);
+                if (!strcmp(argv[i], "-p")) AppData.simcomm.port = StrToInt(argv[i+1], 0);
+                if (!strcmp(argv[i], "-d")) AppData.xdisplay = strdup(argv[i+1]);
+                i++;
+            }
+            else
+            {
+                name = calloc(sizeof(argv[i]), 1);
+                value = calloc(sizeof(argv[i]), 1);
+                count = sscanf(argv[i], "%[^=]=%[^\n]", name, value);
+                if (count == 2)
+                {
+                    data = NewNode(NULL, &(AppData.ArgList));
+                    data->object.ppconst.name = strdup(name);
+                    data->object.ppconst.value = strdup(value);
+                }
+                free(name);
+                free(value);
+            }
+        }
+
+        specfile = strdup(argv[1]);
+    }
+    else /* It was launched as a double-clicked Mac application... */
+    {
+        /* Set TRICK_HOST_CPU in case it's needed later */
         char *trickhostcpu;
         int i;
 
-        /* Set TRICK_HOST_CPU in case it's needed later */
         asprintf(&trickhostcpu, "%s_%s", minfo.sysname, minfo.release);
         for (i=0; i<strlen(trickhostcpu); i++)
         {
@@ -223,41 +205,59 @@ static char *GetSpecfile(char *arg)
         setenv("TRICK_HOST_CPU", trickhostcpu, 0);
         free(trickhostcpu);
 
-        /* Get the specfile from the Application Support folder */
+        /* Get default arguments from the Application Support folder */
+        char *appsupport, *preffilename;
+        FILE *preffile;
+
+        asprintf(&appsupport, "%s/Library/Application Support/dcapp", getenv("HOME"));
+        asprintf(&preffilename, "%s/Preferences", appsupport);
+
         preffile = fopen(preffilename, "r");
         if (preffile)
         {
             fseek(preffile, 0, SEEK_END);
             long len = ftell(preffile);
             rewind(preffile);
-            retval = malloc(len+1);
-            fscanf(preffile, "%s", retval);
+            storedarg = malloc(len+1);
+            fscanf(preffile, "%s", storedarg);
             fclose(preffile);
-        }
-char *appLauncher(void);
-retval = strdup(appLauncher());
+       }
+
+        free(preffilename);
+        free(appsupport);
+
+        specfile = strdup(appLauncher(storedarg));
+        if (storedarg) free(storedarg);
     }
-    else
+
+    if (ParseXMLFile(specfile)) Terminate(-1);
+
+    /* On the Mac, store arguments to use as defaults the next time the app is run */
+    if (!strcmp(minfo.sysname, "Darwin"))
     {
-        /* If run from the command line, store the specfile for use the next time the app is double clicked */
+        char *appsupport, *preffilename;
+        FILE *preffile;
+
+        asprintf(&appsupport, "%s/Library/Application Support/dcapp", getenv("HOME"));
+        asprintf(&preffilename, "%s/Preferences", appsupport);
+
         char *fullpath;
         mkdir(appsupport, 0755);
         preffile = fopen(preffilename, "w");
         if (preffile)
         {
-            if (arg[0] == '/')
-                asprintf(&fullpath, "%s", arg);
+            if (specfile[0] == '/')
+                asprintf(&fullpath, "%s", specfile);
             else
-                asprintf(&fullpath, "%s/%s", getcwd(0, 0), arg);
+                asprintf(&fullpath, "%s/%s", getcwd(0, 0), specfile);
             fprintf(preffile, "%s", fullpath);
             fclose(preffile);
             free(fullpath);
         }
-        retval = strdup(arg);
+
+        free(preffilename);
+        free(appsupport);
     }
 
-    free(preffilename);
-    free(appsupport);
-
-    return retval;
+    free(specfile);
 }

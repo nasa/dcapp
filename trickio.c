@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef TRICKACTIVE
 #include "vscomm.h"
+#endif
 #include "simio.h"
 #include "trickio_constants.h"
 
@@ -55,6 +57,7 @@ void trickio_initialize_parameter_list(int bufID)
 
 int trickio_add_parameter(int bufID, const char *paramname, const char *trickvar, const char *units)
 {
+#ifdef TRICKACTIVE
     io_parameter_list *io_map;
     void *valptr;
 
@@ -93,12 +96,14 @@ int trickio_add_parameter(int bufID, const char *paramname, const char *trickvar
         io_map->data[io_map->count].forcewrite = 0;
         io_map->count++;
     }
+#endif
     
     return 0;
 }
 
 int trickio_finish_initialization(void)
 {
+#ifdef TRICKACTIVE
 	int i, type;
 
 	for (i=0; i<fromsim.count; i++)
@@ -117,18 +122,24 @@ int trickio_finish_initialization(void)
         }
         fromsim.data[i].trickvalue = vscomm_add_var(fromsim.data[i].trickvar, fromsim.data[i].units, type, 1);
     }
+#endif
 
 	return SIMIO_SUCCESS;
 }
 
 int trickio_activatecomm(char *host, int port, char *default_rate)
 {
+#ifdef TRICKACTIVE
     if (fromsim.count == 0 && tosim.count == 0) return SIMIO_NO_DATA_REQUESTED;
 	else return vscomm_activate(host, port, NULL, default_rate);
+#else
+    return SIMIO_NO_DATA_REQUESTED;
+#endif
 }
 
 int trickio_readsimdata(void)
 {
+#ifdef TRICKACTIVE
 	int i;
 	int status = vscomm_get();
 
@@ -152,10 +163,14 @@ int trickio_readsimdata(void)
 	}
 
 	return status;
+#else
+    return SIMIO_NO_NEW_DATA;
+#endif
 }
 
 int trickio_writesimdata(void)
 {
+#ifdef TRICKACTIVE
 	int i, status;
 
 	for (i=0; i<tosim.count; i++)
@@ -190,20 +205,26 @@ int trickio_writesimdata(void)
 	}
 
 	return status;
+#else
+    return SIMIO_NO_NEW_DATA;
+#endif
 }
 
 void trickio_forcewrite(void *value)
 {
+#ifdef TRICKACTIVE
 	int i;
 
 	for (i=0; i<tosim.count; i++)
 	{
         if (tosim.data[i].dcvalue == value) tosim.data[i].forcewrite = 1;
 	}
+#endif
 }
 
 void trickio_term(void)
 {
+#ifdef TRICKACTIVE
 	int i;
 
 	for (i=0; i<fromsim.count; i++) free(fromsim.data[i].trickvar);
@@ -213,4 +234,5 @@ void trickio_term(void)
 	free(tosim.data);
 
 	vscomm_terminate();
+#endif
 }

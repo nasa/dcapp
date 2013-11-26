@@ -33,7 +33,6 @@ DCAPP_SOURCES := \
 	string_utils.c \
 	trickio.c \
 	update_display.c \
-	vscomm.c \
 	xml_parse.c \
 	xml_utils.c
 GENHEADER_SOURCES := \
@@ -81,26 +80,23 @@ LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
 endif
 endif
 
-DCAPP_OBJECTS := $(DCAPP_SOURCES)
-DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.c=.o), $(obj))
-DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.m=.o), $(obj))
-DCAPP_OBJECTS := $(foreach obj, $(patsubst %, $(OBJDIR)/%, $(DCAPP_OBJECTS)), $(obj))
-GENHEADER_OBJECTS := $(foreach obj, $(patsubst %.c, %.o, $(GENHEADER_SOURCES)), $(OBJDIR)/$(obj))
-
+ifdef TRICK_HOME
 #TRICK_MAJOR = $(word 1,$(subst ., ,$(TRICK_VER)))
-TRICK_CFLAG := -I$(TRICK_HOME)/trick_source
+DCAPP_SOURCES += vscomm.c
+TRICK_CFLAG := -DTRICKACTIVE -I$(TRICK_HOME)/trick_source
 TRICK_LFLAG := -L$(TRICK_HOME)/trick_source/trick_utils/comm/object_$(TRICK_HOST_TYPE) -ltrick_comm
+endif
+
+ifdef CANBUS_HOME
+CAN_CFLAG := -DNTCAN -I$(CANBUS_HOME)
+CAN_LFLAG := -L$(CANBUS_HOME) -Wl,-Bstatic -lntcan -Wl,-Bdynamic
+endif
 
 FT_CFLAG := $(shell freetype-config --cflags)
 FT_LFLAG := $(shell freetype-config --libs)
 
 XML2_CFLAG := $(shell xml2-config --cflags)
 XML2_LFLAG := $(shell xml2-config --libs)
-
-ifdef CANBUS_HOME
-CAN_CFLAG := -DNTCAN -I$(CANBUS_HOME)
-CAN_LFLAG := -L$(CANBUS_HOME) -Wl,-Bstatic -lntcan -Wl,-Bdynamic
-endif
 
 COMP_FLAGS := $(XML2_CFLAG) $(FTGL_CFLAG) $(FT_CFLAG) $(UI_CFLAG) $(CAN_CFLAG) $(TRICK_CFLAG)
 LINK_FLAGS := $(XML2_LFLAG) $(FTGL_LFLAG) $(FT_LFLAG) $(UI_LFLAG) $(CAN_LFLAG) $(TRICK_LFLAG) -ldl
@@ -109,6 +105,12 @@ ifeq ($(shell uname), Linux)
 COMP_FLAGS += -D_GNU_SOURCE
 LINK_FLAGS += -lrt
 endif
+
+DCAPP_OBJECTS := $(DCAPP_SOURCES)
+DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.c=.o), $(obj))
+DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.m=.o), $(obj))
+DCAPP_OBJECTS := $(foreach obj, $(patsubst %, $(OBJDIR)/%, $(DCAPP_OBJECTS)), $(obj))
+GENHEADER_OBJECTS := $(foreach obj, $(patsubst %.c, %.o, $(GENHEADER_SOURCES)), $(OBJDIR)/$(obj))
 
 #COMP_FLAGS += -DDEBUG
 
