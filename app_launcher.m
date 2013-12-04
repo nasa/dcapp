@@ -1,5 +1,6 @@
 #import <AppKit/AppKit.h>
- 
+#include <string.h>
+
 @interface MyApp : NSObject
 {
     id window;
@@ -14,14 +15,26 @@
 - (NSString *)getPort;
 - (NSString *)getArgs;
 - (void)setSpecfile:(NSString *)value;
+- (void)setHost:(NSString *)value;
+- (void)setPort:(NSString *)value;
+- (void)setArgs:(NSString *)value;
 @end
 
-char *appLauncher(char *defaultSpecfile)
+void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outHost, char *inPort, char **outPort, char *inArgs, char **outArgs)
 {
     MyApp *myapp = [[ MyApp alloc ] init ];
-    [ myapp setSpecfile:[ NSString stringWithCString:defaultSpecfile encoding:NSASCIIStringEncoding ]];
+
+    if (inSpecfile) [ myapp setSpecfile:[ NSString stringWithCString:inSpecfile encoding:NSASCIIStringEncoding ]];
+    if (inHost) [ myapp setHost:[ NSString stringWithCString:inHost encoding:NSASCIIStringEncoding ]];
+    if (inPort) [ myapp setPort:[ NSString stringWithCString:inPort encoding:NSASCIIStringEncoding ]];
+    if (inArgs) [ myapp setArgs:[ NSString stringWithCString:inArgs encoding:NSASCIIStringEncoding ]];
+
     [ NSApp run ];
-    return (char *)[[ myapp getSpecfile ] cStringUsingEncoding:NSASCIIStringEncoding ];
+
+    *outSpecfile = strdup([[ myapp getSpecfile ] cStringUsingEncoding:NSASCIIStringEncoding ]);
+    *outHost = strdup([[ myapp getHost ] cStringUsingEncoding:NSASCIIStringEncoding ]);
+    *outPort = strdup([[ myapp getPort ] cStringUsingEncoding:NSASCIIStringEncoding ]);
+    *outArgs = strdup([[ myapp getArgs ] cStringUsingEncoding:NSASCIIStringEncoding ]);
 }
 
 @implementation MyApp
@@ -40,91 +53,63 @@ char *appLauncher(char *defaultSpecfile)
         [ window setTitle:appName ];
         [ window makeKeyAndOrderFront:nil ] ;
 
-        id box1 = [[[ NSBox alloc] initWithFrame:NSMakeRect(17, 173, 682, 93) ] autorelease ];
-        [ box1 setTitlePosition:NSNoTitle ];
-        [[ window contentView ] addSubview:box1 ];
+        id box1 = [ self uiBoxParent:[ window contentView ] x:17 y:173 w:682 h:93 ];
+        [ self uiLabelParent:box1 x:5 y:49 w:114 h:17 label:@"Specification File:" ];
+        specfile = [ self uiTextFieldParent:box1 x:5 y:25 w:566 h:22 ];
+        [ self uiButtonParent:box1 x:580 y:50 w:92 h:28 label:@"Create..." target:self action:@selector(createFile:) ];
+        [ self uiButtonParent:box1 x:580 y:25 w:92 h:28 label:@"Select..." target:self action:@selector(selectFile:) ];
+        [ self uiButtonParent:box1 x:580 y:0 w:92 h:28 label:@"Edit..." target:self action:@selector(editFile:) ];
 
-        id speclabel = [[[ NSTextField alloc] initWithFrame:NSMakeRect(5, 49, 114, 17) ] autorelease ];
-        [ speclabel setStringValue:@"Specification File:" ];
-        [ speclabel setEditable:NO ];
-        [ speclabel setDrawsBackground:NO ];
-        [ speclabel setBordered:NO ];
-        [ box1 addSubview:speclabel ];
+        id box2 = [ self uiBoxParent:[ window contentView ] x:17 y:56 w:682 h:115 ];
+        [ self uiLabelParent:box2 x:5 y:84 w:38 h:17 label:@"Host:" ];
+        host = [ self uiTextFieldParent:box2 x:5 y:60 w:414 h:22 ];
+        [ self uiLabelParent:box2 x:435 y:84 w:40 h:17 label:@"Port:" ];
+        port = [ self uiTextFieldParent:box2 x:435 y:60 w:136 h:22 ];
+        [ self uiButtonParent:box2 x:580 y:56 w:92 h:28 label:@"Defaults" target:self action:@selector(setDefaults:) ];
+        [ self uiLabelParent:box2 x:5 y:34 w:136 h:17 label:@"Optional Arguments:" ];
+        args = [ self uiTextFieldParent:box2 x:5 y:10 w:660 h:22 ];
+        id proceed = [ self uiButtonParent:[ window contentView ] x:288 y:12 w:140 h:32 label:@"Proceed" target:self action:@selector(buttonClicked:) ];
 
-        specfile = [[[ NSTextField alloc] initWithFrame:NSMakeRect(5, 25, 566, 22) ] retain ];
-        [ box1 addSubview:specfile ];
-
-        id createbutton = [[ NSButton alloc ] initWithFrame:NSMakeRect(580, 50, 92, 28) ];
-        [ createbutton setBezelStyle:NSRoundedBezelStyle ];
-        [ createbutton setTitle:@"Create..." ];
-        [ createbutton setTarget:self ];
-        [ createbutton setAction:@selector(createFile:) ];
-        [ box1 addSubview:createbutton ];
-
-        id selectbutton = [[ NSButton alloc ] initWithFrame:NSMakeRect(580, 25, 92, 28) ];
-        [ selectbutton setBezelStyle:NSRoundedBezelStyle ];
-        [ selectbutton setTitle:@"Select..." ];
-        [ selectbutton setTarget:self ];
-        [ selectbutton setAction:@selector(selectFile:) ];
-        [ box1 addSubview:selectbutton ];
-
-        id editbutton = [[ NSButton alloc ] initWithFrame:NSMakeRect(580, 0, 92, 28) ];
-        [ editbutton setBezelStyle:NSRoundedBezelStyle ];
-        [ editbutton setTitle:@"Edit..." ];
-        [ editbutton setTarget:self ];
-        [ editbutton setAction:@selector(editFile:) ];
-        [ box1 addSubview:editbutton ];
-
-        id box2 = [[[ NSBox alloc] initWithFrame:NSMakeRect(17, 56, 682, 115) ] autorelease ];
-        [ box2 setTitlePosition:NSNoTitle ];
-        [[ window contentView ] addSubview:box2 ];
-
-        id hostlabel = [[[ NSTextField alloc] initWithFrame:NSMakeRect(5, 84, 38, 17) ] autorelease ];
-        [ hostlabel setStringValue:@"Host:" ];
-        [ hostlabel setEditable:NO ];
-        [ hostlabel setDrawsBackground:NO ];
-        [ hostlabel setBordered:NO ];
-        [ box2 addSubview:hostlabel ];
-
-        host = [[[ NSTextField alloc] initWithFrame:NSMakeRect(5, 60, 414, 22) ] retain ];
-        [ box2 addSubview:host ];
-
-        id portlabel = [[[ NSTextField alloc] initWithFrame:NSMakeRect(435, 84, 40, 17) ] autorelease ];
-        [ portlabel setStringValue:@"Port:" ];
-        [ portlabel setEditable:NO ];
-        [ portlabel setDrawsBackground:NO ];
-        [ portlabel setBordered:NO ];
-        [ box2 addSubview:portlabel ];
-
-        port = [[[ NSTextField alloc] initWithFrame:NSMakeRect(435, 60, 136, 22) ] retain ];
-        [ box2 addSubview:port ];
-
-        id defbutton = [[ NSButton alloc ] initWithFrame:NSMakeRect(580, 56, 92, 28) ];
-        [ defbutton setBezelStyle:NSRoundedBezelStyle ];
-        [ defbutton setTitle:@"Defaults" ];
-        [ defbutton setTarget:self ];
-        [ defbutton setAction:@selector(setDefaults:) ];
-        [ box2 addSubview:defbutton ];
-
-        id argslabel = [[[ NSTextField alloc] initWithFrame:NSMakeRect(5, 34, 136, 17) ] autorelease ];
-        [ argslabel setStringValue:@"Optional Arguments:" ];
-        [ argslabel setEditable:NO ];
-        [ argslabel setDrawsBackground:NO ];
-        [ argslabel setBordered:NO ];
-        [ box2 addSubview:argslabel ];
-
-        args = [[[ NSTextField alloc] initWithFrame:NSMakeRect(5, 10, 660, 22) ] retain ];
-        [ box2 addSubview:args ];
-
-        id mybutton = [[ NSButton alloc ] initWithFrame:NSMakeRect(288, 12, 140, 32) ];
-        [ mybutton setBezelStyle:NSRoundedBezelStyle ];
-        [ mybutton setTitle:@"Proceed" ];
-        [ mybutton setTarget:self ];
-        [ mybutton setAction:@selector(buttonClicked:) ];
-        [ window setDefaultButtonCell:[ mybutton cell ]];
-        [[ window contentView ] addSubview:mybutton ];
+        [ window setDefaultButtonCell:[ proceed cell ]];
     }
     return self;
+}
+
+- (id)uiBoxParent:(id)parent x:(float)x y:(float)y w:(float)w h:(float)h
+{
+    id mybox = [[[ NSBox alloc] initWithFrame:NSMakeRect(x, y, w, h) ] autorelease ];
+    [ mybox setTitlePosition:NSNoTitle ];
+    [ parent addSubview:mybox ];
+    return mybox;
+}
+
+- (id)uiButtonParent:(id)parent x:(float)x y:(float)y w:(float)w h:(float)h label:(NSString *)mystring target:(id)mytarget action:(SEL)myaction
+{
+    id mybutton = [[ NSButton alloc ] initWithFrame:NSMakeRect(x, y, w, h) ];
+    [ mybutton setBezelStyle:NSRoundedBezelStyle ];
+    [ mybutton setTitle:mystring ];
+    [ mybutton setTarget:mytarget ];
+    [ mybutton setAction:myaction ];
+    [ parent addSubview:mybutton ];
+    return mybutton;
+}
+
+- (id)uiLabelParent:(id)parent x:(float)x y:(float)y w:(float)w h:(float)h label:(NSString *)mystring
+{
+    id mylabel = [[[ NSTextField alloc] initWithFrame:NSMakeRect(x, y, w, h) ] autorelease ];
+    [ mylabel setStringValue:mystring ];
+    [ mylabel setEditable:NO ];
+    [ mylabel setDrawsBackground:NO ];
+    [ mylabel setBordered:NO ];
+    [ parent addSubview:mylabel ];
+    return mylabel;
+}
+
+- (id)uiTextFieldParent:(id)parent x:(float)x y:(float)y w:(float)w h:(float)h
+{
+    id myfield = [[[ NSTextField alloc] initWithFrame:NSMakeRect(x, y, w, h) ] retain ];
+    [ parent addSubview:myfield ];
+    return myfield;
 }
 
 - (void)createFile:(id)sender
@@ -177,33 +162,49 @@ char *appLauncher(char *defaultSpecfile)
 
 - (void)buttonClicked:(id)sender
 {
+    [ window makeFirstResponder:nil ];
     [ window close ];
     [[ NSApplication sharedApplication ] stop:sender ];
 }
 
 - (NSString *)getSpecfile
 {
-    return [ specfile stringValue ];
+    return [[ specfile stringValue ] stringByTrimmingCharactersInSet:[ NSCharacterSet whitespaceCharacterSet ]];
 }
 
 - (NSString *)getHost
 {
-    return [ host stringValue ];
+    return [[ host stringValue ] stringByTrimmingCharactersInSet:[ NSCharacterSet whitespaceCharacterSet ]];
 }
 
 - (NSString *)getPort
 {
-    return [ port stringValue ];
+    return [[ port stringValue ] stringByTrimmingCharactersInSet:[ NSCharacterSet whitespaceCharacterSet ]];
 }
 
 - (NSString *)getArgs
 {
-    return [ args stringValue ];
+    return [[ args stringValue ] stringByTrimmingCharactersInSet:[ NSCharacterSet whitespaceCharacterSet ]];
 }
 
 - (void)setSpecfile:(NSString *)value
 {
     [ specfile setStringValue:value ];
+}
+
+- (void)setHost:(NSString *)value
+{
+    [ host setStringValue:value ];
+}
+
+- (void)setPort:(NSString *)value
+{
+    [ port setStringValue:value ];
+}
+
+- (void)setArgs:(NSString *)value
+{
+    [ args setStringValue:value ];
 }
 
 @end

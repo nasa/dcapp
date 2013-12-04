@@ -25,7 +25,7 @@ extern int update_dyn_elements(struct node *);
 extern void SetNeedsRedraw(void);
 extern void ui_init(void);
 extern void ui_terminate(void);
-extern char *appLauncher(char *);
+extern void appLauncher(char *, char **, char *, char **, char *, char **, char *, char **);
 extern int ParseXMLFile(char *);
 
 void Terminate(int);
@@ -148,7 +148,8 @@ static void ProcessArgs(int argc, char **argv)
     AppData.simcomm.port = 0;
     AppData.xdisplay = 0;
     struct node *data;
-    char *name, *value, *specfile, *storedarg = NULL;
+    char *specfile = NULL, *host = NULL, *port = NULL, *args = NULL;
+    char *name, *value;
     struct utsname minfo;
 
     if (argc < 2)
@@ -193,6 +194,8 @@ static void ProcessArgs(int argc, char **argv)
     }
     else /* It was launched as a double-clicked Mac application... */
     {
+        char *defspecfile = NULL, *defhost = NULL, *defport = NULL, *defargs = NULL;
+
         /* Set TRICK_HOST_CPU in case it's needed later */
         char *trickhostcpu;
         int i;
@@ -215,19 +218,61 @@ static void ProcessArgs(int argc, char **argv)
         preffile = fopen(preffilename, "r");
         if (preffile)
         {
+            int retval;
+
             fseek(preffile, 0, SEEK_END);
             long len = ftell(preffile);
             rewind(preffile);
-            storedarg = malloc(len+1);
-            fscanf(preffile, "%s", storedarg);
+            defspecfile = malloc(len);
+            defhost = malloc(len);
+            defport = malloc(len);
+            defargs = malloc(len);
+            retval = fscanf(preffile, "{%[^}]}", defspecfile);
+            if (!retval) fseek(preffile, 1, SEEK_CUR);
+            retval = fscanf(preffile, "{%[^}]}", defhost);
+            if (!retval) fseek(preffile, 1, SEEK_CUR);
+            retval = fscanf(preffile, "{%[^}]}", defport);
+            if (!retval) fseek(preffile, 1, SEEK_CUR);
+            retval = fscanf(preffile, "{%[^}]}", defargs);
             fclose(preffile);
        }
 
         free(preffilename);
         free(appsupport);
 
-        specfile = strdup(appLauncher(storedarg));
-        if (storedarg) free(storedarg);
+        appLauncher(defspecfile, &specfile, defhost, &host, defport, &port, defargs, &args);
+
+        if (host) AppData.simcomm.host = strdup(host);
+        if (port) AppData.simcomm.port = StrToInt(port, 0);
+        if (args)
+        {
+            char *strptr = args;
+
+            name = calloc(sizeof(args), 1);
+            value = calloc(sizeof(args), 1);
+
+            while (strptr < (args + strlen(args)))
+            {
+                count = sscanf(strptr, "%[^= ]=%s", name, value);
+                if (count == 2)
+                {
+                    data = NewNode(NULL, &(AppData.ArgList));
+                    data->object.ppconst.name = strdup(name);
+                    data->object.ppconst.value = strdup(value);
+                }
+                if (count >= 1) strptr += strlen(name);
+                if (count == 2) strptr += strlen(value) + 1;
+                while (strptr < (args + strlen(args)) && *strptr == ' ') strptr++;
+            }
+
+            free(name);
+            free(value);
+        }
+
+        if (defspecfile) free(defspecfile);
+        if (defhost) free(defhost);
+        if (defport) free(defport);
+        if (defargs) free(defargs);
     }
 
     if (ParseXMLFile(specfile)) Terminate(-1);
@@ -250,7 +295,10 @@ static void ProcessArgs(int argc, char **argv)
                 asprintf(&fullpath, "%s", specfile);
             else
                 asprintf(&fullpath, "%s/%s", getcwd(0, 0), specfile);
-            fprintf(preffile, "%s", fullpath);
+            fprintf(preffile, "{%s}", fullpath);
+            if (host) fprintf(preffile, "{%s}", host);
+            if (port) fprintf(preffile, "{%s}", port);
+            if (args) fprintf(preffile, "{%s}", args);
             fclose(preffile);
             free(fullpath);
         }
@@ -259,5 +307,8 @@ static void ProcessArgs(int argc, char **argv)
         free(appsupport);
     }
 
-    free(specfile);
+    if (specfile) free(specfile);
+    if (host) free(host);
+    if (port) free(port);
+    if (args) free(args);
 }
