@@ -18,7 +18,7 @@ extern int tdAlignBaseline;
 extern "C" {
 #endif
 // Initialization routines
-extern int tdInitialize(void);
+extern int tdInitialize(char *);
 extern tdWindow tdOpenWindow(char *, float, float, float, float, int);
 extern tdWindow tdOpenFullScreen(char *);
 extern tdImage *tdLoadImage(char *, tdSize *);

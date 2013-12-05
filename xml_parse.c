@@ -17,7 +17,7 @@
 #include "xml_utils.h"
 #include "msg.h"
 
-extern void new_window(int, int, int, int, int, char *);
+extern void new_window(int, int, int, int, int);
 extern void new_panels(char *);
 extern struct node *new_panel(char *, char *, char *, char *);
 extern struct node *new_container(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *);
@@ -110,7 +110,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
     struct node *curlist, **sublist, *data, *data1;
     char *id, *onval, *offval;
     int subnode_found;
-    char *tmphost, *tmpdatarate, *tmpxdisplay;
+    char *tmphost, *tmpdatarate;
 
     for (node = startnode; node != NULL; node = node->next)
     {
@@ -266,16 +266,11 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "Window"))
         {
             AppData.force_update = StrToFloat(get_element_data(node, "ForceUpdate"), 60);
-        
-            tmpxdisplay = get_element_data(node, "XDisplay");
-            if (tmpxdisplay && !AppData.xdisplay) AppData.xdisplay = strdup(tmpxdisplay);
-        
             new_window(BoolStrToInt(get_element_data(node, "FullScreen"), 0),
                        StrToInt(get_element_data(node, "X"), 0),
                        StrToInt(get_element_data(node, "Y"), 0),
                        StrToInt(get_element_data(node, "Width"), 800),
-                       StrToInt(get_element_data(node, "Height"), 800),
-                       AppData.xdisplay);
+                       StrToInt(get_element_data(node, "Height"), 800));
             process_elements(0, 0, node->children);
         }
         if (NodeCheck(node, "Panels"))

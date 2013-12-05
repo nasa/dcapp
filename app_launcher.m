@@ -70,6 +70,13 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outH
         args = [ self uiTextFieldParent:box2 x:5 y:10 w:660 h:22 ];
         id proceed = [ self uiButtonParent:[ window contentView ] x:288 y:12 w:140 h:32 label:@"Proceed" target:self action:@selector(buttonClicked:) ];
 
+        // Set the key view loop so that the user can switch between fields using the "tab" key
+        [ specfile setNextKeyView:host ];
+        [ host setNextKeyView:port ];
+        [ port setNextKeyView:args ];
+        [ args setNextKeyView:specfile ];
+
+        // Set the "Proceed" button to activate by default with the "return" key
         [ window setDefaultButtonCell:[ proceed cell ]];
     }
     return self;

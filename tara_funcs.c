@@ -27,13 +27,13 @@ static struct
 } mywin;
 
 
-void ui_init(void)
+void ui_init(char *xdisplay)
 {
-    tdInitialize();
+    tdInitialize(xdisplay);
 }
 
 
-void window_init(int fullscreen, int winOriginX, int winOriginY, int winSizeX, int winSizeY, char *unused)
+void window_init(int fullscreen, int winOriginX, int winOriginY, int winSizeX, int winSizeY)
 {
     tdRegion usable;
 

@@ -235,7 +235,6 @@ typedef struct
         int port;
         char *datarate;
     } simcomm;
-    char *xdisplay;
     float force_update;
     struct timeval last_update;
     struct node *window;

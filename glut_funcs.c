@@ -28,12 +28,7 @@ static struct
 } mywin;
 
 
-void ui_init(void)
-{
-}
-
-
-void window_init(int fullscreen, int winOriginX, int winOriginY, int winSizeX, int winSizeY, char *xDisplay)
+void ui_init(char *xDisplay)
 {
     static int myargc;
     static char *myargv[3];
@@ -54,7 +49,11 @@ void window_init(int fullscreen, int winOriginX, int winOriginY, int winSizeX, i
 
     glutInit(&myargc, myargv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+}
 
+
+void window_init(int fullscreen, int winOriginX, int winOriginY, int winSizeX, int winSizeY)
+{
     if (!fullscreen)
     {
         glutInitWindowPosition(winOriginX, winOriginY);

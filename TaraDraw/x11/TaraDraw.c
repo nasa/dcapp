@@ -98,7 +98,7 @@ static int fontnum = 0;
 
 // Initialization routines
 
-int tdInitialize(char *filespec, char *xdisplay)
+int tdInitialize(char *xdisplay)
 {
     int i, j, len, maxlen = 0;
     char *fontspec;

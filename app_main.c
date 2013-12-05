@@ -17,13 +17,14 @@
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
+#define TIDY(a) if (a != NULL) { free(a); a=NULL; }
 #define SecondsElapsed(a,b) ((float)((b).tv_sec - (a).tv_sec) + (0.000001 * (float)((b).tv_usec - (a).tv_usec)))
 
 extern void mainloop(void);
 extern void UpdateDisplay(void);
 extern int update_dyn_elements(struct node *);
 extern void SetNeedsRedraw(void);
-extern void ui_init(void);
+extern void ui_init(char *);
 extern void ui_terminate(void);
 extern void appLauncher(char *, char **, char *, char **, char *, char **, char *, char **);
 extern int ParseXMLFile(char *);
@@ -130,9 +131,9 @@ void Idle(void)
  *********************************************************************************/
 void Terminate(int flag)
 {
-    if (AppData.simcomm.host != NULL) free(AppData.simcomm.host);
-    if (AppData.simcomm.datarate != NULL) free(AppData.simcomm.datarate);
-    if (AppData.xdisplay != NULL) free(AppData.xdisplay);
+    TIDY(AppData.simcomm.host);
+    TIDY(AppData.simcomm.datarate);
+
     ui_terminate();
     CAN_term();
     trickio_term();
@@ -146,7 +147,7 @@ static void ProcessArgs(int argc, char **argv)
     int i, count;
     AppData.simcomm.host = 0;
     AppData.simcomm.port = 0;
-    AppData.xdisplay = 0;
+    char *xdisplay = NULL;
     struct node *data;
     char *specfile = NULL, *host = NULL, *port = NULL, *args = NULL;
     char *name, *value;
@@ -158,9 +159,6 @@ static void ProcessArgs(int argc, char **argv)
         Terminate(-1);
     }
 
-    simio_initialize_parameter_list();
-    ui_init();
-
     uname(&minfo);
 
     if (strncmp(argv[1], "-psn", 4))
@@ -171,7 +169,7 @@ static void ProcessArgs(int argc, char **argv)
             {
                 if (!strcmp(argv[i], "-h")) AppData.simcomm.host = strdup(argv[i+1]);
                 if (!strcmp(argv[i], "-p")) AppData.simcomm.port = StrToInt(argv[i+1], 0);
-                if (!strcmp(argv[i], "-d")) AppData.xdisplay = strdup(argv[i+1]);
+                if (!strcmp(argv[i], "-d")) xdisplay = strdup(argv[i+1]);
                 i++;
             }
             else
@@ -191,6 +189,8 @@ static void ProcessArgs(int argc, char **argv)
         }
 
         specfile = strdup(argv[1]);
+        ui_init(xdisplay);
+        TIDY(xdisplay);
     }
     else /* It was launched as a double-clicked Mac application... */
     {
@@ -235,11 +235,12 @@ static void ProcessArgs(int argc, char **argv)
             if (!retval) fseek(preffile, 1, SEEK_CUR);
             retval = fscanf(preffile, "{%[^}]}", defargs);
             fclose(preffile);
-       }
+        }
 
         free(preffilename);
         free(appsupport);
 
+        ui_init(NULL);
         appLauncher(defspecfile, &specfile, defhost, &host, defport, &port, defargs, &args);
 
         if (host) AppData.simcomm.host = strdup(host);
@@ -269,12 +270,13 @@ static void ProcessArgs(int argc, char **argv)
             free(value);
         }
 
-        if (defspecfile) free(defspecfile);
-        if (defhost) free(defhost);
-        if (defport) free(defport);
-        if (defargs) free(defargs);
+        TIDY(defspecfile);
+        TIDY(defhost);
+        TIDY(defport);
+        TIDY(defargs);
     }
 
+    simio_initialize_parameter_list();
     if (ParseXMLFile(specfile)) Terminate(-1);
 
     /* On the Mac, store arguments to use as defaults the next time the app is run */
@@ -307,8 +309,8 @@ static void ProcessArgs(int argc, char **argv)
         free(appsupport);
     }
 
-    if (specfile) free(specfile);
-    if (host) free(host);
-    if (port) free(port);
-    if (args) free(args);
+    TIDY(specfile);
+    TIDY(host);
+    TIDY(port);
+    TIDY(args);
 }

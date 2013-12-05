@@ -57,6 +57,16 @@ int tdAlignBaseline = 0x10;
     [ self addMenuSeparator:appMenu ];
     [ self addMenuItem:appMenu title:[ @"Quit " stringByAppendingString:appName ] action:@selector(terminate:) keyEquivalent:@"q" modifier:0 ];
 
+    /*** Edit menu ***/
+    id editMenu = [ self addMenu:menubar title:@"Edit" ];
+    [ self addMenuItem:editMenu title:@"Undo" action:@selector(undo:) keyEquivalent:@"z" modifier:0 ];
+    [ self addMenuItem:editMenu title:@"Redo" action:@selector(redo:) keyEquivalent:@"Z" modifier:0 ];
+    [ self addMenuSeparator:editMenu ];
+    [ self addMenuItem:editMenu title:@"Cut" action:@selector(cut:) keyEquivalent:@"x" modifier:0 ];
+    [ self addMenuItem:editMenu title:@"Copy" action:@selector(copy:) keyEquivalent:@"c" modifier:0 ];
+    [ self addMenuItem:editMenu title:@"Paste" action:@selector(paste:) keyEquivalent:@"v" modifier:0 ];
+    [ self addMenuItem:editMenu title:@"Select All" action:@selector(selectAll:) keyEquivalent:@"a" modifier:0 ];
+
     /*** Window menu ***/
     id winMenu = [ self addMenu:menubar title:@"Window" ];
     [ self addMenuItem:winMenu title:@"Minimize" action:@selector(miniaturize:) keyEquivalent:@"m" modifier:0 ];

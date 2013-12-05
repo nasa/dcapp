@@ -8,7 +8,7 @@
 #include "string_utils.h"
 #include "opengl_draw.h"
 
-extern void window_init(int, int , int, int, int, char *);
+extern void window_init(int, int , int, int, int);
 extern void *LoadFont(char *, char *);
 extern void *LoadShm(key_t);
 extern int LoadTexture(char *);
@@ -31,11 +31,11 @@ static float fzero = 0;
 static int izero = 0;
 
 
-void new_window(int fullscreen, int OriginX, int OriginY, int SizeX, int SizeY, char *Xdisplay)
+void new_window(int fullscreen, int OriginX, int OriginY, int SizeX, int SizeY)
 {
     NewNode(NULL, &(AppData.window));
 
-    window_init(fullscreen, OriginX, OriginY, SizeX, SizeY, Xdisplay);
+    window_init(fullscreen, OriginX, OriginY, SizeX, SizeY);
     graphics_init();
 }
 
