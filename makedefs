@@ -1,6 +1,8 @@
 #OSNAME := $(shell uname -s)
 #OSVERS := $(shell uname -r)
 #OSSPEC := $(OSNAME)_$(OSVERS)
+
+TRICK_HOST_CPU ?= $(shell uname -s)
 OSSPEC := $(TRICK_HOST_CPU)
 
 OBJDIR := obj_$(OSSPEC)
