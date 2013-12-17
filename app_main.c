@@ -152,39 +152,40 @@ static void ProcessArgs(int argc, char **argv)
     char *specfile = NULL, *host = NULL, *port = NULL, *args = NULL;
     char *name, *value;
     struct utsname minfo;
+    int argsize, gotargs = 0;
 
-    if (argc < 2)
+    uname(&minfo);
+
+    if (argc < 2 && strcmp(minfo.sysname, "Darwin"))
     {
         user_msg("USAGE: dcapp <specfile> [-h <hostname> -p <port> -d <display>]");
         Terminate(-1);
     }
 
-    uname(&minfo);
+    if (argc > 2) gotargs = 1;
+    else if (argc == 2 && strncmp(argv[1], "-psn", 4)) gotargs = 1;
 
-    if (strncmp(argv[1], "-psn", 4))
+    if (gotargs)
     {
         for (i=2; i<argc; i++)
         {
             if (argv[i][0] == '-' && argc > i+1)
             {
-                if (!strcmp(argv[i], "-h")) AppData.simcomm.host = strdup(argv[i+1]);
-                if (!strcmp(argv[i], "-p")) AppData.simcomm.port = StrToInt(argv[i+1], 0);
+                if (!strcmp(argv[i], "-h")) host = strdup(argv[i+1]);
+                if (!strcmp(argv[i], "-p")) port = strdup(argv[i+1]);
                 if (!strcmp(argv[i], "-d")) xdisplay = strdup(argv[i+1]);
                 i++;
             }
             else
             {
-                name = calloc(sizeof(argv[i]), 1);
-                value = calloc(sizeof(argv[i]), 1);
-                count = sscanf(argv[i], "%[^=]=%[^\n]", name, value);
-                if (count == 2)
+                if (args)
                 {
-                    data = NewNode(NULL, &(AppData.ArgList));
-                    data->object.ppconst.name = strdup(name);
-                    data->object.ppconst.value = strdup(value);
+                    argsize = strlen(args) + strlen(argv[i]) + 1;
+                    args = realloc(args, argsize+1);
+                    sprintf(args, "%s %s", args, argv[i]);
+                    args[argsize] = '\0';
                 }
-                free(name);
-                free(value);
+                else args = strdup(argv[i]);
             }
         }
 
@@ -192,7 +193,7 @@ static void ProcessArgs(int argc, char **argv)
         ui_init(xdisplay);
         TIDY(xdisplay);
     }
-    else /* It was launched as a double-clicked Mac application... */
+    else /* We're on a Mac and the command line arguments don't provide enough information to proceed... */
     {
         char *defspecfile = NULL, *defhost = NULL, *defport = NULL, *defargs = NULL;
 
@@ -243,37 +244,37 @@ static void ProcessArgs(int argc, char **argv)
         ui_init(NULL);
         appLauncher(defspecfile, &specfile, defhost, &host, defport, &port, defargs, &args);
 
-        if (host) AppData.simcomm.host = strdup(host);
-        if (port) AppData.simcomm.port = StrToInt(port, 0);
-        if (args)
-        {
-            char *strptr = args;
-
-            name = calloc(sizeof(args), 1);
-            value = calloc(sizeof(args), 1);
-
-            while (strptr < (args + strlen(args)))
-            {
-                count = sscanf(strptr, "%[^= ]=%s", name, value);
-                if (count == 2)
-                {
-                    data = NewNode(NULL, &(AppData.ArgList));
-                    data->object.ppconst.name = strdup(name);
-                    data->object.ppconst.value = strdup(value);
-                }
-                if (count >= 1) strptr += strlen(name);
-                if (count == 2) strptr += strlen(value) + 1;
-                while (strptr < (args + strlen(args)) && *strptr == ' ') strptr++;
-            }
-
-            free(name);
-            free(value);
-        }
-
         TIDY(defspecfile);
         TIDY(defhost);
         TIDY(defport);
         TIDY(defargs);
+    }
+
+    if (host) AppData.simcomm.host = strdup(host);
+    AppData.simcomm.port = StrToInt(port, 0);
+    if (args)
+    {
+        char *strptr = args;
+
+        name = calloc(sizeof(args), 1);
+        value = calloc(sizeof(args), 1);
+
+        while (strptr < (args + strlen(args)))
+        {
+            count = sscanf(strptr, "%[^= ]=%s", name, value);
+            if (count == 2)
+            {
+                data = NewNode(NULL, &(AppData.ArgList));
+                data->object.ppconst.name = strdup(name);
+                data->object.ppconst.value = strdup(value);
+            }
+            if (count >= 1) strptr += strlen(name);
+            if (count == 2) strptr += strlen(value) + 1;
+            while (strptr < (args + strlen(args)) && *strptr == ' ') strptr++;
+        }
+
+        free(name);
+        free(value);
     }
 
     simio_initialize_parameter_list();
@@ -299,8 +300,11 @@ static void ProcessArgs(int argc, char **argv)
                 asprintf(&fullpath, "%s/%s", getcwd(0, 0), specfile);
             fprintf(preffile, "{%s}", fullpath);
             if (host) fprintf(preffile, "{%s}", host);
+            else fprintf(preffile, "{}");
             if (port) fprintf(preffile, "{%s}", port);
+            else fprintf(preffile, "{}");
             if (args) fprintf(preffile, "{%s}", args);
+            else fprintf(preffile, "{}");
             fclose(preffile);
             free(fullpath);
         }

@@ -24,14 +24,14 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outH
 {
     MyApp *myapp = [[ MyApp alloc ] init ];
 
-    if (inSpecfile) [ myapp setSpecfile:[ NSString stringWithCString:inSpecfile encoding:NSASCIIStringEncoding ]];
+    if (inSpecfile) [ myapp setSpecfile:[[ NSString stringWithCString:inSpecfile encoding:NSASCIIStringEncoding ] stringByStandardizingPath ]];
     if (inHost) [ myapp setHost:[ NSString stringWithCString:inHost encoding:NSASCIIStringEncoding ]];
     if (inPort) [ myapp setPort:[ NSString stringWithCString:inPort encoding:NSASCIIStringEncoding ]];
     if (inArgs) [ myapp setArgs:[ NSString stringWithCString:inArgs encoding:NSASCIIStringEncoding ]];
 
     [ NSApp run ];
 
-    *outSpecfile = strdup([[ myapp getSpecfile ] cStringUsingEncoding:NSASCIIStringEncoding ]);
+    *outSpecfile = strdup([[[ myapp getSpecfile ] stringByStandardizingPath ] cStringUsingEncoding:NSASCIIStringEncoding ]);
     *outHost = strdup([[ myapp getHost ] cStringUsingEncoding:NSASCIIStringEncoding ]);
     *outPort = strdup([[ myapp getPort ] cStringUsingEncoding:NSASCIIStringEncoding ]);
     *outArgs = strdup([[ myapp getArgs ] cStringUsingEncoding:NSASCIIStringEncoding ]);
