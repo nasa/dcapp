@@ -140,6 +140,8 @@ flFont *flInitFont(char *filename, char *facespec, unsigned int basesize)
     myfont->max_advance_numeric = 0;
     myfont->extras = 0;
 
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
 
