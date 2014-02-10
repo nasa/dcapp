@@ -409,6 +409,69 @@ struct node *new_setvalue(struct node *parent, struct node **list, char *var, ch
     return data;
 }
 
+struct node *new_increment(struct node *parent, struct node **list, char *var, char *min, char *max, char *wrap, char *val)
+{
+    int datatype1 = get_data_type(var);
+    int datatype2 = get_data_type(val);
+    int mindatatype;
+    int maxdatatype;
+
+    if (datatype1 == UNDEFINED || datatype1 == STRING || datatype2 == STRING) return NULL;
+
+    struct node *data = add_primitive_node(parent, list, Increment, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+    data->object.incr.datatype1 = datatype1;
+    data->object.incr.var = get_data_pointer(datatype1, var, NULL);
+
+    if (datatype2 == UNDEFINED) datatype2 = datatype1;
+    data->object.incr.datatype2 = datatype2;
+	switch (datatype2)
+	{
+        case FLOAT:
+            data->object.incr.val = get_data_pointer(FLOAT, val, &fzero);
+            break;
+        case INTEGER:
+            data->object.incr.val = get_data_pointer(INTEGER, val, &izero);
+            break;
+	}
+
+    if (min)
+    {
+        mindatatype = get_data_type(min);
+        if (mindatatype == UNDEFINED) mindatatype = datatype1;
+        data->object.incr.mindatatype = mindatatype;
+        switch (mindatatype)
+        {
+            case FLOAT:
+                data->object.incr.min = get_data_pointer(FLOAT, min, &fzero);
+                break;
+            case INTEGER:
+                data->object.incr.min = get_data_pointer(INTEGER, min, &izero);
+                break;
+        }
+    }
+
+    if (max)
+    {
+        maxdatatype = get_data_type(max);
+        if (maxdatatype == UNDEFINED) maxdatatype = datatype1;
+        data->object.incr.maxdatatype = maxdatatype;
+        switch (maxdatatype)
+        {
+            case FLOAT:
+                data->object.incr.max = get_data_pointer(FLOAT, max, &fzero);
+                break;
+            case INTEGER:
+                data->object.incr.max = get_data_pointer(INTEGER, max, &izero);
+                break;
+        }
+    }
+
+    data->object.incr.wrap = BoolStrToInt(wrap, 0);
+
+    return data;
+}
+
 struct node *new_isequal(struct node *parent, struct node **list, char *val1, char *val2)
 {
     char *onestr = {"1"};

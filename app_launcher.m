@@ -45,30 +45,39 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outH
     {
         id appName = [[NSProcessInfo processInfo] processName];
 
-        window = [[[ NSWindow alloc ] initWithContentRect:NSMakeRect(0, 0, 716, 284)
+        window = [[[ NSWindow alloc ] initWithContentRect:NSMakeRect(0, 0, 916, 284)
                                       styleMask:NSTitledWindowMask|NSClosableWindowMask|NSMiniaturizableWindowMask|NSTexturedBackgroundWindowMask
                                       backing:NSBackingStoreBuffered
                                       defer:NO ] autorelease ];
+
         [ window cascadeTopLeftFromPoint:NSMakePoint(20,20) ];
         [ window setTitle:appName ];
         [ window makeKeyAndOrderFront:nil ] ;
 
-        id box1 = [ self uiBoxParent:[ window contentView ] x:17 y:173 w:682 h:93 ];
-        [ self uiLabelParent:box1 x:5 y:49 w:114 h:17 label:@"Specification File:" ];
-        specfile = [ self uiTextFieldParent:box1 x:5 y:25 w:566 h:22 ];
-        [ self uiButtonParent:box1 x:580 y:50 w:92 h:28 label:@"Create..." target:self action:@selector(createFile:) ];
-        [ self uiButtonParent:box1 x:580 y:25 w:92 h:28 label:@"Select..." target:self action:@selector(selectFile:) ];
-        [ self uiButtonParent:box1 x:580 y:0 w:92 h:28 label:@"Edit..." target:self action:@selector(editFile:) ];
+        // the following 4 commands fix a background gradient issue on 10.8 or later:
+        // set the content border thickness to 0 for both the top and bottom window edges
+        [ window setContentBorderThickness:0 forEdge:NSMaxYEdge]; // top border
+        [ window setContentBorderThickness:0 forEdge:NSMinYEdge]; // bottom border
+        // disable the auto-recalculation of the window's content border
+        [ window setAutorecalculatesContentBorderThickness:NO forEdge:NSMaxYEdge];
+        [ window setAutorecalculatesContentBorderThickness:NO forEdge:NSMinYEdge];
 
-        id box2 = [ self uiBoxParent:[ window contentView ] x:17 y:56 w:682 h:115 ];
+        id box1 = [ self uiBoxParent:[ window contentView ] x:17 y:173 w:882 h:93 ];
+        [ self uiLabelParent:box1 x:5 y:49 w:114 h:17 label:@"Specification File:" ];
+        specfile = [ self uiTextFieldParent:box1 x:5 y:25 w:766 h:22 ];
+        [ self uiButtonParent:box1 x:780 y:50 w:92 h:28 label:@"Create..." target:self action:@selector(createFile:) ];
+        [ self uiButtonParent:box1 x:780 y:25 w:92 h:28 label:@"Select..." target:self action:@selector(selectFile:) ];
+        [ self uiButtonParent:box1 x:780 y:0 w:92 h:28 label:@"Edit..." target:self action:@selector(editFile:) ];
+
+        id box2 = [ self uiBoxParent:[ window contentView ] x:17 y:56 w:882 h:115 ];
         [ self uiLabelParent:box2 x:5 y:84 w:38 h:17 label:@"Host:" ];
-        host = [ self uiTextFieldParent:box2 x:5 y:60 w:414 h:22 ];
-        [ self uiLabelParent:box2 x:435 y:84 w:40 h:17 label:@"Port:" ];
-        port = [ self uiTextFieldParent:box2 x:435 y:60 w:136 h:22 ];
-        [ self uiButtonParent:box2 x:580 y:56 w:92 h:28 label:@"Defaults" target:self action:@selector(setDefaults:) ];
+        host = [ self uiTextFieldParent:box2 x:5 y:60 w:564 h:22 ];
+        [ self uiLabelParent:box2 x:585 y:84 w:40 h:17 label:@"Port:" ];
+        port = [ self uiTextFieldParent:box2 x:585 y:60 w:186 h:22 ];
+        [ self uiButtonParent:box2 x:780 y:56 w:92 h:28 label:@"Defaults" target:self action:@selector(setDefaults:) ];
         [ self uiLabelParent:box2 x:5 y:34 w:136 h:17 label:@"Optional Arguments:" ];
-        args = [ self uiTextFieldParent:box2 x:5 y:10 w:660 h:22 ];
-        id proceed = [ self uiButtonParent:[ window contentView ] x:288 y:12 w:140 h:32 label:@"Proceed" target:self action:@selector(buttonClicked:) ];
+        args = [ self uiTextFieldParent:box2 x:5 y:10 w:860 h:22 ];
+        id proceed = [ self uiButtonParent:[ window contentView ] x:388 y:12 w:140 h:32 label:@"Proceed" target:self action:@selector(buttonClicked:) ];
 
         // Set the key view loop so that the user can switch between fields using the "tab" key
         [ specfile setNextKeyView:host ];

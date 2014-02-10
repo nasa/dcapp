@@ -39,6 +39,7 @@ extern struct node *new_mouseevent(struct node *, struct node **, char *, char *
 extern struct node *new_keyboardevent(struct node *, struct node **, char *, char *);
 extern struct node *new_bezelevent(struct node *, struct node **, char *);
 extern struct node *new_setvalue(struct node *, struct node **, char *, char *);
+extern struct node *new_increment(struct node *, struct node **, char *, char *, char *, char *, char *);
 
 extern void DisplayPreInitStub(void *(*)(const char *));
 extern void DisplayInitStub(void);
@@ -643,6 +644,15 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         {
             data = new_setvalue(parent, list, get_element_data(node, "Variable"), get_node_content(node));
         }
+        if (NodeCheck(node, "Increment"))
+        {
+            data = new_increment(parent, list,
+                                 get_element_data(node, "Variable"),
+                                 get_element_data(node, "MinimumValue"),
+                                 get_element_data(node, "MaximumValue"),
+                                 get_element_data(node, "Wrap"),
+                                 get_node_content(node));
+        }
     }
 
     return 0;
@@ -815,7 +825,8 @@ static void replace_string(char **instr)
     if (outstr)
     {
         outstr[outptr] = '\0';
-        free(*instr);
+// This memory should be freed, but I commented this out to avoid "pointer being freed was not allocated" errors
+//        free(*instr);
         *instr = outstr;
     }
 }

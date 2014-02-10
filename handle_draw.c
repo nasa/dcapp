@@ -16,6 +16,7 @@ static void render_primitives(struct node *);
 
 extern int CheckCondition(struct node *);
 extern void UpdateValue(struct node *);
+extern void IncrementValue(struct node *);
 
 
 /*********************************************************************************
@@ -121,6 +122,9 @@ static void render_primitives(struct node *list)
                 break;
             case SetValue:
                 UpdateValue(current);
+                break;
+            case Increment:
+                IncrementValue(current);
                 break;
             default:
                 break;
