@@ -31,6 +31,7 @@ int tdAlignBaseline = 0x10;
         [ center addObserver:self selector:@selector(applicationDidFinishLaunching:) name:NSApplicationDidFinishLaunchingNotification object:nil ];
         [ center addObserver:self selector:@selector(windowReconfigured:) name:NSWindowDidEnterFullScreenNotification object:nil ];
         [ center addObserver:self selector:@selector(windowReconfigured:) name:NSWindowDidExitFullScreenNotification object:nil ];
+        [ center addObserver:self selector:@selector(windowReconfigured:) name:NSWindowDidEndLiveResizeNotification object:nil ];
         [ center addObserver:self selector:@selector(windowReconfigured:) name:NSWindowDidResizeNotification object:nil ];
         [ center addObserver:self selector:@selector(windowClosed:) name:NSWindowWillCloseNotification object:nil ];
         [ center addObserver:self selector:@selector(applicationTerminated:) name:NSApplicationWillTerminateNotification object:nil ];
@@ -567,7 +568,6 @@ int tdAlignBaseline = 0x10;
 - (void)windowReconfigured:(NSNotification *)aNotification
 {
     EventUnion data;
-    tdViewClass *myview;
     int i, j, eventnum;
 
     if (eventcount >= EVENT_QUEUE) return;
@@ -588,14 +588,13 @@ int tdAlignBaseline = 0x10;
                 eventcount++;
             }
 
-            myview = [[ aNotification object ] contentView ];
-            NSRect myrect = [ myview frame ];
+            NSRect myrect = [ winview[i] frame ];
             data.c.window = i;
             data.c.size.width = myrect.size.width;
             data.c.size.height = myrect.size.height;
             EventList[eventnum].type = tdConfigureEvent;
             EventList[eventnum].data = data;
-            [ myview tdSetNeedsRedraw ];
+            [ winview[i] tdSetNeedsRedraw ];
             break;
         }
     }

@@ -46,21 +46,13 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outH
         id appName = [[NSProcessInfo processInfo] processName];
 
         window = [[[ NSWindow alloc ] initWithContentRect:NSMakeRect(0, 0, 916, 284)
-                                      styleMask:NSTitledWindowMask|NSClosableWindowMask|NSMiniaturizableWindowMask|NSTexturedBackgroundWindowMask
+                                      styleMask:NSTitledWindowMask|NSClosableWindowMask|NSMiniaturizableWindowMask
                                       backing:NSBackingStoreBuffered
                                       defer:NO ] autorelease ];
 
         [ window cascadeTopLeftFromPoint:NSMakePoint(20,20) ];
         [ window setTitle:appName ];
         [ window makeKeyAndOrderFront:nil ] ;
-
-        // the following 4 commands fix a background gradient issue on 10.8 or later:
-        // set the content border thickness to 0 for both the top and bottom window edges
-        [ window setContentBorderThickness:0 forEdge:NSMaxYEdge]; // top border
-        [ window setContentBorderThickness:0 forEdge:NSMinYEdge]; // bottom border
-        // disable the auto-recalculation of the window's content border
-        [ window setAutorecalculatesContentBorderThickness:NO forEdge:NSMaxYEdge];
-        [ window setAutorecalculatesContentBorderThickness:NO forEdge:NSMinYEdge];
 
         id box1 = [ self uiBoxParent:[ window contentView ] x:17 y:173 w:882 h:93 ];
         [ self uiLabelParent:box1 x:5 y:49 w:114 h:17 label:@"Specification File:" ];
@@ -124,6 +116,7 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outH
 - (id)uiTextFieldParent:(id)parent x:(float)x y:(float)y w:(float)w h:(float)h
 {
     id myfield = [[[ NSTextField alloc] initWithFrame:NSMakeRect(x, y, w, h) ] retain ];
+    [[ myfield cell ] setScrollable:YES ];
     [ parent addSubview:myfield ];
     return myfield;
 }
