@@ -19,7 +19,7 @@ extern appdata AppData;
 struct node *new_mouseevent(struct node *, struct node **, char *, char *, char *, char *, char *, char *);
 struct node *new_keyboardevent(struct node *, struct node **, char *, char *);
 struct node *new_bezelevent(struct node *, struct node **, char *);
-struct node *new_setvalue(struct node *, struct node **, char *, char *);
+struct node *new_setvalue(struct node *, struct node **, char *, char *, char *, char *, char *);
 struct node *new_isequal(struct node *, struct node **, char *, char *);
 
 static struct node *add_primitive_node(struct node *, struct node **, Type, char *, char *, char *, char *, char *, char *, char *);
@@ -242,60 +242,60 @@ struct node *new_button(struct node *parent, struct node **list, char *x, char *
     {
         cond = new_isequal(curlist, sublist, indid, indonval);
         event = new_mouseevent(cond, &(cond->object.cond.TrueList), NULL, NULL, NULL, NULL, NULL, NULL);
-        new_setvalue(event, &(event->object.me.PressList), switchid, offval);
-        if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, "-1");
+        new_setvalue(event, &(event->object.me.PressList), switchid, NULL, NULL, NULL, offval);
+        if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, NULL, NULL, NULL, "-1");
         event = new_mouseevent(cond, &(cond->object.cond.FalseList), NULL, NULL, NULL, NULL, NULL, NULL);
-        new_setvalue(event, &(event->object.me.PressList), switchid, switchonval);
-        if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, "1");
+        new_setvalue(event, &(event->object.me.PressList), switchid, NULL, NULL, NULL, switchonval);
+        if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, NULL, NULL, NULL, "1");
         if (key || keyascii)
         {
             event = new_keyboardevent(cond, &(cond->object.cond.TrueList), key, keyascii);
-            new_setvalue(event, &(event->object.ke.PressList), switchid, offval);
-            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, "-1");
+            new_setvalue(event, &(event->object.ke.PressList), switchid, NULL, NULL, NULL, offval);
+            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, NULL, NULL, NULL, "-1");
             event = new_keyboardevent(cond, &(cond->object.cond.FalseList), key, keyascii);
-            new_setvalue(event, &(event->object.ke.PressList), switchid, switchonval);
-            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, "1");
+            new_setvalue(event, &(event->object.ke.PressList), switchid, NULL, NULL, NULL, switchonval);
+            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, NULL, NULL, NULL, "1");
         }
         if (bezelkey)
         {
             event = new_bezelevent(cond, &(cond->object.cond.TrueList), bezelkey);
-            new_setvalue(event, &(event->object.be.PressList), switchid, offval);
-            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, "-1");
+            new_setvalue(event, &(event->object.be.PressList), switchid, NULL, NULL, NULL, offval);
+            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, NULL, NULL, NULL, "-1");
             event = new_bezelevent(cond, &(cond->object.cond.FalseList), bezelkey);
-            new_setvalue(event, &(event->object.be.PressList), switchid, switchonval);
-            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, "1");
+            new_setvalue(event, &(event->object.be.PressList), switchid, NULL, NULL, NULL, switchonval);
+            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, NULL, NULL, NULL, "1");
         }
     }
     else
     {
         event = new_mouseevent(curlist, sublist, NULL, NULL, NULL, NULL, NULL, NULL);
-        new_setvalue(event, &(event->object.me.PressList), switchid, switchonval);
-        if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, "1");
+        new_setvalue(event, &(event->object.me.PressList), switchid, NULL, NULL, NULL, switchonval);
+        if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, NULL, NULL, NULL, "1");
         if (momentary)
         {
-            new_setvalue(event, &(event->object.me.ReleaseList), switchid, offval);
-            if (transitionid) new_setvalue(event, &(event->object.me.ReleaseList), transitionid, "-1");
+            new_setvalue(event, &(event->object.me.ReleaseList), switchid, NULL, NULL, NULL, offval);
+            if (transitionid) new_setvalue(event, &(event->object.me.ReleaseList), transitionid, NULL, NULL, NULL, "-1");
         }
         if (key || keyascii)
         {
             event = new_keyboardevent(curlist, sublist, key, keyascii);
-            new_setvalue(event, &(event->object.ke.PressList), switchid, switchonval);
-            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, "1");
+            new_setvalue(event, &(event->object.ke.PressList), switchid, NULL, NULL, NULL, switchonval);
+            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, NULL, NULL, NULL, "1");
             if (momentary)
             {
-                new_setvalue(event, &(event->object.ke.ReleaseList), switchid, offval);
-                if (transitionid) new_setvalue(event, &(event->object.ke.ReleaseList), transitionid, "-1");
+                new_setvalue(event, &(event->object.ke.ReleaseList), switchid, NULL, NULL, NULL, offval);
+                if (transitionid) new_setvalue(event, &(event->object.ke.ReleaseList), transitionid, NULL, NULL, NULL, "-1");
             }
         }
         if (bezelkey)
         {
             event = new_bezelevent(curlist, sublist, bezelkey);
-            new_setvalue(event, &(event->object.be.PressList), switchid, switchonval);
-            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, "1");
+            new_setvalue(event, &(event->object.be.PressList), switchid, NULL, NULL, NULL, switchonval);
+            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, NULL, NULL, NULL, "1");
             if (momentary)
             {
-                new_setvalue(event, &(event->object.be.ReleaseList), switchid, offval);
-                if (transitionid) new_setvalue(event, &(event->object.be.ReleaseList), transitionid, "-1");
+                new_setvalue(event, &(event->object.be.ReleaseList), switchid, NULL, NULL, NULL, offval);
+                if (transitionid) new_setvalue(event, &(event->object.be.ReleaseList), transitionid, NULL, NULL, NULL, "-1");
             }
         }
     }
@@ -304,15 +304,15 @@ struct node *new_button(struct node *parent, struct node **list, char *x, char *
     {
         list1 = new_isequal(data, &(data->object.cont.SubList), transitionid, "1");
         list2 = new_isequal(list1, &(list1->object.cond.TrueList), indid, indonval);
-        new_setvalue(list2, &(list2->object.cond.TrueList), transitionid, "0");
+        new_setvalue(list2, &(list2->object.cond.TrueList), transitionid, NULL, NULL, NULL, "0");
         list3 = new_isequal(list2, &(list2->object.cond.FalseList), switchid, switchonval);
-        new_setvalue(list3, &(list3->object.cond.FalseList), transitionid, "0");
+        new_setvalue(list3, &(list3->object.cond.FalseList), transitionid, NULL, NULL, NULL, "0");
 
         list4 = new_isequal(data, &(data->object.cont.SubList), transitionid, "-1");
         list5 = new_isequal(list4, &(list4->object.cond.TrueList), indid, indonval);
-        new_setvalue(list5, &(list5->object.cond.FalseList), transitionid, "0");
+        new_setvalue(list5, &(list5->object.cond.FalseList), transitionid, NULL, NULL, NULL, "0");
         list6 = new_isequal(list5, &(list5->object.cond.FalseList), switchid, switchoffval);
-        new_setvalue(list6, &(list6->object.cond.TrueList), transitionid, "0");
+        new_setvalue(list6, &(list6->object.cond.TrueList), transitionid, NULL, NULL, NULL, "0");
     }
 
     return data;
@@ -380,20 +380,28 @@ struct node *new_bezelevent(struct node *parent, struct node **list, char *key)
     return data;
 }
 
-struct node *new_setvalue(struct node *parent, struct node **list, char *var, char *val)
+struct node *new_setvalue(struct node *parent, struct node **list, char *var, char *optype, char *min, char *max, char *val)
 {
-    int datatype = get_data_type(var);
-    if (datatype == UNDEFINED) return NULL;
+    int datatype1 = get_data_type(var);
+    int datatype2 = get_data_type(val);
+    int mindatatype;
+    int maxdatatype;
+
+    if (datatype1 == UNDEFINED) return NULL;
 
     struct node *data = add_primitive_node(parent, list, SetValue, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
-    data->object.modval.datatype1 = datatype;
-    data->object.modval.var = get_data_pointer(data->object.modval.datatype1, var, NULL);
+    if (optype == NULL) data->object.modval.optype = Equals;
+    else if (!strcmp(optype, "+=")) data->object.modval.optype = PlusEquals;
+    else if (!strcmp(optype, "-=")) data->object.modval.optype = MinusEquals;
+    else data->object.modval.optype = Equals;
 
-    datatype = get_data_type(val);
-    if (datatype == UNDEFINED) data->object.modval.datatype2 = data->object.modval.datatype1;
-    else data->object.modval.datatype2 = datatype;
-	switch (data->object.modval.datatype2)
+    data->object.modval.datatype1 = datatype1;
+    data->object.modval.var = get_data_pointer(datatype1, var, NULL);
+
+    if (datatype2 == UNDEFINED) datatype2 = datatype1;
+    data->object.modval.datatype2 = datatype2;
+	switch (datatype2)
 	{
         case FLOAT:
             data->object.modval.val = get_data_pointer(FLOAT, val, &fzero);
@@ -406,47 +414,21 @@ struct node *new_setvalue(struct node *parent, struct node **list, char *var, ch
             break;
 	}
 
-    return data;
-}
-
-struct node *new_increment(struct node *parent, struct node **list, char *var, char *min, char *max, char *wrap, char *val)
-{
-    int datatype1 = get_data_type(var);
-    int datatype2 = get_data_type(val);
-    int mindatatype;
-    int maxdatatype;
-
-    if (datatype1 == UNDEFINED || datatype1 == STRING || datatype2 == STRING) return NULL;
-
-    struct node *data = add_primitive_node(parent, list, Increment, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-
-    data->object.incr.datatype1 = datatype1;
-    data->object.incr.var = get_data_pointer(datatype1, var, NULL);
-
-    if (datatype2 == UNDEFINED) datatype2 = datatype1;
-    data->object.incr.datatype2 = datatype2;
-	switch (datatype2)
-	{
-        case FLOAT:
-            data->object.incr.val = get_data_pointer(FLOAT, val, &fzero);
-            break;
-        case INTEGER:
-            data->object.incr.val = get_data_pointer(INTEGER, val, &izero);
-            break;
-	}
-
     if (min)
     {
         mindatatype = get_data_type(min);
         if (mindatatype == UNDEFINED) mindatatype = datatype1;
-        data->object.incr.mindatatype = mindatatype;
+        data->object.modval.mindatatype = mindatatype;
         switch (mindatatype)
         {
             case FLOAT:
-                data->object.incr.min = get_data_pointer(FLOAT, min, &fzero);
+                data->object.modval.min = get_data_pointer(FLOAT, min, &fzero);
                 break;
             case INTEGER:
-                data->object.incr.min = get_data_pointer(INTEGER, min, &izero);
+                data->object.modval.min = get_data_pointer(INTEGER, min, &izero);
+                break;
+            case STRING:
+                data->object.modval.min = get_data_pointer(STRING, min, "");
                 break;
         }
     }
@@ -455,19 +437,20 @@ struct node *new_increment(struct node *parent, struct node **list, char *var, c
     {
         maxdatatype = get_data_type(max);
         if (maxdatatype == UNDEFINED) maxdatatype = datatype1;
-        data->object.incr.maxdatatype = maxdatatype;
+        data->object.modval.maxdatatype = maxdatatype;
         switch (maxdatatype)
         {
             case FLOAT:
-                data->object.incr.max = get_data_pointer(FLOAT, max, &fzero);
+                data->object.modval.max = get_data_pointer(FLOAT, max, &fzero);
                 break;
             case INTEGER:
-                data->object.incr.max = get_data_pointer(INTEGER, max, &izero);
+                data->object.modval.max = get_data_pointer(INTEGER, max, &izero);
+                break;
+            case STRING:
+                data->object.modval.min = get_data_pointer(STRING, max, "");
                 break;
         }
     }
-
-    data->object.incr.wrap = BoolStrToInt(wrap, 0);
 
     return data;
 }

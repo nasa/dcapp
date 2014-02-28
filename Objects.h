@@ -8,9 +8,10 @@
 #include "PixelStream.h"
 #include "fontlib.h"
 
-typedef enum { Empty, Panel, Image, Vertex, Rectangle, Circle, Line, Polygon, ADI, String, MouseEvent, KeyboardEvent, BezelEvent, SetValue, Increment, Condition, Container, PixelStream } Type;
+typedef enum { Empty, Panel, Image, Vertex, Rectangle, Circle, Line, Polygon, ADI, String, MouseEvent, KeyboardEvent, BezelEvent, SetValue, Condition, Container, PixelStream } Type;
 typedef enum { AlignLeft, AlignCenter, AlignRight } HAlignment;
 typedef enum { AlignBottom, AlignMiddle, AlignTop } VAlignment;
+typedef enum { Equals, PlusEquals, MinusEquals } SetOperator;
 
 struct kolor
 {
@@ -136,14 +137,7 @@ struct BezelEvent
 
 struct ModifyValue
 {
-    int datatype1;
-    int datatype2;
-    void *var;
-    void *val;
-};
-
-struct Increment
-{
+    int optype;
     int datatype1;
     int datatype2;
     int mindatatype;
@@ -152,7 +146,6 @@ struct Increment
     void *val;
     void *min;
     void *max;
-    int wrap;
 };
 
 struct Condition

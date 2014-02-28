@@ -8,7 +8,6 @@ extern void UpdateDisplay(void);
 
 void ProcessEventList(struct node *);
 void UpdateValue(struct node *);
-void IncrementValue(struct node *);
 int CheckCondition(struct node *);
 
 
@@ -28,9 +27,6 @@ void ProcessEventList(struct node *list)
                 break;
             case SetValue:
                 UpdateValue(sublist);
-                break;
-            case Increment:
-                IncrementValue(sublist);
                 break;
             default:
                 break;
@@ -70,125 +66,161 @@ void UpdateValue(struct node *mynode)
             switch (mynode->object.modval.datatype2)
             {
                 case FLOAT:
-                    *(float *)(mynode->object.modval.var) = *(float *)(mynode->object.modval.val);
+                    switch (mynode->object.modval.optype)
+                    {
+                        case PlusEquals:
+                            *(float *)(mynode->object.modval.var) += *(float *)(mynode->object.modval.val);
+                            break;
+                        case MinusEquals:
+                            *(float *)(mynode->object.modval.var) -= *(float *)(mynode->object.modval.val);
+                            break;
+                        default:
+                            *(float *)(mynode->object.modval.var) = *(float *)(mynode->object.modval.val);
+                    }
                     break;
                 case INTEGER:
-                    *(float *)(mynode->object.modval.var) = (float)(*(int *)(mynode->object.modval.val));
+                    switch (mynode->object.modval.optype)
+                    {
+                        case PlusEquals:
+                            *(float *)(mynode->object.modval.var) += (float)(*(int *)(mynode->object.modval.val));
+                            break;
+                        case MinusEquals:
+                            *(float *)(mynode->object.modval.var) -= (float)(*(int *)(mynode->object.modval.val));
+                            break;
+                        default:
+                            *(float *)(mynode->object.modval.var) = (float)(*(int *)(mynode->object.modval.val));
+                    }
                     break;
                 case STRING:
-                    *(float *)(mynode->object.modval.var) = strtof((char *)(mynode->object.modval.val), NULL);
+                    switch (mynode->object.modval.optype)
+                    {
+                        case PlusEquals:
+                            *(float *)(mynode->object.modval.var) += strtof((char *)(mynode->object.modval.val), NULL);
+                            break;
+                        case MinusEquals:
+                            *(float *)(mynode->object.modval.var) -= strtof((char *)(mynode->object.modval.val), NULL);
+                            break;
+                        default:
+                            *(float *)(mynode->object.modval.var) = strtof((char *)(mynode->object.modval.val), NULL);
+                    }
                     break;
+            }
+
+            if (mynode->object.modval.min)
+            {
+                switch (mynode->object.modval.mindatatype)
+                {
+                    case FLOAT:
+                        if (*(float *)(mynode->object.modval.var) < *(float *)(mynode->object.modval.min))
+                            *(float *)(mynode->object.modval.var) = *(float *)(mynode->object.modval.min);
+                        break;
+                    case INTEGER:
+                        if (*(float *)(mynode->object.modval.var) < (float)(*(int *)(mynode->object.modval.min)))
+                            *(float *)(mynode->object.modval.var) = (float)(*(int *)(mynode->object.modval.min));
+                        break;
+                }
+            }
+
+            if (mynode->object.modval.max)
+            {
+                switch (mynode->object.modval.maxdatatype)
+                {
+                    case FLOAT:
+                        if (*(float *)(mynode->object.modval.var) > *(float *)(mynode->object.modval.max))
+                            *(float *)(mynode->object.modval.var) = *(float *)(mynode->object.modval.max);
+                        break;
+                    case INTEGER:
+                        if (*(float *)(mynode->object.modval.var) > (float)(*(int *)(mynode->object.modval.max)))
+                            *(float *)(mynode->object.modval.var) = (float)(*(int *)(mynode->object.modval.max));
+                        break;
+                }
             }
             break;
         case INTEGER:
             switch (mynode->object.modval.datatype2)
             {
                 case FLOAT:
-                    *(int *)(mynode->object.modval.var) = (int)(*(float *)(mynode->object.modval.val));
+                    switch (mynode->object.modval.optype)
+                    {
+                        case PlusEquals:
+                            *(int *)(mynode->object.modval.var) += (int)(*(float *)(mynode->object.modval.val));
+                            break;
+                        case MinusEquals:
+                            *(int *)(mynode->object.modval.var) -= (int)(*(float *)(mynode->object.modval.val));
+                            break;
+                        default:
+                            *(int *)(mynode->object.modval.var) = (int)(*(float *)(mynode->object.modval.val));
+                    }
                     break;
                 case INTEGER:
-                    *(int *)(mynode->object.modval.var) = *(int *)(mynode->object.modval.val);
+                    switch (mynode->object.modval.optype)
+                    {
+                        case PlusEquals:
+                            *(int *)(mynode->object.modval.var) += *(int *)(mynode->object.modval.val);
+                            break;
+                        case MinusEquals:
+                            *(int *)(mynode->object.modval.var) -= *(int *)(mynode->object.modval.val);
+                            break;
+                        default:
+                            *(int *)(mynode->object.modval.var) = *(int *)(mynode->object.modval.val);
+                    }
                     break;
                 case STRING:
-                    *(int *)(mynode->object.modval.var) = strtol((char *)(mynode->object.modval.val), NULL, 10);
+                    switch (mynode->object.modval.optype)
+                    {
+                        case PlusEquals:
+                            *(int *)(mynode->object.modval.var) += strtol((char *)(mynode->object.modval.val), NULL, 10);
+                            break;
+                        case MinusEquals:
+                            *(int *)(mynode->object.modval.var) -= strtol((char *)(mynode->object.modval.val), NULL, 10);
+                            break;
+                        default:
+                            *(int *)(mynode->object.modval.var) = strtol((char *)(mynode->object.modval.val), NULL, 10);
+                    }
                     break;
+            }
+
+            if (mynode->object.modval.min)
+            {
+                switch (mynode->object.modval.mindatatype)
+                {
+                    case FLOAT:
+                        if (*(int *)(mynode->object.modval.var) < (int)(*(float *)(mynode->object.modval.min)))
+                            *(int *)(mynode->object.modval.var) = (int)(*(float *)(mynode->object.modval.min));
+                        break;
+                    case INTEGER:
+                        if (*(int *)(mynode->object.modval.var) < *(int *)(mynode->object.modval.min))
+                            *(int *)(mynode->object.modval.var) = *(int *)(mynode->object.modval.min);
+                        break;
+                }
+            }
+
+            if (mynode->object.modval.max)
+            {
+                switch (mynode->object.modval.maxdatatype)
+                {
+                    case FLOAT:
+                        if (*(int *)(mynode->object.modval.var) > (int)(*(float *)(mynode->object.modval.max)))
+                            *(int *)(mynode->object.modval.var) = (int)(*(float *)(mynode->object.modval.max));
+                        break;
+                    case INTEGER:
+                        if (*(int *)(mynode->object.modval.var) > *(int *)(mynode->object.modval.max))
+                            *(int *)(mynode->object.modval.var) = *(int *)(mynode->object.modval.max);
+                        break;
+                }
             }
             break;
         case STRING:
-            strcpy((char *)(mynode->object.modval.var), (char *)(mynode->object.modval.val));
+            switch (mynode->object.modval.datatype2)
+            {
+                case STRING:
+                    if (mynode->object.modval.optype == Equals)
+                        strcpy((char *)(mynode->object.modval.var), (char *)(mynode->object.modval.val));
+                    break;
+            }
             break;
     }
+
     trickio_forcewrite(mynode->object.modval.var);
     edgeio_forcewrite(mynode->object.modval.var);
-}
-
-void IncrementValue(struct node *mynode)
-{
-    switch (mynode->object.incr.datatype1)
-    {
-        case FLOAT:
-            switch (mynode->object.incr.datatype2)
-            {
-                case FLOAT:
-                    *(float *)(mynode->object.incr.var) += *(float *)(mynode->object.incr.val);
-                    break;
-                case INTEGER:
-                    *(float *)(mynode->object.incr.var) += (float)(*(int *)(mynode->object.incr.val));
-                    break;
-            }
-
-            if (mynode->object.incr.min)
-            {
-                switch (mynode->object.incr.mindatatype)
-                {
-                    case FLOAT:
-                        if (*(float *)(mynode->object.incr.var) < *(float *)(mynode->object.incr.min))
-                            *(float *)(mynode->object.incr.var) = *(float *)(mynode->object.incr.min);
-                        break;
-                    case INTEGER:
-                        if (*(float *)(mynode->object.incr.var) < (float)(*(int *)(mynode->object.incr.min)))
-                            *(float *)(mynode->object.incr.var) = (float)(*(int *)(mynode->object.incr.min));
-                        break;
-                }
-            }
-
-            if (mynode->object.incr.max)
-            {
-                switch (mynode->object.incr.maxdatatype)
-                {
-                    case FLOAT:
-                        if (*(float *)(mynode->object.incr.var) > *(float *)(mynode->object.incr.max))
-                            *(float *)(mynode->object.incr.var) = *(float *)(mynode->object.incr.max);
-                        break;
-                    case INTEGER:
-                        if (*(float *)(mynode->object.incr.var) > (float)(*(int *)(mynode->object.incr.max)))
-                            *(float *)(mynode->object.incr.var) = (float)(*(int *)(mynode->object.incr.max));
-                        break;
-                }
-            }
-            break;
-        case INTEGER:
-            switch (mynode->object.incr.datatype2)
-            {
-                case FLOAT:
-                    *(int *)(mynode->object.incr.var) += (int)(*(float *)(mynode->object.incr.val));
-                    break;
-                case INTEGER:
-                    *(int *)(mynode->object.incr.var) += *(int *)(mynode->object.incr.val);
-                    break;
-            }
-
-            if (mynode->object.incr.min)
-            {
-                switch (mynode->object.incr.mindatatype)
-                {
-                    case FLOAT:
-                        if (*(int *)(mynode->object.incr.var) < (int)(*(float *)(mynode->object.incr.min)))
-                            *(int *)(mynode->object.incr.var) = (int)(*(float *)(mynode->object.incr.min));
-                        break;
-                    case INTEGER:
-                        if (*(int *)(mynode->object.incr.var) < *(int *)(mynode->object.incr.min))
-                            *(int *)(mynode->object.incr.var) = *(int *)(mynode->object.incr.min);
-                        break;
-                }
-            }
-
-            if (mynode->object.incr.max)
-            {
-                switch (mynode->object.incr.maxdatatype)
-                {
-                    case FLOAT:
-                        if (*(int *)(mynode->object.incr.var) > (int)(*(float *)(mynode->object.incr.max)))
-                            *(int *)(mynode->object.incr.var) = (int)(*(float *)(mynode->object.incr.max));
-                        break;
-                    case INTEGER:
-                        if (*(int *)(mynode->object.incr.var) > *(int *)(mynode->object.incr.max))
-                            *(int *)(mynode->object.incr.var) = *(int *)(mynode->object.incr.max);
-                        break;
-                }
-            }
-            break;
-    }
-    trickio_forcewrite(mynode->object.incr.var);
-    edgeio_forcewrite(mynode->object.incr.var);
 }

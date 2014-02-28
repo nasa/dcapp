@@ -33,7 +33,6 @@ union objects
     struct KeyboardEvent ke;
     struct BezelEvent be;
     struct ModifyValue modval;
-    struct Increment incr;
 };
 
 // These items are common to many primitives and are stored in a standard structure for easy access
