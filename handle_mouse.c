@@ -3,6 +3,8 @@
 #include "mappings.h"
 #include "geometry.h"
 
+#define SecondsElapsed(a,b) ((float)((b).tv_sec - (a).tv_sec) + (0.000001 * (float)((b).tv_usec - (a).tv_usec)))
+
 extern void ProcessEventList(struct node *);
 extern int CheckCondition(struct node *);
 
@@ -12,12 +14,9 @@ static int CheckRegion(struct node *, float, float);
 static void MouseDown(struct node *, float, float);
 static void MouseUp(struct node *);
 
+static struct node *mousecontinuous = 0;
+static int mousebouncemode = 0;
 
-/*********************************************************************************
- *
- *  Handle mouse events
- *
- *********************************************************************************/
 void HandleMouse(int button, int state, float xpct, float ypct, int modifier)
 {
     struct node *current;
@@ -36,31 +35,51 @@ void HandleMouse(int button, int state, float xpct, float ypct, int modifier)
 }
 
 
-/*********************************************************************************
- *
- * Handle movement of the mouse when a mouse button is depressed.
- *
- *********************************************************************************/
+void CheckMouseBounce(void)
+{
+    static struct timeval mousebounce;
+
+    if (!mousecontinuous) return;
+
+    struct timeval now;
+
+    gettimeofday(&now, NULL);
+
+    if (mousebouncemode == 1)
+    {
+        gettimeofday(&mousebounce, NULL);
+        mousebouncemode = 2;
+    }
+    else if (mousebouncemode == 2)
+    {
+        if (SecondsElapsed(mousebounce, now) > 1)
+        {
+            gettimeofday(&mousebounce, NULL);
+            ProcessEventList(mousecontinuous);
+            mousebouncemode = 3;
+        }
+    }
+    else if (mousebouncemode == 3)
+    {
+        if (SecondsElapsed(mousebounce, now) > .1)
+        {
+            gettimeofday(&mousebounce, NULL);
+            ProcessEventList(mousecontinuous);
+        }
+    }
+}
+
+
 void HandleMouseMotion(int x, int y)
 {
 }
 
 
-/*********************************************************************************
- *
- * Handle movement of the mouse when a mouse button is not depressed.
- *
- *********************************************************************************/
 void HandlePassiveMotion(int x, int y)
 {
 }
 
 
-/*********************************************************************************
- *
- * Pass MOUSE_DOWN event through the primitives list
- *
- *********************************************************************************/
 static void MouseDown(struct node *list, float x, float y)
 {
     struct node *current;
@@ -97,6 +116,9 @@ static void MouseDown(struct node *list, float x, float y)
                 {
                     current->info.selected = 1;
                     ProcessEventList(current->object.me.PressList);
+mousecontinuous = current->object.me.PressList;
+mousebouncemode = 1;
+
                 }
                 else current->info.selected = 0;
                 break;
@@ -107,11 +129,6 @@ static void MouseDown(struct node *list, float x, float y)
 }
 
 
-/*********************************************************************************
- *
- * Pass MOUSE_UP event through the primitives list
- *
- *********************************************************************************/
 static void MouseUp(struct node *list)
 {
     struct node *current;
@@ -136,15 +153,12 @@ static void MouseUp(struct node *list)
 
         // Deselect all objects when releasing mouse button when in runtime.
         current->info.selected = 0;
+mousecontinuous = 0;
     }
 }
 
 
-/*********************************************************************************
- *
- * Check if x and y are within a node's bounds
- *
- *********************************************************************************/
+// Check if x and y are within a node's bounds
 static int CheckRegion(struct node *current, float x, float y)
 {
     Geometry geo = GetGeometry(current);

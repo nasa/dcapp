@@ -58,156 +58,82 @@ int CheckCondition(struct node *mynode)
     return 0;
 }
 
+float getFloatVal(int type, void *val)
+{
+    switch (type)
+    {
+        case FLOAT:
+            return *(float *)val;
+        case INTEGER:
+            return (float)(*(int *)val);
+        case STRING:
+            return strtof((char *)val, NULL);
+    }
+    return 0;
+}
+
+int getIntegerVal(int type, void *val)
+{
+    switch (type)
+    {
+        case FLOAT:
+            return (int)(*(float *)val);
+        case INTEGER:
+            return *(int *)val;
+        case STRING:
+            return strtol((char *)val, NULL, 10);
+    }
+    return 0;
+}
+
 void UpdateValue(struct node *mynode)
 {
     switch (mynode->object.modval.datatype1)
     {
         case FLOAT:
-            switch (mynode->object.modval.datatype2)
+            switch (mynode->object.modval.optype)
             {
-                case FLOAT:
-                    switch (mynode->object.modval.optype)
-                    {
-                        case PlusEquals:
-                            *(float *)(mynode->object.modval.var) += *(float *)(mynode->object.modval.val);
-                            break;
-                        case MinusEquals:
-                            *(float *)(mynode->object.modval.var) -= *(float *)(mynode->object.modval.val);
-                            break;
-                        default:
-                            *(float *)(mynode->object.modval.var) = *(float *)(mynode->object.modval.val);
-                    }
+                case PlusEquals:
+                    *(float *)(mynode->object.modval.var) += getFloatVal(mynode->object.modval.datatype2, mynode->object.modval.val);
                     break;
-                case INTEGER:
-                    switch (mynode->object.modval.optype)
-                    {
-                        case PlusEquals:
-                            *(float *)(mynode->object.modval.var) += (float)(*(int *)(mynode->object.modval.val));
-                            break;
-                        case MinusEquals:
-                            *(float *)(mynode->object.modval.var) -= (float)(*(int *)(mynode->object.modval.val));
-                            break;
-                        default:
-                            *(float *)(mynode->object.modval.var) = (float)(*(int *)(mynode->object.modval.val));
-                    }
+                case MinusEquals:
+                    *(float *)(mynode->object.modval.var) -= getFloatVal(mynode->object.modval.datatype2, mynode->object.modval.val);
                     break;
-                case STRING:
-                    switch (mynode->object.modval.optype)
-                    {
-                        case PlusEquals:
-                            *(float *)(mynode->object.modval.var) += strtof((char *)(mynode->object.modval.val), NULL);
-                            break;
-                        case MinusEquals:
-                            *(float *)(mynode->object.modval.var) -= strtof((char *)(mynode->object.modval.val), NULL);
-                            break;
-                        default:
-                            *(float *)(mynode->object.modval.var) = strtof((char *)(mynode->object.modval.val), NULL);
-                    }
-                    break;
+                default:
+                    *(float *)(mynode->object.modval.var) = getFloatVal(mynode->object.modval.datatype2, mynode->object.modval.val);
             }
-
             if (mynode->object.modval.min)
             {
-                switch (mynode->object.modval.mindatatype)
-                {
-                    case FLOAT:
-                        if (*(float *)(mynode->object.modval.var) < *(float *)(mynode->object.modval.min))
-                            *(float *)(mynode->object.modval.var) = *(float *)(mynode->object.modval.min);
-                        break;
-                    case INTEGER:
-                        if (*(float *)(mynode->object.modval.var) < (float)(*(int *)(mynode->object.modval.min)))
-                            *(float *)(mynode->object.modval.var) = (float)(*(int *)(mynode->object.modval.min));
-                        break;
-                }
+                float minval = getFloatVal(mynode->object.modval.mindatatype, mynode->object.modval.min);
+                if (*(float *)(mynode->object.modval.var) < minval) *(float *)(mynode->object.modval.var) = minval;
             }
-
             if (mynode->object.modval.max)
             {
-                switch (mynode->object.modval.maxdatatype)
-                {
-                    case FLOAT:
-                        if (*(float *)(mynode->object.modval.var) > *(float *)(mynode->object.modval.max))
-                            *(float *)(mynode->object.modval.var) = *(float *)(mynode->object.modval.max);
-                        break;
-                    case INTEGER:
-                        if (*(float *)(mynode->object.modval.var) > (float)(*(int *)(mynode->object.modval.max)))
-                            *(float *)(mynode->object.modval.var) = (float)(*(int *)(mynode->object.modval.max));
-                        break;
-                }
+                float maxval = getFloatVal(mynode->object.modval.maxdatatype, mynode->object.modval.max);
+                if (*(float *)(mynode->object.modval.var) > maxval) *(float *)(mynode->object.modval.var) = maxval;
             }
             break;
         case INTEGER:
-            switch (mynode->object.modval.datatype2)
+            switch (mynode->object.modval.optype)
             {
-                case FLOAT:
-                    switch (mynode->object.modval.optype)
-                    {
-                        case PlusEquals:
-                            *(int *)(mynode->object.modval.var) += (int)(*(float *)(mynode->object.modval.val));
-                            break;
-                        case MinusEquals:
-                            *(int *)(mynode->object.modval.var) -= (int)(*(float *)(mynode->object.modval.val));
-                            break;
-                        default:
-                            *(int *)(mynode->object.modval.var) = (int)(*(float *)(mynode->object.modval.val));
-                    }
+                case PlusEquals:
+                    *(int *)(mynode->object.modval.var) += getIntegerVal(mynode->object.modval.datatype2, mynode->object.modval.val);
                     break;
-                case INTEGER:
-                    switch (mynode->object.modval.optype)
-                    {
-                        case PlusEquals:
-                            *(int *)(mynode->object.modval.var) += *(int *)(mynode->object.modval.val);
-                            break;
-                        case MinusEquals:
-                            *(int *)(mynode->object.modval.var) -= *(int *)(mynode->object.modval.val);
-                            break;
-                        default:
-                            *(int *)(mynode->object.modval.var) = *(int *)(mynode->object.modval.val);
-                    }
+                case MinusEquals:
+                    *(int *)(mynode->object.modval.var) -= getIntegerVal(mynode->object.modval.datatype2, mynode->object.modval.val);
                     break;
-                case STRING:
-                    switch (mynode->object.modval.optype)
-                    {
-                        case PlusEquals:
-                            *(int *)(mynode->object.modval.var) += strtol((char *)(mynode->object.modval.val), NULL, 10);
-                            break;
-                        case MinusEquals:
-                            *(int *)(mynode->object.modval.var) -= strtol((char *)(mynode->object.modval.val), NULL, 10);
-                            break;
-                        default:
-                            *(int *)(mynode->object.modval.var) = strtol((char *)(mynode->object.modval.val), NULL, 10);
-                    }
-                    break;
+                default:
+                    *(int *)(mynode->object.modval.var) = getIntegerVal(mynode->object.modval.datatype2, mynode->object.modval.val);
             }
-
             if (mynode->object.modval.min)
             {
-                switch (mynode->object.modval.mindatatype)
-                {
-                    case FLOAT:
-                        if (*(int *)(mynode->object.modval.var) < (int)(*(float *)(mynode->object.modval.min)))
-                            *(int *)(mynode->object.modval.var) = (int)(*(float *)(mynode->object.modval.min));
-                        break;
-                    case INTEGER:
-                        if (*(int *)(mynode->object.modval.var) < *(int *)(mynode->object.modval.min))
-                            *(int *)(mynode->object.modval.var) = *(int *)(mynode->object.modval.min);
-                        break;
-                }
+                int minval = getIntegerVal(mynode->object.modval.mindatatype, mynode->object.modval.min);
+                if (*(int *)(mynode->object.modval.var) < minval) *(int *)(mynode->object.modval.var) = minval;
             }
-
             if (mynode->object.modval.max)
             {
-                switch (mynode->object.modval.maxdatatype)
-                {
-                    case FLOAT:
-                        if (*(int *)(mynode->object.modval.var) > (int)(*(float *)(mynode->object.modval.max)))
-                            *(int *)(mynode->object.modval.var) = (int)(*(float *)(mynode->object.modval.max));
-                        break;
-                    case INTEGER:
-                        if (*(int *)(mynode->object.modval.var) > *(int *)(mynode->object.modval.max))
-                            *(int *)(mynode->object.modval.var) = *(int *)(mynode->object.modval.max);
-                        break;
-                }
+                int maxval = getIntegerVal(mynode->object.modval.maxdatatype, mynode->object.modval.max);
+                if (*(int *)(mynode->object.modval.var) > maxval) *(int *)(mynode->object.modval.var) = maxval;
             }
             break;
         case STRING:

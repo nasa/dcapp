@@ -24,6 +24,7 @@ extern void mainloop(void);
 extern void UpdateDisplay(void);
 extern int update_dyn_elements(struct node *);
 extern void SetNeedsRedraw(void);
+extern void CheckMouseBounce(void);
 extern void ui_init(char *);
 extern void ui_terminate(void);
 extern void appLauncher(char *, char **, char *, char **, char *, char **, char *, char **);
@@ -118,6 +119,8 @@ void Idle(void)
     }
 
     if (update_dyn_elements(AppData.window->p_current)) SetNeedsRedraw();
+
+    CheckMouseBounce();
 
     gettimeofday(&now, NULL);
     if (SecondsElapsed(AppData.last_update, now) > AppData.force_update) UpdateDisplay();
