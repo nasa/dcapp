@@ -50,6 +50,7 @@ static char *get_element_data(xmlNodePtr, char *);
 static void replace_string(char **);
 static char *get_constval(char *);
 static xmlNodePtr GetSubList(xmlNodePtr);
+static xmlNodePtr GetIfSubList(xmlNodePtr);
 static void clean_list(struct node *);
 
 extern appdata AppData;
@@ -146,7 +147,44 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "IfEqual"))
         {
-            if (preprocessing) process_elements(parent, list, GetSubList(node));
+char *val1 = get_element_data(node, "Value1");
+char *val2 = get_element_data(node, "Value2");
+int staticlogic = 1;
+if (val1)
+{
+    if (val1[0] == '@') staticlogic = 0;
+}
+if (val2)
+{
+    if (val2[0] == '@') staticlogic = 0;
+}
+            if (preprocessing || staticlogic) process_elements(parent, list, GetSubList(node));
+            else
+            {
+                subnode_found = 0;
+                data = new_isequal(parent, list, get_element_data(node, "Value1"), get_element_data(node, "Value2"));
+                for (node1 = node->children; node1 != NULL; node1 = node1->next)
+                {
+                    if (NodeCheck(node1, "True"))
+                    {
+                        process_elements(data, &(data->object.cond.TrueList), node1->children);
+                        subnode_found = 1;
+                    }
+                    if (NodeCheck(node1, "False"))
+                    {
+                        process_elements(data, &(data->object.cond.FalseList), node1->children);
+                        subnode_found = 1;
+                    }
+                }
+                if (!subnode_found) // Assume "True" if no subnode is found
+                {
+                    process_elements(data, &(data->object.cond.TrueList), node->children);
+                }
+            }
+        }
+        if (NodeCheck(node, "If"))
+        {
+            if (preprocessing) process_elements(parent, list, GetIfSubList(node));
             else
             {
                 subnode_found = 0;
@@ -859,6 +897,28 @@ static xmlNodePtr GetSubList(xmlNodePtr node)
         myflag = 0;
     else
         myflag = 1;
+
+    for (node1 = node->children; node1 != NULL; node1 = node1->next)
+    {
+        if (myflag && NodeCheck(node1, "True")) return node1->children;
+        if (!myflag && NodeCheck(node1, "False")) return node1->children;
+    }
+
+    if (myflag) return node->children;  // Assume "True" if no subnode is found
+    else return NULL;
+}
+
+static xmlNodePtr GetIfSubList(xmlNodePtr node)
+{
+    int myflag = 0;
+    xmlNodePtr node1;
+
+    if (!strcmp(get_element_data(node, "Operator"), "eq"))
+    {
+        if (!strcmp(get_element_data(node, "Value1"), get_element_data(node, "Value2"))) myflag = 1;
+    }
+
+return NULL;
 
     for (node1 = node->children; node1 != NULL; node1 = node1->next)
     {
