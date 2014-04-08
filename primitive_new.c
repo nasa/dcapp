@@ -20,7 +20,7 @@ struct node *new_mouseevent(struct node *, struct node **, char *, char *, char 
 struct node *new_keyboardevent(struct node *, struct node **, char *, char *);
 struct node *new_bezelevent(struct node *, struct node **, char *);
 struct node *new_setvalue(struct node *, struct node **, char *, char *, char *, char *, char *);
-struct node *new_isequal(struct node *, struct node **, char *, char *);
+struct node *new_isequal(struct node *, struct node **, char *, char *, char *);
 
 static struct node *add_primitive_node(struct node *, struct node **, Type, char *, char *, char *, char *, char *, char *, char *);
 static void set_geometry(struct node *, char *, char *, char *, char *, char *, char *, char *);
@@ -226,7 +226,7 @@ struct node *new_button(struct node *parent, struct node **list, char *x, char *
     if (activevar)
     {
         if (!activeval) activeval = onestr;
-        curlist = new_isequal(data, &(data->object.cont.SubList), activevar, activeval);
+        curlist = new_isequal(data, &(data->object.cont.SubList), "eq", activevar, activeval);
         sublist = &(curlist->object.cond.TrueList);
     }
 
@@ -240,7 +240,7 @@ struct node *new_button(struct node *parent, struct node **list, char *x, char *
 
     if (toggle)
     {
-        cond = new_isequal(curlist, sublist, indid, indonval);
+        cond = new_isequal(curlist, sublist, "eq", indid, indonval);
         event = new_mouseevent(cond, &(cond->object.cond.TrueList), NULL, NULL, NULL, NULL, NULL, NULL);
         new_setvalue(event, &(event->object.me.PressList), switchid, NULL, NULL, NULL, offval);
         if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, NULL, NULL, NULL, "-1");
@@ -302,16 +302,16 @@ struct node *new_button(struct node *parent, struct node **list, char *x, char *
 
     if (transitionid)
     {
-        list1 = new_isequal(data, &(data->object.cont.SubList), transitionid, "1");
-        list2 = new_isequal(list1, &(list1->object.cond.TrueList), indid, indonval);
+        list1 = new_isequal(data, &(data->object.cont.SubList), "eq", transitionid, "1");
+        list2 = new_isequal(list1, &(list1->object.cond.TrueList), "eq", indid, indonval);
         new_setvalue(list2, &(list2->object.cond.TrueList), transitionid, NULL, NULL, NULL, "0");
-        list3 = new_isequal(list2, &(list2->object.cond.FalseList), switchid, switchonval);
+        list3 = new_isequal(list2, &(list2->object.cond.FalseList), "eq", switchid, switchonval);
         new_setvalue(list3, &(list3->object.cond.FalseList), transitionid, NULL, NULL, NULL, "0");
 
-        list4 = new_isequal(data, &(data->object.cont.SubList), transitionid, "-1");
-        list5 = new_isequal(list4, &(list4->object.cond.TrueList), indid, indonval);
+        list4 = new_isequal(data, &(data->object.cont.SubList), "eq", transitionid, "-1");
+        list5 = new_isequal(list4, &(list4->object.cond.TrueList), "eq", indid, indonval);
         new_setvalue(list5, &(list5->object.cond.FalseList), transitionid, NULL, NULL, NULL, "0");
-        list6 = new_isequal(list5, &(list5->object.cond.FalseList), switchid, switchoffval);
+        list6 = new_isequal(list5, &(list5->object.cond.FalseList), "eq", switchid, switchoffval);
         new_setvalue(list6, &(list6->object.cond.TrueList), transitionid, NULL, NULL, NULL, "0");
     }
 
@@ -455,7 +455,7 @@ struct node *new_setvalue(struct node *parent, struct node **list, char *var, ch
     return data;
 }
 
-struct node *new_isequal(struct node *parent, struct node **list, char *val1, char *val2)
+struct node *new_isequal(struct node *parent, struct node **list, char *opspec, char *val1, char *val2)
 {
     char *onestr = {"1"};
 
@@ -465,6 +465,11 @@ struct node *new_isequal(struct node *parent, struct node **list, char *val1, ch
 
     if (parent) data->info.w = parent->info.w;
     if (parent) data->info.h = parent->info.h;
+
+    if (opspec)
+        data->object.cond.opspec = IfEquals;
+    else
+        data->object.cond.opspec = Simple;
 
     data->object.cond.datatype1 = get_data_type(val1);
     data->object.cond.datatype2 = get_data_type(val2);

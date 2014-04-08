@@ -12,6 +12,7 @@ typedef enum { Empty, Panel, Image, Vertex, Rectangle, Circle, Line, Polygon, AD
 typedef enum { AlignLeft, AlignCenter, AlignRight } HAlignment;
 typedef enum { AlignBottom, AlignMiddle, AlignTop } VAlignment;
 typedef enum { Equals, PlusEquals, MinusEquals } SetOperator;
+typedef enum { Simple, IfEquals } IfOperator;
 
 struct kolor
 {
@@ -150,6 +151,7 @@ struct ModifyValue
 
 struct Condition
 {
+    int opspec;
     int datatype1;
     int datatype2;
     void *val1;

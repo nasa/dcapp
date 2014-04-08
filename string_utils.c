@@ -23,6 +23,7 @@ int BoolStrToInt(const char *instr, int default_value)
     if (instr == NULL) return default_value;
     else if (!strcasecmp(instr, "true") || !strcasecmp(instr, "yes") || !strcasecmp(instr, "on")) return 1;
     else if (!strcasecmp(instr, "false") || !strcasecmp(instr, "no") || !strcasecmp(instr, "off")) return 0;
+    else if (StrToInt(instr, default_value) || StrToFloat(instr, default_value)) return 1;
     else return default_value;
 }
 

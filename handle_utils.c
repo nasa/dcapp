@@ -37,25 +37,34 @@ void ProcessEventList(struct node *list)
 
 int CheckCondition(struct node *mynode)
 {
-    if (mynode->object.cond.datatype1 != mynode->object.cond.datatype2) return 0;
-
-    switch (mynode->object.cond.datatype1)
+#if 0
+    if (mynode->object.cond.opspec == Simple)
     {
-        case FLOAT:
-            if (*(float *)(mynode->object.cond.val1) == *(float *)(mynode->object.cond.val2)) return 1;
-            else return 0;
-            break;
-        case INTEGER:
-            if (*(int *)(mynode->object.cond.val1) == *(int *)(mynode->object.cond.val2)) return 1;
-            else return 0;
-            break;
-        case STRING:
-            if (strcmp((char *)(mynode->object.cond.val1), (char *)(mynode->object.cond.val2))) return 0;
-            else return 1;
-            break;
+        return 1;
     }
+    else
+    {
+#endif
+        if (mynode->object.cond.datatype1 != mynode->object.cond.datatype2) return 0;
 
-    return 0;
+        switch (mynode->object.cond.datatype1)
+        {
+            case FLOAT:
+                if (*(float *)(mynode->object.cond.val1) == *(float *)(mynode->object.cond.val2)) return 1;
+                else return 0;
+                break;
+            case INTEGER:
+                if (*(int *)(mynode->object.cond.val1) == *(int *)(mynode->object.cond.val2)) return 1;
+                else return 0;
+                break;
+            case STRING:
+                if (strcmp((char *)(mynode->object.cond.val1), (char *)(mynode->object.cond.val2))) return 0;
+                else return 1;
+                break;
+        }
+
+        return 0;
+//    }
 }
 
 float getFloatVal(int type, void *val)
