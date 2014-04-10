@@ -39,6 +39,8 @@ extern struct node *new_mouseevent(struct node *, struct node **, char *, char *
 extern struct node *new_keyboardevent(struct node *, struct node **, char *, char *);
 extern struct node *new_bezelevent(struct node *, struct node **, char *);
 extern struct node *new_setvalue(struct node *, struct node **, char *, char *, char *, char *, char *);
+extern struct ModifyValue get_setvalue_data(char *, char *, char *, char *, char *);
+extern void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
 
 extern void DisplayPreInitStub(void *(*)(const char *));
 extern void DisplayInitStub(void);
@@ -198,6 +200,28 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                     process_elements(data, &(data->object.cond.TrueList), node->children);
                 }
             }
+        }
+        if (NodeCheck(node, "Set"))
+        {
+            if (preprocessing)
+            {
+                struct ModifyValue myset = get_setvalue_data(get_element_data(node, "Variable"),
+                                                             get_element_data(node, "Operator"),
+                                                             get_element_data(node, "MinimumValue"),
+                                                             get_element_data(node, "MaximumValue"),
+                                                             get_node_content(node));
+                if (myset.datatype1 != UNDEFINED) UpdateValueLogic(myset.optype,
+                                                                   myset.datatype1, myset.var,
+                                                                   myset.datatype2, myset.val,
+                                                                   myset.mindatatype, myset.min,
+                                                                   myset.maxdatatype, myset.max);
+            }
+            else data = new_setvalue(parent, list,
+                                     get_element_data(node, "Variable"),
+                                     get_element_data(node, "Operator"),
+                                     get_element_data(node, "MinimumValue"),
+                                     get_element_data(node, "MaximumValue"),
+                                     get_node_content(node));
         }
         if (NodeCheck(node, "Variable"))
         {
@@ -667,15 +691,6 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             {
                 process_elements(data, &(data->object.be.PressList), node->children);
             }
-        }
-        if (NodeCheck(node, "Set"))
-        {
-            data = new_setvalue(parent, list,
-                                get_element_data(node, "Variable"),
-                                get_element_data(node, "Operator"),
-                                get_element_data(node, "MinimumValue"),
-                                get_element_data(node, "MaximumValue"),
-                                get_node_content(node));
         }
     }
 

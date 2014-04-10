@@ -95,67 +95,76 @@ int getIntegerVal(int type, void *val)
     return 0;
 }
 
-void UpdateValue(struct node *mynode)
+void UpdateValueLogic(int optype, int vartype, void *var, int valtype, void *val, int mintype, void *min, int maxtype, void *max)
 {
-    switch (mynode->object.modval.datatype1)
+    switch (vartype)
     {
         case FLOAT:
-            switch (mynode->object.modval.optype)
+            switch (optype)
             {
                 case PlusEquals:
-                    *(float *)(mynode->object.modval.var) += getFloatVal(mynode->object.modval.datatype2, mynode->object.modval.val);
+                    *(float *)var += getFloatVal(valtype, val);
                     break;
                 case MinusEquals:
-                    *(float *)(mynode->object.modval.var) -= getFloatVal(mynode->object.modval.datatype2, mynode->object.modval.val);
+                    *(float *)var -= getFloatVal(valtype, val);
                     break;
                 default:
-                    *(float *)(mynode->object.modval.var) = getFloatVal(mynode->object.modval.datatype2, mynode->object.modval.val);
+                    *(float *)var = getFloatVal(valtype, val);
             }
-            if (mynode->object.modval.min)
+            if (min)
             {
-                float minval = getFloatVal(mynode->object.modval.mindatatype, mynode->object.modval.min);
-                if (*(float *)(mynode->object.modval.var) < minval) *(float *)(mynode->object.modval.var) = minval;
+                float minval = getFloatVal(mintype, min);
+                if (*(float *)var < minval) *(float *)var = minval;
             }
-            if (mynode->object.modval.max)
+            if (max)
             {
-                float maxval = getFloatVal(mynode->object.modval.maxdatatype, mynode->object.modval.max);
-                if (*(float *)(mynode->object.modval.var) > maxval) *(float *)(mynode->object.modval.var) = maxval;
+                float maxval = getFloatVal(maxtype, max);
+                if (*(float *)var > maxval) *(float *)var = maxval;
             }
             break;
         case INTEGER:
-            switch (mynode->object.modval.optype)
+            switch (optype)
             {
                 case PlusEquals:
-                    *(int *)(mynode->object.modval.var) += getIntegerVal(mynode->object.modval.datatype2, mynode->object.modval.val);
+                    *(int *)var += getIntegerVal(valtype, val);
                     break;
                 case MinusEquals:
-                    *(int *)(mynode->object.modval.var) -= getIntegerVal(mynode->object.modval.datatype2, mynode->object.modval.val);
+                    *(int *)var -= getIntegerVal(valtype, val);
                     break;
                 default:
-                    *(int *)(mynode->object.modval.var) = getIntegerVal(mynode->object.modval.datatype2, mynode->object.modval.val);
+                    *(int *)var = getIntegerVal(valtype, val);
             }
-            if (mynode->object.modval.min)
+            if (min)
             {
-                int minval = getIntegerVal(mynode->object.modval.mindatatype, mynode->object.modval.min);
-                if (*(int *)(mynode->object.modval.var) < minval) *(int *)(mynode->object.modval.var) = minval;
+                int minval = getIntegerVal(mintype, min);
+                if (*(int *)var < minval) *(int *)var = minval;
             }
-            if (mynode->object.modval.max)
+            if (max)
             {
-                int maxval = getIntegerVal(mynode->object.modval.maxdatatype, mynode->object.modval.max);
-                if (*(int *)(mynode->object.modval.var) > maxval) *(int *)(mynode->object.modval.var) = maxval;
+                int maxval = getIntegerVal(maxtype, max);
+                if (*(int *)var > maxval) *(int *)var = maxval;
             }
             break;
         case STRING:
-            switch (mynode->object.modval.datatype2)
+            switch (valtype)
             {
                 case STRING:
-                    if (mynode->object.modval.optype == Equals)
-                        strcpy((char *)(mynode->object.modval.var), (char *)(mynode->object.modval.val));
+                    if (optype == Equals)
+                        strcpy((char *)var, (char *)val);
                     break;
             }
             break;
     }
 
-    trickio_forcewrite(mynode->object.modval.var);
-    edgeio_forcewrite(mynode->object.modval.var);
+    trickio_forcewrite(var);
+    edgeio_forcewrite(var);
+}
+
+void UpdateValue(struct node *mynode)
+{
+    UpdateValueLogic(mynode->object.modval.optype,
+                     mynode->object.modval.datatype1, mynode->object.modval.var,
+                     mynode->object.modval.datatype2, mynode->object.modval.val,
+                     mynode->object.modval.mindatatype, mynode->object.modval.min,
+                     mynode->object.modval.maxdatatype, mynode->object.modval.max);
 }

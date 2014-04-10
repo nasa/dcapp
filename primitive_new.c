@@ -380,79 +380,100 @@ struct node *new_bezelevent(struct node *parent, struct node **list, char *key)
     return data;
 }
 
+struct ModifyValue get_setvalue_data(char *varspec, char *opspec, char *minspec, char *maxspec, char *valspec)
+{
+    struct ModifyValue ret;
+
+    ret.optype = Equals;
+    ret.datatype1 = get_data_type(varspec);
+    ret.datatype2 = get_data_type(valspec);
+    ret.mindatatype = 0;
+    ret.maxdatatype = 0;
+    ret.var = NULL;
+    ret.val = NULL;
+    ret.min = NULL;
+    ret.max = NULL;
+
+    if (ret.datatype1 != UNDEFINED)
+    {
+        if (opspec == NULL) ret.optype = Equals;
+        else if (!strcmp(opspec, "+=")) ret.optype = PlusEquals;
+        else if (!strcmp(opspec, "-=")) ret.optype = MinusEquals;
+
+        ret.var = get_data_pointer(ret.datatype1, varspec, NULL);
+
+        if (ret.datatype2 == UNDEFINED) ret.datatype2 = ret.datatype1;
+        switch (ret.datatype2)
+        {
+            case FLOAT:
+                ret.val = get_data_pointer(FLOAT, valspec, &fzero);
+                break;
+            case INTEGER:
+                ret.val = get_data_pointer(INTEGER, valspec, &izero);
+                break;
+            case STRING:
+                ret.val = get_data_pointer(STRING, valspec, "");
+                break;
+        }
+
+        if (minspec)
+        {
+            ret.mindatatype = get_data_type(minspec);
+            if (ret.mindatatype == UNDEFINED) ret.mindatatype = ret.datatype1;
+            switch (ret.mindatatype)
+            {
+                case FLOAT:
+                    ret.min = get_data_pointer(FLOAT, minspec, &fzero);
+                    break;
+                case INTEGER:
+                    ret.min = get_data_pointer(INTEGER, minspec, &izero);
+                    break;
+                case STRING:
+                    ret.min = get_data_pointer(STRING, minspec, "");
+                    break;
+            }
+        }
+
+        if (maxspec)
+        {
+            ret.maxdatatype = get_data_type(maxspec);
+            if (ret.maxdatatype == UNDEFINED) ret.maxdatatype = ret.datatype1;
+            switch (ret.maxdatatype)
+            {
+                case FLOAT:
+                    ret.max = get_data_pointer(FLOAT, maxspec, &fzero);
+                    break;
+                case INTEGER:
+                    ret.max = get_data_pointer(INTEGER, maxspec, &izero);
+                    break;
+                case STRING:
+                    ret.max = get_data_pointer(STRING, maxspec, "");
+                    break;
+            }
+        }
+    }
+    return ret;
+}
+
 struct node *new_setvalue(struct node *parent, struct node **list, char *var, char *optype, char *min, char *max, char *val)
 {
-    int datatype1 = get_data_type(var);
-    int datatype2 = get_data_type(val);
-    int mindatatype;
-    int maxdatatype;
+    struct ModifyValue myset = get_setvalue_data(var, optype, min, max, val);
 
-    if (datatype1 == UNDEFINED) return NULL;
+    if (myset.datatype1 == UNDEFINED) return NULL;
 
     struct node *data = add_primitive_node(parent, list, SetValue, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
-    if (optype == NULL) data->object.modval.optype = Equals;
-    else if (!strcmp(optype, "+=")) data->object.modval.optype = PlusEquals;
-    else if (!strcmp(optype, "-=")) data->object.modval.optype = MinusEquals;
-    else data->object.modval.optype = Equals;
+    data->object.modval.optype = myset.optype;    
+    data->object.modval.datatype1 = myset.datatype1;    
+    data->object.modval.datatype2 = myset.datatype2;    
+    data->object.modval.mindatatype = myset.mindatatype;    
+    data->object.modval.maxdatatype = myset.maxdatatype;    
+    data->object.modval.var = myset.var;    
+    data->object.modval.val = myset.val;    
+    data->object.modval.min = myset.min;    
+    data->object.modval.max = myset.max;    
 
-    data->object.modval.datatype1 = datatype1;
-    data->object.modval.var = get_data_pointer(datatype1, var, NULL);
-
-    if (datatype2 == UNDEFINED) datatype2 = datatype1;
-    data->object.modval.datatype2 = datatype2;
-	switch (datatype2)
-	{
-        case FLOAT:
-            data->object.modval.val = get_data_pointer(FLOAT, val, &fzero);
-            break;
-        case INTEGER:
-            data->object.modval.val = get_data_pointer(INTEGER, val, &izero);
-            break;
-        case STRING:
-            data->object.modval.val = get_data_pointer(STRING, val, "");
-            break;
-	}
-
-    if (min)
-    {
-        mindatatype = get_data_type(min);
-        if (mindatatype == UNDEFINED) mindatatype = datatype1;
-        data->object.modval.mindatatype = mindatatype;
-        switch (mindatatype)
-        {
-            case FLOAT:
-                data->object.modval.min = get_data_pointer(FLOAT, min, &fzero);
-                break;
-            case INTEGER:
-                data->object.modval.min = get_data_pointer(INTEGER, min, &izero);
-                break;
-            case STRING:
-                data->object.modval.min = get_data_pointer(STRING, min, "");
-                break;
-        }
-    }
-
-    if (max)
-    {
-        maxdatatype = get_data_type(max);
-        if (maxdatatype == UNDEFINED) maxdatatype = datatype1;
-        data->object.modval.maxdatatype = maxdatatype;
-        switch (maxdatatype)
-        {
-            case FLOAT:
-                data->object.modval.max = get_data_pointer(FLOAT, max, &fzero);
-                break;
-            case INTEGER:
-                data->object.modval.max = get_data_pointer(INTEGER, max, &izero);
-                break;
-            case STRING:
-                data->object.modval.min = get_data_pointer(STRING, max, "");
-                break;
-        }
-    }
-
-    return data;
+    return data;    
 }
 
 struct node *new_isequal(struct node *parent, struct node **list, char *opspec, char *val1, char *val2)
