@@ -487,10 +487,16 @@ struct node *new_isequal(struct node *parent, struct node **list, char *opspec, 
     if (parent) data->info.w = parent->info.w;
     if (parent) data->info.h = parent->info.h;
 
+    data->object.cond.opspec = Simple;
     if (opspec)
-        data->object.cond.opspec = IfEquals;
-    else
-        data->object.cond.opspec = Simple;
+    {
+        if (!strcasecmp(opspec, "eq")) data->object.cond.opspec = IfEquals;
+        else if (!strcasecmp(opspec, "ne")) data->object.cond.opspec = IfNotEquals;
+        else if (!strcasecmp(opspec, "gt")) data->object.cond.opspec = IfGreaterThan;
+        else if (!strcasecmp(opspec, "lt")) data->object.cond.opspec = IfLessThan;
+        else if (!strcasecmp(opspec, "ge")) data->object.cond.opspec = IfGreaterOrEquals;
+        else if (!strcasecmp(opspec, "le")) data->object.cond.opspec = IfLessOrEquals;
+    }
 
     data->object.cond.datatype1 = get_data_type(val1);
     data->object.cond.datatype2 = get_data_type(val2);
@@ -550,19 +556,25 @@ static void set_geometry(struct node *data, char *x, char *y, char *width, char 
     data->info.rotate = get_data_pointer(FLOAT, rotate, &fzero);
 }
 
+int check_dynamic_element(char *spec)
+{
+    if (spec)
+    {
+        if (strlen(spec) > 1)
+        {
+            if (spec[0] == '@') return 1;
+        }
+    }
+    return 0;
+}
+
 static void *get_data_pointer(int type, char *valstr, void *defval)
 {
     float fval;
     int ival;
     char *sval, *inptr;
 
-    if (valstr)
-    {
-        if (strlen(valstr) > 1)
-        {
-            if (valstr[0] == '@') return get_pointer(&valstr[1]);
-        }
-    }
+    if (check_dynamic_element(valstr)) return get_pointer(&valstr[1]);
 
     switch (type)
     {
@@ -596,12 +608,6 @@ static void *get_data_pointer(int type, char *valstr, void *defval)
 
 static int get_data_type(char *valstr)
 {
-    if (valstr)
-    {
-        if (strlen(valstr) > 1)
-        {
-            if (valstr[0] == '@') return get_datatype(&valstr[1]);
-        }
-    }
+    if (check_dynamic_element(valstr)) return get_datatype(&valstr[1]);
     return UNDEFINED;
 }

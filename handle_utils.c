@@ -3,6 +3,7 @@
 #include "nodes.h"
 #include "trickio.h"
 #include "edgeio.h"
+#include "string_utils.h"
 
 extern void UpdateDisplay(void);
 
@@ -35,38 +36,6 @@ void ProcessEventList(struct node *list)
     UpdateDisplay();
 }
 
-int CheckCondition(struct node *mynode)
-{
-#if 0
-    if (mynode->object.cond.opspec == Simple)
-    {
-        return 1;
-    }
-    else
-    {
-#endif
-        if (mynode->object.cond.datatype1 != mynode->object.cond.datatype2) return 0;
-
-        switch (mynode->object.cond.datatype1)
-        {
-            case FLOAT:
-                if (*(float *)(mynode->object.cond.val1) == *(float *)(mynode->object.cond.val2)) return 1;
-                else return 0;
-                break;
-            case INTEGER:
-                if (*(int *)(mynode->object.cond.val1) == *(int *)(mynode->object.cond.val2)) return 1;
-                else return 0;
-                break;
-            case STRING:
-                if (strcmp((char *)(mynode->object.cond.val1), (char *)(mynode->object.cond.val2))) return 0;
-                else return 1;
-                break;
-        }
-
-        return 0;
-//    }
-}
-
 float getFloatVal(int type, void *val)
 {
     switch (type)
@@ -93,6 +62,104 @@ int getIntegerVal(int type, void *val)
             return strtol((char *)val, NULL, 10);
     }
     return 0;
+}
+
+int CheckConditionLogic(int opspec, int datatype1, void *val1, int datatype2, void *val2)
+{
+    int eval = 0;
+
+    switch (datatype1)
+    {
+        case FLOAT:
+            switch (opspec)
+            {
+                case Simple:
+                    if (getFloatVal(datatype1, val1)) eval = 1;
+                    break;
+                case IfEquals:
+                    if (getFloatVal(datatype1, val1) == getFloatVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfNotEquals:
+                    if (getFloatVal(datatype1, val1) != getFloatVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfGreaterThan:
+                    if (getFloatVal(datatype1, val1) > getFloatVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfLessThan:
+                    if (getFloatVal(datatype1, val1) < getFloatVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfGreaterOrEquals:
+                    if (getFloatVal(datatype1, val1) >= getFloatVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfLessOrEquals:
+                    if (getFloatVal(datatype1, val1) <= getFloatVal(datatype2, val2)) eval = 1;
+                    break;
+            }
+            break;
+        case INTEGER:
+            switch (opspec)
+            {
+                case Simple:
+                    if (getIntegerVal(datatype1, val1)) eval = 1;
+                    break;
+                case IfEquals:
+                    if (getIntegerVal(datatype1, val1) == getIntegerVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfNotEquals:
+                    if (getIntegerVal(datatype1, val1) != getIntegerVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfGreaterThan:
+                    if (getIntegerVal(datatype1, val1) > getIntegerVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfLessThan:
+                    if (getIntegerVal(datatype1, val1) < getIntegerVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfGreaterOrEquals:
+                    if (getIntegerVal(datatype1, val1) >= getIntegerVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfLessOrEquals:
+                    if (getIntegerVal(datatype1, val1) <= getIntegerVal(datatype2, val2)) eval = 1;
+                    break;
+            }
+            break;
+        case STRING:
+            switch (opspec)
+            {
+                case Simple:
+                    if (BoolStrToInt((char *)val1, 0)) eval = 1;
+                    break;
+                case IfEquals:
+                    if (!strcmp((char *)val1, (char *)val2)) eval = 1;
+                    break;
+                case IfNotEquals:
+                    if (strcmp((char *)val1, (char *)val2)) eval = 1;
+                    break;
+                case IfGreaterThan:
+                    if (getFloatVal(datatype1, val1) > getFloatVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfLessThan:
+                    if (getFloatVal(datatype1, val1) < getFloatVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfGreaterOrEquals:
+                    if (getFloatVal(datatype1, val1) >= getFloatVal(datatype2, val2)) eval = 1;
+                    break;
+                case IfLessOrEquals:
+                    if (getFloatVal(datatype1, val1) <= getFloatVal(datatype2, val2)) eval = 1;
+                    break;
+            }
+            break;
+    }
+
+    return eval;
+}
+
+int CheckCondition(struct node *mynode)
+{
+    return CheckConditionLogic(mynode->object.cond.opspec,
+                               mynode->object.cond.datatype1,
+                               mynode->object.cond.val1,
+                               mynode->object.cond.datatype2,
+                               mynode->object.cond.val2);
 }
 
 void UpdateValueLogic(int optype, int vartype, void *var, int valtype, void *val, int mintype, void *min, int maxtype, void *max)

@@ -40,7 +40,9 @@ extern struct node *new_keyboardevent(struct node *, struct node **, char *, cha
 extern struct node *new_bezelevent(struct node *, struct node **, char *);
 extern struct node *new_setvalue(struct node *, struct node **, char *, char *, char *, char *, char *);
 extern struct ModifyValue get_setvalue_data(char *, char *, char *, char *, char *);
+extern int CheckConditionLogic(int, int, void *, int, void *);
 extern void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
+extern int check_dynamic_element(char *);
 
 extern void DisplayPreInitStub(void *(*)(const char *));
 extern void DisplayInitStub(void);
@@ -51,7 +53,7 @@ static char *get_node_content(xmlNodePtr);
 static char *get_element_data(xmlNodePtr, char *);
 static void replace_string(char **);
 static char *get_constval(char *);
-static xmlNodePtr GetSubList(xmlNodePtr);
+static xmlNodePtr GetSubList(xmlNodePtr, char *, char *, char *);
 static void clean_list(struct node *);
 
 extern appdata AppData;
@@ -153,35 +155,18 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             char *val2 = get_element_data(node, "Value2");
             char *operator = get_element_data(node, "Operator");
             int staticlogic = 1;
-            if (operator)
-            {
-                if (!strcasecmp(operator, "eq"))
-                {
-                    if (val1)
-                    {
-                        if (val1[0] == '@') staticlogic = 0;
-                    }
-                    if (val2)
-                    {
-                        if (val2[0] == '@') staticlogic = 0;
-                    }
-                }
-            }
-            else
-            {
-                if (val)
-                {
-                    if (val[0] == '@') staticlogic = 0;
-                }
-            }
-            if (preprocessing || staticlogic) process_elements(parent, list, GetSubList(node));
+
+            if (!val1) val1 = val;
+
+            if (check_dynamic_element(val1) || check_dynamic_element(val2)) staticlogic = 0;
+
+            if (preprocessing || staticlogic) process_elements(parent, list, GetSubList(node, operator, val1, val2));
             else
             {
                 subnode_found = 0;
-            if (val1)
-                data = new_isequal(parent, list, get_element_data(node, "Operator"), get_element_data(node, "Value1"), get_element_data(node, "Value2"));
-            else
-                data = new_isequal(parent, list, get_element_data(node, "Operator"), get_element_data(node, "Value"), get_element_data(node, "Value2"));
+
+                data = new_isequal(parent, list, operator, val1, val2);
+
                 for (node1 = node->children; node1 != NULL; node1 = node1->next)
                 {
                     if (NodeCheck(node1, "True"))
@@ -894,20 +879,23 @@ static char *get_constval(char *instr)
     return NULL;
 }
 
-static xmlNodePtr GetSubList(xmlNodePtr node)
+static xmlNodePtr GetSubList(xmlNodePtr node, char *opspec, char *val1, char *val2)
 {
     int myflag = 0;
     xmlNodePtr node1;
-    char *operator = get_element_data(node, "Operator");
+    int optype = Simple;
 
-    if (operator)
+    if (opspec)
     {
-        if (!strcmp(operator, "eq"))
-        {
-            if (!strcmp(get_element_data(node, "Value1"), get_element_data(node, "Value2"))) myflag = 1;
-        }
+        if (!strcasecmp(opspec, "eq")) optype = IfEquals;
+        else if (!strcasecmp(opspec, "ne")) optype = IfNotEquals;
+        else if (!strcasecmp(opspec, "gt")) optype = IfGreaterThan;
+        else if (!strcasecmp(opspec, "lt")) optype = IfLessThan;
+        else if (!strcasecmp(opspec, "ge")) optype = IfGreaterOrEquals;
+        else if (!strcasecmp(opspec, "le")) optype = IfLessOrEquals;
     }
-    else if (BoolStrToInt(get_element_data(node, "Value"), 0)) myflag = 1;
+
+    myflag = CheckConditionLogic(optype, STRING, val1, STRING, val2);
 
     for (node1 = node->children; node1 != NULL; node1 = node1->next)
     {
