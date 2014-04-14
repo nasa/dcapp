@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #ifdef NTCAN
 #include "ntcan.h"
-#include "simio.h"
 
 extern void HandleBezel(int, int, int);
 
@@ -11,7 +10,6 @@ static void CAN_error(char *, NTCAN_RESULT);
 static NTCAN_HANDLE ntCanHandle;
 static int CAN_active = 0;
 static uint32_t buttonID = 0, controlID = 0;
-static int *ACTIVE_DISPLAY, userdisp;
 #endif
 
 void CAN_init(char *networkstr, char *buttonIDstr, char *controlIDstr)
@@ -54,9 +52,6 @@ void CAN_init(char *networkstr, char *buttonIDstr, char *controlIDstr)
         return;
     }
 
-    ACTIVE_DISPLAY = get_pointer("ACTIVE_DISPLAY");
-    userdisp = *ACTIVE_DISPLAY;
-
     CAN_active = 1;
 #endif
 }
@@ -77,12 +72,6 @@ extern void CAN_read(void)
             for (i=0; i<length; i++)
             {
                 if (message.id == buttonID) HandleBezel(message.data[0], message.data[1], message.data[2]);
-                else if (message.id == controlID && message.data[0] == 0xaa && message.data[1] == 0x01)
-                {
-                    if (*ACTIVE_DISPLAY != 99) userdisp = *ACTIVE_DISPLAY;
-                    if (message.data[2]) *ACTIVE_DISPLAY = userdisp; // CAN Bus Enabled
-                    else *ACTIVE_DISPLAY = 99;                       // CAN Bus Disabled
-                }
             }
         }
         else CAN_error("canTake", retval);
