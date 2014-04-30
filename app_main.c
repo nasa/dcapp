@@ -88,7 +88,7 @@ void Idle(void)
         if (status == SIMIO_SUCCESS) UpdateDisplay();
         else if (status == SIMIO_INVALID_CONNECTION)
         {
-            error_msg("TrickComm connection failure");
+            user_msg("TrickComm connection terminated");
             Terminate(0);
         }
         else if (status == SIMIO_MANGLED_BUFFER) error_msg("Received a mangled data buffer");
