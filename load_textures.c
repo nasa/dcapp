@@ -8,7 +8,7 @@ static unsigned int FindTexture(char *);
 
 int LoadTexture(char *filename)
 {
-    unsigned int texture;
+    int texture;
     struct node *data;
 
     // check if this texture has already been loaded
@@ -17,10 +17,13 @@ int LoadTexture(char *filename)
     // if not, create a new texture node and load the image
     if (texture == -1)
     {
-        data = NewNode(NULL, &(AppData.TextureList));
         texture = imgload(filename);
-        data->object.textures.textureFile = strdup(filename);
-        data->object.textures.textureID = texture;
+        if (texture >= 0)
+        {
+            data = NewNode(NULL, &(AppData.TextureList));
+            data->object.textures.textureFile = strdup(filename);
+            data->object.textures.textureID = texture;
+        }
     }
 
     return texture;

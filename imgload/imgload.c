@@ -18,23 +18,32 @@ int imgload(char *filename)
     int texture;
 
     extension = FindExtension(filename);
-    if (!extension) return (-1);
 
-    if (!strcasecmp(extension, "BMP")) /* use ReaderWriterBMP.c */
+    if (!extension)
+    {
+        fprintf(stderr, "No detectable filename extension for file %s\n", filename);
+        return (-1);
+    }
+    else if (!strcasecmp(extension, "BMP")) /* use ReaderWriterBMP.c */
     {
         if (loadBMPImage(filename, &image) == -1)
         {
-            fprintf(stderr, "loadBMPImage returned with error\n");
+            fprintf(stderr, "loadBMPImage returned with error for file %s\n", filename);
             return (-1);
         }
     }
-    if (!strcasecmp(extension, "TGA")) /* use TGAloader.c */
+    else if (!strcasecmp(extension, "TGA")) /* use TGAloader.c */
     {
         if (LoadTGA(filename, &image))
         {
-            fprintf(stderr, "LoadTGA returned with error\n");
+            fprintf(stderr, "LoadTGA returned with error for file %s\n", filename);
             return (-1);
         }
+    }
+    else
+    {
+        fprintf(stderr, "Unsupported extension for file %s: %s\n", filename, extension);
+        return (-1);
     }
 
     texture = createTextureFromImage(&image);

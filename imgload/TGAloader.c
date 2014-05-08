@@ -24,9 +24,9 @@ unsigned int LoadTGA(char *filename, ImageStruct *image)
     unsigned int temp;                                       // Temporary Variable
     int i;
 
-    FILE *file = fopen(filename, "rb"); // Open The TGA File
+    FILE *file = fopen(filename, "r"); // Open The TGA File
 
-    if (file == NULL) // Did The File Even Exist? *Added Jim Strong*
+    if (file == NULL)
     {
         fprintf(stderr, "%s/%s: ERROR - (%s) does not exist\n", __FILE__, __FUNCTION__, filename);
         return 1;
