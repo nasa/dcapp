@@ -93,6 +93,7 @@ void key_click(KeyboardEvent kbd)
         }
         else
         {
+            // Change 0x7f (delete) to 0x08 (backspace) for standardization
             if (kbd.key == 0x7f) HandleKeyboard(0x08, kbd.pos.x, kbd.pos.y);
             else HandleKeyboard(kbd.key, kbd.pos.x, kbd.pos.y);
         }

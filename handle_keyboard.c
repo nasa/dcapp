@@ -1,8 +1,6 @@
 #include "nodes.h"
 #include "mappings.h"
 
-#define ESC 27
-
 extern void ProcessEventList(struct node *);
 extern int CheckCondition(struct node *);
 extern void toggle_fullscreen(void);
@@ -19,9 +17,9 @@ static void KeyPressed(struct node *, char);
  *********************************************************************************/
 void HandleKeyboard(unsigned char key, int x, int y)
 {
-    KeyPressed(AppData.window->p_current, key);
-
-    if (key == ESC) toggle_fullscreen();
+    // escape 0x1b toggles fullscreen mode
+    if (key == 0x1b) toggle_fullscreen();
+    else KeyPressed(AppData.window->p_current, key);
 }
 
 /*********************************************************************************
