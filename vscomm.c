@@ -194,35 +194,17 @@ int vscomm_put(char *param, int type, void *value, char *units)
 
     if (!tc_isValid(&connection)) return VS_INVALID_CONNECTION;
 
-    if (strcmp(units, "--"))
+    switch (type)
     {
-        switch (type)
-        {
-            case VS_FLOAT:
-                if (asprintf(&cmd, "%s=set_unit_val(\"%s\",%f)\n", param, units, *(float *)value) == -1) return VS_ERROR;
-                break;
-            case VS_INTEGER:
-                if (asprintf(&cmd, "%s=set_unit_val(\"%s\",%d)\n", param, units, *(int *)value) == -1) return VS_ERROR;
-                break;
-            case VS_STRING:
-                if (asprintf(&cmd, "%s=\"%s\"\n", param, (char *)value) == -1) return VS_ERROR;
-                break;
-        }
-    }
-    else
-    {
-        switch (type)
-        {
-            case VS_FLOAT:
-                if (asprintf(&cmd, "%s=%f\n", param, *(float *)value) == -1) return VS_ERROR;
-                break;
-            case VS_INTEGER:
-                if (asprintf(&cmd, "%s=%d\n", param, *(int *)value) == -1) return VS_ERROR;
-                break;
-            case VS_STRING:
-                if (asprintf(&cmd, "%s=\"%s\"\n", param, (char *)value) == -1) return VS_ERROR;
-                break;
-        }
+        case VS_FLOAT:
+            if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s {%s} = %f;\")\n", param, units, *(float *)value) == -1) return VS_ERROR;
+            break;
+        case VS_INTEGER:
+            if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s {%s} = %d;\")\n", param, units, *(int *)value) == -1) return VS_ERROR;
+            break;
+        case VS_STRING:
+            if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s = %s;\")\n", param, *(char *)value) == -1) return VS_ERROR;
+            break;
     }
 
     sim_write(cmd);
