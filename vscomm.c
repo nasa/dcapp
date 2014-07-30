@@ -172,10 +172,10 @@ int vscomm_get(void)
 
     if (databuf == 0 || databuf_size == 0) return VS_NO_NEW_DATA;
     if (!databuf_complete)
-{
-printf("vscomm received a partial buffer\n");
-return VS_PARTIAL_BUFFER;
-}
+    {
+        printf("vscomm received a partial buffer\n");
+        return VS_PARTIAL_BUFFER;
+    }
 
     end_buf = find_next_token(databuf, '\n');
     databuf_size = end_buf + 1;
@@ -203,7 +203,7 @@ int vscomm_put(char *param, int type, void *value, char *units)
             if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s {%s} = %d;\")\n", param, units, *(int *)value) == -1) return VS_ERROR;
             break;
         case VS_STRING:
-            if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s = %s;\")\n", param, *(char *)value) == -1) return VS_ERROR;
+            if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s = %s;\")\n", param, (char *)value) == -1) return VS_ERROR;
             break;
     }
 
