@@ -9,8 +9,21 @@ void DisplayPreInitStub(void *(*get_pointer)(const char *))
 
 void DisplayInitStub(void)
 {
+    debug_msg("No DisplayInit() element defined - using generic stub instead");
 }
 
 void DisplayLogicStub(void)
 {
+    static int firstpass = 1;
+
+    if (firstpass)
+    {
+        debug_msg("No DisplayLogic() element defined - using generic stub instead");
+        firstpass = 0;
+    }
+}
+
+void DisplayCloseStub(void)
+{
+    debug_msg("No DisplayClose() element defined - using generic stub instead");
 }

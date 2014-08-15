@@ -47,6 +47,7 @@ extern int check_dynamic_element(char *);
 extern void DisplayPreInitStub(void *(*)(const char *));
 extern void DisplayInitStub(void);
 extern void DisplayLogicStub(void);
+extern void DisplayCloseStub(void);
 
 static int process_elements(struct node *, struct node **, xmlNodePtr);
 static char *get_node_content(xmlNodePtr);
@@ -89,6 +90,7 @@ int ParseXMLFile(char *fullpath)
     AppData.DisplayPreInit = &DisplayPreInitStub;
     AppData.DisplayInit = &DisplayInitStub;
     AppData.DisplayLogic = &DisplayLogicStub;
+    AppData.DisplayClose = &DisplayCloseStub;
 
     if (process_elements(0, 0, root_element->children)) return (-1);
 
@@ -283,22 +285,29 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             AppData.DisplayPreInit = dlsym(so_handler, "DisplayPreInit");
             if ((error = dlerror()) != NULL)  
             {
-                error_msg("%s", error);
-                return (-1);
+                debug_msg("%s", error);
+            	AppData.DisplayPreInit = &DisplayPreInitStub;
             }
         
             AppData.DisplayInit = dlsym(so_handler, "DisplayInit");
             if ((error = dlerror()) != NULL)  
             {
-                error_msg("%s", error);
-                return (-1);
+                debug_msg("%s", error);
+            	AppData.DisplayInit = &DisplayInitStub;
             }
         
             AppData.DisplayLogic = dlsym(so_handler, "DisplayLogic");
             if ((error = dlerror()) != NULL)  
             {
-                error_msg("%s", error);
-                return (-1);
+                debug_msg("%s", error);
+            	AppData.DisplayLogic = &DisplayLogicStub;
+            }
+
+            AppData.DisplayClose = dlsym(so_handler, "DisplayClose");
+            if ((error = dlerror()) != NULL)
+            {
+                debug_msg("%s", error);
+            	AppData.DisplayClose = &DisplayCloseStub;
             }
         }
         if (NodeCheck(node, "Window"))

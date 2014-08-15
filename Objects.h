@@ -254,6 +254,7 @@ typedef struct
     void (*DisplayPreInit)(void *(*)(const char *));
     void (*DisplayInit)(void);
     void (*DisplayLogic)(void);
+    void (*DisplayClose)(void);
 } appdata;
 
 #endif

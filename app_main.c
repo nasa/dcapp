@@ -138,6 +138,8 @@ void Idle(void)
  *********************************************************************************/
 void Terminate(int flag)
 {
+    AppData.DisplayClose();
+
     TIDY(AppData.simcomm.host);
     TIDY(AppData.simcomm.datarate);
 
