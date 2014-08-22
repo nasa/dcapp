@@ -9,6 +9,7 @@
 #include "simio.h"
 #include "trickio.h"
 #include "edgeio.h"
+#include "ccsds_udp_io.h"
 #include "CAN.h"
 #include "uei/UEI.h"
 #include "nodes.h"
@@ -36,7 +37,7 @@ static void ProcessArgs(int, char **);
 
 appdata AppData;
 
-static struct timeval last_trickio_try, last_edgeio_try;
+static struct timeval last_trickio_try, last_edgeio_try, last_ccsdsudp_try;
 
 
 /*********************************************************************************
@@ -74,7 +75,7 @@ int main(int argc, char **argv)
  *********************************************************************************/
 void Idle(void)
 {
-    static int trickio_active = 0, edgeio_active = 0;
+    static int trickio_active = 0, edgeio_active = 0, ccsds_udp_active = 0;
     int status;
     struct timeval now;
 
@@ -122,6 +123,68 @@ void Idle(void)
         }
     }
 
+    if (ccsds_udp_active)
+    {
+    	// read:
+    	CCSDS_INFO_RESULT errrorcause;
+    	dcapp_ccsds_udp_io readstatus = ccsds_udp_readtlmmsg(&errrorcause);
+		switch (readstatus)
+		{
+			case (CCSDSIO_INIT_ERROR):
+			case (CCSDSIO_IO_ERROR):
+			case (CCSDSIO_PARSE_ERROR):
+				error_msg("ccsds_udp_readsimdata() had error= %d.", readstatus);
+				error_msg("\t\t(error cause ID=%d)", errrorcause);
+				ccsds_udp_active = 0; // stop reading
+				break;
+			case (CCSDSIO_NO_NEW_DATA):
+				break; // ignore, nominal
+			case (CCSDSIO_NOT_CCSDS):
+				debug_msg("ccsds_udp_readsimdata() received non-CCSDS packet. status=%d", readstatus);
+				debug_msg("\t\t(error cause ID=%d)", errrorcause);
+				break; // ignore
+			case (CCSDSIO_WRONG_CCSDS):
+				debug_msg("ccsds_udp_readsimdata() received different CCSDS packet");
+				debug_msg("\t\t(error cause ID=%d)", errrorcause);
+				break; // ignore
+			case (CCSDSIO_SUCCESS):
+				UpdateDisplay();
+				break;
+			default:
+				error_msg("ccsds reader switch status logic error, status=%d.", readstatus);
+				ccsds_udp_active = 0; // stop reading
+				break;
+		}
+
+    }
+    else
+    {
+    	// attempt init:
+        gettimeofday(&now, NULL);
+        if (SecondsElapsed(last_ccsdsudp_try, now) > CONNECT_ATTEMPT_INTERVAL)
+        {
+            if (ccsds_udp_finish_initialization() == CCSDSIO_SUCCESS)
+            {
+            	debug_msg("ccsds_udp opened socket for reading telemetry");
+            	ccsds_udp_active = 1;
+            }
+            else
+            {
+            	error_msg("ccsds_udp failed to open socket for reading telemetry");
+            }
+            gettimeofday(&last_ccsdsudp_try, NULL);
+        }
+
+        if (ccsds_udp_finish_send_initialization() == 0)
+        {
+        	debug_msg("ccsds_udp opened socket for sending commands");
+        }
+        else
+        {
+        	error_msg("ccsds_udp failed to open socket for sending commands");
+        }
+    }
+
     if (update_dyn_elements(AppData.window->p_current)) SetNeedsRedraw();
 
     CheckMouseBounce();
@@ -146,6 +209,7 @@ void Terminate(int flag)
     ui_terminate();
     CAN_term();
     trickio_term();
+    ccsds_udp_term();
     edgeio_term();
     simio_term();
     exit(flag);

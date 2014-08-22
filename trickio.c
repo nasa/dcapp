@@ -4,6 +4,7 @@
 #ifdef TRICKACTIVE
 #include "vscomm.h"
 #endif
+#include "string_utils.h"
 #include "simio.h"
 #include "trickio_constants.h"
 
@@ -23,6 +24,7 @@ typedef struct
         char str[STRING_DEFAULT_LENGTH];
     } prevvalue;
     int forcewrite;
+    int init_only;
 } io_parameter;
 
 typedef struct
@@ -55,7 +57,7 @@ void trickio_initialize_parameter_list(int bufID)
     io_map->data = NULL;
 }
 
-int trickio_add_parameter(int bufID, const char *paramname, const char *trickvar, const char *units)
+int trickio_add_parameter(int bufID, const char *paramname, const char *trickvar, const char *units, const char *init_only)
 {
 #ifdef TRICKACTIVE
     io_parameter_list *io_map;
@@ -94,6 +96,7 @@ int trickio_add_parameter(int bufID, const char *paramname, const char *trickvar
         io_map->data[io_map->count].prevvalue.f = 0;
         bzero(io_map->data[io_map->count].prevvalue.str, STRING_DEFAULT_LENGTH);
         io_map->data[io_map->count].forcewrite = 0;
+        io_map->data[io_map->count].init_only = BoolStrToInt(init_only, 0);
         io_map->count++;
     }
 #endif
@@ -159,6 +162,10 @@ int trickio_readsimdata(void)
 					strcpy((char *)fromsim.data[i].dcvalue, (char *)fromsim.data[i].trickvalue);
 					break;
 			}
+            if (fromsim.data[i].type != SIMIO_UNKNOWN_TYPE && fromsim.data[i].init_only)
+            {
+                if (vscomm_remove_var(fromsim.data[i].trickvar) == VS_SUCCESS) fromsim.data[i].type = SIMIO_UNKNOWN_TYPE;
+            }
 		}
 	}
 

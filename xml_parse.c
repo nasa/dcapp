@@ -238,7 +238,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "TrickVariable"))
         {
-            trickio_add_parameter(bufferID, get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"));
+            trickio_add_parameter(bufferID, get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"), get_element_data(node, "InitializationOnly"));
         }
         if (NodeCheck(node, "EdgeIo"))
         {

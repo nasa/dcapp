@@ -81,6 +81,36 @@ void *vscomm_add_var(char *param, char *units, int type, int nelem)
     return pnew->value;
 }
 
+int vscomm_remove_var(char *param)
+{
+    char *cmd=NULL;
+    ParamArray *pstruct, *prev=NULL;
+
+    if (asprintf(&cmd, "trick.var_remove(\"%s\")\n", param) == -1) return VS_ERROR;
+
+    sim_write(cmd);
+    free(cmd);
+
+    for (pstruct = parray; pstruct != NULL; pstruct = prev->next)
+    {
+        if (!strcmp(pstruct->param, param))
+        {
+            if (!prev) parray = pstruct->next;
+            else prev->next = pstruct->next;
+            prev = pstruct;
+            TIDY(pstruct->param);
+            TIDY(pstruct->units);
+            TIDY(pstruct->value);
+            TIDY(pstruct);
+        }
+        else prev = pstruct;
+    }
+
+    paramcount--;
+
+    return VS_SUCCESS;
+}
+
 int vscomm_activate(char *host, int port, char *rate_spec, char *default_rate)
 {
     char *cmd=NULL, *sample_rate, *default_sample_rate = VS_DEFAULT_SAMPLERATE;
@@ -315,10 +345,10 @@ static void clean_paramarray(void)
 
     for (pstruct = parray; pstruct != NULL;)
     {
+        tmp = pstruct->next;
         TIDY(pstruct->param);
         TIDY(pstruct->units);
         TIDY(pstruct->value);
-        tmp = pstruct->next;
         TIDY(pstruct);
         pstruct = tmp;
     }

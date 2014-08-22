@@ -11,6 +11,7 @@ DCAPP_SOURCES := \
 	CAN.c \
 	EDGE_rcs.c \
 	app_main.c \
+	ccsds_udp_io.c \
 	dyn_elements.c \
 	edgeio.c \
 	geometry.c \
@@ -92,14 +93,20 @@ CAN_CFLAG := -DNTCAN -I$(CANBUS_HOME)
 CAN_LFLAG := -L$(CANBUS_HOME) -Wl,-Bstatic -lntcan -Wl,-Bdynamic
 endif
 
+ifdef CCSDS_UDP_HOME
+CCSDS_UDP_CFLAG := -DCCSDSUDPACTIVE -I$(CCSDS_UDP_HOME)
+# -rdynamic is needed for GCC to use the application's symbols to resolve undefined symbols in the loaded .so's
+CCSDS_UDP_LFLAG := -rdynamic -L$(CCSDS_UDP_HOME)/Debug -lccsds_udp
+endif
+
 FT_CFLAG := $(shell freetype-config --cflags)
 FT_LFLAG := $(shell freetype-config --libs)
 
 XML2_CFLAG := $(shell xml2-config --cflags)
 XML2_LFLAG := $(shell xml2-config --libs)
 
-COMP_FLAGS := $(XML2_CFLAG) $(FTGL_CFLAG) $(FT_CFLAG) $(UI_CFLAG) $(CAN_CFLAG) $(TRICK_CFLAG)
-LINK_FLAGS := $(XML2_LFLAG) $(FTGL_LFLAG) $(FT_LFLAG) $(UI_LFLAG) $(CAN_LFLAG) $(TRICK_LFLAG) -ldl
+COMP_FLAGS := $(XML2_CFLAG) $(FTGL_CFLAG) $(FT_CFLAG) $(UI_CFLAG) $(CAN_CFLAG) $(TRICK_CFLAG) $(CCSDS_UDP_CFLAG)
+LINK_FLAGS := $(XML2_LFLAG) $(FTGL_LFLAG) $(FT_LFLAG) $(UI_LFLAG) $(CAN_LFLAG) $(TRICK_LFLAG) $(CCSDS_UDP_LFLAG) -ldl
 
 ifeq ($(shell uname), Linux)
 COMP_FLAGS += -D_GNU_SOURCE
