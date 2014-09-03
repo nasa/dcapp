@@ -97,7 +97,6 @@ int vscomm_remove_var(char *param)
         {
             if (!prev) parray = pstruct->next;
             else prev->next = pstruct->next;
-            prev = pstruct;
             TIDY(pstruct->param);
             TIDY(pstruct->units);
             TIDY(pstruct->value);
