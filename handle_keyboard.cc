@@ -15,7 +15,7 @@ static void KeyPressed(struct node *, char);
  *  Handle regular keyboard events.
  *
  *********************************************************************************/
-void HandleKeyboard(unsigned char key, int x, int y)
+void HandleKeyboard(unsigned char key, float x, float y)
 {
     // escape 0x1b toggles fullscreen mode
     if (key == 0x1b) toggle_fullscreen();
@@ -27,7 +27,7 @@ void HandleKeyboard(unsigned char key, int x, int y)
  *  Handle keyboard events like the arrow keys and function keys.
  *
  *********************************************************************************/
-void HandleSpecialKeyboard(int key, int x, int y)
+void HandleSpecialKeyboard(int key, float x, float y)
 {
     switch (key)
     {

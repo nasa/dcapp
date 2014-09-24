@@ -7,8 +7,8 @@ extern void Draw(void);
 extern void Terminate(int);
 
 extern void HandleMouse(int, int, float, float, int);
-extern void HandleKeyboard(unsigned char, int, int);
-extern void HandleSpecialKeyboard(int, int, int);
+extern void HandleKeyboard(unsigned char, float, float);
+extern void HandleSpecialKeyboard(int, float, float);
 extern void reshape(int, int);
 
 static void app_run(void);

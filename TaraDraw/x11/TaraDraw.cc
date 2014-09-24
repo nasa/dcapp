@@ -189,15 +189,15 @@ tdWindow tdOpenWindow(const char *title, float xpos, float ypos, float width, fl
 
     XGetWindowAttributes(display, newwin->win, &attr);
     newwin->gc = XCreateGC(display, newwin->win, 0, &values);
-    newwin->buffer = XCreatePixmap(display, newwin->win, width, height, attr.depth);
+    newwin->buffer = XCreatePixmap(display, newwin->win, (unsigned int)width, (unsigned int)height, attr.depth);
 
     XSelectInput(display, newwin->win,
         KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | StructureNotifyMask | ExposureMask);
     XMapWindow(display, newwin->win);
     XSetWMProtocols(display, newwin->win, &wm_delete_window, 1);
     
-    newwin->height = height;
-    newwin->width = width;
+    newwin->height = (int)height;
+    newwin->width = (int)width;
 
     // set default colors and linestyle
     newwin->fgcolor = BlackPixel(display, screen_num);
@@ -324,7 +324,7 @@ tdGLContext *tdGLCreateContext(tdWindow winid)
 
 void tdGLReshapeContext(float x, float y, int align, float width, float height)
 {
-    XMoveResizeWindow(display, curGL->win, (int)x, curGL->parent->height-height-(int)y, (int)width, (int)height);
+    XMoveResizeWindow(display, curGL->win, (int)x, curGL->parent->height-(int)(height+y), (int)width, (int)height);
 }
 
 int tdRegisterColor(int index, float r, float g, float b)
@@ -712,7 +712,7 @@ void tdDrawImage(tdImage *myimage, float xpos, float ypos, int align, float scal
     else if (align & tdAlignTop) deltay = -image->height;
     else deltay = 0;
 
-    XSetLineAttributes(display, current->gc, (scaley+0.9999), LineSolid, tdButtLineCapStyle, JoinRound);
+    XSetLineAttributes(display, current->gc, (unsigned int)(scaley+0.9999), LineSolid, tdButtLineCapStyle, JoinRound);
 
     for (i=0; i<(int)(image->height); i++)
     {
@@ -732,7 +732,7 @@ void tdDrawImage(tdImage *myimage, float xpos, float ypos, int align, float scal
             starty = ypos + (dx * sinang) + (dy * cosang);
             endx = xpos + ((dx+scalex+0.9999) * cosang) - (dy * sinang);
             endy = ypos + ((dx+scalex+0.9999) * sinang) + (dy * cosang);
-            XDrawLine(display, current->buffer, current->gc, startx, current->height-starty, endx, current->height-endy);
+            XDrawLine(display, current->buffer, current->gc, (int)startx, (int)(current->height-starty), (int)endx, (int)(current->height-endy));
         }
     }
 

@@ -141,18 +141,18 @@ $(OBJDIR)/%.o: %.mm $(HEADERS)
 	$(CC) $(CFLAGS) $(COMP_FLAGS) -c $< -o $@
 
 uei/$(LIBDIR)/libuei.a: $(wildcard uei/*.cc) $(wildcard uei/*.hh)
-	make -C uei
+	${MAKE} -C uei
 
 imgload/$(LIBDIR)/libimgload.a: $(wildcard imgload/*.cc) $(wildcard imgload/*.hh)
-	make -C imgload
+	${MAKE} -C imgload
 
 TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a: $(wildcard TaraDraw/$(TARA_SUBDIR)/*.mm) $(wildcard TaraDraw/$(TARA_SUBDIR)/*.cc) $(wildcard TaraDraw/$(TARA_SUBDIR)/*.hh)
-	make -C TaraDraw/$(TARA_SUBDIR)
+	${MAKE} -C TaraDraw/$(TARA_SUBDIR)
 
 clean:
-	make -C uei clean
-	make -C imgload clean
-	make -C TaraDraw/$(TARA_SUBDIR) clean
+	${MAKE} -C uei clean
+	${MAKE} -C imgload clean
+	${MAKE} -C TaraDraw/$(TARA_SUBDIR) clean
 	rm -rf $(OBJDIR)
 	rm -rf $(BINDIR)
 	rm -f dcapp.app/Contents/MacOS/dcapp

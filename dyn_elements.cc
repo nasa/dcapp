@@ -45,7 +45,7 @@ int update_dyn_elements(struct node *list)
                         {
                             current->object.pixelstream.buffercount = current->object.pixelstream.shm->buffercount;
                             rewind(current->object.pixelstream.fp);
-                            newh = current->object.pixelstream.shm->width * (*(current->info.h)) / (*(current->info.w));
+                            newh = (size_t)((float)(current->object.pixelstream.shm->width) * (*(current->info.h)) / (*(current->info.w)));
                             if (newh > current->object.pixelstream.shm->height)
                             {
                                 origbytes = current->object.pixelstream.shm->width * current->object.pixelstream.shm->height * 3;

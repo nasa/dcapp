@@ -7,15 +7,16 @@
 extern void Draw(void);
 extern void Idle(void);
 extern void Terminate(int);
-extern void HandleKeyboard(unsigned char, int, int);
+extern void HandleKeyboard(unsigned char, float, float);
 extern void HandleMouse(int, int, float, float, int);
 extern void HandleMouseMotion(int, int);
 extern void HandlePassiveMotion(int, int);
-extern void HandleSpecialKeyboard(int, int, int);
+extern void HandleSpecialKeyboard(int, float, float);
 extern void reshape(int, int);
 
 static void HandleGLUTReshape(int, int);
 static void HandleGLUTMenu(int);
+static void HandleGLUTKeyboard(unsigned char, int, int);
 static void HandleGLUTSpecialKeyboard(int, int, int);
 static void HandleGLUTMouse(int ,int ,int ,int );
 static void HandleGLUTVisibility(int);
@@ -75,7 +76,7 @@ void window_init(int fullscreen, int winOriginX, int winOriginY, int winSizeX, i
     glutEntryFunc(HandleGLUTEntry);
     glutReshapeFunc(HandleGLUTReshape);
     glutVisibilityFunc(HandleGLUTVisibility);
-    glutKeyboardFunc(HandleKeyboard);
+    glutKeyboardFunc(HandleGLUTKeyboard);
     glutSpecialFunc(HandleGLUTSpecialKeyboard);
     glutMouseFunc(HandleGLUTMouse);
     glutMotionFunc(HandleMouseMotion);
@@ -153,6 +154,17 @@ void SwapBuffers(void)
 
 /*********************************************************************************
  *
+ *  Handle standard keyboard events.
+ *
+ *********************************************************************************/
+static void HandleGLUTKeyboard(unsigned char key, int x, int y)
+{
+    HandleKeyboard(key, (float)x, (float)y);
+}
+
+
+/*********************************************************************************
+ *
  *  Handle keyboard events like the arrow keys and function keys.
  *
  *********************************************************************************/
@@ -179,7 +191,7 @@ static void HandleGLUTSpecialKeyboard(int glutkey, int x, int y)
             break;
     }
 
-    HandleSpecialKeyboard(key, x, y);
+    HandleSpecialKeyboard(key, (float)x, (float)y);
 }
 
 
