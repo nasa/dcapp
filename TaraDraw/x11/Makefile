@@ -1,6 +1,6 @@
 include ../../makedefs
 
-HEADERS := tdDefines.h rotate.h image.h xfonts.h
+HEADERS := tdDefines.hh rotate.hh image.hh xfonts.hh
 OBJECTS := TaraDraw.o rotate.o image.o
 
 BLD_OBJECTS := $(foreach obj, $(OBJECTS), $(OBJDIR)/$(obj))
@@ -10,7 +10,7 @@ $(LIBDIR)/libTD.a: $(BLD_OBJECTS)
 	$(AR) $(ARFLAGS) $@ $(BLD_OBJECTS)
 	ranlib $@
 
-$(OBJDIR)/%.o: %.c $(HEADERS)
+$(OBJDIR)/%.o: %.cc $(HEADERS)
 	mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) -I/usr/X11R6/include -c $< -o $@
 

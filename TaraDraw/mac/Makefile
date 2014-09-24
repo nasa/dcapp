@@ -1,6 +1,6 @@
 include ../../makedefs
 
-HEADERS := tdDefines.h tdAdapter.h tdView.h tdWindow.h
+HEADERS := tdDefines.hh tdAdapter.hh tdView.hh tdWindow.hh
 OBJECTS := TaraDraw.o tdAdapter.o tdView.o tdWindow.o
 
 BLD_OBJECTS := $(foreach obj, $(OBJECTS), $(OBJDIR)/$(obj))
@@ -10,7 +10,7 @@ $(LIBDIR)/libTD.a: $(BLD_OBJECTS)
 	$(AR) $(ARFLAGS) $@ $(BLD_OBJECTS)
 	ranlib $@
 
-$(OBJDIR)/%.o: %.m $(HEADERS)
+$(OBJDIR)/%.o: %.mm $(HEADERS)
 	mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 

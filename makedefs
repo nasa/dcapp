@@ -9,7 +9,7 @@ OBJDIR := obj_$(OSSPEC)
 LIBDIR := lib_$(OSSPEC)
 BINDIR := bin_$(OSSPEC)
 
-CC := cc
+CC := c++
 AR := ar
 LD := c++
 

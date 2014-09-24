@@ -1,7 +1,7 @@
 include ../makedefs
 
-HEADERS := $(wildcard *.h)
-OBJECTS := $(foreach obj, $(patsubst %.c, %.o, $(wildcard *.c)), $(OBJDIR)/$(obj))
+HEADERS := $(wildcard *.hh)
+OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
 COMP_FLAGS := -I/usr/X11R6/include
 ARCH_FLAGS := 
@@ -11,7 +11,7 @@ $(LIBDIR)/libimgload.a: $(OBJECTS)
 	$(AR) $(ARFLAGS) $(ARCH_FLAGS) $@ $^
 	ranlib $@
 
-$(OBJDIR)/%.o: %.c $(HEADERS)
+$(OBJDIR)/%.o: %.cc $(HEADERS)
 	mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) $(COMP_FLAGS) -c $< -o $@
 

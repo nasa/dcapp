@@ -3,42 +3,42 @@
 include makedefs
 
 HEADERS := \
-	$(wildcard *.h) \
-	$(wildcard imgload/*.h) \
-	$(wildcard uei/*.h) \
-	$(wildcard TaraDraw/*.h)
+	$(wildcard *.hh) \
+	$(wildcard imgload/*.hh) \
+	$(wildcard uei/*.hh) \
+	$(wildcard TaraDraw/*.hh)
 DCAPP_SOURCES := \
-	CAN.c \
-	EDGE_rcs.c \
-	app_main.c \
-	ccsds_udp_io.c \
-	dyn_elements.c \
-	edgeio.c \
-	geometry.c \
-	handle_bezel.c \
-	handle_draw.c \
-	handle_keyboard.c \
-	handle_mouse.c \
-	handle_utils.c \
-	load_constants.c \
-	load_fonts.c \
-	load_shm.c \
-	load_textures.c \
-	logic_stubs.c \
-	nodes.c \
-	opengl_draw.c \
-	primitive_new.c \
-	render_ADI.c \
-	render_string.c \
-	simio.c \
-	string_utils.c \
-	trickio.c \
-	update_display.c \
-	xml_parse.c \
-	xml_utils.c
+	CAN.cc \
+	EDGE_rcs.cc \
+	app_main.cc \
+	ccsds_udp_io.cc \
+	dyn_elements.cc \
+	edgeio.cc \
+	geometry.cc \
+	handle_bezel.cc \
+	handle_draw.cc \
+	handle_keyboard.cc \
+	handle_mouse.cc \
+	handle_utils.cc \
+	load_constants.cc \
+	load_fonts.cc \
+	load_shm.cc \
+	load_textures.cc \
+	logic_stubs.cc \
+	nodes.cc \
+	opengl_draw.cc \
+	primitive_new.cc \
+	render_ADI.cc \
+	render_string.cc \
+	simio.cc \
+	string_utils.cc \
+	trickio.cc \
+	update_display.cc \
+	xml_parse.cc \
+	xml_utils.cc
 GENHEADER_SOURCES := \
-	dcapp_genheader.c \
-	xml_utils.c
+	dcapp_genheader.cc \
+	xml_utils.cc
 LIBS := \
 	uei/$(LIBDIR)/libuei.a \
 	imgload/$(LIBDIR)/libimgload.a
@@ -47,17 +47,17 @@ ifeq ($(UseFTGL), yes)
 FTGL_CFLAG += -DUseFTGL
 FTGL_LFLAG += -lftgl
 else
-DCAPP_SOURCES += fontlib.c
+DCAPP_SOURCES += fontlib.cc
 endif
 
 ifeq ($(shell uname), Linux)
 TARA_SUBDIR := x11
 ifeq ($(UseGLUT), yes)
-DCAPP_SOURCES += glut_funcs.c app_launcher_stub.c
+DCAPP_SOURCES += glut_funcs.cc app_launcher_stub.cc
 UI_CFLAG := -I../glut/include
 UI_LFLAG := -L../glut/lib/glut -lglut
 else
-DCAPP_SOURCES += tara_funcs.c app_launcher_stub.c
+DCAPP_SOURCES += tara_funcs.cc app_launcher_stub.cc
 UI_CFLAG :=
 UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD
 LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
@@ -68,12 +68,12 @@ COPY_SCRIPTS :=
 else
 TARA_SUBDIR := mac
 ifeq ($(UseGLUT), yes)
-DCAPP_SOURCES += glut_funcs.c app_launcher_stub.c
+DCAPP_SOURCES += glut_funcs.cc app_launcher_stub.cc
 UI_CFLAG := -I/usr/X11R6/include
 UI_LFLAG := -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL -lGLU -lglut
 COPY_SCRIPTS :=
 else
-DCAPP_SOURCES += tara_funcs.c app_launcher.m
+DCAPP_SOURCES += tara_funcs.cc app_launcher.mm
 UI_CFLAG := -I/usr/X11R6/include
 UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD -framework OpenGL -framework AppKit
 COPY_SCRIPTS := mv -f $(BINDIR)/dcapp dcapp.app/Contents/MacOS; cp -f bin/launcher.py $(BINDIR)/dcapp
@@ -83,7 +83,7 @@ endif
 
 ifdef TRICK_HOME
 #TRICK_MAJOR = $(word 1,$(subst ., ,$(TRICK_VER)))
-DCAPP_SOURCES += vscomm.c
+DCAPP_SOURCES += vscomm.cc
 TRICK_CFLAG := -DTRICKACTIVE -I$(TRICK_HOME)/trick_source
 TRICK_LFLAG := -L$(TRICK_HOME)/trick_source/trick_utils/comm/object_$(TRICK_HOST_TYPE) -ltrick_comm
 endif
@@ -114,10 +114,10 @@ LINK_FLAGS += -lrt
 endif
 
 DCAPP_OBJECTS := $(DCAPP_SOURCES)
-DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.c=.o), $(obj))
-DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.m=.o), $(obj))
+DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.cc=.o), $(obj))
+DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.mm=.o), $(obj))
 DCAPP_OBJECTS := $(foreach obj, $(patsubst %, $(OBJDIR)/%, $(DCAPP_OBJECTS)), $(obj))
-GENHEADER_OBJECTS := $(foreach obj, $(patsubst %.c, %.o, $(GENHEADER_SOURCES)), $(OBJDIR)/$(obj))
+GENHEADER_OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(GENHEADER_SOURCES)), $(OBJDIR)/$(obj))
 
 #COMP_FLAGS += -DDEBUG
 
@@ -132,21 +132,21 @@ $(BINDIR)/dcapp_genheader: $(GENHEADER_OBJECTS)
 	mkdir -p $(BINDIR)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LINK_FLAGS)
 
-$(OBJDIR)/%.o: %.c $(HEADERS)
+$(OBJDIR)/%.o: %.cc $(HEADERS)
 	mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) $(COMP_FLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: %.m $(HEADERS)
+$(OBJDIR)/%.o: %.mm $(HEADERS)
 	mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) $(COMP_FLAGS) -c $< -o $@
 
-uei/$(LIBDIR)/libuei.a: $(wildcard uei/*.c) $(wildcard uei/*.h)
+uei/$(LIBDIR)/libuei.a: $(wildcard uei/*.cc) $(wildcard uei/*.hh)
 	make -C uei
 
-imgload/$(LIBDIR)/libimgload.a: $(wildcard imgload/*.c) $(wildcard imgload/*.h)
+imgload/$(LIBDIR)/libimgload.a: $(wildcard imgload/*.cc) $(wildcard imgload/*.hh)
 	make -C imgload
 
-TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a: $(wildcard TaraDraw/$(TARA_SUBDIR)/*.m) $(wildcard TaraDraw/$(TARA_SUBDIR)/*.c) $(wildcard TaraDraw/$(TARA_SUBDIR)/*.h)
+TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a: $(wildcard TaraDraw/$(TARA_SUBDIR)/*.mm) $(wildcard TaraDraw/$(TARA_SUBDIR)/*.cc) $(wildcard TaraDraw/$(TARA_SUBDIR)/*.hh)
 	make -C TaraDraw/$(TARA_SUBDIR)
 
 clean:
