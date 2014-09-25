@@ -13,7 +13,7 @@ typedef struct _vitem
 static void process_elements(xmlNodePtr);
 static vitem *vlist_add(vitem **);
 static void vlist_clean(vitem *);
-static void UsageError(void);
+static void UsageError(xmlDocPtr);
 
 static vitem *vlist_start = 0;
 
@@ -24,30 +24,36 @@ int main(int argc, char **argv)
     FILE *p_file;
     vitem *myvitem;
 
-    if (XMLFileOpen(&mydoc, &root_element, argv[1], NULL)) UsageError();
+    if (argc < 2) UsageError(NULL);
+    if (XMLFileOpen(&mydoc, &root_element, argv[1], NULL)) UsageError(NULL);
+    if (argc < 3) p_file = fopen("dcapp.h", "w");
+    else p_file = fopen(argv[2], "w");
+    if (!p_file) UsageError(mydoc);
 
     process_elements(root_element->children);
-
-    p_file = fopen("dcapp.h", "w");
 
     fprintf(p_file, "// ********************************************* //\n");
     fprintf(p_file, "// THIS FILE IS AUTO-GENERATED -- DO NOT EDIT!!! //\n");
     fprintf(p_file, "// ********************************************* //\n\n");
-    fprintf(p_file, "#ifndef _DCAPP_H_\n#define _DCAPP_H_\n\n");
+    fprintf(p_file, "#ifndef _DCAPP_EXTERNALS_\n#define _DCAPP_EXTERNALS_\n\n");
 
     for (myvitem = vlist_start; myvitem; myvitem = myvitem->next)
     {
-        if (!strcmp(myvitem->type, "Float")) fprintf(p_file, "static float *");
-        else if (!strcmp(myvitem->type, "Integer")) fprintf(p_file, "static int *");
-        else fprintf(p_file, "static char *");
+        if (!strcmp(myvitem->type, "Float")) fprintf(p_file, "float *");
+        else if (!strcmp(myvitem->type, "Integer")) fprintf(p_file, "int *");
+        else fprintf(p_file, "char *");
         fprintf(p_file, "%s;\n", myvitem->name);
     }
 
-    fprintf(p_file, "\nvoid DisplayPreInit(void *(*get_pointer)(char *))\n{\n");
+    fprintf(p_file, "\nvoid DisplayPreInit(void *(*get_pointer)(const char *))\n{\n");
 
     for (myvitem = vlist_start; myvitem; myvitem = myvitem->next)
     {
-        fprintf(p_file, "    %s = get_pointer(\"%s\");\n", myvitem->name, myvitem->name);
+        fprintf(p_file, "    %s = ", myvitem->name);
+        if (!strcmp(myvitem->type, "Float")) fprintf(p_file, "(float *)");
+        else if (!strcmp(myvitem->type, "Integer")) fprintf(p_file, "(int *)");
+        else fprintf(p_file, "(char *)");
+        fprintf(p_file, "get_pointer(\"%s\");\n", myvitem->name);
     }
 
     fprintf(p_file, "}\n\n");
@@ -115,8 +121,13 @@ static void vlist_clean(vitem *start)
     }
 }
 
-static void UsageError(void)
+static void UsageError(xmlDocPtr infile)
 {
-    printf("Usage: dcapp_genheader <file>, where <file> is a dcapp specfile or a dcapp global variable file\n");
+    if (infile) XMLFileClose(infile);
+
+    printf("Usage: dcapp_genheader <infile> <outfile>, where:\n");
+    printf("    <infile> is a dcapp specfile or a dcapp global variable file\n");
+    printf("    <outfile> is a the name of the header file to be generated\n");
+
     exit(-1);
 }
