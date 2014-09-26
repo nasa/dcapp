@@ -45,7 +45,11 @@ int main(int argc, char **argv)
         fprintf(p_file, "%s;\n", myvitem->name);
     }
 
-    fprintf(p_file, "\nvoid DisplayPreInit(void *(*get_pointer)(const char *))\n{\n");
+    fprintf(p_file, "\n#ifdef __cplusplus\n");
+    fprintf(p_file, "extern \"C\" void DisplayPreInit(void *(*get_pointer)(const char *))\n");
+    fprintf(p_file, "#else\n");
+    fprintf(p_file, "void DisplayPreInit(void *(*get_pointer)(const char *))\n");
+    fprintf(p_file, "#endif\n{\n");
 
     for (myvitem = vlist_start; myvitem; myvitem = myvitem->next)
     {
