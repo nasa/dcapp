@@ -4,8 +4,12 @@
 #include <string.h>
 #include <libgen.h>
 #include <signal.h>
+#include <ctype.h>
+#include <pwd.h>
+#include <sys/types.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
+#include <uuid/uuid.h>
 #include "simio.hh"
 #include "trickio.hh"
 #include "edgeio.hh"
@@ -86,15 +90,26 @@ void Idle(void)
     {
         status = trickio_readsimdata();
 
-        if (status == SIMIO_SUCCESS) UpdateDisplay();
-        else if (status == SIMIO_INVALID_CONNECTION)
+        switch (status)
         {
-            user_msg("TrickComm connection terminated");
-            Terminate(0);
+            case SIMIO_SUCCESS:
+                UpdateDisplay();
+                trickio_writesimdata();
+                break;
+            case SIMIO_PARTIAL_BUFFER:
+                debug_msg("TrickComm received a partial buffer");
+                trickio_writesimdata();
+                break;
+            case SIMIO_MANGLED_BUFFER:
+                error_msg("TrickComm received a mangled data buffer");
+                trickio_writesimdata();
+                break;
+            case SIMIO_INVALID_CONNECTION:
+                user_msg("TrickComm connection terminated");
+                if (AppData.simcomm.disconnectaction == AppReconnect) trickio_active = 0;
+                else Terminate(0);
+                break;
         }
-        else if (status == SIMIO_MANGLED_BUFFER) error_msg("Received a mangled data buffer");
-
-        trickio_writesimdata();
     }
     else
     {
@@ -270,11 +285,18 @@ static void ProcessArgs(int argc, char **argv)
     else /* We're on a Mac and the command line arguments don't provide enough information to proceed... */
     {
         char *defspecfile = NULL, *defhost = NULL, *defport = NULL, *defargs = NULL;
-
-        /* Set TRICK_HOST_CPU in case it's needed later */
-        char *trickhostcpu;
         unsigned i;
 
+        /* Set standard environment variables in case the user needs them */
+        struct passwd *pw = getpwuid(getuid());
+        char *lc_os = strdup(minfo.sysname);
+        char *trickhostcpu;
+
+        setenv("HOME", pw->pw_dir, 0);
+        for (i=0; i<strlen(lc_os); i++) lc_os[i] = tolower(lc_os[i]);
+        setenv("OSTYPE", lc_os, 0);
+        free(lc_os);
+        setenv("MACHTYPE", minfo.machine, 0);
         asprintf(&trickhostcpu, "%s_%s", minfo.sysname, minfo.release);
         for (i=0; i<strlen(trickhostcpu); i++)
         {

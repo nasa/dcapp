@@ -202,11 +202,7 @@ int vscomm_get(void)
     sim_read();
 
     if (databuf == 0 || databuf_size == 0) return VS_NO_NEW_DATA;
-    if (!databuf_complete)
-    {
-        printf("vscomm received a partial buffer\n");
-        return VS_PARTIAL_BUFFER;
-    }
+    if (!databuf_complete) return VS_PARTIAL_BUFFER;
 
     end_buf = find_next_token(databuf, '\n');
     databuf_size = end_buf + 1;

@@ -13,6 +13,7 @@ typedef enum { AlignLeft, AlignCenter, AlignRight } HAlignment;
 typedef enum { AlignBottom, AlignMiddle, AlignTop } VAlignment;
 typedef enum { Equals, PlusEquals, MinusEquals } SetOperator;
 typedef enum { Simple, IfEquals, IfNotEquals, IfGreaterThan, IfLessThan, IfGreaterOrEquals, IfLessOrEquals } IfOperator;
+typedef enum { AppTerminate, AppReconnect } DisconnectAction;
 
 struct kolor
 {
@@ -242,6 +243,7 @@ typedef struct
         char *host;
         int port;
         char *datarate;
+        DisconnectAction disconnectaction;
     } simcomm;
     float force_update;
     struct timeval last_update;

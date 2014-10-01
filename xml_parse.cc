@@ -116,7 +116,6 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
     struct node *curlist, **sublist, *data, *data1;
     char *id, *onval, *offval;
     int subnode_found;
-    char *tmphost, *tmpdatarate;
 
     for (node = startnode; node != NULL; node = node->next)
     {
@@ -216,11 +215,19 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "TrickIo"))
         {
+            char *tmphost, *tmpdatarate, *d_a;
+
             if (!AppData.simcomm.port) AppData.simcomm.port = StrToInt(get_element_data(node, "Port"), 0);
             tmphost = get_element_data(node, "Host");
             tmpdatarate = get_element_data(node, "DataRate");
             if (tmphost && !AppData.simcomm.host) AppData.simcomm.host = strdup(tmphost);
             if (tmpdatarate) AppData.simcomm.datarate = strdup(tmpdatarate);
+            d_a = get_element_data(node, "DisconnectAction");
+            AppData.simcomm.disconnectaction = AppTerminate;
+            if (d_a)
+            {
+                if (!strcasecmp(d_a, "Reconnect")) AppData.simcomm.disconnectaction = AppReconnect;
+            }
             process_elements(0, 0, node->children);
             trickio_finish_initialization();
         }
