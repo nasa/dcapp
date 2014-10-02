@@ -9,7 +9,6 @@
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
-#include <uuid/uuid.h>
 #include "simio.hh"
 #include "trickio.hh"
 #include "edgeio.hh"
