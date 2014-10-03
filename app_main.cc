@@ -289,20 +289,17 @@ static void ProcessArgs(int argc, char **argv)
         /* Set standard environment variables in case the user needs them */
         struct passwd *pw = getpwuid(getuid());
         char *lc_os = strdup(minfo.sysname);
-        char *trickhostcpu;
+        long hsize = sysconf(_SC_HOST_NAME_MAX)+1;
+        char myhost[hsize];
 
+        setenv("USER", pw->pw_name, 0);
+        setenv("LOGNAME", pw->pw_name, 0);
         setenv("HOME", pw->pw_dir, 0);
         for (i=0; i<strlen(lc_os); i++) lc_os[i] = tolower(lc_os[i]);
         setenv("OSTYPE", lc_os, 0);
         free(lc_os);
         setenv("MACHTYPE", minfo.machine, 0);
-        asprintf(&trickhostcpu, "%s_%s", minfo.sysname, minfo.release);
-        for (i=0; i<strlen(trickhostcpu); i++)
-        {
-            if (trickhostcpu[i] == '.') trickhostcpu[i] = 0;
-        }
-        setenv("TRICK_HOST_CPU", trickhostcpu, 0);
-        free(trickhostcpu);
+        if (!gethostname(myhost, hsize)) setenv("HOST", myhost, 0);
 
         /* Get default arguments from the Application Support folder */
         char *appsupport, *preffilename;
