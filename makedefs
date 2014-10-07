@@ -1,13 +1,15 @@
-#OSNAME := $(shell uname -s)
-#OSVERS := $(shell uname -r)
-#OSSPEC := $(OSNAME)_$(OSVERS)
+OSTYPE ?= $(shell tr '[:upper:]' '[:lower:]' <<< $(shell uname -s))
+MACHTYPE ?= $(shell uname -m)
 
-TRICK_HOST_CPU ?= $(shell uname -s)
-OSSPEC := $(TRICK_HOST_CPU)
+ifeq ($(OSTYPE), darwin)
+OSSPEC := MacOS
+else
+OSSPEC := $(OSTYPE)_$(MACHTYPE)
+endif
 
 OBJDIR := obj_$(OSSPEC)
 LIBDIR := lib_$(OSSPEC)
-BINDIR := bin_$(OSSPEC)
+BINDIR := dcapp.app/Contents/$(OSSPEC)
 
 CC := c++
 AR := ar
@@ -16,3 +18,6 @@ LD := c++
 CFLAGS := -Wall
 ARFLAGS := cr
 LDFLAGS := 
+
+# Note that LEGACY_CLEANUP and all references to it should be removed in 2015
+LEGACY_CLEANUP := rm -rf obj_$(TRICK_HOST_CPU) lib_$(TRICK_HOST_CPU) bin_$(TRICK_HOST_CPU)

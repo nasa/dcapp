@@ -250,6 +250,22 @@ static void ProcessArgs(int argc, char **argv)
         Terminate(-1);
     }
 
+    /* Make sure that the following environment variables are set in case   */
+    /* the user needs them: USER, LOGNAME, HOME, OSTYPE, MACHTYPE, and HOST */
+    struct passwd *pw = getpwuid(getuid());
+    char *lc_os = strdup(minfo.sysname);
+    long hsize = sysconf(_SC_HOST_NAME_MAX)+1;
+    char myhost[hsize];
+
+    setenv("USER", pw->pw_name, 0);
+    setenv("LOGNAME", pw->pw_name, 0);
+    setenv("HOME", pw->pw_dir, 0);
+    for (i=0; i<(int)strlen(lc_os); i++) lc_os[i] = tolower(lc_os[i]);
+    setenv("OSTYPE", lc_os, 0);
+    free(lc_os);
+    setenv("MACHTYPE", minfo.machine, 0);
+    if (!gethostname(myhost, hsize)) setenv("HOST", myhost, 0);
+
     if (argc > 2) gotargs = 1;
     else if (argc == 2 && strncmp(argv[1], "-psn", 4)) gotargs = 1;
 
@@ -284,27 +300,10 @@ static void ProcessArgs(int argc, char **argv)
     else /* We're on a Mac and the command line arguments don't provide enough information to proceed... */
     {
         char *defspecfile = NULL, *defhost = NULL, *defport = NULL, *defargs = NULL;
-        unsigned i;
-
-        /* Set standard environment variables in case the user needs them */
-        struct passwd *pw = getpwuid(getuid());
-        char *lc_os = strdup(minfo.sysname);
-        long hsize = sysconf(_SC_HOST_NAME_MAX)+1;
-        char myhost[hsize];
-
-        setenv("USER", pw->pw_name, 0);
-        setenv("LOGNAME", pw->pw_name, 0);
-        setenv("HOME", pw->pw_dir, 0);
-        for (i=0; i<strlen(lc_os); i++) lc_os[i] = tolower(lc_os[i]);
-        setenv("OSTYPE", lc_os, 0);
-        free(lc_os);
-        setenv("MACHTYPE", minfo.machine, 0);
-        if (!gethostname(myhost, hsize)) setenv("HOST", myhost, 0);
-
-        /* Get default arguments from the Application Support folder */
         char *appsupport, *preffilename;
         FILE *preffile;
 
+        /* Get default arguments from the Application Support folder */
         asprintf(&appsupport, "%s/Library/Application Support/dcapp", getenv("HOME"));
         asprintf(&preffilename, "%s/Preferences", appsupport);
 

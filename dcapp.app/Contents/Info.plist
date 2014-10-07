@@ -21,7 +21,7 @@
 	<key>CFBundleSignature</key>
 	<string>dcap</string>
 	<key>CFBundleVersion</key>
-	<string>44</string>
+	<string>45</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2014 NASA</string>
 	<key>NSPrincipalClass</key>

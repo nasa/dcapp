@@ -50,7 +50,7 @@ else
 DCAPP_SOURCES += fontlib.cc
 endif
 
-ifeq ($(shell uname), Linux)
+ifeq ($(OSTYPE), linux)
 TARA_SUBDIR := x11
 ifeq ($(UseGLUT), yes)
 DCAPP_SOURCES += glut_funcs.cc app_launcher_stub.cc
@@ -64,19 +64,16 @@ LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
 endif
 UI_CFLAG += -I/usr/X11R6/include
 UI_LFLAG += -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL -lGLU
-COPY_SCRIPTS :=
 else
 TARA_SUBDIR := mac
 ifeq ($(UseGLUT), yes)
 DCAPP_SOURCES += glut_funcs.cc app_launcher_stub.cc
 UI_CFLAG := -I/usr/X11R6/include
 UI_LFLAG := -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL -lGLU -lglut
-COPY_SCRIPTS :=
 else
 DCAPP_SOURCES += tara_funcs.cc app_launcher.mm
 UI_CFLAG := -I/usr/X11R6/include
 UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD -framework OpenGL -framework AppKit
-COPY_SCRIPTS := mv -f $(BINDIR)/dcapp dcapp.app/Contents/MacOS; cp -f bin/launcher.py $(BINDIR)/dcapp
 LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
 endif
 endif
@@ -108,7 +105,7 @@ XML2_LFLAG := $(shell xml2-config --libs)
 COMP_FLAGS := $(XML2_CFLAG) $(FTGL_CFLAG) $(FT_CFLAG) $(UI_CFLAG) $(CAN_CFLAG) $(TRICK_CFLAG) $(CCSDS_UDP_CFLAG)
 LINK_FLAGS := $(XML2_LFLAG) $(FTGL_LFLAG) $(FT_LFLAG) $(UI_LFLAG) $(CAN_LFLAG) $(TRICK_LFLAG) $(CCSDS_UDP_LFLAG) -ldl
 
-ifeq ($(shell uname), Linux)
+ifeq ($(OSTYPE), linux)
 COMP_FLAGS += -D_GNU_SOURCE
 LINK_FLAGS += -lrt
 endif
@@ -126,7 +123,6 @@ dcapp: $(BINDIR)/dcapp $(BINDIR)/dcapp_genheader
 $(BINDIR)/dcapp: $(DCAPP_OBJECTS) $(LIBS)
 	mkdir -p $(BINDIR)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LINK_FLAGS)
-	$(COPY_SCRIPTS)
 
 $(BINDIR)/dcapp_genheader: $(GENHEADER_OBJECTS)
 	mkdir -p $(BINDIR)
@@ -155,4 +151,4 @@ clean:
 	${MAKE} -C TaraDraw/$(TARA_SUBDIR) clean
 	rm -rf $(OBJDIR)
 	rm -rf $(BINDIR)
-	rm -f dcapp.app/Contents/MacOS/dcapp
+	${LEGACY_CLEANUP}
