@@ -1,27 +1,8 @@
 #!/usr/bin/python
 
-import sys, os, platform
+import os, subprocess
 
-argstr = ''
+# dcapp uses subprocess.Popen, so that this script terminates immediately after the real dcapp is spawned
+def launch_app(arglist): subprocess.Popen(arglist)
 
-for arg in sys.argv[1:]:
-	argstr += ' ' + arg
-
-mydir = os.path.dirname(os.path.abspath(__file__))
-
-ostype = os.getenv('OSTYPE')
-if (ostype == None):
-    ostype = platform.system().lower()
-
-machtype = os.getenv('MACHTYPE')
-if (machtype == None):
-    machtype = platform.machine()
-
-if (ostype == 'darwin'):
-    osspec = 'MacOS'
-else:
-    osspec = ostype + '_' + machtype
-
-appcmd = mydir + '/' + osspec + '/dcapp'
-
-if os.path.isfile(appcmd): os.system(appcmd + argstr)
+execfile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'launch.py'))
