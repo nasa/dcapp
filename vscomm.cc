@@ -135,6 +135,22 @@ int vscomm_activate(char *host, int port, char *rate_spec, char *default_rate)
         return VS_INVALID_CONNECTION;
     }
 
+#if 0
+    int new_bytes;
+    char *trickver;
+    sim_write_const("trick.var_add(\"trick_sys.sched.current_version\")\n");
+    sim_write_const("trick.var_send()\n");
+    while (!tc_pending(&connection)) continue;
+    new_bytes = tc_pending(&connection);
+    databuf = (char *)malloc(new_bytes);
+    tc_read(&connection, databuf, new_bytes);
+    sim_write_const("trick.var_clear()\n");
+    trickver = (char *)malloc(new_bytes);
+    sscanf(databuf, "0\t%s\n", trickver);
+    printf("dcapp: Trick Version = %s\n", trickver);
+    free(trickver);
+#endif
+
     if (rate_spec == NULL)
     {
         if (default_rate != NULL && strlen(default_rate) != 0) sample_rate = default_rate;
