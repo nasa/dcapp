@@ -1,7 +1,6 @@
 #ifndef _EDGEIO_HH_
 #define _EDGEIO_HH_
 
-#include "simio_constants.hh"
 #include "edgeio_constants.hh"
 
 extern void edgeio_initialize_parameter_list(int);

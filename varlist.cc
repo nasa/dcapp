@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "simio_constants.hh"
+#include "varlist_constants.hh"
 
 #define ALLOCATION_CHUNK 10
 
@@ -24,43 +24,43 @@ static parameter *get_paramdata(const char *);
 static parameter_list params;
 
 
-void simio_initialize_parameter_list(void)
+void varlist_init(void)
 {
     params.count = 0;
     params.allocated_elements = 0;
 }
 
-int simio_add_parameter(const char *paramname, const char *typestr, const char *initval)
+int varlist_append(const char *paramname, const char *typestr, const char *initval)
 {
     if (params.count == params.allocated_elements)
     {
         params.allocated_elements += ALLOCATION_CHUNK;
         params.data = (parameter *)realloc(params.data, params.allocated_elements * sizeof(parameter));
-        if (params.data == NULL) return SIMIO_ERROR;
+        if (params.data == NULL) return VARLIST_ERROR;
     }
 
     params.data[params.count].label = strdup(paramname);
     if (!strcmp(typestr, "Float"))
     {
-        params.data[params.count].type = SIMIO_FLOAT;
+        params.data[params.count].type = VARLIST_FLOAT;
         params.data[params.count].value = calloc(1, sizeof(float));
         if (initval != NULL) *(float *)params.data[params.count].value = strtof(initval, NULL);
     }
     else if (!strcmp(typestr, "Integer"))
     {
-        params.data[params.count].type = SIMIO_INTEGER;
+        params.data[params.count].type = VARLIST_INTEGER;
         params.data[params.count].value = calloc(1, sizeof(int));
         if (initval != NULL) *(int *)params.data[params.count].value = strtol(initval, NULL, 10);
     }
     else if (!strcmp(typestr, "String"))
     {
-        params.data[params.count].type = SIMIO_STRING;
+        params.data[params.count].type = VARLIST_STRING;
         params.data[params.count].value = calloc(STRING_DEFAULT_LENGTH, sizeof(char));
         if (initval != NULL) strcpy((char *)params.data[params.count].value, initval);
     }
     else
     {
-        params.data[params.count].type = SIMIO_UNKNOWN_TYPE;
+        params.data[params.count].type = VARLIST_UNKNOWN_TYPE;
     }
 
     params.count++;
@@ -86,13 +86,13 @@ int get_datatype(const char *label)
 	if (myparam == NULL)
 	{
 		printf("get_datatype: invalid parameter label: %s\n", label);
-		return SIMIO_UNKNOWN_TYPE;
+		return VARLIST_UNKNOWN_TYPE;
 	}
 	else
 		return myparam->type;
 }
 
-void simio_term(void)
+void varlist_term(void)
 {
 	int i;
 

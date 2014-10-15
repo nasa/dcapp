@@ -3,7 +3,7 @@
 #include <strings.h>
 #include <math.h>
 #include <sys/shm.h>
-#include "simio.hh"
+#include "varlist.hh"
 #include "nodes.hh"
 #include "string_utils.hh"
 #include "opengl_draw.hh"

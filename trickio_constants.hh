@@ -1,13 +1,17 @@
 #ifndef _TRICKIO_CONSTANTS_HH_
 #define _TRICKIO_CONSTANTS_HH_
 
-#define SIMIO_NO_NEW_DATA        (-2)
-#define SIMIO_INVALID_CONNECTION (-3)
-#define SIMIO_MANGLED_BUFFER     (-4)
-#define SIMIO_PARTIAL_BUFFER     (-5)
-#define SIMIO_NO_DATA_REQUESTED  (-9)
+#include "vscomm_constants.hh"
 
-#define TRICKIO_FROMTRICK         (1)
-#define TRICKIO_TOTRICK           (2)
+#define TRICKIO_SUCCESS            VS_SUCCESS
+#define TRICKIO_ERROR              VS_ERROR
+#define TRICKIO_NO_NEW_DATA        VS_NO_NEW_DATA
+#define TRICKIO_INVALID_CONNECTION VS_INVALID_CONNECTION
+#define TRICKIO_MANGLED_BUFFER     VS_MANGLED_BUFFER
+#define TRICKIO_PARTIAL_BUFFER     VS_PARTIAL_BUFFER
+#define TRICKIO_NO_DATA_REQUESTED  (-9)
+
+#define TRICKIO_FROMTRICK          (1)
+#define TRICKIO_TOTRICK            (2)
 
 #endif

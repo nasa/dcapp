@@ -116,9 +116,8 @@ static void MouseDown(struct node *list, float x, float y)
                 {
                     current->info.selected = 1;
                     ProcessEventList(current->object.me.PressList);
-mousecontinuous = current->object.me.PressList;
-mousebouncemode = 1;
-
+                    mousecontinuous = current->object.me.PressList;
+                    mousebouncemode = 1;
                 }
                 else current->info.selected = 0;
                 break;
@@ -153,7 +152,7 @@ static void MouseUp(struct node *list)
 
         // Deselect all objects when releasing mouse button when in runtime.
         current->info.selected = 0;
-mousecontinuous = 0;
+        mousecontinuous = 0;
     }
 }
 

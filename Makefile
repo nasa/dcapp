@@ -30,10 +30,10 @@ DCAPP_SOURCES := \
 	primitive_new.cc \
 	render_ADI.cc \
 	render_string.cc \
-	simio.cc \
 	string_utils.cc \
 	trickio.cc \
 	update_display.cc \
+	varlist.cc \
 	xml_parse.cc \
 	xml_utils.cc
 GENHEADER_SOURCES := \

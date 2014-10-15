@@ -5,7 +5,7 @@
 #include "vscomm.hh"
 #endif
 #include "string_utils.hh"
-#include "simio.hh"
+#include "varlist.hh"
 #include "trickio_constants.hh"
 
 #define ALLOCATION_CHUNK 10
@@ -72,7 +72,7 @@ int trickio_add_parameter(int bufID, const char *paramname, const char *trickvar
             io_map = &tosim;
             break;
         default:
-            return SIMIO_ERROR;
+            return TRICKIO_ERROR;
     }
 
     valptr = get_pointer(paramname);
@@ -83,7 +83,7 @@ int trickio_add_parameter(int bufID, const char *paramname, const char *trickvar
         {
             io_map->allocated_elements += ALLOCATION_CHUNK;
             io_map->data = (io_parameter *)realloc(io_map->data, io_map->allocated_elements * sizeof(io_parameter));
-            if (io_map->data == NULL) return SIMIO_ERROR;
+            if (io_map->data == NULL) return TRICKIO_ERROR;
         }
         io_map->data[io_map->count].trickvar = strdup(trickvar);
 
@@ -101,7 +101,7 @@ int trickio_add_parameter(int bufID, const char *paramname, const char *trickvar
     }
 #endif
     
-    return 0;
+    return TRICKIO_SUCCESS;
 }
 
 int trickio_finish_initialization(void)
@@ -113,13 +113,13 @@ int trickio_finish_initialization(void)
     {
         switch (fromsim.data[i].type)
         {
-				case SIMIO_FLOAT:
+				case VARLIST_FLOAT:
 					type = VS_FLOAT;
 					break;
-				case SIMIO_INTEGER:
+				case VARLIST_INTEGER:
 					type = VS_INTEGER;
 					break;
-				case SIMIO_STRING:
+				case VARLIST_STRING:
 					type = VS_STRING;
 					break;
         }
@@ -127,16 +127,16 @@ int trickio_finish_initialization(void)
     }
 #endif
 
-	return SIMIO_SUCCESS;
+	return TRICKIO_SUCCESS;
 }
 
 int trickio_activatecomm(char *host, int port, char *default_rate)
 {
 #ifdef TRICKACTIVE
-    if (fromsim.count == 0 && tosim.count == 0) return SIMIO_NO_DATA_REQUESTED;
+    if (fromsim.count == 0 && tosim.count == 0) return TRICKIO_NO_DATA_REQUESTED;
 	else return vscomm_activate(host, port, NULL, default_rate);
 #else
-    return SIMIO_NO_DATA_REQUESTED;
+    return TRICKIO_NO_DATA_REQUESTED;
 #endif
 }
 
@@ -152,30 +152,30 @@ int trickio_readsimdata(void)
 		{
 			switch (fromsim.data[i].type)
 			{
-				case SIMIO_FLOAT:
+				case VARLIST_FLOAT:
 					*(float *)fromsim.data[i].dcvalue = *(float *)fromsim.data[i].trickvalue;
 					break;
-				case SIMIO_INTEGER:
+				case VARLIST_INTEGER:
 					*(int *)fromsim.data[i].dcvalue = *(int *)fromsim.data[i].trickvalue;
 					break;
-				case SIMIO_STRING:
+				case VARLIST_STRING:
 					strcpy((char *)fromsim.data[i].dcvalue, (char *)fromsim.data[i].trickvalue);
 					break;
 			}
-            if (fromsim.data[i].type != SIMIO_UNKNOWN_TYPE && fromsim.data[i].init_only)
+            if (fromsim.data[i].type != VARLIST_UNKNOWN_TYPE && fromsim.data[i].init_only)
             {
-                if (vscomm_remove_var(fromsim.data[i].trickvar) == VS_SUCCESS) fromsim.data[i].type = SIMIO_UNKNOWN_TYPE;
+                if (vscomm_remove_var(fromsim.data[i].trickvar) == VS_SUCCESS) fromsim.data[i].type = VARLIST_UNKNOWN_TYPE;
             }
 		}
 	}
 
 	return status;
 #else
-    return SIMIO_NO_NEW_DATA;
+    return TRICKIO_NO_NEW_DATA;
 #endif
 }
 
-int trickio_writesimdata(void)
+void trickio_writesimdata(void)
 {
 #ifdef TRICKACTIVE
 	int i, status;
@@ -184,7 +184,7 @@ int trickio_writesimdata(void)
 	{
 		switch (tosim.data[i].type)
 		{
-			case SIMIO_FLOAT:
+			case VARLIST_FLOAT:
                 if (tosim.data[i].forcewrite || *(float *)tosim.data[i].dcvalue != tosim.data[i].prevvalue.f)
                 {
                     status = vscomm_put(tosim.data[i].trickvar, VS_FLOAT, tosim.data[i].dcvalue, tosim.data[i].units);
@@ -192,7 +192,7 @@ int trickio_writesimdata(void)
                     tosim.data[i].forcewrite = 0;
                 }
 				break;
-			case SIMIO_INTEGER:
+			case VARLIST_INTEGER:
                 if (tosim.data[i].forcewrite || *(int *)tosim.data[i].dcvalue != tosim.data[i].prevvalue.i)
                 {
                     status = vscomm_put(tosim.data[i].trickvar, VS_INTEGER, tosim.data[i].dcvalue, tosim.data[i].units);
@@ -200,7 +200,7 @@ int trickio_writesimdata(void)
                     tosim.data[i].forcewrite = 0;
                 }
 				break;
-			case SIMIO_STRING:
+			case VARLIST_STRING:
                 if (tosim.data[i].forcewrite || strcmp((char *)tosim.data[i].dcvalue, tosim.data[i].prevvalue.str))
                 {
                     status = vscomm_put(tosim.data[i].trickvar, VS_STRING, tosim.data[i].dcvalue, tosim.data[i].units);
@@ -210,10 +210,6 @@ int trickio_writesimdata(void)
 				break;
 		}
 	}
-
-	return status;
-#else
-    return SIMIO_NO_NEW_DATA;
 #endif
 }
 

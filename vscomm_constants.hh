@@ -12,7 +12,6 @@
 #define VS_MANGLED_BUFFER     (-4)
 #define VS_PARTIAL_BUFFER     (-5)
 
-#define VS_UNKNOWN_TYPE       (0)
 #define VS_STRING             (1)
 #define VS_FLOAT              (2)
 #define VS_INTEGER            (3)

@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <ctype.h>
-#include "simio.hh"
+#include "varlist.hh"
 #include "trickio.hh"
 #include "edgeio.hh"
 #include "CAN.hh"
@@ -211,7 +211,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "Variable"))
         {
-            simio_add_parameter(get_node_content(node), get_element_data(node, "Type"), get_element_data(node, "InitialValue"));
+            varlist_append(get_node_content(node), get_element_data(node, "Type"), get_element_data(node, "InitialValue"));
         }
         if (NodeCheck(node, "TrickIo"))
         {
@@ -472,7 +472,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             {
                 asprintf(&id, "@dcappVirtualVariable%d", id_count);
                 id_count++;
-                simio_add_parameter(&id[1], "Integer", "0");
+                varlist_append(&id[1], "Integer", "0");
             }
             if (switchid == NULL) switchid = id;
             if (indid == NULL) indid = switchid;
@@ -480,7 +480,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             {
                 asprintf(&transitionid, "@dcappVirtualVariable%d", id_count);
                 id_count++;
-                simio_add_parameter(&transitionid[1], "Integer", "0");
+                varlist_append(&transitionid[1], "Integer", "0");
             }
             else transitionid = NULL;
 

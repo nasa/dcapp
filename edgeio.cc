@@ -3,7 +3,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include "EDGE_rcs.hh"
-#include "simio.hh"
+#include "varlist.hh"
 #include "edgeio_constants.hh"
 
 #define SecondsElapsed(a,b) ((float)((b).tv_sec - (a).tv_sec) + (0.000001 * (float)((b).tv_usec - (a).tv_usec)))
@@ -72,7 +72,7 @@ int edgeio_add_parameter(int bufID, const char *paramname, const char *edgecmd)
             io_map = &toedge;
             break;
         default:
-            return SIMIO_ERROR;
+            return EDGEIO_ERROR;
     }
 
     valptr = get_pointer(paramname);
@@ -83,7 +83,7 @@ int edgeio_add_parameter(int bufID, const char *paramname, const char *edgecmd)
         {
             io_map->allocated_elements += ALLOCATION_CHUNK;
             io_map->data = (io_parameter *)realloc(io_map->data, io_map->allocated_elements * sizeof(io_parameter));
-            if (io_map->data == NULL) return SIMIO_ERROR;
+            if (io_map->data == NULL) return EDGEIO_ERROR;
         }
         io_map->data[io_map->count].edgecmd = strdup(edgecmd);
         io_map->data[io_map->count].type = get_datatype(paramname);
@@ -100,10 +100,10 @@ int edgeio_add_parameter(int bufID, const char *paramname, const char *edgecmd)
 
 int edgeio_finish_initialization(char *host, char *port, float spec_rate)
 {
-    if (EDGE_rcs_init(host, port)) return SIMIO_ERROR;
+    if (EDGE_rcs_init(host, port)) return EDGEIO_ERROR;
     update_rate = spec_rate;
     gettimeofday(&edge_timer, NULL);
-	return SIMIO_SUCCESS;
+	return EDGEIO_SUCCESS;
 }
 
 int edgeio_activatecomm(void)
@@ -111,23 +111,23 @@ int edgeio_activatecomm(void)
     int i, ret;
     char *cmd = NULL;
 
-    if (fromedge.count == 0 && toedge.count == 0) return SIMIO_NO_DATA_REQUESTED;
+    if (fromedge.count == 0 && toedge.count == 0) return EDGEIO_NO_DATA_REQUESTED;
 
     TIDY(cmd_group);
     ret = send_doug_command("create_command_group", &cmd_group, NULL);
-    if (ret) return SIMIO_ERROR;
-    if (!cmd_group) return SIMIO_ERROR;
-    if (!cmd_group[0]) return SIMIO_ERROR;
+    if (ret) return EDGEIO_ERROR;
+    if (!cmd_group) return EDGEIO_ERROR;
+    if (!cmd_group[0]) return EDGEIO_ERROR;
 
     for (i=0; i<fromedge.count; i++)
     {
-        if (asprintf(&cmd, "add_command_to_group %s \"%s\"", cmd_group, fromedge.data[i].edgecmd) == -1) return SIMIO_ERROR;
+        if (asprintf(&cmd, "add_command_to_group %s \"%s\"", cmd_group, fromedge.data[i].edgecmd) == -1) return EDGEIO_ERROR;
         ret = send_doug_command(cmd, NULL, NULL);
         TIDY(cmd);
-        if (ret) return SIMIO_ERROR;
+        if (ret) return EDGEIO_ERROR;
     }
 
-    return SIMIO_SUCCESS;
+    return EDGEIO_SUCCESS;
 }
 
 int edgeio_readsimdata(void)
@@ -139,30 +139,30 @@ int edgeio_readsimdata(void)
 
     gettimeofday(&now, NULL);
 
-    if (SecondsElapsed(edge_timer, now) < update_rate) return SIMIO_NO_NEW_DATA;
+    if (SecondsElapsed(edge_timer, now) < update_rate) return EDGEIO_NO_NEW_DATA;
 
-    if (asprintf(&cmd, "execute_command_group %s", cmd_group) == -1) return SIMIO_ERROR;
+    if (asprintf(&cmd, "execute_command_group %s", cmd_group) == -1) return EDGEIO_ERROR;
     ret = send_doug_command(cmd, &result, NULL);
     TIDY(cmd);
-    if (ret) return SIMIO_ERROR;
+    if (ret) return EDGEIO_ERROR;
 
     strval = (char *)calloc(1, strlen(result));
-    if (!strval) return SIMIO_ERROR;
+    if (!strval) return EDGEIO_ERROR;
 
     for (i=0, strptr=result; i<fromedge.count; i++)
     {
         ret = sscanf(strptr, "%s", strval);
-        if (!ret) return SIMIO_ERROR;
+        if (!ret) return EDGEIO_ERROR;
 
         switch (fromedge.data[i].type)
         {
-            case SIMIO_FLOAT:
+            case VARLIST_FLOAT:
                 *(float *)fromedge.data[i].dcvalue = strtof(strval, NULL);
                 break;
-            case SIMIO_INTEGER:
+            case VARLIST_INTEGER:
                 *(int *)fromedge.data[i].dcvalue = (int)strtol(strval, NULL, 10);
                 break;
-            case SIMIO_STRING:
+            case VARLIST_STRING:
                 strcpy((char *)fromedge.data[i].dcvalue, strval);
                 break;
         }
@@ -175,7 +175,7 @@ int edgeio_readsimdata(void)
 
     edge_timer = now;
 
-	return SIMIO_SUCCESS;
+	return EDGEIO_SUCCESS;
 }
 
 int edgeio_writesimdata(void)
@@ -187,30 +187,30 @@ int edgeio_writesimdata(void)
 	{
 		switch (toedge.data[i].type)
 		{
-			case SIMIO_FLOAT:
+			case VARLIST_FLOAT:
                 if (toedge.data[i].forcewrite || *(float *)toedge.data[i].dcvalue != toedge.data[i].prevvalue.f)
                 {
-                    if (asprintf(&cmd, "%s %f", toedge.data[i].edgecmd, *(float *)(toedge.data[i].dcvalue)) == -1) return 1;
+                    if (asprintf(&cmd, "%s %f", toedge.data[i].edgecmd, *(float *)(toedge.data[i].dcvalue)) == -1) return EDGEIO_ERROR;
                     status = send_doug_command(cmd, NULL, NULL);
                     toedge.data[i].prevvalue.f = *(float *)toedge.data[i].dcvalue;
                     toedge.data[i].forcewrite = 0;
 		            TIDY(cmd);
                 }
 				break;
-			case SIMIO_INTEGER:
+			case VARLIST_INTEGER:
                 if (toedge.data[i].forcewrite || *(int *)toedge.data[i].dcvalue != toedge.data[i].prevvalue.i)
                 {
-                    if (asprintf(&cmd, "%s %d", toedge.data[i].edgecmd, *(int *)(toedge.data[i].dcvalue)) == -1) return 1;
+                    if (asprintf(&cmd, "%s %d", toedge.data[i].edgecmd, *(int *)(toedge.data[i].dcvalue)) == -1) return EDGEIO_ERROR;
                     status = send_doug_command(cmd, NULL, NULL);
                     toedge.data[i].prevvalue.i = *(int *)toedge.data[i].dcvalue;
                     toedge.data[i].forcewrite = 0;
 		            TIDY(cmd);
                 }
 				break;
-			case SIMIO_STRING:
+			case VARLIST_STRING:
                 if (toedge.data[i].forcewrite || strcmp((char *)toedge.data[i].dcvalue, toedge.data[i].prevvalue.str))
                 {
-                    if (asprintf(&cmd, "%s %s", toedge.data[i].edgecmd, (char *)(toedge.data[i].dcvalue)) == -1) return 1;
+                    if (asprintf(&cmd, "%s %s", toedge.data[i].edgecmd, (char *)(toedge.data[i].dcvalue)) == -1) return EDGEIO_ERROR;
                     status = send_doug_command(cmd, NULL, NULL);
                     strcpy(toedge.data[i].prevvalue.str, (char *)toedge.data[i].dcvalue);
                     toedge.data[i].forcewrite = 0;
@@ -220,7 +220,8 @@ int edgeio_writesimdata(void)
 		}
 	}
 
-	return status;
+	if (status) return EDGEIO_ERROR;
+	else return EDGEIO_SUCCESS;
 }
 
 void edgeio_forcewrite(void *value)

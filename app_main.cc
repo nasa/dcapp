@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
-#include "simio.hh"
+#include "varlist.hh"
 #include "trickio.hh"
 #include "edgeio.hh"
 #include "ccsds_udp_io.hh"
@@ -91,19 +91,19 @@ void Idle(void)
 
         switch (status)
         {
-            case SIMIO_SUCCESS:
+            case TRICKIO_SUCCESS:
                 UpdateDisplay();
                 trickio_writesimdata();
                 break;
-            case SIMIO_PARTIAL_BUFFER:
+            case TRICKIO_PARTIAL_BUFFER:
                 debug_msg("TrickComm received a partial buffer");
                 trickio_writesimdata();
                 break;
-            case SIMIO_MANGLED_BUFFER:
+            case TRICKIO_MANGLED_BUFFER:
                 error_msg("TrickComm received a mangled data buffer");
                 trickio_writesimdata();
                 break;
-            case SIMIO_INVALID_CONNECTION:
+            case TRICKIO_INVALID_CONNECTION:
                 user_msg("TrickComm connection terminated");
                 if (AppData.simcomm.disconnectaction == AppReconnect) trickio_active = 0;
                 else Terminate(0);
@@ -115,7 +115,7 @@ void Idle(void)
         gettimeofday(&now, NULL);
         if (SecondsElapsed(last_trickio_try, now) > CONNECT_ATTEMPT_INTERVAL)
         {
-            if (trickio_activatecomm(AppData.simcomm.host, AppData.simcomm.port, AppData.simcomm.datarate) == SIMIO_SUCCESS) trickio_active = 1;
+            if (trickio_activatecomm(AppData.simcomm.host, AppData.simcomm.port, AppData.simcomm.datarate) == TRICKIO_SUCCESS) trickio_active = 1;
             gettimeofday(&last_trickio_try, NULL);
         }
     }
@@ -123,16 +123,16 @@ void Idle(void)
     if (edgeio_active)
     {
         status = edgeio_readsimdata();
-        if (status == SIMIO_SUCCESS) UpdateDisplay();
-        else if (status == SIMIO_ERROR) edgeio_active = 0;
-        if (edgeio_writesimdata()) edgeio_active = 0;
+        if (status == EDGEIO_SUCCESS) UpdateDisplay();
+        else if (status == EDGEIO_ERROR) edgeio_active = 0;
+        if (edgeio_writesimdata() == EDGEIO_ERROR) edgeio_active = 0;
     }
     else
     {
         gettimeofday(&now, NULL);
         if (SecondsElapsed(last_edgeio_try, now) > CONNECT_ATTEMPT_INTERVAL)
         {
-            if (edgeio_activatecomm() == SIMIO_SUCCESS) edgeio_active = 1;
+            if (edgeio_activatecomm() == EDGEIO_SUCCESS) edgeio_active = 1;
             gettimeofday(&last_edgeio_try, NULL);
         }
     }
@@ -225,7 +225,7 @@ void Terminate(int flag)
     trickio_term();
     ccsds_udp_term();
     edgeio_term();
-    simio_term();
+    varlist_term();
     exit(flag);
 }
 
@@ -368,7 +368,7 @@ static void ProcessArgs(int argc, char **argv)
         free(value);
     }
 
-    simio_initialize_parameter_list();
+    varlist_init();
     if (ParseXMLFile(specfile)) Terminate(-1);
 
     /* On the Mac, store arguments to use as defaults the next time the app is run */
