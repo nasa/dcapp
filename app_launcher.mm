@@ -151,7 +151,11 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outH
     [ panel setResolvesAliases:YES ];
     [ panel setAllowsMultipleSelection:NO ];
 
+#ifdef NSAppKitVersionNumber10_9
+    if ([ panel runModal ] == NSModalResponseOK)
+#else
     if ([ panel runModal ] == NSOKButton)
+#endif
         [ specfile setStringValue:[[[ panel URLs ] objectAtIndex: 0 ] path ]];
 }
 

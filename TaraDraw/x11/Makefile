@@ -12,7 +12,7 @@ $(LIBDIR)/libTD.a: $(BLD_OBJECTS)
 
 $(OBJDIR)/%.o: %.cc $(HEADERS)
 	mkdir -p $(OBJDIR)
-	$(CC) $(CFLAGS) -I/usr/X11R6/include -c $< -o $@
+	$(CC) $(CFLAGS) $(X11_CFLAG) -c $< -o $@
 
 clean:
 	rm -rf $(OBJDIR)

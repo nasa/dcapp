@@ -62,17 +62,17 @@ UI_CFLAG :=
 UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD
 LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
 endif
-UI_CFLAG += -I/usr/X11R6/include
-UI_LFLAG += -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL -lGLU
+UI_CFLAG += $(X11_CFLAG)
+UI_LFLAG += $(X11_LFLAG) -lX11 -lXi -lXmu -lGL -lGLU
 else
 TARA_SUBDIR := mac
 ifeq ($(UseGLUT), yes)
 DCAPP_SOURCES += glut_funcs.cc app_launcher_stub.cc
-UI_CFLAG := -I/usr/X11R6/include
-UI_LFLAG := -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL -lGLU -lglut
+UI_CFLAG := $(X11_CFLAG)
+UI_LFLAG := $(X11_LFLAG) -lX11 -lXi -lXmu -lGL -lGLU -lglut
 else
 DCAPP_SOURCES += tara_funcs.cc app_launcher.mm
-UI_CFLAG := -I/usr/X11R6/include
+UI_CFLAG := $(X11_CFLAG)
 UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD -framework OpenGL -framework AppKit
 LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
 endif

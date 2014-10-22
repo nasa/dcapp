@@ -177,7 +177,7 @@ int tdAlignBaseline = 0x10;
         NSString *fullpath = [ NSString stringWithFormat:@"%@/%@", resourcepath, myfile ];
         myimage = [[ NSImage alloc ] initWithContentsOfFile:fullpath ];
     }
-    [ myimage setScalesWhenResized:YES ];
+//    [ myimage setScalesWhenResized:YES ];
     *mysize = [ myimage size ];
     return myimage;
 }
@@ -528,7 +528,14 @@ int tdAlignBaseline = 0x10;
     {
         if ([ theEvent window ] == [ winview[i] window ])
         {
+#ifdef NSAppKitVersionNumber10_7
+            NSRect mouserect;
+            mouserect.origin = [ NSEvent mouseLocation ];
+            NSRect myrect = [[ theEvent window ] convertRectFromScreen: mouserect ];
+            mypoint = myrect.origin;
+#else
             mypoint = [[ theEvent window ] convertScreenToBase: [ NSEvent mouseLocation ]];
+#endif
             ukey = [[ theEvent characters ] characterAtIndex:0 ];
             if (ukey > 0xff)
             {
