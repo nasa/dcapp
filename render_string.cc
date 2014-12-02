@@ -70,16 +70,16 @@ void render_string(struct node *current)
         {
             top = bottom + current->object.string.fontSize;
             right = left + get_string_width(current->object.string.fontID, current->object.string.fontSize, current->object.string.forcemono, tmpstr);
-            rectangle_fill(current->object.string.bgcolor.R, current->object.string.bgcolor.G, current->object.string.bgcolor.B,
+            rectangle_fill(current->object.string.bgcolor.R, current->object.string.bgcolor.G, current->object.string.bgcolor.B, current->object.string.bgcolor.A,
                            left, bottom, left, top, right, top, right, bottom);
         }
         if (current->object.string.shadowoffset)
         {
             draw_string(left+current->object.string.shadowoffset, bottom-current->object.string.shadowoffset, current->object.string.fontSize,
-                        0, 0, 0, current->object.string.fontID, current->object.string.forcemono, tmpstr);
+                        0, 0, 0, 1, current->object.string.fontID, current->object.string.forcemono, tmpstr);
         }
         draw_string(left, bottom, current->object.string.fontSize,
-                    current->object.string.color.R, current->object.string.color.G, current->object.string.color.B, current->object.string.fontID, current->object.string.forcemono, tmpstr);
+                    current->object.string.color.R, current->object.string.color.G, current->object.string.color.B, current->object.string.color.A, current->object.string.fontID, current->object.string.forcemono, tmpstr);
 
         rotate_end();
         translate_end();

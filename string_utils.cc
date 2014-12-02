@@ -27,17 +27,23 @@ int BoolStrToInt(const char *instr, int default_value)
     else return default_value;
 }
 
-struct kolor StrToColor(const char *instr, float r, float g, float b)
+struct kolor StrToColor(const char *instr, float r, float g, float b, float a)
 {
     struct kolor retval;
+    int count;
 
     if (instr == NULL)
     {
         retval.R = r;
         retval.G = g;
         retval.B = b;
+        retval.A = a;
     }
-    else sscanf(instr, "%f %f %f", &(retval.R), &(retval.G), &(retval.B));
+    else
+    {
+        count = sscanf(instr, "%f %f %f %f", &(retval.R), &(retval.G), &(retval.B), &(retval.A));
+        if (count < 4) retval.A = a;
+    }
 
     return retval;
 }

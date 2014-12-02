@@ -84,7 +84,7 @@ struct node *new_line(struct node *parent, struct node **list, char *linewidth, 
     struct node *data = add_primitive_node(parent, list, Line, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
     data->object.line.linewidth = StrToFloat(linewidth, 1);
-    data->object.line.color = StrToColor(color, 1, 1, 1);
+    data->object.line.color = StrToColor(color, 1, 1, 1, 1);
 
     return data;
 }
@@ -96,8 +96,8 @@ struct node *new_polygon(struct node *parent, struct node **list, char *fillcolo
     if (fillcolor) data->object.poly.fill = 1;
     if (linecolor || linewidth) data->object.poly.outline = 1;
 
-    data->object.poly.FillColor = StrToColor(fillcolor, 1, 1, 1);
-    data->object.poly.LineColor = StrToColor(linecolor, 1, 1, 1);
+    data->object.poly.FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
+    data->object.poly.LineColor = StrToColor(linecolor, 1, 1, 1, 1);
     data->object.poly.linewidth = StrToFloat(linewidth, 1);
 
     return data;
@@ -111,8 +111,8 @@ struct node *new_rectangle(struct node *parent, struct node **list, char *x, cha
     if (fillcolor) data->object.rect.fill = 1;
     if (linecolor || linewidth) data->object.rect.outline = 1;
 
-    data->object.rect.FillColor = StrToColor(fillcolor, 1, 1, 1);
-    data->object.rect.LineColor = StrToColor(linecolor, 1, 1, 1);
+    data->object.rect.FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
+    data->object.rect.LineColor = StrToColor(linecolor, 1, 1, 1, 1);
     data->object.rect.linewidth = StrToFloat(linewidth, 1);
 
     return data;
@@ -128,8 +128,8 @@ struct node *new_circle(struct node *parent, struct node **list, char *x, char *
 
     data->object.circle.radius = (float *)get_data_pointer(FLOAT, radius, &fzero);
     data->object.circle.segments = StrToInt(segments, 80);
-    data->object.circle.FillColor = StrToColor(fillcolor, 1, 1, 1);
-    data->object.circle.LineColor = StrToColor(linecolor, 1, 1, 1);
+    data->object.circle.FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
+    data->object.circle.LineColor = StrToColor(linecolor, 1, 1, 1, 1);
     data->object.circle.linewidth = StrToFloat(linewidth, 1);
 
     return data;
@@ -152,11 +152,11 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
         else if (!strcmp(forcemono, "All")) data->object.string.forcemono = flMonoAll;
     }
 
-    data->object.string.color = StrToColor(color, 1, 1, 1);
+    data->object.string.color = StrToColor(color, 1, 1, 1, 1);
     if (bgcolor)
     {
         data->object.string.background = 1;
-        data->object.string.bgcolor = StrToColor(bgcolor, 0, 0, 0);
+        data->object.string.bgcolor = StrToColor(bgcolor, 0, 0, 0, 1);
     }
     data->object.string.shadowoffset = StrToInt(shadowoffset, 0);
     data->object.string.fontID = LoadFont(font, face);

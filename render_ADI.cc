@@ -62,11 +62,11 @@ static void draw_roll_bug(float roll, float width, float height, float radius)
     triang[2][1] = radius-height;
 
     rotate_start(roll);
-        polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2]);
+        polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2], 1);
             for (i=0; i<3; i++) gfx_vertex(triang[i][0], triang[i][1]);
         polygon_fill_end();
 
-        polygon_outline_start(1, BLACK[0], BLACK[1], BLACK[2]);
+        polygon_outline_start(1, BLACK[0], BLACK[1], BLACK[2], 1);
             for (i=0; i<3; i++) gfx_vertex(triang[i][0], triang[i][1]);
         polygon_outline_end();
     rotate_end();
@@ -111,19 +111,19 @@ static void draw_cross_hairs(float radius)
     crosshair[11][0] = -length;
     crosshair[11][1] = -halfwidth;
 
-    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2]);
+    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2], 1);
         gfx_vertex(crosshair[0][0], crosshair[0][1]);
         gfx_vertex(crosshair[5][0], crosshair[5][1]);
         gfx_vertex(crosshair[6][0], crosshair[6][1]);
         gfx_vertex(crosshair[11][0], crosshair[11][1]);
     polygon_fill_end();
-    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2]);
+    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2], 1);
         gfx_vertex(crosshair[2][0], crosshair[2][1]);
         gfx_vertex(crosshair[3][0], crosshair[3][1]);
         gfx_vertex(crosshair[8][0], crosshair[8][1]);
         gfx_vertex(crosshair[9][0], crosshair[9][1]);
     polygon_fill_end();
-    polygon_outline_start(1, BLACK[0], BLACK[1], BLACK[2]);
+    polygon_outline_start(1, BLACK[0], BLACK[1], BLACK[2], 1);
         for (i=0; i<12; i++) gfx_vertex(crosshair[i][0], crosshair[i][1]);
     polygon_outline_end();
 }
@@ -143,13 +143,13 @@ static void draw_needles(float radius, float roll_err, float pitch_err, float ya
     delta = get_error_info(yaw_err, radius);
     needle_edge = radius*(cos(asin(delta/radius)));
 
-    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2]);
+    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2], 1);
         gfx_vertex(delta-halfwidth, -needle_edge);
         gfx_vertex(delta-halfwidth, -length);
         gfx_vertex(delta+halfwidth, -length);
         gfx_vertex(delta+halfwidth, -needle_edge);
     polygon_fill_end();
-    line_start(1, BLACK[0], BLACK[1], BLACK[2]);
+    line_start(1, BLACK[0], BLACK[1], BLACK[2], 1);
         gfx_vertex(delta-halfwidth, -needle_edge);
         gfx_vertex(delta-halfwidth, -length);
         gfx_vertex(delta+halfwidth, -length);
@@ -159,13 +159,13 @@ static void draw_needles(float radius, float roll_err, float pitch_err, float ya
     delta = get_error_info(roll_err, radius);
     needle_edge = radius*(cos(asin(delta/radius)));
 
-    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2]);
+    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2], 1);
         gfx_vertex(delta-halfwidth, needle_edge);
         gfx_vertex(delta-halfwidth, length);
         gfx_vertex(delta+halfwidth, length);
         gfx_vertex(delta+halfwidth, needle_edge);
     polygon_fill_end();
-    line_start(1, BLACK[0], BLACK[1], BLACK[2]);
+    line_start(1, BLACK[0], BLACK[1], BLACK[2], 1);
         gfx_vertex(delta-halfwidth, needle_edge);
         gfx_vertex(delta-halfwidth, length);
         gfx_vertex(delta+halfwidth, length);
@@ -175,13 +175,13 @@ static void draw_needles(float radius, float roll_err, float pitch_err, float ya
     delta = get_error_info(pitch_err, radius);
     needle_edge = radius*(cos(asin(delta/radius)));
 
-    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2]);
+    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2], 1);
         gfx_vertex(needle_edge, delta-halfwidth);
         gfx_vertex(length, delta-halfwidth);
         gfx_vertex(length, delta+halfwidth);
         gfx_vertex(needle_edge, delta+halfwidth);
     polygon_fill_end();
-    line_start(1, BLACK[0], BLACK[1], BLACK[2]);
+    line_start(1, BLACK[0], BLACK[1], BLACK[2], 1);
         gfx_vertex(needle_edge, delta-halfwidth);
         gfx_vertex(length, delta-halfwidth);
         gfx_vertex(length, delta+halfwidth);

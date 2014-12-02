@@ -12,6 +12,7 @@
 
 #define FONTSIZE 20
 
+
 /*********************************************************************************
  *
  * This function is a general OpenGL initialization function. It sets all of the
@@ -37,15 +38,15 @@ void reshape(int w, int h)
     glViewport(0, 0, w, h);            // Set the viewport to the whole window.
 }
 
-void setup_panel(float x, float y, int near, int far, float R, float G, float B)
+void setup_panel(float x, float y, int near, int far, float red, float green, float blue, float alpha)
 {
-    glClearColor(R, G, B, 0);
+    glClearColor(red, green, blue, alpha);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, x, 0, y, near, far);
     glMatrixMode(GL_MODELVIEW);
-    glColor3f(1, 1, 1);
+    glColor4f(1, 1, 1, 1);
 }
 
 void init_texture(unsigned int *textureID)
@@ -67,7 +68,7 @@ void draw_image(unsigned int textureID, float w, float h)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBindTexture(GL_TEXTURE_2D, textureID);
-    glColor3f(1, 1, 1);
+    glColor4f(1, 1, 1, 1);
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
         glVertex3f(0, 0, 0);
@@ -91,9 +92,9 @@ float get_string_width(void *fontID, float charH, flMonoOption mono, char *strin
 #endif
 }
 
-void draw_string(float xpos, float ypos, float charH, float red, float green, float blue, void *fontID, flMonoOption mono, char *string)
+void draw_string(float xpos, float ypos, float charH, float red, float green, float blue, float alpha, void *fontID, flMonoOption mono, char *string)
 {
-    glColor3f(red, green, blue);
+    glColor4f(red, green, blue, alpha);
     glPushMatrix();
         glEnable(GL_TEXTURE_2D);                                       // Enable Texture Mapping
         glEnable(GL_BLEND);                                            // Blend the transparent part with the background
@@ -148,11 +149,13 @@ void translate_end(void)
     glPopMatrix();
 }
 
-void line_start(float linewidth, float red, float green, float blue)
+void line_start(float linewidth, float red, float green, float blue, float alpha)
 {
     glPushMatrix();
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glLineWidth(linewidth);
-        glColor3f(red, green, blue);
+        glColor4f(red, green, blue, alpha);
         glBegin(GL_LINE_STRIP);
 }
 
@@ -162,9 +165,11 @@ void line_end(void)
     glPopMatrix();
 }
 
-void polygon_outline_start(float linewidth, float red, float green, float blue)
+void polygon_outline_start(float linewidth, float red, float green, float blue, float alpha)
 {
-    glColor3f(red, green, blue);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(red, green, blue, alpha);
     glLineWidth(linewidth);
     glBegin(GL_LINE_LOOP);
 }
@@ -174,9 +179,9 @@ void polygon_outline_end(void)
     glEnd();
 }
 
-void polygon_fill_start(float red, float green, float blue)
+void polygon_fill_start(float red, float green, float blue, float alpha)
 {
-    glColor3f(red, green, blue);
+    glColor4f(red, green, blue, alpha);
     glBegin(GL_POLYGON);
 }
 
@@ -190,9 +195,11 @@ void gfx_vertex(float x, float y)
     glVertex2f(x, y);
 }
 
-void rectangle_outline(float linewidth, float red, float green, float blue, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
+void rectangle_outline(float linewidth, float red, float green, float blue, float alpha, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 {
-    glColor3f(red, green, blue);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(red, green, blue, alpha);
     glLineWidth(linewidth);
     glBegin(GL_LINE_LOOP);
         glVertex2f(x1, y1);
@@ -202,10 +209,10 @@ void rectangle_outline(float linewidth, float red, float green, float blue, floa
     glEnd();
 }
 
-void rectangle_fill(float red, float green, float blue, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
+void rectangle_fill(float red, float green, float blue, float alpha, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 {
     glEnable(GL_BLEND);
-    glColor3f(red, green, blue);
+    glColor4f(red, green, blue, alpha);
     glBegin(GL_QUADS);
         glVertex2f(x1, y1);
         glVertex2f(x2, y2);
@@ -215,7 +222,7 @@ void rectangle_fill(float red, float green, float blue, float x1, float y1, floa
     glDisable(GL_BLEND);
 }
 
-void circle_outline(float cx, float cy, float r, int num_segments, float red, float green, float blue, float linewidth)
+void circle_outline(float cx, float cy, float r, int num_segments, float red, float green, float blue, float alpha, float linewidth)
 { 
 	float theta = 2 * 3.1415926 / (float)num_segments;
 	float c = cosf(theta); // precalculate the sine and cosine
@@ -225,11 +232,12 @@ void circle_outline(float cx, float cy, float r, int num_segments, float red, fl
 	float y = 0;
 	int i;
 
-    glColor3f(red, green, blue);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(red, green, blue, alpha);
     glLineWidth(linewidth);
     glEnable(GL_LINE_SMOOTH);
     glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
-    glEnable(GL_BLEND); 
 	glBegin(GL_LINE_LOOP);
 	for (i = 0; i < num_segments; i++)
 	{
@@ -245,7 +253,7 @@ void circle_outline(float cx, float cy, float r, int num_segments, float red, fl
     glDisable(GL_LINE_SMOOTH);
 }
 
-void circle_fill(float cx, float cy, float r, int num_segments, float red, float green, float blue)
+void circle_fill(float cx, float cy, float r, int num_segments, float red, float green, float blue, float alpha)
 { 
 	float theta = 2 * 3.1415926 / (float)num_segments;
 	float c = cosf(theta); // precalculate the sine and cosine
@@ -255,7 +263,7 @@ void circle_fill(float cx, float cy, float r, int num_segments, float red, float
 	float y = 0;
 	int i;
 
-    glColor3f(red, green, blue);
+    glColor4f(red, green, blue, alpha);
     glEnable(GL_BLEND); 
 	glBegin(GL_POLYGON);
 	for (i = 0; i < num_segments; i++)

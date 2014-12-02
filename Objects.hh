@@ -20,6 +20,7 @@ struct kolor
     float R;
     float G;
     float B;
+    float A;
 };
 
 typedef struct
