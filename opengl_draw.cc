@@ -181,6 +181,8 @@ void polygon_outline_end(void)
 
 void polygon_fill_start(float red, float green, float blue, float alpha)
 {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(red, green, blue, alpha);
     glBegin(GL_POLYGON);
 }
@@ -212,6 +214,7 @@ void rectangle_outline(float linewidth, float red, float green, float blue, floa
 void rectangle_fill(float red, float green, float blue, float alpha, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 {
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(red, green, blue, alpha);
     glBegin(GL_QUADS);
         glVertex2f(x1, y1);
@@ -265,6 +268,7 @@ void circle_fill(float cx, float cy, float r, int num_segments, float red, float
 
     glColor4f(red, green, blue, alpha);
     glEnable(GL_BLEND); 
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBegin(GL_POLYGON);
 	for (i = 0; i < num_segments; i++)
 	{

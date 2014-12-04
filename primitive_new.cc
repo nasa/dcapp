@@ -57,7 +57,7 @@ struct node *new_panel(char *index, char *colorspec, char *vwidth, char *vheight
     data->object.panel.vheight = StrToFloat(vheight, 100);
     data->info.w = &(data->object.panel.vwidth);
     data->info.h = &(data->object.panel.vheight);
-    sscanf(colorspec, "%f %f %f", &(data->object.panel.color.R), &(data->object.panel.color.G), &(data->object.panel.color.B));
+    data->object.panel.color = StrToColor(colorspec, 0, 0, 0, 1);
 
     return data;
 }
@@ -158,7 +158,7 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
         data->object.string.background = 1;
         data->object.string.bgcolor = StrToColor(bgcolor, 0, 0, 0, 1);
     }
-    data->object.string.shadowoffset = StrToInt(shadowoffset, 0);
+    data->object.string.shadowoffset = StrToFloat(shadowoffset, 0);
     data->object.string.fontID = LoadFont(font, face);
 
     data->object.string.value = get_data_pointer(STRING, value, &emptystr);

@@ -17,10 +17,10 @@ typedef enum { AppTerminate, AppReconnect } DisconnectAction;
 
 struct kolor
 {
-    float R;
-    float G;
-    float B;
-    float A;
+    float *R;
+    float *G;
+    float *B;
+    float *A;
 };
 
 typedef struct
@@ -109,7 +109,7 @@ struct String
     struct kolor color;
     struct kolor bgcolor;
     int background;
-    int shadowoffset;
+    float shadowoffset;
     char *format;
     int datatype;
     flMonoOption forcemono;
