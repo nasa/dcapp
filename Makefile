@@ -12,6 +12,7 @@ DCAPP_SOURCES := \
 	EDGE_rcs.cc \
 	app_main.cc \
 	ccsds_udp_io.cc \
+	comm.cc \
 	dyn_elements.cc \
 	edgeio.cc \
 	geometry.cc \
@@ -31,6 +32,7 @@ DCAPP_SOURCES := \
 	render_ADI.cc \
 	render_string.cc \
 	string_utils.cc \
+	trickcomm.cc \
 	trickio.cc \
 	update_display.cc \
 	varlist.cc \

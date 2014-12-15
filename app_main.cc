@@ -10,7 +10,7 @@
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include "varlist.hh"
-#include "trickio.hh"
+#include "trickcomm.hh"
 #include "edgeio.hh"
 #include "ccsds_udp_io.hh"
 #include "CAN.hh"
@@ -39,8 +39,9 @@ void Terminate(int);
 static void ProcessArgs(int, char **);
 
 appdata AppData;
+TrickCommModule *trickcomm;
 
-static struct timeval last_trickio_try, last_edgeio_try, last_ccsdsudp_try;
+static struct timeval last_edgeio_try, last_ccsdsudp_try;
 
 
 /*********************************************************************************
@@ -54,6 +55,7 @@ int main(int argc, char **argv)
     signal(SIGINT, Terminate);
     signal(SIGTERM, Terminate);
 
+    trickcomm = new TrickCommModule;
     ProcessArgs(argc, argv);
 
     AppData.DisplayPreInit(get_pointer);
@@ -61,7 +63,6 @@ int main(int argc, char **argv)
     UpdateDisplay();
 
     // Set up timers
-    gettimeofday(&last_trickio_try, NULL);
     gettimeofday(&last_edgeio_try, NULL);
 
     // Do forever
@@ -78,45 +79,26 @@ int main(int argc, char **argv)
  *********************************************************************************/
 void Idle(void)
 {
-    static int trickio_active = 0, edgeio_active = 0, ccsds_udp_active = 0;
+    static int edgeio_active = 0, ccsds_udp_active = 0;
     int status;
     struct timeval now;
 
     CAN_read();
     UEI_read();
 
-    if (trickio_active)
+    if (trickcomm->active)
     {
-        status = trickio_readsimdata();
-
-        switch (status)
-        {
-            case TRICKIO_SUCCESS:
-                UpdateDisplay();
-                trickio_writesimdata();
-                break;
-            case TRICKIO_PARTIAL_BUFFER:
-                debug_msg("TrickComm received a partial buffer");
-                trickio_writesimdata();
-                break;
-            case TRICKIO_MANGLED_BUFFER:
-                error_msg("TrickComm received a mangled data buffer");
-                trickio_writesimdata();
-                break;
-            case TRICKIO_INVALID_CONNECTION:
-                user_msg("TrickComm connection terminated");
-                if (AppData.simcomm.disconnectaction == AppReconnect) trickio_active = 0;
-                else Terminate(0);
-                break;
-        }
+        status = trickcomm->read();
+        if (status == CommModule::Success) UpdateDisplay();
+        else if (status == CommModule::Terminate) Terminate(0);
+        trickcomm->write();
     }
     else
     {
-        gettimeofday(&now, NULL);
-        if (SecondsElapsed(last_trickio_try, now) > CONNECT_ATTEMPT_INTERVAL)
+        if (trickcomm->SecondsSinceLastConnectAttempt() > CONNECT_ATTEMPT_INTERVAL)
         {
-            if (trickio_activatecomm(AppData.simcomm.host, AppData.simcomm.port, AppData.simcomm.datarate) == TRICKIO_SUCCESS) trickio_active = 1;
-            gettimeofday(&last_trickio_try, NULL);
+            if (trickcomm->activate() == CommModule::Success) trickcomm->active = 1;
+            trickcomm->ResetLastConnectAttemptTime();
         }
     }
 
@@ -217,12 +199,9 @@ void Terminate(int flag)
 {
     AppData.DisplayClose();
 
-    TIDY(AppData.simcomm.host);
-    TIDY(AppData.simcomm.datarate);
-
     ui_terminate();
     CAN_term();
-    trickio_term();
+    delete trickcomm;
     ccsds_udp_term();
     edgeio_term();
     varlist_term();
@@ -232,8 +211,6 @@ void Terminate(int flag)
 static void ProcessArgs(int argc, char **argv)
 {
     int i, count;
-    AppData.simcomm.host = 0;
-    AppData.simcomm.port = 0;
     char *xdisplay = NULL;
     struct node *data;
     char *specfile = NULL, *host = NULL, *port = NULL, *args = NULL;
@@ -341,8 +318,8 @@ static void ProcessArgs(int argc, char **argv)
         TIDY(defargs);
     }
 
-    if (host) AppData.simcomm.host = strdup(host);
-    AppData.simcomm.port = StrToInt(port, 0);
+    trickcomm->setHost(host, true);
+    trickcomm->setPort(StrToInt(port, 0), true);
     if (args)
     {
         char *strptr = args;

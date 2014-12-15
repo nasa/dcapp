@@ -7,7 +7,8 @@
 #include <dlfcn.h>
 #include <ctype.h>
 #include "varlist.hh"
-#include "trickio.hh"
+#include "trickcomm.hh"
+#include "trickio_constants.hh"
 #include "edgeio.hh"
 #include "CAN.hh"
 #include "uei/UEI.hh"
@@ -58,6 +59,7 @@ static xmlNodePtr GetSubList(xmlNodePtr, char *, char *, char *);
 static void clean_list(struct node *);
 
 extern appdata AppData;
+extern TrickCommModule *trickcomm;
 
 static struct node *PPConstantList, *StyleList, *DefaultList;
 static char *switchid, *switchonval, *switchoffval, *indid, *indonval, *activeid, *activetrueval, *transitionid, *key, *keyascii, *bezelkey;
@@ -215,37 +217,32 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "TrickIo"))
         {
-            char *tmphost, *tmpdatarate, *d_a;
-
-            if (!AppData.simcomm.port) AppData.simcomm.port = StrToInt(get_element_data(node, "Port"), 0);
-            tmphost = get_element_data(node, "Host");
-            tmpdatarate = get_element_data(node, "DataRate");
-            if (tmphost && !AppData.simcomm.host) AppData.simcomm.host = strdup(tmphost);
-            if (tmpdatarate) AppData.simcomm.datarate = strdup(tmpdatarate);
-            d_a = get_element_data(node, "DisconnectAction");
-            AppData.simcomm.disconnectaction = AppTerminate;
+            trickcomm->setHost(get_element_data(node, "Host"), false);
+            trickcomm->setPort(StrToInt(get_element_data(node, "Port"), 0), false);
+            trickcomm->setDataRate(get_element_data(node, "DataRate"));
+            char *d_a = get_element_data(node, "DisconnectAction");
             if (d_a)
             {
-                if (!strcasecmp(d_a, "Reconnect")) AppData.simcomm.disconnectaction = AppReconnect;
+                if (!strcasecmp(d_a, "Reconnect")) trickcomm->setReconnectOnDisconnect();
             }
             process_elements(0, 0, node->children);
-            trickio_finish_initialization();
+            trickcomm->finishInitialization();
         }
         if (NodeCheck(node, "FromTrick"))
         {
             bufferID = TRICKIO_FROMTRICK;
-            trickio_initialize_parameter_list(bufferID);
+            trickcomm->initializeParameterList(bufferID);
             process_elements(0, 0, node->children);
         }
         if (NodeCheck(node, "ToTrick"))
         {
             bufferID = TRICKIO_TOTRICK;
-            trickio_initialize_parameter_list(bufferID);
+            trickcomm->initializeParameterList(bufferID);
             process_elements(0, 0, node->children);
         }
         if (NodeCheck(node, "TrickVariable"))
         {
-            trickio_add_parameter(bufferID, get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"), get_element_data(node, "InitializationOnly"));
+            trickcomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"), get_element_data(node, "InitializationOnly"));
         }
         if (NodeCheck(node, "EdgeIo"))
         {

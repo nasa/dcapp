@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "nodes.hh"
-#include "trickio.hh"
+#include "trickcomm.hh"
 #include "edgeio.hh"
 #include "string_utils.hh"
 
@@ -10,6 +10,8 @@ extern void UpdateDisplay(void);
 void ProcessEventList(struct node *);
 void UpdateValue(struct node *);
 int CheckCondition(struct node *);
+
+extern TrickCommModule *trickcomm;
 
 
 void ProcessEventList(struct node *list)
@@ -223,7 +225,7 @@ void UpdateValueLogic(int optype, int vartype, void *var, int valtype, void *val
             break;
     }
 
-    trickio_forcewrite(var);
+    trickcomm->setForceWrite(var);
     edgeio_forcewrite(var);
 }
 
