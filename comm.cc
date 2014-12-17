@@ -30,12 +30,12 @@ void CommModule::setForceWrite(void *)
 
 void CommModule::ResetLastConnectAttemptTime(void)
 {
-    gettimeofday(&(this->last_connect_attempt), NULL);
+    gettimeofday(&(this->last_connect_attempt), 0x0);
 }
 
 float CommModule::SecondsSinceLastConnectAttempt(void)
 {
     struct timeval now;
-    gettimeofday(&now, NULL);
+    gettimeofday(&now, 0x0);
     return SecondsElapsed(this->last_connect_attempt, now);
 }
