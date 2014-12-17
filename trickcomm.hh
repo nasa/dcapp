@@ -20,8 +20,8 @@ class TrickCommModule : public CommModule
         CommModule::CommStatus write(void);
         void setForceWrite(void *);
 
-        void setHost(char *, unsigned);
-        void setPort(int, unsigned);
+        void setHost(char *);
+        void setPort(int);
         void setDataRate(char *);
         void setReconnectOnDisconnect(void);
         void initializeParameterList(int);

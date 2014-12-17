@@ -31,7 +31,7 @@ extern void SetNeedsRedraw(void);
 extern void CheckMouseBounce(void);
 extern void ui_init(char *);
 extern void ui_terminate(void);
-extern void appLauncher(char *, char **, char *, char **, char *, char **, char *, char **);
+extern void appLauncher(char *, char **, char *, char **);
 extern int ParseXMLFile(char *);
 
 void Terminate(int);
@@ -213,7 +213,7 @@ static void ProcessArgs(int argc, char **argv)
     int i, count;
     char *xdisplay = NULL;
     struct node *data;
-    char *specfile = NULL, *host = NULL, *port = NULL, *args = NULL;
+    char *specfile = NULL, *args = NULL;
     char *name, *value;
     struct utsname minfo;
     size_t argsize;
@@ -223,7 +223,7 @@ static void ProcessArgs(int argc, char **argv)
 
     if (argc < 2 && strcmp(minfo.sysname, "Darwin"))
     {
-        user_msg("USAGE: dcapp <specfile> [-h <hostname> -p <port> -d <display>]");
+        user_msg("USAGE: dcapp <specfile> [optional arguments]");
         Terminate(-1);
     }
 
@@ -252,9 +252,7 @@ static void ProcessArgs(int argc, char **argv)
         {
             if (argv[i][0] == '-' && argc > i+1)
             {
-                if (!strcmp(argv[i], "-h")) host = strdup(argv[i+1]);
-                if (!strcmp(argv[i], "-p")) port = strdup(argv[i+1]);
-                if (!strcmp(argv[i], "-d")) xdisplay = strdup(argv[i+1]);
+                if (!strcmp(argv[i], "-x")) xdisplay = strdup(argv[i+1]);
                 i++;
             }
             else
@@ -276,7 +274,7 @@ static void ProcessArgs(int argc, char **argv)
     }
     else /* We're on a Mac and the command line arguments don't provide enough information to proceed... */
     {
-        char *defspecfile = NULL, *defhost = NULL, *defport = NULL, *defargs = NULL;
+        char *defspecfile = NULL, *defargs = NULL;
         char *appsupport, *preffilename;
         FILE *preffile;
 
@@ -293,14 +291,8 @@ static void ProcessArgs(int argc, char **argv)
             long len = ftell(preffile);
             rewind(preffile);
             defspecfile = (char *)malloc(len);
-            defhost = (char *)malloc(len);
-            defport = (char *)malloc(len);
             defargs = (char *)malloc(len);
             retval = fscanf(preffile, "{%[^}]}", defspecfile);
-            if (!retval) fseek(preffile, 1, SEEK_CUR);
-            retval = fscanf(preffile, "{%[^}]}", defhost);
-            if (!retval) fseek(preffile, 1, SEEK_CUR);
-            retval = fscanf(preffile, "{%[^}]}", defport);
             if (!retval) fseek(preffile, 1, SEEK_CUR);
             retval = fscanf(preffile, "{%[^}]}", defargs);
             fclose(preffile);
@@ -310,16 +302,12 @@ static void ProcessArgs(int argc, char **argv)
         free(appsupport);
 
         ui_init(NULL);
-        appLauncher(defspecfile, &specfile, defhost, &host, defport, &port, defargs, &args);
+        appLauncher(defspecfile, &specfile, defargs, &args);
 
         TIDY(defspecfile);
-        TIDY(defhost);
-        TIDY(defport);
         TIDY(defargs);
     }
 
-    trickcomm->setHost(host, true);
-    trickcomm->setPort(StrToInt(port, 0), true);
     if (args)
     {
         char *strptr = args;
@@ -367,10 +355,6 @@ static void ProcessArgs(int argc, char **argv)
             else
                 asprintf(&fullpath, "%s/%s", getcwd(0, 0), specfile);
             fprintf(preffile, "{%s}", fullpath);
-            if (host) fprintf(preffile, "{%s}", host);
-            else fprintf(preffile, "{}");
-            if (port) fprintf(preffile, "{%s}", port);
-            else fprintf(preffile, "{}");
             if (args) fprintf(preffile, "{%s}", args);
             else fprintf(preffile, "{}");
             fclose(preffile);
@@ -382,7 +366,5 @@ static void ProcessArgs(int argc, char **argv)
     }
 
     TIDY(specfile);
-    TIDY(host);
-    TIDY(port);
     TIDY(args);
 }

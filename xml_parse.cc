@@ -217,8 +217,8 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "TrickIo"))
         {
-            trickcomm->setHost(get_element_data(node, "Host"), false);
-            trickcomm->setPort(StrToInt(get_element_data(node, "Port"), 0), false);
+            trickcomm->setHost(get_element_data(node, "Host"));
+            trickcomm->setPort(StrToInt(get_element_data(node, "Port"), 0));
             trickcomm->setDataRate(get_element_data(node, "DataRate"));
             char *d_a = get_element_data(node, "DisconnectAction");
             if (d_a)

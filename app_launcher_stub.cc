@@ -1,3 +1,3 @@
-void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outHost, char *inPort, char **outPort, char *inArgs, char **outArgs)
+void appLauncher(char *inSpecfile, char **outSpecfile, char *inArgs, char **outArgs)
 {
 }

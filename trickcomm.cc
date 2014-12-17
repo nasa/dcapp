@@ -63,15 +63,13 @@ void TrickCommModule::setForceWrite(void *value)
     trickio_forcewrite(value);
 }
 
-void TrickCommModule::setHost(char *hostspec, unsigned overwrite)
+void TrickCommModule::setHost(char *hostspec)
 {
-    if (!hostspec || (this->host && !overwrite)) return;
-    this->host = strdup(hostspec);
+    if (hostspec) this->host = strdup(hostspec);
 }
 
-void TrickCommModule::setPort(int portspec, unsigned overwrite)
+void TrickCommModule::setPort(int portspec)
 {
-    if (this->port && !overwrite) return;
     this->port = portspec;
 }
 

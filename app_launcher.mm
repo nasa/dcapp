@@ -5,35 +5,25 @@
 {
     id window;
     id specfile;
-    id host;
-    id port;
     id args;
 }
 - (id)init;
 - (NSString *)getSpecfile;
-- (NSString *)getHost;
-- (NSString *)getPort;
 - (NSString *)getArgs;
 - (void)setSpecfile:(NSString *)value;
-- (void)setHost:(NSString *)value;
-- (void)setPort:(NSString *)value;
 - (void)setArgs:(NSString *)value;
 @end
 
-void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outHost, char *inPort, char **outPort, char *inArgs, char **outArgs)
+void appLauncher(char *inSpecfile, char **outSpecfile, char *inArgs, char **outArgs)
 {
     MyApp *myapp = [[ MyApp alloc ] init ];
 
     if (inSpecfile) [ myapp setSpecfile:[[ NSString stringWithCString:inSpecfile encoding:NSASCIIStringEncoding ] stringByStandardizingPath ]];
-    if (inHost) [ myapp setHost:[ NSString stringWithCString:inHost encoding:NSASCIIStringEncoding ]];
-    if (inPort) [ myapp setPort:[ NSString stringWithCString:inPort encoding:NSASCIIStringEncoding ]];
     if (inArgs) [ myapp setArgs:[ NSString stringWithCString:inArgs encoding:NSASCIIStringEncoding ]];
 
     [ NSApp run ];
 
     *outSpecfile = strdup([[[ myapp getSpecfile ] stringByStandardizingPath ] cStringUsingEncoding:NSASCIIStringEncoding ]);
-    *outHost = strdup([[ myapp getHost ] cStringUsingEncoding:NSASCIIStringEncoding ]);
-    *outPort = strdup([[ myapp getPort ] cStringUsingEncoding:NSASCIIStringEncoding ]);
     *outArgs = strdup([[ myapp getArgs ] cStringUsingEncoding:NSASCIIStringEncoding ]);
 }
 
@@ -45,7 +35,7 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outH
     {
         id appName = [[NSProcessInfo processInfo] processName];
 
-        window = [[[ NSWindow alloc ] initWithContentRect:NSMakeRect(0, 0, 916, 284)
+        window = [[[ NSWindow alloc ] initWithContentRect:NSMakeRect(0, 0, 1000, 234)
                                       styleMask:NSTitledWindowMask|NSClosableWindowMask|NSMiniaturizableWindowMask
                                       backing:NSBackingStoreBuffered
                                       defer:NO ] autorelease ];
@@ -54,27 +44,21 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outH
         [ window setTitle:appName ];
         [ window makeKeyAndOrderFront:nil ] ;
 
-        id box1 = [ self uiBoxParent:[ window contentView ] x:17 y:173 w:882 h:93 ];
-        [ self uiLabelParent:box1 x:5 y:49 w:114 h:17 label:@"Specification File:" ];
-        specfile = [ self uiTextFieldParent:box1 x:5 y:25 w:766 h:22 ];
-        [ self uiButtonParent:box1 x:780 y:50 w:92 h:28 label:@"Create..." target:self action:@selector(createFile:) ];
-        [ self uiButtonParent:box1 x:780 y:25 w:92 h:28 label:@"Select..." target:self action:@selector(selectFile:) ];
-        [ self uiButtonParent:box1 x:780 y:0 w:92 h:28 label:@"Edit..." target:self action:@selector(editFile:) ];
+        id box1 = [ self uiBoxParent:[ window contentView ] x:17 y:123 w:966 h:93 ];
+        [ self uiLabelParent:box1 x:5 y:49 w:200 h:17 label:@"Specification File:" ];
+        specfile = [ self uiTextFieldParent:box1 x:5 y:25 w:850 h:22 ];
+        [ self uiButtonParent:box1 x:864 y:50 w:92 h:28 label:@"Create..." target:self action:@selector(createFile:) ];
+        [ self uiButtonParent:box1 x:864 y:25 w:92 h:28 label:@"Select..." target:self action:@selector(selectFile:) ];
+        [ self uiButtonParent:box1 x:864 y:0 w:92 h:28 label:@"Edit..." target:self action:@selector(editFile:) ];
 
-        id box2 = [ self uiBoxParent:[ window contentView ] x:17 y:56 w:882 h:115 ];
-        [ self uiLabelParent:box2 x:5 y:84 w:38 h:17 label:@"Host:" ];
-        host = [ self uiTextFieldParent:box2 x:5 y:60 w:564 h:22 ];
-        [ self uiLabelParent:box2 x:585 y:84 w:40 h:17 label:@"Port:" ];
-        port = [ self uiTextFieldParent:box2 x:585 y:60 w:186 h:22 ];
-        [ self uiButtonParent:box2 x:780 y:56 w:92 h:28 label:@"Defaults" target:self action:@selector(setDefaults:) ];
-        [ self uiLabelParent:box2 x:5 y:34 w:136 h:17 label:@"Optional Arguments:" ];
-        args = [ self uiTextFieldParent:box2 x:5 y:10 w:860 h:22 ];
-        id proceed = [ self uiButtonParent:[ window contentView ] x:388 y:12 w:140 h:32 label:@"Proceed" target:self action:@selector(buttonClicked:) ];
+        id box2 = [ self uiBoxParent:[ window contentView ] x:17 y:56 w:966 h:65 ];
+        [ self uiLabelParent:box2 x:5 y:34 w:200 h:17 label:@"Command-Line Arguments:" ];
+        args = [ self uiTextFieldParent:box2 x:5 y:10 w:944 h:22 ];
+
+        id proceed = [ self uiButtonParent:[ window contentView ] x:430 y:12 w:140 h:32 label:@"Proceed" target:self action:@selector(buttonClicked:) ];
 
         // Set the key view loop so that the user can switch between fields using the "tab" key
-        [ specfile setNextKeyView:host ];
-        [ host setNextKeyView:port ];
-        [ port setNextKeyView:args ];
+        [ specfile setNextKeyView:args ];
         [ args setNextKeyView:specfile ];
 
         // Set the "Proceed" button to activate by default with the "return" key
@@ -167,12 +151,6 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outH
     free(cmd);
 }
 
-- (void)setDefaults:(id)sender
-{
-    [ host setStringValue:[[ NSProcessInfo processInfo ] hostName ]];
-    [ port setStringValue:@"7000" ];
-}
-
 - (void)buttonClicked:(id)sender
 {
     [ window makeFirstResponder:nil ];
@@ -185,16 +163,6 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outH
     return [[ specfile stringValue ] stringByTrimmingCharactersInSet:[ NSCharacterSet whitespaceCharacterSet ]];
 }
 
-- (NSString *)getHost
-{
-    return [[ host stringValue ] stringByTrimmingCharactersInSet:[ NSCharacterSet whitespaceCharacterSet ]];
-}
-
-- (NSString *)getPort
-{
-    return [[ port stringValue ] stringByTrimmingCharactersInSet:[ NSCharacterSet whitespaceCharacterSet ]];
-}
-
 - (NSString *)getArgs
 {
     return [[ args stringValue ] stringByTrimmingCharactersInSet:[ NSCharacterSet whitespaceCharacterSet ]];
@@ -203,16 +171,6 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inHost, char **outH
 - (void)setSpecfile:(NSString *)value
 {
     [ specfile setStringValue:value ];
-}
-
-- (void)setHost:(NSString *)value
-{
-    [ host setStringValue:value ];
-}
-
-- (void)setPort:(NSString *)value
-{
-    [ port setStringValue:value ];
 }
 
 - (void)setArgs:(NSString *)value
