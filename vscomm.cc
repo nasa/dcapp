@@ -113,17 +113,21 @@ int vscomm_remove_var(char *param)
 
 int vscomm_activate(char *host, int port, char *rate_spec, char *default_rate)
 {
-    char *cmd=NULL, *sample_rate, *default_sample_rate = strdup(VS_DEFAULT_SAMPLERATE);
+    char *cmd=NULL, *sample_rate=NULL, *default_sample_rate = strdup(VS_DEFAULT_SAMPLERATE);
     int i;
     ParamArray *pstruct;
 
     bzero(&connection, sizeof(TCDevice));
 
-    if (host == VS_DEFAULT_HOST || strlen(host) == 0) host = strdup("localhost");
+    if (host)
+    {
+        if (strlen(host)) connection.hostname = strdup(host);
+    }
+    if (!(connection.hostname)) connection.hostname = strdup("localhost");
 
-    connection.hostname = strdup(host);
     if (port) connection.port = port;
     else connection.port = VS_DEFAULT_PORT;
+
     connection.disable_handshaking = TC_COMM_TRUE;
 
     // disable error messages
@@ -151,12 +155,7 @@ int vscomm_activate(char *host, int port, char *rate_spec, char *default_rate)
     free(trickver);
 #endif
 
-    if (rate_spec == NULL)
-    {
-        if (default_rate != NULL && strlen(default_rate) != 0) sample_rate = default_rate;
-        else sample_rate = default_sample_rate;
-    }
-    else
+    if (rate_spec)
     {
         if (asprintf(&cmd, "trick.var_add(\"%s\")\n", rate_spec) == -1) return VS_ERROR;
         sim_write(cmd);
@@ -177,6 +176,14 @@ int vscomm_activate(char *host, int port, char *rate_spec, char *default_rate)
         }
         sample_rate = databuf + find_next_token(databuf, '\t') + 1;
         sim_write_const("trick.var_clear()\n");
+    }
+    else
+    {
+        if (default_rate)
+        {
+            if (strlen(default_rate)) sample_rate = default_rate;
+        }
+        if (!sample_rate) sample_rate = default_sample_rate;
     }
 
     sim_write_const("trick.var_pause()\n");

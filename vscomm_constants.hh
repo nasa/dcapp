@@ -1,7 +1,6 @@
 #ifndef _VSCOMM_CONSTANTS_HH_
 #define _VSCOMM_CONSTANTS_HH_
 
-#define VS_DEFAULT_HOST       (NULL)
 #define VS_DEFAULT_PORT       (7000)
 #define VS_DEFAULT_SAMPLERATE "1.0"
 

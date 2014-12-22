@@ -104,11 +104,11 @@ struct Polygon
 struct String
 {
     void *fontID;
-    float fontSize;
+    float *fontSize;
     struct kolor color;
     struct kolor bgcolor;
     int background;
-    float shadowoffset;
+    float *shadowOffset;
     char *format;
     int datatype;
     flMonoOption forcemono;

@@ -140,7 +140,7 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
 {
     struct node *data = add_primitive_node(parent, list, String, x, y, "0", fontsize, halign, valign, rotate);
 
-    data->object.string.fontSize = StrToFloat(fontsize, 12);
+    data->object.string.fontSize = (float *)get_data_pointer(FLOAT, fontsize, &fzero);
     data->object.string.halign = (HAlignment)(data->info.halign);
     data->object.string.valign = (VAlignment)(data->info.valign);
 
@@ -158,7 +158,7 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
         data->object.string.background = 1;
         data->object.string.bgcolor = StrToColor(bgcolor, 0, 0, 0, 1);
     }
-    data->object.string.shadowoffset = StrToFloat(shadowoffset, 0);
+    data->object.string.shadowOffset = (float *)get_data_pointer(FLOAT, shadowoffset, &fzero);
     data->object.string.fontID = LoadFont(font, face);
 
     data->object.string.value = get_data_pointer(STRING, value, &emptystr);

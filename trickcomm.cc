@@ -7,9 +7,9 @@
 
 TrickCommModule::TrickCommModule()
 :
-host(NULL),
+host(0x0),
 port(0),
-datarate(NULL),
+datarate(0x0),
 disconnectaction(this->AppTerminate)
 {
 }
