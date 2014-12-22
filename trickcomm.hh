@@ -18,7 +18,7 @@ class TrickCommModule : public CommModule
 
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
-        void setForceWrite(void *);
+        void flagAsChanged(void *);
 
         void setHost(char *);
         void setPort(int);
@@ -27,7 +27,7 @@ class TrickCommModule : public CommModule
         void initializeParameterList(int);
         int addParameter(int, const char *, const char *, const char *, const char *);
         void finishInitialization(void);
-        CommModule::CommStatus activate(void);
+        void activate(void);
 };
 
 #endif

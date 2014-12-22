@@ -5,6 +5,8 @@
 #include "trickio.hh"
 #include "msg.hh"
 
+#define CONNECT_ATTEMPT_INTERVAL 2.0
+
 TrickCommModule::TrickCommModule()
 :
 host(0x0),
@@ -23,6 +25,8 @@ TrickCommModule::~TrickCommModule()
 
 CommModule::CommStatus TrickCommModule::read(void)
 {
+    if (!(this->active)) return this->Inactive;
+
     int status = trickio_readsimdata();
 
     switch (status)
@@ -54,11 +58,21 @@ CommModule::CommStatus TrickCommModule::read(void)
 
 CommModule::CommStatus TrickCommModule::write(void)
 {
-    trickio_writesimdata();
+    if (!(this->active))
+    {
+        if (this->SecondsSinceLastConnectAttempt() > CONNECT_ATTEMPT_INTERVAL)
+        {
+            this->activate();
+            this->ResetLastConnectAttemptTime();
+        }
+    }
+
+    if (this->active) trickio_writesimdata();
+
     return this->None;
 }
 
-void TrickCommModule::setForceWrite(void *value)
+void TrickCommModule::flagAsChanged(void *value)
 {
     trickio_forcewrite(value);
 }
@@ -98,9 +112,8 @@ void TrickCommModule::finishInitialization(void)
     trickio_finish_initialization();
 }
 
-CommModule::CommStatus TrickCommModule::activate(void)
+void TrickCommModule::activate(void)
 {
-    if (trickio_activatecomm(this->host, this->port, this->datarate) == TRICKIO_SUCCESS) return this->Success;
-    else return this->Fail;
+    if (trickio_activatecomm(this->host, this->port, this->datarate) == TRICKIO_SUCCESS) this->active = 1;
 }
 

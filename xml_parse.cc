@@ -59,8 +59,8 @@ static xmlNodePtr GetSubList(xmlNodePtr, char *, char *, char *);
 static void clean_list(struct node *);
 
 extern appdata AppData;
-extern TrickCommModule *trickcomm;
 
+static TrickCommModule *trickcomm = 0x0;
 static struct node *PPConstantList, *StyleList, *DefaultList;
 static char *switchid, *switchonval, *switchoffval, *indid, *indonval, *activeid, *activetrueval, *transitionid, *key, *keyascii, *bezelkey;
 static int id_count = 0, preprocessing = 1, bufferID;
@@ -217,6 +217,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "TrickIo"))
         {
+            trickcomm = new TrickCommModule;
             trickcomm->setHost(get_element_data(node, "Host"));
             trickcomm->setPort(StrToInt(get_element_data(node, "Port"), 0));
             trickcomm->setDataRate(get_element_data(node, "DataRate"));
@@ -227,22 +228,32 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             }
             process_elements(0, 0, node->children);
             trickcomm->finishInitialization();
+            AppData.commlist.push_back(trickcomm);
         }
         if (NodeCheck(node, "FromTrick"))
         {
-            bufferID = TRICKIO_FROMTRICK;
-            trickcomm->initializeParameterList(bufferID);
-            process_elements(0, 0, node->children);
+            if (trickcomm)
+            {
+                bufferID = TRICKIO_FROMTRICK;
+                trickcomm->initializeParameterList(bufferID);
+                process_elements(0, 0, node->children);
+            }
         }
         if (NodeCheck(node, "ToTrick"))
         {
-            bufferID = TRICKIO_TOTRICK;
-            trickcomm->initializeParameterList(bufferID);
-            process_elements(0, 0, node->children);
+            if (trickcomm)
+            {
+                bufferID = TRICKIO_TOTRICK;
+                trickcomm->initializeParameterList(bufferID);
+                process_elements(0, 0, node->children);
+            }
         }
         if (NodeCheck(node, "TrickVariable"))
         {
-            trickcomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"), get_element_data(node, "InitializationOnly"));
+            if (trickcomm)
+            {
+                trickcomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"), get_element_data(node, "InitializationOnly"));
+            }
         }
         if (NodeCheck(node, "EdgeIo"))
         {

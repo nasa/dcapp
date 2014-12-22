@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "nodes.hh"
-#include "trickcomm.hh"
 #include "edgeio.hh"
 #include "string_utils.hh"
 
@@ -11,7 +10,7 @@ void ProcessEventList(struct node *);
 void UpdateValue(struct node *);
 int CheckCondition(struct node *);
 
-extern TrickCommModule *trickcomm;
+extern appdata AppData;
 
 
 void ProcessEventList(struct node *list)
@@ -166,6 +165,8 @@ int CheckCondition(struct node *mynode)
 
 void UpdateValueLogic(int optype, int vartype, void *var, int valtype, void *val, int mintype, void *min, int maxtype, void *max)
 {
+    std::list<CommModule *>::iterator commitem;
+
     switch (vartype)
     {
         case FLOAT:
@@ -225,7 +226,10 @@ void UpdateValueLogic(int optype, int vartype, void *var, int valtype, void *val
             break;
     }
 
-    trickcomm->setForceWrite(var);
+    for (commitem = AppData.commlist.begin(); commitem != AppData.commlist.end(); commitem++)
+    {
+        (*commitem)->flagAsChanged(var);
+    }
     edgeio_forcewrite(var);
 }
 

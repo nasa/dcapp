@@ -9,13 +9,13 @@ class CommModule
         CommModule();
         virtual ~CommModule();
 
-        typedef enum { None, Success, Fail, Terminate } CommStatus;
+        typedef enum { None, Inactive, Success, Fail, Terminate } CommStatus;
 
         int active;
 
         virtual CommModule::CommStatus read(void);
         virtual CommModule::CommStatus write(void);
-        virtual void setForceWrite(void *);
+        virtual void flagAsChanged(void *);
 
         void ResetLastConnectAttemptTime(void);
         float SecondsSinceLastConnectAttempt(void);

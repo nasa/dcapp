@@ -23,7 +23,7 @@ CommModule::CommStatus CommModule::write(void)
     return this->None;
 }
 
-void CommModule::setForceWrite(void *)
+void CommModule::flagAsChanged(void *)
 {
     return;
 }

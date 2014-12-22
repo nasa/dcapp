@@ -10,7 +10,6 @@
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include "varlist.hh"
-#include "trickcomm.hh"
 #include "edgeio.hh"
 #include "ccsds_udp_io.hh"
 #include "CAN.hh"
@@ -39,7 +38,6 @@ void Terminate(int);
 static void ProcessArgs(int, char **);
 
 appdata AppData;
-TrickCommModule *trickcomm;
 
 static struct timeval last_edgeio_try, last_ccsdsudp_try;
 
@@ -55,7 +53,6 @@ int main(int argc, char **argv)
     signal(SIGINT, Terminate);
     signal(SIGTERM, Terminate);
 
-    trickcomm = new TrickCommModule;
     ProcessArgs(argc, argv);
 
     AppData.DisplayPreInit(get_pointer);
@@ -82,24 +79,19 @@ void Idle(void)
     static int edgeio_active = 0, ccsds_udp_active = 0;
     int status;
     struct timeval now;
+    std::list<CommModule *>::iterator commitem;
 
     CAN_read();
     UEI_read();
 
-    if (trickcomm->active)
+    for (commitem = AppData.commlist.begin(); commitem != AppData.commlist.end(); commitem++)
     {
-        status = trickcomm->read();
+        status = (*commitem)->write();
+        if (status == CommModule::Terminate) Terminate(0);
+
+        status = (*commitem)->read();
         if (status == CommModule::Success) UpdateDisplay();
         else if (status == CommModule::Terminate) Terminate(0);
-        trickcomm->write();
-    }
-    else
-    {
-        if (trickcomm->SecondsSinceLastConnectAttempt() > CONNECT_ATTEMPT_INTERVAL)
-        {
-            if (trickcomm->activate() == CommModule::Success) trickcomm->active = 1;
-            trickcomm->ResetLastConnectAttemptTime();
-        }
     }
 
     if (edgeio_active)
@@ -197,11 +189,18 @@ void Idle(void)
  *********************************************************************************/
 void Terminate(int flag)
 {
+    std::list<CommModule *>::iterator commitem;
+
     AppData.DisplayClose();
 
     ui_terminate();
     CAN_term();
-    delete trickcomm;
+
+    for (commitem = AppData.commlist.begin(); commitem != AppData.commlist.end(); commitem++)
+    {
+        delete (*commitem);
+    }
+
     ccsds_udp_term();
     edgeio_term();
     varlist_term();
