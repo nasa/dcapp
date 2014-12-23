@@ -8,7 +8,6 @@
 #include <ctype.h>
 #include "varlist.hh"
 #include "trickcomm.hh"
-#include "trickio_constants.hh"
 #include "edgeio.hh"
 #include "CAN.hh"
 #include "uei/UEI.hh"
@@ -234,7 +233,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         {
             if (trickcomm)
             {
-                bufferID = TRICKIO_FROMTRICK;
+                bufferID = TrickCommModule::FromTrick;
                 trickcomm->initializeParameterList(bufferID);
                 process_elements(0, 0, node->children);
             }
@@ -243,7 +242,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         {
             if (trickcomm)
             {
-                bufferID = TRICKIO_TOTRICK;
+                bufferID = TrickCommModule::ToTrick;
                 trickcomm->initializeParameterList(bufferID);
                 process_elements(0, 0, node->children);
             }

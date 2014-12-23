@@ -2,6 +2,7 @@
 #define _TRICKCOMM_HH_
 
 #include "comm.hh"
+#include "varlist.hh"
 
 class TrickCommModule : public CommModule
 {
@@ -9,12 +10,37 @@ class TrickCommModule : public CommModule
         TrickCommModule();
         virtual ~TrickCommModule();
 
+        typedef enum { FromTrick, ToTrick } BufferType;
         typedef enum { AppTerminate, AppReconnect } DisconnectAction;
+        typedef struct
+        {
+            int type;
+            char *trickvar;
+            char *units;
+            void *trickvalue;
+            void *dcvalue;
+            union
+            {
+                int i;
+                float f;
+                char str[STRING_DEFAULT_LENGTH];
+            } prevvalue;
+            int forcewrite;
+            int init_only;
+        } io_parameter;
+        typedef struct
+        {
+            int count;
+            int allocated_elements;
+            TrickCommModule::io_parameter *data;
+        } io_parameter_list;
 
         char *host;
         int port;
         char *datarate;
         TrickCommModule::DisconnectAction disconnectaction;
+        TrickCommModule::io_parameter_list fromsim;
+        TrickCommModule::io_parameter_list tosim;
 
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);

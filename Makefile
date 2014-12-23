@@ -33,7 +33,6 @@ DCAPP_SOURCES := \
 	render_string.cc \
 	string_utils.cc \
 	trickcomm.cc \
-	trickio.cc \
 	update_display.cc \
 	varlist.cc \
 	xml_parse.cc \
