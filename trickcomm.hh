@@ -2,6 +2,9 @@
 #define _TRICKCOMM_HH_
 
 #include "comm.hh"
+#ifdef TRICKACTIVE
+#include "vscomm.hh"
+#endif
 #include "varlist.hh"
 
 class TrickCommModule : public CommModule
@@ -12,6 +15,20 @@ class TrickCommModule : public CommModule
 
         typedef enum { FromTrick, ToTrick } BufferType;
         typedef enum { AppTerminate, AppReconnect } DisconnectAction;
+
+        CommModule::CommStatus read(void);
+        CommModule::CommStatus write(void);
+        void flagAsChanged(void *);
+
+        void setHost(char *);
+        void setPort(int);
+        void setDataRate(char *);
+        void setReconnectOnDisconnect(void);
+        void initializeParameterList(int);
+        int addParameter(int, const char *, const char *, const char *, const char *);
+        void finishInitialization(void);
+
+    private:
         typedef struct
         {
             int type;
@@ -41,18 +58,8 @@ class TrickCommModule : public CommModule
         TrickCommModule::DisconnectAction disconnectaction;
         TrickCommModule::io_parameter_list fromsim;
         TrickCommModule::io_parameter_list tosim;
+        VariableServerComm *tvs;
 
-        CommModule::CommStatus read(void);
-        CommModule::CommStatus write(void);
-        void flagAsChanged(void *);
-
-        void setHost(char *);
-        void setPort(int);
-        void setDataRate(char *);
-        void setReconnectOnDisconnect(void);
-        void initializeParameterList(int);
-        int addParameter(int, const char *, const char *, const char *, const char *);
-        void finishInitialization(void);
         void activate(void);
 };
 

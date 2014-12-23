@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "trickcomm.hh"
-#ifdef TRICKACTIVE
-#include "vscomm.hh"
-#endif
 #include "msg.hh"
 #include "string_utils.hh"
 #include "varlist.hh"
@@ -17,8 +14,12 @@ TrickCommModule::TrickCommModule()
 host(0x0),
 port(0),
 datarate(0x0),
-disconnectaction(this->AppTerminate)
+disconnectaction(this->AppTerminate),
+tvs(0x0)
 {
+#ifdef TRICKACTIVE
+    tvs = new VariableServerComm;
+#endif
 }
 
 TrickCommModule::~TrickCommModule()
@@ -34,7 +35,7 @@ TrickCommModule::~TrickCommModule()
 	for (i=0; i<this->tosim.count; i++) free(this->tosim.data[i].trickvar);
 	free(this->tosim.data);
 
-	vscomm_terminate();
+	delete tvs;
 #endif
 }
 
@@ -44,7 +45,7 @@ CommModule::CommStatus TrickCommModule::read(void)
     if (!(this->active)) return this->Inactive;
 
 	int i;
-	int status = vscomm_get();
+	int status = tvs->get();
 
     switch (status)
     {
@@ -65,7 +66,7 @@ CommModule::CommStatus TrickCommModule::read(void)
                 }
                 if (this->fromsim.data[i].type != VARLIST_UNKNOWN_TYPE && this->fromsim.data[i].init_only)
                 {
-                    if (vscomm_remove_var(this->fromsim.data[i].trickvar) == VS_SUCCESS) this->fromsim.data[i].type = VARLIST_UNKNOWN_TYPE;
+                    if (tvs->remove_var(this->fromsim.data[i].trickvar) == VS_SUCCESS) this->fromsim.data[i].type = VARLIST_UNKNOWN_TYPE;
                 }
             }
             return this->Success;
@@ -114,7 +115,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                 case VARLIST_FLOAT:
                     if (this->tosim.data[i].forcewrite || *(float *)this->tosim.data[i].dcvalue != this->tosim.data[i].prevvalue.f)
                     {
-                        vscomm_put(this->tosim.data[i].trickvar, VS_FLOAT, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
+                        tvs->put(this->tosim.data[i].trickvar, VS_FLOAT, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
                         this->tosim.data[i].prevvalue.f = *(float *)this->tosim.data[i].dcvalue;
                         this->tosim.data[i].forcewrite = 0;
                     }
@@ -122,7 +123,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                 case VARLIST_INTEGER:
                     if (this->tosim.data[i].forcewrite || *(int *)this->tosim.data[i].dcvalue != this->tosim.data[i].prevvalue.i)
                     {
-                        vscomm_put(this->tosim.data[i].trickvar, VS_INTEGER, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
+                        tvs->put(this->tosim.data[i].trickvar, VS_INTEGER, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
                         this->tosim.data[i].prevvalue.i = *(int *)this->tosim.data[i].dcvalue;
                         this->tosim.data[i].forcewrite = 0;
                     }
@@ -130,7 +131,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                 case VARLIST_STRING:
                     if (this->tosim.data[i].forcewrite || strcmp((char *)this->tosim.data[i].dcvalue, this->tosim.data[i].prevvalue.str))
                     {
-                        vscomm_put(this->tosim.data[i].trickvar, VS_STRING, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
+                        tvs->put(this->tosim.data[i].trickvar, VS_STRING, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
                         strcpy(this->tosim.data[i].prevvalue.str, (char *)this->tosim.data[i].dcvalue);
                         this->tosim.data[i].forcewrite = 0;
                     }
@@ -265,7 +266,7 @@ void TrickCommModule::finishInitialization(void)
 					type = VS_STRING;
 					break;
         }
-        this->fromsim.data[i].trickvalue = vscomm_add_var(this->fromsim.data[i].trickvar, this->fromsim.data[i].units, type, 1);
+        this->fromsim.data[i].trickvalue = tvs->add_var(this->fromsim.data[i].trickvar, this->fromsim.data[i].units, type, 1);
     }
 #endif
 }
@@ -275,7 +276,7 @@ void TrickCommModule::activate(void)
 #ifdef TRICKACTIVE
     if (this->fromsim.count || this->tosim.count)
     {
-	    if (vscomm_activate(this->host, this->port, NULL, this->datarate) == VS_SUCCESS) this->active = 1;
+	    if (tvs->activate(this->host, this->port, NULL, this->datarate) == VS_SUCCESS) this->active = 1;
 	}
 #endif
 }
