@@ -14,7 +14,7 @@ DCAPP_SOURCES := \
 	ccsds_udp_io.cc \
 	comm.cc \
 	dyn_elements.cc \
-	edgeio.cc \
+	edgecomm.cc \
 	geometry.cc \
 	handle_bezel.cc \
 	handle_draw.cc \

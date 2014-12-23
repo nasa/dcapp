@@ -8,7 +8,7 @@
 #include <ctype.h>
 #include "varlist.hh"
 #include "trickcomm.hh"
-#include "edgeio.hh"
+#include "edgecomm.hh"
 #include "CAN.hh"
 #include "uei/UEI.hh"
 #include "nodes.hh"
@@ -60,6 +60,7 @@ static void clean_list(struct node *);
 extern appdata AppData;
 
 static TrickCommModule *trickcomm = 0x0;
+static EdgeCommModule *edgecomm = 0x0;
 static struct node *PPConstantList, *StyleList, *DefaultList;
 static char *switchid, *switchonval, *switchoffval, *indid, *indonval, *activeid, *activetrueval, *transitionid, *key, *keyascii, *bezelkey;
 static int id_count = 0, preprocessing = 1, bufferID;
@@ -83,7 +84,7 @@ int ParseXMLFile(char *fullpath)
     mycwd = open(".", O_RDONLY);
 
     // Move to directory containing the specfile by default
-    if (dname != NULL) chdir(dname);
+    if (dname) chdir(dname);
 
     if (XMLFileOpen(&mydoc, &root_element, bname, "DCAPP")) return (-1);
 
@@ -118,22 +119,22 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
     char *id, *onval, *offval;
     int subnode_found;
 
-    for (node = startnode; node != NULL; node = node->next)
+    for (node = startnode; node; node = node->next)
     {
         if (NodeCheck(node, "Dummy")) process_elements(parent, list, node->children);
         if (NodeCheck(node, "Constant"))
         {
-            data = NewNode(NULL, &PPConstantList);
+            data = NewNode(0x0, &PPConstantList);
             data->object.ppconst.name = get_element_data(node, "Name");
             data->object.ppconst.value = get_node_content(node);
         }
         if (NodeCheck(node, "Style"))
         {
-            for (node1 = node->children; node1 != NULL; node1 = node1->next)
+            for (node1 = node->children; node1; node1 = node1->next)
             {
                 if (NodeValid(node1))
                 {
-                    data = NewNode(NULL, &StyleList);
+                    data = NewNode(0x0, &StyleList);
                     data->object.style.name = get_element_data(node, "Name");
                     data->object.style.node = node1;
                 }
@@ -141,11 +142,11 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "Defaults"))
         {
-            for (node1 = node->children; node1 != NULL; node1 = node1->next)
+            for (node1 = node->children; node1; node1 = node1->next)
             {
                 if (NodeValid(node1))
                 {
-                    data = NewNode(NULL, &DefaultList);
+                    data = NewNode(0x0, &DefaultList);
                     data->object.dflt.node = node1;
                 }
             }
@@ -169,7 +170,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
 
                 data = new_isequal(parent, list, myoperator, val1, val2);
 
-                for (node1 = node->children; node1 != NULL; node1 = node1->next)
+                for (node1 = node->children; node1; node1 = node1->next)
                 {
                     if (NodeCheck(node1, "True"))
                     {
@@ -256,24 +257,35 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "EdgeIo"))
         {
+            edgecomm = new EdgeCommModule;
             process_elements(0, 0, node->children);
-            edgeio_finish_initialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StrToFloat(get_element_data(node, "DataRate"), 1.0));
+            edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StrToFloat(get_element_data(node, "DataRate"), 1.0));
+            AppData.commlist.push_back(edgecomm);
         }
         if (NodeCheck(node, "FromEdge"))
         {
-            bufferID = EDGEIO_FROMEDGE;
-            edgeio_initialize_parameter_list(bufferID);
-            process_elements(0, 0, node->children);
+            if (edgecomm)
+            {
+                bufferID = EDGEIO_FROMEDGE;
+                edgecomm->initializeParameterList(bufferID);
+                process_elements(0, 0, node->children);
+            }
         }
         if (NodeCheck(node, "ToEdge"))
         {
-            bufferID = EDGEIO_TOEDGE;
-            edgeio_initialize_parameter_list(bufferID);
-            process_elements(0, 0, node->children);
+            if (edgecomm)
+            {
+                bufferID = EDGEIO_TOEDGE;
+                edgecomm->initializeParameterList(bufferID);
+                process_elements(0, 0, node->children);
+            }
         }
         if (NodeCheck(node, "EdgeVariable"))
         {
-            edgeio_add_parameter(bufferID, get_node_content(node), get_element_data(node, "RcsCommand"));
+            if (edgecomm)
+            {
+                edgecomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "RcsCommand"));
+            }
         }
         if (NodeCheck(node, "CAN"))
         {
@@ -297,28 +309,28 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             }
         
             AppData.DisplayPreInit = (void (*)(void *(*)(const char *)))dlsym(so_handler, "DisplayPreInit");
-            if ((error = dlerror()) != NULL)  
+            if ((error = dlerror()))  
             {
                 debug_msg("%s", error);
             	AppData.DisplayPreInit = &DisplayPreInitStub;
             }
         
             AppData.DisplayInit = (void (*)())dlsym(so_handler, "DisplayInit");
-            if ((error = dlerror()) != NULL)  
+            if ((error = dlerror()))  
             {
                 debug_msg("%s", error);
             	AppData.DisplayInit = &DisplayInitStub;
             }
         
             AppData.DisplayLogic = (void (*)())dlsym(so_handler, "DisplayLogic");
-            if ((error = dlerror()) != NULL)  
+            if ((error = dlerror()))  
             {
                 debug_msg("%s", error);
             	AppData.DisplayLogic = &DisplayLogicStub;
             }
 
             AppData.DisplayClose = (void (*)())dlsym(so_handler, "DisplayClose");
-            if ((error = dlerror()) != NULL)
+            if ((error = dlerror()))
             {
                 debug_msg("%s", error);
             	AppData.DisplayClose = &DisplayCloseStub;
@@ -471,25 +483,25 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             activeid = get_element_data(node, "ActiveVariable");
             activetrueval = get_element_data(node, "ActiveOn");
 
-            if (switchonval == NULL) switchonval = onval;
-            if (switchoffval == NULL) switchoffval = offval;
-            if (indonval == NULL) indonval = switchonval;
+            if (!switchonval) switchonval = onval;
+            if (!switchoffval) switchoffval = offval;
+            if (!indonval) indonval = switchonval;
 
-            if (id == NULL && switchid == NULL)
+            if (!id && !switchid)
             {
                 asprintf(&id, "@dcappVirtualVariable%d", id_count);
                 id_count++;
                 varlist_append(&id[1], "Integer", "0");
             }
-            if (switchid == NULL) switchid = id;
-            if (indid == NULL) indid = switchid;
+            if (!switchid) switchid = id;
+            if (!indid) indid = switchid;
             if (switchid != indid)
             {
                 asprintf(&transitionid, "@dcappVirtualVariable%d", id_count);
                 id_count++;
                 varlist_append(&transitionid[1], "Integer", "0");
             }
-            else transitionid = NULL;
+            else transitionid = 0x0;
 
             data = new_button(parent, list,
                       get_element_data(node, "X"),
@@ -523,7 +535,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                 curlist = new_isequal(parent, list, "eq", activeid, activetrueval);
                 sublist = &(curlist->object.cond.TrueList);
             }
-            data = new_mouseevent(curlist, sublist, NULL, NULL, NULL, NULL, NULL, NULL);
+            data = new_mouseevent(curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
             process_elements(data, &(data->object.me.PressList), node->children);
             if (key || keyascii)
             {
@@ -545,7 +557,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                 curlist = new_isequal(parent, list, "eq", activeid, activetrueval);
                 sublist = &(curlist->object.cond.TrueList);
             }
-            data = new_mouseevent(curlist, sublist, NULL, NULL, NULL, NULL, NULL, NULL);
+            data = new_mouseevent(curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
             process_elements(data, &(data->object.me.ReleaseList), node->children);
             if (key || keyascii)
             {
@@ -638,7 +650,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                                   get_element_data(node, "HorizontalAlign"),
                                   get_element_data(node, "VerticalAlign"));
             subnode_found = 0;
-            for (node1 = node->children; node1 != NULL; node1 = node1->next)
+            for (node1 = node->children; node1; node1 = node1->next)
             {
                 if (NodeCheck(node1, "OnPress"))
                 {
@@ -660,7 +672,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         {
             data = new_keyboardevent(parent, list, get_element_data(node, "Key"), get_element_data(node, "KeyASCII"));
             subnode_found = 0;
-            for (node1 = node->children; node1 != NULL; node1 = node1->next)
+            for (node1 = node->children; node1; node1 = node1->next)
             {
                 if (NodeCheck(node1, "OnPress"))
                 {
@@ -682,7 +694,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         {
             data = new_bezelevent(parent, list, get_element_data(node, "Key"));
             subnode_found = 0;
-            for (node1 = node->children; node1 != NULL; node1 = node1->next)
+            for (node1 = node->children; node1; node1 = node1->next)
             {
                 if (NodeCheck(node1, "OnPress"))
                 {
@@ -716,7 +728,7 @@ static char *get_node_content(xmlNodePtr node)
             return *retval;
         }
     }
-    return NULL;
+    return 0x0;
 }
 
 static char *get_element_data(xmlNodePtr innode, const char *key)
@@ -743,7 +755,7 @@ static char *get_element_data(xmlNodePtr innode, const char *key)
     {
         if (StyleList)
         {
-            for (data = StyleList->p_tail; data != NULL; data = data->p_prev)
+            for (data = StyleList->p_tail; data; data = data->p_prev)
             {
                 node = (xmlNodePtr)(data->object.style.node);
                 if (NodeCheck(node, type) && !strcmp(data->object.style.name, style))
@@ -765,7 +777,7 @@ static char *get_element_data(xmlNodePtr innode, const char *key)
     // ...if not, check to see if a Default has been defined...
     if (DefaultList)
     {
-        for (data = DefaultList->p_tail; data != NULL; data = data->p_prev)
+        for (data = DefaultList->p_tail; data; data = data->p_prev)
         {
             node = (xmlNodePtr)(data->object.dflt.node);
             if (NodeCheck(node, type))
@@ -784,16 +796,16 @@ static char *get_element_data(xmlNodePtr innode, const char *key)
     }
 
     // ...if not, return NULL
-    return NULL;
+    return 0x0;
 }
 
 static void replace_string(char **instr)
 {
     int count = 0, i, j, len, outlen, repl_len, in_start, in_end, start, end, outptr = 0;
-    char *in_val, *repl_val = NULL, *outstr = NULL;
+    char *in_val, *repl_val = 0x0, *outstr = 0x0;
 
-    if (instr == NULL) return;
-    if (*instr == NULL) return;
+    if (!instr) return;
+    if (!(*instr)) return;
 
     len = strlen(*instr);
     for (i=0; i<len; i++)
@@ -860,7 +872,7 @@ static void replace_string(char **instr)
 
                 for (j=0; j<repl_len; j++) outstr[outptr++] = repl_val[j];
     
-                repl_val = NULL;
+                repl_val = 0x0;
                 free(in_val);
                 i += in_end - in_start;
             }
@@ -885,7 +897,7 @@ static char *get_constval(char *instr)
     // First, check arguments list...
     if (AppData.ArgList)
     {
-        for (data = AppData.ArgList->p_tail; data != NULL; data = data->p_prev)
+        for (data = AppData.ArgList->p_tail; data; data = data->p_prev)
         {
             if (!strcmp(data->object.ppconst.name, instr)) return data->object.ppconst.value;
         }
@@ -893,13 +905,13 @@ static char *get_constval(char *instr)
     // Then, check to see if the constant has been set in the XML file hierarchy...
     if (PPConstantList)
     {
-        for (data = PPConstantList->p_tail; data != NULL; data = data->p_prev)
+        for (data = PPConstantList->p_tail; data; data = data->p_prev)
         {
             if (!strcmp(data->object.ppconst.name, instr)) return data->object.ppconst.value;
         }
     }
     // If no match found in either list, return NULL
-    return NULL;
+    return 0x0;
 }
 
 static xmlNodePtr GetSubList(xmlNodePtr node, char *opspec, char *val1, char *val2)
@@ -920,14 +932,14 @@ static xmlNodePtr GetSubList(xmlNodePtr node, char *opspec, char *val1, char *va
 
     myflag = CheckConditionLogic(optype, STRING, val1, STRING, val2);
 
-    for (node1 = node->children; node1 != NULL; node1 = node1->next)
+    for (node1 = node->children; node1; node1 = node1->next)
     {
         if (myflag && NodeCheck(node1, "True")) return node1->children;
         if (!myflag && NodeCheck(node1, "False")) return node1->children;
     }
 
     if (myflag) return node->children;  // Assume "True" if no subnode is found
-    else return NULL;
+    else return 0x0;
 }
 
 static void clean_list(struct node *mylist)
@@ -936,10 +948,10 @@ static void clean_list(struct node *mylist)
 
     if (mylist)
     {
-        for (data = mylist->p_tail; data != NULL; data = prev)
+        for (data = mylist->p_tail; data; data = prev)
         {
             prev = data->p_prev;
-            if (data == mylist) mylist = NULL;
+            if (data == mylist) mylist = 0x0;
             FreeNode(data);
         }
     }

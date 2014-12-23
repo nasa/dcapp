@@ -8,32 +8,40 @@
 #include <string.h>
 #include <netinet/tcp.h>
 #include "msg.hh"
+#include "EDGE_rcs.hh"
 
 #define MAX_SEND_SIZE 4096
 #define BUF_SIZE_INCREMENT 256
 #define END_OF_MSG_CHAR 0x04
 
-static int edgercs_active = 0;
-static struct addrinfo *server_addr_info;
 
-static int read_rcs_message(int, char **);
+EdgeRcsComm::EdgeRcsComm()
+:
+edgercs_active(0),
+server_addr_info(0x0)
+{
+}
 
+EdgeRcsComm::~EdgeRcsComm()
+{
+    freeaddrinfo(this->server_addr_info);
+}
 
-int EDGE_rcs_init(char *hoststr, char *portstr)
+int EdgeRcsComm::initialize(char *hoststr, char *portstr)
 {
     char *edgehost, *edgeport;
     struct addrinfo hints;
     int result;
 
-    if (hoststr == NULL)
-        edgehost = strdup("localhost");
-    else
+    if (hoststr)
         edgehost = strdup(hoststr);
-
-    if (portstr == NULL)
-        edgeport = strdup("5451");
     else
+        edgehost = strdup("localhost");
+
+    if (portstr)
         edgeport = strdup(portstr);
+    else
+        edgeport = strdup("5451");
 
     /* Set up the connection hints */
     memset(&hints, 0, sizeof(struct addrinfo));
@@ -43,34 +51,27 @@ int EDGE_rcs_init(char *hoststr, char *portstr)
     hints.ai_protocol = 0;          /* Any protocol */
 
     /* resolve into a list of addresses */
-    result = getaddrinfo(edgehost, edgeport, &hints, &server_addr_info);
+    result = getaddrinfo(edgehost, edgeport, &hints, &(this->server_addr_info));
     if (result)
     {
         error_msg("Error in getaddrinfo for host %s: %s", edgehost, gai_strerror(result));
         return -1;
     }
 
-    edgercs_active = 1;
+    this->edgercs_active = 1;
 
     return 0;
 }
 
-
-void EDGE_rcs_term(void)
-{
-    freeaddrinfo(server_addr_info);
-}
-
-
 /* Send a single command. */
-int send_doug_command(const char *doug_command, char **command_result, char **rcs_version)
+int EdgeRcsComm::send_doug_command(const char *doug_command, char **command_result, char **rcs_version)
 {
     struct addrinfo *addr;
     size_t len;
     int command_socket = -1;
     struct timeval timeout;
 
-    if (!edgercs_active) return 0;
+    if (!(this->edgercs_active)) return 0;
 
     len = strlen(doug_command);
     if (len <= 0) return 0;
@@ -81,7 +82,7 @@ int send_doug_command(const char *doug_command, char **command_result, char **rc
     }
 
     /* Loop through available addresses until we get a socket connection */
-    for (addr = server_addr_info; addr != NULL && command_socket < 0; addr = addr->ai_next)
+    for (addr = this->server_addr_info; addr && command_socket < 0; addr = addr->ai_next)
     {
         /* Try creating the socket */
         command_socket = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
@@ -107,7 +108,7 @@ int send_doug_command(const char *doug_command, char **command_result, char **rc
     setsockopt(command_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
 
     /* Read the server version off the socket */
-    if (read_rcs_message(command_socket, rcs_version) == -1)
+    if (this->read_rcs_message(command_socket, rcs_version) == -1)
     {
         close(command_socket);
         return 1;
@@ -125,7 +126,7 @@ int send_doug_command(const char *doug_command, char **command_result, char **rc
 
     /* Now read exec result of command coming back... this only
        works with the updated rcs server done after feb 17, 2010 */
-    if (read_rcs_message(command_socket, command_result) == -1)
+    if (this->read_rcs_message(command_socket, command_result) == -1)
     {
         close(command_socket);
         return 1;
@@ -135,9 +136,8 @@ int send_doug_command(const char *doug_command, char **command_result, char **rc
     return 0;
 }
 
-
 /* Reads a single message from the remote commanding server.. */
-static int read_rcs_message(int socket, char **rcs_response_string)
+int EdgeRcsComm::read_rcs_message(int socket, char **rcs_response_string)
 {
     char incoming_char;
     int more_to_read = 1, nread = 0, buf_size = BUF_SIZE_INCREMENT;

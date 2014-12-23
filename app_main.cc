@@ -10,7 +10,6 @@
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include "varlist.hh"
-#include "edgeio.hh"
 #include "ccsds_udp_io.hh"
 #include "CAN.hh"
 #include "uei/UEI.hh"
@@ -20,7 +19,7 @@
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
-#define TIDY(a) if (a != NULL) { free(a); a=NULL; }
+#define TIDY(a) if (a) { free(a); a=0x0; }
 #define SecondsElapsed(a,b) ((float)((b).tv_sec - (a).tv_sec) + (0.000001 * (float)((b).tv_usec - (a).tv_usec)))
 
 extern void mainloop(void);
@@ -39,7 +38,7 @@ static void ProcessArgs(int, char **);
 
 appdata AppData;
 
-static struct timeval last_edgeio_try, last_ccsdsudp_try;
+static struct timeval last_ccsdsudp_try;
 
 
 /*********************************************************************************
@@ -59,9 +58,6 @@ int main(int argc, char **argv)
     AppData.DisplayInit();
     UpdateDisplay();
 
-    // Set up timers
-    gettimeofday(&last_edgeio_try, NULL);
-
     // Do forever
     mainloop();
 
@@ -76,7 +72,7 @@ int main(int argc, char **argv)
  *********************************************************************************/
 void Idle(void)
 {
-    static int edgeio_active = 0, ccsds_udp_active = 0;
+    static int ccsds_udp_active = 0;
     int status;
     struct timeval now;
     std::list<CommModule *>::iterator commitem;
@@ -92,23 +88,6 @@ void Idle(void)
         status = (*commitem)->read();
         if (status == CommModule::Success) UpdateDisplay();
         else if (status == CommModule::Terminate) Terminate(0);
-    }
-
-    if (edgeio_active)
-    {
-        status = edgeio_readsimdata();
-        if (status == EDGEIO_SUCCESS) UpdateDisplay();
-        else if (status == EDGEIO_ERROR) edgeio_active = 0;
-        if (edgeio_writesimdata() == EDGEIO_ERROR) edgeio_active = 0;
-    }
-    else
-    {
-        gettimeofday(&now, NULL);
-        if (SecondsElapsed(last_edgeio_try, now) > CONNECT_ATTEMPT_INTERVAL)
-        {
-            if (edgeio_activatecomm() == EDGEIO_SUCCESS) edgeio_active = 1;
-            gettimeofday(&last_edgeio_try, NULL);
-        }
     }
 
     if (ccsds_udp_active)
@@ -148,7 +127,7 @@ void Idle(void)
     else
     {
     	// attempt init:
-        gettimeofday(&now, NULL);
+        gettimeofday(&now, 0x0);
         if (SecondsElapsed(last_ccsdsudp_try, now) > CONNECT_ATTEMPT_INTERVAL)
         {
             if (ccsds_udp_finish_initialization() == CCSDSIO_SUCCESS)
@@ -160,7 +139,7 @@ void Idle(void)
             {
             	error_msg("ccsds_udp failed to open socket for reading telemetry");
             }
-            gettimeofday(&last_ccsdsudp_try, NULL);
+            gettimeofday(&last_ccsdsudp_try, 0x0);
         }
 
         if (ccsds_udp_finish_send_initialization() == 0)
@@ -177,7 +156,7 @@ void Idle(void)
 
     CheckMouseBounce();
 
-    gettimeofday(&now, NULL);
+    gettimeofday(&now, 0x0);
     if (SecondsElapsed(AppData.last_update, now) > AppData.force_update) UpdateDisplay();
 }
 
@@ -202,7 +181,6 @@ void Terminate(int flag)
     }
 
     ccsds_udp_term();
-    edgeio_term();
     varlist_term();
     exit(flag);
 }
@@ -210,9 +188,9 @@ void Terminate(int flag)
 static void ProcessArgs(int argc, char **argv)
 {
     int i, count;
-    char *xdisplay = NULL;
+    char *xdisplay = 0x0;
     struct node *data;
-    char *specfile = NULL, *args = NULL;
+    char *specfile = 0x0, *args = 0x0;
     char *name, *value;
     struct utsname minfo;
     size_t argsize;
@@ -273,7 +251,7 @@ static void ProcessArgs(int argc, char **argv)
     }
     else /* We're on a Mac and the command line arguments don't provide enough information to proceed... */
     {
-        char *defspecfile = NULL, *defargs = NULL;
+        char *defspecfile = 0x0, *defargs = 0x0;
         char *appsupport, *preffilename;
         FILE *preffile;
 
@@ -300,7 +278,7 @@ static void ProcessArgs(int argc, char **argv)
         free(preffilename);
         free(appsupport);
 
-        ui_init(NULL);
+        ui_init(0x0);
         appLauncher(defspecfile, &specfile, defargs, &args);
 
         TIDY(defspecfile);
@@ -319,7 +297,7 @@ static void ProcessArgs(int argc, char **argv)
             count = sscanf(strptr, "%[^= ]=%s", name, value);
             if (count == 2)
             {
-                data = NewNode(NULL, &(AppData.ArgList));
+                data = NewNode(0x0, &(AppData.ArgList));
                 data->object.ppconst.name = strdup(name);
                 data->object.ppconst.value = strdup(value);
             }

@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "nodes.hh"
-#include "edgeio.hh"
 #include "string_utils.hh"
 
 extern void UpdateDisplay(void);
@@ -230,7 +229,6 @@ void UpdateValueLogic(int optype, int vartype, void *var, int valtype, void *val
     {
         (*commitem)->flagAsChanged(var);
     }
-    edgeio_forcewrite(var);
 }
 
 void UpdateValue(struct node *mynode)
