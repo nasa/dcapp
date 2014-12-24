@@ -17,21 +17,21 @@ void *LoadConstant(int datatype, void *value)
     myptr = FindConstant(datatype, value);
 
     // if not, create a new constant node and load the constant
-    if (myptr == 0)
+    if (!myptr)
     {
-        data = NewNode(NULL, &(AppData.ConstantList));
+        data = NewNode(0x0, &(AppData.ConstantList));
         data->object.constants.datatype = datatype;
         switch (datatype)
         {
-            case FLOAT:
+            case FLOAT_TYPE:
                 data->object.constants.val.f = *(float *)value;
                 myptr = &(data->object.constants.val.f);
                 break;
-            case INTEGER:
+            case INTEGER_TYPE:
                 data->object.constants.val.i = *(int *)value;
                 myptr = &(data->object.constants.val.i);
                 break;
-            case STRING:
+            case STRING_TYPE:
                 data->object.constants.val.s = strdup((char *)value);
                 myptr = data->object.constants.val.s;
             default:
@@ -52,19 +52,19 @@ static void *FindConstant(int datatype, void *value)
     struct node *current;
 
     // Traverse the list to find the constant
-    for (current = AppData.ConstantList; current != NULL; current = current->p_next)
+    for (current = AppData.ConstantList; current; current = current->p_next)
     {
         // If we find it, return the pointer
         if (current->object.constants.datatype == datatype)
         switch (datatype)
         {
-            case FLOAT:
+            case FLOAT_TYPE:
                 if (current->object.constants.val.f == *(float *)value) return &(current->object.constants.val.f);
                 break;
-            case INTEGER:
+            case INTEGER_TYPE:
                 if (current->object.constants.val.i == *(int *)value) return &(current->object.constants.val.i);
                 break;
-            case STRING:
+            case STRING_TYPE:
                 if (!strcmp(current->object.constants.val.s, (char *)value)) return current->object.constants.val.s;
                 break;
             default:
@@ -73,5 +73,5 @@ static void *FindConstant(int datatype, void *value)
     }
 
     // If we made it here, we didn't find the constant.
-    return 0;
+    return 0x0;
 }

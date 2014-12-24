@@ -3,10 +3,10 @@
 
 #include "Objects.hh"
 
-#define UNDEFINED 0
-#define STRING 1
-#define FLOAT 2
-#define INTEGER 3
+#define UNDEFINED_TYPE 0
+#define STRING_TYPE    1
+#define FLOAT_TYPE     2
+#define INTEGER_TYPE   3
 
 union objects
 {

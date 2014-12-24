@@ -7,9 +7,9 @@
 #define KEY_RIGHT 101
 #define KEY_UP    102
 #define KEY_DOWN  103
-#define SHIFT     104
-#define CTRL      105
-#define ALT       106
+#define SHIFT_KEY 104
+#define CTRL_KEY  105
+#define ALT_KEY   106
 
 // Mouse Mappings
 #define LEFT_BUTTON   200

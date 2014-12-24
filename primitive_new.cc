@@ -42,7 +42,7 @@ void new_window(int fullscreen, int OriginX, int OriginY, int SizeX, int SizeY)
 
 void new_panels(char *var)
 {
-    AppData.window->object.win.active_display = (int *)get_data_pointer(INTEGER, var, &izero);
+    AppData.window->object.win.active_display = (int *)get_data_pointer(INTEGER_TYPE, var, &izero);
 }
 
 struct node *new_panel(char *index, char *colorspec, char *vwidth, char *vheight)
@@ -66,8 +66,8 @@ struct node *new_container(struct node *parent, struct node **list, char *x, cha
 {
     struct node *data = add_primitive_node(parent, list, Container, x, y, width, height, halign, valign, rotate);
 
-    data->object.cont.vwidth = (float *)get_data_pointer(FLOAT, vwidth, data->info.w);
-    data->object.cont.vheight = (float *)get_data_pointer(FLOAT, vheight, data->info.h);
+    data->object.cont.vwidth = (float *)get_data_pointer(FLOAT_TYPE, vwidth, data->info.w);
+    data->object.cont.vheight = (float *)get_data_pointer(FLOAT_TYPE, vheight, data->info.h);
 
     return data;
 }
@@ -126,7 +126,7 @@ struct node *new_circle(struct node *parent, struct node **list, char *x, char *
     if (fillcolor) data->object.circle.fill = 1;
     if (linecolor || linewidth) data->object.circle.outline = 1;
 
-    data->object.circle.radius = (float *)get_data_pointer(FLOAT, radius, &fzero);
+    data->object.circle.radius = (float *)get_data_pointer(FLOAT_TYPE, radius, &fzero);
     data->object.circle.segments = StrToInt(segments, 80);
     data->object.circle.FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
     data->object.circle.LineColor = StrToColor(linecolor, 1, 1, 1, 1);
@@ -140,7 +140,7 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
 {
     struct node *data = add_primitive_node(parent, list, String, x, y, "0", fontsize, halign, valign, rotate);
 
-    data->object.string.fontSize = (float *)get_data_pointer(FLOAT, fontsize, &fzero);
+    data->object.string.fontSize = (float *)get_data_pointer(FLOAT_TYPE, fontsize, &fzero);
     data->object.string.halign = (HAlignment)(data->info.halign);
     data->object.string.valign = (VAlignment)(data->info.valign);
 
@@ -158,24 +158,24 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
         data->object.string.background = 1;
         data->object.string.bgcolor = StrToColor(bgcolor, 0, 0, 0, 1);
     }
-    data->object.string.shadowOffset = (float *)get_data_pointer(FLOAT, shadowoffset, &fzero);
+    data->object.string.shadowOffset = (float *)get_data_pointer(FLOAT_TYPE, shadowoffset, &fzero);
     data->object.string.fontID = LoadFont(font, face);
 
-    data->object.string.value = get_data_pointer(STRING, value, &emptystr);
+    data->object.string.value = get_data_pointer(STRING_TYPE, value, &emptystr);
     data->object.string.datatype = get_data_type(value);
-    if (data->object.string.datatype == UNDEFINED) data->object.string.datatype = STRING;
+    if (data->object.string.datatype == UNDEFINED_TYPE) data->object.string.datatype = STRING_TYPE;
     if (format != NULL) data->object.string.format = strdup(format);
     else
     {
         switch (data->object.string.datatype)
         {
-            case FLOAT:
+            case FLOAT_TYPE:
                 data->object.string.format = strdup("%.1f");
                 break;
-            case INTEGER:
+            case INTEGER_TYPE:
                 data->object.string.format = strdup("%d");
                 break;
-            case STRING:
+            case STRING_TYPE:
                 data->object.string.format = strdup("%s");
                 break;
         }
@@ -333,18 +333,18 @@ struct node *new_adi(struct node *parent, struct node **list, char *x, char *y, 
     defballrad = 0.9 * defouterrad;
     defchevron = 0.2 * defouterrad;
 
-    data->object.adi.outerradius = (float *)get_data_pointer(FLOAT, outerradius, &defouterrad);
-    data->object.adi.ballradius = (float *)get_data_pointer(FLOAT, ballradius, &defballrad);
-    data->object.adi.chevronW = (float *)get_data_pointer(FLOAT, chevronwidth, &defchevron);
-    data->object.adi.chevronH = (float *)get_data_pointer(FLOAT, chevronheight, &defchevron);
+    data->object.adi.outerradius = (float *)get_data_pointer(FLOAT_TYPE, outerradius, &defouterrad);
+    data->object.adi.ballradius = (float *)get_data_pointer(FLOAT_TYPE, ballradius, &defballrad);
+    data->object.adi.chevronW = (float *)get_data_pointer(FLOAT_TYPE, chevronwidth, &defchevron);
+    data->object.adi.chevronH = (float *)get_data_pointer(FLOAT_TYPE, chevronheight, &defchevron);
 
-    data->object.adi.roll = (float *)get_data_pointer(FLOAT, roll, &fzero);
-    data->object.adi.pitch = (float *)get_data_pointer(FLOAT, pitch, &fzero);
-    data->object.adi.yaw = (float *)get_data_pointer(FLOAT, yaw, &fzero);
+    data->object.adi.roll = (float *)get_data_pointer(FLOAT_TYPE, roll, &fzero);
+    data->object.adi.pitch = (float *)get_data_pointer(FLOAT_TYPE, pitch, &fzero);
+    data->object.adi.yaw = (float *)get_data_pointer(FLOAT_TYPE, yaw, &fzero);
 
-    data->object.adi.rollError = (float *)get_data_pointer(FLOAT, roll_error, &fzero);
-    data->object.adi.pitchError = (float *)get_data_pointer(FLOAT, pitch_error, &fzero);
-    data->object.adi.yawError = (float *)get_data_pointer(FLOAT, yaw_error, &fzero);
+    data->object.adi.rollError = (float *)get_data_pointer(FLOAT_TYPE, roll_error, &fzero);
+    data->object.adi.pitchError = (float *)get_data_pointer(FLOAT_TYPE, pitch_error, &fzero);
+    data->object.adi.yawError = (float *)get_data_pointer(FLOAT_TYPE, yaw_error, &fzero);
 
     return data;
 }
@@ -395,42 +395,42 @@ struct ModifyValue get_setvalue_data(char *varspec, char *opspec, char *minspec,
     ret.min = NULL;
     ret.max = NULL;
 
-    if (ret.datatype1 != UNDEFINED)
+    if (ret.datatype1 != UNDEFINED_TYPE)
     {
-        if (opspec == NULL) ret.optype = Equals;
+        if (!opspec) ret.optype = Equals;
         else if (!strcmp(opspec, "+=")) ret.optype = PlusEquals;
         else if (!strcmp(opspec, "-=")) ret.optype = MinusEquals;
 
         ret.var = get_data_pointer(ret.datatype1, varspec, NULL);
 
-        if (ret.datatype2 == UNDEFINED) ret.datatype2 = ret.datatype1;
+        if (ret.datatype2 == UNDEFINED_TYPE) ret.datatype2 = ret.datatype1;
         switch (ret.datatype2)
         {
-            case FLOAT:
-                ret.val = get_data_pointer(FLOAT, valspec, &fzero);
+            case FLOAT_TYPE:
+                ret.val = get_data_pointer(FLOAT_TYPE, valspec, &fzero);
                 break;
-            case INTEGER:
-                ret.val = get_data_pointer(INTEGER, valspec, &izero);
+            case INTEGER_TYPE:
+                ret.val = get_data_pointer(INTEGER_TYPE, valspec, &izero);
                 break;
-            case STRING:
-                ret.val = get_data_pointer(STRING, valspec, &emptystr);
+            case STRING_TYPE:
+                ret.val = get_data_pointer(STRING_TYPE, valspec, &emptystr);
                 break;
         }
 
         if (minspec)
         {
             ret.mindatatype = get_data_type(minspec);
-            if (ret.mindatatype == UNDEFINED) ret.mindatatype = ret.datatype1;
+            if (ret.mindatatype == UNDEFINED_TYPE) ret.mindatatype = ret.datatype1;
             switch (ret.mindatatype)
             {
-                case FLOAT:
-                    ret.min = get_data_pointer(FLOAT, minspec, &fzero);
+                case FLOAT_TYPE:
+                    ret.min = get_data_pointer(FLOAT_TYPE, minspec, &fzero);
                     break;
-                case INTEGER:
-                    ret.min = get_data_pointer(INTEGER, minspec, &izero);
+                case INTEGER_TYPE:
+                    ret.min = get_data_pointer(INTEGER_TYPE, minspec, &izero);
                     break;
-                case STRING:
-                    ret.min = get_data_pointer(STRING, minspec, &emptystr);
+                case STRING_TYPE:
+                    ret.min = get_data_pointer(STRING_TYPE, minspec, &emptystr);
                     break;
             }
         }
@@ -438,17 +438,17 @@ struct ModifyValue get_setvalue_data(char *varspec, char *opspec, char *minspec,
         if (maxspec)
         {
             ret.maxdatatype = get_data_type(maxspec);
-            if (ret.maxdatatype == UNDEFINED) ret.maxdatatype = ret.datatype1;
+            if (ret.maxdatatype == UNDEFINED_TYPE) ret.maxdatatype = ret.datatype1;
             switch (ret.maxdatatype)
             {
-                case FLOAT:
-                    ret.max = get_data_pointer(FLOAT, maxspec, &fzero);
+                case FLOAT_TYPE:
+                    ret.max = get_data_pointer(FLOAT_TYPE, maxspec, &fzero);
                     break;
-                case INTEGER:
-                    ret.max = get_data_pointer(INTEGER, maxspec, &izero);
+                case INTEGER_TYPE:
+                    ret.max = get_data_pointer(INTEGER_TYPE, maxspec, &izero);
                     break;
-                case STRING:
-                    ret.max = get_data_pointer(STRING, maxspec, &emptystr);
+                case STRING_TYPE:
+                    ret.max = get_data_pointer(STRING_TYPE, maxspec, &emptystr);
                     break;
             }
         }
@@ -460,7 +460,7 @@ struct node *new_setvalue(struct node *parent, struct node **list, char *var, ch
 {
     struct ModifyValue myset = get_setvalue_data(var, optype, min, max, val);
 
-    if (myset.datatype1 == UNDEFINED) return NULL;
+    if (myset.datatype1 == UNDEFINED_TYPE) return NULL;
 
     struct node *data = add_primitive_node(parent, list, SetValue, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -501,14 +501,14 @@ struct node *new_isequal(struct node *parent, struct node **list, const char *op
 
     data->object.cond.datatype1 = get_data_type(val1);
     data->object.cond.datatype2 = get_data_type(val2);
-    if (data->object.cond.datatype1 == UNDEFINED && data->object.cond.datatype2 == UNDEFINED)
+    if (data->object.cond.datatype1 == UNDEFINED_TYPE && data->object.cond.datatype2 == UNDEFINED_TYPE)
     {
-        data->object.cond.datatype1 = STRING;
-        data->object.cond.datatype2 = STRING;
+        data->object.cond.datatype1 = STRING_TYPE;
+        data->object.cond.datatype2 = STRING_TYPE;
     }
-    else if (data->object.cond.datatype1 == UNDEFINED)
+    else if (data->object.cond.datatype1 == UNDEFINED_TYPE)
         data->object.cond.datatype1 = data->object.cond.datatype2;
-    else if (data->object.cond.datatype2 == UNDEFINED)
+    else if (data->object.cond.datatype2 == UNDEFINED_TYPE)
         data->object.cond.datatype2 = data->object.cond.datatype1;
 
     if (!val1) val1 = onestr;
@@ -545,16 +545,16 @@ static void set_geometry(struct node *data, char *x, char *y, const char *width,
 
     // set x and y pointers to NULL if those values aren't defined. This tells the draw-time logic that x and y
     // values need to be calculated.
-    if (x) data->info.x = (float *)get_data_pointer(FLOAT, x, &fzero);
+    if (x) data->info.x = (float *)get_data_pointer(FLOAT_TYPE, x, &fzero);
     else data->info.x = 0;
-    if (y) data->info.y = (float *)get_data_pointer(FLOAT, y, &fzero);
+    if (y) data->info.y = (float *)get_data_pointer(FLOAT_TYPE, y, &fzero);
     else data->info.y = 0;
 
     data->info.halign = StrToHAlign(halign, AlignLeft);
     data->info.valign = StrToVAlign(valign, AlignBottom);
-    data->info.w = (float *)get_data_pointer(FLOAT, width, data->info.containerW);
-    data->info.h = (float *)get_data_pointer(FLOAT, height, data->info.containerH);
-    data->info.rotate = (float *)get_data_pointer(FLOAT, rotate, &fzero);
+    data->info.w = (float *)get_data_pointer(FLOAT_TYPE, width, data->info.containerW);
+    data->info.h = (float *)get_data_pointer(FLOAT_TYPE, height, data->info.containerH);
+    data->info.rotate = (float *)get_data_pointer(FLOAT_TYPE, rotate, &fzero);
 }
 
 int check_dynamic_element(const char *spec)
@@ -580,19 +580,19 @@ static void *get_data_pointer(int type, const char *valstr, void *defval)
 
     switch (type)
     {
-        case FLOAT:
+        case FLOAT_TYPE:
             if (defval)
                 fval = StrToFloat(valstr, *(float *)defval);
             else
                 fval = StrToFloat(valstr, 0);
             return LoadConstant(type, &fval);
-        case INTEGER:
+        case INTEGER_TYPE:
             if (defval)
                 ival = StrToInt(valstr, *(int *)defval);
             else
                 ival = StrToInt(valstr, 0);
             return LoadConstant(type, &ival);
-        case STRING:
+        case STRING_TYPE:
             inptr = valstr;
             if (valstr)
             {
@@ -611,5 +611,5 @@ static void *get_data_pointer(int type, const char *valstr, void *defval)
 static int get_data_type(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return get_datatype(&valstr[1]);
-    return UNDEFINED;
+    return UNDEFINED_TYPE;
 }

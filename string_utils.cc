@@ -13,19 +13,19 @@ extern void *get_pointer(const char *);
 
 float StrToFloat(const char *instr, float default_value)
 {
-    if (instr == NULL) return default_value;
+    if (!instr) return default_value;
     else return (strtof(instr, NULL));
 }
 
 int StrToInt(const char *instr, int default_value)
 {
-    if (instr == NULL) return default_value;
+    if (!instr) return default_value;
     else return (strtol(instr, NULL, 10));
 }
 
 int BoolStrToInt(const char *instr, int default_value)
 {
-    if (instr == NULL) return default_value;
+    if (!instr) return default_value;
     else if (!strcasecmp(instr, "true") || !strcasecmp(instr, "yes") || !strcasecmp(instr, "on")) return 1;
     else if (!strcasecmp(instr, "false") || !strcasecmp(instr, "no") || !strcasecmp(instr, "off")) return 0;
     else if (StrToInt(instr, default_value) || StrToFloat(instr, default_value)) return 1;
@@ -37,14 +37,14 @@ static float *color_element(int index, char *strval, float defval)
     float *retptr = NULL;
     float fval;
 
-    if (index < 0) retptr = (float *)LoadConstant(FLOAT, &defval);
+    if (index < 0) retptr = (float *)LoadConstant(FLOAT_TYPE, &defval);
     else
     {
         if (check_dynamic_element(strval)) retptr = (float *)get_pointer(&strval[1]);
         else
         {
             fval = strtof(strval, NULL);
-            retptr = (float *)LoadConstant(FLOAT, &fval);
+            retptr = (float *)LoadConstant(FLOAT_TYPE, &fval);
         }
     }
 
@@ -55,12 +55,12 @@ struct kolor StrToColor(const char *instr, float r, float g, float b, float a)
 {
     struct kolor retval;
 
-    if (instr == NULL)
+    if (!instr)
     {
-        retval.R = (float *)LoadConstant(FLOAT, &r);
-        retval.G = (float *)LoadConstant(FLOAT, &g);
-        retval.B = (float *)LoadConstant(FLOAT, &b);
-        retval.A = (float *)LoadConstant(FLOAT, &a);
+        retval.R = (float *)LoadConstant(FLOAT_TYPE, &r);
+        retval.G = (float *)LoadConstant(FLOAT_TYPE, &g);
+        retval.B = (float *)LoadConstant(FLOAT_TYPE, &b);
+        retval.A = (float *)LoadConstant(FLOAT_TYPE, &a);
     }
     else
     {
@@ -86,13 +86,13 @@ struct kolor StrToColor(const char *instr, float r, float g, float b, float a)
 
 char *StrToStr(const char *instr, char *default_value)
 {
-    if (instr == NULL) return default_value;
+    if (!instr) return default_value;
     else return (char *)instr;
 }
 
 HAlignment StrToHAlign(const char *instr, HAlignment default_value)
 {
-    if (instr == NULL) return default_value;
+    if (!instr) return default_value;
     else if (!strcasecmp(instr, "Left")) return AlignLeft;
     else if (!strcasecmp(instr, "Center")) return AlignCenter;
     else if (!strcasecmp(instr, "Right")) return AlignRight;
@@ -101,7 +101,7 @@ HAlignment StrToHAlign(const char *instr, HAlignment default_value)
 
 VAlignment StrToVAlign(const char *instr, VAlignment default_value)
 {
-    if (instr == NULL) return default_value;
+    if (!instr) return default_value;
     else if (!strcasecmp(instr, "Bottom")) return AlignBottom;
     else if (!strcasecmp(instr, "Middle")) return AlignMiddle;
     else if (!strcasecmp(instr, "Top")) return AlignTop;

@@ -198,7 +198,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                                                              get_element_data(node, "MinimumValue"),
                                                              get_element_data(node, "MaximumValue"),
                                                              get_node_content(node));
-                if (myset.datatype1 != UNDEFINED) UpdateValueLogic(myset.optype,
+                if (myset.datatype1 != UNDEFINED_TYPE) UpdateValueLogic(myset.optype,
                                                                    myset.datatype1, myset.var,
                                                                    myset.datatype2, myset.val,
                                                                    myset.mindatatype, myset.min,
@@ -930,7 +930,7 @@ static xmlNodePtr GetSubList(xmlNodePtr node, char *opspec, char *val1, char *va
         else if (!strcasecmp(opspec, "le")) optype = IfLessOrEquals;
     }
 
-    myflag = CheckConditionLogic(optype, STRING, val1, STRING, val2);
+    myflag = CheckConditionLogic(optype, STRING_TYPE, val1, STRING_TYPE, val2);
 
     for (node1 = node->children; node1; node1 = node1->next)
     {

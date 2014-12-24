@@ -16,7 +16,7 @@ void ProcessEventList(struct node *list)
 {
     struct node *sublist;
 
-    for (sublist = list; sublist != NULL; sublist = sublist->p_next)
+    for (sublist = list; sublist; sublist = sublist->p_next)
     {
         switch (sublist->info.type)
         {
@@ -40,12 +40,12 @@ float getFloatVal(int type, void *val)
 {
     switch (type)
     {
-        case FLOAT:
+        case FLOAT_TYPE:
             return *(float *)val;
-        case INTEGER:
+        case INTEGER_TYPE:
             return (float)(*(int *)val);
-        case STRING:
-            return strtof((char *)val, NULL);
+        case STRING_TYPE:
+            return strtof((char *)val, 0x0);
     }
     return 0;
 }
@@ -54,12 +54,12 @@ int getIntegerVal(int type, void *val)
 {
     switch (type)
     {
-        case FLOAT:
+        case FLOAT_TYPE:
             return (int)(*(float *)val);
-        case INTEGER:
+        case INTEGER_TYPE:
             return *(int *)val;
-        case STRING:
-            return strtol((char *)val, NULL, 10);
+        case STRING_TYPE:
+            return strtol((char *)val, 0x0, 10);
     }
     return 0;
 }
@@ -70,7 +70,7 @@ int CheckConditionLogic(int opspec, int datatype1, void *val1, int datatype2, vo
 
     switch (datatype1)
     {
-        case FLOAT:
+        case FLOAT_TYPE:
             switch (opspec)
             {
                 case Simple:
@@ -96,7 +96,7 @@ int CheckConditionLogic(int opspec, int datatype1, void *val1, int datatype2, vo
                     break;
             }
             break;
-        case INTEGER:
+        case INTEGER_TYPE:
             switch (opspec)
             {
                 case Simple:
@@ -122,7 +122,7 @@ int CheckConditionLogic(int opspec, int datatype1, void *val1, int datatype2, vo
                     break;
             }
             break;
-        case STRING:
+        case STRING_TYPE:
             switch (opspec)
             {
                 case Simple:
@@ -168,7 +168,7 @@ void UpdateValueLogic(int optype, int vartype, void *var, int valtype, void *val
 
     switch (vartype)
     {
-        case FLOAT:
+        case FLOAT_TYPE:
             switch (optype)
             {
                 case PlusEquals:
@@ -191,7 +191,7 @@ void UpdateValueLogic(int optype, int vartype, void *var, int valtype, void *val
                 if (*(float *)var > maxval) *(float *)var = maxval;
             }
             break;
-        case INTEGER:
+        case INTEGER_TYPE:
             switch (optype)
             {
                 case PlusEquals:
@@ -214,10 +214,10 @@ void UpdateValueLogic(int optype, int vartype, void *var, int valtype, void *val
                 if (*(int *)var > maxval) *(int *)var = maxval;
             }
             break;
-        case STRING:
+        case STRING_TYPE:
             switch (valtype)
             {
-                case STRING:
+                case STRING_TYPE:
                     if (optype == Equals)
                         strcpy((char *)var, (char *)val);
                     break;

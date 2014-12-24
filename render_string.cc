@@ -19,13 +19,13 @@ void render_string(struct node *current)
 
     switch (current->object.string.datatype)
     {
-        case FLOAT:
+        case FLOAT_TYPE:
             sprintf(mystr, current->object.string.format, *(float *)current->object.string.value);
             break;
-        case INTEGER:
+        case INTEGER_TYPE:
             sprintf(mystr, current->object.string.format, *(int *)current->object.string.value);
             break;
-        case STRING:
+        case STRING_TYPE:
             sprintf(mystr, current->object.string.format, (char *)current->object.string.value);
             break;
     }

@@ -251,13 +251,13 @@ static void HandleGLUTMouse(int glutbutton, int glutstate, int x, int y)
     switch (glutmodifier)
     {
         case GLUT_ACTIVE_SHIFT:
-            modifier = SHIFT;
+            modifier = SHIFT_KEY;
             break;
         case GLUT_ACTIVE_CTRL:
-            modifier = CTRL;
+            modifier = CTRL_KEY;
             break;
         case GLUT_ACTIVE_ALT:
-            modifier = ALT;
+            modifier = ALT_KEY;
             break;
         default:
             modifier = UNKNOWN;
