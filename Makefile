@@ -11,7 +11,7 @@ DCAPP_SOURCES := \
 	CAN.cc \
 	EDGE_rcs.cc \
 	app_main.cc \
-	ccsds_udp_io.cc \
+	ccsds_udp_comm.cc \
 	comm.cc \
 	dyn_elements.cc \
 	edgecomm.cc \

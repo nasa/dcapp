@@ -3,8 +3,6 @@
 #define SecondsElapsed(a,b) ((float)((b).tv_sec - (a).tv_sec) + (0.000001 * (float)((b).tv_usec - (a).tv_usec)))
 
 CommModule::CommModule()
-:
-active(0)
 {
     this->ResetLastConnectAttemptTime();
 }

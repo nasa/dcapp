@@ -11,6 +11,7 @@
 
 TrickCommModule::TrickCommModule()
 :
+active(0),
 host(0x0),
 port(0),
 datarate(0x0),

@@ -11,8 +11,6 @@ class CommModule
 
         typedef enum { None, Inactive, Success, Fail, Terminate } CommStatus;
 
-        int active;
-
         virtual CommModule::CommStatus read(void);
         virtual CommModule::CommStatus write(void);
         virtual void flagAsChanged(void *);

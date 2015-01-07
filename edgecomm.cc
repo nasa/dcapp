@@ -14,6 +14,7 @@
 
 EdgeCommModule::EdgeCommModule()
 :
+active(0),
 cmd_group(0x0),
 rcs(0x0)
 {

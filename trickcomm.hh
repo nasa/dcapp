@@ -52,6 +52,7 @@ class TrickCommModule : public CommModule
             TrickCommModule::io_parameter *data;
         } io_parameter_list;
 
+        int active;
         char *host;
         int port;
         char *datarate;

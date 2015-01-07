@@ -45,6 +45,7 @@ class EdgeCommModule : public CommModule
             io_parameter *data;
         } io_parameter_list;
 
+        int active;
         io_parameter_list fromedge;
         io_parameter_list toedge;
         struct timeval edge_timer;

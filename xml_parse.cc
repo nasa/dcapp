@@ -9,6 +9,7 @@
 #include "varlist.hh"
 #include "trickcomm.hh"
 #include "edgecomm.hh"
+#include "ccsds_udp_comm.hh"
 #include "CAN.hh"
 #include "uei/UEI.hh"
 #include "nodes.hh"
@@ -61,6 +62,7 @@ extern appdata AppData;
 
 static TrickCommModule *trickcomm = 0x0;
 static EdgeCommModule *edgecomm = 0x0;
+static CcsdsUdpCommModule *ccsdsudpcomm = 0x0;
 static struct node *PPConstantList, *StyleList, *DefaultList;
 static char *switchid, *switchonval, *switchoffval, *indid, *indonval, *activeid, *activetrueval, *transitionid, *key, *keyascii, *bezelkey;
 static int id_count = 0, preprocessing = 1, bufferID;
@@ -286,6 +288,11 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             {
                 edgecomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "RcsCommand"));
             }
+        }
+        if (NodeCheck(node, "CcsdsUdpIo"))
+        {
+            ccsdsudpcomm = new CcsdsUdpCommModule;
+            AppData.commlist.push_back(ccsdsudpcomm);
         }
         if (NodeCheck(node, "CAN"))
         {
