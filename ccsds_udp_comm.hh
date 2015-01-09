@@ -45,7 +45,7 @@
 // The max length of the raw payload buffer
 #define CCDSS_UDP_MAXPAYLOADLEN 255
 // Default hostname if user doesn't specify a hostname
-#define DEFAULT_HOSTNAME "127.0.0.1\0"
+#define DEFAULT_HOST "127.0.0.1\0"
 // Default port number if user doesn't specify a port number
 #define DEFAULT_PORT 0x9c41U /* 40001 decimal */
 #define DEFAULT_THREADID 1
@@ -137,7 +137,6 @@ class CcsdsUdpCommModule : public CommModule
          */
         void read_connect(void);
 
-        /**
         /**
          * Initializes for sending out data over a UDP socket.
          */
