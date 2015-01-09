@@ -5,6 +5,7 @@
 #include "comm.hh"
 #include "EDGE_rcs.hh"
 #include "varlist.hh"
+#include "timer.hh"
 
 #define EDGEIO_FROMEDGE           (1)
 #define EDGEIO_TOEDGE             (2)
@@ -48,7 +49,8 @@ class EdgeCommModule : public CommModule
         int active;
         io_parameter_list fromedge;
         io_parameter_list toedge;
-        struct timeval edge_timer;
+        Timer last_connect_attempt;
+        Timer edge_timer;
         float update_rate;
         char *cmd_group;
         EdgeRcsComm *rcs;

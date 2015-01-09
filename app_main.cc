@@ -15,11 +15,11 @@
 #include "nodes.hh"
 #include "string_utils.hh"
 #include "msg.hh"
+#include "timer.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
 #define TIDY(a) if (a) { free(a); a=0x0; }
-#define SecondsElapsed(a,b) ((float)((b).tv_sec - (a).tv_sec) + (0.000001 * (float)((b).tv_usec - (a).tv_usec)))
 
 extern void mainloop(void);
 extern void UpdateDisplay(void);
@@ -70,7 +70,6 @@ int main(int argc, char **argv)
 void Idle(void)
 {
     int status;
-    struct timeval now;
     std::list<CommModule *>::iterator commitem;
 
     CAN_read();
@@ -90,8 +89,7 @@ void Idle(void)
 
     CheckMouseBounce();
 
-    gettimeofday(&now, 0x0);
-    if (SecondsElapsed(AppData.last_update, now) > AppData.force_update) UpdateDisplay();
+    if (SecondsElapsed(AppData.last_update) > AppData.force_update) UpdateDisplay();
 }
 
 

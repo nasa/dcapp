@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <sys/time.h>
 #include "nodes.hh"
 #include "geometry.hh"
 #include "opengl_draw.hh"
+#include "timer.hh"
 
 extern void render_string(struct node *);
 extern void draw_adi(struct node *);
@@ -27,7 +27,7 @@ void Draw(void)
 {
     render_primitives(AppData.window->p_current);
     SwapBuffers();
-    gettimeofday(&(AppData.last_update), NULL);
+    StartTimer(&(AppData.last_update));
 }
 
 static void render_primitives(struct node *list)

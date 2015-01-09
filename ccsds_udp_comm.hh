@@ -35,6 +35,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "comm.hh"
+#include "timer.hh"
 #ifdef CCSDSUDPACTIVE
 #include "udpRX.h"
 #include "ccsds_xlate.h"
@@ -43,14 +44,12 @@
 
 // The max length of the raw payload buffer
 #define CCDSS_UDP_MAXPAYLOADLEN 255
-// The thread ID
-#define DCAPP_UDPRX_THREADID 1                         // FIXME hardcoded
-// The rate at which dcapp queries the reader thread
-#define DCAPP_UDPRX_SPECRATE 0.5F /* sec */            // FIXME hardcoded
-// Determines how the CCSDS header should be interpreted, T=LE, F=NBO
-#define DCAPP_CCSDS_NETWORK_LITTLEEND false            // FIXME hardcoded
-// Logs update latency metrics
-#define DCAPP_CCSDS_UPDATE_METRICS 1                   // FIXME hardcoded
+// Default hostname if user doesn't specify a hostname
+#define DEFAULT_HOSTNAME "127.0.0.1\0"
+// Default port number if user doesn't specify a port number
+#define DEFAULT_PORT 0x9c41U /* 40001 decimal */
+#define DEFAULT_THREADID 1
+#define DEFAULT_RATE 0.5F
 
 class CcsdsUdpCommModule : public CommModule
 {
@@ -61,37 +60,47 @@ class CcsdsUdpCommModule : public CommModule
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
 
+        void read_initialize(char *, int, int, float, int);
+        void write_initialize(char *, int);
+
     private:
 #ifdef CCSDSUDPACTIVE
         typedef enum dcapp_ccsds_udp_io {
             CCSDSIO_SUCCESS = 0,        // fcn successfully completed
-            CCSDSIO_INIT_ERROR = 1,        // init() failed
-            CCSDSIO_IO_ERROR = 2,        // unrecoverable i/o error
+            CCSDSIO_INIT_ERROR = 1,     // init() failed
+            CCSDSIO_IO_ERROR = 2,       // unrecoverable i/o error
             CCSDSIO_PARSE_ERROR = 3,    // logic error while parsing packet (shouldn't occur)
             CCSDSIO_NO_NEW_DATA = 4,    // no new data as of last ccsds_udp_readsimdata()
-            CCSDSIO_NOT_CCSDS = 5,        // a udp message was received, but it wasn't CCSDS
-            CCSDSIO_WRONG_CCSDS = 6        // A CCSDS message was received, but it wasn't what we wanted
+            CCSDSIO_NOT_CCSDS = 5,      // a udp message was received, but it wasn't CCSDS
+            CCSDSIO_WRONG_CCSDS = 6     // A CCSDS message was received, but it wasn't what we wanted
         } dcapp_ccsds_udp_io;
 
         int read_active;
         int write_active;
-        struct timeval last_read_try;
-        struct timeval last_write_try;
-        struct timeval udpRX_timer;
+        Timer last_read_try;
+        Timer last_write_try;
+        Timer udpRX_timer;
 
         // The IPv4 address string to listen on
-        char DCAPP_UDPRX_ADDR[IPBUFLEN];                // FIXME hardcoded (see .c)
-        uint8_t DCAPP_UDPRX_ADDRLEN;                    // FIXME hardcoded (see .c)
+        char *DCAPP_UDPRX_ADDR;
 
         // the connection port to listen on
-        uint32_t DCAPP_UDPRX_PORT;                      // FIXME hardcoded (see .c)
+        uint32_t DCAPP_UDPRX_PORT;
 
         // The IPv4 address string to send to
-        char DCAPP_UDPSEND_ADDR[IPBUFLEN];              // FIXME hardcoded (see .c)
-        uint8_t DCAPP_UDPSEND_ADDRLEN;                  // FIXME hardcoded (see .c)
+        char *DCAPP_UDPSEND_ADDR;
 
         // the connection port to send to
-        uint32_t DCAPP_UDPSEND_PORT;                    // FIXME hardcoded (see .c)
+        uint16_t DCAPP_UDPSEND_PORT;
+
+        // The thread ID
+        int DCAPP_UDPRX_THREADID;
+
+        // The rate at which dcapp queries the reader thread (in seconds)
+        float DCAPP_UDPRX_SPECRATE;
+
+        // Determines how the CCSDS header should be interpreted, T=LE, F=NBO
+        bool DCAPP_CCSDS_NETWORK_LITTLEEND;
 
         // The reader thread working data, don't alter outside the API!
         udpRX_thread_data_t udpRXThread;
@@ -125,19 +134,14 @@ class CcsdsUdpCommModule : public CommModule
 
         /**
          * Initializes the UDP CCSDS Reader thread and related structs.
-         *
-         * Currently, the thread ID, port, and update rate are hardcoded.
-         * @return success/failure result
          */
-        void ccsds_udp_finish_initialization(void);
+        void read_connect(void);
 
         /**
+        /**
          * Initializes for sending out data over a UDP socket.
-         *
-         * Currently the address and port are hardcoded
-         * @return zero for success, non-zero for failure
          */
-        void ccsds_udp_finish_send_initialization(void);
+        void write_connect(void);
 
         /**
          * Collects message updates from the UDP CCSDS Reader thread and
@@ -146,7 +150,7 @@ class CcsdsUdpCommModule : public CommModule
          *
          * @return success/failure result
          */
-        dcapp_ccsds_udp_io ccsds_udp_readtlmmsg(void);
+        dcapp_ccsds_udp_io read_tlm_msg(void);
 #endif
 };
 

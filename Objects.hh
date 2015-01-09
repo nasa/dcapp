@@ -3,12 +3,12 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <sys/time.h>
 #include <sys/shm.h>
 #include <list>
 #include "PixelStream.hh"
 #include "fontlib.hh"
 #include "comm.hh"
+#include "timer.hh"
 
 typedef enum { Empty, Panel, Image, Vertex, Rectangle, Circle, Line, Polygon, ADI, String, MouseEvent, KeyboardEvent, BezelEvent, SetValue, Condition, Container, PixelStream } Type;
 typedef enum { AlignLeft, AlignCenter, AlignRight } HAlignment;
@@ -241,7 +241,7 @@ struct Window
 typedef struct
 {
     float force_update;
-    struct timeval last_update;
+    Timer last_update;
     std::list<CommModule *> commlist;
     struct node *window;
     struct node *ArgList;

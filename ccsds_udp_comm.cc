@@ -34,31 +34,32 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/socket.h>
-#include <time.h>
 #include <unistd.h>
 #include "msg.hh"
+#include "timer.hh"
 #include "ccsds_udp_comm.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
-#define SecondsElapsed(a,b) ((float)((b).tv_sec - (a).tv_sec) + (0.000001 * (float)((b).tv_usec - (a).tv_usec)))
+#define TIDY(a) if (a) { free(a); a=0x0; }
 
 CcsdsUdpCommModule::CcsdsUdpCommModule()
 #ifdef CCSDSUDPACTIVE
 :
 read_active(0),
 write_active(0),
-DCAPP_UDPRX_ADDR("127.0.0.1\0"),                 // FIXME hardcoded (see .h)
-DCAPP_UDPRX_ADDRLEN(10),                         // FIXME hardcoded (see .h)
-DCAPP_UDPRX_PORT(0x9c41U), /* 40001 decimal */   // FIXME hardcoded (see .h)
-DCAPP_UDPSEND_ADDR("127.0.0.1\0"),               // FIXME hardcoded (see .h)
-DCAPP_UDPSEND_ADDRLEN(10),                       // FIXME hardcoded (see .h)
-DCAPP_UDPSEND_PORT(0x9c41U), /* 40001 decimal */ // FIXME hardcoded (see .h)
+DCAPP_UDPRX_ADDR(0x0),
+DCAPP_UDPRX_PORT(DEFAULT_PORT),
+DCAPP_UDPSEND_ADDR(0x0),
+DCAPP_UDPSEND_PORT(DEFAULT_PORT),
+DCAPP_UDPRX_THREADID(DEFAULT_THREADID),
+DCAPP_UDPRX_SPECRATE(DEFAULT_RATE),
+DCAPP_CCSDS_NETWORK_LITTLEEND(false),
 sockfdsend(-1)
 #endif
 {
 #ifdef CCSDSUDPACTIVE
-    gettimeofday(&last_read_try, 0x0);
-    gettimeofday(&last_write_try, 0x0);
+    StartTimer(&(this->last_read_try));
+    StartTimer(&(this->last_write_try));
 #endif
 }
 
@@ -70,27 +71,18 @@ CcsdsUdpCommModule::~CcsdsUdpCommModule()
 
     // close the writer socket
     if (sockfdsend != -1) close(sockfdsend);
+
+    TIDY(this->DCAPP_UDPRX_ADDR);
+    TIDY(this->DCAPP_UDPSEND_ADDR);
 #endif
 }
 
 CommModule::CommStatus CcsdsUdpCommModule::read(void)
 {
 #ifdef CCSDSUDPACTIVE
-    struct timeval now;
-
-    if (!(this->read_active))
-    {
-        gettimeofday(&now, 0x0);
-        if (SecondsElapsed(last_read_try, now) > CONNECT_ATTEMPT_INTERVAL)
-        {
-            this->ccsds_udp_finish_initialization();
-            gettimeofday(&last_read_try, 0x0);
-        }
-    }
-
     if (this->read_active)
     {
-        dcapp_ccsds_udp_io readstatus = ccsds_udp_readtlmmsg();
+        dcapp_ccsds_udp_io readstatus = this->read_tlm_msg();
         switch (readstatus)
         {
             case (CCSDSIO_IO_ERROR):
@@ -109,6 +101,15 @@ CommModule::CommStatus CcsdsUdpCommModule::read(void)
                 return this->Fail;
         }
     }
+    else
+    {
+        if (SecondsElapsed(this->last_read_try) > CONNECT_ATTEMPT_INTERVAL)
+        {
+            this->read_connect();
+            StartTimer(&(this->last_read_try));
+        }
+    }
+
 
     return this->None;
 #else
@@ -119,20 +120,17 @@ CommModule::CommStatus CcsdsUdpCommModule::read(void)
 CommModule::CommStatus CcsdsUdpCommModule::write(void)
 {
 #ifdef CCSDSUDPACTIVE
-    struct timeval now;
-
-    if (!(this->write_active))
-    {
-        gettimeofday(&now, 0x0);
-        if (SecondsElapsed(last_write_try, now) > CONNECT_ATTEMPT_INTERVAL)
-        {
-            this->ccsds_udp_finish_send_initialization();
-            gettimeofday(&last_write_try, 0x0);
-        }
-    }
-
     if (this->write_active)
     {
+// write processing goes here
+    }
+    else
+    {
+        if (SecondsElapsed(this->last_write_try) > CONNECT_ATTEMPT_INTERVAL)
+        {
+            this->write_connect();
+            StartTimer(&(this->last_write_try));
+        }
     }
 
     return this->None;
@@ -143,40 +141,63 @@ CommModule::CommStatus CcsdsUdpCommModule::write(void)
 
 
 #ifdef CCSDSUDPACTIVE
-void CcsdsUdpCommModule::ccsds_udp_finish_initialization(void)
+void CcsdsUdpCommModule::read_initialize(char *hostspec, int portspec, int threadspec, float ratespec, int littleendianspec)
 {
-    memset(&ccsdsPayload,0,CCDSS_UDP_MAXPAYLOADLEN);
+    if (hostspec) this->DCAPP_UDPRX_ADDR = strdup(hostspec);
+    this->DCAPP_UDPRX_PORT = (uint32_t)portspec;
+    if (threadspec > 0) this->DCAPP_UDPRX_THREADID = threadspec;
+    else this->DCAPP_UDPRX_THREADID = DEFAULT_THREADID;
+    if (ratespec > 0) this->DCAPP_UDPRX_SPECRATE = ratespec;
+    else this->DCAPP_UDPRX_SPECRATE = DEFAULT_RATE;
+    if (littleendianspec) this->DCAPP_CCSDS_NETWORK_LITTLEEND = true;
+}
+
+
+void CcsdsUdpCommModule::read_connect(void)
+{
+    memset(&ccsdsPayload, 0, CCDSS_UDP_MAXPAYLOADLEN);
     ccsdsPayloadLength = 0;
     numTlmCCSDSReceived = 0;
 
-    udpRX_thread_status st = udpRx_reader_init(DCAPP_UDPRX_THREADID,
-                                               DCAPP_UDPRX_ADDR, DCAPP_UDPRX_ADDRLEN,
-                                               DCAPP_UDPRX_PORT,
+    if (!(this->DCAPP_UDPRX_ADDR)) this->DCAPP_UDPRX_ADDR = strdup(DEFAULT_HOST);
+    if (!(this->DCAPP_UDPRX_PORT)) this->DCAPP_UDPRX_PORT = DEFAULT_PORT;
+
+    udpRX_thread_status st = udpRx_reader_init(this->DCAPP_UDPRX_THREADID,
+                                               this->DCAPP_UDPRX_ADDR,
+                                               (uint8_t)(strlen(this->DCAPP_UDPRX_ADDR)+1),
+                                               this->DCAPP_UDPRX_PORT,
                                                &udpRXThread,
                                                &udpRXResults,
                                                &udpRXCtrl);
 
     if (st != UDPRX_NOERROR)
     {
-        error_msg("udpRx_reader_init() failed with status %d",st);
-        debug_msg("\taddress=%s",DCAPP_UDPRX_ADDR);
-        debug_msg("\taddress=%d",DCAPP_UDPRX_PORT);
+        error_msg("udpRx_reader_init() failed with status %d", st);
+        debug_msg("\taddress=%s", this->DCAPP_UDPRX_ADDR);
+        debug_msg("\taddress=%d", this->DCAPP_UDPRX_PORT);
         error_msg("ccsds_udp failed to open socket for reading telemetry");
         return;
     }
     else
     {
         debug_msg("udpRx_reader_init() opened socket");
-        debug_msg("\taddress=%s",DCAPP_UDPRX_ADDR);
-        debug_msg("\taddress=%d",DCAPP_UDPRX_PORT);
+        debug_msg("\taddress=%s", this->DCAPP_UDPRX_ADDR);
+        debug_msg("\taddress=%d", this->DCAPP_UDPRX_PORT);
     }
-    gettimeofday(&udpRX_timer, 0x0);
+    StartTimer(&(this->udpRX_timer));
     debug_msg("ccsds_udp opened socket for reading telemetry");
     this->read_active = 1;
 }
 
 
-void CcsdsUdpCommModule::ccsds_udp_finish_send_initialization(void)
+void CcsdsUdpCommModule::write_initialize(char *hostspec, int portspec)
+{
+    if (hostspec) this->DCAPP_UDPSEND_ADDR = strdup(hostspec);
+    this->DCAPP_UDPSEND_PORT = (uint16_t)portspec;
+}
+
+
+void CcsdsUdpCommModule::write_connect(void)
 {
     if ((sockfdsend = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
     {
@@ -188,14 +209,16 @@ void CcsdsUdpCommModule::ccsds_udp_finish_send_initialization(void)
         }
     }
 
+    if (!(this->DCAPP_UDPSEND_ADDR)) this->DCAPP_UDPSEND_ADDR = strdup(DEFAULT_HOST);
+    if (!(this->DCAPP_UDPSEND_PORT)) this->DCAPP_UDPSEND_PORT = DEFAULT_PORT;
+
     memset((char *) &si_sendother, 0, sizeof(si_sendother));
     si_sendother.sin_family = AF_INET;
-    int porth = DCAPP_UDPSEND_PORT;
-    si_sendother.sin_port = htons(porth); // single sender
-    if (inet_aton(DCAPP_UDPSEND_ADDR, &si_sendother.sin_addr) == 0)
+    si_sendother.sin_port = htons(this->DCAPP_UDPSEND_PORT); // single sender
+    if (inet_aton(this->DCAPP_UDPSEND_ADDR, &si_sendother.sin_addr) == 0)
     {
         close(sockfdsend);
-        error_msg("Failed to obtain port %d.", porth);
+        error_msg("Failed to obtain port %d.", this->DCAPP_UDPSEND_PORT);
         error_msg("ccsds_udp failed to open socket for sending commands");
         return;
     }
@@ -205,14 +228,10 @@ void CcsdsUdpCommModule::ccsds_udp_finish_send_initialization(void)
 }
 
 
-CcsdsUdpCommModule::dcapp_ccsds_udp_io CcsdsUdpCommModule::ccsds_udp_readtlmmsg(void)
+CcsdsUdpCommModule::dcapp_ccsds_udp_io CcsdsUdpCommModule::read_tlm_msg(void)
 {
-    struct timeval now;
-
-    gettimeofday(&now, 0x0);
-
     // only check the reader based on the set update_rate
-    if (SecondsElapsed(udpRX_timer, now) < DCAPP_UDPRX_SPECRATE)
+    if (SecondsElapsed(this->udpRX_timer) < this->DCAPP_UDPRX_SPECRATE)
     {
         return CCSDSIO_NO_NEW_DATA;
     }
@@ -238,7 +257,7 @@ CcsdsUdpCommModule::dcapp_ccsds_udp_io CcsdsUdpCommModule::ccsds_udp_readtlmmsg(
     // in host layout.
     CCSDS_INFO_RESULT res = get_CCSDS_Info(&(udpRXResults.rxbuf[0]),
             udpRXResults.rxbufbytesused,
-            DCAPP_CCSDS_NETWORK_LITTLEEND,
+            this->DCAPP_CCSDS_NETWORK_LITTLEEND,
             &ccsdsPriHdr,
             &ccsdsTlmHdr,
             0,
@@ -246,7 +265,7 @@ CcsdsUdpCommModule::dcapp_ccsds_udp_io CcsdsUdpCommModule::ccsds_udp_readtlmmsg(
             &ccsdsPayloadLength
             );
 
-    udpRX_timer = now;
+    StartTimer(&(this->udpRX_timer));
 
     switch (res)
     {
@@ -277,5 +296,16 @@ CcsdsUdpCommModule::dcapp_ccsds_udp_io CcsdsUdpCommModule::ccsds_udp_readtlmmsg(
     }
 
     return CCSDSIO_SUCCESS;
+}
+#else
+
+
+void CcsdsUdpCommModule::read_initialize(char *hostspec, int portspec, int threadspec, float ratespec, int littleendianspec)
+{
+}
+
+
+void CcsdsUdpCommModule::write_initialize(char *hostspec, int portspec)
+{
 }
 #endif

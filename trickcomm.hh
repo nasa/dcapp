@@ -6,6 +6,7 @@
 #include "vscomm.hh"
 #endif
 #include "varlist.hh"
+#include "timer.hh"
 
 class TrickCommModule : public CommModule
 {
@@ -56,6 +57,7 @@ class TrickCommModule : public CommModule
         char *host;
         int port;
         char *datarate;
+        Timer last_connect_attempt;
         TrickCommModule::DisconnectAction disconnectaction;
         TrickCommModule::io_parameter_list fromsim;
         TrickCommModule::io_parameter_list tosim;

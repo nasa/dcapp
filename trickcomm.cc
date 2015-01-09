@@ -3,6 +3,7 @@
 #include <string.h>
 #include "trickcomm.hh"
 #include "msg.hh"
+#include "timer.hh"
 #include "string_utils.hh"
 #include "varlist.hh"
 
@@ -19,6 +20,7 @@ disconnectaction(this->AppTerminate),
 tvs(0x0)
 {
 #ifdef TRICKACTIVE
+    StartTimer(&(this->last_connect_attempt));
     this->tvs = new VariableServerComm;
 #endif
 }
@@ -98,10 +100,10 @@ CommModule::CommStatus TrickCommModule::write(void)
 #ifdef TRICKACTIVE
     if (!(this->active))
     {
-        if (this->SecondsSinceLastConnectAttempt() > CONNECT_ATTEMPT_INTERVAL)
+        if (SecondsElapsed(this->last_connect_attempt) > CONNECT_ATTEMPT_INTERVAL)
         {
             this->activate();
-            this->ResetLastConnectAttemptTime();
+            StartTimer(&(this->last_connect_attempt));
         }
     }
 

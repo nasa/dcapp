@@ -292,7 +292,22 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "CcsdsUdpIo"))
         {
             ccsdsudpcomm = new CcsdsUdpCommModule;
+            process_elements(0, 0, node->children);
             AppData.commlist.push_back(ccsdsudpcomm);
+        }
+        if (NodeCheck(node, "CcsdsUdpRead"))
+        {
+            if (ccsdsudpcomm)
+            {
+                ccsdsudpcomm->read_initialize(get_element_data(node, "Host"), StrToInt(get_element_data(node, "Port"), 0), StrToInt(get_element_data(node, "ThreadID"), 0), StrToFloat(get_element_data(node, "Rate"), 0), BoolStrToInt(get_element_data(node, "LittleEndian"), 0));
+            }
+        }
+        if (NodeCheck(node, "CcsdsUdpWrite"))
+        {
+            if (ccsdsudpcomm)
+            {
+                ccsdsudpcomm->write_initialize(get_element_data(node, "Host"), StrToInt(get_element_data(node, "Port"), 0));
+            }
         }
         if (NodeCheck(node, "CAN"))
         {

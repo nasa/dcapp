@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
 #include "edgecomm.hh"
 #include "varlist.hh"
+#include "timer.hh"
 
-#define SecondsElapsed(a,b) ((float)((b).tv_sec - (a).tv_sec) + (0.000001 * (float)((b).tv_usec - (a).tv_usec)))
 #define TIDY(a) if (a) { free(a); a=0x0; }
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
@@ -18,6 +17,7 @@ active(0),
 cmd_group(0x0),
 rcs(0x0)
 {
+    StartTimer(&(this->last_connect_attempt));
     this->rcs = new EdgeRcsComm;
 }
 
@@ -40,13 +40,10 @@ CommModule::CommStatus EdgeCommModule::read(void)
     if (!(this->active)) return this->Inactive;
 
 	int i, ret;
-	struct timeval now;
     char *result = 0x0;
     char *cmd = 0x0, *strptr, *strval = 0x0;
 
-    gettimeofday(&now, 0x0);
-
-    if (SecondsElapsed(this->edge_timer, now) < this->update_rate) return this->None;
+    if (SecondsElapsed(this->edge_timer) < this->update_rate) return this->None;
 
     if (asprintf(&cmd, "execute_command_group %s", this->cmd_group) == -1)
     {
@@ -97,7 +94,7 @@ CommModule::CommStatus EdgeCommModule::read(void)
     TIDY(strval);
     TIDY(result);
 
-    this->edge_timer = now;
+    StartTimer(&(this->edge_timer));
 
 	return this->Success;
 }
@@ -106,10 +103,10 @@ CommModule::CommStatus EdgeCommModule::write(void)
 {
     if (!(this->active))
     {
-        if (this->SecondsSinceLastConnectAttempt() > CONNECT_ATTEMPT_INTERVAL)
+        if (SecondsElapsed(this->last_connect_attempt) > CONNECT_ATTEMPT_INTERVAL)
         {
             this->activate();
-            this->ResetLastConnectAttemptTime();
+            StartTimer(&(this->last_connect_attempt));
         }
     }
 
@@ -249,7 +246,7 @@ int EdgeCommModule::finishInitialization(char *host, char *port, float spec_rate
 {
     if (this->rcs->initialize(host, port)) return this->Fail;
     this->update_rate = spec_rate;
-    gettimeofday(&(this->edge_timer), 0x0);
+    StartTimer(&(this->edge_timer));
 	return this->Success;
 }
 

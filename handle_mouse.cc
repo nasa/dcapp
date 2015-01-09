@@ -2,8 +2,7 @@
 #include "nodes.hh"
 #include "mappings.hh"
 #include "geometry.hh"
-
-#define SecondsElapsed(a,b) ((float)((b).tv_sec - (a).tv_sec) + (0.000001 * (float)((b).tv_usec - (a).tv_usec)))
+#include "timer.hh"
 
 extern void ProcessEventList(struct node *);
 extern int CheckCondition(struct node *);
@@ -29,7 +28,7 @@ void HandleMouse(int button, int state, float xpct, float ypct, int modifier)
 
     if (state == MOUSE_UP)
     { // Check all lists since MOUSE_DOWN may have been on a different active page
-        for (current = AppData.window->p_head; current != NULL; current=current->p_next_list)
+        for (current = AppData.window->p_head; current; current=current->p_next_list)
             MouseUp(current);
     }
 }
@@ -37,33 +36,29 @@ void HandleMouse(int button, int state, float xpct, float ypct, int modifier)
 
 void CheckMouseBounce(void)
 {
-    static struct timeval mousebounce;
+    static Timer mousebounce;
 
     if (!mousecontinuous) return;
 
-    struct timeval now;
-
-    gettimeofday(&now, NULL);
-
     if (mousebouncemode == 1)
     {
-        gettimeofday(&mousebounce, NULL);
+        StartTimer(&mousebounce);
         mousebouncemode = 2;
     }
     else if (mousebouncemode == 2)
     {
-        if (SecondsElapsed(mousebounce, now) > 1)
+        if (SecondsElapsed(mousebounce) > 1)
         {
-            gettimeofday(&mousebounce, NULL);
+            StartTimer(&mousebounce);
             ProcessEventList(mousecontinuous);
             mousebouncemode = 3;
         }
     }
     else if (mousebouncemode == 3)
     {
-        if (SecondsElapsed(mousebounce, now) > .1)
+        if (SecondsElapsed(mousebounce) > .1)
         {
-            gettimeofday(&mousebounce, NULL);
+            StartTimer(&mousebounce);
             ProcessEventList(mousecontinuous);
         }
     }
@@ -86,7 +81,7 @@ static void MouseDown(struct node *list, float x, float y)
     Geometry geo;
     float ang, originx, originy, tmpx, tmpy, finalx, finaly;
 
-    for (current = list; current != NULL; current = current->p_next)
+    for (current = list; current; current = current->p_next)
     {
         switch (current->info.type)
         {
@@ -132,7 +127,7 @@ static void MouseUp(struct node *list)
 {
     struct node *current;
 
-    for (current = list; current != NULL; current = current->p_next)
+    for (current = list; current; current = current->p_next)
     {
         switch (current->info.type)
         {

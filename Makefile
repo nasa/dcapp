@@ -32,6 +32,7 @@ DCAPP_SOURCES := \
 	render_ADI.cc \
 	render_string.cc \
 	string_utils.cc \
+	timer.cc \
 	trickcomm.cc \
 	update_display.cc \
 	varlist.cc \
