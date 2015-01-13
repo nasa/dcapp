@@ -3,10 +3,7 @@
 include makedefs
 
 HEADERS := \
-	$(wildcard *.hh) \
-	$(wildcard imgload/*.hh) \
-	$(wildcard uei/*.hh) \
-	$(wildcard TaraDraw/*.hh)
+	$(wildcard *.hh)
 DCAPP_SOURCES := \
 	CAN.cc \
 	EDGE_rcs.cc \
@@ -153,4 +150,3 @@ clean:
 	${MAKE} -C TaraDraw/$(TARA_SUBDIR) clean
 	rm -rf $(OBJDIR)
 	rm -rf $(BINDIR)
-	${LEGACY_CLEANUP}

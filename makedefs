@@ -22,6 +22,3 @@ LD := c++
 CFLAGS := -Wall
 ARFLAGS := cr
 LDFLAGS := 
-
-# Note that LEGACY_CLEANUP and all references to it should be removed in 2015
-LEGACY_CLEANUP := rm -rf obj_$(TRICK_HOST_CPU) lib_$(TRICK_HOST_CPU) bin_$(TRICK_HOST_CPU)

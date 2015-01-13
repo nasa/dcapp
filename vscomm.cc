@@ -23,6 +23,7 @@ databuf_complete(0),
 databuf_size(0),
 paramcount(0)
 {
+    bzero(&(this->connection), sizeof(TCDevice));
 }
 
 VariableServerComm::~VariableServerComm()
@@ -130,8 +131,6 @@ int VariableServerComm::activate(char *host, int port, char *rate_spec, char *de
     char *cmd=0x0, *sample_rate=0x0, *default_sample_rate = strdup(VS_DEFAULT_SAMPLERATE);
     int i;
     ParamArray *pstruct;
-
-    bzero(&(this->connection), sizeof(TCDevice));
 
     if (host)
     {

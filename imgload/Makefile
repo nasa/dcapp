@@ -15,4 +15,3 @@ $(OBJDIR)/%.o: %.cc $(HEADERS)
 clean:
 	rm -rf $(OBJDIR)
 	rm -rf $(LIBDIR)
-	${LEGACY_CLEANUP}
