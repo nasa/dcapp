@@ -9,8 +9,28 @@
 #include "fontlib.hh"
 #include "comm.hh"
 #include "timer.hh"
+#include "animation.hh"
 
-typedef enum { Empty, Panel, Image, Vertex, Rectangle, Circle, Line, Polygon, ADI, String, MouseEvent, KeyboardEvent, BezelEvent, SetValue, Condition, Container, PixelStream } Type;
+typedef enum {
+    Empty,
+    Panel,
+    Image,
+    Vertex,
+    Rectangle,
+    Circle,
+    Line,
+    Polygon,
+    ADI,
+    String,
+    MouseEvent,
+    KeyboardEvent,
+    BezelEvent,
+    SetValue,
+    Animate,
+    Condition,
+    Container,
+    PixelStream
+} Type;
 typedef enum { AlignLeft, AlignCenter, AlignRight } HAlignment;
 typedef enum { AlignBottom, AlignMiddle, AlignTop } VAlignment;
 typedef enum { Equals, PlusEquals, MinusEquals } SetOperator;
@@ -152,6 +172,12 @@ struct ModifyValue
     void *max;
 };
 
+struct Animate
+{
+    float duration;
+    struct node *SubList;
+};
+
 struct Condition
 {
     int opspec;
@@ -242,6 +268,8 @@ typedef struct
 {
     float force_update;
     Timer last_update;
+    Timer master_timer;
+    std::list<Animation *> animators;
     std::list<CommModule *> commlist;
     struct node *window;
     struct node *ArgList;

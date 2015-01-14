@@ -54,6 +54,7 @@ int main(int argc, char **argv)
     AppData.DisplayPreInit(get_pointer);
     AppData.DisplayInit();
     UpdateDisplay();
+    StartTimer(&(AppData.master_timer));
 
     // Do forever
     mainloop();
@@ -71,6 +72,7 @@ void Idle(void)
 {
     int status;
     std::list<CommModule *>::iterator commitem;
+    std::list<Animation *>::iterator animitem;
 
     CAN_read();
     UEI_read();
@@ -83,6 +85,20 @@ void Idle(void)
         status = (*commitem)->read();
         if (status == CommModule::Success) UpdateDisplay();
         else if (status == CommModule::Terminate) Terminate(0);
+    }
+
+    if (!AppData.animators.empty())
+    {
+        SetNeedsRedraw();
+        for (animitem = AppData.animators.begin(); animitem != AppData.animators.end(); animitem++)
+        {
+            if ((*animitem)->update(SecondsElapsed(AppData.master_timer)))
+            {
+                delete *animitem;
+                *animitem = 0x0;
+            }
+        }
+        AppData.animators.remove(0x0);
     }
 
     if (update_dyn_elements(AppData.window->p_current)) SetNeedsRedraw();
@@ -101,6 +117,7 @@ void Idle(void)
 void Terminate(int flag)
 {
     std::list<CommModule *>::iterator commitem;
+    std::list<Animation *>::iterator animitem;
 
     AppData.DisplayClose();
 
@@ -110,6 +127,10 @@ void Terminate(int flag)
     for (commitem = AppData.commlist.begin(); commitem != AppData.commlist.end(); commitem++)
     {
         delete (*commitem);
+    }
+    for (animitem = AppData.animators.begin(); animitem != AppData.animators.end(); animitem++)
+    {
+        delete (*animitem);
     }
 
     varlist_term();

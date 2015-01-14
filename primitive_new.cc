@@ -456,6 +456,15 @@ struct ModifyValue get_setvalue_data(char *varspec, char *opspec, char *minspec,
     return ret;
 }
 
+struct node *new_animation(struct node *parent, struct node **list, char *duration)
+{
+    struct node *data = add_primitive_node(parent, list, Animate, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+
+    data->object.anim.duration = StrToFloat(duration, 1);;
+
+    return data;
+}
+
 struct node *new_setvalue(struct node *parent, struct node **list, char *var, char *optype, char *min, char *max, const char *val)
 {
     struct ModifyValue myset = get_setvalue_data(var, optype, min, max, val);

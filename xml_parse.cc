@@ -39,6 +39,7 @@ extern struct node *new_adi(struct node *, struct node **, char *, char *, char 
 extern struct node *new_mouseevent(struct node *, struct node **, char *, char *, char *, char *, char *, char *);
 extern struct node *new_keyboardevent(struct node *, struct node **, char *, char *);
 extern struct node *new_bezelevent(struct node *, struct node **, char *);
+extern struct node *new_animation(struct node *, struct node **, char *);
 extern struct node *new_setvalue(struct node *, struct node **, char *, char *, char *, char *, const char *);
 extern struct ModifyValue get_setvalue_data(char *, char *, char *, char *, const char *);
 extern int CheckConditionLogic(int, int, void *, int, void *);
@@ -190,6 +191,11 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                     process_elements(data, &(data->object.cond.TrueList), node->children);
                 }
             }
+        }
+        if (NodeCheck(node, "Animation"))
+        {
+            data = new_animation(parent, list, get_element_data(node, "Duration"));
+            process_elements(data, &(data->object.anim.SubList), node->children);
         }
         if (NodeCheck(node, "Set"))
         {

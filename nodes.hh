@@ -22,6 +22,7 @@ union objects
     struct Image image;
     struct PixelStream pixelstream;
     struct Container cont;
+    struct Animate anim;
     struct Condition cond;
     struct Line line;
     struct Polygon poly;

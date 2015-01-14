@@ -2,19 +2,54 @@
 #include <string.h>
 #include "nodes.hh"
 #include "string_utils.hh"
+#include "animation.hh"
 
 extern void UpdateDisplay(void);
 
 void ProcessEventList(struct node *);
 void UpdateValue(struct node *);
+void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
 int CheckCondition(struct node *);
 
 extern appdata AppData;
 
 
+void ProcessAnimationList(Animation *animator, struct node *list)
+{
+    struct node *sublist;
+    float endval;
+
+    for (sublist = list; sublist; sublist = sublist->p_next)
+    {
+        switch (sublist->info.type)
+        {
+            case Condition:
+                if (CheckCondition(sublist))
+                    ProcessAnimationList(animator, sublist->object.cond.TrueList);
+                else
+                    ProcessAnimationList(animator, sublist->object.cond.FalseList);
+                break;
+            case SetValue:
+                if (sublist->object.modval.datatype1 == FLOAT_TYPE)
+                {
+                    UpdateValueLogic(sublist->object.modval.optype,
+                                     FLOAT_TYPE, (void *)&endval,
+                                     sublist->object.modval.datatype2, sublist->object.modval.val,
+                                     sublist->object.modval.mindatatype, sublist->object.modval.min,
+                                     sublist->object.modval.maxdatatype, sublist->object.modval.max);
+                    animator->addItem(sublist->object.modval.var, *(float *)(sublist->object.modval.var), endval);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 void ProcessEventList(struct node *list)
 {
     struct node *sublist;
+    Animation *animobj;
 
     for (sublist = list; sublist; sublist = sublist->p_next)
     {
@@ -28,6 +63,12 @@ void ProcessEventList(struct node *list)
                 break;
             case SetValue:
                 UpdateValue(sublist);
+                break;
+            case Animate:
+                animobj = new Animation;
+                animobj->initialize(SecondsElapsed(AppData.master_timer), sublist->object.anim.duration);
+                AppData.animators.push_back(animobj);
+                ProcessAnimationList(animobj, sublist->object.anim.SubList);
                 break;
             default:
                 break;
