@@ -37,7 +37,7 @@ static int ConvertUTF8toUTF32(UTF8 *, UTF32 *);
 static int isLegalUTF8(const UTF8 *, int);
 
 
-flFont *flInitFont(char *filename, char *facespec, unsigned int basesize)
+flFont *flInitFont(const char *filename, const char *facespec, unsigned int basesize)
 {
     static flFont *myfont;
     static FT_Library library = 0;
@@ -125,6 +125,8 @@ float flGetFontAdvance(flFont *fontID, flMonoOption mono, char *string)
     FT_UInt myindex, previndex = 0;
     FT_Vector kern;
 
+    if (!fontID) return 0;
+
     while (*current)
     {
         current += ConvertUTF8toUTF32(current, &out);
@@ -169,12 +171,16 @@ float flGetFontAdvance(flFont *fontID, flMonoOption mono, char *string)
 
 float flGetFontDescender(flFont *fontID)
 {
+    if (!fontID) return 0;
+
     return fontID->descender;
 }
 
 
 void flRenderFont(flFont *fontID, flMonoOption mono, char *string)
 {
+    if (!fontID) return;
+
     UTF8 *current = (UTF8 *)string;
     UTF32 out;
     FT_Vector kern;

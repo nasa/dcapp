@@ -3,7 +3,7 @@
 
 #include "fontlibdefs.hh"
 
-extern flFont *flInitFont(char *, char *, unsigned int);
+extern flFont *flInitFont(const char *, const char *, unsigned int);
 extern float flGetFontAdvance(flFont *, flMonoOption, char *);
 extern float flGetFontDescender(flFont *);
 extern void flRenderFont(flFont *, flMonoOption, char *);

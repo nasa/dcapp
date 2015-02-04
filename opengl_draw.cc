@@ -85,6 +85,7 @@ void draw_image(unsigned int textureID, float w, float h)
 
 float get_string_width(void *fontID, float charH, flMonoOption mono, char *string)
 {
+    if (!fontID || !string) return 0;
 #ifdef UseFTGL
     return ftglGetFontAdvance(fontID, string)*charH/FONTSIZE;
 #else
