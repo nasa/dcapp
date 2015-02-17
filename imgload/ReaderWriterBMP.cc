@@ -99,7 +99,7 @@ void swapbyte_S(short *i)
 // even Master Gates could have invented it.
 // It is extremely expensive on disk space - every RGB pixel uses 3 bytes plus a header!
 // BMP - sponsored by Seagate.
-int loadBMPImage(char *filename, ImageStruct *image)
+int loadBMPImage(const char *filename, ImageStruct *image)
 {
     unsigned char *buffer = NULL; // returned to sender & as read from the disk
     int filelen;

@@ -13,7 +13,7 @@ extern void setTGAImageData(ImageStruct *, unsigned int);
  * Courtesy: Jeff Molofee (NeHe)  http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=24
  *
  *********************************************************************************/
-unsigned int LoadTGA(char *filename, ImageStruct *image)
+unsigned int LoadTGA(const char *filename, ImageStruct *image)
 {
     unsigned int bpp;
     unsigned char TGAheader[12] = {0,0,2,0,0,0,0,0,0,0,0,0}; // Uncompressed TGA Header

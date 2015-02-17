@@ -4,16 +4,16 @@
 #include <strings.h>
 #include "imgload_internal.hh"
 
-extern unsigned int LoadTGA(char *filename, ImageStruct *);
-extern int loadBMPImage(char *filename, ImageStruct *);
+extern unsigned int LoadTGA(const char *filename, ImageStruct *);
+extern int loadBMPImage(const char *filename, ImageStruct *);
 extern int createTextureFromImage(ImageStruct *);
 
-static char *FindExtension(char *);
+static const char *FindExtension(const char *);
 
 
-int imgload(char *filename)
+int imgload(const char *filename)
 {
-    char *extension;
+    const char *extension;
     ImageStruct image;
     int texture;
 
@@ -52,9 +52,9 @@ int imgload(char *filename)
 }
 
 
-char *FindExtension(char *filename)
+const char *FindExtension(const char *filename)
 {
-    char *end;
+    const char *end;
     
     if (!filename)
     {
