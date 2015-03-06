@@ -8,6 +8,7 @@ extern void reshape(int, int);
 extern void init_texture(unsigned int *);
 extern void set_texture(unsigned int, int, int, void *);
 extern void draw_image(unsigned int, float, float);
+extern void get_image_pixel_RGBA(unsigned char[], unsigned int, float, float);
 extern int build_font(int, int);
 extern void setup_panel(float, float, int, int, float, float, float, float);
 extern float get_string_width(void *, float, flMonoOption, char *);

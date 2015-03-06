@@ -83,6 +83,23 @@ void draw_image(unsigned int textureID, float w, float h)
     glDisable(GL_TEXTURE_2D);
 }
 
+void get_image_pixel_RGBA(unsigned char rgba[], unsigned int textureID, float xpct, float ypct)
+{
+    GLint textureWidth, textureHeight;
+    int pixx, pixy, i;
+
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &textureWidth);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &textureHeight);
+    unsigned char mypixels[textureWidth][textureHeight][4];
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)mypixels);
+
+    pixx = (int)(xpct * textureWidth);
+    pixy = (int)(ypct * textureHeight);
+
+    for (i=0; i<4; i++) rgba[i] = mypixels[pixy][pixx][i];
+}
+
 float get_string_width(void *fontID, float charH, flMonoOption mono, char *string)
 {
     if (!fontID || !string) return 0;
