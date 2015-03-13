@@ -54,7 +54,7 @@ VariableServerComm::~VariableServerComm()
     TIDY(this->prevbuf);
 }
 
-void * VariableServerComm::add_var(char *param, char *units, int type, int nelem)
+void * VariableServerComm::add_var(const char *param, const char *units, int type, int nelem)
 {
     ParamArray *pstruct, *pnew;
 
@@ -97,7 +97,7 @@ void * VariableServerComm::add_var(char *param, char *units, int type, int nelem
     return pnew->value;
 }
 
-int VariableServerComm::remove_var(char *param)
+int VariableServerComm::remove_var(const char *param)
 {
     char *cmd=0x0;
     ParamArray *pstruct, *prev=0x0;
@@ -126,7 +126,7 @@ int VariableServerComm::remove_var(char *param)
     return VS_SUCCESS;
 }
 
-int VariableServerComm::activate(char *host, int port, char *rate_spec, char *default_rate)
+int VariableServerComm::activate(const char *host, int port, const char *rate_spec, char *default_rate)
 {
     char *cmd=0x0, *sample_rate=0x0, *default_sample_rate = strdup(VS_DEFAULT_SAMPLERATE);
     int i;
@@ -251,7 +251,7 @@ int VariableServerComm::get(void)
     return retval;
 }
 
-int VariableServerComm::put(char *param, int type, void *value, char *units)
+int VariableServerComm::put(const char *param, int type, void *value, const char *units)
 {
     char *cmd;
 

@@ -24,11 +24,11 @@ class VariableServerComm
         VariableServerComm();
         virtual ~VariableServerComm();
 
-        void *add_var(char *, char *, int, int);
-        int remove_var(char *);
-        int activate(char *, int, char *, char *);
+        void *add_var(const char *, const char *, int, int);
+        int remove_var(const char *);
+        int activate(const char *, int, const char *, char *);
         int get(void);
-        int put(char *, int, void *, char *);
+        int put(const char *, int, void *, const char *);
 
     private:
         typedef struct paramarray
