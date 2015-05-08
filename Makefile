@@ -7,13 +7,14 @@ HEADERS := \
 DCAPP_SOURCES := \
 	CAN.cc \
 	EDGE_rcs.cc \
+	PixelStreamData.cc \
 	animation.cc \
 	app_main.cc \
 	ccsds_udp_comm.cc \
 	comm.cc \
-	dyn_elements.cc \
 	edgecomm.cc \
 	geometry.cc \
+	getbytes.cc \
 	handle_bezel.cc \
 	handle_draw.cc \
 	handle_keyboard.cc \
@@ -21,7 +22,6 @@ DCAPP_SOURCES := \
 	handle_utils.cc \
 	load_constants.cc \
 	load_fonts.cc \
-	load_shm.cc \
 	load_textures.cc \
 	logic_stubs.cc \
 	nodes.cc \

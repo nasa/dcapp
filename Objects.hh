@@ -2,13 +2,12 @@
 #define _OBJECTS_HH_
 
 #include <stdio.h>
-#include <stdint.h>
-#include <sys/shm.h>
+#include <stdlib.h>
 #include <list>
-#include "PixelStream.hh"
 #include "fontlib.hh"
-#include "comm.hh"
 #include "timer.hh"
+#include "comm.hh"
+#include "PixelStreamData.hh"
 #include "animation.hh"
 
 typedef enum {
@@ -29,7 +28,7 @@ typedef enum {
     Animate,
     Condition,
     Container,
-    PixelStream
+    PixelStreamView
 } Type;
 typedef enum { AlignLeft, AlignCenter, AlignRight } HAlignment;
 typedef enum { AlignBottom, AlignMiddle, AlignTop } VAlignment;
@@ -76,14 +75,11 @@ struct Image
     unsigned int textureID;
 };
 
-struct PixelStream
+struct PixelStreamView
 {
     unsigned int textureID;
-    char *filename;
-    FILE *fp;
-    uint32_t buffercount;
+    PixelStreamData *psd;
     void *pixels;
-    PixelStreamData *shm;
 };
 
 struct Rect
@@ -219,12 +215,6 @@ struct Fonts
     char *fontFace;
 };
 
-struct ShMem
-{
-    void *shm;
-    key_t shm_key;
-};
-
 struct Textures
 {
     unsigned int textureID;
@@ -271,11 +261,11 @@ typedef struct
     Timer master_timer;
     std::list<Animation *> animators;
     std::list<CommModule *> commlist;
+    std::list<PixelStreamData *> pixelstreams;
     struct node *window;
     struct node *ArgList;
     struct node *FontList;
     struct node *TextureList;
-    struct node *ShMemList;
     struct node *ConstantList;
     void (*DisplayPreInit)(void *(*)(const char *));
     void (*DisplayInit)(void);

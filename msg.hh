@@ -13,4 +13,6 @@
 #define debug_msg(...) { if (_debugactive) { printf("dcapp: function = %s, file = %s, line = %d: ", __FUNCTION__, __FILE__, __LINE__); printf(__VA_ARGS__); printf("\n"); }}
 #define error_msg(...) { printf("dcapp ERROR: function = %s, file = %s, line = %d: ", __FUNCTION__, __FILE__, __LINE__); printf(__VA_ARGS__); printf("\n"); }
 
+#define debug_perror(a) { if (_debugactive) { perror(a); }}
+
 #endif

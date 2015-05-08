@@ -2,7 +2,8 @@
 #include <string.h>
 #include <strings.h>
 #include <math.h>
-#include <sys/shm.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 #include "varlist.hh"
 #include "nodes.hh"
 #include "string_utils.hh"
@@ -10,7 +11,6 @@
 
 extern void window_init(int, int , int, int, int);
 extern void *LoadFont(char *, char *);
-extern void *LoadShm(key_t);
 extern int LoadTexture(char *);
 extern void *LoadConstant(int, void *);
 
@@ -193,13 +193,40 @@ struct node *new_image(struct node *parent, struct node **list, char *x, char *y
     return data;
 }
 
-struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign, char *rotate, char *shm_key, char *filename)
+struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign, char *rotate, char *host, char *port, char *shmemkey)
 {
-    struct node *data = add_primitive_node(parent, list, PixelStream, x, y, width, height, halign, valign, rotate);
+    // This line is only here for backward compatability with old display files. TODO: Remove it once those files are updated.
+    if (!port) port = shmemkey;
 
-    data->object.pixelstream.shm = (PixelStreamData *)LoadShm(StrToInt(shm_key, 1234));
-    data->object.pixelstream.filename = strdup(filename);
-    init_texture(&(data->object.pixelstream.textureID));
+    PixelStreamData *mypixelstream = new PixelStreamData;
+    PixelStreamData *match = 0x0;
+
+    if (mypixelstream->initialize(host, StrToInt(port, 0)))
+    {
+        delete mypixelstream;
+        return 0x0;
+    }
+
+    std::list<PixelStreamData *>::iterator psditem;
+    for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
+    {
+        if (!strcmp(mypixelstream->getHost(), (*psditem)->getHost()) && mypixelstream->getPort() == (*psditem)->getPort())
+        {
+            match = *psditem;
+        }
+    }
+
+    if (match)
+    {
+        delete mypixelstream;
+        mypixelstream = match;
+    }
+    else AppData.pixelstreams.push_back(mypixelstream);
+
+    struct node *data = add_primitive_node(parent, list, PixelStreamView, x, y, width, height, halign, valign, rotate);
+
+    init_texture(&data->object.pixelstreamview.textureID);
+    data->object.pixelstreamview.psd = mypixelstream;
 
     return data;
 }

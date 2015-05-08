@@ -23,7 +23,6 @@
 
 extern void mainloop(void);
 extern void UpdateDisplay(void);
-extern int update_dyn_elements(struct node *);
 extern void SetNeedsRedraw(void);
 extern void CheckMouseBounce(void);
 extern void ui_init(char *);
@@ -48,6 +47,7 @@ int main(int argc, char **argv)
     // Set up signal handlers
     signal(SIGINT, Terminate);
     signal(SIGTERM, Terminate);
+    signal(SIGPIPE, SIG_IGN);
 
     ProcessArgs(argc, argv);
 
@@ -73,6 +73,7 @@ void Idle(void)
     int status;
     std::list<CommModule *>::iterator commitem;
     std::list<Animation *>::iterator animitem;
+    std::list<PixelStreamData *>::iterator psditem;
 
     CAN_read();
     UEI_read();
@@ -85,6 +86,12 @@ void Idle(void)
         status = (*commitem)->read();
         if (status == CommModule::Success) UpdateDisplay();
         else if (status == CommModule::Terminate) Terminate(0);
+    }
+
+    for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
+    {
+        // TODO: should probably only do this check if the PixelStream is in the current view tree
+        if ((*psditem)->update()) SetNeedsRedraw();
     }
 
     if (!AppData.animators.empty())
@@ -101,8 +108,6 @@ void Idle(void)
         AppData.animators.remove(0x0);
     }
 
-    if (update_dyn_elements(AppData.window->p_current)) SetNeedsRedraw();
-
     CheckMouseBounce();
 
     if (SecondsElapsed(AppData.last_update) > AppData.force_update) UpdateDisplay();
@@ -118,6 +123,7 @@ void Terminate(int flag)
 {
     std::list<CommModule *>::iterator commitem;
     std::list<Animation *>::iterator animitem;
+    std::list<PixelStreamData *>::iterator psditem;
 
     AppData.DisplayClose();
 
@@ -127,6 +133,10 @@ void Terminate(int flag)
     for (commitem = AppData.commlist.begin(); commitem != AppData.commlist.end(); commitem++)
     {
         delete (*commitem);
+    }
+    for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
+    {
+        delete (*psditem);
     }
     for (animitem = AppData.animators.begin(); animitem != AppData.animators.end(); animitem++)
     {

@@ -15,12 +15,11 @@ union objects
     struct Style style;
     struct Constants constants;
     struct Fonts fonts;
-    struct ShMem shmem;
     struct Textures textures;
     struct Window win;
     struct Panel panel;
     struct Image image;
-    struct PixelStream pixelstream;
+    struct PixelStreamView pixelstreamview;
     struct Container cont;
     struct Animate anim;
     struct Condition cond;

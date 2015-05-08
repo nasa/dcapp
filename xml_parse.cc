@@ -31,7 +31,7 @@ extern struct node *new_circle(struct node *, struct node **, char *, char *, ch
 extern struct node *new_string(struct node *, struct node **, char *, char *, char *, char *, char *,
                                char *, char *, char *, char *, char *, char *, char *, char *, char *);
 extern struct node *new_image(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *);
-extern struct node *new_pixel_stream(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *);
+extern struct node *new_pixel_stream(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *, char *);
 extern struct node *new_button(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *,
                                char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, char *);
 extern struct node *new_adi(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *,
@@ -492,8 +492,9 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                       get_element_data(node, "HorizontalAlign"),
                       get_element_data(node, "VerticalAlign"),
                       get_element_data(node, "Rotate"),
-                      get_element_data(node, "SharedMemoryKey"),
-                      get_node_content(node));
+                      get_element_data(node, "Host"),
+                      get_element_data(node, "Port"),
+                      get_element_data(node, "SharedMemoryKey"));
         }
         if (NodeCheck(node, "Button"))
         {
