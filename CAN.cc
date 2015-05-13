@@ -3,7 +3,8 @@
 #ifdef NTCAN
 #include "ntcan.h"
 
-extern void HandleBezel(int, int, int);
+extern void HandleBezelButton(int, int, int);
+extern void HandleBezelControl(int, int, int);
 
 static void CAN_error(char *, NTCAN_RESULT);
 
@@ -71,7 +72,8 @@ extern void CAN_read(void)
         {
             for (i=0; i<length; i++)
             {
-                if (message.id == buttonID) HandleBezel(message.data[0], message.data[1], message.data[2]);
+                if (message.id == buttonID) HandleBezelButton(message.data[0], message.data[1], message.data[2]);
+                else if (message.id == controlID) HandleBezelControl(message.data[0], message.data[1], message.data[2]);
             }
         }
         else CAN_error("canTake", retval);

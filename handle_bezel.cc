@@ -11,12 +11,23 @@ static void BezelButtonPressed(struct node *, int);
 static void BezelButtonReleased(struct node *, int);
 
 
-/*********************************************************************************
- *
- *  Handle events from bezel
- *
- *********************************************************************************/
-void HandleBezel(int type, int itemid, int action)
+void HandleBezelControl(int type, int itemid, int action)
+{
+    int ACTIVE_DISPLAY=0, PREVIOUS_DISPLAY=0;
+
+    if (type == 0xaa && itemid == 0x01)
+    {
+        if (action) ACTIVE_DISPLAY = PREVIOUS_DISPLAY;
+        else 
+        {
+            PREVIOUS_DISPLAY = ACTIVE_DISPLAY;
+            ACTIVE_DISPLAY = 99;
+        }
+    }
+}
+
+
+void HandleBezelButton(int type, int itemid, int action)
 {
     struct node *current;
 
@@ -70,11 +81,6 @@ void HandleBezel(int type, int itemid, int action)
 }
 
 
-/*********************************************************************************
- *
- * Pass BEZEL_PRESSED event through the primitives list
- *
- *********************************************************************************/
 static void BezelButtonPressed(struct node *list, int itemid)
 {
     struct node *current;
@@ -111,11 +117,6 @@ static void BezelButtonPressed(struct node *list, int itemid)
 }
 
 
-/*********************************************************************************
- *
- * Pass BEZEL_RELEASED event through the primitives list
- *
- *********************************************************************************/
 static void BezelButtonReleased(struct node *list, int itemid)
 {
     struct node *current;

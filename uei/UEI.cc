@@ -8,7 +8,7 @@
 #define UEI_BUFFER_SIZE 60
 #define NUM_BEZELS 3
 
-extern void HandleBezel(int, int, int);
+extern void HandleBezelButton(int, int, int);
 
 static int UEI_active = 0;
 static int bezelID;
@@ -45,8 +45,8 @@ extern void UEI_read(void)
                 {
                     if (!first)
                     {
-                        if (button[bezelID]) HandleBezel(BEZEL_BUTTON, button[bezelID], BEZEL_PRESSED);
-                        else HandleBezel(BEZEL_BUTTON, prev_button, BEZEL_RELEASED);
+                        if (button[bezelID]) HandleBezelButton(BEZEL_BUTTON, button[bezelID], BEZEL_PRESSED);
+                        else HandleBezelButton(BEZEL_BUTTON, prev_button, BEZEL_RELEASED);
                     }
                     prev_button = button[bezelID];
                 }
