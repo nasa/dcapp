@@ -80,6 +80,7 @@ struct PixelStreamView
     unsigned int textureID;
     PixelStreamData *psd;
     void *pixels;
+    size_t memallocation;
 };
 
 struct Rect

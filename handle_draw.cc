@@ -125,7 +125,11 @@ static void render_primitives(struct node *list)
                     pad = ((newh - current->object.pixelstreamview.psd->height) / 2) + 1;
                     padbytes = current->object.pixelstreamview.psd->width * pad * 3;
                     nbytes = (size_t)(current->object.pixelstreamview.psd->width * newh * 3);
-                    current->object.pixelstreamview.pixels = realloc(current->object.pixelstreamview.pixels, nbytes);
+                    if (nbytes > current->object.pixelstreamview.memallocation)
+                    {
+                        current->object.pixelstreamview.pixels = realloc(current->object.pixelstreamview.pixels, nbytes);
+                        current->object.pixelstreamview.memallocation = nbytes;
+                    }
                     bzero(current->object.pixelstreamview.pixels, padbytes);
                     bzero((void *)((size_t)(current->object.pixelstreamview.pixels) + nbytes - padbytes), padbytes);
                     bcopy(current->object.pixelstreamview.psd->pixels, (void *)((size_t)(current->object.pixelstreamview.pixels) + padbytes), origbytes);
@@ -133,7 +137,11 @@ static void render_primitives(struct node *list)
                 else
                 {
                     nbytes = (size_t)(current->object.pixelstreamview.psd->width * current->object.pixelstreamview.psd->height * 3);
-                    current->object.pixelstreamview.pixels = realloc(current->object.pixelstreamview.pixels, nbytes);
+                    if (nbytes > current->object.pixelstreamview.memallocation)
+                    {
+                        current->object.pixelstreamview.pixels = realloc(current->object.pixelstreamview.pixels, nbytes);
+                        current->object.pixelstreamview.memallocation = nbytes;
+                    }
                     bcopy(current->object.pixelstreamview.psd->pixels, current->object.pixelstreamview.pixels, nbytes);
                 }
 

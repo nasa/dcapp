@@ -52,6 +52,7 @@ void setup_panel(float x, float y, int near, int far, float red, float green, fl
 void init_texture(unsigned int *textureID)
 {
     glGenTextures(1, (GLuint *)textureID);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);  // Make sure that byte unpacking (for PixelStream, etc.) is properyly byte aligned
 }
 
 void set_texture(unsigned int textureID, int width, int height, void *pixels)

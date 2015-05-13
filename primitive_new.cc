@@ -227,6 +227,8 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
 
     init_texture(&data->object.pixelstreamview.textureID);
     data->object.pixelstreamview.psd = mypixelstream;
+    data->object.pixelstreamview.pixels = 0x0;
+    data->object.pixelstreamview.memallocation = 0;
 
     return data;
 }
