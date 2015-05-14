@@ -17,12 +17,9 @@ void HandleBezelControl(int type, int itemid, int action)
 
     if (type == 0xaa && itemid == 0x01)
     {
-        if (action) ACTIVE_DISPLAY = PREVIOUS_DISPLAY;
-        else 
-        {
-            PREVIOUS_DISPLAY = ACTIVE_DISPLAY;
-            ACTIVE_DISPLAY = 99;
-        }
+        if (ACTIVE_DISPLAY != 99) PREVIOUS_DISPLAY = ACTIVE_DISPLAY;
+        if (action) ACTIVE_DISPLAY = PREVIOUS_DISPLAY; // displays enabled
+        else ACTIVE_DISPLAY = 99;                      // displays disabled
     }
 }
 
