@@ -263,6 +263,7 @@ typedef struct
     std::list<Animation *> animators;
     std::list<CommModule *> commlist;
     std::list<PixelStreamData *> pixelstreams;
+    int *canbus_inhibited;
     struct node *window;
     struct node *ArgList;
     struct node *FontList;

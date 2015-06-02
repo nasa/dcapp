@@ -53,15 +53,17 @@ class TrickCommModule : public CommModule
             TrickCommModule::io_parameter *data;
         } io_parameter_list;
 
+#ifdef TRICKACTIVE
         int active;
+        Timer last_connect_attempt;
+        VariableServerComm *tvs;
+#endif
         char *host;
         int port;
         char *datarate;
-        Timer last_connect_attempt;
         TrickCommModule::DisconnectAction disconnectaction;
         TrickCommModule::io_parameter_list fromsim;
         TrickCommModule::io_parameter_list tosim;
-        VariableServerComm *tvs;
 
         void activate(void);
 };

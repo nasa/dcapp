@@ -12,12 +12,14 @@
 
 TrickCommModule::TrickCommModule()
 :
+#ifdef TRICKACTIVE
 active(0),
+tvs(0x0),
+#endif
 host(0x0),
 port(0),
 datarate(0x0),
-disconnectaction(this->AppTerminate),
-tvs(0x0)
+disconnectaction(this->AppTerminate)
 {
 #ifdef TRICKACTIVE
     StartTimer(&(this->last_connect_attempt));

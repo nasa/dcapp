@@ -13,13 +13,10 @@ static void BezelButtonReleased(struct node *, int);
 
 void HandleBezelControl(int type, int itemid, int action)
 {
-    int ACTIVE_DISPLAY=0, PREVIOUS_DISPLAY=0;
-
     if (type == 0xaa && itemid == 0x01)
     {
-        if (ACTIVE_DISPLAY != 99) PREVIOUS_DISPLAY = ACTIVE_DISPLAY;
-        if (action) ACTIVE_DISPLAY = PREVIOUS_DISPLAY; // displays enabled
-        else ACTIVE_DISPLAY = 99;                      // displays disabled
+        if (action) *(AppData.canbus_inhibited) = 0;
+        else *(AppData.canbus_inhibited) = 1;
     }
 }
 

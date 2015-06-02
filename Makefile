@@ -81,6 +81,7 @@ endif
 ifdef TRICK_HOME
 #TRICK_MAJOR = $(word 1,$(subst ., ,$(TRICK_VER)))
 DCAPP_SOURCES += vscomm.cc
+TRICK_HOST_TYPE ?= $(shell gte TRICK_HOST_TYPE)
 TRICK_CFLAG := -DTRICKACTIVE -I$(TRICK_HOME)/trick_source
 TRICK_LFLAG := -L$(TRICK_HOME)/trick_source/trick_utils/comm/object_$(TRICK_HOST_TYPE) -ltrick_comm
 endif

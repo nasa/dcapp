@@ -318,6 +318,8 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "CAN"))
         {
             CAN_init(get_element_data(node, "Network"), get_element_data(node, "ButtonID"), get_element_data(node, "ControlID"));
+            char *inhibitvariable = get_element_data(node, "InhibitVariable");
+            AppData.canbus_inhibited = (int *)get_pointer(&inhibitvariable[1]);
         }
         if (NodeCheck(node, "UEI"))
         {
