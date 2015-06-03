@@ -78,7 +78,8 @@ LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
 endif
 endif
 
-ifdef TRICK_HOME
+TRICK_HOME ?= $(shell gte TRICK_HOME)
+ifneq ($(TRICK_HOME),)
 #TRICK_MAJOR = $(word 1,$(subst ., ,$(TRICK_VER)))
 DCAPP_SOURCES += vscomm.cc
 TRICK_HOST_TYPE ?= $(shell gte TRICK_HOST_TYPE)
