@@ -255,7 +255,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
 void TrickCommModule::finishInitialization(void)
 {
 #ifdef TRICKACTIVE
-	int i, type;
+	int i, type, nelem;
 
 	for (i=0; i<this->fromsim.count; i++)
     {
@@ -263,15 +263,22 @@ void TrickCommModule::finishInitialization(void)
         {
 				case VARLIST_FLOAT:
 					type = VS_FLOAT;
+					nelem = 1;
 					break;
 				case VARLIST_INTEGER:
 					type = VS_INTEGER;
+					nelem = 1;
 					break;
 				case VARLIST_STRING:
 					type = VS_STRING;
+					nelem = STRING_DEFAULT_LENGTH;
 					break;
+				default:
+				    type = 0;
+				    break;
         }
-        this->fromsim.data[i].trickvalue = this->tvs->add_var(this->fromsim.data[i].trickvar, this->fromsim.data[i].units, type, 1);
+        if (type)
+            this->fromsim.data[i].trickvalue = this->tvs->add_var(this->fromsim.data[i].trickvar, this->fromsim.data[i].units, type, nelem);
     }
 #endif
 }

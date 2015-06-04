@@ -332,6 +332,7 @@ int VariableServerComm::update_data(char *curbuf)
             break;
         case VS_STRING:
             len = this->find_next_token(element, '\t');
+            if (len >= pstruct->nelem) len = pstruct->nelem - 1;
             strncpy((char *)pstruct->value, element, len);
             *((char *)(pstruct->value)+len) = '\0';
             break;
