@@ -17,6 +17,13 @@ active(0),
 cmd_group(0x0),
 rcs(0x0)
 {
+    this->fromedge.count = 0;
+    this->fromedge.allocated_elements = 0;
+    this->fromedge.data = 0x0;
+    this->toedge.count = 0;
+    this->toedge.allocated_elements = 0;
+    this->toedge.data = 0x0;
+
     StartTimer(&(this->last_connect_attempt));
     this->rcs = new EdgeRcsComm;
 }
@@ -182,26 +189,6 @@ void EdgeCommModule::flagAsChanged(void *value)
 	}
 }
 
-void EdgeCommModule::initializeParameterList(int bufID)
-{
-    io_parameter_list *io_map;
-
-    switch (bufID)
-    {
-        case EDGEIO_FROMEDGE:
-            io_map = &(this->fromedge);
-            break;
-        case EDGEIO_TOEDGE:
-            io_map = &(this->toedge);
-            break;
-        default:
-            return;
-    }
-    io_map->count = 0;
-    io_map->allocated_elements = 0;
-    io_map->data = 0x0;
-}
-
 int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *edgecmd)
 {
     io_parameter_list *io_map;
@@ -272,4 +259,9 @@ void EdgeCommModule::activate(void)
 
         this->active = 1;
     }
+}
+
+int EdgeCommModule::isActive(void)
+{
+    return this->active;
 }

@@ -86,6 +86,8 @@ void Idle(void)
         status = (*commitem)->read();
         if (status == CommModule::Success) UpdateDisplay();
         else if (status == CommModule::Terminate) Terminate(0);
+
+        if ((*commitem)->activeID) *((*commitem)->activeID) = (*commitem)->isActive();
     }
 
     for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)

@@ -20,12 +20,12 @@ class TrickCommModule : public CommModule
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
         void flagAsChanged(void *);
+        int isActive(void);
 
         void setHost(char *);
         void setPort(int);
         void setDataRate(char *);
         void setReconnectOnDisconnect(void);
-        void initializeParameterList(int);
         int addParameter(int, const char *, const char *, const char *, const char *);
         void finishInitialization(void);
 
@@ -53,8 +53,8 @@ class TrickCommModule : public CommModule
             TrickCommModule::io_parameter *data;
         } io_parameter_list;
 
-#ifdef TRICKACTIVE
         int active;
+#ifdef TRICKACTIVE
         Timer last_connect_attempt;
         VariableServerComm *tvs;
 #endif

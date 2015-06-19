@@ -309,3 +309,14 @@ void CcsdsUdpCommModule::write_initialize(char *hostspec, int portspec)
 {
 }
 #endif
+
+
+int CcsdsUdpCommModule::isActive(void)
+{
+#ifdef CCSDSUDPACTIVE
+    if (this->read_active || this->write_active) return 1;
+    else return 0;
+#else
+    return 0;
+#endif
+}

@@ -12,8 +12,8 @@
 
 TrickCommModule::TrickCommModule()
 :
-#ifdef TRICKACTIVE
 active(0),
+#ifdef TRICKACTIVE
 tvs(0x0),
 #endif
 host(0x0),
@@ -21,6 +21,12 @@ port(0),
 datarate(0x0),
 disconnectaction(this->AppTerminate)
 {
+    this->fromsim.count = 0;
+    this->fromsim.allocated_elements = 0;
+    this->fromsim.data = 0x0;
+    this->tosim.count = 0;
+    this->tosim.allocated_elements = 0;
+    this->tosim.data = 0x0;
 #ifdef TRICKACTIVE
     StartTimer(&(this->last_connect_attempt));
     this->tvs = new VariableServerComm;
@@ -183,26 +189,6 @@ void TrickCommModule::setReconnectOnDisconnect(void)
     this->disconnectaction = this->AppReconnect;
 }
 
-void TrickCommModule::initializeParameterList(int bufID)
-{
-    TrickCommModule::io_parameter_list *io_map;
-
-    switch (bufID)
-    {
-        case TrickCommModule::FromTrick:
-            io_map = &(this->fromsim);
-            break;
-        case TrickCommModule::ToTrick:
-            io_map = &(this->tosim);
-            break;
-        default:
-            return;
-    }
-    io_map->count = 0;
-    io_map->allocated_elements = 0;
-    io_map->data = 0x0;
-}
-
 int TrickCommModule::addParameter(int bufID, const char *paramname, const char *trickvar, const char *units, const char *init_only)
 {
 #ifdef TRICKACTIVE
@@ -291,4 +277,9 @@ void TrickCommModule::activate(void)
 	    if (this->tvs->activate(this->host, this->port, NULL, this->datarate) == VS_SUCCESS) this->active = 1;
 	}
 #endif
+}
+
+int TrickCommModule::isActive(void)
+{
+    return this->active;
 }

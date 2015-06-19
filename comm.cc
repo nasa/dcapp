@@ -1,6 +1,8 @@
 #include "comm.hh"
 
 CommModule::CommModule()
+:
+activeID(0x0)
 {
 }
 
@@ -21,4 +23,9 @@ CommModule::CommStatus CommModule::write(void)
 void CommModule::flagAsChanged(void *)
 {
     return;
+}
+
+int CommModule::isActive(void)
+{
+    return 0;
 }

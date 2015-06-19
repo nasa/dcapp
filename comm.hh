@@ -12,6 +12,9 @@ class CommModule
         virtual CommModule::CommStatus read(void);
         virtual CommModule::CommStatus write(void);
         virtual void flagAsChanged(void *);
+        virtual int isActive(void);
+
+        int *activeID;
 };
 
 #endif

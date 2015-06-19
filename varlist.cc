@@ -110,6 +110,7 @@ void varlist_term(void)
 static parameter *get_paramdata(const char *label)
 {
 	int i;
+
 	for (i=0; i<params.count; i++)
 	{
 		if (!strcmp(params.data[i].label, label)) return &params.data[i];

@@ -19,8 +19,8 @@ class EdgeCommModule : public CommModule
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
         void flagAsChanged(void *);
+        int isActive(void);
 
-        void initializeParameterList(int);
         int addParameter(int, const char *, const char *);
         int finishInitialization(char *, char *, float);
 

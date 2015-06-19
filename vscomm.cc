@@ -253,7 +253,7 @@ int VariableServerComm::get(void)
 
 int VariableServerComm::put(const char *param, int type, void *value, const char *units)
 {
-    char *cmd;
+    char *cmd = 0x0;
 
     if (!tc_isValid(&(this->connection))) return VS_INVALID_CONNECTION;
 

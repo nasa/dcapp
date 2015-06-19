@@ -234,6 +234,8 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             {
                 if (!strcasecmp(d_a, "Reconnect")) trickcomm->setReconnectOnDisconnect();
             }
+            char *connectedvariable = get_element_data(node, "ConnectedVariable");
+            if (connectedvariable) trickcomm->activeID = (int *)get_pointer(&connectedvariable[1]);
             process_elements(0, 0, node->children);
             trickcomm->finishInitialization();
             AppData.commlist.push_back(trickcomm);
@@ -243,7 +245,6 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             if (trickcomm)
             {
                 bufferID = TrickCommModule::FromTrick;
-                trickcomm->initializeParameterList(bufferID);
                 process_elements(0, 0, node->children);
             }
         }
@@ -252,7 +253,6 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             if (trickcomm)
             {
                 bufferID = TrickCommModule::ToTrick;
-                trickcomm->initializeParameterList(bufferID);
                 process_elements(0, 0, node->children);
             }
         }
@@ -266,6 +266,8 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "EdgeIo"))
         {
             edgecomm = new EdgeCommModule;
+            char *connectedvariable = get_element_data(node, "ConnectedVariable");
+            if (connectedvariable) edgecomm->activeID = (int *)get_pointer(&connectedvariable[1]);
             process_elements(0, 0, node->children);
             edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StrToFloat(get_element_data(node, "DataRate"), 1.0));
             AppData.commlist.push_back(edgecomm);
@@ -275,7 +277,6 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             if (edgecomm)
             {
                 bufferID = EDGEIO_FROMEDGE;
-                edgecomm->initializeParameterList(bufferID);
                 process_elements(0, 0, node->children);
             }
         }
@@ -284,7 +285,6 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             if (edgecomm)
             {
                 bufferID = EDGEIO_TOEDGE;
-                edgecomm->initializeParameterList(bufferID);
                 process_elements(0, 0, node->children);
             }
         }

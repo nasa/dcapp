@@ -62,6 +62,7 @@ class CcsdsUdpCommModule : public CommModule
 
         void read_initialize(char *, int, int, float, int);
         void write_initialize(char *, int);
+        int isActive(void);
 
     private:
 #ifdef CCSDSUDPACTIVE
