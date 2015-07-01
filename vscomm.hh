@@ -17,6 +17,7 @@
 #define VS_STRING             (1)
 #define VS_FLOAT              (2)
 #define VS_INTEGER            (3)
+#define VS_METHOD             (4)
 
 class VariableServerComm
 {

@@ -268,6 +268,9 @@ int VariableServerComm::put(const char *param, int type, void *value, const char
         case VS_STRING:
             if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s = %s;\")\n", param, (char *)value) == -1) return VS_ERROR;
             break;
+        case VS_METHOD:
+            if (asprintf(&cmd, "%s()\n", param) == -1) return VS_ERROR;
+            break;
     }
 
     this->sim_write(cmd);

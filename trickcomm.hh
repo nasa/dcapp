@@ -26,7 +26,7 @@ class TrickCommModule : public CommModule
         void setPort(int);
         void setDataRate(char *);
         void setReconnectOnDisconnect(void);
-        int addParameter(int, const char *, const char *, const char *, const char *);
+        int addParameter(int, const char *, const char *, const char *, const char *, int);
         void finishInitialization(void);
 
     private:
@@ -45,6 +45,7 @@ class TrickCommModule : public CommModule
             } prevvalue;
             int forcewrite;
             int init_only;
+            int method;
         } io_parameter;
         typedef struct
         {

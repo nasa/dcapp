@@ -121,32 +121,62 @@ CommModule::CommStatus TrickCommModule::write(void)
 
         for (i=0; i<this->tosim.count; i++)
         {
-            switch (this->tosim.data[i].type)
+            if (this->tosim.data[i].method)
             {
-                case VARLIST_FLOAT:
-                    if (this->tosim.data[i].forcewrite || *(float *)this->tosim.data[i].dcvalue != this->tosim.data[i].prevvalue.f)
-                    {
-                        this->tvs->put(this->tosim.data[i].trickvar, VS_FLOAT, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
-                        this->tosim.data[i].prevvalue.f = *(float *)this->tosim.data[i].dcvalue;
-                        this->tosim.data[i].forcewrite = 0;
-                    }
-                    break;
-                case VARLIST_INTEGER:
-                    if (this->tosim.data[i].forcewrite || *(int *)this->tosim.data[i].dcvalue != this->tosim.data[i].prevvalue.i)
-                    {
-                        this->tvs->put(this->tosim.data[i].trickvar, VS_INTEGER, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
-                        this->tosim.data[i].prevvalue.i = *(int *)this->tosim.data[i].dcvalue;
-                        this->tosim.data[i].forcewrite = 0;
-                    }
-                    break;
-                case VARLIST_STRING:
-                    if (this->tosim.data[i].forcewrite || strcmp((char *)this->tosim.data[i].dcvalue, this->tosim.data[i].prevvalue.str))
-                    {
-                        this->tvs->put(this->tosim.data[i].trickvar, VS_STRING, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
-                        strcpy(this->tosim.data[i].prevvalue.str, (char *)this->tosim.data[i].dcvalue);
-                        this->tosim.data[i].forcewrite = 0;
-                    }
-                    break;
+                switch (this->tosim.data[i].type)
+                {
+                    case VARLIST_FLOAT:
+                        if (*(float *)this->tosim.data[i].dcvalue)
+                        {
+                            this->tvs->put(this->tosim.data[i].trickvar, VS_METHOD, 0x0, 0x0);
+                            *(float *)this->tosim.data[i].dcvalue = 0;
+                        }
+                        break;
+                    case VARLIST_INTEGER:
+                        if (*(int *)this->tosim.data[i].dcvalue)
+                        {
+                            this->tvs->put(this->tosim.data[i].trickvar, VS_METHOD, 0x0, 0x0);
+                            *(int *)this->tosim.data[i].dcvalue = 0;
+                        }
+                        break;
+                    case VARLIST_STRING:
+                        if (BoolStrToInt((char *)this->tosim.data[i].dcvalue, 0))
+                        {
+                            this->tvs->put(this->tosim.data[i].trickvar, VS_METHOD, 0x0, 0x0);
+                            strcpy((char *)this->tosim.data[i].dcvalue, "false");
+                        }
+                        break;
+                }
+            }
+            else
+            {
+                switch (this->tosim.data[i].type)
+                {
+                    case VARLIST_FLOAT:
+                        if (this->tosim.data[i].forcewrite || *(float *)this->tosim.data[i].dcvalue != this->tosim.data[i].prevvalue.f)
+                        {
+                            this->tvs->put(this->tosim.data[i].trickvar, VS_FLOAT, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
+                            this->tosim.data[i].prevvalue.f = *(float *)this->tosim.data[i].dcvalue;
+                            this->tosim.data[i].forcewrite = 0;
+                        }
+                        break;
+                    case VARLIST_INTEGER:
+                        if (this->tosim.data[i].forcewrite || *(int *)this->tosim.data[i].dcvalue != this->tosim.data[i].prevvalue.i)
+                        {
+                            this->tvs->put(this->tosim.data[i].trickvar, VS_INTEGER, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
+                            this->tosim.data[i].prevvalue.i = *(int *)this->tosim.data[i].dcvalue;
+                            this->tosim.data[i].forcewrite = 0;
+                        }
+                        break;
+                    case VARLIST_STRING:
+                        if (this->tosim.data[i].forcewrite || strcmp((char *)this->tosim.data[i].dcvalue, this->tosim.data[i].prevvalue.str))
+                        {
+                            this->tvs->put(this->tosim.data[i].trickvar, VS_STRING, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
+                            strcpy(this->tosim.data[i].prevvalue.str, (char *)this->tosim.data[i].dcvalue);
+                            this->tosim.data[i].forcewrite = 0;
+                        }
+                        break;
+                }
             }
         }
     }
@@ -189,7 +219,7 @@ void TrickCommModule::setReconnectOnDisconnect(void)
     this->disconnectaction = this->AppReconnect;
 }
 
-int TrickCommModule::addParameter(int bufID, const char *paramname, const char *trickvar, const char *units, const char *init_only)
+int TrickCommModule::addParameter(int bufID, const char *paramname, const char *trickvar, const char *units, const char *init_only, int method)
 {
 #ifdef TRICKACTIVE
     TrickCommModule::io_parameter_list *io_map;
@@ -229,6 +259,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
         bzero(io_map->data[io_map->count].prevvalue.str, STRING_DEFAULT_LENGTH);
         io_map->data[io_map->count].forcewrite = 0;
         io_map->data[io_map->count].init_only = BoolStrToInt(init_only, 0);
+        io_map->data[io_map->count].method = method;
         io_map->count++;
     }
 
