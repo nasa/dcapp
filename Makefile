@@ -44,58 +44,64 @@ LIBS := \
 	imgload/$(LIBDIR)/libimgload.a
 
 ifeq ($(UseFTGL), yes)
-FTGL_CFLAG += -DUseFTGL
-FTGL_LFLAG += -lftgl
+  FTGL_CFLAG += -DUseFTGL
+  FTGL_LFLAG += -lftgl
 else
-DCAPP_SOURCES += fontlib.cc
+  DCAPP_SOURCES += fontlib.cc
 endif
 
 ifeq ($(OSTYPE), linux)
-TARA_SUBDIR := x11
-ifeq ($(UseGLUT), yes)
-DCAPP_SOURCES += glut_funcs.cc app_launcher_stub.cc
-UI_CFLAG := -I../glut/include
-UI_LFLAG := -L../glut/lib/glut -lglut
+  TARA_SUBDIR := x11
+  ifeq ($(UseGLUT), yes)
+    DCAPP_SOURCES += glut_funcs.cc app_launcher_stub.cc
+    UI_CFLAG := -I../glut/include
+    UI_LFLAG := -L../glut/lib/glut -lglut
+  else
+    DCAPP_SOURCES += tara_funcs.cc app_launcher_stub.cc
+    UI_CFLAG :=
+    UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD
+    LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
+  endif
+  UI_CFLAG += $(X11_CFLAG)
+  UI_LFLAG += $(X11_LFLAG) -lX11 -lXi -lXmu -lGL -lGLU
 else
-DCAPP_SOURCES += tara_funcs.cc app_launcher_stub.cc
-UI_CFLAG :=
-UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD
-LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
-endif
-UI_CFLAG += $(X11_CFLAG)
-UI_LFLAG += $(X11_LFLAG) -lX11 -lXi -lXmu -lGL -lGLU
-else
-TARA_SUBDIR := mac
-ifeq ($(UseGLUT), yes)
-DCAPP_SOURCES += glut_funcs.cc app_launcher_stub.cc
-UI_CFLAG := $(X11_CFLAG)
-UI_LFLAG := $(X11_LFLAG) -lX11 -lXi -lXmu -lGL -lGLU -lglut
-else
-DCAPP_SOURCES += tara_funcs.cc app_launcher.mm
-UI_CFLAG := $(X11_CFLAG)
-UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD -framework OpenGL -framework AppKit
-LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
-endif
+  TARA_SUBDIR := mac
+  ifeq ($(UseGLUT), yes)
+    DCAPP_SOURCES += glut_funcs.cc app_launcher_stub.cc
+    UI_CFLAG := $(X11_CFLAG)
+    UI_LFLAG := $(X11_LFLAG) -lX11 -lXi -lXmu -lGL -lGLU -lglut
+  else
+    DCAPP_SOURCES += tara_funcs.cc app_launcher.mm
+    UI_CFLAG := $(X11_CFLAG)
+    UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD -framework OpenGL -framework AppKit
+    LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
+  endif
 endif
 
-TRICK_HOME ?= $(shell gte TRICK_HOME)
-ifneq ($(TRICK_HOME),)
-#TRICK_MAJOR = $(word 1,$(subst ., ,$(TRICK_VER)))
-DCAPP_SOURCES += vscomm.cc
-TRICK_HOST_TYPE ?= $(shell gte TRICK_HOST_TYPE)
-TRICK_CFLAG := -DTRICKACTIVE -I$(TRICK_HOME)/trick_source
-TRICK_LFLAG := -L$(TRICK_HOME)/trick_source/trick_utils/comm/object_$(TRICK_HOST_TYPE) -ltrick_comm
+GTECMD :=
+ifneq ($(shell which trick-gte),)
+  GTECMD := trick-gte
+endif
+ifneq ($(shell which gte),)
+  GTECMD := gte
+endif
+ifneq ($(GTECMD),)
+  TRICK_HOME ?= $(shell $(GTECMD) TRICK_HOME)
+  TRICK_HOST_TYPE ?= $(shell $(GTECMD) TRICK_HOST_TYPE)
+  DCAPP_SOURCES += vscomm.cc
+  TRICK_CFLAG := -DTRICKACTIVE -I$(TRICK_HOME)/trick_source -I$(TRICK_HOME)/include/trick/compat
+  TRICK_LFLAG := -L$(TRICK_HOME)/trick_source/trick_utils/comm/object_$(TRICK_HOST_TYPE) -L$(TRICK_HOME)/lib -L$(TRICK_HOME)/lib64 -ltrick_comm
 endif
 
 ifdef CANBUS_HOME
-CAN_CFLAG := -DNTCAN -I$(CANBUS_HOME)
-CAN_LFLAG := -L$(CANBUS_HOME) -Wl,-Bstatic -lntcan -Wl,-Bdynamic
+  CAN_CFLAG := -DNTCAN -I$(CANBUS_HOME)
+  CAN_LFLAG := -L$(CANBUS_HOME) -Wl,-Bstatic -lntcan -Wl,-Bdynamic
 endif
 
 ifdef CCSDS_UDP_HOME
-CCSDS_UDP_CFLAG := -DCCSDSUDPACTIVE -I$(CCSDS_UDP_HOME)
-# -rdynamic is needed for GCC to use the application's symbols to resolve undefined symbols in the loaded .so's
-CCSDS_UDP_LFLAG := -rdynamic -L$(CCSDS_UDP_HOME)/Debug -lccsds_udp
+  CCSDS_UDP_CFLAG := -DCCSDSUDPACTIVE -I$(CCSDS_UDP_HOME)
+  # -rdynamic is needed for GCC to use the application's symbols to resolve undefined symbols in the loaded .so's
+  CCSDS_UDP_LFLAG := -rdynamic -L$(CCSDS_UDP_HOME)/Debug -lccsds_udp
 endif
 
 FT_CFLAG := $(shell freetype-config --cflags)
@@ -108,8 +114,8 @@ COMP_FLAGS := $(XML2_CFLAG) $(FTGL_CFLAG) $(FT_CFLAG) $(UI_CFLAG) $(CAN_CFLAG) $
 LINK_FLAGS := $(XML2_LFLAG) $(FTGL_LFLAG) $(FT_LFLAG) $(UI_LFLAG) $(CAN_LFLAG) $(TRICK_LFLAG) $(CCSDS_UDP_LFLAG) -ldl
 
 ifeq ($(OSTYPE), linux)
-COMP_FLAGS += -D_GNU_SOURCE
-LINK_FLAGS += -lrt
+  COMP_FLAGS += -D_GNU_SOURCE
+  LINK_FLAGS += -lrt
 endif
 
 DCAPP_OBJECTS := $(DCAPP_SOURCES)
