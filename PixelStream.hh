@@ -4,6 +4,8 @@
 #define CONNECTION_TIMEOUT 2.0
 #define REQUEST_BUFFER 1
 
+enum { PixelStreamFileProtocol, PixelStreamTcpProtocol };
+
 /*
     Server = EDGE
     Client = dcapp

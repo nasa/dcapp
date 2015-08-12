@@ -8,6 +8,9 @@
 #include "nodes.hh"
 #include "string_utils.hh"
 #include "opengl_draw.hh"
+#include "PixelStream.hh"
+#include "PixelStreamFile.hh"
+#include "PixelStreamTcp.hh"
 
 extern void window_init(int, int , int, int, int);
 extern void *LoadFont(char *, char *);
@@ -193,35 +196,94 @@ struct node *new_image(struct node *parent, struct node **list, char *x, char *y
     return data;
 }
 
-struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign, char *rotate, char *host, char *port, char *shmemkey)
+struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign, char *rotate, char *protocolstr, char *host, char *port, char *shmemkey, char *filename)
 {
-    // This line is only here for backward compatability with old display files. TODO: Remove it once those files are updated.
-    if (!port) port = shmemkey;
-
-    PixelStreamData *mypixelstream = new PixelStreamData;
+    PixelStreamData *mypixelstream = 0x0;
     PixelStreamData *match = 0x0;
-
-    if (mypixelstream->initialize(host, StrToInt(port, 0)))
-    {
-        delete mypixelstream;
-        return 0x0;
-    }
-
     std::list<PixelStreamData *>::iterator psditem;
-    for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
+
+    unsigned protocol = PixelStreamFileProtocol;
+    if (protocolstr)
     {
-        if (!strcmp(mypixelstream->getHost(), (*psditem)->getHost()) && mypixelstream->getPort() == (*psditem)->getPort())
-        {
-            match = *psditem;
-        }
+        if (!strcasecmp(protocolstr, "TCP")) protocol = PixelStreamTcpProtocol;
     }
 
-    if (match)
+    PixelStreamFile *myfilepixelstream;
+    PixelStreamTcp *mytcppixelstream;
+
+    switch (protocol)
     {
-        delete mypixelstream;
-        mypixelstream = match;
+        case PixelStreamFileProtocol:
+            myfilepixelstream = new PixelStreamFile;
+
+            if (myfilepixelstream->initialize(filename, StrToInt(shmemkey, 0)))
+            {
+                delete myfilepixelstream;
+                return 0x0;
+            }
+
+            PixelStreamFile *psdfileitem;
+            for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
+            {
+                if ((*psditem)->protocol == PixelStreamFileProtocol)
+                {
+                    psdfileitem = (PixelStreamFile *)*psditem;
+                    if (!strcmp(myfilepixelstream->getFileName(), psdfileitem->getFileName()) && myfilepixelstream->getShmemKey() == psdfileitem->getShmemKey())
+                    {
+                        match = *psditem;
+                    }
+                }
+            }
+
+            if (match)
+            {
+                delete myfilepixelstream;
+                mypixelstream = match;
+            }
+            else
+            {
+                mypixelstream = (PixelStreamFile *)myfilepixelstream;
+                mypixelstream->protocol = PixelStreamFileProtocol;
+                AppData.pixelstreams.push_back(mypixelstream);
+            }
+            break;
+        case PixelStreamTcpProtocol:
+            mytcppixelstream = new PixelStreamTcp;
+
+            if (mytcppixelstream->initialize(host, StrToInt(port, 0)))
+            {
+                delete mytcppixelstream;
+                return 0x0;
+            }
+
+            PixelStreamTcp *psdtcpitem;
+            for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
+            {
+                if ((*psditem)->protocol == PixelStreamTcpProtocol)
+                {
+                    psdtcpitem = (PixelStreamTcp *)*psditem;
+                    if (!strcmp(mytcppixelstream->getHost(), psdtcpitem->getHost()) && mytcppixelstream->getPort() == psdtcpitem->getPort())
+                    {
+                        match = *psditem;
+                    }
+                }
+            }
+
+            if (match)
+            {
+                delete mytcppixelstream;
+                mypixelstream = match;
+            }
+            else
+            {
+                mypixelstream = (PixelStreamData *)mytcppixelstream;
+                mypixelstream->protocol = PixelStreamTcpProtocol;
+                AppData.pixelstreams.push_back(mypixelstream);
+            }
+            break;
+        default:
+            return 0x0;
     }
-    else AppData.pixelstreams.push_back(mypixelstream);
 
     struct node *data = add_primitive_node(parent, list, PixelStreamView, x, y, width, height, halign, valign, rotate);
 

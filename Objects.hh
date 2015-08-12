@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <list>
+#include <sys/shm.h>
 #include "fontlib.hh"
 #include "timer.hh"
 #include "comm.hh"
@@ -216,6 +217,12 @@ struct Fonts
     char *fontFace;
 };
 
+struct ShMem
+{
+    void *shm;
+    key_t shm_key;
+};
+
 struct Textures
 {
     unsigned int textureID;
@@ -268,6 +275,7 @@ typedef struct
     struct node *ArgList;
     struct node *FontList;
     struct node *TextureList;
+    struct node *ShMemList;
     struct node *ConstantList;
     void (*DisplayPreInit)(void *(*)(const char *));
     void (*DisplayInit)(void);
