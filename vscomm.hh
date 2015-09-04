@@ -1,8 +1,13 @@
 #ifndef _VSCOMM_HH_
 #define _VSCOMM_HH_
 
+#ifdef TRICK16PLUS
+#include "trick/tc.h"
+#include "trick/tc_proto.h"
+#else
 #include "trick_utils/comm/include/tc.h"
 #include "trick_utils/comm/include/tc_proto.h"
+#endif
 
 #define VS_DEFAULT_PORT       (7000)
 #define VS_DEFAULT_SAMPLERATE "1.0"

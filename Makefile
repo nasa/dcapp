@@ -81,19 +81,17 @@ else
   endif
 endif
 
-GTECMD :=
 ifneq ($(shell which trick-gte),)
-  GTECMD := trick-gte
-endif
-ifneq ($(shell which gte),)
-  GTECMD := gte
-endif
-ifneq ($(GTECMD),)
-  TRICK_HOME ?= $(shell $(GTECMD) TRICK_HOME)
-  TRICK_HOST_TYPE ?= $(shell $(GTECMD) TRICK_HOST_TYPE)
+  TRICK_HOME ?= $(shell trick-gte TRICK_HOME)
+  TRICK_CFLAG := -DTRICKACTIVE -DTRICK16PLUS -I$(TRICK_HOME)/include
+  TRICK_LFLAG := -L$(TRICK_HOME)/lib -L$(TRICK_HOME)/lib64 -ltrick_comm
   DCAPP_SOURCES += vscomm.cc
-  TRICK_CFLAG := -DTRICKACTIVE -I$(TRICK_HOME)/trick_source -I$(TRICK_HOME)/include/trick/compat
-  TRICK_LFLAG := -L$(TRICK_HOME)/trick_source/trick_utils/comm/object_$(TRICK_HOST_TYPE) -L$(TRICK_HOME)/lib -L$(TRICK_HOME)/lib64 -ltrick_comm
+else ifneq ($(shell which gte),)
+  TRICK_HOME ?= $(shell gte TRICK_HOME)
+  TRICK_HOST_TYPE ?= $(shell gte TRICK_HOST_TYPE)
+  TRICK_CFLAG := -DTRICKACTIVE -I$(TRICK_HOME)/trick_source
+  TRICK_LFLAG := -L$(TRICK_HOME)/trick_source/trick_utils/comm/object_$(TRICK_HOST_TYPE) -ltrick_comm
+  DCAPP_SOURCES += vscomm.cc
 endif
 
 ifdef CANBUS_HOME
