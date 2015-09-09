@@ -339,28 +339,28 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
 
             debug_msg("Loading %s...", get_node_content(node));
             so_handler = dlopen(get_node_content(node), RTLD_NOW);
-            if (!so_handler) 
+            if (!so_handler)
             {
                 error_msg("%s", dlerror());
                 return (-1);
             }
-        
+
             AppData.DisplayPreInit = (void (*)(void *(*)(const char *)))dlsym(so_handler, "DisplayPreInit");
-            if ((error = dlerror()))  
+            if ((error = dlerror()))
             {
                 debug_msg("%s", error);
             	AppData.DisplayPreInit = &DisplayPreInitStub;
             }
-        
+
             AppData.DisplayInit = (void (*)())dlsym(so_handler, "DisplayInit");
-            if ((error = dlerror()))  
+            if ((error = dlerror()))
             {
                 debug_msg("%s", error);
             	AppData.DisplayInit = &DisplayInitStub;
             }
-        
+
             AppData.DisplayLogic = (void (*)())dlsym(so_handler, "DisplayLogic");
-            if ((error = dlerror()))  
+            if ((error = dlerror()))
             {
                 debug_msg("%s", error);
             	AppData.DisplayLogic = &DisplayLogicStub;
@@ -870,7 +870,7 @@ static void replace_string(char **instr)
                 for (j=start; j<len; j++)
                 {
                     if ((*instr)[j] == '}')
-                    {  
+                    {
                         end = j-1;
                         in_end = j;
                         break;
@@ -911,7 +911,7 @@ static void replace_string(char **instr)
                 outstr = (char *)realloc(outstr, outlen+1);
 
                 for (j=0; j<repl_len; j++) outstr[outptr++] = repl_val[j];
-    
+
                 repl_val = 0x0;
                 free(in_val);
                 i += in_end - in_start;

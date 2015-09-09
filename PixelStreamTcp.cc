@@ -123,7 +123,7 @@ int PixelStreamTcp::initialize(char *hostspec, int portspec)
     return 0;
 }
 
-int PixelStreamTcp::update(void)
+int PixelStreamTcp::reader(void)
 {
     int updated = 0;
 

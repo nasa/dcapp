@@ -9,7 +9,8 @@ class PixelStreamData
         PixelStreamData();
         virtual ~PixelStreamData();
 
-        virtual int update(void);
+        virtual int reader(void);
+        virtual int writer(void);
 
         unsigned protocol;
         void *pixels;

@@ -16,7 +16,7 @@ class PixelStreamTcp : public PixelStreamData
         PixelStreamTcp();
         virtual ~PixelStreamTcp();
 
-        int update(void);
+        int reader(void);
 
         int initialize(char *, int);
         char *getHost(void);

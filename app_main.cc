@@ -29,6 +29,10 @@ extern void ui_init(char *);
 extern void ui_terminate(void);
 extern void appLauncher(char *, char **, char *, char **);
 extern int ParseXMLFile(char *);
+extern void DisplayPreInitStub(void *(*)(const char *));
+extern void DisplayInitStub(void);
+extern void DisplayLogicStub(void);
+extern void DisplayCloseStub(void);
 
 void Terminate(int);
 
@@ -48,6 +52,11 @@ int main(int argc, char **argv)
     signal(SIGINT, Terminate);
     signal(SIGTERM, Terminate);
     signal(SIGPIPE, SIG_IGN);
+
+    AppData.DisplayPreInit = &DisplayPreInitStub;
+    AppData.DisplayInit = &DisplayInitStub;
+    AppData.DisplayLogic = &DisplayLogicStub;
+    AppData.DisplayClose = &DisplayCloseStub;
 
     ProcessArgs(argc, argv);
 
@@ -93,7 +102,7 @@ void Idle(void)
     for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
     {
         // TODO: should probably only do this check if the PixelStream is in the current view tree
-        if ((*psditem)->update()) SetNeedsRedraw();
+        if ((*psditem)->reader()) SetNeedsRedraw();
     }
 
     if (!AppData.animators.empty())
@@ -127,7 +136,7 @@ void Terminate(int flag)
     std::list<Animation *>::iterator animitem;
     std::list<PixelStreamData *>::iterator psditem;
 
-    AppData.DisplayClose();
+    if (AppData.DisplayClose) AppData.DisplayClose();
 
     ui_terminate();
     CAN_term();

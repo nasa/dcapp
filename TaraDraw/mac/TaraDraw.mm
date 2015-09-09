@@ -13,7 +13,6 @@ int tdInitialize(char *unused)
         [[ NSAutoreleasePool alloc ] init ];
         [ NSApp setActivationPolicy:NSApplicationActivationPolicyRegular ];
         [ NSApp activateIgnoringOtherApps:YES ];
-        [ NSApp finishLaunching ];
     }
 
     tda = [[ TaraDrawAdapter alloc ] init ];

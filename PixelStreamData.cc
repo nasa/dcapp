@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include "PixelStream.hh"
 #include "PixelStreamData.hh"
 
@@ -15,7 +14,12 @@ PixelStreamData::~PixelStreamData()
 {
 }
 
-int PixelStreamData::update(void)
+int PixelStreamData::reader(void)
+{
+    return 0;
+}
+
+int PixelStreamData::writer(void)
 {
     return 0;
 }

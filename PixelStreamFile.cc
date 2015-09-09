@@ -3,8 +3,6 @@
 #include <sys/shm.h>
 #include "PixelStreamFile.hh"
 
-extern void *LoadShm(key_t);
-
 PixelStreamFile::PixelStreamFile()
 :
 filename(0x0),
@@ -25,11 +23,24 @@ int PixelStreamFile::initialize(char *filenamespec, int shmemkeyspec)
     if (!filenamespec) return -1;
     this->filename = strdup(filenamespec);
     this->shmemkey = shmemkeyspec;
-    this->shm = (PixelStreamShmem *)LoadShm(shmemkeyspec);
+
+    int shmid = shmget(shmemkeyspec, SHM_SIZE, IPC_CREAT | 0666);
+    if (shmid < 0)
+    {
+        perror("PixelStreamFile shmget");
+        return 0;
+    }
+    this->shm = (PixelStreamShmem *)shmat(shmid, NULL, 0);
+    if (this->shm < 0)
+    {
+        perror("PixelStreamFile shmat");
+        return 0;
+    }
+
     return 0;
 }
 
-int PixelStreamFile::update(void)
+int PixelStreamFile::reader(void)
 {
     int updated = 0;
     uint32_t on = 1, off = 0;
