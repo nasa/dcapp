@@ -25,8 +25,9 @@ class PixelStreamFile : public PixelStreamData
         virtual ~PixelStreamFile();
 
         int reader(void);
+        int writer(void);
 
-        int initialize(char *, int);
+        int initialize(char *, int, int);
         char *getFileName(void);
         int getShmemKey(void);
 
@@ -35,7 +36,7 @@ class PixelStreamFile : public PixelStreamData
         FILE *fp;
         int shmemkey;
         PixelStreamShmem *shm;
-        uint32_t buffercount;
+        uint64_t buffercount;
 };
 
 #endif

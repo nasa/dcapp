@@ -9,10 +9,15 @@
 #define _debugactive 0
 #endif
 
-#define user_msg(...) { printf("dcapp: "); printf(__VA_ARGS__); printf("\n"); }
-#define debug_msg(...) { if (_debugactive) { printf("dcapp: function = %s, file = %s, line = %d: ", __FUNCTION__, __FILE__, __LINE__); printf(__VA_ARGS__); printf("\n"); }}
-#define error_msg(...) { printf("dcapp ERROR: function = %s, file = %s, line = %d: ", __FUNCTION__, __FILE__, __LINE__); printf(__VA_ARGS__); printf("\n"); }
+extern void set_msg_label(const char *);
+extern const char *get_msg_label(void);
 
-#define debug_perror(a) { if (_debugactive) { perror(a); }}
+#define user_msg(...) { printf("%s: ", get_msg_label()); printf(__VA_ARGS__); printf("\n"); }
+
+#define debug_msg(...) { if (_debugactive) { printf("%s: function = %s, file = %s, line = %d: ", get_msg_label(), __FUNCTION__, __FILE__, __LINE__); printf(__VA_ARGS__); printf("\n"); }}
+#define error_msg(...) { printf("%s ERROR: function = %s, file = %s, line = %d: ", get_msg_label(), __FUNCTION__, __FILE__, __LINE__); printf(__VA_ARGS__); printf("\n"); }
+
+#define debug_perror(...) { if (_debugactive) { printf("%s: function = %s, file = %s, line = %d: ", get_msg_label(), __FUNCTION__, __FILE__, __LINE__); printf(__VA_ARGS__);  printf(": "); fflush(0); perror(0x0); }}
+#define error_perror(...) { printf("%s ERROR: function = %s, file = %s, line = %d: ", get_msg_label(), __FUNCTION__, __FILE__, __LINE__); printf(__VA_ARGS__); printf(": "); fflush(0); perror(0x0); }
 
 #endif

@@ -1,7 +1,9 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/shm.h>
 #include "PixelStreamFile.hh"
+#include "msg.hh"
 
 PixelStreamFile::PixelStreamFile()
 :
@@ -11,14 +13,18 @@ shmemkey(0),
 shm(0x0),
 buffercount(0)
 {
+    this->protocol = PixelStreamFileProtocol;
 }
 
 PixelStreamFile::~PixelStreamFile()
 {
+    if (this->shm > 0) shmdt(this->shm);
+    if (this->fp) fclose(this->fp);
     if (this->filename) free(this->filename);
+    if (this->pixels) free(this->pixels);
 }
 
-int PixelStreamFile::initialize(char *filenamespec, int shmemkeyspec)
+int PixelStreamFile::initialize(char *filenamespec, int shmemkeyspec, int writer_flag)
 {
     if (!filenamespec) return -1;
     this->filename = strdup(filenamespec);
@@ -27,14 +33,26 @@ int PixelStreamFile::initialize(char *filenamespec, int shmemkeyspec)
     int shmid = shmget(shmemkeyspec, SHM_SIZE, IPC_CREAT | 0666);
     if (shmid < 0)
     {
-        perror("PixelStreamFile shmget");
-        return 0;
+        error_perror("Unable to get shared memory identifier");
+        return -1;
     }
     this->shm = (PixelStreamShmem *)shmat(shmid, NULL, 0);
-    if (this->shm < 0)
+    if (this->shm <= 0)
     {
-        perror("PixelStreamFile shmat");
-        return 0;
+        error_perror("Unable to attach to shared memory");
+        return -1;
+    }
+
+    if (writer_flag)
+    {
+        memset(this->shm, 0, SHM_SIZE);
+
+        if (this->filename) this->fp = fopen(this->filename, "w");
+        if (!(this->fp))
+        {
+            error_msg("PixelStream: Couldn't open stream file %s", this->filename);
+            return -1;
+        }
     }
 
     return 0;
@@ -49,7 +67,7 @@ int PixelStreamFile::reader(void)
     {
         if (this->filename) this->fp = fopen(this->filename, "r");
     }
-    else if (this->shm)
+    else if (this->shm > 0)
     {
         if (!(this->shm->writing))
         {
@@ -70,6 +88,28 @@ int PixelStreamFile::reader(void)
     }
 
     return updated;
+}
+
+int PixelStreamFile::writer(void)
+{
+    uint32_t on = 1, off = 0;
+
+    if (!(this->pixels)) return 0;
+
+    if (!(this->shm->reading))
+    {
+            memcpy(&(this->shm->writing), &on, 4);
+            rewind(this->fp);
+            fwrite(this->pixels, 1, (size_t)(this->width * this->height * 3), this->fp);
+            memcpy(&(this->shm->buffercount), &(this->buffercount), 8);
+            memcpy(&(this->shm->width), &(this->width), 4);
+            memcpy(&(this->shm->height), &(this->height), 4);
+            fflush(this->fp);
+            memcpy(&(this->shm->writing), &off, 4);
+    }
+    (this->buffercount)++;
+
+    return 1;
 }
 
 char *PixelStreamFile::getFileName(void)

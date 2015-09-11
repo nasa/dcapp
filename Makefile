@@ -26,6 +26,7 @@ DCAPP_SOURCES := \
 	load_fonts.cc \
 	load_textures.cc \
 	logic_stubs.cc \
+	msg.cc \
 	nodes.cc \
 	opengl_draw.cc \
 	primitive_new.cc \

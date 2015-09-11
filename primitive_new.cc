@@ -9,8 +9,6 @@
 #include "string_utils.hh"
 #include "opengl_draw.hh"
 #include "PixelStream.hh"
-#include "PixelStreamFile.hh"
-#include "PixelStreamTcp.hh"
 
 extern void window_init(int, int , int, int, int);
 extern void *LoadFont(char *, char *);
@@ -216,7 +214,7 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
         case PixelStreamFileProtocol:
             myfilepixelstream = new PixelStreamFile;
 
-            if (myfilepixelstream->initialize(filename, StrToInt(shmemkey, 0)))
+            if (myfilepixelstream->initialize(filename, StrToInt(shmemkey, 0), 0))
             {
                 delete myfilepixelstream;
                 return 0x0;
@@ -250,7 +248,7 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
         case PixelStreamTcpProtocol:
             mytcppixelstream = new PixelStreamTcp;
 
-            if (mytcppixelstream->initialize(host, StrToInt(port, 0)))
+            if (mytcppixelstream->readerInitialize(host, StrToInt(port, 0)))
             {
                 delete mytcppixelstream;
                 return 0x0;

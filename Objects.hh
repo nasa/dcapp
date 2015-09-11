@@ -8,7 +8,7 @@
 #include "fontlib.hh"
 #include "timer.hh"
 #include "comm.hh"
-#include "PixelStreamData.hh"
+#include "PixelStream.hh"
 #include "animation.hh"
 
 typedef enum {

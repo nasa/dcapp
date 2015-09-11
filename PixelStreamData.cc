@@ -1,9 +1,8 @@
-#include "PixelStream.hh"
 #include "PixelStreamData.hh"
 
 PixelStreamData::PixelStreamData()
 :
-protocol(PixelStreamFileProtocol),
+protocol(PixelStreamUnknownProtocol),
 pixels(0x0),
 width(0),
 height(0)

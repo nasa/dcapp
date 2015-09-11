@@ -53,6 +53,8 @@ int main(int argc, char **argv)
     signal(SIGTERM, Terminate);
     signal(SIGPIPE, SIG_IGN);
 
+    set_msg_label(argv[0]);
+
     AppData.DisplayPreInit = &DisplayPreInitStub;
     AppData.DisplayInit = &DisplayInitStub;
     AppData.DisplayLogic = &DisplayLogicStub;
