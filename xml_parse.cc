@@ -17,6 +17,7 @@
 #include "string_utils.hh"
 #include "xml_utils.hh"
 #include "msg.hh"
+#include "keyValuePair.hh"
 
 extern void new_window(int, int, int, int, int);
 extern void new_panels(char *);
@@ -64,7 +65,8 @@ extern appdata AppData;
 static TrickCommModule *trickcomm = 0x0;
 static EdgeCommModule *edgecomm = 0x0;
 static CcsdsUdpCommModule *ccsdsudpcomm = 0x0;
-static struct node *PPConstantList, *StyleList, *DefaultList;
+static std::list<KeyValuePair *> ppclist;
+static struct node *StyleList, *DefaultList;
 static char *switchid, *switchonval, *switchoffval, *indid, *indonval, *activeid, *activetrueval, *transitionid, *key, *keyascii, *bezelkey;
 static int id_count = 0, preprocessing = 1, bufferID;
 
@@ -100,7 +102,13 @@ int ParseXMLFile(char *fullpath)
     if (process_elements(0, 0, root_element->children)) return (-1);
 
     // Clean the lists that we created during preprocessing
-    clean_list(PPConstantList);
+    std::list<KeyValuePair *>::iterator kvp;
+
+    for (kvp = AppData.arglist.begin(); kvp != AppData.arglist.end(); kvp++) delete *kvp;
+    AppData.arglist.clear();
+    for (kvp = ppclist.begin(); kvp != ppclist.end(); kvp++) delete *kvp;
+    ppclist.clear();
+
     clean_list(StyleList);
     clean_list(DefaultList);
 
@@ -127,9 +135,9 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "Dummy")) process_elements(parent, list, node->children);
         if (NodeCheck(node, "Constant"))
         {
-            data = NewNode(0x0, &PPConstantList);
-            data->object.ppconst.name = get_element_data(node, "Name");
-            data->object.ppconst.value = get_node_content(node);
+            KeyValuePair *kvp = new KeyValuePair;
+            kvp->setKeyAndValue(get_element_data(node, "Name"), get_node_content(node));
+            ppclist.push_front(kvp);
         }
         if (NodeCheck(node, "Style"))
         {
@@ -932,24 +940,20 @@ static void replace_string(char **instr)
 
 static char *get_constval(char *instr)
 {
-    struct node *data;
+    std::list<KeyValuePair *>::iterator kvp;
 
     // First, check arguments list...
-    if (AppData.ArgList)
+    for (kvp = AppData.arglist.begin(); kvp != AppData.arglist.end(); kvp++)
     {
-        for (data = AppData.ArgList->p_tail; data; data = data->p_prev)
-        {
-            if (!strcmp(data->object.ppconst.name, instr)) return data->object.ppconst.value;
-        }
+        if (!strcmp((*kvp)->getKey(), instr)) return (*kvp)->getValue();
     }
+
     // Then, check to see if the constant has been set in the XML file hierarchy...
-    if (PPConstantList)
+    for (kvp = ppclist.begin(); kvp != ppclist.end(); kvp++)
     {
-        for (data = PPConstantList->p_tail; data; data = data->p_prev)
-        {
-            if (!strcmp(data->object.ppconst.name, instr)) return data->object.ppconst.value;
-        }
+        if (!strcmp((*kvp)->getKey(), instr)) return (*kvp)->getValue();
     }
+
     // If no match found in either list, return NULL
     return 0x0;
 }

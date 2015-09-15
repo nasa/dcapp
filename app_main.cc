@@ -16,6 +16,7 @@
 #include "string_utils.hh"
 #include "msg.hh"
 #include "timer.hh"
+#include "keyValuePair.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
@@ -164,9 +165,7 @@ static void ProcessArgs(int argc, char **argv)
 {
     int i, count;
     char *xdisplay = 0x0;
-    struct node *data;
     char *specfile = 0x0, *args = 0x0;
-    char *name, *value;
     struct utsname minfo;
     size_t argsize;
     int gotargs = 0;
@@ -263,25 +262,24 @@ static void ProcessArgs(int argc, char **argv)
     if (args)
     {
         char *strptr = args;
-
-        name = (char *)calloc(sizeof(args), 1);
-        value = (char *)calloc(sizeof(args), 1);
+        char *key = (char *)calloc(sizeof(args), 1);
+        char *value = (char *)calloc(sizeof(args), 1);
 
         while (strptr < (args + strlen(args)))
         {
-            count = sscanf(strptr, "%[^= ]=%s", name, value);
+            count = sscanf(strptr, "%[^= ]=%s", key, value);
             if (count == 2)
             {
-                data = NewNode(0x0, &(AppData.ArgList));
-                data->object.ppconst.name = strdup(name);
-                data->object.ppconst.value = strdup(value);
+                KeyValuePair *kvp = new KeyValuePair;
+                kvp->setKeyAndValue(key, value);
+                AppData.arglist.push_front(kvp);
             }
-            if (count >= 1) strptr += strlen(name);
+            if (count >= 1) strptr += strlen(key);
             if (count == 2) strptr += strlen(value) + 1;
             while (strptr < (args + strlen(args)) && *strptr == ' ') strptr++;
         }
 
-        free(name);
+        free(key);
         free(value);
     }
 

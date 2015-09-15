@@ -10,6 +10,7 @@
 #include "comm.hh"
 #include "PixelStream.hh"
 #include "animation.hh"
+#include "keyValuePair.hh"
 
 typedef enum {
     Empty,
@@ -240,12 +241,6 @@ struct Constants
     } val;
 };
 
-struct PreProcessConstant
-{
-    char *name;
-    char *value;
-};
-
 struct Style
 {
     char *name;
@@ -270,12 +265,11 @@ typedef struct
     std::list<Animation *> animators;
     std::list<CommModule *> commlist;
     std::list<PixelStreamData *> pixelstreams;
+    std::list<KeyValuePair *> arglist;
     int *canbus_inhibited;
     struct node *window;
-    struct node *ArgList;
     struct node *FontList;
     struct node *TextureList;
-    struct node *ShMemList;
     struct node *ConstantList;
     void (*DisplayPreInit)(void *(*)(const char *));
     void (*DisplayInit)(void);

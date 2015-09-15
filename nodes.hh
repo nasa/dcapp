@@ -10,7 +10,6 @@
 
 union objects
 {
-    struct PreProcessConstant ppconst;
     struct Default dflt;
     struct Style style;
     struct Constants constants;
