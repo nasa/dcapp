@@ -60,7 +60,7 @@ class CcsdsUdpCommModule : public CommModule
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
 
-        void read_initialize(char *, int, int, float, int);
+        void read_initialize(char *, int, int, float, bool);
         void write_initialize(char *, int);
         int isActive(void);
 

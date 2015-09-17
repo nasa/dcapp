@@ -218,29 +218,6 @@ struct Fonts
     char *fontFace;
 };
 
-struct ShMem
-{
-    void *shm;
-    key_t shm_key;
-};
-
-struct Textures
-{
-    unsigned int textureID;
-    char *textureFile;
-};
-
-struct Constants
-{
-    int datatype;
-    union
-    {
-        float f;
-        int i;
-        char *s;
-    } val;
-};
-
 struct Style
 {
     char *name;
@@ -268,9 +245,6 @@ typedef struct
     std::list<KeyValuePair *> arglist;
     int *canbus_inhibited;
     struct node *window;
-    struct node *FontList;
-    struct node *TextureList;
-    struct node *ConstantList;
     void (*DisplayPreInit)(void *(*)(const char *));
     void (*DisplayInit)(void);
     void (*DisplayLogic)(void);

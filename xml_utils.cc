@@ -3,13 +3,13 @@
 #include <libxml/parser.h>
 #include <libxml/xinclude.h>
 
-int NodeCheck(xmlNodePtr, const char *);
-static int xmlStrEq(const xmlChar *, const char *);
+bool NodeCheck(xmlNodePtr, const char *);
+static bool xmlStrEq(const xmlChar *, const char *);
 
 int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *filename, const char *req_name)
 {
-    *mydoc = xmlReadFile(filename, NULL, 0);
-    if (*mydoc == NULL)
+    *mydoc = xmlReadFile(filename, 0x0, 0);
+    if (!(*mydoc))
     {
         printf("dcapp: Couldn't process XML file: %s\n", filename);
         return (-1);
@@ -21,7 +21,7 @@ int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *filename
     }
 
     *root_element = xmlDocGetRootElement(*mydoc);
-    if (*root_element == NULL)
+    if (!(*root_element))
     {
         printf("dcapp: Couldn't find root element in XML file: %s\n", filename);
         return (-1);
@@ -47,57 +47,53 @@ void XMLFileClose(xmlDocPtr mydoc)
 
 char **get_XML_attribute_address(xmlNodePtr node, const char *key)
 {
-    xmlAttrPtr attr;
-
-    for (attr = node->properties; attr != NULL; attr = attr->next)
+    for (xmlAttrPtr attr = node->properties; attr; attr = attr->next)
     {
         if (xmlStrEq(attr->name, key))
         {
-            if (attr->children != NULL) return (char **)&(attr->children->content);
+            if (attr->children) return (char **)&(attr->children->content);
         }
     }
-    return NULL;
+    return 0x0;
 }
 
 char *get_XML_attribute(xmlNodePtr node, const char *key)
 {
-    xmlAttrPtr attr;
-
-    for (attr = node->properties; attr != NULL; attr = attr->next)
+    for (xmlAttrPtr attr = node->properties; attr; attr = attr->next)
     {
         if (xmlStrEq(attr->name, key))
         {
-            if (attr->children != NULL) return ((char *)attr->children->content);
+            if (attr->children) return ((char *)attr->children->content);
         }
     }
-    return NULL;
+    return 0x0;
 }
 
 char **get_XML_content_address(xmlNodePtr node)
 {
-    if (node->xmlChildrenNode != NULL) return (char **)&(node->xmlChildrenNode->content);
-    return NULL;
+    if (node->xmlChildrenNode) return (char **)&(node->xmlChildrenNode->content);
+    return 0x0;
 }
 
 char *get_XML_content(xmlNodePtr node)
 {
-    if (node->xmlChildrenNode != NULL) return ((char *)node->xmlChildrenNode->content);
-    return NULL;
+    if (node->xmlChildrenNode) return ((char *)node->xmlChildrenNode->content);
+    return 0x0;
 }
 
 char *get_node_type(xmlNodePtr node)
 {
     if (node->type == XML_ELEMENT_NODE) return (char *)(node->name);
-    return NULL;
+    return 0x0;
 }
 
-int NodeValid(xmlNodePtr node)
+bool NodeValid(xmlNodePtr node)
 {
-    if (node->type == XML_ELEMENT_NODE) return 1;
-    else return 0;
+    if (node->type == XML_ELEMENT_NODE) return true;
+    else return false;
 }
 
-int NodeCheck(xmlNodePtr node, const char *str)
+bool NodeCheck(xmlNodePtr node, const char *str)
 {
     if (node->type == XML_ELEMENT_NODE && xmlStrEq(node->name, str)) return 1;
     else return 0;
@@ -107,7 +103,7 @@ xmlNodePtr NodeFind(xmlNodePtr startnode, const char *key)
 {
     xmlNodePtr node, child;
 
-    for (node = startnode; node != NULL; node = node->next)
+    for (node = startnode; node; node = node->next)
     {
         if (NodeCheck(node, key)) return node;
         else
@@ -117,11 +113,11 @@ xmlNodePtr NodeFind(xmlNodePtr startnode, const char *key)
         }
     }
 
-    return NULL;
+    return 0x0;
 }
 
-static int xmlStrEq(const xmlChar *xmlstr, const char *charstr)
+static bool xmlStrEq(const xmlChar *xmlstr, const char *charstr)
 {
-    if (strcmp((const char *)xmlstr, charstr)) return 0;
-    else return 1;
+    if (strcmp((const char *)xmlstr, charstr)) return false;
+    else return true;
 }

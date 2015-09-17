@@ -36,7 +36,7 @@ static void render_primitives(struct node *list)
     Geometry geo;
     size_t nbytes, origbytes, newh, pad, padbytes, offset, offsetbytes;
 
-    for (current = list; current != NULL; current = current->p_next)
+    for (current = list; current; current = current->p_next)
     {
         switch (current->info.type)
         {
@@ -57,7 +57,7 @@ static void render_primitives(struct node *list)
                 break;
             case Line:
                 line_start(current->object.line.linewidth, (*(current->object.line.color.R)), (*(current->object.line.color.G)), (*(current->object.line.color.B)), (*(current->object.line.color.A)));
-                for (sublist = current->object.line.Vertices; sublist != NULL; sublist = sublist->p_next)
+                for (sublist = current->object.line.Vertices; sublist; sublist = sublist->p_next)
                 {
                     geo = GetGeometry(sublist);
                     gfx_vertex(geo.refx, geo.refy);
@@ -68,7 +68,7 @@ static void render_primitives(struct node *list)
                 if (current->object.poly.fill)
                 {
                     polygon_fill_start((*(current->object.poly.FillColor.R)), (*(current->object.poly.FillColor.G)), (*(current->object.poly.FillColor.B)), (*(current->object.poly.FillColor.A)));
-                    for (sublist = current->object.poly.Vertices; sublist != NULL; sublist = sublist->p_next)
+                    for (sublist = current->object.poly.Vertices; sublist; sublist = sublist->p_next)
                     {
                         geo = GetGeometry(sublist);
                         gfx_vertex(geo.refx, geo.refy);
@@ -78,7 +78,7 @@ static void render_primitives(struct node *list)
                 if (current->object.poly.outline)
                 {
                     polygon_outline_start(current->object.poly.linewidth, (*(current->object.poly.LineColor.R)), (*(current->object.poly.LineColor.G)), (*(current->object.poly.LineColor.B)), (*(current->object.poly.LineColor.A)));
-                    for (sublist = current->object.poly.Vertices; sublist != NULL; sublist = sublist->p_next)
+                    for (sublist = current->object.poly.Vertices; sublist; sublist = sublist->p_next)
                     {
                         geo = GetGeometry(sublist);
                         gfx_vertex(geo.refx, geo.refy);

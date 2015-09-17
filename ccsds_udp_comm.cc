@@ -141,7 +141,7 @@ CommModule::CommStatus CcsdsUdpCommModule::write(void)
 
 
 #ifdef CCSDSUDPACTIVE
-void CcsdsUdpCommModule::read_initialize(char *hostspec, int portspec, int threadspec, float ratespec, int littleendianspec)
+void CcsdsUdpCommModule::read_initialize(char *hostspec, int portspec, int threadspec, float ratespec, bool littleendianspec)
 {
     if (hostspec) this->DCAPP_UDPRX_ADDR = strdup(hostspec);
     this->DCAPP_UDPRX_PORT = (uint32_t)portspec;
@@ -300,7 +300,7 @@ CcsdsUdpCommModule::dcapp_ccsds_udp_io CcsdsUdpCommModule::read_tlm_msg(void)
 #else
 
 
-void CcsdsUdpCommModule::read_initialize(char *hostspec, int portspec, int threadspec, float ratespec, int littleendianspec)
+void CcsdsUdpCommModule::read_initialize(char *hostspec, int portspec, int threadspec, float ratespec, bool littleendianspec)
 {
 }
 

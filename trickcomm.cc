@@ -140,7 +140,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                         }
                         break;
                     case VARLIST_STRING:
-                        if (BoolStrToInt((char *)this->tosim.data[i].dcvalue, 0))
+                        if (StrToBool((char *)this->tosim.data[i].dcvalue, false))
                         {
                             this->tvs->put(this->tosim.data[i].trickvar, VS_METHOD, 0x0, 0x0);
                             strcpy((char *)this->tosim.data[i].dcvalue, "false");
@@ -258,7 +258,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
         io_map->data[io_map->count].prevvalue.f = 0;
         bzero(io_map->data[io_map->count].prevvalue.str, STRING_DEFAULT_LENGTH);
         io_map->data[io_map->count].forcewrite = 0;
-        io_map->data[io_map->count].init_only = BoolStrToInt(init_only, 0);
+        io_map->data[io_map->count].init_only = StrToBool(init_only, false);
         io_map->data[io_map->count].method = method;
         io_map->count++;
     }
@@ -305,7 +305,7 @@ void TrickCommModule::activate(void)
 #ifdef TRICKACTIVE
     if (this->fromsim.count || this->tosim.count)
     {
-	    if (this->tvs->activate(this->host, this->port, NULL, this->datarate) == VS_SUCCESS) this->active = 1;
+	    if (this->tvs->activate(this->host, this->port, 0x0, this->datarate) == VS_SUCCESS) this->active = 1;
 	}
 #endif
 }

@@ -18,9 +18,9 @@ static char uei_buffer[UEI_BUFFER_SIZE];
 
 void UEI_init(char *host, char *port, char *ID)
 {
-    bezelID = strtol(ID, NULL, 10);
+    bezelID = strtol(ID, 0x0, 10);
 
-    uei_socket = mycomm_init(ENT_SERVER, host, strtol(port, NULL, 10), UEI_BUFFER_SIZE, 0, 0, 40);
+    uei_socket = mycomm_init(ENT_SERVER, host, strtol(port, 0x0, 10), UEI_BUFFER_SIZE, 0, 0, 40);
 
     bzero(uei_buffer, UEI_BUFFER_SIZE);
 

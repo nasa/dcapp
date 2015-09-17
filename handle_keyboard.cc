@@ -44,9 +44,7 @@ void HandleSpecialKeyboard(int key, float x, float y)
 
 static void KeyPressed(struct node *list, char key)
 {
-    struct node *current;
-
-    for (current = list; current != NULL; current = current->p_next)
+    for (struct node *current = list; current; current = current->p_next)
     {
         switch (current->info.type)
         {

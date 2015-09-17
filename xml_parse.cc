@@ -19,7 +19,7 @@
 #include "msg.hh"
 #include "keyValuePair.hh"
 
-extern void new_window(int, int, int, int, int);
+extern void new_window(bool, int, int, int, int);
 extern void new_panels(char *);
 extern struct node *new_panel(char *, char *, char *, char *);
 extern struct node *new_container(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *);
@@ -45,7 +45,7 @@ extern struct node *new_setvalue(struct node *, struct node **, char *, char *, 
 extern struct ModifyValue get_setvalue_data(char *, char *, char *, char *, const char *);
 extern int CheckConditionLogic(int, int, void *, int, void *);
 extern void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
-extern int check_dynamic_element(const char *);
+extern bool check_dynamic_element(const char *);
 
 extern void DisplayPreInitStub(void *(*)(const char *));
 extern void DisplayInitStub(void);
@@ -320,7 +320,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         {
             if (ccsdsudpcomm)
             {
-                ccsdsudpcomm->read_initialize(get_element_data(node, "Host"), StrToInt(get_element_data(node, "Port"), 0), StrToInt(get_element_data(node, "ThreadID"), 0), StrToFloat(get_element_data(node, "Rate"), 0), BoolStrToInt(get_element_data(node, "LittleEndian"), 0));
+                ccsdsudpcomm->read_initialize(get_element_data(node, "Host"), StrToInt(get_element_data(node, "Port"), 0), StrToInt(get_element_data(node, "ThreadID"), 0), StrToFloat(get_element_data(node, "Rate"), 0), StrToBool(get_element_data(node, "LittleEndian"), false));
             }
         }
         if (NodeCheck(node, "CcsdsUdpWrite"))
@@ -384,7 +384,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "Window"))
         {
             AppData.force_update = StrToFloat(get_element_data(node, "ForceUpdate"), 60);
-            new_window(BoolStrToInt(get_element_data(node, "FullScreen"), 0),
+            new_window(StrToBool(get_element_data(node, "FullScreen"), false),
                        StrToInt(get_element_data(node, "X"), 0),
                        StrToInt(get_element_data(node, "Y"), 0),
                        StrToInt(get_element_data(node, "Width"), 800),

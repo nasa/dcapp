@@ -236,7 +236,7 @@ static void scaleImage(ImageStruct *image, int s,int t,int r)
     
     if (image->width==s && image->height==t && image->level==r) return; // no need to scale image
 
-    if (image->data==NULL)
+    if (!(image->data))
     {
         fprintf(stderr, "%s %d: Cannot scale NULL image.\n", __FILE__, __LINE__);
         return;

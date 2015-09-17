@@ -59,7 +59,7 @@ const char *FindExtension(const char *filename)
     if (!filename)
     {
         fprintf(stderr, "%s %d: No filename specified\n", __FILE__, __LINE__);
-        return NULL;
+        return 0x0;
     }
 
     end = &(filename[strlen(filename)-1]);
@@ -68,7 +68,7 @@ const char *FindExtension(const char *filename)
     if (end == filename)
     {
         fprintf(stderr, "%s %d: Couldn't find extension in filename '%s'\n", __FILE__, __LINE__, filename);
-        return NULL;
+        return 0x0;
     }
 
     return (end+1);

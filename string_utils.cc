@@ -2,49 +2,46 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <sys/param.h>
-#include "nodes.hh"
 #include "Objects.hh"
-#include "msg.hh"
 
-extern void *LoadConstant(int, void *);
-extern int check_dynamic_element(const char *);
+extern float *LoadConstant(float);
+extern bool check_dynamic_element(const char *);
 extern void *get_pointer(const char *);
 
 float StrToFloat(const char *instr, float default_value)
 {
     if (!instr) return default_value;
-    else return (strtof(instr, NULL));
+    else return (strtof(instr, 0x0));
 }
 
 int StrToInt(const char *instr, int default_value)
 {
     if (!instr) return default_value;
-    else return (strtol(instr, NULL, 10));
+    else return (strtol(instr, 0x0, 10));
 }
 
-int BoolStrToInt(const char *instr, int default_value)
+bool StrToBool(const char *instr, bool default_value)
 {
     if (!instr) return default_value;
-    else if (!strcasecmp(instr, "true") || !strcasecmp(instr, "yes") || !strcasecmp(instr, "on")) return 1;
-    else if (!strcasecmp(instr, "false") || !strcasecmp(instr, "no") || !strcasecmp(instr, "off")) return 0;
-    else if (StrToInt(instr, default_value) || StrToFloat(instr, default_value)) return 1;
+    else if (!strcasecmp(instr, "true") || !strcasecmp(instr, "yes") || !strcasecmp(instr, "on")) return true;
+    else if (!strcasecmp(instr, "false") || !strcasecmp(instr, "no") || !strcasecmp(instr, "off")) return false;
+    else if (StrToInt(instr, 0) || StrToFloat(instr, 0)) return true;
     else return default_value;
 }
 
 static float *color_element(int index, char *strval, float defval)
 {
-    float *retptr = NULL;
+    float *retptr = 0x0;
     float fval;
 
-    if (index < 0) retptr = (float *)LoadConstant(FLOAT_TYPE, &defval);
+    if (index < 0) retptr = LoadConstant(defval);
     else
     {
         if (check_dynamic_element(strval)) retptr = (float *)get_pointer(&strval[1]);
         else
         {
-            fval = strtof(strval, NULL);
-            retptr = (float *)LoadConstant(FLOAT_TYPE, &fval);
+            fval = strtof(strval, 0x0);
+            retptr = LoadConstant(fval);
         }
     }
 
@@ -57,10 +54,10 @@ struct kolor StrToColor(const char *instr, float r, float g, float b, float a)
 
     if (!instr)
     {
-        retval.R = (float *)LoadConstant(FLOAT_TYPE, &r);
-        retval.G = (float *)LoadConstant(FLOAT_TYPE, &g);
-        retval.B = (float *)LoadConstant(FLOAT_TYPE, &b);
-        retval.A = (float *)LoadConstant(FLOAT_TYPE, &a);
+        retval.R = LoadConstant(r);
+        retval.G = LoadConstant(g);
+        retval.B = LoadConstant(b);
+        retval.A = LoadConstant(a);
     }
     else
     {
@@ -82,12 +79,6 @@ struct kolor StrToColor(const char *instr, float r, float g, float b, float a)
     }
 
     return retval;
-}
-
-char *StrToStr(const char *instr, char *default_value)
-{
-    if (!instr) return default_value;
-    else return (char *)instr;
 }
 
 HAlignment StrToHAlign(const char *instr, HAlignment default_value)

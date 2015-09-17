@@ -71,7 +71,7 @@ int PixelStreamTcp::read_socket_connect(void)
 
             FD_ZERO(&myset);
             FD_SET(sockfd, &myset);
-            if (select(sockfd+1, NULL, &myset, NULL, &tv) > 0)
+            if (select(sockfd+1, 0x0, &myset, 0x0, &tv) > 0)
             {
                 socklen_t optionlen = sizeof(valopt);
                 getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &optionlen);

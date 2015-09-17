@@ -12,10 +12,7 @@ union objects
 {
     struct Default dflt;
     struct Style style;
-    struct Constants constants;
     struct Fonts fonts;
-    struct ShMem shmem;
-    struct Textures textures;
     struct Window win;
     struct Panel panel;
     struct Image image;
@@ -41,7 +38,7 @@ struct info
     Type type;
     int halign;
     int valign;
-    unsigned int selected;
+    bool selected;
 
     float *x;
     float *y;

@@ -10,8 +10,8 @@ extern char *get_XML_attribute(xmlNodePtr, const char *);
 extern char **get_XML_content_address(xmlNodePtr);
 extern char *get_XML_content(xmlNodePtr);
 extern char *get_node_type(xmlNodePtr);
-extern int NodeValid(xmlNodePtr node);
-extern int NodeCheck(xmlNodePtr, const char *);
+extern bool NodeValid(xmlNodePtr node);
+extern bool NodeCheck(xmlNodePtr, const char *);
 extern xmlNodePtr NodeFind(xmlNodePtr, const char *);
 
 #endif

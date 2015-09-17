@@ -1,50 +1,63 @@
+#include <stdlib.h>
 #include <string.h>
+#include <list>
 #include "imgload/imgload.hh"
-#include "nodes.hh"
 
-extern appdata AppData;
+class dcTexture
+{
+    public:
+        dcTexture();
+        virtual ~dcTexture();
 
-static unsigned int FindTexture(char *);
+        void create(const char *);
+        char *getFileName(void);
+        unsigned int getID(void);
+
+    private:
+        char *filename;
+        unsigned int id;
+};
+
+static std::list<dcTexture *> mytextures;
 
 int LoadTexture(char *filename)
 {
-    int texture;
-    struct node *data;
-
-    // check if this texture has already been loaded
-    texture = FindTexture(filename);
-
-    // if not, create a new texture node and load the image
-    if (texture == -1)
+    std::list<dcTexture *>::iterator dct;
+    for (dct = mytextures.begin(); dct != mytextures.end(); dct++)
     {
-        texture = imgload(filename);
-        if (texture >= 0)
-        {
-            data = NewNode(NULL, &(AppData.TextureList));
-            data->object.textures.textureFile = strdup(filename);
-            data->object.textures.textureID = texture;
-        }
+        if (!strcmp((*dct)->getFileName(), filename)) return (*dct)->getID();
     }
 
-    return texture;
+    dcTexture *newtexture = new dcTexture;
+    newtexture->create(filename);
+    mytextures.push_back(newtexture);
+    return newtexture->getID();
 }
 
-/*********************************************************************************
- *
- * This function will determine if a texture file has already been loaded.
- *
- *********************************************************************************/
-static unsigned int FindTexture(char *textureFile)
+dcTexture::dcTexture()
+:
+filename(0x0),
+id(-1)
 {
-    struct node *current;
+}
 
-    // Traverse the list to find the texture file name
-    for (current = AppData.TextureList; current != NULL; current = current->p_next)
-    {
-        // If we find it, return the textureID
-        if (!strcmp(current->object.textures.textureFile, textureFile)) return (current->object.textures.textureID);
-    }
+dcTexture::~dcTexture()
+{
+    if (this->filename) free(this->filename);
+}
 
-    // If we made it here, we didn't find the texture.
-    return (-1);
+void dcTexture::create(const char *infile)
+{
+    this->filename = strdup(infile);
+    this->id = imgload(this->filename);
+}
+
+char * dcTexture::getFileName(void)
+{
+    return this->filename;
+}
+
+unsigned int dcTexture::getID(void)
+{
+    return this->id;
 }

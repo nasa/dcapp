@@ -36,7 +36,7 @@ int PixelStreamFile::initialize(char *filenamespec, int shmemkeyspec, int writer
         error_perror("Unable to get shared memory identifier");
         return -1;
     }
-    this->shm = (PixelStreamShmem *)shmat(shmid, NULL, 0);
+    this->shm = (PixelStreamShmem *)shmat(shmid, 0x0, 0);
     if (this->shm <= 0)
     {
         error_perror("Unable to attach to shared memory");

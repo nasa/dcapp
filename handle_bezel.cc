@@ -23,8 +23,6 @@ void HandleBezelControl(int type, int itemid, int action)
 
 void HandleBezelButton(int type, int itemid, int action)
 {
-    struct node *current;
-
 #ifdef DEBUG
     printf("Type: ");
     switch (type)
@@ -62,13 +60,10 @@ void HandleBezelButton(int type, int itemid, int action)
 
     if (type == BEZEL_BUTTON)
     {
-        if (action == BEZEL_PRESSED)
-        {
-            BezelButtonPressed(AppData.window->p_current, itemid);
-        }
+        if (action == BEZEL_PRESSED) BezelButtonPressed(AppData.window->p_current, itemid);
         else if (action == BEZEL_RELEASED)
         { // Check all lists since BEZEL_PRESSED may have been on a different active page
-            for (current = AppData.window->p_head; current != NULL; current=current->p_next_list)
+            for (struct node *current = AppData.window->p_head; current; current=current->p_next_list)
                 BezelButtonReleased(current, itemid);
         }
     }
@@ -77,9 +72,7 @@ void HandleBezelButton(int type, int itemid, int action)
 
 static void BezelButtonPressed(struct node *list, int itemid)
 {
-    struct node *current;
-
-    for (current = list; current != NULL; current = current->p_next)
+    for (struct node *current = list; current; current = current->p_next)
     {
         switch (current->info.type)
         {
@@ -99,10 +92,10 @@ static void BezelButtonPressed(struct node *list, int itemid)
             case BezelEvent:
                 if (current->object.be.key == itemid)
                 {
-                    current->info.selected = 1;
+                    current->info.selected = true;
                     ProcessEventList(current->object.be.PressList);
                 }
-                else current->info.selected = 0;
+                else current->info.selected = false;
                 break;
             default:
                 break;
@@ -113,9 +106,7 @@ static void BezelButtonPressed(struct node *list, int itemid)
 
 static void BezelButtonReleased(struct node *list, int itemid)
 {
-    struct node *current;
-
-    for (current = list; current != NULL; current = current->p_next)
+    for (struct node *current = list; current; current = current->p_next)
     {
         switch (current->info.type)
         {
@@ -134,6 +125,6 @@ static void BezelButtonReleased(struct node *list, int itemid)
         }
 
         // Deselect all objects when releasing bezel button when in runtime.
-        current->info.selected = 0;
+        current->info.selected = false;
     }
 }

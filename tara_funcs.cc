@@ -33,11 +33,11 @@ void ui_init(char *xdisplay)
 }
 
 
-void window_init(int fullscreen, int winOriginX, int winOriginY, int winSizeX, int winSizeY)
+void window_init(bool fullscreen, int winOriginX, int winOriginY, int winSizeX, int winSizeY)
 {
     tdRegion usable;
 
-    tdGetScreenData(NULL, &usable);
+    tdGetScreenData(0x0, &usable);
 
     if (fullscreen)
     {

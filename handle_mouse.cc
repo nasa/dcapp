@@ -109,12 +109,12 @@ static void MouseDown(struct node *list, float x, float y)
             case MouseEvent:
                 if (CheckRegion(current, x, y))
                 {
-                    current->info.selected = 1;
+                    current->info.selected = true;
                     ProcessEventList(current->object.me.PressList);
                     mousecontinuous = current->object.me.PressList;
                     mousebouncemode = 1;
                 }
-                else current->info.selected = 0;
+                else current->info.selected = false;
                 break;
             default:
                 break;
@@ -146,8 +146,8 @@ static void MouseUp(struct node *list)
         }
 
         // Deselect all objects when releasing mouse button when in runtime.
-        current->info.selected = 0;
-        mousecontinuous = 0;
+        current->info.selected = false;
+        mousecontinuous = 0x0;
     }
 }
 

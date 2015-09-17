@@ -24,8 +24,8 @@ int main(int argc, char **argv)
     FILE *p_file;
     vitem *myvitem;
 
-    if (argc < 2) UsageError(NULL);
-    if (XMLFileOpen(&mydoc, &root_element, argv[1], NULL)) UsageError(NULL);
+    if (argc < 2) UsageError(0x0);
+    if (XMLFileOpen(&mydoc, &root_element, argv[1], 0x0)) UsageError(0x0);
     if (argc < 3) p_file = fopen("dcapp.h", "w");
     else p_file = fopen(argv[2], "w");
     if (!p_file) UsageError(mydoc);
@@ -84,10 +84,9 @@ int main(int argc, char **argv)
 
 static void process_elements(xmlNodePtr startnode)
 {
-    xmlNodePtr node;
     vitem *myvitem;
 
-    for (node = startnode; node != NULL; node = node->next)
+    for (xmlNodePtr node = startnode; node; node = node->next)
     {
         if (NodeCheck(node, "Dummy")) process_elements(node->children);
         if (NodeCheck(node, "Variable"))

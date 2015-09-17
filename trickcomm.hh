@@ -44,7 +44,7 @@ class TrickCommModule : public CommModule
                 char str[STRING_DEFAULT_LENGTH];
             } prevvalue;
             int forcewrite;
-            int init_only;
+            bool init_only;
             int method;
         } io_parameter;
         typedef struct

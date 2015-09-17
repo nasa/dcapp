@@ -16,21 +16,18 @@ PROGRAMMERS:
      ((Hadi Tjandrasa)   (LMSO)   (02/04)  (SES Port to Linux)))
 *******************************************************************************/
 
-
 #define ENT_UTIL_DEF
 #include "net_util.hh"
 
-#define ENT_NULL_FD            ((fd_set *) 0)
+#define SYNCH_BYTE_LEN 4
+#define ENT_NET_DOMAIN PF_INET
+#define ENT_LOC_DOMAIN PF_LOCAL
+#define ENT_BASE_PORT  15000
 
-#define SYNCH_BYTE_LEN         4
-#define ENT_NET_DOMAIN         PF_INET
-#define ENT_LOC_DOMAIN         PF_LOCAL
-#define ENT_BASE_PORT          15000
-
-static socklen_t  len_sckaddr = sizeof(struct sockaddr_in);   /*constant*/
+static socklen_t len_sckaddr = sizeof(struct sockaddr_in);   /*constant*/
 
 #ifdef VxWorks 
-static unsigned long inet_addr( char *inchar );
+static unsigned long inet_addr(char *inchar);
 #endif
 
 
@@ -374,7 +371,7 @@ int peek_socket_ready( int psock, int sec, int usec )
     FD_SET( psock, &readsfd );
     timeout.tv_sec  = sec;
     timeout.tv_usec = usec;
-    nb = select(psock+1,&readsfd,ENT_NULL_FD,ENT_NULL_FD,&timeout);
+    nb = select(psock+1,&readsfd,0x0,0x0,&timeout);
  
   return( nb );
  

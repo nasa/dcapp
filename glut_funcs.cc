@@ -53,7 +53,7 @@ void ui_init(char *xDisplay)
 }
 
 
-void window_init(int fullscreen, int winOriginX, int winOriginY, int winSizeX, int winSizeY)
+void window_init(bool fullscreen, int winOriginX, int winOriginY, int winSizeX, int winSizeY)
 {
     if (!fullscreen)
     {
@@ -114,7 +114,7 @@ void toggle_fullscreen(void)
 static void HandleGLUTVisibility(int visible)
 {
     if (visible == GLUT_VISIBLE) glutIdleFunc(Idle);
-    else glutIdleFunc(NULL);
+    else glutIdleFunc(0x0);
 }
 
 

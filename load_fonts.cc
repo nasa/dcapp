@@ -13,7 +13,7 @@
 
 #define FONTSIZE 20
 
-extern appdata AppData;
+static struct node *FontList;
 
 static void *FindFont(char *, char *);
 
@@ -28,7 +28,7 @@ void *LoadFont(char *filename, char *face)
     // if not, create a new font node and load the font
     if (myfont == 0)
     {
-        data = NewNode(NULL, &(AppData.FontList));
+        data = NewNode(0x0, &FontList);
 #ifdef UseFTGL
         myfont = ftglCreateTextureFont(filename);
         if (!myfont)
@@ -62,10 +62,8 @@ void *LoadFont(char *filename, char *face)
  *********************************************************************************/
 static void *FindFont(char *filename, char *face)
 {
-    struct node *current;
-
     // Traverse the list to find the font file name
-    for (current = AppData.FontList; current != NULL; current = current->p_next)
+    for (struct node *current = FontList; current; current = current->p_next)
     {
         if (!strcmp(current->object.fonts.fontFile, filename))
         {

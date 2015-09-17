@@ -19,9 +19,9 @@ void CAN_init(char *networkstr, char *buttonIDstr, char *controlIDstr)
     int network = 0;
     NTCAN_RESULT retval;
 
-    if (networkstr != NULL) network = strtol(networkstr, NULL, 10);
-    if (buttonIDstr != NULL) buttonID = strtol(buttonIDstr, NULL, 10);
-    if (controlIDstr != NULL) controlID = strtol(controlIDstr, NULL, 10);
+    if (networkstr) network = strtol(networkstr, 0x0, 10);
+    if (buttonIDstr) buttonID = strtol(buttonIDstr, 0x0, 10);
+    if (controlIDstr) controlID = strtol(controlIDstr, 0x0, 10);
 
     // Tell the driver to open a connection and give us a handle.
     retval = canOpen(network, 0, 1024, 1024, 1000, 0, &ntCanHandle);

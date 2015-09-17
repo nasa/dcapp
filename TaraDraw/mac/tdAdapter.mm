@@ -400,16 +400,16 @@ int tdAlignBaseline = 0x10;
         switch (event_type)
         {
             case tdMouseEvent:
-                if (button_handler != NULL) button_handler(EventList[i].data.b);
+                if (button_handler) button_handler(EventList[i].data.b);
                 break;
             case tdKeyboardEvent:
-                if (keyboard_handler != NULL) keyboard_handler(EventList[i].data.k);
+                if (keyboard_handler) keyboard_handler(EventList[i].data.k);
                 break;
             case tdConfigureEvent:
-                if (configure_handler != NULL) configure_handler(EventList[i].data.c);
+                if (configure_handler) configure_handler(EventList[i].data.c);
                 break;
             case tdWinCloseEvent:
-                if (winclose_handler != NULL) winclose_handler(EventList[i].data.w);
+                if (winclose_handler) winclose_handler(EventList[i].data.w);
                 break;
             default:
                 break;

@@ -10,10 +10,12 @@
 #include "opengl_draw.hh"
 #include "PixelStream.hh"
 
-extern void window_init(int, int , int, int, int);
+extern void window_init(bool, int , int, int, int);
 extern void *LoadFont(char *, char *);
 extern int LoadTexture(char *);
-extern void *LoadConstant(int, void *);
+extern float *LoadConstant(float);
+extern int *LoadConstant(int);
+extern char *LoadConstant(const char *);
 
 extern appdata AppData;
 
@@ -23,19 +25,102 @@ struct node *new_bezelevent(struct node *, struct node **, char *);
 struct node *new_setvalue(struct node *, struct node **, char *, char *, char *, char *, const char *);
 struct node *new_isequal(struct node *, struct node **, const char *, char *, const char *);
 
-static struct node *add_primitive_node(struct node *, struct node **, Type, char *, char *, const char *, char *, char *, char *, char *);
-static void set_geometry(struct node *, char *, char *, const char *, char *, char *, char *, char *);
-static void *get_data_pointer(int, const char *, void *);
-static int get_data_type(const char *);
-
-static float fzero = 0;
-static int izero = 0;
-static char emptystr = '\0';
-
-
-void new_window(int fullscreen, int OriginX, int OriginY, int SizeX, int SizeY)
+bool check_dynamic_element(const char *spec)
 {
-    NewNode(NULL, &(AppData.window));
+    if (spec)
+    {
+        if (strlen(spec) > 1)
+        {
+            if (spec[0] == '@') return true;
+        }
+    }
+    return false;
+}
+
+static float *getFloatPointer(const char *valstr)
+{
+    if (check_dynamic_element(valstr)) return (float *)get_pointer(&valstr[1]);
+    else return LoadConstant(StrToFloat(valstr, 0));
+}
+
+static float *getFloatPointer(const char *valstr, float defval)
+{
+    if (check_dynamic_element(valstr)) return (float *)get_pointer(&valstr[1]);
+    else return LoadConstant(StrToFloat(valstr, defval));
+}
+
+static int *getIntegerPointer(const char *valstr)
+{
+    if (check_dynamic_element(valstr)) return (int *)get_pointer(&valstr[1]);
+    else return LoadConstant(StrToInt(valstr, 0));
+}
+
+static char *getStringPointer(const char *valstr)
+{
+    if (check_dynamic_element(valstr)) return (char *)get_pointer(&valstr[1]);
+    else return LoadConstant(valstr);
+}
+
+static void *getVariablePointer(int datatype, const char *valstr)
+{
+    switch (datatype)
+    {
+        case FLOAT_TYPE:
+            return getFloatPointer(valstr);
+            break;
+        case INTEGER_TYPE:
+            return getIntegerPointer(valstr);
+            break;
+        case STRING_TYPE:
+            return getStringPointer(valstr);
+            break;
+    }
+    return 0x0;
+}
+
+static int get_data_type(const char *valstr)
+{
+    if (check_dynamic_element(valstr)) return get_datatype(&valstr[1]);
+    return UNDEFINED_TYPE;
+}
+
+static struct node *add_primitive_node(struct node *parent, struct node **list, Type type, char *x, char *y, const char *width, char *height, char *halign, char *valign, char *rotate)
+{
+    struct node *data = NewNode(parent, list);
+    data->info.type = type;
+
+    // it's important to pass container width and height down through all primitives in the tree, even those
+    // that don't seem to be geometric, so that the size of contained elements can be calculated at draw time.
+    if (data->p_parent->info.type == Container)
+    {
+        data->info.containerW = data->p_parent->object.cont.vwidth;
+        data->info.containerH = data->p_parent->object.cont.vheight;
+    }
+    else
+    {
+        data->info.containerW = data->p_parent->info.w;
+        data->info.containerH = data->p_parent->info.h;
+    }
+
+    // set x and y pointers to 0x0 if those values aren't defined. This tells the draw-time logic that x and y
+    // values need to be calculated.
+    if (x) data->info.x = getFloatPointer(x);
+    else data->info.x = 0x0;
+    if (y) data->info.y = getFloatPointer(y);
+    else data->info.y = 0x0;
+
+    data->info.halign = StrToHAlign(halign, AlignLeft);
+    data->info.valign = StrToVAlign(valign, AlignBottom);
+    data->info.w = getFloatPointer(width, *(data->info.containerW));
+    data->info.h = getFloatPointer(height, *(data->info.containerH));
+    data->info.rotate = getFloatPointer(rotate);
+
+    return data;
+}
+
+void new_window(bool fullscreen, int OriginX, int OriginY, int SizeX, int SizeY)
+{
+    NewNode(0x0, &(AppData.window));
 
     window_init(fullscreen, OriginX, OriginY, SizeX, SizeY);
     graphics_init();
@@ -43,7 +128,7 @@ void new_window(int fullscreen, int OriginX, int OriginY, int SizeX, int SizeY)
 
 void new_panels(char *var)
 {
-    AppData.window->object.win.active_display = (int *)get_data_pointer(INTEGER_TYPE, var, &izero);
+    AppData.window->object.win.active_display = getIntegerPointer(var);
 }
 
 struct node *new_panel(char *index, char *colorspec, char *vwidth, char *vheight)
@@ -67,22 +152,22 @@ struct node *new_container(struct node *parent, struct node **list, char *x, cha
 {
     struct node *data = add_primitive_node(parent, list, Container, x, y, width, height, halign, valign, rotate);
 
-    data->object.cont.vwidth = (float *)get_data_pointer(FLOAT_TYPE, vwidth, data->info.w);
-    data->object.cont.vheight = (float *)get_data_pointer(FLOAT_TYPE, vheight, data->info.h);
+    data->object.cont.vwidth = getFloatPointer(vwidth, *(data->info.w));
+    data->object.cont.vheight = getFloatPointer(vheight, *(data->info.h));
 
     return data;
 }
 
 struct node *new_vertex(struct node *parent, struct node **list, char *x, char *y)
 {
-    struct node *data = add_primitive_node(parent, list, Vertex, x, y, NULL, NULL, NULL, NULL, NULL);
+    struct node *data = add_primitive_node(parent, list, Vertex, x, y, 0x0, 0x0, 0x0, 0x0, 0x0);
 
     return data;
 }
 
 struct node *new_line(struct node *parent, struct node **list, char *linewidth, char *color)
 {
-    struct node *data = add_primitive_node(parent, list, Line, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    struct node *data = add_primitive_node(parent, list, Line, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
     data->object.line.linewidth = StrToFloat(linewidth, 1);
     data->object.line.color = StrToColor(color, 1, 1, 1, 1);
@@ -92,7 +177,7 @@ struct node *new_line(struct node *parent, struct node **list, char *linewidth, 
 
 struct node *new_polygon(struct node *parent, struct node **list, char *fillcolor, char *linecolor, char *linewidth)
 {
-    struct node *data = add_primitive_node(parent, list, Polygon, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    struct node *data = add_primitive_node(parent, list, Polygon, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
     if (fillcolor) data->object.poly.fill = 1;
     if (linecolor || linewidth) data->object.poly.outline = 1;
@@ -122,12 +207,12 @@ struct node *new_rectangle(struct node *parent, struct node **list, char *x, cha
 struct node *new_circle(struct node *parent, struct node **list, char *x, char *y, char *halign, char *valign, char *radius,
                         char *segments, char *fillcolor, char *linecolor, char *linewidth)
 {
-    struct node *data = add_primitive_node(parent, list, Circle, x, y, NULL, NULL, halign, valign, NULL);
+    struct node *data = add_primitive_node(parent, list, Circle, x, y, 0x0, 0x0, halign, valign, 0x0);
 
     if (fillcolor) data->object.circle.fill = 1;
     if (linecolor || linewidth) data->object.circle.outline = 1;
 
-    data->object.circle.radius = (float *)get_data_pointer(FLOAT_TYPE, radius, &fzero);
+    data->object.circle.radius = getFloatPointer(radius);
     data->object.circle.segments = StrToInt(segments, 80);
     data->object.circle.FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
     data->object.circle.LineColor = StrToColor(linecolor, 1, 1, 1, 1);
@@ -141,7 +226,7 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
 {
     struct node *data = add_primitive_node(parent, list, String, x, y, "0", fontsize, halign, valign, rotate);
 
-    data->object.string.fontSize = (float *)get_data_pointer(FLOAT_TYPE, fontsize, &fzero);
+    data->object.string.fontSize = getFloatPointer(fontsize);
     data->object.string.halign = (HAlignment)(data->info.halign);
     data->object.string.valign = (VAlignment)(data->info.valign);
 
@@ -159,13 +244,13 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
         data->object.string.background = 1;
         data->object.string.bgcolor = StrToColor(bgcolor, 0, 0, 0, 1);
     }
-    data->object.string.shadowOffset = (float *)get_data_pointer(FLOAT_TYPE, shadowoffset, &fzero);
+    data->object.string.shadowOffset = getFloatPointer(shadowoffset);
     data->object.string.fontID = LoadFont(font, face);
 
-    data->object.string.value = get_data_pointer(STRING_TYPE, value, &emptystr);
+    data->object.string.value = getStringPointer(value);
     data->object.string.datatype = get_data_type(value);
     if (data->object.string.datatype == UNDEFINED_TYPE) data->object.string.datatype = STRING_TYPE;
-    if (format != NULL) data->object.string.format = strdup(format);
+    if (format) data->object.string.format = strdup(format);
     else
     {
         switch (data->object.string.datatype)
@@ -326,66 +411,66 @@ struct node *new_button(struct node *parent, struct node **list, char *x, char *
         if (switchoffval) offval = switchoffval;
         else offval = zerostr;
     }
-    else offval = NULL;
+    else offval = 0x0;
 
     if (toggle)
     {
         cond = new_isequal(curlist, sublist, "eq", indid, indonval);
-        event = new_mouseevent(cond, &(cond->object.cond.TrueList), NULL, NULL, NULL, NULL, NULL, NULL);
-        new_setvalue(event, &(event->object.me.PressList), switchid, NULL, NULL, NULL, offval);
-        if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, NULL, NULL, NULL, "-1");
-        event = new_mouseevent(cond, &(cond->object.cond.FalseList), NULL, NULL, NULL, NULL, NULL, NULL);
-        new_setvalue(event, &(event->object.me.PressList), switchid, NULL, NULL, NULL, switchonval);
-        if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, NULL, NULL, NULL, "1");
+        event = new_mouseevent(cond, &(cond->object.cond.TrueList), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+        new_setvalue(event, &(event->object.me.PressList), switchid, 0x0, 0x0, 0x0, offval);
+        if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
+        event = new_mouseevent(cond, &(cond->object.cond.FalseList), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+        new_setvalue(event, &(event->object.me.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+        if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, 0x0, 0x0, 0x0, "1");
         if (key || keyascii)
         {
             event = new_keyboardevent(cond, &(cond->object.cond.TrueList), key, keyascii);
-            new_setvalue(event, &(event->object.ke.PressList), switchid, NULL, NULL, NULL, offval);
-            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, NULL, NULL, NULL, "-1");
+            new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, offval);
+            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
             event = new_keyboardevent(cond, &(cond->object.cond.FalseList), key, keyascii);
-            new_setvalue(event, &(event->object.ke.PressList), switchid, NULL, NULL, NULL, switchonval);
-            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, NULL, NULL, NULL, "1");
+            new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "1");
         }
         if (bezelkey)
         {
             event = new_bezelevent(cond, &(cond->object.cond.TrueList), bezelkey);
-            new_setvalue(event, &(event->object.be.PressList), switchid, NULL, NULL, NULL, offval);
-            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, NULL, NULL, NULL, "-1");
+            new_setvalue(event, &(event->object.be.PressList), switchid, 0x0, 0x0, 0x0, offval);
+            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
             event = new_bezelevent(cond, &(cond->object.cond.FalseList), bezelkey);
-            new_setvalue(event, &(event->object.be.PressList), switchid, NULL, NULL, NULL, switchonval);
-            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, NULL, NULL, NULL, "1");
+            new_setvalue(event, &(event->object.be.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, 0x0, 0x0, 0x0, "1");
         }
     }
     else
     {
-        event = new_mouseevent(curlist, sublist, NULL, NULL, NULL, NULL, NULL, NULL);
-        new_setvalue(event, &(event->object.me.PressList), switchid, NULL, NULL, NULL, switchonval);
-        if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, NULL, NULL, NULL, "1");
+        event = new_mouseevent(curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+        new_setvalue(event, &(event->object.me.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+        if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, 0x0, 0x0, 0x0, "1");
         if (momentary)
         {
-            new_setvalue(event, &(event->object.me.ReleaseList), switchid, NULL, NULL, NULL, offval);
-            if (transitionid) new_setvalue(event, &(event->object.me.ReleaseList), transitionid, NULL, NULL, NULL, "-1");
+            new_setvalue(event, &(event->object.me.ReleaseList), switchid, 0x0, 0x0, 0x0, offval);
+            if (transitionid) new_setvalue(event, &(event->object.me.ReleaseList), transitionid, 0x0, 0x0, 0x0, "-1");
         }
         if (key || keyascii)
         {
             event = new_keyboardevent(curlist, sublist, key, keyascii);
-            new_setvalue(event, &(event->object.ke.PressList), switchid, NULL, NULL, NULL, switchonval);
-            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, NULL, NULL, NULL, "1");
+            new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "1");
             if (momentary)
             {
-                new_setvalue(event, &(event->object.ke.ReleaseList), switchid, NULL, NULL, NULL, offval);
-                if (transitionid) new_setvalue(event, &(event->object.ke.ReleaseList), transitionid, NULL, NULL, NULL, "-1");
+                new_setvalue(event, &(event->object.ke.ReleaseList), switchid, 0x0, 0x0, 0x0, offval);
+                if (transitionid) new_setvalue(event, &(event->object.ke.ReleaseList), transitionid, 0x0, 0x0, 0x0, "-1");
             }
         }
         if (bezelkey)
         {
             event = new_bezelevent(curlist, sublist, bezelkey);
-            new_setvalue(event, &(event->object.be.PressList), switchid, NULL, NULL, NULL, switchonval);
-            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, NULL, NULL, NULL, "1");
+            new_setvalue(event, &(event->object.be.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, 0x0, 0x0, 0x0, "1");
             if (momentary)
             {
-                new_setvalue(event, &(event->object.be.ReleaseList), switchid, NULL, NULL, NULL, offval);
-                if (transitionid) new_setvalue(event, &(event->object.be.ReleaseList), transitionid, NULL, NULL, NULL, "-1");
+                new_setvalue(event, &(event->object.be.ReleaseList), switchid, 0x0, 0x0, 0x0, offval);
+                if (transitionid) new_setvalue(event, &(event->object.be.ReleaseList), transitionid, 0x0, 0x0, 0x0, "-1");
             }
         }
     }
@@ -394,15 +479,15 @@ struct node *new_button(struct node *parent, struct node **list, char *x, char *
     {
         list1 = new_isequal(data, &(data->object.cont.SubList), "eq", transitionid, "1");
         list2 = new_isequal(list1, &(list1->object.cond.TrueList), "eq", indid, indonval);
-        new_setvalue(list2, &(list2->object.cond.TrueList), transitionid, NULL, NULL, NULL, "0");
+        new_setvalue(list2, &(list2->object.cond.TrueList), transitionid, 0x0, 0x0, 0x0, "0");
         list3 = new_isequal(list2, &(list2->object.cond.FalseList), "eq", switchid, switchonval);
-        new_setvalue(list3, &(list3->object.cond.FalseList), transitionid, NULL, NULL, NULL, "0");
+        new_setvalue(list3, &(list3->object.cond.FalseList), transitionid, 0x0, 0x0, 0x0, "0");
 
         list4 = new_isequal(data, &(data->object.cont.SubList), "eq", transitionid, "-1");
         list5 = new_isequal(list4, &(list4->object.cond.TrueList), "eq", indid, indonval);
-        new_setvalue(list5, &(list5->object.cond.FalseList), transitionid, NULL, NULL, NULL, "0");
+        new_setvalue(list5, &(list5->object.cond.FalseList), transitionid, 0x0, 0x0, 0x0, "0");
         list6 = new_isequal(list5, &(list5->object.cond.FalseList), "eq", switchid, switchoffval);
-        new_setvalue(list6, &(list6->object.cond.TrueList), transitionid, NULL, NULL, NULL, "0");
+        new_setvalue(list6, &(list6->object.cond.TrueList), transitionid, 0x0, 0x0, 0x0, "0");
     }
 
     return data;
@@ -413,7 +498,7 @@ struct node *new_adi(struct node *parent, struct node **list, char *x, char *y, 
                      char *roll, char *pitch, char *yaw, char *roll_error, char *pitch_error, char *yaw_error)
 {
     float defouterrad, defballrad, defchevron;
-    struct node *data = add_primitive_node(parent, list, ADI, x, y, width, height, halign, valign, NULL);
+    struct node *data = add_primitive_node(parent, list, ADI, x, y, width, height, halign, valign, 0x0);
 
     if (ballimage_filename) data->object.adi.ballID = LoadTexture(ballimage_filename);
     if (coverimage_filename) data->object.adi.bkgdID = LoadTexture(coverimage_filename);
@@ -422,34 +507,34 @@ struct node *new_adi(struct node *parent, struct node **list, char *x, char *y, 
     defballrad = 0.9 * defouterrad;
     defchevron = 0.2 * defouterrad;
 
-    data->object.adi.outerradius = (float *)get_data_pointer(FLOAT_TYPE, outerradius, &defouterrad);
-    data->object.adi.ballradius = (float *)get_data_pointer(FLOAT_TYPE, ballradius, &defballrad);
-    data->object.adi.chevronW = (float *)get_data_pointer(FLOAT_TYPE, chevronwidth, &defchevron);
-    data->object.adi.chevronH = (float *)get_data_pointer(FLOAT_TYPE, chevronheight, &defchevron);
+    data->object.adi.outerradius = getFloatPointer(outerradius, defouterrad);
+    data->object.adi.ballradius = getFloatPointer(ballradius, defballrad);
+    data->object.adi.chevronW = getFloatPointer(chevronwidth, defchevron);
+    data->object.adi.chevronH = getFloatPointer(chevronheight, defchevron);
 
-    data->object.adi.roll = (float *)get_data_pointer(FLOAT_TYPE, roll, &fzero);
-    data->object.adi.pitch = (float *)get_data_pointer(FLOAT_TYPE, pitch, &fzero);
-    data->object.adi.yaw = (float *)get_data_pointer(FLOAT_TYPE, yaw, &fzero);
+    data->object.adi.roll = getFloatPointer(roll);
+    data->object.adi.pitch = getFloatPointer(pitch);
+    data->object.adi.yaw = getFloatPointer(yaw);
 
-    data->object.adi.rollError = (float *)get_data_pointer(FLOAT_TYPE, roll_error, &fzero);
-    data->object.adi.pitchError = (float *)get_data_pointer(FLOAT_TYPE, pitch_error, &fzero);
-    data->object.adi.yawError = (float *)get_data_pointer(FLOAT_TYPE, yaw_error, &fzero);
+    data->object.adi.rollError = getFloatPointer(roll_error);
+    data->object.adi.pitchError = getFloatPointer(pitch_error);
+    data->object.adi.yawError = getFloatPointer(yaw_error);
 
     return data;
 }
 
 struct node *new_mouseevent(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign)
 {
-    struct node *data = add_primitive_node(parent, list, MouseEvent, x, y, width, height, halign, valign, NULL);
+    struct node *data = add_primitive_node(parent, list, MouseEvent, x, y, width, height, halign, valign, 0x0);
 
     return data;
 }
 
 struct node *new_keyboardevent(struct node *parent, struct node **list, char *key, char *keyascii)
 {
-    if (!key && !keyascii) return NULL;
+    if (!key && !keyascii) return 0x0;
 
-    struct node *data = add_primitive_node(parent, list, KeyboardEvent, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    struct node *data = add_primitive_node(parent, list, KeyboardEvent, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
     if (key)
         data->object.ke.key = key[0];
@@ -461,9 +546,9 @@ struct node *new_keyboardevent(struct node *parent, struct node **list, char *ke
 
 struct node *new_bezelevent(struct node *parent, struct node **list, char *key)
 {
-    if (!key) return NULL;
+    if (!key) return 0x0;
 
-    struct node *data = add_primitive_node(parent, list, BezelEvent, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    struct node *data = add_primitive_node(parent, list, BezelEvent, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
     data->object.be.key = StrToInt(key, 0);
 
@@ -479,10 +564,10 @@ struct ModifyValue get_setvalue_data(char *varspec, char *opspec, char *minspec,
     ret.datatype2 = get_data_type(valspec);
     ret.mindatatype = 0;
     ret.maxdatatype = 0;
-    ret.var = NULL;
-    ret.val = NULL;
-    ret.min = NULL;
-    ret.max = NULL;
+    ret.var = 0x0;
+    ret.val = 0x0;
+    ret.min = 0x0;
+    ret.max = 0x0;
 
     if (ret.datatype1 != UNDEFINED_TYPE)
     {
@@ -490,56 +575,23 @@ struct ModifyValue get_setvalue_data(char *varspec, char *opspec, char *minspec,
         else if (!strcmp(opspec, "+=")) ret.optype = PlusEquals;
         else if (!strcmp(opspec, "-=")) ret.optype = MinusEquals;
 
-        ret.var = get_data_pointer(ret.datatype1, varspec, NULL);
+        ret.var = getVariablePointer(ret.datatype1, varspec);
 
         if (ret.datatype2 == UNDEFINED_TYPE) ret.datatype2 = ret.datatype1;
-        switch (ret.datatype2)
-        {
-            case FLOAT_TYPE:
-                ret.val = get_data_pointer(FLOAT_TYPE, valspec, &fzero);
-                break;
-            case INTEGER_TYPE:
-                ret.val = get_data_pointer(INTEGER_TYPE, valspec, &izero);
-                break;
-            case STRING_TYPE:
-                ret.val = get_data_pointer(STRING_TYPE, valspec, &emptystr);
-                break;
-        }
+        ret.val = getVariablePointer(ret.datatype2, valspec);
 
         if (minspec)
         {
             ret.mindatatype = get_data_type(minspec);
             if (ret.mindatatype == UNDEFINED_TYPE) ret.mindatatype = ret.datatype1;
-            switch (ret.mindatatype)
-            {
-                case FLOAT_TYPE:
-                    ret.min = get_data_pointer(FLOAT_TYPE, minspec, &fzero);
-                    break;
-                case INTEGER_TYPE:
-                    ret.min = get_data_pointer(INTEGER_TYPE, minspec, &izero);
-                    break;
-                case STRING_TYPE:
-                    ret.min = get_data_pointer(STRING_TYPE, minspec, &emptystr);
-                    break;
-            }
+            ret.min = getVariablePointer(ret.mindatatype, minspec);
         }
 
         if (maxspec)
         {
             ret.maxdatatype = get_data_type(maxspec);
             if (ret.maxdatatype == UNDEFINED_TYPE) ret.maxdatatype = ret.datatype1;
-            switch (ret.maxdatatype)
-            {
-                case FLOAT_TYPE:
-                    ret.max = get_data_pointer(FLOAT_TYPE, maxspec, &fzero);
-                    break;
-                case INTEGER_TYPE:
-                    ret.max = get_data_pointer(INTEGER_TYPE, maxspec, &izero);
-                    break;
-                case STRING_TYPE:
-                    ret.max = get_data_pointer(STRING_TYPE, maxspec, &emptystr);
-                    break;
-            }
+            ret.max = getVariablePointer(ret.maxdatatype, maxspec);
         }
     }
     return ret;
@@ -558,9 +610,9 @@ struct node *new_setvalue(struct node *parent, struct node **list, char *var, ch
 {
     struct ModifyValue myset = get_setvalue_data(var, optype, min, max, val);
 
-    if (myset.datatype1 == UNDEFINED_TYPE) return NULL;
+    if (myset.datatype1 == UNDEFINED_TYPE) return 0x0;
 
-    struct node *data = add_primitive_node(parent, list, SetValue, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    struct node *data = add_primitive_node(parent, list, SetValue, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
     data->object.modval.optype = myset.optype;    
     data->object.modval.datatype1 = myset.datatype1;    
@@ -579,9 +631,9 @@ struct node *new_isequal(struct node *parent, struct node **list, const char *op
 {
     char *onestr=strdup("1");
 
-    if (!val1 && !val2) return NULL;
+    if (!val1 && !val2) return 0x0;
 
-    struct node *data = add_primitive_node(parent, list, Condition, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    struct node *data = add_primitive_node(parent, list, Condition, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
     if (parent) data->info.w = parent->info.w;
     if (parent) data->info.h = parent->info.h;
@@ -612,102 +664,8 @@ struct node *new_isequal(struct node *parent, struct node **list, const char *op
     if (!val1) val1 = onestr;
     if (!val2) val2 = onestr;
 
-    data->object.cond.val1 = get_data_pointer(data->object.cond.datatype1, val1, NULL);
-    data->object.cond.val2 = get_data_pointer(data->object.cond.datatype2, val2, NULL);
+    data->object.cond.val1 = getVariablePointer(data->object.cond.datatype1, val1);
+    data->object.cond.val2 = getVariablePointer(data->object.cond.datatype2, val2);
 
     return data;
-}
-
-static struct node *add_primitive_node(struct node *parent, struct node **list, Type type, char *x, char *y, const char *width, char *height, char *halign, char *valign, char *rotate)
-{
-    struct node *data = NewNode(parent, list);
-    data->info.type = type;
-    set_geometry(data, x, y, width, height, halign, valign, rotate);
-    return data;
-}
-
-static void set_geometry(struct node *data, char *x, char *y, const char *width, char *height, char *halign, char *valign, char *rotate)
-{
-    // it's important to pass container width and height down through all primitives in the tree, even those
-    // that don't seem to be geometric, so that the size of contained elements can be calculated at draw time.
-    if (data->p_parent->info.type == Container)
-    {
-        data->info.containerW = data->p_parent->object.cont.vwidth;
-        data->info.containerH = data->p_parent->object.cont.vheight;
-    }
-    else
-    {
-        data->info.containerW = data->p_parent->info.w;
-        data->info.containerH = data->p_parent->info.h;
-    }
-
-    // set x and y pointers to NULL if those values aren't defined. This tells the draw-time logic that x and y
-    // values need to be calculated.
-    if (x) data->info.x = (float *)get_data_pointer(FLOAT_TYPE, x, &fzero);
-    else data->info.x = 0;
-    if (y) data->info.y = (float *)get_data_pointer(FLOAT_TYPE, y, &fzero);
-    else data->info.y = 0;
-
-    data->info.halign = StrToHAlign(halign, AlignLeft);
-    data->info.valign = StrToVAlign(valign, AlignBottom);
-    data->info.w = (float *)get_data_pointer(FLOAT_TYPE, width, data->info.containerW);
-    data->info.h = (float *)get_data_pointer(FLOAT_TYPE, height, data->info.containerH);
-    data->info.rotate = (float *)get_data_pointer(FLOAT_TYPE, rotate, &fzero);
-}
-
-int check_dynamic_element(const char *spec)
-{
-    if (spec)
-    {
-        if (strlen(spec) > 1)
-        {
-            if (spec[0] == '@') return 1;
-        }
-    }
-    return 0;
-}
-
-static void *get_data_pointer(int type, const char *valstr, void *defval)
-{
-    float fval;
-    int ival;
-    char *sval;
-    const char *inptr;
-
-    if (check_dynamic_element(valstr)) return get_pointer(&valstr[1]);
-
-    switch (type)
-    {
-        case FLOAT_TYPE:
-            if (defval)
-                fval = StrToFloat(valstr, *(float *)defval);
-            else
-                fval = StrToFloat(valstr, 0);
-            return LoadConstant(type, &fval);
-        case INTEGER_TYPE:
-            if (defval)
-                ival = StrToInt(valstr, *(int *)defval);
-            else
-                ival = StrToInt(valstr, 0);
-            return LoadConstant(type, &ival);
-        case STRING_TYPE:
-            inptr = valstr;
-            if (valstr)
-            {
-                if (valstr[0] == '\\') inptr = &valstr[1];
-            }
-            if (defval)
-                sval = StrToStr(inptr, (char *)defval);
-            else
-                sval = StrToStr(inptr, &emptystr);
-            return LoadConstant(type, sval);
-        default:
-            return 0;
-    }
-}
-
-static int get_data_type(const char *valstr)
-{
-    if (check_dynamic_element(valstr)) return get_datatype(&valstr[1]);
-    return UNDEFINED_TYPE;
 }

@@ -167,7 +167,7 @@ int CheckConditionLogic(int opspec, int datatype1, void *val1, int datatype2, vo
             switch (opspec)
             {
                 case Simple:
-                    if (BoolStrToInt((char *)val1, 0)) eval = 1;
+                    if (StrToBool((char *)val1, false)) eval = 1;
                     break;
                 case IfEquals:
                     if (!strcmp((char *)val1, (char *)val2)) eval = 1;
