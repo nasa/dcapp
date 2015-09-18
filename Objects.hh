@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <list>
-#include <sys/shm.h>
 #include "fontlib.hh"
 #include "timer.hh"
 #include "comm.hh"
@@ -209,24 +208,6 @@ struct ADI
     float *rollError;
     float *pitchError;
     float *yawError;
-};
-
-struct Fonts
-{
-    void *fontID;
-    char *fontFile;
-    char *fontFace;
-};
-
-struct Style
-{
-    char *name;
-    void *node;
-};
-
-struct Default
-{
-    void *node;
 };
 
 struct Window

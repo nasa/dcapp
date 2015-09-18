@@ -21,4 +21,4 @@ LD := c++
 
 CFLAGS := -Wall
 ARFLAGS := cr
-LDFLAGS := 
+LDFLAGS :=

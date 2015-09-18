@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <unistd.h>
@@ -30,8 +31,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
-//#include <stropts.h>
-#else  /* VxWorks */
+#else
 #include "target_header.h"
 #endif
 
@@ -68,8 +68,8 @@ typedef struct
   int     timeout_ms;              /* -- Timeout read in millisec */
   int     tv_sec;                  /* -- Second timeout */
   int     tv_usec;                 /* -- Micro second timeout */
-  struct sockaddr_in  yo_sckaddr;  /* -- Other agent socket address */
-  struct sockaddr_in  my_sckaddr;  /* -- My socket address */
+  struct sockaddr_in yo_sckaddr;   /* -- Other agent socket address */
+  struct sockaddr_in my_sckaddr;   /* -- My socket address */
 } ENT_PARAM_S;
 
 
@@ -82,22 +82,22 @@ typedef  union
 
 
 /* PROTOTYPE */
-extern int  clear_param( ENT_PARAM_S *);
-extern int  init_ent_default_param( int, ENT_PARAM_S*, int, int );
-extern int  create_server_port( ENT_PARAM_S*);
-extern int  comm_is_open( ENT_PARAM_S*);
-extern int  set_socket_nonblocking( ENT_PARAM_S*);
-extern int  set_socket_blocking( ENT_PARAM_S*);
-extern int  create_udp_socket( int, ENT_PARAM_S* );
-extern int  peek_socket_ready( int, int, int );
-extern int  data_ready( int );
-extern int  probe_server_synch( ENT_PARAM_S*);
-extern int  wait_client_synch( ENT_PARAM_S*);
-extern int  peek_read_udp( ENT_PARAM_S*, void*);
-extern int  read_udp( ENT_PARAM_S*, void*);
-extern int  write_udp( ENT_PARAM_S*, void*);
-extern int  close_udp_socket( int );
-extern int  swap_byte( char*, char*, int, int);
-extern void nap_delay( int );
+extern void clear_param(ENT_PARAM_S *);
+extern int  init_ent_default_param(int, ENT_PARAM_S *, int, int);
+extern int  create_server_port(ENT_PARAM_S *);
+extern int  comm_is_open(ENT_PARAM_S *);
+extern int  set_socket_nonblocking(ENT_PARAM_S *);
+extern int  set_socket_blocking(ENT_PARAM_S *);
+extern int  create_udp_socket(int, ENT_PARAM_S *);
+extern int  peek_socket_ready(int, int, int);
+extern int  data_ready(int);
+extern int  probe_server_synch(ENT_PARAM_S *);
+extern int  wait_client_synch(ENT_PARAM_S *);
+extern int  peek_read_udp(ENT_PARAM_S *, void *);
+extern int  read_udp(ENT_PARAM_S *, void *);
+extern int  write_udp(ENT_PARAM_S *, void *);
+extern void close_udp_socket(int);
+extern void swap_byte(char *, char *, int, int);
+extern void nap_delay(int);
 
 #endif

@@ -1,17 +1,12 @@
 #ifndef _TDDEFINES_HH_
 #define _TDDEFINES_HH_
 
-#ifndef NULL
-#define NULL 0
-#endif
-
 typedef long tdWindow;
 typedef void tdImage;
 typedef void tdGLContext;
 
 enum { tdPressed, tdReleased };
-enum { tdUnknownKey, tdArrowLeft, tdArrowRight, tdArrowDown, tdArrowUp,
-       tdHelpKey, tdHomeKey, tdEndKey, tdPageUp, tdPageDown };
+enum { tdUnknownKey, tdArrowLeft, tdArrowRight, tdArrowDown, tdArrowUp, tdHelpKey, tdHomeKey, tdEndKey, tdPageUp, tdPageDown };
 
 typedef struct
 {

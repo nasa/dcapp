@@ -13,12 +13,12 @@ extern int tdAlignBaseline;
 
 - (id)initWithFrame:(NSRect)frameRect adapter:(id)myadapter
 {
-	if ((self = [ super initWithFrame:frameRect ]) != nil)
+    if ((self = [ super initWithFrame:frameRect ]) != nil)
     {
         tdAdapter = myadapter;
         renderColor = [ NSColor blackColor ];
-	}
-	return self;
+    }
+    return self;
 }
 
 - (void)tdSetColor:(NSColor *)mycolor
@@ -85,8 +85,8 @@ extern int tdAlignBaseline;
 {
     NSBezierPath *mypath = [ NSBezierPath bezierPath ];
     [ mypath appendBezierPathWithPoints:mypoints count:mycount ];
-    [ mypath closePath ]; 
-    [ mypath fill ]; 
+    [ mypath closePath ];
+    [ mypath fill ];
 }
 
 - (void)tdDrawFilledRect:(NSRect)myrect

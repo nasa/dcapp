@@ -58,7 +58,7 @@ void init_texture(unsigned int *textureID)
 void set_texture(unsigned int textureID, int width, int height, void *pixels)
 {
     glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 }
@@ -245,14 +245,14 @@ void rectangle_fill(float red, float green, float blue, float alpha, float x1, f
 }
 
 void circle_outline(float cx, float cy, float r, int num_segments, float red, float green, float blue, float alpha, float linewidth)
-{ 
-	float theta = 2 * 3.1415926 / (float)num_segments;
-	float c = cosf(theta); // precalculate the sine and cosine
-	float s = sinf(theta);
-	float t;
-	float x = r; // we start at angle = 0
-	float y = 0;
-	int i;
+{
+    float theta = 2 * 3.1415926 / (float)num_segments;
+    float c = cosf(theta); // precalculate the sine and cosine
+    float s = sinf(theta);
+    float t;
+    float x = r; // we start at angle = 0
+    float y = 0;
+    int i;
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -260,46 +260,46 @@ void circle_outline(float cx, float cy, float r, int num_segments, float red, fl
     glLineWidth(linewidth);
     glEnable(GL_LINE_SMOOTH);
     glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
-	glBegin(GL_LINE_LOOP);
-	for (i = 0; i < num_segments; i++)
-	{
-		glVertex2f(x + cx, y + cy); // output vertex
+    glBegin(GL_LINE_LOOP);
+    for (i = 0; i < num_segments; i++)
+    {
+        glVertex2f(x + cx, y + cy); // output vertex
 
-		//apply the rotation matrix
-		t = x;
-		x = c * x - s * y;
-		y = s * t + c * y;
-	}
-	glEnd();
+        //apply the rotation matrix
+        t = x;
+        x = c * x - s * y;
+        y = s * t + c * y;
+    }
+    glEnd();
     glDisable(GL_BLEND);
     glDisable(GL_LINE_SMOOTH);
 }
 
 void circle_fill(float cx, float cy, float r, int num_segments, float red, float green, float blue, float alpha)
-{ 
-	float theta = 2 * 3.1415926 / (float)num_segments;
-	float c = cosf(theta); // precalculate the sine and cosine
-	float s = sinf(theta);
-	float t;
-	float x = r; // we start at angle = 0
-	float y = 0;
-	int i;
+{
+    float theta = 2 * 3.1415926 / (float)num_segments;
+    float c = cosf(theta); // precalculate the sine and cosine
+    float s = sinf(theta);
+    float t;
+    float x = r; // we start at angle = 0
+    float y = 0;
+    int i;
 
     glColor4f(red, green, blue, alpha);
-    glEnable(GL_BLEND); 
+    glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glBegin(GL_POLYGON);
-	for (i = 0; i < num_segments; i++)
-	{
-		glVertex2f(x + cx, y + cy); // output vertex
+    glBegin(GL_POLYGON);
+    for (i = 0; i < num_segments; i++)
+    {
+        glVertex2f(x + cx, y + cy); // output vertex
 
-		//apply the rotation matrix
-		t = x;
-		x = c * x - s * y;
-		y = s * t + c * y;
-	}
-	glEnd();
-    glDisable(GL_BLEND); 
+        //apply the rotation matrix
+        t = x;
+        x = c * x - s * y;
+        y = s * t + c * y;
+    }
+    glEnd();
+    glDisable(GL_BLEND);
 }
 
 void draw_textured_sphere(float x, float y, float z, float radius, int textureID, float roll, float pitch, float yaw)

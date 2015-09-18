@@ -24,7 +24,7 @@ int createTextureFromImage(ImageStruct *image)
     // Scale the image to power of 2
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxsize);
     ensureValidSizeForTexturing(image, maxsize);
-   
+
     glBindTexture(GL_TEXTURE_2D, texture);
 
 /* GL_TEXTURE_MAG_FILTER and GL_TEXTURE_MIN_FILTER let us change the way OpenGL magnifies and minifies a texture.
@@ -32,9 +32,9 @@ int createTextureFromImage(ImageStruct *image)
  * If we pass GL_NEAREST then no smoothing would occur.
  * For the GL_TEXTURE_ENV (Texture Environment)If we pass GL_MODULATE we tell OpenGL to blend the texture with the base color of the object.
  * If we pass GL_DECAL or GL_REPLACE then the base color (and any lighting effects) would be replaced purely with the colors of the texture.
-        - Courtesy http://paulyg.f2s.com/prog3.htm       
+        - Courtesy http://paulyg.f2s.com/prog3.htm
 */
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -46,7 +46,7 @@ int createTextureFromImage(ImageStruct *image)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 
-    return(texture);
+    return texture;
 }
 
 /*********************************************************************************
@@ -93,7 +93,7 @@ void setRGBImageData(ImageStruct *image, unsigned short x, unsigned short y, uns
     image->width = x;
     image->height = y;
     image->internalFormat = z;
-    if (z == 3) 
+    if (z == 3)
         image->format = GL_RGB;
     else
         image->format = GL_RGBA;
@@ -152,44 +152,43 @@ static unsigned int computeNumComponents(GLenum pixelFormat)
             return 0;
     }
 }
-            
+
 /*********************************************************************************
  *
  *
  *********************************************************************************/
-static unsigned int computePixelSizeInBits(GLenum format,GLenum type)
+static unsigned int computePixelSizeInBits(GLenum format, GLenum type)
 {
-    switch(type)
+    switch (type)
     {
-        case(GL_COMPRESSED_RGB_S3TC_DXT1_EXT): 
-        case(GL_COMPRESSED_RGBA_S3TC_DXT1_EXT): 
+        case(GL_COMPRESSED_RGB_S3TC_DXT1_EXT):
+        case(GL_COMPRESSED_RGBA_S3TC_DXT1_EXT):
             return 4;
-        
-        case(GL_COMPRESSED_RGBA_S3TC_DXT3_EXT): 
+
+        case(GL_COMPRESSED_RGBA_S3TC_DXT3_EXT):
         case(GL_COMPRESSED_RGBA_S3TC_DXT5_EXT):
             return 8;
-    
-        case(GL_BITMAP): 
+
+        case(GL_BITMAP):
             return computeNumComponents(format);
-        
+
         case(GL_BYTE):
-        case(GL_UNSIGNED_BYTE):  
+        case(GL_UNSIGNED_BYTE):
             return 8*computeNumComponents(format);
-        
+
         case(GL_SHORT):
-        case(GL_UNSIGNED_SHORT):  
+        case(GL_UNSIGNED_SHORT):
             return 16*computeNumComponents(format);
-        
+
         case(GL_INT):
         case(GL_UNSIGNED_INT):
-        case(GL_FLOAT):  
+        case(GL_FLOAT):
             return 32*computeNumComponents(format);
-    
-    
-        case(GL_UNSIGNED_BYTE_3_3_2): 
-        case(GL_UNSIGNED_BYTE_2_3_3_REV):  
+
+        case(GL_UNSIGNED_BYTE_3_3_2):
+        case(GL_UNSIGNED_BYTE_2_3_3_REV):
             return 8;
-        
+
         case(GL_UNSIGNED_SHORT_5_6_5):
         case(GL_UNSIGNED_SHORT_5_6_5_REV):
         case(GL_UNSIGNED_SHORT_4_4_4_4):
@@ -197,18 +196,16 @@ static unsigned int computePixelSizeInBits(GLenum format,GLenum type)
         case(GL_UNSIGNED_SHORT_5_5_5_1):
         case(GL_UNSIGNED_SHORT_1_5_5_5_REV):
             return 16;
-        
+
         case(GL_UNSIGNED_INT_8_8_8_8):
         case(GL_UNSIGNED_INT_8_8_8_8_REV):
         case(GL_UNSIGNED_INT_10_10_10_2):
-        case(GL_UNSIGNED_INT_2_10_10_10_REV): 
+        case(GL_UNSIGNED_INT_2_10_10_10_REV):
             return 32;
 
-        default: 
-        {
+        default:
             fprintf(stderr, "%s %d:error type = %d\n", __FILE__, __LINE__, (int)type);
             return 0;
-        }
     }
 }
 
@@ -230,10 +227,10 @@ static unsigned int computeRowWidthInBytes(int width, GLenum pixelFormat, GLenum
  *
  *
  *********************************************************************************/
-static void scaleImage(ImageStruct *image, int s,int t,int r)
+static void scaleImage(ImageStruct *image, int s, int t, int r)
 {
     int newDataType = image->type;
-    
+
     if (image->width==s && image->height==t && image->level==r) return; // no need to scale image
 
     if (!(image->data))
@@ -318,9 +315,9 @@ static void ensureValidSizeForTexturing(ImageStruct *image, int maxTextureSize)
 {
     int new_s = computeNearestPowerOfTwo(image->width);
     int new_t = computeNearestPowerOfTwo(image->height);
-    
+
     if (new_s>maxTextureSize) new_s = maxTextureSize;
     if (new_t>maxTextureSize) new_t = maxTextureSize;
-    
+
     if (new_s!=image->width || new_t!=image->height) scaleImage(image, new_s, new_t, 1);
 }

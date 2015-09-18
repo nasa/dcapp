@@ -7,16 +7,16 @@
 
 typedef struct
 {
-	char *label;
-	int type;
-	void *value;
+    char *label;
+    int type;
+    void *value;
 } parameter;
 
 typedef struct
 {
-	int count;
+    int count;
     int allocated_elements;
-	parameter *data;
+    parameter *data;
 } parameter_list;
 
 static parameter_list params;
@@ -68,44 +68,44 @@ int varlist_append(const char *paramname, const char *typestr, const char *initv
 
 static parameter *get_paramdata(const char *label)
 {
-	for (int i=0; i<params.count; i++)
-	{
-		if (!strcmp(params.data[i].label, label)) return &params.data[i];
-	}
-	return 0x0;
+    for (int i=0; i<params.count; i++)
+    {
+        if (!strcmp(params.data[i].label, label)) return &params.data[i];
+    }
+    return 0x0;
 }
 
 void *get_pointer(const char *label)
 {
-	parameter *myparam = get_paramdata(label);
-	if (myparam) return myparam->value;
-	else
-	{
-		printf("get_pointer: invalid parameter label: %s\n", label);
-		return 0x0;
-	}
+    parameter *myparam = get_paramdata(label);
+    if (myparam) return myparam->value;
+    else
+    {
+        printf("get_pointer: invalid parameter label: %s\n", label);
+        return 0x0;
+    }
 }
 
 int get_datatype(const char *label)
 {
-	parameter *myparam = get_paramdata(label);
-	if (myparam) return myparam->type;
-	else
-	{
-		printf("get_datatype: invalid parameter label: %s\n", label);
-		return VARLIST_UNKNOWN_TYPE;
-	}
+    parameter *myparam = get_paramdata(label);
+    if (myparam) return myparam->type;
+    else
+    {
+        printf("get_datatype: invalid parameter label: %s\n", label);
+        return VARLIST_UNKNOWN_TYPE;
+    }
 }
 
 void varlist_term(void)
 {
-	for (int i=0; i<params.count; i++)
-	{
-		if (params.data[i].type)
-		{
-			free(params.data[i].label);
-			free(params.data[i].value);
-		}
-	}
-	free(params.data);
+    for (int i=0; i<params.count; i++)
+    {
+        if (params.data[i].type)
+        {
+            free(params.data[i].label);
+            free(params.data[i].value);
+        }
+    }
+    free(params.data);
 }

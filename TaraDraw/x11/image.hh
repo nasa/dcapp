@@ -1,4 +1,4 @@
-#ifndef _IMAGE_HH_ 
+#ifndef _IMAGE_HH_
 #define _IMAGE_HH_
 
 typedef struct

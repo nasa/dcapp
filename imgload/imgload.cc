@@ -54,15 +54,13 @@ int imgload(const char *filename)
 
 const char *FindExtension(const char *filename)
 {
-    const char *end;
-    
     if (!filename)
     {
         fprintf(stderr, "%s %d: No filename specified\n", __FILE__, __LINE__);
         return 0x0;
     }
 
-    end = &(filename[strlen(filename)-1]);
+    const char *end = &(filename[strlen(filename)-1]);
     while (*end != '.' && end != filename) end--;
 
     if (end == filename)

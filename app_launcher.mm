@@ -107,10 +107,10 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inArgs, char **outA
 
 - (void)createFile:(id)sender
 {
-    NSSavePanel	*panel = [ NSSavePanel savePanel ];
+    NSSavePanel *panel = [ NSSavePanel savePanel ];
     FILE *fp;
     char *cmd;
-    
+
     [ panel setNameFieldLabel:@"Create:" ];
     [ panel setPrompt:@"Create" ];
 
@@ -128,8 +128,8 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inArgs, char **outA
 
 - (void)selectFile:(id)sender
 {
-    NSOpenPanel	*panel = [ NSOpenPanel openPanel ];
-    
+    NSOpenPanel *panel = [ NSOpenPanel openPanel ];
+
     [ panel setCanChooseFiles:YES ];
     [ panel setCanChooseDirectories:NO ];
     [ panel setResolvesAliases:YES ];

@@ -17,7 +17,7 @@ Programmer: M. McFarlane, March 2005
  * made about the suitability of this software for any purpose.  It is
  * provided "as is" without express or implied warranty.
  */
- /* Modified 25 Mar 02 by S. V. Ramanan for GNUStep 
+ /* Modified 25 Mar 02 by S. V. Ramanan for GNUStep
   * 1. independent x and y scaling added
   * 2. image cache-ing removed
   * 3. user-stippling, background and alignment removed
@@ -48,7 +48,7 @@ extern int tdAlignBaseline;
 /* A structure holding everything needed for a rotated string */
 typedef struct rotated_text_item_template
 {
-    Pixmap bitmap;     
+    Pixmap bitmap;
     int cols_in;
     int rows_in;
     int cols_out;
@@ -57,15 +57,11 @@ typedef struct rotated_text_item_template
 
 /* ---------------------------------------------------------------------- */
 
-static XImage *MakeXImage(Display *dpy, int w, int h);
-int XRotDrawString(Display *dpy, XFontStruct *font, Drawable drawable,
-    GC gc, int x, int y,  float angle,
-    float scalex, float scaley, int align, const char *text);
-static RotatedTextItem *XRotCreateTextItem(Display *dpy, XFontStruct *font,
-    float sin_angle, float cos_angle, float scalex, float scaley, const char *text);
-static void XRotFreeTextItem(Display *dpy, RotatedTextItem *item);
-static XImage *XRotMagnifyImage(Display *dpy, XImage *ximage,
-    float scalex, float scaley);
+static XImage *MakeXImage(Display *, int, int);
+int XRotDrawString(Display *, XFontStruct *, Drawable, GC, int, int,  float, float, float, int, const char *);
+static RotatedTextItem *XRotCreateTextItem(Display *, XFontStruct *, float, float, float, float, const char *);
+static void XRotFreeTextItem(Display *, RotatedTextItem *);
+static XImage *XRotMagnifyImage(Display *, XImage *, float, float);
 
 
 /**************************************************************************/
@@ -73,23 +69,18 @@ static XImage *XRotMagnifyImage(Display *dpy, XImage *ximage,
 /**************************************************************************/
 static XImage *MakeXImage(Display *dpy, int w, int h)
 {
-    XImage *I;
-    char *data;
-    
     /* reserve memory for image */
-    data = (char *)calloc((unsigned)(((w-1)/8+1)*h), 1);
-    if (data == NULL) return NULL;
-    
-    /* create the XImage */
-    I = XCreateImage(dpy, DefaultVisual(dpy, DefaultScreen(dpy)),
-                   1, XYBitmap, 0, data, w, h, 8, 0);
+    char *data = (char *)calloc((unsigned)(((w-1)/8+1)*h), 1);
+    if (!data) return 0x0;
 
-    if (I == NULL)
+    /* create the XImage */
+    XImage *I = XCreateImage(dpy, DefaultVisual(dpy, DefaultScreen(dpy)), 1, XYBitmap, 0, data, w, h, 8, 0);
+    if (!I)
     {
         free(data);
-        return NULL;
+        return 0x0;
     }
-    
+
     I->byte_order = I->bitmap_bit_order = MSBFirst;
     return I;
 }
@@ -108,10 +99,10 @@ int XRotDrawString(Display *dpy, XFontStruct *font, Drawable drawable,
     float hot_xp, hot_yp;
     float sin_angle, cos_angle;
     RotatedTextItem *item;
-    
+
     /* return early for NULL/empty strings or bad scale factors */
-    if (text == NULL || strlen(text) == 0) return 0;
-    if (scalex <= 0 || scaley <= 0) return 0;
+    if (!text) return 0;
+    if (strlen(text) == 0 || scalex <= 0 || scaley <= 0) return 0;
 
     /* horizontal text made easy */
     if (angle==0. && scalex==1. && scaley == 1.)
@@ -147,10 +138,9 @@ int XRotDrawString(Display *dpy, XFontStruct *font, Drawable drawable,
     }
 
     /* get a rotated bitmap */
-    item = XRotCreateTextItem(dpy, font, sin_angle, cos_angle,
-                              scalex, scaley, text);
-    if (item == NULL) return 1;
-    
+    item = XRotCreateTextItem(dpy, font, sin_angle, cos_angle, scalex, scaley, text);
+    if (!item) return 1;
+
     /* this gc has similar properties to the user's gc */
     my_gc = XCreateGC(dpy, drawable, 0, 0);
     XCopyGC(dpy, gc, GCForeground|GCBackground|GCFunction|GCPlaneMask, my_gc);
@@ -176,11 +166,11 @@ int XRotDrawString(Display *dpy, XFontStruct *font, Drawable drawable,
     /* rotate hot_x and hot_y around bitmap centre */
     hot_xp = hot_x*cos_angle - hot_y*sin_angle;
     hot_yp = hot_x*sin_angle + hot_y*cos_angle;
-    
+
     /* where should top left corner of bitmap go ? */
     xp = x - (int)((float)item->cols_out/2. + hot_xp);
     yp = y - (int)((float)item->rows_out/2. - hot_yp);
-    
+
     /* paint text using stipple technique */
     XSetFillStyle(dpy, my_gc, FillStippled);
     XSetStipple(dpy, my_gc, item->bitmap);
@@ -205,7 +195,7 @@ static RotatedTextItem *XRotCreateTextItem(Display *dpy, XFontStruct *font,
                         float sin_angle, float cos_angle,
                         float scalex, float scaley, const char *text)
 {
-    RotatedTextItem *item=NULL;
+    RotatedTextItem *item=0x0;
     Pixmap canvas;
     GC font_gc;
     XImage *I_in, *ximage;
@@ -221,35 +211,34 @@ static RotatedTextItem *XRotCreateTextItem(Display *dpy, XFontStruct *font,
     int dir, asc, desc;
     XCharStruct overall;
     int old_cols_in=0, old_rows_in=0;
-    
+
     /* allocate memory */
     item = (RotatedTextItem *)malloc((unsigned)sizeof(RotatedTextItem));
-    if (!item) return NULL;
-    item->bitmap = (Pixmap)NULL;
-    
+    if (!item) return 0x0;
+    item->bitmap = (Pixmap)0x0;
+
     XTextExtents(font, text, strlen(text), &dir, &asc, &desc, &overall);
-    
+
     /* overall font height */
     /* dimensions horizontal text will have */
     item->cols_in=overall.rbearing;
     item->rows_in=height=font->ascent+font->descent;
-    
+
     /* bitmap for drawing on */
-    canvas=XCreatePixmap(dpy, DefaultRootWindow(dpy),
-                         item->cols_in, item->rows_in, 1);
-    
+    canvas=XCreatePixmap(dpy, DefaultRootWindow(dpy), item->cols_in, item->rows_in, 1);
+
     /* create a GC for the bitmap */
     font_gc=XCreateGC(dpy, canvas, 0, 0);
     XSetBackground(dpy, font_gc, 0);
     XSetFont(dpy, font_gc, font->fid);
-    
+
     /* make sure the bitmap is blank */
     XSetForeground(dpy, font_gc, 0);
     XFillRectangle(dpy, canvas, font_gc, 0, 0, item->cols_in+1, item->rows_in+1);
     XSetForeground(dpy, font_gc, 1);
-    
+
     /* draw text horizontally */
-    
+
     /* where to draw section */
     yp=font->ascent;
     xp=0;
@@ -259,16 +248,15 @@ static RotatedTextItem *XRotCreateTextItem(Display *dpy, XFontStruct *font,
 
     /* create image to hold horizontal text */
     I_in = MakeXImage(dpy, item->cols_in, item->rows_in);
-    if (I_in == NULL)
+    if (!I_in)
     {
         XFreeGC(dpy, font_gc);
         XFreePixmap(dpy, canvas);
-        return NULL;
+        return 0x0;
     }
-    
+
     /* extract horizontal text */
-    XGetSubImage(dpy, canvas, 0, 0, item->cols_in, item->rows_in,
-                 1, XYPixmap, I_in, 0, 0);
+    XGetSubImage(dpy, canvas, 0, 0, item->cols_in, item->rows_in, 1, XYPixmap, I_in, 0, 0);
     I_in->format=XYBitmap;
 
     /* magnify horizontal text */
@@ -285,7 +273,7 @@ static RotatedTextItem *XRotCreateTextItem(Display *dpy, XFontStruct *font,
     item->rows_out = height = font->ascent + font->descent;
 
     /* how big will rotated text be ? */
-    item->cols_out = (int)(fabs((float)item->rows_in*sin_angle) + 
+    item->cols_out = (int)(fabs((float)item->rows_in*sin_angle) +
                      fabs((float)item->cols_in*cos_angle) + 2.99999);
 
     item->rows_out = (int)(fabs((float)item->rows_in*cos_angle) +
@@ -293,23 +281,22 @@ static RotatedTextItem *XRotCreateTextItem(Display *dpy, XFontStruct *font,
 
     if (item->cols_out%2 == 0) item->cols_out++;
     if (item->rows_out%2 == 0) item->rows_out++;
-    
+
     /* create image to hold rotated text */
     ximage = MakeXImage(dpy, item->cols_out, item->rows_out);
-    if (ximage == NULL)
+    if (!ximage)
     {
         XDestroyImage(I_in);
         XFreeGC(dpy, font_gc);
         XFreePixmap(dpy, canvas);
-        return NULL;
+        return 0x0;
     }
-    
+
     byte_w_in = (item->cols_in-1)/8 + 1;
     byte_w_out = (item->cols_out-1)/8 + 1;
-    
-    /* we try to make this bit as fast as possible - which is why it looks
-       a bit over-the-top */
-    
+
+    /* we try to make this bit as fast as possible - which is why it looks a bit over-the-top */
+
     /* vertical distance from centre */
     dj = 0.5 - (float)item->rows_out/2;
 
@@ -347,17 +334,17 @@ static RotatedTextItem *XRotCreateTextItem(Display *dpy, XFontStruct *font,
         byte_out = (item->rows_out-j-1) * byte_w_out;
 
         /* loop through meaningful columns */
-        for (i = ((xl<0)?0:(int)xl);
-             i < ((xr>=item->cols_out)?item->cols_out:(int)xr); i++)
+        for (i = ((xl<0)?0:(int)xl); i < ((xr>=item->cols_out)?item->cols_out:(int)xr); i++)
         {
             /* rotate coordinates */
             it = (int)((float)item->cols_in/2. + ( di*cos_angle + dj*sin_angle));
             jt = (int)((float)item->rows_in/2. - (-di*sin_angle + dj*cos_angle));
-    
+
             /* set pixel if required */
             if (it>=0 && it<item->cols_in && jt>=0 && jt<item->rows_in)
-                if ((I_in->data[jt*byte_w_in+it/8] & 128>>(it%8))>0)
-                    ximage->data[byte_out+i/8]|=128>>i%8;
+            {
+                if ((I_in->data[jt*byte_w_in+it/8] & 128>>(it%8))>0) ximage->data[byte_out+i/8]|=128>>i%8;
+            }
 
             di += 1;
         }
@@ -374,12 +361,10 @@ static RotatedTextItem *XRotCreateTextItem(Display *dpy, XFontStruct *font,
     }
 
     /* create a bitmap to hold rotated text */
-    item->bitmap = XCreatePixmap(dpy, DefaultRootWindow(dpy),
-                                 item->cols_out, item->rows_out, 1);
-    
+    item->bitmap = XCreatePixmap(dpy, DefaultRootWindow(dpy), item->cols_out, item->rows_out, 1);
+
     /* make the text bitmap from XImage */
-    XPutImage(dpy, item->bitmap, font_gc, ximage, 0, 0, 0, 0,
-              item->cols_out, item->rows_out);
+    XPutImage(dpy, item->bitmap, font_gc, ximage, 0, 0, 0, 0, item->cols_out, item->rows_out);
 
     XDestroyImage(ximage);
 
@@ -395,17 +380,15 @@ static RotatedTextItem *XRotCreateTextItem(Display *dpy, XFontStruct *font,
 /**************************************************************************/
 static void XRotFreeTextItem(Display *dpy, RotatedTextItem *item)
 {
-        if (item->bitmap) XFreePixmap(dpy, item->bitmap);
-        free((char *)item);
+    if (item->bitmap) XFreePixmap(dpy, item->bitmap);
+    free(item);
 }
 
 
 /**************************************************************************/
 /* Magnify an XImage using bilinear interpolation                         */
 /**************************************************************************/
-
-static XImage *XRotMagnifyImage(Display *dpy, XImage *ximage,
-                                float scalex, float scaley)
+static XImage *XRotMagnifyImage(Display *dpy, XImage *ximage, float scalex, float scaley)
 {
     int i, j;
     float x, y;
@@ -428,7 +411,7 @@ static XImage *XRotMagnifyImage(Display *dpy, XImage *ximage,
 
     /* this will hold final image */
     I_out = MakeXImage(dpy, cols_out, rows_out);
-    if (I_out == NULL) return NULL;
+    if (!I_out) return 0x0;
 
     /* width in bytes of input, output images */
     byte_width_in=(cols_in-1)/8 + 1;
@@ -504,7 +487,7 @@ static XImage *XRotMagnifyImage(Display *dpy, XImage *ximage,
         }
         y += magy_inv;
     }
-    
+
     /* destroy original */
     XDestroyImage(ximage);
 

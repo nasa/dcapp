@@ -11,8 +11,8 @@
 #include "PixelStream.hh"
 
 extern void window_init(bool, int , int, int, int);
-extern void *LoadFont(char *, char *);
-extern int LoadTexture(char *);
+extern void *LoadFont(const char *, const char *);
+extern int LoadTexture(const char *);
 extern float *LoadConstant(float);
 extern int *LoadConstant(int);
 extern char *LoadConstant(const char *);
@@ -614,17 +614,17 @@ struct node *new_setvalue(struct node *parent, struct node **list, char *var, ch
 
     struct node *data = add_primitive_node(parent, list, SetValue, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
-    data->object.modval.optype = myset.optype;    
-    data->object.modval.datatype1 = myset.datatype1;    
-    data->object.modval.datatype2 = myset.datatype2;    
-    data->object.modval.mindatatype = myset.mindatatype;    
-    data->object.modval.maxdatatype = myset.maxdatatype;    
-    data->object.modval.var = myset.var;    
-    data->object.modval.val = myset.val;    
-    data->object.modval.min = myset.min;    
-    data->object.modval.max = myset.max;    
+    data->object.modval.optype = myset.optype;
+    data->object.modval.datatype1 = myset.datatype1;
+    data->object.modval.datatype2 = myset.datatype2;
+    data->object.modval.mindatatype = myset.mindatatype;
+    data->object.modval.maxdatatype = myset.maxdatatype;
+    data->object.modval.var = myset.var;
+    data->object.modval.val = myset.val;
+    data->object.modval.min = myset.min;
+    data->object.modval.max = myset.max;
 
-    return data;    
+    return data;
 }
 
 struct node *new_isequal(struct node *parent, struct node **list, const char *opspec, char *val1, const char *val2)

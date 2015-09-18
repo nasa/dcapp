@@ -95,8 +95,8 @@ bool NodeValid(xmlNodePtr node)
 
 bool NodeCheck(xmlNodePtr node, const char *str)
 {
-    if (node->type == XML_ELEMENT_NODE && xmlStrEq(node->name, str)) return 1;
-    else return 0;
+    if (node->type == XML_ELEMENT_NODE && xmlStrEq(node->name, str)) return true;
+    else return false;
 }
 
 xmlNodePtr NodeFind(xmlNodePtr startnode, const char *key)

@@ -177,7 +177,7 @@ int EdgeRcsComm::read_rcs_message(int socket, char **rcs_response_string)
                         return -1;
                     }
                 }
-    
+
                 (*rcs_response_string)[nread] = incoming_char;
             }
 

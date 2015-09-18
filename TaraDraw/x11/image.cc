@@ -149,7 +149,7 @@ TDImage *tdLoadBmpImage(char *filespec)
 
         pixmap = (unsigned char *)malloc(imagewidth * sizeof(unsigned char));
         if (pixmap == 0) return 0;
-        
+
         for (i=0; i<imageheight; i++)
         {
             fread(pixmap, sizeof(unsigned char), imagewidth, infile);

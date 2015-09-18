@@ -390,7 +390,7 @@ int tdAlignBaseline = 0x10;
 {
     int i;
     int event_type;
-    
+
     for (i=0; i<eventcount; i++)
     {
         event_type = EventList[i].type;
@@ -463,7 +463,7 @@ int tdAlignBaseline = 0x10;
 - (void)terminate
 {
     int i;
-    
+
     for (i=0; i<MAX_COLORS; i++)
     {
         if (ColorMap[i] != nil) [ ColorMap[i] release ];

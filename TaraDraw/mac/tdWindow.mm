@@ -7,11 +7,12 @@
 {
     unsigned int mymask = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
 
-	if ((self = [ super initWithContentRect:contentRect styleMask: mymask backing: NSBackingStoreBuffered defer: YES ]) != nil)
+    if ((self = [ super initWithContentRect:contentRect styleMask:mymask backing:NSBackingStoreBuffered defer:YES ]) != nil)
     {
         tdAdapter = myadapter;
-	}
-	return self;
+    }
+
+    return self;
 }
 
 - (void)keyDown:(NSEvent *)theEvent

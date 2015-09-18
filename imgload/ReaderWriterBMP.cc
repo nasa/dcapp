@@ -49,7 +49,7 @@ typedef struct
 extern void setBMPImageData(ImageStruct *, ncol);
 
 /* byte order workarounds *sigh* */
-void swapbyte_L(int *i)
+static void swapbyte_L(int *i)
 {
     char *vv=(char *)i;
     char tmp=vv[0];
@@ -59,7 +59,8 @@ void swapbyte_L(int *i)
     vv[1]=vv[2];
     vv[2]=tmp;
 }
-void swapbyte_UL(unsigned int *i)
+/*
+static void swapbyte_UL(unsigned int *i)
 {
     char *vv=(char *)i;
     char tmp=vv[0];
@@ -69,7 +70,7 @@ void swapbyte_UL(unsigned int *i)
     vv[1]=vv[2];
     vv[2]=tmp;
 }
-void swapbyte_F(float *i)
+static void swapbyte_F(float *i)
 {
     char *vv=(char *)i;
     char tmp=vv[0];
@@ -79,14 +80,15 @@ void swapbyte_F(float *i)
     vv[1]=vv[2];
     vv[2]=tmp;
 }
-void swapbyte_US(unsigned short *i)
+*/
+static void swapbyte_US(unsigned short *i)
 {
     char *vv=(char *)i;
     char tmp=vv[0];
     vv[0]=vv[1];
     vv[1]=tmp;
 }
-void swapbyte_S(short *i)
+static void swapbyte_S(short *i)
 {
     char *vv=(char *)i;
     char tmp=vv[0];
@@ -101,19 +103,19 @@ void swapbyte_S(short *i)
 // BMP - sponsored by Seagate.
 int loadBMPImage(const char *filename, ImageStruct *image)
 {
-    unsigned char *buffer = NULL; // returned to sender & as read from the disk
+    unsigned char *buffer = 0x0; // returned to sender & as read from the disk
     int filelen;
     int ncolours;
     int ncomp = 0;
-    int swap = 0; // dont need to swap bytes
-    bmpheader hd; // actual size of the bitmap header; 12=os2; 40 = normal; 64=os2.1
+    int swap = 0;                // dont need to swap bytes
+    bmpheader hd;                // actual size of the bitmap header; 12=os2; 40 = normal; 64=os2.1
     BMPInfo inf;
 
     FILE *fp = fopen(filename, "rb");
     if (!fp)
     {
         fprintf(stderr, "%s/%s: ERROR - (%s) does not exist\n", __FILE__, __FUNCTION__, filename);
-        image->data = NULL;
+        image->data = 0x0;
         return (-1);
     }
 
@@ -129,16 +131,16 @@ int loadBMPImage(const char *filename, ImageStruct *image)
     }
     if (hd.FileType == MB)
     {
-        int infsize;    //size of BMPinfo in bytes
-        unsigned char *cols = NULL; // dynamic colour palette
-        unsigned char *imbuff; // returned to sender & as read from the disk
-        fread((char *)&infsize, sizeof(int), 1, fp); // insert inside 'the file is bmp' clause
+        int infsize;                                           //size of BMPinfo in bytes
+        unsigned char *cols = 0x0;                             // dynamic colour palette
+        unsigned char *imbuff;                                 // returned to sender & as read from the disk
+        fread((char *)&infsize, sizeof(int), 1, fp);           // insert inside 'the file is bmp' clause
         if (swap) swapbyte_L(&infsize);
         unsigned char *hdr = (unsigned char *)malloc(infsize); // to hold the new header
         fread((char *)hdr, 1,infsize-sizeof(int), fp);
-        int hsiz = sizeof(inf); // minimum of structure size &
+        int hsiz = sizeof(inf);                                // minimum of structure size &
         if (infsize <= hsiz) hsiz = infsize;
-        memcpy(&inf, hdr, hsiz/*-sizeof(int)*/); // copy only the bytes I can cope with
+        memcpy(&inf, hdr, hsiz/*-sizeof(int)*/);               // copy only the bytes I can cope with
         free(hdr);
 
         if (swap)
@@ -152,7 +154,7 @@ int loadBMPImage(const char *filename, ImageStruct *image)
         }
         if (infsize == 12)
         { // os2, protect us from our friends ? || infsize==64
-            int wd = inf.width&0xffff; // shorts replace ints
+            int wd = inf.width&0xffff;    // shorts replace ints
             int ht = inf.width>>16;
             int npln = inf.height&0xffff; // number of planes
             int cbits = inf.height>>16;
@@ -171,7 +173,7 @@ int loadBMPImage(const char *filename, ImageStruct *image)
         // handle size == 0 in uncompressed 24-bit BMPs -Eric Hammil
         if (size == 0) size = filelen;
 
-        int ncpal = 4; // default number of colours per palette entry
+        int ncpal = 4;                                   // default number of colours per palette entry
         size -= sizeof(bmpheader) + infsize;
         if (inf.ImageSize<size) inf.ImageSize=size;
         imbuff = (unsigned char *)malloc(inf.ImageSize); // read from disk
@@ -182,17 +184,17 @@ int loadBMPImage(const char *filename, ImageStruct *image)
         if(tmp != inf.ImageSize)
         {
             fprintf(stderr, "%s/%s: ERROR - (%s) problem retrieving image size\n", __FILE__, __FUNCTION__, filename);
-            image->data = NULL;
+            image->data = 0x0;
             return (-1);
         }
         ncolours = inf.Colorbits/8;
         switch (ncolours)
         {
         case 1:
-            ncomp = NCOL_BW; // actually this is a 256 colour, paletted image
-            inf.Colorbits = 8; // so this is how many bits there are per index
+            ncomp = NCOL_BW;     // actually this is a 256 colour, paletted image
+            inf.Colorbits = 8;   // so this is how many bits there are per index
             inf.ColorUsed = 256; // and number of colours used
-            cols=imbuff; // colour palette address - uses 4 bytes/colour
+            cols=imbuff;         // colour palette address - uses 4 bytes/colour
             break;
         case 2:
             ncomp = NCOL_IA;
@@ -216,7 +218,7 @@ int loadBMPImage(const char *filename, ImageStruct *image)
         unsigned int rowbytes = ncomp*sizeof(unsigned char)*inf.width;
         unsigned int doff = (rowbytes)/4;
         if ((rowbytes%4)) doff++; // round up if needed
-        doff *= 4; // to find dword alignment
+        doff *= 4;                // to find dword alignment
         int j;
         for(j = 0; j < inf.height; j++)
         {
@@ -224,7 +226,7 @@ int loadBMPImage(const char *filename, ImageStruct *image)
             else
             { // find from the palette..
                 unsigned char *imptr = imbuff+inf.ColorUsed*ncpal; // add size of the palette- start of image
-                int npixperbyte = 8/inf.Colorbits; // no of pixels per byte
+                int npixperbyte = 8/inf.Colorbits;                 // no of pixels per byte
                 int ii;
                 for(ii = 0; ii < inf.width/npixperbyte; ii++)
                 {
@@ -263,7 +265,7 @@ int loadBMPImage(const char *filename, ImageStruct *image)
     {
         fprintf(stderr, "%s/%s: ERROR - (%s) issue with file header\n", __FILE__, __FUNCTION__, filename);
         fclose(fp);
-        image->data = NULL;
+        image->data = 0x0;
         return (-1);
     }
 

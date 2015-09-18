@@ -9,7 +9,7 @@ extern int CheckCondition(struct node *);
 
 extern appdata AppData;
 
-static int CheckRegion(struct node *, float, float);
+static bool CheckRegion(struct node *, float, float);
 static void MouseDown(struct node *, float, float);
 static void MouseUp(struct node *);
 
@@ -18,18 +18,14 @@ static int mousebouncemode = 0;
 
 void HandleMouse(int button, int state, float xpct, float ypct, int modifier)
 {
-    struct node *current;
-
     if (state == MOUSE_DOWN)
-    {
-        // Scale cursor x and y with ortho x and y
+    {   // Scale cursor x and y with ortho x and y
         MouseDown(AppData.window->p_current, AppData.window->p_current->object.panel.orthoX * xpct, AppData.window->p_current->object.panel.orthoY * ypct);
     }
 
     if (state == MOUSE_UP)
-    { // Check all lists since MOUSE_DOWN may have been on a different active page
-        for (current = AppData.window->p_head; current; current=current->p_next_list)
-            MouseUp(current);
+    {   // Check all lists since MOUSE_DOWN may have been on a different active page
+        for (struct node *current = AppData.window->p_head; current; current=current->p_next_list) MouseUp(current);
     }
 }
 
@@ -98,13 +94,9 @@ static void MouseDown(struct node *list, float x, float y)
                 break;
             case Condition:
                 if (CheckCondition(current))
-                {
                     MouseDown(current->object.cond.TrueList, x, y);
-                }
                 else
-                {
                     MouseDown(current->object.cond.FalseList, x, y);
-                }
                 break;
             case MouseEvent:
                 if (CheckRegion(current, x, y))
@@ -125,9 +117,7 @@ static void MouseDown(struct node *list, float x, float y)
 
 static void MouseUp(struct node *list)
 {
-    struct node *current;
-
-    for (current = list; current; current = current->p_next)
+    for (struct node *current = list; current; current = current->p_next)
     {
         switch (current->info.type)
         {
@@ -153,10 +143,9 @@ static void MouseUp(struct node *list)
 
 
 // Check if x and y are within a node's bounds
-static int CheckRegion(struct node *current, float x, float y)
+static bool CheckRegion(struct node *current, float x, float y)
 {
     Geometry geo = GetGeometry(current);
-
-    if ((geo.left < x) && (x < geo.right) && (geo.bottom < y) && (y < geo.top)) return 1;
-    else return 0;
+    if ((geo.left < x) && (x < geo.right) && (geo.bottom < y) && (y < geo.top)) return true;
+    else return false;
 }

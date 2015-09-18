@@ -5,7 +5,7 @@ Description: Header file for the XRotDrawString routine, which was based largely
 Programmer: M. McFarlane, March 2005
 *******************************************************************************/
 
-#ifndef _ROTATE_HH_ 
+#ifndef _ROTATE_HH_
 #define _ROTATE_HH_
 
 int XRotDrawString(Display*, XFontStruct*, Drawable, GC, int, int, float, float, float, int, const char *);

@@ -38,15 +38,15 @@ TrickCommModule::~TrickCommModule()
     if (this->host) free(this->host);
     if (this->datarate) free(this->datarate);
 #ifdef TRICKACTIVE
-	int i;
+    int i;
 
-	for (i=0; i<this->fromsim.count; i++) free(this->fromsim.data[i].trickvar);
-	free(this->fromsim.data);
+    for (i=0; i<this->fromsim.count; i++) free(this->fromsim.data[i].trickvar);
+    free(this->fromsim.data);
 
-	for (i=0; i<this->tosim.count; i++) free(this->tosim.data[i].trickvar);
-	free(this->tosim.data);
+    for (i=0; i<this->tosim.count; i++) free(this->tosim.data[i].trickvar);
+    free(this->tosim.data);
 
-	delete this->tvs;
+    delete this->tvs;
 #endif
 }
 
@@ -55,8 +55,8 @@ CommModule::CommStatus TrickCommModule::read(void)
 #ifdef TRICKACTIVE
     if (!(this->active)) return this->Inactive;
 
-	int i;
-	int status = this->tvs->get();
+    int i;
+    int status = this->tvs->get();
 
     switch (status)
     {
@@ -97,7 +97,7 @@ CommModule::CommStatus TrickCommModule::read(void)
             else return this->Terminate;
         default:
             return this->None;
-	}
+    }
 #else
     return this->Inactive;
 #endif
@@ -190,12 +190,12 @@ CommModule::CommStatus TrickCommModule::write(void)
 void TrickCommModule::flagAsChanged(void *value)
 {
 #ifdef TRICKACTIVE
-	int i;
+    int i;
 
-	for (i=0; i<this->tosim.count; i++)
-	{
+    for (i=0; i<this->tosim.count; i++)
+    {
         if (this->tosim.data[i].dcvalue == value) this->tosim.data[i].forcewrite = 1;
-	}
+    }
 #endif
 }
 
@@ -272,27 +272,27 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
 void TrickCommModule::finishInitialization(void)
 {
 #ifdef TRICKACTIVE
-	int i, type, nelem;
+    int i, type, nelem;
 
-	for (i=0; i<this->fromsim.count; i++)
+    for (i=0; i<this->fromsim.count; i++)
     {
         switch (this->fromsim.data[i].type)
         {
-				case VARLIST_FLOAT:
-					type = VS_FLOAT;
-					nelem = 1;
-					break;
-				case VARLIST_INTEGER:
-					type = VS_INTEGER;
-					nelem = 1;
-					break;
-				case VARLIST_STRING:
-					type = VS_STRING;
-					nelem = STRING_DEFAULT_LENGTH;
-					break;
-				default:
-				    type = 0;
-				    break;
+                case VARLIST_FLOAT:
+                    type = VS_FLOAT;
+                    nelem = 1;
+                    break;
+                case VARLIST_INTEGER:
+                    type = VS_INTEGER;
+                    nelem = 1;
+                    break;
+                case VARLIST_STRING:
+                    type = VS_STRING;
+                    nelem = STRING_DEFAULT_LENGTH;
+                    break;
+                default:
+                    type = 0;
+                    break;
         }
         if (type)
             this->fromsim.data[i].trickvalue = this->tvs->add_var(this->fromsim.data[i].trickvar, this->fromsim.data[i].units, type, nelem);
@@ -305,8 +305,8 @@ void TrickCommModule::activate(void)
 #ifdef TRICKACTIVE
     if (this->fromsim.count || this->tosim.count)
     {
-	    if (this->tvs->activate(this->host, this->port, 0x0, this->datarate) == VS_SUCCESS) this->active = 1;
-	}
+        if (this->tvs->activate(this->host, this->port, 0x0, this->datarate) == VS_SUCCESS) this->active = 1;
+    }
 #endif
 }
 

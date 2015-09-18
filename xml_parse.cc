@@ -19,6 +19,12 @@
 #include "msg.hh"
 #include "keyValuePair.hh"
 
+struct xmlStyle
+{
+    char *name;
+    xmlNodePtr node;
+};
+
 extern void new_window(bool, int, int, int, int);
 extern void new_panels(char *);
 extern struct node *new_panel(char *, char *, char *, char *);
@@ -58,7 +64,6 @@ static char *get_element_data(xmlNodePtr, const char *);
 static void replace_string(char **);
 static char *get_constval(char *);
 static xmlNodePtr GetSubList(xmlNodePtr, char *, char *, char *);
-static void clean_list(struct node *);
 
 extern appdata AppData;
 
@@ -66,7 +71,8 @@ static TrickCommModule *trickcomm = 0x0;
 static EdgeCommModule *edgecomm = 0x0;
 static CcsdsUdpCommModule *ccsdsudpcomm = 0x0;
 static std::list<KeyValuePair *> ppclist;
-static struct node *StyleList, *DefaultList;
+static std::list<xmlNodePtr> xmldefaults;
+static std::list<struct xmlStyle> xmlstyles;
 static char *switchid, *switchonval, *switchoffval, *indid, *indonval, *activeid, *activetrueval, *transitionid, *key, *keyascii, *bezelkey;
 static int id_count = 0, preprocessing = 1, bufferID;
 
@@ -109,8 +115,8 @@ int ParseXMLFile(char *fullpath)
     for (kvp = ppclist.begin(); kvp != ppclist.end(); kvp++) delete *kvp;
     ppclist.clear();
 
-    clean_list(StyleList);
-    clean_list(DefaultList);
+    xmlstyles.clear();
+    xmldefaults.clear();
 
     XMLFileClose(mydoc);
 
@@ -145,9 +151,10 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             {
                 if (NodeValid(node1))
                 {
-                    data = NewNode(0x0, &StyleList);
-                    data->object.style.name = get_element_data(node, "Name");
-                    data->object.style.node = node1;
+                    struct xmlStyle mystruct;
+                    mystruct.name = get_element_data(node, "Name");
+                    mystruct.node = node1;
+                    xmlstyles.push_front(mystruct);
                 }
             }
         }
@@ -155,11 +162,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         {
             for (node1 = node->children; node1; node1 = node1->next)
             {
-                if (NodeValid(node1))
-                {
-                    data = NewNode(0x0, &DefaultList);
-                    data->object.dflt.node = node1;
-                }
+                if (NodeValid(node1)) xmldefaults.push_front(node1);
             }
         }
         if (NodeCheck(node, "If"))
@@ -357,28 +360,28 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             if ((error = dlerror()))
             {
                 debug_msg("%s", error);
-            	AppData.DisplayPreInit = &DisplayPreInitStub;
+                AppData.DisplayPreInit = &DisplayPreInitStub;
             }
 
             AppData.DisplayInit = (void (*)())dlsym(so_handler, "DisplayInit");
             if ((error = dlerror()))
             {
                 debug_msg("%s", error);
-            	AppData.DisplayInit = &DisplayInitStub;
+                AppData.DisplayInit = &DisplayInitStub;
             }
 
             AppData.DisplayLogic = (void (*)())dlsym(so_handler, "DisplayLogic");
             if ((error = dlerror()))
             {
                 debug_msg("%s", error);
-            	AppData.DisplayLogic = &DisplayLogicStub;
+                AppData.DisplayLogic = &DisplayLogicStub;
             }
 
             AppData.DisplayClose = (void (*)())dlsym(so_handler, "DisplayClose");
             if ((error = dlerror()))
             {
                 debug_msg("%s", error);
-            	AppData.DisplayClose = &DisplayCloseStub;
+                AppData.DisplayClose = &DisplayCloseStub;
             }
         }
         if (NodeCheck(node, "Window"))
@@ -781,11 +784,7 @@ static char *get_node_content(xmlNodePtr node)
 
 static char *get_element_data(xmlNodePtr innode, const char *key)
 {
-    xmlNodePtr node;
-    struct node *data;
-    char **retval, *type, *style;
-
-    retval = get_XML_attribute_address(innode, key);
+    char **retval = get_XML_attribute_address(innode, key);
     if (retval)
     {
         if (*retval)
@@ -795,42 +794,18 @@ static char *get_element_data(xmlNodePtr innode, const char *key)
         }
     }
 
-    type = get_node_type(innode);
+    char *type = get_node_type(innode);
 
     // If not explicitly defined, check to see if a Style has been defined...
-    style = get_XML_attribute(innode, "Style");
+    char *style = get_XML_attribute(innode, "Style");
     if (style)
     {
-        if (StyleList)
+        std::list<struct xmlStyle>::iterator xmls;
+        for (xmls = xmlstyles.begin(); xmls != xmlstyles.end(); xmls++)
         {
-            for (data = StyleList->p_tail; data; data = data->p_prev)
+            if (NodeCheck((*xmls).node, type) && !strcmp((*xmls).name, style))
             {
-                node = (xmlNodePtr)(data->object.style.node);
-                if (NodeCheck(node, type) && !strcmp(data->object.style.name, style))
-                {
-                    retval = get_XML_attribute_address(node, key);
-                    if (retval)
-                    {
-                        if (*retval)
-                        {
-                            replace_string(retval);
-                            return *retval;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // ...if not, check to see if a Default has been defined...
-    if (DefaultList)
-    {
-        for (data = DefaultList->p_tail; data; data = data->p_prev)
-        {
-            node = (xmlNodePtr)(data->object.dflt.node);
-            if (NodeCheck(node, type))
-            {
-                retval = get_XML_attribute_address(node, key);
+                retval = get_XML_attribute_address((*xmls).node, key);
                 if (retval)
                 {
                     if (*retval)
@@ -838,6 +813,24 @@ static char *get_element_data(xmlNodePtr innode, const char *key)
                         replace_string(retval);
                         return *retval;
                     }
+                }
+            }
+        }
+    }
+
+    // ...if not, check to see if a Default has been defined...
+    std::list<xmlNodePtr>::iterator xmld;
+    for (xmld = xmldefaults.begin(); xmld != xmldefaults.end(); xmld++)
+    {
+        if (NodeCheck(*xmld, type))
+        {
+            retval = get_XML_attribute_address(*xmld, key);
+            if (retval)
+            {
+                if (*retval)
+                {
+                    replace_string(retval);
+                    return *retval;
                 }
             }
         }
@@ -984,19 +977,4 @@ static xmlNodePtr GetSubList(xmlNodePtr node, char *opspec, char *val1, char *va
 
     if (myflag) return node->children;  // Assume "True" if no subnode is found
     else return 0x0;
-}
-
-static void clean_list(struct node *mylist)
-{
-    struct node *data, *prev;
-
-    if (mylist)
-    {
-        for (data = mylist->p_tail; data; data = prev)
-        {
-            prev = data->p_prev;
-            if (data == mylist) mylist = 0x0;
-            FreeNode(data);
-        }
-    }
 }

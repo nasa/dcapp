@@ -14,10 +14,8 @@ extern appdata AppData;
  *********************************************************************************/
 void UpdateDisplay(void)
 {
-    struct node *p_panel;
-
     // Get the pointer to the current active panel
-    for (p_panel = AppData.window->p_head; p_panel; p_panel = p_panel->p_next_list)
+    for (struct node *p_panel = AppData.window->p_head; p_panel; p_panel = p_panel->p_next_list)
     {
         if (*(AppData.window->object.win.active_display) == p_panel->object.panel.displayID)
         {

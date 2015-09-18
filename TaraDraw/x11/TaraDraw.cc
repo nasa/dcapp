@@ -85,9 +85,9 @@ int tdAlignMiddle = 0x04;
 int tdAlignTop = 0x08;
 int tdAlignBaseline = 0x10;
 
-static WindowSpec *startwin = NULL;
-static WindowSpec *current = NULL;
-static GLSpec *curGL = NULL;
+static WindowSpec *startwin = 0x0;
+static WindowSpec *current = 0x0;
+static GLSpec *curGL = 0x0;
 static Display *display;
 static int screen_num;
 static Atom wm_delete_window, wm_hints;
@@ -104,17 +104,17 @@ int tdInitialize(char *xdisplay)
     char *fontspec;
 
     display = XOpenDisplay(xdisplay);
-    if (display == NULL)
+    if (!display)
     {
         printf("tdInitialize: Can't connect to X server\n");
         return (-1);
     }
-    
+
     screen_num = DefaultScreen(display);
     wm_delete_window = XInternAtom(display, "WM_DELETE_WINDOW", False);
     wm_hints = XInternAtom(display, "_MOTIF_WM_HINTS", False);
     default_cmap = DefaultColormap(display, screen_num);
-    
+
     tdRegisterColor(0, 1.0, 1.0, 1.0); // white
     tdRegisterColor(1, 0.0, 0.0, 0.0); // black
 
@@ -128,7 +128,7 @@ int tdInitialize(char *xdisplay)
     }
 
     fontspec = (char *)malloc(maxlen);
-    if (fontspec == NULL)
+    if (!fontspec)
     {
         printf("tdInitialize: Can't allocate memory for font definitions\n");
         return (-1);
@@ -143,7 +143,7 @@ int tdInitialize(char *xdisplay)
         }
     }
     free(fontspec);
-    
+
     return 0;
 }
 
@@ -169,7 +169,7 @@ tdWindow tdOpenWindow(const char *title, float xpos, float ypos, float width, fl
         ypos = DisplayHeight(display, screen_num) - ypos;
     else
         ypos = DisplayHeight(display, screen_num) - ypos - height;
-    
+
     newwin->win = XCreateSimpleWindow(display, RootWindow(display, screen_num), (int)xpos, (int)ypos,
         (int)width, (int)height, BORDER_WIDTH, BlackPixel(display, screen_num), WhitePixel(display, screen_num));
 
@@ -178,8 +178,8 @@ tdWindow tdOpenWindow(const char *title, float xpos, float ypos, float width, fl
     sizehints.y = (int)ypos;
     sizehints.width = (int)width;
     sizehints.height = (int)height;
-    XSetStandardProperties(display, newwin->win, title, title, None, NULL, 0, &sizehints);
-        
+    XSetStandardProperties(display, newwin->win, title, title, None, 0x0, 0, &sizehints);
+
     strlist = (char *)malloc(strlen(title)+1);
     strcpy(strlist, title);
     XStringListToTextProperty(&strlist, 1, &textprop);
@@ -195,7 +195,7 @@ tdWindow tdOpenWindow(const char *title, float xpos, float ypos, float width, fl
         KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | StructureNotifyMask | ExposureMask);
     XMapWindow(display, newwin->win);
     XSetWMProtocols(display, newwin->win, &wm_delete_window, 1);
-    
+
     newwin->height = (int)height;
     newwin->width = (int)width;
 
@@ -206,9 +206,9 @@ tdWindow tdOpenWindow(const char *title, float xpos, float ypos, float width, fl
     newwin->capstyle = CapButt;
     XSetLineAttributes(display, newwin->gc, newwin->linewidth, LineSolid, newwin->capstyle, JoinRound);
 
-    if (current == NULL)
+    if (!current)
     {
-        newwin->next = NULL;
+        newwin->next = 0x0;
         startwin = newwin;
     }
     else
@@ -245,7 +245,7 @@ tdImage *tdLoadImage(char *filespec, tdSize *size)
     unsigned i;
     XColor mycolor;
     TDImage *image = tdLoadBmpImage(filespec);
-    
+
     if (image == 0)
     {
         if (size)
@@ -283,35 +283,35 @@ tdGLContext *tdGLCreateContext(tdWindow winid)
 
     int attr_list[] = {
         GLX_RGBA,
-        GLX_DOUBLEBUFFER, 
-        GLX_RED_SIZE, 4, 
-        GLX_GREEN_SIZE, 4, 
-        GLX_BLUE_SIZE, 4, 
+        GLX_DOUBLEBUFFER,
+        GLX_RED_SIZE, 4,
+        GLX_GREEN_SIZE, 4,
+        GLX_BLUE_SIZE, 4,
         GLX_DEPTH_SIZE, 16,
         None };
 
     curGL = (GLSpec *)malloc(sizeof(GLSpec));
-    if (curGL == NULL)
+    if (!curGL)
     {
         printf("tdGLCreateContext: Can't allocate memory for OpenGL context\n");
-        return NULL;
+        return 0x0;
     }
 
-    for (curGL->parent = startwin; curGL->parent != NULL; curGL->parent = curGL->parent->next)
+    for (curGL->parent = startwin; curGL->parent; curGL->parent = curGL->parent->next)
     {
         if (curGL->parent->win == (Window)winid) break;
     }
-    if (curGL->parent == NULL)
+    if (!(curGL->parent))
     {
         printf("tdGLCreateContext: Invalid window specified\n");
-        return NULL;
+        return 0x0;
     }
 
     visual = glXChooseVisual(display, screen_num, attr_list);
-    if (visual == NULL)
+    if (!visual)
     {
         printf("tdGLCreateContext: Can't create OpenGL context\n");
-        return NULL;
+        return 0x0;
     }
 
     curGL->context = glXCreateContext(display, visual, 0, True);
@@ -367,7 +367,7 @@ int tdRegisterXFont(const char *face, int size, char *spec)
 
     font[index].info = XLoadQueryFont(display, spec);
 
-    if (font[index].info == NULL)
+    if (!(font[index].info))
     {
         printf("tdRegisterXFont: Cannot open font %s\n", spec);
         return (-1);
@@ -385,9 +385,7 @@ int tdRegisterXFont(const char *face, int size, char *spec)
 
 void tdSetActiveWindow(tdWindow winid)
 {
-    WindowSpec *win;
-
-    for (win = startwin; win != NULL; win = win->next)
+    for (WindowSpec *win = startwin; win; win = win->next)
     {
         if (win->win == (Window)winid)
         {
@@ -405,25 +403,22 @@ void tdGLSetContext(tdGLContext *glContext)
 
 void tdSetBackgroundColor(int color)
 {
-    if (current == NULL || color < 0 || color >= MAX_COLORS) return;
-
+    if (!current || color < 0 || color >= MAX_COLORS) return;
     current->bgcolor = cmap[color];
 }
 
 void tdSetColor(int color)
 {
-    if (current == NULL || color < 0 || color >= MAX_COLORS) return;
-
+    if (!current || color < 0 || color >= MAX_COLORS) return;
     current->fgcolor = cmap[color];
     XSetForeground(display, current->gc, current->fgcolor);
 }
 
 void tdSetColorRGB(float r, float g, float b)
 {
+    if (!current) return;
+
     XColor mycolor;
-
-    if (current == NULL) return;
-
     mycolor.red = (int)(r*65535);
     mycolor.green = (int)(g*65535);
     mycolor.blue = (int)(b*65535);
@@ -434,11 +429,9 @@ void tdSetColorRGB(float r, float g, float b)
 
 void tdSetFont(const char *fontface, float fontsize)
 {
-    int i;
+    if (!current) return;
 
-    if (current == NULL) return;
-
-    for (i=0; i<fontnum; i++)
+    for (int i=0; i<fontnum; i++)
     {
         if (!strcmp(font[i].face, fontface) && font[i].size == (int)fontsize)
         {
@@ -451,23 +444,21 @@ void tdSetFont(const char *fontface, float fontsize)
 
 void tdSetLineCap(int style)
 {
-    if (current == NULL) return;
+    if (!current) return;
     current->capstyle = style;
     XSetLineAttributes(display, current->gc, current->linewidth, LineSolid, current->capstyle, JoinRound);
 }
 
 void tdSetLineWidth(float linewidth)
 {
-    if (current == NULL) return;
+    if (!current) return;
     current->linewidth = (int)(linewidth+0.5);
     XSetLineAttributes(display, current->gc, current->linewidth, LineSolid, current->capstyle, JoinRound);
 }
 
 void tdSetNeedsRedraw(tdWindow winid)
 {
-    WindowSpec *win;
-
-    for (win = startwin; win != NULL; win = win->next)
+    for (WindowSpec *win = startwin; win; win = win->next)
     {
         if (win->win == (Window)winid)
         {
@@ -526,18 +517,17 @@ tdColorRGB tdGetColor(int index)
 tdSize tdGetStringBounds(char *string)
 {
     tdSize mysize;
-    XFontStruct *finfo;
 
-    if (current == NULL)
+    if (current)
     {
-        mysize.width = 0;
-        mysize.height = 0;
+        XFontStruct *finfo = current->curfont->info;
+        mysize.width = (float)XTextWidth(finfo, string, strlen(string));
+        mysize.height = (float)(finfo->descent + finfo->ascent);
     }
     else
     {
-        finfo = current->curfont->info;
-        mysize.width = (float)XTextWidth(finfo, string, strlen(string));
-        mysize.height = (float)(finfo->descent + finfo->ascent);
+        mysize.width = 0;
+        mysize.height = 0;
     }
 
     return mysize;
@@ -564,9 +554,7 @@ void tdGetPointer(tdPosition *screenpos, tdPosition *windowpos)
 
 int tdNeedsRedraw(tdWindow winid)
 {
-    WindowSpec *win;
-
-    for (win = startwin; win != NULL; win = win->next)
+    for (WindowSpec *win = startwin; win; win = win->next)
     {
         if (win->win == (Window)winid)
         {
@@ -590,7 +578,7 @@ void tdToggleFullScreen(void)
 
 void tdClearWindow(void)
 {
-    if (current == NULL) return;
+    if (!current) return;
 
     XSetForeground(display, current->gc, current->bgcolor);
     XFillRectangle(display, current->buffer, current->gc, 0, 0, current->width, current->height);
@@ -599,16 +587,12 @@ void tdClearWindow(void)
 
 void tdDrawFilledPoly(float x[], float y[], int vertices)
 {
-    int i;
-    XPoint *point;
+    if (!current) return;
 
-    if (current == NULL) return;
+    XPoint *point = (XPoint *)malloc(vertices * sizeof(XPoint));
+    if (!point) return;
 
-    point = (XPoint *)malloc(vertices * sizeof(XPoint));
-    
-    if (point == NULL) return;
-    
-    for (i=0; i<vertices; i++)
+    for (int i=0; i<vertices; i++)
     {
         point[i].x = (int)x[i];
         point[i].y = current->height - (int)y[i];
@@ -623,7 +607,7 @@ void tdDrawFilledRect(float x, float y, int align, float width, float height)
 {
     int xpos, ypos;
 
-    if (current == NULL) return;
+    if (!current) return;
 
     if (align & tdAlignCenter)
         xpos = (int)(x - (width/2));
@@ -648,7 +632,7 @@ void tdDrawString(char *string, float x, float y, float rotate, int align)
     int ypos = (int)y;
     XFontStruct *finfo;
 
-    if (current == NULL) return;
+    if (!current) return;
 
     finfo = current->curfont->info;
 
@@ -678,7 +662,7 @@ void tdDrawString(char *string, float x, float y, float rotate, int align)
 
 void tdLineStart(float x, float y)
 {
-    if (current == NULL) return;
+    if (!current) return;
 
     current->storedpoint.x = (int)x;
     current->storedpoint.y = (int)y;
@@ -686,7 +670,7 @@ void tdLineStart(float x, float y)
 
 void tdLineAppend(float x, float y)
 {
-    if (current == NULL) return;
+    if (!current) return;
 
     XDrawLine(display, current->buffer, current->gc, current->storedpoint.x,
               current->height-current->storedpoint.y, (int)x, current->height-(int)y);
@@ -748,8 +732,7 @@ void tdGLSwapBuffers(void)
 
 void tdRenderGraphics(void)
 {
-    if (current == NULL) return;
-
+    if (!current) return;
     XCopyArea(display, current->buffer, current->win, current->gc, 0, 0, current->width, current->height, 0, 0);
 }
 
@@ -782,9 +765,9 @@ void tdProcessEvents(void (button_handler)(ButtonEvent),
         {
             case ButtonPress:
             case ButtonRelease:
-                if (button_handler != NULL)
+                if (button_handler)
                 {
-                    for (win = startwin; win != NULL; win = win->next)
+                    for (win = startwin; win; win = win->next)
                     {
                         if (win->win == report.xbutton.window)
                         {
@@ -802,16 +785,16 @@ void tdProcessEvents(void (button_handler)(ButtonEvent),
                 break;
             case KeyPress:
             case KeyRelease:
-                if (keyboard_handler != NULL)
+                if (keyboard_handler)
                 {
-                    for (win = startwin; win != NULL; win = win->next)
+                    for (win = startwin; win; win = win->next)
                     {
                         if (win->win == report.xkey.window)
                         {
                             if (report.type == KeyPress) kevent.state = tdPressed;
                             else kevent.state = tdReleased;
 
-                            XLookupString(&report.xkey, &kevent.key, 1, NULL, NULL);
+                            XLookupString(&report.xkey, &kevent.key, 1, 0x0, 0x0);
                             if (kevent.key == 0)
                             {
                                 keysym = XkbKeycodeToKeysym(display, report.xkey.keycode, 0, 0);
@@ -846,7 +829,7 @@ void tdProcessEvents(void (button_handler)(ButtonEvent),
                 // only process the most recent reconfig event, so if there's already one for this window in the queue, replace it
                 while (XCheckWindowEvent(display, changedwin, StructureNotifyMask, &report)) continue;
 
-                for (win = startwin; win != NULL; win = win->next)
+                for (win = startwin; win; win = win->next)
                 {
                     if (win->win == changedwin)
                     {
@@ -857,7 +840,7 @@ void tdProcessEvents(void (button_handler)(ButtonEvent),
                         XFreePixmap(display, win->buffer);
                         win->buffer = XCreatePixmap(display, win->win, win->width, win->height, attr.depth);
 
-                        if (configure_handler != NULL)
+                        if (configure_handler)
                         {
                             cevent.window = changedwin;
                             cevent.size.width = attr.width;
@@ -875,7 +858,7 @@ void tdProcessEvents(void (button_handler)(ButtonEvent),
             case Expose:
                 if (report.xexpose.count == 0)
                 {
-                    for (win = startwin; win != NULL; win = win->next)
+                    for (win = startwin; win; win = win->next)
                     {
                         if (win->win == report.xexpose.window)
                         {
@@ -886,7 +869,7 @@ void tdProcessEvents(void (button_handler)(ButtonEvent),
                 }
                 break;
             case ClientMessage:
-                if (winclose_handler != NULL)
+                if (winclose_handler)
                 {
                     wevent.window = report.xclient.window;
                     winclose_handler(wevent);
@@ -900,9 +883,9 @@ void tdProcessEvents(void (button_handler)(ButtonEvent),
 
 void tdCloseWindow(void)
 {
-    WindowSpec *win, *active = NULL;
+    WindowSpec *win, *active = 0x0;
 
-    if (current == NULL) return;
+    if (!current) return;
 
     XFreePixmap(display, current->buffer);
     XFreeGC(display, current->gc);
@@ -912,7 +895,7 @@ void tdCloseWindow(void)
     if (current == startwin) active = startwin = startwin->next;
     else
     {
-        for (win = startwin; active == NULL && win != NULL; win = win->next)
+        for (win = startwin; win && !active; win = win->next)
         {
             if (win->next == current)
             {
@@ -930,22 +913,21 @@ void tdGLDestroyContext(void)
 {
     if (curGL)
     {
-        glXMakeCurrent(display, None, NULL);
-	    glXDestroyContext(display, curGL->context);
+        glXMakeCurrent(display, None, 0x0);
+        glXDestroyContext(display, curGL->context);
         XDestroyWindow(display, curGL->win);
         free(curGL);
-        curGL = NULL;
+        curGL = 0x0;
     }
 }
 
 void tdTerminate(void)
 {
     WindowSpec *win, *tmp;
-    int i;
 
     tdGLDestroyContext();
 
-    for (win = startwin; win != NULL;)
+    for (win = startwin; win;)
     {
         XFreePixmap(display, win->buffer);
         XFreeGC(display, win->gc);
@@ -954,8 +936,8 @@ void tdTerminate(void)
         win = win->next;
         free(tmp);
     }
-    
-    for (i=0; i<fontnum; i++)
+
+    for (int i=0; i<fontnum; i++)
     {
         XUnloadFont(display, font[i].info->fid);
         free(font[i].face);

@@ -34,7 +34,7 @@ static const UTF32 offsetsFromUTF8[6] = { 0x00000000UL, 0x00003080UL, 0x000E2080
 static void LoadGlyphInfo(GlyphInfo *, flFont *, UTF32);
 static GlyphInfo *GetGlyphInfo(flFont *, UTF32);
 static int ConvertUTF8toUTF32(UTF8 *, UTF32 *);
-static int isLegalUTF8(const UTF8 *, int);
+static bool isLegalUTF8(const UTF8 *, int);
 
 
 flFont *flInitFont(const char *filename, const char *facespec, unsigned int basesize)
@@ -193,7 +193,7 @@ void flRenderFont(flFont *fontID, flMonoOption mono, char *string)
     while (*current)
     {
         current += ConvertUTF8toUTF32(current, &out);
- 
+
         ginfo = GetGlyphInfo(fontID, out);
         if (ginfo)
         {
@@ -254,7 +254,7 @@ static void LoadGlyphInfo(GlyphInfo *ginfo, flFont *fontID, UTF32 index)
 
     glGenTextures(1, &(ginfo->texture));
     glBindTexture(GL_TEXTURE_2D, ginfo->texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -339,7 +339,7 @@ static int ConvertUTF8toUTF32(UTF8 *source, UTF32 *dest)
 }
 
 
-static int isLegalUTF8(const UTF8 *source, int length)
+static bool isLegalUTF8(const UTF8 *source, int length)
 {
     UTF8 a;
     const UTF8 *srcptr = source+length;
@@ -347,38 +347,38 @@ static int isLegalUTF8(const UTF8 *source, int length)
     switch (length)
     {
     default:
-        return 0;
+        return false;
         /* Everything else falls through when "true"... */
     case 4:
-        if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return 0;
+        if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
     case 3:
-        if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return 0;
+        if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
     case 2:
-        if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return 0;
+        if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
 
         switch (*source)
         {
             /* no fall-through in this inner switch */
             case 0xE0:
-                if (a < 0xA0) return 0;
+                if (a < 0xA0) return false;
                 break;
             case 0xED:
-                if (a > 0x9F) return 0;
+                if (a > 0x9F) return false;
                 break;
             case 0xF0:
-                if (a < 0x90) return 0;
+                if (a < 0x90) return false;
                 break;
             case 0xF4:
-                if (a > 0x8F) return 0;
+                if (a > 0x8F) return false;
                 break;
             default:
-                if (a < 0x80) return 0;
+                if (a < 0x80) return false;
         }
 
     case 1:
-        if (*source >= 0x80 && *source < 0xC2) return 0;
+        if (*source >= 0x80 && *source < 0xC2) return false;
     }
 
-    if (*source > 0xF4) return 0;
-    return 1;
+    if (*source > 0xF4) return false;
+    return true;
 }

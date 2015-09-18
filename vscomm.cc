@@ -46,7 +46,7 @@ VariableServerComm::~VariableServerComm()
         TIDY(pstruct);
         pstruct = tmp;
     }
-    
+
     this->parray = 0x0;
 
     TIDY(this->connection.hostname);
@@ -146,7 +146,7 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
     // disable error messages
     tc_error(&(this->connection), 0);
 
-    if (tc_connect(&(this->connection)) != TC_SUCCESS) 
+    if (tc_connect(&(this->connection)) != TC_SUCCESS)
     {
         TIDY(this->connection.hostname);
         return VS_INVALID_CONNECTION;
@@ -223,7 +223,7 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
 
     TIDY(cmd);
     TIDY(default_sample_rate);
-    
+
     return VS_SUCCESS;
 }
 
@@ -347,24 +347,22 @@ int VariableServerComm::update_data(char *curbuf)
 
 int VariableServerComm::count_tokens(const char *str, char key)
 {
-    int i, count=0;
-    
-    for (i=0; i<this->databuf_size; i++)
+    int count=0;
+
+    for (int i=0; i<this->databuf_size; i++)
     {
         if (str[i] == key) count++;
     }
-    
+
     return count;
 }
 
 int VariableServerComm::find_next_token(const char *str, char key)
 {
-    int i;
-    
-    for (i=0; i<this->databuf_size; i++)
+    for (int i=0; i<this->databuf_size; i++)
     {
         if (str[i] == key) return i;
     }
-    
+
     return (-1);
 }

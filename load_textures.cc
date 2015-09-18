@@ -20,7 +20,7 @@ class dcTexture
 
 static std::list<dcTexture *> mytextures;
 
-int LoadTexture(char *filename)
+int LoadTexture(const char *filename)
 {
     std::list<dcTexture *>::iterator dct;
     for (dct = mytextures.begin(); dct != mytextures.end(); dct++)
@@ -48,6 +48,7 @@ dcTexture::~dcTexture()
 
 void dcTexture::create(const char *infile)
 {
+    if (!infile) return;
     this->filename = strdup(infile);
     this->id = imgload(this->filename);
 }

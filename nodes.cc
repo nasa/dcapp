@@ -1,6 +1,4 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "nodes.hh"
 
 
@@ -52,18 +50,3 @@ struct node *NewNode(struct node *parent, struct node **list)
 
     return newNode;
 }
-
-void FreeNode(struct node *node)
-{
-    if (!node) return;
-
-    if (node->p_prev) node->p_prev->p_next = node->p_next;
-    if (node->p_next) node->p_next->p_prev = node->p_prev;
-
-    if (node->p_head->p_tail == node) node->p_head->p_tail = node->p_prev;
-    if (node->p_head == node) node->p_head = node->p_next;
-
-    free(node);
-    node = NULL;
-}
-

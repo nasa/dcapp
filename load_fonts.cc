@@ -1,9 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include "nodes.hh"
-#include "opengl_draw.hh"
+#include <strings.h>
+#include <list>
 #include "msg.hh"
 #ifdef UseFTGL
 #include <FTGL/ftgl.h>
@@ -13,68 +11,96 @@
 
 #define FONTSIZE 20
 
-static struct node *FontList;
-
-static void *FindFont(char *, char *);
-
-void *LoadFont(char *filename, char *face)
+class dcFont
 {
-    void *myfont;
-    struct node *data;
+    public:
+        dcFont();
+        virtual ~dcFont();
 
-    // check if this font has already been loaded
-    myfont = FindFont(filename, face);
+        void create(const char *, const char *);
+        char *getFileName(void);
+        char *getFace(void);
+        void *getID(void);
 
-    // if not, create a new font node and load the font
-    if (myfont == 0)
+    private:
+        char *filename;
+        char *face;
+        void *id;
+};
+
+static std::list<dcFont *> myfonts;
+
+void *LoadFont(const char *filename, const char *face)
+{
+    std::list<dcFont *>::iterator dcf;
+    for (dcf = myfonts.begin(); dcf != myfonts.end(); dcf++)
     {
-        data = NewNode(0x0, &FontList);
-#ifdef UseFTGL
-        myfont = ftglCreateTextureFont(filename);
-        if (!myfont)
+        if (!strcmp((*dcf)->getFileName(), filename))
         {
-            error_msg("Could not load font `%s'", filename);
-            return 0;
+            if (face && (*dcf)->getFace())
+            {
+                if (!strcasecmp((*dcf)->getFace(), face)) return (*dcf)->getID();
+            }
+            else if (!face && !((*dcf)->getFace())) return (*dcf)->getID();
         }
-        ftglSetFontCharMap(myfont, ft_encoding_unicode);
-        ftglSetFontFaceSize(myfont, FONTSIZE, 72); // hard code font size, then use glScale when rendering to size the font
-#else
-        myfont = flInitFont(filename, face, FONTSIZE);
-        if (!myfont)
-        {
-            error_msg("Could not load font `%s'", filename);
-            return 0;
-        }
-#endif
-        data->object.fonts.fontFile = strdup(filename);
-        if (face) data->object.fonts.fontFace = strdup(face);
-        else data->object.fonts.fontFace = 0;
-        data->object.fonts.fontID = myfont;
     }
 
-    return myfont;
+    dcFont *newfont = new dcFont;
+    newfont->create(filename, face);
+    myfonts.push_back(newfont);
+    return newfont->getID();
 }
 
-/*********************************************************************************
- *
- * This function will determine if a texture file has already been loaded.
- *
- *********************************************************************************/
-static void *FindFont(char *filename, char *face)
+dcFont::dcFont()
+:
+filename(0x0),
+face(0x0),
+id(0x0)
 {
-    // Traverse the list to find the font file name
-    for (struct node *current = FontList; current; current = current->p_next)
-    {
-        if (!strcmp(current->object.fonts.fontFile, filename))
-        {
-            if (face && current->object.fonts.fontFace)
-            {
-                if (!strcasecmp(current->object.fonts.fontFace, face)) return (current->object.fonts.fontID);
-            }
-            else if (!face && !(current->object.fonts.fontFace)) return (current->object.fonts.fontID);
-        }
-    }
+}
 
-    // If we made it here, we didn't find the font.
-    return 0;
+dcFont::~dcFont()
+{
+    if (this->filename) free(this->filename);
+    if (this->face) free(this->face);
+}
+
+void dcFont::create(const char *infile, const char *inface)
+{
+    if (!infile) return;
+    this->filename = strdup(infile);
+    if (inface) this->face = strdup(inface);
+
+#ifdef UseFTGL
+        this->id = ftglCreateTextureFont(this->filename);
+        if (!(this->id))
+        {
+            error_msg("Could not load font `%s'", this->filename);
+            return;
+        }
+        ftglSetFontCharMap(this->id, ft_encoding_unicode);
+        ftglSetFontFaceSize(this->id, FONTSIZE, 72); // hard code font size, then use glScale when rendering to size the font
+#else
+        this->id = flInitFont(this->filename, this->face, FONTSIZE);
+        if (!(this->id))
+        {
+            error_msg("Could not load font `%s'", this->filename);
+            return;
+        }
+#endif
+}
+
+char * dcFont::getFileName(void)
+{
+    return this->filename;
+}
+
+char * dcFont::getFace(void)
+{
+    return this->face;
+}
+
+void * dcFont::getID(void)
+{
+    return this->id;
 }

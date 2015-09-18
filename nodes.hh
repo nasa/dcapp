@@ -10,9 +10,6 @@
 
 union objects
 {
-    struct Default dflt;
-    struct Style style;
-    struct Fonts fonts;
     struct Window win;
     struct Panel panel;
     struct Image image;
@@ -66,6 +63,5 @@ struct node
 /* Function Protytypes */
 extern struct node *NewList(struct node *);
 extern struct node *NewNode(struct node *, struct node **);
-extern void FreeNode(struct node *);
 
 #endif

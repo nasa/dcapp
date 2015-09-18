@@ -30,12 +30,12 @@ rcs(0x0)
 
 EdgeCommModule::~EdgeCommModule()
 {
-	int i;
+    int i;
 
-	for (i=0; i<this->fromedge.count; i++) TIDY(this->fromedge.data[i].edgecmd);
-	TIDY(this->fromedge.data);
-	for (i=0; i<this->toedge.count; i++) TIDY(this->toedge.data[i].edgecmd);
-	TIDY(this->toedge.data);
+    for (i=0; i<this->fromedge.count; i++) TIDY(this->fromedge.data[i].edgecmd);
+    TIDY(this->fromedge.data);
+    for (i=0; i<this->toedge.count; i++) TIDY(this->toedge.data[i].edgecmd);
+    TIDY(this->toedge.data);
 
     TIDY(this->cmd_group);
 
@@ -46,7 +46,7 @@ CommModule::CommStatus EdgeCommModule::read(void)
 {
     if (!(this->active)) return this->Inactive;
 
-	int i, ret;
+    int i, ret;
     char *result = 0x0;
     char *cmd = 0x0, *strptr, *strval = 0x0;
 
@@ -103,7 +103,7 @@ CommModule::CommStatus EdgeCommModule::read(void)
 
     StartTimer(&(this->edge_timer));
 
-	return this->Success;
+    return this->Success;
 }
 
 CommModule::CommStatus EdgeCommModule::write(void)
@@ -119,14 +119,14 @@ CommModule::CommStatus EdgeCommModule::write(void)
 
     if (!this->active) return this->None;
 
-	int i, status = 0;
-	char *cmd = 0x0;
+    int i, status = 0;
+    char *cmd = 0x0;
 
-	for (i=0; i<this->toedge.count; i++)
-	{
-		switch (this->toedge.data[i].type)
-		{
-			case VARLIST_FLOAT:
+    for (i=0; i<this->toedge.count; i++)
+    {
+        switch (this->toedge.data[i].type)
+        {
+            case VARLIST_FLOAT:
                 if (this->toedge.data[i].forcewrite || *(float *)this->toedge.data[i].dcvalue != this->toedge.data[i].prevvalue.f)
                 {
                     if (asprintf(&cmd, "%s %f", this->toedge.data[i].edgecmd, *(float *)(this->toedge.data[i].dcvalue)) == -1)
@@ -137,10 +137,10 @@ CommModule::CommStatus EdgeCommModule::write(void)
                     status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
                     this->toedge.data[i].prevvalue.f = *(float *)this->toedge.data[i].dcvalue;
                     this->toedge.data[i].forcewrite = 0;
-		            TIDY(cmd);
+                    TIDY(cmd);
                 }
-				break;
-			case VARLIST_INTEGER:
+                break;
+            case VARLIST_INTEGER:
                 if (this->toedge.data[i].forcewrite || *(int *)this->toedge.data[i].dcvalue != this->toedge.data[i].prevvalue.i)
                 {
                     if (asprintf(&cmd, "%s %d", this->toedge.data[i].edgecmd, *(int *)(this->toedge.data[i].dcvalue)) == -1)
@@ -151,10 +151,10 @@ CommModule::CommStatus EdgeCommModule::write(void)
                     status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
                     this->toedge.data[i].prevvalue.i = *(int *)this->toedge.data[i].dcvalue;
                     this->toedge.data[i].forcewrite = 0;
-		            TIDY(cmd);
+                    TIDY(cmd);
                 }
-				break;
-			case VARLIST_STRING:
+                break;
+            case VARLIST_STRING:
                 if (this->toedge.data[i].forcewrite || strcmp((char *)this->toedge.data[i].dcvalue, this->toedge.data[i].prevvalue.str))
                 {
                     if (asprintf(&cmd, "%s %s", this->toedge.data[i].edgecmd, (char *)(this->toedge.data[i].dcvalue)) == -1)
@@ -165,34 +165,33 @@ CommModule::CommStatus EdgeCommModule::write(void)
                     status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
                     strcpy(this->toedge.data[i].prevvalue.str, (char *)this->toedge.data[i].dcvalue);
                     this->toedge.data[i].forcewrite = 0;
-		            TIDY(cmd);
+                    TIDY(cmd);
                 }
-				break;
-		}
-	}
+                break;
+        }
+    }
 
-	if (status)
+    if (status)
     {
         this->active = 0;
         return this->Fail;
     }
-	else return this->Success;
+    else return this->Success;
 }
 
 void EdgeCommModule::flagAsChanged(void *value)
 {
-	int i;
+    int i;
 
-	for (i=0; i<this->toedge.count; i++)
-	{
+    for (i=0; i<this->toedge.count; i++)
+    {
         if (this->toedge.data[i].dcvalue == value) this->toedge.data[i].forcewrite = 1;
-	}
+    }
 }
 
 int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *edgecmd)
 {
     io_parameter_list *io_map;
-    void *valptr;
 
     switch (bufID)
     {
@@ -206,7 +205,7 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *e
             return this->Fail;
     }
 
-    valptr = get_pointer(paramname);
+    void *valptr = get_pointer(paramname);
 
     if (valptr)
     {
@@ -225,7 +224,7 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *e
         io_map->data[io_map->count].forcewrite = 0;
         io_map->count++;
     }
-    
+
     return this->Success;
 }
 
@@ -234,12 +233,12 @@ int EdgeCommModule::finishInitialization(char *host, char *port, float spec_rate
     if (this->rcs->initialize(host, port)) return this->Fail;
     this->update_rate = spec_rate;
     StartTimer(&(this->edge_timer));
-	return this->Success;
+    return this->Success;
 }
 
 void EdgeCommModule::activate(void)
 {
-    int i, ret;
+    int ret;
     char *cmd = 0x0;
 
     if (this->fromedge.count || this->toedge.count)
@@ -249,7 +248,7 @@ void EdgeCommModule::activate(void)
         if (!this->cmd_group) return;
         if (!this->cmd_group[0]) return;
 
-        for (i=0; i<this->fromedge.count; i++)
+        for (int i=0; i<this->fromedge.count; i++)
         {
             if (asprintf(&cmd, "add_command_to_group %s \"%s\"", this->cmd_group, this->fromedge.data[i].edgecmd) == -1) return;
             ret = this->rcs->send_doug_command(cmd, 0x0, 0x0);
