@@ -74,7 +74,8 @@ static std::list<KeyValuePair *> ppclist;
 static std::list<xmlNodePtr> xmldefaults;
 static std::list<struct xmlStyle> xmlstyles;
 static char *switchid, *switchonval, *switchoffval, *indid, *indonval, *activeid, *activetrueval, *transitionid, *key, *keyascii, *bezelkey;
-static int id_count = 0, preprocessing = 1, bufferID;
+static int id_count = 0, bufferID;
+static bool preprocessing = true;
 
 
 int ParseXMLFile(char *fullpath)
@@ -171,11 +172,11 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             char *val1 = get_element_data(node, "Value1");
             char *val2 = get_element_data(node, "Value2");
             char *myoperator = get_element_data(node, "Operator");
-            int staticlogic = 1;
+            bool staticlogic = true;
 
             if (!val1) val1 = val;
 
-            if (check_dynamic_element(val1) || check_dynamic_element(val2)) staticlogic = 0;
+            if (check_dynamic_element(val1) || check_dynamic_element(val2)) staticlogic = false;
 
             if (preprocessing || staticlogic) process_elements(parent, list, GetSubList(node, myoperator, val1, val2));
             else
@@ -406,9 +407,9 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                                              get_element_data(node, "BackgroundColor"),
                                              get_element_data(node, "VirtualWidth"),
                                              get_element_data(node, "VirtualHeight"));
-            preprocessing = 0;
+            preprocessing = false;
             process_elements(panelID, &panelID, node->children);
-            preprocessing = 1;
+            preprocessing = true;
         }
         if (NodeCheck(node, "Container"))
         {

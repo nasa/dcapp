@@ -3,14 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <GL/glu.h>
-#include "opengl_draw.hh"
-#ifdef UseFTGL
-#include <FTGL/ftgl.h>
-#else
 #include "fontlib.hh"
-#endif
-
-#define FONTSIZE 20
 
 
 /*********************************************************************************
@@ -101,32 +94,23 @@ void get_image_pixel_RGBA(unsigned char rgba[], unsigned int textureID, float xp
     for (i=0; i<4; i++) rgba[i] = mypixels[pixy][pixx][i];
 }
 
-float get_string_width(void *fontID, float charH, flMonoOption mono, char *string)
+float get_string_width(flFont *fontID, float size, flMonoOption mono, char *string)
 {
     if (!fontID || !string) return 0;
-#ifdef UseFTGL
-    return ftglGetFontAdvance(fontID, string)*charH/FONTSIZE;
-#else
-    return flGetFontAdvance((flFont *)fontID, mono, string)*charH/FONTSIZE;
-#endif
+    return flGetFontAdvance(fontID, mono, string) * size / flGetFontBaseSize(fontID);
 }
 
-void draw_string(float xpos, float ypos, float charH, float red, float green, float blue, float alpha, void *fontID, flMonoOption mono, char *string)
+void draw_string(float xpos, float ypos, float size, float red, float green, float blue, float alpha, flFont *fontID, flMonoOption mono, char *string)
 {
+    float scale = size / flGetFontBaseSize(fontID);
     glColor4f(red, green, blue, alpha);
     glPushMatrix();
         glEnable(GL_TEXTURE_2D);                                       // Enable Texture Mapping
         glEnable(GL_BLEND);                                            // Blend the transparent part with the background
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-#ifdef UseFTGL
-        glTranslatef(xpos, ypos-(ftglGetFontDescender(fontID)*charH/FONTSIZE), 0);
-        glScalef(charH/FONTSIZE, charH/FONTSIZE, 0);
-        ftglRenderFont(fontID, string, FTGL_RENDER_ALL);
-#else
-        glTranslatef(xpos, ypos-(flGetFontDescender((flFont *)fontID)*charH/FONTSIZE), 0);
-        glScalef(charH/FONTSIZE, charH/FONTSIZE, 0);
-        flRenderFont((flFont *)fontID, mono, string);
-#endif
+        glTranslatef(xpos, ypos-(flGetFontDescender(fontID)*scale), 0);
+        glScalef(scale, scale, 0);
+        flRenderFont(fontID, mono, string);
         glDisable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
     glPopMatrix();

@@ -78,8 +78,8 @@ void render_string(struct node *current)
             draw_string(left+(*(current->object.string.shadowOffset)), bottom-(*(current->object.string.shadowOffset)), *(current->object.string.fontSize),
                         0, 0, 0, 1, current->object.string.fontID, current->object.string.forcemono, tmpstr);
         }
-        draw_string(left, bottom, *(current->object.string.fontSize),
-                    (*(current->object.string.color.R)), (*(current->object.string.color.G)), (*(current->object.string.color.B)), (*(current->object.string.color.A)), current->object.string.fontID, current->object.string.forcemono, tmpstr);
+        draw_string(left, bottom, *(current->object.string.fontSize), (*(current->object.string.color.R)), (*(current->object.string.color.G)), (*(current->object.string.color.B)), (*(current->object.string.color.A)),
+                    current->object.string.fontID, current->object.string.forcemono, tmpstr);
 
         rotate_end();
         translate_end();

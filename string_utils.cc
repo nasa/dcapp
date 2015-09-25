@@ -3,8 +3,8 @@
 #include <string.h>
 #include <strings.h>
 #include "Objects.hh"
+#include "loadUtils.hh"
 
-extern float *LoadConstant(float);
 extern bool check_dynamic_element(const char *);
 extern void *get_pointer(const char *);
 
@@ -34,14 +34,14 @@ static float *color_element(int index, char *strval, float defval)
     float *retptr = 0x0;
     float fval;
 
-    if (index < 0) retptr = LoadConstant(defval);
+    if (index < 0) retptr = dcLoadConstant(defval);
     else
     {
         if (check_dynamic_element(strval)) retptr = (float *)get_pointer(&strval[1]);
         else
         {
             fval = strtof(strval, 0x0);
-            retptr = LoadConstant(fval);
+            retptr = dcLoadConstant(fval);
         }
     }
 
@@ -54,10 +54,10 @@ struct kolor StrToColor(const char *instr, float r, float g, float b, float a)
 
     if (!instr)
     {
-        retval.R = LoadConstant(r);
-        retval.G = LoadConstant(g);
-        retval.B = LoadConstant(b);
-        retval.A = LoadConstant(a);
+        retval.R = dcLoadConstant(r);
+        retval.G = dcLoadConstant(g);
+        retval.B = dcLoadConstant(b);
+        retval.A = dcLoadConstant(a);
     }
     else
     {

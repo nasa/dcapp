@@ -4,18 +4,15 @@
 #include <math.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include "dc.hh"
 #include "varlist.hh"
 #include "nodes.hh"
 #include "string_utils.hh"
+#include "loadUtils.hh"
 #include "opengl_draw.hh"
 #include "PixelStream.hh"
 
 extern void window_init(bool, int , int, int, int);
-extern void *LoadFont(const char *, const char *);
-extern int LoadTexture(const char *);
-extern float *LoadConstant(float);
-extern int *LoadConstant(int);
-extern char *LoadConstant(const char *);
 
 extern appdata AppData;
 
@@ -40,25 +37,25 @@ bool check_dynamic_element(const char *spec)
 static float *getFloatPointer(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return (float *)get_pointer(&valstr[1]);
-    else return LoadConstant(StrToFloat(valstr, 0));
+    else return dcLoadConstant(StrToFloat(valstr, 0));
 }
 
 static float *getFloatPointer(const char *valstr, float defval)
 {
     if (check_dynamic_element(valstr)) return (float *)get_pointer(&valstr[1]);
-    else return LoadConstant(StrToFloat(valstr, defval));
+    else return dcLoadConstant(StrToFloat(valstr, defval));
 }
 
 static int *getIntegerPointer(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return (int *)get_pointer(&valstr[1]);
-    else return LoadConstant(StrToInt(valstr, 0));
+    else return dcLoadConstant(StrToInt(valstr, 0));
 }
 
 static char *getStringPointer(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return (char *)get_pointer(&valstr[1]);
-    else return LoadConstant(valstr);
+    else return dcLoadConstant(valstr);
 }
 
 static void *getVariablePointer(int datatype, const char *valstr)
@@ -245,7 +242,7 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
         data->object.string.bgcolor = StrToColor(bgcolor, 0, 0, 0, 1);
     }
     data->object.string.shadowOffset = getFloatPointer(shadowoffset);
-    data->object.string.fontID = LoadFont(font, face);
+    data->object.string.fontID = dcLoadFont(font, face);
 
     data->object.string.value = getStringPointer(value);
     data->object.string.datatype = get_data_type(value);
@@ -274,7 +271,7 @@ struct node *new_image(struct node *parent, struct node **list, char *x, char *y
 {
     struct node *data = add_primitive_node(parent, list, Image, x, y, width, height, halign, valign, rotate);
 
-    data->object.image.textureID = LoadTexture(filename);
+    data->object.image.textureID = dcLoadTexture(filename);
 
     return data;
 }
@@ -370,7 +367,7 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
 
     struct node *data = add_primitive_node(parent, list, PixelStreamView, x, y, width, height, halign, valign, rotate);
 
-    init_texture(&data->object.pixelstreamview.textureID);
+    init_texture(&(data->object.pixelstreamview.textureID));
     data->object.pixelstreamview.psd = mypixelstream;
     data->object.pixelstreamview.pixels = 0x0;
     data->object.pixelstreamview.memallocation = 0;
@@ -500,8 +497,8 @@ struct node *new_adi(struct node *parent, struct node **list, char *x, char *y, 
     float defouterrad, defballrad, defchevron;
     struct node *data = add_primitive_node(parent, list, ADI, x, y, width, height, halign, valign, 0x0);
 
-    if (ballimage_filename) data->object.adi.ballID = LoadTexture(ballimage_filename);
-    if (coverimage_filename) data->object.adi.bkgdID = LoadTexture(coverimage_filename);
+    if (ballimage_filename) data->object.adi.ballID = dcLoadTexture(ballimage_filename);
+    if (coverimage_filename) data->object.adi.bkgdID = dcLoadTexture(coverimage_filename);
 
     defouterrad = 0.5 * (fminf(*(data->info.w), *(data->info.h)));
     defballrad = 0.9 * defouterrad;

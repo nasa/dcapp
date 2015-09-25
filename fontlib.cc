@@ -50,7 +50,7 @@ flFont *flInitFont(const char *filename, const char *facespec, unsigned int base
         if (FT_Init_FreeType(&library))
         {
             printf("ERROR: Couldn't initialize FreeType library\n");
-            return 0;
+            return 0x0;
         }
     }
 
@@ -58,19 +58,19 @@ flFont *flInitFont(const char *filename, const char *facespec, unsigned int base
     if (!myfont)
     {
         printf("ERROR: Unable to allocate memory for font\n");
-        return 0;
+        return 0x0;
     }
 
     ret = FT_New_Face(library, filename, 0, &(myfont->face));
     if (ret == FT_Err_Unknown_File_Format)
     {
         printf("ERROR: The font file %s appears to be in an unsupported format\n", filename);
-        return 0;
+        return 0x0;
     }
     else if (ret)
     {
         printf("ERROR: The font file %s could not be opened or read\n", filename);
-        return 0;
+        return 0x0;
     }
 
     if (facespec)
@@ -95,6 +95,7 @@ flFont *flInitFont(const char *filename, const char *facespec, unsigned int base
 
     // set font-wide settings here
     myfont->kern_flag = FT_HAS_KERNING(myfont->face);
+    myfont->basesize = basesize;
     myfont->descender = (float)(myfont->face->size->metrics.descender>>6);
     myfont->max_advance = 0;
     myfont->max_advance_alnum = 0;
@@ -171,9 +172,15 @@ float flGetFontAdvance(flFont *fontID, flMonoOption mono, char *string)
 
 float flGetFontDescender(flFont *fontID)
 {
-    if (!fontID) return 0;
+    if (fontID) return fontID->descender;
+    else return 0;
+}
 
-    return fontID->descender;
+
+unsigned int flGetFontBaseSize(flFont *fontID)
+{
+    if (fontID) return fontID->basesize;
+    else return 0;
 }
 
 

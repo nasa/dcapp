@@ -36,7 +36,7 @@ class EdgeCommModule : public CommModule
                 float f;
                 char str[STRING_DEFAULT_LENGTH];
             } prevvalue;
-            int forcewrite;
+            bool forcewrite;
         } io_parameter;
 
         typedef struct

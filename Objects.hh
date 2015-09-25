@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <list>
+#include "dc.hh"
 #include "fontlib.hh"
 #include "timer.hh"
 #include "comm.hh"
@@ -73,12 +74,12 @@ struct Panel
 
 struct Image
 {
-    unsigned int textureID;
+    dcTexture textureID;
 };
 
 struct PixelStreamView
 {
-    unsigned int textureID;
+    dcTexture textureID;
     PixelStreamData *psd;
     void *pixels;
     size_t memallocation;
@@ -123,7 +124,7 @@ struct Polygon
 
 struct String
 {
-    void *fontID;
+    dcFont fontID;
     float *fontSize;
     struct kolor color;
     struct kolor bgcolor;
@@ -196,8 +197,8 @@ struct Container
 
 struct ADI
 {
-    int bkgdID;
-    int ballID;
+    dcTexture bkgdID;
+    dcTexture ballID;
     float *outerradius;
     float *ballradius;
     float *chevronW;

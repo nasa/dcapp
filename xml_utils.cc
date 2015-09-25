@@ -72,13 +72,13 @@ char *get_XML_attribute(xmlNodePtr node, const char *key)
 char **get_XML_content_address(xmlNodePtr node)
 {
     if (node->xmlChildrenNode) return (char **)&(node->xmlChildrenNode->content);
-    return 0x0;
+    else return 0x0;
 }
 
 char *get_XML_content(xmlNodePtr node)
 {
     if (node->xmlChildrenNode) return ((char *)node->xmlChildrenNode->content);
-    return 0x0;
+    else return 0x0;
 }
 
 char *get_node_type(xmlNodePtr node)
@@ -118,6 +118,6 @@ xmlNodePtr NodeFind(xmlNodePtr startnode, const char *key)
 
 static bool xmlStrEq(const xmlChar *xmlstr, const char *charstr)
 {
-    if (strcmp((const char *)xmlstr, charstr)) return false;
-    else return true;
+    if (!strcmp((const char *)xmlstr, charstr)) return true;
+    else return false;
 }

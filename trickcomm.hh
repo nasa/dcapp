@@ -43,7 +43,7 @@ class TrickCommModule : public CommModule
                 float f;
                 char str[STRING_DEFAULT_LENGTH];
             } prevvalue;
-            int forcewrite;
+            bool forcewrite;
             bool init_only;
             int method;
         } io_parameter;

@@ -9,6 +9,7 @@
 
     if ((self = [ super initWithContentRect:contentRect styleMask:mymask backing:NSBackingStoreBuffered defer:YES ]) != nil)
     {
+        [ self flushWindow ];
         tdAdapter = myadapter;
     }
 

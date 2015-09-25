@@ -10,11 +10,11 @@ int tdInitialize(char *unused)
     [ NSApplication sharedApplication ];
     if ( ![ NSApp isRunning ] )
     {
-        NSAutoreleasePool *pool = [[ NSAutoreleasePool alloc ] init ];
+//        NSAutoreleasePool *pool = [[ NSAutoreleasePool alloc ] init ];
         [ NSApp setActivationPolicy:NSApplicationActivationPolicyRegular ];
         [ NSApp activateIgnoringOtherApps:YES ];
-        [ NSApp finishLaunching ];
-        [ pool release ];
+//        [ NSApp finishLaunching ];
+//        [ pool release ];
     }
 
     tda = [[ TaraDrawAdapter alloc ] init ];

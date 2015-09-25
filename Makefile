@@ -15,6 +15,7 @@ DCAPP_SOURCES := \
 	ccsds_udp_comm.cc \
 	comm.cc \
 	edgecomm.cc \
+	fontlib.cc \
 	geometry.cc \
 	getbytes.cc \
 	handle_bezel.cc \
@@ -23,9 +24,7 @@ DCAPP_SOURCES := \
 	handle_mouse.cc \
 	handle_utils.cc \
 	keyValuePair.cc \
-	load_constants.cc \
-	load_fonts.cc \
-	load_textures.cc \
+	loadUtils.cc \
 	logic_stubs.cc \
 	msg.cc \
 	nodes.cc \
@@ -46,13 +45,6 @@ GENHEADER_SOURCES := \
 LIBS := \
 	uei/$(LIBDIR)/libuei.a \
 	imgload/$(LIBDIR)/libimgload.a
-
-ifeq ($(UseFTGL), yes)
-  FTGL_CFLAG += -DUseFTGL
-  FTGL_LFLAG += -lftgl
-else
-  DCAPP_SOURCES += fontlib.cc
-endif
 
 ifeq ($(OSTYPE), linux)
   TARA_SUBDIR := x11
@@ -112,8 +104,8 @@ FT_LFLAG := $(shell freetype-config --libs)
 XML2_CFLAG := $(shell xml2-config --cflags)
 XML2_LFLAG := $(shell xml2-config --libs)
 
-COMP_FLAGS := $(XML2_CFLAG) $(FTGL_CFLAG) $(FT_CFLAG) $(UI_CFLAG) $(CAN_CFLAG) $(TRICK_CFLAG) $(CCSDS_UDP_CFLAG)
-LINK_FLAGS := $(XML2_LFLAG) $(FTGL_LFLAG) $(FT_LFLAG) $(UI_LFLAG) $(CAN_LFLAG) $(TRICK_LFLAG) $(CCSDS_UDP_LFLAG) -ldl
+COMP_FLAGS := $(XML2_CFLAG) $(FT_CFLAG) $(UI_CFLAG) $(CAN_CFLAG) $(TRICK_CFLAG) $(CCSDS_UDP_CFLAG)
+LINK_FLAGS := $(XML2_LFLAG) $(FT_LFLAG) $(UI_LFLAG) $(CAN_LFLAG) $(TRICK_LFLAG) $(CCSDS_UDP_LFLAG) -ldl
 
 ifeq ($(OSTYPE), linux)
   COMP_FLAGS += -D_GNU_SOURCE

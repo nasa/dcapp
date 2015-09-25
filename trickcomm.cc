@@ -157,7 +157,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                         {
                             this->tvs->put(this->tosim.data[i].trickvar, VS_FLOAT, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
                             this->tosim.data[i].prevvalue.f = *(float *)this->tosim.data[i].dcvalue;
-                            this->tosim.data[i].forcewrite = 0;
+                            this->tosim.data[i].forcewrite = false;
                         }
                         break;
                     case VARLIST_INTEGER:
@@ -165,7 +165,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                         {
                             this->tvs->put(this->tosim.data[i].trickvar, VS_INTEGER, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
                             this->tosim.data[i].prevvalue.i = *(int *)this->tosim.data[i].dcvalue;
-                            this->tosim.data[i].forcewrite = 0;
+                            this->tosim.data[i].forcewrite = false;
                         }
                         break;
                     case VARLIST_STRING:
@@ -173,7 +173,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                         {
                             this->tvs->put(this->tosim.data[i].trickvar, VS_STRING, this->tosim.data[i].dcvalue, this->tosim.data[i].units);
                             strcpy(this->tosim.data[i].prevvalue.str, (char *)this->tosim.data[i].dcvalue);
-                            this->tosim.data[i].forcewrite = 0;
+                            this->tosim.data[i].forcewrite = false;
                         }
                         break;
                 }
@@ -194,7 +194,7 @@ void TrickCommModule::flagAsChanged(void *value)
 
     for (i=0; i<this->tosim.count; i++)
     {
-        if (this->tosim.data[i].dcvalue == value) this->tosim.data[i].forcewrite = 1;
+        if (this->tosim.data[i].dcvalue == value) this->tosim.data[i].forcewrite = true;
     }
 #endif
 }
@@ -257,7 +257,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
         io_map->data[io_map->count].prevvalue.i = 0;
         io_map->data[io_map->count].prevvalue.f = 0;
         bzero(io_map->data[io_map->count].prevvalue.str, STRING_DEFAULT_LENGTH);
-        io_map->data[io_map->count].forcewrite = 0;
+        io_map->data[io_map->count].forcewrite = false;
         io_map->data[io_map->count].init_only = StrToBool(init_only, false);
         io_map->data[io_map->count].method = method;
         io_map->count++;

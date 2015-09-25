@@ -136,7 +136,7 @@ CommModule::CommStatus EdgeCommModule::write(void)
                     }
                     status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
                     this->toedge.data[i].prevvalue.f = *(float *)this->toedge.data[i].dcvalue;
-                    this->toedge.data[i].forcewrite = 0;
+                    this->toedge.data[i].forcewrite = false;
                     TIDY(cmd);
                 }
                 break;
@@ -150,7 +150,7 @@ CommModule::CommStatus EdgeCommModule::write(void)
                     }
                     status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
                     this->toedge.data[i].prevvalue.i = *(int *)this->toedge.data[i].dcvalue;
-                    this->toedge.data[i].forcewrite = 0;
+                    this->toedge.data[i].forcewrite = false;
                     TIDY(cmd);
                 }
                 break;
@@ -164,7 +164,7 @@ CommModule::CommStatus EdgeCommModule::write(void)
                     }
                     status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
                     strcpy(this->toedge.data[i].prevvalue.str, (char *)this->toedge.data[i].dcvalue);
-                    this->toedge.data[i].forcewrite = 0;
+                    this->toedge.data[i].forcewrite = false;
                     TIDY(cmd);
                 }
                 break;
@@ -185,7 +185,7 @@ void EdgeCommModule::flagAsChanged(void *value)
 
     for (i=0; i<this->toedge.count; i++)
     {
-        if (this->toedge.data[i].dcvalue == value) this->toedge.data[i].forcewrite = 1;
+        if (this->toedge.data[i].dcvalue == value) this->toedge.data[i].forcewrite = true;
     }
 }
 
@@ -221,7 +221,7 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *e
         io_map->data[io_map->count].prevvalue.i = 0;
         io_map->data[io_map->count].prevvalue.f = 0;
         bzero(io_map->data[io_map->count].prevvalue.str, STRING_DEFAULT_LENGTH);
-        io_map->data[io_map->count].forcewrite = 0;
+        io_map->data[io_map->count].forcewrite = false;
         io_map->count++;
     }
 

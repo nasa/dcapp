@@ -6,6 +6,7 @@
 extern flFont *flInitFont(const char *, const char *, unsigned int);
 extern float flGetFontAdvance(flFont *, flMonoOption, char *);
 extern float flGetFontDescender(flFont *);
+extern unsigned int flGetFontBaseSize(flFont *);
 extern void flRenderFont(flFont *, flMonoOption, char *);
 
 #endif
