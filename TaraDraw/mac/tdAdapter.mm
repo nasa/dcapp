@@ -27,17 +27,9 @@ int tdAlignBaseline = 0x10;
         TerminateRoutine = nil;
 
         NSNotificationCenter *center = [ NSNotificationCenter defaultCenter ];
-
         [ center addObserver:self selector:@selector(applicationDidFinishLaunching:) name:NSApplicationDidFinishLaunchingNotification object:nil ];
-        [ center addObserver:self selector:@selector(windowReconfigured:) name:NSWindowDidEnterFullScreenNotification object:nil ];
-        [ center addObserver:self selector:@selector(windowReconfigured:) name:NSWindowDidExitFullScreenNotification object:nil ];
-        [ center addObserver:self selector:@selector(windowReconfigured:) name:NSWindowDidEndLiveResizeNotification object:nil ];
-        [ center addObserver:self selector:@selector(windowReconfigured:) name:NSWindowDidResizeNotification object:nil ];
-        [ center addObserver:self selector:@selector(windowClosed:) name:NSWindowWillCloseNotification object:nil ];
-        [ center addObserver:self selector:@selector(applicationTerminated:) name:NSApplicationWillTerminateNotification object:nil ];
 
-        myTimer = [[ NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(runLoop:) userInfo:nil repeats:YES ] retain ];
-        [[ NSRunLoop currentRunLoop ] addTimer:myTimer forMode:NSRunLoopCommonModes ];
+        [ self setFont:"Helvetica" size:12 ];
     }
     return self;
 }
@@ -76,6 +68,17 @@ int tdAlignBaseline = 0x10;
     [ self addMenuItem:winMenu title:@"Bring All to Front" action:@selector(arrangeInFront:) keyEquivalent:@"" modifier:0 ];
     [ self addMenuSeparator:winMenu ];
     [ self addMenuItem:winMenu title:@"Close" action:@selector(performClose:) keyEquivalent:@"w" modifier:0 ];
+
+    NSNotificationCenter *center = [ NSNotificationCenter defaultCenter ];
+    [ center addObserver:self selector:@selector(windowReconfigured:) name:NSWindowDidEnterFullScreenNotification object:nil ];
+    [ center addObserver:self selector:@selector(windowReconfigured:) name:NSWindowDidExitFullScreenNotification object:nil ];
+    [ center addObserver:self selector:@selector(windowReconfigured:) name:NSWindowDidEndLiveResizeNotification object:nil ];
+    [ center addObserver:self selector:@selector(windowReconfigured:) name:NSWindowDidResizeNotification object:nil ];
+    [ center addObserver:self selector:@selector(windowClosed:) name:NSWindowWillCloseNotification object:nil ];
+    [ center addObserver:self selector:@selector(applicationTerminated:) name:NSApplicationWillTerminateNotification object:nil ];
+
+    myTimer = [[ NSTimer scheduledTimerWithTimeInterval:0.01 target:self selector:@selector(runLoop:) userInfo:nil repeats:YES ] retain ];
+    [[ NSRunLoop currentRunLoop ] addTimer:myTimer forMode:NSRunLoopCommonModes ];
 }
 
 - (id)addMenu:(id)bar title:(NSString *)mytitle
@@ -84,10 +87,8 @@ int tdAlignBaseline = 0x10;
     id myitem = [[ NSMenuItem new ] autorelease ];
 
     [ bar addItem:myitem ];
-    if (mytitle)
-        mymenu = [[[ NSMenu new ] initWithTitle:mytitle ] autorelease ];
-    else
-        mymenu = [[ NSMenu new ] autorelease ];
+    if (mytitle) mymenu = [[[ NSMenu new ] initWithTitle:mytitle ] autorelease ];
+    else mymenu = [[ NSMenu new ] autorelease ];
     [ myitem setSubmenu:mymenu ];
 
     return mymenu;
@@ -118,10 +119,6 @@ int tdAlignBaseline = 0x10;
 
 - (tdWindow)openWindow:(NSString *)mytitle withFrame:(NSRect)myrect aligned:(int)align
 {
-    tdWindowClass *mywin;
-
-    curwin = numwin;
-
     if (align & tdAlignCenter)
         myrect.origin.x -= myrect.size.width/2;
     else if (align & tdAlignRight)
@@ -132,36 +129,35 @@ int tdAlignBaseline = 0x10;
     else if (align & tdAlignTop)
         myrect.origin.y -= myrect.size.height;
 
-    winview[curwin] = [[ tdViewClass alloc ] initWithFrame:myrect adapter:self ];
-    mywin = [[ tdWindowClass alloc ] initWithContentRect:myrect adapter:self ];
+    winview[numwin] = [[ tdViewClass alloc ] initWithFrame:myrect adapter:self ];
+    tdWindowClass *mywin = [[ tdWindowClass alloc ] initWithContentRect:myrect adapter:self ];
+
     [ mywin setTitle:mytitle ];
-    [ mywin setContentView:winview[curwin] ];
+    [ mywin setContentView:winview[numwin] ];
     [ mywin makeKeyAndOrderFront:nil ];
     [ mywin setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary ];
-    [ self setFont:"Helvetica" size:12 ];
-    [ self setActiveWindow:curwin ];
+    [ self setActiveWindow:numwin ];
 
+    curwin = numwin;
     numwin++;
     return curwin;
 }
 
 - (tdWindow)openFullScreen:(NSString *)mytitle
 {
-    tdWindowClass *mywin;
     NSRect myrect = [[ NSScreen mainScreen ] visibleFrame ];
 
-    curwin = numwin;
+    winview[numwin] = [[ tdViewClass alloc ] initWithFrame:myrect adapter:self ];
+    tdWindowClass *mywin = [[ tdWindowClass alloc ] initWithContentRect:myrect adapter:self ];
 
-    winview[curwin] = [[ tdViewClass alloc ] initWithFrame:myrect adapter:self ];
-    mywin = [[ tdWindowClass alloc ] initWithContentRect:myrect adapter:self ];
     [ mywin setTitle:mytitle ];
-    [ mywin setContentView:winview[curwin] ];
+    [ mywin setContentView:winview[numwin] ];
     [ mywin makeKeyAndOrderFront:nil ];
     [ mywin setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary ];
     [ mywin toggleFullScreen:self ];
-    [ self setFont:"Helvetica" size:12 ];
-    [ self setActiveWindow:curwin ];
+    [ self setActiveWindow:numwin ];
 
+    curwin = numwin;
     numwin++;
     return curwin;
 }
@@ -184,7 +180,7 @@ int tdAlignBaseline = 0x10;
 
 - (NSOpenGLContext *)glCreateContext:(tdWindow)winid
 {
-    if ( winview[winid] == nil) return nil;
+    if (!(winview[winid])) return nil;
 
     NSOpenGLView *myview = [[ NSOpenGLView alloc ] initWithFrame:[ winview[winid] frame ] pixelFormat:[ NSOpenGLView defaultPixelFormat ]];
     NSOpenGLPixelFormatAttribute attrs[] = { NSOpenGLPFADoubleBuffer, NSOpenGLPFADepthSize, 32, 0 };
@@ -231,12 +227,12 @@ int tdAlignBaseline = 0x10;
 - (void)setActiveWindow:(tdWindow)winid
 {
     curwin = winid;
-    if (winview[curwin] != nil)
+    if (winview[curwin])
     {
         NSView *focusView = [ NSView focusView ];
         if (focusView != winview[curwin])
         {
-            if (focusView != nil) [ focusView unlockFocus ];
+            if (focusView) [ focusView unlockFocus ];
             [ winview[curwin] lockFocus ];
         }
     }
@@ -422,15 +418,12 @@ int tdAlignBaseline = 0x10;
 
 - (void)closeWindow
 {
-    NSOpenGLContext *mycontext;
-    int i;
-
-    if (winview[curwin] != nil)
+    if (winview[curwin])
     {
         tdWindowClass *mywin = (tdWindowClass *)[ winview[curwin] window ];
-        if (mywin != nil)
+        if (mywin)
         {
-            mycontext = [ winview[curwin] getGlContext ];
+            NSOpenGLContext *mycontext = [ winview[curwin] getGlContext ];
             if (mycontext)
             {
                 if (mycontext == curGLcontext) [ self glDestroyContext ];
@@ -443,9 +436,9 @@ int tdAlignBaseline = 0x10;
     }
 
     // Reset curwin to a valid window
-    for (i=0; i < MAX_WINDOWS; i++)
+    for (int i=0; i < MAX_WINDOWS; i++)
     {
-        if (winview[i] != nil)
+        if (winview[i])
         {
             curwin = i;
             break;
@@ -460,18 +453,28 @@ int tdAlignBaseline = 0x10;
     curGLcontext = nil;
 }
 
-- (void)terminate
+- (void)cleanUp
 {
     int i;
 
-    for (i=0; i<MAX_COLORS; i++)
+    if (myTimer)
     {
-        if (ColorMap[i] != nil) [ ColorMap[i] release ];
+        [ myTimer invalidate ];
+        [ myTimer release ];
+        myTimer = nil;
     }
 
-    for (i=0; i<numwin; i++)
+    NSNotificationCenter *center = [ NSNotificationCenter defaultCenter ];
+    [ center removeObserver:self ];
+
+    for (i=0; i<MAX_COLORS; i++)
     {
-        if (winview[i] != nil) [ winview[i] release ];
+        if (ColorMap[i]) [ ColorMap[i] release ];
+    }
+
+    for (int i=0; i<numwin; i++)
+    {
+        if (winview[i]) [ winview[i] release ];
     }
 }
 
@@ -610,11 +613,10 @@ int tdAlignBaseline = 0x10;
 - (void)windowClosed:(NSNotification *)aNotification
 {
     EventUnion data;
-    int i;
 
     if (eventcount >= EVENT_QUEUE) return;
 
-    for (i=0; i<numwin; i++)
+    for (int i=0; i<numwin; i++)
     {
         if ([ aNotification object ] == [ winview[i] window ])
         {
@@ -630,13 +632,8 @@ int tdAlignBaseline = 0x10;
 
 - (void)applicationTerminated:(NSNotification *)aNotification
 {
-    if (myTimer != nil)
-    {
-        [myTimer invalidate];
-        [myTimer release];
-        myTimer = nil;
-    }
     if (TerminateRoutine) TerminateRoutine();
+    [ self cleanUp ];
 }
 
 @end

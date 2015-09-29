@@ -10,21 +10,18 @@ int tdInitialize(char *unused)
     [ NSApplication sharedApplication ];
     if ( ![ NSApp isRunning ] )
     {
-//        NSAutoreleasePool *pool = [[ NSAutoreleasePool alloc ] init ];
         [ NSApp setActivationPolicy:NSApplicationActivationPolicyRegular ];
         [ NSApp activateIgnoringOtherApps:YES ];
-//        [ NSApp finishLaunching ];
-//        [ pool release ];
     }
 
     tda = [[ TaraDrawAdapter alloc ] init ];
-    if (tda == nil) return (-1);
-    else
+    if (tda)
     {
         [ tda registerColor:0 red:1.0 green:1.0 blue:1.0 ]; // white
         [ tda registerColor:1 red:0.0 green:0.0 blue:0.0 ]; // black
         return 0;
     }
+    else return (-1);
 }
 
 tdWindow tdOpenWindow(const char *title, float xpos, float ypos, float width, float height, int align)
@@ -298,5 +295,5 @@ void tdGLDestroyContext(void)
 
 void tdTerminate(void)
 {
-    [ tda terminate ];
+    [ tda cleanUp ];
 }

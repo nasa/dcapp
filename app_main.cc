@@ -262,8 +262,8 @@ static void ProcessArgs(int argc, char **argv)
     if (args)
     {
         char *strptr = args;
-        char *key = (char *)calloc(sizeof(args), 1);
-        char *value = (char *)calloc(sizeof(args), 1);
+        char *key = (char *)calloc(strlen(args), 1);
+        char *value = (char *)calloc(strlen(args), 1);
 
         while (strptr < (args + strlen(args)))
         {

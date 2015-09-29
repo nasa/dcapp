@@ -78,7 +78,7 @@ typedef struct
 // Termination routines
 - (void)closeWindow;
 - (void)glDestroyContext;
-- (void)terminate;
+- (void)cleanUp;
 // Public routines
 - (void)setRunHandler:(void (*)(void))run_routine terminateHandler:(void (*)(void))terminate_routine;
 - (void)runLoop:(NSTimer *)aTimer;

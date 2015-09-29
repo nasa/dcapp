@@ -8,8 +8,6 @@
 #include "imgload/imgload.hh"
 #include "fontlib.hh"
 
-#define DEFAULTBASESIZE 20
-
 typedef struct
 {
     dcTexture id;
@@ -24,11 +22,13 @@ typedef struct
     unsigned int basesize;
 } fontInfo;
 
-static std::list<textureInfo> textures;
-static std::list<fontInfo> fonts;
-static std::list<float> floatConstants;
-static std::list<int> integerConstants;
-static std::list<char *> stringConstants;
+using namespace std;
+
+static list<textureInfo> textures;
+static list<fontInfo> fonts;
+static list<float> floatConstants;
+static list<int> integerConstants;
+static list<char *> stringConstants;
 
 static char *getFullPath(const char *fname)
 {
@@ -56,7 +56,7 @@ dcTexture dcLoadTexture(const char *filename)
         return -1;
     }
 
-    for (std::list<textureInfo>::iterator item = textures.begin(); item != textures.end(); item++)
+    for (list<textureInfo>::iterator item = textures.begin(); item != textures.end(); item++)
     {
         if (!strcmp((*item).filename, fullpath))
         {
@@ -84,7 +84,7 @@ dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)
         return 0x0;
     }
 
-    for (std::list<fontInfo>::iterator item = fonts.begin(); item != fonts.end(); item++)
+    for (list<fontInfo>::iterator item = fonts.begin(); item != fonts.end(); item++)
     {
         if (!strcmp((*item).filename, fullpath) && ((*item).basesize == basesize))
         {
@@ -121,19 +121,9 @@ dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)
     return newfont.id;
 }
 
-dcFont dcLoadFont(const char *filename, const char *face)
-{
-    return dcLoadFont(filename, face, DEFAULTBASESIZE);
-}
-
-dcFont dcLoadFont(const char *filename)
-{
-    return dcLoadFont(filename, 0x0, DEFAULTBASESIZE);
-}
-
 float *dcLoadConstant(float fval)
 {
-    std::list<float>::iterator fc;
+    list<float>::iterator fc;
     for (fc = floatConstants.begin(); fc != floatConstants.end(); fc++)
     {
         if (*fc == fval) return &(*fc);
@@ -144,7 +134,7 @@ float *dcLoadConstant(float fval)
 
 int *dcLoadConstant(int ival)
 {
-    std::list<int>::iterator ic;
+    list<int>::iterator ic;
     for (ic = integerConstants.begin(); ic != integerConstants.end(); ic++)
     {
         if (*ic == ival) return &(*ic);
@@ -155,7 +145,7 @@ int *dcLoadConstant(int ival)
 
 char *dcLoadConstant(const char *sval)
 {
-    std::list<char *>::iterator sc;
+    list<char *>::iterator sc;
     for (sc = stringConstants.begin(); sc != stringConstants.end(); sc++)
     {
         if (!strcmp(*sc, sval)) return *sc;
