@@ -2,6 +2,7 @@ include ../makedefs
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
+CFLAGS += -I..
 
 $(LIBDIR)/libuei.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)

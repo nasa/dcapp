@@ -33,13 +33,13 @@ int PixelStreamFile::initialize(char *filenamespec, int shmemkeyspec, int writer
     int shmid = shmget(shmemkeyspec, SHM_SIZE, IPC_CREAT | 0666);
     if (shmid < 0)
     {
-        error_perror("Unable to get shared memory identifier");
+        error_msg("Unable to get shared memory identifier: " << strerror(errno));
         return -1;
     }
     this->shm = (PixelStreamShmem *)shmat(shmid, 0x0, 0);
     if (this->shm <= 0)
     {
-        error_perror("Unable to attach to shared memory");
+        error_msg("Unable to attach to shared memory: " << strerror(errno));
         return -1;
     }
 
@@ -50,7 +50,7 @@ int PixelStreamFile::initialize(char *filenamespec, int shmemkeyspec, int writer
         if (this->filename) this->fp = fopen(this->filename, "w");
         if (!(this->fp))
         {
-            error_msg("PixelStream: Couldn't open stream file %s", this->filename);
+            error_msg("PixelStream: Couldn't open stream file " << this->filename);
             return -1;
         }
     }

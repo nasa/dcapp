@@ -52,7 +52,7 @@ dcTexture dcLoadTexture(const char *filename)
 
     if (!fullpath)
     {
-        error_msg("Unable to locate texture file at `%s'", filename);
+        error_msg("Unable to locate texture file at " << filename);
         return -1;
     }
 
@@ -80,7 +80,7 @@ dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)
 
     if (!fullpath)
     {
-        error_msg("Unable to locate font file at `%s'", filename);
+        error_msg("Unable to locate font file at " << filename);
         return 0x0;
     }
 
@@ -114,7 +114,7 @@ dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)
 
     if (!(newfont.id))
     {
-        error_msg("Could not load font `%s'", filename);
+        error_msg("Could not load font " << filename);
         return 0x0;
     }
 

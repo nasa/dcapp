@@ -1,6 +1,7 @@
-#include <stdio.h>
+#include <sstream>
 #include "nodes.hh"
 #include "bezel.hh"
+#include "msg.hh"
 
 extern void ProcessEventList(struct node *);
 extern int CheckCondition(struct node *);
@@ -24,38 +25,24 @@ void HandleBezelControl(int type, int itemid, int action)
 void HandleBezelButton(int type, int itemid, int action)
 {
 #ifdef DEBUG
-    printf("Type: ");
+    std::stringstream debug_string;
+    debug_string << "Type: ";
     switch (type)
     {
-        case BEZEL_BUTTON:
-            printf("Button");
-            break;
-        case BEZEL_KNOB:
-            printf("Knob");
-            break;
-        default:
-            printf("Unknown");
-            break;
+        case BEZEL_BUTTON:           debug_string << "Button";               break;
+        case BEZEL_KNOB:             debug_string << "Knob";                 break;
+        default:                     debug_string << "Unknown";              break;
     }
-    printf(", ID: %d, Action: ", itemid);
+    debug_string << ", ID: " << itemid << ", Action: ";
     switch (action)
     {
-        case BEZEL_RELEASED:
-            printf("Released\n");
-            break;
-        case BEZEL_PRESSED:
-            printf("Pressed\n");
-            break;
-        case BEZEL_CLOCKWISE:
-            printf("Clockwise Tick\n");
-            break;
-        case BEZEL_COUNTERCLOCKWISE:
-            printf("Couterclockwise Tick\n");
-            break;
-        default:
-            printf("Unknown\n");
-            break;
+        case BEZEL_RELEASED:         debug_string << "Released";             break;
+        case BEZEL_PRESSED:          debug_string << "Pressed";              break;
+        case BEZEL_CLOCKWISE:        debug_string << "Clockwise Tick";       break;
+        case BEZEL_COUNTERCLOCKWISE: debug_string << "Couterclockwise Tick"; break;
+        default:                     debug_string << "Unknown";              break;
     }
+    debug_msg(debug_string);
 #endif
 
     if (type == BEZEL_BUTTON)
@@ -81,13 +68,9 @@ static void BezelButtonPressed(struct node *list, int itemid)
                 break;
             case Condition:
                 if (CheckCondition(current))
-                {
                     BezelButtonPressed(current->object.cond.TrueList, itemid);
-                }
                 else
-                {
                     BezelButtonPressed(current->object.cond.FalseList, itemid);
-                }
                 break;
             case BezelEvent:
                 if (current->object.be.key == itemid)

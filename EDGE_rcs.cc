@@ -54,7 +54,7 @@ int EdgeRcsComm::initialize(char *hoststr, char *portstr)
     result = getaddrinfo(edgehost, edgeport, &hints, &(this->server_addr_info));
     if (result)
     {
-        error_msg("Error in getaddrinfo for host %s: %s", edgehost, gai_strerror(result));
+        error_msg("Error in getaddrinfo for host " << edgehost << ": " << gai_strerror(result));
         return -1;
     }
 

@@ -33,7 +33,6 @@ DCAPP_SOURCES := \
 	render_ADI.cc \
 	render_string.cc \
 	string_utils.cc \
-	timer.cc \
 	trickcomm.cc \
 	update_display.cc \
 	varlist.cc \
@@ -41,6 +40,7 @@ DCAPP_SOURCES := \
 	xml_utils.cc
 GENHEADER_SOURCES := \
 	dcapp_genheader.cc \
+	msg.cc \
 	xml_utils.cc
 LIBS := \
 	uei/$(LIBDIR)/libuei.a \

@@ -34,7 +34,8 @@ header_sent(0),
 header_received(0)
 {
     this->protocol = PixelStreamTcpProtocol;
-    StartTimer(&(this->lastconnectattempt));
+    this->lastconnectattempt = new Timer;
+    this->lastread = new Timer;
 }
 
 PixelStreamTcp::~PixelStreamTcp()
@@ -43,6 +44,8 @@ PixelStreamTcp::~PixelStreamTcp()
     socket_disconnect(&ListenSocket);
     if (this->host) free(this->host);
     if (this->pixels) free(this->pixels);
+    delete this->lastconnectattempt;
+    delete this->lastread;
 }
 
 int PixelStreamTcp::read_socket_connect(void)
@@ -50,7 +53,7 @@ int PixelStreamTcp::read_socket_connect(void)
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
     {
-        error_perror("Unable to create socket");
+        error_msg("Unable to create socket: " << strerror(errno));
         return (-1);
     }
 
@@ -77,21 +80,21 @@ int PixelStreamTcp::read_socket_connect(void)
                 getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &optionlen);
                 if (valopt)
                 {
-                    debug_msg("Socket not ready to communicate: %d - %s", valopt, strerror(valopt));
+                    debug_msg("Socket not ready to communicate: " << valopt << " - " << strerror(valopt));
                     close(sockfd);
                     return -1;
                 }
             }
             else
             {
-                debug_msg("Timeout or error in select: %d - %s", valopt, strerror(valopt));
+                debug_msg("Timeout or error in select: " << valopt << " - " << strerror(valopt));
                 close(sockfd);
                 return -1;
             }
         }
         else
         {
-            debug_msg("Socket connect error: %d", errno);
+            debug_msg("Socket connect error: " << errno);
             close(sockfd);
             return -1;
         }
@@ -118,7 +121,7 @@ int PixelStreamTcp::readerInitialize(char *hostspec, int portspec)
 
     if (!server)
     {
-        error_msg("Unable to resolve host name: %s", hostspec);
+        error_msg("Unable to resolve host name: " << hostspec);
         return -1;
     }
 
@@ -142,7 +145,7 @@ int PixelStreamTcp::writerInitialize(int portspec)
     ListenSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (ListenSocket < 0)
     {
-        error_perror("Unable to create listen socket");
+        error_msg("Unable to create listen socket: " << strerror(errno));
         return (-1);
     }
 
@@ -156,7 +159,7 @@ int PixelStreamTcp::writerInitialize(int portspec)
     serv_addr.sin_port = htons(portspec);
     if (bind(ListenSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
     {
-        error_perror("Unable to bind listen socket");
+        error_msg("Unable to bind listen socket: " << strerror(errno));
         return (-1);
     }
 
@@ -174,7 +177,7 @@ int PixelStreamTcp::reader(void)
 
     if (!sockets_connected)
     {
-        if (SecondsElapsed(lastconnectattempt) > CONNECTION_ATTEMPT_INTERVAL)
+        if (this->lastconnectattempt->getSeconds() > CONNECTION_ATTEMPT_INTERVAL)
         {
             if (ClientToServerSocket < 0) ClientToServerSocket = read_socket_connect();
             if (ClientToServerSocket >= 0 && ServerToClientSocket < 0) ServerToClientSocket = read_socket_connect();
@@ -188,14 +191,14 @@ int PixelStreamTcp::reader(void)
                 wfd.revents = 0;
 
                 sockets_connected = 1;
-                StartTimer(&lastread);
+                this->lastread->restart();
             }
-            StartTimer(&lastconnectattempt);
+            this->lastconnectattempt->restart();
         }
     }
     else
     {
-        if (SecondsElapsed(lastread) > CONNECTION_TIMEOUT)
+        if (this->lastread->getSeconds() > CONNECTION_TIMEOUT)
         {
             debug_msg("Data connection timeout, disconnecting...");
             disconnect_all();
@@ -243,12 +246,12 @@ int PixelStreamTcp::writer(void)
             wfd.revents = 0;
 
             sockets_connected = 1;
-            StartTimer(&lastread);
+            this->lastread->restart();
         }
     }
     else
     {
-        if (SecondsElapsed(lastread) > CONNECTION_TIMEOUT)
+        if (this->lastread->getSeconds() > CONNECTION_TIMEOUT)
         {
             error_msg("PixelStream data connection read timeout, disconnecting...");
             disconnect_all();
@@ -295,7 +298,7 @@ int PixelStreamTcp::SendDataRequest(void)
     if (write(ClientToServerSocket, &command, sizeof(command)) == sizeof(command)) return 1;
     else
     {
-        debug_perror("Unable to write data");
+        debug_msg("Unable to write data: " << strerror(errno));
         disconnect_all();
         return 0;
     }
@@ -313,7 +316,7 @@ int PixelStreamTcp::RecvHeader(uint32_t *width, uint32_t *height)
         else byteswap = 1;
         getbytes((char *)&(recvbuf[2]), (char *)width, sizeof(*width), byteswap);
         getbytes((char *)&(recvbuf[6]), (char *)height, sizeof(*height), byteswap);
-        StartTimer(&lastread);
+        this->lastread->restart();
         return 1;
     }
     else return 0;
@@ -330,7 +333,7 @@ int PixelStreamTcp::RecvData(char *buffer, uint32_t datasize)
             n = read(ServerToClientSocket, buffer + totalBytesRead, datasize - totalBytesRead);
             if (n < 0)
             {
-                debug_perror("Unable to read data");
+                debug_msg("Unable to read data: " << strerror(errno));
                 disconnect_all();
                 return 0;
             }
@@ -338,7 +341,7 @@ int PixelStreamTcp::RecvData(char *buffer, uint32_t datasize)
         }
     }
 
-    StartTimer(&lastread);
+    this->lastread->restart();
     return totalBytesRead;
 }
 
@@ -348,7 +351,7 @@ int PixelStreamTcp::RecvDataRequest(void)
 
     if (read(ClientToServerSocket, &command, sizeof(command)) == sizeof(command) && command == REQUEST_BUFFER)
     {
-        StartTimer(&lastread);
+        this->lastread->restart();
         return 1;
     }
     else return 0;
@@ -366,7 +369,7 @@ int PixelStreamTcp::SendHeader(uint32_t width, uint32_t height)
     if (write(ServerToClientSocket, &sendbuf, sizeof(sendbuf)) == sizeof(sendbuf)) return 1;
     else
     {
-        error_perror("Unable to write data");
+        error_msg("Unable to write data: " << strerror(errno));
         disconnect_all();
         return 0;
     }
@@ -383,7 +386,7 @@ int PixelStreamTcp::SendData(char *buffer, uint32_t datasize)
             n = write(ServerToClientSocket, buffer + totalBytesWritten, datasize - totalBytesWritten);
             if (n < 0)
             {
-                error_perror("Unable to write data");
+                error_msg("Unable to write data: " << strerror(errno));
                 disconnect_all();
                 return 0;
             }

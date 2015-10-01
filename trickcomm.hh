@@ -56,7 +56,7 @@ class TrickCommModule : public CommModule
 
         int active;
 #ifdef TRICKACTIVE
-        Timer last_connect_attempt;
+        Timer *last_connect_attempt;
         VariableServerComm *tvs;
 #endif
         char *host;

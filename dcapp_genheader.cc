@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h>
+#include "msg.hh"
 #include "xml_utils.hh"
 
 typedef struct _vitem
@@ -23,6 +25,8 @@ int main(int argc, char **argv)
     xmlNodePtr root_element;
     FILE *p_file;
     vitem *myvitem;
+
+    Message::setLabel(basename(argv[0]));
 
     if (argc < 2) UsageError(0x0);
     if (XMLFileOpen(&mydoc, &root_element, argv[1], 0x0)) UsageError(0x0);

@@ -78,9 +78,9 @@ class CcsdsUdpCommModule : public CommModule
 
         int read_active;
         int write_active;
-        Timer last_read_try;
-        Timer last_write_try;
-        Timer udpRX_timer;
+        Timer *last_read_try;
+        Timer *last_write_try;
+        Timer *udpRX_timer;
 
         // The IPv4 address string to listen on
         char *DCAPP_UDPRX_ADDR;

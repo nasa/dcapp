@@ -49,8 +49,8 @@ class EdgeCommModule : public CommModule
         int active;
         io_parameter_list fromedge;
         io_parameter_list toedge;
-        Timer last_connect_attempt;
-        Timer edge_timer;
+        Timer *last_connect_attempt;
+        Timer *edge_timer;
         float update_rate;
         char *cmd_group;
         EdgeRcsComm *rcs;

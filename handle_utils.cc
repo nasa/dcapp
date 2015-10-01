@@ -66,7 +66,7 @@ void ProcessEventList(struct node *list)
                 break;
             case Animate:
                 animobj = new Animation;
-                animobj->initialize(SecondsElapsed(AppData.master_timer), sublist->object.anim.duration);
+                animobj->initialize(AppData.master_timer->getSeconds(), sublist->object.anim.duration);
                 AppData.animators.push_back(animobj);
                 ProcessAnimationList(animobj, sublist->object.anim.SubList);
                 break;

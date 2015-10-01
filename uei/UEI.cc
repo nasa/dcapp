@@ -3,7 +3,8 @@
 #include <strings.h>
 #include <signal.h>
 #include "util_comm.hh"
-#include "../bezel.hh"
+#include "msg.hh"
+#include "bezel.hh"
 
 #define UEI_BUFFER_SIZE 60
 #define NUM_BEZELS 3
@@ -38,7 +39,7 @@ extern void UEI_read(void)
         if (statlen)
         {
             if (sscanf(uei_buffer, "%d %d %d", &button[0], &button[1], &button[2]) != 3)
-                fprintf(stderr, "READ ERROR: partial buffer received\n");
+                error_msg("Partial buffer received");
             else
             {
                 if (button[bezelID] != prev_button)

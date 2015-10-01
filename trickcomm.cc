@@ -28,7 +28,7 @@ disconnectaction(this->AppTerminate)
     this->tosim.allocated_elements = 0;
     this->tosim.data = 0x0;
 #ifdef TRICKACTIVE
-    StartTimer(&(this->last_connect_attempt));
+    this->last_connect_attempt = new Timer;
     this->tvs = new VariableServerComm;
 #endif
 }
@@ -46,6 +46,7 @@ TrickCommModule::~TrickCommModule()
     for (i=0; i<this->tosim.count; i++) free(this->tosim.data[i].trickvar);
     free(this->tosim.data);
 
+    delete this->last_connect_attempt;
     delete this->tvs;
 #endif
 }
@@ -108,10 +109,10 @@ CommModule::CommStatus TrickCommModule::write(void)
 #ifdef TRICKACTIVE
     if (!(this->active))
     {
-        if (SecondsElapsed(this->last_connect_attempt) > CONNECT_ATTEMPT_INTERVAL)
+        if (this->last_connect_attempt->getSeconds() > CONNECT_ATTEMPT_INTERVAL)
         {
             this->activate();
-            StartTimer(&(this->last_connect_attempt));
+            this->last_connect_attempt->restart();
         }
     }
 

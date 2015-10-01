@@ -27,7 +27,7 @@ void Draw(void)
 {
     render_primitives(AppData.window->p_current);
     SwapBuffers();
-    StartTimer(&(AppData.last_update));
+    AppData.last_update->restart();
 }
 
 static void render_primitives(struct node *list)

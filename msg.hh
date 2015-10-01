@@ -1,7 +1,8 @@
 #ifndef _MSG_HH_
 #define _MSG_HH_
 
-#include <stdio.h>
+#include <iostream>
+#include <sstream>
 
 #ifdef DEBUG
 #define _debugactive 1
@@ -9,15 +10,35 @@
 #define _debugactive 0
 #endif
 
-extern void set_msg_label(const char *);
-extern const char *get_msg_label(void);
+class Message
+{
+    public:
+        static void setLabel(const std::string in) { label = in; };
+        static std::string getLabel(void) { return label; };
+    private:
+        static std::string label;
+};
 
-#define user_msg(...) { printf("%s: ", get_msg_label()); printf(__VA_ARGS__); printf("\n"); }
-
-#define debug_msg(...) { if (_debugactive) { printf("%s: function = %s, file = %s, line = %d: ", get_msg_label(), __FUNCTION__, __FILE__, __LINE__); printf(__VA_ARGS__); printf("\n"); }}
-#define error_msg(...) { printf("%s ERROR: function = %s, file = %s, line = %d: ", get_msg_label(), __FUNCTION__, __FILE__, __LINE__); printf(__VA_ARGS__); printf("\n"); }
-
-#define debug_perror(...) { if (_debugactive) { printf("%s: function = %s, file = %s, line = %d: ", get_msg_label(), __FUNCTION__, __FILE__, __LINE__); printf(__VA_ARGS__);  printf(": "); fflush(0); perror(0x0); }}
-#define error_perror(...) { printf("%s ERROR: function = %s, file = %s, line = %d: ", get_msg_label(), __FUNCTION__, __FILE__, __LINE__); printf(__VA_ARGS__); printf(": "); fflush(0); perror(0x0); }
+#define user_msg(a) \
+do { \
+    std::stringstream _MyTmpStr; \
+    _MyTmpStr << Message::getLabel().c_str() << ": " << a; \
+    std::cout << _MyTmpStr.str() << std::endl; \
+} while(0)
+#define debug_msg(a) \
+do { \
+    if (_debugactive) \
+    { \
+        std::stringstream _MyTmpStr; \
+        _MyTmpStr << Message::getLabel().c_str() << ": function=" << __FUNCTION__ << ", file=" << __FILE__ << ", line=" << __LINE__ << ": " << a; \
+        std::cout << _MyTmpStr.str() << std::endl; \
+    } \
+} while(0)
+#define error_msg(a) \
+do { \
+    std::stringstream _MyTmpStr; \
+    _MyTmpStr << Message::getLabel().c_str() << " ERROR: function=" << __FUNCTION__ << ", file=" << __FILE__ << ", line=" << __LINE__ << ": " << a; \
+    std::cout << _MyTmpStr.str() << std::endl; \
+} while(0)
 
 #endif

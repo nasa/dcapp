@@ -32,29 +32,29 @@ void HandleMouse(int button, int state, float xpct, float ypct, int modifier)
 
 void CheckMouseBounce(void)
 {
-    static Timer mousebounce;
+    static Timer *mousetimer = new Timer;
 
     if (!mousecontinuous) return;
 
     if (mousebouncemode == 1)
     {
-        StartTimer(&mousebounce);
+        mousetimer->restart();
         mousebouncemode = 2;
     }
     else if (mousebouncemode == 2)
     {
-        if (SecondsElapsed(mousebounce) > 1)
+        if (mousetimer->getSeconds() > 1)
         {
-            StartTimer(&mousebounce);
+            mousetimer->restart();
             ProcessEventList(mousecontinuous);
             mousebouncemode = 3;
         }
     }
     else if (mousebouncemode == 3)
     {
-        if (SecondsElapsed(mousebounce) > .1)
+        if (mousetimer->getSeconds() > .1)
         {
-            StartTimer(&mousebounce);
+            mousetimer->restart();
             ProcessEventList(mousecontinuous);
         }
     }

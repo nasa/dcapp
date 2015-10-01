@@ -57,8 +57,8 @@ class PixelStreamTcp : public PixelStreamData
         int ListenSocket;
         int ClientToServerSocket;
         int ServerToClientSocket;
-        Timer lastconnectattempt;
-        Timer lastread;
+        Timer *lastconnectattempt;
+        Timer *lastread;
         uint32_t datasize;
         size_t dataalloc;
         int sockets_connected;

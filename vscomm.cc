@@ -164,7 +164,7 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
     this->sim_write_const("trick.var_clear()\n");
     trickver = (char *)malloc(new_bytes);
     sscanf(this->databuf, "0\t%s\n", trickver);
-    printf("dcapp: Trick Version = %s\n", trickver);
+    user_msg("Trick Version = " << trickver);
     free(trickver);
 #endif
 

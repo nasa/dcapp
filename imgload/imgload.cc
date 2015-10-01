@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include "msg.hh"
 #include "imgload_internal.hh"
 
 extern unsigned int LoadTGA(const char *filename, ImageStruct *);
@@ -21,14 +22,14 @@ int imgload(const char *filename)
 
     if (!extension)
     {
-        fprintf(stderr, "No detectable filename extension for file %s\n", filename);
+        error_msg("No detectable filename extension for file " << filename);
         return (-1);
     }
     else if (!strcasecmp(extension, "BMP")) /* use ReaderWriterBMP.c */
     {
         if (loadBMPImage(filename, &image) == -1)
         {
-            fprintf(stderr, "loadBMPImage returned with error for file %s\n", filename);
+            error_msg("loadBMPImage returned with error for file " << filename);
             return (-1);
         }
     }
@@ -36,13 +37,13 @@ int imgload(const char *filename)
     {
         if (LoadTGA(filename, &image))
         {
-            fprintf(stderr, "LoadTGA returned with error for file %s\n", filename);
+            error_msg("LoadTGA returned with error for file " << filename);
             return (-1);
         }
     }
     else
     {
-        fprintf(stderr, "Unsupported extension for file %s: %s\n", filename, extension);
+        error_msg("Unsupported extension for file " << filename << ": " << extension);
         return (-1);
     }
 
@@ -56,7 +57,7 @@ const char *FindExtension(const char *filename)
 {
     if (!filename)
     {
-        fprintf(stderr, "%s %d: No filename specified\n", __FILE__, __LINE__);
+        error_msg("No filename specified");
         return 0x0;
     }
 
@@ -65,7 +66,7 @@ const char *FindExtension(const char *filename)
 
     if (end == filename)
     {
-        fprintf(stderr, "%s %d: Couldn't find extension in filename '%s'\n", __FILE__, __LINE__, filename);
+        error_msg("Couldn't find extension in filename " << filename);
         return 0x0;
     }
 

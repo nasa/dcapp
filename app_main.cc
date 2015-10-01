@@ -54,7 +54,10 @@ int main(int argc, char **argv)
     signal(SIGTERM, Terminate);
     signal(SIGPIPE, SIG_IGN);
 
-    set_msg_label(argv[0]);
+    Message::setLabel(basename(argv[0]));
+
+    AppData.master_timer = new Timer;
+    AppData.last_update = new Timer;
 
     AppData.DisplayPreInit = &DisplayPreInitStub;
     AppData.DisplayInit = &DisplayInitStub;
@@ -66,7 +69,6 @@ int main(int argc, char **argv)
     AppData.DisplayPreInit(get_pointer);
     AppData.DisplayInit();
     UpdateDisplay();
-    StartTimer(&(AppData.master_timer));
 
     // Do forever
     mainloop();
@@ -113,7 +115,7 @@ void Idle(void)
         SetNeedsRedraw();
         for (animitem = AppData.animators.begin(); animitem != AppData.animators.end(); animitem++)
         {
-            if ((*animitem)->update(SecondsElapsed(AppData.master_timer)))
+            if ((*animitem)->update(AppData.master_timer->getSeconds()))
             {
                 delete *animitem;
                 *animitem = 0x0;
@@ -124,7 +126,7 @@ void Idle(void)
 
     CheckMouseBounce();
 
-    if (SecondsElapsed(AppData.last_update) > AppData.force_update) UpdateDisplay();
+    if (AppData.last_update->getSeconds() > AppData.force_update) UpdateDisplay();
 }
 
 

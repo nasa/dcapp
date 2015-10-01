@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "msg.hh"
 #include "varlist_constants.hh"
 
 #define ALLOCATION_CHUNK 10
@@ -81,7 +82,7 @@ void *get_pointer(const char *label)
     if (myparam) return myparam->value;
     else
     {
-        printf("get_pointer: invalid parameter label: %s\n", label);
+        error_msg("Invalid parameter label: " << label);
         return 0x0;
     }
 }
@@ -92,7 +93,7 @@ int get_datatype(const char *label)
     if (myparam) return myparam->type;
     else
     {
-        printf("get_datatype: invalid parameter label: %s\n", label);
+        error_msg("Invalid parameter label: " << label);
         return VARLIST_UNKNOWN_TYPE;
     }
 }

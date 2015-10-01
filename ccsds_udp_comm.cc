@@ -58,8 +58,9 @@ sockfdsend(-1)
 #endif
 {
 #ifdef CCSDSUDPACTIVE
-    StartTimer(&(this->last_read_try));
-    StartTimer(&(this->last_write_try));
+    this->last_read_try = new Timer;
+    this->last_write_try = new Timer;
+    this->udpRX_timer = new Timer;
 #endif
 }
 
@@ -74,6 +75,10 @@ CcsdsUdpCommModule::~CcsdsUdpCommModule()
 
     TIDY(this->DCAPP_UDPRX_ADDR);
     TIDY(this->DCAPP_UDPSEND_ADDR);
+
+    delete this->last_read_try;
+    delete this->last_write_try;
+    delete this->udpRX_timer;
 #endif
 }
 
@@ -96,17 +101,17 @@ CommModule::CommStatus CcsdsUdpCommModule::read(void)
             case (CCSDSIO_SUCCESS):
                 return this->Success;
             default:
-                error_msg("ccsds reader switch status logic error, status=%d.", readstatus);
+                error_msg("ccsds reader switch status logic error, status=" << readstatus);
                 this->read_active = 0; // stop reading
                 return this->Fail;
         }
     }
     else
     {
-        if (SecondsElapsed(this->last_read_try) > CONNECT_ATTEMPT_INTERVAL)
+        if (this->last_read_try->getSeconds() > CONNECT_ATTEMPT_INTERVAL)
         {
             this->read_connect();
-            StartTimer(&(this->last_read_try));
+            this->last_read_try->restart();
         }
     }
 
@@ -126,10 +131,10 @@ CommModule::CommStatus CcsdsUdpCommModule::write(void)
     }
     else
     {
-        if (SecondsElapsed(this->last_write_try) > CONNECT_ATTEMPT_INTERVAL)
+        if (this->last_write_try->getSeconds() > CONNECT_ATTEMPT_INTERVAL)
         {
             this->write_connect();
-            StartTimer(&(this->last_write_try));
+            this->last_write_try->restart();
         }
     }
 
@@ -172,19 +177,19 @@ void CcsdsUdpCommModule::read_connect(void)
 
     if (st != UDPRX_NOERROR)
     {
-        error_msg("udpRx_reader_init() failed with status %d", st);
-        debug_msg("\taddress=%s", this->DCAPP_UDPRX_ADDR);
-        debug_msg("\taddress=%d", this->DCAPP_UDPRX_PORT);
+        error_msg("udpRx_reader_init() failed with status " << st);
+        debug_msg("\taddress=" << this->DCAPP_UDPRX_ADDR);
+        debug_msg("\taddress=" << this->DCAPP_UDPRX_PORT);
         error_msg("ccsds_udp failed to open socket for reading telemetry");
         return;
     }
     else
     {
         debug_msg("udpRx_reader_init() opened socket");
-        debug_msg("\taddress=%s", this->DCAPP_UDPRX_ADDR);
-        debug_msg("\taddress=%d", this->DCAPP_UDPRX_PORT);
+        debug_msg("\taddress=" << this->DCAPP_UDPRX_ADDR);
+        debug_msg("\taddress=" << this->DCAPP_UDPRX_PORT);
     }
-    StartTimer(&(this->udpRX_timer));
+    this->udpRX_timer->restart();
     debug_msg("ccsds_udp opened socket for reading telemetry");
     this->read_active = 1;
 }
@@ -218,7 +223,7 @@ void CcsdsUdpCommModule::write_connect(void)
     if (inet_aton(this->DCAPP_UDPSEND_ADDR, &si_sendother.sin_addr) == 0)
     {
         close(sockfdsend);
-        error_msg("Failed to obtain port %d.", this->DCAPP_UDPSEND_PORT);
+        error_msg("Failed to obtain port " << this->DCAPP_UDPSEND_PORT);
         error_msg("ccsds_udp failed to open socket for sending commands");
         return;
     }
@@ -231,7 +236,7 @@ void CcsdsUdpCommModule::write_connect(void)
 CcsdsUdpCommModule::dcapp_ccsds_udp_io CcsdsUdpCommModule::read_tlm_msg(void)
 {
     // only check the reader based on the set update_rate
-    if (SecondsElapsed(this->udpRX_timer) < this->DCAPP_UDPRX_SPECRATE)
+    if (this->udpRX_timer->getSeconds() < this->DCAPP_UDPRX_SPECRATE)
     {
         return CCSDSIO_NO_NEW_DATA;
     }
@@ -244,7 +249,7 @@ CcsdsUdpCommModule::dcapp_ccsds_udp_io CcsdsUdpCommModule::read_tlm_msg(void)
 
     if (udpRXResults.status != UDPRX_NOERROR)
     {
-        error_msg("ccsds_udp_readsimdata() had error= %d.", CCSDSIO_IO_ERROR);
+        error_msg("ccsds_udp_readsimdata() had error=" << CCSDSIO_IO_ERROR);
         return CCSDSIO_IO_ERROR;
     }
 
@@ -265,7 +270,7 @@ CcsdsUdpCommModule::dcapp_ccsds_udp_io CcsdsUdpCommModule::read_tlm_msg(void)
             &ccsdsPayloadLength
             );
 
-    StartTimer(&(this->udpRX_timer));
+    this->udpRX_timer->restart();
 
     switch (res)
     {
@@ -276,15 +281,15 @@ CcsdsUdpCommModule::dcapp_ccsds_udp_io CcsdsUdpCommModule::read_tlm_msg(void)
         case (INVALID_BADTLMPAYLOADLENGTH):
         case (INVALID_BADCMDPAYLOADLENGTH):
         case (INVALID_BADPAYLOADLENGTH):
-            debug_msg("ccsds_udp_readsimdata() received non-CCSDS packet. status=%d", CCSDSIO_NOT_CCSDS);
-            debug_msg("\t\t(error cause ID=%d)", res);
+            debug_msg("ccsds_udp_readsimdata() received non-CCSDS packet. status=" << CCSDSIO_NOT_CCSDS);
+            debug_msg("\t\t(error cause ID=" << res << ")");
             return CCSDSIO_NOT_CCSDS;
         case (VALID_NOSECHDR):
         case (INVALID_UNEXPTLMSECHDR):
         case (INVALID_UNEXPCMDSECHDR):
         case (VALID_CMDSECHDR):
             debug_msg("ccsds_udp_readsimdata() received different CCSDS packet");
-            debug_msg("\t\t(error cause ID=%d)", res);
+            debug_msg("\t\t(error cause ID=" << res << ")");
             return CCSDSIO_WRONG_CCSDS; // cmd not tlm
         case (VALID_TLMSECHDR):
             // got it!

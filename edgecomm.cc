@@ -24,7 +24,8 @@ rcs(0x0)
     this->toedge.allocated_elements = 0;
     this->toedge.data = 0x0;
 
-    StartTimer(&(this->last_connect_attempt));
+    this->last_connect_attempt = new Timer;
+    this->edge_timer = new Timer;
     this->rcs = new EdgeRcsComm;
 }
 
@@ -39,6 +40,8 @@ EdgeCommModule::~EdgeCommModule()
 
     TIDY(this->cmd_group);
 
+    delete this->last_connect_attempt;
+    delete this->edge_timer;
     delete this->rcs;
 }
 
@@ -50,7 +53,7 @@ CommModule::CommStatus EdgeCommModule::read(void)
     char *result = 0x0;
     char *cmd = 0x0, *strptr, *strval = 0x0;
 
-    if (SecondsElapsed(this->edge_timer) < this->update_rate) return this->None;
+    if (this->edge_timer->getSeconds() < this->update_rate) return this->None;
 
     if (asprintf(&cmd, "execute_command_group %s", this->cmd_group) == -1)
     {
@@ -101,7 +104,7 @@ CommModule::CommStatus EdgeCommModule::read(void)
     TIDY(strval);
     TIDY(result);
 
-    StartTimer(&(this->edge_timer));
+    this->edge_timer->restart();
 
     return this->Success;
 }
@@ -110,10 +113,10 @@ CommModule::CommStatus EdgeCommModule::write(void)
 {
     if (!(this->active))
     {
-        if (SecondsElapsed(this->last_connect_attempt) > CONNECT_ATTEMPT_INTERVAL)
+        if (this->last_connect_attempt->getSeconds() > CONNECT_ATTEMPT_INTERVAL)
         {
             this->activate();
-            StartTimer(&(this->last_connect_attempt));
+            this->last_connect_attempt->restart();
         }
     }
 
@@ -232,7 +235,7 @@ int EdgeCommModule::finishInitialization(char *host, char *port, float spec_rate
 {
     if (this->rcs->initialize(host, port)) return this->Fail;
     this->update_rate = spec_rate;
-    StartTimer(&(this->edge_timer));
+    this->edge_timer->restart();
     return this->Success;
 }
 

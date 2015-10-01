@@ -1,12 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "msg.hh"
 #ifdef NTCAN
 #include "ntcan.h"
 
 extern void HandleBezelButton(int, int, int);
 extern void HandleBezelControl(int, int, int);
-
-static void CAN_error(char *, NTCAN_RESULT);
 
 static NTCAN_HANDLE ntCanHandle;
 static int CAN_active = 0;
@@ -27,7 +26,7 @@ void CAN_init(char *networkstr, char *buttonIDstr, char *controlIDstr)
     retval = canOpen(network, 0, 1024, 1024, 1000, 0, &ntCanHandle);
     if (retval != NTCAN_SUCCESS)
     {
-        CAN_error("canOpen", retval);
+        error_msg("canOpen failed with code " << retval);
         return;
     }
 
@@ -35,7 +34,7 @@ void CAN_init(char *networkstr, char *buttonIDstr, char *controlIDstr)
     retval = canSetBaudrate(ntCanHandle, NTCAN_BAUD_1000);
     if (retval != NTCAN_SUCCESS)
     {
-        CAN_error("canSetBaudrate", retval);
+        error_msg("canSetBaudrate failed with code " << retval);
         return;
     }
 
@@ -43,13 +42,13 @@ void CAN_init(char *networkstr, char *buttonIDstr, char *controlIDstr)
     retval = canIdAdd(ntCanHandle, buttonID);
     if (retval != NTCAN_SUCCESS)
     {
-        CAN_error("canIdAdd", retval);
+        error_msg("canIdAdd failed with code " << retval);
         return;
     }
     retval = canIdAdd(ntCanHandle, controlID);
     if (retval != NTCAN_SUCCESS)
     {
-        CAN_error("canIdAdd", retval);
+        error_msg("canIdAdd failed with code " << retval);
         return;
     }
 
@@ -76,7 +75,7 @@ extern void CAN_read(void)
                 else if (message.id == controlID) HandleBezelControl(message.data[0], message.data[1], message.data[2]);
             }
         }
-        else CAN_error("canTake", retval);
+        else error_msg("canTake failed with code " << retval);
     }
 #endif
 }
@@ -89,14 +88,7 @@ extern void CAN_term(void)
     if (CAN_active)
     {
         retval = canClose(ntCanHandle);
-        if (retval != NTCAN_SUCCESS) CAN_error("canClose", retval);
+        if (retval != NTCAN_SUCCESS) error_msg("canClose failed with code " << retval);
     }
 #endif
 }
-
-#ifdef NTCAN
-static void CAN_error(char *command, NTCAN_RESULT retval)
-{
-    printf("dcapp: CAN error: %s call failed with code %d\n", command, retval);
-}
-#endif

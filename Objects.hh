@@ -219,8 +219,8 @@ struct Window
 typedef struct
 {
     float force_update;
-    Timer last_update;
-    Timer master_timer;
+    Timer *last_update;
+    Timer *master_timer;
     std::list<Animation *> animators;
     std::list<CommModule *> commlist;
     std::list<PixelStreamData *> pixelstreams;

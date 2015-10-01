@@ -2,6 +2,7 @@
 #include <string.h>
 #include <libxml/parser.h>
 #include <libxml/xinclude.h>
+#include "msg.hh"
 
 bool NodeCheck(xmlNodePtr, const char *);
 static bool xmlStrEq(const xmlChar *, const char *);
@@ -11,19 +12,19 @@ int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *filename
     *mydoc = xmlReadFile(filename, 0x0, 0);
     if (!(*mydoc))
     {
-        printf("dcapp: Couldn't process XML file: %s\n", filename);
+        error_msg("Couldn't process XML file: " << filename);
         return (-1);
     }
 
     if (xmlXIncludeProcess(*mydoc) < 0)
     {
-        printf("dcapp: XInclude processing failed in XML file: %s\n", filename);
+        error_msg("XInclude processing failed in XML file: " << filename);
     }
 
     *root_element = xmlDocGetRootElement(*mydoc);
     if (!(*root_element))
     {
-        printf("dcapp: Couldn't find root element in XML file: %s\n", filename);
+        error_msg("Couldn't find root element in XML file: " << filename);
         return (-1);
     }
 
@@ -31,7 +32,7 @@ int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *filename
     {
         if (!NodeCheck(*root_element, req_name))
         {
-            printf("dcapp: Bad root element in XML file: \"%s\" (should be \"%s\")", (*root_element)->name, req_name);
+            error_msg("Bad root element in XML file: \"" << (*root_element)->name << "\" (should be \"" << req_name << "\")");
             return (-1);
         }
     }

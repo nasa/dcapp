@@ -349,39 +349,39 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             char *error;
             void *so_handler;
 
-            debug_msg("Loading %s...", get_node_content(node));
+            debug_msg("Loading " << get_node_content(node) << "...");
             so_handler = dlopen(get_node_content(node), RTLD_NOW);
             if (!so_handler)
             {
-                error_msg("%s", dlerror());
+                error_msg(dlerror());
                 return (-1);
             }
 
             AppData.DisplayPreInit = (void (*)(void *(*)(const char *)))dlsym(so_handler, "DisplayPreInit");
             if ((error = dlerror()))
             {
-                debug_msg("%s", error);
+                debug_msg(error);
                 AppData.DisplayPreInit = &DisplayPreInitStub;
             }
 
             AppData.DisplayInit = (void (*)())dlsym(so_handler, "DisplayInit");
             if ((error = dlerror()))
             {
-                debug_msg("%s", error);
+                debug_msg(error);
                 AppData.DisplayInit = &DisplayInitStub;
             }
 
             AppData.DisplayLogic = (void (*)())dlsym(so_handler, "DisplayLogic");
             if ((error = dlerror()))
             {
-                debug_msg("%s", error);
+                debug_msg(error);
                 AppData.DisplayLogic = &DisplayLogicStub;
             }
 
             AppData.DisplayClose = (void (*)())dlsym(so_handler, "DisplayClose");
             if ((error = dlerror()))
             {
-                debug_msg("%s", error);
+                debug_msg(error);
                 AppData.DisplayClose = &DisplayCloseStub;
             }
         }
