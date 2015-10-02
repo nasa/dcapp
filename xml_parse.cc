@@ -25,7 +25,7 @@ struct xmlStyle
     xmlNodePtr node;
 };
 
-extern void new_window(bool, int, int, int, int);
+extern void new_window(bool, int, int, int, int, char *);
 extern void new_panels(char *);
 extern struct node *new_panel(char *, char *, char *, char *);
 extern struct node *new_container(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *);
@@ -392,9 +392,11 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                        StrToInt(get_element_data(node, "X"), 0),
                        StrToInt(get_element_data(node, "Y"), 0),
                        StrToInt(get_element_data(node, "Width"), 800),
-                       StrToInt(get_element_data(node, "Height"), 800));
+                       StrToInt(get_element_data(node, "Height"), 800),
+                       get_element_data(node, "ActiveDisplay"));
             process_elements(0, 0, node->children);
         }
+        // TODO: remove "Panels" - the functionality is already provided by "Window"
         if (NodeCheck(node, "Panels"))
         {
             new_panels(get_element_data(node, "ActiveDisplay"));

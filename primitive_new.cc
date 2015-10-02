@@ -115,12 +115,13 @@ static struct node *add_primitive_node(struct node *parent, struct node **list, 
     return data;
 }
 
-void new_window(bool fullscreen, int OriginX, int OriginY, int SizeX, int SizeY)
+void new_window(bool fullscreen, int OriginX, int OriginY, int SizeX, int SizeY, char *activedisp)
 {
     NewNode(0x0, &(AppData.window));
 
     window_init(fullscreen, OriginX, OriginY, SizeX, SizeY);
     graphics_init();
+    AppData.window->object.win.active_display = getIntegerPointer(activedisp);
 }
 
 void new_panels(char *var)
