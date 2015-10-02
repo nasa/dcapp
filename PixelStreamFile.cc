@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/shm.h>
+#include <errno.h>
 #include "PixelStreamFile.hh"
 #include "msg.hh"
 
