@@ -1,12 +1,67 @@
 #ifndef _FONTLIB_HH_
 #define _FONTLIB_HH_
 
-#include "fontlibdefs.hh"
+#include <map>
+#include <GL/glu.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
-extern flFont *flInitFont(const char *, const char *, unsigned int);
-extern float flGetFontAdvance(flFont *, flMonoOption, char *);
-extern float flGetFontDescender(flFont *);
-extern unsigned int flGetFontBaseSize(flFont *);
-extern void flRenderFont(flFont *, flMonoOption, char *);
+#define PRELOAD_START 0x20
+#define PRELOAD_END 0x7e
+
+typedef unsigned int UTF32;
+typedef unsigned char UTF8;
+
+typedef enum { flMonoNone, flMonoNumeric, flMonoAlphaNumeric, flMonoAll } flMonoOption;
+
+typedef struct
+{
+    UTF32 index;
+    FT_Int width;
+    FT_Int height;
+    float bitmap_left;
+    float bitmap_top;
+    float advance;
+    GLuint texture;
+    unsigned char bitmap[64*64];
+} GlyphInfo;
+
+typedef std::map<UTF32, GlyphInfo *> GlyphSet;
+
+class flFont
+{
+    public:
+        flFont(const char *, const char *, unsigned int);
+        ~flFont();
+        float getAdvance(const char *, flMonoOption);
+        float getDescender(void);
+        bool isValid(void);
+        const char *getFileName(void);
+        const char *getFaceName(void);
+        unsigned int getBaseSize(void);
+        void render(const char *, flMonoOption);
+    private:
+        static FT_Library library;
+        static const char trailingBytesForUTF8[256];
+        static const UTF32 offsetsFromUTF8[6];
+
+        FT_Face face;
+        FT_Bool kern_flag;
+        char *filename;
+        char *facename;
+        FT_UInt basesize;
+        float descender;
+        float max_advance;
+        float max_advance_alnum;
+        float max_advance_numeric;
+        GlyphInfo gdata[PRELOAD_END+1];
+        GlyphSet extras;
+        bool valid;
+
+        void loadGlyphInfo(GlyphInfo *, UTF32);
+        GlyphInfo *getGlyphInfo(UTF32);
+        int convertUTF8toUTF32(UTF8 *, UTF32 *);
+        bool isLegalUTF8(const UTF8 *, int);
+};
 
 #endif

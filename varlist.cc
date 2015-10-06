@@ -1,85 +1,56 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
+#include <map>
 #include "msg.hh"
 #include "varlist_constants.hh"
 
-#define ALLOCATION_CHUNK 10
-
 typedef struct
 {
-    char *label;
     int type;
     void *value;
-} parameter;
+} varInfo;
 
-typedef struct
+std::map<std::string, varInfo> varMap;
+
+
+void varlist_append(const char *paramname, const char *typestr, const char *initval)
 {
-    int count;
-    int allocated_elements;
-    parameter *data;
-} parameter_list;
+    if (!paramname || !typestr) return;
 
-static parameter_list params;
+    varInfo vinfo;
 
-
-void varlist_init(void)
-{
-    params.count = 0;
-    params.allocated_elements = 0;
-}
-
-int varlist_append(const char *paramname, const char *typestr, const char *initval)
-{
-    if (params.count == params.allocated_elements)
-    {
-        params.allocated_elements += ALLOCATION_CHUNK;
-        params.data = (parameter *)realloc(params.data, params.allocated_elements * sizeof(parameter));
-        if (!(params.data)) return VARLIST_ERROR;
-    }
-
-    params.data[params.count].label = strdup(paramname);
     if (!strcmp(typestr, "Float"))
     {
-        params.data[params.count].type = VARLIST_FLOAT;
-        params.data[params.count].value = calloc(1, sizeof(float));
-        if (initval) *(float *)params.data[params.count].value = strtof(initval, 0x0);
+        vinfo.type = VARLIST_FLOAT;
+        vinfo.value = calloc(1, sizeof(float));
+        if (initval) *(float *)vinfo.value = strtof(initval, 0x0);
     }
     else if (!strcmp(typestr, "Integer"))
     {
-        params.data[params.count].type = VARLIST_INTEGER;
-        params.data[params.count].value = calloc(1, sizeof(int));
-        if (initval) *(int *)params.data[params.count].value = strtol(initval, 0x0, 10);
+        vinfo.type = VARLIST_INTEGER;
+        vinfo.value = calloc(1, sizeof(int));
+        if (initval) *(int *)vinfo.value = strtol(initval, 0x0, 10);
     }
     else if (!strcmp(typestr, "String"))
     {
-        params.data[params.count].type = VARLIST_STRING;
-        params.data[params.count].value = calloc(STRING_DEFAULT_LENGTH, sizeof(char));
-        if (initval) strcpy((char *)params.data[params.count].value, initval);
+        vinfo.type = VARLIST_STRING;
+        vinfo.value = calloc(STRING_DEFAULT_LENGTH, sizeof(char));
+        if (initval) strcpy((char *)vinfo.value, initval);
     }
     else
     {
-        params.data[params.count].type = VARLIST_UNKNOWN_TYPE;
+        vinfo.type = VARLIST_UNKNOWN_TYPE;
+        vinfo.value = 0x0;
     }
 
-    params.count++;
-
-    return 0;
-}
-
-static parameter *get_paramdata(const char *label)
-{
-    for (int i=0; i<params.count; i++)
-    {
-        if (!strcmp(params.data[i].label, label)) return &params.data[i];
-    }
-    return 0x0;
+    varMap[std::string(paramname)] = vinfo;
 }
 
 void *get_pointer(const char *label)
 {
-    parameter *myparam = get_paramdata(label);
-    if (myparam) return myparam->value;
+    if (varMap.find(label) != varMap.end()) return varMap[label].value;
     else
     {
         error_msg("Invalid parameter label: " << label);
@@ -89,8 +60,7 @@ void *get_pointer(const char *label)
 
 int get_datatype(const char *label)
 {
-    parameter *myparam = get_paramdata(label);
-    if (myparam) return myparam->type;
+    if (varMap.find(label) != varMap.end()) return varMap[label].type;
     else
     {
         error_msg("Invalid parameter label: " << label);
@@ -100,13 +70,10 @@ int get_datatype(const char *label)
 
 void varlist_term(void)
 {
-    for (int i=0; i<params.count; i++)
+    static std::map<std::string, varInfo>::iterator myitem;
+    for (myitem = varMap.begin(); myitem != varMap.end(); myitem++)
     {
-        if (params.data[i].type)
-        {
-            free(params.data[i].label);
-            free(params.data[i].value);
-        }
+        if (myitem->second.type) free(myitem->second.value);
     }
-    free(params.data);
+    varMap.clear();
 }

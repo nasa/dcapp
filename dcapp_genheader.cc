@@ -2,29 +2,28 @@
 #include <stdlib.h>
 #include <string.h>
 #include <libgen.h>
+#include <iostream>
+#include <list>
 #include "msg.hh"
 #include "xml_utils.hh"
 
-typedef struct _vitem
+typedef struct
 {
-    char *name;
-    char *type;
-    struct _vitem *next;
+    std::string name;
+    std::string type;
 } vitem;
 
-static void process_elements(xmlNodePtr);
-static vitem *vlist_add(vitem **);
-static void vlist_clean(vitem *);
-static void UsageError(xmlDocPtr);
+static std::list<vitem> vlist;
 
-static vitem *vlist_start = 0;
+static void process_elements(xmlNodePtr);
+static void UsageError(xmlDocPtr);
 
 int main(int argc, char **argv)
 {
     xmlDocPtr mydoc;
     xmlNodePtr root_element;
     FILE *p_file;
-    vitem *myvitem;
+    static std::list<vitem>::iterator myvitem;
 
     Message::setLabel(basename(argv[0]));
 
@@ -41,12 +40,12 @@ int main(int argc, char **argv)
     fprintf(p_file, "// ********************************************* //\n\n");
     fprintf(p_file, "#ifndef _DCAPP_EXTERNALS_\n#define _DCAPP_EXTERNALS_\n\n");
 
-    for (myvitem = vlist_start; myvitem; myvitem = myvitem->next)
+    for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
-        if (!strcmp(myvitem->type, "Float")) fprintf(p_file, "float *");
-        else if (!strcmp(myvitem->type, "Integer")) fprintf(p_file, "int *");
+        if (myvitem->type == "Float") fprintf(p_file, "float *");
+        else if (myvitem->type == "Integer") fprintf(p_file, "int *");
         else fprintf(p_file, "char *");
-        fprintf(p_file, "%s;\n", myvitem->name);
+        fprintf(p_file, "%s;\n", myvitem->name.c_str());
     }
 
     fprintf(p_file, "\n#ifdef __cplusplus\n");
@@ -55,32 +54,29 @@ int main(int argc, char **argv)
     fprintf(p_file, "void DisplayPreInit(void *(*get_pointer)(const char *))\n");
     fprintf(p_file, "#endif\n{\n");
 
-    for (myvitem = vlist_start; myvitem; myvitem = myvitem->next)
+    for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
-        fprintf(p_file, "    %s = ", myvitem->name);
-        if (!strcmp(myvitem->type, "Float")) fprintf(p_file, "(float *)");
-        else if (!strcmp(myvitem->type, "Integer")) fprintf(p_file, "(int *)");
+        fprintf(p_file, "    %s = ", myvitem->name.c_str());
+        if (myvitem->type == "Float") fprintf(p_file, "(float *)");
+        else if (myvitem->type == "Integer") fprintf(p_file, "(int *)");
         else fprintf(p_file, "(char *)");
-        fprintf(p_file, "get_pointer(\"%s\");\n", myvitem->name);
+        fprintf(p_file, "get_pointer(\"%s\");\n", myvitem->name.c_str());
     }
 
     fprintf(p_file, "}\n\n");
     fprintf(p_file, "#else\n\n");
 
-    for (myvitem = vlist_start; myvitem; myvitem = myvitem->next)
+    for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
-        if (!strcmp(myvitem->type, "Float")) fprintf(p_file, "extern float *");
-        else if (!strcmp(myvitem->type, "Integer")) fprintf(p_file, "extern int *");
+        if (myvitem->type == "Float") fprintf(p_file, "extern float *");
+        else if (myvitem->type == "Integer") fprintf(p_file, "extern int *");
         else fprintf(p_file, "extern char *");
-        fprintf(p_file, "%s;\n", myvitem->name);
+        fprintf(p_file, "%s;\n", myvitem->name.c_str());
     }
 
     fprintf(p_file, "\n#endif\n");
-
     fclose(p_file);
-
-    vlist_clean(vlist_start);
-
+    vlist.clear();
     XMLFileClose(mydoc);
 
     return 0;
@@ -88,43 +84,16 @@ int main(int argc, char **argv)
 
 static void process_elements(xmlNodePtr startnode)
 {
-    vitem *myvitem;
-
     for (xmlNodePtr node = startnode; node; node = node->next)
     {
         if (NodeCheck(node, "Dummy")) process_elements(node->children);
         if (NodeCheck(node, "Variable"))
         {
-            myvitem = vlist_add(&vlist_start);
-            myvitem->name = get_XML_content(node);
-            myvitem->type = get_XML_attribute(node, "Type");
+            vitem newitem;
+            newitem.name = std::string(get_XML_content(node));
+            newitem.type = std::string(get_XML_attribute(node, "Type"));
+            vlist.push_back(newitem);
         }
-    }
-}
-
-static vitem *vlist_add(vitem **start)
-{
-    vitem *newitem;
-    static vitem *previtem = 0;
-
-    newitem = (vitem *)malloc(sizeof(vitem));
-    if (!*start) *start = newitem;
-    if (previtem) previtem->next = newitem;
-    newitem->next = 0;
-    previtem = newitem;
-
-    return newitem;
-}
-
-static void vlist_clean(vitem *start)
-{
-    vitem *current, *tmp;
-
-    for (current = start; current;)
-    {
-        tmp = current->next;
-        free(current);
-        current = tmp;
     }
 }
 

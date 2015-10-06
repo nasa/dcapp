@@ -10,9 +10,6 @@ class Timer
         {
             gettimeofday(&(this->stored), 0x0);
         };
-        ~Timer()
-        {
-        };
         void restart(void)
         {
             gettimeofday(&(this->stored), 0x0);

@@ -23,7 +23,6 @@ DCAPP_SOURCES := \
 	handle_keyboard.cc \
 	handle_mouse.cc \
 	handle_utils.cc \
-	keyValuePair.cc \
 	loadUtils.cc \
 	logic_stubs.cc \
 	msg.cc \

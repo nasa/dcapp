@@ -14,18 +14,10 @@ typedef struct
     char *filename;
 } textureInfo;
 
-typedef struct
-{
-    dcFont id;
-    const char *filename;
-    const char *face;
-    unsigned int basesize;
-} fontInfo;
-
 using namespace std;
 
 static list<textureInfo> textures;
-static list<fontInfo> fonts;
+static list<flFont *> fonts;
 static list<float> floatConstants;
 static list<int> integerConstants;
 static list<char *> stringConstants;
@@ -46,8 +38,6 @@ static char *getFullPath(const char *fname)
 
 dcTexture dcLoadTexture(const char *filename)
 {
-    if (!filename) return -1;
-
     char *fullpath = getFullPath(filename);
 
     if (!fullpath)
@@ -58,10 +48,10 @@ dcTexture dcLoadTexture(const char *filename)
 
     for (list<textureInfo>::iterator item = textures.begin(); item != textures.end(); item++)
     {
-        if (!strcmp((*item).filename, fullpath))
+        if (!strcmp(item->filename, fullpath))
         {
             free(fullpath);
-            return (*item).id;
+            return item->id;
         }
     }
 
@@ -72,10 +62,8 @@ dcTexture dcLoadTexture(const char *filename)
     return newtexture.id;
 }
 
-dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)
+flFont *dcLoadFont(const char *filename, const char *face, unsigned int basesize)
 {
-    if (!filename) return 0x0;
-
     char *fullpath = getFullPath(filename);
 
     if (!fullpath)
@@ -84,41 +72,30 @@ dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)
         return 0x0;
     }
 
-    for (list<fontInfo>::iterator item = fonts.begin(); item != fonts.end(); item++)
+    for (list<flFont *>::iterator item = fonts.begin(); item != fonts.end(); item++)
     {
-        if (!strcmp((*item).filename, fullpath) && ((*item).basesize == basesize))
+        if (!strcmp((*item)->getFileName(), fullpath) && ((*item)->getBaseSize() == basesize))
         {
-            if (!(*item).face && !face)
+            if (!face && !(*item)->getFaceName())
             {
                 free(fullpath);
-                return (*item).id;
+                return *item;
             }
-            else if ((*item).face && face)
+            else if (face && (*item)->getFaceName())
             {
-                if (!strcmp((*item).face, face))
+                if (!strcmp((*item)->getFaceName(), face))
                 {
                     free(fullpath);
-                    return (*item).id;
+                    return *item;
                 }
             }
         }
     }
 
-    fontInfo newfont;
-    newfont.id = flInitFont(fullpath, face, basesize);
-    newfont.filename = fullpath;
-    if (face) newfont.face = strdup(face);
-    else newfont.face = 0x0;
-    newfont.basesize = basesize;
-    fonts.push_back(newfont);
-
-    if (!(newfont.id))
-    {
-        error_msg("Could not load font " << filename);
-        return 0x0;
-    }
-
-    return newfont.id;
+    flFont *id = new flFont(fullpath, face, basesize);
+    if (!(id->isValid())) error_msg("Could not load font " << filename);
+    fonts.push_back(id);
+    return id;
 }
 
 float *dcLoadConstant(float fval)

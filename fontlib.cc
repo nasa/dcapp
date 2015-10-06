@@ -3,104 +3,105 @@
 #include <string.h>
 #include <strings.h>
 #include <ctype.h>
-#include "fontlibdefs.hh"
+#include "fontlib.hh"
+
+FT_Library flFont::library = 0;
 
 /*************************/
 /******** UNICODE ********/
 /*************************/
+
 #define UNI_REPLACEMENT_CHAR (UTF32)0x0000FFFD
 #define UNI_MAX_LEGAL_UTF32  (UTF32)0x0010FFFF
 #define UNI_SUR_HIGH_START   (UTF32)0xD800
 #define UNI_SUR_LOW_END      (UTF32)0xDFFF
 
-static const char trailingBytesForUTF8[256] =
+const char flFont::trailingBytesForUTF8[] =
 {
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5
+    0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+    1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1,
+    2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3, 4,4,4,4,5,5,5,5
 };
 
-static const UTF32 offsetsFromUTF8[6] = { 0x00000000UL, 0x00003080UL, 0x000E2080UL, 0x03C82080UL, 0xFA082080UL, 0x82082080UL };
+const UTF32 flFont::offsetsFromUTF8[] = { 0x00000000UL, 0x00003080UL, 0x000E2080UL, 0x03C82080UL, 0xFA082080UL, 0x82082080UL };
 
 /*************************/
 /******** UNICODE ********/
 /*************************/
 
-static void LoadGlyphInfo(GlyphInfo *, flFont *, UTF32);
-static GlyphInfo *GetGlyphInfo(flFont *, UTF32);
-static int ConvertUTF8toUTF32(UTF8 *, UTF32 *);
-static bool isLegalUTF8(const UTF8 *, int);
 
-
-flFont *flInitFont(const char *filename, const char *facespec, unsigned int basesize)
+flFont::flFont(const char *filespec, const char *facespec, unsigned int basesize)
+:
+face(0x0),
+kern_flag(false),
+filename(0x0),
+facename(0x0),
+basesize(0),
+descender(0),
+max_advance(0),
+max_advance_alnum(0),
+max_advance_numeric(0),
+valid(false)
 {
-    static flFont *myfont;
-    static FT_Library library = 0;
     int ret, i;
     FT_Face tmpface, newface = 0;
     UTF32 glyph;
+
+    if (filespec) this->filename = strdup(filespec);
+    if (facespec) this->facename = strdup(facespec);
+    this->basesize = basesize;
 
     if (!library)
     {
         if (FT_Init_FreeType(&library))
         {
             printf("ERROR: Couldn't initialize FreeType library\n");
-            return 0x0;
+            return;
         }
     }
 
-    myfont = (flFont *)calloc(1, sizeof(flFont));
-    if (!myfont)
-    {
-        printf("ERROR: Unable to allocate memory for font\n");
-        return 0x0;
-    }
-
-    ret = FT_New_Face(library, filename, 0, &(myfont->face));
+    ret = FT_New_Face(library, filespec, 0, &(this->face));
     if (ret == FT_Err_Unknown_File_Format)
     {
-        printf("ERROR: The font file %s appears to be in an unsupported format\n", filename);
-        return 0x0;
+        printf("ERROR: The font file %s appears to be in an unsupported format\n", filespec);
+        return;
     }
     else if (ret)
     {
-        printf("ERROR: The font file %s could not be opened or read\n", filename);
-        return 0x0;
+        printf("ERROR: The font file %s could not be opened or read\n", filespec);
+        return;
     }
+
+    this->valid = true;
 
     if (facespec)
     {
-        for (i = 0; i < myfont->face->num_faces && !newface; i++)
+        for (i = 0; i < this->face->num_faces && !newface; i++)
         {
-            FT_New_Face(library, filename, i, &tmpface);
+            FT_New_Face(library, filespec, i, &tmpface);
             if (!strcasecmp(facespec, tmpface->style_name)) newface = tmpface;
             else FT_Done_Face(tmpface);
         }
         if (newface)
         {
-            FT_Done_Face(myfont->face);
-            myfont->face = newface;
+            FT_Done_Face(this->face);
+            this->face = newface;
         }
     }
 
-    if (FT_Set_Pixel_Sizes(myfont->face, basesize, basesize))
+    if (FT_Set_Pixel_Sizes(this->face, basesize, basesize))
     {
         printf("ERROR: Unable to set pixel size\n");
     }
 
     // set font-wide settings here
-    myfont->kern_flag = FT_HAS_KERNING(myfont->face);
-    myfont->basesize = basesize;
-    myfont->descender = (float)(myfont->face->size->metrics.descender>>6);
-    myfont->max_advance = 0;
-    myfont->max_advance_alnum = 0;
-    myfont->max_advance_numeric = 0;
-    myfont->extras = 0;
+    this->kern_flag = FT_HAS_KERNING(this->face);
+    this->descender = (float)(this->face->size->metrics.descender>>6);
 
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -108,17 +109,24 @@ flFont *flInitFont(const char *filename, const char *facespec, unsigned int base
     glEnable(GL_BLEND);
 
     // pre-load commonly-used glyphs
-    for (glyph=PRELOAD_START; glyph<=PRELOAD_END; glyph++) LoadGlyphInfo(&(myfont->gdata[glyph]), myfont, glyph);
+    for (glyph=PRELOAD_START; glyph<=PRELOAD_END; glyph++) this->loadGlyphInfo(&(this->gdata[glyph]), glyph);
 
     glDisable(GL_BLEND);
     glDisable(GL_TEXTURE_2D);
-
-    return myfont;
 }
 
 
-float flGetFontAdvance(flFont *fontID, flMonoOption mono, char *string)
+flFont::~flFont()
 {
+    if (this->filename) free(this->filename);
+    if (this->facename) free(this->facename);
+}
+
+
+float flFont::getAdvance(const char *string, flMonoOption mono=flMonoNone)
+{
+    if (!(this->valid)) return 0;
+
     UTF8 *current = (UTF8 *)string;
     float adv = 0;
     UTF32 out;
@@ -126,39 +134,37 @@ float flGetFontAdvance(flFont *fontID, flMonoOption mono, char *string)
     FT_UInt myindex, previndex = 0;
     FT_Vector kern;
 
-    if (!fontID) return 0;
-
     while (*current)
     {
-        current += ConvertUTF8toUTF32(current, &out);
+        current += this->convertUTF8toUTF32(current, &out);
 
         if (mono == flMonoAll)
         {
-            adv += fontID->max_advance;
-            if (fontID->kern_flag) previndex = 0;
+            adv += this->max_advance;
+            if (this->kern_flag) previndex = 0;
         }
         else if (mono == flMonoAlphaNumeric && isalnum(out))
         {
-            adv += fontID->max_advance_alnum;
-            if (fontID->kern_flag) previndex = 0;
+            adv += this->max_advance_alnum;
+            if (this->kern_flag) previndex = 0;
         }
         else if (mono == flMonoNumeric && isdigit(out))
         {
-            adv += fontID->max_advance_numeric;
-            if (fontID->kern_flag) previndex = 0;
+            adv += this->max_advance_numeric;
+            if (this->kern_flag) previndex = 0;
         }
         else
         {
-            ginfo = GetGlyphInfo(fontID, out);
+            ginfo = this->getGlyphInfo(out);
 
             if (ginfo) adv += ginfo->advance;
 
-            if (fontID->kern_flag)
+            if (this->kern_flag)
             {
-                myindex = FT_Get_Char_Index(fontID->face, out);
+                myindex = FT_Get_Char_Index(this->face, out);
                 if (myindex)
                 {
-                    FT_Get_Kerning(fontID->face, previndex, myindex, FT_KERNING_DEFAULT, &kern);
+                    FT_Get_Kerning(this->face, previndex, myindex, FT_KERNING_DEFAULT, &kern);
                     adv += (float)(kern.x>>6);
                 }
                 previndex = myindex;
@@ -170,23 +176,39 @@ float flGetFontAdvance(flFont *fontID, flMonoOption mono, char *string)
 }
 
 
-float flGetFontDescender(flFont *fontID)
+float flFont::getDescender(void)
 {
-    if (fontID) return fontID->descender;
-    else return 0;
+    return this->descender;
 }
 
 
-unsigned int flGetFontBaseSize(flFont *fontID)
+bool flFont::isValid(void)
 {
-    if (fontID) return fontID->basesize;
-    else return 0;
+    return this->valid;
 }
 
 
-void flRenderFont(flFont *fontID, flMonoOption mono, char *string)
+const char * flFont::getFileName(void)
 {
-    if (!fontID) return;
+    return this->filename;
+}
+
+
+const char * flFont::getFaceName(void)
+{
+    return this->facename;
+}
+
+
+unsigned int flFont::getBaseSize(void)
+{
+    return this->basesize;
+}
+
+
+void flFont::render(const char *string, flMonoOption mono=flMonoNone)
+{
+    if (!(this->valid)) return;
 
     UTF8 *current = (UTF8 *)string;
     UTF32 out;
@@ -199,22 +221,22 @@ void flRenderFont(flFont *fontID, flMonoOption mono, char *string)
 
     while (*current)
     {
-        current += ConvertUTF8toUTF32(current, &out);
+        current += this->convertUTF8toUTF32(current, &out);
 
-        ginfo = GetGlyphInfo(fontID, out);
+        ginfo = this->getGlyphInfo(out);
         if (ginfo)
         {
             glTranslatef(ginfo->bitmap_left, ginfo->bitmap_top, 0);
-            if (fontID->kern_flag)
+            if (this->kern_flag)
             {
                 if (mono == flMonoAll || (mono == flMonoAlphaNumeric && isalnum(out)) || (mono == flMonoNumeric && isdigit(out)))
                     previndex = 0;
                 else
                 {
-                    myindex = FT_Get_Char_Index(fontID->face, out);
+                    myindex = FT_Get_Char_Index(this->face, out);
                     if (myindex)
                     {
-                        FT_Get_Kerning(fontID->face, previndex, myindex, FT_KERNING_DEFAULT, &kern);
+                        FT_Get_Kerning(this->face, previndex, myindex, FT_KERNING_DEFAULT, &kern);
                         glTranslatef((float)(kern.x>>6), 0, 0);
                     }
                     previndex = myindex;
@@ -236,11 +258,11 @@ void flRenderFont(flFont *fontID, flMonoOption mono, char *string)
             glEnd();
 
             if (mono == flMonoAll)
-                glTranslatef(fontID->max_advance - ginfo->bitmap_left, -ginfo->bitmap_top, 0);
+                glTranslatef(this->max_advance - ginfo->bitmap_left, -ginfo->bitmap_top, 0);
             else if (mono == flMonoAlphaNumeric && isalnum(out))
-                glTranslatef(fontID->max_advance_alnum - ginfo->bitmap_left, -ginfo->bitmap_top, 0);
+                glTranslatef(this->max_advance_alnum - ginfo->bitmap_left, -ginfo->bitmap_top, 0);
             else if (mono == flMonoNumeric && isdigit(out))
-                glTranslatef(fontID->max_advance_numeric - ginfo->bitmap_left, -ginfo->bitmap_top, 0);
+                glTranslatef(this->max_advance_numeric - ginfo->bitmap_left, -ginfo->bitmap_top, 0);
             else
                 glTranslatef(ginfo->advance - ginfo->bitmap_left, -ginfo->bitmap_top, 0);
         }
@@ -251,13 +273,13 @@ void flRenderFont(flFont *fontID, flMonoOption mono, char *string)
 }
 
 
-static void LoadGlyphInfo(GlyphInfo *ginfo, flFont *fontID, UTF32 index)
+void flFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
 {
     int i, j;
     unsigned char bitmap[64][64];
 
-    FT_Load_Char(fontID->face, index, FT_LOAD_RENDER);
-    FT_GlyphSlot slot = fontID->face->glyph;
+    FT_Load_Char(this->face, index, FT_LOAD_RENDER);
+    FT_GlyphSlot slot = this->face->glyph;
 
     glGenTextures(1, &(ginfo->texture));
     glBindTexture(GL_TEXTURE_2D, ginfo->texture);
@@ -286,45 +308,33 @@ static void LoadGlyphInfo(GlyphInfo *ginfo, flFont *fontID, UTF32 index)
     ginfo->height = slot->bitmap.rows;
     ginfo->advance = (float)(slot->advance.x>>6);
 
-    if (ginfo->advance > fontID->max_advance) fontID->max_advance = ginfo->advance;
-    if (isalnum(index) && ginfo->advance > fontID->max_advance_alnum) fontID->max_advance_alnum = ginfo->advance;
-    if (isdigit(index) && ginfo->advance > fontID->max_advance_numeric) fontID->max_advance_numeric = ginfo->advance;
+    if (ginfo->advance > this->max_advance) this->max_advance = ginfo->advance;
+    if (isalnum(index) && ginfo->advance > this->max_advance_alnum) this->max_advance_alnum = ginfo->advance;
+    if (isdigit(index) && ginfo->advance > this->max_advance_numeric) this->max_advance_numeric = ginfo->advance;
 }
 
 
-static GlyphInfo *GetGlyphInfo(flFont *fontID, UTF32 index)
+GlyphInfo * flFont::getGlyphInfo(UTF32 index)
 {
     // first, check our pre-load list
-    if (index >= PRELOAD_START && index <= PRELOAD_END) return (&(fontID->gdata[index]));
+    if (index >= PRELOAD_START && index <= PRELOAD_END) return (&(this->gdata[index]));
 
     // if not in the pre-load list, check the extras list
-    GlyphNode *current;
-
-    for (current = fontID->extras; current; current = current->next)
-    {
-        if (current->gdata.index == index) return &(current->gdata);
-    }
-
-    // if we got here, we didn't find the glyph in extras, so learn it and load it into extras
+    if (extras.find(index) != extras.end()) return extras[index];
 
     // if not in either list, learn it and load it into extras
-    GlyphNode **newnode;
-
-    for (newnode = &(fontID->extras); *newnode != 0; newnode = &((*newnode)->next));
-
-    *newnode = (GlyphNode *)calloc(1, sizeof(GlyphNode));
-    LoadGlyphInfo(&((*newnode)->gdata), fontID, index);
-    (*newnode)->next = 0;
-
-    return &((*newnode)->gdata);
+    GlyphInfo *newglyph = new GlyphInfo;        
+    this->loadGlyphInfo(newglyph, index);
+    extras[index] = newglyph;
+    return newglyph;
 }
 
 
-static int ConvertUTF8toUTF32(UTF8 *source, UTF32 *dest)
+int flFont::convertUTF8toUTF32(UTF8 *source, UTF32 *dest)
 {
     unsigned short extraBytesToRead = trailingBytesForUTF8[*source];
 
-    if (isLegalUTF8(source, extraBytesToRead+1))
+    if (this->isLegalUTF8(source, extraBytesToRead+1))
     {
         *dest = 0;
         switch (extraBytesToRead)
@@ -346,46 +356,33 @@ static int ConvertUTF8toUTF32(UTF8 *source, UTF32 *dest)
 }
 
 
-static bool isLegalUTF8(const UTF8 *source, int length)
+bool flFont::isLegalUTF8(const UTF8 *source, int length)
 {
     UTF8 a;
     const UTF8 *srcptr = source+length;
 
     switch (length)
     {
-    default:
-        return false;
-        /* Everything else falls through when "true"... */
-    case 4:
-        if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
-    case 3:
-        if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
-    case 2:
-        if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
+        default: return false;
+            /* Everything else falls through when "true"... */
+        case 4: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
+        case 3: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
+        case 2: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
 
-        switch (*source)
-        {
-            /* no fall-through in this inner switch */
-            case 0xE0:
-                if (a < 0xA0) return false;
-                break;
-            case 0xED:
-                if (a > 0x9F) return false;
-                break;
-            case 0xF0:
-                if (a < 0x90) return false;
-                break;
-            case 0xF4:
-                if (a > 0x8F) return false;
-                break;
-            default:
-                if (a < 0x80) return false;
-        }
+            switch (*source)
+            {
+                /* no fall-through in this inner switch */
+                case 0xE0: if (a < 0xA0) return false; break;
+                case 0xED: if (a > 0x9F) return false; break;
+                case 0xF0: if (a < 0x90) return false; break;
+                case 0xF4: if (a > 0x8F) return false; break;
+                default:   if (a < 0x80) return false;
+            }
 
-    case 1:
-        if (*source >= 0x80 && *source < 0xC2) return false;
+        case 1: if (*source >= 0x80 && *source < 0xC2) return false;
     }
 
     if (*source > 0xF4) return false;
+
     return true;
 }

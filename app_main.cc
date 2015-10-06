@@ -16,7 +16,6 @@
 #include "string_utils.hh"
 #include "msg.hh"
 #include "timer.hh"
-#include "keyValuePair.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
@@ -270,12 +269,7 @@ static void ProcessArgs(int argc, char **argv)
         while (strptr < (args + strlen(args)))
         {
             count = sscanf(strptr, "%[^= ]=%s", key, value);
-            if (count == 2)
-            {
-                KeyValuePair *kvp = new KeyValuePair;
-                kvp->setKeyAndValue(key, value);
-                AppData.arglist.push_front(kvp);
-            }
+            if (count == 2) AppData.arglist[std::string(key)] = std::string(value);
             if (count >= 1) strptr += strlen(key);
             if (count == 2) strptr += strlen(value) + 1;
             while (strptr < (args + strlen(args)) && *strptr == ' ') strptr++;
@@ -285,7 +279,6 @@ static void ProcessArgs(int argc, char **argv)
         free(value);
     }
 
-    varlist_init();
     if (ParseXMLFile(specfile)) Terminate(-1);
 
     /* On the Mac, store arguments to use as defaults the next time the app is run */

@@ -124,11 +124,6 @@ void new_window(bool fullscreen, int OriginX, int OriginY, int SizeX, int SizeY,
     AppData.window->object.win.active_display = getIntegerPointer(activedisp);
 }
 
-void new_panels(char *var)
-{
-    AppData.window->object.win.active_display = getIntegerPointer(var);
-}
-
 struct node *new_panel(char *index, char *colorspec, char *vwidth, char *vheight)
 {
     struct node *data = NewList(AppData.window);
@@ -239,9 +234,11 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
     data->object.string.color = StrToColor(color, 1, 1, 1, 1);
     if (bgcolor)
     {
-        data->object.string.background = 1;
+        data->object.string.background = true;
         data->object.string.bgcolor = StrToColor(bgcolor, 0, 0, 0, 1);
     }
+    else
+        data->object.string.background = false;
     data->object.string.shadowOffset = getFloatPointer(shadowoffset);
     data->object.string.fontID = dcLoadFont(font, face);
 

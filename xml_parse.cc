@@ -17,7 +17,6 @@
 #include "string_utils.hh"
 #include "xml_utils.hh"
 #include "msg.hh"
-#include "keyValuePair.hh"
 
 struct xmlStyle
 {
@@ -26,7 +25,6 @@ struct xmlStyle
 };
 
 extern void new_window(bool, int, int, int, int, char *);
-extern void new_panels(char *);
 extern struct node *new_panel(char *, char *, char *, char *);
 extern struct node *new_container(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *);
 extern struct node *new_isequal(struct node *, struct node **, const char *, char *, const char *);
@@ -62,7 +60,7 @@ static int process_elements(struct node *, struct node **, xmlNodePtr);
 static char *get_node_content(xmlNodePtr);
 static char *get_element_data(xmlNodePtr, const char *);
 static void replace_string(char **);
-static char *get_constval(char *);
+static const char *get_constval(char *);
 static xmlNodePtr GetSubList(xmlNodePtr, char *, char *, char *);
 
 extern appdata AppData;
@@ -70,7 +68,7 @@ extern appdata AppData;
 static TrickCommModule *trickcomm = 0x0;
 static EdgeCommModule *edgecomm = 0x0;
 static CcsdsUdpCommModule *ccsdsudpcomm = 0x0;
-static std::list<KeyValuePair *> ppclist;
+static ConstantsList ppclist;
 static std::list<xmlNodePtr> xmldefaults;
 static std::list<struct xmlStyle> xmlstyles;
 static char *switchid, *switchonval, *switchoffval, *indid, *indonval, *activeid, *activetrueval, *transitionid, *key, *keyascii, *bezelkey;
@@ -109,13 +107,8 @@ int ParseXMLFile(char *fullpath)
     if (process_elements(0, 0, root_element->children)) return (-1);
 
     // Clean the lists that we created during preprocessing
-    std::list<KeyValuePair *>::iterator kvp;
-
-    for (kvp = AppData.arglist.begin(); kvp != AppData.arglist.end(); kvp++) delete *kvp;
     AppData.arglist.clear();
-    for (kvp = ppclist.begin(); kvp != ppclist.end(); kvp++) delete *kvp;
     ppclist.clear();
-
     xmlstyles.clear();
     xmldefaults.clear();
 
@@ -142,9 +135,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "Dummy")) process_elements(parent, list, node->children);
         if (NodeCheck(node, "Constant"))
         {
-            KeyValuePair *kvp = new KeyValuePair;
-            kvp->setKeyAndValue(get_element_data(node, "Name"), get_node_content(node));
-            ppclist.push_front(kvp);
+            ppclist[std::string(get_element_data(node, "Name"))] = std::string(get_node_content(node));
         }
         if (NodeCheck(node, "Style"))
         {
@@ -397,12 +388,6 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             process_elements(0, 0, node->children);
         }
         // TODO: remove "Panels" - the functionality is already provided by "Window"
-        if (NodeCheck(node, "Panels"))
-        {
-            new_panels(get_element_data(node, "ActiveDisplay"));
-            process_elements(0, 0, node->children);
-        }
-
         if (NodeCheck(node, "Panel"))
         {
             struct node *panelID = new_panel(get_element_data(node, "DisplayIndex"),
@@ -806,9 +791,9 @@ static char *get_element_data(xmlNodePtr innode, const char *key)
         std::list<struct xmlStyle>::iterator xmls;
         for (xmls = xmlstyles.begin(); xmls != xmlstyles.end(); xmls++)
         {
-            if (NodeCheck((*xmls).node, type) && !strcmp((*xmls).name, style))
+            if (NodeCheck(xmls->node, type) && !strcmp(xmls->name, style))
             {
-                retval = get_XML_attribute_address((*xmls).node, key);
+                retval = get_XML_attribute_address(xmls->node, key);
                 if (retval)
                 {
                     if (*retval)
@@ -846,7 +831,8 @@ static char *get_element_data(xmlNodePtr innode, const char *key)
 static void replace_string(char **instr)
 {
     int count = 0, i, j, len, outlen, repl_len, in_start, in_end, start, end, outptr = 0;
-    char *in_val, *repl_val = 0x0, *outstr = 0x0;
+    char *in_val, *outstr = 0x0;
+    const char *repl_val;
 
     if (!instr) return;
     if (!(*instr)) return;
@@ -934,21 +920,13 @@ static void replace_string(char **instr)
     }
 }
 
-static char *get_constval(char *instr)
+static const char *get_constval(char *instr)
 {
-    std::list<KeyValuePair *>::iterator kvp;
-
     // First, check arguments list...
-    for (kvp = AppData.arglist.begin(); kvp != AppData.arglist.end(); kvp++)
-    {
-        if (!strcmp((*kvp)->getKey(), instr)) return (*kvp)->getValue();
-    }
+    if (AppData.arglist.find(instr) != AppData.arglist.end()) return AppData.arglist[instr].c_str();
 
     // Then, check to see if the constant has been set in the XML file hierarchy...
-    for (kvp = ppclist.begin(); kvp != ppclist.end(); kvp++)
-    {
-        if (!strcmp((*kvp)->getKey(), instr)) return (*kvp)->getValue();
-    }
+    if (ppclist.find(instr) != ppclist.end()) return ppclist[instr].c_str();
 
     // If no match found in either list, return NULL
     return 0x0;

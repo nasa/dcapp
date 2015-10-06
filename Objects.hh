@@ -3,14 +3,17 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 #include <list>
+#include <map>
 #include "dc.hh"
 #include "fontlib.hh"
 #include "timer.hh"
 #include "comm.hh"
 #include "PixelStream.hh"
 #include "animation.hh"
-#include "keyValuePair.hh"
+
+typedef std::map<std::string, std::string> ConstantsList;
 
 typedef enum {
     Empty,
@@ -124,11 +127,11 @@ struct Polygon
 
 struct String
 {
-    dcFont fontID;
+    flFont *fontID;
     float *fontSize;
     struct kolor color;
     struct kolor bgcolor;
-    int background;
+    bool background;
     float *shadowOffset;
     char *format;
     int datatype;
@@ -224,7 +227,7 @@ typedef struct
     std::list<Animation *> animators;
     std::list<CommModule *> commlist;
     std::list<PixelStreamData *> pixelstreams;
-    std::list<KeyValuePair *> arglist;
+    ConstantsList arglist;
     int *canbus_inhibited;
     struct node *window;
     void (*DisplayPreInit)(void *(*)(const char *));

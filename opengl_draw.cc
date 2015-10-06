@@ -97,20 +97,21 @@ void get_image_pixel_RGBA(unsigned char rgba[], unsigned int textureID, float xp
 float get_string_width(flFont *fontID, float size, flMonoOption mono, char *string)
 {
     if (!fontID || !string) return 0;
-    return flGetFontAdvance(fontID, mono, string) * size / flGetFontBaseSize(fontID);
+    return fontID->getAdvance(string, mono) * size / fontID->getBaseSize();
 }
 
 void draw_string(float xpos, float ypos, float size, float red, float green, float blue, float alpha, flFont *fontID, flMonoOption mono, char *string)
 {
-    float scale = size / flGetFontBaseSize(fontID);
+    if (!fontID || !string) return;
+    float scale = size / fontID->getBaseSize();
     glColor4f(red, green, blue, alpha);
     glPushMatrix();
         glEnable(GL_TEXTURE_2D);                                       // Enable Texture Mapping
         glEnable(GL_BLEND);                                            // Blend the transparent part with the background
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glTranslatef(xpos, ypos-(flGetFontDescender(fontID)*scale), 0);
+        glTranslatef(xpos, ypos - (fontID->getDescender() * scale), 0);
         glScalef(scale, scale, 0);
-        flRenderFont(fontID, mono, string);
+        fontID->render(string, mono);
         glDisable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
     glPopMatrix();
