@@ -308,6 +308,8 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "CcsdsUdpIo"))
         {
             ccsdsudpcomm = new CcsdsUdpCommModule;
+            char *connectedvariable = get_element_data(node, "ConnectedVariable");
+            if (connectedvariable) ccsdsudpcomm->activeID = (int *)get_pointer(&connectedvariable[1]);
             process_elements(0, 0, node->children);
             AppData.commlist.push_back(ccsdsudpcomm);
         }

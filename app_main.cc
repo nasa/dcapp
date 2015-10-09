@@ -16,10 +16,9 @@
 #include "string_utils.hh"
 #include "msg.hh"
 #include "timer.hh"
+#include "utils.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
-
-#define TIDY(a) if (a) { free(a); a=0x0; }
 
 extern void mainloop(void);
 extern void UpdateDisplay(void);

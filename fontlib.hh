@@ -1,6 +1,7 @@
 #ifndef _FONTLIB_HH_
 #define _FONTLIB_HH_
 
+#include <string>
 #include <map>
 #include <GL/glu.h>
 #include <ft2build.h>
@@ -36,8 +37,8 @@ class flFont
         float getAdvance(const char *, flMonoOption);
         float getDescender(void);
         bool isValid(void);
-        const char *getFileName(void);
-        const char *getFaceName(void);
+        std::string getFileName(void);
+        std::string getFaceName(void);
         unsigned int getBaseSize(void);
         void render(const char *, flMonoOption);
     private:
@@ -47,8 +48,8 @@ class flFont
 
         FT_Face face;
         FT_Bool kern_flag;
-        char *filename;
-        char *facename;
+        std::string filename;
+        std::string facename;
         FT_UInt basesize;
         float descender;
         float max_advance;

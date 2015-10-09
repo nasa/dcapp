@@ -37,16 +37,16 @@
 #include <unistd.h>
 #include "msg.hh"
 #include "timer.hh"
+#include "utils.hh"
 #include "ccsds_udp_comm.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
-#define TIDY(a) if (a) { free(a); a=0x0; }
 
 CcsdsUdpCommModule::CcsdsUdpCommModule()
 #ifdef CCSDSUDPACTIVE
 :
-read_active(0),
-write_active(0),
+read_active(false),
+write_active(false),
 DCAPP_UDPRX_ADDR(0x0),
 DCAPP_UDPRX_PORT(DEFAULT_PORT),
 DCAPP_UDPSEND_ADDR(0x0),
@@ -92,7 +92,7 @@ CommModule::CommStatus CcsdsUdpCommModule::read(void)
         {
             case (CCSDSIO_IO_ERROR):
             case (CCSDSIO_PARSE_ERROR):
-                this->read_active = 0; // stop reading
+                this->read_active = false; // stop reading
                 return this->Fail;
             case (CCSDSIO_NO_NEW_DATA):
             case (CCSDSIO_NOT_CCSDS):
@@ -102,7 +102,7 @@ CommModule::CommStatus CcsdsUdpCommModule::read(void)
                 return this->Success;
             default:
                 error_msg("ccsds reader switch status logic error, status=" << readstatus);
-                this->read_active = 0; // stop reading
+                this->read_active = false; // stop reading
                 return this->Fail;
         }
     }
@@ -191,7 +191,7 @@ void CcsdsUdpCommModule::read_connect(void)
     }
     this->udpRX_timer->restart();
     debug_msg("ccsds_udp opened socket for reading telemetry");
-    this->read_active = 1;
+    this->read_active = true;
 }
 
 
@@ -229,7 +229,7 @@ void CcsdsUdpCommModule::write_connect(void)
     }
 
     debug_msg("ccsds_udp opened socket for sending commands");
-    this->write_active = 1;
+    this->write_active = true;
 }
 
 
@@ -316,12 +316,12 @@ void CcsdsUdpCommModule::write_initialize(char *hostspec, int portspec)
 #endif
 
 
-int CcsdsUdpCommModule::isActive(void)
+bool CcsdsUdpCommModule::isActive(void)
 {
 #ifdef CCSDSUDPACTIVE
-    if (this->read_active || this->write_active) return 1;
-    else return 0;
+    if (this->read_active || this->write_active) return true;
+    else return false;
 #else
-    return 0;
+    return false;
 #endif
 }

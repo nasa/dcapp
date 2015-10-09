@@ -1,7 +1,7 @@
 #ifndef _EDGEIO_HH_
 #define _EDGEIO_HH_
 
-#include <sys/time.h>
+#include <list>
 #include "comm.hh"
 #include "EDGE_rcs.hh"
 #include "varlist.hh"
@@ -19,7 +19,7 @@ class EdgeCommModule : public CommModule
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
         void flagAsChanged(void *);
-        int isActive(void);
+        bool isActive(void);
 
         int addParameter(int, const char *, const char *);
         int finishInitialization(char *, char *, float);
@@ -39,16 +39,9 @@ class EdgeCommModule : public CommModule
             bool forcewrite;
         } io_parameter;
 
-        typedef struct
-        {
-            int count;
-            int allocated_elements;
-            io_parameter *data;
-        } io_parameter_list;
-
-        int active;
-        io_parameter_list fromedge;
-        io_parameter_list toedge;
+        bool active;
+        std::list<io_parameter> fromEdge;
+        std::list<io_parameter> toEdge;
         Timer *last_connect_attempt;
         Timer *edge_timer;
         float update_rate;

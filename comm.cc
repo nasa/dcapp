@@ -25,7 +25,7 @@ void CommModule::flagAsChanged(void *)
     return;
 }
 
-int CommModule::isActive(void)
+bool CommModule::isActive(void)
 {
-    return 0;
+    return false;
 }

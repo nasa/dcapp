@@ -2,6 +2,7 @@
 #include <string.h>
 #include <strings.h>
 #include <limits.h>
+#include <string>
 #include <list>
 #include "dc.hh"
 #include "msg.hh"
@@ -17,7 +18,7 @@ typedef struct
 using namespace std;
 
 static list<textureInfo> textures;
-static list<flFont *> fonts;
+static list<dcFont> fonts;
 static list<float> floatConstants;
 static list<int> integerConstants;
 static list<char *> stringConstants;
@@ -62,7 +63,7 @@ dcTexture dcLoadTexture(const char *filename)
     return newtexture.id;
 }
 
-flFont *dcLoadFont(const char *filename, const char *face, unsigned int basesize)
+dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)
 {
     char *fullpath = getFullPath(filename);
 
@@ -72,18 +73,18 @@ flFont *dcLoadFont(const char *filename, const char *face, unsigned int basesize
         return 0x0;
     }
 
-    for (list<flFont *>::iterator item = fonts.begin(); item != fonts.end(); item++)
+    for (list<dcFont>::iterator item = fonts.begin(); item != fonts.end(); item++)
     {
-        if (!strcmp((*item)->getFileName(), fullpath) && ((*item)->getBaseSize() == basesize))
+        if (((*item)->getFileName() == fullpath) && ((*item)->getBaseSize() == basesize))
         {
-            if (!face && !(*item)->getFaceName())
+            if (!face && (*item)->getFaceName().empty())
             {
                 free(fullpath);
                 return *item;
             }
-            else if (face && (*item)->getFaceName())
+            else if (face && !((*item)->getFaceName().empty()))
             {
-                if (!strcmp((*item)->getFaceName(), face))
+                if ((*item)->getFaceName() == face)
                 {
                     free(fullpath);
                     return *item;
@@ -92,7 +93,7 @@ flFont *dcLoadFont(const char *filename, const char *face, unsigned int basesize
         }
     }
 
-    flFont *id = new flFont(fullpath, face, basesize);
+    dcFont id = new flFont(fullpath, face, basesize);
     if (!(id->isValid())) error_msg("Could not load font " << filename);
     fonts.push_back(id);
     return id;

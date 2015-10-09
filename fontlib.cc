@@ -39,8 +39,6 @@ flFont::flFont(const char *filespec, const char *facespec, unsigned int basesize
 :
 face(0x0),
 kern_flag(false),
-filename(0x0),
-facename(0x0),
 basesize(0),
 descender(0),
 max_advance(0),
@@ -52,8 +50,8 @@ valid(false)
     FT_Face tmpface, newface = 0;
     UTF32 glyph;
 
-    if (filespec) this->filename = strdup(filespec);
-    if (facespec) this->facename = strdup(facespec);
+    if (filespec) this->filename = filespec;
+    if (facespec) this->facename = facespec;
     this->basesize = basesize;
 
     if (!library)
@@ -118,8 +116,7 @@ valid(false)
 
 flFont::~flFont()
 {
-    if (this->filename) free(this->filename);
-    if (this->facename) free(this->facename);
+    FT_Done_Face(this->face);
 }
 
 
@@ -188,13 +185,13 @@ bool flFont::isValid(void)
 }
 
 
-const char * flFont::getFileName(void)
+std::string flFont::getFileName(void)
 {
     return this->filename;
 }
 
 
-const char * flFont::getFaceName(void)
+std::string flFont::getFaceName(void)
 {
     return this->facename;
 }

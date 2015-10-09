@@ -56,8 +56,8 @@ class VariableServerComm
         int paramcount;
 
         void sim_read(void);
-        void sim_write_const(const char *);
         void sim_write(char *);
+        void sim_write(const char *);
         int update_data(char *);
         int count_tokens(const char *, char);
         int find_next_token(const char *, char);

@@ -62,7 +62,7 @@ class CcsdsUdpCommModule : public CommModule
 
         void read_initialize(char *, int, int, float, bool);
         void write_initialize(char *, int);
-        int isActive(void);
+        bool isActive(void);
 
     private:
 #ifdef CCSDSUDPACTIVE
@@ -76,8 +76,8 @@ class CcsdsUdpCommModule : public CommModule
             CCSDSIO_WRONG_CCSDS = 6     // A CCSDS message was received, but it wasn't what we wanted
         } dcapp_ccsds_udp_io;
 
-        int read_active;
-        int write_active;
+        bool read_active;
+        bool write_active;
         Timer *last_read_try;
         Timer *last_write_try;
         Timer *udpRX_timer;

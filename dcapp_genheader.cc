@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <libgen.h>
-#include <iostream>
+#include <string>
 #include <list>
 #include "msg.hh"
 #include "xml_utils.hh"

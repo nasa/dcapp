@@ -10,9 +10,8 @@ Programmer: M. McFarlane, March 2005
 #include <strings.h>
 #include <ctype.h>
 #include <sys/utsname.h>
+#include "utils.hh"
 #include "vscomm.hh"
-
-#define TIDY(a) if (a) { free(a); a=0x0; }
 
 VariableServerComm::VariableServerComm()
 :
@@ -32,8 +31,8 @@ VariableServerComm::~VariableServerComm()
 
     if (this->connection.disabled == TC_COMM_ENABLED)
     {
-        this->sim_write_const("trick.var_clear()\n");
-        this->sim_write_const("trick.var_exit()\n");
+        this->sim_write("trick.var_clear()\n");
+        this->sim_write("trick.var_exit()\n");
         tc_disconnect(&(this->connection));
     }
 
@@ -155,13 +154,13 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
 #if 0
     int new_bytes;
     char *trickver;
-    this->sim_write_const("trick.var_add(\"trick_sys.sched.current_version\")\n");
-    this->sim_write_const("trick.var_send()\n");
+    this->sim_write("trick.var_add(\"trick_sys.sched.current_version\")\n");
+    this->sim_write("trick.var_send()\n");
     while (!tc_pending(&(this->connection))) continue;
     new_bytes = tc_pending(&(this->connection));
     this->databuf = (char *)malloc(new_bytes);
     tc_read(&(this->connection), this->databuf, new_bytes);
-    this->sim_write_const("trick.var_clear()\n");
+    this->sim_write("trick.var_clear()\n");
     trickver = (char *)malloc(new_bytes);
     sscanf(this->databuf, "0\t%s\n", trickver);
     user_msg("Trick Version = " << trickver);
@@ -173,7 +172,7 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
         if (asprintf(&cmd, "trick.var_add(\"%s\")\n", rate_spec) == -1) return VS_ERROR;
         this->sim_write(cmd);
         TIDY(cmd);
-        this->sim_write_const("trick.var_send()\n");
+        this->sim_write("trick.var_send()\n");
 
         // block until sim returns rate_spec
         while (!(this->databuf_complete)) this->sim_read();
@@ -188,7 +187,7 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
             }
         }
         sample_rate = this->databuf + this->find_next_token(this->databuf, '\t') + 1;
-        this->sim_write_const("trick.var_clear()\n");
+        this->sim_write("trick.var_clear()\n");
     }
     else
     {
@@ -199,7 +198,7 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
         if (!sample_rate) sample_rate = default_sample_rate;
     }
 
-    this->sim_write_const("trick.var_pause()\n");
+    this->sim_write("trick.var_pause()\n");
 
     for (pstruct = this->parray; pstruct; pstruct = pstruct->next)
     {
@@ -218,8 +217,8 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
     if (asprintf(&cmd, "trick.var_cycle(%s)\n", sample_rate) == -1) return VS_ERROR;
     this->sim_write(cmd);
 
-//    this->sim_write_const("trick.var_debug(1)\n"); // FOR DEBUGGING
-    this->sim_write_const("trick.var_unpause()\n");
+//    this->sim_write("trick.var_debug(1)\n"); // FOR DEBUGGING
+    this->sim_write("trick.var_unpause()\n");
 
     TIDY(cmd);
     TIDY(default_sample_rate);
@@ -298,16 +297,17 @@ void VariableServerComm::sim_read(void)
     if (this->count_tokens(this->databuf, '\n')) this->databuf_complete = 1;
 }
 
-void VariableServerComm::sim_write_const(const char *cmd)
+void VariableServerComm::sim_write(char *cmd)
+{
+    tc_write(&(this->connection), cmd, strlen(cmd));
+}
+
+// If tc_write is ever updated to take "const char *" as input, then this ugly work-around can be removed
+void VariableServerComm::sim_write(const char *cmd)
 {
     char *dyncmd = strdup(cmd);
     tc_write(&(this->connection), dyncmd, strlen(cmd));
     TIDY(dyncmd);
-}
-
-void VariableServerComm::sim_write(char *cmd)
-{
-    tc_write(&(this->connection), cmd, strlen(cmd));
 }
 
 int VariableServerComm::update_data(char *curbuf)

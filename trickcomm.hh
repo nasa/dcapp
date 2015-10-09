@@ -1,6 +1,7 @@
 #ifndef _TRICKCOMM_HH_
 #define _TRICKCOMM_HH_
 
+#include <list>
 #include "comm.hh"
 #ifdef TRICKACTIVE
 #include "vscomm.hh"
@@ -20,11 +21,11 @@ class TrickCommModule : public CommModule
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
         void flagAsChanged(void *);
-        int isActive(void);
+        bool isActive(void);
 
-        void setHost(char *);
+        void setHost(const char *);
         void setPort(int);
-        void setDataRate(char *);
+        void setDataRate(const char *);
         void setReconnectOnDisconnect(void);
         int addParameter(int, const char *, const char *, const char *, const char *, int);
         void finishInitialization(void);
@@ -47,14 +48,8 @@ class TrickCommModule : public CommModule
             bool init_only;
             int method;
         } io_parameter;
-        typedef struct
-        {
-            int count;
-            int allocated_elements;
-            TrickCommModule::io_parameter *data;
-        } io_parameter_list;
 
-        int active;
+        bool active;
 #ifdef TRICKACTIVE
         Timer *last_connect_attempt;
         VariableServerComm *tvs;
@@ -63,8 +58,8 @@ class TrickCommModule : public CommModule
         int port;
         char *datarate;
         TrickCommModule::DisconnectAction disconnectaction;
-        TrickCommModule::io_parameter_list fromsim;
-        TrickCommModule::io_parameter_list tosim;
+        std::list<io_parameter> fromSim;
+        std::list<io_parameter> toSim;
 
         void activate(void);
 };
