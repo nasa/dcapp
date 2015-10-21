@@ -94,13 +94,13 @@ void get_image_pixel_RGBA(unsigned char rgba[], unsigned int textureID, float xp
     for (i=0; i<4; i++) rgba[i] = mypixels[pixy][pixx][i];
 }
 
-float get_string_width(flFont *fontID, float size, flMonoOption mono, char *string)
+float get_string_width(flFont *fontID, float size, flMonoOption mono, const char *string)
 {
     if (!fontID || !string) return 0;
     return fontID->getAdvance(string, mono) * size / fontID->getBaseSize();
 }
 
-void draw_string(float xpos, float ypos, float size, float red, float green, float blue, float alpha, flFont *fontID, flMonoOption mono, char *string)
+void draw_string(float xpos, float ypos, float size, float red, float green, float blue, float alpha, flFont *fontID, flMonoOption mono, const char *string)
 {
     if (!fontID || !string) return;
     float scale = size / fontID->getBaseSize();

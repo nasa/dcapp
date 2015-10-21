@@ -389,7 +389,6 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                        get_element_data(node, "ActiveDisplay"));
             process_elements(0, 0, node->children);
         }
-        // TODO: remove "Panels" - the functionality is already provided by "Window"
         if (NodeCheck(node, "Panel"))
         {
             struct node *panelID = new_panel(get_element_data(node, "DisplayIndex"),

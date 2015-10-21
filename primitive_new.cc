@@ -7,6 +7,8 @@
 #include "dc.hh"
 #include "varlist.hh"
 #include "nodes.hh"
+#include "utils.hh"
+#include "msg.hh"
 #include "string_utils.hh"
 #include "loadUtils.hh"
 #include "opengl_draw.hh"
@@ -214,6 +216,64 @@ struct node *new_circle(struct node *parent, struct node **list, char *x, char *
     return data;
 }
 
+// TODO: This parsing should be simplified and/or combined with string parsing in xml_parse.cc
+static size_t parse_var(std::vector<VarString *> *vstring, std::string mystr)
+{
+    size_t var_start, var_end;
+    size_t fmt_start = mystr.find('(');
+    size_t fmt_end = mystr.find(')');
+    bool braced;
+    std::string varstr = "@";
+
+    if (mystr[1] == '{') 
+    {
+        braced = true;
+        var_start = 2;
+    }
+    else
+    {
+        braced = false;
+        var_start = 1;
+    }
+
+    if (fmt_start != std::string::npos) var_end = fmt_start;
+    else if (braced) var_end = mystr.find('}');
+    else var_end = mystr.find(' ');
+
+    if (var_end == std::string::npos) varstr += mystr.substr(var_start, std::string::npos);
+    else varstr += mystr.substr(var_start, var_end - var_start);
+
+    if (fmt_start != std::string::npos && fmt_end != std::string::npos)
+        vstring->push_back(new VarString(get_data_type(varstr.c_str()), getStringPointer(varstr.c_str()), mystr.substr(fmt_start+1, fmt_end-fmt_start-1).c_str()));
+    else
+        vstring->push_back(new VarString(get_data_type(varstr.c_str()), getStringPointer(varstr.c_str()), 0x0));
+
+    if (braced) return mystr.find('}') + 1;
+    else if (fmt_end != std::string::npos) return fmt_end + 1;
+    else return mystr.find(' ');
+}
+
+static void parse_string(std::vector<VarString *> *vstring, std::vector<std::string> *filler, std::string mystr)
+{
+    size_t vstart, vlen, curpos = 0;
+
+    do
+    {
+        vstart = mystr.find('@', curpos);
+        filler->push_back(mystr.substr(curpos, vstart-curpos));
+        if (vstart == std::string::npos) return;
+        vlen = parse_var(vstring, mystr.substr(vstart, std::string::npos));
+        if (vlen == std::string::npos)
+        {
+            filler->push_back("");
+            return;
+        }
+        curpos = vstart + vlen;
+    } while (curpos < mystr.size());
+
+    filler->push_back("");
+}
+
 struct node *new_string(struct node *parent, struct node **list, char *x, char *y, char *rotate, char *fontsize, char *halign, char *valign,
                         char *color, char *bgcolor, char *shadowoffset, char *font, char *face, char *format, char *forcemono, char *value)
 {
@@ -242,25 +302,15 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
     data->object.string.shadowOffset = getFloatPointer(shadowoffset);
     data->object.string.fontID = dcLoadFont(font, face);
 
-    data->object.string.value = getStringPointer(value);
-    data->object.string.datatype = get_data_type(value);
-    if (data->object.string.datatype == UNDEFINED_TYPE) data->object.string.datatype = STRING_TYPE;
-    if (format) data->object.string.format = strdup(format);
-    else
+// TODO: remove "format" option once it has been pulled from all active displays
+    if (format)
     {
-        switch (data->object.string.datatype)
-        {
-            case FLOAT_TYPE:
-                data->object.string.format = strdup("%.1f");
-                break;
-            case INTEGER_TYPE:
-                data->object.string.format = strdup("%d");
-                break;
-            case STRING_TYPE:
-                data->object.string.format = strdup("%s");
-                break;
-        }
+        data->filler.push_back("");
+        data->vstring.push_back(new VarString(get_data_type(value), getStringPointer(value), format));
+        data->filler.push_back("");
     }
+    else
+        parse_string(&(data->vstring), &(data->filler), value);
 
     return data;
 }

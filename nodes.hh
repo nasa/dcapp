@@ -1,12 +1,51 @@
 #ifndef _NODES_HH_
 #define _NODES_HH_
 
+#include <vector>
 #include "Objects.hh"
 
 #define UNDEFINED_TYPE 0
 #define STRING_TYPE    1
 #define FLOAT_TYPE     2
 #define INTEGER_TYPE   3
+
+class VarString
+{
+    public:
+        VarString(int a, void *b, const char *c)
+        {
+            if (a == UNDEFINED_TYPE) datatype = STRING_TYPE;
+            else datatype = a;
+            value = b;
+            if (c) format = c;
+            else
+            {
+                switch (datatype)
+                {
+                    case FLOAT_TYPE:   format = "%.1f"; break;
+                    case INTEGER_TYPE: format = "%d";   break;
+                    case STRING_TYPE:  format = "%s";   break;
+                }
+            }
+        };
+        std::string get(void)
+        {
+            char *tmp_str = 0x0;
+            switch (datatype)
+            {
+                case FLOAT_TYPE:   asprintf(&tmp_str, format.c_str(), *(float *)(value)); break;
+                case INTEGER_TYPE: asprintf(&tmp_str, format.c_str(), *(int *)(value));   break;
+                case STRING_TYPE:  asprintf(&tmp_str, format.c_str(), (char *)value);     break;
+            }
+            std::string ret_str = tmp_str;
+            free(tmp_str);
+            return ret_str;
+        };
+    private:
+        int datatype;
+        void *value;
+        std::string format;
+};
 
 union objects
 {
@@ -50,6 +89,10 @@ struct node
 {
     struct info info;
     union objects object;
+    // The two items below, and the above VarString class, should be defined in the String structure,
+    // but the String structure is a member of the objects union, so it can't hold a variable size class
+    std::vector<VarString *>vstring;
+    std::vector<std::string>filler;
     struct node *p_prev;
     struct node *p_prev_list;
     struct node *p_next;
