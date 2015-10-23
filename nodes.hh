@@ -22,7 +22,7 @@ class VarString
             {
                 switch (datatype)
                 {
-                    case FLOAT_TYPE:   format = "%.1f"; break;
+                    case FLOAT_TYPE:   format = "%g"; break;
                     case INTEGER_TYPE: format = "%d";   break;
                     case STRING_TYPE:  format = "%s";   break;
                 }
