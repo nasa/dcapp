@@ -34,7 +34,7 @@ extern struct node *new_polygon(struct node *, struct node **, char *, char *, c
 extern struct node *new_rectangle(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *, char *);
 extern struct node *new_circle(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *);
 extern struct node *new_string(struct node *, struct node **, char *, char *, char *, char *, char *,
-                               char *, char *, char *, char *, char *, char *, char *, char *, char *);
+                               char *, char *, char *, char *, char *, char *, char *, char *);
 extern struct node *new_image(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *);
 extern struct node *new_pixel_stream(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, char *);
 extern struct node *new_button(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *,
@@ -47,7 +47,7 @@ extern struct node *new_bezelevent(struct node *, struct node **, char *);
 extern struct node *new_animation(struct node *, struct node **, char *);
 extern struct node *new_setvalue(struct node *, struct node **, char *, char *, char *, char *, const char *);
 extern struct ModifyValue get_setvalue_data(char *, char *, char *, char *, const char *);
-extern int CheckConditionLogic(int, int, void *, int, void *);
+extern bool CheckConditionLogic(int, int, void *, int, void *);
 extern void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
 extern bool check_dynamic_element(const char *);
 
@@ -475,7 +475,6 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                             get_element_data(node, "ShadowOffset"),
                             get_element_data(node, "Font"),
                             get_element_data(node, "Face"),
-                            get_element_data(node, "Format"),
                             get_element_data(node, "ForceMono"),
                             get_node_content(node));
         }
@@ -935,7 +934,7 @@ static const char *get_constval(char *instr)
 
 static xmlNodePtr GetSubList(xmlNodePtr node, char *opspec, char *val1, char *val2)
 {
-    int myflag = 0;
+    bool myflag = 0;
     xmlNodePtr node1;
     int optype = Simple;
 

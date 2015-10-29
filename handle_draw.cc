@@ -14,7 +14,7 @@ extern appdata AppData;
 
 static void render_primitives(struct node *);
 
-extern int CheckCondition(struct node *);
+extern bool CheckCondition(struct node *);
 extern void UpdateValue(struct node *);
 
 

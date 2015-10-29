@@ -9,12 +9,12 @@ extern void UpdateDisplay(void);
 void ProcessEventList(struct node *);
 void UpdateValue(struct node *);
 void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
-int CheckCondition(struct node *);
+bool CheckCondition(struct node *);
 
 extern appdata AppData;
 
 
-void ProcessAnimationList(Animation *animator, struct node *list)
+static void ProcessAnimationList(Animation *animator, struct node *list)
 {
     struct node *sublist;
     float endval;
@@ -105,9 +105,9 @@ int getIntegerVal(int type, void *val)
     return 0;
 }
 
-int CheckConditionLogic(int opspec, int datatype1, void *val1, int datatype2, void *val2)
+bool CheckConditionLogic(int opspec, int datatype1, void *val1, int datatype2, void *val2)
 {
-    int eval = 0;
+    int eval = false;
 
     switch (datatype1)
     {
@@ -115,25 +115,25 @@ int CheckConditionLogic(int opspec, int datatype1, void *val1, int datatype2, vo
             switch (opspec)
             {
                 case Simple:
-                    if (getFloatVal(datatype1, val1)) eval = 1;
+                    if (getFloatVal(datatype1, val1)) eval = true;
                     break;
                 case IfEquals:
-                    if (getFloatVal(datatype1, val1) == getFloatVal(datatype2, val2)) eval = 1;
+                    if (getFloatVal(datatype1, val1) == getFloatVal(datatype2, val2)) eval = true;
                     break;
                 case IfNotEquals:
-                    if (getFloatVal(datatype1, val1) != getFloatVal(datatype2, val2)) eval = 1;
+                    if (getFloatVal(datatype1, val1) != getFloatVal(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterThan:
-                    if (getFloatVal(datatype1, val1) > getFloatVal(datatype2, val2)) eval = 1;
+                    if (getFloatVal(datatype1, val1) > getFloatVal(datatype2, val2)) eval = true;
                     break;
                 case IfLessThan:
-                    if (getFloatVal(datatype1, val1) < getFloatVal(datatype2, val2)) eval = 1;
+                    if (getFloatVal(datatype1, val1) < getFloatVal(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterOrEquals:
-                    if (getFloatVal(datatype1, val1) >= getFloatVal(datatype2, val2)) eval = 1;
+                    if (getFloatVal(datatype1, val1) >= getFloatVal(datatype2, val2)) eval = true;
                     break;
                 case IfLessOrEquals:
-                    if (getFloatVal(datatype1, val1) <= getFloatVal(datatype2, val2)) eval = 1;
+                    if (getFloatVal(datatype1, val1) <= getFloatVal(datatype2, val2)) eval = true;
                     break;
             }
             break;
@@ -141,25 +141,25 @@ int CheckConditionLogic(int opspec, int datatype1, void *val1, int datatype2, vo
             switch (opspec)
             {
                 case Simple:
-                    if (getIntegerVal(datatype1, val1)) eval = 1;
+                    if (getIntegerVal(datatype1, val1)) eval = true;
                     break;
                 case IfEquals:
-                    if (getIntegerVal(datatype1, val1) == getIntegerVal(datatype2, val2)) eval = 1;
+                    if (getIntegerVal(datatype1, val1) == getIntegerVal(datatype2, val2)) eval = true;
                     break;
                 case IfNotEquals:
-                    if (getIntegerVal(datatype1, val1) != getIntegerVal(datatype2, val2)) eval = 1;
+                    if (getIntegerVal(datatype1, val1) != getIntegerVal(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterThan:
-                    if (getIntegerVal(datatype1, val1) > getIntegerVal(datatype2, val2)) eval = 1;
+                    if (getIntegerVal(datatype1, val1) > getIntegerVal(datatype2, val2)) eval = true;
                     break;
                 case IfLessThan:
-                    if (getIntegerVal(datatype1, val1) < getIntegerVal(datatype2, val2)) eval = 1;
+                    if (getIntegerVal(datatype1, val1) < getIntegerVal(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterOrEquals:
-                    if (getIntegerVal(datatype1, val1) >= getIntegerVal(datatype2, val2)) eval = 1;
+                    if (getIntegerVal(datatype1, val1) >= getIntegerVal(datatype2, val2)) eval = true;
                     break;
                 case IfLessOrEquals:
-                    if (getIntegerVal(datatype1, val1) <= getIntegerVal(datatype2, val2)) eval = 1;
+                    if (getIntegerVal(datatype1, val1) <= getIntegerVal(datatype2, val2)) eval = true;
                     break;
             }
             break;
@@ -167,25 +167,25 @@ int CheckConditionLogic(int opspec, int datatype1, void *val1, int datatype2, vo
             switch (opspec)
             {
                 case Simple:
-                    if (StrToBool((char *)val1, false)) eval = 1;
+                    if (StrToBool((char *)val1, false)) eval = true;
                     break;
                 case IfEquals:
-                    if (!strcmp((char *)val1, (char *)val2)) eval = 1;
+                    if (!strcmp((char *)val1, (char *)val2)) eval = true;
                     break;
                 case IfNotEquals:
-                    if (strcmp((char *)val1, (char *)val2)) eval = 1;
+                    if (strcmp((char *)val1, (char *)val2)) eval = true;
                     break;
                 case IfGreaterThan:
-                    if (getFloatVal(datatype1, val1) > getFloatVal(datatype2, val2)) eval = 1;
+                    if (getFloatVal(datatype1, val1) > getFloatVal(datatype2, val2)) eval = true;
                     break;
                 case IfLessThan:
-                    if (getFloatVal(datatype1, val1) < getFloatVal(datatype2, val2)) eval = 1;
+                    if (getFloatVal(datatype1, val1) < getFloatVal(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterOrEquals:
-                    if (getFloatVal(datatype1, val1) >= getFloatVal(datatype2, val2)) eval = 1;
+                    if (getFloatVal(datatype1, val1) >= getFloatVal(datatype2, val2)) eval = true;
                     break;
                 case IfLessOrEquals:
-                    if (getFloatVal(datatype1, val1) <= getFloatVal(datatype2, val2)) eval = 1;
+                    if (getFloatVal(datatype1, val1) <= getFloatVal(datatype2, val2)) eval = true;
                     break;
             }
             break;
@@ -194,7 +194,7 @@ int CheckConditionLogic(int opspec, int datatype1, void *val1, int datatype2, vo
     return eval;
 }
 
-int CheckCondition(struct node *mynode)
+bool CheckCondition(struct node *mynode)
 {
     return CheckConditionLogic(mynode->object.cond.opspec,
                                mynode->object.cond.datatype1,

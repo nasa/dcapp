@@ -4,7 +4,7 @@
 #include "msg.hh"
 
 extern void ProcessEventList(struct node *);
-extern int CheckCondition(struct node *);
+extern bool CheckCondition(struct node *);
 
 extern appdata AppData;
 

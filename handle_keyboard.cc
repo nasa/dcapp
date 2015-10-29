@@ -2,7 +2,7 @@
 #include "mappings.hh"
 
 extern void ProcessEventList(struct node *);
-extern int CheckCondition(struct node *);
+extern bool CheckCondition(struct node *);
 extern void toggle_fullscreen(void);
 
 extern appdata AppData;
@@ -31,14 +31,10 @@ void HandleSpecialKeyboard(int key, float x, float y)
 {
     switch (key)
     {
-        case KEY_LEFT:
-            break;
-        case KEY_RIGHT:
-            break;
-        case KEY_UP:
-            break;
-        case KEY_DOWN:
-            break;
+        case KEY_LEFT:  break;
+        case KEY_RIGHT: break;
+        case KEY_UP:    break;
+        case KEY_DOWN:  break;
     }
 }
 
@@ -53,13 +49,9 @@ static void KeyPressed(struct node *list, char key)
                 break;
             case Condition:
                 if (CheckCondition(current))
-                {
                     KeyPressed(current->object.cond.TrueList, key);
-                }
                 else
-                {
                     KeyPressed(current->object.cond.FalseList, key);
-                }
                 break;
             case KeyboardEvent:
                 if (current->object.ke.key == key)

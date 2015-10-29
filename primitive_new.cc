@@ -275,7 +275,7 @@ static void parse_string(std::vector<VarString *> *vstring, std::vector<std::str
 }
 
 struct node *new_string(struct node *parent, struct node **list, char *x, char *y, char *rotate, char *fontsize, char *halign, char *valign,
-                        char *color, char *bgcolor, char *shadowoffset, char *font, char *face, char *format, char *forcemono, char *value)
+                        char *color, char *bgcolor, char *shadowoffset, char *font, char *face, char *forcemono, char *value)
 {
     struct node *data = add_primitive_node(parent, list, String, x, y, "0", fontsize, halign, valign, rotate);
 
@@ -302,15 +302,7 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
     data->object.string.shadowOffset = getFloatPointer(shadowoffset);
     data->object.string.fontID = dcLoadFont(font, face);
 
-// TODO: remove "format" option once it has been pulled from all active displays
-    if (format)
-    {
-        data->filler.push_back("");
-        data->vstring.push_back(new VarString(get_data_type(value), getStringPointer(value), format));
-        data->filler.push_back("");
-    }
-    else
-        parse_string(&(data->vstring), &(data->filler), value);
+    parse_string(&(data->vstring), &(data->filler), value);
 
     return data;
 }
