@@ -1,4 +1,5 @@
 #include <math.h>
+#include <list>
 #include "nodes.hh"
 #include "mappings.hh"
 #include "geometry.hh"
@@ -13,8 +14,10 @@ static bool CheckRegion(struct node *, float, float);
 static void MouseDown(struct node *, float, float);
 static void MouseUp(struct node *);
 
-static struct node *mousecontinuous = 0;
+static std::list<struct node *> actionList;
+static std::list<struct node *> mouseContinuous;
 static int mousebouncemode = 0;
+
 
 void HandleMouse(int button, int state, float xpct, float ypct, int modifier)
 {
@@ -27,6 +30,13 @@ void HandleMouse(int button, int state, float xpct, float ypct, int modifier)
     {   // Check all lists since MOUSE_DOWN may have been on a different active page
         for (struct node *current = AppData.window->p_head; current; current=current->p_next_list) MouseUp(current);
     }
+
+    std::list<struct node *>::iterator action;
+    for (action = actionList.begin(); action != actionList.end(); action++)
+    {
+        ProcessEventList(*action);
+    }
+    actionList.clear();
 }
 
 
@@ -34,7 +44,7 @@ void CheckMouseBounce(void)
 {
     static Timer *mousetimer = new Timer;
 
-    if (!mousecontinuous) return;
+    if (mouseContinuous.empty()) return;
 
     if (mousebouncemode == 1)
     {
@@ -46,7 +56,11 @@ void CheckMouseBounce(void)
         if (mousetimer->getSeconds() > 1)
         {
             mousetimer->restart();
-            ProcessEventList(mousecontinuous);
+            std::list<struct node *>::iterator action;
+            for (action = mouseContinuous.begin(); action != mouseContinuous.end(); action++)
+            {
+                ProcessEventList(*action);
+            }
             mousebouncemode = 3;
         }
     }
@@ -55,7 +69,11 @@ void CheckMouseBounce(void)
         if (mousetimer->getSeconds() > .1)
         {
             mousetimer->restart();
-            ProcessEventList(mousecontinuous);
+            std::list<struct node *>::iterator action;
+            for (action = mouseContinuous.begin(); action != mouseContinuous.end(); action++)
+            {
+                ProcessEventList(*action);
+            }
         }
     }
 }
@@ -102,8 +120,8 @@ static void MouseDown(struct node *list, float x, float y)
                 if (CheckRegion(current, x, y))
                 {
                     current->info.selected = true;
-                    ProcessEventList(current->object.me.PressList);
-                    mousecontinuous = current->object.me.PressList;
+                    actionList.push_back(current->object.me.PressList);
+                    mouseContinuous.push_back(current->object.me.PressList);
                     mousebouncemode = 1;
                 }
                 else current->info.selected = false;
@@ -129,7 +147,7 @@ static void MouseUp(struct node *list)
                 MouseUp(current->object.cond.FalseList);
                 break;
             case MouseEvent:
-                if (current->info.selected) ProcessEventList(current->object.me.ReleaseList);
+                if (current->info.selected) actionList.push_back(current->object.me.ReleaseList);
                 break;
             default:
                 break;
@@ -137,7 +155,7 @@ static void MouseUp(struct node *list)
 
         // Deselect all objects when releasing mouse button when in runtime.
         current->info.selected = false;
-        mousecontinuous = 0x0;
+        mouseContinuous.clear();
     }
 }
 

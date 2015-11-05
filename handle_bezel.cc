@@ -1,4 +1,5 @@
 #include <sstream>
+#include <list>
 #include "nodes.hh"
 #include "bezel.hh"
 #include "msg.hh"
@@ -10,6 +11,8 @@ extern appdata AppData;
 
 static void BezelButtonPressed(struct node *, int);
 static void BezelButtonReleased(struct node *, int);
+
+static std::list<struct node *> actionList;
 
 
 void HandleBezelControl(int type, int itemid, int action)
@@ -53,6 +56,13 @@ void HandleBezelButton(int type, int itemid, int action)
             for (struct node *current = AppData.window->p_head; current; current=current->p_next_list)
                 BezelButtonReleased(current, itemid);
         }
+
+        std::list<struct node *>::iterator action;
+        for (action = actionList.begin(); action != actionList.end(); action++)
+        {
+            ProcessEventList(*action);
+        }
+        actionList.clear();
     }
 }
 
@@ -76,7 +86,7 @@ static void BezelButtonPressed(struct node *list, int itemid)
                 if (current->object.be.key == itemid)
                 {
                     current->info.selected = true;
-                    ProcessEventList(current->object.be.PressList);
+                    actionList.push_back(current->object.be.PressList);
                 }
                 else current->info.selected = false;
                 break;
@@ -101,7 +111,7 @@ static void BezelButtonReleased(struct node *list, int itemid)
                 BezelButtonReleased(current->object.cond.FalseList, itemid);
                 break;
             case BezelEvent:
-                if (current->info.selected) ProcessEventList(current->object.be.ReleaseList);
+                if (current->info.selected) actionList.push_back(current->object.be.ReleaseList);
                 break;
             default:
                 break;

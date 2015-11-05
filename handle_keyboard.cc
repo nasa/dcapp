@@ -1,3 +1,4 @@
+#include <list>
 #include "nodes.hh"
 #include "mappings.hh"
 
@@ -9,24 +10,26 @@ extern appdata AppData;
 
 static void KeyPressed(struct node *, char);
 
+static std::list<struct node *> actionList;
 
-/*********************************************************************************
- *
- *  Handle regular keyboard events.
- *
- *********************************************************************************/
+
 void HandleKeyboard(unsigned char key, float x, float y)
 {
-    // escape 0x1b toggles fullscreen mode
+    // escape (0x1b) toggles fullscreen mode
     if (key == 0x1b) toggle_fullscreen();
-    else KeyPressed(AppData.window->p_current, key);
+    else
+    {
+        KeyPressed(AppData.window->p_current, key);
+        std::list<struct node *>::iterator action;
+        for (action = actionList.begin(); action != actionList.end(); action++)
+        {
+            ProcessEventList(*action);
+        }
+        actionList.clear();
+    }
 }
 
-/*********************************************************************************
- *
- *  Handle keyboard events like the arrow keys and function keys.
- *
- *********************************************************************************/
+
 void HandleSpecialKeyboard(int key, float x, float y)
 {
     switch (key)
@@ -37,6 +40,7 @@ void HandleSpecialKeyboard(int key, float x, float y)
         case KEY_DOWN:  break;
     }
 }
+
 
 static void KeyPressed(struct node *list, char key)
 {
@@ -56,8 +60,8 @@ static void KeyPressed(struct node *list, char key)
             case KeyboardEvent:
                 if (current->object.ke.key == key)
                 {
-                    ProcessEventList(current->object.ke.PressList);
-                    ProcessEventList(current->object.ke.ReleaseList);
+                    actionList.push_back(current->object.ke.PressList);
+                    actionList.push_back(current->object.ke.ReleaseList);
                 }
                 break;
             default:
