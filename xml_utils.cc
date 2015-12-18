@@ -1,5 +1,5 @@
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <libxml/parser.h>
 #include <libxml/xinclude.h>
 #include "msg.hh"

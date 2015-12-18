@@ -1,5 +1,5 @@
-#include <string.h>
-#include <stdio.h>
+#include <cstdio>
+#include <cstring>
 #include <sys/time.h>
 #include <GL/glut.h>
 #include "mappings.hh"

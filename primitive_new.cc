@@ -1,7 +1,7 @@
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
 #include <strings.h>
-#include <math.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include "dc.hh"

@@ -2,10 +2,9 @@
  * SGI rgb file reader borrowed from gltk library
  */
 
-//#include "togl.h"               /* added by GG to include windows.h */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include "imgload_internal.hh"
 
 extern void setRGBImageData (ImageStruct *, unsigned short, unsigned short, unsigned short);

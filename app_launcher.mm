@@ -1,5 +1,4 @@
 #import <AppKit/AppKit.h>
-#include <string.h>
 
 @interface MyApp : NSObject
 {
@@ -108,8 +107,6 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inArgs, char **outA
 - (void)createFile:(id)sender
 {
     NSSavePanel *panel = [ NSSavePanel savePanel ];
-    FILE *fp;
-    char *cmd;
 
     [ panel setNameFieldLabel:@"Create:" ];
     [ panel setPrompt:@"Create" ];
@@ -117,12 +114,10 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inArgs, char **outA
     if ([ panel runModal ] == NSFileHandlingPanelOKButton)
     {
         [ specfile setStringValue:[[ panel URL ] path ]];
-        fp = fopen([[ specfile stringValue ] cStringUsingEncoding:NSASCIIStringEncoding ], "w");
-        fclose(fp);
-        cmd = (char *)malloc(strlen([[ specfile stringValue ] cStringUsingEncoding:NSASCIIStringEncoding ])+8);
-        sprintf(cmd, "open \"%s\"", [[ specfile stringValue ] cStringUsingEncoding:NSASCIIStringEncoding ]);
-        system(cmd);
-        free(cmd);
+        NSString *content = @"<?xml version=\"1.0\"?>\n<DCAPP>\n\n</DCAPP>\n";
+        NSData *fileContents = [ content dataUsingEncoding:NSASCIIStringEncoding ];
+        [[ NSFileManager defaultManager ] createFileAtPath:[ specfile stringValue ] contents:fileContents attributes:nil ];
+        [[ NSWorkspace sharedWorkspace ] openFile:[ specfile stringValue ]];
     }
 }
 
@@ -145,10 +140,7 @@ void appLauncher(char *inSpecfile, char **outSpecfile, char *inArgs, char **outA
 
 - (void)editFile:(id)sender
 {
-    char *cmd = (char *)malloc(strlen([[ specfile stringValue ] cStringUsingEncoding:NSASCIIStringEncoding ])+8);
-    sprintf(cmd, "open \"%s\"", [[ specfile stringValue ] cStringUsingEncoding:NSASCIIStringEncoding ]);
-    system(cmd);
-    free(cmd);
+    [[ NSWorkspace sharedWorkspace ] openFile:[ specfile stringValue ]];
 }
 
 - (void)buttonClicked:(id)sender

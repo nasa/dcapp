@@ -4,11 +4,11 @@ Description: Library that facilitates communication between real-time data
 Programmer: M. McFarlane, March 2005
 *******************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
 #include <strings.h>
-#include <ctype.h>
 #include <sys/utsname.h>
 #include "utils.hh"
 #include "vscomm.hh"

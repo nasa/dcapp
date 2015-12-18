@@ -9,10 +9,10 @@
  *
  **********************************************************************/
 
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
 #include "imgload_internal.hh"
 
 // BMP format bits - at start of file is 512 bytes of pure garbage

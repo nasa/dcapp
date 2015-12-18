@@ -1,7 +1,7 @@
 #ifndef _PIXELSTREAMFILE_HH_
 #define _PIXELSTREAMFILE_HH_
 
-#include <stdio.h>
+#include <cstdio>
 #include <stdint.h>
 #include "PixelStreamData.hh"
 

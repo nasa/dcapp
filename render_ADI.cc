@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 #include "nodes.hh"
 #include "geometry.hh"
 #include "opengl_draw.hh"

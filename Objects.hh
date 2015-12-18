@@ -1,8 +1,8 @@
 #ifndef _OBJECTS_HH_
 #define _OBJECTS_HH_
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <list>
 #include <map>

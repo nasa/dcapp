@@ -1,5 +1,5 @@
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include "nodes.hh"
 #include "string_utils.hh"
 #include "animation.hh"

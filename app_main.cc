@@ -1,10 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <csignal>
+#include <cctype>
 #include <unistd.h>
-#include <string.h>
 #include <libgen.h>
-#include <signal.h>
-#include <ctype.h>
 #include <pwd.h>
 #include <sys/types.h>
 #include <sys/utsname.h>

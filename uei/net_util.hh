@@ -16,17 +16,17 @@
 *
 ***********************************************************************/
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <ctime>
 #include <strings.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <time.h>
 
 #ifndef VxWorks
-#include <errno.h>
+#include <cerrno>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>

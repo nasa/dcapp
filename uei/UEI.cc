@@ -1,7 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <csignal>
 #include <strings.h>
-#include <signal.h>
 #include "util_comm.hh"
 #include "msg.hh"
 #include "bezel.hh"

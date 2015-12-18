@@ -1,7 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
 #include "imgload_internal.hh"
 
 extern void setTGAImageData(ImageStruct *, unsigned int);
@@ -33,7 +33,7 @@ unsigned int LoadTGA(const char *filename, ImageStruct *image)
     }
 
     if (fread(TGAcompare, 1, sizeof(TGAcompare), file) != sizeof(TGAcompare) ||  // Are There 12 Bytes To Read?
-        memcmp(TGAheader, TGAcompare, sizeof(TGAheader)) !=0 ||                  // Does The Header Match What We Want?
+        memcmp(TGAheader, TGAcompare, sizeof(TGAheader)) != 0 ||                 // Does The Header Match What We Want?
         fread(header, 1, sizeof(header), file) != sizeof(header))                // If So Read Next 6 Header Bytes
     {
         fprintf(stderr, "%s/%s: ERROR - Something else failed\n", __FILE__, __FUNCTION__);

@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cerrno>
 #include <sys/shm.h>
-#include <errno.h>
 #include "PixelStreamFile.hh"
 #include "msg.hh"
 

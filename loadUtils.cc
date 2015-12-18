@@ -1,9 +1,9 @@
-#include <stdlib.h>
-#include <string.h>
-#include <strings.h>
-#include <limits.h>
+#include <cstdlib>
+#include <cstring>
+#include <climits>
 #include <string>
 #include <list>
+#include <strings.h>
 #include "dc.hh"
 #include "msg.hh"
 #include "imgload/imgload.hh"

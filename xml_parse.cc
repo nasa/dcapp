@@ -1,11 +1,11 @@
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
 #include <unistd.h>
-#include <string.h>
 #include <strings.h>
 #include <libgen.h>
 #include <fcntl.h>
 #include <dlfcn.h>
-#include <ctype.h>
 #include "varlist.hh"
 #include "trickcomm.hh"
 #include "edgecomm.hh"

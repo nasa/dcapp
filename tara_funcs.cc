@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <cstdio>
 #include "TaraDraw/TaraDraw.hh"
 #include "mappings.hh"
 

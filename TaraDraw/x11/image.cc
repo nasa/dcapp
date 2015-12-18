@@ -1,6 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include "image.hh"
 
 #define BytesToInt4(a) ((16777216 * a[3]) + (65536 * a[2]) + (256 * a[1]) + a[0])

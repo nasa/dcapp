@@ -10,10 +10,10 @@ Programmer: M. McFarlane, March 2005
 #include <X11/keysym.h>
 #include <X11/XKBlib.h>
 #include <GL/glx.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
 #include "tdDefines.hh"
 #include "rotate.hh"
 #include "image.hh"

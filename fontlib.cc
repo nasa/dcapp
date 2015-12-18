@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
 #include <strings.h>
-#include <ctype.h>
 #include "fontlib.hh"
 
 FT_Library flFont::library = 0;

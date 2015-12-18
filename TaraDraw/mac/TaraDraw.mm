@@ -1,5 +1,5 @@
-#include "tdDefines.hh"
-#include "tdAdapter.hh"
+#import "tdDefines.hh"
+#import "tdAdapter.hh"
 
 static TaraDrawAdapter *tda;
 
