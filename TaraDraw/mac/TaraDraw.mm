@@ -39,7 +39,7 @@ tdWindow tdOpenFullScreen(const char *title)
     return [ tda openFullScreen:[ NSString stringWithCString:title encoding:NSASCIIStringEncoding ]];
 }
 
-tdImage *tdLoadImage(char *filespec, tdSize *size)
+tdImage *tdLoadImage(const char *filespec, tdSize *size)
 {
     NSSize mysize;
     tdImage *retval = (tdImage *)[ tda loadImage:[ NSString stringWithCString:filespec encoding:NSASCIIStringEncoding ] size:&mysize ];
@@ -51,9 +51,9 @@ tdImage *tdLoadImage(char *filespec, tdSize *size)
     return (retval);
 }
 
-tdGLContext *tdGLCreateContext(tdWindow win)
+tdGLContext *tdGLCreateContext(tdWindow winid)
 {
-    return [ tda glCreateContext:win ];
+    return [ tda glCreateContext:winid ];
 }
 
 void tdGLReshapeContext(float x, float y, int align, float width, float height)
@@ -71,7 +71,7 @@ int tdRegisterColor(int index, float r, float g, float b)
     return [ tda registerColor:index red:r green:g blue:b ];
 }
 
-int tdRegisterXFont(char *face, int size, char *spec)
+int tdRegisterXFont(const char *face, int size, char *spec)
 {
     return 0;
 }

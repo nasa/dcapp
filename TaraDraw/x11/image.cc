@@ -48,7 +48,7 @@ typedef struct
     unsigned char alpha;
 } TmpColorTable;
 
-TDImage *tdLoadBmpImage(char *filespec)
+TDImage *tdLoadBmpImage(const char *filespec)
 {
     BmpHeader header;
     int filesize, offset, headersize, imagewidth, imageheight;

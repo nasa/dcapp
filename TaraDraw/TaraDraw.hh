@@ -18,11 +18,11 @@ extern int tdAlignBaseline;
 extern int tdInitialize(char *);
 extern tdWindow tdOpenWindow(const char *, float, float, float, float, int);
 extern tdWindow tdOpenFullScreen(const char *);
-extern tdImage *tdLoadImage(char *, tdSize *);
+extern tdImage *tdLoadImage(const char *, tdSize *);
 extern tdGLContext *tdGLCreateContext(tdWindow);
 extern void tdGLReshapeContext(float, float, int, float, float);
 extern int tdRegisterColor(int, float, float, float);
-extern int tdRegisterXFont(char *, int, char *);
+extern int tdRegisterXFont(const char *, int, char *);
 
 // Settings routines
 extern void tdSetActiveWindow(tdWindow);

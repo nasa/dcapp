@@ -362,7 +362,7 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
             }
             else
             {
-                mypixelstream = (PixelStreamFile *)myfilepixelstream;
+                mypixelstream = (PixelStreamData *)myfilepixelstream;
                 mypixelstream->protocol = PixelStreamFileProtocol;
                 AppData.pixelstreams.push_back(mypixelstream);
             }

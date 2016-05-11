@@ -65,7 +65,7 @@ typedef struct
     WindowSpec *parent;
 } GLSpec;
 
-extern TDImage *tdLoadBmpImage(char *);
+extern TDImage *tdLoadBmpImage(const char *);
 
 int tdRegisterColor(int, float, float, float);
 int tdRegisterXFont(const char *, int, char *);
@@ -240,7 +240,7 @@ tdWindow tdOpenFullScreen(const char *title)
     return mywin;
 }
 
-tdImage *tdLoadImage(char *filespec, tdSize *size)
+tdImage *tdLoadImage(const char *filespec, tdSize *size)
 {
     unsigned i;
     XColor mycolor;
@@ -650,13 +650,11 @@ void tdDrawString(char *string, float x, float y, float rotate, int align)
         else if (!(align & tdAlignBaseline))
             ypos += finfo->descent;
 
-        XDrawString(display, current->buffer, current->gc,
-                    xpos, current->height-ypos, string, strlen(string));
+        XDrawString(display, current->buffer, current->gc, xpos, current->height-ypos, string, strlen(string));
     }
     else
     {
-        XRotDrawString(display, finfo, current->buffer, current->gc, xpos,
-                       current->height-ypos, rotate, 1.0, 1.0, align, string);
+        XRotDrawString(display, finfo, current->buffer, current->gc, xpos, current->height-ypos, rotate, 1.0, 1.0, align, string);
     }
 }
 
