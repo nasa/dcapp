@@ -3,8 +3,8 @@ MACHTYPE ?= $(shell uname -m)
 
 ifeq ($(OSTYPE), darwin)
 OSSPEC := MacOS
-X11_CFLAG = -I/opt/X11/include -I/usr/X11R6/include
-X11_LFLAG = -L/opt/X11/lib -L/usr/X11R6/lib
+X11_CFLAG = -I/opt/X11/include
+X11_LFLAG = -L/opt/X11/lib
 else
 OSSPEC := $(OSTYPE)_$(MACHTYPE)
 X11_CFLAG = -I/usr/X11R6/include

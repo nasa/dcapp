@@ -17,7 +17,17 @@ std::map<std::string, varInfo> varMap;
 
 void varlist_append(const char *paramname, const char *typestr, const char *initval)
 {
-    if (!paramname || !typestr) return;
+    if (!paramname)
+    {
+        error_msg("Attempting to create a variable without a name");
+        return;
+    }
+
+    if (!typestr)
+    {
+        error_msg("Attempting to create the variable \"" << paramname << "\" without a specified type");
+        return;
+    }
 
     varInfo vinfo;
 
@@ -43,6 +53,7 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
     {
         vinfo.type = VARLIST_UNKNOWN_TYPE;
         vinfo.value = 0x0;
+        error_msg("Attempting to create the variable \"" << paramname << "\" with an unknown type: " << typestr);
     }
 
     varMap[std::string(paramname)] = vinfo;
