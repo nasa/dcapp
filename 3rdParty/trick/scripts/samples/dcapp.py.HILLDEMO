@@ -1,0 +1,1 @@
+customize_dcapp('-d :0.0 EdgeDisp=BOTTOM EdgePort=5452 FullScreen=True')

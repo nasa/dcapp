@@ -1,0 +1,3 @@
+inhibit_local_dcapp_clients()
+add_remote_dcapp_client('vdwdc1', ':1', 'FullScreen=True EdgeDisp=BOTTOM SideSpec=port')
+add_remote_dcapp_client('vdwdc2', ':1', 'FullScreen=True EdgeDisp=BOTTOM SideSpec=starboard')

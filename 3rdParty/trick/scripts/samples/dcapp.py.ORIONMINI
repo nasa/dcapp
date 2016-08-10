@@ -1,0 +1,3 @@
+add_remote_dcapp_client('rocmdc1', ':0.0', 'CockpitEnvironment=SesOrion UeiHost=oucmuei UeiID=0 SideSpec=port')
+add_remote_dcapp_client('rocmdc2', ':0.0', 'CockpitEnvironment=SesOrion UeiHost=oucmuei UeiID=1 HcActive=0')
+add_remote_dcapp_client('rocmdc3', ':0.0', 'CockpitEnvironment=SesOrion UeiHost=oucmuei UeiID=2 SideSpec=starboard')
