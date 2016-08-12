@@ -1,17 +1,17 @@
-User customization of Trick-based NExSyS sims is achieved by creating customization files and including them in a
+Users can customize how dcapp is launched from Trick-based sims by creating customization files and including them in a
 defined directory within the user's login directory.  This is the search order of directories in which the
 start_dcapp.py script looks for these customization files:
 
-    1. $HOME/.nexsys_$HOST
-    2. $HOME/.nexsys
+    1. $HOME/.dcapp_$HOST
+    2. $HOME/.dcapp
 
 ... where $HOME is the directory returned by the python "os.path.expanduser('~')" command and $HOST is the name returned
 by the python "socket.gethostname()" command.
 
-Note that this directory contains several examples of such customization files that are set for various environments. 
-For example, if a user wants their machine to behave like the machines configured for the Capitol Hill demo in terms of
-how dcapp is activated, they would copy or link dcapp.py.HILLDEMO to their ~/.nexsys directory (or ~/.nexsys_$HOST
-directory) and rename it to dcapp.py.  For instance:
+Note that this directory contains examples of such customization files that are set for various environments.  For
+instance, if a user wants their machine to behave like the machines configured for the Capitol Hill demo in terms of how
+dcapp is activated, they would copy or link config.py.HILLDEMO to their ~/.dcapp directory (or ~/.dcapp_$HOST directory)
+and rename it to config.py.  For instance:
 
-    cd ~/.nexsys
-    ln -s $DCAPP_HOME/3rdParty/trick/scripts/samples/dcapp.py.HILLDEMO dcapp.py
+    cd ~/.dcapp
+    ln -s $DCAPP_HOME/3rdParty/trick/scripts/samples/config.py.HILLDEMO config.py

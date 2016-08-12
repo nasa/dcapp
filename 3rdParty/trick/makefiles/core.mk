@@ -11,14 +11,15 @@
 # within an externals directory that is easily accesible by the Trick
 # simulation.
 #
-# Note that the user should explicitly set DCAPP_HOME and DISPLAYS_HOME before
-# using this file.  Alternately, the user may set MODEL_PACKAGE_HOME if that
-# directory contains the dcapp and displays packages.
+# Note that the user may explicitly set DCAPP_HOME and/or DISPLAYS_HOME before
+# using this file.  If not, it will set DCAPP_HOME based on a relative
+# location from this file, and it will set DISPLAYS_HOME to
+# $DCAPP_HOME/../displays.
 #=============================================================================
 
-DCAPP_HOME    ?= ${MODEL_PACKAGE_HOME}/dcapp
-DISPLAYS_HOME ?= ${MODEL_PACKAGE_HOME}/displays
-EXTERNALS_DIR ?= ./externals/dcapp
+DCAPP_HOME    ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../../..)
+DISPLAYS_HOME ?= $(abspath $(DCAPP_HOME)/../displays)
+EXTERNALS_DIR ?= $(abspath externals/dcapp)
 
 all: build_dcapp build_dcapp_link
 

@@ -17,7 +17,7 @@ import os
 import socket
 
 # This specifies where start_dcapp will look for customization files
-customization_dir = os.path.join(os.path.expanduser('~'), '.nexsys')
+customization_dir = os.path.join(os.path.expanduser('~'), '.dcapp')
 
 dcapp_user_args = ''
 dcapp_local_client_count = 1
@@ -54,9 +54,9 @@ def start_dcapp(dc_data_file, input_file_args = ''):
     # Build the core command to execute
     app_cmnd = app_exec + ' ' + spec_file + ' TrickPort=' + var_server_port
 
-    # Look for user arguments in the .nexsys directories
-    host_config_path = os.path.join(customization_dir + '_' + socket.gethostname(), 'dcapp.py')
-    user_config_path = os.path.join(customization_dir, 'dcapp.py')
+    # Look for user arguments in the customization directories
+    host_config_path = os.path.join(customization_dir + '_' + socket.gethostname(), 'config.py')
+    user_config_path = os.path.join(customization_dir, 'config.py')
     if os.path.isfile(host_config_path):
         execfile(host_config_path)
     elif os.path.isfile(user_config_path):
