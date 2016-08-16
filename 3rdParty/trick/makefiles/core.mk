@@ -17,7 +17,7 @@
 # $DCAPP_HOME/../displays.
 #=============================================================================
 
-DCAPP_HOME    ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../../..)
+export DCAPP_HOME ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../../..)
 DISPLAYS_HOME ?= $(abspath $(DCAPP_HOME)/../displays)
 EXTERNALS_DIR ?= $(abspath externals/dcapp)
 
