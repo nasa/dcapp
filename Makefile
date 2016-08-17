@@ -17,7 +17,6 @@ DCAPP_SOURCES := \
 	edgecomm.cc \
 	fontlib.cc \
 	geometry.cc \
-	getbytes.cc \
 	handle_bezel.cc \
 	handle_draw.cc \
 	handle_keyboard.cc \

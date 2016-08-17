@@ -16,7 +16,6 @@
 #include <fcntl.h>
 #include "PixelStreamTcp.hh"
 #include "timer.hh"
-#include "getbytes.hh"
 #include "msg.hh"
 
 PixelStreamTcp::PixelStreamTcp()
@@ -307,15 +306,23 @@ int PixelStreamTcp::SendDataRequest(void)
 int PixelStreamTcp::RecvHeader(uint32_t *width, uint32_t *height)
 {
     char recvbuf[10];
-    int byteswap;
 
     if (read(ServerToClientSocket, &recvbuf, sizeof(recvbuf)) == sizeof(recvbuf))
     {
         uint16_t *recvendianflag = (uint16_t *)(&(recvbuf[0]));
-        if (*recvendianflag == 1) byteswap = 0;
-        else byteswap = 1;
-        getbytes((char *)&(recvbuf[2]), (char *)width, sizeof(*width), byteswap);
-        getbytes((char *)&(recvbuf[6]), (char *)height, sizeof(*height), byteswap);
+        char *wbytes = (char *)width;
+        char *hbytes = (char *)height;
+
+        if (*recvendianflag == 1)
+        {
+            wbytes[0] = recvbuf[2]; wbytes[1] = recvbuf[3]; wbytes[2] = recvbuf[4]; wbytes[3] = recvbuf[5];
+            hbytes[0] = recvbuf[6]; hbytes[1] = recvbuf[7]; hbytes[2] = recvbuf[8]; hbytes[3] = recvbuf[9];
+        }
+        else
+        {
+            wbytes[3] = recvbuf[2]; wbytes[2] = recvbuf[3]; wbytes[1] = recvbuf[4]; wbytes[0] = recvbuf[5];
+            hbytes[3] = recvbuf[6]; hbytes[2] = recvbuf[7]; hbytes[1] = recvbuf[8]; hbytes[0] = recvbuf[9];
+        }
         this->lastread->restart();
         return 1;
     }
