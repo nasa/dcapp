@@ -1,8 +1,8 @@
 #include <sstream>
 #include <list>
+#include "utils/msg.hh"
 #include "nodes.hh"
 #include "bezel.hh"
-#include "msg.hh"
 
 extern void ProcessEventList(struct node *);
 extern bool CheckCondition(struct node *);

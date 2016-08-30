@@ -1,9 +1,9 @@
 #include <cmath>
 #include <list>
+#include "utils/timer.hh"
 #include "nodes.hh"
 #include "mappings.hh"
 #include "geometry.hh"
-#include "timer.hh"
 
 extern void ProcessEventList(struct node *);
 extern bool CheckCondition(struct node *);

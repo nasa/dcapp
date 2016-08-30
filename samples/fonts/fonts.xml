@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Window X="30" Y="30" Width="640" Height="480" ForceUpdate="0.01" ActiveDisplay="1">
+        <Constant Name="BgColor">0 0 0</Constant>
+        <Constant Name="FgColor">1 1 1</Constant>
+        <Defaults>
+            <String Size="48" Color="#FgColor" HorizontalAlign="Center" VerticalAlign="Middle"/>
+        </Defaults>
+
+        <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="1600" VirtualHeight="1200">
+            <String Font="fonts/Arial.ttf" Y="775">Arial</String>
+            <String Font="fonts/Calibri.ttf" Y="725">Calibri</String>
+            <String Font="fonts/Verdana.ttf" Y="675">Verdana</String>
+            <String Font="fonts/Times.dfont" Y="625">Times</String>
+            <String Font="fonts/Times.dfont" Face="Bold" Y="575">Times Bold</String>
+            <String Font="fonts/Times.dfont" Face="Italic" Y="525">Times Italic</String>
+            <String Font="fonts/Times.dfont" Face="Bold Italic" Y="475">Times Bold Italic</String>
+            <String Font="fonts/SimHei.ttf" Y="425">载使用界面</String>
+            <String Font="fonts/AppleSymbols.ttc" Y="375">☀ ︎☼ ☯ ♠ ︎♣ ︎♥ ︎♦ ︎︎◉ ⧳ ® © α β γ ☞ ⌘ ␛ ⎈</String>
+        </Panel>
+    </Window>
+</DCAPP>

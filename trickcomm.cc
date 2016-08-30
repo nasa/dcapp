@@ -1,9 +1,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include "utils/msg.hh"
+#include "utils/timer.hh"
 #include "trickcomm.hh"
-#include "msg.hh"
-#include "timer.hh"
 #include "string_utils.hh"
 #include "varlist.hh"
 

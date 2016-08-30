@@ -1,10 +1,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include "utils/timer.hh"
+#include "utils/tidy.hh"
 #include "edgecomm.hh"
 #include "varlist.hh"
-#include "timer.hh"
-#include "utils.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 

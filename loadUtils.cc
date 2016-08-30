@@ -4,10 +4,10 @@
 #include <string>
 #include <list>
 #include <strings.h>
-#include "dc.hh"
-#include "msg.hh"
+#include "utils/msg.hh"
 #include "imgload/imgload.hh"
-#include "fontlib.hh"
+#include "fontlib/fontlib.hh"
+#include "dc.hh"
 
 typedef struct
 {

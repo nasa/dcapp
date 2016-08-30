@@ -7,7 +7,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
-#include "msg.hh"
+#include "utils/msg.hh"
 #include "EDGE_rcs.hh"
 
 #define MAX_SEND_SIZE 4096

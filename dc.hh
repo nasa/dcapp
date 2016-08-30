@@ -1,7 +1,7 @@
 #ifndef _DC_HH_
 #define _DC_HH_
 
-#include "fontlib.hh"
+#include "fontlib/fontlib.hh"
 
 typedef flFont *dcFont;
 typedef unsigned int dcTexture;

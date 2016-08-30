@@ -2,7 +2,7 @@
 #include <cstring>
 #include <libxml/parser.h>
 #include <libxml/xinclude.h>
-#include "msg.hh"
+#include "utils/msg.hh"
 
 bool NodeCheck(xmlNodePtr, const char *);
 static bool xmlStrEq(const xmlChar *, const char *);

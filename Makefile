@@ -1,21 +1,22 @@
 .NOTPARALLEL:
+.PHONY: all prebuild postbuild clean
 
-include makedefs
+OSSPEC := $(shell ./PkgInfo --osspec)
+OBJDIR := $(shell ./PkgInfo --objdir)
+
+BINDIR := dcapp.app/Contents/$(OSSPEC)
 
 HEADERS := \
 	$(wildcard *.hh)
 DCAPP_SOURCES := \
-	CAN.cc \
 	EDGE_rcs.cc \
 	PixelStreamData.cc \
 	PixelStreamFile.cc \
 	PixelStreamTcp.cc \
 	animation.cc \
 	app_main.cc \
-	ccsds_udp_comm.cc \
 	comm.cc \
 	edgecomm.cc \
-	fontlib.cc \
 	geometry.cc \
 	handle_bezel.cc \
 	handle_draw.cc \
@@ -24,13 +25,13 @@ DCAPP_SOURCES := \
 	handle_utils.cc \
 	loadUtils.cc \
 	logic_stubs.cc \
-	msg.cc \
 	nodes.cc \
 	opengl_draw.cc \
 	primitive_new.cc \
 	render_ADI.cc \
 	render_string.cc \
 	string_utils.cc \
+	tara_funcs.cc \
 	trickcomm.cc \
 	update_display.cc \
 	varlist.cc \
@@ -38,76 +39,46 @@ DCAPP_SOURCES := \
 	xml_utils.cc
 GENHEADER_SOURCES := \
 	dcapp_genheader.cc \
-	msg.cc \
 	xml_utils.cc
-LIBS := \
-	uei/$(LIBDIR)/libuei.a \
-	imgload/$(LIBDIR)/libimgload.a
 
-ifeq ($(OSTYPE), linux)
-  TARA_SUBDIR := x11
-  ifeq ($(UseGLUT), yes)
-    DCAPP_SOURCES += glut_funcs.cc app_launcher_stub.cc
-    UI_CFLAG := -I../glut/include
-    UI_LFLAG := -L../glut/lib/glut -lglut
-  else
-    DCAPP_SOURCES += tara_funcs.cc app_launcher_stub.cc
-    UI_CFLAG :=
-    UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD
-    LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
-  endif
-  UI_CFLAG += $(X11_CFLAG)
-  UI_LFLAG += $(X11_LFLAG) -lX11 -lXi -lXmu -lGL -lGLU
+ifneq ($(shell which trick-gte 2> /dev/null),)
+    DCAPP_SOURCES += vscomm.cc
+else ifneq ($(shell which gte 2> /dev/null),)
+    DCAPP_SOURCES += vscomm.cc
+endif
+
+CXXFLAGS += -Wall -I.
+CXXFLAGS += $(shell osenv/PkgInfo --cflags)
+CXXFLAGS += $(shell 3rdParty/can/PkgInfo --cflags)
+CXXFLAGS += $(shell 3rdParty/ccsds/PkgInfo --cflags)
+CXXFLAGS += $(shell 3rdParty/edge/PkgInfo --cflags)
+CXXFLAGS += $(shell 3rdParty/trick/PkgInfo --cflags)
+CXXFLAGS += $(shell 3rdParty/uei/PkgInfo --cflags)
+CXXFLAGS += $(shell packages/TaraDraw/PkgInfo --cflags)
+CXXFLAGS += $(shell packages/fontlib/PkgInfo --cflags)
+CXXFLAGS += $(shell packages/imgload/PkgInfo --cflags)
+CXXFLAGS += $(shell packages/utils/PkgInfo --cflags)
+CXXFLAGS += $(shell xml2-config --cflags)
+
+LINK_LIBS += $(shell osenv/PkgInfo --libs)
+LINK_LIBS += $(shell 3rdParty/can/PkgInfo --libs)
+LINK_LIBS += $(shell 3rdParty/ccsds/PkgInfo --libs)
+LINK_LIBS += $(shell 3rdParty/edge/PkgInfo --libs)
+LINK_LIBS += $(shell 3rdParty/trick/PkgInfo --libs)
+LINK_LIBS += $(shell 3rdParty/uei/PkgInfo --libs)
+LINK_LIBS += $(shell packages/TaraDraw/PkgInfo --libs)
+LINK_LIBS += $(shell packages/fontlib/PkgInfo --libs)
+LINK_LIBS += $(shell packages/imgload/PkgInfo --libs)
+LINK_LIBS += $(shell packages/utils/PkgInfo --libs)
+LINK_LIBS += $(shell xml2-config --libs)
+LINK_LIBS += -ldl
+
+ifeq ($(OSSPEC), MacOS)
+    CXXFLAGS += -I/opt/X11/include
+    LINK_LIBS += -framework OpenGL -framework AppKit
 else
-  TARA_SUBDIR := mac
-  ifeq ($(UseGLUT), yes)
-    DCAPP_SOURCES += glut_funcs.cc app_launcher_stub.cc
-    UI_CFLAG := $(X11_CFLAG)
-    UI_LFLAG := $(X11_LFLAG) -lX11 -lXi -lXmu -lGL -lGLU -lglut
-  else
-    DCAPP_SOURCES += tara_funcs.cc app_launcher.mm
-    UI_CFLAG := $(X11_CFLAG)
-    UI_LFLAG := -LTaraDraw/$(TARA_SUBDIR)/$(LIBDIR) -lTD -framework OpenGL -framework AppKit
-    LIBS += TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a
-  endif
-endif
-
-ifneq ($(shell which trick-gte),)
-  TRICK_HOME ?= $(shell trick-gte TRICK_HOME)
-  TRICK_CFLAG := -DTRICKACTIVE -DTRICK16PLUS -I$(TRICK_HOME)/include
-  TRICK_LFLAG := -L$(TRICK_HOME)/lib -L$(TRICK_HOME)/lib64 -ltrick_comm
-  DCAPP_SOURCES += vscomm.cc
-else ifneq ($(shell which gte),)
-  TRICK_HOME ?= $(shell gte TRICK_HOME)
-  TRICK_HOST_TYPE ?= $(shell gte TRICK_HOST_TYPE)
-  TRICK_CFLAG := -DTRICKACTIVE -I$(TRICK_HOME)/trick_source
-  TRICK_LFLAG := -L$(TRICK_HOME)/trick_source/trick_utils/comm/object_$(TRICK_HOST_TYPE) -ltrick_comm
-  DCAPP_SOURCES += vscomm.cc
-endif
-
-ifdef CANBUS_HOME
-  CAN_CFLAG := -DNTCAN -I$(CANBUS_HOME)
-  CAN_LFLAG := -L$(CANBUS_HOME) -Wl,-Bstatic -lntcan -Wl,-Bdynamic
-endif
-
-ifdef CCSDS_UDP_HOME
-  CCSDS_UDP_CFLAG := -DCCSDSUDPACTIVE -I$(CCSDS_UDP_HOME)
-  # -rdynamic is needed for GCC to use the application's symbols to resolve undefined symbols in the loaded .so's
-  CCSDS_UDP_LFLAG := -rdynamic -L$(CCSDS_UDP_HOME)/Debug -lccsds_udp
-endif
-
-FT_CFLAG := $(shell freetype-config --cflags)
-FT_LFLAG := $(shell freetype-config --libs)
-
-XML2_CFLAG := $(shell xml2-config --cflags)
-XML2_LFLAG := $(shell xml2-config --libs)
-
-COMP_FLAGS := $(XML2_CFLAG) $(FT_CFLAG) $(UI_CFLAG) $(CAN_CFLAG) $(TRICK_CFLAG) $(CCSDS_UDP_CFLAG)
-LINK_FLAGS := $(XML2_LFLAG) $(FT_LFLAG) $(UI_LFLAG) $(CAN_LFLAG) $(TRICK_LFLAG) $(CCSDS_UDP_LFLAG) -ldl
-
-ifeq ($(OSTYPE), linux)
-  COMP_FLAGS += -D_GNU_SOURCE
-  LINK_FLAGS += -lrt
+    CXXFLAGS += -D_GNU_SOURCE -I/usr/X11R6/include
+    LINK_LIBS += -lrt -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL -lGLU
 endif
 
 DCAPP_OBJECTS := $(DCAPP_SOURCES)
@@ -116,38 +87,38 @@ DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.mm=.o), $(obj))
 DCAPP_OBJECTS := $(foreach obj, $(patsubst %, $(OBJDIR)/%, $(DCAPP_OBJECTS)), $(obj))
 GENHEADER_OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(GENHEADER_SOURCES)), $(OBJDIR)/$(obj))
 
-#COMP_FLAGS += -DDEBUG
+#CXXFLAGS += -DDEBUG
 
-dcapp: $(BINDIR)/dcapp $(BINDIR)/dcapp_genheader
+all: prebuild $(BINDIR)/dcapp $(BINDIR)/dcapp_genheader postbuild
 
-$(BINDIR)/dcapp: $(DCAPP_OBJECTS) $(LIBS)
+$(BINDIR)/dcapp: $(DCAPP_OBJECTS)
 	mkdir -p $(BINDIR)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LINK_FLAGS)
+	$(CXX) $(LDFLAGS) $^ $(LINK_LIBS) -o $@
 
 $(BINDIR)/dcapp_genheader: $(GENHEADER_OBJECTS)
 	mkdir -p $(BINDIR)
-	$(LD) $(LDFLAGS) $^ -o $@ $(LINK_FLAGS)
+	$(CXX) $(LDFLAGS) $^ $(LINK_LIBS) -o $@
 
 $(OBJDIR)/%.o: %.cc $(HEADERS)
 	mkdir -p $(OBJDIR)
-	$(CC) $(CFLAGS) $(COMP_FLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: %.mm $(HEADERS)
 	mkdir -p $(OBJDIR)
-	$(CC) $(CFLAGS) $(COMP_FLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-uei/$(LIBDIR)/libuei.a: $(wildcard uei/*.cc) $(wildcard uei/*.hh)
-	${MAKE} -C uei
+prebuild:
+	${MAKE} -C packages
+	${MAKE} -C 3rdParty
+	${MAKE} -C osenv
 
-imgload/$(LIBDIR)/libimgload.a: $(wildcard imgload/*.cc) $(wildcard imgload/*.hh)
-	${MAKE} -C imgload
-
-TaraDraw/$(TARA_SUBDIR)/$(LIBDIR)/libTD.a: $(wildcard TaraDraw/$(TARA_SUBDIR)/*.mm) $(wildcard TaraDraw/$(TARA_SUBDIR)/*.cc) $(wildcard TaraDraw/$(TARA_SUBDIR)/*.hh)
-	${MAKE} -C TaraDraw/$(TARA_SUBDIR)
+postbuild:
+	${MAKE} -C samples
 
 clean:
-	${MAKE} -C uei clean
-	${MAKE} -C imgload clean
-	${MAKE} -C TaraDraw/$(TARA_SUBDIR) clean
+	${MAKE} -C packages clean
+	${MAKE} -C 3rdParty clean
+	${MAKE} -C osenv clean
+	${MAKE} -C samples clean
 	rm -rf $(OBJDIR)
 	rm -rf $(BINDIR)

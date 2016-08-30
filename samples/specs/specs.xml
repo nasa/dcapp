@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Window X="30" Y="30" Width="640" Height="480" ForceUpdate="1" ActiveDisplay="1">
+        <Constant Name="BgColor">0 0 0</Constant>
+        <Constant Name="FgColor">1 1 1</Constant>
+        <Defaults>
+            <String Font="fonts/Calibri.ttf" Size="48" Color="#FgColor" HorizontalAlign="Center" VerticalAlign="Middle"/>
+        </Defaults>
+
+        <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="1600" VirtualHeight="1200">
+            <String Y="750">\$USER=$USER</String>
+            <String Y="700">\$LOGNAME=$LOGNAME</String>
+            <String Y="650">\$HOME=$HOME</String>
+            <String Y="600">\$HOSTTYPE=$HOSTTYPE</String>
+            <String Y="550">\$VENDOR=$VENDOR</String>
+            <String Y="500">\$OSTYPE=$OSTYPE</String>
+            <String Y="450">\$MACHTYPE=$MACHTYPE</String>
+            <String Y="400">\$HOST=$HOST</String>
+        </Panel>
+    </Window>
+</DCAPP>

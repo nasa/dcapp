@@ -2,12 +2,12 @@
 #define _TRICKCOMM_HH_
 
 #include <list>
+#include "utils/timer.hh"
 #include "comm.hh"
 #ifdef TRICKACTIVE
 #include "vscomm.hh"
 #endif
 #include "varlist.hh"
-#include "timer.hh"
 
 class TrickCommModule : public CommModule
 {

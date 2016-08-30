@@ -14,9 +14,9 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include "utils/timer.hh"
+#include "utils/msg.hh"
 #include "PixelStreamTcp.hh"
-#include "timer.hh"
-#include "msg.hh"
 
 PixelStreamTcp::PixelStreamTcp()
 :

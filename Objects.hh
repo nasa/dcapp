@@ -6,9 +6,9 @@
 #include <string>
 #include <list>
 #include <map>
+#include "fontlib/fontlib.hh"
+#include "utils/timer.hh"
 #include "dc.hh"
-#include "fontlib.hh"
-#include "timer.hh"
 #include "comm.hh"
 #include "PixelStream.hh"
 #include "animation.hh"

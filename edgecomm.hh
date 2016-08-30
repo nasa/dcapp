@@ -2,10 +2,10 @@
 #define _EDGEIO_HH_
 
 #include <list>
+#include "utils/timer.hh"
 #include "comm.hh"
-#include "EDGE_rcs.hh"
 #include "varlist.hh"
-#include "timer.hh"
+#include "EDGE_rcs.hh"
 
 #define EDGEIO_FROMEDGE           (1)
 #define EDGEIO_TOEDGE             (2)

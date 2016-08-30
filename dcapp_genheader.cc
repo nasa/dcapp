@@ -4,7 +4,7 @@
 #include <string>
 #include <list>
 #include <libgen.h>
-#include "msg.hh"
+#include "utils/msg.hh"
 #include "xml_utils.hh"
 
 typedef struct

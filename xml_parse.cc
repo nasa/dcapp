@@ -6,17 +6,17 @@
 #include <libgen.h>
 #include <fcntl.h>
 #include <dlfcn.h>
+#include "utils/msg.hh"
 #include "varlist.hh"
 #include "trickcomm.hh"
 #include "edgecomm.hh"
-#include "ccsds_udp_comm.hh"
-#include "CAN.hh"
+#include "ccsds/ccsds_udp_comm.hh"
+#include "can/CAN.hh"
 #include "uei/UEI.hh"
 #include "nodes.hh"
 #include "mappings.hh"
 #include "string_utils.hh"
 #include "xml_utils.hh"
-#include "msg.hh"
 
 struct xmlStyle
 {

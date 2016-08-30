@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="Float" InitialValue="0.5">RED</Variable>
+    <Variable Type="Float" InitialValue="0.5">GREEN</Variable>
+    <Variable Type="Float" InitialValue="0.5">BLUE</Variable>
+    <Variable Type="Float" InitialValue="0.5">ALPHA</Variable>
+
+    <Window X="30" Y="30" Width="800" Height="600" ActiveDisplay="1">
+        <Constant Name="BgColor">0 0 0</Constant>
+        <Constant Name="FgColor">1 1 1</Constant>
+
+        <Defaults>
+            <Button Y="7.5" Width="10" Height="10" HorizontalAlign="Center" VerticalAlign="Middle"/>
+            <String Font="fonts/Calibri.ttf" Size="4" Color="0 0 0" HorizontalAlign="Center" VerticalAlign="Middle"/>
+        </Defaults>
+
+        <Style Name="Button">
+            <String Size="3" Color="1 1 1" ShadowOffset=".2"/>
+        </Style>
+
+        <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="100" VirtualHeight="100">
+            <String X="20" Y="92.5" Color="1 1 1">R: @RED(%.2f)</String>
+            <String X="40" Y="92.5" Color="1 1 1">G: @GREEN(%.2f)</String>
+            <String X="60" Y="92.5" Color="1 1 1">B: @BLUE(%.2f)</String>
+            <String X="80" Y="92.5" Color="1 1 1">A: @ALPHA(%.2f)</String>
+            <Image Width="46" Height="50" HorizontalAlign="Center" VerticalAlign="Middle">nasa.tga</Image>
+            <Rectangle Width="70" Height="70" HorizontalAlign="Center" VerticalAlign="Middle" FillColor="@RED @GREEN @BLUE @ALPHA" LineColor="1 1 1"/>
+            <Button Type="Momentary" X="7">
+                <OnPress><Set Variable="@RED" Operator="-=" MinimumValue="0">.05</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Red\n-</String>
+            </Button>
+            <Button Type="Momentary" X="18">
+                <OnPress><Set Variable="@RED" Operator="+=" MaximumValue="1">.05</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Red\n+</String>
+            </Button>
+            <Button Type="Momentary" X="32">
+                <OnPress><Set Variable="@GREEN" Operator="-=" MinimumValue="0">.05</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Green\n-</String>
+            </Button>
+            <Button Type="Momentary" X="43">
+                <OnPress><Set Variable="@GREEN" Operator="+=" MaximumValue="1">.05</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Green\n+</String>
+            </Button>
+            <Button Type="Momentary" X="57">
+                <OnPress><Set Variable="@BLUE" Operator="-=" MinimumValue="0">.05</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Blue\n-</String>
+            </Button>
+            <Button Type="Momentary" X="68">
+                <OnPress><Set Variable="@BLUE" Operator="+=" MaximumValue="1">.05</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Blue\n+</String>
+            </Button>
+            <Button Type="Momentary" X="82">
+                <OnPress><Set Variable="@ALPHA" Operator="-=" MinimumValue="0">.05</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Alpha\n-</String>
+            </Button>
+            <Button Type="Momentary" X="93">
+                <OnPress><Set Variable="@ALPHA" Operator="+=" MaximumValue="1">.05</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Alpha\n+</String>
+            </Button>
+        </Panel>
+    </Window>
+</DCAPP>

@@ -4,7 +4,7 @@
 #include <cerrno>
 #include <sys/shm.h>
 #include "PixelStreamFile.hh"
-#include "msg.hh"
+#include "utils/msg.hh"
 
 PixelStreamFile::PixelStreamFile()
 :

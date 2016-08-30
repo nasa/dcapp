@@ -1,0 +1,74 @@
+#!/bin/sh
+
+usage()
+{
+    cat <<EOF
+Usage: $0 [OPTION]...
+Get package compilation and linking information.
+
+Options:
+    --osspec    display default directory name extension
+    --objdir    display default directory name for compiled objects
+    --libdir    display default directory name for compiled libraries
+    --bindir    display default directory name for compiled binaries
+    --cflags    display required compilation flags
+    --libs      display required linking flags
+EOF
+    exit $1
+}
+
+if test $# -eq 0 ; then
+    usage 1 1>&2
+fi
+
+mydir="$(cd "$(dirname "$0")"; pwd)"
+parentdir="$(cd "$(dirname "$0")/.."; pwd)"
+ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
+machtype=`uname -m`
+if test "$ostype" = "darwin" ; then
+    osspec="MacOS"
+else
+    osspec="${ostype}_${machtype}"
+fi
+objdir="obj_${osspec}"
+libdir="lib_${osspec}"
+bindir="bin_${osspec}"
+
+while test $# -gt 0 ; do
+    case $1 in
+        --osspec)
+            echo $osspec
+            ;;
+        --objdir)
+            echo $objdir
+            ;;
+        --libdir)
+            echo $libdir
+            ;;
+        --bindir)
+            echo $bindir
+            ;;
+##### These are the only lines that should differ from package to package. #####
+        --cflags)
+            if [ ! -z ${CANBUS_HOME} ]
+            then
+                echo "-I${parentdir} -I${CANBUS_HOME}"
+            else
+                echo "-I${parentdir}"
+            fi
+            ;;
+        --libs)
+            if [ ! -z ${CANBUS_HOME} ]
+            then
+                echo "-L${mydir}/${libdir} -lCAN -L${CANBUS_HOME} -Wl,-Bstatic -lntcan -Wl,-Bdynamic"
+            else
+                echo "-L${mydir}/${libdir} -lCAN"
+            fi
+            ;;
+################################################################################
+        *)
+            usage 1 1>&2
+            ;;
+    esac
+    shift
+done

@@ -1,10 +1,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <stdint.h>
+#include "utils/timer.hh"
 #include "nodes.hh"
 #include "geometry.hh"
 #include "opengl_draw.hh"
-#include "timer.hh"
 
 extern void render_string(struct node *);
 extern void draw_adi(struct node *);

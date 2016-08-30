@@ -4,11 +4,11 @@
 #include <strings.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include "utils/tidy.hh"
+#include "utils/msg.hh"
 #include "dc.hh"
 #include "varlist.hh"
 #include "nodes.hh"
-#include "utils.hh"
-#include "msg.hh"
 #include "string_utils.hh"
 #include "loadUtils.hh"
 #include "opengl_draw.hh"

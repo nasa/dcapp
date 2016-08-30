@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<DCAPP xmlns:xi="http://www.w3.org/2001/XInclude">
+    <Variable Type="String">CURRENT_TIME</Variable>
+    <Variable Type="String">MY_STR</Variable>
+    <Variable Type="Float">POS_X</Variable>
+    <Variable Type="Float">POS_Y</Variable>
+
+    <DisplayLogic>logic/mylogic.so</DisplayLogic>
+
+    <Window X="30" Y="30" Width="640" Height="480" ForceUpdate="0.01" ActiveDisplay="1">
+        <Constant Name="BgColor">0 0 0</Constant>
+        <Constant Name="FgColor">1 1 1</Constant>
+        <Defaults>
+            <String Font="fonts/Calibri.ttf" Size="48" Color="#FgColor"/>
+        </Defaults>
+
+        <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="1600" VirtualHeight="1200">
+            <Image X="@POS_X" Y="@POS_Y" Width="300" Height="250">images/nasa.tga</Image>
+            <String HorizontalAlign="Center" VerticalAlign="Middle">@CURRENT_TIME</String>
+
+            <String Y="180" HorizontalAlign="Center">X = @{POS_X}, Y = @{POS_Y}</String>
+
+            <Set Variable="@MY_STR">Hello</Set>
+            <Constant Name="yval">120</Constant>
+            <xi:include href="element.xml"/>
+
+            <Set Variable="@MY_STR">World</Set>
+            <Constant Name="yval">60</Constant>
+            <xi:include href="element.xml"/>
+        </Panel>
+    </Window>
+</DCAPP>

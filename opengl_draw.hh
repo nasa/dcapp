@@ -1,7 +1,7 @@
 #ifndef _OPENGL_DRAW_HH_
 #define _OPENGL_DRAW_HH_
 
-#include "fontlib.hh"
+#include "fontlib/fontlib.hh"
 
 extern void graphics_init(void);
 extern void reshape(int, int);

@@ -3,7 +3,7 @@
 #include <cstring>
 #include <cmath>
 #include <GL/glu.h>
-#include "fontlib.hh"
+#include "fontlib/fontlib.hh"
 
 
 /*********************************************************************************
