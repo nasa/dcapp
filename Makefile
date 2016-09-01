@@ -9,14 +9,12 @@ BINDIR := dcapp.app/Contents/$(OSSPEC)
 HEADERS := \
 	$(wildcard *.hh)
 DCAPP_SOURCES := \
-	EDGE_rcs.cc \
 	PixelStreamData.cc \
 	PixelStreamFile.cc \
 	PixelStreamTcp.cc \
 	animation.cc \
 	app_main.cc \
 	comm.cc \
-	edgecomm.cc \
 	geometry.cc \
 	handle_bezel.cc \
 	handle_draw.cc \
@@ -32,7 +30,6 @@ DCAPP_SOURCES := \
 	render_string.cc \
 	string_utils.cc \
 	tara_funcs.cc \
-	trickcomm.cc \
 	update_display.cc \
 	varlist.cc \
 	xml_parse.cc \
@@ -40,12 +37,6 @@ DCAPP_SOURCES := \
 GENHEADER_SOURCES := \
 	dcapp_genheader.cc \
 	xml_utils.cc
-
-ifneq ($(shell which trick-gte 2> /dev/null),)
-    DCAPP_SOURCES += vscomm.cc
-else ifneq ($(shell which gte 2> /dev/null),)
-    DCAPP_SOURCES += vscomm.cc
-endif
 
 CXXFLAGS += -Wall -I.
 CXXFLAGS += $(shell osenv/PkgInfo --cflags)
@@ -83,7 +74,6 @@ endif
 
 DCAPP_OBJECTS := $(DCAPP_SOURCES)
 DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.cc=.o), $(obj))
-DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.mm=.o), $(obj))
 DCAPP_OBJECTS := $(foreach obj, $(patsubst %, $(OBJDIR)/%, $(DCAPP_OBJECTS)), $(obj))
 GENHEADER_OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(GENHEADER_SOURCES)), $(OBJDIR)/$(obj))
 
@@ -100,10 +90,6 @@ $(BINDIR)/dcapp_genheader: $(GENHEADER_OBJECTS)
 	$(CXX) $(LDFLAGS) $^ $(LINK_LIBS) -o $@
 
 $(OBJDIR)/%.o: %.cc $(HEADERS)
-	mkdir -p $(OBJDIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(OBJDIR)/%.o: %.mm $(HEADERS)
 	mkdir -p $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 

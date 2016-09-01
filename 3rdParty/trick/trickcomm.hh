@@ -50,9 +50,11 @@ class TrickCommModule : public CommModule
         } io_parameter;
 
         bool active;
-#ifdef TRICKACTIVE
         Timer *last_connect_attempt;
+#ifdef TRICKACTIVE
         VariableServerComm *tvs;
+#else
+        void *tvs;
 #endif
         char *host;
         int port;

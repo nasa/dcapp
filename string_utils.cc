@@ -2,7 +2,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <strings.h>
-#include "Objects.hh"
+#include "alignment.hh"
+#include "kolor.hh"
 #include "loadUtils.hh"
 
 extern bool check_dynamic_element(const char *);
@@ -48,9 +49,9 @@ static float *color_element(int index, char *strval, float defval)
     return retptr;
 }
 
-struct kolor StrToColor(const char *instr, float r, float g, float b, float a)
+Kolor StrToColor(const char *instr, float r, float g, float b, float a)
 {
-    struct kolor retval;
+    Kolor retval;
 
     if (!instr)
     {

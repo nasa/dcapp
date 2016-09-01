@@ -13,8 +13,11 @@
 #include "loadUtils.hh"
 #include "opengl_draw.hh"
 #include "PixelStream.hh"
+#include "alignment.hh"
 
 extern void window_init(bool, int , int, int, int);
+extern struct node *NewList(struct node *);
+extern struct node *NewNode(struct node *, struct node **);
 
 extern appdata AppData;
 

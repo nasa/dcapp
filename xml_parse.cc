@@ -7,12 +7,12 @@
 #include <fcntl.h>
 #include <dlfcn.h>
 #include "utils/msg.hh"
-#include "varlist.hh"
-#include "trickcomm.hh"
-#include "edgecomm.hh"
+#include "trick/trickcomm.hh"
+#include "edge/edgecomm.hh"
 #include "ccsds/ccsds_udp_comm.hh"
 #include "can/CAN.hh"
 #include "uei/UEI.hh"
+#include "varlist.hh"
 #include "nodes.hh"
 #include "mappings.hh"
 #include "string_utils.hh"

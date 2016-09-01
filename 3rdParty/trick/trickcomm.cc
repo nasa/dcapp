@@ -12,9 +12,6 @@
 TrickCommModule::TrickCommModule()
 :
 active(false),
-#ifdef TRICKACTIVE
-tvs(0x0),
-#endif
 host(0x0),
 port(0),
 datarate(0x0),
@@ -23,6 +20,9 @@ disconnectaction(this->AppTerminate)
 #ifdef TRICKACTIVE
     this->last_connect_attempt = new Timer;
     this->tvs = new VariableServerComm;
+#else
+    this->last_connect_attempt = 0x0;
+    this->tvs = 0x0;
 #endif
 }
 
