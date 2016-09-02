@@ -53,22 +53,13 @@ while test $# -gt 0 ; do
             echo "-I${parentdir}"
             ;;
         --libs)
-            extra_libs=""
-            trick_home=`trick-gte TRICK_HOME`
-            if [ `type -p trick-gte` ]
+            if [ ! -z ${CCSDS_UDP_HOME} ]
             then
-                if [ -d "${trick_home}/lib64" ]
-                then
-                    extra_libs="-L${trick_home}/lib -L${trick_home}/lib64 -ltrick_comm"
-                else
-                    extra_libs="-L${trick_home}/lib -ltrick_comm"
-                fi
-            else if [ `type -p gte` ]
-            then
-                extra_libs="-L${trick_home}/trick_source/trick_utils/comm/object_`gte TRICK_HOST_TYPE` -ltrick_comm"
+                # -rdynamic is needed for GCC to use the application's symbols to resolve undefined symbols in the loaded .so's
+                echo "-L${mydir}/${libdir} -lCcsdsPlugin -rdynamic -L${CCSDS_UDP_HOME}/Debug -lccsds_udp"
+            else
+                echo "-L${mydir}/${libdir} -lCcsdsPlugin"
             fi
-            fi
-            echo "-L${mydir}/${libdir} -lTrickComm ${extra_libs}"
             ;;
 ################################################################################
         *)

@@ -1,17 +1,17 @@
 .PHONY: clean
 
-OBJDIR := $(shell ./PkgInfo --objdir)
-LIBDIR := $(shell ./PkgInfo --libdir)
+OBJDIR := $(shell ./CanPlugin-config --objdir)
+LIBDIR := $(shell ./CanPlugin-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall $(shell ../../packages/utils/PkgInfo --cflags)
+CXXFLAGS += -Wall $(shell ../../packages/utils/utils-config --cflags)
 ifdef CANBUS_HOME
     CXXFLAGS += -DNTCAN -I$(CANBUS_HOME)
 endif
 
-$(LIBDIR)/libCAN.a: $(OBJECTS)
+$(LIBDIR)/libCanPlugin.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)
 	$(AR) $(ARFLAGS) $@ $^
 

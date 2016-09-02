@@ -1,8 +1,8 @@
 .PHONY: clean
 
-OSSPEC := $(shell ./PkgInfo --osspec)
-OBJDIR := $(shell ./PkgInfo --objdir)
-LIBDIR := $(shell ./PkgInfo --libdir)
+OSSPEC := $(shell ./fontlib-config --osspec)
+OBJDIR := $(shell ./fontlib-config --objdir)
+LIBDIR := $(shell ./fontlib-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))

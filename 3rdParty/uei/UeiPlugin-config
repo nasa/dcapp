@@ -53,7 +53,7 @@ while test $# -gt 0 ; do
             echo "-I${parentdir}"
             ;;
         --libs)
-            echo "-L${mydir}/${libdir} -lUEI"
+            echo "-L${mydir}/${libdir} -lUeiPlugin"
             ;;
 ################################################################################
         *)

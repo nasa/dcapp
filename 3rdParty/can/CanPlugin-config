@@ -60,9 +60,9 @@ while test $# -gt 0 ; do
         --libs)
             if [ ! -z ${CANBUS_HOME} ]
             then
-                echo "-L${mydir}/${libdir} -lCAN -L${CANBUS_HOME} -Wl,-Bstatic -lntcan -Wl,-Bdynamic"
+                echo "-L${mydir}/${libdir} -lCanPlugin -L${CANBUS_HOME} -Wl,-Bstatic -lntcan -Wl,-Bdynamic"
             else
-                echo "-L${mydir}/${libdir} -lCAN"
+                echo "-L${mydir}/${libdir} -lCanPlugin"
             fi
             ;;
 ################################################################################

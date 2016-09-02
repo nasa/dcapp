@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-OSSPEC := $(shell ./PkgInfo --osspec)
+OSSPEC := $(shell ./TaraDraw-config --osspec)
 
 ifeq ($(OSSPEC), MacOS)
     TARA_SUBDIR := mac

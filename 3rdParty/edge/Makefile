@@ -1,14 +1,14 @@
 .PHONY: clean
 
-OBJDIR := $(shell ./PkgInfo --objdir)
-LIBDIR := $(shell ./PkgInfo --libdir)
+OBJDIR := $(shell ./EdgePlugin-config --objdir)
+LIBDIR := $(shell ./EdgePlugin-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/PkgInfo --cflags)
+CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/utils-config --cflags)
 
-$(LIBDIR)/libEdgeComm.a: $(OBJECTS)
+$(LIBDIR)/libEdgePlugin.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)
 	$(AR) $(ARFLAGS) $@ $^
 

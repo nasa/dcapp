@@ -1,8 +1,8 @@
 .PHONY: clean
 
-OSSPEC := $(shell ./PkgInfo --osspec)
-OBJDIR := $(shell ./PkgInfo --objdir)
-LIBDIR := $(shell ./PkgInfo --libdir)
+OSSPEC := $(shell ./osenv-config --osspec)
+OBJDIR := $(shell ./osenv-config --objdir)
+LIBDIR := $(shell ./osenv-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 ifeq ($(OSSPEC), MacOS)

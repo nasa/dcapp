@@ -1,8 +1,8 @@
 .NOTPARALLEL:
 .PHONY: all prebuild postbuild clean
 
-OSSPEC := $(shell ./PkgInfo --osspec)
-OBJDIR := $(shell ./PkgInfo --objdir)
+OSSPEC := $(shell ./dcapp-config --osspec)
+OBJDIR := $(shell ./dcapp-config --objdir)
 
 BINDIR := dcapp.app/Contents/$(OSSPEC)
 
@@ -39,28 +39,28 @@ GENHEADER_SOURCES := \
 	xml_utils.cc
 
 CXXFLAGS += -Wall -I.
-CXXFLAGS += $(shell osenv/PkgInfo --cflags)
-CXXFLAGS += $(shell 3rdParty/can/PkgInfo --cflags)
-CXXFLAGS += $(shell 3rdParty/ccsds/PkgInfo --cflags)
-CXXFLAGS += $(shell 3rdParty/edge/PkgInfo --cflags)
-CXXFLAGS += $(shell 3rdParty/trick/PkgInfo --cflags)
-CXXFLAGS += $(shell 3rdParty/uei/PkgInfo --cflags)
-CXXFLAGS += $(shell packages/TaraDraw/PkgInfo --cflags)
-CXXFLAGS += $(shell packages/fontlib/PkgInfo --cflags)
-CXXFLAGS += $(shell packages/imgload/PkgInfo --cflags)
-CXXFLAGS += $(shell packages/utils/PkgInfo --cflags)
+CXXFLAGS += $(shell osenv/osenv-config --cflags)
+CXXFLAGS += $(shell 3rdParty/can/CanPlugin-config --cflags)
+CXXFLAGS += $(shell 3rdParty/ccsds/CcsdsPlugin-config --cflags)
+CXXFLAGS += $(shell 3rdParty/edge/EdgePlugin-config --cflags)
+CXXFLAGS += $(shell 3rdParty/trick/TrickPlugin-config --cflags)
+CXXFLAGS += $(shell 3rdParty/uei/UeiPlugin-config --cflags)
+CXXFLAGS += $(shell packages/TaraDraw/TaraDraw-config --cflags)
+CXXFLAGS += $(shell packages/fontlib/fontlib-config --cflags)
+CXXFLAGS += $(shell packages/imgload/imgload-config --cflags)
+CXXFLAGS += $(shell packages/utils/utils-config --cflags)
 CXXFLAGS += $(shell xml2-config --cflags)
 
-LINK_LIBS += $(shell osenv/PkgInfo --libs)
-LINK_LIBS += $(shell 3rdParty/can/PkgInfo --libs)
-LINK_LIBS += $(shell 3rdParty/ccsds/PkgInfo --libs)
-LINK_LIBS += $(shell 3rdParty/edge/PkgInfo --libs)
-LINK_LIBS += $(shell 3rdParty/trick/PkgInfo --libs)
-LINK_LIBS += $(shell 3rdParty/uei/PkgInfo --libs)
-LINK_LIBS += $(shell packages/TaraDraw/PkgInfo --libs)
-LINK_LIBS += $(shell packages/fontlib/PkgInfo --libs)
-LINK_LIBS += $(shell packages/imgload/PkgInfo --libs)
-LINK_LIBS += $(shell packages/utils/PkgInfo --libs)
+LINK_LIBS += $(shell osenv/osenv-config --libs)
+LINK_LIBS += $(shell 3rdParty/can/CanPlugin-config --libs)
+LINK_LIBS += $(shell 3rdParty/ccsds/CcsdsPlugin-config --libs)
+LINK_LIBS += $(shell 3rdParty/edge/EdgePlugin-config --libs)
+LINK_LIBS += $(shell 3rdParty/trick/TrickPlugin-config --libs)
+LINK_LIBS += $(shell 3rdParty/uei/UeiPlugin-config --libs)
+LINK_LIBS += $(shell packages/TaraDraw/TaraDraw-config --libs)
+LINK_LIBS += $(shell packages/fontlib/fontlib-config --libs)
+LINK_LIBS += $(shell packages/imgload/imgload-config --libs)
+LINK_LIBS += $(shell packages/utils/utils-config --libs)
 LINK_LIBS += $(shell xml2-config --libs)
 LINK_LIBS += -ldl
 

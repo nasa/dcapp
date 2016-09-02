@@ -1,7 +1,7 @@
 .PHONY: clean
 
-OBJDIR := $(shell ../PkgInfo --objdir)
-LIBDIR := $(shell ../PkgInfo --libdir)
+OBJDIR := $(shell ../TaraDraw-config --objdir)
+LIBDIR := $(shell ../TaraDraw-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.mm, %.o, $(wildcard *.mm)), $(OBJDIR)/$(obj))

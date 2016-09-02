@@ -1,7 +1,7 @@
 .PHONY: clean
 
-OBJDIR := $(shell ./PkgInfo --objdir)
-LIBDIR := $(shell ./PkgInfo --libdir)
+OBJDIR := $(shell ./utils-config --objdir)
+LIBDIR := $(shell ./utils-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))

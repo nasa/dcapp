@@ -1,13 +1,13 @@
 .PHONY: clean
 
-OSSPEC := $(shell ./PkgInfo --osspec)
-OBJDIR := $(shell ./PkgInfo --objdir)
-LIBDIR := $(shell ./PkgInfo --libdir)
+OSSPEC := $(shell ./imgload-config --osspec)
+OBJDIR := $(shell ./imgload-config --objdir)
+LIBDIR := $(shell ./imgload-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall $(shell ../utils/PkgInfo --cflags)
+CXXFLAGS += -Wall $(shell ../utils/utils-config --cflags)
 ifeq ($(OSSPEC), MacOS)
     CXXFLAGS += -I/opt/X11/include
 else
