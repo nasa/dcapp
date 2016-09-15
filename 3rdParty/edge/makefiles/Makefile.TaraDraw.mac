@@ -1,0 +1,37 @@
+DIR_TOP = ../../../../..
+
+C_FILES = $(DIR_SRC)/*.c $(DIR_SRC)/*.cpp $(DIR_SRC)/*.cc $(DIR_SRC)/*.mm $(DIR_SRC)/*.m
+C_FILTERS = %.c %.cpp %.cc %.mm $.m
+
+include $(DIR_TOP)/src.dist/defns.mk
+
+BUILD_TYPE := STATIC_LIB
+LIBNAME := libTD
+include $(DIR_TOP)/src.dist/common.mk
+
+#$(buildtargets)
+
+.PHONY: all clean
+
+MYOBJDIR := $(DIR_TOP)/obj/plugins/object_Darwin
+MYLIBDIR := $(DIR_TOP)/lib_Darwin
+
+MYHEADERS := $(wildcard *.hh)
+MYOBJECTS := $(foreach obj, $(patsubst %.mm, %.o, $(wildcard *.mm)), $(MYOBJDIR)/$(obj))
+
+CXXFLAGS += -Wall -m32
+
+all:: $(TARGETS)
+
+clean::
+	echo "Clean SPL"
+	@ echo "rm -f $(TARGETS)"
+	$(foreach target,$(TARGETS), $(shell rm -f $(target)))
+	@ echo "rm -f $(MYOBJECTS)"
+	$(foreach object,$(MYOBJECTS), $(shell rm -f $(object)))
+
+$(MYLIBDIR)/libTD.a: $(MYOBJECTS)
+	$(AR) $(ARFLAGS) $@ $(MYOBJECTS)
+
+$(MYOBJDIR)/%.o: %.mm $(MYHEADERS)
+	$(CXX) $(CXXFLAGS) -c $< -o $@

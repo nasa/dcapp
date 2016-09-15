@@ -1,0 +1,8 @@
+DIR_TOP = ../../../..
+
+BUILD_TYPE := STATIC_LIB
+LIBNAME := libpixelstream
+INCLUDES := -I.. -I/usr/X11/include -I/opt/X11/include
+include $(DIR_TOP)/src.dist/common.mk
+
+$(buildtargets)

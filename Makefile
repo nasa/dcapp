@@ -9,9 +9,6 @@ BINDIR := dcapp.app/Contents/$(OSSPEC)
 HEADERS := \
 	$(wildcard *.hh)
 DCAPP_SOURCES := \
-	PixelStreamData.cc \
-	PixelStreamFile.cc \
-	PixelStreamTcp.cc \
 	animation.cc \
 	app_main.cc \
 	comm.cc \
@@ -45,6 +42,7 @@ CXXFLAGS += $(shell 3rdParty/ccsds/CcsdsPlugin-config --cflags)
 CXXFLAGS += $(shell 3rdParty/edge/EdgePlugin-config --cflags)
 CXXFLAGS += $(shell 3rdParty/trick/TrickPlugin-config --cflags)
 CXXFLAGS += $(shell 3rdParty/uei/UeiPlugin-config --cflags)
+CXXFLAGS += $(shell packages/PixelStream/PixelStream-config --cflags)
 CXXFLAGS += $(shell packages/TaraDraw/TaraDraw-config --cflags)
 CXXFLAGS += $(shell packages/fontlib/fontlib-config --cflags)
 CXXFLAGS += $(shell packages/imgload/imgload-config --cflags)
@@ -57,6 +55,7 @@ LINK_LIBS += $(shell 3rdParty/ccsds/CcsdsPlugin-config --libs)
 LINK_LIBS += $(shell 3rdParty/edge/EdgePlugin-config --libs)
 LINK_LIBS += $(shell 3rdParty/trick/TrickPlugin-config --libs)
 LINK_LIBS += $(shell 3rdParty/uei/UeiPlugin-config --libs)
+LINK_LIBS += $(shell packages/PixelStream/PixelStream-config --libs)
 LINK_LIBS += $(shell packages/TaraDraw/TaraDraw-config --libs)
 LINK_LIBS += $(shell packages/fontlib/fontlib-config --libs)
 LINK_LIBS += $(shell packages/imgload/imgload-config --libs)

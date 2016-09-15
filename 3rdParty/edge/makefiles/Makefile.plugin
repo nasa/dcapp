@@ -1,0 +1,13 @@
+DIR_TOP    := ../../../..
+
+include $(DIR_TOP)/src.dist/defns.mk
+
+COMPILER   := $(CPLUSPLUS)
+BUILD_TYPE := SHARED_PLUGIN
+LIBNAME    := dsp_pixelstream
+INCLUDES   := -I/usr/X11/include -I/opt/X11/include -I..
+LINK_LIBS  := -L/opt/X11/lib $(LIB_VIEWER) $(LIB_DSP) $(LIB_GL) -lpixelstream -lutils
+
+include $(DIR_TOP)/src.dist/common.mk
+
+$(buildtargets)

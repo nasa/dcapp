@@ -1,0 +1,22 @@
+DIR_TOP    := ../../../..
+
+include $(DIR_TOP)/src.dist/defns.mk
+
+COMPILER   := $(CPLUSPLUS)
+INSTALL_PREFIX := bin
+BUILD_TYPE := SINGLE_EXEC
+INCLUDES   := -I/usr/X11/include
+INCLUDES   += -I../ -I/usr/X11/include -I/opt/X11/include
+LDFLAGS    += -pthread
+
+ifeq ($(HOST_TYPE),Darwin)
+    LINK_LIBS  := -L/usr/X11R6/lib -lpixelstream -lutils -lTD -framework OpenGL -framework AppKit
+else
+    LINK_LIBS  := -L/usr/X11R6/lib -lpixelstream -lutils -lTD -lX11 -lXi -lXmu -lGL -lGLU
+endif
+
+include $(DIR_TOP)/src.dist/common.mk
+LD = $(LD_EXEC)
+LIB_SYSTEM :=
+
+$(buildtargets)

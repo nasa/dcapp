@@ -1,0 +1,9 @@
+Use the construct_edge_package script to construct an EDGE plugin package to be installed in
+$DOUG_HOME/src.dist/plugins.  This works for EDGE 2.3, but the following changes should be made for
+future EDGE releases:
+
+    * Remove dsp_plugin_common.h from the plugin directory (the current implementation is a kludge
+      until dsp_plugin_common.h becomes available in a post-2.3 version of EDGE).
+    * In TaraDraw/mac/Makefile, uncomment the $(buildtargets) line and remove all of the lines below
+      it.  This is a kludge until the C_FILES/C_FILTERS issue is resolved in a post-2.3 version of
+      EDGE.

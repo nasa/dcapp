@@ -7,13 +7,13 @@
 #include <list>
 #include <map>
 #include <vector>
-#include "fontlib/fontlib.hh"
 #include "utils/timer.hh"
+#include "PixelStream/PixelStream.hh"
+#include "fontlib/fontlib.hh"
 #include "dc.hh"
 #include "alignment.hh"
 #include "kolor.hh"
 #include "comm.hh"
-#include "PixelStream.hh"
 #include "animation.hh"
 
 #define UNDEFINED_TYPE 0

@@ -6,13 +6,13 @@
 #include <arpa/inet.h>
 #include "utils/tidy.hh"
 #include "utils/msg.hh"
+#include "PixelStream/PixelStream.hh"
 #include "dc.hh"
 #include "varlist.hh"
 #include "nodes.hh"
 #include "string_utils.hh"
 #include "loadUtils.hh"
 #include "opengl_draw.hh"
-#include "PixelStream.hh"
 #include "alignment.hh"
 
 extern void window_init(bool, int , int, int, int);
