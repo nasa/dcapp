@@ -60,7 +60,9 @@ LINK_LIBS += $(shell packages/TaraDraw/TaraDraw-config --libs)
 LINK_LIBS += $(shell packages/fontlib/fontlib-config --libs)
 LINK_LIBS += $(shell packages/imgload/imgload-config --libs)
 LINK_LIBS += $(shell packages/utils/utils-config --libs)
-LINK_LIBS += $(shell xml2-config --libs)
+# STANKY KLUDGE FOR XCODE 8 ISSUE:
+LINK_LIBS += $(shell xml2-config --exec-prefix=/usr --libs)
+#LINK_LIBS += $(shell xml2-config --libs)
 LINK_LIBS += -ldl
 
 ifeq ($(OSSPEC), MacOS)
