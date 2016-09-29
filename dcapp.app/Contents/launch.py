@@ -18,3 +18,4 @@ myargs = [appcmd]
 for arg in sys.argv[1:]: myargs.append(arg)
 
 if os.path.isfile(appcmd): launch_app(myargs)
+else: print 'ERROR: Compiled ' + os.path.basename(appcmd) + ' binary doesn\'t exist.'

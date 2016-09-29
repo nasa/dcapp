@@ -65,6 +65,10 @@ LINK_LIBS += $(shell xml2-config --exec-prefix=/usr --libs)
 #LINK_LIBS += $(shell xml2-config --libs)
 LINK_LIBS += -ldl
 
+COMPDEPENDS += $(shell osenv/osenv-config --compdepends)
+
+LINKDEPENDS += $(shell osenv/osenv-config --linkdepends)
+
 ifeq ($(OSSPEC), MacOS)
     CXXFLAGS += -I/opt/X11/include
     LINK_LIBS += -framework OpenGL -framework AppKit
@@ -82,15 +86,15 @@ GENHEADER_OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(GENHEADER_SOURCES)),
 
 all: prebuild $(BINDIR)/dcapp $(BINDIR)/dcapp_genheader postbuild
 
-$(BINDIR)/dcapp: $(DCAPP_OBJECTS)
+$(BINDIR)/dcapp: $(DCAPP_OBJECTS) $(LINKDEPENDS)
 	mkdir -p $(BINDIR)
 	$(CXX) $(LDFLAGS) $^ $(LINK_LIBS) -o $@
 
-$(BINDIR)/dcapp_genheader: $(GENHEADER_OBJECTS)
+$(BINDIR)/dcapp_genheader: $(GENHEADER_OBJECTS) $(LINKDEPENDS)
 	mkdir -p $(BINDIR)
 	$(CXX) $(LDFLAGS) $^ $(LINK_LIBS) -o $@
 
-$(OBJDIR)/%.o: %.cc $(HEADERS)
+$(OBJDIR)/%.o: %.cc $(HEADERS) $(COMPDEPENDS)
 	mkdir -p $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 

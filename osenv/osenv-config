@@ -7,12 +7,18 @@ Usage: $0 [OPTION]...
 Get package compilation and linking information.
 
 Options:
-    --osspec    display default directory name extension
-    --objdir    display default directory name for compiled objects
-    --libdir    display default directory name for compiled libraries
-    --bindir    display default directory name for compiled binaries
-    --cflags    display required compilation flags
-    --libs      display required linking flags
+    --version      software version
+    --prefix       install location
+    --cflags       required compilation flags
+    --libs         required linking flags
+    --exepath      path(s) to add to the PATH environment variable
+    --compdepends  makefile compilation dependencies
+    --linkdepends  makefile linking dependencies
+    --s_overrides  Trick S_overrides file
+    --osspec       default directory name extension
+    --objdir       default directory name for compiled objects
+    --libdir       default directory name for compiled libraries
+    --bindir       default directory name for compiled binaries
 EOF
     exit $1
 }
@@ -36,6 +42,9 @@ bindir="bin_${osspec}"
 
 while test $# -gt 0 ; do
     case $1 in
+        --prefix)
+            echo $mydir
+            ;;
         --osspec)
             echo $osspec
             ;;
@@ -49,11 +58,24 @@ while test $# -gt 0 ; do
             echo $bindir
             ;;
 ##### These are the only lines that should differ from package to package. #####
+        --version)
+            echo "1.0.0 alpha"
+            ;;
         --cflags)
             echo "-I${parentdir}"
             ;;
         --libs)
             echo "-L${mydir}/${libdir} -losenv"
+            ;;
+        --exepath)
+            ;;
+        --compdepends)
+            echo "${mydir}/osenv.hh"
+            ;;
+        --linkdepends)
+            echo "${mydir}/${libdir}/libosenv.a"
+            ;;
+        --s_overrides)
             ;;
 ################################################################################
         *)
