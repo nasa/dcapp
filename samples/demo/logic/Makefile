@@ -1,5 +1,7 @@
 .PHONY: clean
 
+DCAPP_HOME ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../../..)
+
 ifneq ($(wildcard ${DCAPP_HOME}/dcapp.app/Contents/dcapp_genheader),)
     GENHEADER := ${DCAPP_HOME}/dcapp.app/Contents/dcapp_genheader
 else
