@@ -1,7 +1,7 @@
 .PHONY: clean
 
-OBJDIR := $(shell ./TrickPlugin-config --objdir)
-LIBDIR := $(shell ./TrickPlugin-config --libdir)
+OBJDIR := $(shell ./bin/TrickPlugin-config --objdir)
+LIBDIR := $(shell ./bin/TrickPlugin-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 SOURCES := trickcomm.cc
@@ -14,7 +14,7 @@ else ifneq ($(shell which gte 2> /dev/null),)
 endif
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(SOURCES)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/utils-config --cflags)
+CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/bin/utils-config --cflags)
 
 $(LIBDIR)/libTrickPlugin.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)

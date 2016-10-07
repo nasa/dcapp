@@ -1,12 +1,12 @@
 .PHONY: clean
 
-OBJDIR := $(shell ./CcsdsPlugin-config --objdir)
-LIBDIR := $(shell ./CcsdsPlugin-config --libdir)
+OBJDIR := $(shell ./bin/CcsdsPlugin-config --objdir)
+LIBDIR := $(shell ./bin/CcsdsPlugin-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/utils-config --cflags)
+CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/bin/utils-config --cflags)
 ifdef CCSDS_UDP_HOME
     CXXFLAGS += -DCCSDSUDPACTIVE -I$(CCSDS_UDP_HOME)
 endif

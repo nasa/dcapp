@@ -1,12 +1,12 @@
 .PHONY: all clean
 
-OSSPEC := $(shell ../TaraDraw-config --osspec)
-BINDIR := $(shell ../TaraDraw-config --bindir)
+OSSPEC := $(shell ../bin/TaraDraw-config --osspec)
+BINDIR := $(shell ../bin/TaraDraw-config --bindir)
 
 CXXFLAGS += -Wall
-CXXFLAGS += $(shell ../TaraDraw-config --cflags)
+CXXFLAGS += $(shell ../bin/TaraDraw-config --cflags)
 
-LINK_LIBS += $(shell ../TaraDraw-config --libs)
+LINK_LIBS += $(shell ../bin/TaraDraw-config --libs)
 
 ifeq ($(OSSPEC), MacOS)
     CXXFLAGS += -I/opt/X11/include

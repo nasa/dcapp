@@ -1,13 +1,13 @@
 .PHONY: clean
 
-OSSPEC := $(shell ./imgload-config --osspec)
-OBJDIR := $(shell ./imgload-config --objdir)
-LIBDIR := $(shell ./imgload-config --libdir)
+OSSPEC := $(shell ./bin/imgload-config --osspec)
+OBJDIR := $(shell ./bin/imgload-config --objdir)
+LIBDIR := $(shell ./bin/imgload-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall $(shell ../utils/utils-config --cflags)
+CXXFLAGS += -Wall $(shell ../utils/bin/utils-config --cflags)
 ifeq ($(OSSPEC), MacOS)
     CXXFLAGS += -I/opt/X11/include
 else

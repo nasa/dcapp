@@ -1,8 +1,8 @@
 .NOTPARALLEL:
 .PHONY: all prebuild postbuild clean
 
-OSSPEC := $(shell ./dcapp-config --osspec)
-OBJDIR := $(shell ./dcapp-config --objdir)
+OSSPEC := $(shell ./bin/dcapp-config --osspec)
+OBJDIR := $(shell ./bin/dcapp-config --objdir)
 
 BINDIR := dcapp.app/Contents/$(OSSPEC)
 
@@ -20,7 +20,6 @@ DCAPP_SOURCES := \
 	handle_utils.cc \
 	loadUtils.cc \
 	logic_stubs.cc \
-	nodes.cc \
 	opengl_draw.cc \
 	primitive_new.cc \
 	render_ADI.cc \
@@ -36,38 +35,38 @@ GENHEADER_SOURCES := \
 	xml_utils.cc
 
 CXXFLAGS += -Wall -I.
-CXXFLAGS += $(shell osenv/osenv-config --cflags)
-CXXFLAGS += $(shell 3rdParty/can/CanPlugin-config --cflags)
-CXXFLAGS += $(shell 3rdParty/ccsds/CcsdsPlugin-config --cflags)
-CXXFLAGS += $(shell 3rdParty/edge/EdgePlugin-config --cflags)
-CXXFLAGS += $(shell 3rdParty/trick/TrickPlugin-config --cflags)
-CXXFLAGS += $(shell 3rdParty/uei/UeiPlugin-config --cflags)
-CXXFLAGS += $(shell packages/PixelStream/PixelStream-config --cflags)
-CXXFLAGS += $(shell packages/TaraDraw/TaraDraw-config --cflags)
-CXXFLAGS += $(shell packages/fontlib/fontlib-config --cflags)
-CXXFLAGS += $(shell packages/imgload/imgload-config --cflags)
-CXXFLAGS += $(shell packages/utils/utils-config --cflags)
+CXXFLAGS += $(shell osenv/bin/osenv-config --cflags)
+CXXFLAGS += $(shell 3rdParty/can/bin/CanPlugin-config --cflags)
+CXXFLAGS += $(shell 3rdParty/ccsds/bin/CcsdsPlugin-config --cflags)
+CXXFLAGS += $(shell 3rdParty/edge/bin/EdgePlugin-config --cflags)
+CXXFLAGS += $(shell 3rdParty/trick/bin/TrickPlugin-config --cflags)
+CXXFLAGS += $(shell 3rdParty/uei/bin/UeiPlugin-config --cflags)
+CXXFLAGS += $(shell packages/PixelStream/bin/PixelStream-config --cflags)
+CXXFLAGS += $(shell packages/TaraDraw/bin/TaraDraw-config --cflags)
+CXXFLAGS += $(shell packages/fontlib/bin/fontlib-config --cflags)
+CXXFLAGS += $(shell packages/imgload/bin/imgload-config --cflags)
+CXXFLAGS += $(shell packages/utils/bin/utils-config --cflags)
 CXXFLAGS += $(shell xml2-config --cflags)
 
-LINK_LIBS += $(shell osenv/osenv-config --libs)
-LINK_LIBS += $(shell 3rdParty/can/CanPlugin-config --libs)
-LINK_LIBS += $(shell 3rdParty/ccsds/CcsdsPlugin-config --libs)
-LINK_LIBS += $(shell 3rdParty/edge/EdgePlugin-config --libs)
-LINK_LIBS += $(shell 3rdParty/trick/TrickPlugin-config --libs)
-LINK_LIBS += $(shell 3rdParty/uei/UeiPlugin-config --libs)
-LINK_LIBS += $(shell packages/PixelStream/PixelStream-config --libs)
-LINK_LIBS += $(shell packages/TaraDraw/TaraDraw-config --libs)
-LINK_LIBS += $(shell packages/fontlib/fontlib-config --libs)
-LINK_LIBS += $(shell packages/imgload/imgload-config --libs)
-LINK_LIBS += $(shell packages/utils/utils-config --libs)
+LINK_LIBS += $(shell osenv/bin/osenv-config --libs)
+LINK_LIBS += $(shell 3rdParty/can/bin/CanPlugin-config --libs)
+LINK_LIBS += $(shell 3rdParty/ccsds/bin/CcsdsPlugin-config --libs)
+LINK_LIBS += $(shell 3rdParty/edge/bin/EdgePlugin-config --libs)
+LINK_LIBS += $(shell 3rdParty/trick/bin/TrickPlugin-config --libs)
+LINK_LIBS += $(shell 3rdParty/uei/bin/UeiPlugin-config --libs)
+LINK_LIBS += $(shell packages/PixelStream/bin/PixelStream-config --libs)
+LINK_LIBS += $(shell packages/TaraDraw/bin/TaraDraw-config --libs)
+LINK_LIBS += $(shell packages/fontlib/bin/fontlib-config --libs)
+LINK_LIBS += $(shell packages/imgload/bin/imgload-config --libs)
+LINK_LIBS += $(shell packages/utils/bin/utils-config --libs)
 # STANKY KLUDGE FOR XCODE 8 ISSUE:
 LINK_LIBS += $(shell xml2-config --exec-prefix=/usr --libs)
 #LINK_LIBS += $(shell xml2-config --libs)
 LINK_LIBS += -ldl
 
-COMPDEPENDS += $(shell osenv/osenv-config --compdepends)
+COMPDEPENDS += $(shell osenv/bin/osenv-config --compdepends)
 
-LINKDEPENDS += $(shell osenv/osenv-config --linkdepends)
+LINKDEPENDS += $(shell osenv/bin/osenv-config --linkdepends)
 
 ifeq ($(OSSPEC), MacOS)
     CXXFLAGS += -I/opt/X11/include

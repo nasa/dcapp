@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <cmath>
 #include <strings.h>
@@ -16,8 +17,6 @@
 #include "alignment.hh"
 
 extern void window_init(bool, int , int, int, int);
-extern struct node *NewList(struct node *);
-extern struct node *NewNode(struct node *, struct node **);
 
 extern appdata AppData;
 
@@ -88,7 +87,17 @@ static int get_data_type(const char *valstr)
 
 static struct node *add_primitive_node(struct node *parent, struct node **list, Type type, char *x, char *y, const char *width, char *height, char *halign, char *valign, char *rotate)
 {
-    struct node *data = NewNode(parent, list);
+    struct node *data = (struct node *)calloc(1, sizeof(struct node));
+
+    if (*list == 0x0)
+        *list = data;
+    else
+        (*list)->p_tail->p_next = data;
+
+    (*list)->p_tail = data;
+    data->p_next = 0x0;
+    data->p_parent = parent;
+
     data->info.type = type;
 
     // it's important to pass container width and height down through all primitives in the tree, even those
@@ -122,18 +131,15 @@ static struct node *add_primitive_node(struct node *parent, struct node **list, 
 
 void new_window(bool fullscreen, int OriginX, int OriginY, int SizeX, int SizeY, char *activedisp)
 {
-    NewNode(0x0, &(AppData.window));
-
     window_init(fullscreen, OriginX, OriginY, SizeX, SizeY);
     graphics_init();
-    AppData.window->object.win.active_display = getIntegerPointer(activedisp);
+    AppData.window.active_display = getIntegerPointer(activedisp);
 }
 
 struct node *new_panel(char *index, char *colorspec, char *vwidth, char *vheight)
 {
-    struct node *data = NewList(AppData.window);
+    struct node *data = (struct node *)calloc(1, sizeof(struct node));
 
-    data->info.type = Panel;
     data->object.panel.displayID = StrToInt(index, 0);
     data->object.panel.orthoX = StrToFloat(vwidth, 100);
     data->object.panel.orthoY = StrToFloat(vheight, 100);
@@ -142,6 +148,9 @@ struct node *new_panel(char *index, char *colorspec, char *vwidth, char *vheight
     data->info.w = &(data->object.panel.vwidth);
     data->info.h = &(data->object.panel.vheight);
     data->object.panel.color = StrToColor(colorspec, 0, 0, 0, 1);
+
+    AppData.window.panels.push_back(data);
+    AppData.window.current_panel = data;
 
     return data;
 }

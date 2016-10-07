@@ -21,8 +21,8 @@ if test $# -eq 0 ; then
     usage 1 1>&2
 fi
 
-mydir="$(cd "$(dirname "$0")"; pwd)"
-parentdir="$(cd "$(dirname "$0")/.."; pwd)"
+mydir="$(cd "$(dirname "$0")/.."; pwd)"
+parentdir="$(cd "$(dirname "$0")/../.."; pwd)"
 ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
 machtype=`uname -m`
 if test "$ostype" = "darwin" ; then
@@ -53,14 +53,22 @@ while test $# -gt 0 ; do
             echo "-I${parentdir}"
             ;;
         --libs)
-            if test "$osspec" = "MacOS" ; then
-                subdir="mac"
-                extra_libs="-framework AppKit"
-            else
-                subdir="x11"
-                extra_libs="-L/usr/X11R6/lib -lGL"
+            extra_libs=""
+            if [ `type -p trick-gte` ]
+            then
+                trick_home=`trick-gte TRICK_HOME`
+                if [ -d "${trick_home}/lib64" ]
+                then
+                    extra_libs="-L${trick_home}/lib -L${trick_home}/lib64 -ltrick_comm"
+                else
+                    extra_libs="-L${trick_home}/lib -ltrick_comm"
+                fi
+            else if [ `type -p gte` ]
+            then
+                extra_libs="-L`gte TRICK_HOME`/trick_source/trick_utils/comm/object_`gte TRICK_HOST_TYPE` -ltrick_comm"
             fi
-            echo "-L${mydir}/${subdir}/${libdir} -lTD ${extra_libs}"
+            fi
+            echo "-L${mydir}/${libdir} -lTrickPlugin ${extra_libs}"
             ;;
 ################################################################################
         *)

@@ -21,11 +21,11 @@ fi
 
 mkdir -p "$1"/PixelStream
 
-rsync -av plugin "$1"/PixelStream
-rsync -av makefiles "$1"/PixelStream
-rsync -av --exclude="obj_*" --exclude="lib_*" --exclude="bin_*" --exclude="*-config" --exclude="Makefile" ../../packages/PixelStream "$1"/PixelStream
-rsync -av --exclude="obj_*" --exclude="lib_*" --exclude="bin_*" --exclude="*-config" --exclude="Makefile" ../../packages/TaraDraw "$1"/PixelStream
-rsync -av --exclude="obj_*" --exclude="lib_*" --exclude="bin_*" --exclude="*-config" --exclude="Makefile" ../../packages/utils "$1"/PixelStream
+rsync -av ../plugin "$1"/PixelStream
+rsync -av ../makefiles "$1"/PixelStream
+rsync -av --exclude="obj*" --exclude="lib*" --exclude="bin*" --exclude="Makefile" ../../../packages/PixelStream "$1"/PixelStream
+rsync -av --exclude="obj*" --exclude="lib*" --exclude="bin*" --exclude="Makefile" ../../../packages/TaraDraw "$1"/PixelStream
+rsync -av --exclude="obj*" --exclude="lib*" --exclude="bin*" --exclude="Makefile" ../../../packages/utils "$1"/PixelStream
 
 cd "$1"/PixelStream
 

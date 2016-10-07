@@ -50,11 +50,14 @@ void HandleBezelButton(int type, int itemid, int action)
 
     if (type == BEZEL_BUTTON)
     {
-        if (action == BEZEL_PRESSED) BezelButtonPressed(AppData.window->p_current, itemid);
+        if (action == BEZEL_PRESSED) BezelButtonPressed(AppData.window.current_panel->object.panel.SubList, itemid);
         else if (action == BEZEL_RELEASED)
         { // Check all lists since BEZEL_PRESSED may have been on a different active page
-            for (struct node *current = AppData.window->p_head; current; current=current->p_next_list)
-                BezelButtonReleased(current, itemid);
+            std::list<struct node *>::iterator panel;
+            for (panel = AppData.window.panels.begin(); panel != AppData.window.panels.end(); panel++)
+            {
+                BezelButtonReleased((*panel)->object.panel.SubList, itemid);
+            }
         }
 
         std::list<struct node *>::iterator action;

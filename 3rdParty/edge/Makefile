@@ -1,12 +1,12 @@
 .PHONY: clean
 
-OBJDIR := $(shell ./EdgePlugin-config --objdir)
-LIBDIR := $(shell ./EdgePlugin-config --libdir)
+OBJDIR := $(shell ./bin/EdgePlugin-config --objdir)
+LIBDIR := $(shell ./bin/EdgePlugin-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/utils-config --cflags)
+CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/bin/utils-config --cflags)
 
 $(LIBDIR)/libEdgePlugin.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)

@@ -1,8 +1,8 @@
 .PHONY: clean
 
-OSSPEC := $(shell ../TaraDraw-config --osspec)
-OBJDIR := $(shell ../TaraDraw-config --objdir)
-LIBDIR := $(shell ../TaraDraw-config --libdir)
+OSSPEC := $(shell ../bin/TaraDraw-config --osspec)
+OBJDIR := $(shell ../bin/TaraDraw-config --objdir)
+LIBDIR := $(shell ../bin/TaraDraw-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))

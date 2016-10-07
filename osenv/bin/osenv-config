@@ -9,9 +9,9 @@ Get package compilation and linking information.
 Options:
     --version      software version
     --prefix       install location
+    --exepath      path(s) to add to the PATH environment variable
     --cflags       required compilation flags
     --libs         required linking flags
-    --exepath      path(s) to add to the PATH environment variable
     --compdepends  makefile compilation dependencies
     --linkdepends  makefile linking dependencies
     --s_overrides  Trick S_overrides file
@@ -27,8 +27,8 @@ if test $# -eq 0 ; then
     usage 1 1>&2
 fi
 
-mydir="$(cd "$(dirname "$0")"; pwd)"
-parentdir="$(cd "$(dirname "$0")/.."; pwd)"
+mydir="$(cd "$(dirname "$0")/.."; pwd)"
+parentdir="$(cd "$(dirname "$0")/../.."; pwd)"
 ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
 machtype=`uname -m`
 if test "$ostype" = "darwin" ; then
@@ -61,13 +61,13 @@ while test $# -gt 0 ; do
         --version)
             echo "1.0.0 alpha"
             ;;
+        --exepath)
+            ;;
         --cflags)
             echo "-I${parentdir}"
             ;;
         --libs)
             echo "-L${mydir}/${libdir} -losenv"
-            ;;
-        --exepath)
             ;;
         --compdepends)
             echo "${mydir}/osenv.hh"

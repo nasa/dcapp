@@ -15,11 +15,12 @@ extern appdata AppData;
 void UpdateDisplay(void)
 {
     // Get the pointer to the current active panel
-    for (struct node *p_panel = AppData.window->p_head; p_panel; p_panel = p_panel->p_next_list)
+    std::list<struct node *>::iterator panel;
+    for (panel = AppData.window.panels.begin(); panel != AppData.window.panels.end(); panel++)
     {
-        if (*(AppData.window->object.win.active_display) == p_panel->object.panel.displayID)
+        if (*(AppData.window.active_display) == (*panel)->object.panel.displayID)
         {
-            AppData.window->p_current = p_panel;
+            AppData.window.current_panel = *panel;
             break;
         }
     }

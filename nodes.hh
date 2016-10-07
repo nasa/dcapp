@@ -63,7 +63,6 @@ typedef std::map<std::string, std::string> ConstantsList;
 
 typedef enum {
     Empty,
-    Panel,
     Image,
     Vertex,
     Rectangle,
@@ -109,7 +108,7 @@ struct Panel
     float orthoY;
     float vwidth;
     float vheight;
-    struct node *PrimitivesList;
+    struct node *SubList;
 };
 
 struct Image
@@ -251,14 +250,8 @@ struct ADI
     float *yawError;
 };
 
-struct Window
-{
-    int *active_display;
-};
-
 union objects
 {
-    struct Window win;
     struct Panel panel;
     struct Image image;
     struct PixelStreamView pixelstreamview;
@@ -297,16 +290,18 @@ struct node
     union objects object;
     // The two items below, and the above VarString class, should be defined in the String structure,
     // but the String structure is a member of the objects union, so it can't hold a variable size class
-    std::vector<VarString *>vstring;
-    std::vector<std::string>filler;
-    struct node *p_prev;
-    struct node *p_prev_list;
+    std::vector<VarString *> vstring;
+    std::vector<std::string> filler;
     struct node *p_next;
-    struct node *p_next_list;
-    struct node *p_head;
     struct node *p_tail;
-    struct node *p_current;
     struct node *p_parent;
+};
+
+struct Window
+{
+    int *active_display;
+    std::list<struct node *> panels;
+    struct node *current_panel;
 };
 
 typedef struct
@@ -319,7 +314,7 @@ typedef struct
     std::list<PixelStreamData *> pixelstreams;
     ConstantsList arglist;
     int *canbus_inhibited;
-    struct node *window;
+    struct Window window;
     void (*DisplayPreInit)(void *(*)(const char *));
     void (*DisplayInit)(void);
     void (*DisplayLogic)(void);

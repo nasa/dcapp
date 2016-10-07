@@ -21,8 +21,8 @@ if test $# -eq 0 ; then
     usage 1 1>&2
 fi
 
-mydir="$(cd "$(dirname "$0")"; pwd)"
-parentdir="$(cd "$(dirname "$0")/.."; pwd)"
+mydir="$(cd "$(dirname "$0")/.."; pwd)"
+parentdir="$(cd "$(dirname "$0")/../.."; pwd)"
 ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
 machtype=`uname -m`
 if test "$ostype" = "darwin" ; then
@@ -50,20 +50,17 @@ while test $# -gt 0 ; do
             ;;
 ##### These are the only lines that should differ from package to package. #####
         --cflags)
-            if [ ! -z ${CANBUS_HOME} ]
-            then
-                echo "-I${parentdir} -I${CANBUS_HOME}"
-            else
-                echo "-I${parentdir}"
-            fi
+            echo "-I${parentdir}"
             ;;
         --libs)
-            if [ ! -z ${CANBUS_HOME} ]
-            then
-                echo "-L${mydir}/${libdir} -lCanPlugin -L${CANBUS_HOME} -Wl,-Bstatic -lntcan -Wl,-Bdynamic"
+            if test "$osspec" = "MacOS" ; then
+                subdir="mac"
+                extra_libs="-framework AppKit"
             else
-                echo "-L${mydir}/${libdir} -lCanPlugin"
+                subdir="x11"
+                extra_libs="-L/usr/X11R6/lib -lGL"
             fi
+            echo "-L${mydir}/${subdir}/${libdir} -lTD ${extra_libs}"
             ;;
 ################################################################################
         *)

@@ -391,12 +391,12 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "Panel"))
         {
-            struct node *panelID = new_panel(get_element_data(node, "DisplayIndex"),
+            data = new_panel(get_element_data(node, "DisplayIndex"),
                                              get_element_data(node, "BackgroundColor"),
                                              get_element_data(node, "VirtualWidth"),
                                              get_element_data(node, "VirtualHeight"));
             preprocessing = false;
-            process_elements(panelID, &panelID, node->children);
+            process_elements(data, &(data->object.panel.SubList), node->children);
             preprocessing = true;
         }
         if (NodeCheck(node, "Container"))

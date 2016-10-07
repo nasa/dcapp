@@ -21,8 +21,8 @@ if test $# -eq 0 ; then
     usage 1 1>&2
 fi
 
-mydir="$(cd "$(dirname "$0")"; pwd)"
-parentdir="$(cd "$(dirname "$0")/.."; pwd)"
+mydir="$(cd "$(dirname "$0")/.."; pwd)"
+parentdir="$(cd "$(dirname "$0")/../.."; pwd)"
 ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
 machtype=`uname -m`
 if test "$ostype" = "darwin" ; then
@@ -50,10 +50,20 @@ while test $# -gt 0 ; do
             ;;
 ##### These are the only lines that should differ from package to package. #####
         --cflags)
-            echo "-I${parentdir}"
+            if [ ! -z ${CANBUS_HOME} ]
+            then
+                echo "-I${parentdir} -I${CANBUS_HOME}"
+            else
+                echo "-I${parentdir}"
+            fi
             ;;
         --libs)
-            echo "-L${mydir}/${libdir} -lUeiPlugin"
+            if [ ! -z ${CANBUS_HOME} ]
+            then
+                echo "-L${mydir}/${libdir} -lCanPlugin -L${CANBUS_HOME} -Wl,-Bstatic -lntcan -Wl,-Bdynamic"
+            else
+                echo "-L${mydir}/${libdir} -lCanPlugin"
+            fi
             ;;
 ################################################################################
         *)

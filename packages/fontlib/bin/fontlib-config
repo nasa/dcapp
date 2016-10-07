@@ -21,8 +21,8 @@ if test $# -eq 0 ; then
     usage 1 1>&2
 fi
 
-mydir="$(cd "$(dirname "$0")"; pwd)"
-parentdir="$(cd "$(dirname "$0")/.."; pwd)"
+mydir="$(cd "$(dirname "$0")/.."; pwd)"
+parentdir="$(cd "$(dirname "$0")/../.."; pwd)"
 ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
 machtype=`uname -m`
 if test "$ostype" = "darwin" ; then
@@ -50,25 +50,20 @@ while test $# -gt 0 ; do
             ;;
 ##### These are the only lines that should differ from package to package. #####
         --cflags)
-            echo "-I${parentdir}"
+            if test "$osspec" = "MacOS" ; then
+                opengl_cflags="-I/opt/X11/include"
+            else
+                opengl_cflags="-I/usr/X11R6/include"
+            fi
+            echo "-I${parentdir} `freetype-config --cflags` ${opengl_cflags}"
             ;;
         --libs)
-            extra_libs=""
-            if [ `type -p trick-gte` ]
-            then
-                trick_home=`trick-gte TRICK_HOME`
-                if [ -d "${trick_home}/lib64" ]
-                then
-                    extra_libs="-L${trick_home}/lib -L${trick_home}/lib64 -ltrick_comm"
-                else
-                    extra_libs="-L${trick_home}/lib -ltrick_comm"
-                fi
-            else if [ `type -p gte` ]
-            then
-                extra_libs="-L`gte TRICK_HOME`/trick_source/trick_utils/comm/object_`gte TRICK_HOST_TYPE` -ltrick_comm"
+            if test "$osspec" = "MacOS" ; then
+                opengl_libs="-framework OpenGL"
+            else
+                opengl_libs="-L/usr/X11R6/lib -lGL -lGLU"
             fi
-            fi
-            echo "-L${mydir}/${libdir} -lTrickPlugin ${extra_libs}"
+            echo "-L${mydir}/${libdir} -lfontlib `freetype-config --libs` ${opengl_libs}"
             ;;
 ################################################################################
         *)

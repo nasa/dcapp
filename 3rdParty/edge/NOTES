@@ -1,4 +1,4 @@
-Use the construct_edge_package script to construct an EDGE plugin package to be installed in
+Use the construct_edge_package script in bin to construct an EDGE plugin package to be installed in
 $DOUG_HOME/src.dist/plugins.  This works for EDGE 2.3, but the following changes should be made for
 future EDGE releases:
 

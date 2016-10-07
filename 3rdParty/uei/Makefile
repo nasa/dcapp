@@ -1,12 +1,12 @@
 .PHONY: clean
 
-OBJDIR := $(shell ./UeiPlugin-config --objdir)
-LIBDIR := $(shell ./UeiPlugin-config --libdir)
+OBJDIR := $(shell ./bin/UeiPlugin-config --objdir)
+LIBDIR := $(shell ./bin/UeiPlugin-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/utils-config --cflags)
+CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/bin/utils-config --cflags)
 
 $(LIBDIR)/libUeiPlugin.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)

@@ -25,7 +25,9 @@ extern void UpdateValue(struct node *);
  *********************************************************************************/
 void Draw(void)
 {
-    render_primitives(AppData.window->p_current);
+    struct node *current = AppData.window.current_panel;
+    setup_panel(current->object.panel.orthoX, current->object.panel.orthoY, -1, 1, (*(current->object.panel.color.R)), (*(current->object.panel.color.G)), (*(current->object.panel.color.B)), (*(current->object.panel.color.A)));
+    render_primitives(current->object.panel.SubList);
     SwapBuffers();
     AppData.last_update->restart();
 }
@@ -40,9 +42,6 @@ static void render_primitives(struct node *list)
     {
         switch (current->info.type)
         {
-            case Panel:
-                setup_panel(current->object.panel.orthoX, current->object.panel.orthoY, -1, 1, (*(current->object.panel.color.R)), (*(current->object.panel.color.G)), (*(current->object.panel.color.B)), (*(current->object.panel.color.A)));
-                break;
             case Condition:
                 if (CheckCondition(current))
                     render_primitives(current->object.cond.TrueList);

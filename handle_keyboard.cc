@@ -19,7 +19,7 @@ void HandleKeyboard(unsigned char key, float x, float y)
     if (key == 0x1b) toggle_fullscreen();
     else
     {
-        KeyPressed(AppData.window->p_current, key);
+        KeyPressed(AppData.window.current_panel->object.panel.SubList, key);
         std::list<struct node *>::iterator action;
         for (action = actionList.begin(); action != actionList.end(); action++)
         {

@@ -23,12 +23,16 @@ void HandleMouse(int button, int state, float xpct, float ypct, int modifier)
 {
     if (state == MOUSE_DOWN)
     {   // Scale cursor x and y with ortho x and y
-        MouseDown(AppData.window->p_current, AppData.window->p_current->object.panel.orthoX * xpct, AppData.window->p_current->object.panel.orthoY * ypct);
+        MouseDown(AppData.window.current_panel->object.panel.SubList, AppData.window.current_panel->object.panel.orthoX * xpct, AppData.window.current_panel->object.panel.orthoY * ypct);
     }
 
     if (state == MOUSE_UP)
     {   // Check all lists since MOUSE_DOWN may have been on a different active page
-        for (struct node *current = AppData.window->p_head; current; current=current->p_next_list) MouseUp(current);
+        std::list<struct node *>::iterator panel;
+        for (panel = AppData.window.panels.begin(); panel != AppData.window.panels.end(); panel++)
+        {
+            MouseUp((*panel)->object.panel.SubList);
+        }
     }
 
     std::list<struct node *>::iterator action;
