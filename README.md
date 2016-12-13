@@ -17,7 +17,7 @@ To build, `cd` to the top level of the dcapp package (`$DCAPP_HOME`) and type `m
 
 ### Activation
 
-To enable command line activation, add the return value of `$DCAPP_HOME/bin/dcapp-config --exepath` to the $PATH
+To enable command line activation, add the return value of `$DCAPP_HOME/bin/dcapp-config --exepath` to the `$PATH`
 environment variable.
 
 To activate dcapp for a given spec file (`file.xml`) via the command line:
