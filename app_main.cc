@@ -17,6 +17,7 @@
 #include "uei/UEI.hh"
 #include "nodes.hh"
 #include "string_utils.hh"
+#include "xml_stringsub.hh"
 #include "osenv/osenv.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
@@ -243,7 +244,7 @@ static void ProcessArgs(int argc, char **argv)
         while (strptr < (args + strlen(args)))
         {
             count = sscanf(strptr, "%[^= ]=%s", key, value);
-            if (count == 2) AppData.arglist[std::string(key)] = std::string(value);
+            if (count == 2) processArgument(key, value);
             if (count >= 1) strptr += strlen(key);
             if (count == 2) strptr += strlen(value) + 1;
             while (strptr < (args + strlen(args)) && *strptr == ' ') strptr++;

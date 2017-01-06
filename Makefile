@@ -29,9 +29,11 @@ DCAPP_SOURCES := \
 	update_display.cc \
 	varlist.cc \
 	xml_parse.cc \
+	xml_stringsub.cc \
 	xml_utils.cc
 GENHEADER_SOURCES := \
 	dcapp_genheader.cc \
+	xml_stringsub.cc \
 	xml_utils.cc
 
 CXXFLAGS += -Wall -I.

@@ -6,6 +6,7 @@
 #include <libgen.h>
 #include "utils/msg.hh"
 #include "xml_utils.hh"
+#include "xml_stringsub.hh"
 
 typedef struct
 {
@@ -87,11 +88,14 @@ static void process_elements(xmlNodePtr startnode)
     for (xmlNodePtr node = startnode; node; node = node->next)
     {
         if (NodeCheck(node, "Dummy")) process_elements(node->children);
+        if (NodeCheck(node, "Constant")) processConstantNode(node);
+        if (NodeCheck(node, "Style")) processStyleNode(node);
+        if (NodeCheck(node, "Defaults")) processDefaultsNode(node);
         if (NodeCheck(node, "Variable"))
         {
             vitem newitem;
-            newitem.name = std::string(get_XML_content(node));
-            newitem.type = std::string(get_XML_attribute(node, "Type"));
+            newitem.name = std::string(get_node_content(node));
+            newitem.type = std::string(get_element_data(node, "Type"));
             vlist.push_back(newitem);
         }
     }

@@ -59,8 +59,6 @@ class VarString
         std::string format;
 };
 
-typedef std::map<std::string, std::string> ConstantsList;
-
 typedef enum {
     Empty,
     Image,
@@ -312,7 +310,6 @@ typedef struct
     std::list<Animation *> animators;
     std::list<CommModule *> commlist;
     std::list<PixelStreamData *> pixelstreams;
-    ConstantsList arglist;
     int *canbus_inhibited;
     struct Window window;
     void (*DisplayPreInit)(void *(*)(const char *));
