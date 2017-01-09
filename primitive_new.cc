@@ -228,7 +228,7 @@ struct node *new_circle(struct node *parent, struct node **list, char *x, char *
     return data;
 }
 
-// TODO: This parsing should be simplified and/or combined with string parsing in xml_parse.cc
+// TODO: This parsing should be simplified and/or combined with string parsing in xml_stringsub.cc
 static size_t parse_var(std::vector<VarString *> *vstring, std::string mystr)
 {
     size_t var_start, var_end;

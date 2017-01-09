@@ -1,6 +1,9 @@
 #include <list>
 #include <string>
 #include <map>
+#include <cstdlib>
+#include <cctype>
+#include <cstring>
 #include <libxml/parser.h>
 #include "xml_utils.hh"
 
