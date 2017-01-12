@@ -40,6 +40,7 @@ int main(int argc, char **argv)
     fprintf(p_file, "// THIS FILE IS AUTO-GENERATED -- DO NOT EDIT!!! //\n");
     fprintf(p_file, "// ********************************************* //\n\n");
     fprintf(p_file, "#ifndef _DCAPP_EXTERNALS_\n#define _DCAPP_EXTERNALS_\n\n");
+    fprintf(p_file, "void *(*get_pointer)(const char *);\n\n");
 
     for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
@@ -50,10 +51,11 @@ int main(int argc, char **argv)
     }
 
     fprintf(p_file, "\n#ifdef __cplusplus\n");
-    fprintf(p_file, "extern \"C\" void DisplayPreInit(void *(*get_pointer)(const char *))\n");
+    fprintf(p_file, "extern \"C\" void DisplayPreInit(void *(*get_pointer_arg)(const char *))\n");
     fprintf(p_file, "#else\n");
-    fprintf(p_file, "void DisplayPreInit(void *(*get_pointer)(const char *))\n");
+    fprintf(p_file, "void DisplayPreInit(void *(*get_pointer_arg)(const char *))\n");
     fprintf(p_file, "#endif\n{\n");
+    fprintf(p_file, "    get_pointer = get_pointer_arg;\n\n");
 
     for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
@@ -66,6 +68,7 @@ int main(int argc, char **argv)
 
     fprintf(p_file, "}\n\n");
     fprintf(p_file, "#else\n\n");
+    fprintf(p_file, "extern void *(*get_pointer)(const char *);\n\n");
 
     for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
