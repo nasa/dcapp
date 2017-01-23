@@ -27,6 +27,8 @@ if test $# -eq 0 ; then
     usage 1 1>&2
 fi
 
+CDPATH=""
+
 mydir="$(cd "$(dirname "$0")/.."; pwd)"
 parentdir="$(cd "$(dirname "$0")/../.."; pwd)"
 ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
