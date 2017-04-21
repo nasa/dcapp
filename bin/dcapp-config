@@ -15,6 +15,8 @@ Options:
     --compdepends  makefile compilation dependencies
     --linkdepends  makefile linking dependencies
     --s_overrides  Trick S_overrides file
+    --ostype       operating system name
+    --machtype     machine hardware name
     --osspec       default directory name extension
     --objdir       default directory name for compiled objects
     --libdir       default directory name for compiled libraries
@@ -60,6 +62,12 @@ while test $# -gt 0 ; do
             echo $bindir
             ;;
 ##### These are the only lines that should differ from package to package. #####
+        --ostype)
+            echo $ostype
+            ;;
+        --machtype)
+            echo $machtype
+            ;;
         --version)
             echo "1.0.0 alpha"
             ;;
