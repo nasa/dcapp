@@ -7,7 +7,7 @@ LIBDIR := $(shell ./bin/imgload-config --libdir)
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall $(shell ../utils/bin/utils-config --cflags)
+CXXFLAGS += -Wall $(shell ./bin/imgload-config --cflags_internal)
 ifeq ($(OSSPEC), MacOS)
     CXXFLAGS += -I/opt/X11/include
 else

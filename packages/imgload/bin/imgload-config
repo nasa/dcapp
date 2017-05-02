@@ -13,6 +13,7 @@ Options:
     --bindir    display default directory name for compiled binaries
     --cflags    display required compilation flags
     --libs      display required linking flags
+    --cflags_internal    display required compilation flags for building the package
 EOF
     exit $1
 }
@@ -36,6 +37,22 @@ objdir="obj_${osspec}"
 libdir="lib_${osspec}"
 bindir="bin_${osspec}"
 
+################################################################################
+jpegturbopath="/usr/local/opt/jpeg-turbo"
+jpegenabled=0
+jpegturboenabled=0
+if [[ -r /usr/include/jpeglib.h ]] ; then
+    jpegenabled=1
+fi
+if [[ -r /usr/local/include/jpeglib.h ]] ; then
+    jpegenabled=1
+fi
+if [[ -r ${jpegturbopath}/include/jpeglib.h ]] ; then
+    jpegenabled=1
+    jpegturboenabled=1
+fi
+################################################################################
+
 while test $# -gt 0 ; do
     case $1 in
         --osspec)
@@ -57,7 +74,7 @@ while test $# -gt 0 ; do
             else
                 opengl_cflags="-I/usr/X11R6/include"
             fi
-            echo "-I${parentdir} ${opengl_cflags}"
+            echo "-I${parentdir} ${opengl_cflags} ${jpeg_cflags}"
             ;;
         --libs)
             if test "$osspec" = "MacOS" ; then
@@ -65,8 +82,24 @@ while test $# -gt 0 ; do
             else
                 opengl_libs="-L/usr/X11R6/lib -lGL -lGLU"
             fi
-            echo "-L${mydir}/${libdir} -limgload ${opengl_libs}"
+            if test "jpegenabled" ; then
+                jpeg_libs="-ljpeg"
+            fi
+            if test "jpegturboenabled" ; then
+                jpeg_libs_path="-L${jpegturbopath}/lib"
+            fi
+            echo "-L${mydir}/${libdir} -limgload ${opengl_libs} ${jpeg_libs_path} ${jpeg_libs}"
             ;;
+        --cflags_internal)
+            if test "jpegenabled" ; then
+                jpeg_define="-DJPEG_ENABLED"
+            fi
+            if test "jpegturboenabled" ; then
+                jpeg_cflags="-I${jpegturbopath}/include"
+            fi
+            echo "-I${parentdir} ${jpeg_cflags} ${jpeg_define}"
+            ;;
+            
 ################################################################################
         *)
             usage 1 1>&2

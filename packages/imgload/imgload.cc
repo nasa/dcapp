@@ -5,12 +5,30 @@
 #include "utils/msg.hh"
 #include "imgload_internal.hh"
 
-extern unsigned int LoadTGA(const char *filename, ImageStruct *);
-extern int loadBMPImage(const char *filename, ImageStruct *);
+extern unsigned int LoadTGA(const char *, ImageStruct *);
+extern int loadBMPImage(const char *, ImageStruct *);
+extern unsigned int LoadJPG(const char *, ImageStruct *);
 extern int createTextureFromImage(ImageStruct *);
 
-static const char *FindExtension(const char *);
+static const char *FindExtension(const char *filename)
+{
+    if (!filename)
+    {
+        error_msg("No filename specified");
+        return 0x0;
+    }
 
+    const char *end = &(filename[strlen(filename)-1]);
+    while (*end != '.' && end != filename) end--;
+
+    if (end == filename)
+    {
+        error_msg("Couldn't find extension in filename " << filename);
+        return 0x0;
+    }
+
+    return (end+1);
+}
 
 int imgload(const char *filename)
 {
@@ -41,6 +59,14 @@ int imgload(const char *filename)
             return (-1);
         }
     }
+    else if (!strcasecmp(extension, "JPG") || !strcasecmp(extension, "JPEG")) /* use TGAloader.c */
+    {
+        if (LoadJPG(filename, &image))
+        {
+            error_msg("LoadJPG returned with error for file " << filename);
+            return (-1);
+        }
+    }
     else
     {
         error_msg("Unsupported extension for file " << filename << ": " << extension);
@@ -50,25 +76,4 @@ int imgload(const char *filename)
     texture = createTextureFromImage(&image);
     if (image.data) free(image.data);
     return texture;
-}
-
-
-const char *FindExtension(const char *filename)
-{
-    if (!filename)
-    {
-        error_msg("No filename specified");
-        return 0x0;
-    }
-
-    const char *end = &(filename[strlen(filename)-1]);
-    while (*end != '.' && end != filename) end--;
-
-    if (end == filename)
-    {
-        error_msg("Couldn't find extension in filename " << filename);
-        return 0x0;
-    }
-
-    return (end+1);
 }
