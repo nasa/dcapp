@@ -38,18 +38,18 @@ libdir="lib_${osspec}"
 bindir="bin_${osspec}"
 
 ################################################################################
-jpegturbopath="/usr/local/opt/jpeg-turbo"
 jpegenabled=0
-jpegturboenabled=0
 if [[ -r /usr/include/jpeglib.h ]] ; then
     jpegenabled=1
-fi
-if [[ -r /usr/local/include/jpeglib.h ]] ; then
-    jpegenabled=1
-fi
-if [[ -r ${jpegturbopath}/include/jpeglib.h ]] ; then
-    jpegenabled=1
-    jpegturboenabled=1
+else
+    if [[ -r /usr/local/include/jpeglib.h ]] ; then
+        jpegenabled=1
+    else
+        if [[ -r /usr/local/opt/jpeg-turbo/include/jpeglib.h ]] ; then
+            jpegenabled=1
+            jpegpath="/usr/local/opt/jpeg-turbo"
+        fi
+    fi
 fi
 ################################################################################
 
@@ -74,7 +74,7 @@ while test $# -gt 0 ; do
             else
                 opengl_cflags="-I/usr/X11R6/include"
             fi
-            echo "-I${parentdir} ${opengl_cflags} ${jpeg_cflags}"
+            echo "-I${parentdir} ${opengl_cflags}"
             ;;
         --libs)
             if test "$osspec" = "MacOS" ; then
@@ -82,22 +82,24 @@ while test $# -gt 0 ; do
             else
                 opengl_libs="-L/usr/X11R6/lib -lGL -lGLU"
             fi
-            if test "jpegenabled" ; then
-                jpeg_libs="-ljpeg"
+            if [[ $jpegenabled -ne 0 ]] ; then
+                if test "$jpegpath" ; then
+                    jpeg_libs="-L${jpegpath}/lib -ljpeg"
+                else
+                    jpeg_libs="-ljpeg"
+                fi
             fi
-            if test "jpegturboenabled" ; then
-                jpeg_libs_path="-L${jpegturbopath}/lib"
-            fi
-            echo "-L${mydir}/${libdir} -limgload ${opengl_libs} ${jpeg_libs_path} ${jpeg_libs}"
+            echo "-L${mydir}/${libdir} -limgload ${opengl_libs} ${jpeg_libs}"
             ;;
         --cflags_internal)
-            if test "jpegenabled" ; then
-                jpeg_define="-DJPEG_ENABLED"
+            if [[ $jpegenabled -ne 0 ]] ; then
+                if test "$jpegpath" ; then
+                    jpeg_cflags="-DJPEG_ENABLED -I${jpegpath}/include"
+                else
+                    jpeg_cflags="-DJPEG_ENABLED"
+                fi
             fi
-            if test "jpegturboenabled" ; then
-                jpeg_cflags="-I${jpegturbopath}/include"
-            fi
-            echo "-I${parentdir} ${jpeg_cflags} ${jpeg_define}"
+            echo "-I${parentdir} ${jpeg_cflags}"
             ;;
             
 ################################################################################
