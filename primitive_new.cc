@@ -337,10 +337,12 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
     unsigned protocol = PixelStreamFileProtocol;
     if (protocolstr)
     {
+        if (!strcasecmp(protocolstr, "MJPEG")) protocol = PixelStreamMjpegProtocol;
         if (!strcasecmp(protocolstr, "TCP")) protocol = PixelStreamTcpProtocol;
     }
 
     PixelStreamFile *myfilepixelstream;
+    PixelStreamMjpeg *mymjpegpixelstream;
     PixelStreamTcp *mytcppixelstream;
 
     switch (protocol)
@@ -410,6 +412,40 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
             {
                 mypixelstream = (PixelStreamData *)mytcppixelstream;
                 mypixelstream->protocol = PixelStreamTcpProtocol;
+                AppData.pixelstreams.push_back(mypixelstream);
+            }
+            break;
+        case PixelStreamMjpegProtocol:
+            mymjpegpixelstream = new PixelStreamMjpeg;
+
+            if (mymjpegpixelstream->readerInitialize(host, StrToInt(port, 8080)))
+            {
+                delete mymjpegpixelstream;
+                return 0x0;
+            }
+
+            PixelStreamMjpeg *psdmjpegitem;
+            for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
+            {
+                if ((*psditem)->protocol == PixelStreamMjpegProtocol)
+                {
+                    psdmjpegitem = (PixelStreamMjpeg *)*psditem;
+                    if (!strcmp(mymjpegpixelstream->getHost(), psdmjpegitem->getHost()) && mymjpegpixelstream->getPort() == psdmjpegitem->getPort())
+                    {
+                        match = *psditem;
+                    }
+                }
+            }
+
+            if (match)
+            {
+                delete mymjpegpixelstream;
+                mypixelstream = match;
+            }
+            else
+            {
+                mypixelstream = (PixelStreamData *)mymjpegpixelstream;
+                mypixelstream->protocol = PixelStreamMjpegProtocol;
                 AppData.pixelstreams.push_back(mypixelstream);
             }
             break;

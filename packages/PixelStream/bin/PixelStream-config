@@ -13,6 +13,7 @@ Options:
     --bindir    display default directory name for compiled binaries
     --cflags    display required compilation flags
     --libs      display required linking flags
+    --cflags_internal    display required compilation flags for building the package
 EOF
     exit $1
 }
@@ -36,6 +37,22 @@ objdir="obj_${osspec}"
 libdir="lib_${osspec}"
 bindir="bin_${osspec}"
 
+################################################################################
+jpegenabled=0
+if [[ -r /usr/include/jpeglib.h ]] ; then
+    jpegenabled=1
+else
+    if [[ -r /usr/local/include/jpeglib.h ]] ; then
+        jpegenabled=1
+    else
+        if [[ -r /usr/local/opt/jpeg-turbo/include/jpeglib.h ]] ; then
+            jpegenabled=1
+            jpegpath="/usr/local/opt/jpeg-turbo"
+        fi
+    fi
+fi
+################################################################################
+
 while test $# -gt 0 ; do
     case $1 in
         --osspec)
@@ -55,7 +72,24 @@ while test $# -gt 0 ; do
             echo "-I${parentdir}"
             ;;
         --libs)
-            echo "-L${mydir}/${libdir} -lPixelStream"
+            if [[ $jpegenabled -ne 0 ]] ; then
+                if test "$jpegpath" ; then
+                    jpeg_libs="-L${jpegpath}/lib -ljpeg"
+                else
+                    jpeg_libs="-ljpeg"
+                fi
+            fi
+            echo "-L${mydir}/${libdir} -lPixelStream ${jpeg_cflags}"
+            ;;
+        --cflags_internal)
+            if [[ $jpegenabled -ne 0 ]] ; then
+                if test "$jpegpath" ; then
+                    jpeg_cflags="-DJPEG_ENABLED -I${jpegpath}/include"
+                else
+                    jpeg_cflags="-DJPEG_ENABLED"
+                fi
+            fi
+            echo "-I${parentdir} ${jpeg_cflags}"
             ;;
 ################################################################################
         *)

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-enum { PixelStreamUnknownProtocol, PixelStreamFileProtocol, PixelStreamTcpProtocol };
+enum { PixelStreamUnknownProtocol, PixelStreamFileProtocol, PixelStreamMjpegProtocol, PixelStreamTcpProtocol };
 
 class PixelStreamData
 {

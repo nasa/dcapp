@@ -26,6 +26,8 @@ unsigned int LoadJPG(const char *filename, ImageStruct *image)
     jpeg_stdio_src(&jinfo, file);
     jpeg_read_header(&jinfo, 1);
 
+    image->width = jinfo.image_width;
+    image->height = jinfo.image_height;
     image->data = (unsigned char *)malloc(3 * jinfo.image_width * jinfo.image_height);
 
     jpeg_start_decompress(&jinfo);
@@ -37,9 +39,9 @@ unsigned int LoadJPG(const char *filename, ImageStruct *image)
     jpeg_finish_decompress(&jinfo);
     jpeg_destroy_decompress(&jinfo);
 
-    image->width = jinfo.image_width;
-    image->height = jinfo.image_height;
     setRGBImageData(image, image->width, image->height, 3);
+
+    fclose(file);
 
     return 0;
 #else
