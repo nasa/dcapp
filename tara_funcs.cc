@@ -9,6 +9,7 @@ extern void Terminate(int);
 extern void HandleMouse(int, int, float, float, int);
 extern void HandleKeyboard(unsigned char, float, float);
 extern void HandleSpecialKeyboard(int, float, float);
+extern void CheckStreams(void);
 extern void reshape(int, int);
 
 static void app_run(void);
@@ -121,6 +122,7 @@ static void app_run(void)
 {
     Idle();
     tdProcessEvents(mouse_click, key_click, win_config, win_close);
+    CheckStreams();
     if (tdNeedsRedraw(mywin.id)) Draw();
 }
 

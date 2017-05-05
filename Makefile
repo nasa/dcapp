@@ -17,6 +17,7 @@ DCAPP_SOURCES := \
 	handle_draw.cc \
 	handle_keyboard.cc \
 	handle_mouse.cc \
+	handle_streams.cc \
 	handle_utils.cc \
 	loadUtils.cc \
 	logic_stubs.cc \

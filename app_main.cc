@@ -105,12 +105,6 @@ void Idle(void)
         if ((*commitem)->activeID) *((*commitem)->activeID) = (*commitem)->isActive();
     }
 
-    for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
-    {
-        // TODO: should probably only do this check if the PixelStream is in the current view tree
-        if ((*psditem)->reader()) SetNeedsRedraw();
-    }
-
     if (!AppData.animators.empty())
     {
         SetNeedsRedraw();

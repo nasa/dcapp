@@ -8,15 +8,13 @@
 
 extern void render_string(struct node *);
 extern void draw_adi(struct node *);
+extern bool CheckCondition(struct node *);
+extern void UpdateValue(struct node *);
 extern void SwapBuffers(void);
-
-extern appdata AppData;
 
 static void render_primitives(struct node *);
 
-extern bool CheckCondition(struct node *);
-extern void UpdateValue(struct node *);
-
+extern appdata AppData;
 
 /*********************************************************************************
  *
