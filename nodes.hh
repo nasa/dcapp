@@ -21,6 +21,15 @@
 #define FLOAT_TYPE     2
 #define INTEGER_TYPE   3
 
+class PixelStreamItem
+{
+    public:
+        PixelStreamItem() : psd(0x0), frame_count(0) {};
+        ~PixelStreamItem() { if (psd) delete psd; };
+        PixelStreamData *psd;
+        unsigned frame_count;
+};
+
 class VarString
 {
     public:
@@ -117,7 +126,7 @@ struct Image
 struct PixelStreamView
 {
     dcTexture textureID;
-    PixelStreamData *psd;
+    PixelStreamItem *psi;
     void *pixels;
     size_t memallocation;
 };
@@ -309,7 +318,7 @@ typedef struct
     Timer *master_timer;
     std::list<Animation *> animators;
     std::list<CommModule *> commlist;
-    std::list<PixelStreamData *> pixelstreams;
+    std::list<PixelStreamItem *> pixelstreams;
     int *canbus_inhibited;
     struct Window window;
     void (*DisplayPreInit)(void *(*)(const char *));

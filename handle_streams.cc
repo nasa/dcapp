@@ -9,7 +9,7 @@ static void traverse_list(struct node *);
 
 static unsigned passnum=0;
 
-void CheckStreams(void)
+void UpdateStreams(void)
 {
     passnum++;
     struct node *current = AppData.window.current_panel;
@@ -34,10 +34,10 @@ static void traverse_list(struct node *list)
                 traverse_list(current->object.cont.SubList);
                 break;
             case PixelStreamView:
-                if (current->object.pixelstreamview.psd->count != passnum)
+                if (current->object.pixelstreamview.psi->frame_count != passnum)
                 {
-                    if (current->object.pixelstreamview.psd->reader()) SetNeedsRedraw();
-                    current->object.pixelstreamview.psd->count = passnum;
+                    if (current->object.pixelstreamview.psi->psd->reader()) SetNeedsRedraw();
+                    current->object.pixelstreamview.psi->frame_count = passnum;
                 }
                 break;
             default:

@@ -114,14 +114,14 @@ static void render_primitives(struct node *list)
             case PixelStreamView:
                 geo = GetGeometry(current);
                 container_start(geo.refx, geo.refy, geo.delx, geo.dely, 1, 1, *(current->info.rotate));
-                newh = (size_t)((float)(current->object.pixelstreamview.psd->width) * (*(current->info.h)) / (*(current->info.w)));
-                if (newh > current->object.pixelstreamview.psd->height)
+                newh = (size_t)((float)(current->object.pixelstreamview.psi->psd->width) * (*(current->info.h)) / (*(current->info.w)));
+                if (newh > current->object.pixelstreamview.psi->psd->height)
                 {
-                    origbytes = current->object.pixelstreamview.psd->width * current->object.pixelstreamview.psd->height * 3;
+                    origbytes = current->object.pixelstreamview.psi->psd->width * current->object.pixelstreamview.psi->psd->height * 3;
                     // overpad the pad by 1 so that no unfilled rows show up
-                    pad = ((newh - current->object.pixelstreamview.psd->height) / 2) + 1;
-                    padbytes = current->object.pixelstreamview.psd->width * pad * 3;
-                    nbytes = (size_t)(current->object.pixelstreamview.psd->width * newh * 3);
+                    pad = ((newh - current->object.pixelstreamview.psi->psd->height) / 2) + 1;
+                    padbytes = current->object.pixelstreamview.psi->psd->width * pad * 3;
+                    nbytes = (size_t)(current->object.pixelstreamview.psi->psd->width * newh * 3);
                     if (nbytes > current->object.pixelstreamview.memallocation)
                     {
                         current->object.pixelstreamview.pixels = realloc(current->object.pixelstreamview.pixels, nbytes);
@@ -129,27 +129,27 @@ static void render_primitives(struct node *list)
                     }
                     bzero(current->object.pixelstreamview.pixels, padbytes);
                     bzero((void *)((size_t)(current->object.pixelstreamview.pixels) + nbytes - padbytes), padbytes);
-                    bcopy(current->object.pixelstreamview.psd->pixels, (void *)((size_t)(current->object.pixelstreamview.pixels) + padbytes), origbytes);
+                    bcopy(current->object.pixelstreamview.psi->psd->pixels, (void *)((size_t)(current->object.pixelstreamview.pixels) + padbytes), origbytes);
                 }
                 else
                 {
-                    nbytes = (size_t)(current->object.pixelstreamview.psd->width * current->object.pixelstreamview.psd->height * 3);
+                    nbytes = (size_t)(current->object.pixelstreamview.psi->psd->width * current->object.pixelstreamview.psi->psd->height * 3);
                     if (nbytes > current->object.pixelstreamview.memallocation)
                     {
                         current->object.pixelstreamview.pixels = realloc(current->object.pixelstreamview.pixels, nbytes);
                         current->object.pixelstreamview.memallocation = nbytes;
                     }
-                    bcopy(current->object.pixelstreamview.psd->pixels, current->object.pixelstreamview.pixels, nbytes);
+                    bcopy(current->object.pixelstreamview.psi->psd->pixels, current->object.pixelstreamview.pixels, nbytes);
                 }
 
-                if (newh < current->object.pixelstreamview.psd->height)
+                if (newh < current->object.pixelstreamview.psi->psd->height)
                 {
-                    offset = (current->object.pixelstreamview.psd->height - newh) / 2;
-                    offsetbytes = current->object.pixelstreamview.psd->width * offset * 3;
-                    set_texture(current->object.pixelstreamview.textureID, current->object.pixelstreamview.psd->width, newh, (void *)((size_t)(current->object.pixelstreamview.pixels) + offsetbytes));
+                    offset = (current->object.pixelstreamview.psi->psd->height - newh) / 2;
+                    offsetbytes = current->object.pixelstreamview.psi->psd->width * offset * 3;
+                    set_texture(current->object.pixelstreamview.textureID, current->object.pixelstreamview.psi->psd->width, newh, (void *)((size_t)(current->object.pixelstreamview.pixels) + offsetbytes));
                 }
                 else
-                    set_texture(current->object.pixelstreamview.textureID, current->object.pixelstreamview.psd->width, newh, current->object.pixelstreamview.pixels);
+                    set_texture(current->object.pixelstreamview.textureID, current->object.pixelstreamview.psi->psd->width, newh, current->object.pixelstreamview.pixels);
                 draw_image(current->object.pixelstreamview.textureID, geo.width, geo.height);
                 container_end();
                 break;

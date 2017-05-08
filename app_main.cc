@@ -133,7 +133,7 @@ void Terminate(int flag)
 {
     std::list<CommModule *>::iterator commitem;
     std::list<Animation *>::iterator animitem;
-    std::list<PixelStreamData *>::iterator psditem;
+    std::list<PixelStreamItem *>::iterator psitem;
 
     if (AppData.DisplayClose) AppData.DisplayClose();
 
@@ -144,9 +144,9 @@ void Terminate(int flag)
     {
         delete (*commitem);
     }
-    for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
+    for (psitem = AppData.pixelstreams.begin(); psitem != AppData.pixelstreams.end(); psitem++)
     {
-        delete (*psditem);
+        delete (*psitem);
     }
     for (animitem = AppData.animators.begin(); animitem != AppData.animators.end(); animitem++)
     {

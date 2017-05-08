@@ -330,9 +330,9 @@ struct node *new_image(struct node *parent, struct node **list, char *x, char *y
 
 struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign, char *rotate, char *protocolstr, char *host, char *port, char *shmemkey, char *filename)
 {
-    PixelStreamData *mypixelstream = 0x0;
-    PixelStreamData *match = 0x0;
-    std::list<PixelStreamData *>::iterator psditem;
+    PixelStreamItem *mypixelstream = 0x0;
+    PixelStreamItem *match = 0x0;
+    std::list<PixelStreamItem *>::iterator psitem;
 
     unsigned protocol = PixelStreamFileProtocol;
     if (protocolstr)
@@ -356,15 +356,15 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
                 return 0x0;
             }
 
-            PixelStreamFile *psdfileitem;
-            for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
+            PixelStreamFile *psfileitem;
+            for (psitem = AppData.pixelstreams.begin(); psitem != AppData.pixelstreams.end(); psitem++)
             {
-                if ((*psditem)->protocol == PixelStreamFileProtocol)
+                if ((*psitem)->psd->protocol == PixelStreamFileProtocol)
                 {
-                    psdfileitem = (PixelStreamFile *)*psditem;
-                    if (!strcmp(myfilepixelstream->getFileName(), psdfileitem->getFileName()) && myfilepixelstream->getShmemKey() == psdfileitem->getShmemKey())
+                    psfileitem = (PixelStreamFile *)((*psitem)->psd);
+                    if (!strcmp(myfilepixelstream->getFileName(), psfileitem->getFileName()) && myfilepixelstream->getShmemKey() == psfileitem->getShmemKey())
                     {
-                        match = *psditem;
+                        match = *psitem;
                     }
                 }
             }
@@ -376,8 +376,8 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
             }
             else
             {
-                mypixelstream = (PixelStreamData *)myfilepixelstream;
-                mypixelstream->protocol = PixelStreamFileProtocol;
+                mypixelstream = new PixelStreamItem;
+                mypixelstream->psd = (PixelStreamData *)myfilepixelstream;
                 AppData.pixelstreams.push_back(mypixelstream);
             }
             break;
@@ -390,15 +390,15 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
                 return 0x0;
             }
 
-            PixelStreamTcp *psdtcpitem;
-            for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
+            PixelStreamTcp *pstcpitem;
+            for (psitem = AppData.pixelstreams.begin(); psitem != AppData.pixelstreams.end(); psitem++)
             {
-                if ((*psditem)->protocol == PixelStreamTcpProtocol)
+                if ((*psitem)->psd->protocol == PixelStreamTcpProtocol)
                 {
-                    psdtcpitem = (PixelStreamTcp *)*psditem;
-                    if (!strcmp(mytcppixelstream->getHost(), psdtcpitem->getHost()) && mytcppixelstream->getPort() == psdtcpitem->getPort())
+                    pstcpitem = (PixelStreamTcp *)((*psitem)->psd);
+                    if (!strcmp(mytcppixelstream->getHost(), pstcpitem->getHost()) && mytcppixelstream->getPort() == pstcpitem->getPort())
                     {
-                        match = *psditem;
+                        match = *psitem;
                     }
                 }
             }
@@ -410,8 +410,8 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
             }
             else
             {
-                mypixelstream = (PixelStreamData *)mytcppixelstream;
-                mypixelstream->protocol = PixelStreamTcpProtocol;
+                mypixelstream = new PixelStreamItem;
+                mypixelstream->psd = (PixelStreamData *)mytcppixelstream;
                 AppData.pixelstreams.push_back(mypixelstream);
             }
             break;
@@ -424,15 +424,15 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
                 return 0x0;
             }
 
-            PixelStreamMjpeg *psdmjpegitem;
-            for (psditem = AppData.pixelstreams.begin(); psditem != AppData.pixelstreams.end(); psditem++)
+            PixelStreamMjpeg *psmjpegitem;
+            for (psitem = AppData.pixelstreams.begin(); psitem != AppData.pixelstreams.end(); psitem++)
             {
-                if ((*psditem)->protocol == PixelStreamMjpegProtocol)
+                if ((*psitem)->psd->protocol == PixelStreamMjpegProtocol)
                 {
-                    psdmjpegitem = (PixelStreamMjpeg *)*psditem;
-                    if (!strcmp(mymjpegpixelstream->getHost(), psdmjpegitem->getHost()) && mymjpegpixelstream->getPort() == psdmjpegitem->getPort())
+                    psmjpegitem = (PixelStreamMjpeg *)((*psitem)->psd);
+                    if (!strcmp(mymjpegpixelstream->getHost(), psmjpegitem->getHost()) && mymjpegpixelstream->getPort() == psmjpegitem->getPort())
                     {
-                        match = *psditem;
+                        match = *psitem;
                     }
                 }
             }
@@ -444,8 +444,8 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
             }
             else
             {
-                mypixelstream = (PixelStreamData *)mymjpegpixelstream;
-                mypixelstream->protocol = PixelStreamMjpegProtocol;
+                mypixelstream = new PixelStreamItem;
+                mypixelstream->psd = (PixelStreamData *)mymjpegpixelstream;
                 AppData.pixelstreams.push_back(mypixelstream);
             }
             break;
@@ -456,7 +456,7 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
     struct node *data = add_primitive_node(parent, list, PixelStreamView, x, y, width, height, halign, valign, rotate);
 
     init_texture(&(data->object.pixelstreamview.textureID));
-    data->object.pixelstreamview.psd = mypixelstream;
+    data->object.pixelstreamview.psi = mypixelstream;
     data->object.pixelstreamview.pixels = 0x0;
     data->object.pixelstreamview.memallocation = 0;
 
