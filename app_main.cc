@@ -88,7 +88,6 @@ void Idle(void)
     int status;
     std::list<CommModule *>::iterator commitem;
     std::list<Animation *>::iterator animitem;
-    std::list<PixelStreamData *>::iterator psditem;
 
     CAN_read();
     UEI_read();

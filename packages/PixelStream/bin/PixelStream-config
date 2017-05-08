@@ -79,7 +79,7 @@ while test $# -gt 0 ; do
                     jpeg_libs="-ljpeg"
                 fi
             fi
-            echo "-L${mydir}/${libdir} -lPixelStream ${jpeg_cflags}"
+            echo "-L${mydir}/${libdir} -lPixelStream ${jpeg_libs}"
             ;;
         --cflags_internal)
             if [[ $jpegenabled -ne 0 ]] ; then

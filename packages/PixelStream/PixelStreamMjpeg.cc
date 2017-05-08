@@ -107,6 +107,13 @@ int PixelStreamMjpeg::socket_connect(void)
 
 int PixelStreamMjpeg::readerInitialize(char *hostspec, int portspec)
 {
+#ifdef JPEG_ENABLED
+#if JPEG_LIB_VERSION < 80 && !defined(MEM_SRCDST_SUPPORTED)
+warning_msg("Version 80 or higher of libjpeg or libjpeg-turbo is required (current installed version is " << JPEG_LIB_VERSION);
+#endif
+#else
+warning_msg("Could not find libjpeg or libjpeg-turbo");
+#endif
     struct hostent *server;
 
     if (hostspec)
@@ -181,7 +188,7 @@ void PixelStreamMjpeg::socket_disconnect(void)
 
 int PixelStreamMjpeg::SendDataRequest(const char *command)
 {
-    if (write(CommSocket, command, strlen(command)) == strlen(command)) return 1;
+    if (write(CommSocket, command, strlen(command)) == (ssize_t)strlen(command)) return 1;
     else
     {
         debug_msg("Unable to write data: " << strerror(errno));
@@ -196,7 +203,7 @@ int PixelStreamMjpeg::GetBuffer(unsigned sep)
 
     for (i=0; i<MAX_ATTEMPTS; i++)
     {
-        if (buflen >= readbufalloc)
+        if (buflen >= (int)readbufalloc)
         {
             readbufalloc += READBUF_ALLOC_CHUNK;
             readbuf = (char *)realloc(readbuf, readbufalloc);
@@ -243,7 +250,7 @@ int PixelStreamMjpeg::RecvHeader(void)
         for (j=0; j<MAX_ATTEMPTS; j++)
         {
             buflen = GetBuffer(crlf);
-            if (buflen >= strlen(boundarytag) && (!strncmp(readbuf, boundarytag, strlen(boundarytag)) || !strncmp(readbuf+2, boundarytag, strlen(boundarytag))))
+            if (buflen >= (int)strlen(boundarytag) && (!strncmp(readbuf, boundarytag, strlen(boundarytag)) || !strncmp(readbuf+2, boundarytag, strlen(boundarytag))))
                 return 1;
         }
     }
@@ -253,7 +260,7 @@ int PixelStreamMjpeg::RecvHeader(void)
 
 int PixelStreamMjpeg::RecvData(void)
 {
-#ifdef JPEG_ENABLED
+#if defined(JPEG_ENABLED) && (JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
     int i;
     struct jpeg_decompress_struct jinfo;
     struct jpeg_error_mgr jerr;
@@ -276,7 +283,7 @@ int PixelStreamMjpeg::RecvData(void)
         rawdata = (void *)realloc(rawdata, rawalloc);
     }
 
-    if (read(CommSocket, rawdata, rawsize) != rawsize) return 0;
+    if (read(CommSocket, rawdata, rawsize) != (ssize_t)rawsize) return 0;
 
     jinfo.err = jpeg_std_error(&jerr);
     jpeg_create_decompress(&jinfo);

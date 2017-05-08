@@ -34,6 +34,12 @@ do { \
         std::cout << _MyTmpStr.str() << std::endl; \
     } \
 } while(0)
+#define warning_msg(a) \
+do { \
+    std::stringstream _MyTmpStr; \
+    _MyTmpStr << Message::getLabel().c_str() << " WARNING: function=" << __FUNCTION__ << ", file=" << __FILE__ << ", line=" << __LINE__ << ": " << a; \
+    std::cout << _MyTmpStr.str() << std::endl; \
+} while(0)
 #define error_msg(a) \
 do { \
     std::stringstream _MyTmpStr; \

@@ -119,7 +119,7 @@ static void app_run(void)
 
 void usageError(const char *appname)
 {
-    printf("usage:\n  %s filename shared_memory_key\n  %s TCP <host> port\n", appname, appname);
+    printf("usage:\n  %s filename shared_memory_key\n  %s MJPEG <host> <port>\n  %s TCP <host> port\n", appname, appname, appname);
     exit(0);
 }
 
@@ -127,23 +127,56 @@ int main(int argc, char **argv)
 {
     Message::setLabel(argv[0]);
 
-    if (argc < 3 || argc > 4) usageError(argv[0]);
+    if (argc < 2) usageError(argv[0]);
 
-    if (!strcmp(argv[1], "TCP"))
+    if (!strcmp(argv[1], "MJPEG"))
     {
-        char *host;
-        int port;
+        char *host = 0x0;
+        int port = 0;
+
+        if (argc == 2)
+        {
+            host = strdup("localhost");
+            port = 8080;
+        }
+        else if (argc == 3)
+        {
+            port = strtol(argv[2], 0x0, 10);
+            if (port > 0) host = strdup("localhost");
+            else
+            {
+                host = strdup(argv[2]);
+                port = 8080;
+            }
+        }
+        else if (argc == 4)
+        {
+            host = strdup(argv[2]);
+            port = strtol(argv[3], 0x0, 10);
+        }
+        else usageError(argv[0]);
+
+        PixelStreamMjpeg *psm = new PixelStreamMjpeg;
+        if (psm->readerInitialize(host, port)) return -1;
+        psd = (PixelStreamData *)psm;
+        psd->protocol = PixelStreamMjpegProtocol;
+    }
+    else if (!strcmp(argv[1], "TCP"))
+    {
+        char *host = 0x0;
+        int port = 0;
 
         if (argc == 3)
         {
             host = strdup("localhost");
             port = strtol(argv[2], 0x0, 10);
         }
-        else
+        else if (argc == 4)
         {
             host = strdup(argv[2]);
             port = strtol(argv[3], 0x0, 10);
-        }        
+        }
+        else usageError(argv[0]);
 
         PixelStreamTcp *pst = new PixelStreamTcp;
         if (pst->readerInitialize(host, port)) return -1;
@@ -152,13 +185,15 @@ int main(int argc, char **argv)
     }
     else
     {
-        char *filename;
-        int shared_memory_key;
+        char *filename = 0x0;
+        int shared_memory_key = 0;
 
-        if (argc == 4) usageError(argv[0]);
-
-        filename = strdup(argv[1]);
-        shared_memory_key = strtol(argv[2], 0x0, 10);
+        if (argc == 3)
+        {
+            filename = strdup(argv[1]);
+            shared_memory_key = strtol(argv[2], 0x0, 10);
+        }
+        else usageError(argv[0]);
 
         PixelStreamFile *psf = new PixelStreamFile;
         if (psf->initialize(filename, shared_memory_key, 0)) return -1;
