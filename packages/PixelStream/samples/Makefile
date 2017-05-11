@@ -20,9 +20,9 @@ else
     LINK_LIBS += -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL -lGLU
 endif
 
-$(BINDIR)/PixelStreamReader:
+$(BINDIR)/PixelStreamReader: PixelStreamReader.cc
 	mkdir -p $(BINDIR)
-	$(CXX) $(CXXFLAGS) PixelStreamReader.cc -o $@ $(LINK_LIBS)
+	$(CXX) $(CXXFLAGS) $< -o $@ $(LINK_LIBS)
 
 clean:
 	rm -rf $(BINDIR)

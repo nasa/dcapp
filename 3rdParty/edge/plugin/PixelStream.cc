@@ -55,7 +55,7 @@ DSP_InitializePlugin(DSS_PLUGIN *plugin)
     {
         case PixelStreamFileProtocol:
             psf = new PixelStreamFile;
-            retval = psf->initialize(plugin->argv[1], strtol(plugin->argv[2], 0x0, 10), 1);
+            retval = psf->initialize(plugin->argv[1], strtol(plugin->argv[2], 0x0, 10), PixelStreamWriterFunction);
             psd = (PixelStreamData *)psf;
             break;
         case PixelStreamTcpProtocol:

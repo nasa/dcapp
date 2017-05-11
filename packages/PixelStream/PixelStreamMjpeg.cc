@@ -50,6 +50,17 @@ PixelStreamMjpeg::~PixelStreamMjpeg()
     delete this->lastread;
 }
 
+bool PixelStreamMjpeg::operator == (const PixelStreamMjpeg &that)
+{
+    if (!strcmp(this->host, that.host) && this->port == that.port) return true;
+    else return false;
+}
+
+bool PixelStreamMjpeg::operator != (const PixelStreamMjpeg &that)
+{
+    return !(*this == that);
+}
+
 int PixelStreamMjpeg::socket_connect(void)
 {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);

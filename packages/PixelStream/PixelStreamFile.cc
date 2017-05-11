@@ -25,7 +25,18 @@ PixelStreamFile::~PixelStreamFile()
     if (this->pixels) free(this->pixels);
 }
 
-int PixelStreamFile::initialize(char *filenamespec, int shmemkeyspec, int writer_flag)
+bool PixelStreamFile::operator == (const PixelStreamFile &that)
+{
+    if (!strcmp(this->filename, that.filename) && this->shmemkey == that.shmemkey) return true;
+    else return false;
+}
+
+bool PixelStreamFile::operator != (const PixelStreamFile &that)
+{
+    return !(*this == that);
+}
+
+int PixelStreamFile::initialize(char *filenamespec, int shmemkeyspec, unsigned function)
 {
     if (!filenamespec) return -1;
     this->filename = strdup(filenamespec);
@@ -44,7 +55,7 @@ int PixelStreamFile::initialize(char *filenamespec, int shmemkeyspec, int writer
         return -1;
     }
 
-    if (writer_flag)
+    if (function == PixelStreamWriterFunction)
     {
         memset(this->shm, 0, SHM_SIZE);
 

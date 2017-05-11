@@ -11,6 +11,8 @@ class PixelStreamData
         PixelStreamData();
         virtual ~PixelStreamData();
 
+        bool operator == (const PixelStreamData &);
+        bool operator != (const PixelStreamData &);
         virtual int reader(void);
         virtual int writer(void);
 

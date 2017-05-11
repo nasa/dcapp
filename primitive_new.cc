@@ -330,6 +330,10 @@ struct node *new_image(struct node *parent, struct node **list, char *x, char *y
 
 struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign, char *rotate, char *protocolstr, char *host, char *port, char *shmemkey, char *filename)
 {
+    PixelStreamData *mypsd = 0x0;
+    PixelStreamFile *psf;
+    PixelStreamMjpeg *psm;
+    PixelStreamTcp *pst;
     PixelStreamItem *mypixelstream = 0x0;
     PixelStreamItem *match = 0x0;
     std::list<PixelStreamItem *>::iterator psitem;
@@ -341,116 +345,56 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
         if (!strcasecmp(protocolstr, "TCP")) protocol = PixelStreamTcpProtocol;
     }
 
-    PixelStreamFile *myfilepixelstream;
-    PixelStreamMjpeg *mymjpegpixelstream;
-    PixelStreamTcp *mytcppixelstream;
-
     switch (protocol)
     {
         case PixelStreamFileProtocol:
-            myfilepixelstream = new PixelStreamFile;
-
-            if (myfilepixelstream->initialize(filename, StrToInt(shmemkey, 0), 0))
+            psf = new PixelStreamFile;
+            if (psf->initialize(filename, StrToInt(shmemkey, 0), PixelStreamReaderFunction))
             {
-                delete myfilepixelstream;
+                delete psf;
                 return 0x0;
             }
-
-            PixelStreamFile *psfileitem;
-            for (psitem = AppData.pixelstreams.begin(); psitem != AppData.pixelstreams.end(); psitem++)
-            {
-                if ((*psitem)->psd->protocol == PixelStreamFileProtocol)
-                {
-                    psfileitem = (PixelStreamFile *)((*psitem)->psd);
-                    if (!strcmp(myfilepixelstream->getFileName(), psfileitem->getFileName()) && myfilepixelstream->getShmemKey() == psfileitem->getShmemKey())
-                    {
-                        match = *psitem;
-                    }
-                }
-            }
-
-            if (match)
-            {
-                delete myfilepixelstream;
-                mypixelstream = match;
-            }
-            else
-            {
-                mypixelstream = new PixelStreamItem;
-                mypixelstream->psd = (PixelStreamData *)myfilepixelstream;
-                AppData.pixelstreams.push_back(mypixelstream);
-            }
-            break;
-        case PixelStreamTcpProtocol:
-            mytcppixelstream = new PixelStreamTcp;
-
-            if (mytcppixelstream->readerInitialize(host, StrToInt(port, 0)))
-            {
-                delete mytcppixelstream;
-                return 0x0;
-            }
-
-            PixelStreamTcp *pstcpitem;
-            for (psitem = AppData.pixelstreams.begin(); psitem != AppData.pixelstreams.end(); psitem++)
-            {
-                if ((*psitem)->psd->protocol == PixelStreamTcpProtocol)
-                {
-                    pstcpitem = (PixelStreamTcp *)((*psitem)->psd);
-                    if (!strcmp(mytcppixelstream->getHost(), pstcpitem->getHost()) && mytcppixelstream->getPort() == pstcpitem->getPort())
-                    {
-                        match = *psitem;
-                    }
-                }
-            }
-
-            if (match)
-            {
-                delete mytcppixelstream;
-                mypixelstream = match;
-            }
-            else
-            {
-                mypixelstream = new PixelStreamItem;
-                mypixelstream->psd = (PixelStreamData *)mytcppixelstream;
-                AppData.pixelstreams.push_back(mypixelstream);
-            }
+            mypsd = (PixelStreamData *)psf;
             break;
         case PixelStreamMjpegProtocol:
-            mymjpegpixelstream = new PixelStreamMjpeg;
-
-            if (mymjpegpixelstream->readerInitialize(host, StrToInt(port, 8080)))
+            psm = new PixelStreamMjpeg;
+            if (psm->readerInitialize(host, StrToInt(port, 8080)))
             {
-                delete mymjpegpixelstream;
+                delete psm;
                 return 0x0;
             }
-
-            PixelStreamMjpeg *psmjpegitem;
-            for (psitem = AppData.pixelstreams.begin(); psitem != AppData.pixelstreams.end(); psitem++)
+            mypsd = (PixelStreamData *)psm;
+            break;
+        case PixelStreamTcpProtocol:
+            pst = new PixelStreamTcp;
+            if (pst->readerInitialize(host, StrToInt(port, 0)))
             {
-                if ((*psitem)->psd->protocol == PixelStreamMjpegProtocol)
-                {
-                    psmjpegitem = (PixelStreamMjpeg *)((*psitem)->psd);
-                    if (!strcmp(mymjpegpixelstream->getHost(), psmjpegitem->getHost()) && mymjpegpixelstream->getPort() == psmjpegitem->getPort())
-                    {
-                        match = *psitem;
-                    }
-                }
+                delete pst;
+                return 0x0;
             }
-
-            if (match)
-            {
-                delete mymjpegpixelstream;
-                mypixelstream = match;
-            }
-            else
-            {
-                mypixelstream = new PixelStreamItem;
-                mypixelstream->psd = (PixelStreamData *)mymjpegpixelstream;
-                AppData.pixelstreams.push_back(mypixelstream);
-            }
+            mypsd = (PixelStreamData *)pst;
             break;
         default:
-            return 0x0;
+            break;
+    }
+
+    if (!mypsd) return 0x0;
+
+    for (psitem = AppData.pixelstreams.begin(); psitem != AppData.pixelstreams.end() && !match; psitem++)
+    {
+        if (*(*psitem)->psd == *mypsd) match = *psitem;
+    }
+
+    if (match)
+    {
+        delete mypsd;
+        mypixelstream = match;
+    }
+    else
+    {
+        mypixelstream = new PixelStreamItem;
+        mypixelstream->psd = (PixelStreamData *)mypsd;
+        AppData.pixelstreams.push_back(mypixelstream);
     }
 
     struct node *data = add_primitive_node(parent, list, PixelStreamView, x, y, width, height, halign, valign, rotate);

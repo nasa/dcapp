@@ -9,6 +9,8 @@
 // to be large enough to house the elements of the PixelStreamShmem structure defined below.
 #define SHM_SIZE 1024
 
+enum { PixelStreamReaderFunction, PixelStreamWriterFunction };
+
 typedef struct
 {
     uint32_t writing;
@@ -24,10 +26,12 @@ class PixelStreamFile : public PixelStreamData
         PixelStreamFile();
         virtual ~PixelStreamFile();
 
+        bool operator == (const PixelStreamFile &);
+        bool operator != (const PixelStreamFile &);
         int reader(void);
         int writer(void);
 
-        int initialize(char *, int, int);
+        int initialize(char *, int, unsigned);
         char *getFileName(void);
         int getShmemKey(void);
 

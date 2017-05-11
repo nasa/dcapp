@@ -1,4 +1,8 @@
+#include <cstring>
 #include "PixelStreamData.hh"
+#include "PixelStreamFile.hh"
+#include "PixelStreamMjpeg.hh"
+#include "PixelStreamTcp.hh"
 
 PixelStreamData::PixelStreamData()
 :
@@ -11,6 +15,33 @@ height(0)
 
 PixelStreamData::~PixelStreamData()
 {
+}
+
+bool PixelStreamData::operator == (const PixelStreamData &that)
+{
+    if (this->protocol == that.protocol)
+    {
+        switch (this->protocol)
+        {
+        case PixelStreamFileProtocol:
+            return (*(PixelStreamFile *)this == *(PixelStreamFile *)&that);
+            break;
+        case PixelStreamMjpegProtocol:
+            return (*(PixelStreamMjpeg *)this == *(PixelStreamMjpeg *)&that);
+            break;
+        case PixelStreamTcpProtocol:
+            return (*(PixelStreamTcp *)this == *(PixelStreamTcp *)&that);
+            break;
+        default:
+            break;
+        }
+    }
+    return false;
+}
+
+bool PixelStreamData::operator != (const PixelStreamData &that)
+{
+    return !(*this == that);
 }
 
 int PixelStreamData::reader(void)

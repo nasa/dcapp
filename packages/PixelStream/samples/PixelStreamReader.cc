@@ -11,7 +11,7 @@
 static tdWindow winid;
 static float winwidth = 640, winheight = 480;
 static tdGLContext *gl_context;
-static PixelStreamData *psd;
+static PixelStreamData *psd = 0x0;
 static unsigned int textureID;
 static void *pixels;
 static size_t memallocation = 0;
@@ -159,7 +159,6 @@ int main(int argc, char **argv)
         PixelStreamMjpeg *psm = new PixelStreamMjpeg;
         if (psm->readerInitialize(host, port)) return -1;
         psd = (PixelStreamData *)psm;
-        psd->protocol = PixelStreamMjpegProtocol;
     }
     else if (!strcmp(argv[1], "TCP"))
     {
@@ -181,7 +180,6 @@ int main(int argc, char **argv)
         PixelStreamTcp *pst = new PixelStreamTcp;
         if (pst->readerInitialize(host, port)) return -1;
         psd = (PixelStreamData *)pst;
-        psd->protocol = PixelStreamTcpProtocol;
     }
     else
     {
@@ -196,10 +194,11 @@ int main(int argc, char **argv)
         else usageError(argv[0]);
 
         PixelStreamFile *psf = new PixelStreamFile;
-        if (psf->initialize(filename, shared_memory_key, 0)) return -1;
+        if (psf->initialize(filename, shared_memory_key, PixelStreamReaderFunction)) return -1;
         psd = (PixelStreamData *)psf;
-        psd->protocol = PixelStreamFileProtocol;
     }
+
+    if (!psd) return -1;
 
     tdInitialize(0x0);
     winid = tdOpenWindow(argv[0], 100, 100, winwidth, winheight, tdAlignLeft | tdAlignBottom);

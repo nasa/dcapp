@@ -31,6 +31,8 @@ class PixelStreamTcp : public PixelStreamData
         PixelStreamTcp();
         virtual ~PixelStreamTcp();
 
+        bool operator == (const PixelStreamTcp &);
+        bool operator != (const PixelStreamTcp &);
         int reader(void);
         int writer(void);
 

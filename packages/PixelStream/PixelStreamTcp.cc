@@ -47,6 +47,17 @@ PixelStreamTcp::~PixelStreamTcp()
     delete this->lastread;
 }
 
+bool PixelStreamTcp::operator == (const PixelStreamTcp &that)
+{
+    if (!strcmp(this->host, that.host) && this->port == that.port) return true;
+    else return false;
+}
+
+bool PixelStreamTcp::operator != (const PixelStreamTcp &that)
+{
+    return !(*this == that);
+}
+
 int PixelStreamTcp::read_socket_connect(void)
 {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
