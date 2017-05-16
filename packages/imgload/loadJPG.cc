@@ -5,8 +5,9 @@
 #endif
 #include "imgload_internal.hh"
 
-extern void setRGBImageData(ImageStruct *, unsigned short, unsigned short, unsigned short);
-
+/*********************************************************************************
+ * Create ImageStruct data from the contents of a JPEG file.
+ *********************************************************************************/
 unsigned int LoadJPG(const char *filename, ImageStruct *image)
 {
 #ifdef JPEG_ENABLED
@@ -29,6 +30,7 @@ unsigned int LoadJPG(const char *filename, ImageStruct *image)
     image->width = jinfo.image_width;
     image->height = jinfo.image_height;
     image->data = (unsigned char *)malloc(3 * jinfo.image_width * jinfo.image_height);
+    image->pixelspec = PixelRGB;
 
     jpeg_start_decompress(&jinfo);
     while (jinfo.output_scanline < jinfo.output_height)
@@ -38,8 +40,6 @@ unsigned int LoadJPG(const char *filename, ImageStruct *image)
     }
     jpeg_finish_decompress(&jinfo);
     jpeg_destroy_decompress(&jinfo);
-
-    setRGBImageData(image, image->width, image->height, 3);
 
     fclose(file);
 

@@ -4,14 +4,9 @@
 #include <cmath>
 #include "imgload_internal.hh"
 
-extern void setTGAImageData(ImageStruct *, unsigned int);
-
 /*********************************************************************************
- *
- * This function is a Targa loader.
- *
+ * Create ImageStruct data from the contents of a TARGA file.
  * Courtesy: Jeff Molofee (NeHe)  http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=24
- *
  *********************************************************************************/
 unsigned int LoadTGA(const char *filename, ImageStruct *image)
 {
@@ -52,11 +47,11 @@ unsigned int LoadTGA(const char *filename, ImageStruct *image)
         return 3;
     }
 
-    bpp = header[4];                                         // Grab The TGA's Bits Per Pixel (24 or 32)
-    bytesPerPixel = bpp/8;                                   // Divide By 8 To Get The Bytes Per Pixel
-    imageSize = image->width*image->height*bytesPerPixel;    // Calculate The Memory Required For The TGA Data
+    bpp = header[4];                                          // Grab The TGA's Bits Per Pixel (24 or 32)
+    bytesPerPixel = bpp/8;                                    // Divide By 8 To Get The Bytes Per Pixel
+    imageSize = image->width * image->height * bytesPerPixel; // Calculate The Memory Required For The TGA Data
 
-    image->data = (unsigned char *)malloc(imageSize);        // Reserve Memory To Hold The TGA Data
+    image->data = (unsigned char *)malloc(imageSize);         // Reserve Memory To Hold The TGA Data
 
     // If the storage memory doesn't exist or its size doesn't match the memory reserved
     if (!(image->data) || fread(image->data, 1, imageSize, file) != imageSize)
@@ -75,6 +70,9 @@ unsigned int LoadTGA(const char *filename, ImageStruct *image)
     }
 
     fclose(file);
-    setTGAImageData(image, bpp);
+
+    if (bpp == 24) image->pixelspec = PixelRGB;
+    else image->pixelspec = PixelRGBA;
+
     return 0;
 }

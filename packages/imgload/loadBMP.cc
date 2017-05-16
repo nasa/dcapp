@@ -1,13 +1,7 @@
-/****************************************************************************
- *
- * Follows is code written by GWM and translated to fit with the OSG Ethos.
- *
- *
- * Ported into the OSG as a plugin, Geoff Michel October 2001.
- * For patches, bugs and new features
- * please send them direct to the OSG dev team.
- *
- **********************************************************************/
+/*********************************************************************************
+ * Create ImageStruct data from the contents of a bitmap file.
+ * Courtesy: Geoff Michel (OSG), October 2001
+ *********************************************************************************/
 
 #include <cstdio>
 #include <cstdlib>
@@ -16,7 +10,7 @@
 #include "imgload_internal.hh"
 
 // BMP format bits - at start of file is 512 bytes of pure garbage
-enum ftype { MB=19778 }; // magic number identifies a bmp file; actually chars 'B''M'
+enum ftype { MB = 0x4d42 }; // magic number identifies a bmp file; actually chars 'B''M'
 // allowed ftypes are 'BM'  for windoze;  OS2 allows:
 //'BA' - Bitmap Array
 //'CI' - Color Icon
@@ -45,8 +39,6 @@ typedef struct
     int ColorUsed;    // number of colors used
     int Important;    // number of "important" colors
 } BMPInfo;
-
-extern void setBMPImageData(ImageStruct *, ncol);
 
 /* byte order workarounds *sigh* */
 static void swapbyte_L(int *i)
@@ -101,7 +93,7 @@ static void swapbyte_S(short *i)
 // even Master Gates could have invented it.
 // It is extremely expensive on disk space - every RGB pixel uses 3 bytes plus a header!
 // BMP - sponsored by Seagate.
-int loadBMPImage(const char *filename, ImageStruct *image)
+int LoadBMP(const char *filename, ImageStruct *image)
 {
     unsigned char *buffer = 0x0; // returned to sender & as read from the disk
     int filelen;
@@ -179,7 +171,7 @@ int loadBMPImage(const char *filename, ImageStruct *image)
         imbuff = (unsigned char *)malloc(inf.ImageSize); // read from disk
 
         //The following line reads in the actual data from the image
-        //tmp should eqaul inf.ImageSize.  If not there is a problem
+        //tmp should equal inf.ImageSize.  If not there is a problem
         int tmp = fread((char *)imbuff, sizeof(unsigned char),inf.ImageSize, fp);
         if(tmp != inf.ImageSize)
         {
@@ -191,38 +183,45 @@ int loadBMPImage(const char *filename, ImageStruct *image)
         switch (ncolours)
         {
         case 1:
-            ncomp = NCOL_BW;     // actually this is a 256 colour, paletted image
+            image->pixelspec = PixelLuminance;
+            ncomp = 1;     // actually this is a 256 colour, paletted image
             inf.Colorbits = 8;   // so this is how many bits there are per index
             inf.ColorUsed = 256; // and number of colours used
             cols=imbuff;         // colour palette address - uses 4 bytes/colour
             break;
         case 2:
-            ncomp = NCOL_IA;
+            image->pixelspec = PixelLuminanceAlpha;
+            ncomp = 2;
             break;
         case 3:
-            ncomp = NCOL_RGB;
+            image->pixelspec = PixelRGB;
+            ncomp = 3;
             break;
         case 4:
-            ncomp = NCOL_RGBA;
+            image->pixelspec = PixelRGBA;
+            ncomp = 4;
             break;
         default:
+            image->pixelspec = PixelUnknown;
             cols = imbuff; // colour palette address - uses 4 bytes/colour
             if (infsize == 12 || infsize == 64) ncpal = 3; // OS2 - uses 3 colours per palette entry
             else ncpal = 4; // Windoze uses 4!
         }
 
-        if (ncomp > 0) buffer = (unsigned char *)malloc((ncomp==NCOL_BW?3:ncomp)*inf.width*inf.height); // to be returned
-        else buffer = (unsigned char *)malloc(3*inf.width*inf.height); // default full colour to be returned
+        if (ncomp > 1)
+            buffer = (unsigned char *)malloc(inf.width * inf.height * ncomp);
+        else
+            buffer = (unsigned char *)malloc(inf.width * inf.height * 3);  // default to full colour
 
         unsigned int off = 0;
-        unsigned int rowbytes = ncomp*sizeof(unsigned char)*inf.width;
-        unsigned int doff = (rowbytes)/4;
+        unsigned int rowbytes = ncomp * sizeof(unsigned char) * inf.width;
+        unsigned int doff = rowbytes/4;
         if ((rowbytes%4)) doff++; // round up if needed
         doff *= 4;                // to find dword alignment
         int j;
-        for(j = 0; j < inf.height; j++)
+        for (j = 0; j < inf.height; j++)
         {
-            if (ncomp>NCOL_BW) memcpy(buffer+j*rowbytes, imbuff+off, rowbytes); // pack bytes closely
+            if (ncomp > 1) memcpy(buffer+j*rowbytes, imbuff+off, rowbytes); // pack bytes closely
             else
             { // find from the palette..
                 unsigned char *imptr = imbuff+inf.ColorUsed*ncpal; // add size of the palette- start of image
@@ -245,7 +244,7 @@ int loadBMPImage(const char *filename, ImageStruct *image)
                 }
             }
             off += doff;
-            if (ncomp>2)
+            if (ncomp > 2)
             { // yes bill, colours are usually BGR aren't they
                 int i;
                 for(i=0; i<inf.width; i++)
@@ -271,10 +270,7 @@ int loadBMPImage(const char *filename, ImageStruct *image)
 
     image->width = inf.width;
     image->height = inf.height;
-    image->internalFormat = ncomp;
     image->data = buffer;
-
-    setBMPImageData(image, (ncol)ncomp);
 
     return 0;
 }

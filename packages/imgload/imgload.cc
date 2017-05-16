@@ -6,7 +6,7 @@
 #include "imgload_internal.hh"
 
 extern unsigned int LoadTGA(const char *, ImageStruct *);
-extern int loadBMPImage(const char *, ImageStruct *);
+extern int LoadBMP(const char *, ImageStruct *);
 extern unsigned int LoadJPG(const char *, ImageStruct *);
 extern int createTextureFromImage(ImageStruct *);
 
@@ -45,9 +45,9 @@ int imgload(const char *filename)
     }
     else if (!strcasecmp(extension, "BMP")) /* use ReaderWriterBMP.c */
     {
-        if (loadBMPImage(filename, &image) == -1)
+        if (LoadBMP (filename, &image) == -1)
         {
-            error_msg("loadBMPImage returned with error for file " << filename);
+            error_msg("LoadBMP returned with error for file " << filename);
             return (-1);
         }
     }
