@@ -7,13 +7,15 @@ Usage: $0 [OPTION]...
 Get package compilation and linking information.
 
 Options:
-    --osspec    display default directory name extension
-    --objdir    display default directory name for compiled objects
-    --libdir    display default directory name for compiled libraries
-    --bindir    display default directory name for compiled binaries
-    --cflags    display required compilation flags
-    --libs      display required linking flags
-    --cflags_internal    display required compilation flags for building the package
+    --osspec           default directory name extension
+    --objdir           default directory name for compiled objects
+    --libdir           default directory name for compiled libraries
+    --bindir           default directory name for compiled binaries
+    --cflags           required compilation flags
+    --libs             required linking flags
+    --compdepends      makefile compilation dependencies
+    --linkdepends      makefile linking dependencies
+    --cflags_internal  required compilation flags for building the package
 EOF
     exit $1
 }
@@ -90,6 +92,12 @@ while test $# -gt 0 ; do
                 fi
             fi
             echo "-L${mydir}/${libdir} -limgload ${opengl_libs} ${jpeg_libs}"
+            ;;
+        --compdepends)
+            echo "${mydir}/imgload.hh"
+            ;;
+        --linkdepends)
+            echo "${mydir}/${libdir}/libimgload.a"
             ;;
         --cflags_internal)
             if [[ $jpegenabled -ne 0 ]] ; then

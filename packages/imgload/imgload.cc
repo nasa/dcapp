@@ -23,7 +23,7 @@ static const char *FindExtension(const char *filename)
 
     if (end == filename)
     {
-        error_msg("Couldn't find extension in filename " << filename);
+        error_msg("No detectable filename extension for file " << filename);
         return 0x0;
     }
 
@@ -40,18 +40,17 @@ int imgload(const char *filename)
 
     if (!extension)
     {
-        error_msg("No detectable filename extension for file " << filename);
         return (-1);
     }
-    else if (!strcasecmp(extension, "BMP")) /* use ReaderWriterBMP.c */
+    else if (!strcasecmp(extension, "BMP"))
     {
-        if (LoadBMP (filename, &image) == -1)
+        if (LoadBMP(filename, &image) == -1)
         {
             error_msg("LoadBMP returned with error for file " << filename);
             return (-1);
         }
     }
-    else if (!strcasecmp(extension, "TGA")) /* use TGAloader.c */
+    else if (!strcasecmp(extension, "TGA"))
     {
         if (LoadTGA(filename, &image))
         {
@@ -59,7 +58,7 @@ int imgload(const char *filename)
             return (-1);
         }
     }
-    else if (!strcasecmp(extension, "JPG") || !strcasecmp(extension, "JPEG")) /* use TGAloader.c */
+    else if (!strcasecmp(extension, "JPG") || !strcasecmp(extension, "JPEG"))
     {
         if (LoadJPG(filename, &image))
         {

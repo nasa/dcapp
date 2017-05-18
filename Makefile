@@ -37,39 +37,32 @@ GENHEADER_SOURCES := \
 	xml_stringsub.cc \
 	xml_utils.cc
 
-CXXFLAGS += -Wall -I.
-CXXFLAGS += $(shell osenv/bin/osenv-config --cflags)
-CXXFLAGS += $(shell 3rdParty/can/bin/CanPlugin-config --cflags)
-CXXFLAGS += $(shell 3rdParty/ccsds/bin/CcsdsPlugin-config --cflags)
-CXXFLAGS += $(shell 3rdParty/edge/bin/EdgePlugin-config --cflags)
-CXXFLAGS += $(shell 3rdParty/trick/bin/TrickPlugin-config --cflags)
-CXXFLAGS += $(shell 3rdParty/uei/bin/UeiPlugin-config --cflags)
-CXXFLAGS += $(shell packages/PixelStream/bin/PixelStream-config --cflags)
-CXXFLAGS += $(shell packages/TaraDraw/bin/TaraDraw-config --cflags)
-CXXFLAGS += $(shell packages/fontlib/bin/fontlib-config --cflags)
-CXXFLAGS += $(shell packages/imgload/bin/imgload-config --cflags)
-CXXFLAGS += $(shell packages/utils/bin/utils-config --cflags)
-CXXFLAGS += $(shell xml2-config --cflags)
+SUBPACKAGE_CONFIGS := \
+    osenv/bin/osenv-config \
+    3rdParty/can/bin/CanPlugin-config \
+    3rdParty/ccsds/bin/CcsdsPlugin-config \
+    3rdParty/edge/bin/EdgePlugin-config \
+    3rdParty/trick/bin/TrickPlugin-config \
+    3rdParty/uei/bin/UeiPlugin-config \
+    packages/PixelStream/bin/PixelStream-config \
+    packages/TaraDraw/bin/TaraDraw-config \
+    packages/fontlib/bin/fontlib-config \
+    packages/imgload/bin/imgload-config \
+    packages/utils/bin/utils-config
 
-LINK_LIBS += $(shell osenv/bin/osenv-config --libs)
-LINK_LIBS += $(shell 3rdParty/can/bin/CanPlugin-config --libs)
-LINK_LIBS += $(shell 3rdParty/ccsds/bin/CcsdsPlugin-config --libs)
-LINK_LIBS += $(shell 3rdParty/edge/bin/EdgePlugin-config --libs)
-LINK_LIBS += $(shell 3rdParty/trick/bin/TrickPlugin-config --libs)
-LINK_LIBS += $(shell 3rdParty/uei/bin/UeiPlugin-config --libs)
-LINK_LIBS += $(shell packages/PixelStream/bin/PixelStream-config --libs)
-LINK_LIBS += $(shell packages/TaraDraw/bin/TaraDraw-config --libs)
-LINK_LIBS += $(shell packages/fontlib/bin/fontlib-config --libs)
-LINK_LIBS += $(shell packages/imgload/bin/imgload-config --libs)
-LINK_LIBS += $(shell packages/utils/bin/utils-config --libs)
+CXXFLAGS += -Wall -I.
+
+CXXFLAGS += $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --cflags))
+LINK_LIBS += $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --libs))
+COMPDEPENDS := $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --compdepends))
+LINKDEPENDS := $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --linkdepends))
+
+CXXFLAGS += $(shell xml2-config --cflags)
 # STANKY KLUDGE FOR XCODE 8 ISSUE:
 LINK_LIBS += $(shell xml2-config --exec-prefix=/usr --libs)
 #LINK_LIBS += $(shell xml2-config --libs)
+
 LINK_LIBS += -ldl
-
-COMPDEPENDS += $(shell osenv/bin/osenv-config --compdepends)
-
-LINKDEPENDS += $(shell osenv/bin/osenv-config --linkdepends)
 
 ifeq ($(OSSPEC), MacOS)
     CXXFLAGS += -I/opt/X11/include

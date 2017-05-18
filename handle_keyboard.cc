@@ -13,7 +13,7 @@ static void KeyPressed(struct node *, char);
 static std::list<struct node *> actionList;
 
 
-void HandleKeyboard(unsigned char key, float x, float y)
+void HandleKeyboard(unsigned char key)
 {
     // escape (0x1b) toggles fullscreen mode
     if (key == 0x1b) toggle_fullscreen();
@@ -30,7 +30,7 @@ void HandleKeyboard(unsigned char key, float x, float y)
 }
 
 
-void HandleSpecialKeyboard(int key, float x, float y)
+void HandleSpecialKeyboard(int key)
 {
     switch (key)
     {

@@ -7,8 +7,8 @@ extern void Draw(void);
 extern void Terminate(int);
 
 extern void HandleMouse(int, int, float, float, int);
-extern void HandleKeyboard(unsigned char, float, float);
-extern void HandleSpecialKeyboard(int, float, float);
+extern void HandleKeyboard(unsigned char);
+extern void HandleSpecialKeyboard(int);
 extern void UpdateStreams(void);
 extern void reshape(int, int);
 
@@ -79,24 +79,24 @@ void key_click(KeyboardEvent kbd)
             switch (kbd.specialkey)
             {
                 case tdArrowLeft:
-                    HandleSpecialKeyboard(KEY_LEFT, kbd.pos.x, kbd.pos.y);
+                    HandleSpecialKeyboard(KEY_LEFT);
                     break;
                 case tdArrowRight:
-                    HandleSpecialKeyboard(KEY_RIGHT, kbd.pos.x, kbd.pos.y);
+                    HandleSpecialKeyboard(KEY_RIGHT);
                     break;
                 case tdArrowDown:
-                    HandleSpecialKeyboard(KEY_DOWN, kbd.pos.x, kbd.pos.y);
+                    HandleSpecialKeyboard(KEY_DOWN);
                     break;
                 case tdArrowUp:
-                    HandleSpecialKeyboard(KEY_UP, kbd.pos.x, kbd.pos.y);
+                    HandleSpecialKeyboard(KEY_UP);
                     break;
             }
         }
         else
         {
             // Change 0x7f (delete) to 0x08 (backspace) for standardization
-            if (kbd.key == 0x7f) HandleKeyboard(0x08, kbd.pos.x, kbd.pos.y);
-            else HandleKeyboard(kbd.key, kbd.pos.x, kbd.pos.y);
+            if (kbd.key == 0x7f) HandleKeyboard(0x08);
+            else HandleKeyboard(kbd.key);
         }
     }
 }

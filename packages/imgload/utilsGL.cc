@@ -42,7 +42,7 @@ int createTextureFromImage(ImageStruct *image)
             bytesPerPixel = 3;
     }
 
-    // Scale the image to power of 2
+    // Scale the image to power of 2 (may not be necessary)
     ensureValidSizeForTexturing(image, bytesPerPixel, format);
 
     glBindTexture(GL_TEXTURE_2D, texture);

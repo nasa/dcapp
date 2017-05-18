@@ -173,7 +173,8 @@ int PixelStreamMjpeg::reader(void)
             debug_msg("Data connection timeout, disconnecting...");
             socket_disconnect();
         }
-        if (!data_requested) data_requested = SendDataRequest("GET /video HTTP/1.0\n\n");
+        if (!data_requested) data_requested = SendDataRequest("GET /video?width=640&height=480 HTTP/1.0\n\n");
+//        if (!data_requested) data_requested = SendDataRequest("GET /video HTTP/1.0\n\n");
         if (data_requested && !header_received) header_received = RecvHeader();
         if (header_received) updated = RecvData();
     }

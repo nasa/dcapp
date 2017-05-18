@@ -7,12 +7,14 @@ Usage: $0 [OPTION]...
 Get package compilation and linking information.
 
 Options:
-    --osspec    display default directory name extension
-    --objdir    display default directory name for compiled objects
-    --libdir    display default directory name for compiled libraries
-    --bindir    display default directory name for compiled binaries
-    --cflags    display required compilation flags
-    --libs      display required linking flags
+    --osspec       default directory name extension
+    --objdir       default directory name for compiled objects
+    --libdir       default directory name for compiled libraries
+    --bindir       default directory name for compiled binaries
+    --cflags       required compilation flags
+    --libs         required linking flags
+    --compdepends  makefile compilation dependencies
+    --linkdepends  makefile linking dependencies
 EOF
     exit $1
 }
@@ -56,6 +58,17 @@ while test $# -gt 0 ; do
             ;;
         --libs)
             echo "-L${mydir}/${libdir} -lEdgePlugin"
+            ;;
+        --compdepends)
+            cdlist=""
+            for cditem in "${mydir}"/*.hh
+            do
+                cdlist="${cdlist} ${cditem}"
+            done
+            echo "${cdlist}"
+            ;;
+        --linkdepends)
+            echo "${mydir}/${libdir}/libEdgePlugin.a"
             ;;
 ################################################################################
         *)
