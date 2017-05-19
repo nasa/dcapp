@@ -1,13 +1,28 @@
-DIR_TOP    := ../../../..
+# Makefile for DSP plugin libraries
+include ../../../../makefiles/common.mk
 
-include $(DIR_TOP)/src.dist/defns.mk
+DIR_OBJ_DIRNAME = src.dist/plugins/PixelStream/plugin
 
-COMPILER   := $(CPLUSPLUS)
-BUILD_TYPE := SHARED_PLUGIN
-LIBNAME    := dsp_pixelstream
-INCLUDES   := -I/usr/X11/include -I/opt/X11/include -I..
-LINK_LIBS  := -L/opt/X11/lib $(LIB_VIEWER) $(LIB_DSP) $(LIB_GL) -lpixelstream -lbasicutils
+CXXFLAGS = ${CFLAGS} -I.. -I${DIR_TOP}/include
 
-include $(DIR_TOP)/src.dist/common.mk
+PLUGINS = $(DIR_PLUGIN)/dsp_pixelstream.so
 
-$(buildtargets)
+ifeq (${HOST_TYPE},Darwin)
+LD    = c++ -bundle -bundle_loader $(DIR_BIN)/doug
+else
+LD    = cc -shared
+endif
+
+all :  $(PLUGINS)
+
+$(DIR_PLUGIN)/dsp_pixelstream.so : $(DIR_OBJ)/PixelStream.o | $(DIR_PLUGIN)
+	${LD} ${CXXFLAGS} -o $@ $^ -L${DIR_LIB} -lpixelstream -lbasicutils $(LIB_DSP) $(LIB_SIGAR) $(LIB_GL) $(LIB_JPEG)
+
+$(DIR_OBJ)/PixelStream.o : PixelStream.cc | $(DIR_OBJ)
+	${CXX} ${CXXFLAGS} -o $@ -c $<
+
+$(DIR_PLUGIN) $(DIR_OBJ) :
+	mkdir -p $@
+
+clean:
+	$(RM) -rf $(PLUGINS)

@@ -1,3 +1,4 @@
+#include <sstream>
 #include <GL/glu.h>
 #include "PixelStream/PixelStream.hh"
 #include "basicutils/msg.hh"
@@ -14,6 +15,7 @@ void PixelStream(void)
         glGetIntegerv(GL_VIEWPORT, gldata);
         psd->width = (uint32_t)gldata[2];
         psd->height = (uint32_t)gldata[3];
+
         // TODO: Right now the plugin is reading the last viewport
         //       in the display.  We should look at adding an optional
         //       command-line argument to let you specify the display 
@@ -35,14 +37,15 @@ DSP_InitializePlugin(DSS_PLUGIN *plugin)
 {
     Message::setLabel("PixelStream");
     unsigned protocol = PixelStreamFileProtocol;
+    std::ostringstream oss;
 
     // Register plugin version
     DSF_RegisterPluginVersion(plugin, __DATE__ " - " __TIME__);
 
     if (plugin->argc < 3)
     {
-        DSF_LogWarningQ("Not enough arguments to dsp_pixelstream.");
-        DSF_LogWarningQ("Usage: -plugin dsp_pixelstream <TCP|filename> <port|shared_mem_id>");
+        DSF_LogWarning("Not enough arguments to dsp_pixelstream.");
+        DSF_LogWarning("Usage: -plugin dsp_pixelstream <TCP|filename> <port|shared_mem_id>");
         return 0;
     }
     if (!strcasecmp(plugin->argv[1], "TCP")) protocol = PixelStreamTcpProtocol;
@@ -69,16 +72,18 @@ DSP_InitializePlugin(DSS_PLUGIN *plugin)
 
     if (retval < 0)
     {
-        DSF_LogWarningQ("Error initializing dsp_pixelstream plugin.");
+        DSF_LogWarning("Error initializing dsp_pixelstream plugin.");
         return 0;
     }
     else if (protocol == PixelStreamFileProtocol)
     {
-        DSF_LogStatusQ("dsp_pixelstream now streaming to file at %s with shmid %ld", plugin->argv[1], strtol(plugin->argv[2], 0x0, 10));
+        oss << "dsp_pixelstream now streaming to file at " << plugin->argv[1] << " with shmid " << plugin->argv[2];
+        DSF_LogStatus(oss.str().c_str());
     }
     else if (protocol == PixelStreamTcpProtocol)
     {
-        DSF_LogStatusQ("dsp_pixelstream now streaming over TCP on port %ld", strtol(plugin->argv[2], 0x0, 10));
+        oss << "dsp_pixelstream now streaming over TCP on port " << plugin->argv[2];
+        DSF_LogStatus(oss.str().c_str());
     }
 
     // Set mem allocation based upon GL_MAX_VIEWPORT_DIMS because dynamic method based upon GL_VIEWPORT isn't reliable

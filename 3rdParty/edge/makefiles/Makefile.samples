@@ -1,22 +1,22 @@
-DIR_TOP    := ../../../..
+# Makefile for DSP plugin libraries
+include ../../../../makefiles/common.mk
 
-include $(DIR_TOP)/src.dist/defns.mk
+DIR_OBJ_DIRNAME = src.dist/plugins/PixelStream/samples
 
-COMPILER   := $(CPLUSPLUS)
-INSTALL_PREFIX := bin
-BUILD_TYPE := SINGLE_EXEC
-INCLUDES   := -I/usr/X11/include
-INCLUDES   += -I../ -I/usr/X11/include -I/opt/X11/include
-LDFLAGS    += -pthread
+CXXFLAGS = ${CFLAGS} -I.. -I${DIR_TOP}/src/includes
 
-ifeq ($(HOST_TYPE),Darwin)
-    LINK_LIBS  := -L/usr/X11R6/lib -lpixelstream -lbasicutils -lTD -framework OpenGL -framework AppKit
-else
-    LINK_LIBS  := -L/usr/X11R6/lib -lpixelstream -lbasicutils -lTD -lX11 -lXi -lXmu -lGL -lGLU
-endif
+EXECUTABLES = $(DIR_BIN)/PixelStreamReader
 
-include $(DIR_TOP)/src.dist/common.mk
-LD = $(LD_EXEC)
-LIB_SYSTEM :=
+all :  $(EXECUTABLES)
 
-$(buildtargets)
+$(DIR_BIN)/PixelStreamReader : $(DIR_OBJ)/PixelStreamReader.o | $(DIR_BIN)
+	${CXX} ${CXXFLAGS} -o $@ $^ -L${DIR_LIB} -lpixelstream -lbasicutils -lTD $(LIB_XWIN) $(LIB_GL) $(LIB_AGL) $(LIB_JPEG)
+
+$(DIR_OBJ)/PixelStreamReader.o : PixelStreamReader.cc | $(DIR_OBJ)
+	${CXX} ${CXXFLAGS} -o $@ -c $<
+
+$(DIR_BIN) $(DIR_OBJ) :
+	mkdir -p $@
+
+clean:
+	$(RM) -rf $(EXECUTABLES)

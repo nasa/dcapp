@@ -1,37 +1,30 @@
-DIR_TOP = ../../../../..
+include ../../../../../makefiles/common.mk
 
-C_FILES = $(DIR_SRC)/*.c $(DIR_SRC)/*.cpp $(DIR_SRC)/*.cc $(DIR_SRC)/*.mm $(DIR_SRC)/*.m
-C_FILTERS = %.c %.cpp %.cc %.mm $.m
+DIR_OBJ_DIRNAME = src.dist/plugins/PixelStream/TaraDraw/mac
 
-include $(DIR_TOP)/src.dist/defns.mk
+CXXFLAGS := -g $(CFLAGS)
 
-BUILD_TYPE := STATIC_LIB
-LIBNAME := libTD
-include $(DIR_TOP)/src.dist/common.mk
+LIB = $(DIR_LIB)/libTD.a
 
-#$(buildtargets)
+SRC = $(wildcard *.mm)
+OBJS = $(addprefix ${DIR_OBJ}/,$(subst .mm,.o,$(SRC)))
 
-.PHONY: all clean
+all : $(LIB)
 
-MYOBJDIR := $(DIR_TOP)/obj/plugins/object_Darwin
-MYLIBDIR := $(DIR_TOP)/lib_Darwin
+$(LIB) : | $(DIR_LIB)
 
-MYHEADERS := $(wildcard *.hh)
-MYOBJECTS := $(foreach obj, $(patsubst %.mm, %.o, $(wildcard *.mm)), $(MYOBJDIR)/$(obj))
+# LIBRARIES
 
-CXXFLAGS += -Wall -m32
+$(LIB) : $(OBJS)
+	$(AR_OR_LIBTOOL) $@ $^
 
-all:: $(TARGETS)
+# OBJECT CODE and DIRECTORY
 
-clean::
-	echo "Clean SPL"
-	@ echo "rm -f $(TARGETS)"
-	$(foreach target,$(TARGETS), $(shell rm -f $(target)))
-	@ echo "rm -f $(MYOBJECTS)"
-	$(foreach object,$(MYOBJECTS), $(shell rm -f $(object)))
+$(DIR_LIB) $(DIR_OBJ):
+	mkdir -p $@
 
-$(MYLIBDIR)/libTD.a: $(MYOBJECTS)
-	$(AR) $(ARFLAGS) $@ $(MYOBJECTS)
-
-$(MYOBJDIR)/%.o: %.mm $(MYHEADERS)
+$(OBJS): $(DIR_OBJ)/%.o : %.mm | $(DIR_OBJ)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean :
+	$(RM) -rf $(DIR_OBJ) $(LIB)

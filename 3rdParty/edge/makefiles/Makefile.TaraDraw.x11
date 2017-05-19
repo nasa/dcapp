@@ -1,7 +1,31 @@
-DIR_TOP = ../../../../..
+# Makefile for libraries and programs include ../../../../src/doug/common.mk
+include ../../../../../makefiles/common.mk
 
-BUILD_TYPE = STATIC_LIB
-LIBNAME   = libTD
-include $(DIR_TOP)/src.dist/common.mk
+DIR_OBJ_DIRNAME = src.dist/plugins/PixelStream/TaraDraw/x11
 
-$(buildtargets)
+CXXFLAGS := -g $(CFLAGS)
+
+LIB = $(DIR_LIB)/libTD.a
+
+SRC = $(wildcard *.cc)
+OBJS = $(addprefix ${DIR_OBJ}/,$(subst .cc,.o,$(SRC)))
+
+all : $(LIB)
+
+$(LIB) : | $(DIR_LIB)
+
+# LIBRARIES
+
+$(LIB) : $(OBJS)
+	$(AR_OR_LIBTOOL) $@ $^
+
+# OBJECT CODE and DIRECTORY
+
+$(DIR_LIB) $(DIR_OBJ):
+	mkdir -p $@
+
+$(OBJS): $(DIR_OBJ)/%.o : %.cc | $(DIR_OBJ)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean :
+	$(RM) -rf $(DIR_OBJ) $(LIB)

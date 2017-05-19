@@ -1,8 +1,32 @@
-DIR_TOP = ../../../..
+# Makefile for libraries and programs include ../../../../src/doug/common.mk
+include ../../../../makefiles/common.mk
 
-BUILD_TYPE := STATIC_LIB
-LIBNAME := libpixelstream
-INCLUDES := -I.. -I/usr/X11/include -I/opt/X11/include
-include $(DIR_TOP)/src.dist/common.mk
+DIR_OBJ_DIRNAME = src.dist/plugins/PixelStream/PixelStream
 
-$(buildtargets)
+CXXFLAGS := -g $(CFLAGS) -I.. -I/usr/local/opt/jpeg-turbo/include -DJPEG_ENABLED
+# NOTE that turbo-jpeg includes are installed in /usr/local/opt/jpeg-turbo/include by brew by default
+
+LIB = $(DIR_LIB)/libpixelstream.a
+
+SRC = $(wildcard *.cc)
+OBJS = $(addprefix ${DIR_OBJ}/,$(subst .cc,.o,$(SRC)))
+
+all : $(LIB)
+
+$(LIB) : | $(DIR_LIB)
+
+# LIBRARIES
+
+$(LIB) : $(OBJS)
+	$(AR_OR_LIBTOOL) $@ $^
+
+# OBJECT CODE and DIRECTORY
+
+$(DIR_LIB) $(DIR_OBJ):
+	mkdir -p $@
+
+$(OBJS): $(DIR_OBJ)/%.o : %.cc | $(DIR_OBJ)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean :
+	$(RM) -rf $(DIR_OBJ) $(LIB)
