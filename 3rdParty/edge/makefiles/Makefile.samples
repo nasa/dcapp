@@ -10,9 +10,9 @@ INCLUDES   += -I../ -I/usr/X11/include -I/opt/X11/include
 LDFLAGS    += -pthread
 
 ifeq ($(HOST_TYPE),Darwin)
-    LINK_LIBS  := -L/usr/X11R6/lib -lpixelstream -lutils -lTD -framework OpenGL -framework AppKit
+    LINK_LIBS  := -L/usr/X11R6/lib -lpixelstream -lbasicutils -lTD -framework OpenGL -framework AppKit
 else
-    LINK_LIBS  := -L/usr/X11R6/lib -lpixelstream -lutils -lTD -lX11 -lXi -lXmu -lGL -lGLU
+    LINK_LIBS  := -L/usr/X11R6/lib -lpixelstream -lbasicutils -lTD -lX11 -lXi -lXmu -lGL -lGLU
 endif
 
 include $(DIR_TOP)/src.dist/common.mk

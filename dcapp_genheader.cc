@@ -4,7 +4,7 @@
 #include <string>
 #include <list>
 #include <libgen.h>
-#include "utils/msg.hh"
+#include "basicutils/msg.hh"
 #include "xml_utils.hh"
 #include "xml_stringsub.hh"
 

@@ -9,9 +9,9 @@
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
-#include "utils/msg.hh"
-#include "utils/timer.hh"
-#include "utils/tidy.hh"
+#include "basicutils/msg.hh"
+#include "basicutils/timer.hh"
+#include "basicutils/tidy.hh"
 #include "varlist.hh"
 #include "can/CAN.hh"
 #include "uei/UEI.hh"

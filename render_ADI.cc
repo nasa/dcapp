@@ -22,7 +22,7 @@ void draw_adi(struct node *current)
     Geometry geo = GetGeometry(current);
 
     // Draw the ball
-    draw_textured_sphere(geo.center, geo.middle, 0, *(current->object.adi.ballradius), current->object.adi.ballID,
+    draw_textured_sphere(geo.center, geo.middle, *(current->object.adi.ballradius), current->object.adi.ballID,
                 *(current->object.adi.roll), *(current->object.adi.pitch), *(current->object.adi.yaw));
 
     // Draw the surrounding area (i.e. background)

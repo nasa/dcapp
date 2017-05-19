@@ -6,7 +6,7 @@ LIBDIR := $(shell ./bin/EdgePlugin-config --libdir)
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/bin/utils-config --cflags)
+CXXFLAGS += -Wall -I../.. $(shell ../../packages/basicutils/bin/basicutils-config --cflags)
 
 $(LIBDIR)/libEdgePlugin.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)

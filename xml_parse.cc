@@ -6,7 +6,7 @@
 #include <libgen.h>
 #include <fcntl.h>
 #include <dlfcn.h>
-#include "utils/msg.hh"
+#include "basicutils/msg.hh"
 #include "trick/trickcomm.hh"
 #include "edge/edgecomm.hh"
 #include "ccsds/ccsds_udp_comm.hh"

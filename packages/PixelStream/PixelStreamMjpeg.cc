@@ -17,8 +17,8 @@
 #ifdef JPEG_ENABLED
 #include <jpeglib.h>
 #endif
-#include "utils/timer.hh"
-#include "utils/msg.hh"
+#include "basicutils/timer.hh"
+#include "basicutils/msg.hh"
 #include "PixelStreamMjpeg.hh"
 
 PixelStreamMjpeg::PixelStreamMjpeg()

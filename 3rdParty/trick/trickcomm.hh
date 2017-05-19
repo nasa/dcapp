@@ -2,7 +2,7 @@
 #define _TRICKCOMM_HH_
 
 #include <list>
-#include "utils/timer.hh"
+#include "basicutils/timer.hh"
 #include "comm.hh"
 #ifdef TRICKACTIVE
 #include "vscomm.hh"

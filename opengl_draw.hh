@@ -30,6 +30,6 @@ extern void rectangle_outline(float, float, float, float, float, float, float, f
 extern void rectangle_fill(float, float, float, float, float, float, float, float, float, float, float, float);
 extern void circle_outline(float, float, float, int, float, float, float, float, float);
 extern void circle_fill(float, float, float, int, float, float, float, float);
-extern void draw_textured_sphere(float, float, float, float, int, float, float, float);
+extern void draw_textured_sphere(float, float, float, int, float, float, float);
 
 #endif

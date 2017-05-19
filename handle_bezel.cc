@@ -1,6 +1,6 @@
 #include <sstream>
 #include <list>
-#include "utils/msg.hh"
+#include "basicutils/msg.hh"
 #include "nodes.hh"
 #include "bezel.hh"
 

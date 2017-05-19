@@ -57,7 +57,7 @@ while test $# -gt 0 ; do
             echo "-I${parentdir}"
             ;;
         --libs)
-            echo "-L${mydir}/${libdir} -lutils"
+            echo "-L${mydir}/${libdir} -lbasicutils"
             ;;
         --compdepends)
             cdlist=""
@@ -68,7 +68,7 @@ while test $# -gt 0 ; do
             echo "${cdlist}"
             ;;
         --linkdepends)
-            echo "${mydir}/${libdir}/libutils.a"
+            echo "${mydir}/${libdir}/libbasicutils.a"
             ;;
 ################################################################################
         *)

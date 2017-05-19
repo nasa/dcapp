@@ -1,6 +1,6 @@
 // Generic display logic routines (used when there is no DisplayLogic element set in specfile)
 
-#include "utils/msg.hh"
+#include "basicutils/msg.hh"
 
 void DisplayPreInitStub(void *(*get_pointer)(const char *))
 {

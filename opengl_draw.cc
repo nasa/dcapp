@@ -287,7 +287,7 @@ void circle_fill(float cx, float cy, float r, int num_segments, float red, float
     glDisable(GL_BLEND);
 }
 
-void draw_textured_sphere(float x, float y, float z, float radius, int textureID, float roll, float pitch, float yaw)
+void draw_textured_sphere(float x, float y, float radius, int textureID, float roll, float pitch, float yaw)
 {
     GLUquadricObj *q = gluNewQuadric();         // Create A New Quadratic
 
@@ -306,18 +306,13 @@ void draw_textured_sphere(float x, float y, float z, float radius, int textureID
         glTranslatef(x, y, 0);
         glScalef(radius, radius, 1);
         /* Orient the sphere according to the roll, pitch, and yaw */
-#if 0
-        glRotatef(-roll    , 0, 1, 0);    /* R */
-        glRotatef( yaw  +90, 0, 0, 1);    /* Y */
-        glRotatef(-pitch-90, 1, 0, 0);    /* P */
-#else
         glRotatef(-90,    0, 1, 0);
         glRotatef( 90,    0, 0, 1);
         glRotatef(-roll,  0, 1, 0);
         glRotatef(-yaw,   1, 0, 0);
         glRotatef(-pitch, 0, 0, 1);
-#endif
-        gluSphere(q, 1, 32, 32);       // Draw sphere
+        /* Draw the sphere */
+        gluSphere(q, 1, 32, 32);
     glPopMatrix();
     gluDeleteQuadric(q);
     glDisable(GL_DEPTH_TEST);          // Disable depth testing

@@ -6,7 +6,7 @@ LIBDIR := $(shell ./bin/CcsdsPlugin-config --libdir)
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/bin/utils-config --cflags)
+CXXFLAGS += -Wall -I../.. $(shell ../../packages/basicutils/bin/basicutils-config --cflags)
 ifdef CCSDS_UDP_HOME
     CXXFLAGS += -DCCSDSUDPACTIVE -I$(CCSDS_UDP_HOME)
 endif

@@ -4,7 +4,7 @@
 #include <string>
 #include <list>
 #include <strings.h>
-#include "utils/msg.hh"
+#include "basicutils/msg.hh"
 #include "imgload/imgload.hh"
 #include "fontlib/fontlib.hh"
 #include "dc.hh"

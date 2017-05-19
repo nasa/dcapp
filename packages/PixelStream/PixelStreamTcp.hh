@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include <poll.h>
 #include <netinet/in.h>
-#include "utils/timer.hh"
+#include "basicutils/timer.hh"
 #include "PixelStreamData.hh"
 
 #define CONNECTION_ATTEMPT_INTERVAL 2

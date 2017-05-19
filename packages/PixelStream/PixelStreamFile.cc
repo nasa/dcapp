@@ -4,7 +4,7 @@
 #include <cerrno>
 #include <sys/shm.h>
 #include "PixelStreamFile.hh"
-#include "utils/msg.hh"
+#include "basicutils/msg.hh"
 
 PixelStreamFile::PixelStreamFile()
 :
@@ -36,7 +36,7 @@ bool PixelStreamFile::operator != (const PixelStreamFile &that)
     return !(*this == that);
 }
 
-int PixelStreamFile::initialize(char *filenamespec, int shmemkeyspec, unsigned function)
+int PixelStreamFile::genericInitialize(const char *filenamespec, int shmemkeyspec)
 {
     if (!filenamespec) return -1;
     this->filename = strdup(filenamespec);
@@ -55,16 +55,25 @@ int PixelStreamFile::initialize(char *filenamespec, int shmemkeyspec, unsigned f
         return -1;
     }
 
-    if (function == PixelStreamWriterFunction)
-    {
-        memset(this->shm, 0, SHM_SIZE);
+    return 0;
+}
 
-        if (this->filename) this->fp = fopen(this->filename, "w");
-        if (!(this->fp))
-        {
-            error_msg("PixelStream: Couldn't open stream file " << this->filename);
-            return -1;
-        }
+int PixelStreamFile::readerInitialize(const char *filenamespec, int shmemkeyspec)
+{
+    return genericInitialize(filenamespec, shmemkeyspec);
+}
+
+int PixelStreamFile::writerInitialize(const char *filenamespec, int shmemkeyspec)
+{
+    if (genericInitialize(filenamespec, shmemkeyspec)) return -1;
+
+    memset(this->shm, 0, SHM_SIZE);
+
+    if (this->filename) this->fp = fopen(this->filename, "w");
+    if (!(this->fp))
+    {
+        error_msg("PixelStream: Couldn't open stream file " << this->filename);
+        return -1;
     }
 
     return 0;

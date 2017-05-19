@@ -1,6 +1,6 @@
 #include <GL/glu.h>
 #include "PixelStream/PixelStream.hh"
-#include "utils/msg.hh"
+#include "basicutils/msg.hh"
 #include "doug.h"
 #include "dsp_plugin_common.h"
 
@@ -55,7 +55,7 @@ DSP_InitializePlugin(DSS_PLUGIN *plugin)
     {
         case PixelStreamFileProtocol:
             psf = new PixelStreamFile;
-            retval = psf->initialize(plugin->argv[1], strtol(plugin->argv[2], 0x0, 10), PixelStreamWriterFunction);
+            retval = psf->writerInitialize(plugin->argv[1], strtol(plugin->argv[2], 0x0, 10));
             psd = (PixelStreamData *)psf;
             break;
         case PixelStreamTcpProtocol:

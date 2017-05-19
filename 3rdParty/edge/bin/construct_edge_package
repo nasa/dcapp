@@ -25,15 +25,15 @@ rsync -av ../plugin "$1"/PixelStream
 rsync -av ../makefiles "$1"/PixelStream
 rsync -av --exclude="obj*" --exclude="lib*" --exclude="bin*" --exclude="Makefile" ../../../packages/PixelStream "$1"/PixelStream
 rsync -av --exclude="obj*" --exclude="lib*" --exclude="bin*" --exclude="Makefile" ../../../packages/TaraDraw "$1"/PixelStream
-rsync -av --exclude="obj*" --exclude="lib*" --exclude="bin*" --exclude="Makefile" ../../../packages/utils "$1"/PixelStream
+rsync -av --exclude="obj*" --exclude="lib*" --exclude="bin*" --exclude="Makefile" ../../../packages/basicutils "$1"/PixelStream
 
 cd "$1"/PixelStream
 
 mv PixelStream/samples .
 mv makefiles/Makefile.main Makefile
+mv makefiles/Makefile.basicutils basicutils/Makefile
 mv makefiles/Makefile.plugin plugin/Makefile
 mv makefiles/Makefile.samples samples/Makefile
-mv makefiles/Makefile.utils utils/Makefile
 mv makefiles/Makefile.PixelStream PixelStream/Makefile
 mv makefiles/Makefile.TaraDraw TaraDraw/Makefile
 mv makefiles/Makefile.TaraDraw.mac TaraDraw/mac/Makefile

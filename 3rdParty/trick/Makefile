@@ -14,7 +14,7 @@ else ifneq ($(shell which gte 2> /dev/null),)
 endif
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(SOURCES)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -I../.. $(shell ../../packages/utils/bin/utils-config --cflags)
+CXXFLAGS += -Wall -I../.. $(shell ../../packages/basicutils/bin/basicutils-config --cflags)
 
 $(LIBDIR)/libTrickPlugin.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)

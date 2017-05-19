@@ -5,8 +5,6 @@
 #include <strings.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include "utils/tidy.hh"
-#include "utils/msg.hh"
 #include "PixelStream/PixelStream.hh"
 #include "dc.hh"
 #include "varlist.hh"
@@ -349,7 +347,7 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
     {
         case PixelStreamFileProtocol:
             psf = new PixelStreamFile;
-            if (psf->initialize(filename, StrToInt(shmemkey, 0), PixelStreamReaderFunction))
+            if (psf->readerInitialize(filename, StrToInt(shmemkey, 0)))
             {
                 delete psf;
                 return 0x0;

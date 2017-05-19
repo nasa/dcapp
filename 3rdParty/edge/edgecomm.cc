@@ -1,8 +1,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include "utils/timer.hh"
-#include "utils/tidy.hh"
+#include "basicutils/timer.hh"
+#include "basicutils/tidy.hh"
 #include "edgecomm.hh"
 #include "varlist.hh"
 

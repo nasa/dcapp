@@ -1,14 +1,14 @@
 .PHONY: clean
 
-OBJDIR := $(shell ./bin/utils-config --objdir)
-LIBDIR := $(shell ./bin/utils-config --libdir)
+OBJDIR := $(shell ./bin/basicutils-config --objdir)
+LIBDIR := $(shell ./bin/basicutils-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
 CXXFLAGS += -Wall
 
-$(LIBDIR)/libutils.a: $(OBJECTS)
+$(LIBDIR)/libbasicutils.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)
 	$(AR) $(ARFLAGS) $@ $^
 

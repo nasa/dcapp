@@ -6,11 +6,11 @@ BINDIR := $(shell ../bin/PixelStream-config --bindir)
 CXXFLAGS += -Wall
 CXXFLAGS += $(shell ../bin/PixelStream-config --cflags)
 CXXFLAGS += $(shell ../../TaraDraw/bin/TaraDraw-config --cflags)
-CXXFLAGS += $(shell ../../utils/bin/utils-config --cflags)
+CXXFLAGS += $(shell ../../basicutils/bin/basicutils-config --cflags)
 
 LINK_LIBS += $(shell ../bin/PixelStream-config --libs)
 LINK_LIBS += $(shell ../../TaraDraw/bin/TaraDraw-config --libs)
-LINK_LIBS += $(shell ../../utils/bin/utils-config --libs)
+LINK_LIBS += $(shell ../../basicutils/bin/basicutils-config --libs)
 
 ifeq ($(OSSPEC), MacOS)
     CXXFLAGS += -I/opt/X11/include

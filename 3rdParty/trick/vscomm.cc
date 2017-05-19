@@ -10,7 +10,7 @@ Programmer: M. McFarlane, March 2005
 #include <cctype>
 #include <strings.h>
 #include <sys/utsname.h>
-#include "utils/tidy.hh"
+#include "basicutils/tidy.hh"
 #include "vscomm.hh"
 
 VariableServerComm::VariableServerComm()

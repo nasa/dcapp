@@ -2,7 +2,7 @@
 #define _EDGEIO_HH_
 
 #include <list>
-#include "utils/timer.hh"
+#include "basicutils/timer.hh"
 #include "comm.hh"
 #include "varlist.hh"
 #include "EDGE_rcs.hh"

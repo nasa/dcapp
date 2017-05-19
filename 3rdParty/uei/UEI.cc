@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <csignal>
 #include <strings.h>
-#include "utils/msg.hh"
+#include "basicutils/msg.hh"
 #include "util_comm.hh"
 #include "bezel.hh"
 

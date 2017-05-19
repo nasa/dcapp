@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <strings.h>
-#include "utils/msg.hh"
+#include "basicutils/msg.hh"
 #include "imgload_internal.hh"
 
 extern unsigned int LoadTGA(const char *, ImageStruct *);

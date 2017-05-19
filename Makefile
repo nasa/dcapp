@@ -48,7 +48,7 @@ SUBPACKAGE_CONFIGS := \
     packages/TaraDraw/bin/TaraDraw-config \
     packages/fontlib/bin/fontlib-config \
     packages/imgload/bin/imgload-config \
-    packages/utils/bin/utils-config
+    packages/basicutils/bin/basicutils-config
 
 CXXFLAGS += -Wall -I.
 

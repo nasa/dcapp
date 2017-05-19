@@ -4,7 +4,7 @@
 #include <strings.h>
 #include <unistd.h>
 #include <GL/glu.h>
-#include "utils/msg.hh"
+#include "basicutils/msg.hh"
 #include "TaraDraw/TaraDraw.hh"
 #include "PixelStream/PixelStream.hh"
 
@@ -194,7 +194,7 @@ int main(int argc, char **argv)
         else usageError(argv[0]);
 
         PixelStreamFile *psf = new PixelStreamFile;
-        if (psf->initialize(filename, shared_memory_key, PixelStreamReaderFunction)) return -1;
+        if (psf->readerInitialize(filename, shared_memory_key)) return -1;
         psd = (PixelStreamData *)psf;
     }
 

@@ -35,9 +35,9 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/socket.h>
-#include "utils/msg.hh"
-#include "utils/timer.hh"
-#include "utils/tidy.hh"
+#include "basicutils/msg.hh"
+#include "basicutils/timer.hh"
+#include "basicutils/tidy.hh"
 #include "ccsds_udp_comm.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
