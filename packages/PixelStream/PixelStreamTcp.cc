@@ -120,6 +120,24 @@ int PixelStreamTcp::write_socket_connect(int sockfd)
     return (accept(sockfd, (struct sockaddr *) &cli_addr, &clilen));
 }
 
+void PixelStreamTcp::connect_write_sockets(void)
+{
+    if (ClientToServerSocket < 0) ClientToServerSocket = write_socket_connect(ListenSocket);
+    else if (ServerToClientSocket < 0) ServerToClientSocket = write_socket_connect(ListenSocket);
+    else
+    {
+        rfd.fd = ClientToServerSocket;
+        rfd.events = POLLIN;
+        rfd.revents = 0;
+        wfd.fd = ServerToClientSocket;
+        wfd.events = POLLOUT;
+        wfd.revents = 0;
+
+        sockets_connected = 1;
+        this->lastread->restart();
+    }
+}
+
 int PixelStreamTcp::readerInitialize(char *hostspec, int portspec)
 {
     struct hostent *server;
@@ -238,27 +256,19 @@ int PixelStreamTcp::reader(void)
     return updated;
 }
 
+bool PixelStreamTcp::writeRequested(void)
+{
+    if (!sockets_connected) connect_write_sockets();
+
+    if (sockets_connected) return true;
+    else return false;
+}
+
 int PixelStreamTcp::writer(void)
 {
     if (!this->pixels) return 0;
 
-    if (!sockets_connected)
-    {
-        if (ClientToServerSocket < 0) ClientToServerSocket = write_socket_connect(ListenSocket);
-        else if (ServerToClientSocket < 0) ServerToClientSocket = write_socket_connect(ListenSocket);
-        else
-        {
-            rfd.fd = ClientToServerSocket;
-            rfd.events = POLLIN;
-            rfd.revents = 0;
-            wfd.fd = ServerToClientSocket;
-            wfd.events = POLLOUT;
-            wfd.revents = 0;
-
-            sockets_connected = 1;
-            this->lastread->restart();
-        }
-    }
+    if (!sockets_connected) connect_write_sockets();
     else
     {
         if (this->lastread->getSeconds() > CONNECTION_TIMEOUT)

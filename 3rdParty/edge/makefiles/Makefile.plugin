@@ -16,7 +16,7 @@ endif
 all :  $(PLUGINS)
 
 $(DIR_PLUGIN)/dsp_pixelstream.so : $(DIR_OBJ)/PixelStream.o | $(DIR_PLUGIN)
-	${LD} ${CXXFLAGS} -o $@ $^ -L${DIR_LIB} -lpixelstream -lbasicutils $(LIB_DSP) $(LIB_SIGAR) $(LIB_GL) $(LIB_JPEG)
+	${LD} ${CXXFLAGS} -o $@ $^ -L${DIR_LIB} -lpixelstream -lbasicutils $(LIB_DSP) $(LIB_SIGAR) $(LIB_GL) -lturbojpeg
 
 $(DIR_OBJ)/PixelStream.o : PixelStream.cc | $(DIR_OBJ)
 	${CXX} ${CXXFLAGS} -o $@ -c $<

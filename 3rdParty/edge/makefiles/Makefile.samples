@@ -10,7 +10,7 @@ EXECUTABLES = $(DIR_BIN)/PixelStreamReader
 all :  $(EXECUTABLES)
 
 $(DIR_BIN)/PixelStreamReader : $(DIR_OBJ)/PixelStreamReader.o | $(DIR_BIN)
-	${CXX} ${CXXFLAGS} -o $@ $^ -L${DIR_LIB} -lpixelstream -lbasicutils -lTD $(LIB_XWIN) $(LIB_GL) $(LIB_AGL) $(LIB_JPEG)
+	${CXX} ${CXXFLAGS} -o $@ $^ -L${DIR_LIB} -lpixelstream -lbasicutils -lTD $(LIB_XWIN) $(LIB_GL) $(LIB_AGL) -lturbojpeg
 
 $(DIR_OBJ)/PixelStreamReader.o : PixelStreamReader.cc | $(DIR_OBJ)
 	${CXX} ${CXXFLAGS} -o $@ -c $<

@@ -47,7 +47,7 @@ int createTextureFromImage(ImageStruct *image)
 
     glBindTexture(GL_TEXTURE_2D, texture);
 
-// GL_TEXTURE_MAG_FILTER and GL_TEXTURE_MIN_FILTER define how OpenGL magnifies and minimizes a texture:
+// GL_TEXTURE_MAG_FILTER and GL_TEXTURE_MIN_FILTER define how OpenGL magnifies and minifies a texture:
 //   GL_LINEAR tells OpenGL to interpolate the texture using bilinear filtering (in other words, it'd appear smoothed).
 //   GL_NEAREST tells OpenGL to not do any smoothing would occur.
 // Courtesy http://paulyg.f2s.com/prog3.htm

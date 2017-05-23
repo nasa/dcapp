@@ -16,6 +16,7 @@ typedef struct
     uint64_t buffercount;
     uint32_t width;
     uint32_t height;
+    uint32_t bufferrequested;
 } PixelStreamShmem;
 
 class PixelStreamFile : public PixelStreamData
@@ -28,6 +29,7 @@ class PixelStreamFile : public PixelStreamData
         bool operator != (const PixelStreamFile &);
         int reader(void);
         int writer(void);
+        bool writeRequested(void);
 
         int readerInitialize(const char *, int);
         int writerInitialize(const char *, int);

@@ -35,6 +35,7 @@ class PixelStreamTcp : public PixelStreamData
         bool operator != (const PixelStreamTcp &);
         int reader(void);
         int writer(void);
+        bool writeRequested(void);
 
         int readerInitialize(char *, int);
         int writerInitialize(int);
@@ -44,6 +45,7 @@ class PixelStreamTcp : public PixelStreamData
     private:
         int read_socket_connect(void);
         int write_socket_connect(int);
+        void connect_write_sockets(void);
         void socket_disconnect(int *);
         void disconnect_all(void);
         int SendDataRequest(void);

@@ -15,6 +15,7 @@ class PixelStreamData
         bool operator != (const PixelStreamData &);
         virtual int reader(void);
         virtual int writer(void);
+        virtual bool writeRequested(void);
 
         unsigned protocol;
         void *pixels;

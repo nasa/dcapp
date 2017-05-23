@@ -53,3 +53,8 @@ int PixelStreamData::writer(void)
 {
     return 0;
 }
+
+bool PixelStreamData::writeRequested(void)
+{
+    return true;
+}

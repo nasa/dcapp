@@ -11,21 +11,22 @@ void PixelStream(void)
 {
     if (psd)
     {
-        GLint gldata[4];
-        glGetIntegerv(GL_VIEWPORT, gldata);
-        psd->width = (uint32_t)gldata[2];
-        psd->height = (uint32_t)gldata[3];
+        if (psd->writeRequested())
+        {
+            GLint gldata[4];
+            glGetIntegerv(GL_VIEWPORT, gldata);
+            psd->width = (uint32_t)gldata[2];
+            psd->height = (uint32_t)gldata[3];
 
-        // TODO: Right now the plugin is reading the last viewport
-        //       in the display.  We should look at adding an optional
-        //       command-line argument to let you specify the display 
-        //       to stream and a tcl command to let you switch it at
-        //       runtime.  --FG
+            // TODO: Right now the plugin is reading the last viewport
+            //       in the display.  We should look at adding an optional
+            //       command-line argument to let you specify the display 
+            //       to stream and a tcl command to let you switch it at
+            //       runtime.  --FG
 
-        //TODO: Should probably not make the glReadPixels call 
-        //      if no clients are connected --FG
-        glReadPixels(gldata[0], gldata[1], (GLsizei)(psd->width), (GLsizei)(psd->height), GL_RGB, GL_UNSIGNED_BYTE, psd->pixels);
-        psd->writer();
+            glReadPixels(gldata[0], gldata[1], (GLsizei)(psd->width), (GLsizei)(psd->height), GL_RGB, GL_UNSIGNED_BYTE, psd->pixels);
+            psd->writer();
+        }
     }
 
     // Execute rest of UPDATE_SCENE functional module

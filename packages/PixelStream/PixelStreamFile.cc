@@ -92,6 +92,7 @@ int PixelStreamFile::reader(void)
     {
         if (!(this->shm->writing))
         {
+            memcpy(&(this->shm->bufferrequested), &on, 4);
             memcpy(&(this->shm->reading), &on, 4);
             if (this->buffercount != this->shm->buffercount)
             {
@@ -111,6 +112,12 @@ int PixelStreamFile::reader(void)
     return updated;
 }
 
+bool PixelStreamFile::writeRequested(void)
+{
+    if (this->pixels && this->shm->bufferrequested) return true;
+    else return false;
+}
+
 int PixelStreamFile::writer(void)
 {
     uint32_t on = 1, off = 0;
@@ -127,6 +134,7 @@ int PixelStreamFile::writer(void)
             memcpy(&(this->shm->height), &(this->height), 4);
             fflush(this->fp);
             memcpy(&(this->shm->writing), &off, 4);
+            memcpy(&(this->shm->bufferrequested), &off, 4);
     }
     (this->buffercount)++;
 
