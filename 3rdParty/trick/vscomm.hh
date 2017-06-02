@@ -51,7 +51,7 @@ class VariableServerComm
         ParamArray *parray;
         char *databuf;
         char *prevbuf;
-        int databuf_complete;
+        bool databuf_complete;
         int databuf_size;
         int paramcount;
 
@@ -61,6 +61,7 @@ class VariableServerComm
         int update_data(char *);
         int count_tokens(const char *, char);
         int find_next_token(const char *, char);
+        int find_last_token(const char *, char);
 };
 
 #endif

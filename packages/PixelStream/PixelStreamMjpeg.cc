@@ -172,10 +172,23 @@ int PixelStreamMjpeg::reader(void)
         {
             debug_msg("Data connection timeout, disconnecting...");
             socket_disconnect();
+            return 0;
         }
         if (!data_requested) data_requested = SendDataRequest("GET /video?nativeresolution=1 HTTP/1.0\n\n");
         if (data_requested && !header_received) header_received = RecvHeader();
         if (header_received) updated = RecvData();
+
+        // Purge any extra data to prevent the socket from getting saturated
+        if (updated)
+        {
+            int extra_bytes;
+            ioctl(CommSocket, FIONREAD, &extra_bytes);
+            if (extra_bytes)
+            {
+                char dummy;
+                for (int i=0; i<extra_bytes; i++) read(CommSocket, &dummy, 1);
+            }
+        }
     }
 
     return updated;
@@ -235,6 +248,7 @@ int PixelStreamMjpeg::GetBuffer(unsigned sep)
             buflen++;
         }
     }
+
     return 0;
 }
 

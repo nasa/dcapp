@@ -4,6 +4,7 @@
 #include <cerrno>
 #include <unistd.h>
 #include <netdb.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -13,7 +14,6 @@
 #define MAX_SEND_SIZE 4096
 #define BUF_SIZE_INCREMENT 256
 #define END_OF_MSG_CHAR 0x04
-
 
 EdgeRcsComm::EdgeRcsComm()
 :
@@ -68,8 +68,11 @@ int EdgeRcsComm::send_doug_command(const char *doug_command, char **command_resu
 {
     struct addrinfo *addr;
     size_t len;
-    int command_socket = -1;
+    int valopt, command_socket = -1;
     struct timeval timeout;
+    long arg; 
+    fd_set myset; 
+    static socklen_t valopt_len = sizeof(valopt_len); 
 
     if (!(this->edgercs_active)) return 0;
 
@@ -81,17 +84,51 @@ int EdgeRcsComm::send_doug_command(const char *doug_command, char **command_resu
         return 1;
     }
 
-    /* Loop through available addresses until we get a socket connection */
+    // Set timeout interval for later use
+    timeout.tv_sec  = 1;
+    timeout.tv_usec = 0;
+
+    // Loop through available addresses until we get a socket connection
     for (addr = this->server_addr_info; addr && command_socket < 0; addr = addr->ai_next)
     {
-        /* Try creating the socket */
+        // Try creating the socket
         command_socket = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
         if (command_socket >= 0)
         {
+            // Set socket to non-blocking mode
+            arg = fcntl(command_socket, F_GETFL, 0x0); 
+            arg |= O_NONBLOCK; 
+            fcntl(command_socket, F_SETFL, arg); 
+
             if (connect(command_socket, (struct sockaddr *)addr->ai_addr, addr->ai_addrlen) < 0)
             {
-                close(command_socket);
-                command_socket = -1;
+                if (errno == EINPROGRESS)
+                {
+                    FD_ZERO(&myset);
+                    FD_SET(command_socket, &myset);
+                    if (select(command_socket+1, 0x0, &myset, 0x0, &timeout) > 0)
+                    {
+                        getsockopt(command_socket, SOL_SOCKET, SO_ERROR, (void *)(&valopt), &valopt_len);
+                        if (valopt)
+                        {
+                            debug_msg("Error " << valopt << " in connection: " << strerror(valopt));
+                            close(command_socket);
+                            command_socket = -1;
+                        }
+                    }
+                    else
+                    {
+                        debug_msg("Timeout or error "<< valopt << ": " << strerror(valopt));
+                        close(command_socket);
+                        command_socket = -1;
+                    }
+                }
+                else
+                {
+                    debug_msg("Error " << errno << " connecting:" << strerror(errno));
+                    close(command_socket);
+                    command_socket = -1;
+                }
             }
         }
     }
@@ -102,12 +139,15 @@ int EdgeRcsComm::send_doug_command(const char *doug_command, char **command_resu
         return 1;
     }
 
+    // Set socket to blocking mode again
+    arg = fcntl(command_socket, F_GETFL, 0x0); 
+    arg &= (~O_NONBLOCK); 
+    fcntl(command_socket, F_SETFL, arg); 
+
     // Try using a receive timeout, in case the EDGE RCS hangs, we don't wait forever.
-    timeout.tv_sec  = 1;
-    timeout.tv_usec = 0;
     setsockopt(command_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
 
-    /* Read the server version off the socket */
+    // Read the server version off the socket
     if (this->read_rcs_message(command_socket, rcs_version) == -1)
     {
         close(command_socket);
@@ -121,11 +161,10 @@ int EdgeRcsComm::send_doug_command(const char *doug_command, char **command_resu
         return 1;
     }
 
-    /* Signal the server that we are done sending */
+    // Signal the server that we are done sending
     shutdown(command_socket, SHUT_WR);
 
-    /* Now read exec result of command coming back... this only
-       works with the updated rcs server done after feb 17, 2010 */
+    // Now read exec result of command coming back (works with rcs server after feb 17, 2010)
     if (this->read_rcs_message(command_socket, command_result) == -1)
     {
         close(command_socket);
@@ -140,7 +179,8 @@ int EdgeRcsComm::send_doug_command(const char *doug_command, char **command_resu
 int EdgeRcsComm::read_rcs_message(int socket, char **rcs_response_string)
 {
     char incoming_char;
-    int more_to_read = 1, nread = 0, buf_size = BUF_SIZE_INCREMENT;
+    int nread = 0, buf_size = BUF_SIZE_INCREMENT;
+    bool more_to_read = true;
 
     if (rcs_response_string)
     {
@@ -152,7 +192,7 @@ int EdgeRcsComm::read_rcs_message(int socket, char **rcs_response_string)
         }
     }
 
-    /* Read off one char at a time until we hit END_OF_MSG_CHAR */
+    // Read off one char at a time until we hit END_OF_MSG_CHAR
     while (more_to_read)
     {
         if (read(socket, &incoming_char, 1) != 1)
@@ -161,12 +201,12 @@ int EdgeRcsComm::read_rcs_message(int socket, char **rcs_response_string)
             return -1;
         }
 
-        if (incoming_char == END_OF_MSG_CHAR) more_to_read = 0;
+        if (incoming_char == END_OF_MSG_CHAR) more_to_read = false;
         else
         {
             if (rcs_response_string)
             {
-                // if the result container is too small, grow it
+                // If the result container is too small, grow it
                 if (nread + 2 > buf_size)
                 {
                     buf_size += BUF_SIZE_INCREMENT;

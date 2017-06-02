@@ -18,7 +18,7 @@ VariableServerComm::VariableServerComm()
 parray(0x0),
 databuf(0x0),
 prevbuf(0x0),
-databuf_complete(0),
+databuf_complete(false),
 databuf_size(0),
 paramcount(0)
 {
@@ -230,14 +230,19 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
 // NOTE: this means that if multiple buffers are received, only one will be processed
 int VariableServerComm::get(void)
 {
-    int end_buf, retval;
+    int end_buf, retval, store_start, store_bytes;
 
     if (!tc_isValid(&(this->connection))) return VS_INVALID_CONNECTION;
 
     this->sim_read();
 
     if (!(this->databuf) || this->databuf_size == 0) return VS_NO_NEW_DATA;
+
     if (!(this->databuf_complete)) return VS_PARTIAL_BUFFER;
+
+    // if there's a partial buffer after the last \n, mark its location
+    store_start = this->find_last_token(this->databuf, '\n') + 1;
+    store_bytes = this->databuf_size - store_start;
 
     end_buf = this->find_next_token(this->databuf, '\n');
     this->databuf_size = end_buf + 1;
@@ -246,6 +251,20 @@ int VariableServerComm::get(void)
 
     this->databuf[end_buf] = '\t'; // replace \n with \t to simplify parsing
     retval = this->update_data(this->databuf);
+
+    // if there's a partial buffer after the last \n, shift the bytes to the front of the buffer
+    if (store_bytes > 0)
+    {
+        char *store_buf = &(this->databuf[store_start]);
+
+        for (int i=0; i<store_bytes; i++)
+        {
+            this->databuf[i] = store_buf[i];
+        }
+
+        this->databuf_size = store_bytes;
+        this->databuf_complete = false;
+    }
 
     return retval;
 }
@@ -284,7 +303,7 @@ void VariableServerComm::sim_read(void)
     if (this->databuf_complete)
     {
         this->databuf_size = 0;
-        this->databuf_complete = 0;
+        this->databuf_complete = false;
     }
 
     while ((new_bytes = tc_pending(&(this->connection))))
@@ -294,7 +313,7 @@ void VariableServerComm::sim_read(void)
         this->databuf_size += new_bytes;
     }
 
-    if (this->count_tokens(this->databuf, '\n')) this->databuf_complete = 1;
+    if (this->count_tokens(this->databuf, '\n')) this->databuf_complete = true;
 }
 
 void VariableServerComm::sim_write(char *cmd)
@@ -347,9 +366,9 @@ int VariableServerComm::update_data(char *curbuf)
 
 int VariableServerComm::count_tokens(const char *str, char key)
 {
-    int count=0;
+    int count = 0;
 
-    for (int i=0; i<this->databuf_size; i++)
+    for (int i = 0; i < this->databuf_size; i++)
     {
         if (str[i] == key) count++;
     }
@@ -359,7 +378,17 @@ int VariableServerComm::count_tokens(const char *str, char key)
 
 int VariableServerComm::find_next_token(const char *str, char key)
 {
-    for (int i=0; i<this->databuf_size; i++)
+    for (int i = 0; i < this->databuf_size; i++)
+    {
+        if (str[i] == key) return i;
+    }
+
+    return (-1);
+}
+
+int VariableServerComm::find_last_token(const char *str, char key)
+{
+    for (int i = this->databuf_size - 1; i >= 0; i--)
     {
         if (str[i] == key) return i;
     }
