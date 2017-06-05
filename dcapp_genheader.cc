@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     Message::setLabel(basename(argv[0]));
 
     if (argc < 2) UsageError(0x0);
-    if (XMLFileOpen(&mydoc, &root_element, argv[1], 0x0)) UsageError(0x0);
+    if (XMLFileOpen(&mydoc, &root_element, argv[1])) UsageError(0x0);
     if (argc < 3) p_file = fopen("dcapp.h", "w");
     else p_file = fopen(argv[2], "w");
     if (!p_file) UsageError(mydoc);
@@ -82,6 +82,7 @@ int main(int argc, char **argv)
     fclose(p_file);
     vlist.clear();
     XMLFileClose(mydoc);
+    XMLEndParsing();
 
     return 0;
 }

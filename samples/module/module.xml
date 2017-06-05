@@ -22,10 +22,13 @@
 
             <Set Variable="@MY_STR">Hello</Set>
             <Constant Name="yval">120</Constant>
-            <xi:include href="element.xml"/>
+<!-- NOTE: this is the built-in "include" file method provided by dcapp -->
+            <Include>element.xml</Include>
 
             <Set Variable="@MY_STR">World</Set>
             <Constant Name="yval">60</Constant>
+<!-- The user may also use the XML-native "xi:include" construct, but it doesn't resolve -->
+<!--  dcapp constants, defaults, styles, environment variables, conditional logic, etc.  -->
             <xi:include href="element.xml"/>
         </Panel>
     </Window>

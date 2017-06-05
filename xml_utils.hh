@@ -3,8 +3,9 @@
 
 #include <libxml/parser.h>
 
-extern int XMLFileOpen(xmlDocPtr *, xmlNodePtr *, const char *, const char *);
+extern int XMLFileOpen(xmlDocPtr *, xmlNodePtr *, const char *);
 extern void XMLFileClose(xmlDocPtr);
+extern void XMLEndParsing(void);
 extern char **get_XML_attribute_address(xmlNodePtr, const char *);
 extern char *get_XML_attribute(xmlNodePtr, const char *);
 extern char **get_XML_content_address(xmlNodePtr);

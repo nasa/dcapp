@@ -7,7 +7,7 @@
 bool NodeCheck(xmlNodePtr, const char *);
 static bool xmlStrEq(const xmlChar *, const char *);
 
-int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *filename, const char *req_name)
+int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *filename)
 {
     *mydoc = xmlReadFile(filename, 0x0, 0);
     if (!(*mydoc))
@@ -25,16 +25,8 @@ int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *filename
     if (!(*root_element))
     {
         error_msg("Couldn't find root element in XML file: " << filename);
+        xmlFreeDoc(*mydoc);
         return (-1);
-    }
-
-    if (req_name)
-    {
-        if (!NodeCheck(*root_element, req_name))
-        {
-            error_msg("Bad root element in XML file: \"" << (*root_element)->name << "\" (should be \"" << req_name << "\")");
-            return (-1);
-        }
     }
 
     return 0;
@@ -43,6 +35,10 @@ int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *filename
 void XMLFileClose(xmlDocPtr mydoc)
 {
     xmlFreeDoc(mydoc);
+}
+
+void XMLEndParsing(void)
+{
     xmlCleanupParser();
 }
 

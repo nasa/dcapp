@@ -84,7 +84,13 @@ int ParseXMLFile(char *fullpath)
     // Move to directory containing the specfile by default
     if (dname) chdir(dname);
 
-    if (XMLFileOpen(&mydoc, &root_element, bname, "DCAPP")) return (-1);
+    if (XMLFileOpen(&mydoc, &root_element, bname)) return (-1);
+
+    if (!NodeCheck(root_element, "DCAPP"))
+    {
+        error_msg("Bad root element in XML file: \"" << root_element->name << "\" (should be \"DCAPP\")");
+        return (-1);
+    }
 
     // Set generic display logic handlers, in case the user doesn't specify a DisplayLogic element
     AppData.DisplayPreInit = &DisplayPreInitStub;
@@ -95,6 +101,7 @@ int ParseXMLFile(char *fullpath)
     if (process_elements(0, 0, root_element->children)) return (-1);
 
     XMLFileClose(mydoc);
+    XMLEndParsing();
 
     // Return to the original working directory
     fchdir(mycwd);
@@ -118,6 +125,20 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "Constant")) processConstantNode(node);
         if (NodeCheck(node, "Style")) processStyleNode(node);
         if (NodeCheck(node, "Defaults")) processDefaultsNode(node);
+        if (NodeCheck(node, "Include"))
+        {
+            xmlDocPtr include_file;
+            xmlNodePtr include_element;
+            if (XMLFileOpen(&include_file, &include_element, get_node_content(node)))
+            {
+                warning_msg("Couldn't open include file " << get_node_content(node));
+            }
+            else
+            {
+                process_elements(parent, list, include_element);
+                XMLFileClose(include_file);
+            }
+        }
         if (NodeCheck(node, "If"))
         {
             char *val = get_element_data(node, "Value");
