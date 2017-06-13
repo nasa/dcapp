@@ -6,9 +6,7 @@
 extern int XMLFileOpen(xmlDocPtr *, xmlNodePtr *, const char *);
 extern void XMLFileClose(xmlDocPtr);
 extern void XMLEndParsing(void);
-extern char **get_XML_attribute_address(xmlNodePtr, const char *);
 extern char *get_XML_attribute(xmlNodePtr, const char *);
-extern char **get_XML_content_address(xmlNodePtr);
 extern char *get_XML_content(xmlNodePtr);
 extern char *get_node_type(xmlNodePtr);
 extern bool NodeValid(xmlNodePtr node);

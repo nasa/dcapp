@@ -3,9 +3,9 @@
 
 #include <libxml/parser.h>
 
-extern char *get_node_content(xmlNodePtr);
-extern char *get_element_data(xmlNodePtr, const char *);
-extern char processArgument(const char *, const char *);
+extern const char *get_node_content(xmlNodePtr);
+extern const char *get_element_data(xmlNodePtr, const char *);
+extern void processArgument(const char *, const char *);
 extern void processConstantNode(xmlNodePtr);
 extern void processStyleNode(xmlNodePtr);
 extern void processDefaultsNode(xmlNodePtr);

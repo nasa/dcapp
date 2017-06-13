@@ -18,11 +18,11 @@ extern void window_init(bool, int , int, int, int);
 
 extern appdata AppData;
 
-struct node *new_mouseevent(struct node *, struct node **, char *, char *, char *, char *, char *, char *);
-struct node *new_keyboardevent(struct node *, struct node **, char *, char *);
-struct node *new_bezelevent(struct node *, struct node **, char *);
-struct node *new_setvalue(struct node *, struct node **, char *, char *, char *, char *, const char *);
-struct node *new_isequal(struct node *, struct node **, const char *, char *, const char *);
+struct node *new_mouseevent(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
+struct node *new_keyboardevent(struct node *, struct node **, const char *, const char *);
+struct node *new_bezelevent(struct node *, struct node **, const char *);
+struct node *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
+struct node *new_isequal(struct node *, struct node **, const char *, const char *, const char *);
 
 bool check_dynamic_element(const char *spec)
 {
@@ -83,7 +83,7 @@ static int get_data_type(const char *valstr)
     return UNDEFINED_TYPE;
 }
 
-static struct node *add_primitive_node(struct node *parent, struct node **list, Type type, char *x, char *y, const char *width, char *height, char *halign, char *valign, char *rotate)
+static struct node *add_primitive_node(struct node *parent, struct node **list, Type type, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *rotate)
 {
     struct node *data = (struct node *)calloc(1, sizeof(struct node));
 
@@ -127,14 +127,14 @@ static struct node *add_primitive_node(struct node *parent, struct node **list, 
     return data;
 }
 
-void new_window(bool fullscreen, int OriginX, int OriginY, int SizeX, int SizeY, char *activedisp)
+void new_window(bool fullscreen, int OriginX, int OriginY, int SizeX, int SizeY, const char *activedisp)
 {
     window_init(fullscreen, OriginX, OriginY, SizeX, SizeY);
     graphics_init();
     AppData.window.active_display = getIntegerPointer(activedisp);
 }
 
-struct node *new_panel(char *index, char *colorspec, char *vwidth, char *vheight)
+struct node *new_panel(const char *index, const char *colorspec, const char *vwidth, const char *vheight)
 {
     struct node *data = (struct node *)calloc(1, sizeof(struct node));
 
@@ -153,7 +153,7 @@ struct node *new_panel(char *index, char *colorspec, char *vwidth, char *vheight
     return data;
 }
 
-struct node *new_container(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign, char *vwidth, char *vheight, char *rotate)
+struct node *new_container(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *vwidth, const char *vheight, const char *rotate)
 {
     struct node *data = add_primitive_node(parent, list, Container, x, y, width, height, halign, valign, rotate);
 
@@ -163,14 +163,14 @@ struct node *new_container(struct node *parent, struct node **list, char *x, cha
     return data;
 }
 
-struct node *new_vertex(struct node *parent, struct node **list, char *x, char *y)
+struct node *new_vertex(struct node *parent, struct node **list, const char *x, const char *y)
 {
     struct node *data = add_primitive_node(parent, list, Vertex, x, y, 0x0, 0x0, 0x0, 0x0, 0x0);
 
     return data;
 }
 
-struct node *new_line(struct node *parent, struct node **list, char *linewidth, char *color)
+struct node *new_line(struct node *parent, struct node **list, const char *linewidth, const char *color)
 {
     struct node *data = add_primitive_node(parent, list, Line, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
@@ -180,7 +180,7 @@ struct node *new_line(struct node *parent, struct node **list, char *linewidth, 
     return data;
 }
 
-struct node *new_polygon(struct node *parent, struct node **list, char *fillcolor, char *linecolor, char *linewidth)
+struct node *new_polygon(struct node *parent, struct node **list, const char *fillcolor, const char *linecolor, const char *linewidth)
 {
     struct node *data = add_primitive_node(parent, list, Polygon, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
@@ -194,8 +194,8 @@ struct node *new_polygon(struct node *parent, struct node **list, char *fillcolo
     return data;
 }
 
-struct node *new_rectangle(struct node *parent, struct node **list, char *x, char *y, char *width, char *height,
-                           char *halign, char *valign, char *rotate, char *fillcolor, char *linecolor, char *linewidth)
+struct node *new_rectangle(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height,
+                           const char *halign, const char *valign, const char *rotate, const char *fillcolor, const char *linecolor, const char *linewidth)
 {
     struct node *data = add_primitive_node(parent, list, Rectangle, x, y, width, height, halign, valign, rotate);
 
@@ -209,8 +209,8 @@ struct node *new_rectangle(struct node *parent, struct node **list, char *x, cha
     return data;
 }
 
-struct node *new_circle(struct node *parent, struct node **list, char *x, char *y, char *halign, char *valign, char *radius,
-                        char *segments, char *fillcolor, char *linecolor, char *linewidth)
+struct node *new_circle(struct node *parent, struct node **list, const char *x, const char *y, const char *halign, const char *valign, const char *radius,
+                        const char *segments, const char *fillcolor, const char *linecolor, const char *linewidth)
 {
     struct node *data = add_primitive_node(parent, list, Circle, x, y, 0x0, 0x0, halign, valign, 0x0);
 
@@ -284,8 +284,8 @@ static void parse_string(std::vector<VarString *> *vstring, std::vector<std::str
     filler->push_back("");
 }
 
-struct node *new_string(struct node *parent, struct node **list, char *x, char *y, char *rotate, char *fontsize, char *halign, char *valign,
-                        char *color, char *bgcolor, char *shadowoffset, char *font, char *face, char *forcemono, char *value)
+struct node *new_string(struct node *parent, struct node **list, const char *x, const char *y, const char *rotate, const char *fontsize, const char *halign, const char *valign,
+                        const char *color, const char *bgcolor, const char *shadowoffset, const char *font, const char *face, const char *forcemono, const char *value)
 {
     struct node *data = add_primitive_node(parent, list, String, x, y, "0", fontsize, halign, valign, rotate);
 
@@ -317,7 +317,7 @@ struct node *new_string(struct node *parent, struct node **list, char *x, char *
     return data;
 }
 
-struct node *new_image(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign, char *rotate, char *filename)
+struct node *new_image(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *rotate, const char *filename)
 {
     struct node *data = add_primitive_node(parent, list, Image, x, y, width, height, halign, valign, rotate);
 
@@ -326,7 +326,7 @@ struct node *new_image(struct node *parent, struct node **list, char *x, char *y
     return data;
 }
 
-struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign, char *rotate, char *protocolstr, char *host, char *port, char *shmemkey, char *filename)
+struct node *new_pixel_stream(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *rotate, const char *protocolstr, const char *host, const char *port, const char *shmemkey, const char *filename)
 {
     PixelStreamData *mypsd = 0x0;
     PixelStreamFile *psf;
@@ -405,13 +405,13 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, char *x, 
     return data;
 }
 
-struct node *new_button(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign,
-                        char *rotate, char *type, char *switchid, char *switchonval, char *switchoffval, char *indid, char *indonval,
-                        char *activevar, char *activeval, char *transitionid, char *key, char *keyascii, char *bezelkey)
+struct node *new_button(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign,
+                        const char *rotate, const char *type, const char *switchid, const char *switchonval, const char *switchoffval, const char *indid, const char *indonval,
+                        const char *activevar, const char *activeval, const char *transitionid, const char *key, const char *keyascii, const char *bezelkey)
 {
     int toggle=0, momentary=0;
     struct node *cond, *event, *curlist, **sublist, *list1, *list2, *list3, *list4, *list5, *list6;
-    char *offval, *zerostr=strdup("0"), *onestr=strdup("1");
+    const char *offval, *zerostr=strdup("0"), *onestr=strdup("1");
     struct node *data = add_primitive_node(parent, list, Container, x, y, width, height, halign, valign, rotate);
 
     if (type)
@@ -520,9 +520,9 @@ struct node *new_button(struct node *parent, struct node **list, char *x, char *
     return data;
 }
 
-struct node *new_adi(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign, char *outerradius, char *ballradius,
-                     char *chevronwidth, char *chevronheight, char *ballimage_filename, char *coverimage_filename,
-                     char *roll, char *pitch, char *yaw, char *roll_error, char *pitch_error, char *yaw_error)
+struct node *new_adi(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *outerradius, const char *ballradius,
+                     const char *chevronwidth, const char *chevronheight, const char *ballimage_filename, const char *coverimage_filename,
+                     const char *roll, const char *pitch, const char *yaw, const char *roll_error, const char *pitch_error, const char *yaw_error)
 {
     float defouterrad, defballrad, defchevron;
     struct node *data = add_primitive_node(parent, list, ADI, x, y, width, height, halign, valign, 0x0);
@@ -550,14 +550,14 @@ struct node *new_adi(struct node *parent, struct node **list, char *x, char *y, 
     return data;
 }
 
-struct node *new_mouseevent(struct node *parent, struct node **list, char *x, char *y, char *width, char *height, char *halign, char *valign)
+struct node *new_mouseevent(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign)
 {
     struct node *data = add_primitive_node(parent, list, MouseEvent, x, y, width, height, halign, valign, 0x0);
 
     return data;
 }
 
-struct node *new_keyboardevent(struct node *parent, struct node **list, char *key, char *keyascii)
+struct node *new_keyboardevent(struct node *parent, struct node **list, const char *key, const char *keyascii)
 {
     if (!key && !keyascii) return 0x0;
 
@@ -571,7 +571,7 @@ struct node *new_keyboardevent(struct node *parent, struct node **list, char *ke
     return data;
 }
 
-struct node *new_bezelevent(struct node *parent, struct node **list, char *key)
+struct node *new_bezelevent(struct node *parent, struct node **list, const char *key)
 {
     if (!key) return 0x0;
 
@@ -582,7 +582,7 @@ struct node *new_bezelevent(struct node *parent, struct node **list, char *key)
     return data;
 }
 
-struct ModifyValue get_setvalue_data(char *varspec, char *opspec, char *minspec, char *maxspec, const char *valspec)
+struct ModifyValue get_setvalue_data(const char *varspec, const char *opspec, const char *minspec, const char *maxspec, const char *valspec)
 {
     struct ModifyValue ret;
 
@@ -624,7 +624,7 @@ struct ModifyValue get_setvalue_data(char *varspec, char *opspec, char *minspec,
     return ret;
 }
 
-struct node *new_animation(struct node *parent, struct node **list, char *duration)
+struct node *new_animation(struct node *parent, struct node **list, const char *duration)
 {
     struct node *data = add_primitive_node(parent, list, Animate, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
@@ -633,7 +633,7 @@ struct node *new_animation(struct node *parent, struct node **list, char *durati
     return data;
 }
 
-struct node *new_setvalue(struct node *parent, struct node **list, char *var, char *optype, char *min, char *max, const char *val)
+struct node *new_setvalue(struct node *parent, struct node **list, const char *var, const char *optype, const char *min, const char *max, const char *val)
 {
     struct ModifyValue myset = get_setvalue_data(var, optype, min, max, val);
 
@@ -654,9 +654,9 @@ struct node *new_setvalue(struct node *parent, struct node **list, char *var, ch
     return data;
 }
 
-struct node *new_isequal(struct node *parent, struct node **list, const char *opspec, char *val1, const char *val2)
+struct node *new_isequal(struct node *parent, struct node **list, const char *opspec, const char *val1, const char *val2)
 {
-    char *onestr=strdup("1");
+    const char *onestr = strdup("1");
 
     if (!val1 && !val2) return 0x0;
 

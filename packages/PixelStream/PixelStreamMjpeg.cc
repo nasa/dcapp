@@ -116,7 +116,7 @@ int PixelStreamMjpeg::socket_connect(void)
     return sockfd;
 }
 
-int PixelStreamMjpeg::readerInitialize(char *hostspec, int portspec)
+int PixelStreamMjpeg::readerInitialize(const char *hostspec, int portspec)
 {
 #ifdef JPEG_ENABLED
 #if JPEG_LIB_VERSION < 80 && !defined(MEM_SRCDST_SUPPORTED)

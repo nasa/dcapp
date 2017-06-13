@@ -14,35 +14,34 @@
 #include "uei/UEI.hh"
 #include "varlist.hh"
 #include "nodes.hh"
-#include "mappings.hh"
 #include "string_utils.hh"
 #include "xml_utils.hh"
 #include "xml_stringsub.hh"
 
-extern void new_window(bool, int, int, int, int, char *);
-extern struct node *new_panel(char *, char *, char *, char *);
-extern struct node *new_container(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *);
-extern struct node *new_isequal(struct node *, struct node **, const char *, char *, const char *);
-extern struct node *new_vertex(struct node *, struct node **, char *, char *);
-extern struct node *new_line(struct node *, struct node **, char *, char *);
-extern struct node *new_polygon(struct node *, struct node **, char *, char *, char *);
-extern struct node *new_rectangle(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *, char *);
-extern struct node *new_circle(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *);
-extern struct node *new_string(struct node *, struct node **, char *, char *, char *, char *, char *,
-                               char *, char *, char *, char *, char *, char *, char *, char *);
-extern struct node *new_image(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *);
-extern struct node *new_pixel_stream(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, char *);
-extern struct node *new_button(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *,
-                               char *, char *, char *, char *, char *, char *, char *, char *, char *, char *, char *);
-extern struct node *new_adi(struct node *, struct node **, char *, char *, char *, char *, char *, char *, char *, char *, char *,
-                                 char *, char *, char *, char *, char *, char *, char *, char *, char *);
-extern struct node *new_mouseevent(struct node *, struct node **, char *, char *, char *, char *, char *, char *);
-extern struct node *new_keyboardevent(struct node *, struct node **, char *, char *);
-extern struct node *new_bezelevent(struct node *, struct node **, char *);
-extern struct node *new_animation(struct node *, struct node **, char *);
-extern struct node *new_setvalue(struct node *, struct node **, char *, char *, char *, char *, const char *);
-extern struct ModifyValue get_setvalue_data(char *, char *, char *, char *, const char *);
-extern bool CheckConditionLogic(int, int, void *, int, void *);
+extern void new_window(bool, int, int, int, int, const char *);
+extern struct node *new_panel(const char *, const char *, const char *, const char *);
+extern struct node *new_container(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_isequal(struct node *, struct node **, const char *, const char *, const char *);
+extern struct node *new_vertex(struct node *, struct node **, const char *, const char *);
+extern struct node *new_line(struct node *, struct node **, const char *, const char *);
+extern struct node *new_polygon(struct node *, struct node **, const char *, const char *, const char *);
+extern struct node *new_rectangle(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_circle(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_string(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *,
+                               const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_image(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_pixel_stream(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_button(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
+                               const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_adi(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
+                                 const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_mouseevent(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_keyboardevent(struct node *, struct node **, const char *, const char *);
+extern struct node *new_bezelevent(struct node *, struct node **, const char *);
+extern struct node *new_animation(struct node *, struct node **, const char *);
+extern struct node *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
+extern struct ModifyValue get_setvalue_data(const char *, const char *, const char *, const char *, const char *);
+extern bool CheckConditionLogic(int, int, const void *, int, const void *);
 extern void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
 extern bool check_dynamic_element(const char *);
 
@@ -52,14 +51,15 @@ extern void DisplayLogicStub(void);
 extern void DisplayCloseStub(void);
 
 static int process_elements(struct node *, struct node **, xmlNodePtr);
-static xmlNodePtr GetSubList(xmlNodePtr, char *, char *, char *);
+static xmlNodePtr GetSubList(xmlNodePtr, const char *, const char *, const char *);
 
 extern appdata AppData;
 
 static TrickCommModule *trickcomm = 0x0;
 static EdgeCommModule *edgecomm = 0x0;
 static CcsdsUdpCommModule *ccsdsudpcomm = 0x0;
-static char *switchid, *switchonval, *switchoffval, *indid, *indonval, *activeid, *activetrueval, *transitionid, *key, *keyascii, *bezelkey;
+static char *transitionid;
+static const char *switchid, *switchonval, *switchoffval, *indid, *indonval, *activeid, *activetrueval, *key, *keyascii, *bezelkey;
 static int id_count = 0, bufferID;
 static bool preprocessing = true;
 
@@ -116,7 +116,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
 {
     xmlNodePtr node, node1;
     struct node *curlist, **sublist, *data, *data1;
-    char *id, *onval, *offval;
+    const char *id, *onval, *offval;
     int subnode_found;
 
     for (node = startnode; node; node = node->next)
@@ -129,9 +129,10 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         {
             xmlDocPtr include_file;
             xmlNodePtr include_element;
-            if (XMLFileOpen(&include_file, &include_element, get_node_content(node)))
+            const char *include_filename = get_node_content(node);
+            if (XMLFileOpen(&include_file, &include_element, include_filename))
             {
-                warning_msg("Couldn't open include file " << get_node_content(node));
+                warning_msg("Couldn't open include file " << include_filename);
             }
             else
             {
@@ -141,10 +142,10 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "If"))
         {
-            char *val = get_element_data(node, "Value");
-            char *val1 = get_element_data(node, "Value1");
-            char *val2 = get_element_data(node, "Value2");
-            char *myoperator = get_element_data(node, "Operator");
+            const char *val = get_element_data(node, "Value");
+            const char *val1 = get_element_data(node, "Value1");
+            const char *val2 = get_element_data(node, "Value2");
+            const char *myoperator = get_element_data(node, "Operator");
             bool staticlogic = true;
 
             if (!val1) val1 = val;
@@ -214,12 +215,12 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             trickcomm->setHost(get_element_data(node, "Host"));
             trickcomm->setPort(StrToInt(get_element_data(node, "Port"), 0));
             trickcomm->setDataRate(get_element_data(node, "DataRate"));
-            char *d_a = get_element_data(node, "DisconnectAction");
+            const char *d_a = get_element_data(node, "DisconnectAction");
             if (d_a)
             {
                 if (!strcasecmp(d_a, "Reconnect")) trickcomm->setReconnectOnDisconnect();
             }
-            char *connectedvariable = get_element_data(node, "ConnectedVariable");
+            const char *connectedvariable = get_element_data(node, "ConnectedVariable");
             if (connectedvariable) trickcomm->activeID = (int *)get_pointer(&connectedvariable[1]);
             process_elements(0, 0, node->children);
             trickcomm->finishInitialization();
@@ -258,7 +259,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "EdgeIo"))
         {
             edgecomm = new EdgeCommModule;
-            char *connectedvariable = get_element_data(node, "ConnectedVariable");
+            const char *connectedvariable = get_element_data(node, "ConnectedVariable");
             if (connectedvariable) edgecomm->activeID = (int *)get_pointer(&connectedvariable[1]);
             process_elements(0, 0, node->children);
             edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StrToFloat(get_element_data(node, "DataRate"), 1.0));
@@ -290,7 +291,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "CcsdsUdpIo"))
         {
             ccsdsudpcomm = new CcsdsUdpCommModule;
-            char *connectedvariable = get_element_data(node, "ConnectedVariable");
+            const char *connectedvariable = get_element_data(node, "ConnectedVariable");
             if (connectedvariable) ccsdsudpcomm->activeID = (int *)get_pointer(&connectedvariable[1]);
             process_elements(0, 0, node->children);
             AppData.commlist.push_back(ccsdsudpcomm);
@@ -312,7 +313,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "CAN"))
         {
             CAN_init(get_element_data(node, "Network"), get_element_data(node, "ButtonID"), get_element_data(node, "ControlID"));
-            char *inhibitvariable = get_element_data(node, "InhibitVariable");
+            const char *inhibitvariable = get_element_data(node, "InhibitVariable");
             AppData.canbus_inhibited = (int *)get_pointer(&inhibitvariable[1]);
         }
         if (NodeCheck(node, "UEI"))
@@ -510,9 +511,12 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
 
             if (!id && !switchid)
             {
-                asprintf(&id, "@dcappVirtualVariable%d", id_count);
+                char *tmpstr;
+                asprintf(&tmpstr, "@dcappVirtualVariable%d", id_count);
+                id = strdup(tmpstr);
                 id_count++;
                 varlist_append(&id[1], "Integer", "0");
+                free(tmpstr);
             }
             if (!switchid) switchid = id;
             if (!indid) indid = switchid;
@@ -738,7 +742,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
     return 0;
 }
 
-static xmlNodePtr GetSubList(xmlNodePtr node, char *opspec, char *val1, char *val2)
+static xmlNodePtr GetSubList(xmlNodePtr node, const char *opspec, const char *val1, const char *val2)
 {
     bool myflag = 0;
     xmlNodePtr node1;

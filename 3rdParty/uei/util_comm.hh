@@ -12,12 +12,10 @@ struct sock_param
     int  uflag;
 };
 
-extern int *mycomm_init(int type, char *hostname, int port, int insize, int outsize, int swap, int timeout);
+extern int *mycomm_init(int type, const char *hostname, int port, int insize, int outsize, int swap, int timeout);
 extern void mycomm_write(int *ptr, void *w_buffer);
 extern int  mycomm_read(int *ptr, void *r_buffer);
 extern void mycomm_close(int *ptr);
-
-extern int  mycomm_is_open(char *uid);
 extern void mycomm_set_flag(int *ptr, int flag);
 extern int  mycomm_get_flag(int *ptr);
 

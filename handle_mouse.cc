@@ -2,7 +2,6 @@
 #include <list>
 #include "basicutils/timer.hh"
 #include "nodes.hh"
-#include "mappings.hh"
 #include "geometry.hh"
 
 extern void ProcessEventList(struct node *);
@@ -19,20 +18,27 @@ static std::list<struct node *> mouseContinuous;
 static int mousebouncemode = 0;
 
 
-void HandleMouse(int button, int state, float xpct, float ypct, int modifier)
+void HandleMousePress(float xpct, float ypct)
 {
-    if (state == MOUSE_DOWN)
-    {   // Scale cursor x and y with ortho x and y
-        MouseDown(AppData.window.current_panel->object.panel.SubList, AppData.window.current_panel->object.panel.orthoX * xpct, AppData.window.current_panel->object.panel.orthoY * ypct);
-    }
+    // Scale cursor x and y with ortho x and y
+    MouseDown(AppData.window.current_panel->object.panel.SubList, AppData.window.current_panel->object.panel.orthoX * xpct, AppData.window.current_panel->object.panel.orthoY * ypct);
 
-    if (state == MOUSE_UP)
-    {   // Check all lists since MOUSE_DOWN may have been on a different active page
-        std::list<struct node *>::iterator panel;
-        for (panel = AppData.window.panels.begin(); panel != AppData.window.panels.end(); panel++)
-        {
-            MouseUp((*panel)->object.panel.SubList);
-        }
+    std::list<struct node *>::iterator action;
+    for (action = actionList.begin(); action != actionList.end(); action++)
+    {
+        ProcessEventList(*action);
+    }
+    actionList.clear();
+}
+
+
+void HandleMouseRelease(void)
+{
+    // Check all lists since "MouseDown" may have been on a different active page
+    std::list<struct node *>::iterator panel;
+    for (panel = AppData.window.panels.begin(); panel != AppData.window.panels.end(); panel++)
+    {
+        MouseUp((*panel)->object.panel.SubList);
     }
 
     std::list<struct node *>::iterator action;
@@ -80,16 +86,6 @@ void CheckMouseBounce(void)
             }
         }
     }
-}
-
-
-void HandleMouseMotion(int x, int y)
-{
-}
-
-
-void HandlePassiveMotion(int x, int y)
-{
 }
 
 

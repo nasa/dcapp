@@ -22,7 +22,7 @@ class EdgeCommModule : public CommModule
         bool isActive(void);
 
         int addParameter(int, const char *, const char *);
-        int finishInitialization(char *, char *, float);
+        int finishInitialization(const char *, const char *, float);
 
     private:
         typedef struct

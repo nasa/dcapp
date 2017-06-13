@@ -37,7 +37,7 @@ class PixelStreamTcp : public PixelStreamData
         int writer(void);
         bool writeRequested(void);
 
-        int readerInitialize(char *, int);
+        int readerInitialize(const char *, int);
         int writerInitialize(int);
         char *getHost(void);
         int getPort(void);

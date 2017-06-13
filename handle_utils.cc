@@ -77,7 +77,7 @@ void ProcessEventList(struct node *list)
     UpdateDisplay();
 }
 
-float getFloatVal(int type, void *val)
+float getFloatVal(int type, const void *val)
 {
     switch (type)
     {
@@ -91,7 +91,7 @@ float getFloatVal(int type, void *val)
     return 0;
 }
 
-int getIntegerVal(int type, void *val)
+int getIntegerVal(int type, const void *val)
 {
     switch (type)
     {
@@ -105,7 +105,7 @@ int getIntegerVal(int type, void *val)
     return 0;
 }
 
-bool CheckConditionLogic(int opspec, int datatype1, void *val1, int datatype2, void *val2)
+bool CheckConditionLogic(int opspec, int datatype1, const void *val1, int datatype2, const void *val2)
 {
     int eval = false;
 

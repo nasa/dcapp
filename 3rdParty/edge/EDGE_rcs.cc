@@ -27,7 +27,7 @@ EdgeRcsComm::~EdgeRcsComm()
     freeaddrinfo(this->server_addr_info);
 }
 
-int EdgeRcsComm::initialize(char *hoststr, char *portstr)
+int EdgeRcsComm::initialize(const char *hoststr, const char *portstr)
 {
     char *edgehost, *edgeport;
     struct addrinfo hints;

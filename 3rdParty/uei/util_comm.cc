@@ -26,7 +26,7 @@ int global_w_length;
 *       int swap          - swap byte flag (1=swap | 0=no swap)
 *
 *******************************************************************/
-int *mycomm_init(int type, char *hostname, int port, int insize, int outsize, int swap, int timeout)
+int *mycomm_init(int type, const char *hostname, int port, int insize, int outsize, int swap, int timeout)
 {
     struct sock_param *mysock = (struct sock_param*)malloc(sizeof(struct sock_param));
 
@@ -45,7 +45,7 @@ int *mycomm_init(int type, char *hostname, int port, int insize, int outsize, in
 
     if (!hostname)
     {
-        strcpy(hostname, "localhost");
+        hostname = strdup("localhost");
         fprintf(stderr, "%s: WARNING - Failed to get HOSTNAME variable, using default %s\n", __FUNCTION__, hostname);
     }
     fprintf(stderr, "%s: Host name is %s \n", __FUNCTION__, hostname);

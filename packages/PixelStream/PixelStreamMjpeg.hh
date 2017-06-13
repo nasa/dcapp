@@ -24,7 +24,7 @@ class PixelStreamMjpeg : public PixelStreamData
         bool operator == (const PixelStreamMjpeg &);
         bool operator != (const PixelStreamMjpeg &);
         int reader(void);
-        int readerInitialize(char *, int);
+        int readerInitialize(const char *, int);
         char *getHost(void);
         int getPort(void);
 

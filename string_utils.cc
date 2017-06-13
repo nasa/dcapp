@@ -30,7 +30,7 @@ bool StrToBool(const char *instr, bool default_value)
     else return default_value;
 }
 
-static float *color_element(int index, char *strval, float defval)
+static float *color_element(int index, const char *strval, float defval)
 {
     float *retptr = 0x0;
     float fval;

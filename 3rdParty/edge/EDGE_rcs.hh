@@ -11,7 +11,7 @@ class EdgeRcsComm
         EdgeRcsComm();
         virtual ~EdgeRcsComm();
 
-        int initialize(char *, char *);
+        int initialize(const char *, const char *);
         int send_doug_command(const char *, char **, char **);
 
     private:

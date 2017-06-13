@@ -1,10 +1,8 @@
 #include <list>
 #include "nodes.hh"
-#include "mappings.hh"
 
 extern void ProcessEventList(struct node *);
 extern bool CheckCondition(struct node *);
-extern void toggle_fullscreen(void);
 
 extern appdata AppData;
 
@@ -12,35 +10,16 @@ static void KeyPressed(struct node *, char);
 
 static std::list<struct node *> actionList;
 
-
 void HandleKeyboard(unsigned char key)
 {
-    // escape (0x1b) toggles fullscreen mode
-    if (key == 0x1b) toggle_fullscreen();
-    else
+    KeyPressed(AppData.window.current_panel->object.panel.SubList, key);
+    std::list<struct node *>::iterator action;
+    for (action = actionList.begin(); action != actionList.end(); action++)
     {
-        KeyPressed(AppData.window.current_panel->object.panel.SubList, key);
-        std::list<struct node *>::iterator action;
-        for (action = actionList.begin(); action != actionList.end(); action++)
-        {
-            ProcessEventList(*action);
-        }
-        actionList.clear();
+        ProcessEventList(*action);
     }
+    actionList.clear();
 }
-
-
-void HandleSpecialKeyboard(int key)
-{
-    switch (key)
-    {
-        case KEY_LEFT:  break;
-        case KEY_RIGHT: break;
-        case KEY_UP:    break;
-        case KEY_DOWN:  break;
-    }
-}
-
 
 static void KeyPressed(struct node *list, char key)
 {

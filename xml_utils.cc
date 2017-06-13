@@ -42,18 +42,6 @@ void XMLEndParsing(void)
     xmlCleanupParser();
 }
 
-char **get_XML_attribute_address(xmlNodePtr node, const char *key)
-{
-    for (xmlAttrPtr attr = node->properties; attr; attr = attr->next)
-    {
-        if (xmlStrEq(attr->name, key))
-        {
-            if (attr->children) return (char **)&(attr->children->content);
-        }
-    }
-    return 0x0;
-}
-
 char *get_XML_attribute(xmlNodePtr node, const char *key)
 {
     for (xmlAttrPtr attr = node->properties; attr; attr = attr->next)
@@ -64,12 +52,6 @@ char *get_XML_attribute(xmlNodePtr node, const char *key)
         }
     }
     return 0x0;
-}
-
-char **get_XML_content_address(xmlNodePtr node)
-{
-    if (node->xmlChildrenNode) return (char **)&(node->xmlChildrenNode->content);
-    else return 0x0;
 }
 
 char *get_XML_content(xmlNodePtr node)

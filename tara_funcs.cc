@@ -1,14 +1,12 @@
-#include <cstdio>
 #include "TaraDraw/TaraDraw.hh"
-#include "mappings.hh"
 
 extern void Idle(void);
 extern void Draw(void);
 extern void Terminate(int);
 
-extern void HandleMouse(int, int, float, float, int);
+extern void HandleMousePress(float, float);
+extern void HandleMouseRelease(void);
 extern void HandleKeyboard(unsigned char);
-extern void HandleSpecialKeyboard(int);
 extern void UpdateStreams(void);
 extern void reshape(int, int);
 
@@ -57,47 +55,22 @@ void window_init(bool fullscreen, int winOriginX, int winOriginY, int winSizeX, 
 }
 
 
-void toggle_fullscreen(void)
-{
-    tdToggleFullScreen();
-}
-
-
 void mouse_click(ButtonEvent btn)
 {
-    if (btn.state == tdPressed) HandleMouse(0, MOUSE_DOWN, btn.pos.x/mywin.width, btn.pos.y/mywin.height, 0);
-    else HandleMouse(0, MOUSE_UP, 0, 0, 0);
+    if (btn.state == tdPressed) HandleMousePress(btn.pos.x/mywin.width, btn.pos.y/mywin.height);
+    else HandleMouseRelease();
 }
 
 
 void key_click(KeyboardEvent kbd)
 {
-    if (kbd.state == tdPressed)
+    if (kbd.state == tdPressed && kbd.key) // Ignore if "specialkey" pressed
     {
-        if (kbd.specialkey)
-        {
-            switch (kbd.specialkey)
-            {
-                case tdArrowLeft:
-                    HandleSpecialKeyboard(KEY_LEFT);
-                    break;
-                case tdArrowRight:
-                    HandleSpecialKeyboard(KEY_RIGHT);
-                    break;
-                case tdArrowDown:
-                    HandleSpecialKeyboard(KEY_DOWN);
-                    break;
-                case tdArrowUp:
-                    HandleSpecialKeyboard(KEY_UP);
-                    break;
-            }
-        }
-        else
-        {
-            // Change 0x7f (delete) to 0x08 (backspace) for standardization
-            if (kbd.key == 0x7f) HandleKeyboard(0x08);
-            else HandleKeyboard(kbd.key);
-        }
+        // Pressing 0x1b (escape) toggles fullscreen mode
+        if (kbd.key == 0x1b) tdToggleFullScreen();
+        // Change 0x7f (delete) to 0x08 (backspace) for standardization
+        else if (kbd.key == 0x7f) HandleKeyboard(0x08);
+        else HandleKeyboard(kbd.key);
     }
 }
 

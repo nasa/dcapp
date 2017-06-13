@@ -222,7 +222,7 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *e
     return this->Success;
 }
 
-int EdgeCommModule::finishInitialization(char *host, char *port, float spec_rate)
+int EdgeCommModule::finishInitialization(const char *host, const char *port, float spec_rate)
 {
     if (this->rcs->initialize(host, port)) return this->Fail;
     this->update_rate = spec_rate;

@@ -138,7 +138,7 @@ void PixelStreamTcp::connect_write_sockets(void)
     }
 }
 
-int PixelStreamTcp::readerInitialize(char *hostspec, int portspec)
+int PixelStreamTcp::readerInitialize(const char *hostspec, int portspec)
 {
     struct hostent *server;
 

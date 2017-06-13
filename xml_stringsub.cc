@@ -9,7 +9,7 @@
 
 struct xmlStyle
 {
-    char *name;
+    const char *name;
     xmlNodePtr node;
 };
 
@@ -18,7 +18,7 @@ static std::map<std::string, std::string> ppclist;
 static std::list<xmlNodePtr> xmldefaults;
 static std::list<struct xmlStyle> xmlstyles;
 
-static const char *get_constval(char *instr)
+static const char *get_constval(const char *instr)
 {
     // First, check arguments list...
     if (arglist.find(instr) != arglist.end()) return arglist[instr].c_str();
@@ -30,38 +30,37 @@ static const char *get_constval(char *instr)
     return 0x0;
 }
 
-static void replace_string(char **instr)
+static const char *replace_string(const char *instr)
 {
     int count = 0, i, j, len, outlen, repl_len, in_start, in_end, start, end, outptr = 0;
     char *in_val, *outstr = 0x0;
     const char *repl_val;
 
-    if (!instr) return;
-    if (!(*instr)) return;
+    if (!instr) return 0x0;
 
-    len = strlen(*instr);
+    len = strlen(instr);
     for (i=0; i<len; i++)
     {
-        if ((*instr)[i] == '#' || (*instr)[i] == '$') count++;
+        if (instr[i] == '#' || instr[i] == '$') count++;
     }
-    if (!count) return;
+    if (!count) return strdup(instr);
 
     outlen = len;
     outstr = (char *)calloc(outlen+1, sizeof(char));
 
     for (i=0; i<len; i++)
     {
-        if ((*instr)[i] == '#' || (*instr)[i] == '$')
+        if (instr[i] == '#' || instr[i] == '$')
         {
             start = -1;
             end = -1;
             in_start = i;
-            if ((*instr)[i+1] == '{')
+            if (instr[i+1] == '{')
             {
                 start = i+2;
                 for (j=start; j<len; j++)
                 {
-                    if ((*instr)[j] == '}')
+                    if (instr[j] == '}')
                     {
                         end = j-1;
                         in_end = j;
@@ -74,7 +73,7 @@ static void replace_string(char **instr)
                 start = i+1;
                 for (j=start; j<len; j++)
                 {
-                    if (!isalnum((*instr)[j]) && (*instr)[j] != '_')
+                    if (!isalnum(instr[j]) && instr[j] != '_')
                     {
                         end = j-1;
                         in_end = j-1;
@@ -91,9 +90,9 @@ static void replace_string(char **instr)
             if (start >= 0 && end >= start)
             {
                 in_val = (char *)calloc(2+end-start, sizeof(char));
-                strncpy(in_val, &(*instr)[start], 1+end-start);
+                strncpy(in_val, &(instr[start]), 1+end-start);
 
-                if ((*instr)[i] == '#') repl_val = get_constval(in_val);
+                if (instr[i] == '#') repl_val = get_constval(in_val);
                 else repl_val = getenv(in_val);
 
                 if (repl_val) repl_len = strlen(repl_val);
@@ -109,44 +108,26 @@ static void replace_string(char **instr)
                 i += in_end - in_start;
             }
         }
-        else if ((*instr)[i] == '\\' && ((*instr)[i+1] == '#' || (*instr)[i+1] == '$')) outstr[outptr++] = (*instr)[++i];
-        else outstr[outptr++] = (*instr)[i];
+        else if (instr[i] == '\\' && (instr[i+1] == '#' || instr[i+1] == '$')) outstr[outptr++] = instr[++i];
+        else outstr[outptr++] = instr[i];
     }
 
-    if (outstr)
-    {
-        outstr[outptr] = '\0';
-// This memory should be freed, but I commented this out to avoid "pointer being freed was not allocated" errors
-//        free(*instr);
-        *instr = outstr;
-    }
+    if (outstr) outstr[outptr] = '\0';
+
+    return outstr;
 }
 
-char *get_node_content(xmlNodePtr node)
+const char *get_node_content(xmlNodePtr node)
 {
-    char **retval = get_XML_content_address(node);
-    if (retval)
-    {
-        if (*retval)
-        {
-            replace_string(retval);
-            return *retval;
-        }
-    }
-    return 0x0;
+    return replace_string(get_XML_content(node));
 }
 
-char *get_element_data(xmlNodePtr innode, const char *key)
+const char *get_element_data(xmlNodePtr innode, const char *key)
 {
-    char **retval = get_XML_attribute_address(innode, key);
-    if (retval)
-    {
-        if (*retval)
-        {
-            replace_string(retval);
-            return *retval;
-        }
-    }
+    char *myattr;
+
+    myattr = get_XML_attribute(innode, key);
+    if (myattr) return replace_string(myattr);
 
     char *type = get_node_type(innode);
 
@@ -159,15 +140,8 @@ char *get_element_data(xmlNodePtr innode, const char *key)
         {
             if (NodeCheck(xmls->node, type) && !strcmp(xmls->name, style))
             {
-                retval = get_XML_attribute_address(xmls->node, key);
-                if (retval)
-                {
-                    if (*retval)
-                    {
-                        replace_string(retval);
-                        return *retval;
-                    }
-                }
+                myattr = get_XML_attribute(xmls->node, key);
+                if (myattr) return replace_string(myattr);
             }
         }
     }
@@ -178,15 +152,8 @@ char *get_element_data(xmlNodePtr innode, const char *key)
     {
         if (NodeCheck(*xmld, type))
         {
-            retval = get_XML_attribute_address(*xmld, key);
-            if (retval)
-            {
-                if (*retval)
-                {
-                    replace_string(retval);
-                    return *retval;
-                }
-            }
+            myattr = get_XML_attribute(*xmld, key);
+            if (myattr) return replace_string(myattr);
         }
     }
 

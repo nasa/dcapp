@@ -12,7 +12,7 @@ static int CAN_active = 0;
 static uint32_t buttonID = 0, controlID = 0;
 #endif
 
-void CAN_init(char *networkstr, char *buttonIDstr, char *controlIDstr)
+void CAN_init(const char *networkstr, const char *buttonIDstr, const char *controlIDstr)
 {
 #ifdef NTCAN
     int network = 0;

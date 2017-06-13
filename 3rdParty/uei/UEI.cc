@@ -17,7 +17,7 @@ static int first = 1;
 static int *uei_socket;
 static char uei_buffer[UEI_BUFFER_SIZE];
 
-void UEI_init(char *host, char *port, char *ID)
+void UEI_init(const char *host, const char *port, const char *ID)
 {
     bezelID = strtol(ID, 0x0, 10);
 
