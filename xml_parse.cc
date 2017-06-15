@@ -60,11 +60,11 @@ static EdgeCommModule *edgecomm = 0x0;
 static CcsdsUdpCommModule *ccsdsudpcomm = 0x0;
 static char *transitionid;
 static const char *switchid, *switchonval, *switchoffval, *indid, *indonval, *activeid, *activetrueval, *key, *keyascii, *bezelkey;
-static int id_count = 0, bufferID;
+static int bufferID;
 static bool preprocessing = true;
 
 
-int ParseXMLFile(char *fullpath)
+int ParseXMLFile(const char *fullpath)
 {
     char *dirc, *basec, *bname, *dname;
     int mycwd;
@@ -116,8 +116,6 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
 {
     xmlNodePtr node, node1;
     struct node *curlist, **sublist, *data, *data1;
-    const char *id, *onval, *offval;
-    int subnode_found;
 
     for (node = startnode; node; node = node->next)
     {
@@ -146,16 +144,14 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             const char *val1 = get_element_data(node, "Value1");
             const char *val2 = get_element_data(node, "Value2");
             const char *myoperator = get_element_data(node, "Operator");
-            bool staticlogic = true;
 
             if (!val1) val1 = val;
 
-            if (check_dynamic_element(val1) || check_dynamic_element(val2)) staticlogic = false;
-
-            if (preprocessing || staticlogic) process_elements(parent, list, GetSubList(node, myoperator, val1, val2));
+            if (preprocessing || (!check_dynamic_element(val1) && !check_dynamic_element(val2)))
+                process_elements(parent, list, GetSubList(node, myoperator, val1, val2));
             else
             {
-                subnode_found = 0;
+                bool subnode_found = false;
 
                 data = new_isequal(parent, list, myoperator, val1, val2);
 
@@ -164,18 +160,16 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                     if (NodeCheck(node1, "True"))
                     {
                         process_elements(data, &(data->object.cond.TrueList), node1->children);
-                        subnode_found = 1;
+                        subnode_found = true;
                     }
                     if (NodeCheck(node1, "False"))
                     {
                         process_elements(data, &(data->object.cond.FalseList), node1->children);
-                        subnode_found = 1;
+                        subnode_found = true;
                     }
                 }
-                if (!subnode_found) // Assume "True" if no subnode is found
-                {
-                    process_elements(data, &(data->object.cond.TrueList), node->children);
-                }
+                // Assume "True" if no subnode is found
+                if (!subnode_found) process_elements(data, &(data->object.cond.TrueList), node->children);
             }
         }
         if (NodeCheck(node, "Animation"))
@@ -491,12 +485,12 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "Button"))
         {
-            key = get_element_data(node, "Key"),
-            keyascii = get_element_data(node, "KeyASCII"),
-            bezelkey = get_element_data(node, "BezelKey"),
-            id = get_element_data(node, "Variable");
-            onval = get_element_data(node, "On");
-            offval = get_element_data(node, "Off");
+            key = get_element_data(node, "Key");
+            keyascii = get_element_data(node, "KeyASCII");
+            bezelkey = get_element_data(node, "BezelKey");
+            const char *buttonid = get_element_data(node, "Variable");
+            const char *buttononval = get_element_data(node, "On");
+            const char *buttonoffval = get_element_data(node, "Off");
             switchid = get_element_data(node, "SwitchVariable");
             switchonval = get_element_data(node, "SwitchOn");
             switchoffval = get_element_data(node, "SwitchOff");
@@ -505,27 +499,14 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             activeid = get_element_data(node, "ActiveVariable");
             activetrueval = get_element_data(node, "ActiveOn");
 
-            if (!switchonval) switchonval = onval;
-            if (!switchoffval) switchoffval = offval;
+            if (!switchonval) switchonval = buttononval;
+            if (!switchoffval) switchoffval = buttonoffval;
             if (!indonval) indonval = switchonval;
 
-            if (!id && !switchid)
-            {
-                char *tmpstr;
-                asprintf(&tmpstr, "@dcappVirtualVariable%d", id_count);
-                id = strdup(tmpstr);
-                id_count++;
-                varlist_append(&id[1], "Integer", "0");
-                free(tmpstr);
-            }
-            if (!switchid) switchid = id;
+            if (!buttonid && !switchid) buttonid = strdup(create_virtual_variable("Integer", "0"));
+            if (!switchid) switchid = buttonid;
             if (!indid) indid = switchid;
-            if (switchid != indid)
-            {
-                asprintf(&transitionid, "@dcappVirtualVariable%d", id_count);
-                id_count++;
-                varlist_append(&transitionid[1], "Integer", "0");
-            }
+            if (switchid != indid) transitionid = create_virtual_variable("Integer", "0");
             else transitionid = 0x0;
 
             data = new_button(parent, list,
@@ -674,68 +655,62 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                                   get_element_data(node, "Height"),
                                   get_element_data(node, "HorizontalAlign"),
                                   get_element_data(node, "VerticalAlign"));
-            subnode_found = 0;
+            bool subnode_found = false;
             for (node1 = node->children; node1; node1 = node1->next)
             {
                 if (NodeCheck(node1, "OnPress"))
                 {
                     process_elements(data, &(data->object.me.PressList), node1->children);
-                    subnode_found = 1;
+                    subnode_found = true;
                 }
                 if (NodeCheck(node1, "OnRelease"))
                 {
                     process_elements(data, &(data->object.me.ReleaseList), node1->children);
-                    subnode_found = 1;
+                    subnode_found = true;
                 }
             }
-            if (!subnode_found) // Assume "Press" if no subnode is found
-            {
-                process_elements(data, &(data->object.me.PressList), node->children);
-            }
+            // Assume "Press" if no subnode is found
+            if (!subnode_found) process_elements(data, &(data->object.me.PressList), node->children);
         }
         if (NodeCheck(node, "KeyboardEvent"))
         {
             data = new_keyboardevent(parent, list, get_element_data(node, "Key"), get_element_data(node, "KeyASCII"));
-            subnode_found = 0;
+            bool subnode_found = false;
             for (node1 = node->children; node1; node1 = node1->next)
             {
                 if (NodeCheck(node1, "OnPress"))
                 {
                     process_elements(data, &(data->object.ke.PressList), node1->children);
-                    subnode_found = 1;
+                    subnode_found = true;
                 }
                 if (NodeCheck(node1, "OnRelease"))
                 {
                     process_elements(data, &(data->object.ke.ReleaseList), node1->children);
-                    subnode_found = 1;
+                    subnode_found = true;
                 }
             }
-            if (!subnode_found) // Assume "Press" if no subnode is found
-            {
-                process_elements(data, &(data->object.ke.PressList), node->children);
-            }
+            // Assume "Press" if no subnode is found
+            if (!subnode_found) process_elements(data, &(data->object.ke.PressList), node->children);
         }
         if (NodeCheck(node, "BezelEvent"))
         {
             data = new_bezelevent(parent, list, get_element_data(node, "Key"));
-            subnode_found = 0;
+            bool subnode_found = false;
             for (node1 = node->children; node1; node1 = node1->next)
             {
                 if (NodeCheck(node1, "OnPress"))
                 {
                     process_elements(data, &(data->object.be.PressList), node1->children);
-                    subnode_found = 1;
+                    subnode_found = true;
                 }
                 if (NodeCheck(node1, "OnRelease"))
                 {
                     process_elements(data, &(data->object.be.ReleaseList), node1->children);
-                    subnode_found = 1;
+                    subnode_found = true;
                 }
             }
-            if (!subnode_found) // Assume "Press" if no subnode is found
-            {
-                process_elements(data, &(data->object.be.PressList), node->children);
-            }
+            // Assume "Press" if no subnode is found
+            if (!subnode_found) process_elements(data, &(data->object.be.PressList), node->children);
         }
     }
 

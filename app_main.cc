@@ -28,7 +28,7 @@ extern void SetNeedsRedraw(void);
 extern void CheckMouseBounce(void);
 extern void ui_init(char *);
 extern void ui_terminate(void);
-extern int ParseXMLFile(char *);
+extern int ParseXMLFile(const char *);
 extern void DisplayPreInitStub(void *(*)(const char *));
 extern void DisplayInitStub(void);
 extern void DisplayLogicStub(void);

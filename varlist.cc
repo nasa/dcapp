@@ -59,6 +59,16 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
     varMap[std::string(paramname)] = vinfo;
 }
 
+char *create_virtual_variable(const char *typestr, const char *initval)
+{
+    static unsigned id_count = 0;
+    char *vname;
+    asprintf(&vname, "@dcappVirtualVariable%u", id_count);
+    varlist_append(&vname[1], typestr, initval);
+    id_count++;
+    return vname;
+}
+
 void *get_pointer(const char *label)
 {
     if (varMap.find(label) != varMap.end()) return varMap[label].value;
