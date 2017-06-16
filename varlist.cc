@@ -17,6 +17,11 @@ std::map<std::string, varInfo> varMap;
 
 void varlist_append(const char *paramname, const char *typestr, const char *initval)
 {
+    const char *mylabel;
+
+    if (paramname[0] == '@') mylabel = &paramname[1];
+    else mylabel = paramname;
+
     if (!paramname)
     {
         error_msg("Attempting to create a variable without a name");
@@ -56,7 +61,7 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
         error_msg("Attempting to create the variable \"" << paramname << "\" with an unknown type: " << typestr);
     }
 
-    varMap[std::string(paramname)] = vinfo;
+    varMap[std::string(mylabel)] = vinfo;
 }
 
 char *create_virtual_variable(const char *typestr, const char *initval)
@@ -64,14 +69,21 @@ char *create_virtual_variable(const char *typestr, const char *initval)
     static unsigned id_count = 0;
     char *vname;
     asprintf(&vname, "@dcappVirtualVariable%u", id_count);
-    varlist_append(&vname[1], typestr, initval);
+    varlist_append(vname, typestr, initval);
     id_count++;
     return vname;
 }
 
 void *get_pointer(const char *label)
 {
-    if (varMap.find(label) != varMap.end()) return varMap[label].value;
+    if (!label) return 0x0;
+
+    const char *mylabel;
+
+    if (label[0] == '@') mylabel = &label[1];
+    else mylabel = label;
+
+    if (varMap.find(mylabel) != varMap.end()) return varMap[mylabel].value;
     else
     {
         error_msg("Invalid parameter label: " << label);
@@ -81,7 +93,14 @@ void *get_pointer(const char *label)
 
 int get_datatype(const char *label)
 {
-    if (varMap.find(label) != varMap.end()) return varMap[label].type;
+    if (!label) return VARLIST_UNKNOWN_TYPE;
+
+    const char *mylabel;
+
+    if (label[0] == '@') mylabel = &label[1];
+    else mylabel = label;
+
+    if (varMap.find(mylabel) != varMap.end()) return varMap[mylabel].type;
     else
     {
         error_msg("Invalid parameter label: " << label);

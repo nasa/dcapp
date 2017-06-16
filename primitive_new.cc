@@ -38,25 +38,25 @@ bool check_dynamic_element(const char *spec)
 
 static float *getFloatPointer(const char *valstr)
 {
-    if (check_dynamic_element(valstr)) return (float *)get_pointer(&valstr[1]);
+    if (check_dynamic_element(valstr)) return (float *)get_pointer(valstr);
     else return dcLoadConstant(StrToFloat(valstr, 0));
 }
 
 static float *getFloatPointer(const char *valstr, float defval)
 {
-    if (check_dynamic_element(valstr)) return (float *)get_pointer(&valstr[1]);
+    if (check_dynamic_element(valstr)) return (float *)get_pointer(valstr);
     else return dcLoadConstant(StrToFloat(valstr, defval));
 }
 
 static int *getIntegerPointer(const char *valstr)
 {
-    if (check_dynamic_element(valstr)) return (int *)get_pointer(&valstr[1]);
+    if (check_dynamic_element(valstr)) return (int *)get_pointer(valstr);
     else return dcLoadConstant(StrToInt(valstr, 0));
 }
 
 static char *getStringPointer(const char *valstr)
 {
-    if (check_dynamic_element(valstr)) return (char *)get_pointer(&valstr[1]);
+    if (check_dynamic_element(valstr)) return (char *)get_pointer(valstr);
     else return dcLoadConstant(valstr);
 }
 
@@ -79,7 +79,7 @@ static void *getVariablePointer(int datatype, const char *valstr)
 
 static int get_data_type(const char *valstr)
 {
-    if (check_dynamic_element(valstr)) return get_datatype(&valstr[1]);
+    if (check_dynamic_element(valstr)) return get_datatype(valstr);
     return UNDEFINED_TYPE;
 }
 

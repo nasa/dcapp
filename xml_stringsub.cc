@@ -30,7 +30,7 @@ static const char *get_constval(const char *instr)
     return 0x0;
 }
 
-static const char *replace_string(const char *instr)
+static char *replace_string(const char *instr)
 {
     int count = 0, i, j, len, outlen, repl_len, in_start, in_end, start, end, outptr = 0;
     char *in_val, *outstr = 0x0;
@@ -117,12 +117,12 @@ static const char *replace_string(const char *instr)
     return outstr;
 }
 
-const char *get_node_content(xmlNodePtr node)
+char *get_node_content(xmlNodePtr node)
 {
     return replace_string(get_XML_content(node));
 }
 
-const char *get_element_data(xmlNodePtr innode, const char *key)
+char *get_element_data(xmlNodePtr innode, const char *key)
 {
     char *myattr;
 

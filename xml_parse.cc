@@ -59,7 +59,7 @@ static TrickCommModule *trickcomm = 0x0;
 static EdgeCommModule *edgecomm = 0x0;
 static CcsdsUdpCommModule *ccsdsudpcomm = 0x0;
 static char *transitionid;
-static const char *switchid, *switchonval, *switchoffval, *indid, *indonval, *activeid, *activetrueval, *key, *keyascii, *bezelkey;
+static const char *indid, *indonval, *activeid, *activetrueval, *key, *keyascii, *bezelkey;
 static int bufferID;
 static bool preprocessing = true;
 
@@ -114,8 +114,8 @@ int ParseXMLFile(const char *fullpath)
 
 static int process_elements(struct node *parent, struct node **list, xmlNodePtr startnode)
 {
-    xmlNodePtr node, node1;
-    struct node *curlist, **sublist, *data, *data1;
+    xmlNodePtr node;
+    struct node *data;
 
     for (node = startnode; node; node = node->next)
     {
@@ -151,25 +151,25 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                 process_elements(parent, list, GetSubList(node, myoperator, val1, val2));
             else
             {
-                bool subnode_found = false;
+                bool subparent_found = false;
 
                 data = new_isequal(parent, list, myoperator, val1, val2);
 
-                for (node1 = node->children; node1; node1 = node1->next)
+                for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
                 {
-                    if (NodeCheck(node1, "True"))
+                    if (NodeCheck(subnode, "True"))
                     {
-                        process_elements(data, &(data->object.cond.TrueList), node1->children);
-                        subnode_found = true;
+                        process_elements(data, &(data->object.cond.TrueList), subnode->children);
+                        subparent_found = true;
                     }
-                    if (NodeCheck(node1, "False"))
+                    if (NodeCheck(subnode, "False"))
                     {
-                        process_elements(data, &(data->object.cond.FalseList), node1->children);
-                        subnode_found = true;
+                        process_elements(data, &(data->object.cond.FalseList), subnode->children);
+                        subparent_found = true;
                     }
                 }
-                // Assume "True" if no subnode is found
-                if (!subnode_found) process_elements(data, &(data->object.cond.TrueList), node->children);
+                // Assume "True" if no subparent is found
+                if (!subparent_found) process_elements(data, &(data->object.cond.TrueList), node->children);
             }
         }
         if (NodeCheck(node, "Animation"))
@@ -214,8 +214,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             {
                 if (!strcasecmp(d_a, "Reconnect")) trickcomm->setReconnectOnDisconnect();
             }
-            const char *connectedvariable = get_element_data(node, "ConnectedVariable");
-            if (connectedvariable) trickcomm->activeID = (int *)get_pointer(&connectedvariable[1]);
+            trickcomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
             process_elements(0, 0, node->children);
             trickcomm->finishInitialization();
             AppData.commlist.push_back(trickcomm);
@@ -253,8 +252,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "EdgeIo"))
         {
             edgecomm = new EdgeCommModule;
-            const char *connectedvariable = get_element_data(node, "ConnectedVariable");
-            if (connectedvariable) edgecomm->activeID = (int *)get_pointer(&connectedvariable[1]);
+            edgecomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
             process_elements(0, 0, node->children);
             edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StrToFloat(get_element_data(node, "DataRate"), 1.0));
             AppData.commlist.push_back(edgecomm);
@@ -285,8 +283,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "CcsdsUdpIo"))
         {
             ccsdsudpcomm = new CcsdsUdpCommModule;
-            const char *connectedvariable = get_element_data(node, "ConnectedVariable");
-            if (connectedvariable) ccsdsudpcomm->activeID = (int *)get_pointer(&connectedvariable[1]);
+            ccsdsudpcomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
             process_elements(0, 0, node->children);
             AppData.commlist.push_back(ccsdsudpcomm);
         }
@@ -307,8 +304,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "CAN"))
         {
             CAN_init(get_element_data(node, "Network"), get_element_data(node, "ButtonID"), get_element_data(node, "ControlID"));
-            const char *inhibitvariable = get_element_data(node, "InhibitVariable");
-            AppData.canbus_inhibited = (int *)get_pointer(&inhibitvariable[1]);
+            AppData.canbus_inhibited = (int *)get_pointer(get_element_data(node, "InhibitVariable"));
         }
         if (NodeCheck(node, "UEI"))
         {
@@ -491,9 +487,9 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             const char *buttonid = get_element_data(node, "Variable");
             const char *buttononval = get_element_data(node, "On");
             const char *buttonoffval = get_element_data(node, "Off");
-            switchid = get_element_data(node, "SwitchVariable");
-            switchonval = get_element_data(node, "SwitchOn");
-            switchoffval = get_element_data(node, "SwitchOff");
+            const char *switchid = get_element_data(node, "SwitchVariable");
+            const char *switchonval = get_element_data(node, "SwitchOn");
+            const char *switchoffval = get_element_data(node, "SwitchOff");
             indid = get_element_data(node, "IndicatorVariable");
             indonval = get_element_data(node, "IndicatorOn");
             activeid = get_element_data(node, "ActiveVariable");
@@ -534,8 +530,8 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "OnPress"))
         {
-            curlist = parent;
-            sublist = list;
+            struct node *curlist = parent;
+            struct node **sublist = list;
             if (activeid)
             {
                 curlist = new_isequal(parent, list, "eq", activeid, activetrueval);
@@ -544,20 +540,14 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             data = new_mouseevent(curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
             process_elements(data, &(data->object.me.PressList), node->children);
             if (key || keyascii)
-            {
-                data1 = new_keyboardevent(curlist, sublist, key, keyascii);
-                data1->object.ke.PressList = data->object.me.PressList;
-            }
+                new_keyboardevent(curlist, sublist, key, keyascii)->object.ke.PressList = data->object.me.PressList;
             if (bezelkey)
-            {
-                data1 = new_bezelevent(curlist, sublist, bezelkey);
-                data1->object.be.PressList = data->object.me.PressList;
-            }
+                new_bezelevent(curlist, sublist, bezelkey)->object.be.PressList = data->object.me.PressList;
         }
         if (NodeCheck(node, "OnRelease"))
         {
-            curlist = parent;
-            sublist = list;
+            struct node *curlist = parent;
+            struct node **sublist = list;
             if (activeid)
             {
                 curlist = new_isequal(parent, list, "eq", activeid, activetrueval);
@@ -566,15 +556,9 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             data = new_mouseevent(curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
             process_elements(data, &(data->object.me.ReleaseList), node->children);
             if (key || keyascii)
-            {
-                data1 = new_keyboardevent(curlist, sublist, key, keyascii);
-                data1->object.ke.PressList = data->object.me.ReleaseList;
-            }
+                new_keyboardevent(curlist, sublist, key, keyascii)->object.ke.PressList = data->object.me.ReleaseList;
             if (bezelkey)
-            {
-                data1 = new_bezelevent(curlist, sublist, bezelkey);
-                data1->object.be.PressList = data->object.me.ReleaseList;
-            }
+                new_bezelevent(curlist, sublist, bezelkey)->object.be.PressList = data->object.me.ReleaseList;
         }
         if (NodeCheck(node, "Active"))
         {
@@ -591,8 +575,8 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             if (transitionid)
             {
                 data = new_isequal(parent, list, "eq", transitionid, "0");
-                data1 = new_isequal(data, &(data->object.cond.TrueList), "eq", indid, indonval);
-                process_elements(data1, &(data1->object.cond.TrueList), node->children);
+                struct node *iseq = new_isequal(data, &(data->object.cond.TrueList), "eq", indid, indonval);
+                process_elements(iseq, &(iseq->object.cond.TrueList), node->children);
             }
             else
             {
@@ -615,8 +599,8 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             if (transitionid)
             {
                 data = new_isequal(parent, list, "eq", transitionid, "0");
-                data1 = new_isequal(data, &(data->object.cond.TrueList), "eq", indid, indonval);
-                process_elements(data1, &(data1->object.cond.FalseList), node->children);
+                struct node *iseq = new_isequal(data, &(data->object.cond.TrueList), "eq", indid, indonval);
+                process_elements(iseq, &(iseq->object.cond.FalseList), node->children);
             }
             else
             {
@@ -655,62 +639,62 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                                   get_element_data(node, "Height"),
                                   get_element_data(node, "HorizontalAlign"),
                                   get_element_data(node, "VerticalAlign"));
-            bool subnode_found = false;
-            for (node1 = node->children; node1; node1 = node1->next)
+            bool subparent_found = false;
+            for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
-                if (NodeCheck(node1, "OnPress"))
+                if (NodeCheck(subnode, "OnPress"))
                 {
-                    process_elements(data, &(data->object.me.PressList), node1->children);
-                    subnode_found = true;
+                    process_elements(data, &(data->object.me.PressList), subnode->children);
+                    subparent_found = true;
                 }
-                if (NodeCheck(node1, "OnRelease"))
+                if (NodeCheck(subnode, "OnRelease"))
                 {
-                    process_elements(data, &(data->object.me.ReleaseList), node1->children);
-                    subnode_found = true;
+                    process_elements(data, &(data->object.me.ReleaseList), subnode->children);
+                    subparent_found = true;
                 }
             }
-            // Assume "Press" if no subnode is found
-            if (!subnode_found) process_elements(data, &(data->object.me.PressList), node->children);
+            // Assume "Press" if no subparent is found
+            if (!subparent_found) process_elements(data, &(data->object.me.PressList), node->children);
         }
         if (NodeCheck(node, "KeyboardEvent"))
         {
             data = new_keyboardevent(parent, list, get_element_data(node, "Key"), get_element_data(node, "KeyASCII"));
-            bool subnode_found = false;
-            for (node1 = node->children; node1; node1 = node1->next)
+            bool subparent_found = false;
+            for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
-                if (NodeCheck(node1, "OnPress"))
+                if (NodeCheck(subnode, "OnPress"))
                 {
-                    process_elements(data, &(data->object.ke.PressList), node1->children);
-                    subnode_found = true;
+                    process_elements(data, &(data->object.ke.PressList), subnode->children);
+                    subparent_found = true;
                 }
-                if (NodeCheck(node1, "OnRelease"))
+                if (NodeCheck(subnode, "OnRelease"))
                 {
-                    process_elements(data, &(data->object.ke.ReleaseList), node1->children);
-                    subnode_found = true;
+                    process_elements(data, &(data->object.ke.ReleaseList), subnode->children);
+                    subparent_found = true;
                 }
             }
-            // Assume "Press" if no subnode is found
-            if (!subnode_found) process_elements(data, &(data->object.ke.PressList), node->children);
+            // Assume "Press" if no subparent is found
+            if (!subparent_found) process_elements(data, &(data->object.ke.PressList), node->children);
         }
         if (NodeCheck(node, "BezelEvent"))
         {
             data = new_bezelevent(parent, list, get_element_data(node, "Key"));
-            bool subnode_found = false;
-            for (node1 = node->children; node1; node1 = node1->next)
+            bool subparent_found = false;
+            for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
-                if (NodeCheck(node1, "OnPress"))
+                if (NodeCheck(subnode, "OnPress"))
                 {
-                    process_elements(data, &(data->object.be.PressList), node1->children);
-                    subnode_found = true;
+                    process_elements(data, &(data->object.be.PressList), subnode->children);
+                    subparent_found = true;
                 }
-                if (NodeCheck(node1, "OnRelease"))
+                if (NodeCheck(subnode, "OnRelease"))
                 {
-                    process_elements(data, &(data->object.be.ReleaseList), node1->children);
-                    subnode_found = true;
+                    process_elements(data, &(data->object.be.ReleaseList), subnode->children);
+                    subparent_found = true;
                 }
             }
-            // Assume "Press" if no subnode is found
-            if (!subnode_found) process_elements(data, &(data->object.be.PressList), node->children);
+            // Assume "Press" if no subparent is found
+            if (!subparent_found) process_elements(data, &(data->object.be.PressList), node->children);
         }
     }
 
@@ -720,7 +704,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
 static xmlNodePtr GetSubList(xmlNodePtr node, const char *opspec, const char *val1, const char *val2)
 {
     bool myflag = 0;
-    xmlNodePtr node1;
+    xmlNodePtr subnode;
     int optype = Simple;
 
     if (opspec)
@@ -735,12 +719,12 @@ static xmlNodePtr GetSubList(xmlNodePtr node, const char *opspec, const char *va
 
     myflag = CheckConditionLogic(optype, STRING_TYPE, val1, STRING_TYPE, val2);
 
-    for (node1 = node->children; node1; node1 = node1->next)
+    for (subnode = node->children; subnode; subnode = subnode->next)
     {
-        if (myflag && NodeCheck(node1, "True")) return node1->children;
-        if (!myflag && NodeCheck(node1, "False")) return node1->children;
+        if (myflag && NodeCheck(subnode, "True")) return subnode->children;
+        if (!myflag && NodeCheck(subnode, "False")) return subnode->children;
     }
 
-    if (myflag) return node->children;  // Assume "True" if no subnode is found
+    if (myflag) return node->children;  // Assume "True" if no subparent is found
     else return 0x0;
 }

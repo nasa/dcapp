@@ -32,21 +32,9 @@ bool StrToBool(const char *instr, bool default_value)
 
 static float *color_element(int index, const char *strval, float defval)
 {
-    float *retptr = 0x0;
-    float fval;
-
-    if (index < 0) retptr = dcLoadConstant(defval);
-    else
-    {
-        if (check_dynamic_element(strval)) retptr = (float *)get_pointer(&strval[1]);
-        else
-        {
-            fval = strtof(strval, 0x0);
-            retptr = dcLoadConstant(fval);
-        }
-    }
-
-    return retptr;
+    if (index < 0) return dcLoadConstant(defval);
+    else if (check_dynamic_element(strval)) return (float *)get_pointer(strval);
+    else return dcLoadConstant(strtof(strval, 0x0));
 }
 
 Kolor StrToColor(const char *instr, float r, float g, float b, float a)
