@@ -1,3 +1,13 @@
+#include "nodes.hh"
+
+extern appdata AppData;
+
+void HandleKeyboard(unsigned char key)
+{
+    AppData.toplevel->handleKeyboard(key);
+}
+
+/*
 #include <list>
 #include "nodes.hh"
 
@@ -13,7 +23,7 @@ static std::list<struct node *> actionList;
 void HandleKeyboard(unsigned char key)
 {
     KeyPressed(AppData.window.current_panel->object.panel.SubList, key);
-AppData.toplevel->handleKeyboard(key);
+
     std::list<struct node *>::iterator action;
     for (action = actionList.begin(); action != actionList.end(); action++)
     {
@@ -49,3 +59,4 @@ static void KeyPressed(struct node *list, char key)
         }
     }
 }
+*/

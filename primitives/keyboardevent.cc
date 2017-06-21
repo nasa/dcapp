@@ -1,5 +1,8 @@
 #include "keyboardevent.hh"
 
+// TODO: include file for this
+extern void UpdateDisplay(void);
+
 dcKeyboardEvent::dcKeyboardEvent(char key)
 {
     mykey = key;
@@ -17,8 +20,9 @@ void dcKeyboardEvent::handleKeyboard(char key)
 {
     if (mykey == key)
     {
-printf("found a key press item = %p, panel = %p, key = %c\n", this, this->getParent(), key);
-//        actionList.push_back(current->object.ke.PressList);
-//        actionList.push_back(current->object.ke.ReleaseList);
+        this->PressList->updateData();
+        UpdateDisplay();
+        this->ReleaseList->updateData();
+        UpdateDisplay();
     }
 }

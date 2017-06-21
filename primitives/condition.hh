@@ -12,6 +12,7 @@ class dcCondition : public dcObject
 
         void handleKeyboard(char);
         void updateData(void);
+        void processAnimation(void);
 
         dcParent *TrueList;
         dcParent *FalseList;

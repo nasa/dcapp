@@ -22,6 +22,7 @@ struct node *new_mouseevent(struct node *, struct node **, const char *, const c
 struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
 struct node *new_bezelevent(struct node *, struct node **, const char *);
 struct node *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
+struct node *new_setvalue(dcSetValue **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
 struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
 
 bool check_dynamic_element(const char *spec)
@@ -451,7 +452,7 @@ mySublist = mycond->TrueList;
     if (toggle)
     {
 dcCondition *mycond;
-cond = new_isequal(&mycond, curlist, sublist, "eq", indid, indonval);
+        cond = new_isequal(&mycond, curlist, sublist, "eq", indid, indonval);
 mySublist->addChild(mycond);
         event = new_mouseevent(cond, &(cond->object.cond.TrueList), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
         new_setvalue(event, &(event->object.me.PressList), switchid, 0x0, 0x0, 0x0, offval);
@@ -464,12 +465,26 @@ mySublist->addChild(mycond);
 dcKeyboardEvent *myevent;
             event = new_keyboardevent(&myevent, cond, &(cond->object.cond.TrueList), key, keyascii);
 mycond->TrueList->addChild(myevent);
-            new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, offval);
-            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
+dcSetValue *myset1;
+            new_setvalue(&myset1, event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, offval);
+myevent->PressList->addChild(myset1);
+            if (transitionid)
+            {
+dcSetValue *myset2;
+                new_setvalue(&myset2, event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
+myevent->PressList->addChild(myset2);
+            }
             event = new_keyboardevent(&myevent, cond, &(cond->object.cond.FalseList), key, keyascii);
 mycond->FalseList->addChild(myevent);
-            new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
-            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+dcSetValue *myset3;
+            new_setvalue(&myset3, event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+myevent->PressList->addChild(myset3);
+            if (transitionid)
+            {
+dcSetValue *myset4;
+                new_setvalue(&myset4, event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+myevent->PressList->addChild(myset4);
+            }
         }
         if (bezelkey)
         {
@@ -496,12 +511,26 @@ mycond->FalseList->addChild(myevent);
 dcKeyboardEvent *myevent;
             event = new_keyboardevent(&myevent, curlist, sublist, key, keyascii);
 mySublist->addChild(myevent);
-            new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
-            if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+dcSetValue *myset1;
+            new_setvalue(&myset1, event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+myevent->PressList->addChild(myset1);
+            if (transitionid)
+            {
+dcSetValue *myset2;
+                new_setvalue(&myset2, event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+myevent->PressList->addChild(myset2);
+            }
             if (momentary)
             {
-                new_setvalue(event, &(event->object.ke.ReleaseList), switchid, 0x0, 0x0, 0x0, offval);
-                if (transitionid) new_setvalue(event, &(event->object.ke.ReleaseList), transitionid, 0x0, 0x0, 0x0, "-1");
+dcSetValue *myset1;
+                new_setvalue(&myset1, event, &(event->object.ke.ReleaseList), switchid, 0x0, 0x0, 0x0, offval);
+myevent->ReleaseList->addChild(myset1);
+                if (transitionid)
+                {
+dcSetValue *myset2;
+                    new_setvalue(&myset2, event, &(event->object.ke.ReleaseList), transitionid, 0x0, 0x0, 0x0, "-1");
+myevent->ReleaseList->addChild(myset2);
+                }
             }
         }
         if (bezelkey)
@@ -581,15 +610,20 @@ struct node *new_mouseevent(struct node *parent, struct node **list, const char 
 
 struct node *new_keyboardevent(dcKeyboardEvent **myitem, struct node *parent, struct node **list, const char *key, const char *keyascii)
 {
-    if (!key && !keyascii) return 0x0;
+    if (!key && !keyascii) 
+    {
+        *myitem = 0x0;
+        return 0x0;
+    }
 
     struct node *data = add_primitive_node(parent, list, KeyboardEvent, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
     if (key)
-        data->object.ke.key = key[0];
+//        data->object.ke.key = key[0];
+*myitem = new dcKeyboardEvent(key[0]);
     else
-        data->object.ke.key = StrToInt(keyascii, 0);
-*myitem = new dcKeyboardEvent(data->object.ke.key);
+//        data->object.ke.key = StrToInt(keyascii, 0);
+*myitem = new dcKeyboardEvent(StrToInt(keyascii, 0));
 
     return data;
 }
@@ -674,6 +708,14 @@ struct node *new_setvalue(struct node *parent, struct node **list, const char *v
     data->object.modval.min = myset.min;
     data->object.modval.max = myset.max;
 
+    return data;
+}
+
+struct node *new_setvalue(dcSetValue **myitem, struct node *parent, struct node **list, const char *var, const char *optype, const char *min, const char *max, const char *val)
+{
+    struct node *data = new_setvalue(parent, list, var, optype, min, max, val);
+if (data) *myitem = new dcSetValue(data->object.modval.optype, data->object.modval.datatype1, data->object.modval.datatype2, data->object.modval.mindatatype, data->object.modval.maxdatatype, data->object.modval.var, data->object.modval.val, data->object.modval.min, data->object.modval.max);
+else *myitem = 0x0;
     return data;
 }
 

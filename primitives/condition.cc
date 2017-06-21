@@ -35,3 +35,11 @@ void dcCondition::updateData(void)
     else
         FalseList->updateData();
 }
+
+void dcCondition::processAnimation(void)
+{
+    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+        TrueList->processAnimation();
+    else
+        FalseList->processAnimation();
+}

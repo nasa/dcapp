@@ -39,7 +39,7 @@ extern struct node *new_mouseevent(struct node *, struct node **, const char *, 
 extern struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
 extern struct node *new_bezelevent(struct node *, struct node **, const char *);
 extern struct node *new_animation(struct node *, struct node **, const char *);
-extern struct node *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_setvalue(dcSetValue **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
 extern struct ModifyValue get_setvalue_data(const char *, const char *, const char *, const char *, const char *);
 extern bool CheckConditionLogic(int, int, const void *, int, const void *);
 extern void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
@@ -194,12 +194,17 @@ myparent->addChild(myitem);
                                                                    myset.mindatatype, myset.min,
                                                                    myset.maxdatatype, myset.max);
             }
-            else data = new_setvalue(parent, list,
+            else
+{
+dcSetValue *myitem;
+                data = new_setvalue(&myitem, parent, list,
                                      get_element_data(node, "Variable"),
                                      get_element_data(node, "Operator"),
                                      get_element_data(node, "MinimumValue"),
                                      get_element_data(node, "MaximumValue"),
                                      get_node_content(node));
+myparent->addChild(myitem);
+}
         }
         if (NodeCheck(node, "Variable"))
         {
@@ -557,7 +562,8 @@ mySublist = mycond->TrueList;
             if (key || keyascii)
 {
 dcKeyboardEvent *myitem;
-                new_keyboardevent(&myitem, curlist, sublist, key, keyascii)->object.ke.PressList = data->object.me.PressList;
+                /*struct node *dataitem = */new_keyboardevent(&myitem, curlist, sublist, key, keyascii);
+//                dataitem->object.ke.PressList = data->object.me.PressList;
 mySublist->addChild(myitem);
 //set KeyboardEvent PressList to MouseEvent PressList
 process_elements(myitem->PressList, data, &(data->object.me.PressList), node->children);
@@ -585,7 +591,8 @@ mySublist = mycond->TrueList;
             if (key || keyascii)
 {
 dcKeyboardEvent *myitem;
-                new_keyboardevent(&myitem, curlist, sublist, key, keyascii)->object.ke.PressList = data->object.me.ReleaseList;
+                /*struct node *dataitem = */new_keyboardevent(&myitem, curlist, sublist, key, keyascii);
+//                dataitem->object.ke.PressList = data->object.me.ReleaseList;
 mySublist->addChild(myitem);
 //set KeyboardEvent PressList to MouseEvent PressList
 process_elements(myitem->PressList, data, &(data->object.me.PressList), node->children);
@@ -713,17 +720,17 @@ myparent->addChild(myitem);
             {
                 if (NodeCheck(subnode, "OnPress"))
                 {
-                    process_elements(myparent, data, &(data->object.ke.PressList), subnode->children);
+                    process_elements(myitem->PressList, data, &(data->object.ke.PressList), subnode->children);
                     subparent_found = true;
                 }
                 if (NodeCheck(subnode, "OnRelease"))
                 {
-                    process_elements(myparent, data, &(data->object.ke.ReleaseList), subnode->children);
+                    process_elements(myitem->ReleaseList, data, &(data->object.ke.ReleaseList), subnode->children);
                     subparent_found = true;
                 }
             }
             // Assume "Press" if no subparent is found
-            if (!subparent_found) process_elements(myparent, data, &(data->object.ke.PressList), node->children);
+            if (!subparent_found) process_elements(myitem->PressList, data, &(data->object.ke.PressList), node->children);
         }
         if (NodeCheck(node, "BezelEvent"))
         {

@@ -16,9 +16,7 @@ dcSetValue::dcSetValue(int opspec, int dtype1, int dtype2, int mindtype, int max
     max = maxspec;
 }
 
-#include <stdio.h>
 void dcSetValue::updateData(void)
 {
-printf("setting %p to %p\n", var, val);
     UpdateValueLogic(optype, datatype1, var, datatype2, val, mindatatype, min, maxdatatype, max);
 }
