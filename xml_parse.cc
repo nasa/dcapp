@@ -21,7 +21,7 @@
 extern void new_window(dcWindow **, bool, int, int, int, int, const char *);
 extern struct node *new_panel(dcPanel **, const char *, const char *, const char *, const char *);
 extern struct node *new_container(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_isequal(struct node *, struct node **, const char *, const char *, const char *);
+extern struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
 extern struct node *new_vertex(struct node *, struct node **, const char *, const char *);
 extern struct node *new_line(struct node *, struct node **, const char *, const char *);
 extern struct node *new_polygon(struct node *, struct node **, const char *, const char *, const char *);
@@ -153,23 +153,25 @@ static int process_elements(dcParent *myparent, struct node *parent, struct node
             {
                 bool subparent_found = false;
 
-                data = new_isequal(parent, list, myoperator, val1, val2);
+dcCondition *myitem;
+                data = new_isequal(&myitem, parent, list, myoperator, val1, val2);
+myparent->addChild(myitem);
 
                 for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
                 {
                     if (NodeCheck(subnode, "True"))
                     {
-                        process_elements(myparent, data, &(data->object.cond.TrueList), subnode->children);
+                        process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), subnode->children);
                         subparent_found = true;
                     }
                     if (NodeCheck(subnode, "False"))
                     {
-                        process_elements(myparent, data, &(data->object.cond.FalseList), subnode->children);
+                        process_elements(myitem->FalseList, data, &(data->object.cond.FalseList), subnode->children);
                         subparent_found = true;
                     }
                 }
                 // Assume "True" if no subparent is found
-                if (!subparent_found) process_elements(myparent, data, &(data->object.cond.TrueList), node->children);
+                if (!subparent_found) process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
             }
         }
         if (NodeCheck(node, "Animation"))
@@ -511,8 +513,8 @@ myparent->addChild(myitem);
             if (switchid != indid) transitionid = create_virtual_variable("Integer", "0");
             else transitionid = 0x0;
 
-dcContainer *mycond;
-            data = new_button(&mycond, parent, list,
+dcContainer *mycont;
+            data = new_button(&mycont, parent, list,
                       get_element_data(node, "X"),
                       get_element_data(node, "Y"),
                       get_element_data(node, "Width"),
@@ -532,26 +534,34 @@ dcContainer *mycond;
                       key,
                       keyascii,
                       bezelkey);
-myparent->addChild(mycond);
-            process_elements((dcParent *)mycond, data, &(data->object.cont.SubList), node->children);
+myparent->addChild(mycont);
+            process_elements((dcParent *)mycont, data, &(data->object.cont.SubList), node->children);
             if (transitionid) free(transitionid);
         }
         if (NodeCheck(node, "OnPress"))
         {
             struct node *curlist = parent;
             struct node **sublist = list;
+dcParent *mySublist = myparent;
+dcCondition *mycond;
             if (activeid)
             {
-                curlist = new_isequal(parent, list, "eq", activeid, activetrueval);
+                curlist = new_isequal(&mycond, parent, list, "eq", activeid, activetrueval);
+myparent->addChild(mycond);
+mySublist = mycond->TrueList;
                 sublist = &(curlist->object.cond.TrueList);
             }
             data = new_mouseevent(curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+//need to do this for functionality
             process_elements(myparent, data, &(data->object.me.PressList), node->children);
             if (key || keyascii)
 {
 dcKeyboardEvent *myitem;
                 new_keyboardevent(&myitem, curlist, sublist, key, keyascii)->object.ke.PressList = data->object.me.PressList;
-myparent->addChild(myitem);
+mySublist->addChild(myitem);
+//set KeyboardEvent PressList to MouseEvent PressList
+process_elements(myitem->PressList, data, &(data->object.me.PressList), node->children);
+//see the hack a few lines above
 }
             if (bezelkey)
                 new_bezelevent(curlist, sublist, bezelkey)->object.be.PressList = data->object.me.PressList;
@@ -560,68 +570,89 @@ myparent->addChild(myitem);
         {
             struct node *curlist = parent;
             struct node **sublist = list;
+dcParent *mySublist = myparent;
+dcCondition *mycond;
             if (activeid)
             {
-                curlist = new_isequal(parent, list, "eq", activeid, activetrueval);
+                curlist = new_isequal(&mycond, parent, list, "eq", activeid, activetrueval);
+myparent->addChild(mycond);
+mySublist = mycond->TrueList;
                 sublist = &(curlist->object.cond.TrueList);
             }
             data = new_mouseevent(curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+//need to do this for functionality
             process_elements(myparent, data, &(data->object.me.ReleaseList), node->children);
             if (key || keyascii)
 {
 dcKeyboardEvent *myitem;
                 new_keyboardevent(&myitem, curlist, sublist, key, keyascii)->object.ke.PressList = data->object.me.ReleaseList;
-myparent->addChild(myitem);
+mySublist->addChild(myitem);
+//set KeyboardEvent PressList to MouseEvent PressList
+process_elements(myitem->PressList, data, &(data->object.me.PressList), node->children);
+//see the hack a few lines above
 }
             if (bezelkey)
                 new_bezelevent(curlist, sublist, bezelkey)->object.be.PressList = data->object.me.ReleaseList;
         }
         if (NodeCheck(node, "Active"))
         {
-            data = new_isequal(parent, list, "eq", activeid, activetrueval);
-            process_elements(myparent, data, &(data->object.cond.TrueList), node->children);
+dcCondition *myitem;
+            data = new_isequal(&myitem, parent, list, "eq", activeid, activetrueval);
+            process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
         }
         if (NodeCheck(node, "Inactive"))
         {
-            data = new_isequal(parent, list, "eq", activeid, activetrueval);
-            process_elements(myparent, data, &(data->object.cond.FalseList), node->children);
+dcCondition *myitem;
+            data = new_isequal(&myitem, parent, list, "eq", activeid, activetrueval);
+            process_elements(myitem->FalseList, data, &(data->object.cond.FalseList), node->children);
         }
         if (NodeCheck(node, "On"))
         {
             if (transitionid)
             {
-                data = new_isequal(parent, list, "eq", transitionid, "0");
-                struct node *iseq = new_isequal(data, &(data->object.cond.TrueList), "eq", indid, indonval);
-                process_elements(myparent, iseq, &(iseq->object.cond.TrueList), node->children);
+dcCondition *myitem, *mychild;
+                data = new_isequal(&myitem, parent, list, "eq", transitionid, "0");
+myparent->addChild(myitem);
+                struct node *iseq = new_isequal(&mychild, data, &(data->object.cond.TrueList), "eq", indid, indonval);
+myitem->TrueList->addChild(mychild);
+                process_elements(mychild->TrueList, iseq, &(iseq->object.cond.TrueList), node->children);
             }
             else
             {
-                data = new_isequal(parent, list, "eq", indid, indonval);
-                process_elements(myparent, data, &(data->object.cond.TrueList), node->children);
+dcCondition *myitem;
+                data = new_isequal(&myitem, parent, list, "eq", indid, indonval);
+myparent->addChild(myitem);
+                process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
             }
         }
         if (NodeCheck(node, "Transition"))
         {
             if (transitionid)
             {
-                data = new_isequal(parent, list, "eq", transitionid, "1");
-                process_elements(myparent, data, &(data->object.cond.TrueList), node->children);
-                data = new_isequal(parent, list, "eq", transitionid, "-1");
-                process_elements(myparent, data, &(data->object.cond.TrueList), node->children);
+dcCondition *myitem;
+                data = new_isequal(&myitem, parent, list, "eq", transitionid, "1");
+                process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
+                data = new_isequal(&myitem, parent, list, "eq", transitionid, "-1");
+                process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
             }
         }
         if (NodeCheck(node, "Off"))
         {
             if (transitionid)
             {
-                data = new_isequal(parent, list, "eq", transitionid, "0");
-                struct node *iseq = new_isequal(data, &(data->object.cond.TrueList), "eq", indid, indonval);
-                process_elements(myparent, iseq, &(iseq->object.cond.FalseList), node->children);
+dcCondition *myitem, *mychild;
+                data = new_isequal(&myitem, parent, list, "eq", transitionid, "0");
+myparent->addChild(myitem);
+                struct node *iseq = new_isequal(&mychild, data, &(data->object.cond.TrueList), "eq", indid, indonval);
+myitem->TrueList->addChild(mychild);
+                process_elements(mychild->TrueList, iseq, &(iseq->object.cond.FalseList), node->children);
             }
             else
             {
-                data = new_isequal(parent, list, "eq", indid, indonval);
-                process_elements(myparent, data, &(data->object.cond.FalseList), node->children);
+dcCondition *myitem;
+                data = new_isequal(&myitem, parent, list, "eq", indid, indonval);
+myparent->addChild(myitem);
+                process_elements(myitem->TrueList, data, &(data->object.cond.FalseList), node->children);
             }
         }
         if (NodeCheck(node, "ADI"))

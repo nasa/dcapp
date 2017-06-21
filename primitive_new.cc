@@ -22,7 +22,7 @@ struct node *new_mouseevent(struct node *, struct node **, const char *, const c
 struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
 struct node *new_bezelevent(struct node *, struct node **, const char *);
 struct node *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
-struct node *new_isequal(struct node *, struct node **, const char *, const char *, const char *);
+struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
 
 bool check_dynamic_element(const char *spec)
 {
@@ -429,10 +429,14 @@ struct node *new_button(dcContainer **myitem, struct node *parent, struct node *
 *myitem = new dcContainer();
     curlist = data;
     sublist = &(data->object.cont.SubList);
+dcParent *mySublist = (dcParent *)(*myitem);
     if (activevar)
     {
         if (!activeval) activeval = onestr;
-        curlist = new_isequal(data, &(data->object.cont.SubList), "eq", activevar, activeval);
+dcCondition *mycond;
+curlist = new_isequal(&mycond, data, &(data->object.cont.SubList), "eq", activevar, activeval);
+(*myitem)->addChild(mycond);
+mySublist = mycond->TrueList;
         sublist = &(curlist->object.cond.TrueList);
     }
 
@@ -446,7 +450,9 @@ struct node *new_button(dcContainer **myitem, struct node *parent, struct node *
 
     if (toggle)
     {
-        cond = new_isequal(curlist, sublist, "eq", indid, indonval);
+dcCondition *mycond;
+cond = new_isequal(&mycond, curlist, sublist, "eq", indid, indonval);
+mySublist->addChild(mycond);
         event = new_mouseevent(cond, &(cond->object.cond.TrueList), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
         new_setvalue(event, &(event->object.me.PressList), switchid, 0x0, 0x0, 0x0, offval);
         if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
@@ -457,11 +463,11 @@ struct node *new_button(dcContainer **myitem, struct node *parent, struct node *
         {
 dcKeyboardEvent *myevent;
             event = new_keyboardevent(&myevent, cond, &(cond->object.cond.TrueList), key, keyascii);
-(*myitem)->addChild(myevent);
+mycond->TrueList->addChild(myevent);
             new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, offval);
             if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
             event = new_keyboardevent(&myevent, cond, &(cond->object.cond.FalseList), key, keyascii);
-(*myitem)->addChild(myevent);
+mycond->FalseList->addChild(myevent);
             new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
             if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "1");
         }
@@ -489,7 +495,7 @@ dcKeyboardEvent *myevent;
         {
 dcKeyboardEvent *myevent;
             event = new_keyboardevent(&myevent, curlist, sublist, key, keyascii);
-(*myitem)->addChild(myevent);
+mySublist->addChild(myevent);
             new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
             if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "1");
             if (momentary)
@@ -513,16 +519,23 @@ dcKeyboardEvent *myevent;
 
     if (transitionid)
     {
-        list1 = new_isequal(data, &(data->object.cont.SubList), "eq", transitionid, "1");
-        list2 = new_isequal(list1, &(list1->object.cond.TrueList), "eq", indid, indonval);
+dcCondition *mylist1, *mylist2, *mylist3, *mylist4, *mylist5, *mylist6;
+        list1 = new_isequal(&mylist1, data, &(data->object.cont.SubList), "eq", transitionid, "1");
+(*myitem)->addChild(mylist1);
+        list2 = new_isequal(&mylist2, list1, &(list1->object.cond.TrueList), "eq", indid, indonval);
+mylist1->TrueList->addChild(mylist2);
         new_setvalue(list2, &(list2->object.cond.TrueList), transitionid, 0x0, 0x0, 0x0, "0");
-        list3 = new_isequal(list2, &(list2->object.cond.FalseList), "eq", switchid, switchonval);
+        list3 = new_isequal(&mylist3, list2, &(list2->object.cond.FalseList), "eq", switchid, switchonval);
+mylist2->FalseList->addChild(mylist3);
         new_setvalue(list3, &(list3->object.cond.FalseList), transitionid, 0x0, 0x0, 0x0, "0");
 
-        list4 = new_isequal(data, &(data->object.cont.SubList), "eq", transitionid, "-1");
-        list5 = new_isequal(list4, &(list4->object.cond.TrueList), "eq", indid, indonval);
+        list4 = new_isequal(&mylist4, data, &(data->object.cont.SubList), "eq", transitionid, "-1");
+(*myitem)->addChild(mylist4);
+        list5 = new_isequal(&mylist5, list4, &(list4->object.cond.TrueList), "eq", indid, indonval);
+mylist4->TrueList->addChild(mylist5);
         new_setvalue(list5, &(list5->object.cond.FalseList), transitionid, 0x0, 0x0, 0x0, "0");
-        list6 = new_isequal(list5, &(list5->object.cond.FalseList), "eq", switchid, switchoffval);
+        list6 = new_isequal(&mylist6, list5, &(list5->object.cond.FalseList), "eq", switchid, switchoffval);
+mylist5->FalseList->addChild(mylist6);
         new_setvalue(list6, &(list6->object.cond.TrueList), transitionid, 0x0, 0x0, 0x0, "0");
     }
 
@@ -664,7 +677,7 @@ struct node *new_setvalue(struct node *parent, struct node **list, const char *v
     return data;
 }
 
-struct node *new_isequal(struct node *parent, struct node **list, const char *opspec, const char *val1, const char *val2)
+struct node *new_isequal(dcCondition **myitem, struct node *parent, struct node **list, const char *opspec, const char *val1, const char *val2)
 {
     const char *onestr = strdup("1");
 
@@ -703,7 +716,7 @@ struct node *new_isequal(struct node *parent, struct node **list, const char *op
 
     data->object.cond.val1 = getVariablePointer(data->object.cond.datatype1, val1);
     data->object.cond.val2 = getVariablePointer(data->object.cond.datatype2, val2);
-//*myitem = new dcCondition(parent, data->object.cond.opspec, data->object.cond.datatype1, data->object.cond.val1, data->object.cond.datatype2, data->object.cond.val2);
+*myitem = new dcCondition(data->object.cond.opspec, data->object.cond.datatype1, data->object.cond.val1, data->object.cond.datatype2, data->object.cond.val2);
 
     return data;
 }
