@@ -16,6 +16,8 @@
 #include "comm.hh"
 #include "animation.hh"
 
+#include "primitives/primitives.hh"
+
 #define UNDEFINED_TYPE 0
 #define STRING_TYPE    1
 #define FLOAT_TYPE     2
@@ -321,6 +323,7 @@ typedef struct
     std::list<PixelStreamItem *> pixelstreams;
     int *canbus_inhibited;
     struct Window window;
+dcWindow *toplevel;
     void (*DisplayPreInit)(void *(*)(const char *));
     void (*DisplayInit)(void);
     void (*DisplayLogic)(void);

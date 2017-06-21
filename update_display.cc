@@ -24,6 +24,7 @@ void UpdateDisplay(void)
             break;
         }
     }
+AppData.toplevel->setCurrentPanel();
 
     AppData.DisplayLogic();
 

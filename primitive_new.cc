@@ -19,7 +19,7 @@ extern void window_init(bool, int , int, int, int);
 extern appdata AppData;
 
 struct node *new_mouseevent(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
-struct node *new_keyboardevent(struct node *, struct node **, const char *, const char *);
+struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
 struct node *new_bezelevent(struct node *, struct node **, const char *);
 struct node *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
 struct node *new_isequal(struct node *, struct node **, const char *, const char *, const char *);
@@ -127,14 +127,15 @@ static struct node *add_primitive_node(struct node *parent, struct node **list, 
     return data;
 }
 
-void new_window(bool fullscreen, int OriginX, int OriginY, int SizeX, int SizeY, const char *activedisp)
+void new_window(dcWindow **myitem, bool fullscreen, int OriginX, int OriginY, int SizeX, int SizeY, const char *activedisp)
 {
     window_init(fullscreen, OriginX, OriginY, SizeX, SizeY);
     graphics_init();
     AppData.window.active_display = getIntegerPointer(activedisp);
+*myitem = new dcWindow(AppData.window.active_display);
 }
 
-struct node *new_panel(const char *index, const char *colorspec, const char *vwidth, const char *vheight)
+struct node *new_panel(dcPanel **myitem, const char *index, const char *colorspec, const char *vwidth, const char *vheight)
 {
     struct node *data = (struct node *)calloc(1, sizeof(struct node));
 
@@ -149,16 +150,18 @@ struct node *new_panel(const char *index, const char *colorspec, const char *vwi
 
     AppData.window.panels.push_back(data);
     AppData.window.current_panel = data;
+*myitem = new dcPanel(data->object.panel.displayID);
 
     return data;
 }
 
-struct node *new_container(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *vwidth, const char *vheight, const char *rotate)
+struct node *new_container(dcContainer **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *vwidth, const char *vheight, const char *rotate)
 {
     struct node *data = add_primitive_node(parent, list, Container, x, y, width, height, halign, valign, rotate);
 
     data->object.cont.vwidth = getFloatPointer(vwidth, *(data->info.w));
     data->object.cont.vheight = getFloatPointer(vheight, *(data->info.h));
+*myitem = new dcContainer();
 
     return data;
 }
@@ -405,7 +408,7 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, const cha
     return data;
 }
 
-struct node *new_button(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign,
+struct node *new_button(dcContainer **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign,
                         const char *rotate, const char *type, const char *switchid, const char *switchonval, const char *switchoffval, const char *indid, const char *indonval,
                         const char *activevar, const char *activeval, const char *transitionid, const char *key, const char *keyascii, const char *bezelkey)
 {
@@ -423,6 +426,7 @@ struct node *new_button(struct node *parent, struct node **list, const char *x, 
     data->object.cont.vwidth = data->info.w;
     data->object.cont.vheight = data->info.h;
 
+*myitem = new dcContainer();
     curlist = data;
     sublist = &(data->object.cont.SubList);
     if (activevar)
@@ -451,10 +455,13 @@ struct node *new_button(struct node *parent, struct node **list, const char *x, 
         if (transitionid) new_setvalue(event, &(event->object.me.PressList), transitionid, 0x0, 0x0, 0x0, "1");
         if (key || keyascii)
         {
-            event = new_keyboardevent(cond, &(cond->object.cond.TrueList), key, keyascii);
+dcKeyboardEvent *myevent;
+            event = new_keyboardevent(&myevent, cond, &(cond->object.cond.TrueList), key, keyascii);
+(*myitem)->addChild(myevent);
             new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, offval);
             if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
-            event = new_keyboardevent(cond, &(cond->object.cond.FalseList), key, keyascii);
+            event = new_keyboardevent(&myevent, cond, &(cond->object.cond.FalseList), key, keyascii);
+(*myitem)->addChild(myevent);
             new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
             if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "1");
         }
@@ -480,7 +487,9 @@ struct node *new_button(struct node *parent, struct node **list, const char *x, 
         }
         if (key || keyascii)
         {
-            event = new_keyboardevent(curlist, sublist, key, keyascii);
+dcKeyboardEvent *myevent;
+            event = new_keyboardevent(&myevent, curlist, sublist, key, keyascii);
+(*myitem)->addChild(myevent);
             new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
             if (transitionid) new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "1");
             if (momentary)
@@ -557,7 +566,7 @@ struct node *new_mouseevent(struct node *parent, struct node **list, const char 
     return data;
 }
 
-struct node *new_keyboardevent(struct node *parent, struct node **list, const char *key, const char *keyascii)
+struct node *new_keyboardevent(dcKeyboardEvent **myitem, struct node *parent, struct node **list, const char *key, const char *keyascii)
 {
     if (!key && !keyascii) return 0x0;
 
@@ -567,6 +576,7 @@ struct node *new_keyboardevent(struct node *parent, struct node **list, const ch
         data->object.ke.key = key[0];
     else
         data->object.ke.key = StrToInt(keyascii, 0);
+*myitem = new dcKeyboardEvent(data->object.ke.key);
 
     return data;
 }
@@ -693,6 +703,7 @@ struct node *new_isequal(struct node *parent, struct node **list, const char *op
 
     data->object.cond.val1 = getVariablePointer(data->object.cond.datatype1, val1);
     data->object.cond.val2 = getVariablePointer(data->object.cond.datatype2, val2);
+//*myitem = new dcCondition(parent, data->object.cond.opspec, data->object.cond.datatype1, data->object.cond.val1, data->object.cond.datatype2, data->object.cond.val2);
 
     return data;
 }

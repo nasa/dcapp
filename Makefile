@@ -39,6 +39,7 @@ GENHEADER_SOURCES := \
 
 SUBPACKAGE_CONFIGS := \
     osenv/bin/osenv-config \
+    primitives/bin/primitives-config \
     3rdParty/can/bin/CanPlugin-config \
     3rdParty/ccsds/bin/CcsdsPlugin-config \
     3rdParty/edge/bin/EdgePlugin-config \
@@ -97,6 +98,7 @@ prebuild:
 	${MAKE} -C packages
 	${MAKE} -C 3rdParty
 	${MAKE} -C osenv
+	${MAKE} -C primitives
 
 postbuild:
 	${MAKE} -C samples
@@ -105,6 +107,7 @@ clean:
 	${MAKE} -C packages clean
 	${MAKE} -C 3rdParty clean
 	${MAKE} -C osenv clean
+	${MAKE} -C primitives clean
 	${MAKE} -C samples clean
 	rm -rf $(OBJDIR)
 	rm -rf $(BINDIR)

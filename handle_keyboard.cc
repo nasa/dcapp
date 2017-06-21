@@ -13,6 +13,7 @@ static std::list<struct node *> actionList;
 void HandleKeyboard(unsigned char key)
 {
     KeyPressed(AppData.window.current_panel->object.panel.SubList, key);
+AppData.toplevel->handleKeyboard(key);
     std::list<struct node *>::iterator action;
     for (action = actionList.begin(); action != actionList.end(); action++)
     {
