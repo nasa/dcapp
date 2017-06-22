@@ -21,8 +21,8 @@ void dcKeyboardEvent::handleKeyboard(char key)
     if (mykey == key)
     {
         this->PressList->updateData();
-        UpdateDisplay();
+        UpdateDisplay(); // TODO: UpdateDisplay should only be called once AFTER all keypress events are processed
         this->ReleaseList->updateData();
-        UpdateDisplay();
+        UpdateDisplay(); // TODO: UpdateDisplay should only be called once AFTER all keyrelease events are processed
     }
 }

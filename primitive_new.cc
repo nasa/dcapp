@@ -20,7 +20,7 @@ extern appdata AppData;
 
 struct node *new_mouseevent(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
 struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
-struct node *new_bezelevent(struct node *, struct node **, const char *);
+struct node *new_bezelevent(dcBezelEvent **, struct node *, struct node **, const char *);
 struct node *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
 struct node *new_setvalue(dcSetValue **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
 struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
@@ -488,12 +488,30 @@ myevent->PressList->addChild(myset4);
         }
         if (bezelkey)
         {
-            event = new_bezelevent(cond, &(cond->object.cond.TrueList), bezelkey);
-            new_setvalue(event, &(event->object.be.PressList), switchid, 0x0, 0x0, 0x0, offval);
-            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
-            event = new_bezelevent(cond, &(cond->object.cond.FalseList), bezelkey);
-            new_setvalue(event, &(event->object.be.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
-            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+dcBezelEvent *myevent1;
+            event = new_bezelevent(&myevent1, cond, &(cond->object.cond.TrueList), bezelkey);
+mycond->TrueList->addChild(myevent1);
+dcSetValue *myset1;
+            new_setvalue(&myset1, event, &(event->object.be.PressList), switchid, 0x0, 0x0, 0x0, offval);
+myevent1->PressList->addChild(myset1);
+            if (transitionid)
+            {
+dcSetValue *myset2;
+                new_setvalue(&myset2, event, &(event->object.be.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
+myevent1->PressList->addChild(myset2);
+            }
+dcBezelEvent *myevent2;
+            event = new_bezelevent(&myevent2, cond, &(cond->object.cond.FalseList), bezelkey);
+mycond->FalseList->addChild(myevent2);
+dcSetValue *myset3;
+            new_setvalue(&myset3, event, &(event->object.be.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+myevent2->PressList->addChild(myset3);
+            if (transitionid)
+            {
+dcSetValue *myset4;
+                new_setvalue(&myset4, event, &(event->object.be.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+myevent2->PressList->addChild(myset4);
+            }
         }
     }
     else
@@ -535,13 +553,29 @@ myevent->ReleaseList->addChild(myset2);
         }
         if (bezelkey)
         {
-            event = new_bezelevent(curlist, sublist, bezelkey);
-            new_setvalue(event, &(event->object.be.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
-            if (transitionid) new_setvalue(event, &(event->object.be.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+dcBezelEvent *myevent1;
+            event = new_bezelevent(&myevent1, curlist, sublist, bezelkey);
+mySublist->addChild(myevent1);
+dcSetValue *myset1;
+            new_setvalue(&myset1, event, &(event->object.be.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+myevent1->PressList->addChild(myset1);
+            if (transitionid)
+            {
+dcSetValue *myset2;
+                new_setvalue(&myset2, event, &(event->object.be.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+myevent1->PressList->addChild(myset2);
+            }
             if (momentary)
             {
-                new_setvalue(event, &(event->object.be.ReleaseList), switchid, 0x0, 0x0, 0x0, offval);
-                if (transitionid) new_setvalue(event, &(event->object.be.ReleaseList), transitionid, 0x0, 0x0, 0x0, "-1");
+dcSetValue *myset3;
+                new_setvalue(&myset3, event, &(event->object.be.ReleaseList), switchid, 0x0, 0x0, 0x0, offval);
+myevent1->ReleaseList->addChild(myset3);
+                if (transitionid)
+                {
+dcSetValue *myset4;
+                    new_setvalue(&myset4, event, &(event->object.be.ReleaseList), transitionid, 0x0, 0x0, 0x0, "-1");
+myevent1->ReleaseList->addChild(myset4);
+                }
             }
         }
     }
@@ -628,13 +662,18 @@ struct node *new_keyboardevent(dcKeyboardEvent **myitem, struct node *parent, st
     return data;
 }
 
-struct node *new_bezelevent(struct node *parent, struct node **list, const char *key)
+struct node *new_bezelevent(dcBezelEvent **myitem, struct node *parent, struct node **list, const char *key)
 {
-    if (!key) return 0x0;
+    if (!key)
+    {
+        *myitem = 0x0;
+        return 0x0;
+    }
 
     struct node *data = add_primitive_node(parent, list, BezelEvent, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-
     data->object.be.key = StrToInt(key, 0);
+
+*myitem = new dcBezelEvent(StrToInt(key, 0));
 
     return data;
 }

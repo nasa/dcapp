@@ -10,16 +10,13 @@ class dcKeyboardEvent : public dcObject
         dcKeyboardEvent(char);
         virtual ~dcKeyboardEvent();
 
-//        virtual void draw(void) { };
         void handleKeyboard(char);
-//        virtual void handleMousePress(float, float) { };
-//        virtual void handleMouseRelease(void) { };
 
         dcParent *PressList;
         dcParent *ReleaseList;
 
     private:
-        char mykey; // better to have a key list
+        char mykey; // TODO: better to have a key list
 };
 
 #endif

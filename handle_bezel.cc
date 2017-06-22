@@ -1,18 +1,18 @@
 #include <sstream>
-#include <list>
+//#include <list>
 #include "basicutils/msg.hh"
 #include "nodes.hh"
 #include "bezel.hh"
 
-extern void ProcessEventList(struct node *);
-extern bool CheckCondition(struct node *);
+//extern void ProcessEventList(struct node *);
+//extern bool CheckCondition(struct node *);
 
 extern appdata AppData;
 
-static void BezelButtonPressed(struct node *, int);
-static void BezelButtonReleased(struct node *, int);
+//static void BezelButtonPressed(struct node *, int);
+//static void BezelButtonReleased(struct node *, int);
 
-static std::list<struct node *> actionList;
+//static std::list<struct node *> actionList;
 
 
 void HandleBezelControl(int type, int itemid, int action)
@@ -50,6 +50,7 @@ void HandleBezelButton(int type, int itemid, int action)
 
     if (type == BEZEL_BUTTON)
     {
+#if 0
         if (action == BEZEL_PRESSED) BezelButtonPressed(AppData.window.current_panel->object.panel.SubList, itemid);
         else if (action == BEZEL_RELEASED)
         { // Check all lists since BEZEL_PRESSED may have been on a different active page
@@ -66,10 +67,14 @@ void HandleBezelButton(int type, int itemid, int action)
             ProcessEventList(*action);
         }
         actionList.clear();
+#else
+        if (action == BEZEL_PRESSED) AppData.toplevel->handleBezelPress(itemid);
+        else if (action == BEZEL_RELEASED) AppData.toplevel->handleBezelRelease(itemid);
+#endif
     }
 }
 
-
+#if 0
 static void BezelButtonPressed(struct node *list, int itemid)
 {
     for (struct node *current = list; current; current = current->p_next)
@@ -124,3 +129,4 @@ static void BezelButtonReleased(struct node *list, int itemid)
         current->info.selected = false;
     }
 }
+#endif

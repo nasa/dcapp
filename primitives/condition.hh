@@ -11,6 +11,8 @@ class dcCondition : public dcObject
         virtual ~dcCondition();
 
         void handleKeyboard(char);
+        void handleBezelPress(int);
+        void handleBezelRelease(int);
         void updateData(void);
         void processAnimation(void);
 

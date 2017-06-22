@@ -37,7 +37,7 @@ extern struct node *new_adi(struct node *, struct node **, const char *, const c
                                  const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_mouseevent(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
-extern struct node *new_bezelevent(struct node *, struct node **, const char *);
+extern struct node *new_bezelevent(dcBezelEvent **, struct node *, struct node **, const char *);
 extern struct node *new_animation(struct node *, struct node **, const char *);
 extern struct node *new_setvalue(dcSetValue **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
 extern struct ModifyValue get_setvalue_data(const char *, const char *, const char *, const char *, const char *);
@@ -562,15 +562,21 @@ mySublist = mycond->TrueList;
             if (key || keyascii)
 {
 dcKeyboardEvent *myitem;
-                /*struct node *dataitem = */new_keyboardevent(&myitem, curlist, sublist, key, keyascii);
-//                dataitem->object.ke.PressList = data->object.me.PressList;
+                new_keyboardevent(&myitem, curlist, sublist, key, keyascii);
+//                data->object.ke.PressList = data->object.me.PressList;
 mySublist->addChild(myitem);
-//set KeyboardEvent PressList to MouseEvent PressList
+//set KeyboardEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
 process_elements(myitem->PressList, data, &(data->object.me.PressList), node->children);
-//see the hack a few lines above
 }
             if (bezelkey)
-                new_bezelevent(curlist, sublist, bezelkey)->object.be.PressList = data->object.me.PressList;
+            {
+dcBezelEvent *myitem;
+                new_bezelevent(&myitem, curlist, sublist, bezelkey);
+//                data->object.be.PressList = data->object.me.PressList;
+mySublist->addChild(myitem);
+//set BezelEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
+process_elements(myitem->PressList, data, &(data->object.me.PressList), node->children);
+            }
         }
         if (NodeCheck(node, "OnRelease"))
         {
@@ -591,15 +597,21 @@ mySublist = mycond->TrueList;
             if (key || keyascii)
 {
 dcKeyboardEvent *myitem;
-                /*struct node *dataitem = */new_keyboardevent(&myitem, curlist, sublist, key, keyascii);
-//                dataitem->object.ke.PressList = data->object.me.ReleaseList;
+                new_keyboardevent(&myitem, curlist, sublist, key, keyascii);
+//                data->object.ke.PressList = data->object.me.ReleaseList;
 mySublist->addChild(myitem);
-//set KeyboardEvent PressList to MouseEvent PressList
+//set KeyboardEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
 process_elements(myitem->PressList, data, &(data->object.me.PressList), node->children);
-//see the hack a few lines above
 }
             if (bezelkey)
-                new_bezelevent(curlist, sublist, bezelkey)->object.be.PressList = data->object.me.ReleaseList;
+            {
+dcBezelEvent *myitem;
+                new_bezelevent(&myitem, curlist, sublist, bezelkey);
+//                data->object.be.PressList = data->object.me.ReleaseList;
+mySublist->addChild(myitem);
+//set BezelEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
+process_elements(myitem->PressList, data, &(data->object.me.PressList), node->children);
+            }
         }
         if (NodeCheck(node, "Active"))
         {
@@ -734,23 +746,25 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "BezelEvent"))
         {
-            data = new_bezelevent(parent, list, get_element_data(node, "Key"));
+dcBezelEvent *myitem;
+            data = new_bezelevent(&myitem, parent, list, get_element_data(node, "Key"));
+myparent->addChild(myitem);
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
                 if (NodeCheck(subnode, "OnPress"))
                 {
-                    process_elements(myparent, data, &(data->object.be.PressList), subnode->children);
+                    process_elements(myitem->PressList, data, &(data->object.be.PressList), subnode->children);
                     subparent_found = true;
                 }
                 if (NodeCheck(subnode, "OnRelease"))
                 {
-                    process_elements(myparent, data, &(data->object.be.ReleaseList), subnode->children);
+                    process_elements(myitem->ReleaseList, data, &(data->object.be.ReleaseList), subnode->children);
                     subparent_found = true;
                 }
             }
             // Assume "Press" if no subparent is found
-            if (!subparent_found) process_elements(myparent, data, &(data->object.be.PressList), node->children);
+            if (!subparent_found) process_elements(myitem->PressList, data, &(data->object.be.PressList), node->children);
         }
     }
 

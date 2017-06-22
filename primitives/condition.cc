@@ -28,6 +28,21 @@ void dcCondition::handleKeyboard(char key)
         FalseList->handleKeyboard(key);
 }
 
+void dcCondition::handleBezelPress(int key)
+{
+    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+        TrueList->handleBezelPress(key);
+    else
+        FalseList->handleBezelPress(key);
+}
+
+void dcCondition::handleBezelRelease(int key)
+{
+    // check both lists in case the press was done while the condition was in a different state
+    TrueList->handleBezelRelease(key);
+    FalseList->handleBezelRelease(key);
+}
+
 void dcCondition::updateData(void)
 {
     if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))

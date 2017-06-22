@@ -11,6 +11,8 @@ class dcObject
         virtual void handleKeyboard(char) { };
         virtual void handleMousePress(float, float) { };
         virtual void handleMouseRelease(void) { };
+        virtual void handleBezelPress(int) { };
+        virtual void handleBezelRelease(int) { };
         virtual void updateData(void) { };
         virtual void processAnimation(void) { };
         virtual void setParent(dcObject *parentid) { parent = parentid; };

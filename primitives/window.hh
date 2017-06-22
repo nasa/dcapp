@@ -10,6 +10,8 @@ class dcWindow : public dcParent
         dcWindow(int *);
         void setCurrentPanel(void);
         void handleKeyboard(char);
+        void handleBezelPress(int);
+        void handleBezelRelease(int);
 
     private:
         int *displayID;
