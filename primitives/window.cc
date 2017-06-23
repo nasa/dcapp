@@ -22,6 +22,20 @@ void dcWindow::handleKeyboard(char key)
     if (currentPanel) currentPanel->handleKeyboard(key);
 }
 
+void dcWindow::handleMousePress(float x, float y)
+{
+    if (currentPanel) currentPanel->handleMousePress(x, y);
+}
+
+void dcWindow::handleMouseRelease(void)
+{
+    // check all panels for release in case the active panel changed after the press event
+    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
+    {
+        (*myobj)->handleMouseRelease();
+    }
+}
+
 void dcWindow::handleBezelPress(int key)
 {
     if (currentPanel) currentPanel->handleBezelPress(key);

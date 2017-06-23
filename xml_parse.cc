@@ -35,11 +35,11 @@ extern struct node *new_button(dcContainer **, struct node *, struct node **, co
                                const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_adi(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
                                  const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_mouseevent(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_mouseevent(dcMouseEvent **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
 extern struct node *new_bezelevent(dcBezelEvent **, struct node *, struct node **, const char *);
 extern struct node *new_animation(struct node *, struct node **, const char *);
-extern struct node *new_setvalue(dcSetValue **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
+extern dcSetValue *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
 extern struct ModifyValue get_setvalue_data(const char *, const char *, const char *, const char *, const char *);
 extern bool CheckConditionLogic(int, int, const void *, int, const void *);
 extern void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
@@ -196,8 +196,7 @@ myparent->addChild(myitem);
             }
             else
 {
-dcSetValue *myitem;
-                data = new_setvalue(&myitem, parent, list,
+dcSetValue *myitem = new_setvalue(parent, list,
                                      get_element_data(node, "Variable"),
                                      get_element_data(node, "Operator"),
                                      get_element_data(node, "MinimumValue"),
@@ -556,9 +555,11 @@ myparent->addChild(mycond);
 mySublist = mycond->TrueList;
                 sublist = &(curlist->object.cond.TrueList);
             }
-            data = new_mouseevent(curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+dcMouseEvent *mymouse;
+            data = new_mouseevent(&mymouse, curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+mySublist->addChild(mymouse);
 //need to do this for functionality
-            process_elements(myparent, data, &(data->object.me.PressList), node->children);
+            process_elements(mymouse->PressList, data, &(data->object.me.PressList), node->children);
             if (key || keyascii)
 {
 dcKeyboardEvent *myitem;
@@ -591,9 +592,11 @@ myparent->addChild(mycond);
 mySublist = mycond->TrueList;
                 sublist = &(curlist->object.cond.TrueList);
             }
-            data = new_mouseevent(curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+            dcMouseEvent *mymouse;
+            data = new_mouseevent(&mymouse, curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+            mySublist->addChild(mymouse);
 //need to do this for functionality
-            process_elements(myparent, data, &(data->object.me.ReleaseList), node->children);
+            process_elements(mymouse->ReleaseList, data, &(data->object.me.ReleaseList), node->children);
             if (key || keyascii)
 {
 dcKeyboardEvent *myitem;
@@ -698,29 +701,31 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "MouseEvent"))
         {
-            data = new_mouseevent(parent, list,
+            dcMouseEvent *mymouse;
+            data = new_mouseevent(&mymouse, parent, list,
                                   get_element_data(node, "X"),
                                   get_element_data(node, "Y"),
                                   get_element_data(node, "Width"),
                                   get_element_data(node, "Height"),
                                   get_element_data(node, "HorizontalAlign"),
                                   get_element_data(node, "VerticalAlign"));
+            myparent->addChild(mymouse);
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
                 if (NodeCheck(subnode, "OnPress"))
                 {
-                    process_elements(myparent, data, &(data->object.me.PressList), subnode->children);
+                    process_elements(mymouse->PressList, data, &(data->object.me.PressList), subnode->children);
                     subparent_found = true;
                 }
                 if (NodeCheck(subnode, "OnRelease"))
                 {
-                    process_elements(myparent, data, &(data->object.me.ReleaseList), subnode->children);
+                    process_elements(mymouse->ReleaseList, data, &(data->object.me.ReleaseList), subnode->children);
                     subparent_found = true;
                 }
             }
             // Assume "Press" if no subparent is found
-            if (!subparent_found) process_elements(myparent, data, &(data->object.me.PressList), node->children);
+            if (!subparent_found) process_elements(mymouse->PressList, data, &(data->object.me.PressList), node->children);
         }
         if (NodeCheck(node, "KeyboardEvent"))
         {

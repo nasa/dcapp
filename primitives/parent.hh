@@ -11,6 +11,10 @@ class dcParent : public dcObject
         virtual ~dcParent();
 
         void handleKeyboard(char);
+        void handleMousePress(float, float);
+        void handleMouseRelease(void);
+        void handleBezelPress(int);
+        void handleBezelRelease(int);
         void updateData(void);
         void processAnimation(void);
 

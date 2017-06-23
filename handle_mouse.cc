@@ -20,6 +20,7 @@ static int mousebouncemode = 0;
 
 void HandleMousePress(float xpct, float ypct)
 {
+AppData.toplevel->handleMousePress(AppData.window.current_panel->object.panel.orthoX * xpct, AppData.window.current_panel->object.panel.orthoY * ypct);
     // Scale cursor x and y with ortho x and y
     MouseDown(AppData.window.current_panel->object.panel.SubList, AppData.window.current_panel->object.panel.orthoX * xpct, AppData.window.current_panel->object.panel.orthoY * ypct);
 
@@ -34,6 +35,7 @@ void HandleMousePress(float xpct, float ypct)
 
 void HandleMouseRelease(void)
 {
+AppData.toplevel->handleMouseRelease();
     // Check all lists since "MouseDown" may have been on a different active page
     std::list<struct node *>::iterator panel;
     for (panel = AppData.window.panels.begin(); panel != AppData.window.panels.end(); panel++)

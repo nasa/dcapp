@@ -7,17 +7,24 @@
 class dcMouseEvent : public dcObject
 {
     public:
-        dcMouseEvent(int);
+        dcMouseEvent(float *, float *, float *, float *, float *, float *, unsigned, unsigned);
         virtual ~dcMouseEvent();
 
-        void handleMousePress(int);
-        void handleMouseRelease(int);
+        void handleMousePress(float, float);
+        void handleMouseRelease(void);
 
         dcParent *PressList;
         dcParent *ReleaseList;
 
     private:
-        int mykey; // TODO: better to have a key list
+        float *x;
+        float *y;
+        float *w;
+        float *h;
+        float *containerw;
+        float *containerh;
+        unsigned halign;
+        unsigned valign;
         bool selected;
 };
 
