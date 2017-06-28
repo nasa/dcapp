@@ -13,6 +13,9 @@ void UpdateStreams(void)
 {
     passnum++;
     struct node *current = AppData.window.current_panel;
+    if( current == nullptr )
+        return;
+    
     traverse_list(current->object.panel.SubList);
 }
 

@@ -45,7 +45,7 @@ void HandleBezelButton(int type, int itemid, int action)
         case BEZEL_COUNTERCLOCKWISE: debug_string << "Couterclockwise Tick"; break;
         default:                     debug_string << "Unknown";              break;
     }
-    debug_msg(debug_string);
+    debug_msg(debug_string.str());
 #endif
 
     if (type == BEZEL_BUTTON)

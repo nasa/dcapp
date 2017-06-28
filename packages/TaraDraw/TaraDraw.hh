@@ -3,16 +3,16 @@
 
 #include "tdDefines.hh"
 
-extern int tdButtLineCapStyle;
-extern int tdRoundLineCapStyle;
-extern int tdSquareLineCapStyle;
-extern int tdAlignLeft;
-extern int tdAlignCenter;
-extern int tdAlignRight;
-extern int tdAlignBottom;
-extern int tdAlignMiddle;
-extern int tdAlignTop;
-extern int tdAlignBaseline;
+const int tdButtLineCapStyle =  0; // NSButtLineCapStyle;
+const int tdRoundLineCapStyle = 0; // NSRoundLineCapStyle;
+const int tdSquareLineCapStyle = 0; // NSSquareLineCapStyle;
+const int tdAlignLeft = 0x00;
+const int tdAlignCenter = 0x01;
+const int tdAlignRight = 0x02;
+const int tdAlignBottom = 0x00;
+const int tdAlignMiddle = 0x04;
+const int tdAlignTop = 0x08;
+const int tdAlignBaseline = 0x10;
 
 // Initialization routines
 extern int tdInitialize(char *);
@@ -23,6 +23,8 @@ extern tdGLContext *tdGLCreateContext(tdWindow);
 extern void tdGLReshapeContext(float, float, int, float, float);
 extern int tdRegisterColor(int, float, float, float);
 extern int tdRegisterXFont(const char *, int, char *);
+
+int tdLoadImageAsTexture( const char *fileNameA );
 
 // Settings routines
 extern void tdSetActiveWindow(tdWindow);

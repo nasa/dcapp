@@ -19,8 +19,8 @@ void win_close(WinCloseEvent);
 
 static struct
 {
-    tdWindow id;
-    tdGLContext *gl_context;
+    tdWindow windowID;      // changed to allow easier searching
+    tdGLContext *gl_context;    // This does not need to be exposed at this level, every use is encapsulated in the drawing routines.
     float width;
     float height;
 } mywin;
@@ -40,18 +40,18 @@ void window_init(bool fullscreen, int winOriginX, int winOriginY, int winSizeX, 
 
     if (fullscreen)
     {
-        mywin.id = tdOpenFullScreen("dcapp");
+        mywin.windowID = tdOpenFullScreen("dcapp");
         mywin.width = usable.width;
         mywin.height = usable.height;
     }
     else
     {
-        mywin.id = tdOpenWindow("dcapp", (float)winOriginX, usable.top - (float)winOriginY, (float)winSizeX, (float)winSizeY, tdAlignLeft | tdAlignTop);
+        mywin.windowID = tdOpenWindow("dcapp", (float)winOriginX, usable.top - (float)winOriginY, (float)winSizeX, (float)winSizeY, tdAlignLeft | tdAlignTop);
         mywin.width = (float)winSizeX;
         mywin.height = (float)winSizeY;
     }
 
-    mywin.gl_context = tdGLCreateContext(mywin.id);
+    mywin.gl_context = tdGLCreateContext(mywin.windowID);
 }
 
 
@@ -96,7 +96,10 @@ static void app_run(void)
     Idle();
     tdProcessEvents(mouse_click, key_click, win_config, win_close);
     UpdateStreams();
-    if (tdNeedsRedraw(mywin.id)) Draw();
+#ifndef IOS_BUILD
+    if (tdNeedsRedraw(mywin.windowID))
+        Draw();
+#endif
 }
 
 
@@ -120,7 +123,7 @@ void mainloop(void)
 
 void SetNeedsRedraw(void)
 {
-    tdSetNeedsRedraw(mywin.id);
+    tdSetNeedsRedraw(mywin.windowID);
 }
 
 

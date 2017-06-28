@@ -446,7 +446,7 @@ int probe_server_synch(ENT_PARAM_S *epar)
 int wait_client_synch(ENT_PARAM_S *epar)
 {
     int dataready = 0;
-    int synch_word, cbuf, swapbuf;
+    int synch_word, cbuf=0, swapbuf;
     int iloop = 0;
 
     synch_word = epar->server_port + ENT_CLI_REQ;
@@ -676,7 +676,7 @@ static unsigned long inet_addr(char *inchar)
 ***************************************************************************/
 void swap_byte(char *in, char *out, int blen, int wsize)
 {
-    register int  k;
+    int  k;
     int nword;
     unsigned short *i_2, *o_2;
     unsigned int *i_4, *o_4;

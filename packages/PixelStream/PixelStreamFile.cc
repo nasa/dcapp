@@ -60,7 +60,11 @@ int PixelStreamFile::genericInitialize(const char *filenamespec, int shmemkeyspe
 
 int PixelStreamFile::readerInitialize(const char *filenamespec, int shmemkeyspec)
 {
+#ifndef IOS_BUILD
     return genericInitialize(filenamespec, shmemkeyspec);
+#else
+    return -1;
+#endif
 }
 
 int PixelStreamFile::writerInitialize(const char *filenamespec, int shmemkeyspec)

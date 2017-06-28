@@ -159,11 +159,13 @@ static void MouseUp(struct node *list)
     }
 }
 
-
 // Check if x and y are within a node's bounds
 static bool CheckRegion(struct node *current, float x, float y)
 {
     Geometry geo = GetGeometry(current);
-    if ((geo.left < x) && (x < geo.right) && (geo.bottom < y) && (y < geo.top)) return true;
-    else return false;
+    
+    if ((geo.left < x) && (x < geo.right) && (geo.bottom < y) && (y < geo.top))
+        return true;
+    
+    return false;
 }

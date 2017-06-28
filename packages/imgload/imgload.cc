@@ -76,3 +76,44 @@ int imgload(const char *filename)
     if (image.data) free(image.data);
     return texture;
 }
+
+bool LoadImageFile(const char *filename, ImageStruct *imageA )
+{
+    const char *extension = FindExtension(filename);
+    
+    if (!extension)
+    {
+        return false;
+    }
+    else if (!strcasecmp(extension, "BMP"))
+    {
+        if (LoadBMP(filename, imageA) == -1)
+        {
+            error_msg("LoadBMP returned with error for file " << filename);
+            return false;
+        }
+    }
+    else if (!strcasecmp(extension, "TGA"))
+    {
+        if (LoadTGA(filename, imageA))
+        {
+            error_msg("LoadTGA returned with error for file " << filename);
+            return false;
+        }
+    }
+    else if (!strcasecmp(extension, "JPG") || !strcasecmp(extension, "JPEG"))
+    {
+        if (LoadJPG(filename, imageA))
+        {
+            error_msg("LoadJPG returned with error for file " << filename);
+            return false;
+        }
+    }
+    else
+    {
+        error_msg("Unsupported extension for file " << filename << ": " << extension);
+        return false;
+    }
+
+    return true;
+}

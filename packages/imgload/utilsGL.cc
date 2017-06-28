@@ -2,7 +2,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#ifndef IOS_BUILD
 #include <GL/glu.h>
+#else
+#include <OpenGLES/ES1/glext.h>
+#endif
 #include "imgload_internal.hh"
 
 static void ensureValidSizeForTexturing(ImageStruct *, GLint, GLenum);
@@ -61,8 +65,8 @@ int createTextureFromImage(ImageStruct *image)
 //   GL_DECAL or GL_REPLACE tells OpenGL to replace the base color (and any lighting effects) purely with the colors of the texture.
 // Courtesy http://paulyg.f2s.com/prog3.htm
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, bytesPerPixel, image->width, image->height, 0, format, GL_UNSIGNED_BYTE, image->data);
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, format, image->width, image->height, 0, format, GL_UNSIGNED_BYTE, image->data);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
@@ -94,7 +98,8 @@ static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel,
         fprintf(stderr, "%s %d: Cannot scale NULL image.\n", __FILE__, __LINE__);
         return;
     }
-
+    
+#ifndef IOS_BUILD
     int newW = computeNearestPowerOfTwo(image->width);
     int newH = computeNearestPowerOfTwo(image->height);
 
@@ -116,7 +121,6 @@ static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel,
 
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
         GLint status = gluScaleImage(format, image->width, image->height, GL_UNSIGNED_BYTE, image->data, newW, newH, GL_UNSIGNED_BYTE, newData);
 
         if (!status)
@@ -126,6 +130,10 @@ static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel,
             image->data = (unsigned char*)realloc(image->data, newTotalSize);
             memcpy(image->data, newData, newTotalSize);
         }
-        else fprintf(stderr, "%s %d: %s did not succeed : %s\n", __FILE__,__LINE__, __FUNCTION__,  (char *)gluErrorString((GLenum)status));
+        else
+            fprintf(stderr, "%s %d: %s did not succeed : %s\n", __FILE__,__LINE__, __FUNCTION__,  (char *)gluErrorString((GLenum)status));
     }
+#else
+    // fprintf(stderr, "%s %d: %s did not succeed : No Image Scaling available\n", __FILE__,__LINE__, __FUNCTION__ );
+#endif
 }

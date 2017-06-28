@@ -75,7 +75,7 @@ Geometry GetGeometry(struct node *mynode)
 
 static float GeomX(struct node *mynode)
 {
-    float val;
+    float val = 0.0;
 
     if (mynode->info.x == 0)
     {
@@ -112,7 +112,7 @@ static float GeomX(struct node *mynode)
 
 static float GeomY(struct node *mynode)
 {
-    float val;
+    float val = 0.0;
 
     if (mynode->info.y == 0)
     {

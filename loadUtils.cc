@@ -8,10 +8,15 @@
 #include "imgload/imgload.hh"
 #include "fontlib/fontlib.hh"
 #include "dc.hh"
+#include "TaraDraw/TaraDraw.hh"
+
+#ifdef IOS_BUILD
+#include <CoreFoundation/CoreFoundation.h>
+#endif
 
 typedef struct
 {
-    dcTexture id;
+    dcTexture textureID;    // changed for easier searching
     char *filename;
 } textureInfo;
 
@@ -23,10 +28,11 @@ static list<float> floatConstants;
 static list<int> integerConstants;
 static list<char *> stringConstants;
 
-static char *getFullPath(const char *fname)
+char *getFullPath(const char *fname)
 {
+#ifndef IOS_BUILD
     if (!fname) return 0x0;
-	char *longname = (char *)calloc(PATH_MAX, sizeof(char));
+	char *longname = (char *) calloc(PATH_MAX, sizeof(char));
 	if (!realpath(fname, longname))
 	{
 	    free(longname);
@@ -35,32 +41,57 @@ static char *getFullPath(const char *fname)
 	char *shortname = strdup(longname);
 	free(longname);
 	return shortname;
+#else
+    CFBundleRef mainBundle = CFBundleGetMainBundle();
+    
+    // Look for a resource in the main bundle by name and type.
+    CFURLRef urlL = CFBundleCopyResourceURL( mainBundle,
+                                         CFStringCreateWithCString(NULL, fname, kCFStringEncodingUTF8),
+                                         nullptr,
+                                         nullptr );
+    
+    if( urlL )
+        return strdup( CFStringGetCStringPtr( CFURLCopyPath( urlL ), kCFStringEncodingUTF8 ) );
+    
+    return nullptr;
+#endif
 }
 
 dcTexture dcLoadTexture(const char *filename)
 {
     char *fullpath = getFullPath(filename);
-
+    
     if (!fullpath)
     {
         error_msg("Unable to locate texture file at " << filename);
         return -1;
     }
-
+    
+#if 0
+    for( const auto &pTexL : textures )
+    {
+        if( !strcmp( pTexL.filename, fullpath ) )
+        {
+            free( fullpath );
+            return pTexL.id;
+        }
+    }
+#else
     for (list<textureInfo>::iterator item = textures.begin(); item != textures.end(); item++)
     {
         if (!strcmp(item->filename, fullpath))
         {
             free(fullpath);
-            return item->id;
+            return item->textureID;
         }
     }
-
+#endif
     textureInfo newtexture;
-    newtexture.id = imgload(fullpath);;
+    newtexture.textureID = imgload(fullpath);
+//    newtexture.textureID = tdLoadImageAsTexture( fullpath );
     newtexture.filename = fullpath;
     textures.push_back(newtexture);
-    return newtexture.id;
+    return newtexture.textureID;
 }
 
 dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)

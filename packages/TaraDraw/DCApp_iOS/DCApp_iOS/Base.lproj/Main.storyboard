@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11542" systemVersion="15G1212" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="oAU-au-lRy">
+    <device id="ipad9_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11524"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Main View Controller-->
+        <scene sceneID="P3F-om-fpP">
+            <objects>
+                <viewController id="oAU-au-lRy" customClass="MainViewController" customModule="DCApp_iOS" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="SFW-vP-s20"/>
+                        <viewControllerLayoutGuide type="bottom" id="ccE-6s-qjN"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="Art-dy-reA">
+                        <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="L87-Aq-O9p">
+                                <rect key="frame" x="129" y="459" width="511" height="106"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="511" id="e5b-kw-YqC"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" weight="black" pointSize="72"/>
+                                <state key="normal" title="Start Display"/>
+                                <connections>
+                                    <action selector="onStartDisplay:" destination="oAU-au-lRy" eventType="touchUpInside" id="04O-7k-9Ib"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="L87-Aq-O9p" firstAttribute="top" secondItem="SFW-vP-s20" secondAttribute="bottom" constant="439" id="20m-wz-OaY"/>
+                            <constraint firstItem="L87-Aq-O9p" firstAttribute="centerX" secondItem="Art-dy-reA" secondAttribute="centerX" id="OPk-iZ-L4B"/>
+                            <constraint firstItem="L87-Aq-O9p" firstAttribute="centerY" secondItem="Art-dy-reA" secondAttribute="centerY" id="wHE-0F-66k"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="startDisplayButton" destination="L87-Aq-O9p" id="xhG-Wr-Fej"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="UeP-Ro-jia" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1261.71875" y="-743.5546875"/>
+        </scene>
+    </scenes>
+</document>

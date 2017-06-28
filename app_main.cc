@@ -42,11 +42,33 @@ static void ProcessArgs(int, char **);
 appdata AppData;
 
 
+void InitializeData( int argc, char **argv )
+{
+    
+    Message::setLabel(basename(argv[0]));
+    
+    AppData.master_timer = new Timer;
+    AppData.last_update = new Timer;
+    
+    AppData.DisplayPreInit = &DisplayPreInitStub;
+    AppData.DisplayInit = &DisplayInitStub;
+    AppData.DisplayLogic = &DisplayLogicStub;
+    AppData.DisplayClose = &DisplayCloseStub;
+    
+    SetDefaultEnvironment();
+    ProcessArgs(argc, argv);
+    
+    AppData.DisplayPreInit(get_pointer);
+    AppData.DisplayInit();
+    UpdateDisplay();
+}
+
 /*********************************************************************************
  *
  *  The main routine. Calls setup, handlers, and event loop.
  *
  *********************************************************************************/
+#ifndef IOS_BUILD
 int main(int argc, char **argv)
 {
     // Set up signal handlers
@@ -54,28 +76,14 @@ int main(int argc, char **argv)
     signal(SIGTERM, Terminate);
     signal(SIGPIPE, SIG_IGN);
 
-    Message::setLabel(basename(argv[0]));
-
-    AppData.master_timer = new Timer;
-    AppData.last_update = new Timer;
-
-    AppData.DisplayPreInit = &DisplayPreInitStub;
-    AppData.DisplayInit = &DisplayInitStub;
-    AppData.DisplayLogic = &DisplayLogicStub;
-    AppData.DisplayClose = &DisplayCloseStub;
-
-    SetDefaultEnvironment();
-    ProcessArgs(argc, argv);
-
-    AppData.DisplayPreInit(get_pointer);
-    AppData.DisplayInit();
-    UpdateDisplay();
-
+    InitializeData( argc, argv );
+    
     // Do forever
     mainloop();
 
     return(0);
 }
+#endif
 
 
 /*********************************************************************************
@@ -161,6 +169,7 @@ void Terminate(int flag)
 /* the user needs them: USER, LOGNAME, HOME, OSTYPE, MACHTYPE, and HOST */
 static void SetDefaultEnvironment(void)
 {
+#ifndef IOS_BUILD
     int i;
     struct utsname minfo;
     struct passwd *pw = getpwuid(getuid());
@@ -181,6 +190,7 @@ static void SetDefaultEnvironment(void)
     setenv("MACHTYPE", minfo.machine, 0);
 
     if (!gethostname(myhost, hsize)) setenv("HOST", myhost, 0);
+#endif
 }
 
 static void ProcessArgs(int argc, char **argv)
@@ -246,7 +256,7 @@ static void ProcessArgs(int argc, char **argv)
         free(key);
         free(value);
     }
-
+    
     if (ParseXMLFile(specfile)) Terminate(-1);
 
     storeArgs(specfile, args);

@@ -23,11 +23,14 @@ extern appdata AppData;
  *********************************************************************************/
 void Draw(void)
 {
-    struct node *current = AppData.window.current_panel;
-    setup_panel(current->object.panel.orthoX, current->object.panel.orthoY, -1, 1, (*(current->object.panel.color.R)), (*(current->object.panel.color.G)), (*(current->object.panel.color.B)), (*(current->object.panel.color.A)));
-    render_primitives(current->object.panel.SubList);
-    SwapBuffers();
-    AppData.last_update->restart();
+    if( AppData.window.current_panel != nullptr )
+    {
+        struct node *current = AppData.window.current_panel;
+        setup_panel(current->object.panel.orthoX, current->object.panel.orthoY, -1, 1, (*(current->object.panel.color.R)), (*(current->object.panel.color.G)), (*(current->object.panel.color.B)), (*(current->object.panel.color.A)));
+        render_primitives(current->object.panel.SubList);
+        SwapBuffers();
+        AppData.last_update->restart();
+    }
 }
 
 static void render_primitives(struct node *list)

@@ -3,7 +3,11 @@
 
 #include <string>
 #include <map>
+#ifndef IOS_BUILD
 #include <GL/glu.h>
+#else
+#include <OpenGLES/ES1/glext.h>
+#endif
 #include <ft2build.h>
 #include FT_FREETYPE_H
 

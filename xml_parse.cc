@@ -66,50 +66,66 @@ static bool preprocessing = true;
 
 int ParseXMLFile(const char *fullpath)
 {
-    char *dirc, *basec, *bname, *dname;
+    if (!fullpath) return (-1);
+    
     int mycwd;
     xmlDocPtr mydoc;
     xmlNodePtr root_element;
 
-    if (!fullpath) return (-1);
+    char *dirc = strdup(fullpath);
+    char *basec = strdup(fullpath);
+    char *bname = basename(basec);
 
-    dirc = strdup(fullpath);
-    basec = strdup(fullpath);
-    dname = dirname(dirc);
-    bname = basename(basec);
-
+#ifndef IOS_BUILD
+    char *dname = dirname(dirc);
+    
     // Store cwd for future use
     mycwd = open(".", O_RDONLY);
 
     // Move to directory containing the specfile by default
     if (dname) chdir(dname);
-
-    if (XMLFileOpen(&mydoc, &root_element, bname)) return (-1);
-
-    if (!NodeCheck(root_element, "DCAPP"))
+#else
+    bname = strdup(fullpath);
+#endif
+    
+    int returnValL = 0;
+    
+    if (XMLFileOpen(&mydoc, &root_element, bname) == 0 )
     {
-        error_msg("Bad root element in XML file: \"" << root_element->name << "\" (should be \"DCAPP\")");
-        return (-1);
+        if ( NodeCheck(root_element, "DCAPP"))
+        {
+            
+            // Set generic display logic handlers, in case the user doesn't specify a DisplayLogic element
+            AppData.DisplayPreInit = &DisplayPreInitStub;
+            AppData.DisplayInit = &DisplayInitStub;
+            AppData.DisplayLogic = &DisplayLogicStub;
+            AppData.DisplayClose = &DisplayCloseStub;
+            
+            if (process_elements(0, 0, root_element->children))
+                returnValL = -1;
+        }
+        else
+        {
+            error_msg("Bad root element in XML file: \"" << root_element->name << "\" (should be \"DCAPP\")");
+            returnValL = -1;
+        }
+        
+        XMLFileClose(mydoc);
+        XMLEndParsing();
     }
-
-    // Set generic display logic handlers, in case the user doesn't specify a DisplayLogic element
-    AppData.DisplayPreInit = &DisplayPreInitStub;
-    AppData.DisplayInit = &DisplayInitStub;
-    AppData.DisplayLogic = &DisplayLogicStub;
-    AppData.DisplayClose = &DisplayCloseStub;
-
-    if (process_elements(0, 0, root_element->children)) return (-1);
-
-    XMLFileClose(mydoc);
-    XMLEndParsing();
-
+    else
+        returnValL = -1;
+    
+#ifndef IOS_BUILD
     // Return to the original working directory
     fchdir(mycwd);
-
+#endif
+    
     free(dirc);
     free(basec);
+    free(bname);
 
-    return 0;
+    return returnValL;
 }
 
 static int process_elements(struct node *parent, struct node **list, xmlNodePtr startnode)
@@ -312,6 +328,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         }
         if (NodeCheck(node, "DisplayLogic"))
         {
+#ifndef IOS_BUILD
             char *error;
             void *so_handler;
 
@@ -350,6 +367,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                 debug_msg(error);
                 AppData.DisplayClose = &DisplayCloseStub;
             }
+#endif
         }
         if (NodeCheck(node, "Window"))
         {
