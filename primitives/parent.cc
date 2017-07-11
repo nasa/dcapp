@@ -57,6 +57,14 @@ void dcParent::updateData(void)
     }
 }
 
+void dcParent::updateStreams(unsigned passcount)
+{
+    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
+    {
+        (*myobj)->updateStreams(passcount);
+    }
+}
+
 void dcParent::processAnimation(void)
 {
     for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)

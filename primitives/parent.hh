@@ -16,6 +16,7 @@ class dcParent : public dcObject
         void handleBezelPress(int);
         void handleBezelRelease(int);
         void updateData(void);
+        void updateStreams(unsigned);
         void processAnimation(void);
 
         void addChild(dcObject *);

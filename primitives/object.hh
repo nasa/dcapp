@@ -14,6 +14,7 @@ class dcObject
         virtual void handleBezelPress(int) { };
         virtual void handleBezelRelease(int) { };
         virtual void updateData(void) { };
+        virtual void updateStreams(unsigned) { };
         virtual void processAnimation(void) { };
         virtual void setParent(dcObject *parentid) { parent = parentid; };
         virtual dcObject *getParent(void) { return parent; };

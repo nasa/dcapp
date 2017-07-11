@@ -49,3 +49,8 @@ void dcWindow::handleBezelRelease(int key)
         (*myobj)->handleBezelRelease(key);
     }
 }
+
+void dcWindow::updateStreams(unsigned passcount)
+{
+    if (currentPanel) currentPanel->updateStreams(passcount);
+}

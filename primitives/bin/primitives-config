@@ -7,18 +7,19 @@ Usage: $0 [OPTION]...
 Get package compilation and linking information.
 
 Options:
-    --version      software version
-    --prefix       install location
-    --exepath      path(s) to add to the PATH environment variable
-    --cflags       required compilation flags
-    --libs         required linking flags
-    --compdepends  makefile compilation dependencies
-    --linkdepends  makefile linking dependencies
-    --s_overrides  Trick S_overrides file
-    --osspec       default directory name extension
-    --objdir       default directory name for compiled objects
-    --libdir       default directory name for compiled libraries
-    --bindir       default directory name for compiled binaries
+    --version          software version
+    --prefix           install location
+    --exepath          path(s) to add to the PATH environment variable
+    --cflags           required compilation flags
+    --libs             required linking flags
+    --compdepends      makefile compilation dependencies
+    --linkdepends      makefile linking dependencies
+    --cflags_internal  required compilation flags for building the package
+    --s_overrides      Trick S_overrides file
+    --osspec           default directory name extension
+    --objdir           default directory name for compiled objects
+    --libdir           default directory name for compiled libraries
+    --bindir           default directory name for compiled binaries
 EOF
     exit $1
 }
@@ -81,6 +82,9 @@ while test $# -gt 0 ; do
             ;;
         --linkdepends)
             echo "${mydir}/${libdir}/libprimitives.a"
+            ;;
+        --cflags_internal)
+            echo "-I${parentdir}/packages"
             ;;
         --s_overrides)
             ;;

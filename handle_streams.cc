@@ -14,6 +14,7 @@ void UpdateStreams(void)
     passnum++;
     struct node *current = AppData.window.current_panel;
     traverse_list(current->object.panel.SubList);
+AppData.toplevel->updateStreams(passnum); // TODO: this replaces the above two lines when complete
 }
 
 static void traverse_list(struct node *list)

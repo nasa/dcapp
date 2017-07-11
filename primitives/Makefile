@@ -7,7 +7,7 @@ LIBDIR := lib_MacOS
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall
+CXXFLAGS += -Wall $(shell ./bin/primitives-config --cflags_internal)
 
 all: $(LIBDIR)/libprimitives.a
 

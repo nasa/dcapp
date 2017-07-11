@@ -6,5 +6,6 @@
 #include "object.hh"
 #include "panel.hh"
 #include "parent.hh"
+#include "pixelstream.hh"
 #include "setvalue.hh"
 #include "window.hh"

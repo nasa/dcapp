@@ -66,6 +66,14 @@ void dcCondition::updateData(void)
         FalseList->updateData();
 }
 
+void dcCondition::updateStreams(unsigned passcount)
+{
+    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+        TrueList->updateStreams(passcount);
+    else
+        FalseList->updateStreams(passcount);
+}
+
 void dcCondition::processAnimation(void)
 {
     if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))

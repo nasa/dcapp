@@ -14,6 +14,7 @@ class dcWindow : public dcParent
         void handleMouseRelease(void);
         void handleBezelPress(int);
         void handleBezelRelease(int);
+        void updateStreams(unsigned);
 
     private:
         int *displayID;
