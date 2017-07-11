@@ -68,11 +68,11 @@ int EdgeRcsComm::send_doug_command(const char *doug_command, char **command_resu
 {
     struct addrinfo *addr;
     size_t len;
-    int valopt, command_socket = -1;
+    int valopt = 0, command_socket = -1;
     struct timeval timeout;
     long arg; 
     fd_set myset; 
-    static socklen_t valopt_len = sizeof(valopt_len); 
+    static socklen_t valopt_len = sizeof(valopt); 
 
     if (!(this->edgercs_active)) return 0;
 
