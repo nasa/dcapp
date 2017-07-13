@@ -32,6 +32,7 @@ static void ProcessAnimationList(Animation *animator, struct node *list)
             case SetValue:
                 if (sublist->object.modval.datatype1 == FLOAT_TYPE)
                 {
+                    endval = *(float *)(sublist->object.modval.var);
                     UpdateValueLogic(sublist->object.modval.optype,
                                      FLOAT_TYPE, (void *)&endval,
                                      sublist->object.modval.datatype2, sublist->object.modval.val,
