@@ -161,7 +161,7 @@ struct node *new_container(dcContainer **myitem, struct node *parent, struct nod
 
     data->object.cont.vwidth = getFloatPointer(vwidth, *(data->info.w));
     data->object.cont.vheight = getFloatPointer(vheight, *(data->info.h));
-*myitem = new dcContainer();
+*myitem = new dcContainer(data->object.cont.vwidth, data->object.cont.vheight, data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign);
 
     return data;
 }
@@ -427,7 +427,7 @@ dcSetValue *myset;
     data->object.cont.vwidth = data->info.w;
     data->object.cont.vheight = data->info.h;
 
-*myitem = new dcContainer();
+*myitem = new dcContainer(data->object.cont.vwidth, data->object.cont.vheight, data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign);
     curlist = data;
     sublist = &(data->object.cont.SubList);
 dcParent *mySublist = (dcParent *)(*myitem);
