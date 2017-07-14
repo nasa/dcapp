@@ -8,7 +8,9 @@ class dcWindow : public dcParent
 {
     public:
         dcWindow(int *);
+
         void setCurrentPanel(void);
+        void draw(void);
         void handleKeyboard(char);
         void handleMousePress(float, float);
         void handleMouseRelease(void);

@@ -17,6 +17,11 @@ void dcWindow::setCurrentPanel(void)
     }
 }
 
+void dcWindow::draw(void)
+{
+    if (currentPanel) currentPanel->draw();
+}
+
 void dcWindow::handleKeyboard(char key)
 {
     if (currentPanel) currentPanel->handleKeyboard(key);

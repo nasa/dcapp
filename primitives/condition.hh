@@ -10,6 +10,7 @@ class dcCondition : public dcObject
         dcCondition(int, int, void *, int, void *);
         virtual ~dcCondition();
 
+        void draw(void);
         void handleKeyboard(char);
         void handleMousePress(float, float);
         void handleMouseRelease(void);

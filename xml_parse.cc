@@ -25,11 +25,11 @@ extern struct node *new_isequal(dcCondition **, struct node *, struct node **, c
 extern struct node *new_vertex(struct node *, struct node **, const char *, const char *);
 extern struct node *new_line(struct node *, struct node **, const char *, const char *);
 extern struct node *new_polygon(struct node *, struct node **, const char *, const char *, const char *);
-extern struct node *new_rectangle(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_rectangle(dcRectangle **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_circle(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_string(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *,
+extern struct node *new_string(dcString **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *,
                                const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_image(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_image(dcImage **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_pixel_stream(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_button(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
                                const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
@@ -421,7 +421,8 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "Rectangle"))
         {
-            data = new_rectangle(parent, list,
+dcRectangle *myitem;
+            data = new_rectangle(&myitem, parent, list,
                                  get_element_data(node, "X"),
                                  get_element_data(node, "Y"),
                                  get_element_data(node, "Width"),
@@ -432,6 +433,7 @@ myparent->addChild(myitem);
                                  get_element_data(node, "FillColor"),
                                  get_element_data(node, "LineColor"),
                                  get_element_data(node, "LineWidth"));
+myparent->addChild(myitem);
         }
         if (NodeCheck(node, "Circle"))
         {
@@ -448,7 +450,8 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "String"))
         {
-            data = new_string(parent, list,
+dcString *myitem;
+            data = new_string(&myitem, parent, list,
                             get_element_data(node, "X"),
                             get_element_data(node, "Y"),
                             get_element_data(node, "Rotate"),
@@ -462,10 +465,12 @@ myparent->addChild(myitem);
                             get_element_data(node, "Face"),
                             get_element_data(node, "ForceMono"),
                             get_node_content(node));
+myparent->addChild(myitem);
         }
         if (NodeCheck(node, "Image"))
         {
-            data = new_image(parent, list,
+dcImage *myitem;
+            data = new_image(&myitem, parent, list,
                       get_element_data(node, "X"),
                       get_element_data(node, "Y"),
                       get_element_data(node, "Width"),
@@ -474,6 +479,7 @@ myparent->addChild(myitem);
                       get_element_data(node, "VerticalAlign"),
                       get_element_data(node, "Rotate"),
                       get_node_content(node));
+myparent->addChild(myitem);
         }
         if (NodeCheck(node, "PixelStream"))
         {
@@ -592,9 +598,9 @@ myparent->addChild(mycond);
 mySublist = mycond->TrueList;
                 sublist = &(curlist->object.cond.TrueList);
             }
-            dcMouseEvent *mymouse;
+dcMouseEvent *mymouse;
             data = new_mouseevent(&mymouse, curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-            mySublist->addChild(mymouse);
+mySublist->addChild(mymouse);
 //need to do this for functionality
             process_elements(mymouse->ReleaseList, data, &(data->object.me.ReleaseList), node->children);
             if (key || keyascii)
@@ -620,12 +626,14 @@ process_elements(myitem->PressList, data, &(data->object.me.PressList), node->ch
         {
 dcCondition *myitem;
             data = new_isequal(&myitem, parent, list, "eq", activeid, activetrueval);
+myparent->addChild(myitem);
             process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
         }
         if (NodeCheck(node, "Inactive"))
         {
 dcCondition *myitem;
             data = new_isequal(&myitem, parent, list, "eq", activeid, activetrueval);
+myparent->addChild(myitem);
             process_elements(myitem->FalseList, data, &(data->object.cond.FalseList), node->children);
         }
         if (NodeCheck(node, "On"))
@@ -653,8 +661,10 @@ myparent->addChild(myitem);
             {
 dcCondition *myitem;
                 data = new_isequal(&myitem, parent, list, "eq", transitionid, "1");
+myparent->addChild(myitem);
                 process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
                 data = new_isequal(&myitem, parent, list, "eq", transitionid, "-1");
+myparent->addChild(myitem);
                 process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
             }
         }
@@ -667,14 +677,14 @@ dcCondition *myitem, *mychild;
 myparent->addChild(myitem);
                 struct node *iseq = new_isequal(&mychild, data, &(data->object.cond.TrueList), "eq", indid, indonval);
 myitem->TrueList->addChild(mychild);
-                process_elements(mychild->TrueList, iseq, &(iseq->object.cond.FalseList), node->children);
+                process_elements(mychild->FalseList, iseq, &(iseq->object.cond.FalseList), node->children);
             }
             else
             {
 dcCondition *myitem;
                 data = new_isequal(&myitem, parent, list, "eq", indid, indonval);
 myparent->addChild(myitem);
-                process_elements(myitem->TrueList, data, &(data->object.cond.FalseList), node->children);
+                process_elements(myitem->FalseList, data, &(data->object.cond.FalseList), node->children);
             }
         }
         if (NodeCheck(node, "ADI"))

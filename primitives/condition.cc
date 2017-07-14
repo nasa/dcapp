@@ -20,6 +20,14 @@ dcCondition::~dcCondition()
     delete FalseList;
 }
 
+void dcCondition::draw(void)
+{
+    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+        TrueList->draw();
+    else
+        FalseList->draw();
+}
+
 void dcCondition::handleKeyboard(char key)
 {
     if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))

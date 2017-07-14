@@ -9,9 +9,11 @@ extern bool CheckCondition(struct node *);
 
 extern appdata AppData;
 
+#if 0
 static bool CheckRegion(struct node *, float, float);
 static void MouseDown(struct node *, float, float);
 static void MouseUp(struct node *);
+#endif
 
 static std::list<struct node *> actionList;
 static std::list<struct node *> mouseContinuous;
@@ -22,6 +24,7 @@ void HandleMousePress(float xpct, float ypct)
 {
 AppData.toplevel->handleMousePress(AppData.window.current_panel->object.panel.orthoX * xpct, AppData.window.current_panel->object.panel.orthoY * ypct);
     // Scale cursor x and y with ortho x and y
+#if 0
     MouseDown(AppData.window.current_panel->object.panel.SubList, AppData.window.current_panel->object.panel.orthoX * xpct, AppData.window.current_panel->object.panel.orthoY * ypct);
 
     std::list<struct node *>::iterator action;
@@ -30,6 +33,7 @@ AppData.toplevel->handleMousePress(AppData.window.current_panel->object.panel.or
         ProcessEventList(*action);
     }
     actionList.clear();
+#endif
 }
 
 
@@ -37,6 +41,7 @@ void HandleMouseRelease(void)
 {
 AppData.toplevel->handleMouseRelease();
     // Check all lists since "MouseDown" may have been on a different active page
+#if 0
     std::list<struct node *>::iterator panel;
     for (panel = AppData.window.panels.begin(); panel != AppData.window.panels.end(); panel++)
     {
@@ -49,6 +54,7 @@ AppData.toplevel->handleMouseRelease();
         ProcessEventList(*action);
     }
     actionList.clear();
+#endif
 }
 
 
@@ -90,7 +96,7 @@ void CheckMouseBounce(void)
     }
 }
 
-
+#if 0
 static void MouseDown(struct node *list, float x, float y)
 {
     struct node *current;
@@ -169,3 +175,4 @@ static bool CheckRegion(struct node *current, float x, float y)
     if ((geo.left < x) && (x < geo.right) && (geo.bottom < y) && (y < geo.top)) return true;
     else return false;
 }
+#endif

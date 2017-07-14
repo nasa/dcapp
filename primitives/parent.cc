@@ -9,6 +9,14 @@ dcParent::~dcParent()
     }
 }
 
+void dcParent::draw(void)
+{
+    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
+    {
+        (*myobj)->draw();
+    }
+}
+
 void dcParent::handleKeyboard(char key)
 {
     for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)

@@ -6,8 +6,9 @@
 class dcContainer : public dcParent
 {
     public:
-        dcContainer(float *, float *, float *, float *, float *, float *, float *, float *, unsigned, unsigned);
+        dcContainer(float *, float *, float *, float *, float *, float *, float *, float *, unsigned, unsigned, float *);
 
+        void draw(void);
         void handleMousePress(float, float);
 
     private:
@@ -21,6 +22,7 @@ class dcContainer : public dcParent
         float *containerh;
         unsigned halign;
         unsigned valign;
+        float *rotate;
 };
 
 #endif

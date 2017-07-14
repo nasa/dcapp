@@ -16,6 +16,11 @@ dcSetValue::dcSetValue(int opspec, int dtype1, int dtype2, int mindtype, int max
     max = maxspec;
 }
 
+void dcSetValue::draw(void)
+{
+    UpdateValueLogic(optype, datatype1, var, datatype2, val, mindatatype, min, maxdatatype, max);
+}
+
 void dcSetValue::updateData(void)
 {
     UpdateValueLogic(optype, datatype1, var, datatype2, val, mindatatype, min, maxdatatype, max);

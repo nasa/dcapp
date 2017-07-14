@@ -10,6 +10,7 @@ class dcParent : public dcObject
         dcParent() { };
         virtual ~dcParent();
 
+        void draw(void);
         void handleKeyboard(char);
         void handleMousePress(float, float);
         void handleMouseRelease(void);

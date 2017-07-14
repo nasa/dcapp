@@ -8,6 +8,7 @@ class dcSetValue : public dcObject
     public:
         dcSetValue(int, int, int, int, int, void *, void *, void *, void *);
 
+        void draw(void);
         void updateData(void);
 
     private:

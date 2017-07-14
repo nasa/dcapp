@@ -18,10 +18,8 @@
 
 #include "primitives/primitives.hh"
 
-#define UNDEFINED_TYPE 0
-#define STRING_TYPE    1
-#define FLOAT_TYPE     2
-#define INTEGER_TYPE   3
+#include "types.hh"
+#include "varstring.hh"
 
 class PixelStreamItem
 {
@@ -30,44 +28,6 @@ class PixelStreamItem
         ~PixelStreamItem() { if (psd) delete psd; };
         PixelStreamData *psd;
         unsigned frame_count;
-};
-
-class VarString
-{
-    public:
-        VarString(int a, void *b, const char *c)
-        {
-            if (a == UNDEFINED_TYPE) datatype = STRING_TYPE;
-            else datatype = a;
-            value = b;
-            if (c) format = c;
-            else
-            {
-                switch (datatype)
-                {
-                    case FLOAT_TYPE:   format = "%g"; break;
-                    case INTEGER_TYPE: format = "%d";   break;
-                    case STRING_TYPE:  format = "%s";   break;
-                }
-            }
-        };
-        std::string get(void)
-        {
-            char *tmp_str = 0x0;
-            switch (datatype)
-            {
-                case FLOAT_TYPE:   asprintf(&tmp_str, format.c_str(), *(float *)(value)); break;
-                case INTEGER_TYPE: asprintf(&tmp_str, format.c_str(), *(int *)(value));   break;
-                case STRING_TYPE:  asprintf(&tmp_str, format.c_str(), (char *)value);     break;
-            }
-            std::string ret_str = tmp_str;
-            free(tmp_str);
-            return ret_str;
-        };
-    private:
-        int datatype;
-        void *value;
-        std::string format;
 };
 
 typedef enum {
@@ -178,10 +138,10 @@ struct String
     Kolor bgcolor;
     bool background;
     float *shadowOffset;
-    char *format;
-    int datatype;
+//    char *format;
+//    int datatype;
     flMonoOption forcemono;
-    void *value;
+//    void *value;
     HAlignment halign;
     VAlignment valign;
 };

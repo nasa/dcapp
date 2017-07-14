@@ -6,13 +6,13 @@
 #include "geometry.hh"
 #include "opengl_draw.hh"
 
-extern void render_string(struct node *);
-extern void draw_adi(struct node *);
-extern bool CheckCondition(struct node *);
-extern void UpdateValue(struct node *);
+//extern void render_string(struct node *);
+//extern void draw_adi(struct node *);
+//extern bool CheckCondition(struct node *);
+//extern void UpdateValue(struct node *);
 extern void SwapBuffers(void);
 
-static void render_primitives(struct node *);
+//static void render_primitives(struct node *);
 
 extern appdata AppData;
 
@@ -25,11 +25,13 @@ void Draw(void)
 {
     struct node *current = AppData.window.current_panel;
     setup_panel(current->object.panel.orthoX, current->object.panel.orthoY, -1, 1, (*(current->object.panel.color.R)), (*(current->object.panel.color.G)), (*(current->object.panel.color.B)), (*(current->object.panel.color.A)));
-    render_primitives(current->object.panel.SubList);
+//    render_primitives(current->object.panel.SubList);
+AppData.toplevel->draw();
     SwapBuffers();
     AppData.last_update->restart();
 }
 
+#if 0
 static void render_primitives(struct node *list)
 {
     struct node *current, *sublist;
@@ -161,3 +163,4 @@ static void render_primitives(struct node *list)
         }
     }
 }
+#endif

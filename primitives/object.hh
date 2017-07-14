@@ -18,7 +18,7 @@ class dcObject
         virtual void processAnimation(void) { };
         virtual void setParent(dcObject *parentid) { parent = parentid; };
         virtual dcObject *getParent(void) { return parent; };
-        virtual bool checkID(int) { return false; }; // TODO: this probably doesn't fit here
+        virtual bool checkID(int) { return false; }; // TODO: this probably doesn't fit here, make window only have panel children
 
     private:
         dcObject *parent;

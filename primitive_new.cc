@@ -161,7 +161,7 @@ struct node *new_container(dcContainer **myitem, struct node *parent, struct nod
 
     data->object.cont.vwidth = getFloatPointer(vwidth, *(data->info.w));
     data->object.cont.vheight = getFloatPointer(vheight, *(data->info.h));
-*myitem = new dcContainer(data->object.cont.vwidth, data->object.cont.vheight, data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign);
+*myitem = new dcContainer(data->object.cont.vwidth, data->object.cont.vheight, data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate);
 
     return data;
 }
@@ -197,7 +197,7 @@ struct node *new_polygon(struct node *parent, struct node **list, const char *fi
     return data;
 }
 
-struct node *new_rectangle(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height,
+struct node *new_rectangle(dcRectangle **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height,
                            const char *halign, const char *valign, const char *rotate, const char *fillcolor, const char *linecolor, const char *linewidth)
 {
     struct node *data = add_primitive_node(parent, list, Rectangle, x, y, width, height, halign, valign, rotate);
@@ -208,6 +208,10 @@ struct node *new_rectangle(struct node *parent, struct node **list, const char *
     data->object.rect.FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
     data->object.rect.LineColor = StrToColor(linecolor, 1, 1, 1, 1);
     data->object.rect.linewidth = StrToFloat(linewidth, 1);
+bool myfill, myoutline;
+if (data->object.rect.fill) myfill = true; else myfill = false;
+if (data->object.rect.outline) myoutline = true; else myoutline = false;
+*myitem = new dcRectangle(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, data->object.rect.linewidth, myfill, myoutline, &(data->object.rect.FillColor), &(data->object.rect.LineColor));
 
     return data;
 }
@@ -287,7 +291,7 @@ static void parse_string(std::vector<VarString *> *vstring, std::vector<std::str
     filler->push_back("");
 }
 
-struct node *new_string(struct node *parent, struct node **list, const char *x, const char *y, const char *rotate, const char *fontsize, const char *halign, const char *valign,
+struct node *new_string(dcString **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *rotate, const char *fontsize, const char *halign, const char *valign,
                         const char *color, const char *bgcolor, const char *shadowoffset, const char *font, const char *face, const char *forcemono, const char *value)
 {
     struct node *data = add_primitive_node(parent, list, String, x, y, "0", fontsize, halign, valign, rotate);
@@ -316,15 +320,17 @@ struct node *new_string(struct node *parent, struct node **list, const char *x, 
     data->object.string.fontID = dcLoadFont(font, face);
 
     parse_string(&(data->vstring), &(data->filler), value);
+*myitem = new dcString(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, data->object.string.background, &(data->object.string.color), &(data->object.string.bgcolor), data->vstring, data->filler, data->object.string.fontID, data->object.string.fontSize, data->object.string.shadowOffset, data->object.string.forcemono);
 
     return data;
 }
 
-struct node *new_image(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *rotate, const char *filename)
+struct node *new_image(dcImage **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *rotate, const char *filename)
 {
     struct node *data = add_primitive_node(parent, list, Image, x, y, width, height, halign, valign, rotate);
 
     data->object.image.textureID = dcLoadTexture(filename);
+*myitem = new dcImage(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, data->object.image.textureID);
 
     return data;
 }
@@ -427,7 +433,7 @@ dcSetValue *myset;
     data->object.cont.vwidth = data->info.w;
     data->object.cont.vheight = data->info.h;
 
-*myitem = new dcContainer(data->object.cont.vwidth, data->object.cont.vheight, data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign);
+*myitem = new dcContainer(data->object.cont.vwidth, data->object.cont.vheight, data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate);
     curlist = data;
     sublist = &(data->object.cont.SubList);
 dcParent *mySublist = (dcParent *)(*myitem);
