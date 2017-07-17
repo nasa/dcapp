@@ -15,9 +15,6 @@
 #include "kolor.hh"
 #include "comm.hh"
 #include "animation.hh"
-
-#include "primitives/primitives.hh"
-
 #include "types.hh"
 #include "varstring.hh"
 
@@ -29,6 +26,10 @@ class PixelStreamItem
         PixelStreamData *psd;
         unsigned frame_count;
 };
+
+
+#include "primitives/primitives.hh" // TODO: move and incorporate PixelStreamItem somewhere
+
 
 typedef enum {
     Empty,

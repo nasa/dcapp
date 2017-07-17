@@ -22,18 +22,18 @@ extern void new_window(dcWindow **, bool, int, int, int, int, const char *);
 extern struct node *new_panel(dcPanel **, const char *, const char *, const char *, const char *);
 extern struct node *new_container(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
-extern struct node *new_vertex(struct node *, struct node **, const char *, const char *);
-extern struct node *new_line(struct node *, struct node **, const char *, const char *);
-extern struct node *new_polygon(struct node *, struct node **, const char *, const char *, const char *);
+extern struct node *new_vertex(dcVertex **, struct node *, struct node **, const char *, const char *);
+extern struct node *new_line(dcLine **, struct node *, struct node **, const char *, const char *);
+extern struct node *new_polygon(dcPolygon **, struct node *, struct node **, const char *, const char *, const char *);
 extern struct node *new_rectangle(dcRectangle **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_circle(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_circle(dcCircle **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_string(dcString **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *,
                                const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_image(dcImage **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_pixel_stream(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_pixel_stream(dcPixelStream **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_button(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
                                const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_adi(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
+extern struct node *new_adi(dcADI **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
                                  const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_mouseevent(dcMouseEvent **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
@@ -400,24 +400,30 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "Vertex"))
         {
-            data = new_vertex(parent, list,
+dcVertex *myitem;
+            data = new_vertex(&myitem, parent, list,
                               get_element_data(node, "X"),
                               get_element_data(node, "Y"));
+myparent->addChild(myitem);
         }
         if (NodeCheck(node, "Line"))
         {
-            data = new_line(parent, list,
+dcLine *myitem;
+            data = new_line(&myitem, parent, list,
                             get_element_data(node, "LineWidth"),
                             get_element_data(node, "Color"));
-            process_elements(myparent, data, &(data->object.line.Vertices), node->children);
+myparent->addChild(myitem);
+            process_elements(myitem, data, &(data->object.line.Vertices), node->children);
         }
         if (NodeCheck(node, "Polygon"))
         {
-            data = new_polygon(parent, list,
+dcPolygon *myitem;
+            data = new_polygon(&myitem, parent, list,
                                  get_element_data(node, "FillColor"),
                                  get_element_data(node, "LineColor"),
                                  get_element_data(node, "LineWidth"));
-            process_elements(myparent, data, &(data->object.poly.Vertices), node->children);
+myparent->addChild(myitem);
+            process_elements(myitem, data, &(data->object.poly.Vertices), node->children);
         }
         if (NodeCheck(node, "Rectangle"))
         {
@@ -437,7 +443,8 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "Circle"))
         {
-            data = new_circle(parent, list,
+dcCircle *myitem;
+            data = new_circle(&myitem, parent, list,
                                  get_element_data(node, "X"),
                                  get_element_data(node, "Y"),
                                  get_element_data(node, "HorizontalAlign"),
@@ -447,6 +454,7 @@ myparent->addChild(myitem);
                                  get_element_data(node, "FillColor"),
                                  get_element_data(node, "LineColor"),
                                  get_element_data(node, "LineWidth"));
+myparent->addChild(myitem);
         }
         if (NodeCheck(node, "String"))
         {
@@ -483,7 +491,8 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "PixelStream"))
         {
-            data = new_pixel_stream(parent, list,
+dcPixelStream *myitem;
+            data = new_pixel_stream(&myitem, parent, list,
                       get_element_data(node, "X"),
                       get_element_data(node, "Y"),
                       get_element_data(node, "Width"),
@@ -496,6 +505,7 @@ myparent->addChild(myitem);
                       get_element_data(node, "Port"),
                       get_element_data(node, "SharedMemoryKey"),
                       get_element_data(node, "File"));
+myparent->addChild(myitem);
         }
         if (NodeCheck(node, "Button"))
         {
@@ -689,7 +699,8 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "ADI"))
         {
-            data = new_adi(parent, list,
+dcADI *myitem;
+            data = new_adi(&myitem, parent, list,
                            get_element_data(node, "X"),
                            get_element_data(node, "Y"),
                            get_element_data(node, "Width"),
@@ -708,6 +719,7 @@ myparent->addChild(myitem);
                            get_element_data(node, "RollError"),
                            get_element_data(node, "PitchError"),
                            get_element_data(node, "YawError"));
+myparent->addChild(myitem);
         }
         if (NodeCheck(node, "MouseEvent"))
         {

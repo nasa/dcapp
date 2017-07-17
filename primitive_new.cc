@@ -166,24 +166,26 @@ struct node *new_container(dcContainer **myitem, struct node *parent, struct nod
     return data;
 }
 
-struct node *new_vertex(struct node *parent, struct node **list, const char *x, const char *y)
+struct node *new_vertex(dcVertex **myitem, struct node *parent, struct node **list, const char *x, const char *y)
 {
     struct node *data = add_primitive_node(parent, list, Vertex, x, y, 0x0, 0x0, 0x0, 0x0, 0x0);
+*myitem = new dcVertex(data->info.x, data->info.y, data->info.containerW, data->info.containerH);
 
     return data;
 }
 
-struct node *new_line(struct node *parent, struct node **list, const char *linewidth, const char *color)
+struct node *new_line(dcLine **myitem, struct node *parent, struct node **list, const char *linewidth, const char *color)
 {
     struct node *data = add_primitive_node(parent, list, Line, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
     data->object.line.linewidth = StrToFloat(linewidth, 1);
     data->object.line.color = StrToColor(color, 1, 1, 1, 1);
+*myitem = new dcLine(data->object.line.linewidth, &(data->object.line.color));
 
     return data;
 }
 
-struct node *new_polygon(struct node *parent, struct node **list, const char *fillcolor, const char *linecolor, const char *linewidth)
+struct node *new_polygon(dcPolygon **myitem, struct node *parent, struct node **list, const char *fillcolor, const char *linecolor, const char *linewidth)
 {
     struct node *data = add_primitive_node(parent, list, Polygon, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
@@ -193,6 +195,10 @@ struct node *new_polygon(struct node *parent, struct node **list, const char *fi
     data->object.poly.FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
     data->object.poly.LineColor = StrToColor(linecolor, 1, 1, 1, 1);
     data->object.poly.linewidth = StrToFloat(linewidth, 1);
+bool myfill, myoutline;
+if (data->object.poly.fill) myfill = true; else myfill = false;
+if (data->object.poly.outline) myoutline = true; else myoutline = false;
+*myitem = new dcPolygon(data->object.poly.linewidth, myfill, myoutline, &(data->object.poly.FillColor), &(data->object.poly.LineColor));
 
     return data;
 }
@@ -216,7 +222,7 @@ if (data->object.rect.outline) myoutline = true; else myoutline = false;
     return data;
 }
 
-struct node *new_circle(struct node *parent, struct node **list, const char *x, const char *y, const char *halign, const char *valign, const char *radius,
+struct node *new_circle(dcCircle **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *halign, const char *valign, const char *radius,
                         const char *segments, const char *fillcolor, const char *linecolor, const char *linewidth)
 {
     struct node *data = add_primitive_node(parent, list, Circle, x, y, 0x0, 0x0, halign, valign, 0x0);
@@ -229,6 +235,10 @@ struct node *new_circle(struct node *parent, struct node **list, const char *x, 
     data->object.circle.FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
     data->object.circle.LineColor = StrToColor(linecolor, 1, 1, 1, 1);
     data->object.circle.linewidth = StrToFloat(linewidth, 1);
+bool myfill, myoutline;
+if (data->object.circle.fill) myfill = true; else myfill = false;
+if (data->object.circle.outline) myoutline = true; else myoutline = false;
+*myitem = new dcCircle(data->info.x, data->info.y, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->object.circle.radius, data->object.circle.linewidth, myfill, myoutline, &(data->object.circle.FillColor), &(data->object.circle.LineColor), data->object.circle.segments);
 
     return data;
 }
@@ -335,7 +345,7 @@ struct node *new_image(dcImage **myitem, struct node *parent, struct node **list
     return data;
 }
 
-struct node *new_pixel_stream(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *rotate, const char *protocolstr, const char *host, const char *port, const char *shmemkey, const char *filename)
+struct node *new_pixel_stream(dcPixelStream **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *rotate, const char *protocolstr, const char *host, const char *port, const char *shmemkey, const char *filename)
 {
     PixelStreamData *mypsd = 0x0;
     PixelStreamFile *psf;
@@ -410,6 +420,7 @@ struct node *new_pixel_stream(struct node *parent, struct node **list, const cha
     data->object.pixelstreamview.psi = mypixelstream;
     data->object.pixelstreamview.pixels = 0x0;
     data->object.pixelstreamview.memallocation = 0;
+*myitem = new dcPixelStream(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, data->object.pixelstreamview.textureID);
 
     return data;
 }
@@ -625,7 +636,7 @@ mylist6->TrueList->addChild(myset);
     return data;
 }
 
-struct node *new_adi(struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *outerradius, const char *ballradius,
+struct node *new_adi(dcADI **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *outerradius, const char *ballradius,
                      const char *chevronwidth, const char *chevronheight, const char *ballimage_filename, const char *coverimage_filename,
                      const char *roll, const char *pitch, const char *yaw, const char *roll_error, const char *pitch_error, const char *yaw_error)
 {
@@ -652,6 +663,7 @@ struct node *new_adi(struct node *parent, struct node **list, const char *x, con
     data->object.adi.pitchError = getFloatPointer(pitch_error);
     data->object.adi.yawError = getFloatPointer(yaw_error);
 
+*myitem = new dcADI(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->object.adi.bkgdID, data->object.adi.ballID, data->object.adi.outerradius, data->object.adi.ballradius, data->object.adi.chevronW, data->object.adi.chevronH, data->object.adi.roll, data->object.adi.pitch, data->object.adi.yaw, data->object.adi.rollError, data->object.adi.pitchError, data->object.adi.yawError);
     return data;
 }
 
@@ -660,7 +672,6 @@ struct node *new_mouseevent(dcMouseEvent **myitem, struct node *parent, struct n
     struct node *data = add_primitive_node(parent, list, MouseEvent, x, y, width, height, halign, valign, 0x0);
 
 *myitem = new dcMouseEvent(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign);
-
     return data;
 }
 

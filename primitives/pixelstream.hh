@@ -1,27 +1,29 @@
-#ifndef _PIXELSTREAM_HH_
-#define _PIXELSTREAM_HH_
+#ifndef _PIXELSTREAM_PRIMITIVE_HH_
+#define _PIXELSTREAM_PRIMITIVE_HH_
 
 #include "PixelStream/PixelStreamData.hh"
+#include "nodes.hh"
 #include "object.hh"
-
-// TODO: this structure is duplicated in nodes.hh
-class PixelStreamItem
-{
-    public:
-        PixelStreamItem() : psd(0x0), frame_count(0) {};
-        ~PixelStreamItem() { if (psd) delete psd; };
-        PixelStreamData *psd;
-        unsigned frame_count;
-};
 
 class dcPixelStream : public dcObject
 {
     public:
-        dcPixelStream();
+        dcPixelStream(float *, float *, float *, float *, float *, float *, unsigned, unsigned, float *, dcTexture);
         ~dcPixelStream();
         void updateStreams(unsigned);
+        void draw(void);
 
     private:
+        float *x;
+        float *y;
+        float *w;
+        float *h;
+        float *containerw;
+        float *containerh;
+        unsigned halign;
+        unsigned valign;
+        float *rotate;
+        dcTexture textureID;
         PixelStreamItem *psi;
 };
 
