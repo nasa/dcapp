@@ -150,7 +150,7 @@ struct node *new_panel(dcPanel **myitem, const char *index, const char *colorspe
 
     AppData.window.panels.push_back(data);
     AppData.window.current_panel = data;
-*myitem = new dcPanel(data->object.panel.displayID);
+*myitem = new dcPanel(data->object.panel.displayID, data->object.panel.orthoX, data->object.panel.orthoY, &(data->object.panel.color));
 
     return data;
 }
@@ -420,7 +420,7 @@ struct node *new_pixel_stream(dcPixelStream **myitem, struct node *parent, struc
     data->object.pixelstreamview.psi = mypixelstream;
     data->object.pixelstreamview.pixels = 0x0;
     data->object.pixelstreamview.memallocation = 0;
-*myitem = new dcPixelStream(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, data->object.pixelstreamview.textureID);
+*myitem = new dcPixelStream(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, data->object.pixelstreamview.textureID, data->object.pixelstreamview.psi);
 
     return data;
 }

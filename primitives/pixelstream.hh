@@ -8,7 +8,7 @@
 class dcPixelStream : public dcObject
 {
     public:
-        dcPixelStream(float *, float *, float *, float *, float *, float *, unsigned, unsigned, float *, dcTexture);
+        dcPixelStream(float *, float *, float *, float *, float *, float *, unsigned, unsigned, float *, dcTexture, PixelStreamItem *);
         ~dcPixelStream();
         void updateStreams(unsigned);
         void draw(void);
@@ -25,6 +25,8 @@ class dcPixelStream : public dcObject
         float *rotate;
         dcTexture textureID;
         PixelStreamItem *psi;
+        void *pixels;
+        size_t memallocation;
 };
 
 #endif
