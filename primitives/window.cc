@@ -22,9 +22,14 @@ void dcWindow::draw(void)
     if (currentPanel) currentPanel->draw();
 }
 
-void dcWindow::handleKeyboard(char key)
+void dcWindow::handleKeyPress(char key)
 {
-    if (currentPanel) currentPanel->handleKeyboard(key);
+    if (currentPanel) currentPanel->handleKeyPress(key);
+}
+
+void dcWindow::handleKeyRelease(char key)
+{
+    if (currentPanel) currentPanel->handleKeyRelease(key);
 }
 
 void dcWindow::handleMousePress(float x, float y)

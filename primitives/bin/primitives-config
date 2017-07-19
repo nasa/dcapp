@@ -84,7 +84,7 @@ while test $# -gt 0 ; do
             echo "${mydir}/${libdir}/libprimitives.a"
             ;;
         --cflags_internal)
-            echo "-I${parentdir}/packages"
+            echo "-I${parentdir} -I${parentdir}/packages"
             ;;
         --s_overrides)
             ;;

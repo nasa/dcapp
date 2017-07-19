@@ -28,12 +28,20 @@ void dcCondition::draw(void)
         FalseList->draw();
 }
 
-void dcCondition::handleKeyboard(char key)
+void dcCondition::handleKeyPress(char key)
 {
     if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
-        TrueList->handleKeyboard(key);
+        TrueList->handleKeyPress(key);
     else
-        FalseList->handleKeyboard(key);
+        FalseList->handleKeyPress(key);
+}
+
+void dcCondition::handleKeyRelease(char key)
+{
+    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+        TrueList->handleKeyRelease(key);
+    else
+        FalseList->handleKeyRelease(key);
 }
 
 void dcCondition::handleMousePress(float x, float y)
@@ -66,12 +74,12 @@ void dcCondition::handleBezelRelease(int key)
     FalseList->handleBezelRelease(key);
 }
 
-void dcCondition::updateData(void)
+void dcCondition::handleEvent(void)
 {
     if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
-        TrueList->updateData();
+        TrueList->handleEvent();
     else
-        FalseList->updateData();
+        FalseList->handleEvent();
 }
 
 void dcCondition::updateStreams(unsigned passcount)

@@ -6,6 +6,7 @@
 
 extern void ProcessEventList(struct node *);
 extern bool CheckCondition(struct node *);
+extern void UpdateDisplay(void);
 
 extern appdata AppData;
 
@@ -19,10 +20,12 @@ static std::list<struct node *> actionList;
 static std::list<struct node *> mouseContinuous;
 static int mousebouncemode = 0;
 
+extern void ProcessEvents(void);
 
 void HandleMousePress(float xpct, float ypct)
 {
 AppData.toplevel->handleMousePress(AppData.window.current_panel->object.panel.orthoX * xpct, AppData.window.current_panel->object.panel.orthoY * ypct);
+ProcessEvents();
     // Scale cursor x and y with ortho x and y
 #if 0
     MouseDown(AppData.window.current_panel->object.panel.SubList, AppData.window.current_panel->object.panel.orthoX * xpct, AppData.window.current_panel->object.panel.orthoY * ypct);
@@ -40,6 +43,7 @@ AppData.toplevel->handleMousePress(AppData.window.current_panel->object.panel.or
 void HandleMouseRelease(void)
 {
 AppData.toplevel->handleMouseRelease();
+ProcessEvents();
     // Check all lists since "MouseDown" may have been on a different active page
 #if 0
     std::list<struct node *>::iterator panel;

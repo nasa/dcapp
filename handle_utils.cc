@@ -13,6 +13,24 @@ bool CheckCondition(struct node *);
 
 extern appdata AppData;
 
+#include <list>
+#include "primitives/primitives.hh"
+
+std::list<dcSetValue *> events;
+
+void ProcessEvents(void)
+{
+    if (!events.empty())
+    {
+        std::list<dcSetValue *>::iterator event;
+        for (event = events.begin(); event != events.end(); event++)
+        {
+            (*event)->updateData();
+        }
+        events.clear();
+        UpdateDisplay();
+    }
+}
 
 static void ProcessAnimationList(Animation *animator, struct node *list)
 {

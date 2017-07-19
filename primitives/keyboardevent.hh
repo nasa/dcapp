@@ -10,7 +10,8 @@ class dcKeyboardEvent : public dcObject
         dcKeyboardEvent(char);
         virtual ~dcKeyboardEvent();
 
-        void handleKeyboard(char);
+        void handleKeyPress(char);
+        void handleKeyRelease(char);
 
         dcParent *PressList;
         dcParent *ReleaseList;

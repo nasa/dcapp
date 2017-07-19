@@ -17,11 +17,19 @@ void dcParent::draw(void)
     }
 }
 
-void dcParent::handleKeyboard(char key)
+void dcParent::handleKeyPress(char key)
 {
     for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
     {
-        (*myobj)->handleKeyboard(key);
+        (*myobj)->handleKeyPress(key);
+    }
+}
+
+void dcParent::handleKeyRelease(char key)
+{
+    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
+    {
+        (*myobj)->handleKeyRelease(key);
     }
 }
 
@@ -57,11 +65,11 @@ void dcParent::handleBezelRelease(int key)
     }
 }
 
-void dcParent::updateData(void)
+void dcParent::handleEvent(void)
 {
     for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
     {
-        (*myobj)->updateData();
+        (*myobj)->handleEvent();
     }
 }
 

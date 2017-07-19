@@ -8,11 +8,13 @@ class dcObject
         virtual ~dcObject() { };
 
         virtual void draw(void) { };
-        virtual void handleKeyboard(char) { };
+        virtual void handleKeyPress(char) { };
+        virtual void handleKeyRelease(char) { };
         virtual void handleMousePress(float, float) { };
         virtual void handleMouseRelease(void) { };
         virtual void handleBezelPress(int) { };
         virtual void handleBezelRelease(int) { };
+        virtual void handleEvent(void) { };
         virtual void updateData(void) { };
         virtual void updateStreams(unsigned) { };
         virtual void processAnimation(void) { };

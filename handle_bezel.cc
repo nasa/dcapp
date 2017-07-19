@@ -9,6 +9,8 @@
 
 extern appdata AppData;
 
+extern void ProcessEvents(void);
+
 //static void BezelButtonPressed(struct node *, int);
 //static void BezelButtonReleased(struct node *, int);
 
@@ -68,8 +70,16 @@ void HandleBezelButton(int type, int itemid, int action)
         }
         actionList.clear();
 #else
-        if (action == BEZEL_PRESSED) AppData.toplevel->handleBezelPress(itemid);
-        else if (action == BEZEL_RELEASED) AppData.toplevel->handleBezelRelease(itemid);
+        if (action == BEZEL_PRESSED)
+        {
+            AppData.toplevel->handleBezelPress(itemid);
+            ProcessEvents();
+        }
+        else if (action == BEZEL_RELEASED)
+        {
+            AppData.toplevel->handleBezelRelease(itemid);
+            ProcessEvents();
+        }
 #endif
     }
 }

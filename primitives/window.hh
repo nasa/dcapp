@@ -11,7 +11,8 @@ class dcWindow : public dcParent
 
         void setCurrentPanel(void);
         void draw(void);
-        void handleKeyboard(char);
+        void handleKeyPress(char);
+        void handleKeyRelease(char);
         void handleMousePress(float, float);
         void handleMouseRelease(void);
         void handleBezelPress(int);

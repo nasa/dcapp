@@ -11,12 +11,13 @@ class dcCondition : public dcObject
         virtual ~dcCondition();
 
         void draw(void);
-        void handleKeyboard(char);
+        void handleKeyPress(char);
+        void handleKeyRelease(char);
         void handleMousePress(float, float);
         void handleMouseRelease(void);
         void handleBezelPress(int);
         void handleBezelRelease(int);
-        void updateData(void);
+        void handleEvent(void);
         void updateStreams(unsigned);
         void processAnimation(void);
 
