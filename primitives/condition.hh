@@ -1,6 +1,7 @@
 #ifndef _CONDITION_HH_
 #define _CONDITION_HH_
 
+#include "animation.hh"
 #include "object.hh"
 #include "parent.hh"
 
@@ -19,7 +20,7 @@ class dcCondition : public dcObject
         void handleBezelRelease(int);
         void handleEvent(void);
         void updateStreams(unsigned);
-        void processAnimation(void);
+        void processAnimation(Animation *);
 
         dcParent *TrueList;
         dcParent *FalseList;

@@ -73,6 +73,14 @@ void dcParent::handleEvent(void)
     }
 }
 
+void dcParent::updateData(void)
+{
+    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
+    {
+        (*myobj)->updateData();
+    }
+}
+
 void dcParent::updateStreams(unsigned passcount)
 {
     for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
@@ -81,11 +89,11 @@ void dcParent::updateStreams(unsigned passcount)
     }
 }
 
-void dcParent::processAnimation(void)
+void dcParent::processAnimation(Animation *anim)
 {
     for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
     {
-        (*myobj)->processAnimation();
+        (*myobj)->processAnimation(anim);
     }
 }
 

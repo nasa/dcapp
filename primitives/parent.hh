@@ -2,6 +2,7 @@
 #define _PARENT_HH_
 
 #include <list>
+#include "animation.hh"
 #include "object.hh"
 
 class dcParent : public dcObject
@@ -18,8 +19,9 @@ class dcParent : public dcObject
         void handleBezelPress(int);
         void handleBezelRelease(int);
         void handleEvent(void);
+        void updateData(void);
         void updateStreams(unsigned);
-        void processAnimation(void);
+        void processAnimation(Animation *);
 
         void addChild(dcObject *);
 

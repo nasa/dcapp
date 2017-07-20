@@ -1,5 +1,9 @@
+#include <list>
 #include "geometry.hh"
 #include "mouseevent.hh"
+
+extern std::list<dcObject *> mouseheld;
+extern int mousebouncemode;
 
 dcMouseEvent::dcMouseEvent(float *inx, float *iny, float *inw, float *inh, float *incw, float *inch, unsigned inhal, unsigned inval)
 :
@@ -31,7 +35,8 @@ void dcMouseEvent::handleMousePress(float inx, float iny)
     {
         this->selected = true;
         this->PressList->handleEvent();
-        // TODO: add mousebounce stuff here
+        mouseheld.push_back(this->PressList);
+        mousebouncemode = 1; // TODO: these two lines (at least) and declarations above should be in a method
     }
     else this->selected = false; // is this really necessary?
 }
@@ -42,6 +47,6 @@ void dcMouseEvent::handleMouseRelease(void)
     {
         this->selected = false;
         this->ReleaseList->handleEvent();
-        // TODO: add mousebounce clear here
+        mouseheld.clear();
     }
 }

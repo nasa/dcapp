@@ -1,28 +1,22 @@
 #include <cstdlib>
 #include <cstring>
+#include <list>
+#include "primitives/primitives.hh"
 #include "nodes.hh"
 #include "string_utils.hh"
 #include "animation.hh"
 
 extern void UpdateDisplay(void);
 
-void ProcessEventList(struct node *);
-void UpdateValue(struct node *);
-void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
-bool CheckCondition(struct node *);
-
 extern appdata AppData;
 
-#include <list>
-#include "primitives/primitives.hh"
-
-std::list<dcSetValue *> events;
+std::list<dcObject *> events;
 
 void ProcessEvents(void)
 {
     if (!events.empty())
     {
-        std::list<dcSetValue *>::iterator event;
+        std::list<dcObject *>::iterator event;
         for (event = events.begin(); event != events.end(); event++)
         {
             (*event)->updateData();
@@ -30,69 +24,6 @@ void ProcessEvents(void)
         events.clear();
         UpdateDisplay();
     }
-}
-
-static void ProcessAnimationList(Animation *animator, struct node *list)
-{
-    struct node *sublist;
-    float endval;
-
-    for (sublist = list; sublist; sublist = sublist->p_next)
-    {
-        switch (sublist->info.type)
-        {
-            case Condition:
-                if (CheckCondition(sublist))
-                    ProcessAnimationList(animator, sublist->object.cond.TrueList);
-                else
-                    ProcessAnimationList(animator, sublist->object.cond.FalseList);
-                break;
-            case SetValue:
-                if (sublist->object.modval.datatype1 == FLOAT_TYPE)
-                {
-                    UpdateValueLogic(sublist->object.modval.optype,
-                                     FLOAT_TYPE, (void *)&endval,
-                                     sublist->object.modval.datatype2, sublist->object.modval.val,
-                                     sublist->object.modval.mindatatype, sublist->object.modval.min,
-                                     sublist->object.modval.maxdatatype, sublist->object.modval.max);
-                    animator->addItem(sublist->object.modval.var, *(float *)(sublist->object.modval.var), endval);
-                }
-                break;
-            default:
-                break;
-        }
-    }
-}
-
-void ProcessEventList(struct node *list)
-{
-    struct node *sublist;
-    Animation *animobj;
-
-    for (sublist = list; sublist; sublist = sublist->p_next)
-    {
-        switch (sublist->info.type)
-        {
-            case Condition:
-                if (CheckCondition(sublist))
-                    ProcessEventList(sublist->object.cond.TrueList);
-                else
-                    ProcessEventList(sublist->object.cond.FalseList);
-                break;
-            case SetValue:
-                UpdateValue(sublist);
-                break;
-            case Animate:
-                animobj = new Animation;
-                animobj->initialize(AppData.master_timer->getSeconds(), sublist->object.anim.duration);
-                AppData.animators.push_back(animobj);
-                ProcessAnimationList(animobj, sublist->object.anim.SubList);
-                break;
-            default:
-                break;
-        }
-    }
-    UpdateDisplay();
 }
 
 float getFloatVal(int type, const void *val)
@@ -212,15 +143,6 @@ bool CheckConditionLogic(int opspec, int datatype1, const void *val1, int dataty
     return eval;
 }
 
-bool CheckCondition(struct node *mynode)
-{
-    return CheckConditionLogic(mynode->object.cond.opspec,
-                               mynode->object.cond.datatype1,
-                               mynode->object.cond.val1,
-                               mynode->object.cond.datatype2,
-                               mynode->object.cond.val2);
-}
-
 void UpdateValueLogic(int optype, int vartype, void *var, int valtype, void *val, int mintype, void *min, int maxtype, void *max)
 {
     std::list<CommModule *>::iterator commitem;
@@ -288,13 +210,4 @@ void UpdateValueLogic(int optype, int vartype, void *var, int valtype, void *val
     {
         (*commitem)->flagAsChanged(var);
     }
-}
-
-void UpdateValue(struct node *mynode)
-{
-    UpdateValueLogic(mynode->object.modval.optype,
-                     mynode->object.modval.datatype1, mynode->object.modval.var,
-                     mynode->object.modval.datatype2, mynode->object.modval.val,
-                     mynode->object.modval.mindatatype, mynode->object.modval.min,
-                     mynode->object.modval.maxdatatype, mynode->object.modval.max);
 }

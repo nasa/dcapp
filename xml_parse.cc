@@ -38,7 +38,7 @@ extern struct node *new_adi(dcADI **, struct node *, struct node **, const char 
 extern struct node *new_mouseevent(dcMouseEvent **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
 extern struct node *new_bezelevent(dcBezelEvent **, struct node *, struct node **, const char *);
-extern struct node *new_animation(struct node *, struct node **, const char *);
+extern struct node *new_animation(dcAnimate **, struct node *, struct node **, const char *);
 extern dcSetValue *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
 extern struct ModifyValue get_setvalue_data(const char *, const char *, const char *, const char *, const char *);
 extern bool CheckConditionLogic(int, int, const void *, int, const void *);
@@ -176,8 +176,10 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "Animation"))
         {
-            data = new_animation(parent, list, get_element_data(node, "Duration"));
-            process_elements(myparent, data, &(data->object.anim.SubList), node->children);
+dcAnimate *myitem;
+            data = new_animation(&myitem, parent, list, get_element_data(node, "Duration"));
+myparent->addChild(myitem);
+            process_elements(myitem, data, &(data->object.anim.SubList), node->children);
         }
         if (NodeCheck(node, "Set"))
         {

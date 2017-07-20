@@ -753,12 +753,13 @@ struct ModifyValue get_setvalue_data(const char *varspec, const char *opspec, co
     return ret;
 }
 
-struct node *new_animation(struct node *parent, struct node **list, const char *duration)
+struct node *new_animation(dcAnimate **myitem, struct node *parent, struct node **list, const char *duration)
 {
     struct node *data = add_primitive_node(parent, list, Animate, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
     data->object.anim.duration = StrToFloat(duration, 1);;
 
+*myitem = new dcAnimate(data->object.anim.duration);
     return data;
 }
 

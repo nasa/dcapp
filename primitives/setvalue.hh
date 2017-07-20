@@ -1,6 +1,7 @@
 #ifndef _SETVALUE_HH_
 #define _SETVALUE_HH_
 
+#include "animation.hh"
 #include "object.hh"
 
 class dcSetValue : public dcObject
@@ -11,6 +12,7 @@ class dcSetValue : public dcObject
         void draw(void);
         void handleEvent(void);
         void updateData(void);
+        void processAnimation(Animation *);
 
     private:
         int optype;

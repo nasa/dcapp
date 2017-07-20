@@ -23,8 +23,6 @@ DCAPP_SOURCES := \
 	logic_stubs.cc \
 	opengl_draw.cc \
 	primitive_new.cc \
-	render_ADI.cc \
-	render_string.cc \
 	string_utils.cc \
 	tara_funcs.cc \
 	update_display.cc \

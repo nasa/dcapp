@@ -1,4 +1,5 @@
 #include "adi.hh"
+#include "animate.hh"
 #include "bezelevent.hh"
 #include "circle.hh"
 #include "condition.hh"
