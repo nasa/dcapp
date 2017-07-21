@@ -11,6 +11,7 @@ class dcCondition : public dcObject
         dcCondition(int, int, void *, int, void *);
         virtual ~dcCondition();
 
+        void completeInitialization(void);
         void draw(void);
         void handleKeyPress(char);
         void handleKeyRelease(char);

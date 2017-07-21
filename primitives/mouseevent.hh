@@ -10,6 +10,7 @@ class dcMouseEvent : public dcObject
         dcMouseEvent(float *, float *, float *, float *, float *, float *, unsigned, unsigned);
         virtual ~dcMouseEvent();
 
+        void completeInitialization(void);
         void handleMousePress(float, float);
         void handleMouseRelease(void);
 

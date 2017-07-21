@@ -20,12 +20,20 @@ selected(false)
 
     PressList = new dcParent;
     ReleaseList = new dcParent;
+    PressList->setParent(this);
+    ReleaseList->setParent(this);
 }
 
 dcMouseEvent::~dcMouseEvent()
 {
     delete PressList;
     delete ReleaseList;
+}
+
+void dcMouseEvent::completeInitialization(void)
+{
+    PressList->completeInitialization();
+    ReleaseList->completeInitialization();
 }
 
 void dcMouseEvent::handleMousePress(float inx, float iny)

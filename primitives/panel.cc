@@ -27,3 +27,11 @@ void dcPanel::draw(void)
         (*myobj)->draw();
     }
 }
+
+void dcPanel::handleMousePress(float x, float y)
+{
+    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
+    {
+        (*myobj)->handleMousePress(orthoX * x, orthoY * y);
+    }
+}

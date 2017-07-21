@@ -10,6 +10,7 @@ class dcBezelEvent : public dcObject
         dcBezelEvent(int);
         virtual ~dcBezelEvent();
 
+        void completeInitialization(void);
         void handleBezelPress(int);
         void handleBezelRelease(int);
 

@@ -8,6 +8,7 @@ class dcVertex : public dcObject
     public:
         dcVertex(float *, float *, float *, float *);
 
+        void completeInitialization(void);
         void draw(void);
 
     private:

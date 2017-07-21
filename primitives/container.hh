@@ -8,8 +8,11 @@ class dcContainer : public dcParent
     public:
         dcContainer(float *, float *, float *, float *, float *, float *, float *, float *, unsigned, unsigned, float *);
 
+        void completeInitialization(void);
         void draw(void);
         void handleMousePress(float, float);
+        float *getContainerWidth(void);
+        float *getContainerHeight(void);
 
     private:
         float *vwidth;

@@ -8,12 +8,20 @@ dcKeyboardEvent::dcKeyboardEvent(char key)
     mykey = key;
     PressList = new dcParent;
     ReleaseList = new dcParent;
+    PressList->setParent(this);
+    ReleaseList->setParent(this);
 }
 
 dcKeyboardEvent::~dcKeyboardEvent()
 {
     delete PressList;
     delete ReleaseList;
+}
+
+void dcKeyboardEvent::completeInitialization(void)
+{
+    PressList->completeInitialization();
+    ReleaseList->completeInitialization();
 }
 
 void dcKeyboardEvent::handleKeyPress(char key)

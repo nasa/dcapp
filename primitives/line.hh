@@ -9,6 +9,7 @@ class dcLine : public dcParent
 {
     public:
         dcLine(float, Kolor *);
+        void completeInitialization(void);
         void draw(void);
     
     private:

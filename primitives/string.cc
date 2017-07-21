@@ -9,8 +9,6 @@ dcString::dcString(float *inx, float *iny, float *inw, float *inh, float *incw, 
     y = iny;
     w = inw;
     h = inh;
-    containerw = incw; // TODO: these should come from the parent
-    containerh = inch; // TODO: these should come from the parent
     halign = inhal;
     valign = inval;
     rotate = inrot;
@@ -46,6 +44,12 @@ static unsigned count_lines(std::string instr)
     } while (next != std::string::npos);
 
     return count;
+}
+
+void dcString::completeInitialization(void)
+{
+    containerw = getContainerWidth();
+    containerh = getContainerHeight();
 }
 
 void dcString::draw(void)

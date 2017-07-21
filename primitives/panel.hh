@@ -10,7 +10,8 @@ class dcPanel : public dcParent
         dcPanel(int, float, float, Kolor *);
         bool checkID(int);
         void draw(void);
-    
+        void handleMousePress(float, float);
+
     private:
         int displayID;
         float orthoX;

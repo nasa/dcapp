@@ -11,11 +11,20 @@ dcContainer::dcContainer(float *invwidth, float *invheight, float *inx, float *i
     y = iny;
     w = inw;
     h = inh;
-    containerw = incw; // TODO: these should come from the parent
-    containerh = inch; // TODO: these should come from the parent
     halign = inhal;
     valign = inval;
     rotate = inrot;
+}
+
+void dcContainer::completeInitialization(void)
+{
+    containerw = getContainerWidth();
+    containerh = getContainerHeight();
+
+    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
+    {
+        (*myobj)->completeInitialization();
+    }
 }
 
 void dcContainer::draw(void)
@@ -46,4 +55,14 @@ void dcContainer::handleMousePress(float inx, float iny)
     {
         (*myobj)->handleMousePress(finalx, finaly);
     }
+}
+
+float * dcContainer::getContainerWidth(void)
+{
+    return vwidth;
+}
+
+float * dcContainer::getContainerHeight(void)
+{
+    return vheight;
 }

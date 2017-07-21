@@ -12,12 +12,20 @@ dcCondition::dcCondition(int spec, int dtype1, void *v1, int dtype2, void *v2)
     val2 = v2;
     TrueList = new dcParent;
     FalseList = new dcParent;
+    TrueList->setParent(this);
+    FalseList->setParent(this);
 }
 
 dcCondition::~dcCondition()
 {
     delete TrueList;
     delete FalseList;
+}
+
+void dcCondition::completeInitialization(void)
+{
+    TrueList->completeInitialization();
+    FalseList->completeInitialization();
 }
 
 void dcCondition::draw(void)

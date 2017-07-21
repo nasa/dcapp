@@ -1,7 +1,21 @@
 #ifndef _GEOMETRY_HH_
 #define _GEOMETRY_HH_
 
-#include "nodes.hh" // TODO: nodes.hh only needed for Geometry and Align flags here
+typedef struct
+{
+    float refx;
+    float refy;
+    float delx;
+    float dely;
+    float width;
+    float height;
+    float left;
+    float right;
+    float bottom;
+    float top;
+    float center;
+    float middle;
+} Geometry;
 
 extern Geometry GetGeometry(float *, float *, float *, float *, float, float, int, int);
 

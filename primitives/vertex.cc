@@ -6,8 +6,14 @@ dcVertex::dcVertex(float *inx, float *iny, float *incw, float *inch)
 {
     x = inx;
     y = iny;
-    containerw = incw; // TODO: these should come from the parent
-    containerh = inch; // TODO: these should come from the parent
+    containerw = incw;
+    containerh = inch;
+}
+
+void dcVertex::completeInitialization(void)
+{
+//    containerw = getContainerWidth(); TODO
+//    containerh = getContainerHeight(); TODO
 }
 
 void dcVertex::draw(void)

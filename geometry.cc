@@ -1,4 +1,20 @@
-#include "nodes.hh" // TODO: nodes.hh only needed for Geometry and Align flags here
+#include "alignment.hh"
+
+typedef struct
+{
+    float refx;
+    float refy;
+    float delx;
+    float dely;
+    float width;
+    float height;
+    float left;
+    float right;
+    float bottom;
+    float top;
+    float center;
+    float middle;
+} Geometry;
 
 static float GeomX(float *x, float w, float containerW, int halign)
 {

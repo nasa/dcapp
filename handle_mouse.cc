@@ -14,7 +14,7 @@ int mousebouncemode = 0;
 
 void HandleMousePress(float xpct, float ypct)
 {
-    AppData.toplevel->handleMousePress(AppData.window.current_panel->object.panel.orthoX * xpct, AppData.window.current_panel->object.panel.orthoY * ypct);
+    AppData.toplevel->handleMousePress(xpct, ypct);
     ProcessEvents();
 }
 

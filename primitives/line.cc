@@ -9,6 +9,14 @@ dcLine::dcLine(float inlwidth, Kolor *incolor)
     color.A = incolor->A;
 }
 
+void dcLine::completeInitialization(void)
+{
+    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
+    {
+        (*myobj)->completeInitialization();
+    }
+}
+
 void dcLine::draw(void)
 {
     line_start(linewidth, *(color.R), *(color.G), *(color.B), *(color.A));

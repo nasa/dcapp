@@ -15,6 +15,14 @@ dcPolygon::dcPolygon(float inlwidth, bool infill, bool inoutline, Kolor *infillc
     LineColor.A = inlinecol->A;
 }
 
+void dcPolygon::completeInitialization(void)
+{
+    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
+    {
+        (*myobj)->completeInitialization();
+    }
+}
+
 void dcPolygon::draw(void)
 {
     if (fill)

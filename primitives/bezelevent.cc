@@ -5,12 +5,20 @@ dcBezelEvent::dcBezelEvent(int key) : selected(false)
     mykey = key;
     PressList = new dcParent;
     ReleaseList = new dcParent;
+    PressList->setParent(this);
+    ReleaseList->setParent(this);
 }
 
 dcBezelEvent::~dcBezelEvent()
 {
     delete PressList;
     delete ReleaseList;
+}
+
+void dcBezelEvent::completeInitialization(void)
+{
+    PressList->completeInitialization();
+    ReleaseList->completeInitialization();
 }
 
 void dcBezelEvent::handleBezelPress(int key)

@@ -13,6 +13,7 @@ class dcString : public dcObject
     public:
         dcString(float *, float *, float *, float *, float *, float *, unsigned, unsigned, float *, bool, Kolor *, Kolor *, std::vector<VarString *>, std::vector<std::string>, flFont *, float *, float *, flMonoOption);
 
+        void completeInitialization(void);
         void draw(void);
 
     private:

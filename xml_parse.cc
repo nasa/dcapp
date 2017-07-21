@@ -14,11 +14,14 @@
 #include "uei/UEI.hh"
 #include "varlist.hh"
 #include "nodes.hh"
+#include "opengl_draw.hh"
 #include "string_utils.hh"
 #include "xml_utils.hh"
 #include "xml_stringsub.hh"
 
-extern void new_window(dcWindow **, bool, int, int, int, int, const char *);
+extern void window_init(bool, int , int, int, int);
+extern int *getIntegerPointer(const char *);
+
 extern struct node *new_panel(dcPanel **, const char *, const char *, const char *, const char *);
 extern struct node *new_container(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
@@ -99,6 +102,8 @@ int ParseXMLFile(const char *fullpath)
     AppData.DisplayClose = &DisplayCloseStub;
 
     if (process_elements(0x0, 0, 0, root_element->children)) return (-1);
+
+    AppData.toplevel->completeInitialization();
 
     XMLFileClose(mydoc);
     XMLEndParsing();
@@ -362,13 +367,13 @@ myparent->addChild(myitem);
         if (NodeCheck(node, "Window"))
         {
             AppData.force_update = StrToFloat(get_element_data(node, "ForceUpdate"), 60);
-            new_window((dcWindow **)&(AppData.toplevel),
-                       StrToBool(get_element_data(node, "FullScreen"), false),
-                       StrToInt(get_element_data(node, "X"), 0),
-                       StrToInt(get_element_data(node, "Y"), 0),
-                       StrToInt(get_element_data(node, "Width"), 800),
-                       StrToInt(get_element_data(node, "Height"), 800),
-                       get_element_data(node, "ActiveDisplay"));
+            window_init(StrToBool(get_element_data(node, "FullScreen"), false),
+                        StrToInt(get_element_data(node, "X"), 0),
+                        StrToInt(get_element_data(node, "Y"), 0),
+                        StrToInt(get_element_data(node, "Width"), 800),
+                        StrToInt(get_element_data(node, "Height"), 800));
+            graphics_init();
+            AppData.toplevel = new dcWindow(getIntegerPointer(get_element_data(node, "ActiveDisplay")));
             process_elements(AppData.toplevel, 0, 0, node->children);
         }
         if (NodeCheck(node, "Panel"))

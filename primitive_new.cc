@@ -14,8 +14,6 @@
 #include "opengl_draw.hh"
 #include "alignment.hh"
 
-extern void window_init(bool, int , int, int, int);
-
 extern appdata AppData;
 
 struct node *new_mouseevent(dcMouseEvent **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
@@ -48,7 +46,7 @@ static float *getFloatPointer(const char *valstr, float defval)
     else return dcLoadConstant(StrToFloat(valstr, defval));
 }
 
-static int *getIntegerPointer(const char *valstr)
+int *getIntegerPointer(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return (int *)get_pointer(valstr);
     else return dcLoadConstant(StrToInt(valstr, 0));
@@ -127,30 +125,19 @@ static struct node *add_primitive_node(struct node *parent, struct node **list, 
     return data;
 }
 
-void new_window(dcWindow **myitem, bool fullscreen, int OriginX, int OriginY, int SizeX, int SizeY, const char *activedisp)
-{
-    window_init(fullscreen, OriginX, OriginY, SizeX, SizeY);
-    graphics_init();
-    AppData.window.active_display = getIntegerPointer(activedisp);
-*myitem = new dcWindow(AppData.window.active_display);
-}
-
 struct node *new_panel(dcPanel **myitem, const char *index, const char *colorspec, const char *vwidth, const char *vheight)
 {
     struct node *data = (struct node *)calloc(1, sizeof(struct node));
 
-    data->object.panel.displayID = StrToInt(index, 0);
-    data->object.panel.orthoX = StrToFloat(vwidth, 100);
-    data->object.panel.orthoY = StrToFloat(vheight, 100);
-    data->object.panel.vwidth = StrToFloat(vwidth, 100);
-    data->object.panel.vheight = StrToFloat(vheight, 100);
-    data->info.w = &(data->object.panel.vwidth);
-    data->info.h = &(data->object.panel.vheight);
-    data->object.panel.color = StrToColor(colorspec, 0, 0, 0, 1);
+    float myvwidth = StrToFloat(vwidth, 100);
+    float myvheight = StrToFloat(vheight, 100);
 
-    AppData.window.panels.push_back(data);
-    AppData.window.current_panel = data;
-*myitem = new dcPanel(data->object.panel.displayID, data->object.panel.orthoX, data->object.panel.orthoY, &(data->object.panel.color));
+    data->info.w = &myvwidth;
+    data->info.h = &myvheight;
+
+    Kolor mycolor = StrToColor(colorspec, 0, 0, 0, 1);
+
+    *myitem = new dcPanel(StrToInt(index, 0), myvwidth, myvheight, &mycolor);
 
     return data;
 }
@@ -161,44 +148,48 @@ struct node *new_container(dcContainer **myitem, struct node *parent, struct nod
 
     data->object.cont.vwidth = getFloatPointer(vwidth, *(data->info.w));
     data->object.cont.vheight = getFloatPointer(vheight, *(data->info.h));
-*myitem = new dcContainer(data->object.cont.vwidth, data->object.cont.vheight, data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate);
+
+    *myitem = new dcContainer(data->object.cont.vwidth, data->object.cont.vheight, data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate);
 
     return data;
 }
 
 struct node *new_vertex(dcVertex **myitem, struct node *parent, struct node **list, const char *x, const char *y)
 {
-    struct node *data = add_primitive_node(parent, list, Vertex, x, y, 0x0, 0x0, 0x0, 0x0, 0x0);
-*myitem = new dcVertex(data->info.x, data->info.y, data->info.containerW, data->info.containerH);
+    struct node *data = add_primitive_node(parent, list, Empty, x, y, 0x0, 0x0, 0x0, 0x0, 0x0);
+
+    *myitem = new dcVertex(data->info.x, data->info.y, data->info.containerW, data->info.containerH);
 
     return data;
 }
 
 struct node *new_line(dcLine **myitem, struct node *parent, struct node **list, const char *linewidth, const char *color)
 {
-    struct node *data = add_primitive_node(parent, list, Line, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+    struct node *data = add_primitive_node(parent, list, Empty, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
-    data->object.line.linewidth = StrToFloat(linewidth, 1);
-    data->object.line.color = StrToColor(color, 1, 1, 1, 1);
-*myitem = new dcLine(data->object.line.linewidth, &(data->object.line.color));
+    Kolor linecolor = StrToColor(color, 1, 1, 1, 1);
+
+    *myitem = new dcLine(StrToFloat(linewidth, 1), &linecolor);
 
     return data;
 }
 
 struct node *new_polygon(dcPolygon **myitem, struct node *parent, struct node **list, const char *fillcolor, const char *linecolor, const char *linewidth)
 {
-    struct node *data = add_primitive_node(parent, list, Polygon, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+    struct node *data = add_primitive_node(parent, list, Empty, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
-    if (fillcolor) data->object.poly.fill = 1;
-    if (linecolor || linewidth) data->object.poly.outline = 1;
+    bool myfill, myoutline;
 
-    data->object.poly.FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
-    data->object.poly.LineColor = StrToColor(linecolor, 1, 1, 1, 1);
-    data->object.poly.linewidth = StrToFloat(linewidth, 1);
-bool myfill, myoutline;
-if (data->object.poly.fill) myfill = true; else myfill = false;
-if (data->object.poly.outline) myoutline = true; else myoutline = false;
-*myitem = new dcPolygon(data->object.poly.linewidth, myfill, myoutline, &(data->object.poly.FillColor), &(data->object.poly.LineColor));
+    if (fillcolor) myfill = true;
+    else myfill = false;
+
+    if (linecolor || linewidth) myoutline = true;
+    else myoutline = false;
+
+    Kolor FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
+    Kolor LineColor = StrToColor(linecolor, 1, 1, 1, 1);
+
+    *myitem = new dcPolygon(StrToFloat(linewidth, 1), myfill, myoutline, &FillColor, &LineColor);
 
     return data;
 }
@@ -206,18 +197,20 @@ if (data->object.poly.outline) myoutline = true; else myoutline = false;
 struct node *new_rectangle(dcRectangle **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height,
                            const char *halign, const char *valign, const char *rotate, const char *fillcolor, const char *linecolor, const char *linewidth)
 {
-    struct node *data = add_primitive_node(parent, list, Rectangle, x, y, width, height, halign, valign, rotate);
+    struct node *data = add_primitive_node(parent, list, Empty, x, y, width, height, halign, valign, rotate);
 
-    if (fillcolor) data->object.rect.fill = 1;
-    if (linecolor || linewidth) data->object.rect.outline = 1;
+    bool myfill, myoutline;
 
-    data->object.rect.FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
-    data->object.rect.LineColor = StrToColor(linecolor, 1, 1, 1, 1);
-    data->object.rect.linewidth = StrToFloat(linewidth, 1);
-bool myfill, myoutline;
-if (data->object.rect.fill) myfill = true; else myfill = false;
-if (data->object.rect.outline) myoutline = true; else myoutline = false;
-*myitem = new dcRectangle(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, data->object.rect.linewidth, myfill, myoutline, &(data->object.rect.FillColor), &(data->object.rect.LineColor));
+    if (fillcolor) myfill = true;
+    else myfill = false;
+
+    if (linecolor || linewidth) myoutline = true;
+    else myoutline = false;
+
+    Kolor FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
+    Kolor LineColor = StrToColor(linecolor, 1, 1, 1, 1);
+
+    *myitem = new dcRectangle(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, StrToFloat(linewidth, 1), myfill, myoutline, &FillColor, &LineColor);
 
     return data;
 }
@@ -225,20 +218,20 @@ if (data->object.rect.outline) myoutline = true; else myoutline = false;
 struct node *new_circle(dcCircle **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *halign, const char *valign, const char *radius,
                         const char *segments, const char *fillcolor, const char *linecolor, const char *linewidth)
 {
-    struct node *data = add_primitive_node(parent, list, Circle, x, y, 0x0, 0x0, halign, valign, 0x0);
+    struct node *data = add_primitive_node(parent, list, Empty, x, y, 0x0, 0x0, halign, valign, 0x0);
 
-    if (fillcolor) data->object.circle.fill = 1;
-    if (linecolor || linewidth) data->object.circle.outline = 1;
+    bool myfill, myoutline;
 
-    data->object.circle.radius = getFloatPointer(radius);
-    data->object.circle.segments = StrToInt(segments, 80);
-    data->object.circle.FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
-    data->object.circle.LineColor = StrToColor(linecolor, 1, 1, 1, 1);
-    data->object.circle.linewidth = StrToFloat(linewidth, 1);
-bool myfill, myoutline;
-if (data->object.circle.fill) myfill = true; else myfill = false;
-if (data->object.circle.outline) myoutline = true; else myoutline = false;
-*myitem = new dcCircle(data->info.x, data->info.y, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->object.circle.radius, data->object.circle.linewidth, myfill, myoutline, &(data->object.circle.FillColor), &(data->object.circle.LineColor), data->object.circle.segments);
+    if (fillcolor) myfill = true;
+    else myfill = false;
+
+    if (linecolor || linewidth) myoutline = true;
+    else myoutline = false;
+
+    Kolor FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
+    Kolor LineColor = StrToColor(linecolor, 1, 1, 1, 1);
+
+    *myitem = new dcCircle(data->info.x, data->info.y, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, getFloatPointer(radius), StrToFloat(linewidth, 1), myfill, myoutline, &FillColor, &LineColor, StrToInt(segments, 80));
 
     return data;
 }
@@ -304,43 +297,44 @@ static void parse_string(std::vector<VarString *> *vstring, std::vector<std::str
 struct node *new_string(dcString **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *rotate, const char *fontsize, const char *halign, const char *valign,
                         const char *color, const char *bgcolor, const char *shadowoffset, const char *font, const char *face, const char *forcemono, const char *value)
 {
-    struct node *data = add_primitive_node(parent, list, String, x, y, "0", fontsize, halign, valign, rotate);
+    struct node *data = add_primitive_node(parent, list, Empty, x, y, "0", fontsize, halign, valign, rotate);
 
-    data->object.string.fontSize = getFloatPointer(fontsize);
-    data->object.string.halign = (HAlignment)(data->info.halign);
-    data->object.string.valign = (VAlignment)(data->info.valign);
+    bool background;
+    Kolor mycolor, mybgcolor;
+    flMonoOption myforcemono = flMonoNone;
 
-    data->object.string.forcemono = flMonoNone;
     if (forcemono)
     {
-        if (!strcmp(forcemono, "Numeric")) data->object.string.forcemono = flMonoNumeric;
-        else if (!strcmp(forcemono, "AlphaNumeric")) data->object.string.forcemono = flMonoAlphaNumeric;
-        else if (!strcmp(forcemono, "All")) data->object.string.forcemono = flMonoAll;
+        if (!strcmp(forcemono, "Numeric")) myforcemono = flMonoNumeric;
+        else if (!strcmp(forcemono, "AlphaNumeric")) myforcemono = flMonoAlphaNumeric;
+        else if (!strcmp(forcemono, "All")) myforcemono = flMonoAll;
     }
 
-    data->object.string.color = StrToColor(color, 1, 1, 1, 1);
+    mycolor = StrToColor(color, 1, 1, 1, 1);
+
     if (bgcolor)
     {
-        data->object.string.background = true;
-        data->object.string.bgcolor = StrToColor(bgcolor, 0, 0, 0, 1);
+        background = true;
+        mybgcolor = StrToColor(bgcolor, 0, 0, 0, 1);
     }
     else
-        data->object.string.background = false;
-    data->object.string.shadowOffset = getFloatPointer(shadowoffset);
-    data->object.string.fontID = dcLoadFont(font, face);
+        background = false;
 
     parse_string(&(data->vstring), &(data->filler), value);
-*myitem = new dcString(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, data->object.string.background, &(data->object.string.color), &(data->object.string.bgcolor), data->vstring, data->filler, data->object.string.fontID, data->object.string.fontSize, data->object.string.shadowOffset, data->object.string.forcemono);
+
+    *myitem = new dcString(data->info.x, data->info.y, data->info.w, data->info.h,
+                           data->info.containerW, data->info.containerH, data->info.halign, data->info.valign,
+                           data->info.rotate, background, &mycolor, &mybgcolor, data->vstring, data->filler,
+                           dcLoadFont(font, face), getFloatPointer(fontsize), getFloatPointer(shadowoffset), myforcemono);
 
     return data;
 }
 
 struct node *new_image(dcImage **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *rotate, const char *filename)
 {
-    struct node *data = add_primitive_node(parent, list, Image, x, y, width, height, halign, valign, rotate);
+    struct node *data = add_primitive_node(parent, list, Empty, x, y, width, height, halign, valign, rotate);
 
-    data->object.image.textureID = dcLoadTexture(filename);
-*myitem = new dcImage(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, data->object.image.textureID);
+    *myitem = new dcImage(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, dcLoadTexture(filename));
 
     return data;
 }
@@ -414,13 +408,13 @@ struct node *new_pixel_stream(dcPixelStream **myitem, struct node *parent, struc
         AppData.pixelstreams.push_back(mypixelstream);
     }
 
-    struct node *data = add_primitive_node(parent, list, PixelStreamView, x, y, width, height, halign, valign, rotate);
+    struct node *data = add_primitive_node(parent, list, Empty, x, y, width, height, halign, valign, rotate);
 
-    init_texture(&(data->object.pixelstreamview.textureID));
-    data->object.pixelstreamview.psi = mypixelstream;
-    data->object.pixelstreamview.pixels = 0x0;
-    data->object.pixelstreamview.memallocation = 0;
-*myitem = new dcPixelStream(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, data->object.pixelstreamview.textureID, data->object.pixelstreamview.psi);
+    dcTexture textureID;
+
+    init_texture(&textureID);
+
+    *myitem = new dcPixelStream(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, textureID, mypixelstream);
 
     return data;
 }
@@ -640,38 +634,34 @@ struct node *new_adi(dcADI **myitem, struct node *parent, struct node **list, co
                      const char *chevronwidth, const char *chevronheight, const char *ballimage_filename, const char *coverimage_filename,
                      const char *roll, const char *pitch, const char *yaw, const char *roll_error, const char *pitch_error, const char *yaw_error)
 {
-    float defouterrad, defballrad, defchevron;
-    struct node *data = add_primitive_node(parent, list, ADI, x, y, width, height, halign, valign, 0x0);
+    struct node *data = add_primitive_node(parent, list, Empty, x, y, width, height, halign, valign, 0x0);
 
-    if (ballimage_filename) data->object.adi.ballID = dcLoadTexture(ballimage_filename);
-    if (coverimage_filename) data->object.adi.bkgdID = dcLoadTexture(coverimage_filename);
+    dcTexture ballID = -1;
+    dcTexture bkgdID = -1;
 
-    defouterrad = 0.5 * (fminf(*(data->info.w), *(data->info.h)));
-    defballrad = 0.9 * defouterrad;
-    defchevron = 0.2 * defouterrad;
+    if (ballimage_filename) ballID = dcLoadTexture(ballimage_filename);
+    if (coverimage_filename) bkgdID = dcLoadTexture(coverimage_filename);
 
-    data->object.adi.outerradius = getFloatPointer(outerradius, defouterrad);
-    data->object.adi.ballradius = getFloatPointer(ballradius, defballrad);
-    data->object.adi.chevronW = getFloatPointer(chevronwidth, defchevron);
-    data->object.adi.chevronH = getFloatPointer(chevronheight, defchevron);
+    float defouterrad = 0.5 * (fminf(*(data->info.w), *(data->info.h)));
+    float defballrad = 0.9 * defouterrad;
+    float defchevron = 0.2 * defouterrad;
 
-    data->object.adi.roll = getFloatPointer(roll);
-    data->object.adi.pitch = getFloatPointer(pitch);
-    data->object.adi.yaw = getFloatPointer(yaw);
+    *myitem = new dcADI(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH,
+                        data->info.halign, data->info.valign, bkgdID, ballID,
+                        getFloatPointer(outerradius, defouterrad), getFloatPointer(ballradius, defballrad),
+                        getFloatPointer(chevronwidth, defchevron), getFloatPointer(chevronheight, defchevron),
+                        getFloatPointer(roll), getFloatPointer(pitch), getFloatPointer(yaw),
+                        getFloatPointer(roll_error), getFloatPointer(pitch_error), getFloatPointer(yaw_error));
 
-    data->object.adi.rollError = getFloatPointer(roll_error);
-    data->object.adi.pitchError = getFloatPointer(pitch_error);
-    data->object.adi.yawError = getFloatPointer(yaw_error);
-
-*myitem = new dcADI(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->object.adi.bkgdID, data->object.adi.ballID, data->object.adi.outerradius, data->object.adi.ballradius, data->object.adi.chevronW, data->object.adi.chevronH, data->object.adi.roll, data->object.adi.pitch, data->object.adi.yaw, data->object.adi.rollError, data->object.adi.pitchError, data->object.adi.yawError);
     return data;
 }
 
 struct node *new_mouseevent(dcMouseEvent **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign)
 {
-    struct node *data = add_primitive_node(parent, list, MouseEvent, x, y, width, height, halign, valign, 0x0);
+    struct node *data = add_primitive_node(parent, list, Empty, x, y, width, height, halign, valign, 0x0);
 
-*myitem = new dcMouseEvent(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign);
+    *myitem = new dcMouseEvent(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign);
+
     return data;
 }
 
@@ -683,14 +673,12 @@ struct node *new_keyboardevent(dcKeyboardEvent **myitem, struct node *parent, st
         return 0x0;
     }
 
-    struct node *data = add_primitive_node(parent, list, KeyboardEvent, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+    struct node *data = add_primitive_node(parent, list, Empty, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
     if (key)
-//        data->object.ke.key = key[0];
-*myitem = new dcKeyboardEvent(key[0]);
+        *myitem = new dcKeyboardEvent(key[0]);
     else
-//        data->object.ke.key = StrToInt(keyascii, 0);
-*myitem = new dcKeyboardEvent(StrToInt(keyascii, 0));
+        *myitem = new dcKeyboardEvent(StrToInt(keyascii, 0));
 
     return data;
 }
@@ -703,10 +691,9 @@ struct node *new_bezelevent(dcBezelEvent **myitem, struct node *parent, struct n
         return 0x0;
     }
 
-    struct node *data = add_primitive_node(parent, list, BezelEvent, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-    data->object.be.key = StrToInt(key, 0);
+    struct node *data = add_primitive_node(parent, list, Empty, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
-*myitem = new dcBezelEvent(StrToInt(key, 0));
+    *myitem = new dcBezelEvent(StrToInt(key, 0));
 
     return data;
 }
@@ -755,11 +742,10 @@ struct ModifyValue get_setvalue_data(const char *varspec, const char *opspec, co
 
 struct node *new_animation(dcAnimate **myitem, struct node *parent, struct node **list, const char *duration)
 {
-    struct node *data = add_primitive_node(parent, list, Animate, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+    struct node *data = add_primitive_node(parent, list, Empty, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 
-    data->object.anim.duration = StrToFloat(duration, 1);;
+    *myitem = new dcAnimate(StrToFloat(duration, 1));
 
-*myitem = new dcAnimate(data->object.anim.duration);
     return data;
 }
 
@@ -768,18 +754,6 @@ dcSetValue *new_setvalue(struct node *parent, struct node **list, const char *va
     struct ModifyValue myset = get_setvalue_data(var, optype, min, max, val);
 
     if (myset.datatype1 == UNDEFINED_TYPE) return 0x0;
-
-    struct node *data = add_primitive_node(parent, list, SetValue, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-
-    data->object.modval.optype = myset.optype;
-    data->object.modval.datatype1 = myset.datatype1;
-    data->object.modval.datatype2 = myset.datatype2;
-    data->object.modval.mindatatype = myset.mindatatype;
-    data->object.modval.maxdatatype = myset.maxdatatype;
-    data->object.modval.var = myset.var;
-    data->object.modval.val = myset.val;
-    data->object.modval.min = myset.min;
-    data->object.modval.max = myset.max;
 
     return new dcSetValue(myset.optype, myset.datatype1, myset.datatype2, myset.mindatatype, myset.maxdatatype, myset.var, myset.val, myset.min, myset.max);
 }
@@ -794,40 +768,38 @@ struct node *new_isequal(dcCondition **myitem, struct node *parent, struct node 
         return 0x0;
     }
 
-    struct node *data = add_primitive_node(parent, list, Condition, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+    struct node *data = add_primitive_node(parent, list, Empty, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+
+    int myopspec, datatype1, datatype2;
 
     if (parent) data->info.w = parent->info.w;
     if (parent) data->info.h = parent->info.h;
 
-    data->object.cond.opspec = Simple;
+    myopspec = Simple;
     if (opspec)
     {
-        if (!strcasecmp(opspec, "eq")) data->object.cond.opspec = IfEquals;
-        else if (!strcasecmp(opspec, "ne")) data->object.cond.opspec = IfNotEquals;
-        else if (!strcasecmp(opspec, "gt")) data->object.cond.opspec = IfGreaterThan;
-        else if (!strcasecmp(opspec, "lt")) data->object.cond.opspec = IfLessThan;
-        else if (!strcasecmp(opspec, "ge")) data->object.cond.opspec = IfGreaterOrEquals;
-        else if (!strcasecmp(opspec, "le")) data->object.cond.opspec = IfLessOrEquals;
+        if (!strcasecmp(opspec, "eq")) myopspec = IfEquals;
+        else if (!strcasecmp(opspec, "ne")) myopspec = IfNotEquals;
+        else if (!strcasecmp(opspec, "gt")) myopspec = IfGreaterThan;
+        else if (!strcasecmp(opspec, "lt")) myopspec = IfLessThan;
+        else if (!strcasecmp(opspec, "ge")) myopspec = IfGreaterOrEquals;
+        else if (!strcasecmp(opspec, "le")) myopspec = IfLessOrEquals;
     }
 
-    data->object.cond.datatype1 = get_data_type(val1);
-    data->object.cond.datatype2 = get_data_type(val2);
-    if (data->object.cond.datatype1 == UNDEFINED_TYPE && data->object.cond.datatype2 == UNDEFINED_TYPE)
+    datatype1 = get_data_type(val1);
+    datatype2 = get_data_type(val2);
+    if (datatype1 == UNDEFINED_TYPE && datatype2 == UNDEFINED_TYPE)
     {
-        data->object.cond.datatype1 = STRING_TYPE;
-        data->object.cond.datatype2 = STRING_TYPE;
+        datatype1 = STRING_TYPE;
+        datatype2 = STRING_TYPE;
     }
-    else if (data->object.cond.datatype1 == UNDEFINED_TYPE)
-        data->object.cond.datatype1 = data->object.cond.datatype2;
-    else if (data->object.cond.datatype2 == UNDEFINED_TYPE)
-        data->object.cond.datatype2 = data->object.cond.datatype1;
+    else if (datatype1 == UNDEFINED_TYPE) datatype1 = datatype2;
+    else if (datatype2 == UNDEFINED_TYPE) datatype2 = datatype1;
 
     if (!val1) val1 = onestr;
     if (!val2) val2 = onestr;
 
-    data->object.cond.val1 = getVariablePointer(data->object.cond.datatype1, val1);
-    data->object.cond.val2 = getVariablePointer(data->object.cond.datatype2, val2);
-*myitem = new dcCondition(data->object.cond.opspec, data->object.cond.datatype1, data->object.cond.val1, data->object.cond.datatype2, data->object.cond.val2);
+    *myitem = new dcCondition(myopspec, datatype1, getVariablePointer(datatype1, val1), datatype2, getVariablePointer(datatype2, val2));
 
     return data;
 }

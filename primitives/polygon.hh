@@ -9,6 +9,7 @@ class dcPolygon : public dcParent
 {
     public:
         dcPolygon(float, bool, bool, Kolor *, Kolor *);
+        void completeInitialization(void);
         void draw(void);
     
     private:
