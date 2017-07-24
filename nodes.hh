@@ -126,10 +126,6 @@ struct node
         float *rotate;
     } info;
     union objects object;
-    // The two items below, and the above VarString class, should be defined in the String structure,
-    // but the String structure is a member of the objects union, so it can't hold a variable size class
-    std::vector<VarString *> vstring;
-    std::vector<std::string> filler;
     struct node *p_next;
     struct node *p_tail;
     struct node *p_parent;

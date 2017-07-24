@@ -7,16 +7,27 @@
 #include "kolor.hh"
 #include "varstring.hh"
 #include "object.hh"
+#include "parent.hh"
 
-class dcString : public dcObject
+class dcString : public virtual dcObject
 {
     public:
-        dcString(float *, float *, float *, float *, float *, float *, unsigned, unsigned, float *, bool, Kolor *, Kolor *, std::vector<VarString *>, std::vector<std::string>, flFont *, float *, float *, flMonoOption);
-
-        void completeInitialization(void);
+        dcString(dcParent *);
+        void setPosition(const char *, const char *);
+        void setSize(const char *, const char *);
+        void setRotation(const char *);
+        void setAlignment(const char *, const char *);
+        void setColor(const char *);
+        void setBackgroundColor(const char *);
+        void setFont(const char *, const char *, const char *, const char *);
+        void setShadowOffset(const char *);
+        void setString(std::string);
         void draw(void);
 
     private:
+        size_t parse_var(std::string);
+        unsigned count_lines(std::string);
+
         float *x;
         float *y;
         float *w;

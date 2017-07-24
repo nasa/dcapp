@@ -30,8 +30,6 @@ extern struct node *new_line(dcLine **, struct node *, struct node **, const cha
 extern struct node *new_polygon(dcPolygon **, struct node *, struct node **, const char *, const char *, const char *);
 extern struct node *new_rectangle(dcRectangle **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_circle(dcCircle **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_string(dcString **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *,
-                               const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_image(dcImage **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_pixel_stream(dcPixelStream **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_button(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
@@ -465,22 +463,16 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "String"))
         {
-dcString *myitem;
-            data = new_string(&myitem, parent, list,
-                            get_element_data(node, "X"),
-                            get_element_data(node, "Y"),
-                            get_element_data(node, "Rotate"),
-                            get_element_data(node, "Size"),
-                            get_element_data(node, "HorizontalAlign"),
-                            get_element_data(node, "VerticalAlign"),
-                            get_element_data(node, "Color"),
-                            get_element_data(node, "BackgroundColor"),
-                            get_element_data(node, "ShadowOffset"),
-                            get_element_data(node, "Font"),
-                            get_element_data(node, "Face"),
-                            get_element_data(node, "ForceMono"),
-                            get_node_content(node));
-myparent->addChild(myitem);
+            dcString *myitem = new dcString(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize("0", get_element_data(node, "Size"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setColor(get_element_data(node, "Color"));
+            myitem->setBackgroundColor(get_element_data(node, "BackgroundColor"));
+            myitem->setFont(get_element_data(node, "Font"), get_element_data(node, "Face"), get_element_data(node, "Size"), get_element_data(node, "ForceMono"));
+            myitem->setShadowOffset(get_element_data(node, "ShadowOffset"));
+            myitem->setString(get_node_content(node));
         }
         if (NodeCheck(node, "Image"))
         {

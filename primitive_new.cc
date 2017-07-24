@@ -34,7 +34,7 @@ bool check_dynamic_element(const char *spec)
     return false;
 }
 
-static float *getFloatPointer(const char *valstr)
+float *getFloatPointer(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return (float *)get_pointer(valstr);
     else return dcLoadConstant(StrToFloat(valstr, 0));
@@ -52,7 +52,7 @@ int *getIntegerPointer(const char *valstr)
     else return dcLoadConstant(StrToInt(valstr, 0));
 }
 
-static char *getStringPointer(const char *valstr)
+char *getStringPointer(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return (char *)get_pointer(valstr);
     else return dcLoadConstant(valstr);
@@ -75,7 +75,7 @@ static void *getVariablePointer(int datatype, const char *valstr)
     return 0x0;
 }
 
-static int get_data_type(const char *valstr)
+int get_data_type(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return get_datatype(valstr);
     return UNDEFINED_TYPE;
@@ -118,8 +118,12 @@ static struct node *add_primitive_node(struct node *parent, struct node **list, 
 
     data->info.halign = StrToHAlign(halign, AlignLeft);
     data->info.valign = StrToVAlign(valign, AlignBottom);
-    data->info.w = getFloatPointer(width, *(data->info.containerW));
-    data->info.h = getFloatPointer(height, *(data->info.containerH));
+//    data->info.w = getFloatPointer(width, *(data->info.containerW));
+//    data->info.h = getFloatPointer(height, *(data->info.containerH));
+if (width) data->info.w = getFloatPointer(width);
+else data->info.w = data->info.containerW;
+if (height) data->info.h = getFloatPointer(height);
+else data->info.h = data->info.containerH;
     data->info.rotate = getFloatPointer(rotate);
 
     return data;
@@ -232,100 +236,6 @@ struct node *new_circle(dcCircle **myitem, struct node *parent, struct node **li
     Kolor LineColor = StrToColor(linecolor, 1, 1, 1, 1);
 
     *myitem = new dcCircle(data->info.x, data->info.y, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, getFloatPointer(radius), StrToFloat(linewidth, 1), myfill, myoutline, &FillColor, &LineColor, StrToInt(segments, 80));
-
-    return data;
-}
-
-// TODO: This parsing should be simplified and/or combined with string parsing in xml_stringsub.cc
-static size_t parse_var(std::vector<VarString *> *vstring, std::string mystr)
-{
-    size_t var_start, var_end;
-    size_t fmt_start = mystr.find('(');
-    size_t fmt_end = mystr.find(')');
-    bool braced;
-    std::string varstr = "@";
-
-    if (mystr[1] == '{') 
-    {
-        braced = true;
-        var_start = 2;
-    }
-    else
-    {
-        braced = false;
-        var_start = 1;
-    }
-
-    if (fmt_start != std::string::npos) var_end = fmt_start;
-    else if (braced) var_end = mystr.find('}');
-    else var_end = mystr.find(' ');
-
-    if (var_end == std::string::npos) varstr += mystr.substr(var_start, std::string::npos);
-    else varstr += mystr.substr(var_start, var_end - var_start);
-
-    if (fmt_start != std::string::npos && fmt_end != std::string::npos)
-        vstring->push_back(new VarString(get_data_type(varstr.c_str()), getStringPointer(varstr.c_str()), mystr.substr(fmt_start+1, fmt_end-fmt_start-1).c_str()));
-    else
-        vstring->push_back(new VarString(get_data_type(varstr.c_str()), getStringPointer(varstr.c_str()), 0x0));
-
-    if (braced) return mystr.find('}') + 1;
-    else if (fmt_end != std::string::npos) return fmt_end + 1;
-    else return mystr.find(' ');
-}
-
-static void parse_string(std::vector<VarString *> *vstring, std::vector<std::string> *filler, std::string mystr)
-{
-    size_t vstart, vlen, curpos = 0;
-
-    do
-    {
-        vstart = mystr.find('@', curpos);
-        filler->push_back(mystr.substr(curpos, vstart-curpos));
-        if (vstart == std::string::npos) return;
-        vlen = parse_var(vstring, mystr.substr(vstart, std::string::npos));
-        if (vlen == std::string::npos)
-        {
-            filler->push_back("");
-            return;
-        }
-        curpos = vstart + vlen;
-    } while (curpos < mystr.size());
-
-    filler->push_back("");
-}
-
-struct node *new_string(dcString **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *rotate, const char *fontsize, const char *halign, const char *valign,
-                        const char *color, const char *bgcolor, const char *shadowoffset, const char *font, const char *face, const char *forcemono, const char *value)
-{
-    struct node *data = add_primitive_node(parent, list, Empty, x, y, "0", fontsize, halign, valign, rotate);
-
-    bool background;
-    Kolor mycolor, mybgcolor;
-    flMonoOption myforcemono = flMonoNone;
-
-    if (forcemono)
-    {
-        if (!strcmp(forcemono, "Numeric")) myforcemono = flMonoNumeric;
-        else if (!strcmp(forcemono, "AlphaNumeric")) myforcemono = flMonoAlphaNumeric;
-        else if (!strcmp(forcemono, "All")) myforcemono = flMonoAll;
-    }
-
-    mycolor = StrToColor(color, 1, 1, 1, 1);
-
-    if (bgcolor)
-    {
-        background = true;
-        mybgcolor = StrToColor(bgcolor, 0, 0, 0, 1);
-    }
-    else
-        background = false;
-
-    parse_string(&(data->vstring), &(data->filler), value);
-
-    *myitem = new dcString(data->info.x, data->info.y, data->info.w, data->info.h,
-                           data->info.containerW, data->info.containerH, data->info.halign, data->info.valign,
-                           data->info.rotate, background, &mycolor, &mybgcolor, data->vstring, data->filler,
-                           dcLoadFont(font, face), getFloatPointer(fontsize), getFloatPointer(shadowoffset), myforcemono);
 
     return data;
 }
