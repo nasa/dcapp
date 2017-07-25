@@ -1,4 +1,5 @@
 #include "nodes.hh"
+#include "string_utils.hh"
 #include "animate.hh"
 
 // TODO: put in a centralized header file:
@@ -6,9 +7,14 @@ extern std::list<dcObject *> events;
 extern appdata AppData;
 
 
-dcAnimate::dcAnimate(float inval)
+dcAnimate::dcAnimate(dcParent *myparent) : duration(1)
 {
-    duration = inval;
+    myparent->addChild(this);
+}
+
+void dcAnimate::setDuration(const char *inval)
+{
+    if (inval) duration = StrToFloat(inval, 1);
 }
 
 void dcAnimate::handleEvent(void)

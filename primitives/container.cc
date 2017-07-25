@@ -18,8 +18,8 @@ dcContainer::dcContainer(float *invwidth, float *invheight, float *inx, float *i
 
 void dcContainer::completeInitialization(void)
 {
-    containerw = getContainerWidth();
-    containerh = getContainerHeight();
+    containerw = getParent()->getContainerWidth();
+    containerh = getParent()->getContainerHeight();
 
     for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
     {

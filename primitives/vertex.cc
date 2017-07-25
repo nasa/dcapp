@@ -1,19 +1,19 @@
-#include "geometry.hh"
 #include "opengl_draw.hh"
 #include "vertex.hh"
 
-dcVertex::dcVertex(float *inx, float *iny, float *incw, float *inch)
+extern float *getFloatPointer(const char *); // TODO: put in header file
+
+dcVertex::dcVertex(dcParent *myparent) : x(0x0), y(0x0)
 {
-    x = inx;
-    y = iny;
-    containerw = incw;
-    containerh = inch;
+    myparent->addChild(this);
+    containerw = getContainerWidth();
+    containerh = getContainerHeight();
 }
 
-void dcVertex::completeInitialization(void)
+void dcVertex::setPosition(const char *inx, const char *iny)
 {
-//    containerw = getContainerWidth(); TODO
-//    containerh = getContainerHeight(); TODO
+    if (inx) x = getFloatPointer(inx);
+    if (iny) y = getFloatPointer(iny);
 }
 
 void dcVertex::draw(void)

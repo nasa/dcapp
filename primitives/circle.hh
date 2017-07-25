@@ -2,22 +2,21 @@
 #define _CIRCLE_HH_
 
 #include "kolor.hh"
-#include "object.hh"
+#include "geometric.hh"
+#include "parent.hh"
 
-class dcCircle : public dcObject
+class dcCircle : public dcGeometric
 {
     public:
-        dcCircle(float *, float *, float *, float *, unsigned, unsigned, float *, float, bool, bool, Kolor *, Kolor *, unsigned);
-
+        dcCircle(dcParent *);
+        void setFillColor(const char *);
+        void setLineColor(const char *);
+        void setLineWidth(const char *);
+        void setRadius(const char *);
+        void setSegments(const char *);
         void draw(void);
 
     private:
-        float *x;
-        float *y;
-        float *containerw;
-        float *containerh;
-        unsigned halign;
-        unsigned valign;
         float *radius;
         float linewidth;
         bool fill;

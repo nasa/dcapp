@@ -129,23 +129,6 @@ else data->info.h = data->info.containerH;
     return data;
 }
 
-struct node *new_panel(dcPanel **myitem, const char *index, const char *colorspec, const char *vwidth, const char *vheight)
-{
-    struct node *data = (struct node *)calloc(1, sizeof(struct node));
-
-    float myvwidth = StrToFloat(vwidth, 100);
-    float myvheight = StrToFloat(vheight, 100);
-
-    data->info.w = &myvwidth;
-    data->info.h = &myvheight;
-
-    Kolor mycolor = StrToColor(colorspec, 0, 0, 0, 1);
-
-    *myitem = new dcPanel(StrToInt(index, 0), myvwidth, myvheight, &mycolor);
-
-    return data;
-}
-
 struct node *new_container(dcContainer **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *vwidth, const char *vheight, const char *rotate)
 {
     struct node *data = add_primitive_node(parent, list, Container, x, y, width, height, halign, valign, rotate);
@@ -154,88 +137,6 @@ struct node *new_container(dcContainer **myitem, struct node *parent, struct nod
     data->object.cont.vheight = getFloatPointer(vheight, *(data->info.h));
 
     *myitem = new dcContainer(data->object.cont.vwidth, data->object.cont.vheight, data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate);
-
-    return data;
-}
-
-struct node *new_vertex(dcVertex **myitem, struct node *parent, struct node **list, const char *x, const char *y)
-{
-    struct node *data = add_primitive_node(parent, list, Empty, x, y, 0x0, 0x0, 0x0, 0x0, 0x0);
-
-    *myitem = new dcVertex(data->info.x, data->info.y, data->info.containerW, data->info.containerH);
-
-    return data;
-}
-
-struct node *new_line(dcLine **myitem, struct node *parent, struct node **list, const char *linewidth, const char *color)
-{
-    struct node *data = add_primitive_node(parent, list, Empty, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-
-    Kolor linecolor = StrToColor(color, 1, 1, 1, 1);
-
-    *myitem = new dcLine(StrToFloat(linewidth, 1), &linecolor);
-
-    return data;
-}
-
-struct node *new_polygon(dcPolygon **myitem, struct node *parent, struct node **list, const char *fillcolor, const char *linecolor, const char *linewidth)
-{
-    struct node *data = add_primitive_node(parent, list, Empty, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-
-    bool myfill, myoutline;
-
-    if (fillcolor) myfill = true;
-    else myfill = false;
-
-    if (linecolor || linewidth) myoutline = true;
-    else myoutline = false;
-
-    Kolor FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
-    Kolor LineColor = StrToColor(linecolor, 1, 1, 1, 1);
-
-    *myitem = new dcPolygon(StrToFloat(linewidth, 1), myfill, myoutline, &FillColor, &LineColor);
-
-    return data;
-}
-
-struct node *new_rectangle(dcRectangle **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height,
-                           const char *halign, const char *valign, const char *rotate, const char *fillcolor, const char *linecolor, const char *linewidth)
-{
-    struct node *data = add_primitive_node(parent, list, Empty, x, y, width, height, halign, valign, rotate);
-
-    bool myfill, myoutline;
-
-    if (fillcolor) myfill = true;
-    else myfill = false;
-
-    if (linecolor || linewidth) myoutline = true;
-    else myoutline = false;
-
-    Kolor FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
-    Kolor LineColor = StrToColor(linecolor, 1, 1, 1, 1);
-
-    *myitem = new dcRectangle(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, StrToFloat(linewidth, 1), myfill, myoutline, &FillColor, &LineColor);
-
-    return data;
-}
-
-struct node *new_circle(dcCircle **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *halign, const char *valign, const char *radius,
-                        const char *segments, const char *fillcolor, const char *linecolor, const char *linewidth)
-{
-    struct node *data = add_primitive_node(parent, list, Empty, x, y, 0x0, 0x0, halign, valign, 0x0);
-
-    bool myfill, myoutline;
-
-    if (fillcolor) myfill = true;
-    else myfill = false;
-
-    if (linecolor || linewidth) myoutline = true;
-    else myoutline = false;
-
-    Kolor FillColor = StrToColor(fillcolor, 1, 1, 1, 1);
-    Kolor LineColor = StrToColor(linecolor, 1, 1, 1, 1);
-
-    *myitem = new dcCircle(data->info.x, data->info.y, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, getFloatPointer(radius), StrToFloat(linewidth, 1), myfill, myoutline, &FillColor, &LineColor, StrToInt(segments, 80));
 
     return data;
 }
@@ -639,15 +540,6 @@ struct ModifyValue get_setvalue_data(const char *varspec, const char *opspec, co
         }
     }
     return ret;
-}
-
-struct node *new_animation(dcAnimate **myitem, struct node *parent, struct node **list, const char *duration)
-{
-    struct node *data = add_primitive_node(parent, list, Empty, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-
-    *myitem = new dcAnimate(StrToFloat(duration, 1));
-
-    return data;
 }
 
 dcSetValue *new_setvalue(struct node *parent, struct node **list, const char *var, const char *optype, const char *min, const char *max, const char *val)

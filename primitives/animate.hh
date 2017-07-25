@@ -6,8 +6,8 @@
 class dcAnimate : public dcParent
 {
     public:
-        dcAnimate(float);
-
+        dcAnimate(dcParent *);
+        void setDuration(const char *);
         void handleEvent(void);
         void updateData(void);
 

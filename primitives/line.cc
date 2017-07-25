@@ -1,20 +1,25 @@
+#include "opengl_draw.hh"
+#include "string_utils.hh"
+#include "loadUtils.hh"
 #include "line.hh"
 
-dcLine::dcLine(float inlwidth, Kolor *incolor)
+dcLine::dcLine(dcParent *myparent) : linewidth(1)
 {
-    linewidth = inlwidth;
-    color.R = incolor->R;
-    color.G = incolor->G;
-    color.B = incolor->B;
-    color.A = incolor->A;
+    myparent->addChild(this);
+    color.R = dcLoadConstant(1.0f);
+    color.G = dcLoadConstant(1.0f);
+    color.B = dcLoadConstant(1.0f);
+    color.A = dcLoadConstant(1.0f);
 }
 
-void dcLine::completeInitialization(void)
+void dcLine::setColor(const char *cspec)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->completeInitialization();
-    }
+    if (cspec) color = StrToColor(cspec, 1, 1, 1, 1);
+}
+
+void dcLine::setLineWidth(const char *inval)
+{
+    if (inval) linewidth = StrToFloat(inval, 1);
 }
 
 void dcLine::draw(void)

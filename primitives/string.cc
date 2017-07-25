@@ -8,16 +8,14 @@ extern float *getFloatPointer(const char *); // TODO: put in header file
 extern char *getStringPointer(const char *); // TODO: put in header file
 extern int get_data_type(const char *); // TODO: put in header file
 
-dcString::dcString(dcParent *myparent) : dcGeometric(myparent), fontID(0x0)
+dcString::dcString(dcParent *myparent) : dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone)
 {
-    background = false;
     color.R = dcLoadConstant(1.0f);
     color.G = dcLoadConstant(1.0f);
     color.B = dcLoadConstant(1.0f);
     color.A = dcLoadConstant(1.0f);
     fontSize = dcLoadConstant(12.0f);
     shadowOffset = dcLoadConstant(0.0f);
-    forcemono = flMonoNone;
 }
 
 void dcString::setColor(const char *cspec)

@@ -1,21 +1,47 @@
 #include "opengl_draw.hh"
+#include "string_utils.hh"
+#include "loadUtils.hh"
 #include "panel.hh"
 
-dcPanel::dcPanel(int id, float inox, float inoy, Kolor *incolor)
+dcPanel::dcPanel(dcParent *myparent) : displayID(0), orthoX(100), orthoY(100)
 {
-    displayID = id;
-    orthoX = inox;
-    orthoY = inoy;
-    color.R = incolor->R;
-    color.G = incolor->G;
-    color.B = incolor->B;
-    color.A = incolor->A;
+    myparent->addChild(this);
+    color.R = dcLoadConstant(0.0f);
+    color.G = dcLoadConstant(0.0f);
+    color.B = dcLoadConstant(0.0f);
+    color.A = dcLoadConstant(0.0f);
+}
+
+void dcPanel::setID(const char *inval)
+{
+    if (inval) displayID = StrToInt(inval, 0);
+}
+
+void dcPanel::setColor(const char *cspec)
+{
+    if (cspec) color = StrToColor(cspec, 0, 0, 0, 1);
+}
+
+void dcPanel::setOrtho(const char *inw, const char *inh)
+{
+    if (inw) orthoX = StrToFloat(inw, 100);
+    if (inh) orthoY = StrToFloat(inh, 100);
 }
 
 bool dcPanel::checkID(int id)
 {
     if (id == displayID) return true;
     else return false;
+}
+
+float * dcPanel::getContainerWidth(void)
+{
+    return &orthoX;
+}
+
+float * dcPanel::getContainerHeight(void)
+{
+    return &orthoY;
 }
 
 void dcPanel::draw(void)

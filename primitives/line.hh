@@ -2,14 +2,14 @@
 #define _LINE_HH_
 
 #include "kolor.hh"
-#include "opengl_draw.hh"
 #include "parent.hh"
 
 class dcLine : public dcParent
 {
     public:
-        dcLine(float, Kolor *);
-        void completeInitialization(void);
+        dcLine(dcParent *);
+        void setColor(const char *);
+        void setLineWidth(const char *);
         void draw(void);
     
     private:

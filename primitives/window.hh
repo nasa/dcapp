@@ -7,8 +7,8 @@
 class dcWindow : public dcParent
 {
     public:
-        dcWindow(int *);
-
+        dcWindow();
+        void setActiveDisplay(const char *);
         void setCurrentPanel(void);
         void draw(void);
         void handleKeyPress(char);

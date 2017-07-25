@@ -2,25 +2,19 @@
 #define _RECTANGLE_HH_
 
 #include "kolor.hh"
-#include "object.hh"
+#include "geometric.hh"
+#include "parent.hh"
 
-class dcRectangle : public dcObject
+class dcRectangle : public dcGeometric
 {
     public:
-        dcRectangle(float *, float *, float *, float *, float *, float *, unsigned, unsigned, float *, float, bool, bool, Kolor *, Kolor *);
-
+        dcRectangle(dcParent *);
+        void setFillColor(const char *);
+        void setLineColor(const char *);
+        void setLineWidth(const char *);
         void draw(void);
 
     private:
-        float *x;
-        float *y;
-        float *w;
-        float *h;
-        float *containerw;
-        float *containerh;
-        unsigned halign;
-        unsigned valign;
-        float *rotate;
         float linewidth;
         bool fill;
         bool outline;

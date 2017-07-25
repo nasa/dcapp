@@ -7,8 +7,13 @@
 class dcPanel : public dcParent
 {
     public:
-        dcPanel(int, float, float, Kolor *);
+        dcPanel(dcParent *);
+        void setID(const char *);
+        void setColor(const char *);
+        void setOrtho(const char *, const char *);
         bool checkID(int);
+        float *getContainerWidth(void);
+        float *getContainerHeight(void);
         void draw(void);
         void handleMousePress(float, float);
 

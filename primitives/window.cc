@@ -1,8 +1,16 @@
+#include "loadUtils.hh"
 #include "window.hh"
 
-dcWindow::dcWindow(int *dispid) : currentPanel(0x0)
+extern int *getIntegerPointer(const char *); // TODO: put in header file
+
+dcWindow::dcWindow() : currentPanel(0x0)
 {
-    displayID = dispid;
+    displayID = dcLoadConstant(0);
+}
+
+void dcWindow::setActiveDisplay(const char *inval)
+{
+    if (inval) displayID = getIntegerPointer(inval);
 }
 
 void dcWindow::setCurrentPanel(void)

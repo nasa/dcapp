@@ -22,14 +22,8 @@
 extern void window_init(bool, int , int, int, int);
 extern int *getIntegerPointer(const char *);
 
-extern struct node *new_panel(dcPanel **, const char *, const char *, const char *, const char *);
 extern struct node *new_container(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
-extern struct node *new_vertex(dcVertex **, struct node *, struct node **, const char *, const char *);
-extern struct node *new_line(dcLine **, struct node *, struct node **, const char *, const char *);
-extern struct node *new_polygon(dcPolygon **, struct node *, struct node **, const char *, const char *, const char *);
-extern struct node *new_rectangle(dcRectangle **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_circle(dcCircle **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_pixel_stream(dcPixelStream **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_button(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
                                const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
@@ -38,7 +32,6 @@ extern struct node *new_adi(dcADI **, struct node *, struct node **, const char 
 extern struct node *new_mouseevent(dcMouseEvent **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
 extern struct node *new_bezelevent(dcBezelEvent **, struct node *, struct node **, const char *);
-extern struct node *new_animation(dcAnimate **, struct node *, struct node **, const char *);
 extern dcSetValue *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
 extern struct ModifyValue get_setvalue_data(const char *, const char *, const char *, const char *, const char *);
 extern bool CheckConditionLogic(int, int, const void *, int, const void *);
@@ -178,9 +171,8 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "Animation"))
         {
-dcAnimate *myitem;
-            data = new_animation(&myitem, parent, list, get_element_data(node, "Duration"));
-myparent->addChild(myitem);
+            dcAnimate *myitem = new dcAnimate(myparent);
+            myitem->setDuration(get_element_data(node, "Duration"));
             process_elements(myitem, data, &(data->object.anim.SubList), node->children);
         }
         if (NodeCheck(node, "Set"))
@@ -370,19 +362,18 @@ myparent->addChild(myitem);
                         StrToInt(get_element_data(node, "Width"), 800),
                         StrToInt(get_element_data(node, "Height"), 800));
             graphics_init();
-            AppData.toplevel = new dcWindow(getIntegerPointer(get_element_data(node, "ActiveDisplay")));
+            AppData.toplevel = new dcWindow();
+            AppData.toplevel->setActiveDisplay(get_element_data(node, "ActiveDisplay"));
             process_elements(AppData.toplevel, 0, 0, node->children);
         }
         if (NodeCheck(node, "Panel"))
         {
-dcPanel *myitem;
-            data = new_panel(&myitem,
-                             get_element_data(node, "DisplayIndex"),
-                             get_element_data(node, "BackgroundColor"),
-                             get_element_data(node, "VirtualWidth"),
-                             get_element_data(node, "VirtualHeight"));
-myparent->addChild(myitem);
+            dcPanel *myitem = new dcPanel(myparent);
+            myitem->setID(get_element_data(node, "DisplayIndex"));
+            myitem->setColor(get_element_data(node, "BackgroundColor"));
+            myitem->setOrtho(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
             preprocessing = false;
+data = (struct node *)calloc(1, sizeof(struct node)); // TODO: remove once sublists are gone
             process_elements(myitem, data, &(data->object.panel.SubList), node->children);
             preprocessing = true;
         }
@@ -404,61 +395,45 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "Vertex"))
         {
-dcVertex *myitem;
-            data = new_vertex(&myitem, parent, list,
-                              get_element_data(node, "X"),
-                              get_element_data(node, "Y"));
-myparent->addChild(myitem);
+            dcVertex *myitem = new dcVertex(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
         }
         if (NodeCheck(node, "Line"))
         {
-dcLine *myitem;
-            data = new_line(&myitem, parent, list,
-                            get_element_data(node, "LineWidth"),
-                            get_element_data(node, "Color"));
-myparent->addChild(myitem);
+            dcLine *myitem = new dcLine(myparent);
+            myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            myitem->setColor(get_element_data(node, "Color"));
             process_elements(myitem, data, &(data->object.line.Vertices), node->children);
         }
         if (NodeCheck(node, "Polygon"))
         {
-dcPolygon *myitem;
-            data = new_polygon(&myitem, parent, list,
-                                 get_element_data(node, "FillColor"),
-                                 get_element_data(node, "LineColor"),
-                                 get_element_data(node, "LineWidth"));
-myparent->addChild(myitem);
+            dcPolygon *myitem = new dcPolygon(myparent);
+            myitem->setFillColor(get_element_data(node, "FillColor"));
+            myitem->setLineColor(get_element_data(node, "LineColor"));
+            myitem->setLineWidth(get_element_data(node, "LineWidth"));
             process_elements(myitem, data, &(data->object.poly.Vertices), node->children);
         }
         if (NodeCheck(node, "Rectangle"))
         {
-dcRectangle *myitem;
-            data = new_rectangle(&myitem, parent, list,
-                                 get_element_data(node, "X"),
-                                 get_element_data(node, "Y"),
-                                 get_element_data(node, "Width"),
-                                 get_element_data(node, "Height"),
-                                 get_element_data(node, "HorizontalAlign"),
-                                 get_element_data(node, "VerticalAlign"),
-                                 get_element_data(node, "Rotate"),
-                                 get_element_data(node, "FillColor"),
-                                 get_element_data(node, "LineColor"),
-                                 get_element_data(node, "LineWidth"));
-myparent->addChild(myitem);
+            dcRectangle *myitem = new dcRectangle(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setFillColor(get_element_data(node, "FillColor"));
+            myitem->setLineColor(get_element_data(node, "LineColor"));
+            myitem->setLineWidth(get_element_data(node, "LineWidth"));
         }
         if (NodeCheck(node, "Circle"))
         {
-dcCircle *myitem;
-            data = new_circle(&myitem, parent, list,
-                                 get_element_data(node, "X"),
-                                 get_element_data(node, "Y"),
-                                 get_element_data(node, "HorizontalAlign"),
-                                 get_element_data(node, "VerticalAlign"),
-                                 get_element_data(node, "Radius"),
-                                 get_element_data(node, "Segments"),
-                                 get_element_data(node, "FillColor"),
-                                 get_element_data(node, "LineColor"),
-                                 get_element_data(node, "LineWidth"));
-myparent->addChild(myitem);
+            dcCircle *myitem = new dcCircle(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setFillColor(get_element_data(node, "FillColor"));
+            myitem->setLineColor(get_element_data(node, "LineColor"));
+            myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            myitem->setRadius(get_element_data(node, "Radius"));
+            myitem->setSegments(get_element_data(node, "Segments"));
         }
         if (NodeCheck(node, "String"))
         {

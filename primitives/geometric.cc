@@ -4,12 +4,7 @@
 
 extern float *getFloatPointer(const char *); // TODO: put in header file
 
-dcGeometric::dcGeometric(dcParent *myparent)
-:
-x(0x0),
-y(0x0),
-halign(AlignLeft),
-valign(AlignBottom)
+dcGeometric::dcGeometric(dcParent *myparent) : x(0x0), y(0x0), halign(AlignLeft), valign(AlignBottom)
 {
     myparent->addChild(this);
     containerw = getContainerWidth();

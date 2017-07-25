@@ -1,25 +1,45 @@
+#include "opengl_draw.hh"
+#include "string_utils.hh"
+#include "loadUtils.hh"
 #include "polygon.hh"
 
-dcPolygon::dcPolygon(float inlwidth, bool infill, bool inoutline, Kolor *infillcol, Kolor *inlinecol)
+dcPolygon::dcPolygon(dcParent *myparent) : linewidth(1), fill(false), outline(false)
 {
-    linewidth = inlwidth;
-    fill = infill;
-    outline = inoutline;
-    FillColor.R = infillcol->R;
-    FillColor.G = infillcol->G;
-    FillColor.B = infillcol->B;
-    FillColor.A = infillcol->A;
-    LineColor.R = inlinecol->R;
-    LineColor.G = inlinecol->G;
-    LineColor.B = inlinecol->B;
-    LineColor.A = inlinecol->A;
+    myparent->addChild(this);
+    FillColor.R = dcLoadConstant(0.5f);
+    FillColor.G = dcLoadConstant(0.5f);
+    FillColor.B = dcLoadConstant(0.5f);
+    FillColor.A = dcLoadConstant(0.5f);
+    LineColor.R = dcLoadConstant(1.0f);
+    LineColor.G = dcLoadConstant(1.0f);
+    LineColor.B = dcLoadConstant(1.0f);
+    LineColor.A = dcLoadConstant(1.0f);
 }
 
-void dcPolygon::completeInitialization(void)
+void dcPolygon::setFillColor(const char *cspec)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
+    if (cspec)
     {
-        (*myobj)->completeInitialization();
+        FillColor = StrToColor(cspec, 1, 1, 1, 1);
+        fill = true;
+    }
+}
+
+void dcPolygon::setLineColor(const char *cspec)
+{
+    if (cspec)
+    {
+        LineColor = StrToColor(cspec, 1, 1, 1, 1);
+        outline = true;
+    }
+}
+
+void dcPolygon::setLineWidth(const char *inval)
+{
+    if (inval)
+    {
+        linewidth = StrToFloat(inval, 1);
+        outline = true;
     }
 }
 
