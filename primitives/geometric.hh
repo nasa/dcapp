@@ -1,24 +1,20 @@
 #ifndef _GEOMETRIC_HH_
 #define _GEOMETRIC_HH_
 
-#include <string>
-#include <vector>
-#include "fontlib/fontlib.hh"
-#include "kolor.hh"
-#include "varstring.hh"
-#include "object.hh"
 #include "parent.hh"
+#include "object.hh"
 
 class dcGeometric : public virtual dcObject
 {
     public:
-        dcGeometric(void);
+        dcGeometric(dcParent *);
         void setPosition(const char *, const char *);
         void setSize(const char *, const char *);
         void setRotation(const char *);
         void setAlignment(const char *, const char *);
+        void computeGeometry(void);
 
-    private:
+    protected:
         float *x;
         float *y;
         float *w;
@@ -28,6 +24,23 @@ class dcGeometric : public virtual dcObject
         unsigned halign;
         unsigned valign;
         float *rotate;
+
+        float refx;
+        float refy;
+        float delx;
+        float dely;
+        float width;
+        float height;
+        float left;
+        float right;
+        float bottom;
+        float top;
+        float center;
+        float middle;
+
+    private:
+        float GeomX(float *, float, float, int);
+        float GeomY(float *, float, float, int);
 };
 
 #endif

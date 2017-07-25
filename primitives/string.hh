@@ -6,17 +6,13 @@
 #include "fontlib/fontlib.hh"
 #include "kolor.hh"
 #include "varstring.hh"
-#include "object.hh"
+#include "geometric.hh"
 #include "parent.hh"
 
-class dcString : public virtual dcObject
+class dcString : public dcGeometric
 {
     public:
         dcString(dcParent *);
-        void setPosition(const char *, const char *);
-        void setSize(const char *, const char *);
-        void setRotation(const char *);
-        void setAlignment(const char *, const char *);
         void setColor(const char *);
         void setBackgroundColor(const char *);
         void setFont(const char *, const char *, const char *, const char *);
@@ -28,15 +24,6 @@ class dcString : public virtual dcObject
         size_t parse_var(std::string);
         unsigned count_lines(std::string);
 
-        float *x;
-        float *y;
-        float *w;
-        float *h;
-        float *containerw;
-        float *containerh;
-        unsigned halign;
-        unsigned valign;
-        float *rotate;
         bool background;
         Kolor color;
         Kolor bgcolor;

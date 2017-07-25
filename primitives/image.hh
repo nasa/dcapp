@@ -2,25 +2,17 @@
 #define _IMAGE_HH_
 
 #include "dc.hh"
-#include "object.hh"
+#include "geometric.hh"
+#include "parent.hh"
 
-class dcImage : public dcObject
+class dcImage : public dcGeometric
 {
     public:
-        dcImage(float *, float *, float *, float *, float *, float *, unsigned, unsigned, float *, dcTexture);
-
+        dcImage(dcParent *);
+        void setTexture(const char *);
         void draw(void);
 
     private:
-        float *x;
-        float *y;
-        float *w;
-        float *h;
-        float *containerw;
-        float *containerh;
-        unsigned halign;
-        unsigned valign;
-        float *rotate;
         dcTexture textureID;
 };
 

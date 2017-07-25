@@ -1,7 +1,6 @@
 #include "opengl_draw.hh"
 #include "string_utils.hh"
 #include "loadUtils.hh"
-#include "geometry.hh"
 #include "alignment.hh"
 #include "string.hh"
 
@@ -9,20 +8,8 @@ extern float *getFloatPointer(const char *); // TODO: put in header file
 extern char *getStringPointer(const char *); // TODO: put in header file
 extern int get_data_type(const char *); // TODO: put in header file
 
-dcString::dcString(dcParent *myparent)
-:
-x(0x0),
-y(0x0),
-halign(AlignLeft),
-valign(AlignBottom),
-fontID(0x0)
+dcString::dcString(dcParent *myparent) : dcGeometric(myparent), fontID(0x0)
 {
-    myparent->addChild(this);
-    containerw = getContainerWidth();
-    containerh = getContainerHeight();
-    w = containerw;
-    h = containerh;
-    rotate = dcLoadConstant(0.0f);
     background = false;
     color.R = dcLoadConstant(1.0f);
     color.G = dcLoadConstant(1.0f);
@@ -31,39 +18,6 @@ fontID(0x0)
     fontSize = dcLoadConstant(12.0f);
     shadowOffset = dcLoadConstant(0.0f);
     forcemono = flMonoNone;
-}
-
-void dcString::setPosition(const char *inx, const char *iny)
-{
-    if (inx) x = getFloatPointer(inx);
-    if (iny) y = getFloatPointer(iny);
-}
-
-void dcString::setSize(const char *inw, const char *inh)
-{
-    if (inw) w = getFloatPointer(inw);
-    if (inh) h = getFloatPointer(inh);
-}
-
-void dcString::setRotation(const char *inr)
-{
-    if (inr) rotate = getFloatPointer(inr);
-}
-
-void dcString::setAlignment(const char *inhal, const char *inval)
-{
-    if (inhal)
-    {
-        if (!strcasecmp(inhal, "Left")) halign = AlignLeft;
-        else if (!strcasecmp(inhal, "Center")) halign = AlignCenter;
-        else if (!strcasecmp(inhal, "Right")) halign = AlignRight;
-    }
-    if (inval)
-    {
-        if (!strcasecmp(inval, "Bottom")) valign = AlignBottom;
-        else if (!strcasecmp(inval, "Middle")) valign = AlignMiddle;
-        else if (!strcasecmp(inval, "Top")) valign = AlignTop;
-    }
 }
 
 void dcString::setColor(const char *cspec)
@@ -122,9 +76,10 @@ void dcString::draw(void)
 {
     if (!fontID) return;
 
-    float left, right, bottom, top;
+    computeGeometry();
+
+    float myleft, myright, mybottom, mytop;
     unsigned num_lines, i, strptr=0, seglen;
-    Geometry geo = GetGeometry(x, y, w, h, *containerw, *containerh, halign, valign);
 
     std::string mystring;
     for (i = 0; i < vstring.size(); i++) mystring += filler[i] + vstring[i]->get();
@@ -141,43 +96,43 @@ void dcString::draw(void)
         switch (halign)
         {
             case AlignLeft:
-                left = 0;
+                myleft = 0;
                 break;
             case AlignCenter:
-                left = - 0.5 * get_string_width(fontID, *fontSize, forcemono, tmpstr.c_str());
+                myleft = - 0.5 * get_string_width(fontID, *fontSize, forcemono, tmpstr.c_str());
                 break;
             case AlignRight:
-                left = - get_string_width(fontID, *fontSize, forcemono, tmpstr.c_str());
+                myleft = - get_string_width(fontID, *fontSize, forcemono, tmpstr.c_str());
                 break;
         }
 
         switch (valign)
         {
             case AlignBottom:
-                bottom = (*fontSize) * (float)(num_lines - i);
+                mybottom = (*fontSize) * (float)(num_lines - i);
                 break;
             case AlignMiddle:
-                bottom = (*fontSize) * (((float)num_lines/2) - (float)i);
+                mybottom = (*fontSize) * (((float)num_lines/2) - (float)i);
                 break;
             case AlignTop:
-                bottom = -(*fontSize) * (float)i;
+                mybottom = -(*fontSize) * (float)i;
                 break;
         }
 
-        translate_start(geo.refx, geo.refy);
+        translate_start(refx, refy);
         rotate_start(*rotate);
 
         if (background)
         {
-            top = bottom + (*fontSize);
-            right = left + get_string_width(fontID, *fontSize, forcemono, tmpstr.c_str());
-            rectangle_fill(*(bgcolor.R), *(bgcolor.G), *(bgcolor.B), *(bgcolor.A), left, bottom, left, top, right, top, right, bottom);
+            mytop = mybottom + (*fontSize);
+            myright = myleft + get_string_width(fontID, *fontSize, forcemono, tmpstr.c_str());
+            rectangle_fill(*(bgcolor.R), *(bgcolor.G), *(bgcolor.B), *(bgcolor.A), myleft, mybottom, myleft, mytop, myright, mytop, myright, mybottom);
         }
         if (*shadowOffset)
         {
-            draw_string(left+(*shadowOffset), bottom-(*shadowOffset), *fontSize, 0, 0, 0, 1, fontID, forcemono, tmpstr.c_str());
+            draw_string(myleft+(*shadowOffset), mybottom-(*shadowOffset), *fontSize, 0, 0, 0, 1, fontID, forcemono, tmpstr.c_str());
         }
-        draw_string(left, bottom, *fontSize, *(color.R), *(color.G), *(color.B), *(color.A), fontID, forcemono, tmpstr.c_str());
+        draw_string(myleft, mybottom, *fontSize, *(color.R), *(color.G), *(color.B), *(color.A), fontID, forcemono, tmpstr.c_str());
 
         rotate_end();
         translate_end();

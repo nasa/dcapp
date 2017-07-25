@@ -240,15 +240,6 @@ struct node *new_circle(dcCircle **myitem, struct node *parent, struct node **li
     return data;
 }
 
-struct node *new_image(dcImage **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *rotate, const char *filename)
-{
-    struct node *data = add_primitive_node(parent, list, Empty, x, y, width, height, halign, valign, rotate);
-
-    *myitem = new dcImage(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, dcLoadTexture(filename));
-
-    return data;
-}
-
 struct node *new_pixel_stream(dcPixelStream **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *rotate, const char *protocolstr, const char *host, const char *port, const char *shmemkey, const char *filename)
 {
     PixelStreamData *mypsd = 0x0;
