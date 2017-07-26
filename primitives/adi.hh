@@ -2,24 +2,18 @@
 #define _ADI_HH_
 
 #include "dc.hh"
-#include "object.hh"
+#include "geometric.hh"
+#include "parent.hh"
 
-class dcADI : public dcObject
+class dcADI : public dcGeometric
 {
     public:
-        dcADI(float *, float *, float *, float *, float *, float *, unsigned, unsigned, dcTexture, dcTexture, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *);
-
+        dcADI(dcParent *);
+        void setBackgrountTexture(const char *);
+        void setBallTexture(const char *);
         void draw(void);
 
     private:
-        float *x;
-        float *y;
-        float *w;
-        float *h;
-        float *containerw;
-        float *containerh;
-        unsigned halign;
-        unsigned valign;
         dcTexture bkgdID;
         dcTexture ballID;
         float *outerradius;

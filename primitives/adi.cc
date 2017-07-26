@@ -1,52 +1,62 @@
 #include <cmath>
-#include "geometry.hh"
+#include "loadUtils.hh"
 #include "opengl_draw.hh"
 #include "adi.hh"
 
 static const float BLACK[3] = {0.0, 0.0, 0.0};
 static const float YELLOW[3] = {1.0, 1.0, 0.0};
 
-dcADI::dcADI(float *inx, float *iny, float *inw, float *inh, float *incw, float *inch, unsigned inhal, unsigned inval, dcTexture inbkgd, dcTexture inball, float *inoutrad, float *inballrad, float *inchevw, float *inchevh, float *inroll, float *inpitch, float *inyaw, float *inre, float *inpe, float *inye)
+dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(-1), ballID(-1), outerradius(0x0), ballradius(0x0), chevronW(0x0), chevronH(0x0)
 {
-    x = inx;
-    y = iny;
-    w = inw;
-    h = inh;
-    containerw = incw; // TODO: these should come from the parent
-    containerh = inch; // TODO: these should come from the parent
-    halign = inhal;
-    valign = inval;
-    bkgdID = inbkgd;
-    ballID = inball;
-    outerradius = inoutrad;
-    ballradius = inballrad;
-    chevronW = inchevw;
-    chevronH = inchevh;
-    roll = inroll;
-    pitch = inpitch;
-    yaw = inyaw;
-    rollError = inre;
-    pitchError = inpe;
-    yawError = inye;
+    roll = dcLoadConstant(0.0f);
+    pitch = dcLoadConstant(0.0f);
+    yaw = dcLoadConstant(0.0f);
+    rollError = dcLoadConstant(0.0f);
+    pitchError = dcLoadConstant(0.0f);
+    yawError = dcLoadConstant(0.0f);
+}
+
+void dcADI::setBackgrountTexture(const char *filename)
+{
+    if (filename) bkgdID = dcLoadTexture(filename);
+}
+
+void dcADI::setBallTexture(const char *filename)
+{
+    if (filename) ballID = dcLoadTexture(filename);
 }
 
 void dcADI::draw(void)
 {
-    Geometry geo = GetGeometry(x, y, w, h, *containerw, *containerh, halign, valign);
+    computeGeometry();
+
+    float outerrad, ballrad, chevw, chevh;
+
+    if (outerradius) outerrad = *outerradius;
+    else outerrad = 0.5 * (fminf(*w, *h));
+
+    if (ballradius) ballrad = *ballradius;
+    else ballrad = 0.9 * outerrad;
+
+    if (chevronW) chevw = *chevronW;
+    else chevw = 0.2 * outerrad;
+
+    if (chevronH) chevh = *chevronH;
+    else chevh = 0.2 * outerrad;
 
     // Draw the ball
-    draw_textured_sphere(geo.center, geo.middle, *ballradius, ballID, *roll, *pitch, *yaw);
+    draw_textured_sphere(center, middle, ballrad, ballID, *roll, *pitch, *yaw);
 
     // Draw the surrounding area (i.e. background)
-    translate_start(geo.left, geo.bottom);
-    draw_image(bkgdID, geo.width, geo.height);
+    translate_start(left, bottom);
+    draw_image(bkgdID, width, height);
     translate_end();
 
     // Draw the items on top: roll bug, cross-hairs, needles
-    translate_start(geo.center, geo.middle);
-        draw_roll_bug(*roll, *chevronW, *chevronH, 0.8 * (*outerradius));
-        draw_cross_hairs(*outerradius);
-        draw_needles(*outerradius, *rollError, *pitchError, *yawError);
+    translate_start(center, middle);
+        draw_roll_bug(*roll, chevw, chevh, 0.8 * outerrad);
+        draw_cross_hairs(outerrad);
+        draw_needles(outerrad, *rollError, *pitchError, *yawError);
     translate_end();
 }
 

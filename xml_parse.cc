@@ -24,11 +24,8 @@ extern int *getIntegerPointer(const char *);
 
 extern struct node *new_container(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
-extern struct node *new_pixel_stream(dcPixelStream **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_button(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
                                const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_adi(dcADI **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
-                                 const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_mouseevent(dcMouseEvent **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
 extern struct node *new_bezelevent(dcBezelEvent **, struct node *, struct node **, const char *);
@@ -459,21 +456,12 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "PixelStream"))
         {
-dcPixelStream *myitem;
-            data = new_pixel_stream(&myitem, parent, list,
-                      get_element_data(node, "X"),
-                      get_element_data(node, "Y"),
-                      get_element_data(node, "Width"),
-                      get_element_data(node, "Height"),
-                      get_element_data(node, "HorizontalAlign"),
-                      get_element_data(node, "VerticalAlign"),
-                      get_element_data(node, "Rotate"),
-                      get_element_data(node, "Protocol"),
-                      get_element_data(node, "Host"),
-                      get_element_data(node, "Port"),
-                      get_element_data(node, "SharedMemoryKey"),
-                      get_element_data(node, "File"));
-myparent->addChild(myitem);
+            dcPixelStream *myitem = new dcPixelStream(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setProtocol(get_element_data(node, "Protocol"), get_element_data(node, "Host"), get_element_data(node, "Port"), get_element_data(node, "SharedMemoryKey"), get_element_data(node, "File"));
         }
         if (NodeCheck(node, "Button"))
         {
@@ -667,27 +655,13 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "ADI"))
         {
-dcADI *myitem;
-            data = new_adi(&myitem, parent, list,
-                           get_element_data(node, "X"),
-                           get_element_data(node, "Y"),
-                           get_element_data(node, "Width"),
-                           get_element_data(node, "Height"),
-                           get_element_data(node, "HorizontalAlign"),
-                           get_element_data(node, "VerticalAlign"),
-                           get_element_data(node, "OuterRadius"),
-                           get_element_data(node, "BallRadius"),
-                           get_element_data(node, "ChevronWidth"),
-                           get_element_data(node, "ChevronHeight"),
-                           get_element_data(node, "BallFile"),
-                           get_element_data(node, "CoverFile"),
-                           get_element_data(node, "Roll"),
-                           get_element_data(node, "Pitch"),
-                           get_element_data(node, "Yaw"),
-                           get_element_data(node, "RollError"),
-                           get_element_data(node, "PitchError"),
-                           get_element_data(node, "YawError"));
-myparent->addChild(myitem);
+            dcADI *myitem = new dcADI(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setBackgrountTexture(get_element_data(node, "CoverFile"));
+            myitem->setBallTexture(get_element_data(node, "BallFile"));
         }
         if (NodeCheck(node, "MouseEvent"))
         {

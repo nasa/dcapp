@@ -1,29 +1,88 @@
-#include "geometry.hh"
+#include "nodes.hh"
+#include "string_utils.hh"
 #include "opengl_draw.hh"
 #include "pixelstream.hh"
 
+extern appdata AppData;
 extern void SetNeedsRedraw(void); // TODO: put in header file
 
-dcPixelStream::dcPixelStream(float *inx, float *iny, float *inw, float *inh, float *incw, float *inch, unsigned inhal, unsigned inval, float *inrot, dcTexture intex, PixelStreamItem *inpsi)
-:
-pixels(0x0), memallocation(0)
+dcPixelStream::dcPixelStream(dcParent *myparent) : dcGeometric(myparent), psi(0x0), pixels(0x0), memallocation(0)
 {
-    x = inx;
-    y = iny;
-    w = inw;
-    h = inh;
-    containerw = incw; // TODO: these should come from the parent
-    containerh = inch; // TODO: these should come from the parent
-    halign = inhal;
-    valign = inval;
-    rotate = inrot;
-    textureID = intex;
-    psi = inpsi;
+    init_texture(&textureID);
 }
 
 dcPixelStream::~dcPixelStream()
 {
     if (psi) delete psi;
+}
+
+void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const char *port, const char *shmemkey, const char *filename)
+{
+    PixelStreamData *mypsd = 0x0;
+    PixelStreamFile *psf;
+    PixelStreamMjpeg *psm;
+    PixelStreamTcp *pst;
+    PixelStreamItem *match = 0x0;
+    std::list<PixelStreamItem *>::iterator psitem;
+
+    unsigned protocol = PixelStreamFileProtocol;
+    if (protocolstr)
+    {
+        if (!strcasecmp(protocolstr, "MJPEG")) protocol = PixelStreamMjpegProtocol;
+        if (!strcasecmp(protocolstr, "TCP")) protocol = PixelStreamTcpProtocol;
+    }
+
+    switch (protocol)
+    {
+        case PixelStreamFileProtocol:
+            psf = new PixelStreamFile;
+            if (psf->readerInitialize(filename, StrToInt(shmemkey, 0)))
+            {
+                delete psf;
+                return;
+            }
+            mypsd = (PixelStreamData *)psf;
+            break;
+        case PixelStreamMjpegProtocol:
+            psm = new PixelStreamMjpeg;
+            if (psm->readerInitialize(host, StrToInt(port, 8080)))
+            {
+                delete psm;
+                return;
+            }
+            mypsd = (PixelStreamData *)psm;
+            break;
+        case PixelStreamTcpProtocol:
+            pst = new PixelStreamTcp;
+            if (pst->readerInitialize(host, StrToInt(port, 0)))
+            {
+                delete pst;
+                return;
+            }
+            mypsd = (PixelStreamData *)pst;
+            break;
+        default:
+            break;
+    }
+
+    if (!mypsd) return;
+
+    for (psitem = AppData.pixelstreams.begin(); psitem != AppData.pixelstreams.end() && !match; psitem++)
+    {
+        if (*(*psitem)->psd == *mypsd) match = *psitem;
+    }
+
+    if (match)
+    {
+        delete mypsd;
+        psi = match;
+    }
+    else
+    {
+        psi = new PixelStreamItem;
+        psi->psd = (PixelStreamData *)mypsd;
+        AppData.pixelstreams.push_back(psi);
+    }
 }
 
 void dcPixelStream::updateStreams(unsigned passcount)
@@ -41,8 +100,8 @@ void dcPixelStream::draw(void)
 if (!psi) return; // TODO: this can go away if psi is created in constructor
     size_t nbytes, origbytes, newh, pad, padbytes, offset, offsetbytes;
 
-    Geometry geo = GetGeometry(x, y, w, h, *containerw, *containerh, halign, valign);
-    container_start(geo.refx, geo.refy, geo.delx, geo.dely, 1, 1, *rotate);
+    computeGeometry();
+    container_start(refx, refy, delx, dely, 1, 1, *rotate);
     newh = (size_t)((float)(psi->psd->width) * (*h) / (*w));
 
     if (newh > psi->psd->height)
@@ -81,6 +140,6 @@ if (!psi) return; // TODO: this can go away if psi is created in constructor
     else
         set_texture(textureID, psi->psd->width, newh, pixels);
 
-    draw_image(textureID, geo.width, geo.height);
+    draw_image(textureID, width, height);
     container_end();
 }

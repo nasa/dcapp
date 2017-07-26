@@ -3,26 +3,19 @@
 
 #include "PixelStream/PixelStreamData.hh"
 #include "nodes.hh"
-#include "object.hh"
+#include "geometric.hh"
+#include "parent.hh"
 
-class dcPixelStream : public dcObject
+class dcPixelStream : public dcGeometric
 {
     public:
-        dcPixelStream(float *, float *, float *, float *, float *, float *, unsigned, unsigned, float *, dcTexture, PixelStreamItem *);
+        dcPixelStream(dcParent *);
         ~dcPixelStream();
+        void setProtocol(const char *, const char *, const char *, const char *, const char *);
         void updateStreams(unsigned);
         void draw(void);
 
     private:
-        float *x;
-        float *y;
-        float *w;
-        float *h;
-        float *containerw;
-        float *containerh;
-        unsigned halign;
-        unsigned valign;
-        float *rotate;
         dcTexture textureID;
         PixelStreamItem *psi;
         void *pixels;

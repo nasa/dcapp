@@ -141,86 +141,6 @@ struct node *new_container(dcContainer **myitem, struct node *parent, struct nod
     return data;
 }
 
-struct node *new_pixel_stream(dcPixelStream **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *rotate, const char *protocolstr, const char *host, const char *port, const char *shmemkey, const char *filename)
-{
-    PixelStreamData *mypsd = 0x0;
-    PixelStreamFile *psf;
-    PixelStreamMjpeg *psm;
-    PixelStreamTcp *pst;
-    PixelStreamItem *mypixelstream = 0x0;
-    PixelStreamItem *match = 0x0;
-    std::list<PixelStreamItem *>::iterator psitem;
-
-    unsigned protocol = PixelStreamFileProtocol;
-    if (protocolstr)
-    {
-        if (!strcasecmp(protocolstr, "MJPEG")) protocol = PixelStreamMjpegProtocol;
-        if (!strcasecmp(protocolstr, "TCP")) protocol = PixelStreamTcpProtocol;
-    }
-
-    switch (protocol)
-    {
-        case PixelStreamFileProtocol:
-            psf = new PixelStreamFile;
-            if (psf->readerInitialize(filename, StrToInt(shmemkey, 0)))
-            {
-                delete psf;
-                return 0x0;
-            }
-            mypsd = (PixelStreamData *)psf;
-            break;
-        case PixelStreamMjpegProtocol:
-            psm = new PixelStreamMjpeg;
-            if (psm->readerInitialize(host, StrToInt(port, 8080)))
-            {
-                delete psm;
-                return 0x0;
-            }
-            mypsd = (PixelStreamData *)psm;
-            break;
-        case PixelStreamTcpProtocol:
-            pst = new PixelStreamTcp;
-            if (pst->readerInitialize(host, StrToInt(port, 0)))
-            {
-                delete pst;
-                return 0x0;
-            }
-            mypsd = (PixelStreamData *)pst;
-            break;
-        default:
-            break;
-    }
-
-    if (!mypsd) return 0x0;
-
-    for (psitem = AppData.pixelstreams.begin(); psitem != AppData.pixelstreams.end() && !match; psitem++)
-    {
-        if (*(*psitem)->psd == *mypsd) match = *psitem;
-    }
-
-    if (match)
-    {
-        delete mypsd;
-        mypixelstream = match;
-    }
-    else
-    {
-        mypixelstream = new PixelStreamItem;
-        mypixelstream->psd = (PixelStreamData *)mypsd;
-        AppData.pixelstreams.push_back(mypixelstream);
-    }
-
-    struct node *data = add_primitive_node(parent, list, Empty, x, y, width, height, halign, valign, rotate);
-
-    dcTexture textureID;
-
-    init_texture(&textureID);
-
-    *myitem = new dcPixelStream(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate, textureID, mypixelstream);
-
-    return data;
-}
-
 struct node *new_button(dcContainer **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign,
                         const char *rotate, const char *type, const char *switchid, const char *switchonval, const char *switchoffval, const char *indid, const char *indonval,
                         const char *activevar, const char *activeval, const char *transitionid, const char *key, const char *keyascii, const char *bezelkey)
@@ -428,32 +348,6 @@ mylist5->FalseList->addChild(mylist6);
         myset = new_setvalue(list6, &(list6->object.cond.TrueList), transitionid, 0x0, 0x0, 0x0, "0");
 mylist6->TrueList->addChild(myset);
     }
-
-    return data;
-}
-
-struct node *new_adi(dcADI **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *outerradius, const char *ballradius,
-                     const char *chevronwidth, const char *chevronheight, const char *ballimage_filename, const char *coverimage_filename,
-                     const char *roll, const char *pitch, const char *yaw, const char *roll_error, const char *pitch_error, const char *yaw_error)
-{
-    struct node *data = add_primitive_node(parent, list, Empty, x, y, width, height, halign, valign, 0x0);
-
-    dcTexture ballID = -1;
-    dcTexture bkgdID = -1;
-
-    if (ballimage_filename) ballID = dcLoadTexture(ballimage_filename);
-    if (coverimage_filename) bkgdID = dcLoadTexture(coverimage_filename);
-
-    float defouterrad = 0.5 * (fminf(*(data->info.w), *(data->info.h)));
-    float defballrad = 0.9 * defouterrad;
-    float defchevron = 0.2 * defouterrad;
-
-    *myitem = new dcADI(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH,
-                        data->info.halign, data->info.valign, bkgdID, ballID,
-                        getFloatPointer(outerradius, defouterrad), getFloatPointer(ballradius, defballrad),
-                        getFloatPointer(chevronwidth, defchevron), getFloatPointer(chevronheight, defchevron),
-                        getFloatPointer(roll), getFloatPointer(pitch), getFloatPointer(yaw),
-                        getFloatPointer(roll_error), getFloatPointer(pitch_error), getFloatPointer(yaw_error));
 
     return data;
 }
