@@ -7,9 +7,11 @@
 class dcBezelEvent : public dcObject
 {
     public:
-        dcBezelEvent(int);
+        dcBezelEvent(dcParent *);
+        dcBezelEvent(dcParent *, const char *);
         virtual ~dcBezelEvent();
-
+        void coreConstructor(dcParent *);
+        void setKey(const char *);
         void handleBezelPress(int);
         void handleBezelRelease(int);
 

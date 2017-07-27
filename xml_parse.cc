@@ -24,8 +24,6 @@ extern int *getIntegerPointer(const char *);
 
 extern void new_isequal(dcCondition **, const char *, const char *, const char *);
 extern void new_button(dcContainer *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern void new_keyboardevent(dcKeyboardEvent **, const char *, const char *);
-extern void new_bezelevent(dcBezelEvent **, const char *);
 extern dcSetValue *new_setvalue(const char *, const char *, const char *, const char *, const char *);
 extern struct ModifyValue get_setvalue_data(const char *, const char *, const char *, const char *, const char *);
 extern bool CheckConditionLogic(int, int, const void *, int, const void *);
@@ -499,19 +497,15 @@ dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
             process_elements(mymouse->PressList, node->children);
             if (key || keyascii)
 {
-dcKeyboardEvent *myitem;
-                new_keyboardevent(&myitem, key, keyascii);
+dcKeyboardEvent *myitem = new dcKeyboardEvent(mySublist, key, keyascii);
 //                data->object.ke.PressList = data->object.me.PressList;
-mySublist->addChild(myitem);
 //set KeyboardEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
 process_elements(myitem->PressList, node->children);
 }
             if (bezelkey)
             {
-dcBezelEvent *myitem;
-                new_bezelevent(&myitem, bezelkey);
+dcBezelEvent *myitem = new dcBezelEvent(mySublist, bezelkey);
 //                data->object.be.PressList = data->object.me.PressList;
-mySublist->addChild(myitem);
 //set BezelEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
 process_elements(myitem->PressList, node->children);
             }
@@ -531,19 +525,15 @@ dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
             process_elements(mymouse->ReleaseList, node->children);
             if (key || keyascii)
 {
-dcKeyboardEvent *myitem;
-                new_keyboardevent(&myitem, key, keyascii);
+dcKeyboardEvent *myitem = new dcKeyboardEvent(mySublist, key, keyascii);
 //                data->object.ke.PressList = data->object.me.ReleaseList;
-mySublist->addChild(myitem);
 //set KeyboardEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
 process_elements(myitem->PressList, node->children);
 }
             if (bezelkey)
             {
-dcBezelEvent *myitem;
-                new_bezelevent(&myitem, bezelkey);
+dcBezelEvent *myitem = new dcBezelEvent(mySublist, bezelkey);
 //                data->object.be.PressList = data->object.me.ReleaseList;
-mySublist->addChild(myitem);
 //set BezelEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
 process_elements(myitem->PressList, node->children);
             }
@@ -649,9 +639,9 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "KeyboardEvent"))
         {
-dcKeyboardEvent *myitem;
-            new_keyboardevent(&myitem, get_element_data(node, "Key"), get_element_data(node, "KeyASCII"));
-myparent->addChild(myitem);
+            dcKeyboardEvent *myitem = new dcKeyboardEvent(myparent);
+            myitem->setKey(get_element_data(node, "Key"));
+            myitem->setKeyAscii(get_element_data(node, "KeyASCII"));
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
@@ -671,9 +661,8 @@ myparent->addChild(myitem);
         }
         if (NodeCheck(node, "BezelEvent"))
         {
-dcBezelEvent *myitem;
-            new_bezelevent(&myitem, get_element_data(node, "Key"));
-myparent->addChild(myitem);
+            dcBezelEvent *myitem = new dcBezelEvent(myparent);
+            myitem->setKey(get_element_data(node, "Key"));
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {

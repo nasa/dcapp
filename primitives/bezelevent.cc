@@ -1,18 +1,35 @@
+#include "string_utils.hh"
 #include "bezelevent.hh"
 
-dcBezelEvent::dcBezelEvent(int key) : selected(false)
+dcBezelEvent::dcBezelEvent(dcParent *myparent) : mykey(0), selected(false)
 {
-    mykey = key;
-    PressList = new dcParent;
-    ReleaseList = new dcParent;
-    PressList->setParent(this);
-    ReleaseList->setParent(this);
+    coreConstructor(myparent);
+}
+
+dcBezelEvent::dcBezelEvent(dcParent *myparent, const char *key) : selected(false)
+{
+    coreConstructor(myparent);
+    setKey(key);
 }
 
 dcBezelEvent::~dcBezelEvent()
 {
     delete PressList;
     delete ReleaseList;
+}
+
+void dcBezelEvent::coreConstructor(dcParent *myparent)
+{
+    myparent->addChild(this);
+    PressList = new dcParent;
+    ReleaseList = new dcParent;
+    PressList->setParent(this);
+    ReleaseList->setParent(this);
+}
+
+void dcBezelEvent::setKey(const char *key)
+{
+    mykey = StrToInt(key, 0);
 }
 
 void dcBezelEvent::handleBezelPress(int key)

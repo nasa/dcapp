@@ -16,8 +16,6 @@
 
 extern appdata AppData;
 
-void new_keyboardevent(dcKeyboardEvent **, const char *, const char *);
-void new_bezelevent(dcBezelEvent **, const char *);
 dcSetValue *new_setvalue(const char *, const char *, const char *, const char *, const char *);
 void new_isequal(dcCondition **, const char *, const char *, const char *);
 
@@ -128,9 +126,7 @@ mymouse1->PressList->addChild(myset);
         }
         if (key || keyascii)
         {
-dcKeyboardEvent *myevent;
-            new_keyboardevent(&myevent, key, keyascii);
-mycond->TrueList->addChild(myevent);
+dcKeyboardEvent *myevent = new dcKeyboardEvent(mycond->TrueList, key, keyascii);
 myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
 myevent->PressList->addChild(myset);
             if (transitionid)
@@ -138,8 +134,7 @@ myevent->PressList->addChild(myset);
 myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
 myevent->PressList->addChild(myset);
             }
-            new_keyboardevent(&myevent, key, keyascii);
-mycond->FalseList->addChild(myevent);
+myevent = new dcKeyboardEvent(mycond->FalseList, key, keyascii);
 myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
 myevent->PressList->addChild(myset);
             if (transitionid)
@@ -150,9 +145,7 @@ myevent->PressList->addChild(myset);
         }
         if (bezelkey)
         {
-dcBezelEvent *myevent1;
-            new_bezelevent(&myevent1, bezelkey);
-mycond->TrueList->addChild(myevent1);
+dcBezelEvent *myevent1 = new dcBezelEvent(mycond->TrueList, bezelkey);
 myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
 myevent1->PressList->addChild(myset);
             if (transitionid)
@@ -160,9 +153,7 @@ myevent1->PressList->addChild(myset);
 myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
 myevent1->PressList->addChild(myset);
             }
-dcBezelEvent *myevent2;
-            new_bezelevent(&myevent2, bezelkey);
-mycond->FalseList->addChild(myevent2);
+dcBezelEvent *myevent2 = new dcBezelEvent(mycond->FalseList, bezelkey);
 myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
 myevent2->PressList->addChild(myset);
             if (transitionid)
@@ -194,9 +185,7 @@ mymouse->ReleaseList->addChild(myset);
         }
         if (key || keyascii)
         {
-dcKeyboardEvent *myevent;
-            new_keyboardevent(&myevent, key, keyascii);
-mySublist->addChild(myevent);
+dcKeyboardEvent *myevent = new dcKeyboardEvent(mySublist, key, keyascii);
 myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
 myevent->PressList->addChild(myset);
             if (transitionid)
@@ -217,9 +206,7 @@ myevent->ReleaseList->addChild(myset);
         }
         if (bezelkey)
         {
-dcBezelEvent *myevent1;
-            new_bezelevent(&myevent1, bezelkey);
-mySublist->addChild(myevent1);
+dcBezelEvent *myevent1 = new dcBezelEvent(mySublist, bezelkey);
 myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
 myevent1->PressList->addChild(myset);
             if (transitionid)
@@ -265,31 +252,6 @@ mylist5->FalseList->addChild(mylist6);
         myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
 mylist6->TrueList->addChild(myset);
     }
-}
-
-void new_keyboardevent(dcKeyboardEvent **myitem, const char *key, const char *keyascii)
-{
-    if (!key && !keyascii) 
-    {
-        *myitem = 0x0;
-        return;
-    }
-
-    if (key)
-        *myitem = new dcKeyboardEvent(key[0]);
-    else
-        *myitem = new dcKeyboardEvent(StrToInt(keyascii, 0));
-}
-
-void new_bezelevent(dcBezelEvent **myitem, const char *key)
-{
-    if (!key)
-    {
-        *myitem = 0x0;
-        return;
-    }
-
-    *myitem = new dcBezelEvent(StrToInt(key, 0));
 }
 
 struct ModifyValue get_setvalue_data(const char *varspec, const char *opspec, const char *minspec, const char *maxspec, const char *valspec)
