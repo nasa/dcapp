@@ -22,14 +22,14 @@
 extern void window_init(bool, int , int, int, int);
 extern int *getIntegerPointer(const char *);
 
-extern struct node *new_container(struct node *, struct node **);
-extern struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
-extern struct node *new_button(dcContainer *, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
+extern struct node *new_container(struct node **);
+extern struct node *new_isequal(dcCondition **, struct node **, const char *, const char *, const char *);
+extern struct node *new_button(dcContainer *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
                                const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_mouseevent(dcMouseEvent **, dcParent *, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
-extern struct node *new_bezelevent(dcBezelEvent **, struct node *, struct node **, const char *);
-extern dcSetValue *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_mouseevent(dcMouseEvent **, dcParent *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_keyboardevent(dcKeyboardEvent **, struct node **, const char *, const char *);
+extern struct node *new_bezelevent(dcBezelEvent **, struct node **, const char *);
+extern dcSetValue *new_setvalue(const char *, const char *, const char *, const char *, const char *);
 extern struct ModifyValue get_setvalue_data(const char *, const char *, const char *, const char *, const char *);
 extern bool CheckConditionLogic(int, int, const void *, int, const void *);
 extern void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
@@ -40,7 +40,7 @@ extern void DisplayInitStub(void);
 extern void DisplayLogicStub(void);
 extern void DisplayCloseStub(void);
 
-static int process_elements(dcParent *, struct node *, struct node **, xmlNodePtr);
+static int process_elements(dcParent *, struct node **, xmlNodePtr);
 static xmlNodePtr GetSubList(xmlNodePtr, const char *, const char *, const char *);
 
 extern appdata AppData;
@@ -88,7 +88,7 @@ int ParseXMLFile(const char *fullpath)
     AppData.DisplayLogic = &DisplayLogicStub;
     AppData.DisplayClose = &DisplayCloseStub;
 
-    if (process_elements(0x0, 0, 0, root_element->children)) return (-1);
+    if (process_elements(0x0, 0, root_element->children)) return (-1);
 
     XMLFileClose(mydoc);
     XMLEndParsing();
@@ -102,14 +102,14 @@ int ParseXMLFile(const char *fullpath)
     return 0;
 }
 
-static int process_elements(dcParent *myparent, struct node *parent, struct node **list, xmlNodePtr startnode)
+static int process_elements(dcParent *myparent, struct node **list, xmlNodePtr startnode)
 {
     xmlNodePtr node;
     struct node *data;
 
     for (node = startnode; node; node = node->next)
     {
-        if (NodeCheck(node, "Dummy")) process_elements(myparent, parent, list, node->children);
+        if (NodeCheck(node, "Dummy")) process_elements(myparent, list, node->children);
         if (NodeCheck(node, "Constant")) processConstantNode(node);
         if (NodeCheck(node, "Style")) processStyleNode(node);
         if (NodeCheck(node, "Defaults")) processDefaultsNode(node);
@@ -124,7 +124,7 @@ static int process_elements(dcParent *myparent, struct node *parent, struct node
             }
             else
             {
-                process_elements(myparent, parent, list, include_element);
+                process_elements(myparent, list, include_element);
                 XMLFileClose(include_file);
             }
         }
@@ -138,37 +138,37 @@ static int process_elements(dcParent *myparent, struct node *parent, struct node
             if (!val1) val1 = val;
 
             if (preprocessing || (!check_dynamic_element(val1) && !check_dynamic_element(val2)))
-                process_elements(myparent, parent, list, GetSubList(node, myoperator, val1, val2));
+                process_elements(myparent, list, GetSubList(node, myoperator, val1, val2));
             else
             {
                 bool subparent_found = false;
 
 dcCondition *myitem;
-                data = new_isequal(&myitem, parent, list, myoperator, val1, val2);
+                data = new_isequal(&myitem, list, myoperator, val1, val2);
 myparent->addChild(myitem);
 
                 for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
                 {
                     if (NodeCheck(subnode, "True"))
                     {
-                        process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), subnode->children);
+                        process_elements(myitem->TrueList, &(data->object.cond.TrueList), subnode->children);
                         subparent_found = true;
                     }
                     if (NodeCheck(subnode, "False"))
                     {
-                        process_elements(myitem->FalseList, data, &(data->object.cond.FalseList), subnode->children);
+                        process_elements(myitem->FalseList, &(data->object.cond.FalseList), subnode->children);
                         subparent_found = true;
                     }
                 }
                 // Assume "True" if no subparent is found
-                if (!subparent_found) process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
+                if (!subparent_found) process_elements(myitem->TrueList, &(data->object.cond.TrueList), node->children);
             }
         }
         if (NodeCheck(node, "Animation"))
         {
             dcAnimate *myitem = new dcAnimate(myparent);
             myitem->setDuration(get_element_data(node, "Duration"));
-            process_elements(myitem, data, &(data->object.anim.SubList), node->children);
+            process_elements(myitem, &(data->object.anim.SubList), node->children);
         }
         if (NodeCheck(node, "Set"))
         {
@@ -187,8 +187,7 @@ myparent->addChild(myitem);
             }
             else
 {
-dcSetValue *myitem = new_setvalue(parent, list,
-                                     get_element_data(node, "Variable"),
+dcSetValue *myitem = new_setvalue(   get_element_data(node, "Variable"),
                                      get_element_data(node, "Operator"),
                                      get_element_data(node, "MinimumValue"),
                                      get_element_data(node, "MaximumValue"),
@@ -212,7 +211,7 @@ myparent->addChild(myitem);
                 if (!strcasecmp(d_a, "Reconnect")) trickcomm->setReconnectOnDisconnect();
             }
             trickcomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
-            process_elements(myparent, 0, 0, node->children);
+            process_elements(myparent, 0, node->children);
             trickcomm->finishInitialization();
             AppData.commlist.push_back(trickcomm);
         }
@@ -221,7 +220,7 @@ myparent->addChild(myitem);
             if (trickcomm)
             {
                 bufferID = TrickCommModule::FromTrick;
-                process_elements(myparent, 0, 0, node->children);
+                process_elements(myparent, 0, node->children);
             }
         }
         if (NodeCheck(node, "ToTrick"))
@@ -229,7 +228,7 @@ myparent->addChild(myitem);
             if (trickcomm)
             {
                 bufferID = TrickCommModule::ToTrick;
-                process_elements(myparent, 0, 0, node->children);
+                process_elements(myparent, 0, node->children);
             }
         }
         if (NodeCheck(node, "TrickVariable"))
@@ -250,7 +249,7 @@ myparent->addChild(myitem);
         {
             edgecomm = new EdgeCommModule;
             edgecomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
-            process_elements(myparent, 0, 0, node->children);
+            process_elements(myparent, 0, node->children);
             edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StrToFloat(get_element_data(node, "DataRate"), 1.0));
             AppData.commlist.push_back(edgecomm);
         }
@@ -259,7 +258,7 @@ myparent->addChild(myitem);
             if (edgecomm)
             {
                 bufferID = EDGEIO_FROMEDGE;
-                process_elements(myparent, 0, 0, node->children);
+                process_elements(myparent, 0, node->children);
             }
         }
         if (NodeCheck(node, "ToEdge"))
@@ -267,7 +266,7 @@ myparent->addChild(myitem);
             if (edgecomm)
             {
                 bufferID = EDGEIO_TOEDGE;
-                process_elements(myparent, 0, 0, node->children);
+                process_elements(myparent, 0, node->children);
             }
         }
         if (NodeCheck(node, "EdgeVariable"))
@@ -281,7 +280,7 @@ myparent->addChild(myitem);
         {
             ccsdsudpcomm = new CcsdsUdpCommModule;
             ccsdsudpcomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
-            process_elements(myparent, 0, 0, node->children);
+            process_elements(myparent, 0, node->children);
             AppData.commlist.push_back(ccsdsudpcomm);
         }
         if (NodeCheck(node, "CcsdsUdpRead"))
@@ -359,7 +358,7 @@ myparent->addChild(myitem);
             graphics_init();
             AppData.toplevel = new dcWindow();
             AppData.toplevel->setActiveDisplay(get_element_data(node, "ActiveDisplay"));
-            process_elements(AppData.toplevel, 0, 0, node->children);
+            process_elements(AppData.toplevel, 0, node->children);
         }
         if (NodeCheck(node, "Panel"))
         {
@@ -369,7 +368,7 @@ myparent->addChild(myitem);
             myitem->setOrtho(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
             preprocessing = false;
 data = (struct node *)calloc(1, sizeof(struct node)); // TODO: remove once sublists are gone
-            process_elements(myitem, data, &(data->object.panel.SubList), node->children);
+            process_elements(myitem, &(data->object.panel.SubList), node->children);
             preprocessing = true;
         }
         if (NodeCheck(node, "Container"))
@@ -380,8 +379,8 @@ data = (struct node *)calloc(1, sizeof(struct node)); // TODO: remove once subli
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setVirtualSize(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
-data = new_container(parent, list);
-            process_elements(myitem, data, &(data->object.cont.SubList), node->children);
+data = new_container(list);
+            process_elements(myitem, &(data->object.cont.SubList), node->children);
         }
         if (NodeCheck(node, "Vertex"))
         {
@@ -393,7 +392,7 @@ data = new_container(parent, list);
             dcLine *myitem = new dcLine(myparent);
             myitem->setLineWidth(get_element_data(node, "LineWidth"));
             myitem->setColor(get_element_data(node, "Color"));
-            process_elements(myitem, data, &(data->object.line.Vertices), node->children);
+            process_elements(myitem, &(data->object.line.Vertices), node->children);
         }
         if (NodeCheck(node, "Polygon"))
         {
@@ -401,7 +400,7 @@ data = new_container(parent, list);
             myitem->setFillColor(get_element_data(node, "FillColor"));
             myitem->setLineColor(get_element_data(node, "LineColor"));
             myitem->setLineWidth(get_element_data(node, "LineWidth"));
-            process_elements(myitem, data, &(data->object.poly.Vertices), node->children);
+            process_elements(myitem, &(data->object.poly.Vertices), node->children);
         }
         if (NodeCheck(node, "Rectangle"))
         {
@@ -487,7 +486,7 @@ data = new_container(parent, list);
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
-data = new_button(myitem, parent, list,
+data = new_button(myitem, list,
       get_element_data(node, "X"),
       get_element_data(node, "Y"),
       get_element_data(node, "Width"),
@@ -507,112 +506,110 @@ data = new_button(myitem, parent, list,
       key,
       keyascii,
       bezelkey);
-            process_elements(myitem, data, &(data->object.cont.SubList), node->children);
+            process_elements(myitem, &(data->object.cont.SubList), node->children);
             if (transitionid) free(transitionid);
         }
         if (NodeCheck(node, "OnPress"))
         {
-            struct node *curlist = parent;
             struct node **sublist = list;
 dcParent *mySublist = myparent;
 dcCondition *mycond;
             if (activeid)
             {
-                curlist = new_isequal(&mycond, parent, list, "eq", activeid, activetrueval);
+                struct node *curlist = new_isequal(&mycond, list, "eq", activeid, activetrueval);
 myparent->addChild(mycond);
 mySublist = mycond->TrueList;
                 sublist = &(curlist->object.cond.TrueList);
             }
 dcMouseEvent *mymouse;
-            data = new_mouseevent(&mymouse, mySublist, curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+            data = new_mouseevent(&mymouse, mySublist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 //need to do this for functionality
-            process_elements(mymouse->PressList, data, &(data->object.me.PressList), node->children);
+            process_elements(mymouse->PressList, &(data->object.me.PressList), node->children);
             if (key || keyascii)
 {
 dcKeyboardEvent *myitem;
-                new_keyboardevent(&myitem, curlist, sublist, key, keyascii);
+                new_keyboardevent(&myitem, sublist, key, keyascii);
 //                data->object.ke.PressList = data->object.me.PressList;
 mySublist->addChild(myitem);
 //set KeyboardEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
-process_elements(myitem->PressList, data, &(data->object.me.PressList), node->children);
+process_elements(myitem->PressList, &(data->object.me.PressList), node->children);
 }
             if (bezelkey)
             {
 dcBezelEvent *myitem;
-                new_bezelevent(&myitem, curlist, sublist, bezelkey);
+                new_bezelevent(&myitem, sublist, bezelkey);
 //                data->object.be.PressList = data->object.me.PressList;
 mySublist->addChild(myitem);
 //set BezelEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
-process_elements(myitem->PressList, data, &(data->object.me.PressList), node->children);
+process_elements(myitem->PressList, &(data->object.me.PressList), node->children);
             }
         }
         if (NodeCheck(node, "OnRelease"))
         {
-            struct node *curlist = parent;
             struct node **sublist = list;
 dcParent *mySublist = myparent;
 dcCondition *mycond;
             if (activeid)
             {
-                curlist = new_isequal(&mycond, parent, list, "eq", activeid, activetrueval);
+                struct node *curlist = new_isequal(&mycond, list, "eq", activeid, activetrueval);
 myparent->addChild(mycond);
 mySublist = mycond->TrueList;
                 sublist = &(curlist->object.cond.TrueList);
             }
 dcMouseEvent *mymouse;
-            data = new_mouseevent(&mymouse, mySublist, curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+            data = new_mouseevent(&mymouse, mySublist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 //need to do this for functionality
-            process_elements(mymouse->ReleaseList, data, &(data->object.me.ReleaseList), node->children);
+            process_elements(mymouse->ReleaseList, &(data->object.me.ReleaseList), node->children);
             if (key || keyascii)
 {
 dcKeyboardEvent *myitem;
-                new_keyboardevent(&myitem, curlist, sublist, key, keyascii);
+                new_keyboardevent(&myitem, sublist, key, keyascii);
 //                data->object.ke.PressList = data->object.me.ReleaseList;
 mySublist->addChild(myitem);
 //set KeyboardEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
-process_elements(myitem->PressList, data, &(data->object.me.PressList), node->children);
+process_elements(myitem->PressList, &(data->object.me.PressList), node->children);
 }
             if (bezelkey)
             {
 dcBezelEvent *myitem;
-                new_bezelevent(&myitem, curlist, sublist, bezelkey);
+                new_bezelevent(&myitem, sublist, bezelkey);
 //                data->object.be.PressList = data->object.me.ReleaseList;
 mySublist->addChild(myitem);
 //set BezelEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
-process_elements(myitem->PressList, data, &(data->object.me.PressList), node->children);
+process_elements(myitem->PressList, &(data->object.me.PressList), node->children);
             }
         }
         if (NodeCheck(node, "Active"))
         {
 dcCondition *myitem;
-            data = new_isequal(&myitem, parent, list, "eq", activeid, activetrueval);
+            data = new_isequal(&myitem, list, "eq", activeid, activetrueval);
 myparent->addChild(myitem);
-            process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
+            process_elements(myitem->TrueList, &(data->object.cond.TrueList), node->children);
         }
         if (NodeCheck(node, "Inactive"))
         {
 dcCondition *myitem;
-            data = new_isequal(&myitem, parent, list, "eq", activeid, activetrueval);
+            data = new_isequal(&myitem, list, "eq", activeid, activetrueval);
 myparent->addChild(myitem);
-            process_elements(myitem->FalseList, data, &(data->object.cond.FalseList), node->children);
+            process_elements(myitem->FalseList, &(data->object.cond.FalseList), node->children);
         }
         if (NodeCheck(node, "On"))
         {
             if (transitionid)
             {
 dcCondition *myitem, *mychild;
-                data = new_isequal(&myitem, parent, list, "eq", transitionid, "0");
+                data = new_isequal(&myitem, list, "eq", transitionid, "0");
 myparent->addChild(myitem);
-                struct node *iseq = new_isequal(&mychild, data, &(data->object.cond.TrueList), "eq", indid, indonval);
+                struct node *iseq = new_isequal(&mychild, &(data->object.cond.TrueList), "eq", indid, indonval);
 myitem->TrueList->addChild(mychild);
-                process_elements(mychild->TrueList, iseq, &(iseq->object.cond.TrueList), node->children);
+                process_elements(mychild->TrueList, &(iseq->object.cond.TrueList), node->children);
             }
             else
             {
 dcCondition *myitem;
-                data = new_isequal(&myitem, parent, list, "eq", indid, indonval);
+                data = new_isequal(&myitem, list, "eq", indid, indonval);
 myparent->addChild(myitem);
-                process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
+                process_elements(myitem->TrueList, &(data->object.cond.TrueList), node->children);
             }
         }
         if (NodeCheck(node, "Transition"))
@@ -620,12 +617,12 @@ myparent->addChild(myitem);
             if (transitionid)
             {
 dcCondition *myitem;
-                data = new_isequal(&myitem, parent, list, "eq", transitionid, "1");
+                data = new_isequal(&myitem, list, "eq", transitionid, "1");
 myparent->addChild(myitem);
-                process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
-                data = new_isequal(&myitem, parent, list, "eq", transitionid, "-1");
+                process_elements(myitem->TrueList, &(data->object.cond.TrueList), node->children);
+                data = new_isequal(&myitem, list, "eq", transitionid, "-1");
 myparent->addChild(myitem);
-                process_elements(myitem->TrueList, data, &(data->object.cond.TrueList), node->children);
+                process_elements(myitem->TrueList, &(data->object.cond.TrueList), node->children);
             }
         }
         if (NodeCheck(node, "Off"))
@@ -633,18 +630,18 @@ myparent->addChild(myitem);
             if (transitionid)
             {
 dcCondition *myitem, *mychild;
-                data = new_isequal(&myitem, parent, list, "eq", transitionid, "0");
+                data = new_isequal(&myitem, list, "eq", transitionid, "0");
 myparent->addChild(myitem);
-                struct node *iseq = new_isequal(&mychild, data, &(data->object.cond.TrueList), "eq", indid, indonval);
+                struct node *iseq = new_isequal(&mychild, &(data->object.cond.TrueList), "eq", indid, indonval);
 myitem->TrueList->addChild(mychild);
-                process_elements(mychild->FalseList, iseq, &(iseq->object.cond.FalseList), node->children);
+                process_elements(mychild->FalseList, &(iseq->object.cond.FalseList), node->children);
             }
             else
             {
 dcCondition *myitem;
-                data = new_isequal(&myitem, parent, list, "eq", indid, indonval);
+                data = new_isequal(&myitem, list, "eq", indid, indonval);
 myparent->addChild(myitem);
-                process_elements(myitem->FalseList, data, &(data->object.cond.FalseList), node->children);
+                process_elements(myitem->FalseList, &(data->object.cond.FalseList), node->children);
             }
         }
         if (NodeCheck(node, "ADI"))
@@ -660,7 +657,7 @@ myparent->addChild(myitem);
         if (NodeCheck(node, "MouseEvent"))
         {
             dcMouseEvent *mymouse;
-            data = new_mouseevent(&mymouse, myparent, parent, list,
+            data = new_mouseevent(&mymouse, myparent, list,
                                   get_element_data(node, "X"),
                                   get_element_data(node, "Y"),
                                   get_element_data(node, "Width"),
@@ -672,61 +669,61 @@ myparent->addChild(myitem);
             {
                 if (NodeCheck(subnode, "OnPress"))
                 {
-                    process_elements(mymouse->PressList, data, &(data->object.me.PressList), subnode->children);
+                    process_elements(mymouse->PressList, &(data->object.me.PressList), subnode->children);
                     subparent_found = true;
                 }
                 if (NodeCheck(subnode, "OnRelease"))
                 {
-                    process_elements(mymouse->ReleaseList, data, &(data->object.me.ReleaseList), subnode->children);
+                    process_elements(mymouse->ReleaseList, &(data->object.me.ReleaseList), subnode->children);
                     subparent_found = true;
                 }
             }
             // Assume "Press" if no subparent is found
-            if (!subparent_found) process_elements(mymouse->PressList, data, &(data->object.me.PressList), node->children);
+            if (!subparent_found) process_elements(mymouse->PressList, &(data->object.me.PressList), node->children);
         }
         if (NodeCheck(node, "KeyboardEvent"))
         {
 dcKeyboardEvent *myitem;
-            data = new_keyboardevent(&myitem, parent, list, get_element_data(node, "Key"), get_element_data(node, "KeyASCII"));
+            data = new_keyboardevent(&myitem, list, get_element_data(node, "Key"), get_element_data(node, "KeyASCII"));
 myparent->addChild(myitem);
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
                 if (NodeCheck(subnode, "OnPress"))
                 {
-                    process_elements(myitem->PressList, data, &(data->object.ke.PressList), subnode->children);
+                    process_elements(myitem->PressList, &(data->object.ke.PressList), subnode->children);
                     subparent_found = true;
                 }
                 if (NodeCheck(subnode, "OnRelease"))
                 {
-                    process_elements(myitem->ReleaseList, data, &(data->object.ke.ReleaseList), subnode->children);
+                    process_elements(myitem->ReleaseList, &(data->object.ke.ReleaseList), subnode->children);
                     subparent_found = true;
                 }
             }
             // Assume "Press" if no subparent is found
-            if (!subparent_found) process_elements(myitem->PressList, data, &(data->object.ke.PressList), node->children);
+            if (!subparent_found) process_elements(myitem->PressList, &(data->object.ke.PressList), node->children);
         }
         if (NodeCheck(node, "BezelEvent"))
         {
 dcBezelEvent *myitem;
-            data = new_bezelevent(&myitem, parent, list, get_element_data(node, "Key"));
+            data = new_bezelevent(&myitem, list, get_element_data(node, "Key"));
 myparent->addChild(myitem);
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
                 if (NodeCheck(subnode, "OnPress"))
                 {
-                    process_elements(myitem->PressList, data, &(data->object.be.PressList), subnode->children);
+                    process_elements(myitem->PressList, &(data->object.be.PressList), subnode->children);
                     subparent_found = true;
                 }
                 if (NodeCheck(subnode, "OnRelease"))
                 {
-                    process_elements(myitem->ReleaseList, data, &(data->object.be.ReleaseList), subnode->children);
+                    process_elements(myitem->ReleaseList, &(data->object.be.ReleaseList), subnode->children);
                     subparent_found = true;
                 }
             }
             // Assume "Press" if no subparent is found
-            if (!subparent_found) process_elements(myitem->PressList, data, &(data->object.be.PressList), node->children);
+            if (!subparent_found) process_elements(myitem->PressList, &(data->object.be.PressList), node->children);
         }
     }
 

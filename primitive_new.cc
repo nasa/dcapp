@@ -16,11 +16,11 @@
 
 extern appdata AppData;
 
-struct node *new_mouseevent(dcMouseEvent **, dcParent *, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
-struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
-struct node *new_bezelevent(dcBezelEvent **, struct node *, struct node **, const char *);
-dcSetValue *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
-struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
+struct node *new_mouseevent(dcMouseEvent **, dcParent *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
+struct node *new_keyboardevent(dcKeyboardEvent **, struct node **, const char *, const char *);
+struct node *new_bezelevent(dcBezelEvent **, struct node **, const char *);
+dcSetValue *new_setvalue(const char *, const char *, const char *, const char *, const char *);
+struct node *new_isequal(dcCondition **, struct node **, const char *, const char *, const char *);
 
 bool check_dynamic_element(const char *spec)
 {
@@ -75,36 +75,27 @@ int get_data_type(const char *valstr)
     return UNDEFINED_TYPE;
 }
 
-static struct node *add_primitive_node(struct node *parent, struct node **list)
+static struct node *add_primitive_node(struct node **list)
 {
     struct node *data = (struct node *)calloc(1, sizeof(struct node));
-
-    if (*list == 0x0)
-        *list = data;
-    else
-        (*list)->p_tail->p_next = data;
-
-    (*list)->p_tail = data;
-    data->p_next = 0x0;
-    data->p_parent = parent;
-
+    *list = data;
     return data;
 }
 
-struct node *new_container(struct node *parent, struct node **list)
+struct node *new_container(struct node **list)
 {
-    struct node *data = add_primitive_node(parent, list);
+    struct node *data = add_primitive_node(list);
     return data;
 }
 
-struct node *new_button(dcContainer *myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign,
+struct node *new_button(dcContainer *myitem, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign,
                         const char *rotate, const char *type, const char *switchid, const char *switchonval, const char *switchoffval, const char *indid, const char *indonval,
                         const char *activevar, const char *activeval, const char *transitionid, const char *key, const char *keyascii, const char *bezelkey)
 {
     int toggle=0, momentary=0;
     struct node *cond, *event, *curlist, **sublist, *list1, *list2, *list3, *list4, *list5, *list6;
     const char *offval, *zerostr=strdup("0"), *onestr=strdup("1");
-    struct node *data = add_primitive_node(parent, list);
+    struct node *data = add_primitive_node(list);
 dcSetValue *myset;
 
     if (type)
@@ -123,7 +114,7 @@ dcParent *mySublist = myitem;
     {
         if (!activeval) activeval = onestr;
 dcCondition *mycond;
-curlist = new_isequal(&mycond, data, &(data->object.cont.SubList), "eq", activevar, activeval);
+curlist = new_isequal(&mycond, &(data->object.cont.SubList), "eq", activevar, activeval);
 myitem->addChild(mycond);
 mySublist = mycond->TrueList;
         sublist = &(curlist->object.cond.TrueList);
@@ -140,68 +131,68 @@ mySublist = mycond->TrueList;
     if (toggle)
     {
 dcCondition *mycond;
-        cond = new_isequal(&mycond, curlist, sublist, "eq", indid, indonval);
+        cond = new_isequal(&mycond, sublist, "eq", indid, indonval);
 mySublist->addChild(mycond);
 dcMouseEvent *mymouse;
-        event = new_mouseevent(&mymouse, mycond->TrueList, cond, &(cond->object.cond.TrueList), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-myset = new_setvalue(event, &(event->object.me.PressList), switchid, 0x0, 0x0, 0x0, offval);
+        event = new_mouseevent(&mymouse, mycond->TrueList, &(cond->object.cond.TrueList), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
 mymouse->PressList->addChild(myset);
         if (transitionid)
         {
-myset = new_setvalue(event, &(event->object.me.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
+myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
 mymouse->PressList->addChild(myset);
         }
 dcMouseEvent *mymouse1;
-        event = new_mouseevent(&mymouse1, mycond->FalseList, cond, &(cond->object.cond.FalseList), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-myset = new_setvalue(event, &(event->object.me.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+        event = new_mouseevent(&mymouse1, mycond->FalseList, &(cond->object.cond.FalseList), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
 mymouse1->PressList->addChild(myset);
         if (transitionid)
         {
-myset = new_setvalue(event, &(event->object.me.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "1");
 mymouse1->PressList->addChild(myset);
         }
         if (key || keyascii)
         {
 dcKeyboardEvent *myevent;
-            event = new_keyboardevent(&myevent, cond, &(cond->object.cond.TrueList), key, keyascii);
+            event = new_keyboardevent(&myevent, &(cond->object.cond.TrueList), key, keyascii);
 mycond->TrueList->addChild(myevent);
-myset = new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, offval);
+myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
 myevent->PressList->addChild(myset);
             if (transitionid)
             {
-myset = new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
+myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
 myevent->PressList->addChild(myset);
             }
-            event = new_keyboardevent(&myevent, cond, &(cond->object.cond.FalseList), key, keyascii);
+            event = new_keyboardevent(&myevent, &(cond->object.cond.FalseList), key, keyascii);
 mycond->FalseList->addChild(myevent);
-myset = new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
 myevent->PressList->addChild(myset);
             if (transitionid)
             {
-myset = new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "1");
 myevent->PressList->addChild(myset);
             }
         }
         if (bezelkey)
         {
 dcBezelEvent *myevent1;
-            event = new_bezelevent(&myevent1, cond, &(cond->object.cond.TrueList), bezelkey);
+            event = new_bezelevent(&myevent1, &(cond->object.cond.TrueList), bezelkey);
 mycond->TrueList->addChild(myevent1);
-myset = new_setvalue(event, &(event->object.be.PressList), switchid, 0x0, 0x0, 0x0, offval);
+myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
 myevent1->PressList->addChild(myset);
             if (transitionid)
             {
-myset = new_setvalue(event, &(event->object.be.PressList), transitionid, 0x0, 0x0, 0x0, "-1");
+myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
 myevent1->PressList->addChild(myset);
             }
 dcBezelEvent *myevent2;
-            event = new_bezelevent(&myevent2, cond, &(cond->object.cond.FalseList), bezelkey);
+            event = new_bezelevent(&myevent2, &(cond->object.cond.FalseList), bezelkey);
 mycond->FalseList->addChild(myevent2);
-myset = new_setvalue(event, &(event->object.be.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
 myevent2->PressList->addChild(myset);
             if (transitionid)
             {
-myset = new_setvalue(event, &(event->object.be.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "1");
 myevent2->PressList->addChild(myset);
             }
         }
@@ -209,43 +200,43 @@ myevent2->PressList->addChild(myset);
     else
     {
 dcMouseEvent *mymouse;
-        event = new_mouseevent(&mymouse, mySublist, curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-myset = new_setvalue(event, &(event->object.me.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+        event = new_mouseevent(&mymouse, mySublist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
 mymouse->PressList->addChild(myset);
         if (transitionid)
         {
-myset = new_setvalue(event, &(event->object.me.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "1");
 mymouse->PressList->addChild(myset);
         }
         if (momentary)
         {
-myset = new_setvalue(event, &(event->object.me.ReleaseList), switchid, 0x0, 0x0, 0x0, offval);
+myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
 mymouse->ReleaseList->addChild(myset);
             if (transitionid)
             {
-myset = new_setvalue(event, &(event->object.me.ReleaseList), transitionid, 0x0, 0x0, 0x0, "-1");
+myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
 mymouse->ReleaseList->addChild(myset);
             }
         }
         if (key || keyascii)
         {
 dcKeyboardEvent *myevent;
-            event = new_keyboardevent(&myevent, curlist, sublist, key, keyascii);
+            event = new_keyboardevent(&myevent, sublist, key, keyascii);
 mySublist->addChild(myevent);
-myset = new_setvalue(event, &(event->object.ke.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
 myevent->PressList->addChild(myset);
             if (transitionid)
             {
-myset = new_setvalue(event, &(event->object.ke.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "1");
 myevent->PressList->addChild(myset);
             }
             if (momentary)
             {
-myset = new_setvalue(event, &(event->object.ke.ReleaseList), switchid, 0x0, 0x0, 0x0, offval);
+myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
 myevent->ReleaseList->addChild(myset);
                 if (transitionid)
                 {
-myset = new_setvalue(event, &(event->object.ke.ReleaseList), transitionid, 0x0, 0x0, 0x0, "-1");
+myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
 myevent->ReleaseList->addChild(myset);
                 }
             }
@@ -253,22 +244,22 @@ myevent->ReleaseList->addChild(myset);
         if (bezelkey)
         {
 dcBezelEvent *myevent1;
-            event = new_bezelevent(&myevent1, curlist, sublist, bezelkey);
+            event = new_bezelevent(&myevent1, sublist, bezelkey);
 mySublist->addChild(myevent1);
-myset = new_setvalue(event, &(event->object.be.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
+myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
 myevent1->PressList->addChild(myset);
             if (transitionid)
             {
-myset = new_setvalue(event, &(event->object.be.PressList), transitionid, 0x0, 0x0, 0x0, "1");
+myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "1");
 myevent1->PressList->addChild(myset);
             }
             if (momentary)
             {
-myset = new_setvalue(event, &(event->object.be.ReleaseList), switchid, 0x0, 0x0, 0x0, offval);
+myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
 myevent1->ReleaseList->addChild(myset);
                 if (transitionid)
                 {
-myset = new_setvalue(event, &(event->object.be.ReleaseList), transitionid, 0x0, 0x0, 0x0, "-1");
+myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
 myevent1->ReleaseList->addChild(myset);
                 }
             }
@@ -278,35 +269,35 @@ myevent1->ReleaseList->addChild(myset);
     if (transitionid)
     {
 dcCondition *mylist1, *mylist2, *mylist3, *mylist4, *mylist5, *mylist6;
-        list1 = new_isequal(&mylist1, data, &(data->object.cont.SubList), "eq", transitionid, "1");
+        list1 = new_isequal(&mylist1, &(data->object.cont.SubList), "eq", transitionid, "1");
 myitem->addChild(mylist1);
-        list2 = new_isequal(&mylist2, list1, &(list1->object.cond.TrueList), "eq", indid, indonval);
+        list2 = new_isequal(&mylist2, &(list1->object.cond.TrueList), "eq", indid, indonval);
 mylist1->TrueList->addChild(mylist2);
-        myset = new_setvalue(list2, &(list2->object.cond.TrueList), transitionid, 0x0, 0x0, 0x0, "0");
+        myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
 mylist2->TrueList->addChild(myset);
-        list3 = new_isequal(&mylist3, list2, &(list2->object.cond.FalseList), "eq", switchid, switchonval);
+        list3 = new_isequal(&mylist3, &(list2->object.cond.FalseList), "eq", switchid, switchonval);
 mylist2->FalseList->addChild(mylist3);
-        myset = new_setvalue(list3, &(list3->object.cond.FalseList), transitionid, 0x0, 0x0, 0x0, "0");
+        myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
 mylist3->FalseList->addChild(myset);
 
-        list4 = new_isequal(&mylist4, data, &(data->object.cont.SubList), "eq", transitionid, "-1");
+        list4 = new_isequal(&mylist4, &(data->object.cont.SubList), "eq", transitionid, "-1");
 myitem->addChild(mylist4);
-        list5 = new_isequal(&mylist5, list4, &(list4->object.cond.TrueList), "eq", indid, indonval);
+        list5 = new_isequal(&mylist5, &(list4->object.cond.TrueList), "eq", indid, indonval);
 mylist4->TrueList->addChild(mylist5);
-        myset = new_setvalue(list5, &(list5->object.cond.FalseList), transitionid, 0x0, 0x0, 0x0, "0");
+        myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
 mylist5->FalseList->addChild(myset);
-        list6 = new_isequal(&mylist6, list5, &(list5->object.cond.FalseList), "eq", switchid, switchoffval);
+        list6 = new_isequal(&mylist6, &(list5->object.cond.FalseList), "eq", switchid, switchoffval);
 mylist5->FalseList->addChild(mylist6);
-        myset = new_setvalue(list6, &(list6->object.cond.TrueList), transitionid, 0x0, 0x0, 0x0, "0");
+        myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
 mylist6->TrueList->addChild(myset);
     }
 
     return data;
 }
 
-struct node *new_mouseevent(dcMouseEvent **myitem, dcParent *myparent, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign)
+struct node *new_mouseevent(dcMouseEvent **myitem, dcParent *myparent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign)
 {
-    struct node *data = add_primitive_node(parent, list);
+    struct node *data = add_primitive_node(list);
 
     *myitem = new dcMouseEvent(myparent);
     (*myitem)->setPosition(x, y);
@@ -316,7 +307,7 @@ struct node *new_mouseevent(dcMouseEvent **myitem, dcParent *myparent, struct no
     return data;
 }
 
-struct node *new_keyboardevent(dcKeyboardEvent **myitem, struct node *parent, struct node **list, const char *key, const char *keyascii)
+struct node *new_keyboardevent(dcKeyboardEvent **myitem, struct node **list, const char *key, const char *keyascii)
 {
     if (!key && !keyascii) 
     {
@@ -324,7 +315,7 @@ struct node *new_keyboardevent(dcKeyboardEvent **myitem, struct node *parent, st
         return 0x0;
     }
 
-    struct node *data = add_primitive_node(parent, list);
+    struct node *data = add_primitive_node(list);
 
     if (key)
         *myitem = new dcKeyboardEvent(key[0]);
@@ -334,7 +325,7 @@ struct node *new_keyboardevent(dcKeyboardEvent **myitem, struct node *parent, st
     return data;
 }
 
-struct node *new_bezelevent(dcBezelEvent **myitem, struct node *parent, struct node **list, const char *key)
+struct node *new_bezelevent(dcBezelEvent **myitem, struct node **list, const char *key)
 {
     if (!key)
     {
@@ -342,7 +333,7 @@ struct node *new_bezelevent(dcBezelEvent **myitem, struct node *parent, struct n
         return 0x0;
     }
 
-    struct node *data = add_primitive_node(parent, list);
+    struct node *data = add_primitive_node(list);
 
     *myitem = new dcBezelEvent(StrToInt(key, 0));
 
@@ -391,7 +382,7 @@ struct ModifyValue get_setvalue_data(const char *varspec, const char *opspec, co
     return ret;
 }
 
-dcSetValue *new_setvalue(struct node *parent, struct node **list, const char *var, const char *optype, const char *min, const char *max, const char *val)
+dcSetValue *new_setvalue(const char *var, const char *optype, const char *min, const char *max, const char *val)
 {
     struct ModifyValue myset = get_setvalue_data(var, optype, min, max, val);
 
@@ -400,7 +391,7 @@ dcSetValue *new_setvalue(struct node *parent, struct node **list, const char *va
     return new dcSetValue(myset.optype, myset.datatype1, myset.datatype2, myset.mindatatype, myset.maxdatatype, myset.var, myset.val, myset.min, myset.max);
 }
 
-struct node *new_isequal(dcCondition **myitem, struct node *parent, struct node **list, const char *opspec, const char *val1, const char *val2)
+struct node *new_isequal(dcCondition **myitem, struct node **list, const char *opspec, const char *val1, const char *val2)
 {
     const char *onestr = strdup("1");
 
@@ -410,12 +401,9 @@ struct node *new_isequal(dcCondition **myitem, struct node *parent, struct node 
         return 0x0;
     }
 
-    struct node *data = add_primitive_node(parent, list);
+    struct node *data = add_primitive_node(list);
 
     int myopspec, datatype1, datatype2;
-
-    if (parent) data->info.w = parent->info.w;
-    if (parent) data->info.h = parent->info.h;
 
     myopspec = Simple;
     if (opspec)
