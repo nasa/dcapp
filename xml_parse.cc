@@ -24,7 +24,7 @@ extern int *getIntegerPointer(const char *);
 
 extern struct node *new_container(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
-extern struct node *new_button(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
+extern struct node *new_button(dcContainer *, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
                                const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_mouseevent(dcMouseEvent **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
@@ -376,18 +376,22 @@ data = (struct node *)calloc(1, sizeof(struct node)); // TODO: remove once subli
         }
         if (NodeCheck(node, "Container"))
         {
-dcContainer *myitem;
-            data = new_container(&myitem, parent, list,
-                                 get_element_data(node, "X"),
-                                 get_element_data(node, "Y"),
-                                 get_element_data(node, "Width"),
-                                 get_element_data(node, "Height"),
-                                 get_element_data(node, "HorizontalAlign"),
-                                 get_element_data(node, "VerticalAlign"),
-                                 get_element_data(node, "VirtualWidth"),
-                                 get_element_data(node, "VirtualHeight"),
-                                 get_element_data(node, "Rotate"));
-myparent->addChild(myitem);
+            dcContainer *myitem = new dcContainer(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setVirtualSize(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
+data = new_container(&myitem, parent, list,
+         get_element_data(node, "X"),
+         get_element_data(node, "Y"),
+         get_element_data(node, "Width"),
+         get_element_data(node, "Height"),
+         get_element_data(node, "HorizontalAlign"),
+         get_element_data(node, "VerticalAlign"),
+         get_element_data(node, "VirtualWidth"),
+         get_element_data(node, "VirtualHeight"),
+         get_element_data(node, "Rotate"));
             process_elements(myitem, data, &(data->object.cont.SubList), node->children);
         }
         if (NodeCheck(node, "Vertex"))
@@ -489,29 +493,32 @@ myparent->addChild(myitem);
             if (switchid != indid) transitionid = create_virtual_variable("Integer", "0");
             else transitionid = 0x0;
 
-dcContainer *mycont;
-            data = new_button(&mycont, parent, list,
-                      get_element_data(node, "X"),
-                      get_element_data(node, "Y"),
-                      get_element_data(node, "Width"),
-                      get_element_data(node, "Height"),
-                      get_element_data(node, "HorizontalAlign"),
-                      get_element_data(node, "VerticalAlign"),
-                      get_element_data(node, "Rotate"),
-                      get_element_data(node, "Type"),
-                      switchid,
-                      switchonval,
-                      switchoffval,
-                      indid,
-                      indonval,
-                      activeid,
-                      activetrueval,
-                      transitionid,
-                      key,
-                      keyascii,
-                      bezelkey);
-myparent->addChild(mycont);
-            process_elements((dcParent *)mycont, data, &(data->object.cont.SubList), node->children);
+            dcContainer *myitem = new dcContainer(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+data = new_button(myitem, parent, list,
+      get_element_data(node, "X"),
+      get_element_data(node, "Y"),
+      get_element_data(node, "Width"),
+      get_element_data(node, "Height"),
+      get_element_data(node, "HorizontalAlign"),
+      get_element_data(node, "VerticalAlign"),
+      get_element_data(node, "Rotate"),
+      get_element_data(node, "Type"),
+      switchid,
+      switchonval,
+      switchoffval,
+      indid,
+      indonval,
+      activeid,
+      activetrueval,
+      transitionid,
+      key,
+      keyascii,
+      bezelkey);
+            process_elements(myitem, data, &(data->object.cont.SubList), node->children);
             if (transitionid) free(transitionid);
         }
         if (NodeCheck(node, "OnPress"))

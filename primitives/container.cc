@@ -1,26 +1,39 @@
 #include <cmath>
-#include "geometry.hh"
 #include "opengl_draw.hh"
 #include "container.hh"
 
-dcContainer::dcContainer(float *invwidth, float *invheight, float *inx, float *iny, float *inw, float *inh, float *incw, float *inch, unsigned inhal, unsigned inval, float *inrot)
+extern float *getFloatPointer(const char *); // TODO: put in header file
+
+dcContainer::dcContainer(dcParent *myparent) : dcGeometric(myparent)
 {
-    vwidth = invwidth;
-    vheight = invheight;
-    x = inx;
-    y = iny;
-    w = inw;
-    h = inh;
-    halign = inhal;
-    valign = inval;
-    rotate = inrot;
+    vwidth = w;
+    vheight = h;
+}
+
+void dcContainer::setSize(const char *inw, const char *inh)
+{
+    if (inw)
+    {
+        float *tmpptr = getFloatPointer(inw);
+        if (vwidth == w) vwidth = tmpptr;
+        w = tmpptr;
+    }
+    if (inh)
+    {
+        float *tmpptr = getFloatPointer(inh);
+        if (vheight == h) vheight = tmpptr;
+        h = tmpptr;
+    }
+}
+
+void dcContainer::setVirtualSize(const char *inw, const char *inh)
+{
+    if (inw) vwidth = getFloatPointer(inw);
+    if (inh) vheight = getFloatPointer(inh);
 }
 
 void dcContainer::completeInitialization(void)
 {
-    containerw = getParent()->getContainerWidth();
-    containerh = getParent()->getContainerHeight();
-
     for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
     {
         (*myobj)->completeInitialization();
@@ -29,8 +42,8 @@ void dcContainer::completeInitialization(void)
 
 void dcContainer::draw(void)
 {
-    Geometry geo = GetGeometry(x, y, w, h, *containerw, *containerh, halign, valign);
-    container_start(geo.refx, geo.refy, geo.delx, geo.dely, (*w)/(*vwidth), (*h)/(*vheight), *rotate);
+    computeGeometry();
+    container_start(refx, refy, delx, dely, (*w)/(*vwidth), (*h)/(*vheight), *rotate);
     for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
     {
         (*myobj)->draw();
@@ -42,10 +55,10 @@ void dcContainer::handleMousePress(float inx, float iny)
 {
     float ang, originx, originy, tmpx, tmpy, finalx, finaly;
 
-    Geometry geo = GetGeometry(x, y, w, h, *containerw, *containerh, halign, valign);
+    computeGeometry();
     ang = (*rotate) * 0.01745329252;
-    originx = geo.refx - ((geo.delx * cosf(-ang)) + (geo.dely * sinf(-ang)));
-    originy = geo.refy - ((geo.dely * cosf(-ang)) - (geo.delx * sinf(-ang)));
+    originx = refx - ((delx * cosf(-ang)) + (dely * sinf(-ang)));
+    originy = refy - ((dely * cosf(-ang)) - (delx * sinf(-ang)));
     tmpx = (inx - originx) * (*vwidth) / (*w);
     tmpy = (iny - originy) * (*vheight) / (*h);
     finalx = (tmpx * cosf(ang)) + (tmpy * sinf(ang));

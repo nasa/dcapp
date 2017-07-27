@@ -136,12 +136,10 @@ struct node *new_container(dcContainer **myitem, struct node *parent, struct nod
     data->object.cont.vwidth = getFloatPointer(vwidth, *(data->info.w));
     data->object.cont.vheight = getFloatPointer(vheight, *(data->info.h));
 
-    *myitem = new dcContainer(data->object.cont.vwidth, data->object.cont.vheight, data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate);
-
     return data;
 }
 
-struct node *new_button(dcContainer **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign,
+struct node *new_button(dcContainer *myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign,
                         const char *rotate, const char *type, const char *switchid, const char *switchonval, const char *switchoffval, const char *indid, const char *indonval,
                         const char *activevar, const char *activeval, const char *transitionid, const char *key, const char *keyascii, const char *bezelkey)
 {
@@ -160,16 +158,15 @@ dcSetValue *myset;
     data->object.cont.vwidth = data->info.w;
     data->object.cont.vheight = data->info.h;
 
-*myitem = new dcContainer(data->object.cont.vwidth, data->object.cont.vheight, data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign, data->info.rotate);
     curlist = data;
     sublist = &(data->object.cont.SubList);
-dcParent *mySublist = (dcParent *)(*myitem);
+dcParent *mySublist = myitem;
     if (activevar)
     {
         if (!activeval) activeval = onestr;
 dcCondition *mycond;
 curlist = new_isequal(&mycond, data, &(data->object.cont.SubList), "eq", activevar, activeval);
-(*myitem)->addChild(mycond);
+myitem->addChild(mycond);
 mySublist = mycond->TrueList;
         sublist = &(curlist->object.cond.TrueList);
     }
@@ -327,7 +324,7 @@ myevent1->ReleaseList->addChild(myset);
     {
 dcCondition *mylist1, *mylist2, *mylist3, *mylist4, *mylist5, *mylist6;
         list1 = new_isequal(&mylist1, data, &(data->object.cont.SubList), "eq", transitionid, "1");
-(*myitem)->addChild(mylist1);
+myitem->addChild(mylist1);
         list2 = new_isequal(&mylist2, list1, &(list1->object.cond.TrueList), "eq", indid, indonval);
 mylist1->TrueList->addChild(mylist2);
         myset = new_setvalue(list2, &(list2->object.cond.TrueList), transitionid, 0x0, 0x0, 0x0, "0");
@@ -338,7 +335,7 @@ mylist2->FalseList->addChild(mylist3);
 mylist3->FalseList->addChild(myset);
 
         list4 = new_isequal(&mylist4, data, &(data->object.cont.SubList), "eq", transitionid, "-1");
-(*myitem)->addChild(mylist4);
+myitem->addChild(mylist4);
         list5 = new_isequal(&mylist5, list4, &(list4->object.cond.TrueList), "eq", indid, indonval);
 mylist4->TrueList->addChild(mylist5);
         myset = new_setvalue(list5, &(list5->object.cond.FalseList), transitionid, 0x0, 0x0, 0x0, "0");

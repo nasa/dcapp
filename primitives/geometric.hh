@@ -4,7 +4,7 @@
 #include "parent.hh"
 #include "object.hh"
 
-class dcGeometric : public virtual dcObject
+class dcGeometric : public dcObject
 {
     public:
         dcGeometric(dcParent *);
