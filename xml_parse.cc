@@ -22,7 +22,7 @@
 extern void window_init(bool, int , int, int, int);
 extern int *getIntegerPointer(const char *);
 
-extern struct node *new_container(dcContainer **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_container(struct node *, struct node **);
 extern struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
 extern struct node *new_button(dcContainer *, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
                                const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
@@ -380,16 +380,7 @@ data = (struct node *)calloc(1, sizeof(struct node)); // TODO: remove once subli
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setVirtualSize(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
-data = new_container(&myitem, parent, list,
-         get_element_data(node, "X"),
-         get_element_data(node, "Y"),
-         get_element_data(node, "Width"),
-         get_element_data(node, "Height"),
-         get_element_data(node, "HorizontalAlign"),
-         get_element_data(node, "VerticalAlign"),
-         get_element_data(node, "VirtualWidth"),
-         get_element_data(node, "VirtualHeight"),
-         get_element_data(node, "Rotate"));
+data = new_container(parent, list);
             process_elements(myitem, data, &(data->object.cont.SubList), node->children);
         }
         if (NodeCheck(node, "Vertex"))

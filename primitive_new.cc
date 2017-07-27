@@ -40,12 +40,6 @@ float *getFloatPointer(const char *valstr)
     else return dcLoadConstant(StrToFloat(valstr, 0));
 }
 
-static float *getFloatPointer(const char *valstr, float defval)
-{
-    if (check_dynamic_element(valstr)) return (float *)get_pointer(valstr);
-    else return dcLoadConstant(StrToFloat(valstr, defval));
-}
-
 int *getIntegerPointer(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return (int *)get_pointer(valstr);
@@ -81,7 +75,7 @@ int get_data_type(const char *valstr)
     return UNDEFINED_TYPE;
 }
 
-static struct node *add_primitive_node(struct node *parent, struct node **list, Type type, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *rotate)
+static struct node *add_primitive_node(struct node *parent, struct node **list)
 {
     struct node *data = (struct node *)calloc(1, sizeof(struct node));
 
@@ -94,48 +88,12 @@ static struct node *add_primitive_node(struct node *parent, struct node **list, 
     data->p_next = 0x0;
     data->p_parent = parent;
 
-    data->info.type = type;
-
-    // it's important to pass container width and height down through all primitives in the tree, even those
-    // that don't seem to be geometric, so that the size of contained elements can be calculated at draw time.
-    if (data->p_parent->info.type == Container)
-    {
-        data->info.containerW = data->p_parent->object.cont.vwidth;
-        data->info.containerH = data->p_parent->object.cont.vheight;
-    }
-    else
-    {
-        data->info.containerW = data->p_parent->info.w;
-        data->info.containerH = data->p_parent->info.h;
-    }
-
-    // set x and y pointers to 0x0 if those values aren't defined. This tells the draw-time logic that x and y
-    // values need to be calculated.
-    if (x) data->info.x = getFloatPointer(x);
-    else data->info.x = 0x0;
-    if (y) data->info.y = getFloatPointer(y);
-    else data->info.y = 0x0;
-
-    data->info.halign = StrToHAlign(halign, AlignLeft);
-    data->info.valign = StrToVAlign(valign, AlignBottom);
-//    data->info.w = getFloatPointer(width, *(data->info.containerW));
-//    data->info.h = getFloatPointer(height, *(data->info.containerH));
-if (width) data->info.w = getFloatPointer(width);
-else data->info.w = data->info.containerW;
-if (height) data->info.h = getFloatPointer(height);
-else data->info.h = data->info.containerH;
-    data->info.rotate = getFloatPointer(rotate);
-
     return data;
 }
 
-struct node *new_container(dcContainer **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign, const char *vwidth, const char *vheight, const char *rotate)
+struct node *new_container(struct node *parent, struct node **list)
 {
-    struct node *data = add_primitive_node(parent, list, Container, x, y, width, height, halign, valign, rotate);
-
-    data->object.cont.vwidth = getFloatPointer(vwidth, *(data->info.w));
-    data->object.cont.vheight = getFloatPointer(vheight, *(data->info.h));
-
+    struct node *data = add_primitive_node(parent, list);
     return data;
 }
 
@@ -146,7 +104,7 @@ struct node *new_button(dcContainer *myitem, struct node *parent, struct node **
     int toggle=0, momentary=0;
     struct node *cond, *event, *curlist, **sublist, *list1, *list2, *list3, *list4, *list5, *list6;
     const char *offval, *zerostr=strdup("0"), *onestr=strdup("1");
-    struct node *data = add_primitive_node(parent, list, Container, x, y, width, height, halign, valign, rotate);
+    struct node *data = add_primitive_node(parent, list);
 dcSetValue *myset;
 
     if (type)
@@ -348,9 +306,8 @@ mylist6->TrueList->addChild(myset);
 
 struct node *new_mouseevent(dcMouseEvent **myitem, dcParent *myparent, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign)
 {
-    struct node *data = add_primitive_node(parent, list, Empty, x, y, width, height, halign, valign, 0x0);
+    struct node *data = add_primitive_node(parent, list);
 
-//    *myitem = new dcMouseEvent(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign);
     *myitem = new dcMouseEvent(myparent);
     (*myitem)->setPosition(x, y);
     (*myitem)->setSize(width, height);
@@ -367,7 +324,7 @@ struct node *new_keyboardevent(dcKeyboardEvent **myitem, struct node *parent, st
         return 0x0;
     }
 
-    struct node *data = add_primitive_node(parent, list, Empty, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+    struct node *data = add_primitive_node(parent, list);
 
     if (key)
         *myitem = new dcKeyboardEvent(key[0]);
@@ -385,7 +342,7 @@ struct node *new_bezelevent(dcBezelEvent **myitem, struct node *parent, struct n
         return 0x0;
     }
 
-    struct node *data = add_primitive_node(parent, list, Empty, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+    struct node *data = add_primitive_node(parent, list);
 
     *myitem = new dcBezelEvent(StrToInt(key, 0));
 
@@ -453,7 +410,7 @@ struct node *new_isequal(dcCondition **myitem, struct node *parent, struct node 
         return 0x0;
     }
 
-    struct node *data = add_primitive_node(parent, list, Empty, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
+    struct node *data = add_primitive_node(parent, list);
 
     int myopspec, datatype1, datatype2;
 
