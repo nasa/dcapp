@@ -29,42 +29,8 @@ class PixelStreamItem
 
 #include "primitives/primitives.hh" // TODO: move and incorporate PixelStreamItem somewhere
 
-typedef enum { Empty, Container } Type;
 typedef enum { Equals, PlusEquals, MinusEquals } SetOperator;
 typedef enum { Simple, IfEquals, IfNotEquals, IfGreaterThan, IfLessThan, IfGreaterOrEquals, IfLessOrEquals } IfOperator;
-
-struct Panel
-{
-    struct node *SubList;
-};
-
-struct Line
-{
-    struct node *Vertices;
-};
-
-struct Polygon
-{
-    struct node *Vertices;
-};
-
-struct MouseEvent
-{
-    struct node *PressList;
-    struct node *ReleaseList;
-};
-
-struct KeyboardEvent
-{
-    struct node *PressList;
-    struct node *ReleaseList;
-};
-
-struct BezelEvent
-{
-    struct node *PressList;
-    struct node *ReleaseList;
-};
 
 struct ModifyValue
 {
@@ -77,58 +43,6 @@ struct ModifyValue
     void *val;
     void *min;
     void *max;
-};
-
-struct Animate
-{
-    struct node *SubList;
-};
-
-struct Condition
-{
-    struct node *TrueList;
-    struct node *FalseList;
-};
-
-struct Container
-{
-    struct node *SubList;
-    float *vwidth;
-    float *vheight;
-};
-
-union objects
-{
-    struct Panel panel;
-    struct Container cont;
-    struct Animate anim;
-    struct Condition cond;
-    struct Line line;
-    struct Polygon poly;
-    struct MouseEvent me;
-    struct KeyboardEvent ke;
-    struct BezelEvent be;
-};
-
-struct node
-{
-    struct
-    {
-        Type type;
-        int halign;
-        int valign;
-        float *x;
-        float *y;
-        float *w;
-        float *h;
-        float *containerW;
-        float *containerH;
-        float *rotate;
-    } info;
-    union objects object;
-    struct node *p_next;
-    struct node *p_tail;
-    struct node *p_parent;
 };
 
 typedef struct
