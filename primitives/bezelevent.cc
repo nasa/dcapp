@@ -15,12 +15,6 @@ dcBezelEvent::~dcBezelEvent()
     delete ReleaseList;
 }
 
-void dcBezelEvent::completeInitialization(void)
-{
-    PressList->completeInitialization();
-    ReleaseList->completeInitialization();
-}
-
 void dcBezelEvent::handleBezelPress(int key)
 {
     if (mykey == key)

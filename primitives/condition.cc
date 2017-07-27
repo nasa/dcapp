@@ -22,12 +22,6 @@ dcCondition::~dcCondition()
     delete FalseList;
 }
 
-void dcCondition::completeInitialization(void)
-{
-    TrueList->completeInitialization();
-    FalseList->completeInitialization();
-}
-
 void dcCondition::draw(void)
 {
     if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))

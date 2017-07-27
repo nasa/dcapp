@@ -9,14 +9,6 @@ dcParent::~dcParent()
     }
 }
 
-void dcParent::completeInitialization(void)
-{
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->completeInitialization();
-    }
-}
-
 void dcParent::draw(void)
 {
     for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)

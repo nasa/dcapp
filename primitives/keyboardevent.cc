@@ -18,12 +18,6 @@ dcKeyboardEvent::~dcKeyboardEvent()
     delete ReleaseList;
 }
 
-void dcKeyboardEvent::completeInitialization(void)
-{
-    PressList->completeInitialization();
-    ReleaseList->completeInitialization();
-}
-
 void dcKeyboardEvent::handleKeyPress(char key)
 {
     if (mykey == key) this->PressList->handleEvent();

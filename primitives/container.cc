@@ -32,14 +32,6 @@ void dcContainer::setVirtualSize(const char *inw, const char *inh)
     if (inh) vheight = getFloatPointer(inh);
 }
 
-void dcContainer::completeInitialization(void)
-{
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->completeInitialization();
-    }
-}
-
 void dcContainer::draw(void)
 {
     computeGeometry();

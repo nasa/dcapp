@@ -11,7 +11,6 @@ class dcParent : public dcObject
         dcParent() { };
         virtual ~dcParent();
 
-        void completeInitialization(void);
         void draw(void);
         void handleKeyPress(char);
         void handleKeyRelease(char);

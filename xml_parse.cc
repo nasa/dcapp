@@ -26,7 +26,7 @@ extern struct node *new_container(dcContainer **, struct node *, struct node **,
 extern struct node *new_isequal(dcCondition **, struct node *, struct node **, const char *, const char *, const char *);
 extern struct node *new_button(dcContainer *, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
                                const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_mouseevent(dcMouseEvent **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
+extern struct node *new_mouseevent(dcMouseEvent **, dcParent *, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
 extern struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
 extern struct node *new_bezelevent(dcBezelEvent **, struct node *, struct node **, const char *);
 extern dcSetValue *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
@@ -89,8 +89,6 @@ int ParseXMLFile(const char *fullpath)
     AppData.DisplayClose = &DisplayCloseStub;
 
     if (process_elements(0x0, 0, 0, root_element->children)) return (-1);
-
-    AppData.toplevel->completeInitialization();
 
     XMLFileClose(mydoc);
     XMLEndParsing();
@@ -535,8 +533,7 @@ mySublist = mycond->TrueList;
                 sublist = &(curlist->object.cond.TrueList);
             }
 dcMouseEvent *mymouse;
-            data = new_mouseevent(&mymouse, curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-mySublist->addChild(mymouse);
+            data = new_mouseevent(&mymouse, mySublist, curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 //need to do this for functionality
             process_elements(mymouse->PressList, data, &(data->object.me.PressList), node->children);
             if (key || keyascii)
@@ -572,8 +569,7 @@ mySublist = mycond->TrueList;
                 sublist = &(curlist->object.cond.TrueList);
             }
 dcMouseEvent *mymouse;
-            data = new_mouseevent(&mymouse, curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-mySublist->addChild(mymouse);
+            data = new_mouseevent(&mymouse, mySublist, curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 //need to do this for functionality
             process_elements(mymouse->ReleaseList, data, &(data->object.me.ReleaseList), node->children);
             if (key || keyascii)
@@ -673,14 +669,13 @@ myparent->addChild(myitem);
         if (NodeCheck(node, "MouseEvent"))
         {
             dcMouseEvent *mymouse;
-            data = new_mouseevent(&mymouse, parent, list,
+            data = new_mouseevent(&mymouse, myparent, parent, list,
                                   get_element_data(node, "X"),
                                   get_element_data(node, "Y"),
                                   get_element_data(node, "Width"),
                                   get_element_data(node, "Height"),
                                   get_element_data(node, "HorizontalAlign"),
                                   get_element_data(node, "VerticalAlign"));
-            myparent->addChild(mymouse);
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {

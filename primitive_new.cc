@@ -16,7 +16,7 @@
 
 extern appdata AppData;
 
-struct node *new_mouseevent(dcMouseEvent **, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
+struct node *new_mouseevent(dcMouseEvent **, dcParent *, struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
 struct node *new_keyboardevent(dcKeyboardEvent **, struct node *, struct node **, const char *, const char *);
 struct node *new_bezelevent(dcBezelEvent **, struct node *, struct node **, const char *);
 dcSetValue *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
@@ -185,8 +185,7 @@ dcCondition *mycond;
         cond = new_isequal(&mycond, curlist, sublist, "eq", indid, indonval);
 mySublist->addChild(mycond);
 dcMouseEvent *mymouse;
-        event = new_mouseevent(&mymouse, cond, &(cond->object.cond.TrueList), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-mycond->TrueList->addChild(mymouse);
+        event = new_mouseevent(&mymouse, mycond->TrueList, cond, &(cond->object.cond.TrueList), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 myset = new_setvalue(event, &(event->object.me.PressList), switchid, 0x0, 0x0, 0x0, offval);
 mymouse->PressList->addChild(myset);
         if (transitionid)
@@ -195,8 +194,7 @@ myset = new_setvalue(event, &(event->object.me.PressList), transitionid, 0x0, 0x
 mymouse->PressList->addChild(myset);
         }
 dcMouseEvent *mymouse1;
-        event = new_mouseevent(&mymouse1, cond, &(cond->object.cond.FalseList), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-mycond->FalseList->addChild(mymouse1);
+        event = new_mouseevent(&mymouse1, mycond->FalseList, cond, &(cond->object.cond.FalseList), 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 myset = new_setvalue(event, &(event->object.me.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
 mymouse1->PressList->addChild(myset);
         if (transitionid)
@@ -253,8 +251,7 @@ myevent2->PressList->addChild(myset);
     else
     {
 dcMouseEvent *mymouse;
-        event = new_mouseevent(&mymouse, curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-mySublist->addChild(mymouse);
+        event = new_mouseevent(&mymouse, mySublist, curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
 myset = new_setvalue(event, &(event->object.me.PressList), switchid, 0x0, 0x0, 0x0, switchonval);
 mymouse->PressList->addChild(myset);
         if (transitionid)
@@ -349,11 +346,15 @@ mylist6->TrueList->addChild(myset);
     return data;
 }
 
-struct node *new_mouseevent(dcMouseEvent **myitem, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign)
+struct node *new_mouseevent(dcMouseEvent **myitem, dcParent *myparent, struct node *parent, struct node **list, const char *x, const char *y, const char *width, const char *height, const char *halign, const char *valign)
 {
     struct node *data = add_primitive_node(parent, list, Empty, x, y, width, height, halign, valign, 0x0);
 
-    *myitem = new dcMouseEvent(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign);
+//    *myitem = new dcMouseEvent(data->info.x, data->info.y, data->info.w, data->info.h, data->info.containerW, data->info.containerH, data->info.halign, data->info.valign);
+    *myitem = new dcMouseEvent(myparent);
+    (*myitem)->setPosition(x, y);
+    (*myitem)->setSize(width, height);
+    (*myitem)->setAlignment(halign, valign);
 
     return data;
 }

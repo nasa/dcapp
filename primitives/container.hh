@@ -10,7 +10,6 @@ class dcContainer : public dcParent, public dcGeometric
         dcContainer(dcParent *);
         void setSize(const char *, const char *);
         void setVirtualSize(const char *, const char *);
-        void completeInitialization(void);
         void draw(void);
         void handleMousePress(float, float);
 

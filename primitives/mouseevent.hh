@@ -1,16 +1,15 @@
 #ifndef _MOUSEEVENT_HH_
 #define _MOUSEEVENT_HH_
 
-#include "object.hh"
+#include "geometric.hh"
 #include "parent.hh"
 
-class dcMouseEvent : public dcObject
+class dcMouseEvent : public dcGeometric
 {
     public:
-        dcMouseEvent(float *, float *, float *, float *, float *, float *, unsigned, unsigned);
+        dcMouseEvent(dcParent *);
         virtual ~dcMouseEvent();
 
-        void completeInitialization(void);
         void handleMousePress(float, float);
         void handleMouseRelease(void);
 
@@ -18,14 +17,6 @@ class dcMouseEvent : public dcObject
         dcParent *ReleaseList;
 
     private:
-        float *x;
-        float *y;
-        float *w;
-        float *h;
-        float *containerw;
-        float *containerh;
-        unsigned halign;
-        unsigned valign;
         bool selected;
 };
 

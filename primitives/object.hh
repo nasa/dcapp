@@ -9,7 +9,6 @@ class dcObject
         dcObject() : parent(0x0) { };
         virtual ~dcObject() { };
 
-        virtual void completeInitialization(void) { };
         virtual void draw(void) { };
         virtual void handleKeyPress(char) { };
         virtual void handleKeyRelease(char) { };
