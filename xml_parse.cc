@@ -20,10 +20,8 @@
 #include "xml_stringsub.hh"
 
 extern void window_init(bool, int , int, int, int);
-extern int *getIntegerPointer(const char *);
 
 extern void new_button(dcContainer *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern bool CheckConditionLogic(int, int, const void *, int, const void *);
 extern bool check_dynamic_element(const char *);
 
 extern void DisplayPreInitStub(void *(*)(const char *));
@@ -32,7 +30,6 @@ extern void DisplayLogicStub(void);
 extern void DisplayCloseStub(void);
 
 static int process_elements(dcParent *, xmlNodePtr);
-static xmlNodePtr GetSubList(xmlNodePtr, const char *, const char *, const char *);
 
 extern appdata AppData;
 
@@ -124,15 +121,34 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             const char *val1 = get_element_data(node, "Value1");
             const char *val2 = get_element_data(node, "Value2");
             const char *myoperator = get_element_data(node, "Operator");
+            bool subparent_found = false;
 
             if (!val1) val1 = val;
 
             if (preprocessing || (!check_dynamic_element(val1) && !check_dynamic_element(val2)))
-                process_elements(myparent, GetSubList(node, myoperator, val1, val2));
+            {
+                dcCondition *myitem = new dcCondition(0x0, myoperator, val1, val2);
+                bool myflag = myitem->checkCondition();
+                delete myitem;
+
+                for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
+                {
+                    if (myflag && NodeCheck(subnode, "True"))
+                    {
+                        process_elements(myparent, subnode->children);
+                        subparent_found = true;
+                    }
+                    if (!myflag && NodeCheck(subnode, "False"))
+                    {
+                        process_elements(myparent, subnode->children);
+                        subparent_found = true;
+                    }
+                }
+                // Assume "True" if no subparent is found
+                if (myflag && !subparent_found) process_elements(myparent, node->children);
+            }
             else
             {
-                bool subparent_found = false;
-
                 dcCondition *myitem = new dcCondition(myparent, myoperator, val1, val2);
 
                 for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
@@ -152,12 +168,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 if (!subparent_found) process_elements(myitem->TrueList, node->children);
             }
         }
-        if (NodeCheck(node, "Animation"))
-        {
-            dcAnimate *myitem = new dcAnimate(myparent);
-            myitem->setDuration(get_element_data(node, "Duration"));
-            process_elements(myitem, node->children);
-        }
         if (NodeCheck(node, "Set"))
         {
             if (preprocessing)
@@ -174,6 +184,12 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 myitem->setOperator(get_element_data(node, "Operator"));
                 myitem->setRange(get_element_data(node, "MinimumValue"), get_element_data(node, "MaximumValue"));
             }
+        }
+        if (NodeCheck(node, "Animation"))
+        {
+            dcAnimate *myitem = new dcAnimate(myparent);
+            myitem->setDuration(get_element_data(node, "Duration"));
+            process_elements(myitem, node->children);
         }
         if (NodeCheck(node, "Variable"))
         {
@@ -651,32 +667,4 @@ process_elements(myitem->PressList, node->children);
     }
 
     return 0;
-}
-
-static xmlNodePtr GetSubList(xmlNodePtr node, const char *opspec, const char *val1, const char *val2)
-{
-    bool myflag = 0;
-    xmlNodePtr subnode;
-    int optype = Simple;
-
-    if (opspec)
-    {
-        if (!strcasecmp(opspec, "eq")) optype = IfEquals;
-        else if (!strcasecmp(opspec, "ne")) optype = IfNotEquals;
-        else if (!strcasecmp(opspec, "gt")) optype = IfGreaterThan;
-        else if (!strcasecmp(opspec, "lt")) optype = IfLessThan;
-        else if (!strcasecmp(opspec, "ge")) optype = IfGreaterOrEquals;
-        else if (!strcasecmp(opspec, "le")) optype = IfLessOrEquals;
-    }
-
-    myflag = CheckConditionLogic(optype, STRING_TYPE, val1, STRING_TYPE, val2);
-
-    for (subnode = node->children; subnode; subnode = subnode->next)
-    {
-        if (myflag && NodeCheck(subnode, "True")) return subnode->children;
-        if (!myflag && NodeCheck(subnode, "False")) return subnode->children;
-    }
-
-    if (myflag) return node->children;  // Assume "True" if no subparent is found
-    else return 0x0;
 }

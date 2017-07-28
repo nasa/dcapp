@@ -1,18 +1,22 @@
+#include <cstring>
 #include "nodes.hh"
+#include "string_utils.hh"
 #include "types.hh"
 #include "condition.hh"
 
 // TODO: put in a centralized header file:
 extern int get_data_type(const char *);
 extern void *getVariablePointer(int, const char *);
-extern bool CheckConditionLogic(int, int, const void *, int, const void *);
+extern int getIntegerVal(int, const void *);
+extern float getFloatVal(int, const void *);
 
 dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inval1, const char *inval2)
 {
     // don't parent this object if inval1 and inval2 are both nullptr
     if (!inval1 && !inval2) return;
 
-    myparent->addChild(this);
+    // this object doesn't require a parent since it can be used during preprocessing
+    if (myparent) myparent->addChild(this);
     TrueList = new dcParent;
     FalseList = new dcParent;
     TrueList->setParent(this);
@@ -53,7 +57,7 @@ dcCondition::~dcCondition()
 
 void dcCondition::draw(void)
 {
-    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+    if (checkCondition())
         TrueList->draw();
     else
         FalseList->draw();
@@ -61,7 +65,7 @@ void dcCondition::draw(void)
 
 void dcCondition::handleKeyPress(char key)
 {
-    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+    if (checkCondition())
         TrueList->handleKeyPress(key);
     else
         FalseList->handleKeyPress(key);
@@ -69,7 +73,7 @@ void dcCondition::handleKeyPress(char key)
 
 void dcCondition::handleKeyRelease(char key)
 {
-    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+    if (checkCondition())
         TrueList->handleKeyRelease(key);
     else
         FalseList->handleKeyRelease(key);
@@ -77,7 +81,7 @@ void dcCondition::handleKeyRelease(char key)
 
 void dcCondition::handleMousePress(float x, float y)
 {
-    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+    if (checkCondition())
         TrueList->handleMousePress(x, y);
     else
         FalseList->handleMousePress(x, y);
@@ -92,7 +96,7 @@ void dcCondition::handleMouseRelease(void)
 
 void dcCondition::handleBezelPress(int key)
 {
-    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+    if (checkCondition())
         TrueList->handleBezelPress(key);
     else
         FalseList->handleBezelPress(key);
@@ -107,7 +111,7 @@ void dcCondition::handleBezelRelease(int key)
 
 void dcCondition::handleEvent(void)
 {
-    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+    if (checkCondition())
         TrueList->handleEvent();
     else
         FalseList->handleEvent();
@@ -115,7 +119,7 @@ void dcCondition::handleEvent(void)
 
 void dcCondition::updateStreams(unsigned passcount)
 {
-    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+    if (checkCondition())
         TrueList->updateStreams(passcount);
     else
         FalseList->updateStreams(passcount);
@@ -123,8 +127,97 @@ void dcCondition::updateStreams(unsigned passcount)
 
 void dcCondition::processAnimation(Animation *anim)
 {
-    if (CheckConditionLogic(opspec, datatype1, val1, datatype2, val2))
+    if (checkCondition())
         TrueList->processAnimation(anim);
     else
         FalseList->processAnimation(anim);
+}
+
+bool dcCondition::checkCondition(void)
+{
+    bool eval = false;
+
+    switch (datatype1)
+    {
+        case FLOAT_TYPE:
+            switch (opspec)
+            {
+                case Simple:
+                    if (getFloatVal(datatype1, val1)) eval = true;
+                    break;
+                case IfEquals:
+                    if (getFloatVal(datatype1, val1) == getFloatVal(datatype2, val2)) eval = true;
+                    break;
+                case IfNotEquals:
+                    if (getFloatVal(datatype1, val1) != getFloatVal(datatype2, val2)) eval = true;
+                    break;
+                case IfGreaterThan:
+                    if (getFloatVal(datatype1, val1) > getFloatVal(datatype2, val2)) eval = true;
+                    break;
+                case IfLessThan:
+                    if (getFloatVal(datatype1, val1) < getFloatVal(datatype2, val2)) eval = true;
+                    break;
+                case IfGreaterOrEquals:
+                    if (getFloatVal(datatype1, val1) >= getFloatVal(datatype2, val2)) eval = true;
+                    break;
+                case IfLessOrEquals:
+                    if (getFloatVal(datatype1, val1) <= getFloatVal(datatype2, val2)) eval = true;
+                    break;
+            }
+            break;
+        case INTEGER_TYPE:
+            switch (opspec)
+            {
+                case Simple:
+                    if (getIntegerVal(datatype1, val1)) eval = true;
+                    break;
+                case IfEquals:
+                    if (getIntegerVal(datatype1, val1) == getIntegerVal(datatype2, val2)) eval = true;
+                    break;
+                case IfNotEquals:
+                    if (getIntegerVal(datatype1, val1) != getIntegerVal(datatype2, val2)) eval = true;
+                    break;
+                case IfGreaterThan:
+                    if (getIntegerVal(datatype1, val1) > getIntegerVal(datatype2, val2)) eval = true;
+                    break;
+                case IfLessThan:
+                    if (getIntegerVal(datatype1, val1) < getIntegerVal(datatype2, val2)) eval = true;
+                    break;
+                case IfGreaterOrEquals:
+                    if (getIntegerVal(datatype1, val1) >= getIntegerVal(datatype2, val2)) eval = true;
+                    break;
+                case IfLessOrEquals:
+                    if (getIntegerVal(datatype1, val1) <= getIntegerVal(datatype2, val2)) eval = true;
+                    break;
+            }
+            break;
+        case STRING_TYPE:
+            switch (opspec)
+            {
+                case Simple:
+                    if (StrToBool((char *)val1, false)) eval = true;
+                    break;
+                case IfEquals:
+                    if (!strcmp((char *)val1, (char *)val2)) eval = true;
+                    break;
+                case IfNotEquals:
+                    if (strcmp((char *)val1, (char *)val2)) eval = true;
+                    break;
+                case IfGreaterThan:
+                    if (getFloatVal(datatype1, val1) > getFloatVal(datatype2, val2)) eval = true;
+                    break;
+                case IfLessThan:
+                    if (getFloatVal(datatype1, val1) < getFloatVal(datatype2, val2)) eval = true;
+                    break;
+                case IfGreaterOrEquals:
+                    if (getFloatVal(datatype1, val1) >= getFloatVal(datatype2, val2)) eval = true;
+                    break;
+                case IfLessOrEquals:
+                    if (getFloatVal(datatype1, val1) <= getFloatVal(datatype2, val2)) eval = true;
+                    break;
+            }
+            break;
+    }
+
+    return eval;
 }

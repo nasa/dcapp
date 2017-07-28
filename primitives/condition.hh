@@ -20,6 +20,7 @@ class dcCondition : public dcObject
         void handleEvent(void);
         void updateStreams(unsigned);
         void processAnimation(Animation *);
+        bool checkCondition(void);
 
         dcParent *TrueList;
         dcParent *FalseList;
