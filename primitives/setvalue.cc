@@ -5,9 +5,6 @@
 #include "varlist.hh"
 #include "setvalue.hh"
 
-// TODO: put in a centralized header file:
-extern int getIntegerVal(int, const void *);
-extern float getFloatVal(int, const void *);
 extern appdata AppData;
 
 enum { Equals, PlusEquals, MinusEquals };
@@ -88,22 +85,22 @@ void dcSetValue::calculateValue(int opspec, int vartype, void *varID, int valtyp
             switch (opspec)
             {
                 case PlusEquals:
-                    *(float *)varID += getFloatVal(valtype, valID);
+                    *(float *)varID += getFloatValue(valtype, valID);
                     break;
                 case MinusEquals:
-                    *(float *)varID -= getFloatVal(valtype, valID);
+                    *(float *)varID -= getFloatValue(valtype, valID);
                     break;
                 default:
-                    *(float *)varID = getFloatVal(valtype, valID);
+                    *(float *)varID = getFloatValue(valtype, valID);
             }
             if (minID)
             {
-                float minval = getFloatVal(mintype, minID);
+                float minval = getFloatValue(mintype, minID);
                 if (*(float *)varID < minval) *(float *)varID = minval;
             }
             if (maxID)
             {
-                float maxval = getFloatVal(maxtype, maxID);
+                float maxval = getFloatValue(maxtype, maxID);
                 if (*(float *)varID > maxval) *(float *)varID = maxval;
             }
             break;
@@ -111,22 +108,22 @@ void dcSetValue::calculateValue(int opspec, int vartype, void *varID, int valtyp
             switch (opspec)
             {
                 case PlusEquals:
-                    *(int *)varID += getIntegerVal(valtype, valID);
+                    *(int *)varID += getIntegerValue(valtype, valID);
                     break;
                 case MinusEquals:
-                    *(int *)varID -= getIntegerVal(valtype, valID);
+                    *(int *)varID -= getIntegerValue(valtype, valID);
                     break;
                 default:
-                    *(int *)varID = getIntegerVal(valtype, valID);
+                    *(int *)varID = getIntegerValue(valtype, valID);
             }
             if (minID)
             {
-                int minval = getIntegerVal(mintype, minID);
+                int minval = getIntegerValue(mintype, minID);
                 if (*(int *)varID < minval) *(int *)varID = minval;
             }
             if (maxID)
             {
-                int maxval = getIntegerVal(maxtype, maxID);
+                int maxval = getIntegerValue(maxtype, maxID);
                 if (*(int *)varID > maxval) *(int *)varID = maxval;
             }
             break;

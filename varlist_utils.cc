@@ -1,13 +1,11 @@
-#include <cstdio>
-#include <cstdlib>
 #include <cstring>
-#include <string>
-#include <map>
-#include "basicutils/msg.hh"
 #include "types.hh"
 #include "string_utils.hh"
 #include "loadUtils.hh"
-#include "varlist_constants.hh"
+
+extern void varlist_append(const char *, const char *, const char *);
+extern void *get_pointer(const char *);
+extern int get_datatype(const char *);
 
 char *create_virtual_variable(const char *typestr, const char *initval)
 {
@@ -70,4 +68,32 @@ int get_data_type(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return get_datatype(valstr);
     return UNDEFINED_TYPE;
+}
+
+float getFloatValue(int type, const void *val)
+{
+    switch (type)
+    {
+        case FLOAT_TYPE:
+            return *(float *)val;
+        case INTEGER_TYPE:
+            return (float)(*(int *)val);
+        case STRING_TYPE:
+            return strtof((char *)val, 0x0);
+    }
+    return 0;
+}
+
+int getIntegerValue(int type, const void *val)
+{
+    switch (type)
+    {
+        case FLOAT_TYPE:
+            return (int)(*(float *)val);
+        case INTEGER_TYPE:
+            return *(int *)val;
+        case STRING_TYPE:
+            return strtol((char *)val, 0x0, 10);
+    }
+    return 0;
 }

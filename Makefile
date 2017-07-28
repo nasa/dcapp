@@ -20,10 +20,10 @@ DCAPP_SOURCES := \
 	loadUtils.cc \
 	logic_stubs.cc \
 	opengl_draw.cc \
-	primitive_new.cc \
 	string_utils.cc \
 	tara_funcs.cc \
 	varlist.cc \
+	varlist_utils.cc \
 	xml_parse.cc \
 	xml_stringsub.cc \
 	xml_utils.cc

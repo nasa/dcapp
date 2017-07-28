@@ -4,10 +4,6 @@
 #include "varlist.hh"
 #include "condition.hh"
 
-// TODO: put in a centralized header file:
-extern int getIntegerVal(int, const void *);
-extern float getFloatVal(int, const void *);
-
 enum { Simple, IfEquals, IfNotEquals, IfGreaterThan, IfLessThan, IfGreaterOrEquals, IfLessOrEquals };
 
 dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inval1, const char *inval2)
@@ -143,25 +139,25 @@ bool dcCondition::checkCondition(void)
             switch (opspec)
             {
                 case Simple:
-                    if (getFloatVal(datatype1, val1)) eval = true;
+                    if (getFloatValue(datatype1, val1)) eval = true;
                     break;
                 case IfEquals:
-                    if (getFloatVal(datatype1, val1) == getFloatVal(datatype2, val2)) eval = true;
+                    if (getFloatValue(datatype1, val1) == getFloatValue(datatype2, val2)) eval = true;
                     break;
                 case IfNotEquals:
-                    if (getFloatVal(datatype1, val1) != getFloatVal(datatype2, val2)) eval = true;
+                    if (getFloatValue(datatype1, val1) != getFloatValue(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterThan:
-                    if (getFloatVal(datatype1, val1) > getFloatVal(datatype2, val2)) eval = true;
+                    if (getFloatValue(datatype1, val1) > getFloatValue(datatype2, val2)) eval = true;
                     break;
                 case IfLessThan:
-                    if (getFloatVal(datatype1, val1) < getFloatVal(datatype2, val2)) eval = true;
+                    if (getFloatValue(datatype1, val1) < getFloatValue(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterOrEquals:
-                    if (getFloatVal(datatype1, val1) >= getFloatVal(datatype2, val2)) eval = true;
+                    if (getFloatValue(datatype1, val1) >= getFloatValue(datatype2, val2)) eval = true;
                     break;
                 case IfLessOrEquals:
-                    if (getFloatVal(datatype1, val1) <= getFloatVal(datatype2, val2)) eval = true;
+                    if (getFloatValue(datatype1, val1) <= getFloatValue(datatype2, val2)) eval = true;
                     break;
             }
             break;
@@ -169,25 +165,25 @@ bool dcCondition::checkCondition(void)
             switch (opspec)
             {
                 case Simple:
-                    if (getIntegerVal(datatype1, val1)) eval = true;
+                    if (getIntegerValue(datatype1, val1)) eval = true;
                     break;
                 case IfEquals:
-                    if (getIntegerVal(datatype1, val1) == getIntegerVal(datatype2, val2)) eval = true;
+                    if (getIntegerValue(datatype1, val1) == getIntegerValue(datatype2, val2)) eval = true;
                     break;
                 case IfNotEquals:
-                    if (getIntegerVal(datatype1, val1) != getIntegerVal(datatype2, val2)) eval = true;
+                    if (getIntegerValue(datatype1, val1) != getIntegerValue(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterThan:
-                    if (getIntegerVal(datatype1, val1) > getIntegerVal(datatype2, val2)) eval = true;
+                    if (getIntegerValue(datatype1, val1) > getIntegerValue(datatype2, val2)) eval = true;
                     break;
                 case IfLessThan:
-                    if (getIntegerVal(datatype1, val1) < getIntegerVal(datatype2, val2)) eval = true;
+                    if (getIntegerValue(datatype1, val1) < getIntegerValue(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterOrEquals:
-                    if (getIntegerVal(datatype1, val1) >= getIntegerVal(datatype2, val2)) eval = true;
+                    if (getIntegerValue(datatype1, val1) >= getIntegerValue(datatype2, val2)) eval = true;
                     break;
                 case IfLessOrEquals:
-                    if (getIntegerVal(datatype1, val1) <= getIntegerVal(datatype2, val2)) eval = true;
+                    if (getIntegerValue(datatype1, val1) <= getIntegerValue(datatype2, val2)) eval = true;
                     break;
             }
             break;
@@ -204,16 +200,16 @@ bool dcCondition::checkCondition(void)
                     if (strcmp((char *)val1, (char *)val2)) eval = true;
                     break;
                 case IfGreaterThan:
-                    if (getFloatVal(datatype1, val1) > getFloatVal(datatype2, val2)) eval = true;
+                    if (getFloatValue(datatype1, val1) > getFloatValue(datatype2, val2)) eval = true;
                     break;
                 case IfLessThan:
-                    if (getFloatVal(datatype1, val1) < getFloatVal(datatype2, val2)) eval = true;
+                    if (getFloatValue(datatype1, val1) < getFloatValue(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterOrEquals:
-                    if (getFloatVal(datatype1, val1) >= getFloatVal(datatype2, val2)) eval = true;
+                    if (getFloatValue(datatype1, val1) >= getFloatValue(datatype2, val2)) eval = true;
                     break;
                 case IfLessOrEquals:
-                    if (getFloatVal(datatype1, val1) <= getFloatVal(datatype2, val2)) eval = true;
+                    if (getFloatValue(datatype1, val1) <= getFloatValue(datatype2, val2)) eval = true;
                     break;
             }
             break;

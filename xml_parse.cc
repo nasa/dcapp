@@ -12,6 +12,7 @@
 #include "ccsds/ccsds_udp_comm.hh"
 #include "can/CAN.hh"
 #include "uei/UEI.hh"
+#include "primitives/primitives.hh"
 #include "varlist.hh"
 #include "nodes.hh"
 #include "opengl_draw.hh"
@@ -453,6 +454,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             key = get_element_data(node, "Key");
             keyascii = get_element_data(node, "KeyASCII");
             bezelkey = get_element_data(node, "BezelKey");
+            const char *type = get_element_data(node, "Type");
             const char *buttonid = get_element_data(node, "Variable");
             const char *buttononval = get_element_data(node, "On");
             const char *buttonoffval = get_element_data(node, "Off");
@@ -479,62 +481,156 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
-new_button(myitem, get_element_data(node, "Type"), switchid, switchonval, switchoffval, indid, indonval, activeid, activetrueval, transitionid, key, keyascii, bezelkey);
+
+            bool toggle = false, momentary = false;
+            const char *offval, *zerostr=strdup("0"), *onestr=strdup("1");
+
+            if (type)
+            {
+                if (!strcmp(type, "Toggle")) toggle = true;
+                if (!strcmp(type, "Momentary")) momentary = true;
+            }
+
+            dcParent *mySublist = myitem;
+            if (activeid)
+            {
+                if (!activetrueval) activetrueval = onestr;
+                dcCondition *mycond = new dcCondition(myitem, "eq", activeid, activetrueval);
+                mySublist = mycond->TrueList;
+            }
+
+            if (!switchonval) switchonval = onestr;
+            if (toggle || momentary)
+            {
+                if (switchoffval) offval = switchoffval;
+                else offval = zerostr;
+            }
+            else offval = 0x0;
+
+            if (toggle)
+            {
+                dcCondition *mycond = new dcCondition(mySublist, "eq", indid, indonval);
+                dcMouseEvent *mymouse = new dcMouseEvent(mycond->TrueList);
+                new dcSetValue(mymouse->PressList, switchid, offval);
+                if (transitionid) new dcSetValue(mymouse->PressList, transitionid, "-1");
+                dcMouseEvent *mymouse1 = new dcMouseEvent(mycond->FalseList);
+                new dcSetValue(mymouse1->PressList, switchid, switchonval);
+                if (transitionid) new dcSetValue(mymouse1->PressList, transitionid, "1");
+                if (key || keyascii)
+                {
+                    dcKeyboardEvent *myevent = new dcKeyboardEvent(mycond->TrueList, key, keyascii);
+                    new dcSetValue(myevent->PressList, switchid, offval);
+                    if (transitionid) new dcSetValue(myevent->PressList, transitionid, "-1");
+                    myevent = new dcKeyboardEvent(mycond->FalseList, key, keyascii);
+                    new dcSetValue(myevent->PressList, switchid, switchonval);
+                    if (transitionid) new dcSetValue(myevent->PressList, transitionid, "1");
+                }
+                if (bezelkey)
+                {
+                    dcBezelEvent *myevent1 = new dcBezelEvent(mycond->TrueList, bezelkey);
+                    new dcSetValue(myevent1->PressList, switchid, offval);
+                    if (transitionid) new dcSetValue(myevent1->PressList, transitionid, "-1");
+                    dcBezelEvent *myevent2 = new dcBezelEvent(mycond->FalseList, bezelkey);
+                    new dcSetValue(myevent2->PressList, switchid, switchonval);
+                    if (transitionid) new dcSetValue(myevent2->PressList, transitionid, "1");
+                }
+            }
+            else
+            {
+                dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
+                new dcSetValue(mymouse->PressList, switchid, switchonval);
+                if (transitionid) new dcSetValue(mymouse->PressList, transitionid, "1");
+                if (momentary)
+                {
+                    new dcSetValue(mymouse->ReleaseList, switchid, offval);
+                    if (transitionid) new dcSetValue(mymouse->ReleaseList, transitionid, "-1");
+                }
+                if (key || keyascii)
+                {
+                    dcKeyboardEvent *myevent = new dcKeyboardEvent(mySublist, key, keyascii);
+                    new dcSetValue(myevent->PressList, switchid, switchonval);
+                    if (transitionid) new dcSetValue(myevent->PressList, transitionid, "1");
+                    if (momentary)
+                    {
+                        new dcSetValue(myevent->ReleaseList, switchid, offval);
+                        if (transitionid) new dcSetValue(myevent->ReleaseList, transitionid, "-1");
+                    }
+                }
+                if (bezelkey)
+                {
+                    dcBezelEvent *myevent1 = new dcBezelEvent(mySublist, bezelkey);
+                    new dcSetValue(myevent1->PressList, switchid, switchonval);
+                    if (transitionid) new dcSetValue(myevent1->PressList, transitionid, "1");
+                    if (momentary)
+                    {
+                        new dcSetValue(myevent1->ReleaseList, switchid, offval);
+                        if (transitionid) new dcSetValue(myevent1->ReleaseList, transitionid, "-1");
+                    }
+                }
+            }
+
+            if (transitionid)
+            {
+                dcCondition *mylist1, *mylist2, *mylist3;
+
+                mylist1 = new dcCondition(myitem, "eq", transitionid, "1");
+                mylist2 = new dcCondition(mylist1->TrueList, "eq", indid, indonval);
+                new dcSetValue(mylist2->TrueList, transitionid, "0");
+                mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid, switchonval);
+                new dcSetValue(mylist3->FalseList, transitionid, "0");
+
+                mylist1 = new dcCondition(myitem, "eq", transitionid, "-1");
+                mylist2 = new dcCondition(mylist1->TrueList, "eq", indid, indonval);
+                new dcSetValue(mylist2->FalseList, transitionid, "0");
+                mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid, switchoffval);
+                new dcSetValue(mylist3->TrueList, transitionid, "0");
+            }
+
             process_elements(myitem, node->children);
             if (transitionid) free(transitionid);
         }
         if (NodeCheck(node, "OnPress"))
         {
-dcParent *mySublist = myparent;
-dcCondition *mycond;
+            dcParent *mySublist = myparent;
+            dcCondition *mycond;
             if (activeid)
             {
                 mycond = new dcCondition(myparent, "eq", activeid, activetrueval);
-mySublist = mycond->TrueList;
+                mySublist = mycond->TrueList;
             }
-dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
-//need to do this for functionality
+            dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
             process_elements(mymouse->PressList, node->children);
             if (key || keyascii)
-{
-dcKeyboardEvent *myitem = new dcKeyboardEvent(mySublist, key, keyascii);
-//                data->object.ke.PressList = data->object.me.PressList;
-//set KeyboardEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
-process_elements(myitem->PressList, node->children);
-}
+            {
+                dcKeyboardEvent *myitem = new dcKeyboardEvent(mySublist, key, keyascii);
+                process_elements(myitem->PressList, node->children);
+            }
             if (bezelkey)
             {
-dcBezelEvent *myitem = new dcBezelEvent(mySublist, bezelkey);
-//                data->object.be.PressList = data->object.me.PressList;
-//set BezelEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
-process_elements(myitem->PressList, node->children);
+                dcBezelEvent *myitem = new dcBezelEvent(mySublist, bezelkey);
+                process_elements(myitem->PressList, node->children);
             }
         }
         if (NodeCheck(node, "OnRelease"))
         {
-dcParent *mySublist = myparent;
-dcCondition *mycond;
+            dcParent *mySublist = myparent;
+            dcCondition *mycond;
             if (activeid)
             {
                 mycond = new dcCondition(myparent, "eq", activeid, activetrueval);
-mySublist = mycond->TrueList;
+                mySublist = mycond->TrueList;
             }
-dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
-//need to do this for functionality
+            dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
             process_elements(mymouse->ReleaseList, node->children);
             if (key || keyascii)
-{
-dcKeyboardEvent *myitem = new dcKeyboardEvent(mySublist, key, keyascii);
-//                data->object.ke.PressList = data->object.me.ReleaseList;
-//set KeyboardEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
-process_elements(myitem->PressList, node->children);
-}
+            {
+                dcKeyboardEvent *myitem = new dcKeyboardEvent(mySublist, key, keyascii);
+                process_elements(myitem->PressList, node->children);
+            }
             if (bezelkey)
             {
-dcBezelEvent *myitem = new dcBezelEvent(mySublist, bezelkey);
-//                data->object.be.PressList = data->object.me.ReleaseList;
-//set BezelEvent PressList to MouseEvent PressList (see the hack above to remove the line below)
-process_elements(myitem->PressList, node->children);
+                dcBezelEvent *myitem = new dcBezelEvent(mySublist, bezelkey);
+                process_elements(myitem->PressList, node->children);
             }
         }
         if (NodeCheck(node, "Active"))

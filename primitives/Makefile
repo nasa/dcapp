@@ -17,8 +17,7 @@ $(LIBDIR)/libprimitives.a: $(OBJECTS)
 
 $(OBJDIR)/%.o: %.cc $(HEADERS)
 	mkdir -p $(OBJDIR)
-#	$(CXX) $(CXXFLAGS) -c $< -o $@  TODO: fix with -config file
-	$(CXX) $(CXXFLAGS) -I/opt/X11/include/freetype2 -I/opt/X11/include -c $< -o $@ 
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(OBJDIR)

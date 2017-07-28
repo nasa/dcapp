@@ -87,7 +87,8 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
 
 void dcPixelStream::updateStreams(unsigned passcount)
 {
-if (!psi) return; // TODO: this can go away if psi is created in constructor
+    if (!psi) return;
+
     if (psi->frame_count != passcount)
     {
         if (psi->psd->reader()) SetNeedsRedraw();
@@ -97,7 +98,8 @@ if (!psi) return; // TODO: this can go away if psi is created in constructor
 
 void dcPixelStream::draw(void)
 {
-if (!psi) return; // TODO: this can go away if psi is created in constructor
+    if (!psi) return;
+
     size_t nbytes, origbytes, newh, pad, padbytes, offset, offsetbytes;
 
     computeGeometry();
