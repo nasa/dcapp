@@ -16,8 +16,6 @@
 
 extern appdata AppData;
 
-dcSetValue *new_setvalue(const char *, const char *, const char *, const char *, const char *);
-
 bool check_dynamic_element(const char *spec)
 {
     if (spec)
@@ -76,7 +74,6 @@ void new_button(dcContainer *myitem, const char *type, const char *switchid, con
 {
     bool toggle = false, momentary = false;
     const char *offval, *zerostr=strdup("0"), *onestr=strdup("1");
-dcSetValue *myset;
 
     if (type)
     {
@@ -84,12 +81,12 @@ dcSetValue *myset;
         if (!strcmp(type, "Momentary")) momentary = true;
     }
 
-dcParent *mySublist = myitem;
+    dcParent *mySublist = myitem;
     if (activevar)
     {
         if (!activeval) activeval = onestr;
-dcCondition *mycond = new dcCondition(myitem, "eq", activevar, activeval);
-mySublist = mycond->TrueList;
+        dcCondition *mycond = new dcCondition(myitem, "eq", activevar, activeval);
+        mySublist = mycond->TrueList;
     }
 
     if (!switchonval) switchonval = onestr;
@@ -102,194 +99,80 @@ mySublist = mycond->TrueList;
 
     if (toggle)
     {
-dcCondition *mycond = new dcCondition(mySublist, "eq", indid, indonval);
-dcMouseEvent *mymouse = new dcMouseEvent(mycond->TrueList);
-myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
-mymouse->PressList->addChild(myset);
-        if (transitionid)
-        {
-myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
-mymouse->PressList->addChild(myset);
-        }
-dcMouseEvent *mymouse1 = new dcMouseEvent(mycond->FalseList);
-myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
-mymouse1->PressList->addChild(myset);
-        if (transitionid)
-        {
-myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "1");
-mymouse1->PressList->addChild(myset);
-        }
+        dcCondition *mycond = new dcCondition(mySublist, "eq", indid, indonval);
+        dcMouseEvent *mymouse = new dcMouseEvent(mycond->TrueList);
+        new dcSetValue(mymouse->PressList, switchid, offval);
+        if (transitionid) new dcSetValue(mymouse->PressList, transitionid, "-1");
+        dcMouseEvent *mymouse1 = new dcMouseEvent(mycond->FalseList);
+        new dcSetValue(mymouse1->PressList, switchid, switchonval);
+        if (transitionid) new dcSetValue(mymouse1->PressList, transitionid, "1");
         if (key || keyascii)
         {
-dcKeyboardEvent *myevent = new dcKeyboardEvent(mycond->TrueList, key, keyascii);
-myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
-myevent->PressList->addChild(myset);
-            if (transitionid)
-            {
-myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
-myevent->PressList->addChild(myset);
-            }
-myevent = new dcKeyboardEvent(mycond->FalseList, key, keyascii);
-myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
-myevent->PressList->addChild(myset);
-            if (transitionid)
-            {
-myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "1");
-myevent->PressList->addChild(myset);
-            }
+            dcKeyboardEvent *myevent = new dcKeyboardEvent(mycond->TrueList, key, keyascii);
+            new dcSetValue(myevent->PressList, switchid, offval);
+            if (transitionid) new dcSetValue(myevent->PressList, transitionid, "-1");
+            myevent = new dcKeyboardEvent(mycond->FalseList, key, keyascii);
+            new dcSetValue(myevent->PressList, switchid, switchonval);
+            if (transitionid) new dcSetValue(myevent->PressList, transitionid, "1");
         }
         if (bezelkey)
         {
-dcBezelEvent *myevent1 = new dcBezelEvent(mycond->TrueList, bezelkey);
-myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
-myevent1->PressList->addChild(myset);
-            if (transitionid)
-            {
-myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
-myevent1->PressList->addChild(myset);
-            }
-dcBezelEvent *myevent2 = new dcBezelEvent(mycond->FalseList, bezelkey);
-myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
-myevent2->PressList->addChild(myset);
-            if (transitionid)
-            {
-myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "1");
-myevent2->PressList->addChild(myset);
-            }
+            dcBezelEvent *myevent1 = new dcBezelEvent(mycond->TrueList, bezelkey);
+            new dcSetValue(myevent1->PressList, switchid, offval);
+            if (transitionid) new dcSetValue(myevent1->PressList, transitionid, "-1");
+            dcBezelEvent *myevent2 = new dcBezelEvent(mycond->FalseList, bezelkey);
+            new dcSetValue(myevent2->PressList, switchid, switchonval);
+            if (transitionid) new dcSetValue(myevent2->PressList, transitionid, "1");
         }
     }
     else
     {
-dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
-myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
-mymouse->PressList->addChild(myset);
-        if (transitionid)
-        {
-myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "1");
-mymouse->PressList->addChild(myset);
-        }
+        dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
+        new dcSetValue(mymouse->PressList, switchid, switchonval);
+        if (transitionid) new dcSetValue(mymouse->PressList, transitionid, "1");
         if (momentary)
         {
-myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
-mymouse->ReleaseList->addChild(myset);
-            if (transitionid)
-            {
-myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
-mymouse->ReleaseList->addChild(myset);
-            }
+            new dcSetValue(mymouse->ReleaseList, switchid, offval);
+            if (transitionid) new dcSetValue(mymouse->ReleaseList, transitionid, "-1");
         }
         if (key || keyascii)
         {
-dcKeyboardEvent *myevent = new dcKeyboardEvent(mySublist, key, keyascii);
-myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
-myevent->PressList->addChild(myset);
-            if (transitionid)
-            {
-myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "1");
-myevent->PressList->addChild(myset);
-            }
+            dcKeyboardEvent *myevent = new dcKeyboardEvent(mySublist, key, keyascii);
+            new dcSetValue(myevent->PressList, switchid, switchonval);
+            if (transitionid) new dcSetValue(myevent->PressList, transitionid, "1");
             if (momentary)
             {
-myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
-myevent->ReleaseList->addChild(myset);
-                if (transitionid)
-                {
-myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
-myevent->ReleaseList->addChild(myset);
-                }
+                new dcSetValue(myevent->ReleaseList, switchid, offval);
+                if (transitionid) new dcSetValue(myevent->ReleaseList, transitionid, "-1");
             }
         }
         if (bezelkey)
         {
-dcBezelEvent *myevent1 = new dcBezelEvent(mySublist, bezelkey);
-myset = new_setvalue(switchid, 0x0, 0x0, 0x0, switchonval);
-myevent1->PressList->addChild(myset);
-            if (transitionid)
-            {
-myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "1");
-myevent1->PressList->addChild(myset);
-            }
+            dcBezelEvent *myevent1 = new dcBezelEvent(mySublist, bezelkey);
+            new dcSetValue(myevent1->PressList, switchid, switchonval);
+            if (transitionid) new dcSetValue(myevent1->PressList, transitionid, "1");
             if (momentary)
             {
-myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
-myevent1->ReleaseList->addChild(myset);
-                if (transitionid)
-                {
-myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "-1");
-myevent1->ReleaseList->addChild(myset);
-                }
+                new dcSetValue(myevent1->ReleaseList, switchid, offval);
+                if (transitionid) new dcSetValue(myevent1->ReleaseList, transitionid, "-1");
             }
         }
     }
 
     if (transitionid)
     {
-dcCondition *mylist1, *mylist2, *mylist3, *mylist4, *mylist5, *mylist6;
+        dcCondition *mylist1, *mylist2, *mylist3;
+
         mylist1 = new dcCondition(myitem, "eq", transitionid, "1");
         mylist2 = new dcCondition(mylist1->TrueList, "eq", indid, indonval);
-        myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
-mylist2->TrueList->addChild(myset);
+        new dcSetValue(mylist2->TrueList, transitionid, "0");
         mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid, switchonval);
-        myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
-mylist3->FalseList->addChild(myset);
+        new dcSetValue(mylist3->FalseList, transitionid, "0");
 
-        mylist4 = new dcCondition(myitem, "eq", transitionid, "-1");
-        mylist5 = new dcCondition(mylist4->TrueList, "eq", indid, indonval);
-        myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
-mylist5->FalseList->addChild(myset);
-        mylist6 = new dcCondition(mylist5->FalseList, "eq", switchid, switchoffval);
-        myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
-mylist6->TrueList->addChild(myset);
+        mylist1 = new dcCondition(myitem, "eq", transitionid, "-1");
+        mylist2 = new dcCondition(mylist1->TrueList, "eq", indid, indonval);
+        new dcSetValue(mylist2->FalseList, transitionid, "0");
+        mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid, switchoffval);
+        new dcSetValue(mylist3->TrueList, transitionid, "0");
     }
-}
-
-struct ModifyValue get_setvalue_data(const char *varspec, const char *opspec, const char *minspec, const char *maxspec, const char *valspec)
-{
-    struct ModifyValue ret;
-
-    ret.optype = Equals;
-    ret.datatype1 = get_data_type(varspec);
-    ret.datatype2 = get_data_type(valspec);
-    ret.mindatatype = 0;
-    ret.maxdatatype = 0;
-    ret.var = 0x0;
-    ret.val = 0x0;
-    ret.min = 0x0;
-    ret.max = 0x0;
-
-    if (ret.datatype1 != UNDEFINED_TYPE)
-    {
-        if (!opspec) ret.optype = Equals;
-        else if (!strcmp(opspec, "+=")) ret.optype = PlusEquals;
-        else if (!strcmp(opspec, "-=")) ret.optype = MinusEquals;
-
-        ret.var = getVariablePointer(ret.datatype1, varspec);
-
-        if (ret.datatype2 == UNDEFINED_TYPE) ret.datatype2 = ret.datatype1;
-        ret.val = getVariablePointer(ret.datatype2, valspec);
-
-        if (minspec)
-        {
-            ret.mindatatype = get_data_type(minspec);
-            if (ret.mindatatype == UNDEFINED_TYPE) ret.mindatatype = ret.datatype1;
-            ret.min = getVariablePointer(ret.mindatatype, minspec);
-        }
-
-        if (maxspec)
-        {
-            ret.maxdatatype = get_data_type(maxspec);
-            if (ret.maxdatatype == UNDEFINED_TYPE) ret.maxdatatype = ret.datatype1;
-            ret.max = getVariablePointer(ret.maxdatatype, maxspec);
-        }
-    }
-    return ret;
-}
-
-dcSetValue *new_setvalue(const char *var, const char *optype, const char *min, const char *max, const char *val)
-{
-    struct ModifyValue myset = get_setvalue_data(var, optype, min, max, val);
-
-    if (myset.datatype1 == UNDEFINED_TYPE) return 0x0;
-
-    return new dcSetValue(myset.optype, myset.datatype1, myset.datatype2, myset.mindatatype, myset.maxdatatype, myset.var, myset.val, myset.min, myset.max);
 }

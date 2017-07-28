@@ -9,8 +9,14 @@ extern bool CheckConditionLogic(int, int, const void *, int, const void *);
 
 dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inval1, const char *inval2)
 {
-// TODO: abort initialization if inval1 and inval2 are both nullptr
-    coreConstructor(myparent);
+    // don't parent this object if inval1 and inval2 are both nullptr
+    if (!inval1 && !inval2) return;
+
+    myparent->addChild(this);
+    TrueList = new dcParent;
+    FalseList = new dcParent;
+    TrueList->setParent(this);
+    FalseList->setParent(this);
 
     opspec = Simple;
     if (inspec)
@@ -43,15 +49,6 @@ dcCondition::~dcCondition()
 {
     delete TrueList;
     delete FalseList;
-}
-
-void dcCondition::coreConstructor(dcParent *myparent)
-{
-    myparent->addChild(this);
-    TrueList = new dcParent;
-    FalseList = new dcParent;
-    TrueList->setParent(this);
-    FalseList->setParent(this);
 }
 
 void dcCondition::draw(void)

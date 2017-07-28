@@ -23,10 +23,7 @@ extern void window_init(bool, int , int, int, int);
 extern int *getIntegerPointer(const char *);
 
 extern void new_button(dcContainer *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern dcSetValue *new_setvalue(const char *, const char *, const char *, const char *, const char *);
-extern struct ModifyValue get_setvalue_data(const char *, const char *, const char *, const char *, const char *);
 extern bool CheckConditionLogic(int, int, const void *, int, const void *);
-extern void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
 extern bool check_dynamic_element(const char *);
 
 extern void DisplayPreInitStub(void *(*)(const char *));
@@ -165,26 +162,18 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             if (preprocessing)
             {
-                struct ModifyValue myset = get_setvalue_data(get_element_data(node, "Variable"),
-                                                             get_element_data(node, "Operator"),
-                                                             get_element_data(node, "MinimumValue"),
-                                                             get_element_data(node, "MaximumValue"),
-                                                             get_node_content(node));
-                if (myset.datatype1 != UNDEFINED_TYPE) UpdateValueLogic(myset.optype,
-                                                                   myset.datatype1, myset.var,
-                                                                   myset.datatype2, myset.val,
-                                                                   myset.mindatatype, myset.min,
-                                                                   myset.maxdatatype, myset.max);
+                dcSetValue *myitem = new dcSetValue(0x0, get_element_data(node, "Variable"), get_node_content(node));
+                myitem->setOperator(get_element_data(node, "Operator"));
+                myitem->setRange(get_element_data(node, "MinimumValue"), get_element_data(node, "MaximumValue"));
+                myitem->updateData();
+                delete myitem;
             }
             else
-{
-dcSetValue *myitem = new_setvalue(   get_element_data(node, "Variable"),
-                                     get_element_data(node, "Operator"),
-                                     get_element_data(node, "MinimumValue"),
-                                     get_element_data(node, "MaximumValue"),
-                                     get_node_content(node));
-myparent->addChild(myitem);
-}
+            {
+                dcSetValue *myitem = new dcSetValue(myparent, get_element_data(node, "Variable"), get_node_content(node));
+                myitem->setOperator(get_element_data(node, "Operator"));
+                myitem->setRange(get_element_data(node, "MinimumValue"), get_element_data(node, "MaximumValue"));
+            }
         }
         if (NodeCheck(node, "Variable"))
         {

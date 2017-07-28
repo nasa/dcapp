@@ -10,7 +10,6 @@ class dcCondition : public dcObject
     public:
         dcCondition(dcParent *, const char *, const char *, const char *);
         virtual ~dcCondition();
-        void coreConstructor(dcParent *);
         void draw(void);
         void handleKeyPress(char);
         void handleKeyRelease(char);
