@@ -17,7 +17,6 @@
 extern appdata AppData;
 
 dcSetValue *new_setvalue(const char *, const char *, const char *, const char *, const char *);
-void new_isequal(dcCondition **, const char *, const char *, const char *);
 
 bool check_dynamic_element(const char *spec)
 {
@@ -49,7 +48,7 @@ char *getStringPointer(const char *valstr)
     else return dcLoadConstant(valstr);
 }
 
-static void *getVariablePointer(int datatype, const char *valstr)
+void *getVariablePointer(int datatype, const char *valstr)
 {
     switch (datatype)
     {
@@ -89,9 +88,7 @@ dcParent *mySublist = myitem;
     if (activevar)
     {
         if (!activeval) activeval = onestr;
-dcCondition *mycond;
-new_isequal(&mycond, "eq", activevar, activeval);
-myitem->addChild(mycond);
+dcCondition *mycond = new dcCondition(myitem, "eq", activevar, activeval);
 mySublist = mycond->TrueList;
     }
 
@@ -105,9 +102,7 @@ mySublist = mycond->TrueList;
 
     if (toggle)
     {
-dcCondition *mycond;
-        new_isequal(&mycond, "eq", indid, indonval);
-mySublist->addChild(mycond);
+dcCondition *mycond = new dcCondition(mySublist, "eq", indid, indonval);
 dcMouseEvent *mymouse = new dcMouseEvent(mycond->TrueList);
 myset = new_setvalue(switchid, 0x0, 0x0, 0x0, offval);
 mymouse->PressList->addChild(myset);
@@ -230,25 +225,19 @@ myevent1->ReleaseList->addChild(myset);
     if (transitionid)
     {
 dcCondition *mylist1, *mylist2, *mylist3, *mylist4, *mylist5, *mylist6;
-        new_isequal(&mylist1, "eq", transitionid, "1");
-myitem->addChild(mylist1);
-        new_isequal(&mylist2, "eq", indid, indonval);
-mylist1->TrueList->addChild(mylist2);
+        mylist1 = new dcCondition(myitem, "eq", transitionid, "1");
+        mylist2 = new dcCondition(mylist1->TrueList, "eq", indid, indonval);
         myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
 mylist2->TrueList->addChild(myset);
-        new_isequal(&mylist3, "eq", switchid, switchonval);
-mylist2->FalseList->addChild(mylist3);
+        mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid, switchonval);
         myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
 mylist3->FalseList->addChild(myset);
 
-        new_isequal(&mylist4, "eq", transitionid, "-1");
-myitem->addChild(mylist4);
-        new_isequal(&mylist5, "eq", indid, indonval);
-mylist4->TrueList->addChild(mylist5);
+        mylist4 = new dcCondition(myitem, "eq", transitionid, "-1");
+        mylist5 = new dcCondition(mylist4->TrueList, "eq", indid, indonval);
         myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
 mylist5->FalseList->addChild(myset);
-        new_isequal(&mylist6, "eq", switchid, switchoffval);
-mylist5->FalseList->addChild(mylist6);
+        mylist6 = new dcCondition(mylist5->FalseList, "eq", switchid, switchoffval);
         myset = new_setvalue(transitionid, 0x0, 0x0, 0x0, "0");
 mylist6->TrueList->addChild(myset);
     }
@@ -303,43 +292,4 @@ dcSetValue *new_setvalue(const char *var, const char *optype, const char *min, c
     if (myset.datatype1 == UNDEFINED_TYPE) return 0x0;
 
     return new dcSetValue(myset.optype, myset.datatype1, myset.datatype2, myset.mindatatype, myset.maxdatatype, myset.var, myset.val, myset.min, myset.max);
-}
-
-void new_isequal(dcCondition **myitem, const char *opspec, const char *val1, const char *val2)
-{
-    const char *onestr = strdup("1");
-
-    if (!val1 && !val2)
-    {
-        *myitem = 0x0;
-        return;
-    }
-
-    int myopspec, datatype1, datatype2;
-
-    myopspec = Simple;
-    if (opspec)
-    {
-        if (!strcasecmp(opspec, "eq")) myopspec = IfEquals;
-        else if (!strcasecmp(opspec, "ne")) myopspec = IfNotEquals;
-        else if (!strcasecmp(opspec, "gt")) myopspec = IfGreaterThan;
-        else if (!strcasecmp(opspec, "lt")) myopspec = IfLessThan;
-        else if (!strcasecmp(opspec, "ge")) myopspec = IfGreaterOrEquals;
-        else if (!strcasecmp(opspec, "le")) myopspec = IfLessOrEquals;
-    }
-
-    datatype1 = get_data_type(val1);
-    datatype2 = get_data_type(val2);
-    if (datatype1 == UNDEFINED_TYPE && datatype2 == UNDEFINED_TYPE)
-    {
-        datatype1 = STRING_TYPE;
-        datatype2 = STRING_TYPE;
-    }
-    else if (datatype1 == UNDEFINED_TYPE) datatype1 = datatype2;
-    else if (datatype2 == UNDEFINED_TYPE) datatype2 = datatype1;
-
-    if (!val1) val1 = onestr;
-    if (!val2) val2 = onestr;
-
-    *myitem = new dcCondition(myopspec, datatype1, getVariablePointer(datatype1, val1), datatype2, getVariablePointer(datatype2, val2));
 }

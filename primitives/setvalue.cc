@@ -8,6 +8,7 @@ extern std::list<dcObject *> events;
 
 dcSetValue::dcSetValue(int opspec, int dtype1, int dtype2, int mindtype, int maxdtype, void *varspec, void *valspec, void *minspec, void *maxspec)
 {
+//    myparent->addChild(this);
     optype = opspec;
     datatype1 = dtype1;
     datatype2 = dtype2;

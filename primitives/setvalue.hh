@@ -3,6 +3,7 @@
 
 #include "animation.hh"
 #include "object.hh"
+#include "parent.hh"
 
 class dcSetValue : public dcObject
 {

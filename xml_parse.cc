@@ -22,7 +22,6 @@
 extern void window_init(bool, int , int, int, int);
 extern int *getIntegerPointer(const char *);
 
-extern void new_isequal(dcCondition **, const char *, const char *, const char *);
 extern void new_button(dcContainer *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 extern dcSetValue *new_setvalue(const char *, const char *, const char *, const char *, const char *);
 extern struct ModifyValue get_setvalue_data(const char *, const char *, const char *, const char *, const char *);
@@ -137,9 +136,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             {
                 bool subparent_found = false;
 
-dcCondition *myitem;
-                new_isequal(&myitem, myoperator, val1, val2);
-myparent->addChild(myitem);
+                dcCondition *myitem = new dcCondition(myparent, myoperator, val1, val2);
 
                 for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
                 {
@@ -488,8 +485,7 @@ dcParent *mySublist = myparent;
 dcCondition *mycond;
             if (activeid)
             {
-                new_isequal(&mycond, "eq", activeid, activetrueval);
-myparent->addChild(mycond);
+                mycond = new dcCondition(myparent, "eq", activeid, activetrueval);
 mySublist = mycond->TrueList;
             }
 dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
@@ -516,8 +512,7 @@ dcParent *mySublist = myparent;
 dcCondition *mycond;
             if (activeid)
             {
-                new_isequal(&mycond, "eq", activeid, activetrueval);
-myparent->addChild(mycond);
+                mycond = new dcCondition(myparent, "eq", activeid, activetrueval);
 mySublist = mycond->TrueList;
             }
 dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
@@ -540,34 +535,25 @@ process_elements(myitem->PressList, node->children);
         }
         if (NodeCheck(node, "Active"))
         {
-dcCondition *myitem;
-            new_isequal(&myitem, "eq", activeid, activetrueval);
-myparent->addChild(myitem);
+            dcCondition *myitem = new dcCondition(myparent, "eq", activeid, activetrueval);
             process_elements(myitem->TrueList, node->children);
         }
         if (NodeCheck(node, "Inactive"))
         {
-dcCondition *myitem;
-            new_isequal(&myitem, "eq", activeid, activetrueval);
-myparent->addChild(myitem);
+            dcCondition *myitem = new dcCondition(myparent, "eq", activeid, activetrueval);
             process_elements(myitem->FalseList, node->children);
         }
         if (NodeCheck(node, "On"))
         {
             if (transitionid)
             {
-dcCondition *myitem, *mychild;
-                new_isequal(&myitem, "eq", transitionid, "0");
-myparent->addChild(myitem);
-                new_isequal(&mychild, "eq", indid, indonval);
-myitem->TrueList->addChild(mychild);
+                dcCondition *myitem = new dcCondition(myparent, "eq", transitionid, "0");
+                dcCondition *mychild = new dcCondition(myitem->TrueList, "eq", indid, indonval);
                 process_elements(mychild->TrueList, node->children);
             }
             else
             {
-dcCondition *myitem;
-                new_isequal(&myitem, "eq", indid, indonval);
-myparent->addChild(myitem);
+                dcCondition *myitem = new dcCondition(myparent, "eq", indid, indonval);
                 process_elements(myitem->TrueList, node->children);
             }
         }
@@ -575,12 +561,10 @@ myparent->addChild(myitem);
         {
             if (transitionid)
             {
-dcCondition *myitem;
-                new_isequal(&myitem, "eq", transitionid, "1");
-myparent->addChild(myitem);
+                dcCondition *myitem;
+                myitem = new dcCondition(myparent, "eq", transitionid, "1");
                 process_elements(myitem->TrueList, node->children);
-                new_isequal(&myitem, "eq", transitionid, "-1");
-myparent->addChild(myitem);
+                myitem = new dcCondition(myparent, "eq", transitionid, "-1");
                 process_elements(myitem->TrueList, node->children);
             }
         }
@@ -588,18 +572,13 @@ myparent->addChild(myitem);
         {
             if (transitionid)
             {
-dcCondition *myitem, *mychild;
-                new_isequal(&myitem, "eq", transitionid, "0");
-myparent->addChild(myitem);
-                new_isequal(&mychild, "eq", indid, indonval);
-myitem->TrueList->addChild(mychild);
+                dcCondition *myitem = new dcCondition(myparent, "eq", transitionid, "0");
+                dcCondition *mychild = new dcCondition(myitem->TrueList, "eq", indid, indonval);
                 process_elements(mychild->FalseList, node->children);
             }
             else
             {
-dcCondition *myitem;
-                new_isequal(&myitem, "eq", indid, indonval);
-myparent->addChild(myitem);
+                dcCondition *myitem = new dcCondition(myparent, "eq", indid, indonval);
                 process_elements(myitem->FalseList, node->children);
             }
         }

@@ -1,25 +1,57 @@
+#include "nodes.hh"
+#include "types.hh"
 #include "condition.hh"
 
 // TODO: put in a centralized header file:
+extern int get_data_type(const char *);
+extern void *getVariablePointer(int, const char *);
 extern bool CheckConditionLogic(int, int, const void *, int, const void *);
 
-dcCondition::dcCondition(int spec, int dtype1, void *v1, int dtype2, void *v2)
+dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inval1, const char *inval2)
 {
-    opspec = spec;
-    datatype1 = dtype1;
-    datatype2 = dtype2;
-    val1 = v1;
-    val2 = v2;
-    TrueList = new dcParent;
-    FalseList = new dcParent;
-    TrueList->setParent(this);
-    FalseList->setParent(this);
+// TODO: abort initialization if inval1 and inval2 are both nullptr
+    coreConstructor(myparent);
+
+    opspec = Simple;
+    if (inspec)
+    {
+        if (!strcasecmp(inspec, "eq")) opspec = IfEquals;
+        else if (!strcasecmp(inspec, "ne")) opspec = IfNotEquals;
+        else if (!strcasecmp(inspec, "gt")) opspec = IfGreaterThan;
+        else if (!strcasecmp(inspec, "lt")) opspec = IfLessThan;
+        else if (!strcasecmp(inspec, "ge")) opspec = IfGreaterOrEquals;
+        else if (!strcasecmp(inspec, "le")) opspec = IfLessOrEquals;
+    }
+
+    datatype1 = get_data_type(inval1);
+    datatype2 = get_data_type(inval2);
+    if (datatype1 == UNDEFINED_TYPE && datatype2 == UNDEFINED_TYPE)
+    {
+        datatype1 = STRING_TYPE;
+        datatype2 = STRING_TYPE;
+    }
+    else if (datatype1 == UNDEFINED_TYPE) datatype1 = datatype2;
+    else if (datatype2 == UNDEFINED_TYPE) datatype2 = datatype1;
+
+    if (inval1) val1 = getVariablePointer(datatype1, inval1);
+    else val1 = getVariablePointer(datatype1, "1");
+    if (inval2) val2 = getVariablePointer(datatype2, inval2);
+    else val2 = getVariablePointer(datatype2, "1");
 }
 
 dcCondition::~dcCondition()
 {
     delete TrueList;
     delete FalseList;
+}
+
+void dcCondition::coreConstructor(dcParent *myparent)
+{
+    myparent->addChild(this);
+    TrueList = new dcParent;
+    FalseList = new dcParent;
+    TrueList->setParent(this);
+    FalseList->setParent(this);
 }
 
 void dcCondition::draw(void)
