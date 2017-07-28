@@ -1,7 +1,6 @@
 #include "loadUtils.hh"
+#include "varlist.hh"
 #include "window.hh"
-
-extern int *getIntegerPointer(const char *); // TODO: put in header file
 
 dcWindow::dcWindow() : currentPanel(0x0)
 {

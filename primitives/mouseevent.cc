@@ -1,7 +1,9 @@
 #include <list>
+#include "nodes.hh"
 #include "mouseevent.hh"
 
-extern std::list<dcObject *> mouseheld;
+extern appdata AppData;
+
 extern int mousebouncemode;
 
 dcMouseEvent::dcMouseEvent(dcParent *myparent) : dcGeometric(myparent), selected(false)
@@ -25,7 +27,7 @@ void dcMouseEvent::handleMousePress(float inx, float iny)
     {
         this->selected = true;
         this->PressList->handleEvent();
-        mouseheld.push_back(this->PressList);
+        AppData.mouseheld.push_back(this->PressList);
         mousebouncemode = 1; // TODO: these two lines (at least) and declarations above should be in a method
     }
     else this->selected = false; // is this really necessary?
@@ -37,6 +39,6 @@ void dcMouseEvent::handleMouseRelease(void)
     {
         this->selected = false;
         this->ReleaseList->handleEvent();
-        mouseheld.clear();
+        AppData.mouseheld.clear();
     }
 }

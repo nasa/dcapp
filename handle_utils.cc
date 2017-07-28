@@ -1,27 +1,23 @@
 #include <cstdlib>
-#include <cstring>
 #include <list>
-#include "primitives/primitives.hh"
 #include "nodes.hh"
-#include "string_utils.hh"
-#include "animation.hh"
+#include "types.hh"
+#include "primitives/primitives.hh"
 
 extern void UpdateDisplay(void);
 
 extern appdata AppData;
 
-std::list<dcObject *> events;
-
 void ProcessEvents(void)
 {
-    if (!events.empty())
+    if (!AppData.events.empty())
     {
         std::list<dcObject *>::iterator event;
-        for (event = events.begin(); event != events.end(); event++)
+        for (event = AppData.events.begin(); event != AppData.events.end(); event++)
         {
             (*event)->updateData();
         }
-        events.clear();
+        AppData.events.clear();
         UpdateDisplay();
     }
 }

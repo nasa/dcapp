@@ -2,10 +2,7 @@
 #include "string_utils.hh"
 #include "animate.hh"
 
-// TODO: put in a centralized header file:
-extern std::list<dcObject *> events;
 extern appdata AppData;
-
 
 dcAnimate::dcAnimate(dcParent *myparent) : duration(1)
 {
@@ -19,7 +16,7 @@ void dcAnimate::setDuration(const char *inval)
 
 void dcAnimate::handleEvent(void)
 {
-    events.push_back(this);
+    AppData.events.push_back(this);
 }
 
 void dcAnimate::updateData(void)

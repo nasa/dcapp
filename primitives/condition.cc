@@ -1,14 +1,14 @@
 #include <cstring>
-#include "nodes.hh"
 #include "string_utils.hh"
 #include "types.hh"
+#include "varlist.hh"
 #include "condition.hh"
 
 // TODO: put in a centralized header file:
-extern int get_data_type(const char *);
-extern void *getVariablePointer(int, const char *);
 extern int getIntegerVal(int, const void *);
 extern float getFloatVal(int, const void *);
+
+enum { Simple, IfEquals, IfNotEquals, IfGreaterThan, IfLessThan, IfGreaterOrEquals, IfLessOrEquals };
 
 dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inval1, const char *inval2)
 {

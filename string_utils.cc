@@ -5,9 +5,7 @@
 #include "alignment.hh"
 #include "kolor.hh"
 #include "loadUtils.hh"
-
-extern bool check_dynamic_element(const char *);
-extern void *get_pointer(const char *);
+#include "varlist.hh"
 
 float StrToFloat(const char *instr, float default_value)
 {

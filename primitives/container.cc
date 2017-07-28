@@ -1,8 +1,7 @@
 #include <cmath>
 #include "opengl_draw.hh"
+#include "varlist.hh"
 #include "container.hh"
-
-extern float *getFloatPointer(const char *); // TODO: put in header file
 
 dcContainer::dcContainer(dcParent *myparent) : dcGeometric(myparent)
 {

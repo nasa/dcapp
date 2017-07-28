@@ -1,8 +1,7 @@
 #ifndef _PIXELSTREAM_PRIMITIVE_HH_
 #define _PIXELSTREAM_PRIMITIVE_HH_
 
-#include "PixelStream/PixelStreamData.hh"
-#include "nodes.hh"
+#include "psi.hh"
 #include "geometric.hh"
 #include "parent.hh"
 

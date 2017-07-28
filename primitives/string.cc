@@ -2,11 +2,8 @@
 #include "string_utils.hh"
 #include "loadUtils.hh"
 #include "alignment.hh"
+#include "varlist.hh"
 #include "string.hh"
-
-extern float *getFloatPointer(const char *); // TODO: put in header file
-extern char *getStringPointer(const char *); // TODO: put in header file
-extern int get_data_type(const char *); // TODO: put in header file
 
 dcString::dcString(dcParent *myparent) : dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone)
 {

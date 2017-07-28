@@ -1,7 +1,6 @@
 #include "opengl_draw.hh"
+#include "varlist.hh"
 #include "vertex.hh"
-
-extern float *getFloatPointer(const char *); // TODO: put in header file
 
 dcVertex::dcVertex(dcParent *myparent) : x(0x0), y(0x0)
 {

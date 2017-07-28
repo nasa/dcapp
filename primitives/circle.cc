@@ -1,9 +1,8 @@
 #include "opengl_draw.hh"
 #include "string_utils.hh"
 #include "loadUtils.hh"
+#include "varlist.hh"
 #include "circle.hh"
-
-extern float *getFloatPointer(const char *); // TODO: put in header file
 
 dcCircle::dcCircle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), segments(80)
 {

@@ -3,8 +3,6 @@
 #include "loadUtils.hh"
 #include "rectangle.hh"
 
-extern float *getFloatPointer(const char *); // TODO: put in header file
-
 dcRectangle::dcRectangle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false)
 {
     FillColor.R = dcLoadConstant(0.5f);

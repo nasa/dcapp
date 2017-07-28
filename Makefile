@@ -14,10 +14,8 @@ DCAPP_SOURCES := \
 	comm.cc \
 	geometry.cc \
 	handle_bezel.cc \
-	handle_draw.cc \
 	handle_keyboard.cc \
 	handle_mouse.cc \
-	handle_streams.cc \
 	handle_utils.cc \
 	loadUtils.cc \
 	logic_stubs.cc \
@@ -25,7 +23,6 @@ DCAPP_SOURCES := \
 	primitive_new.cc \
 	string_utils.cc \
 	tara_funcs.cc \
-	update_display.cc \
 	varlist.cc \
 	xml_parse.cc \
 	xml_stringsub.cc \

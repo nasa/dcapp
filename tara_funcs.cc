@@ -1,13 +1,14 @@
 #include "TaraDraw/TaraDraw.hh"
+#include "nodes.hh"
+
+extern appdata AppData;
 
 extern void Idle(void);
-extern void Draw(void);
 extern void Terminate(int);
 
 extern void HandleMousePress(float, float);
 extern void HandleMouseRelease(void);
 extern void HandleKeyboard(unsigned char);
-extern void UpdateStreams(void);
 extern void reshape(int, int);
 
 static void app_run(void);
@@ -16,6 +17,7 @@ void mouse_click(ButtonEvent);
 void key_click(KeyboardEvent);
 void win_config(ConfigureEvent);
 void win_close(WinCloseEvent);
+void SwapBuffers(void);
 
 static struct
 {
@@ -93,10 +95,17 @@ void win_close(WinCloseEvent wcl)
 
 static void app_run(void)
 {
+    static unsigned passnum = 0;
     Idle();
     tdProcessEvents(mouse_click, key_click, win_config, win_close);
-    UpdateStreams();
-    if (tdNeedsRedraw(mywin.id)) Draw();
+    passnum++;
+    AppData.toplevel->updateStreams(passnum);
+    if (tdNeedsRedraw(mywin.id))
+    {
+        AppData.toplevel->draw();
+        SwapBuffers();
+        AppData.last_update->restart();
+    }
 }
 
 
@@ -127,4 +136,12 @@ void SetNeedsRedraw(void)
 void SwapBuffers(void)
 {
     tdGLSwapBuffers();
+}
+
+
+void UpdateDisplay(void)
+{
+    AppData.toplevel->setCurrentPanel();
+    AppData.DisplayLogic();
+    SetNeedsRedraw();
 }

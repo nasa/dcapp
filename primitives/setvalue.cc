@@ -1,16 +1,16 @@
 #include <cstring>
+#include <list>
 #include "nodes.hh"
 #include "types.hh"
+#include "varlist.hh"
 #include "setvalue.hh"
 
 // TODO: put in a centralized header file:
-#include <list>
-extern std::list<dcObject *> events;
-extern void *getVariablePointer(int, const char *);
-extern int get_data_type(const char *);
 extern int getIntegerVal(int, const void *);
 extern float getFloatVal(int, const void *);
 extern appdata AppData;
+
+enum { Equals, PlusEquals, MinusEquals };
 
 dcSetValue::dcSetValue(dcParent *myparent, const char *invar, const char *inval)
 :
@@ -62,7 +62,7 @@ void dcSetValue::draw(void)
 
 void dcSetValue::handleEvent(void)
 {
-    events.push_back(this);
+    AppData.events.push_back(this);
 }
 
 void dcSetValue::updateData(void)

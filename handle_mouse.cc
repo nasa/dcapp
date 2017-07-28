@@ -8,8 +8,6 @@ extern void UpdateDisplay(void);
 
 extern appdata AppData;
 
-std::list<dcObject *> mouseheld;
-
 int mousebouncemode = 0;
 
 void HandleMousePress(float xpct, float ypct)
@@ -26,7 +24,7 @@ void HandleMouseRelease(void)
 
 void CheckMouseBounce(void)
 {
-    if (mouseheld.empty()) return;
+    if (AppData.mouseheld.empty()) return;
 
     static Timer *mousetimer = new Timer;
 
@@ -41,7 +39,7 @@ void CheckMouseBounce(void)
         {
             mousetimer->restart();
             std::list<dcObject *>::iterator mh;
-            for (mh = mouseheld.begin(); mh != mouseheld.end(); mh++)
+            for (mh = AppData.mouseheld.begin(); mh != AppData.mouseheld.end(); mh++)
             {
                 (*mh)->updateData();
             }
@@ -55,7 +53,7 @@ void CheckMouseBounce(void)
         {
             mousetimer->restart();
             std::list<dcObject *>::iterator mh;
-            for (mh = mouseheld.begin(); mh != mouseheld.end(); mh++)
+            for (mh = AppData.mouseheld.begin(); mh != AppData.mouseheld.end(); mh++)
             {
                 (*mh)->updateData();
             }
