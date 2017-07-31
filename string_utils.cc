@@ -2,7 +2,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <strings.h>
-#include "alignment.hh"
 #include "kolor.hh"
 #include "loadUtils.hh"
 #include "varlist.hh"
@@ -66,22 +65,4 @@ Kolor StrToColor(const char *instr, float r, float g, float b, float a)
     }
 
     return retval;
-}
-
-HAlignment StrToHAlign(const char *instr, HAlignment default_value)
-{
-    if (!instr) return default_value;
-    else if (!strcasecmp(instr, "Left")) return AlignLeft;
-    else if (!strcasecmp(instr, "Center")) return AlignCenter;
-    else if (!strcasecmp(instr, "Right")) return AlignRight;
-    else return default_value;
-}
-
-VAlignment StrToVAlign(const char *instr, VAlignment default_value)
-{
-    if (!instr) return default_value;
-    else if (!strcasecmp(instr, "Bottom")) return AlignBottom;
-    else if (!strcasecmp(instr, "Middle")) return AlignMiddle;
-    else if (!strcasecmp(instr, "Top")) return AlignTop;
-    else return default_value;
 }

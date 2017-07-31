@@ -12,7 +12,6 @@ DCAPP_SOURCES := \
 	animation.cc \
 	app_main.cc \
 	comm.cc \
-	geometry.cc \
 	handle_bezel.cc \
 	handle_keyboard.cc \
 	handle_mouse.cc \
