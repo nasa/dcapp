@@ -1,4 +1,3 @@
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -13,7 +12,6 @@ typedef struct
 } varInfo;
 
 std::map<std::string, varInfo> varMap;
-
 
 void varlist_append(const char *paramname, const char *typestr, const char *initval)
 {
@@ -64,14 +62,14 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
     varMap[std::string(mylabel)] = vinfo;
 }
 
-char *create_virtual_variable(const char *typestr, const char *initval)
+void varlist_term(void)
 {
-    static unsigned id_count = 0;
-    char *vname;
-    asprintf(&vname, "@dcappVirtualVariable%u", id_count);
-    varlist_append(vname, typestr, initval);
-    id_count++;
-    return vname;
+    static std::map<std::string, varInfo>::iterator myitem;
+    for (myitem = varMap.begin(); myitem != varMap.end(); myitem++)
+    {
+        if (myitem->second.type) free(myitem->second.value);
+    }
+    varMap.clear();
 }
 
 void *get_pointer(const char *label)
@@ -106,14 +104,4 @@ int get_datatype(const char *label)
         error_msg("Invalid parameter label: " << label);
         return VARLIST_UNKNOWN_TYPE;
     }
-}
-
-void varlist_term(void)
-{
-    static std::map<std::string, varInfo>::iterator myitem;
-    for (myitem = varMap.begin(); myitem != varMap.end(); myitem++)
-    {
-        if (myitem->second.type) free(myitem->second.value);
-    }
-    varMap.clear();
 }

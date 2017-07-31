@@ -12,23 +12,17 @@ DCAPP_SOURCES := \
 	animation.cc \
 	app_main.cc \
 	comm.cc \
-	geometry.cc \
 	handle_bezel.cc \
-	handle_draw.cc \
 	handle_keyboard.cc \
 	handle_mouse.cc \
-	handle_streams.cc \
 	handle_utils.cc \
 	loadUtils.cc \
 	logic_stubs.cc \
 	opengl_draw.cc \
-	primitive_new.cc \
-	render_ADI.cc \
-	render_string.cc \
 	string_utils.cc \
 	tara_funcs.cc \
-	update_display.cc \
 	varlist.cc \
+	varlist_utils.cc \
 	xml_parse.cc \
 	xml_stringsub.cc \
 	xml_utils.cc
@@ -39,6 +33,7 @@ GENHEADER_SOURCES := \
 
 SUBPACKAGE_CONFIGS := \
     osenv/bin/osenv-config \
+    primitives/bin/primitives-config \
     3rdParty/can/bin/CanPlugin-config \
     3rdParty/ccsds/bin/CcsdsPlugin-config \
     3rdParty/edge/bin/EdgePlugin-config \
@@ -97,6 +92,7 @@ prebuild:
 	${MAKE} -C packages
 	${MAKE} -C 3rdParty
 	${MAKE} -C osenv
+	${MAKE} -C primitives
 
 postbuild:
 	${MAKE} -C samples
@@ -105,6 +101,7 @@ clean:
 	${MAKE} -C packages clean
 	${MAKE} -C 3rdParty clean
 	${MAKE} -C osenv clean
+	${MAKE} -C primitives clean
 	${MAKE} -C samples clean
 	rm -rf $(OBJDIR)
 	rm -rf $(BINDIR)

@@ -1,6 +1,8 @@
 #ifndef _ANIMATION_HH_
 #define _ANIMATION_HH_
 
+#include <list>
+
 class AnimationItem
 {
     public:

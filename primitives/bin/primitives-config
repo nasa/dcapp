@@ -1,0 +1,97 @@
+#!/bin/bash
+
+usage()
+{
+    cat <<EOF
+Usage: $0 [OPTION]...
+Get package compilation and linking information.
+
+Options:
+    --version          software version
+    --prefix           install location
+    --exepath          path(s) to add to the PATH environment variable
+    --cflags           required compilation flags
+    --libs             required linking flags
+    --compdepends      makefile compilation dependencies
+    --linkdepends      makefile linking dependencies
+    --cflags_internal  required compilation flags for building the package
+    --s_overrides      Trick S_overrides file
+    --osspec           default directory name extension
+    --objdir           default directory name for compiled objects
+    --libdir           default directory name for compiled libraries
+    --bindir           default directory name for compiled binaries
+EOF
+    exit $1
+}
+
+if test $# -eq 0 ; then
+    usage 1 1>&2
+fi
+
+CDPATH=""
+
+mydir="$(cd "$(dirname "$0")/.."; pwd)"
+parentdir="$(cd "$(dirname "$0")/../.."; pwd)"
+ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
+machtype=`uname -m`
+if test "$ostype" = "darwin" ; then
+    osspec="MacOS"
+else
+    osspec="${ostype}_${machtype}"
+fi
+objdir="obj_${osspec}"
+libdir="lib_${osspec}"
+bindir="bin_${osspec}"
+
+while test $# -gt 0 ; do
+    case $1 in
+        --prefix)
+            echo $mydir
+            ;;
+        --osspec)
+            echo $osspec
+            ;;
+        --objdir)
+            echo $objdir
+            ;;
+        --libdir)
+            echo $libdir
+            ;;
+        --bindir)
+            echo $bindir
+            ;;
+##### These are the only lines that should differ from package to package. #####
+        --version)
+            echo "1.0.0 alpha"
+            ;;
+        --exepath)
+            ;;
+        --cflags)
+            echo "-I${parentdir}"
+            ;;
+        --libs)
+            echo "-L${mydir}/${libdir} -lprimitives"
+            ;;
+        --compdepends)
+            cdlist=""
+            for cditem in "${mydir}"/*.hh
+            do
+                cdlist="${cdlist} ${cditem}"
+            done
+            echo "${cdlist}"
+            ;;
+        --linkdepends)
+            echo "${mydir}/${libdir}/libprimitives.a"
+            ;;
+        --cflags_internal)
+            echo "-I${parentdir} -I${parentdir}/packages `${parentdir}/packages/fontlib/bin/fontlib-config --cflags`"
+            ;;
+        --s_overrides)
+            ;;
+################################################################################
+        *)
+            usage 1 1>&2
+            ;;
+    esac
+    shift
+done

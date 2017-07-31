@@ -12,46 +12,24 @@
 #include "ccsds/ccsds_udp_comm.hh"
 #include "can/CAN.hh"
 #include "uei/UEI.hh"
+#include "primitives/primitives.hh"
 #include "varlist.hh"
 #include "nodes.hh"
+#include "opengl_draw.hh"
 #include "string_utils.hh"
 #include "xml_utils.hh"
 #include "xml_stringsub.hh"
 
-extern void new_window(bool, int, int, int, int, const char *);
-extern struct node *new_panel(const char *, const char *, const char *, const char *);
-extern struct node *new_container(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_isequal(struct node *, struct node **, const char *, const char *, const char *);
-extern struct node *new_vertex(struct node *, struct node **, const char *, const char *);
-extern struct node *new_line(struct node *, struct node **, const char *, const char *);
-extern struct node *new_polygon(struct node *, struct node **, const char *, const char *, const char *);
-extern struct node *new_rectangle(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_circle(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_string(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *,
-                               const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_image(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_pixel_stream(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_button(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
-                               const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_adi(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *,
-                                 const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_mouseevent(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *, const char *);
-extern struct node *new_keyboardevent(struct node *, struct node **, const char *, const char *);
-extern struct node *new_bezelevent(struct node *, struct node **, const char *);
-extern struct node *new_animation(struct node *, struct node **, const char *);
-extern struct node *new_setvalue(struct node *, struct node **, const char *, const char *, const char *, const char *, const char *);
-extern struct ModifyValue get_setvalue_data(const char *, const char *, const char *, const char *, const char *);
-extern bool CheckConditionLogic(int, int, const void *, int, const void *);
-extern void UpdateValueLogic(int, int, void *, int, void *, int, void *, int, void *);
-extern bool check_dynamic_element(const char *);
+extern void window_init(bool, int , int, int, int);
+
+extern void new_button(dcContainer *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *, const char *);
 
 extern void DisplayPreInitStub(void *(*)(const char *));
 extern void DisplayInitStub(void);
 extern void DisplayLogicStub(void);
 extern void DisplayCloseStub(void);
 
-static int process_elements(struct node *, struct node **, xmlNodePtr);
-static xmlNodePtr GetSubList(xmlNodePtr, const char *, const char *, const char *);
+static int process_elements(dcParent *, xmlNodePtr);
 
 extern appdata AppData;
 
@@ -98,7 +76,7 @@ int ParseXMLFile(const char *fullpath)
     AppData.DisplayLogic = &DisplayLogicStub;
     AppData.DisplayClose = &DisplayCloseStub;
 
-    if (process_elements(0, 0, root_element->children)) return (-1);
+    if (process_elements(0x0, root_element->children)) return (-1);
 
     XMLFileClose(mydoc);
     XMLEndParsing();
@@ -112,14 +90,13 @@ int ParseXMLFile(const char *fullpath)
     return 0;
 }
 
-static int process_elements(struct node *parent, struct node **list, xmlNodePtr startnode)
+static int process_elements(dcParent *myparent, xmlNodePtr startnode)
 {
     xmlNodePtr node;
-    struct node *data;
 
     for (node = startnode; node; node = node->next)
     {
-        if (NodeCheck(node, "Dummy")) process_elements(parent, list, node->children);
+        if (NodeCheck(node, "Dummy")) process_elements(myparent, node->children);
         if (NodeCheck(node, "Constant")) processConstantNode(node);
         if (NodeCheck(node, "Style")) processStyleNode(node);
         if (NodeCheck(node, "Defaults")) processDefaultsNode(node);
@@ -134,7 +111,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             }
             else
             {
-                process_elements(parent, list, include_element);
+                process_elements(myparent, include_element);
                 XMLFileClose(include_file);
             }
         }
@@ -144,60 +121,75 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             const char *val1 = get_element_data(node, "Value1");
             const char *val2 = get_element_data(node, "Value2");
             const char *myoperator = get_element_data(node, "Operator");
+            bool subparent_found = false;
 
             if (!val1) val1 = val;
 
             if (preprocessing || (!check_dynamic_element(val1) && !check_dynamic_element(val2)))
-                process_elements(parent, list, GetSubList(node, myoperator, val1, val2));
+            {
+                dcCondition *myitem = new dcCondition(0x0, myoperator, val1, val2);
+                bool myflag = myitem->checkCondition();
+                delete myitem;
+
+                for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
+                {
+                    if (myflag && NodeCheck(subnode, "True"))
+                    {
+                        process_elements(myparent, subnode->children);
+                        subparent_found = true;
+                    }
+                    if (!myflag && NodeCheck(subnode, "False"))
+                    {
+                        process_elements(myparent, subnode->children);
+                        subparent_found = true;
+                    }
+                }
+                // Assume "True" if no subparent is found
+                if (myflag && !subparent_found) process_elements(myparent, node->children);
+            }
             else
             {
-                bool subparent_found = false;
-
-                data = new_isequal(parent, list, myoperator, val1, val2);
+                dcCondition *myitem = new dcCondition(myparent, myoperator, val1, val2);
 
                 for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
                 {
                     if (NodeCheck(subnode, "True"))
                     {
-                        process_elements(data, &(data->object.cond.TrueList), subnode->children);
+                        process_elements(myitem->TrueList, subnode->children);
                         subparent_found = true;
                     }
                     if (NodeCheck(subnode, "False"))
                     {
-                        process_elements(data, &(data->object.cond.FalseList), subnode->children);
+                        process_elements(myitem->FalseList, subnode->children);
                         subparent_found = true;
                     }
                 }
                 // Assume "True" if no subparent is found
-                if (!subparent_found) process_elements(data, &(data->object.cond.TrueList), node->children);
+                if (!subparent_found) process_elements(myitem->TrueList, node->children);
             }
-        }
-        if (NodeCheck(node, "Animation"))
-        {
-            data = new_animation(parent, list, get_element_data(node, "Duration"));
-            process_elements(data, &(data->object.anim.SubList), node->children);
         }
         if (NodeCheck(node, "Set"))
         {
             if (preprocessing)
             {
-                struct ModifyValue myset = get_setvalue_data(get_element_data(node, "Variable"),
-                                                             get_element_data(node, "Operator"),
-                                                             get_element_data(node, "MinimumValue"),
-                                                             get_element_data(node, "MaximumValue"),
-                                                             get_node_content(node));
-                if (myset.datatype1 != UNDEFINED_TYPE) UpdateValueLogic(myset.optype,
-                                                                   myset.datatype1, myset.var,
-                                                                   myset.datatype2, myset.val,
-                                                                   myset.mindatatype, myset.min,
-                                                                   myset.maxdatatype, myset.max);
+                dcSetValue *myitem = new dcSetValue(0x0, get_element_data(node, "Variable"), get_node_content(node));
+                myitem->setOperator(get_element_data(node, "Operator"));
+                myitem->setRange(get_element_data(node, "MinimumValue"), get_element_data(node, "MaximumValue"));
+                myitem->updateData();
+                delete myitem;
             }
-            else data = new_setvalue(parent, list,
-                                     get_element_data(node, "Variable"),
-                                     get_element_data(node, "Operator"),
-                                     get_element_data(node, "MinimumValue"),
-                                     get_element_data(node, "MaximumValue"),
-                                     get_node_content(node));
+            else
+            {
+                dcSetValue *myitem = new dcSetValue(myparent, get_element_data(node, "Variable"), get_node_content(node));
+                myitem->setOperator(get_element_data(node, "Operator"));
+                myitem->setRange(get_element_data(node, "MinimumValue"), get_element_data(node, "MaximumValue"));
+            }
+        }
+        if (NodeCheck(node, "Animation"))
+        {
+            dcAnimate *myitem = new dcAnimate(myparent);
+            myitem->setDuration(get_element_data(node, "Duration"));
+            process_elements(myitem, node->children);
         }
         if (NodeCheck(node, "Variable"))
         {
@@ -215,7 +207,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
                 if (!strcasecmp(d_a, "Reconnect")) trickcomm->setReconnectOnDisconnect();
             }
             trickcomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
-            process_elements(0, 0, node->children);
+            process_elements(myparent, node->children);
             trickcomm->finishInitialization();
             AppData.commlist.push_back(trickcomm);
         }
@@ -224,7 +216,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             if (trickcomm)
             {
                 bufferID = TrickCommModule::FromTrick;
-                process_elements(0, 0, node->children);
+                process_elements(myparent, node->children);
             }
         }
         if (NodeCheck(node, "ToTrick"))
@@ -232,7 +224,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             if (trickcomm)
             {
                 bufferID = TrickCommModule::ToTrick;
-                process_elements(0, 0, node->children);
+                process_elements(myparent, node->children);
             }
         }
         if (NodeCheck(node, "TrickVariable"))
@@ -253,7 +245,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         {
             edgecomm = new EdgeCommModule;
             edgecomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
-            process_elements(0, 0, node->children);
+            process_elements(myparent, node->children);
             edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StrToFloat(get_element_data(node, "DataRate"), 1.0));
             AppData.commlist.push_back(edgecomm);
         }
@@ -262,7 +254,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             if (edgecomm)
             {
                 bufferID = EDGEIO_FROMEDGE;
-                process_elements(0, 0, node->children);
+                process_elements(myparent, node->children);
             }
         }
         if (NodeCheck(node, "ToEdge"))
@@ -270,7 +262,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             if (edgecomm)
             {
                 bufferID = EDGEIO_TOEDGE;
-                process_elements(0, 0, node->children);
+                process_elements(myparent, node->children);
             }
         }
         if (NodeCheck(node, "EdgeVariable"))
@@ -284,7 +276,7 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         {
             ccsdsudpcomm = new CcsdsUdpCommModule;
             ccsdsudpcomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
-            process_elements(0, 0, node->children);
+            process_elements(myparent, node->children);
             AppData.commlist.push_back(ccsdsudpcomm);
         }
         if (NodeCheck(node, "CcsdsUdpRead"))
@@ -354,136 +346,115 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
         if (NodeCheck(node, "Window"))
         {
             AppData.force_update = StrToFloat(get_element_data(node, "ForceUpdate"), 60);
-            new_window(StrToBool(get_element_data(node, "FullScreen"), false),
-                       StrToInt(get_element_data(node, "X"), 0),
-                       StrToInt(get_element_data(node, "Y"), 0),
-                       StrToInt(get_element_data(node, "Width"), 800),
-                       StrToInt(get_element_data(node, "Height"), 800),
-                       get_element_data(node, "ActiveDisplay"));
-            process_elements(0, 0, node->children);
+            window_init(StrToBool(get_element_data(node, "FullScreen"), false),
+                        StrToInt(get_element_data(node, "X"), 0),
+                        StrToInt(get_element_data(node, "Y"), 0),
+                        StrToInt(get_element_data(node, "Width"), 800),
+                        StrToInt(get_element_data(node, "Height"), 800));
+            graphics_init();
+            AppData.toplevel = new dcWindow();
+            AppData.toplevel->setActiveDisplay(get_element_data(node, "ActiveDisplay"));
+            process_elements(AppData.toplevel, node->children);
         }
         if (NodeCheck(node, "Panel"))
         {
-            data = new_panel(get_element_data(node, "DisplayIndex"),
-                                             get_element_data(node, "BackgroundColor"),
-                                             get_element_data(node, "VirtualWidth"),
-                                             get_element_data(node, "VirtualHeight"));
+            dcPanel *myitem = new dcPanel(myparent);
+            myitem->setID(get_element_data(node, "DisplayIndex"));
+            myitem->setColor(get_element_data(node, "BackgroundColor"));
+            myitem->setOrtho(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
             preprocessing = false;
-            process_elements(data, &(data->object.panel.SubList), node->children);
+            process_elements(myitem, node->children);
             preprocessing = true;
         }
         if (NodeCheck(node, "Container"))
         {
-            data = new_container(parent, list,
-                                 get_element_data(node, "X"),
-                                 get_element_data(node, "Y"),
-                                 get_element_data(node, "Width"),
-                                 get_element_data(node, "Height"),
-                                 get_element_data(node, "HorizontalAlign"),
-                                 get_element_data(node, "VerticalAlign"),
-                                 get_element_data(node, "VirtualWidth"),
-                                 get_element_data(node, "VirtualHeight"),
-                                 get_element_data(node, "Rotate"));
-            process_elements(data, &(data->object.cont.SubList), node->children);
+            dcContainer *myitem = new dcContainer(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setVirtualSize(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
+            process_elements(myitem, node->children);
         }
         if (NodeCheck(node, "Vertex"))
         {
-            data = new_vertex(parent, list,
-                              get_element_data(node, "X"),
-                              get_element_data(node, "Y"));
+            dcVertex *myitem = new dcVertex(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
         }
         if (NodeCheck(node, "Line"))
         {
-            data = new_line(parent, list,
-                            get_element_data(node, "LineWidth"),
-                            get_element_data(node, "Color"));
-            process_elements(data, &(data->object.line.Vertices), node->children);
+            dcLine *myitem = new dcLine(myparent);
+            myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            myitem->setColor(get_element_data(node, "Color"));
+            process_elements(myitem, node->children);
         }
         if (NodeCheck(node, "Polygon"))
         {
-            data = new_polygon(parent, list,
-                                 get_element_data(node, "FillColor"),
-                                 get_element_data(node, "LineColor"),
-                                 get_element_data(node, "LineWidth"));
-            process_elements(data, &(data->object.poly.Vertices), node->children);
+            dcPolygon *myitem = new dcPolygon(myparent);
+            myitem->setFillColor(get_element_data(node, "FillColor"));
+            myitem->setLineColor(get_element_data(node, "LineColor"));
+            myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            process_elements(myitem, node->children);
         }
         if (NodeCheck(node, "Rectangle"))
         {
-            data = new_rectangle(parent, list,
-                                 get_element_data(node, "X"),
-                                 get_element_data(node, "Y"),
-                                 get_element_data(node, "Width"),
-                                 get_element_data(node, "Height"),
-                                 get_element_data(node, "HorizontalAlign"),
-                                 get_element_data(node, "VerticalAlign"),
-                                 get_element_data(node, "Rotate"),
-                                 get_element_data(node, "FillColor"),
-                                 get_element_data(node, "LineColor"),
-                                 get_element_data(node, "LineWidth"));
+            dcRectangle *myitem = new dcRectangle(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setFillColor(get_element_data(node, "FillColor"));
+            myitem->setLineColor(get_element_data(node, "LineColor"));
+            myitem->setLineWidth(get_element_data(node, "LineWidth"));
         }
         if (NodeCheck(node, "Circle"))
         {
-            data = new_circle(parent, list,
-                                 get_element_data(node, "X"),
-                                 get_element_data(node, "Y"),
-                                 get_element_data(node, "HorizontalAlign"),
-                                 get_element_data(node, "VerticalAlign"),
-                                 get_element_data(node, "Radius"),
-                                 get_element_data(node, "Segments"),
-                                 get_element_data(node, "FillColor"),
-                                 get_element_data(node, "LineColor"),
-                                 get_element_data(node, "LineWidth"));
+            dcCircle *myitem = new dcCircle(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setFillColor(get_element_data(node, "FillColor"));
+            myitem->setLineColor(get_element_data(node, "LineColor"));
+            myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            myitem->setRadius(get_element_data(node, "Radius"));
+            myitem->setSegments(get_element_data(node, "Segments"));
         }
         if (NodeCheck(node, "String"))
         {
-            data = new_string(parent, list,
-                            get_element_data(node, "X"),
-                            get_element_data(node, "Y"),
-                            get_element_data(node, "Rotate"),
-                            get_element_data(node, "Size"),
-                            get_element_data(node, "HorizontalAlign"),
-                            get_element_data(node, "VerticalAlign"),
-                            get_element_data(node, "Color"),
-                            get_element_data(node, "BackgroundColor"),
-                            get_element_data(node, "ShadowOffset"),
-                            get_element_data(node, "Font"),
-                            get_element_data(node, "Face"),
-                            get_element_data(node, "ForceMono"),
-                            get_node_content(node));
+            dcString *myitem = new dcString(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize("0", get_element_data(node, "Size"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setColor(get_element_data(node, "Color"));
+            myitem->setBackgroundColor(get_element_data(node, "BackgroundColor"));
+            myitem->setFont(get_element_data(node, "Font"), get_element_data(node, "Face"), get_element_data(node, "Size"), get_element_data(node, "ForceMono"));
+            myitem->setShadowOffset(get_element_data(node, "ShadowOffset"));
+            myitem->setString(get_node_content(node));
         }
         if (NodeCheck(node, "Image"))
         {
-            data = new_image(parent, list,
-                      get_element_data(node, "X"),
-                      get_element_data(node, "Y"),
-                      get_element_data(node, "Width"),
-                      get_element_data(node, "Height"),
-                      get_element_data(node, "HorizontalAlign"),
-                      get_element_data(node, "VerticalAlign"),
-                      get_element_data(node, "Rotate"),
-                      get_node_content(node));
+            dcImage *myitem = new dcImage(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setTexture(get_node_content(node));
         }
         if (NodeCheck(node, "PixelStream"))
         {
-            data = new_pixel_stream(parent, list,
-                      get_element_data(node, "X"),
-                      get_element_data(node, "Y"),
-                      get_element_data(node, "Width"),
-                      get_element_data(node, "Height"),
-                      get_element_data(node, "HorizontalAlign"),
-                      get_element_data(node, "VerticalAlign"),
-                      get_element_data(node, "Rotate"),
-                      get_element_data(node, "Protocol"),
-                      get_element_data(node, "Host"),
-                      get_element_data(node, "Port"),
-                      get_element_data(node, "SharedMemoryKey"),
-                      get_element_data(node, "File"));
+            dcPixelStream *myitem = new dcPixelStream(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setProtocol(get_element_data(node, "Protocol"), get_element_data(node, "Host"), get_element_data(node, "Port"), get_element_data(node, "SharedMemoryKey"), get_element_data(node, "File"));
         }
         if (NodeCheck(node, "Button"))
         {
             key = get_element_data(node, "Key");
             keyascii = get_element_data(node, "KeyASCII");
             bezelkey = get_element_data(node, "BezelKey");
+            const char *type = get_element_data(node, "Type");
             const char *buttonid = get_element_data(node, "Variable");
             const char *buttononval = get_element_data(node, "On");
             const char *buttonoffval = get_element_data(node, "Off");
@@ -505,226 +476,290 @@ static int process_elements(struct node *parent, struct node **list, xmlNodePtr 
             if (switchid != indid) transitionid = create_virtual_variable("Integer", "0");
             else transitionid = 0x0;
 
-            data = new_button(parent, list,
-                      get_element_data(node, "X"),
-                      get_element_data(node, "Y"),
-                      get_element_data(node, "Width"),
-                      get_element_data(node, "Height"),
-                      get_element_data(node, "HorizontalAlign"),
-                      get_element_data(node, "VerticalAlign"),
-                      get_element_data(node, "Rotate"),
-                      get_element_data(node, "Type"),
-                      switchid,
-                      switchonval,
-                      switchoffval,
-                      indid,
-                      indonval,
-                      activeid,
-                      activetrueval,
-                      transitionid,
-                      key,
-                      keyascii,
-                      bezelkey);
-            process_elements(data, &(data->object.cont.SubList), node->children);
+            dcContainer *myitem = new dcContainer(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+
+            bool toggle = false, momentary = false;
+            const char *offval, *zerostr=strdup("0"), *onestr=strdup("1");
+
+            if (type)
+            {
+                if (!strcmp(type, "Toggle")) toggle = true;
+                if (!strcmp(type, "Momentary")) momentary = true;
+            }
+
+            dcParent *mySublist = myitem;
+            if (activeid)
+            {
+                if (!activetrueval) activetrueval = onestr;
+                dcCondition *mycond = new dcCondition(myitem, "eq", activeid, activetrueval);
+                mySublist = mycond->TrueList;
+            }
+
+            if (!switchonval) switchonval = onestr;
+            if (toggle || momentary)
+            {
+                if (switchoffval) offval = switchoffval;
+                else offval = zerostr;
+            }
+            else offval = 0x0;
+
+            if (toggle)
+            {
+                dcCondition *mycond = new dcCondition(mySublist, "eq", indid, indonval);
+                dcMouseEvent *mymouse = new dcMouseEvent(mycond->TrueList);
+                new dcSetValue(mymouse->PressList, switchid, offval);
+                if (transitionid) new dcSetValue(mymouse->PressList, transitionid, "-1");
+                dcMouseEvent *mymouse1 = new dcMouseEvent(mycond->FalseList);
+                new dcSetValue(mymouse1->PressList, switchid, switchonval);
+                if (transitionid) new dcSetValue(mymouse1->PressList, transitionid, "1");
+                if (key || keyascii)
+                {
+                    dcKeyboardEvent *myevent = new dcKeyboardEvent(mycond->TrueList, key, keyascii);
+                    new dcSetValue(myevent->PressList, switchid, offval);
+                    if (transitionid) new dcSetValue(myevent->PressList, transitionid, "-1");
+                    myevent = new dcKeyboardEvent(mycond->FalseList, key, keyascii);
+                    new dcSetValue(myevent->PressList, switchid, switchonval);
+                    if (transitionid) new dcSetValue(myevent->PressList, transitionid, "1");
+                }
+                if (bezelkey)
+                {
+                    dcBezelEvent *myevent1 = new dcBezelEvent(mycond->TrueList, bezelkey);
+                    new dcSetValue(myevent1->PressList, switchid, offval);
+                    if (transitionid) new dcSetValue(myevent1->PressList, transitionid, "-1");
+                    dcBezelEvent *myevent2 = new dcBezelEvent(mycond->FalseList, bezelkey);
+                    new dcSetValue(myevent2->PressList, switchid, switchonval);
+                    if (transitionid) new dcSetValue(myevent2->PressList, transitionid, "1");
+                }
+            }
+            else
+            {
+                dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
+                new dcSetValue(mymouse->PressList, switchid, switchonval);
+                if (transitionid) new dcSetValue(mymouse->PressList, transitionid, "1");
+                if (momentary)
+                {
+                    new dcSetValue(mymouse->ReleaseList, switchid, offval);
+                    if (transitionid) new dcSetValue(mymouse->ReleaseList, transitionid, "-1");
+                }
+                if (key || keyascii)
+                {
+                    dcKeyboardEvent *myevent = new dcKeyboardEvent(mySublist, key, keyascii);
+                    new dcSetValue(myevent->PressList, switchid, switchonval);
+                    if (transitionid) new dcSetValue(myevent->PressList, transitionid, "1");
+                    if (momentary)
+                    {
+                        new dcSetValue(myevent->ReleaseList, switchid, offval);
+                        if (transitionid) new dcSetValue(myevent->ReleaseList, transitionid, "-1");
+                    }
+                }
+                if (bezelkey)
+                {
+                    dcBezelEvent *myevent1 = new dcBezelEvent(mySublist, bezelkey);
+                    new dcSetValue(myevent1->PressList, switchid, switchonval);
+                    if (transitionid) new dcSetValue(myevent1->PressList, transitionid, "1");
+                    if (momentary)
+                    {
+                        new dcSetValue(myevent1->ReleaseList, switchid, offval);
+                        if (transitionid) new dcSetValue(myevent1->ReleaseList, transitionid, "-1");
+                    }
+                }
+            }
+
+            if (transitionid)
+            {
+                dcCondition *mylist1, *mylist2, *mylist3;
+
+                mylist1 = new dcCondition(myitem, "eq", transitionid, "1");
+                mylist2 = new dcCondition(mylist1->TrueList, "eq", indid, indonval);
+                new dcSetValue(mylist2->TrueList, transitionid, "0");
+                mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid, switchonval);
+                new dcSetValue(mylist3->FalseList, transitionid, "0");
+
+                mylist1 = new dcCondition(myitem, "eq", transitionid, "-1");
+                mylist2 = new dcCondition(mylist1->TrueList, "eq", indid, indonval);
+                new dcSetValue(mylist2->FalseList, transitionid, "0");
+                mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid, switchoffval);
+                new dcSetValue(mylist3->TrueList, transitionid, "0");
+            }
+
+            process_elements(myitem, node->children);
             if (transitionid) free(transitionid);
         }
         if (NodeCheck(node, "OnPress"))
         {
-            struct node *curlist = parent;
-            struct node **sublist = list;
+            dcParent *mySublist = myparent;
+            dcCondition *mycond;
             if (activeid)
             {
-                curlist = new_isequal(parent, list, "eq", activeid, activetrueval);
-                sublist = &(curlist->object.cond.TrueList);
+                mycond = new dcCondition(myparent, "eq", activeid, activetrueval);
+                mySublist = mycond->TrueList;
             }
-            data = new_mouseevent(curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-            process_elements(data, &(data->object.me.PressList), node->children);
+            dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
+            process_elements(mymouse->PressList, node->children);
             if (key || keyascii)
-                new_keyboardevent(curlist, sublist, key, keyascii)->object.ke.PressList = data->object.me.PressList;
+            {
+                dcKeyboardEvent *myitem = new dcKeyboardEvent(mySublist, key, keyascii);
+                process_elements(myitem->PressList, node->children);
+            }
             if (bezelkey)
-                new_bezelevent(curlist, sublist, bezelkey)->object.be.PressList = data->object.me.PressList;
+            {
+                dcBezelEvent *myitem = new dcBezelEvent(mySublist, bezelkey);
+                process_elements(myitem->PressList, node->children);
+            }
         }
         if (NodeCheck(node, "OnRelease"))
         {
-            struct node *curlist = parent;
-            struct node **sublist = list;
+            dcParent *mySublist = myparent;
+            dcCondition *mycond;
             if (activeid)
             {
-                curlist = new_isequal(parent, list, "eq", activeid, activetrueval);
-                sublist = &(curlist->object.cond.TrueList);
+                mycond = new dcCondition(myparent, "eq", activeid, activetrueval);
+                mySublist = mycond->TrueList;
             }
-            data = new_mouseevent(curlist, sublist, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);
-            process_elements(data, &(data->object.me.ReleaseList), node->children);
+            dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
+            process_elements(mymouse->ReleaseList, node->children);
             if (key || keyascii)
-                new_keyboardevent(curlist, sublist, key, keyascii)->object.ke.PressList = data->object.me.ReleaseList;
+            {
+                dcKeyboardEvent *myitem = new dcKeyboardEvent(mySublist, key, keyascii);
+                process_elements(myitem->PressList, node->children);
+            }
             if (bezelkey)
-                new_bezelevent(curlist, sublist, bezelkey)->object.be.PressList = data->object.me.ReleaseList;
+            {
+                dcBezelEvent *myitem = new dcBezelEvent(mySublist, bezelkey);
+                process_elements(myitem->PressList, node->children);
+            }
         }
         if (NodeCheck(node, "Active"))
         {
-            data = new_isequal(parent, list, "eq", activeid, activetrueval);
-            process_elements(data, &(data->object.cond.TrueList), node->children);
+            dcCondition *myitem = new dcCondition(myparent, "eq", activeid, activetrueval);
+            process_elements(myitem->TrueList, node->children);
         }
         if (NodeCheck(node, "Inactive"))
         {
-            data = new_isequal(parent, list, "eq", activeid, activetrueval);
-            process_elements(data, &(data->object.cond.FalseList), node->children);
+            dcCondition *myitem = new dcCondition(myparent, "eq", activeid, activetrueval);
+            process_elements(myitem->FalseList, node->children);
         }
         if (NodeCheck(node, "On"))
         {
             if (transitionid)
             {
-                data = new_isequal(parent, list, "eq", transitionid, "0");
-                struct node *iseq = new_isequal(data, &(data->object.cond.TrueList), "eq", indid, indonval);
-                process_elements(iseq, &(iseq->object.cond.TrueList), node->children);
+                dcCondition *myitem = new dcCondition(myparent, "eq", transitionid, "0");
+                dcCondition *mychild = new dcCondition(myitem->TrueList, "eq", indid, indonval);
+                process_elements(mychild->TrueList, node->children);
             }
             else
             {
-                data = new_isequal(parent, list, "eq", indid, indonval);
-                process_elements(data, &(data->object.cond.TrueList), node->children);
+                dcCondition *myitem = new dcCondition(myparent, "eq", indid, indonval);
+                process_elements(myitem->TrueList, node->children);
             }
         }
         if (NodeCheck(node, "Transition"))
         {
             if (transitionid)
             {
-                data = new_isequal(parent, list, "eq", transitionid, "1");
-                process_elements(data, &(data->object.cond.TrueList), node->children);
-                data = new_isequal(parent, list, "eq", transitionid, "-1");
-                process_elements(data, &(data->object.cond.TrueList), node->children);
+                dcCondition *myitem;
+                myitem = new dcCondition(myparent, "eq", transitionid, "1");
+                process_elements(myitem->TrueList, node->children);
+                myitem = new dcCondition(myparent, "eq", transitionid, "-1");
+                process_elements(myitem->TrueList, node->children);
             }
         }
         if (NodeCheck(node, "Off"))
         {
             if (transitionid)
             {
-                data = new_isequal(parent, list, "eq", transitionid, "0");
-                struct node *iseq = new_isequal(data, &(data->object.cond.TrueList), "eq", indid, indonval);
-                process_elements(iseq, &(iseq->object.cond.FalseList), node->children);
+                dcCondition *myitem = new dcCondition(myparent, "eq", transitionid, "0");
+                dcCondition *mychild = new dcCondition(myitem->TrueList, "eq", indid, indonval);
+                process_elements(mychild->FalseList, node->children);
             }
             else
             {
-                data = new_isequal(parent, list, "eq", indid, indonval);
-                process_elements(data, &(data->object.cond.FalseList), node->children);
+                dcCondition *myitem = new dcCondition(myparent, "eq", indid, indonval);
+                process_elements(myitem->FalseList, node->children);
             }
         }
         if (NodeCheck(node, "ADI"))
         {
-            data = new_adi(parent, list,
-                           get_element_data(node, "X"),
-                           get_element_data(node, "Y"),
-                           get_element_data(node, "Width"),
-                           get_element_data(node, "Height"),
-                           get_element_data(node, "HorizontalAlign"),
-                           get_element_data(node, "VerticalAlign"),
-                           get_element_data(node, "OuterRadius"),
-                           get_element_data(node, "BallRadius"),
-                           get_element_data(node, "ChevronWidth"),
-                           get_element_data(node, "ChevronHeight"),
-                           get_element_data(node, "BallFile"),
-                           get_element_data(node, "CoverFile"),
-                           get_element_data(node, "Roll"),
-                           get_element_data(node, "Pitch"),
-                           get_element_data(node, "Yaw"),
-                           get_element_data(node, "RollError"),
-                           get_element_data(node, "PitchError"),
-                           get_element_data(node, "YawError"));
+            dcADI *myitem = new dcADI(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setBackgrountTexture(get_element_data(node, "CoverFile"));
+            myitem->setBallTexture(get_element_data(node, "BallFile"));
         }
         if (NodeCheck(node, "MouseEvent"))
         {
-            data = new_mouseevent(parent, list,
-                                  get_element_data(node, "X"),
-                                  get_element_data(node, "Y"),
-                                  get_element_data(node, "Width"),
-                                  get_element_data(node, "Height"),
-                                  get_element_data(node, "HorizontalAlign"),
-                                  get_element_data(node, "VerticalAlign"));
+            dcMouseEvent *myitem = new dcMouseEvent(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
                 if (NodeCheck(subnode, "OnPress"))
                 {
-                    process_elements(data, &(data->object.me.PressList), subnode->children);
+                    process_elements(myitem->PressList, subnode->children);
                     subparent_found = true;
                 }
                 if (NodeCheck(subnode, "OnRelease"))
                 {
-                    process_elements(data, &(data->object.me.ReleaseList), subnode->children);
+                    process_elements(myitem->ReleaseList, subnode->children);
                     subparent_found = true;
                 }
             }
             // Assume "Press" if no subparent is found
-            if (!subparent_found) process_elements(data, &(data->object.me.PressList), node->children);
+            if (!subparent_found) process_elements(myitem->PressList, node->children);
         }
         if (NodeCheck(node, "KeyboardEvent"))
         {
-            data = new_keyboardevent(parent, list, get_element_data(node, "Key"), get_element_data(node, "KeyASCII"));
+            dcKeyboardEvent *myitem = new dcKeyboardEvent(myparent);
+            myitem->setKey(get_element_data(node, "Key"));
+            myitem->setKeyAscii(get_element_data(node, "KeyASCII"));
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
                 if (NodeCheck(subnode, "OnPress"))
                 {
-                    process_elements(data, &(data->object.ke.PressList), subnode->children);
+                    process_elements(myitem->PressList, subnode->children);
                     subparent_found = true;
                 }
                 if (NodeCheck(subnode, "OnRelease"))
                 {
-                    process_elements(data, &(data->object.ke.ReleaseList), subnode->children);
+                    process_elements(myitem->ReleaseList, subnode->children);
                     subparent_found = true;
                 }
             }
             // Assume "Press" if no subparent is found
-            if (!subparent_found) process_elements(data, &(data->object.ke.PressList), node->children);
+            if (!subparent_found) process_elements(myitem->PressList, node->children);
         }
         if (NodeCheck(node, "BezelEvent"))
         {
-            data = new_bezelevent(parent, list, get_element_data(node, "Key"));
+            dcBezelEvent *myitem = new dcBezelEvent(myparent);
+            myitem->setKey(get_element_data(node, "Key"));
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
                 if (NodeCheck(subnode, "OnPress"))
                 {
-                    process_elements(data, &(data->object.be.PressList), subnode->children);
+                    process_elements(myitem->PressList, subnode->children);
                     subparent_found = true;
                 }
                 if (NodeCheck(subnode, "OnRelease"))
                 {
-                    process_elements(data, &(data->object.be.ReleaseList), subnode->children);
+                    process_elements(myitem->ReleaseList, subnode->children);
                     subparent_found = true;
                 }
             }
             // Assume "Press" if no subparent is found
-            if (!subparent_found) process_elements(data, &(data->object.be.PressList), node->children);
+            if (!subparent_found) process_elements(myitem->PressList, node->children);
         }
     }
 
     return 0;
-}
-
-static xmlNodePtr GetSubList(xmlNodePtr node, const char *opspec, const char *val1, const char *val2)
-{
-    bool myflag = 0;
-    xmlNodePtr subnode;
-    int optype = Simple;
-
-    if (opspec)
-    {
-        if (!strcasecmp(opspec, "eq")) optype = IfEquals;
-        else if (!strcasecmp(opspec, "ne")) optype = IfNotEquals;
-        else if (!strcasecmp(opspec, "gt")) optype = IfGreaterThan;
-        else if (!strcasecmp(opspec, "lt")) optype = IfLessThan;
-        else if (!strcasecmp(opspec, "ge")) optype = IfGreaterOrEquals;
-        else if (!strcasecmp(opspec, "le")) optype = IfLessOrEquals;
-    }
-
-    myflag = CheckConditionLogic(optype, STRING_TYPE, val1, STRING_TYPE, val2);
-
-    for (subnode = node->children; subnode; subnode = subnode->next)
-    {
-        if (myflag && NodeCheck(subnode, "True")) return subnode->children;
-        if (!myflag && NodeCheck(subnode, "False")) return subnode->children;
-    }
-
-    if (myflag) return node->children;  // Assume "True" if no subparent is found
-    else return 0x0;
 }

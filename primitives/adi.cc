@@ -1,55 +1,66 @@
 #include <cmath>
-#include "nodes.hh"
-#include "geometry.hh"
+#include "loadUtils.hh"
 #include "opengl_draw.hh"
-
-static void draw_roll_bug(float, float, float, float);
-static void draw_cross_hairs(float);
-static void draw_needles(float, float, float, float);
-static float get_error_info(float, float);
+#include "adi.hh"
 
 static const float BLACK[3] = {0.0, 0.0, 0.0};
 static const float YELLOW[3] = {1.0, 1.0, 0.0};
 
-
-/*********************************************************************************
- *
- * This function draws the ADI components
- *
- *********************************************************************************/
-void draw_adi(struct node *current)
+dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(-1), ballID(-1), outerradius(0x0), ballradius(0x0), chevronW(0x0), chevronH(0x0)
 {
-    Geometry geo = GetGeometry(current);
+    roll = dcLoadConstant(0.0f);
+    pitch = dcLoadConstant(0.0f);
+    yaw = dcLoadConstant(0.0f);
+    rollError = dcLoadConstant(0.0f);
+    pitchError = dcLoadConstant(0.0f);
+    yawError = dcLoadConstant(0.0f);
+}
+
+void dcADI::setBackgrountTexture(const char *filename)
+{
+    if (filename) bkgdID = dcLoadTexture(filename);
+}
+
+void dcADI::setBallTexture(const char *filename)
+{
+    if (filename) ballID = dcLoadTexture(filename);
+}
+
+void dcADI::draw(void)
+{
+    computeGeometry();
+
+    float outerrad, ballrad, chevw, chevh;
+
+    if (outerradius) outerrad = *outerradius;
+    else outerrad = 0.5 * (fminf(*w, *h));
+
+    if (ballradius) ballrad = *ballradius;
+    else ballrad = 0.9 * outerrad;
+
+    if (chevronW) chevw = *chevronW;
+    else chevw = 0.2 * outerrad;
+
+    if (chevronH) chevh = *chevronH;
+    else chevh = 0.2 * outerrad;
 
     // Draw the ball
-    draw_textured_sphere(geo.center, geo.middle, *(current->object.adi.ballradius), current->object.adi.ballID,
-                *(current->object.adi.roll), *(current->object.adi.pitch), *(current->object.adi.yaw));
+    draw_textured_sphere(center, middle, ballrad, ballID, *roll, *pitch, *yaw);
 
     // Draw the surrounding area (i.e. background)
-    translate_start(geo.left, geo.bottom);
-    draw_image(current->object.adi.bkgdID, geo.width, geo.height);
+    translate_start(left, bottom);
+    draw_image(bkgdID, width, height);
     translate_end();
 
-    // Draw the items on top...roll bug, shuttle, cross-hairs
-    translate_start(geo.center, geo.middle);
-        draw_roll_bug(*(current->object.adi.roll),
-                      *(current->object.adi.chevronW),
-                      *(current->object.adi.chevronH),
-                      0.8 * (*(current->object.adi.outerradius)));
-        draw_cross_hairs(*(current->object.adi.outerradius));
-        draw_needles(*(current->object.adi.outerradius),
-                     *(current->object.adi.rollError),
-                     *(current->object.adi.pitchError),
-                     *(current->object.adi.yawError));
+    // Draw the items on top: roll bug, cross-hairs, needles
+    translate_start(center, middle);
+        draw_roll_bug(*roll, chevw, chevh, 0.8 * outerrad);
+        draw_cross_hairs(outerrad);
+        draw_needles(outerrad, *rollError, *pitchError, *yawError);
     translate_end();
 }
 
-/*******************************************************************************
- *
- * Draw a roll-bug around the ADI perimeter.
- *
- ******************************************************************************/
-static void draw_roll_bug(float roll, float width, float height, float radius)
+void dcADI::draw_roll_bug(float roll, float width, float height, float radius)
 {
     short i;
     float triang[3][2];
@@ -72,13 +83,7 @@ static void draw_roll_bug(float roll, float width, float height, float radius)
     rotate_end();
 }
 
-
-/*******************************************************************************
- *
- * Draw cross hairs on top of the ADI ball
- *
- ******************************************************************************/
-static void draw_cross_hairs(float radius)
+void dcADI::draw_cross_hairs(float radius)
 {
     float length = 0.21 * radius;
     float halfwidth = 0.017 * radius;
@@ -128,13 +133,7 @@ static void draw_cross_hairs(float radius)
     polygon_outline_end();
 }
 
-
-/*********************************************************************************
- *
- * Draw the error needles.
- *
- *********************************************************************************/
-static void draw_needles(float radius, float roll_err, float pitch_err, float yaw_err)
+void dcADI::draw_needles(float radius, float roll_err, float pitch_err, float yaw_err)
 {
     float delta, needle_edge;
     float length = 0.29 * radius;
@@ -189,13 +188,7 @@ static void draw_needles(float radius, float roll_err, float pitch_err, float ya
     line_end();
 }
 
-
-/******************************************************************************
- *
- * Return info to draw current position of error needle.
- *
- *******************************************************************************/
-static float get_error_info(float value, float outer_rad)
+float dcADI::get_error_info(float value, float outer_rad)
 {
     if (value < -1.0) return (0.4 * outer_rad);
     else if (value > 1.0) return (-0.4 * outer_rad);
