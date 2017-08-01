@@ -14,10 +14,11 @@ class dcWindow : public dcParent
         void handleKeyPress(char);
         void handleKeyRelease(char);
         void handleMousePress(float, float);
-        void handleMouseRelease(void);
         void handleBezelPress(int);
-        void handleBezelRelease(int);
         void updateStreams(unsigned);
+
+// note that handleMouseRelease and handleBezelRelease use the methods from the base
+// class since ALL panels are checked in case currentPanel changed after the press event
 
     private:
         int *displayID;

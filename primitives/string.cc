@@ -7,25 +7,22 @@
 
 dcString::dcString(dcParent *myparent) : dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone)
 {
-    color.R = dcLoadConstant(1.0f);
-    color.G = dcLoadConstant(1.0f);
-    color.B = dcLoadConstant(1.0f);
-    color.A = dcLoadConstant(1.0f);
+    color.set(1, 1, 1);
     fontSize = dcLoadConstant(12.0f);
     shadowOffset = dcLoadConstant(0.0f);
 }
 
 void dcString::setColor(const char *cspec)
 {
-    if (cspec) color = StrToColor(cspec, 1, 1, 1, 1);
+    color.set(cspec);
 }
 
 void dcString::setBackgroundColor(const char *cspec)
 {
     if (cspec)
     {
+        bgcolor.set(cspec);
         background = true;
-        bgcolor = StrToColor(cspec, 0, 0, 0, 1);
     }
 }
 

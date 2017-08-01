@@ -24,7 +24,6 @@ class dcObject
         virtual dcObject *getParent(void) { return parent; };
         virtual float *getContainerWidth(void) { return parent->getContainerWidth(); };
         virtual float *getContainerHeight(void) { return parent->getContainerHeight(); };
-        virtual bool checkID(int) { return false; }; // TODO: this probably doesn't fit here, make window only have panel children
 
     private:
         dcObject *parent;

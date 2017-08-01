@@ -1,25 +1,18 @@
 #include "opengl_draw.hh"
 #include "string_utils.hh"
-#include "loadUtils.hh"
 #include "rectangle.hh"
 
 dcRectangle::dcRectangle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false)
 {
-    FillColor.R = dcLoadConstant(0.5f);
-    FillColor.G = dcLoadConstant(0.5f);
-    FillColor.B = dcLoadConstant(0.5f);
-    FillColor.A = dcLoadConstant(0.5f);
-    LineColor.R = dcLoadConstant(1.0f);
-    LineColor.G = dcLoadConstant(1.0f);
-    LineColor.B = dcLoadConstant(1.0f);
-    LineColor.A = dcLoadConstant(1.0f);
+    FillColor.set(0.5, 0.5, 0.5);
+    LineColor.set(1, 1, 1);
 }
 
 void dcRectangle::setFillColor(const char *cspec)
 {
     if (cspec)
     {
-        FillColor = StrToColor(cspec, 1, 1, 1, 1);
+        FillColor.set(cspec);
         fill = true;
     }
 }
@@ -28,7 +21,7 @@ void dcRectangle::setLineColor(const char *cspec)
 {
     if (cspec)
     {
-        LineColor = StrToColor(cspec, 1, 1, 1, 1);
+        LineColor.set(cspec);
         outline = true;
     }
 }

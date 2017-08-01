@@ -1,15 +1,11 @@
 #include "opengl_draw.hh"
 #include "string_utils.hh"
-#include "loadUtils.hh"
 #include "panel.hh"
 
 dcPanel::dcPanel(dcParent *myparent) : displayID(0), orthoX(100), orthoY(100)
 {
     myparent->addChild(this);
-    color.R = dcLoadConstant(0.0f);
-    color.G = dcLoadConstant(0.0f);
-    color.B = dcLoadConstant(0.0f);
-    color.A = dcLoadConstant(0.0f);
+    color.set(0, 0, 0);
 }
 
 void dcPanel::setID(const char *inval)
@@ -19,7 +15,7 @@ void dcPanel::setID(const char *inval)
 
 void dcPanel::setColor(const char *cspec)
 {
-    if (cspec) color = StrToColor(cspec, 0, 0, 0, 1);
+    color.set(cspec);
 }
 
 void dcPanel::setOrtho(const char *inw, const char *inh)
@@ -47,17 +43,10 @@ float * dcPanel::getContainerHeight(void)
 void dcPanel::draw(void)
 {
     setup_panel(orthoX, orthoY, -1, 1, *(color.R), *(color.G), *(color.B), *(color.A));
-
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->draw();
-    }
+    for (const auto &myobj : children) myobj->draw();
 }
 
 void dcPanel::handleMousePress(float x, float y)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->handleMousePress(orthoX * x, orthoY * y);
-    }
+    for (const auto &myobj : children) myobj->handleMousePress(orthoX * x, orthoY * y);
 }

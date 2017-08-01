@@ -138,8 +138,5 @@ void dcSetValue::calculateValue(int opspec, int vartype, void *varID, int valtyp
             break;
     }
 
-    for (std::list<CommModule *>::iterator commitem = AppData.commlist.begin(); commitem != AppData.commlist.end(); commitem++)
-    {
-        (*commitem)->flagAsChanged(varID);
-    }
+    for (const auto &commitem : AppData.commlist) commitem->flagAsChanged(varID);
 }

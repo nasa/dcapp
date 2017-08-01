@@ -14,11 +14,14 @@ void dcWindow::setActiveDisplay(const char *inval)
 
 void dcWindow::setCurrentPanel(void)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
+    if (!displayID) return;
+
+    for (const auto &myobj : children)
     {
-        if ((*myobj)->checkID(*displayID))
+        dcPanel *mypanel = (dcPanel *)myobj; // TODO: fix this
+        if (mypanel->checkID(*displayID))
         {
-            currentPanel = (dcPanel *)(*myobj);
+            currentPanel = mypanel;
             return;
         }
     }
@@ -44,28 +47,26 @@ void dcWindow::handleMousePress(float x, float y)
     if (currentPanel) currentPanel->handleMousePress(x, y);
 }
 
+#if 0
 void dcWindow::handleMouseRelease(void)
 {
     // check all panels for release in case the active panel changed after the press event
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->handleMouseRelease();
-    }
+    for (const auto &myobj : children) myobj->handleMouseRelease();
 }
+#endif
 
 void dcWindow::handleBezelPress(int key)
 {
     if (currentPanel) currentPanel->handleBezelPress(key);
 }
 
+#if 0
 void dcWindow::handleBezelRelease(int key)
 {
     // check all panels for release in case the active panel changed after the press event
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->handleBezelRelease(key);
-    }
+    for (const auto &myobj : children) myobj->handleBezelRelease(key);
 }
+#endif
 
 void dcWindow::updateStreams(unsigned passcount)
 {
