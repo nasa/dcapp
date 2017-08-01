@@ -3,103 +3,67 @@
 
 dcParent::~dcParent()
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        delete *myobj;
-    }
+    for (const auto &myobj : children) delete myobj;
 }
 
 void dcParent::draw(void)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->draw();
-    }
+    for (const auto &myobj : children) myobj->draw();
 }
 
 void dcParent::handleKeyPress(char key)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->handleKeyPress(key);
-    }
+    for (const auto &myobj : children) myobj->handleKeyPress(key);
 }
 
 void dcParent::handleKeyRelease(char key)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->handleKeyRelease(key);
-    }
+    for (const auto &myobj : children) myobj->handleKeyRelease(key);
 }
 
 void dcParent::handleMousePress(float x, float y)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->handleMousePress(x, y);
-    }
+    for (const auto &myobj : children) myobj->handleMousePress(x, y);
 }
 
 void dcParent::handleMouseRelease(void)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->handleMouseRelease();
-    }
+    for (const auto &myobj : children) myobj->handleMouseRelease();
 }
 
 void dcParent::handleBezelPress(int key)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->handleBezelPress(key);
-    }
+    for (const auto &myobj : children) myobj->handleBezelPress(key);
 }
 
 void dcParent::handleBezelRelease(int key)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->handleBezelRelease(key);
-    }
+    for (const auto &myobj : children) myobj->handleBezelRelease(key);
 }
 
 void dcParent::handleEvent(void)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->handleEvent();
-    }
+    for (const auto &myobj : children) myobj->handleEvent();
 }
 
 void dcParent::updateData(void)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->updateData();
-    }
+    for (const auto &myobj : children) myobj->updateData();
 }
 
 void dcParent::updateStreams(unsigned passcount)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->updateStreams(passcount);
-    }
+    for (const auto &myobj : children) myobj->updateStreams(passcount);
 }
 
 void dcParent::processAnimation(Animation *anim)
 {
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->processAnimation(anim);
-    }
+    for (const auto &myobj : children) myobj->processAnimation(anim);
 }
 
 void dcParent::addChild(dcObject *item)
 {
     if (!item) return;
-    this->children.push_back(item);
+    children.push_back(item);
     item->setParent(this);
 }

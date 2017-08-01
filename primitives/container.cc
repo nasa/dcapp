@@ -35,10 +35,7 @@ void dcContainer::draw(void)
 {
     computeGeometry();
     container_start(refx, refy, delx, dely, (*w)/(*vwidth), (*h)/(*vheight), *rotate);
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->draw();
-    }
+    for (const auto &myobj : children) myobj->draw();
     container_end();
 }
 
@@ -55,10 +52,7 @@ void dcContainer::handleMousePress(float inx, float iny)
     finalx = (tmpx * cosf(ang)) + (tmpy * sinf(ang));
     finaly = (tmpy * cosf(ang)) - (tmpx * sinf(ang));
 
-    for (std::list<dcObject *>::iterator myobj = children.begin(); myobj != children.end(); myobj++)
-    {
-        (*myobj)->handleMousePress(finalx, finaly);
-    }
+    for (const auto &myobj : children) myobj->handleMousePress(finalx, finaly);
 }
 
 float * dcContainer::getContainerWidth(void)
