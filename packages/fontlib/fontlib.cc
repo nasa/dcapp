@@ -272,7 +272,7 @@ void flFont::render(const char *string, flMonoOption mono=flMonoNone)
 
 void flFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
 {
-    unsigned int i, j;
+    int i, j;
     unsigned char bitmap[64][64];
 
     FT_Load_Char(this->face, index, FT_LOAD_RENDER);

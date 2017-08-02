@@ -51,9 +51,7 @@ typedef struct
 TDImage *tdLoadBmpImage(const char *filespec)
 {
     BmpHeader header;
-    int filesize, offset, headersize, imagewidth, imageheight;
-    int ncolplanes, bitsperpixel, compression;
-    int imagesize, hrez, vrez, ncols, nimportant;
+    int imagewidth, imageheight, ncols;
     int npixels, index, i, j, k, pad, foundmatch, colcount = 0;
     char dummy[4];
     TmpColorTable *ct;
@@ -73,19 +71,9 @@ TDImage *tdLoadBmpImage(const char *filespec)
     }
     fread(&header, sizeof(BmpHeader), 1, infile);
 
-    filesize = BytesToInt4(header.filesize);
-    offset = BytesToInt4(header.offset);
-    headersize = BytesToInt4(header.headersize);
     imagewidth = BytesToInt4(header.imagewidth);
     imageheight = BytesToInt4(header.imageheight);
-    ncolplanes = BytesToInt2(header.ncolplanes);
-    bitsperpixel = BytesToInt2(header.bitsperpixel);
-    compression = BytesToInt4(header.compression);
-    imagesize = BytesToInt4(header.imagesize);
-    hrez = BytesToInt4(header.hrez);
-    vrez = BytesToInt4(header.vrez);
     ncols = BytesToInt4(header.ncols);
-    nimportant = BytesToInt4(header.nimportant);
 
     npixels = imagewidth * imageheight;
 
