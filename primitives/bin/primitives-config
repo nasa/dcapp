@@ -67,7 +67,7 @@ while test $# -gt 0 ; do
         --exepath)
             ;;
         --cflags)
-            echo "-I${parentdir}"
+            echo "-I${parentdir} -I${TRICK_HOME}/include"
             ;;
         --libs)
             echo "-L${mydir}/${libdir} -lprimitives"
@@ -84,7 +84,7 @@ while test $# -gt 0 ; do
             echo "${mydir}/${libdir}/libprimitives.a"
             ;;
         --cflags_internal)
-            echo "-I${parentdir} -I${parentdir}/packages `${parentdir}/packages/fontlib/bin/fontlib-config --cflags`"
+            echo "-I${parentdir} -I${parentdir}/packages -I${TRICK_HOME}/include `${parentdir}/packages/fontlib/bin/fontlib-config --cflags`"
             ;;
         --s_overrides)
             ;;

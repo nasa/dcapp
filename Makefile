@@ -12,6 +12,7 @@ DCAPP_SOURCES := \
 	animation.cc \
 	app_main.cc \
 	comm.cc \
+	dcapp_comm.cc \
 	handle_bezel.cc \
 	handle_keyboard.cc \
 	handle_mouse.cc \
@@ -45,7 +46,7 @@ SUBPACKAGE_CONFIGS := \
     packages/imgload/bin/imgload-config \
     packages/basicutils/bin/basicutils-config
 
-CXXFLAGS += -Wall -I.
+CXXFLAGS += -std=c++11 -Wall -I.  -I${TRICK_HOME}/include 
 
 CXXFLAGS += $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --cflags))
 LINK_LIBS += $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --libs))

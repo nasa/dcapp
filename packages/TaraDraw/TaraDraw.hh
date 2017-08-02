@@ -24,6 +24,8 @@ extern void tdGLReshapeContext(float, float, int, float, float);
 extern int tdRegisterColor(int, float, float, float);
 extern int tdRegisterXFont(const char *, int, char *);
 
+void GetApplicationDocumentsDirectory( char *bufferA, int sizeA );
+
 // Settings routines
 extern void tdSetActiveWindow(tdWindow);
 extern void tdGLSetContext(tdGLContext *);

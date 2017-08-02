@@ -2,10 +2,16 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#ifndef IOS_BUILD
 #include <GL/glu.h>
+#else
+#include <OpenGLES/ES1/glext.h>
+#endif
 #include "imgload_internal.hh"
 
+#ifndef IOS_BUILD
 static void ensureValidSizeForTexturing(ImageStruct *, GLint, GLenum);
+#endif
 
 /*********************************************************************************
  *********************************************************************************/
@@ -14,7 +20,7 @@ int createTextureFromImage(ImageStruct *image)
     int texture;
     GLenum format;
     GLint bytesPerPixel;
-
+    
     glGenTextures(1, (GLuint *)&texture);
     if (texture < 0) return texture;
 
@@ -42,9 +48,11 @@ int createTextureFromImage(ImageStruct *image)
             bytesPerPixel = 3;
     }
 
+#ifndef IOS_BUILD // iOS 2+ provides NPOT
     // Scale the image to power of 2 (may not be necessary)
-    ensureValidSizeForTexturing(image, bytesPerPixel, format);
-
+        ensureValidSizeForTexturing(image, bytesPerPixel, format);
+#endif
+    
     glBindTexture(GL_TEXTURE_2D, texture);
 
 // GL_TEXTURE_MAG_FILTER and GL_TEXTURE_MIN_FILTER define how OpenGL magnifies and minifies a texture:
@@ -61,8 +69,8 @@ int createTextureFromImage(ImageStruct *image)
 //   GL_DECAL or GL_REPLACE tells OpenGL to replace the base color (and any lighting effects) purely with the colors of the texture.
 // Courtesy http://paulyg.f2s.com/prog3.htm
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, bytesPerPixel, image->width, image->height, 0, format, GL_UNSIGNED_BYTE, image->data);
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, format, image->width, image->height, 0, format, GL_UNSIGNED_BYTE, image->data);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
@@ -70,6 +78,7 @@ int createTextureFromImage(ImageStruct *image)
     return texture;
 }
 
+#ifndef IOS_BUILD
 /*********************************************************************************
  *********************************************************************************/
 static int computeNearestPowerOfTwo(int val)
@@ -87,13 +96,13 @@ static int computeNearestPowerOfTwo(int val)
  *********************************************************************************/
 static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel, GLenum format)
 {
-    GLint maxTextureSize;
-
     if (!(image->data))
     {
         fprintf(stderr, "%s %d: Cannot scale NULL image.\n", __FILE__, __LINE__);
         return;
     }
+    
+    GLint maxTextureSize;
 
     int newW = computeNearestPowerOfTwo(image->width);
     int newH = computeNearestPowerOfTwo(image->height);
@@ -116,7 +125,6 @@ static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel,
 
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
         GLint status = gluScaleImage(format, image->width, image->height, GL_UNSIGNED_BYTE, image->data, newW, newH, GL_UNSIGNED_BYTE, newData);
 
         if (!status)
@@ -126,6 +134,8 @@ static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel,
             image->data = (unsigned char*)realloc(image->data, newTotalSize);
             memcpy(image->data, newData, newTotalSize);
         }
-        else fprintf(stderr, "%s %d: %s did not succeed : %s\n", __FILE__,__LINE__, __FUNCTION__,  (char *)gluErrorString((GLenum)status));
+        else
+            fprintf(stderr, "%s %d: %s did not succeed : %s\n", __FILE__,__LINE__, __FUNCTION__,  (char *)gluErrorString((GLenum)status));
     }
 }
+#endif

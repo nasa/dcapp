@@ -1,5 +1,6 @@
 #ifndef _OPENGL_DRAW_HH_
 #define _OPENGL_DRAW_HH_
+#include <vector>
 
 #include "fontlib/fontlib.hh"
 
@@ -19,17 +20,20 @@ extern void rotate_start(float);
 extern void rotate_end(void);
 extern void translate_start(float, float);
 extern void translate_end(void);
-extern void line_start(float, float, float, float, float);
-extern void line_end(void);
-extern void polygon_outline_start(float, float, float, float, float);
-extern void polygon_outline_end(void);
-extern void polygon_fill_start(float, float, float, float);
-extern void polygon_fill_end(void);
-extern void gfx_vertex(float, float);
-extern void rectangle_outline(float, float, float, float, float, float, float, float, float, float, float, float, float);
-extern void rectangle_fill(float, float, float, float, float, float, float, float, float, float, float, float);
+
 extern void circle_outline(float, float, float, int, float, float, float, float, float);
 extern void circle_fill(float, float, float, int, float, float, float, float);
-extern void draw_textured_sphere(float, float, float, int, float, float, float);
 
+void draw_textured_sphere(float x, float y, const std::vector<float > &pointsA, float radius, int texID, float roll, float pitch, float yaw );
+void draw_line(const std::vector< float > &pntsA, float linewidth, float red, float green, float blue, float alpha);
+void draw_filled_triangles( const std::vector< float >&pntsA, float red, float green, float blue, float alpha);
+void draw_quad( const std::vector< float >&pntsA, float red, float green, float blue, float alpha);
+void draw_polygon( const std::vector< float >&pntsA, float red, float green, float blue, float alpha);
+
+// convenience functions
+void addPoint( std::vector<float> &listA, float xA, float yA );
+void addPoint( std::vector<float> &listA, float xA, float yA, float zA );
+void addPoint( std::vector<float> &listA, float xA, float yA, float zA, float uA, float vA );
+
+void CheckError( const char *idA );
 #endif

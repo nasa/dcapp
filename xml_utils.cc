@@ -32,6 +32,35 @@ int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *filename
     return 0;
 }
 
+int XMLParseString(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *pDataA )
+{
+	/*
+	 * The document being in memory, it have no base per RFC 2396,
+	 * and the "noname.xml" argument will serve as its base.
+	 */
+	*mydoc = xmlReadMemory( pDataA, (int)strlen(pDataA), "noname.xml", NULL, 0);
+	if (!(*mydoc))
+	{
+		error_msg("Couldn't process XML string" );
+		return (-1);
+	}
+	
+	if (xmlXIncludeProcess(*mydoc) < 0)
+	{
+		error_msg("XInclude processing failed in XML string" );
+	}
+	
+	*root_element = xmlDocGetRootElement(*mydoc);
+	if (!(*root_element))
+	{
+		error_msg("Couldn't find root element in XML string");
+		xmlFreeDoc(*mydoc);
+		return (-1);
+	}
+	
+	return 0;
+}
+
 void XMLFileClose(xmlDocPtr mydoc)
 {
     xmlFreeDoc(mydoc);

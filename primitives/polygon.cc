@@ -44,16 +44,12 @@ void dcPolygon::draw(void)
     for (const auto &myobj : children) myobj->draw();
 
     if (fill)
-    {
-        polygon_fill_start(*(FillColor.R), *(FillColor.G), *(FillColor.B), *(FillColor.A));
-        for (const auto &mypos : AppData.vertices) gfx_vertex(mypos.x, mypos.y);
-        polygon_fill_end();
+	{
+		draw_polygon( AppData.vertices, *(FillColor.R), *(FillColor.G), *(FillColor.B), *(FillColor.A) );
     }
     if (outline)
-    {
-        polygon_outline_start(linewidth, *(LineColor.R), *(LineColor.G), *(LineColor.B), *(LineColor.A));
-        for (const auto &mypos : AppData.vertices) gfx_vertex(mypos.x, mypos.y);
-        polygon_outline_end();
+	{
+		draw_line( AppData.vertices, linewidth, *(LineColor.R), *(LineColor.G), *(LineColor.B), *(LineColor.A) );
     }
 
     AppData.vertices.clear();

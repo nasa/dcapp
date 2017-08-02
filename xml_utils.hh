@@ -4,6 +4,7 @@
 #include <libxml/parser.h>
 
 extern int XMLFileOpen(xmlDocPtr *, xmlNodePtr *, const char *);
+int XMLParseString(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *pDataA );
 extern void XMLFileClose(xmlDocPtr);
 extern void XMLEndParsing(void);
 extern char *get_XML_attribute(xmlNodePtr, const char *);

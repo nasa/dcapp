@@ -9,6 +9,8 @@
 #include "geometric.hh"
 #include "parent.hh"
 
+#include <iostream>
+
 class VarString
 {
     public:
@@ -33,7 +35,7 @@ class VarString
             char *tmp_str = 0x0;
             switch (datatype)
             {
-                case FLOAT_TYPE:   asprintf(&tmp_str, format.c_str(), *(float *)(value)); break;
+                case FLOAT_TYPE: asprintf(&tmp_str, format.c_str(), *(float *)(value));   break;
                 case INTEGER_TYPE: asprintf(&tmp_str, format.c_str(), *(int *)(value));   break;
                 case STRING_TYPE:  asprintf(&tmp_str, format.c_str(), (char *)value);     break;
             }

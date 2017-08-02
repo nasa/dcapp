@@ -2,3 +2,4 @@ obj_*
 lib_*
 bin_*
 *.so
+xcshareddata

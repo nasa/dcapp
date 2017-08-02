@@ -71,7 +71,7 @@ while test $# -gt 0 ; do
             ;;
 ##### These are the only lines that should differ from package to package. #####
         --cflags)
-            echo "-I${parentdir}"
+            echo "-I${parentdir} -I${TRICK_HOME}/include"
             ;;
         --libs)
             if [[ $jpegenabled -ne 0 ]] ; then

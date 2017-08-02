@@ -2,9 +2,46 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include <vector>
+#include <assert.h>
+#include <iostream>
+
+#ifndef IOS_BUILD
 #include <GL/glu.h>
+#else
+#include <OpenGLES/ES1/glext.h>
+#endif
 #include "fontlib/fontlib.hh"
 
+void CheckError( const char *idA )
+{
+    auto errorL = glGetError();
+    if( errorL )
+        std::cout << "Error(" << idA << ") = " << errorL << std::endl;
+}
+
+// convenience functions
+void addPoint( std::vector<float> &listA, float xA, float yA )
+{
+	listA.push_back( xA );
+	listA.push_back( yA );
+}
+
+void addPoint( std::vector<float> &listA, float xA, float yA, float zA )
+{
+	listA.push_back( xA );
+	listA.push_back( yA );
+	listA.push_back( zA );
+}
+
+void addPoint( std::vector<float> &listA, float xA, float yA, float zA, float uA, float vA )
+{
+	listA.push_back( xA );
+	listA.push_back( yA );
+	listA.push_back( zA );
+	listA.push_back( uA );
+	listA.push_back( vA );
+}
 
 /*********************************************************************************
  *
@@ -16,7 +53,11 @@ void graphics_init(void)
 {
     glClearColor(0, 0, 0, 0);          // Clear the window to black.
     glShadeModel(GL_SMOOTH);
+#ifndef IOS_BUILD
     glClearDepth(1.0f);                // Depth Buffer Setup
+#else
+    glClearDepthf( 1.0f );
+#endif
     glDepthFunc(GL_LEQUAL);            // The Type Of Depth Testing To Do
 }
 
@@ -35,9 +76,15 @@ void setup_panel(float x, float y, int near, int far, float red, float green, fl
 {
     glClearColor(red, green, blue, alpha);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+#ifndef IOS_BUILD
     glOrtho(0, x, 0, y, near, far);
+#else
+    glOrthof(0, x, 0, y, near, far );
+#endif
+
     glMatrixMode(GL_MODELVIEW);
     glColor4f(1, 1, 1, 1);
 }
@@ -50,11 +97,18 @@ void init_texture(unsigned int *textureID)
 
 void set_texture(unsigned int textureID, int width, int height, void *pixels)
 {
-    glBindTexture(GL_TEXTURE_2D, textureID);
-// GL_LINEAR interpolates using bilinear filtering (smoothing). GL_NEAREST specifies no smoothing.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+	if( width ==  0 || height == 0 )
+		return;
+//
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//
+//	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL );
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 }
 
 void draw_image(unsigned int textureID, float w, float h)
@@ -62,37 +116,44 @@ void draw_image(unsigned int textureID, float w, float h)
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBindTexture(GL_TEXTURE_2D, textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
     glColor4f(1, 1, 1, 1);
-    glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        glVertex3f(0, 0, 0);
-        glTexCoord2f(1, 0);
-        glVertex3f(w, 0, 0);
-        glTexCoord2f(1, 1);
-        glVertex3f(w, h, 0);
-        glTexCoord2f(0, 1);
-        glVertex3f(0, h, 0);
-    glEnd();
+	
+    const GLfloat vertices[8]   = { 0,h, 0,0, w,h, w,0 };
+    const GLfloat uvs[8]        = { 0,1, 0,0, 1,1, 1,0 };
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glVertexPointer( 2, GL_FLOAT, 0, vertices);
+    glTexCoordPointer(2, GL_FLOAT, 0, uvs );
+    glDrawArrays( GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glBindTexture( GL_TEXTURE_2D, 0 );
     glDisable(GL_BLEND);
-    glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_2D);
 }
 
 void get_image_pixel_RGBA(unsigned char rgba[], unsigned int textureID, float xpct, float ypct)
 {
+#ifndef IOS_BUILD
     GLint textureWidth, textureHeight;
-    int pixx, pixy, i;
-
+    
     glBindTexture(GL_TEXTURE_2D, textureID);
+    
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &textureWidth);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &textureHeight);
+    int pixx, pixy, i;
+    
     unsigned char mypixels[textureHeight][textureWidth][4];
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)mypixels);
-
     pixx = (int)(xpct * textureWidth);
     pixy = (int)(ypct * textureHeight);
-
+    
+    
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)mypixels);
+    
     for (i=0; i<4; i++) rgba[i] = mypixels[pixy][pixx][i];
+#endif
 }
 
 float get_string_width(flFont *fontID, float size, flMonoOption mono, const char *string)
@@ -105,6 +166,7 @@ void draw_string(float xpos, float ypos, float size, float red, float green, flo
 {
     if (!fontID || !string) return;
     float scale = size / fontID->getBaseSize();
+	
     glColor4f(red, green, blue, alpha);
     glPushMatrix();
         glEnable(GL_TEXTURE_2D);                                       // Enable Texture Mapping
@@ -112,7 +174,9 @@ void draw_string(float xpos, float ypos, float size, float red, float green, flo
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glTranslatef(xpos, ypos - (fontID->getDescender() * scale), 0);
         glScalef(scale, scale, 0);
+	
         fontID->render(string, mono);
+    
         glDisable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
     glPopMatrix();
@@ -124,7 +188,7 @@ void container_start(float refx, float refy, float delx, float dely, float scale
         glTranslatef(refx, refy, 0);
         glScalef(scalex, scaley, 1);
         glRotatef(rotate, 0, 0, 1);
-        glTranslatef(-delx/scalex, -dely/scaley, 0);
+    glTranslatef(-delx/scalex, -dely/scaley, 0);
 }
 
 void container_end(void)
@@ -135,7 +199,7 @@ void container_end(void)
 void rotate_start(float rot)
 {
     glPushMatrix();
-        glRotatef(rot, 0, 0, 1);
+    glRotatef(rot, 0, 0, 1);
 }
 
 void rotate_end(void)
@@ -146,7 +210,7 @@ void rotate_end(void)
 void translate_start(float x, float y)
 {
     glPushMatrix();
-        glTranslatef(x, y, 0);
+    glTranslatef(x, y, 0);
 }
 
 void translate_end(void)
@@ -154,80 +218,98 @@ void translate_end(void)
     glPopMatrix();
 }
 
-void line_start(float linewidth, float red, float green, float blue, float alpha)
+void draw_line(const std::vector< float > &pntsA, float linewidth, float red, float green, float blue, float alpha)
 {
-    glPushMatrix();
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glLineWidth(linewidth);
-        glColor4f(red, green, blue, alpha);
-        glBegin(GL_LINE_STRIP);
+	glPushMatrix();
+	glEnable( GL_BLEND );
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glLineWidth( linewidth );
+	glColor4f( red, green, blue, alpha );
+	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer( 2, GL_FLOAT, 0, pntsA.data() );
+	glDrawArrays( GL_LINE_STRIP, 0, static_cast<int>(pntsA.size()/2) );
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisable(GL_BLEND);
+	
+	glPopMatrix();
 }
 
-void line_end(void)
+void draw_filled_triangles( const std::vector< float >&pntsA, float red, float green, float blue, float alpha)
 {
-        glEnd();
-    glPopMatrix();
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glColor4f(red, green, blue, alpha);
+	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer( 2, GL_FLOAT, 0, pntsA.data() );
+	glDrawArrays( GL_TRIANGLES, 0, static_cast<int>(pntsA.size() / 2) );
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisable(GL_BLEND);
 }
 
-void polygon_outline_start(float linewidth, float red, float green, float blue, float alpha)
+void draw_quad( const std::vector< float >&pntsA, float red, float green, float blue, float alpha)
 {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(red, green, blue, alpha);
-    glLineWidth(linewidth);
-    glBegin(GL_LINE_LOOP);
+	assert( pntsA.size() == 8 );
+	std::vector< float > localPointsL;
+//	localPointsL.reserve(8);
+	
+	// tri1
+	localPointsL.push_back( pntsA[0] );
+	localPointsL.push_back( pntsA[1] );
+	
+	localPointsL.push_back( pntsA[2] );
+	localPointsL.push_back( pntsA[3] );
+	
+	localPointsL.push_back( pntsA[4] );
+	localPointsL.push_back( pntsA[5] );
+	
+	// tri1
+	localPointsL.push_back( pntsA[0] );
+	localPointsL.push_back( pntsA[1] );
+	
+	localPointsL.push_back( pntsA[4] );
+	localPointsL.push_back( pntsA[5] );
+	
+	localPointsL.push_back( pntsA[6] );
+	localPointsL.push_back( pntsA[7] );
+
+	
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
+	glColor4f(red, green, blue, alpha);
+	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer( 2, GL_FLOAT, 0, localPointsL.data() );
+	glDrawArrays( GL_TRIANGLES, 0, static_cast<int>(localPointsL.size() / 2) );
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisable(GL_BLEND);
 }
 
-void polygon_outline_end(void)
+void draw_polygon( const std::vector< float >&pntsA, float red, float green, float blue, float alpha)
 {
-    glEnd();
-}
+	std::vector< float > localPointsL;
 
-void polygon_fill_start(float red, float green, float blue, float alpha)
-{
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(red, green, blue, alpha);
-    glBegin(GL_POLYGON);
-}
-
-void polygon_fill_end(void)
-{
-    glEnd();
-}
-
-void gfx_vertex(float x, float y)
-{
-    glVertex2f(x, y);
-}
-
-void rectangle_outline(float linewidth, float red, float green, float blue, float alpha, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
-{
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(red, green, blue, alpha);
-    glLineWidth(linewidth);
-    glBegin(GL_LINE_LOOP);
-        glVertex2f(x1, y1);
-        glVertex2f(x2, y2);
-        glVertex2f(x3, y3);
-        glVertex2f(x4, y4);
-    glEnd();
-}
-
-void rectangle_fill(float red, float green, float blue, float alpha, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
-{
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(red, green, blue, alpha);
-    glBegin(GL_QUADS);
-        glVertex2f(x1, y1);
-        glVertex2f(x2, y2);
-        glVertex2f(x3, y3);
-        glVertex2f(x4, y4);
-    glEnd();
-    glDisable(GL_BLEND);
+//	localPointsL.push_back( pntsA[0] ); // x0
+//	localPointsL.push_back( pntsA[1] ); // y0
+	for( size_t iL=0; iL< pntsA.size()-1; iL+=2 )
+	{
+		localPointsL.push_back( pntsA[iL] );
+		localPointsL.push_back( pntsA[iL+1] );
+	}
+	
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
+	glColor4f(red, green, blue, alpha);
+	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer( 2, GL_FLOAT, 0, localPointsL.data() );
+	glDrawArrays( GL_TRIANGLE_FAN, 0, static_cast<int>(localPointsL.size() / 2) );
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisable(GL_BLEND);
 }
 
 void circle_outline(float cx, float cy, float r, int num_segments, float red, float green, float blue, float alpha, float linewidth)
@@ -242,23 +324,29 @@ void circle_outline(float cx, float cy, float r, int num_segments, float red, fl
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glColor4f(red, green, blue, alpha);
     glLineWidth(linewidth);
-    glEnable(GL_LINE_SMOOTH);
-    glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
-    glBegin(GL_LINE_LOOP);
+	
+    std::vector<GLfloat> vertices;
+    
     for (i = 0; i < num_segments; i++)
     {
-        glVertex2f(x + cx, y + cy); // output vertex
+        vertices.push_back( x + cx );
+        vertices.push_back( y + cy );
 
         //apply the rotation matrix
         t = x;
         x = c * x - s * y;
         y = s * t + c * y;
     }
-    glEnd();
+    
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer( 2, GL_FLOAT, 0, vertices.data());
+    glDrawArrays( GL_LINE_LOOP, 0, num_segments);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    
     glDisable(GL_BLEND);
-    glDisable(GL_LINE_SMOOTH);
 }
 
 void circle_fill(float cx, float cy, float r, int num_segments, float red, float green, float blue, float alpha)
@@ -269,53 +357,66 @@ void circle_fill(float cx, float cy, float r, int num_segments, float red, float
     float t;
     float x = r; // we start at angle = 0
     float y = 0;
-    int i;
-
+    
     glColor4f(red, green, blue, alpha);
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBegin(GL_POLYGON);
-    for (i = 0; i < num_segments; i++)
-    {
-        glVertex2f(x + cx, y + cy); // output vertex
 
+    std::vector<GLfloat> vertices;
+    
+//	vertices.push_back( 0.0 );
+//	vertices.push_back( 0.0 );
+	
+    for( size_t i = 0; i < num_segments; i++)
+    {
+        vertices.push_back( x + cx );
+        vertices.push_back( y + cy );
+        
         //apply the rotation matrix
         t = x;
         x = c * x - s * y;
         y = s * t + c * y;
     }
-    glEnd();
+    
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer( 2, GL_FLOAT, 0, vertices.data());
+    glDrawArrays( GL_TRIANGLE_FAN, 0, static_cast<int>(vertices.size() / 2) );
+    glDisableClientState(GL_VERTEX_ARRAY);
+
     glDisable(GL_BLEND);
 }
 
-void draw_textured_sphere(float x, float y, float radius, int textureID, float roll, float pitch, float yaw)
+void draw_textured_sphere(float x, float y, const std::vector<float > &pointsA, float radiusA, int textureID, float roll, float pitch, float yaw)
 {
-    GLUquadricObj *q = gluNewQuadric();         // Create A New Quadratic
+//	glEnable(GL_DEPTH_TEST);                    // Enables Depth Testing
+	glEnable( GL_TEXTURE_2D );
+	glEnable( GL_CULL_FACE );
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glColor4f( 1.0, 1.0, 1.0, 1.0 );
+	glPushMatrix();
+		glTranslatef(x, y, 0);
+		glScalef(radiusA, radiusA, 1.0 );
+		/* Orient the sphere according to the roll, pitch, and yaw */
+		glRotatef( 180, 0, 0, 1 );
+	
+		glRotatef(-roll,  0, 1, 0);
+		glRotatef(-yaw,   1, 0, 0);
+		glRotatef(-pitch, 0, 0, 1);
+		/* Draw the sphere */
 
-    /* Set Up Sphere Mapping */
-    glEnable(GL_TEXTURE_2D);                    // Enable Texture Mapping
-    glEnable(GL_DEPTH_TEST);                    // Enables Depth Testing
-    gluQuadricDrawStyle(q, GL_FILL);            // Generate a filled sphere
-    gluQuadricNormals(q, GL_SMOOTH);            // Generate Smooth Normals For The Quad
-    gluQuadricTexture(q, GL_TRUE);              // Enable Texture Coords For The Quad
-    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-
-    glBindTexture(GL_TEXTURE_2D, textureID);
-
-    glPushMatrix();
-        glTranslatef(x, y, 0);
-        glScalef(radius, radius, 1);
-        /* Orient the sphere according to the roll, pitch, and yaw */
-        glRotatef(-90,    0, 1, 0);
-        glRotatef( 90,    0, 0, 1);
-        glRotatef(-roll,  0, 1, 0);
-        glRotatef(-yaw,   1, 0, 0);
-        glRotatef(-pitch, 0, 0, 1);
-        /* Draw the sphere */
-        gluSphere(q, 1, 32, 32);
-    glPopMatrix();
-    gluDeleteQuadric(q);
-    glDisable(GL_DEPTH_TEST);          // Disable depth testing
-    glDisable(GL_TEXTURE_2D);          // Disable texture mapping
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer( 2, GL_FLOAT, sizeof(float) * 5, pointsA.data() + 3 );
+		glVertexPointer( 3, GL_FLOAT, sizeof(float) * 5, pointsA.data() );
+	
+		glDrawArrays( GL_TRIANGLES, 0, static_cast<int>(pointsA.size() / 5) );
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glPopMatrix();
+	
+	glBindTexture( GL_TEXTURE_2D, 0 );
+	glDisable(GL_TEXTURE_2D );
+	glDisable(GL_CULL_FACE);
+//	glDisable(GL_DEPTH_TEST);                    // disables Depth Testing
 }

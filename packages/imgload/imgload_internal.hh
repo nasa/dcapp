@@ -1,6 +1,8 @@
 #ifndef _IMGLOAD_INTERNAL_HH_
 #define _IMGLOAD_INTERNAL_HH_
 
+#include <string>
+
 typedef enum { PixelUnknown, PixelLuminance, PixelLuminanceAlpha, PixelRGB, PixelRGBA } PixelSpec;
 
 typedef struct

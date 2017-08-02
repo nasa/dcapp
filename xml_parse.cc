@@ -7,6 +7,9 @@
 #include <libgen.h>
 #include <fcntl.h>
 #include <dlfcn.h>
+#include <iostream>
+#include <fstream>
+
 #include "basicutils/msg.hh"
 #include "trick/trickcomm.hh"
 #include "edge/edgecomm.hh"
@@ -30,7 +33,7 @@ extern void DisplayInitStub(void);
 extern void DisplayLogicStub(void);
 extern void DisplayCloseStub(void);
 
-static int process_elements(dcParent *, xmlNodePtr);
+static int process_elements(dcParent *myparent, xmlNodePtr startnode);
 
 extern appdata AppData;
 
@@ -43,52 +46,114 @@ static int bufferID;
 static bool preprocessing = true;
 
 
+int ParseXMLString( const char *pDataA )
+{
+	if (!pDataA) return (-1);
+	
+	xmlDocPtr mydoc;
+	xmlNodePtr root_element;
+
+	int returnValL = 0;
+	
+	if( XMLParseString( &mydoc, &root_element, pDataA ) == 0 )
+	{
+		if ( NodeCheck(root_element, "DCAPP"))
+		{
+			// Set generic display logic handlers, in case the user doesn't specify a DisplayLogic element
+			AppData.DisplayPreInit = &DisplayPreInitStub;
+			AppData.DisplayInit = &DisplayInitStub;
+			AppData.DisplayLogic = &DisplayLogicStub;
+			AppData.DisplayClose = &DisplayCloseStub;
+			
+			if (process_elements( nullptr, root_element->children))
+				returnValL = -1;
+		}
+		else
+		{
+			error_msg("Bad root element in XML file: \"" << root_element->name << "\" (should be \"DCAPP\")");
+			returnValL = -1;
+		}
+	}
+	else
+		returnValL = -1;
+
+	return returnValL;
+}
+
 int ParseXMLFile(const char *fullpath)
 {
-    char *dirc, *basec, *bname, *dname;
-    int mycwd;
+    if (!fullpath) return (-1);
+
     xmlDocPtr mydoc;
     xmlNodePtr root_element;
 
-    if (!fullpath) return (-1);
+    char *dirc = strdup(fullpath);
+    char *basec = strdup(fullpath);
+    char *bname = basename(basec);
 
-    dirc = strdup(fullpath);
-    basec = strdup(fullpath);
-    dname = dirname(dirc);
-    bname = basename(basec);
-
+	int mycwd;
     // Store cwd for future use
     mycwd = open(".", O_RDONLY);
 
+    char *dname = dirname(dirc);
+
     // Move to directory containing the specfile by default
     if (dname) chdir(dname);
-
-    if (XMLFileOpen(&mydoc, &root_element, bname)) return (-1);
-
-    if (!NodeCheck(root_element, "DCAPP"))
+    
+    int returnValL = 0;
+    
+    if (XMLFileOpen(&mydoc, &root_element, bname) == 0 )
     {
-        error_msg("Bad root element in XML file: \"" << root_element->name << "\" (should be \"DCAPP\")");
-        return (-1);
+        if ( NodeCheck(root_element, "DCAPP"))
+        {
+            
+            // Set generic display logic handlers, in case the user doesn't specify a DisplayLogic element
+            AppData.DisplayPreInit = &DisplayPreInitStub;
+            AppData.DisplayInit = &DisplayInitStub;
+            AppData.DisplayLogic = &DisplayLogicStub;
+            AppData.DisplayClose = &DisplayCloseStub;
+            
+            if (process_elements( nullptr, root_element->children))
+                returnValL = -1;
+        }
+        else
+        {
+            error_msg("Bad root element in XML file: \"" << root_element->name << "\" (should be \"DCAPP\")");
+            returnValL = -1;
+        }
+		
+		if( returnValL != -1 && AppData.isServer )
+		{
+			int buffersize;
+			xmlChar *xmlbuff;
+			
+			xmlDocDumpFormatMemory( mydoc, &xmlbuff, &buffersize, 1);
+			
+			AppData.xmlTmpFileName = "/tmp/dcAppTmp.xml";
+			std::ofstream tmpFileL;
+			
+			tmpFileL.open( AppData.xmlTmpFileName );
+			tmpFileL << xmlbuff << std::endl;
+			tmpFileL.close();
+			
+			xmlFree( xmlbuff );
+		}
+		
+        XMLFileClose(mydoc);
+        XMLEndParsing();
     }
-
-    // Set generic display logic handlers, in case the user doesn't specify a DisplayLogic element
-    AppData.DisplayPreInit = &DisplayPreInitStub;
-    AppData.DisplayInit = &DisplayInitStub;
-    AppData.DisplayLogic = &DisplayLogicStub;
-    AppData.DisplayClose = &DisplayCloseStub;
-
-    if (process_elements(0x0, root_element->children)) return (-1);
-
-    XMLFileClose(mydoc);
-    XMLEndParsing();
+    else
+        returnValL = -1;
 
     // Return to the original working directory
     fchdir(mycwd);
-
+    
     free(dirc);
     free(basec);
+    free(bname);
 
-    return 0;
+    return returnValL;
+
 }
 
 static int process_elements(dcParent *myparent, xmlNodePtr startnode)
@@ -198,19 +263,30 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "TrickIo"))
         {
-            trickcomm = new TrickCommModule;
-            trickcomm->setHost(get_element_data(node, "Host"));
-            trickcomm->setPort(StrToInt(get_element_data(node, "Port"), 0));
-            trickcomm->setDataRate(get_element_data(node, "DataRate"));
-            const char *d_a = get_element_data(node, "DisconnectAction");
-            if (d_a)
-            {
-                if (!strcasecmp(d_a, "Reconnect")) trickcomm->setReconnectOnDisconnect();
-            }
-            trickcomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
-            process_elements(myparent, node->children);
-            trickcomm->finishInitialization();
-            AppData.commlist.push_back(trickcomm);
+#ifndef IOS_BUILD
+			auto trickHost = get_element_data(node, "Host" );
+			int trickPort = StrToInt(get_element_data(node, "Port"), 0);
+			std::cout << "trickPort = " << trickPort << " : " << get_element_data(node, "Port") << std::endl;
+			trickPort = 56056;
+			std::cout << "trichHost " << trickHost << " Port " << trickPort << " FORCED!!!!!!!!!" << std::endl;
+#else
+			auto trickHost = AppData.trickHostName.c_str();
+			int trickPort = StrToInt(AppData.trickPortNumber.c_str(), 0);
+#endif
+			trickcomm = new TrickCommModule;
+			trickcomm->setHost(trickHost);
+			trickcomm->setPort(trickPort);
+			
+			trickcomm->setDataRate(get_element_data(node, "DataRate"));
+			const char *d_a = get_element_data(node, "DisconnectAction");
+			if (d_a)
+			{
+				if (!strcasecmp(d_a, "Reconnect")) trickcomm->setReconnectOnDisconnect();
+			}
+			trickcomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
+			process_elements(myparent, node->children);
+			trickcomm->finishInitialization();
+			AppData.commlist.push_back(trickcomm);
         }
         if (NodeCheck(node, "FromTrick"))
         {
@@ -243,11 +319,18 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             }
         }
         if (NodeCheck(node, "EdgeIo"))
-        {
-            edgecomm = new EdgeCommModule;
-            edgecomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
-            process_elements(myparent, node->children);
-            edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StrToFloat(get_element_data(node, "DataRate"), 1.0));
+		{
+			edgecomm = new EdgeCommModule;
+			edgecomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
+			process_elements(myparent, node->children);
+#ifndef IOS_BUILD
+			auto dougHost = get_element_data(node, "Host" );
+			auto dougPort = get_element_data(node, "PORT" );
+#else
+			auto dougHost = AppData.dougHostName.c_str();
+			auto dougPort = AppData.dougPortNumber.c_str();
+#endif
+			edgecomm->finishInitialization( dougHost, dougPort, StrToFloat(get_element_data(node, "DataRate"), 1.0));
             AppData.commlist.push_back(edgecomm);
         }
         if (NodeCheck(node, "FromEdge"))
@@ -305,6 +388,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "DisplayLogic"))
         {
+#ifndef IOS_BUILD
             char *error, *fname = get_node_content(node), *abspath;
             void *so_handler;
 
@@ -352,6 +436,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             }
 
             free(abspath);
+#endif
         }
         if (NodeCheck(node, "Window"))
         {
@@ -397,7 +482,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setLineWidth(get_element_data(node, "LineWidth"));
             myitem->setColor(get_element_data(node, "Color"));
             process_elements(myitem, node->children);
-        }
+        }  
         if (NodeCheck(node, "Polygon"))
         {
             dcPolygon *myitem = new dcPolygon(myparent);
@@ -457,7 +542,18 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
-            myitem->setProtocol(get_element_data(node, "Protocol"), get_element_data(node, "Host"), get_element_data(node, "Port"), get_element_data(node, "SharedMemoryKey"), get_element_data(node, "File"));
+			
+#ifndef IOS_BUILD
+			auto psHost		= get_element_data(node, "Host" );
+			auto psPort		= get_element_data(node, "PORT" );
+			auto protocol	= get_element_data(node, "Protocol");
+#else
+			auto psHost		= AppData.pixelStreamHostName.c_str();
+			auto psPort		= AppData.pixelStreamPortNumber.c_str();
+			auto protocol	= "MJPEG";
+#endif
+			
+            myitem->setProtocol( protocol, psHost, psPort, get_element_data(node, "SharedMemoryKey"), get_element_data(node, "File"));
         }
         if (NodeCheck(node, "Button"))
         {

@@ -132,7 +132,7 @@ void dcPixelStream::draw(void)
         }
         bcopy(psi->psd->pixels, pixels, nbytes);
     }
-
+	
     if (newh < psi->psd->height)
     {
         offset = (psi->psd->height - newh) / 2;

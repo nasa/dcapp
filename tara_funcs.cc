@@ -100,14 +100,64 @@ static void app_run(void)
     tdProcessEvents(mouse_click, key_click, win_config, win_close);
     passnum++;
     AppData.toplevel->updateStreams(passnum);
+#ifndef IOS_BUILD
     if (tdNeedsRedraw(mywin.id))
     {
         AppData.toplevel->draw();
         SwapBuffers();
         AppData.last_update->restart();
     }
+#endif
 }
 
+void Draw( void )
+{
+	if( AppData.toplevel == nullptr )
+		return;
+	
+	
+	if (tdNeedsRedraw(mywin.id))
+	{
+		AppData.toplevel->draw();
+		SwapBuffers();
+		AppData.last_update->restart();
+	}
+}
+
+#ifdef IOS_BUILD
+void SetDougHostAndPort( const char *hostNameA, const char *portNumberA )
+{
+	AppData.dougHostName	= hostNameA;
+	AppData.dougPortNumber	= portNumberA;
+}
+
+void SetPixelStreamHostAndPort( const char *hostNameA, const char *portNumberA )
+{
+	AppData.pixelStreamHostName		= hostNameA;
+	AppData.pixelStreamPortNumber	= portNumberA;
+}
+
+void SetTrickHostAndPort( const char *hostNameA, const char *portNumberA )
+{
+	AppData.trickHostName	= hostNameA;
+	AppData.trickPortNumber	= portNumberA;
+}
+
+void SetdcAppHostAndPort( const char *hostNameA, const char *portNumberA )
+{
+	AppData.dcappServerPortNumber	= portNumberA;
+	
+	char bufferL[4096];
+	GetApplicationDocumentsDirectory( bufferL, 4096 );
+	AppData.documentsFolder			= bufferL;
+}
+
+void SetForceDownload( bool valueA )
+{
+	AppData.forceDownload	= valueA;
+}
+
+#endif
 
 static void app_term(void)
 {

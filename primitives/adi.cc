@@ -16,6 +16,9 @@ dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(-1), ballID(-1)
     rollError = dcLoadConstant(0.0f);
     pitchError = dcLoadConstant(0.0f);
     yawError = dcLoadConstant(0.0f);
+	
+	
+	sphereTriangles = BuildSphere();
 }
 
 void dcADI::setBackgrountTexture(const char *filename)
@@ -72,8 +75,10 @@ void dcADI::draw(void)
     if (chevronH) chevh = *chevronH;
     else chevh = 0.2 * outerrad;
 
+
     // Draw the ball
-    draw_textured_sphere(center, middle, ballrad, ballID, *roll, *pitch, *yaw);
+//    draw_textured_sphere(center, middle, ballrad, ballID, *roll, *pitch, *yaw);
+    draw_textured_sphere( center, middle, sphereTriangles, ballrad, ballID, *roll, *pitch, *yaw );
 
     // Draw the surrounding area (i.e. background)
     translate_start(left, bottom);
@@ -90,130 +95,106 @@ void dcADI::draw(void)
 
 void dcADI::draw_roll_bug(float roll, float width, float height, float radius)
 {
-    short i;
-    float triang[3][2];
-
-    triang[0][0] = 0;
-    triang[0][1] = radius;
-    triang[1][0] = width/2.0;
-    triang[1][1] = radius-height;
-    triang[2][0] = -(width/2.0);
-    triang[2][1] = radius-height;
+	std::vector< float > pointsL = { 0, radius, width/2.0f, radius-height, -(width/2.0f), radius-height };
 
     rotate_start(roll);
-        polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2], 1);
-            for (i=0; i<3; i++) gfx_vertex(triang[i][0], triang[i][1]);
-        polygon_fill_end();
-
-        polygon_outline_start(1, BLACK[0], BLACK[1], BLACK[2], 1);
-            for (i=0; i<3; i++) gfx_vertex(triang[i][0], triang[i][1]);
-        polygon_outline_end();
+		draw_filled_triangles( pointsL, YELLOW[0], YELLOW[1], YELLOW[2], 1 );
+		draw_line( pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1 );
     rotate_end();
 }
 
 void dcADI::draw_cross_hairs(float radius)
 {
-    float length = 0.21 * radius;
-    float halfwidth = 0.017 * radius;
+	const float length = 0.21 * radius;
+	const float halfwidth = 0.017 * radius;
+	std::vector< float > crosshair;
+	std::vector< float > polygonL;
+	
+    addPoint( crosshair, -length, halfwidth );
+    addPoint( crosshair, -halfwidth, halfwidth );
+    addPoint( crosshair, -halfwidth, length );
+    addPoint( crosshair, halfwidth, length );
+    addPoint( crosshair, halfwidth, halfwidth );
+    addPoint( crosshair, length, halfwidth );
+    addPoint( crosshair, length, -halfwidth );
+    addPoint( crosshair, halfwidth, -halfwidth );
+    addPoint( crosshair, halfwidth, -length );
+    addPoint( crosshair, -halfwidth, -length );
+    addPoint( crosshair, -halfwidth, -halfwidth );
+    addPoint( crosshair, -length, -halfwidth );
+	
+	// tri 1
+	addPoint( polygonL, -length,  halfwidth );
+	addPoint( polygonL,  length,  halfwidth );
+	addPoint( polygonL,  length, -halfwidth );
+	addPoint( polygonL, -length, -halfwidth );
+	
+	draw_filled_triangles( polygonL, YELLOW[0], YELLOW[1], YELLOW[2], 1 );
 
-    float crosshair[12][2];
-    short i;
-
-    crosshair[0][0] = -length;
-    crosshair[0][1] = halfwidth;
-    crosshair[1][0] = -halfwidth;
-    crosshair[1][1] = halfwidth;
-    crosshair[2][0] = -halfwidth;
-    crosshair[2][1] = length;
-    crosshair[3][0] = halfwidth;
-    crosshair[3][1] = length;
-    crosshair[4][0] = halfwidth;
-    crosshair[4][1] = halfwidth;
-    crosshair[5][0] = length;
-    crosshair[5][1] = halfwidth;
-    crosshair[6][0] = length;
-    crosshair[6][1] = -halfwidth;
-    crosshair[7][0] = halfwidth;
-    crosshair[7][1] = -halfwidth;
-    crosshair[8][0] = halfwidth;
-    crosshair[8][1] = -length;
-    crosshair[9][0] = -halfwidth;
-    crosshair[9][1] = -length;
-    crosshair[10][0] = -halfwidth;
-    crosshair[10][1] = -halfwidth;
-    crosshair[11][0] = -length;
-    crosshair[11][1] = -halfwidth;
-
-    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2], 1);
-        gfx_vertex(crosshair[0][0], crosshair[0][1]);
-        gfx_vertex(crosshair[5][0], crosshair[5][1]);
-        gfx_vertex(crosshair[6][0], crosshair[6][1]);
-        gfx_vertex(crosshair[11][0], crosshair[11][1]);
-    polygon_fill_end();
-    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2], 1);
-        gfx_vertex(crosshair[2][0], crosshair[2][1]);
-        gfx_vertex(crosshair[3][0], crosshair[3][1]);
-        gfx_vertex(crosshair[8][0], crosshair[8][1]);
-        gfx_vertex(crosshair[9][0], crosshair[9][1]);
-    polygon_fill_end();
-    polygon_outline_start(1, BLACK[0], BLACK[1], BLACK[2], 1);
-        for (i=0; i<12; i++) gfx_vertex(crosshair[i][0], crosshair[i][1]);
-    polygon_outline_end();
+	// add starting point for line to end to close the loop
+	crosshair.push_back( -length );
+	crosshair.push_back( halfwidth );
+	draw_line( crosshair, 1, BLACK[0], BLACK[1], BLACK[2], 1 );
 }
 
 void dcADI::draw_needles(float radius, float roll_err, float pitch_err, float yaw_err)
 {
-    float delta, needle_edge;
-    float length = 0.29 * radius;
-    float halfwidth = 0.017 * radius;
+    const float length = 0.29 * radius;
+	const float halfwidth = 0.017 * radius;
+	float delta, needle_edge;
+	std::vector<float>	pntsL;
 
     delta = get_error_info(yaw_err, radius);
     needle_edge = radius*(cos(asin(delta/radius)));
+	
+	addPoint( pntsL, delta-halfwidth, -needle_edge);
+	addPoint( pntsL, delta-halfwidth, -length);
+	addPoint( pntsL, delta+halfwidth, -length);
+	addPoint( pntsL, delta+halfwidth, -needle_edge);
+	
+	draw_quad( pntsL, YELLOW[0], YELLOW[1], YELLOW[2], 1 );
+	
+	pntsL.clear();
+	addPoint( pntsL, delta-halfwidth, -needle_edge );
+	addPoint( pntsL, delta-halfwidth, -length );
+	addPoint( pntsL, delta+halfwidth, -length );
+	addPoint( pntsL, delta+halfwidth, -needle_edge );
 
-    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2], 1);
-        gfx_vertex(delta-halfwidth, -needle_edge);
-        gfx_vertex(delta-halfwidth, -length);
-        gfx_vertex(delta+halfwidth, -length);
-        gfx_vertex(delta+halfwidth, -needle_edge);
-    polygon_fill_end();
-    line_start(1, BLACK[0], BLACK[1], BLACK[2], 1);
-        gfx_vertex(delta-halfwidth, -needle_edge);
-        gfx_vertex(delta-halfwidth, -length);
-        gfx_vertex(delta+halfwidth, -length);
-        gfx_vertex(delta+halfwidth, -needle_edge);
-    line_end();
+	draw_line( pntsL, 1, BLACK[0], BLACK[1], BLACK[2], 1 );
 
     delta = get_error_info(roll_err, radius);
     needle_edge = radius*(cos(asin(delta/radius)));
 
-    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2], 1);
-        gfx_vertex(delta-halfwidth, needle_edge);
-        gfx_vertex(delta-halfwidth, length);
-        gfx_vertex(delta+halfwidth, length);
-        gfx_vertex(delta+halfwidth, needle_edge);
-    polygon_fill_end();
-    line_start(1, BLACK[0], BLACK[1], BLACK[2], 1);
-        gfx_vertex(delta-halfwidth, needle_edge);
-        gfx_vertex(delta-halfwidth, length);
-        gfx_vertex(delta+halfwidth, length);
-        gfx_vertex(delta+halfwidth, needle_edge);
-    line_end();
+	pntsL.clear();
+	addPoint( pntsL, delta-halfwidth, needle_edge);
+	addPoint( pntsL, delta-halfwidth, length);
+	addPoint( pntsL, delta+halfwidth, length);
+	addPoint( pntsL, delta+halfwidth, needle_edge);
+	draw_quad( pntsL, YELLOW[0], YELLOW[1], YELLOW[2], 1 );
+
+	pntsL.clear();
+	addPoint( pntsL, delta-halfwidth, needle_edge );
+	addPoint( pntsL, delta-halfwidth, length );
+	addPoint( pntsL, delta+halfwidth, length );
+	addPoint( pntsL, delta+halfwidth, needle_edge );
+	draw_line( pntsL, 1, BLACK[0], BLACK[1], BLACK[2], 1 );
 
     delta = get_error_info(pitch_err, radius);
     needle_edge = radius*(cos(asin(delta/radius)));
 
-    polygon_fill_start(YELLOW[0], YELLOW[1], YELLOW[2], 1);
-        gfx_vertex(needle_edge, delta-halfwidth);
-        gfx_vertex(length, delta-halfwidth);
-        gfx_vertex(length, delta+halfwidth);
-        gfx_vertex(needle_edge, delta+halfwidth);
-    polygon_fill_end();
-    line_start(1, BLACK[0], BLACK[1], BLACK[2], 1);
-        gfx_vertex(needle_edge, delta-halfwidth);
-        gfx_vertex(length, delta-halfwidth);
-        gfx_vertex(length, delta+halfwidth);
-        gfx_vertex(needle_edge, delta+halfwidth);
-    line_end();
+	pntsL.clear();
+	addPoint( pntsL, needle_edge, delta-halfwidth);
+	addPoint( pntsL, length, delta-halfwidth);
+	addPoint( pntsL, length, delta+halfwidth);
+	addPoint( pntsL, needle_edge, delta+halfwidth);
+	draw_quad( pntsL, YELLOW[0], YELLOW[1], YELLOW[2], 1 );
+	
+	pntsL.clear();
+	addPoint( pntsL, needle_edge, delta-halfwidth );
+	addPoint( pntsL, length, delta-halfwidth );
+	addPoint( pntsL, length, delta+halfwidth );
+	addPoint( pntsL, needle_edge, delta+halfwidth );
+	draw_line( pntsL, 1, BLACK[0], BLACK[1], BLACK[2], 1 );
 }
 
 float dcADI::get_error_info(float value, float outer_rad)
@@ -221,4 +202,183 @@ float dcADI::get_error_info(float value, float outer_rad)
     if (value < -1.0) return (0.4 * outer_rad);
     else if (value > 1.0) return (-0.4 * outer_rad);
     else return (-0.4 * outer_rad * value);
+}
+
+/* Build a sphere with triangles */
+
+void dcADI::BuildTriangles( std::vector<float> &listA, const std::vector<LocalPoint> &list1A, const std::vector<LocalPoint> &list2A  )
+{
+	auto itr1L = std::begin( list1A );
+	auto itr2L = std::begin( list2A );
+	auto end1L = std::end( list1A );
+	auto end2L = std::end( list2A );
+	
+	size_t indexL = 0;
+	while( itr1L != end1L )
+	{
+		auto itr3L = std::next( itr1L );
+		auto itr4L = std::next( itr2L );
+		
+		if( itr3L == end1L )
+			itr3L = std::begin( list1A );
+		
+		if( itr4L == end2L )
+			itr4L = std::begin( list2A );
+		
+		{
+			auto p1L = (*itr1L);
+			auto p2L = (*itr2L);
+			auto p3L = (*itr4L);
+			
+			if( indexL == (list1A.size() - 1) )
+				p3L.m_U += 1.0;
+			
+			addPoint( listA, p1L.m_X, p1L.m_Y, p1L.m_Z, p1L.m_U, p1L.m_V );
+			addPoint( listA, p2L.m_X, p2L.m_Y, p2L.m_Z, p2L.m_U, p2L.m_V );
+			addPoint( listA, p3L.m_X, p3L.m_Y, p3L.m_Z, p3L.m_U, p3L.m_V );
+		}
+		
+		{
+			auto p1L = (*itr1L);
+			auto p2L = (*itr4L);
+			auto p3L = (*itr3L);
+			if( indexL == (list1A.size() - 1) )
+			{
+				p2L.m_U += 1.0;
+				p3L.m_U += 1.0;
+			}
+			
+			addPoint( listA, p1L.m_X, p1L.m_Y, p1L.m_Z, p1L.m_U, p1L.m_V );
+			addPoint( listA, p2L.m_X, p2L.m_Y, p2L.m_Z, p2L.m_U, p2L.m_V );
+			addPoint( listA, p3L.m_X, p3L.m_Y, p3L.m_Z, p3L.m_U, p3L.m_V );
+		}
+		
+		itr1L = std::next( itr1L );
+		itr2L = std::next( itr2L );
+	}
+}
+
+std::vector<float> dcADI::BuildSphere( void )
+{
+	const int numLatL	= 10;
+	const int numLongL	= 10;
+	float radiusL		= 1.0;
+	float deltalongL	= 2.0 * M_PI / static_cast<float>(numLongL);
+	float deltalatL		= M_PI / static_cast<float>(numLatL);
+	
+	std::vector< std::vector< LocalPoint > >	pointListL;
+
+	//
+	// Build all points needed for sphere
+	
+	// This does not start at 0; it starts one latitude(row) up and
+	// ends one latitude(row) down from 1.  The top and bottom are done
+	// as a fan at the bottom of this loop.
+	float anglelatL = deltalatL;
+	
+	for( size_t iL=0; iL<numLatL-1; iL++ )
+	{
+		std::vector< LocalPoint > pointsL;
+		float anglelongL = 0.0f;
+		float radiuslatL = std::abs(sinf(anglelatL) * radiusL);
+		float zL = cosf( anglelatL ) * radiusL;
+
+		for( size_t jL=0; jL<numLongL; jL++ )
+		{
+			// C++ 17 this will become LocalPoint &pointL = pointsL.emplace_back( LocalPoint() );
+			pointsL.emplace_back( LocalPoint() );
+			LocalPoint &pointL = pointsL.back();
+			
+			pointL.m_Y = (cosf( anglelongL ) * radiuslatL );
+			pointL.m_Z = (sinf( anglelongL ) * radiuslatL );
+			pointL.m_X = zL;
+			
+			pointL.m_U = std::abs( anglelongL / (2.0 * M_PI) ) * 2.0f;
+			pointL.m_V = 1.0 - anglelatL / M_PI;
+			
+			pointsL.push_back( pointL );
+			
+			anglelongL += deltalongL;
+		}
+		
+		pointListL.push_back( pointsL );
+		
+		anglelatL += deltalatL;
+	}
+	
+	std::vector< float > trianglePoints;
+	for( size_t iL=0; iL<numLatL-2; iL++ )
+		BuildTriangles( trianglePoints, pointListL[iL], pointListL[iL+1] );
+
+	//
+	// Build Bottom EndCap
+	
+	auto itr1L = pointListL[0].begin();
+	auto end1L = pointListL[0].end();
+	
+	while( itr1L != end1L )
+	{
+		auto itr3L = itr1L + 1;
+		
+		if( itr3L == end1L )
+			itr3L = pointListL[0].begin();
+		
+		{
+			trianglePoints.push_back( 0.5 );
+			trianglePoints.push_back( 0.0 );
+			trianglePoints.push_back( 0.0 );
+			trianglePoints.push_back( 0.5 );
+			trianglePoints.push_back( 1.0 );
+
+			trianglePoints.push_back( itr1L->m_X );
+			trianglePoints.push_back( itr1L->m_Y );
+			trianglePoints.push_back( itr1L->m_Z );
+			trianglePoints.push_back( itr1L->m_U );
+			trianglePoints.push_back( itr1L->m_V );
+			
+			trianglePoints.push_back( itr3L->m_X );
+			trianglePoints.push_back( itr3L->m_Y );
+			trianglePoints.push_back( itr3L->m_Z );
+			trianglePoints.push_back( itr3L->m_U );
+			trianglePoints.push_back( itr3L->m_V );
+		}
+		
+		++itr1L;
+	}
+	
+	// Build Top EndCap
+	itr1L = pointListL[numLatL-2].begin();
+	end1L = pointListL[numLatL-2].end();
+	
+	while( itr1L != end1L )
+	{
+		auto itr3L = itr1L + 1;
+		
+		if( itr3L == end1L )
+			itr3L = pointListL[numLatL-2].begin();
+		
+		{
+			trianglePoints.push_back( -0.5 );
+			trianglePoints.push_back( 0.0 );
+			trianglePoints.push_back( 0.0 );
+			trianglePoints.push_back( 0.5 );
+			trianglePoints.push_back( 0.0 );
+			
+			trianglePoints.push_back( itr3L->m_X );
+			trianglePoints.push_back( itr3L->m_Y );
+			trianglePoints.push_back( itr3L->m_Z );
+			trianglePoints.push_back( itr3L->m_U );
+			trianglePoints.push_back( itr3L->m_V );
+			
+			trianglePoints.push_back( itr1L->m_X );
+			trianglePoints.push_back( itr1L->m_Y );
+			trianglePoints.push_back( itr1L->m_Z );
+			trianglePoints.push_back( itr1L->m_U );
+			trianglePoints.push_back( itr1L->m_V );
+		}
+		
+		++itr1L;
+	}
+	
+	return trianglePoints;
 }
