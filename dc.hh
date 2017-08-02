@@ -5,5 +5,12 @@
 
 typedef flFont *dcFont;
 typedef unsigned int dcTexture;
+class dcPosition
+{
+    public:
+        dcPosition(float X, float Y) { x = X; y = Y; };
+        float x;
+        float y;
+};
 
 #endif

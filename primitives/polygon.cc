@@ -1,6 +1,9 @@
+#include "nodes.hh"
 #include "opengl_draw.hh"
 #include "string_utils.hh"
 #include "polygon.hh"
+
+extern appdata AppData;
 
 dcPolygon::dcPolygon(dcParent *myparent) : linewidth(1), fill(false), outline(false)
 {
@@ -38,16 +41,20 @@ void dcPolygon::setLineWidth(const char *inval)
 
 void dcPolygon::draw(void)
 {
+    for (const auto &myobj : children) myobj->draw();
+
     if (fill)
     {
         polygon_fill_start(*(FillColor.R), *(FillColor.G), *(FillColor.B), *(FillColor.A));
-        for (const auto &myobj : children) myobj->draw();
+        for (const auto &mypos : AppData.vertices) gfx_vertex(mypos.x, mypos.y);
         polygon_fill_end();
     }
     if (outline)
     {
         polygon_outline_start(linewidth, *(LineColor.R), *(LineColor.G), *(LineColor.B), *(LineColor.A));
-        for (const auto &myobj : children) myobj->draw();
+        for (const auto &mypos : AppData.vertices) gfx_vertex(mypos.x, mypos.y);
         polygon_outline_end();
     }
+
+    AppData.vertices.clear();
 }

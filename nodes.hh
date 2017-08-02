@@ -4,6 +4,7 @@
 #include <list>
 #include "basicutils/timer.hh"
 #include "primitives/primitives.hh"
+#include "dc.hh"
 #include "animation.hh"
 #include "comm.hh"
 #include "psi.hh"
@@ -18,6 +19,7 @@ typedef struct
     std::list<PixelStreamItem *> pixelstreams;
     std::list<dcObject *> events;
     std::list<dcObject *> mouseheld;
+    std::list<dcPosition> vertices;
     dcWindow *toplevel;
     void (*DisplayPreInit)(void *(*)(const char *));
     void (*DisplayInit)(void);

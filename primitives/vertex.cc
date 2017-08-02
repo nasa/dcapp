@@ -1,6 +1,9 @@
+#include "nodes.hh"
 #include "opengl_draw.hh"
 #include "varlist.hh"
 #include "vertex.hh"
+
+extern appdata AppData;
 
 dcVertex::dcVertex(dcParent *myparent) : x(0x0), y(0x0)
 {
@@ -33,5 +36,5 @@ void dcVertex::draw(void)
     }
     else myy = 0;
 
-    gfx_vertex(myx, myy);
+    AppData.vertices.push_back(dcPosition(myx, myy));
 }
