@@ -98,7 +98,9 @@ static void process_elements(xmlNodePtr startnode)
         if (NodeCheck(node, "Variable"))
         {
             vitem newitem;
-            newitem.name = std::string(get_node_content(node));
+            const char *myname = get_node_content(node);
+            if (myname[0] == '@') myname++;
+            newitem.name = std::string(myname);
             newitem.type = std::string(get_element_data(node, "Type"));
             vlist.push_back(newitem);
         }
