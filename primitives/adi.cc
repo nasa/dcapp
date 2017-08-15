@@ -1,6 +1,8 @@
 #include <cmath>
+#include <cstring>
 #include "loadUtils.hh"
 #include "opengl_draw.hh"
+#include "varlist.hh"
 #include "adi.hh"
 
 static const float BLACK[3] = {0.0, 0.0, 0.0};
@@ -24,6 +26,32 @@ void dcADI::setBackgrountTexture(const char *filename)
 void dcADI::setBallTexture(const char *filename)
 {
     if (filename) ballID = dcLoadTexture(filename);
+}
+
+void dcADI::setRPY(const char *inroll, const char *inpitch, const char *inyaw)
+{
+    if (inroll) roll = getFloatPointer(inroll);
+    if (inpitch) pitch = getFloatPointer(inpitch);
+    if (inyaw) yaw = getFloatPointer(inyaw);
+}
+
+void dcADI::setRPYerrors(const char *re, const char *pe, const char *ye)
+{
+    if (re) rollError = getFloatPointer(re);
+    if (pe) pitchError = getFloatPointer(pe);
+    if (ye) yawError = getFloatPointer(ye);
+}
+
+void dcADI::setRadius(const char *outer, const char *ball)
+{
+    if (outer) outerradius = getFloatPointer(outer);
+    if (ball) ballradius = getFloatPointer(ball);
+}
+
+void dcADI::setChevron(const char *width, const char *height)
+{
+    if (width) chevronW = getFloatPointer(width);
+    if (height) chevronH = getFloatPointer(height);
 }
 
 void dcADI::draw(void)

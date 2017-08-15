@@ -11,6 +11,10 @@ class dcADI : public dcGeometric
         dcADI(dcParent *);
         void setBackgrountTexture(const char *);
         void setBallTexture(const char *);
+        void setRPY(const char *, const char *, const char *);
+        void setRPYerrors(const char *, const char *, const char *);
+        void setRadius(const char *, const char *);
+        void setChevron(const char *, const char *);
         void draw(void);
 
     private:

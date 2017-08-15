@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
@@ -304,11 +305,18 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "DisplayLogic"))
         {
-            char *error;
+            char *error, *fname = get_node_content(node), *abspath;
             void *so_handler;
 
-            debug_msg("Loading " << get_node_content(node) << "...");
-            so_handler = dlopen(get_node_content(node), RTLD_NOW);
+            debug_msg("Loading " << fname << "...");
+
+            // If path isn't specified, prepend with "./" to avoid searching LD_LIBRARY_PATH, DYLD_LIBRARY_PATH, etc.
+            bool absolute = false;
+            for (int i=0; i<strlen(fname) && !absolute; i++) if (fname[i] == '/') absolute = true;
+            if (absolute) abspath = strdup(fname);
+            else asprintf(&abspath, "./%s", fname);
+
+            so_handler = dlopen(abspath, RTLD_NOW);
             if (!so_handler)
             {
                 error_msg(dlerror());
@@ -342,6 +350,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 debug_msg(error);
                 AppData.DisplayClose = &DisplayCloseStub;
             }
+
+            free(abspath);
         }
         if (NodeCheck(node, "Window"))
         {
@@ -691,6 +701,10 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setBackgrountTexture(get_element_data(node, "CoverFile"));
             myitem->setBallTexture(get_element_data(node, "BallFile"));
+            myitem->setRPY(get_element_data(node, "Roll"), get_element_data(node, "Pitch"), get_element_data(node, "Yaw"));
+            myitem->setRPYerrors(get_element_data(node, "RollError"), get_element_data(node, "PitchError"), get_element_data(node, "YawError"));
+            myitem->setRadius(get_element_data(node, "OuterRadius"), get_element_data(node, "BallRadius"));
+            myitem->setChevron(get_element_data(node, "ChevronWidth"), get_element_data(node, "ChevronHeight"));
         }
         if (NodeCheck(node, "MouseEvent"))
         {
