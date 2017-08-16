@@ -312,7 +312,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
 
             // If path isn't specified, prepend with "./" to avoid searching LD_LIBRARY_PATH, DYLD_LIBRARY_PATH, etc.
             bool absolute = false;
-            for (int i=0; i<strlen(fname) && !absolute; i++) if (fname[i] == '/') absolute = true;
+            for (size_t i=0; i<strlen(fname) && !absolute; i++) if (fname[i] == '/') absolute = true;
             if (absolute) abspath = strdup(fname);
             else asprintf(&abspath, "./%s", fname);
 
