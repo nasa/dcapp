@@ -10,10 +10,6 @@
 #define CONNECTION_ATTEMPT_INTERVAL 2
 #define CONNECTION_TIMEOUT 2.0
 #define CONNECTION_TIMEOUT_USEC 10000
-#define MAX_ATTEMPTS 1000
-#define READBUF_ALLOC_CHUNK 256
-
-enum { crlf, crlfcrlf };
 
 class PixelStreamMjpeg : public PixelStreamData
 {
@@ -32,9 +28,11 @@ class PixelStreamMjpeg : public PixelStreamData
         int socket_connect(void);
         void socket_disconnect(void);
         int SendDataRequest(const char *);
-        int GetBuffer(unsigned);
+        int findCrlf(char *, unsigned);
+        int findCrlfCrlf(char *, unsigned);
         int RecvHeader(void);
         int RecvData(void);
+        void loadPixels(const char *, size_t);
 
         char *host;
         int port;
@@ -43,13 +41,14 @@ class PixelStreamMjpeg : public PixelStreamData
         Timer *lastconnectattempt;
         Timer *lastread;
         char *readbuf;
-        void *rawdata;
         size_t readbufalloc;
-        size_t rawalloc;
         size_t dataalloc;
         int socket_connected;
         int data_requested;
         int header_received;
+        int totalbytes;
+        int masteroffset;
+        bool flushonly;
 };
 
 #endif

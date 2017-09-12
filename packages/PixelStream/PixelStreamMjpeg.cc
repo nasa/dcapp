@@ -27,13 +27,13 @@ host(0x0),
 port(0),
 CommSocket(-1),
 readbuf(0x0),
-rawdata(0x0),
 readbufalloc(0),
-rawalloc(0),
 dataalloc(0),
 socket_connected(0),
 data_requested(0),
-header_received(0)
+header_received(0),
+totalbytes(0),
+masteroffset(0)
 {
     this->protocol = PixelStreamMjpegProtocol;
     this->lastconnectattempt = new Timer;
@@ -44,7 +44,6 @@ PixelStreamMjpeg::~PixelStreamMjpeg()
 {
     this->socket_disconnect();
     if (this->host) free(this->host);
-    if (this->rawdata) free(this->rawdata);
     if (this->pixels) free(this->pixels);
     delete this->lastconnectattempt;
     delete this->lastread;
@@ -151,7 +150,7 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
 
 int PixelStreamMjpeg::reader(void)
 {
-    int updated = 0;
+    int updated = 0, updatepixels = 0, bytes_to_read, newbytes;
 
     if (!socket_connected)
     {
@@ -175,23 +174,39 @@ int PixelStreamMjpeg::reader(void)
             return 0;
         }
         if (!data_requested) data_requested = SendDataRequest("GET /video?nativeresolution=1 HTTP/1.0\n\n");
-        if (data_requested && !header_received) header_received = RecvHeader();
-        if (header_received) updated = RecvData();
-
-        // Purge any extra data to prevent the socket from getting saturated
-        if (updated)
+        if (data_requested)
         {
-            int extra_bytes;
-            ioctl(CommSocket, FIONREAD, &extra_bytes);
-            if (extra_bytes)
+            do
             {
-                char dummy;
-                for (int i=0; i<extra_bytes; i++) read(CommSocket, &dummy, 1);
+                ioctl(CommSocket, FIONREAD, &bytes_to_read);
+                if (bytes_to_read > 0)
+                {
+                    if ((totalbytes + bytes_to_read) >= (int)readbufalloc)
+                    {
+                        readbufalloc = totalbytes + bytes_to_read;
+                        readbuf = (char *)realloc(readbuf, readbufalloc);
+                    }
+                    newbytes = read(CommSocket, readbuf + totalbytes, bytes_to_read);
+                    if (newbytes > 0) totalbytes += newbytes;
+                }
             }
+            while (bytes_to_read > 0);
+
+            flushonly = false;
+            if (totalbytes > 0) do
+            {
+                if (!header_received) header_received = RecvHeader();
+                if (header_received) updated = RecvData();
+                if (updated) updatepixels = 1;
+                totalbytes -= masteroffset;
+                for (int i=0; i<totalbytes; i++) readbuf[i] = readbuf[masteroffset+i];
+                masteroffset = 0;
+            }
+            while ((totalbytes > 0) && updated);
         }
     }
 
-    return updated;
+    return updatepixels;
 }
 
 void PixelStreamMjpeg::socket_disconnect(void)
@@ -221,34 +236,21 @@ int PixelStreamMjpeg::SendDataRequest(const char *command)
     }
 }
 
-int PixelStreamMjpeg::GetBuffer(unsigned sep)
+int PixelStreamMjpeg::findCrlf(char *bufptr, unsigned buflen)
 {
-    int i, n, buflen = 0;
-
-    for (i=0; i<MAX_ATTEMPTS; i++)
+    for (unsigned i=1; i<buflen; i++)
     {
-        if (buflen >= (int)readbufalloc)
-        {
-            readbufalloc += READBUF_ALLOC_CHUNK;
-            readbuf = (char *)realloc(readbuf, readbufalloc);
-        }
-        n = read(CommSocket, &readbuf[buflen], 1);
-        if (n == 1)
-        {
-            if (buflen > 0 && sep == crlf && readbuf[buflen-1] == '\r' && readbuf[buflen] == '\n')
-            {
-                readbuf[buflen-1] = '\0';
-                return buflen-1;
-            }
-            else if (buflen > 2 && readbuf[buflen-3] == '\r' && readbuf[buflen-2] == '\n' && readbuf[buflen-1] == '\r' && readbuf[buflen] == '\n')
-            {
-                readbuf[buflen-3] = '\0';
-                return buflen-3;
-            }
-            buflen++;
-        }
+        if (bufptr[i-1] == '\r' && bufptr[i] == '\n') return i;
     }
+    return 0;
+}
 
+int PixelStreamMjpeg::findCrlfCrlf(char *bufptr, unsigned buflen)
+{
+    for (unsigned i=3; i<buflen; i++)
+    {
+        if (bufptr[i-3] == '\r' && bufptr[i-2] == '\n' && bufptr[i-1] == '\r' && bufptr[i] == '\n') return i;
+    }
     return 0;
 }
 
@@ -257,14 +259,16 @@ int PixelStreamMjpeg::RecvHeader(void)
     int i, j;
     char *boundarytag = 0x0;
 
-    int buflen = GetBuffer(crlfcrlf);
-    if (buflen >= 15 && !strncmp(readbuf, "HTTP/1.1 200 OK", 15))
+    int buflen = findCrlfCrlf(readbuf+masteroffset, totalbytes-masteroffset) - 3;
+    readbuf[buflen+masteroffset] = '\0';
+
+    if (buflen >= 15 && !strncmp(readbuf+masteroffset, "HTTP/1.1 200 OK", 15))
     {
         for (i=0; !boundarytag && i<buflen-9; i++)
         {
-            if (!strncmp(&readbuf[i], "boundary=", 9))
+            if (!strncmp(&readbuf[masteroffset+i], "boundary=", 9))
             {
-                boundarytag=&readbuf[i+9];
+                boundarytag=&readbuf[masteroffset+i+9];
                 for (j=0; j<buflen-i-9; j++)
                 {
                     if (isspace(boundarytag[j])) boundarytag[j] = '\0';
@@ -272,47 +276,66 @@ int PixelStreamMjpeg::RecvHeader(void)
             }
         }
         if (!boundarytag) return 0;
-        for (j=0; j<MAX_ATTEMPTS; j++)
+
+        masteroffset += buflen+4;
+        buflen = findCrlf(readbuf+masteroffset, totalbytes-masteroffset);
+        if (buflen >= (int)strlen(boundarytag) && (!strncmp(readbuf+masteroffset, boundarytag, strlen(boundarytag)) || !strncmp(readbuf+masteroffset+2, boundarytag, strlen(boundarytag))))
         {
-            buflen = GetBuffer(crlf);
-            if (buflen >= (int)strlen(boundarytag) && (!strncmp(readbuf, boundarytag, strlen(boundarytag)) || !strncmp(readbuf+2, boundarytag, strlen(boundarytag))))
-                return 1;
+            masteroffset += buflen+2;
+            return 1;
         }
     }
-    
+
     return 0;
 }
 
 int PixelStreamMjpeg::RecvData(void)
 {
 #if defined(JPEG_ENABLED) && (JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
-    int i;
-    struct jpeg_decompress_struct jinfo;
-    struct jpeg_error_mgr jerr;
-    unsigned char *line;
-    size_t datasize, rawsize = 0;
+    int i, tmpoffset;
+    size_t rawsize = 0;
 
-    int buflen = GetBuffer(crlfcrlf);
+    int buflen = findCrlfCrlf(readbuf+masteroffset, totalbytes-masteroffset);
     for (i=0; !rawsize && i<buflen-15; i++)
     {
-        if (!strncmp(&readbuf[i], "Content-Length:", 15))
+        if (!strncmp(&readbuf[masteroffset+i], "Content-Length:", 15))
         {
-            if (sscanf(&readbuf[i+15], "%ld", &rawsize) != 1) return 0;
+            if (sscanf(&readbuf[masteroffset+i+15], "%ld", &rawsize) != 1) return 0;
         }
     }
     if (!rawsize) return 0;
 
-    if (rawsize > rawalloc)
+    tmpoffset = masteroffset + buflen + 1;
+    if ((totalbytes - tmpoffset) >= rawsize)
     {
-        rawalloc = rawsize;
-        rawdata = (void *)realloc(rawdata, rawalloc);
+        if (!flushonly)
+        {
+            loadPixels(readbuf + tmpoffset, rawsize);
+            flushonly = true;
+        }
+        masteroffset = tmpoffset + rawsize;
+        this->lastread->restart();
+        return 1;
     }
 
-    if (read(CommSocket, rawdata, rawsize) != (ssize_t)rawsize) return 0;
+    return 0;
+#else
+    dataalloc = 0;
+    this->lastread->restart();
+    return 0;
+#endif
+}
+
+void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
+{
+    struct jpeg_decompress_struct jinfo;
+    struct jpeg_error_mgr jerr;
+    unsigned char *line;
+    size_t datasize;
 
     jinfo.err = jpeg_std_error(&jerr);
     jpeg_create_decompress(&jinfo);
-    jpeg_mem_src(&jinfo, (unsigned char *)rawdata, rawsize);
+    jpeg_mem_src(&jinfo, (unsigned const char *)memptr, memsize);
     jpeg_read_header(&jinfo, 1);
 
     width = jinfo.image_width;
@@ -332,16 +355,6 @@ int PixelStreamMjpeg::RecvData(void)
     }
     jpeg_finish_decompress(&jinfo);
     jpeg_destroy_decompress(&jinfo);
-
-    this->lastread->restart();
-
-    return 1;
-#else
-    rawalloc = 0;
-    dataalloc = 0;
-    this->lastread->restart();
-    return 0;
-#endif
 }
 
 char *PixelStreamMjpeg::getHost(void)

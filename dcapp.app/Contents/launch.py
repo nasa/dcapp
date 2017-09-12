@@ -1,18 +1,15 @@
 #!/usr/bin/python
 
-import os, platform, sys
-
-ostype = os.getenv('OSTYPE')
-if (ostype == None): ostype = platform.system().lower()
-
-machtype = os.getenv('MACHTYPE')
-if (machtype == None): machtype = platform.machine()
-
-if (ostype == 'darwin'): osspec = 'MacOS'
-else: osspec = ostype + '_' + machtype
+import os, subprocess, sys
 
 myfullpath = os.path.abspath(__file__)
-appcmd = os.path.join(os.path.dirname(myfullpath), osspec, os.path.basename(myfullpath))
+mydir = os.path.dirname(myfullpath)
+mybase = os.path.basename(myfullpath)
+
+myscript = os.path.abspath(os.path.join(mydir, '..', '..', 'bin', 'dcapp-config'))
+osspec = subprocess.check_output([myscript, "--osspec"]).strip()
+
+appcmd = os.path.join(mydir, osspec, mybase)
 
 myargs = [appcmd]
 for arg in sys.argv[1:]: myargs.append(arg)
