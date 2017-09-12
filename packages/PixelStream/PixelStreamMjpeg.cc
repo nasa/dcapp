@@ -335,7 +335,7 @@ void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
 
     jinfo.err = jpeg_std_error(&jerr);
     jpeg_create_decompress(&jinfo);
-    jpeg_mem_src(&jinfo, (unsigned const char *)memptr, memsize);
+    jpeg_mem_src(&jinfo, (unsigned char *)memptr, memsize);
     jpeg_read_header(&jinfo, 1);
 
     width = jinfo.image_width;
