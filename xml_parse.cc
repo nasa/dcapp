@@ -52,10 +52,16 @@ int ParseXMLFile(const char *fullpath)
 
     if (!fullpath) return (-1);
 
-    dirc = strdup(fullpath);
-    basec = strdup(fullpath);
+    char *myabspath = (char *)calloc(PATH_MAX, sizeof(char));
+    realpath(fullpath, myabspath);
+
+    dirc = strdup(myabspath);
+    basec = strdup(myabspath);
     dname = dirname(dirc);
     bname = basename(basec);
+
+    free(myabspath);
+    setenv("dcappDisplayHome", dname, 1);
 
     // Store cwd for future use
     mycwd = open(".", O_RDONLY);

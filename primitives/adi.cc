@@ -48,10 +48,10 @@ void dcADI::setRadius(const char *outer, const char *ball)
     if (ball) ballradius = getFloatPointer(ball);
 }
 
-void dcADI::setChevron(const char *width, const char *height)
+void dcADI::setChevron(const char *widthspec, const char *heightspec)
 {
-    if (width) chevronW = getFloatPointer(width);
-    if (height) chevronH = getFloatPointer(height);
+    if (widthspec) chevronW = getFloatPointer(widthspec);
+    if (heightspec) chevronH = getFloatPointer(heightspec);
 }
 
 void dcADI::draw(void)

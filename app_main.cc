@@ -36,7 +36,7 @@ extern void DisplayCloseStub(void);
 
 void Terminate(int);
 
-static void SetDefaultEnvironment(void);
+static void SetDefaultEnvironment(std::string);
 static void ProcessArgs(int, char **);
 
 appdata AppData;
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
     AppData.DisplayLogic = &DisplayLogicStub;
     AppData.DisplayClose = &DisplayCloseStub;
 
-    SetDefaultEnvironment();
+    SetDefaultEnvironment(dirname(argv[0]));
     ProcessArgs(argc, argv);
 
     AppData.DisplayPreInit(get_pointer);
@@ -157,9 +157,59 @@ void Terminate(int flag)
     exit(flag);
 }
 
-/* Make sure that the following environment variables are set in case   */
-/* the user needs them: USER, LOGNAME, HOME, OSTYPE, MACHTYPE, and HOST */
-static void SetDefaultEnvironment(void)
+static void setenvUsingScript(const char *myenv, const char *myscript, const char *myarg)
+{
+    char *cmd;
+    asprintf(&cmd, "%s %s", myscript, myarg);
+
+    FILE *pipe = popen(cmd, "r");
+    if (!pipe)
+    {
+        free(cmd);
+        return;
+    }
+
+    size_t currentalloc = 256, bytecount = 0;
+    char mychar;
+
+    char *buffer = (char *)malloc(currentalloc);
+
+    while (fread(&mychar, 1, 1, pipe))
+    {
+        bytecount++;
+        if (bytecount > currentalloc)
+        {
+            currentalloc += 256;
+            buffer = (char *)realloc((void *)buffer, currentalloc); fflush(0);
+        }
+        buffer[bytecount-1] = mychar;
+    }
+
+    // strip out leading and trailing white space
+    int i;
+    size_t startbyte = 0, endbyte = bytecount;
+    for (i=0; i<bytecount; i++)
+    {
+        if (isspace(buffer[i])) startbyte++;
+        else break;
+    }
+    for (i=bytecount-1; i>=0; i--)
+    {
+        if (isspace(buffer[i])) endbyte--;
+        else break;
+    }
+    buffer[endbyte] = '\0';
+
+    setenv(myenv, &buffer[startbyte], 1);
+
+    free(buffer);
+    free(cmd);
+}
+
+/* Set the dcappOSTYPE, dcappOSSPEC, dcappOBJDIR, and dcappBINDIR environment       */
+/* variables in case the user needs them.  Likewise, set the following for the user */
+/* if they have not been set: USER, LOGNAME, HOME, OSTYPE, MACHTYPE, and HOST.      */
+static void SetDefaultEnvironment(std::string mypath)
 {
     int i;
     struct utsname minfo;
@@ -167,6 +217,17 @@ static void SetDefaultEnvironment(void)
     long hsize = sysconf(_SC_HOST_NAME_MAX)+1;
     char myhost[hsize];
     char *lc_os;
+
+    mypath += "/../../../bin/dcapp-config";
+    char *myscript = (char *)calloc(PATH_MAX, sizeof(char));
+    realpath(mypath.c_str(), myscript);
+
+    setenvUsingScript("dcappOSTYPE", myscript, "--ostype");
+    setenvUsingScript("dcappOSSPEC", myscript, "--osspec");
+    setenvUsingScript("dcappOBJDIR", myscript, "--objdir");
+    setenvUsingScript("dcappBINDIR", myscript, "--bindir");
+
+    free(myscript);
 
     uname(&minfo);
 
