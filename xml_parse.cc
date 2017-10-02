@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <dlfcn.h>
 #include "basicutils/msg.hh"
+#include "basicutils/pathinfo.hh"
 #include "trick/trickcomm.hh"
 #include "edge/edgecomm.hh"
 #include "ccsds/ccsds_udp_comm.hh"
@@ -45,31 +46,21 @@ static bool preprocessing = true;
 
 int ParseXMLFile(const char *fullpath)
 {
-    char *dirc, *basec, *bname, *dname;
     int mycwd;
     xmlDocPtr mydoc;
     xmlNodePtr root_element;
 
-    if (!fullpath) return (-1);
+    PathInfo *mypath = new PathInfo(fullpath);
 
-    char *myabspath = (char *)calloc(PATH_MAX, sizeof(char));
-    realpath(fullpath, myabspath);
-
-    dirc = strdup(myabspath);
-    basec = strdup(myabspath);
-    dname = dirname(dirc);
-    bname = basename(basec);
-
-    free(myabspath);
-    setenv("dcappDisplayHome", dname, 1);
+    setenv("dcappDisplayHome", mypath->getDirectory(), 1);
 
     // Store cwd for future use
     mycwd = open(".", O_RDONLY);
 
     // Move to directory containing the specfile by default
-    if (dname) chdir(dname);
+    if (mypath->getDirectory()) chdir(mypath->getDirectory());
 
-    if (XMLFileOpen(&mydoc, &root_element, bname)) return (-1);
+    if (XMLFileOpen(&mydoc, &root_element, mypath->getFile())) return (-1);
 
     if (!NodeCheck(root_element, "DCAPP"))
     {
@@ -91,8 +82,7 @@ int ParseXMLFile(const char *fullpath)
     // Return to the original working directory
     fchdir(mycwd);
 
-    free(dirc);
-    free(basec);
+    delete mypath;
 
     return 0;
 }
@@ -111,25 +101,17 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             xmlDocPtr include_file;
             xmlNodePtr include_element;
-
             const char *include_filename = get_node_content(node);
-            char *myabspath = (char *)calloc(PATH_MAX, sizeof(char));
-            realpath(include_filename, myabspath);
 
-            char *dirc = strdup(myabspath);
-            char *basec = strdup(myabspath);
-            char *dname = dirname(dirc);
-            char *bname = basename(basec);
-
-            free(myabspath);
+            PathInfo *mypath = new PathInfo(include_filename);
 
             // Store cwd for future use
             int mycwd = open(".", O_RDONLY);
 
-            // Move to directory containing the specfile by default
-            if (dname) chdir(dname);
+            // Move to directory containing the new file
+            if (mypath->getDirectory()) chdir(mypath->getDirectory());
 
-            if (XMLFileOpen(&include_file, &include_element, bname))
+            if (XMLFileOpen(&include_file, &include_element, mypath->getFile()))
             {
                 warning_msg("Couldn't open include file " << include_filename);
             }
@@ -142,8 +124,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             // Return to the original working directory
             fchdir(mycwd);
 
-            free(dirc);
-            free(basec);
+            delete mypath;
         }
         if (NodeCheck(node, "If"))
         {

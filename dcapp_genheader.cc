@@ -4,7 +4,10 @@
 #include <string>
 #include <list>
 #include <libgen.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include "basicutils/msg.hh"
+#include "basicutils/pathinfo.hh"
 #include "xml_utils.hh"
 #include "xml_stringsub.hh"
 
@@ -29,7 +32,10 @@ int main(int argc, char **argv)
     Message::setLabel(basename(argv[0]));
 
     if (argc < 2) UsageError(0x0);
-    if (XMLFileOpen(&mydoc, &root_element, argv[1])) UsageError(0x0);
+    PathInfo *mypath = new PathInfo(argv[1]);
+    setenv("dcappDisplayHome", mypath->getDirectory(), 1);
+    if (mypath->getDirectory()) chdir(mypath->getDirectory());
+    if (XMLFileOpen(&mydoc, &root_element, mypath->getFile())) UsageError(0x0);
     if (argc < 3) p_file = fopen("dcapp.h", "w");
     else p_file = fopen(argv[2], "w");
     if (!p_file) UsageError(mydoc);
@@ -83,6 +89,7 @@ int main(int argc, char **argv)
     vlist.clear();
     XMLFileClose(mydoc);
     XMLEndParsing();
+    delete mypath;
 
     return 0;
 }
@@ -95,6 +102,35 @@ static void process_elements(xmlNodePtr startnode)
         if (NodeCheck(node, "Constant")) processConstantNode(node);
         if (NodeCheck(node, "Style")) processStyleNode(node);
         if (NodeCheck(node, "Defaults")) processDefaultsNode(node);
+        if (NodeCheck(node, "Include"))
+        {
+            xmlDocPtr include_file;
+            xmlNodePtr include_element;
+            const char *include_filename = get_node_content(node);
+
+            PathInfo *mypath = new PathInfo(include_filename);
+
+            // Store cwd for future use
+            int mycwd = open(".", O_RDONLY);
+
+            // Move to directory containing the new file
+            if (mypath->getDirectory()) chdir(mypath->getDirectory());
+
+            if (XMLFileOpen(&include_file, &include_element, mypath->getFile()))
+            {
+                warning_msg("Couldn't open include file " << include_filename);
+            }
+            else
+            {
+                process_elements(include_element);
+                XMLFileClose(include_file);
+            }
+
+            // Return to the original working directory
+            fchdir(mycwd);
+
+            delete mypath;
+        }
         if (NodeCheck(node, "Variable"))
         {
             vitem newitem;
