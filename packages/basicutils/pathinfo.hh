@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <climits>
 #include <libgen.h>
 #include "tidy.hh"
 

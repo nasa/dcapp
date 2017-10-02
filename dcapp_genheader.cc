@@ -32,13 +32,16 @@ int main(int argc, char **argv)
     Message::setLabel(basename(argv[0]));
 
     if (argc < 2) UsageError(0x0);
-    PathInfo *mypath = new PathInfo(argv[1]);
-    setenv("dcappDisplayHome", mypath->getDirectory(), 1);
-    if (mypath->getDirectory()) chdir(mypath->getDirectory());
-    if (XMLFileOpen(&mydoc, &root_element, mypath->getFile())) UsageError(0x0);
+    if (XMLFileOpen(&mydoc, &root_element, argv[1])) UsageError(0x0);
     if (argc < 3) p_file = fopen("dcapp.h", "w");
     else p_file = fopen(argv[2], "w");
     if (!p_file) UsageError(mydoc);
+
+    // move to the folder containing the specfile and set $dcappDisplayHome
+    PathInfo *mypath = new PathInfo(argv[1]);
+    setenv("dcappDisplayHome", mypath->getDirectory(), 1);
+    if (mypath->getDirectory()) chdir(mypath->getDirectory());
+    delete mypath;
 
     process_elements(root_element->children);
 
@@ -89,7 +92,6 @@ int main(int argc, char **argv)
     vlist.clear();
     XMLFileClose(mydoc);
     XMLEndParsing();
-    delete mypath;
 
     return 0;
 }
