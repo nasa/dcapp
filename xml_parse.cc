@@ -111,8 +111,25 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             xmlDocPtr include_file;
             xmlNodePtr include_element;
+
             const char *include_filename = get_node_content(node);
-            if (XMLFileOpen(&include_file, &include_element, include_filename))
+            char *myabspath = (char *)calloc(PATH_MAX, sizeof(char));
+            realpath(include_filename, myabspath);
+
+            char *dirc = strdup(myabspath);
+            char *basec = strdup(myabspath);
+            char *dname = dirname(dirc);
+            char *bname = basename(basec);
+
+            free(myabspath);
+
+            // Store cwd for future use
+            int mycwd = open(".", O_RDONLY);
+
+            // Move to directory containing the specfile by default
+            if (dname) chdir(dname);
+
+            if (XMLFileOpen(&include_file, &include_element, bname))
             {
                 warning_msg("Couldn't open include file " << include_filename);
             }
@@ -121,6 +138,12 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 process_elements(myparent, include_element);
                 XMLFileClose(include_file);
             }
+
+            // Return to the original working directory
+            fchdir(mycwd);
+
+            free(dirc);
+            free(basec);
         }
         if (NodeCheck(node, "If"))
         {
