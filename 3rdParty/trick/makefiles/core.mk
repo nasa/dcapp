@@ -42,6 +42,7 @@ clean_dcapp:
 build_dcapp_link: clean_dcapp_link
 	@ echo "[32mcreating links to dcapp files in externals[00m"
 	@ if [ ! -e ${EXTERNALS_DIR} ] ; then mkdir -p ${EXTERNALS_DIR} ; fi 
+	ln -s -f ${DCAPP_HOME}/bin ${EXTERNALS_DIR}
 	ln -s -f ${DCAPP_HOME}/dcapp.app ${EXTERNALS_DIR}
 	ln -s -f ${DCAPP_HOME}/3rdParty/trick/scripts/start_dcapp.py ${EXTERNALS_DIR}
 	ln -s -f ${DISPLAYS_HOME} ${EXTERNALS_DIR}
