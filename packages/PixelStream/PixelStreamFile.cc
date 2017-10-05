@@ -19,7 +19,7 @@ buffercount(0)
 
 PixelStreamFile::~PixelStreamFile()
 {
-    if (this->shm > 0) shmdt(this->shm);
+    if (this->shm > (void *)0) shmdt(this->shm);
     if (this->fp) fclose(this->fp);
     if (this->filename) free(this->filename);
     if (this->pixels) free(this->pixels);
@@ -49,7 +49,7 @@ int PixelStreamFile::genericInitialize(const char *filenamespec, int shmemkeyspe
         return -1;
     }
     this->shm = (PixelStreamShmem *)shmat(shmid, 0x0, 0);
-    if (this->shm <= 0)
+    if (this->shm <= (void *)0)
     {
         error_msg("Unable to attach to shared memory: " << strerror(errno));
         return -1;
@@ -88,7 +88,7 @@ int PixelStreamFile::reader(void)
     {
         if (this->filename) this->fp = fopen(this->filename, "r");
     }
-    else if (this->shm > 0)
+    else if (this->shm > (void *)0)
     {
         if (!(this->shm->writing))
         {
