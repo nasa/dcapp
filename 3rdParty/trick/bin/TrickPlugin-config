@@ -58,18 +58,23 @@ while test $# -gt 0 ; do
             ;;
         --libs)
             extra_libs=""
-            if [ `type -p trick-gte` ]
+            if [ -z "$TRICK_HOME" ]
             then
-                trick_home=`trick-gte TRICK_HOME`
-                if [ -d "${trick_home}/lib64" ]
+                TRICK_HOME=`which trick-gte 2> /dev/null`
+                TRICK_HOME=${TRICK_HOME:=`which gte 2> /dev/null`}
+                TRICK_HOME=${TRICK_HOME:+$(dirname $(dirname ${TRICK_HOME}))}
+            fi
+            if [ `type -p ${TRICK_HOME}/bin/trick-gte` ]
+            then
+                if [ -d "${TRICK_HOME}/lib64" ]
                 then
-                    extra_libs="-L${trick_home}/lib -L${trick_home}/lib64 -ltrick_comm"
+                    extra_libs="-L${TRICK_HOME}/lib -L${TRICK_HOME}/lib64 -ltrick_comm"
                 else
-                    extra_libs="-L${trick_home}/lib -ltrick_comm"
+                    extra_libs="-L${TRICK_HOME}/lib -ltrick_comm"
                 fi
-            else if [ `type -p gte` ]
+            else if [ `type -p ${TRICK_HOME}/bin/gte` ]
             then
-                extra_libs="-L`gte TRICK_HOME`/trick_source/trick_utils/comm/object_`gte TRICK_HOST_TYPE` -ltrick_comm"
+                extra_libs="-L${TRICK_HOME}/trick_source/trick_utils/comm/object_`${TRICK_HOME}/bin/gte TRICK_HOST_TYPE` -ltrick_comm"
             fi
             fi
             echo "-L${mydir}/${libdir} -lTrickPlugin ${extra_libs}"
