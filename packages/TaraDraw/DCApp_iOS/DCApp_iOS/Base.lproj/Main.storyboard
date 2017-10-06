@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1611" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="oAU-au-lRy">
+    <device id="ipad9_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Main View Controller-->
+        <scene sceneID="P3F-om-fpP">
+            <objects>
+                <viewController id="oAU-au-lRy" customClass="MainViewController" customModule="DCApp_iOS" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="SFW-vP-s20"/>
+                        <viewControllerLayoutGuide type="bottom" id="ccE-6s-qjN"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="Art-dy-reA">
+                        <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <stackView autoresizesSubviews="NO" opaque="NO" contentMode="scaleToFill" spacing="5" translatesAutoresizingMaskIntoConstraints="NO" id="qMX-7x-cW2">
+                                <rect key="frame" x="30" y="236" width="708" height="510"/>
+                                <subviews>
+                                    <stackView autoresizesSubviews="NO" opaque="NO" contentMode="scaleToFill" axis="vertical" distribution="fillEqually" spacing="10" translatesAutoresizingMaskIntoConstraints="NO" id="gpN-9G-BCa">
+                                        <rect key="frame" x="0.0" y="0.0" width="296" height="510"/>
+                                        <subviews>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="DOUG Host:" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xia-iq-Ljx">
+                                                <rect key="frame" x="0.0" y="0.0" width="296" height="42"/>
+                                                <fontDescription key="fontDescription" type="boldSystem" pointSize="35"/>
+                                                <color key="textColor" red="0.93996546214143384" green="1" blue="0.94439188458761247" alpha="1" colorSpace="calibratedRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="DOUG Port:" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="AiT-WV-0Fl">
+                                                <rect key="frame" x="0.0" y="52" width="296" height="42"/>
+                                                <fontDescription key="fontDescription" type="boldSystem" pointSize="35"/>
+                                                <color key="textColor" red="0.93996546209999998" green="1" blue="0.94439188460000001" alpha="1" colorSpace="calibratedRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="PixelStream Host:" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1EE-hc-JNe">
+                                                <rect key="frame" x="0.0" y="104" width="296" height="42"/>
+                                                <fontDescription key="fontDescription" type="boldSystem" pointSize="35"/>
+                                                <color key="textColor" red="0.93996546209999998" green="1" blue="0.94439188460000001" alpha="1" colorSpace="calibratedRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="PixelStream Port:" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="V9l-Ke-1jZ">
+                                                <rect key="frame" x="0.0" y="156" width="296" height="42"/>
+                                                <fontDescription key="fontDescription" type="boldSystem" pointSize="35"/>
+                                                <color key="textColor" red="0.93996546209999998" green="1" blue="0.94439188460000001" alpha="1" colorSpace="calibratedRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Trick Host:" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="6HQ-R9-Cu3">
+                                                <rect key="frame" x="0.0" y="208" width="296" height="42"/>
+                                                <fontDescription key="fontDescription" type="boldSystem" pointSize="35"/>
+                                                <color key="textColor" red="0.93996546209999998" green="1" blue="0.94439188460000001" alpha="1" colorSpace="calibratedRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Trick Port:" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LYe-ZY-x8c">
+                                                <rect key="frame" x="0.0" y="260" width="296" height="42"/>
+                                                <fontDescription key="fontDescription" type="boldSystem" pointSize="35"/>
+                                                <color key="textColor" red="0.93996546209999998" green="1" blue="0.94439188460000001" alpha="1" colorSpace="calibratedRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="DCApp Port:" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="d93-Gd-TY6">
+                                                <rect key="frame" x="0.0" y="312" width="296" height="42"/>
+                                                <fontDescription key="fontDescription" type="boldSystem" pointSize="35"/>
+                                                <color key="textColor" red="0.93996546209999998" green="1" blue="0.94439188460000001" alpha="1" colorSpace="calibratedRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="DCApp Host:" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="d3o-8a-5zj">
+                                                <rect key="frame" x="0.0" y="364" width="296" height="42"/>
+                                                <fontDescription key="fontDescription" type="boldSystem" pointSize="35"/>
+                                                <color key="textColor" red="0.93996546209999998" green="1" blue="0.94439188460000001" alpha="1" colorSpace="calibratedRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Same host" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="DUT-Mb-jyj">
+                                                <rect key="frame" x="0.0" y="416" width="296" height="42"/>
+                                                <fontDescription key="fontDescription" type="boldSystem" pointSize="35"/>
+                                                <color key="textColor" red="0.93996546209999998" green="1" blue="0.94439188460000001" alpha="1" colorSpace="calibratedRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Force Download" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="caP-gf-bju">
+                                                <rect key="frame" x="0.0" y="468" width="296" height="42"/>
+                                                <fontDescription key="fontDescription" type="boldSystem" pointSize="35"/>
+                                                <color key="textColor" red="0.93996546209999998" green="1" blue="0.94439188460000001" alpha="1" colorSpace="calibratedRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                        </subviews>
+                                    </stackView>
+                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" distribution="fillEqually" spacing="10" translatesAutoresizingMaskIntoConstraints="NO" id="uN5-1E-dpS">
+                                        <rect key="frame" x="301" y="0.0" width="407" height="510"/>
+                                        <subviews>
+                                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="nA6-dF-3MT">
+                                                <rect key="frame" x="0.0" y="0.0" width="407" height="42"/>
+                                                <nil key="textColor"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                                <textInputTraits key="textInputTraits"/>
+                                            </textField>
+                                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="SbI-le-PZS">
+                                                <rect key="frame" x="0.0" y="52" width="407" height="42"/>
+                                                <nil key="textColor"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                                <textInputTraits key="textInputTraits"/>
+                                            </textField>
+                                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="aPO-gC-c0P">
+                                                <rect key="frame" x="0.0" y="104" width="407" height="42"/>
+                                                <nil key="textColor"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                                <textInputTraits key="textInputTraits"/>
+                                            </textField>
+                                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="tpy-MR-Lkd">
+                                                <rect key="frame" x="0.0" y="156" width="407" height="42"/>
+                                                <nil key="textColor"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                                <textInputTraits key="textInputTraits"/>
+                                            </textField>
+                                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="GTy-Pa-J2m">
+                                                <rect key="frame" x="0.0" y="208" width="407" height="42"/>
+                                                <nil key="textColor"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                                <textInputTraits key="textInputTraits"/>
+                                            </textField>
+                                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="fpj-51-Ppm">
+                                                <rect key="frame" x="0.0" y="260" width="407" height="42"/>
+                                                <nil key="textColor"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                                <textInputTraits key="textInputTraits"/>
+                                            </textField>
+                                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="EuG-s9-qtH">
+                                                <rect key="frame" x="0.0" y="312" width="407" height="42"/>
+                                                <nil key="textColor"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                                <textInputTraits key="textInputTraits"/>
+                                            </textField>
+                                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="0gD-7m-FN5">
+                                                <rect key="frame" x="0.0" y="364" width="407" height="42"/>
+                                                <nil key="textColor"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                                <textInputTraits key="textInputTraits"/>
+                                            </textField>
+                                            <switch opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="NZQ-M1-Ljc">
+                                                <rect key="frame" x="0.0" y="416" width="409" height="42"/>
+                                                <connections>
+                                                    <action selector="ToggleSameHost:" destination="oAU-au-lRy" eventType="valueChanged" id="7Ef-Ja-KXQ"/>
+                                                </connections>
+                                            </switch>
+                                            <switch opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="lVH-BB-pAF">
+                                                <rect key="frame" x="0.0" y="468" width="409" height="42"/>
+                                                <connections>
+                                                    <action selector="ToggleForceLoad:" destination="oAU-au-lRy" eventType="valueChanged" id="37G-ad-QRd"/>
+                                                    <action selector="ToggleSameHost:" destination="oAU-au-lRy" eventType="valueChanged" id="1ed-Pz-dOz"/>
+                                                </connections>
+                                            </switch>
+                                        </subviews>
+                                    </stackView>
+                                </subviews>
+                            </stackView>
+                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="L87-Aq-O9p">
+                                <rect key="frame" x="112" y="775" width="511" height="103"/>
+                                <fontDescription key="fontDescription" type="system" weight="black" pointSize="72"/>
+                                <state key="normal" title="Start Display"/>
+                                <connections>
+                                    <action selector="onStartDisplay:" destination="oAU-au-lRy" eventType="touchUpInside" id="04O-7k-9Ib"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" red="0.61426292539267013" green="0.61426292539267013" blue="0.61426292539267013" alpha="1" colorSpace="calibratedRGB"/>
+                        <constraints>
+                            <constraint firstItem="L87-Aq-O9p" firstAttribute="leading" secondItem="Art-dy-reA" secondAttribute="leadingMargin" constant="92" id="A49-iR-8pI"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="qMX-7x-cW2" secondAttribute="trailing" constant="10" id="YQP-I6-Nht"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="L87-Aq-O9p" secondAttribute="trailing" constant="125" id="d1v-G7-a1P"/>
+                            <constraint firstItem="qMX-7x-cW2" firstAttribute="leading" secondItem="Art-dy-reA" secondAttribute="leadingMargin" constant="10" id="fKe-M1-BCa"/>
+                            <constraint firstItem="qMX-7x-cW2" firstAttribute="top" secondItem="SFW-vP-s20" secondAttribute="bottom" constant="216" id="hxM-Ep-wW4"/>
+                            <constraint firstItem="L87-Aq-O9p" firstAttribute="top" secondItem="uN5-1E-dpS" secondAttribute="bottom" constant="29" id="r5J-rF-EnK"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="dcAppHost" destination="0gD-7m-FN5" id="7vT-of-4Rq"/>
+                        <outlet property="dcAppPort" destination="EuG-s9-qtH" id="sFk-pA-PIG"/>
+                        <outlet property="dougHost" destination="nA6-dF-3MT" id="lJI-j6-eLM"/>
+                        <outlet property="dougPort" destination="SbI-le-PZS" id="NnV-bX-68W"/>
+                        <outlet property="editFieldSys" destination="qMX-7x-cW2" id="gOz-M8-hPv"/>
+                        <outlet property="forceDownload" destination="lVH-BB-pAF" id="l7Y-Zb-hpr"/>
+                        <outlet property="pixelStreamHost" destination="aPO-gC-c0P" id="6sg-QZ-NVF"/>
+                        <outlet property="pixelStreamPort" destination="tpy-MR-Lkd" id="LTr-lp-8TE"/>
+                        <outlet property="startDisplayButton" destination="L87-Aq-O9p" id="xhG-Wr-Fej"/>
+                        <outlet property="trickHost" destination="GTy-Pa-J2m" id="H9c-VA-Upo"/>
+                        <outlet property="trickPort" destination="fpj-51-Ppm" id="EGJ-22-B6o"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="UeP-Ro-jia" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-1261.71875" y="-743.5546875"/>
+        </scene>
+    </scenes>
+</document>

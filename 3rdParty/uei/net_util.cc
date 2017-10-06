@@ -676,7 +676,7 @@ static unsigned long inet_addr(char *inchar)
 ***************************************************************************/
 void swap_byte(char *in, char *out, int blen, int wsize)
 {
-    register int  k;
+    int k;
     int nword;
     unsigned short *i_2, *o_2;
     unsigned int *i_4, *o_4;

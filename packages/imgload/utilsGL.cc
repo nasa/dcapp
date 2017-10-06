@@ -2,10 +2,16 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#ifndef IOS_BUILD
 #include <GL/glu.h>
+#else
+#include <OpenGLES/ES1/glext.h>
+#endif
 #include "imgload_internal.hh"
 
+#ifndef IOS_BUILD
 static void ensureValidSizeForTexturing(ImageStruct *, GLint, GLenum);
+#endif
 
 /*********************************************************************************
  *********************************************************************************/
@@ -42,8 +48,10 @@ int createTextureFromImage(ImageStruct *image)
             bytesPerPixel = 3;
     }
 
+#ifndef IOS_BUILD // iOS 2+ provides NPOT
     // Scale the image to power of 2 (may not be necessary)
     ensureValidSizeForTexturing(image, bytesPerPixel, format);
+#endif
 
     glBindTexture(GL_TEXTURE_2D, texture);
 
@@ -62,6 +70,7 @@ int createTextureFromImage(ImageStruct *image)
 // Courtesy http://paulyg.f2s.com/prog3.htm
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
+    // 3rd argument may need to be "format" instead of "bytesPerPixel"
     glTexImage2D(GL_TEXTURE_2D, 0, bytesPerPixel, image->width, image->height, 0, format, GL_UNSIGNED_BYTE, image->data);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -70,6 +79,7 @@ int createTextureFromImage(ImageStruct *image)
     return texture;
 }
 
+#ifndef IOS_BUILD
 /*********************************************************************************
  *********************************************************************************/
 static int computeNearestPowerOfTwo(int val)
@@ -87,14 +97,13 @@ static int computeNearestPowerOfTwo(int val)
  *********************************************************************************/
 static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel, GLenum format)
 {
-    GLint maxTextureSize;
-
     if (!(image->data))
     {
         fprintf(stderr, "%s %d: Cannot scale NULL image.\n", __FILE__, __LINE__);
         return;
     }
 
+    GLint maxTextureSize;
     int newW = computeNearestPowerOfTwo(image->width);
     int newH = computeNearestPowerOfTwo(image->height);
 
@@ -129,3 +138,4 @@ static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel,
         else fprintf(stderr, "%s %d: %s did not succeed : %s\n", __FILE__,__LINE__, __FUNCTION__,  (char *)gluErrorString((GLenum)status));
     }
 }
+#endif
