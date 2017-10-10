@@ -181,7 +181,7 @@ void processStyleNode(xmlNodePtr node)
         {
             struct xmlStyle mystruct;
             mystruct.name = get_element_data(node, "Name");
-            mystruct.node = node1;
+            mystruct.node = xmlCopyNode(node1, 1);
             xmlstyles.push_front(mystruct);
         }
     }
@@ -193,6 +193,6 @@ void processDefaultsNode(xmlNodePtr node)
 
     for (node1 = node->children; node1; node1 = node1->next)
     {
-        if (NodeValid(node1)) xmldefaults.push_front(node1);
+        if (NodeValid(node1)) xmldefaults.push_front(xmlCopyNode(node1, 1));
     }
 }

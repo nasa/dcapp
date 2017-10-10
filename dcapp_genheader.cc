@@ -130,6 +130,7 @@ static void process_elements(xmlNodePtr startnode)
 
             // Return to the original working directory
             fchdir(mycwd);
+            close(mycwd);
 
             delete mypath;
         }
