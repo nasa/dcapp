@@ -25,6 +25,8 @@ PixelStreamMjpeg::PixelStreamMjpeg()
 :
 host(0x0),
 port(0),
+path(0x0),
+data_request(0x0),
 CommSocket(-1),
 readbuf(0x0),
 readbufalloc(0),
@@ -44,6 +46,8 @@ PixelStreamMjpeg::~PixelStreamMjpeg()
 {
     this->socket_disconnect();
     if (this->host) free(this->host);
+    if (this->path) free(this->path);
+    if (this->data_request) free(this->data_request);
     if (this->pixels) free(this->pixels);
     delete this->lastconnectattempt;
     delete this->lastread;
@@ -51,7 +55,7 @@ PixelStreamMjpeg::~PixelStreamMjpeg()
 
 bool PixelStreamMjpeg::operator == (const PixelStreamMjpeg &that)
 {
-    if (!strcmp(this->host, that.host) && this->port == that.port) return true;
+    if (!strcmp(this->host, that.host) && this->port == that.port && !strcmp(this->path, that.path)) return true;
     else return false;
 }
 
@@ -115,7 +119,7 @@ int PixelStreamMjpeg::socket_connect(void)
     return sockfd;
 }
 
-int PixelStreamMjpeg::readerInitialize(const char *hostspec, int portspec)
+int PixelStreamMjpeg::readerInitialize(const char *hostspec, int portspec, const char *pathspec)
 {
 #ifdef JPEG_ENABLED
 #if JPEG_LIB_VERSION < 80 && !defined(MEM_SRCDST_SUPPORTED)
@@ -145,6 +149,12 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
     bcopy((char *)server->h_addr, (char *)&server_address.sin_addr.s_addr, server->h_length);
     server_address.sin_port = htons(this->port);
 
+    if (pathspec)
+        this->path = strdup(pathspec);
+    else
+        this->path = strdup("video");
+    asprintf(&(this->data_request), "GET /%s HTTP/1.0\n\n", this->path);
+
     return 0;
 }
 
@@ -173,7 +183,7 @@ int PixelStreamMjpeg::reader(void)
             socket_disconnect();
             return 0;
         }
-        if (!data_requested) data_requested = SendDataRequest("GET /video?nativeresolution=1 HTTP/1.0\n\n");
+        if (!data_requested) data_requested = SendDataRequest(this->data_request);
         if (data_requested)
         {
             do
@@ -223,6 +233,8 @@ void PixelStreamMjpeg::socket_disconnect(void)
     socket_connected = 0;
     data_requested = 0;
     header_received = 0;
+// is this needed?
+masteroffset = 0;
 }
 
 int PixelStreamMjpeg::SendDataRequest(const char *command)
@@ -260,9 +272,11 @@ int PixelStreamMjpeg::RecvHeader(void)
     char *boundarytag = 0x0;
 
     int buflen = findCrlfCrlf(readbuf+masteroffset, totalbytes-masteroffset) - 3;
+if (buflen < 0) return 0;
     readbuf[buflen+masteroffset] = '\0';
 
-    if (buflen >= 15 && !strncmp(readbuf+masteroffset, "HTTP/1.1 200 OK", 15))
+    // this verifies that the header is "HTTP/1.x 200 OK", where x can be any digit
+    if (buflen >= 15 && !strncmp(readbuf+masteroffset, "HTTP/1.", 7) && !strncmp(readbuf+masteroffset+8, " 200 OK", 7))
     {
         for (i=0; !boundarytag && i<buflen-9; i++)
         {
@@ -286,6 +300,7 @@ int PixelStreamMjpeg::RecvHeader(void)
         }
     }
 
+// why do we get here?
     return 0;
 }
 
@@ -355,14 +370,4 @@ void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
     }
     jpeg_finish_decompress(&jinfo);
     jpeg_destroy_decompress(&jinfo);
-}
-
-char *PixelStreamMjpeg::getHost(void)
-{
-    return this->host;
-}
-
-int PixelStreamMjpeg::getPort(void)
-{
-    return this->port;
 }

@@ -423,13 +423,3 @@ int PixelStreamTcp::SendData(char *buffer, uint32_t datasize)
     }
     return 1;
 }
-
-char *PixelStreamTcp::getHost(void)
-{
-    return this->host;
-}
-
-int PixelStreamTcp::getPort(void)
-{
-    return this->port;
-}

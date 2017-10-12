@@ -20,9 +20,7 @@ class PixelStreamMjpeg : public PixelStreamData
         bool operator == (const PixelStreamMjpeg &);
         bool operator != (const PixelStreamMjpeg &);
         int reader(void);
-        int readerInitialize(const char *, int);
-        char *getHost(void);
-        int getPort(void);
+        int readerInitialize(const char *, int, const char *);
 
     private:
         int socket_connect(void);
@@ -36,6 +34,8 @@ class PixelStreamMjpeg : public PixelStreamData
 
         char *host;
         int port;
+        char *path;
+        char *data_request;
         struct sockaddr_in server_address;
         int CommSocket;
         Timer *lastconnectattempt;

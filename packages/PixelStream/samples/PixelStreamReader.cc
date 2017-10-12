@@ -120,7 +120,7 @@ static void app_run(void)
 
 void usageError(const char *appname)
 {
-    printf("usage:\n  %s filename shared_memory_key\n  %s MJPEG <host> <port>\n  %s TCP <host> port\n", appname, appname, appname);
+    printf("usage:\n  %s filename shared_memory_key\n  %s MJPEG <host> <port> <path>\n  %s TCP <host> port\n", appname, appname, appname);
     exit(0);
 }
 
@@ -134,11 +134,13 @@ int main(int argc, char **argv)
     {
         char *host = 0x0;
         int port = 0;
+        char *path = 0x0;
 
         if (argc == 2)
         {
             host = strdup("localhost");
             port = 8080;
+            path = strdup("video?nativeresolution=1");
         }
         else if (argc == 3)
         {
@@ -149,16 +151,24 @@ int main(int argc, char **argv)
                 host = strdup(argv[2]);
                 port = 8080;
             }
+            path = strdup("video?nativeresolution=1");
         }
         else if (argc == 4)
         {
             host = strdup(argv[2]);
             port = strtol(argv[3], 0x0, 10);
+            path = strdup("video?nativeresolution=1");
+        }
+        else if (argc == 5)
+        {
+            host = strdup(argv[2]);
+            port = strtol(argv[3], 0x0, 10);
+            path = strdup(argv[4]);
         }
         else usageError(argv[0]);
 
         PixelStreamMjpeg *psm = new PixelStreamMjpeg;
-        if (psm->readerInitialize(host, port)) return -1;
+        if (psm->readerInitialize(host, port, path)) return -1;
         psd = (PixelStreamData *)psm;
     }
     else if (!strcmp(argv[1], "TCP"))

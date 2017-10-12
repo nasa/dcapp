@@ -10,7 +10,7 @@ class dcPixelStream : public dcGeometric
     public:
         dcPixelStream(dcParent *);
         ~dcPixelStream();
-        void setProtocol(const char *, const char *, const char *, const char *, const char *);
+        void setProtocol(const char *, const char *, const char *, const char *, const char *, const char *);
         void updateStreams(unsigned);
         void draw(void);
 

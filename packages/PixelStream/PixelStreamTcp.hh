@@ -39,8 +39,6 @@ class PixelStreamTcp : public PixelStreamData
 
         int readerInitialize(const char *, int);
         int writerInitialize(int);
-        char *getHost(void);
-        int getPort(void);
 
     private:
         int read_socket_connect(void);
