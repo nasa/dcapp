@@ -233,8 +233,8 @@ void PixelStreamMjpeg::socket_disconnect(void)
     socket_connected = 0;
     data_requested = 0;
     header_received = 0;
-// is this needed?
-masteroffset = 0;
+    totalbytes = 0;
+    masteroffset = 0;
 }
 
 int PixelStreamMjpeg::SendDataRequest(const char *command)
@@ -272,8 +272,6 @@ int PixelStreamMjpeg::RecvHeader(void)
     char *boundarytag = 0x0;
 
     int buflen = findCrlfCrlf(readbuf+masteroffset, totalbytes-masteroffset) - 3;
-if (buflen < 0) return 0;
-    readbuf[buflen+masteroffset] = '\0';
 
     // this verifies that the header is "HTTP/1.x 200 OK", where x can be any digit
     if (buflen >= 15 && !strncmp(readbuf+masteroffset, "HTTP/1.", 7) && !strncmp(readbuf+masteroffset+8, " 200 OK", 7))
@@ -282,6 +280,7 @@ if (buflen < 0) return 0;
         {
             if (!strncmp(&readbuf[masteroffset+i], "boundary=", 9))
             {
+                readbuf[buflen+masteroffset] = '\0';
                 boundarytag=&readbuf[masteroffset+i+9];
                 for (j=0; j<buflen-i-9; j++)
                 {
@@ -300,7 +299,6 @@ if (buflen < 0) return 0;
         }
     }
 
-// why do we get here?
     return 0;
 }
 
