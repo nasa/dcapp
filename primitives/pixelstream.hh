@@ -11,11 +11,13 @@ class dcPixelStream : public dcGeometric
         dcPixelStream(dcParent *);
         ~dcPixelStream();
         void setProtocol(const char *, const char *, const char *, const char *, const char *, const char *);
+        void setTestPattern(const char *);
         void updateStreams(unsigned);
         void draw(void);
 
     private:
         dcTexture textureID;
+        dcTexture testpatternID;
         PixelStreamItem *psi;
         void *pixels;
         size_t memallocation;

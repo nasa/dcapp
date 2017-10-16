@@ -31,9 +31,8 @@ CommSocket(-1),
 readbuf(0x0),
 readbufalloc(0),
 dataalloc(0),
-socket_connected(0),
-data_requested(0),
-header_received(0),
+data_requested(false),
+header_received(false),
 totalbytes(0),
 masteroffset(0)
 {
@@ -160,16 +159,17 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
 
 int PixelStreamMjpeg::reader(void)
 {
-    int updated = 0, updatepixels = 0, bytes_to_read, newbytes;
+    bool updated = false;
+    int updatepixels = 0, bytes_to_read, newbytes;
 
-    if (!socket_connected)
+    if (!connected)
     {
         if (this->lastconnectattempt->getSeconds() > CONNECTION_ATTEMPT_INTERVAL)
         {
             if (CommSocket < 0) CommSocket = socket_connect();
             if (CommSocket >= 0)
             {
-                socket_connected = 1;
+                connected = true;
                 this->lastread->restart();
             }
             this->lastconnectattempt->restart();
@@ -230,21 +230,21 @@ void PixelStreamMjpeg::socket_disconnect(void)
         CommSocket = -1;
     }
 
-    socket_connected = 0;
-    data_requested = 0;
-    header_received = 0;
+    connected = false;
+    data_requested = false;
+    header_received = false;
     totalbytes = 0;
     masteroffset = 0;
 }
 
-int PixelStreamMjpeg::SendDataRequest(const char *command)
+bool PixelStreamMjpeg::SendDataRequest(const char *command)
 {
-    if (write(CommSocket, command, strlen(command)) == (ssize_t)strlen(command)) return 1;
+    if (write(CommSocket, command, strlen(command)) == (ssize_t)strlen(command)) return true;
     else
     {
         debug_msg("Unable to write data: " << strerror(errno));
         socket_disconnect();
-        return 0;
+        return false;
     }
 }
 
@@ -266,7 +266,7 @@ int PixelStreamMjpeg::findCrlfCrlf(char *bufptr, unsigned buflen)
     return 0;
 }
 
-int PixelStreamMjpeg::RecvHeader(void)
+bool PixelStreamMjpeg::RecvHeader(void)
 {
     int i, j;
     char *boundarytag = 0x0;
@@ -288,21 +288,21 @@ int PixelStreamMjpeg::RecvHeader(void)
                 }
             }
         }
-        if (!boundarytag) return 0;
+        if (!boundarytag) return false;
 
         masteroffset += buflen+4;
         buflen = findCrlf(readbuf+masteroffset, totalbytes-masteroffset);
         if (buflen >= (int)strlen(boundarytag) && (!strncmp(readbuf+masteroffset, boundarytag, strlen(boundarytag)) || !strncmp(readbuf+masteroffset+2, boundarytag, strlen(boundarytag))))
         {
             masteroffset += buflen+2;
-            return 1;
+            return true;
         }
     }
 
-    return 0;
+    return false;
 }
 
-int PixelStreamMjpeg::RecvData(void)
+bool PixelStreamMjpeg::RecvData(void)
 {
 #if defined(JPEG_ENABLED) && (JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
     int i, tmpoffset;
@@ -313,10 +313,10 @@ int PixelStreamMjpeg::RecvData(void)
     {
         if (!strncmp(&readbuf[masteroffset+i], "Content-Length:", 15))
         {
-            if (sscanf(&readbuf[masteroffset+i+15], "%ld", &rawsize) != 1) return 0;
+            if (sscanf(&readbuf[masteroffset+i+15], "%ld", &rawsize) != 1) return false;
         }
     }
-    if (!rawsize) return 0;
+    if (!rawsize) return false;
 
     tmpoffset = masteroffset + buflen + 1;
     if ((totalbytes - tmpoffset) >= rawsize)
@@ -328,14 +328,14 @@ int PixelStreamMjpeg::RecvData(void)
         }
         masteroffset = tmpoffset + rawsize;
         this->lastread->restart();
-        return 1;
+        return true;
     }
 
-    return 0;
+    return false;
 #else
     dataalloc = 0;
     this->lastread->restart();
-    return 0;
+    return false;
 #endif
 }
 

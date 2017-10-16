@@ -18,6 +18,7 @@ class PixelStreamData
         virtual bool writeRequested(void);
 
         unsigned protocol;
+        bool connected;
         void *pixels;
         uint32_t width;
         uint32_t height;

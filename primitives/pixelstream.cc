@@ -1,12 +1,13 @@
 #include "nodes.hh"
 #include "string_utils.hh"
 #include "opengl_draw.hh"
+#include "loadUtils.hh"
 #include "pixelstream.hh"
 
 extern appdata AppData;
 extern void SetNeedsRedraw(void); // TODO: put in header file
 
-dcPixelStream::dcPixelStream(dcParent *myparent) : dcGeometric(myparent), psi(0x0), pixels(0x0), memallocation(0)
+dcPixelStream::dcPixelStream(dcParent *myparent) : dcGeometric(myparent), testpatternID(-1), psi(0x0), pixels(0x0), memallocation(0)
 {
     init_texture(&textureID);
 }
@@ -85,6 +86,11 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
     }
 }
 
+void dcPixelStream::setTestPattern(const char *filename)
+{
+    if (filename) testpatternID = dcLoadTexture(filename);
+}
+
 void dcPixelStream::updateStreams(unsigned passcount)
 {
     if (!psi) return;
@@ -104,44 +110,50 @@ void dcPixelStream::draw(void)
 
     computeGeometry();
     container_start(refx, refy, delx, dely, 1, 1, *rotate);
-    newh = (size_t)((float)(psi->psd->width) * (*h) / (*w));
 
-    if (newh > psi->psd->height)
+    if (psi->psd->connected)
     {
-        origbytes = psi->psd->width * psi->psd->height * 3;
-        // overpad the pad by 1 so that no unfilled rows show up
-        pad = ((newh - psi->psd->height) / 2) + 1;
-        padbytes = psi->psd->width * pad * 3;
-        nbytes = (size_t)(psi->psd->width * newh * 3);
-        if (nbytes > memallocation)
+        newh = (size_t)((float)(psi->psd->width) * (*h) / (*w));
+
+        if (newh > psi->psd->height)
         {
-            pixels = realloc(pixels, nbytes);
-            memallocation = nbytes;
+            origbytes = psi->psd->width * psi->psd->height * 3;
+            // overpad the pad by 1 so that no unfilled rows show up
+            pad = ((newh - psi->psd->height) / 2) + 1;
+            padbytes = psi->psd->width * pad * 3;
+            nbytes = (size_t)(psi->psd->width * newh * 3);
+            if (nbytes > memallocation)
+            {
+                pixels = realloc(pixels, nbytes);
+                memallocation = nbytes;
+            }
+            bzero(pixels, padbytes);
+            bzero((void *)((size_t)pixels + nbytes - padbytes), padbytes);
+            bcopy(psi->psd->pixels, (void *)((size_t)pixels + padbytes), origbytes);
         }
-        bzero(pixels, padbytes);
-        bzero((void *)((size_t)pixels + nbytes - padbytes), padbytes);
-        bcopy(psi->psd->pixels, (void *)((size_t)pixels + padbytes), origbytes);
-    }
-    else
-    {
-        nbytes = (size_t)(psi->psd->width * psi->psd->height * 3);
-        if (nbytes > memallocation)
+        else
         {
-            pixels = realloc(pixels, nbytes);
-            memallocation = nbytes;
+            nbytes = (size_t)(psi->psd->width * psi->psd->height * 3);
+            if (nbytes > memallocation)
+            {
+                pixels = realloc(pixels, nbytes);
+                memallocation = nbytes;
+            }
+            bcopy(psi->psd->pixels, pixels, nbytes);
         }
-        bcopy(psi->psd->pixels, pixels, nbytes);
-    }
 
-    if (newh < psi->psd->height)
-    {
-        offset = (psi->psd->height - newh) / 2;
-        offsetbytes = psi->psd->width * offset * 3;
-        set_texture(textureID, psi->psd->width, newh, (void *)((size_t)pixels + offsetbytes));
-    }
-    else
-        set_texture(textureID, psi->psd->width, newh, pixels);
+        if (newh < psi->psd->height)
+        {
+            offset = (psi->psd->height - newh) / 2;
+            offsetbytes = psi->psd->width * offset * 3;
+            set_texture(textureID, psi->psd->width, newh, (void *)((size_t)pixels + offsetbytes));
+        }
+        else
+            set_texture(textureID, psi->psd->width, newh, pixels);
 
-    draw_image(textureID, width, height);
+        draw_image(textureID, width, height);
+    }
+    else draw_image(testpatternID, width, height);
+
     container_end();
 }

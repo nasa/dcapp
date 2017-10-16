@@ -46,11 +46,11 @@ class PixelStreamTcp : public PixelStreamData
         void connect_write_sockets(void);
         void socket_disconnect(int *);
         void disconnect_all(void);
-        int SendDataRequest(void);
-        int RecvHeader(uint32_t *, uint32_t *);
+        bool SendDataRequest(void);
+        bool RecvHeader(uint32_t *, uint32_t *);
         int RecvData(char *, uint32_t);
-        int RecvDataRequest(void);
-        int SendHeader(uint32_t, uint32_t);
+        bool RecvDataRequest(void);
+        bool SendHeader(uint32_t, uint32_t);
         int SendData(char *, uint32_t);
 
         char *host;
@@ -63,10 +63,9 @@ class PixelStreamTcp : public PixelStreamData
         Timer *lastread;
         uint32_t datasize;
         size_t dataalloc;
-        int sockets_connected;
-        int data_requested;
-        int header_sent;
-        int header_received;
+        bool data_requested;
+        bool header_sent;
+        bool header_received;
         struct pollfd rfd;
         struct pollfd wfd;
 };

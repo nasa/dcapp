@@ -27,10 +27,9 @@ ClientToServerSocket(-1),
 ServerToClientSocket(-1),
 datasize(0),
 dataalloc(0),
-sockets_connected(0),
-data_requested(0),
-header_sent(0),
-header_received(0)
+data_requested(false),
+header_sent(false),
+header_received(false)
 {
     this->protocol = PixelStreamTcpProtocol;
     this->lastconnectattempt = new Timer;
@@ -133,7 +132,7 @@ void PixelStreamTcp::connect_write_sockets(void)
         wfd.events = POLLOUT;
         wfd.revents = 0;
 
-        sockets_connected = 1;
+        connected = true;
         this->lastread->restart();
     }
 }
@@ -203,7 +202,7 @@ int PixelStreamTcp::reader(void)
 {
     int updated = 0;
 
-    if (!sockets_connected)
+    if (!connected)
     {
         if (this->lastconnectattempt->getSeconds() > CONNECTION_ATTEMPT_INTERVAL)
         {
@@ -218,7 +217,7 @@ int PixelStreamTcp::reader(void)
                 wfd.events = POLLOUT;
                 wfd.revents = 0;
 
-                sockets_connected = 1;
+                connected = true;
                 this->lastread->restart();
             }
             this->lastconnectattempt->restart();
@@ -248,8 +247,8 @@ int PixelStreamTcp::reader(void)
         if (header_received)
         {
             if (RecvData((char *)pixels, datasize)) updated = 1;
-            data_requested = 0;
-            header_received = 0;
+            data_requested = false;
+            header_received = false;
         }
     }
 
@@ -258,17 +257,16 @@ int PixelStreamTcp::reader(void)
 
 bool PixelStreamTcp::writeRequested(void)
 {
-    if (!sockets_connected) connect_write_sockets();
+    if (!connected) connect_write_sockets();
 
-    if (sockets_connected) return true;
-    else return false;
+    return connected;
 }
 
 int PixelStreamTcp::writer(void)
 {
     if (!this->pixels) return 0;
 
-    if (!sockets_connected) connect_write_sockets();
+    if (!connected) connect_write_sockets();
     else
     {
         if (this->lastread->getSeconds() > CONNECTION_TIMEOUT)
@@ -281,8 +279,8 @@ int PixelStreamTcp::writer(void)
         if (header_sent)
         {
             SendData((char *)(this->pixels), this->width * this->height * 3);
-            data_requested = 0;
-            header_sent = 0;
+            data_requested = false;
+            header_sent = false;
         }
     }
 
@@ -305,26 +303,26 @@ void PixelStreamTcp::disconnect_all(void)
     socket_disconnect(&ClientToServerSocket);
     socket_disconnect(&ServerToClientSocket);
 
-    sockets_connected = 0;
-    data_requested = 0;
-    header_sent = 0;
-    header_received = 0;
+    connected = false;
+    data_requested = false;
+    header_sent = false;
+    header_received = false;
 }
 
-int PixelStreamTcp::SendDataRequest(void)
+bool PixelStreamTcp::SendDataRequest(void)
 {
     uint8_t command = REQUEST_BUFFER;
 
-    if (write(ClientToServerSocket, &command, sizeof(command)) == sizeof(command)) return 1;
+    if (write(ClientToServerSocket, &command, sizeof(command)) == sizeof(command)) return true;
     else
     {
         debug_msg("Unable to write data: " << strerror(errno));
         disconnect_all();
-        return 0;
+        return false;
     }
 }
 
-int PixelStreamTcp::RecvHeader(uint32_t *width, uint32_t *height)
+bool PixelStreamTcp::RecvHeader(uint32_t *width, uint32_t *height)
 {
     char recvbuf[10];
 
@@ -345,9 +343,9 @@ int PixelStreamTcp::RecvHeader(uint32_t *width, uint32_t *height)
             hbytes[3] = recvbuf[6]; hbytes[2] = recvbuf[7]; hbytes[1] = recvbuf[8]; hbytes[0] = recvbuf[9];
         }
         this->lastread->restart();
-        return 1;
+        return true;
     }
-    else return 0;
+    else return false;
 }
 
 int PixelStreamTcp::RecvData(char *buffer, uint32_t datasize)
@@ -373,19 +371,19 @@ int PixelStreamTcp::RecvData(char *buffer, uint32_t datasize)
     return totalBytesRead;
 }
 
-int PixelStreamTcp::RecvDataRequest(void)
+bool PixelStreamTcp::RecvDataRequest(void)
 {
     uint8_t command;
 
     if (read(ClientToServerSocket, &command, sizeof(command)) == sizeof(command) && command == REQUEST_BUFFER)
     {
         this->lastread->restart();
-        return 1;
+        return true;
     }
-    else return 0;
+    else return false;
 }
 
-int PixelStreamTcp::SendHeader(uint32_t width, uint32_t height)
+bool PixelStreamTcp::SendHeader(uint32_t width, uint32_t height)
 {
     char sendbuf[10];
 
@@ -394,12 +392,12 @@ int PixelStreamTcp::SendHeader(uint32_t width, uint32_t height)
     bcopy((void *)&width, (void *)(&(sendbuf[2])), sizeof(width));
     bcopy((void *)&height, (void *)(&(sendbuf[6])), sizeof(height));
 
-    if (write(ServerToClientSocket, &sendbuf, sizeof(sendbuf)) == sizeof(sendbuf)) return 1;
+    if (write(ServerToClientSocket, &sendbuf, sizeof(sendbuf)) == sizeof(sendbuf)) return true;
     else
     {
         error_msg("Unable to write data: " << strerror(errno));
         disconnect_all();
-        return 0;
+        return false;
     }
 }
 

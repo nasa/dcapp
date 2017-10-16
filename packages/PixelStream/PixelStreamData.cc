@@ -7,6 +7,7 @@
 PixelStreamData::PixelStreamData()
 :
 protocol(PixelStreamUnknownProtocol),
+connected(false),
 pixels(0x0),
 width(0),
 height(0)

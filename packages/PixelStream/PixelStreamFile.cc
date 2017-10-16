@@ -84,12 +84,15 @@ int PixelStreamFile::reader(void)
     int updated = 0;
     uint32_t on = 1, off = 0;
 
+    connected = false;
+
     if (!(this->fp))
     {
         if (this->filename) this->fp = fopen(this->filename, "r");
     }
     else if (this->shm > (void *)0)
     {
+        connected = true;
         if (!(this->shm->writing))
         {
             memcpy(&(this->shm->bufferrequested), &on, 4);

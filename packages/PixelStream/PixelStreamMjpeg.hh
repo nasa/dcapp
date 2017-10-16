@@ -25,11 +25,11 @@ class PixelStreamMjpeg : public PixelStreamData
     private:
         int socket_connect(void);
         void socket_disconnect(void);
-        int SendDataRequest(const char *);
+        bool SendDataRequest(const char *);
         int findCrlf(char *, unsigned);
         int findCrlfCrlf(char *, unsigned);
-        int RecvHeader(void);
-        int RecvData(void);
+        bool RecvHeader(void);
+        bool RecvData(void);
         void loadPixels(const char *, size_t);
 
         char *host;
@@ -43,9 +43,8 @@ class PixelStreamMjpeg : public PixelStreamData
         char *readbuf;
         size_t readbufalloc;
         size_t dataalloc;
-        int socket_connected;
-        int data_requested;
-        int header_received;
+        bool data_requested;
+        bool header_received;
         int totalbytes;
         int masteroffset;
         bool flushonly;
