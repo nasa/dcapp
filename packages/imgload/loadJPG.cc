@@ -25,7 +25,7 @@ unsigned int LoadJPG(const char *filename, ImageStruct *image)
     jinfo.err = jpeg_std_error(&jerr);
     jpeg_create_decompress(&jinfo);
     jpeg_stdio_src(&jinfo, file);
-    jpeg_read_header(&jinfo, true);
+    jpeg_read_header(&jinfo, TRUE);
 
     image->width = jinfo.image_width;
     image->height = jinfo.image_height;
