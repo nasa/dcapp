@@ -29,16 +29,16 @@ bool check_dynamic_element(const char *spec)
     return false;
 }
 
-float *getFloatPointer(const char *valstr)
+double *getDecimalPointer(const char *valstr)
 {
-    if (check_dynamic_element(valstr)) return (float *)get_pointer(valstr);
-    else return dcLoadConstant(StrToFloat(valstr, 0));
+    if (check_dynamic_element(valstr)) return (double *)get_pointer(valstr);
+    else return dcLoadConstant(StringToDecimal(valstr, 0));
 }
 
 int *getIntegerPointer(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return (int *)get_pointer(valstr);
-    else return dcLoadConstant(StrToInt(valstr, 0));
+    else return dcLoadConstant(StringToInteger(valstr, 0));
 }
 
 char *getStringPointer(const char *valstr)
@@ -51,8 +51,8 @@ void *getVariablePointer(int datatype, const char *valstr)
 {
     switch (datatype)
     {
-        case FLOAT_TYPE:
-            return getFloatPointer(valstr);
+        case DECIMAL_TYPE:
+            return getDecimalPointer(valstr);
             break;
         case INTEGER_TYPE:
             return getIntegerPointer(valstr);
@@ -70,16 +70,16 @@ int get_data_type(const char *valstr)
     return UNDEFINED_TYPE;
 }
 
-float getFloatValue(int type, const void *val)
+double getDecimalValue(int type, const void *val)
 {
     switch (type)
     {
-        case FLOAT_TYPE:
-            return *(float *)val;
+        case DECIMAL_TYPE:
+            return *(double *)val;
         case INTEGER_TYPE:
-            return (float)(*(int *)val);
+            return (double)(*(int *)val);
         case STRING_TYPE:
-            return strtof((char *)val, 0x0);
+            return strtod((char *)val, 0x0);
     }
     return 0;
 }
@@ -88,8 +88,8 @@ int getIntegerValue(int type, const void *val)
 {
     switch (type)
     {
-        case FLOAT_TYPE:
-            return (int)(*(float *)val);
+        case DECIMAL_TYPE:
+            return (int)(*(double *)val);
         case INTEGER_TYPE:
             return *(int *)val;
         case STRING_TYPE:

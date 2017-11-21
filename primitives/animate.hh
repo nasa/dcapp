@@ -12,7 +12,7 @@ class dcAnimate : public dcParent
         void updateData(void);
 
     private:
-        float duration;
+        double duration;
 };
 
 #endif

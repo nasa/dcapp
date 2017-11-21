@@ -9,13 +9,13 @@ class AnimationItem
         AnimationItem();
         virtual ~AnimationItem();
 
-        void initialize(void *, float, float);
-        void update(float);
+        void initialize(void *, double, double);
+        void update(double);
 
     private:
-        float *variable;
-        float startValue;
-        float deltaValue;
+        double *variable;
+        double startValue;
+        double deltaValue;
 };
 
 class Animation
@@ -24,13 +24,13 @@ class Animation
         Animation();
         virtual ~Animation();
 
-        void initialize(float, float);
-        void addItem(void *, float, float);
-        int update(float);
+        void initialize(double, double);
+        void addItem(void *, double, double);
+        int update(double);
 
     private:
-        float duration;
-        float startTime;
+        double duration;
+        double startTime;
         std::list<AnimationItem *> items;
 };
 

@@ -15,7 +15,7 @@ class dcRectangle : public dcGeometric
         void draw(void);
 
     private:
-        float linewidth;
+        double linewidth;
         bool fill;
         bool outline;
         Kolor FillColor;

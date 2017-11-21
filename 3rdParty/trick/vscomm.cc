@@ -73,8 +73,8 @@ void * VariableServerComm::add_var(const char *param, const char *units, int typ
 
     switch (pnew->type)
     {
-        case VS_FLOAT:
-            pnew->value = calloc(1, sizeof(float));
+        case VS_DECIMAL:
+            pnew->value = calloc(1, sizeof(double));
             break;
         case VS_INTEGER:
             pnew->value = calloc(1, sizeof(int));
@@ -277,8 +277,8 @@ int VariableServerComm::put(const char *param, int type, void *value, const char
 
     switch (type)
     {
-        case VS_FLOAT:
-            if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s {%s} = %f;\")\n", param, units, *(float *)value) == -1) return VS_ERROR;
+        case VS_DECIMAL:
+            if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s {%s} = %f;\")\n", param, units, *(double *)value) == -1) return VS_ERROR;
             break;
         case VS_INTEGER:
             if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s {%s} = %d;\")\n", param, units, *(int *)value) == -1) return VS_ERROR;
@@ -346,8 +346,8 @@ int VariableServerComm::update_data(char *curbuf)
         element += this->find_next_token(element, '\t') + 1;
         switch (pstruct->type)
         {
-        case VS_FLOAT:
-            *(float *)pstruct->value = strtof(element, 0x0);
+        case VS_DECIMAL:
+            *(double *)pstruct->value = strtod(element, 0x0);
             break;
         case VS_INTEGER:
             *(int *)pstruct->value = (int)strtol(element, 0x0, 10);

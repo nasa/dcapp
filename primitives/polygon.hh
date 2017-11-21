@@ -14,7 +14,7 @@ class dcPolygon : public dcParent
         void draw(void);
     
     private:
-        float linewidth;
+        double linewidth;
         bool fill;
         bool outline;
         Kolor FillColor;

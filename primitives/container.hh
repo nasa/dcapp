@@ -11,7 +11,7 @@ class dcContainer : public dcParent, public dcGeometric
         void setSize(const char *, const char *);
         void setVirtualSize(const char *, const char *);
         void draw(void);
-        void handleMousePress(float, float);
+        void handleMousePress(double, double);
 
 // TODO: why the heck to I need these?
 void handleKeyPress(char key) { dcParent::handleKeyPress(key); };
@@ -24,12 +24,12 @@ void updateData(void) { dcParent::updateData(); };
 void updateStreams(unsigned passcount) { dcParent::updateStreams(passcount); };
 void processAnimation(Animation *anim) { dcParent::processAnimation(anim); };
 
-        float *getContainerWidth(void);
-        float *getContainerHeight(void);
+        double *getContainerWidth(void);
+        double *getContainerHeight(void);
 
     private:
-        float *vwidth;
-        float *vheight;
+        double *vwidth;
+        double *vheight;
 };
 
 #endif

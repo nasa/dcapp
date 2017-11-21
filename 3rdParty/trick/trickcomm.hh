@@ -41,7 +41,7 @@ class TrickCommModule : public CommModule
             union
             {
                 int i;
-                float f;
+                double f;
                 char str[STRING_DEFAULT_LENGTH];
             } prevvalue;
             bool forcewrite;

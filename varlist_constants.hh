@@ -3,7 +3,7 @@
 
 #define VARLIST_UNKNOWN_TYPE      (0)
 #define VARLIST_STRING            (1)
-#define VARLIST_FLOAT             (2)
+#define VARLIST_DECIMAL           (2)
 #define VARLIST_INTEGER           (3)
 
 #define STRING_DEFAULT_LENGTH    (64)

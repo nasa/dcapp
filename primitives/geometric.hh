@@ -15,32 +15,32 @@ class dcGeometric : public dcObject
         void computeGeometry(void);
 
     protected:
-        float *x;
-        float *y;
-        float *w;
-        float *h;
-        float *containerw;
-        float *containerh;
+        double *x;
+        double *y;
+        double *w;
+        double *h;
+        double *containerw;
+        double *containerh;
         unsigned halign;
         unsigned valign;
-        float *rotate;
+        double *rotate;
 
-        float refx;
-        float refy;
-        float delx;
-        float dely;
-        float width;
-        float height;
-        float left;
-        float right;
-        float bottom;
-        float top;
-        float center;
-        float middle;
+        double refx;
+        double refy;
+        double delx;
+        double dely;
+        double width;
+        double height;
+        double left;
+        double right;
+        double bottom;
+        double top;
+        double center;
+        double middle;
 
     private:
-        float GeomX(float *, float, float, int);
-        float GeomY(float *, float, float, int);
+        double GeomX(double *, double, double, int);
+        double GeomY(double *, double, double, int);
 };
 
 #endif

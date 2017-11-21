@@ -6,7 +6,7 @@
 
 dcCircle::dcCircle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), segments(80)
 {
-    radius = dcLoadConstant(10.0f);
+    radius = dcLoadConstant(10.0);
     FillColor.set(0.5, 0.5, 0.5);
     LineColor.set(1, 1, 1);
 }
@@ -33,19 +33,19 @@ void dcCircle::setLineWidth(const char *inval)
 {
     if (inval)
     {
-        linewidth = StrToFloat(inval, 1);
+        linewidth = StringToDecimal(inval, 1);
         outline = true;
     }
 }
 
 void dcCircle::setRadius(const char *inval)
 {
-    if (inval) radius = getFloatPointer(inval);
+    if (inval) radius = getDecimalPointer(inval);
 }
 
 void dcCircle::setSegments(const char *inval)
 {
-    if (inval) segments = StrToInt(inval, 80);
+    if (inval) segments = StringToInteger(inval, 80);
 }
 
 void dcCircle::draw(void)

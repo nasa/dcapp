@@ -22,7 +22,7 @@ class EdgeCommModule : public CommModule
         bool isActive(void);
 
         int addParameter(int, const char *, const char *);
-        int finishInitialization(const char *, const char *, float);
+        int finishInitialization(const char *, const char *, double);
 
     private:
         typedef struct
@@ -33,7 +33,7 @@ class EdgeCommModule : public CommModule
             union
             {
                 int i;
-                float f;
+                double f;
                 char str[STRING_DEFAULT_LENGTH];
             } prevvalue;
             bool forcewrite;
@@ -44,7 +44,7 @@ class EdgeCommModule : public CommModule
         std::list<io_parameter> toEdge;
         Timer *last_connect_attempt;
         Timer *edge_timer;
-        float update_rate;
+        double update_rate;
         char *cmd_group;
         EdgeRcsComm *rcs;
 

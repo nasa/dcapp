@@ -13,7 +13,7 @@ class dcWindow : public dcParent
         void draw(void);
         void handleKeyPress(char);
         void handleKeyRelease(char);
-        void handleMousePress(float, float);
+        void handleMousePress(double, double);
         void handleBezelPress(int);
         void updateStreams(unsigned);
 

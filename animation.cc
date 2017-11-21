@@ -15,25 +15,25 @@ Animation::~Animation()
     }
 }
 
-void Animation::initialize(float start, float dur)
+void Animation::initialize(double start, double dur)
 {
     this->duration = dur;
     this->startTime = start;
 }
 
-void Animation::addItem(void *var, float startval, float endval)
+void Animation::addItem(void *var, double startval, double endval)
 {
     AnimationItem *myitem = new AnimationItem;
     myitem->initialize(var, startval, endval);
     this->items.push_back(myitem);
 }
 
-int Animation::update(float currentTime)
+int Animation::update(double currentTime)
 {
     std::list<AnimationItem *>::iterator myitem;
     bool complete = false;
 
-    float pct_elapsed = (currentTime - this->startTime)/this->duration;
+    double pct_elapsed = (currentTime - this->startTime)/this->duration;
     if (pct_elapsed >= 1)
     {
         complete = true;
@@ -56,14 +56,14 @@ AnimationItem::~AnimationItem()
 {
 }
 
-void AnimationItem::initialize(void *var, float startval, float endval)
+void AnimationItem::initialize(void *var, double startval, double endval)
 {
-    this->variable = (float *)var;
+    this->variable = (double *)var;
     this->startValue = startval;
     this->deltaValue = endval - startval;
 }
 
-void AnimationItem::update(float pct_elapsed)
+void AnimationItem::update(double pct_elapsed)
 {
     *(this->variable) = this->startValue + (pct_elapsed * this->deltaValue);
 }

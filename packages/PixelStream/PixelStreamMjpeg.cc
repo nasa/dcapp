@@ -319,7 +319,7 @@ bool PixelStreamMjpeg::RecvData(void)
     if (!rawsize) return false;
 
     tmpoffset = masteroffset + buflen + 1;
-    if ((totalbytes - tmpoffset) >= rawsize)
+    if ((size_t)(totalbytes - tmpoffset) >= rawsize)
     {
         if (!flushonly)
         {

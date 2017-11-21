@@ -69,11 +69,11 @@ void dcSetValue::updateData(void)
 
 void dcSetValue::processAnimation(Animation *anim)
 {
-    if (datatype1 == FLOAT_TYPE)
+    if (datatype1 == DECIMAL_TYPE)
     {
-        float endval = *(float *)var;
-        calculateValue(optype, FLOAT_TYPE, (void *)&endval, datatype2, val, mindatatype, min, maxdatatype, max);
-        anim->addItem(var, *(float *)var, endval);
+        double endval = *(double *)var;
+        calculateValue(optype, DECIMAL_TYPE, (void *)&endval, datatype2, val, mindatatype, min, maxdatatype, max);
+        anim->addItem(var, *(double *)var, endval);
     }
 }
 
@@ -81,27 +81,27 @@ void dcSetValue::calculateValue(int opspec, int vartype, void *varID, int valtyp
 {
     switch (vartype)
     {
-        case FLOAT_TYPE:
+        case DECIMAL_TYPE:
             switch (opspec)
             {
                 case PlusEquals:
-                    *(float *)varID += getFloatValue(valtype, valID);
+                    *(double *)varID += getDecimalValue(valtype, valID);
                     break;
                 case MinusEquals:
-                    *(float *)varID -= getFloatValue(valtype, valID);
+                    *(double *)varID -= getDecimalValue(valtype, valID);
                     break;
                 default:
-                    *(float *)varID = getFloatValue(valtype, valID);
+                    *(double *)varID = getDecimalValue(valtype, valID);
             }
             if (minID)
             {
-                float minval = getFloatValue(mintype, minID);
-                if (*(float *)varID < minval) *(float *)varID = minval;
+                double minval = getDecimalValue(mintype, minID);
+                if (*(double *)varID < minval) *(double *)varID = minval;
             }
             if (maxID)
             {
-                float maxval = getFloatValue(maxtype, maxID);
-                if (*(float *)varID > maxval) *(float *)varID = maxval;
+                double maxval = getDecimalValue(maxtype, maxID);
+                if (*(double *)varID > maxval) *(double *)varID = maxval;
             }
             break;
         case INTEGER_TYPE:

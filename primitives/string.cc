@@ -29,7 +29,7 @@ void dcString::setBackgroundColor(const char *cspec)
 void dcString::setFont(const char *font, const char *face, const char *size, const char *mono)
 {
     fontID = dcLoadFont(font, face);
-    if (size) fontSize = getFloatPointer(size);
+    if (size) fontSize = getDecimalPointer(size);
     if (mono)
     {
         if (!strcmp(mono, "Numeric")) forcemono = flMonoNumeric;
@@ -40,7 +40,7 @@ void dcString::setFont(const char *font, const char *face, const char *size, con
 
 void dcString::setShadowOffset(const char *inval)
 {
-    if (inval) shadowOffset = getFloatPointer(inval);
+    if (inval) shadowOffset = getDecimalPointer(inval);
 }
 
 void dcString::setString(std::string mystr)
@@ -70,7 +70,7 @@ void dcString::draw(void)
 
     computeGeometry();
 
-    float myleft, myright, mybottom, mytop;
+    double myleft, myright, mybottom, mytop;
     unsigned num_lines, i, strptr=0, seglen;
 
     std::string mystring;
@@ -101,13 +101,13 @@ void dcString::draw(void)
         switch (valign)
         {
             case AlignBottom:
-                mybottom = (*fontSize) * (float)(num_lines - i);
+                mybottom = (*fontSize) * (double)(num_lines - i);
                 break;
             case AlignMiddle:
-                mybottom = (*fontSize) * (((float)num_lines/2) - (float)i);
+                mybottom = (*fontSize) * (((double)num_lines/2) - (double)i);
                 break;
             case AlignTop:
-                mybottom = -(*fontSize) * (float)i;
+                mybottom = -(*fontSize) * (double)i;
                 break;
         }
 

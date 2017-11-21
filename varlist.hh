@@ -10,12 +10,12 @@ extern int get_datatype(const char *);
 
 extern char *create_virtual_variable(const char *, const char *);
 extern bool check_dynamic_element(const char *);
-extern float *getFloatPointer(const char *);
+extern double *getDecimalPointer(const char *);
 extern int *getIntegerPointer(const char *);
 extern char *getStringPointer(const char *);
 extern void *getVariablePointer(int, const char *);
 extern int get_data_type(const char *);
-extern float getFloatValue(int, const void *);
+extern double getDecimalValue(int, const void *);
 extern int getIntegerValue(int, const void *);
 
 #endif

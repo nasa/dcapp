@@ -54,8 +54,8 @@ CommModule::CommStatus TrickCommModule::read(void)
             {
                 switch (myitem->type)
                 {
-                    case VARLIST_FLOAT:
-                        *(float *)myitem->dcvalue = *(float *)myitem->trickvalue;
+                    case VARLIST_DECIMAL:
+                        *(double *)myitem->dcvalue = *(double *)myitem->trickvalue;
                         break;
                     case VARLIST_INTEGER:
                         *(int *)myitem->dcvalue = *(int *)myitem->trickvalue;
@@ -114,11 +114,11 @@ CommModule::CommStatus TrickCommModule::write(void)
             {
                 switch (myitem->type)
                 {
-                    case VARLIST_FLOAT:
-                        if (*(float *)myitem->dcvalue)
+                    case VARLIST_DECIMAL:
+                        if (*(double *)myitem->dcvalue)
                         {
                             this->tvs->put(myitem->trickvar, VS_METHOD, 0x0, 0x0);
-                            *(float *)myitem->dcvalue = 0;
+                            *(double *)myitem->dcvalue = 0;
                         }
                         break;
                     case VARLIST_INTEGER:
@@ -129,7 +129,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                         }
                         break;
                     case VARLIST_STRING:
-                        if (StrToBool((char *)myitem->dcvalue, false))
+                        if (StringToBoolean((char *)myitem->dcvalue, false))
                         {
                             this->tvs->put(myitem->trickvar, VS_METHOD, 0x0, 0x0);
                             strcpy((char *)myitem->dcvalue, "false");
@@ -141,11 +141,11 @@ CommModule::CommStatus TrickCommModule::write(void)
             {
                 switch (myitem->type)
                 {
-                    case VARLIST_FLOAT:
-                        if (myitem->forcewrite || *(float *)myitem->dcvalue != myitem->prevvalue.f)
+                    case VARLIST_DECIMAL:
+                        if (myitem->forcewrite || *(double *)myitem->dcvalue != myitem->prevvalue.f)
                         {
-                            this->tvs->put(myitem->trickvar, VS_FLOAT, myitem->dcvalue, myitem->units);
-                            myitem->prevvalue.f = *(float *)myitem->dcvalue;
+                            this->tvs->put(myitem->trickvar, VS_DECIMAL, myitem->dcvalue, myitem->units);
+                            myitem->prevvalue.f = *(double *)myitem->dcvalue;
                             myitem->forcewrite = false;
                         }
                         break;
@@ -241,7 +241,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
         myparam.prevvalue.f = 0;
         bzero(myparam.prevvalue.str, STRING_DEFAULT_LENGTH);
         myparam.forcewrite = false;
-        myparam.init_only = StrToBool(init_only, false);
+        myparam.init_only = StringToBoolean(init_only, false);
         myparam.method = method;
         io_map->push_back(myparam);
     }
@@ -262,8 +262,8 @@ void TrickCommModule::finishInitialization(void)
     {
         switch (myitem->type)
         {
-                case VARLIST_FLOAT:
-                    type = VS_FLOAT;
+                case VARLIST_DECIMAL:
+                    type = VS_DECIMAL;
                     nelem = 1;
                     break;
                 case VARLIST_INTEGER:

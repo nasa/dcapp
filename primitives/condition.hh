@@ -13,7 +13,7 @@ class dcCondition : public dcObject
         void draw(void);
         void handleKeyPress(char);
         void handleKeyRelease(char);
-        void handleMousePress(float, float);
+        void handleMousePress(double, double);
         void handleMouseRelease(void);
         void handleBezelPress(int);
         void handleBezelRelease(int);

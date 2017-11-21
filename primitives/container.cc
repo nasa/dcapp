@@ -13,13 +13,13 @@ void dcContainer::setSize(const char *inw, const char *inh)
 {
     if (inw)
     {
-        float *tmpptr = getFloatPointer(inw);
+        double *tmpptr = getDecimalPointer(inw);
         if (vwidth == w) vwidth = tmpptr;
         w = tmpptr;
     }
     if (inh)
     {
-        float *tmpptr = getFloatPointer(inh);
+        double *tmpptr = getDecimalPointer(inh);
         if (vheight == h) vheight = tmpptr;
         h = tmpptr;
     }
@@ -27,8 +27,8 @@ void dcContainer::setSize(const char *inw, const char *inh)
 
 void dcContainer::setVirtualSize(const char *inw, const char *inh)
 {
-    if (inw) vwidth = getFloatPointer(inw);
-    if (inh) vheight = getFloatPointer(inh);
+    if (inw) vwidth = getDecimalPointer(inw);
+    if (inh) vheight = getDecimalPointer(inh);
 }
 
 void dcContainer::draw(void)
@@ -39,9 +39,9 @@ void dcContainer::draw(void)
     container_end();
 }
 
-void dcContainer::handleMousePress(float inx, float iny)
+void dcContainer::handleMousePress(double inx, double iny)
 {
-    float ang, originx, originy, tmpx, tmpy, finalx, finaly;
+    double ang, originx, originy, tmpx, tmpy, finalx, finaly;
 
     computeGeometry();
     ang = (*rotate) * 0.01745329252;
@@ -55,12 +55,12 @@ void dcContainer::handleMousePress(float inx, float iny)
     for (const auto &myobj : children) myobj->handleMousePress(finalx, finaly);
 }
 
-float * dcContainer::getContainerWidth(void)
+double * dcContainer::getContainerWidth(void)
 {
     return vwidth;
 }
 
-float * dcContainer::getContainerHeight(void)
+double * dcContainer::getContainerHeight(void)
 {
     return vheight;
 }

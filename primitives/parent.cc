@@ -21,7 +21,7 @@ void dcParent::handleKeyRelease(char key)
     for (const auto &myobj : children) myobj->handleKeyRelease(key);
 }
 
-void dcParent::handleMousePress(float x, float y)
+void dcParent::handleMousePress(double x, double y)
 {
     for (const auto &myobj : children) myobj->handleMousePress(x, y);
 }

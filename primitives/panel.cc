@@ -10,7 +10,7 @@ dcPanel::dcPanel(dcParent *myparent) : displayID(0), orthoX(100), orthoY(100)
 
 void dcPanel::setID(const char *inval)
 {
-    if (inval) displayID = StrToInt(inval, 0);
+    if (inval) displayID = StringToInteger(inval, 0);
 }
 
 void dcPanel::setColor(const char *cspec)
@@ -20,8 +20,8 @@ void dcPanel::setColor(const char *cspec)
 
 void dcPanel::setOrtho(const char *inw, const char *inh)
 {
-    if (inw) orthoX = StrToFloat(inw, 100);
-    if (inh) orthoY = StrToFloat(inh, 100);
+    if (inw) orthoX = StringToDecimal(inw, 100);
+    if (inh) orthoY = StringToDecimal(inh, 100);
 }
 
 bool dcPanel::checkID(int id)
@@ -30,12 +30,12 @@ bool dcPanel::checkID(int id)
     else return false;
 }
 
-float * dcPanel::getContainerWidth(void)
+double * dcPanel::getContainerWidth(void)
 {
     return &orthoX;
 }
 
-float * dcPanel::getContainerHeight(void)
+double * dcPanel::getContainerHeight(void)
 {
     return &orthoY;
 }
@@ -46,7 +46,7 @@ void dcPanel::draw(void)
     for (const auto &myobj : children) myobj->draw();
 }
 
-void dcPanel::handleMousePress(float x, float y)
+void dcPanel::handleMousePress(double x, double y)
 {
     for (const auto &myobj : children) myobj->handleMousePress(orthoX * x, orthoY * y);
 }

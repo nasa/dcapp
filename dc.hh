@@ -8,9 +8,9 @@ typedef unsigned int dcTexture;
 class dcPosition
 {
     public:
-        dcPosition(float X, float Y) { x = X; y = Y; };
-        float x;
-        float y;
+        dcPosition(double X, double Y) { x = X; y = Y; };
+        double x;
+        double y;
 };
 
 #endif

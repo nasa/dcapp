@@ -7,7 +7,7 @@ extern "C" void DisplayLogic(void)
 {
     struct timeval tp;
     struct timezone tzp;
-    static float deltax = 8, deltay = 8;
+    static double deltax = 8, deltay = 8;
 
     gettimeofday(&tp, &tzp);
 

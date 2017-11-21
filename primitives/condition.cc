@@ -75,7 +75,7 @@ void dcCondition::handleKeyRelease(char key)
         FalseList->handleKeyRelease(key);
 }
 
-void dcCondition::handleMousePress(float x, float y)
+void dcCondition::handleMousePress(double x, double y)
 {
     if (checkCondition())
         TrueList->handleMousePress(x, y);
@@ -135,29 +135,29 @@ bool dcCondition::checkCondition(void)
 
     switch (datatype1)
     {
-        case FLOAT_TYPE:
+        case DECIMAL_TYPE:
             switch (opspec)
             {
                 case Simple:
-                    if (getFloatValue(datatype1, val1)) eval = true;
+                    if (getDecimalValue(datatype1, val1)) eval = true;
                     break;
                 case IfEquals:
-                    if (getFloatValue(datatype1, val1) == getFloatValue(datatype2, val2)) eval = true;
+                    if (getDecimalValue(datatype1, val1) == getDecimalValue(datatype2, val2)) eval = true;
                     break;
                 case IfNotEquals:
-                    if (getFloatValue(datatype1, val1) != getFloatValue(datatype2, val2)) eval = true;
+                    if (getDecimalValue(datatype1, val1) != getDecimalValue(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterThan:
-                    if (getFloatValue(datatype1, val1) > getFloatValue(datatype2, val2)) eval = true;
+                    if (getDecimalValue(datatype1, val1) > getDecimalValue(datatype2, val2)) eval = true;
                     break;
                 case IfLessThan:
-                    if (getFloatValue(datatype1, val1) < getFloatValue(datatype2, val2)) eval = true;
+                    if (getDecimalValue(datatype1, val1) < getDecimalValue(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterOrEquals:
-                    if (getFloatValue(datatype1, val1) >= getFloatValue(datatype2, val2)) eval = true;
+                    if (getDecimalValue(datatype1, val1) >= getDecimalValue(datatype2, val2)) eval = true;
                     break;
                 case IfLessOrEquals:
-                    if (getFloatValue(datatype1, val1) <= getFloatValue(datatype2, val2)) eval = true;
+                    if (getDecimalValue(datatype1, val1) <= getDecimalValue(datatype2, val2)) eval = true;
                     break;
             }
             break;
@@ -191,7 +191,7 @@ bool dcCondition::checkCondition(void)
             switch (opspec)
             {
                 case Simple:
-                    if (StrToBool((char *)val1, false)) eval = true;
+                    if (StringToBoolean((char *)val1, false)) eval = true;
                     break;
                 case IfEquals:
                     if (!strcmp((char *)val1, (char *)val2)) eval = true;
@@ -200,16 +200,16 @@ bool dcCondition::checkCondition(void)
                     if (strcmp((char *)val1, (char *)val2)) eval = true;
                     break;
                 case IfGreaterThan:
-                    if (getFloatValue(datatype1, val1) > getFloatValue(datatype2, val2)) eval = true;
+                    if (getDecimalValue(datatype1, val1) > getDecimalValue(datatype2, val2)) eval = true;
                     break;
                 case IfLessThan:
-                    if (getFloatValue(datatype1, val1) < getFloatValue(datatype2, val2)) eval = true;
+                    if (getDecimalValue(datatype1, val1) < getDecimalValue(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterOrEquals:
-                    if (getFloatValue(datatype1, val1) >= getFloatValue(datatype2, val2)) eval = true;
+                    if (getDecimalValue(datatype1, val1) >= getDecimalValue(datatype2, val2)) eval = true;
                     break;
                 case IfLessOrEquals:
-                    if (getFloatValue(datatype1, val1) <= getFloatValue(datatype2, val2)) eval = true;
+                    if (getDecimalValue(datatype1, val1) <= getDecimalValue(datatype2, val2)) eval = true;
                     break;
             }
             break;

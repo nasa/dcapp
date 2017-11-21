@@ -42,7 +42,7 @@ void dcWindow::handleKeyRelease(char key)
     if (currentPanel) currentPanel->handleKeyRelease(key);
 }
 
-void dcWindow::handleMousePress(float x, float y)
+void dcWindow::handleMousePress(double x, double y)
 {
     if (currentPanel) currentPanel->handleMousePress(x, y);
 }

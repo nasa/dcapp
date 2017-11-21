@@ -10,7 +10,7 @@ extern appdata AppData;
 
 int mousebouncemode = 0;
 
-void HandleMousePress(float xpct, float ypct)
+void HandleMousePress(double xpct, double ypct)
 {
     AppData.toplevel->handleMousePress(xpct, ypct);
     ProcessEvents();

@@ -20,7 +20,7 @@ dcMouseEvent::~dcMouseEvent()
     delete ReleaseList;
 }
 
-void dcMouseEvent::handleMousePress(float inx, float iny)
+void dcMouseEvent::handleMousePress(double inx, double iny)
 {
     computeGeometry();
     if ((left < inx) && (inx < right) && (bottom < iny) && (iny < top))

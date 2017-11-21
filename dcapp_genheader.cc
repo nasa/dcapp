@@ -48,12 +48,13 @@ int main(int argc, char **argv)
     fprintf(p_file, "// ********************************************* //\n");
     fprintf(p_file, "// THIS FILE IS AUTO-GENERATED -- DO NOT EDIT!!! //\n");
     fprintf(p_file, "// ********************************************* //\n\n");
+fprintf(p_file, "#define float double\n#define fabsf fabs\n");
     fprintf(p_file, "#ifndef _DCAPP_EXTERNALS_\n#define _DCAPP_EXTERNALS_\n\n");
     fprintf(p_file, "void *(*get_pointer)(const char *);\n\n");
 
     for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
-        if (myvitem->type == "Float") fprintf(p_file, "float *");
+        if (myvitem->type == "Float") fprintf(p_file, "double *");
         else if (myvitem->type == "Integer") fprintf(p_file, "int *");
         else fprintf(p_file, "char *");
         fprintf(p_file, "%s;\n", myvitem->name.c_str());
@@ -69,7 +70,7 @@ int main(int argc, char **argv)
     for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
         fprintf(p_file, "    %s = ", myvitem->name.c_str());
-        if (myvitem->type == "Float") fprintf(p_file, "(float *)");
+        if (myvitem->type == "Float") fprintf(p_file, "(double *)");
         else if (myvitem->type == "Integer") fprintf(p_file, "(int *)");
         else fprintf(p_file, "(char *)");
         fprintf(p_file, "get_pointer(\"%s\");\n", myvitem->name.c_str());
@@ -81,7 +82,7 @@ int main(int argc, char **argv)
 
     for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
-        if (myvitem->type == "Float") fprintf(p_file, "extern float *");
+        if (myvitem->type == "Float") fprintf(p_file, "extern double *");
         else if (myvitem->type == "Integer") fprintf(p_file, "extern int *");
         else fprintf(p_file, "extern char *");
         fprintf(p_file, "%s;\n", myvitem->name.c_str());

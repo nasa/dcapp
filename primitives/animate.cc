@@ -11,7 +11,7 @@ dcAnimate::dcAnimate(dcParent *myparent) : duration(1)
 
 void dcAnimate::setDuration(const char *inval)
 {
-    if (inval) duration = StrToFloat(inval, 1);
+    if (inval) duration = StringToDecimal(inval, 1);
 }
 
 void dcAnimate::handleEvent(void)

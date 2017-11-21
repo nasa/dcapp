@@ -37,7 +37,7 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
     {
         case PixelStreamFileProtocol:
             psf = new PixelStreamFile;
-            if (psf->readerInitialize(filename, StrToInt(shmemkey, 0)))
+            if (psf->readerInitialize(filename, StringToInteger(shmemkey, 0)))
             {
                 delete psf;
                 return;
@@ -46,7 +46,7 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
             break;
         case PixelStreamMjpegProtocol:
             psm = new PixelStreamMjpeg;
-            if (psm->readerInitialize(host, StrToInt(port, 80), path))
+            if (psm->readerInitialize(host, StringToInteger(port, 80), path))
             {
                 delete psm;
                 return;
@@ -55,7 +55,7 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
             break;
         case PixelStreamTcpProtocol:
             pst = new PixelStreamTcp;
-            if (pst->readerInitialize(host, StrToInt(port, 0)))
+            if (pst->readerInitialize(host, StringToInteger(port, 0)))
             {
                 delete pst;
                 return;
@@ -113,7 +113,7 @@ void dcPixelStream::draw(void)
 
     if (psi->psd->connected)
     {
-        newh = (size_t)((float)(psi->psd->width) * (*h) / (*w));
+        newh = (size_t)((double)(psi->psd->width) * (*h) / (*w));
 
         if (newh > psi->psd->height)
         {

@@ -20,21 +20,21 @@ class dcADI : public dcGeometric
     private:
         dcTexture bkgdID;
         dcTexture ballID;
-        float *outerradius;
-        float *ballradius;
-        float *chevronW;
-        float *chevronH;
-        float *roll;
-        float *pitch;
-        float *yaw;
-        float *rollError;
-        float *pitchError;
-        float *yawError;
+        double *outerradius;
+        double *ballradius;
+        double *chevronW;
+        double *chevronH;
+        double *roll;
+        double *pitch;
+        double *yaw;
+        double *rollError;
+        double *pitchError;
+        double *yawError;
 
-        void draw_roll_bug(float, float, float, float);
-        void draw_cross_hairs(float);
-        void draw_needles(float, float, float, float);
-        float get_error_info(float, float);
+        void draw_roll_bug(double, double, double, double);
+        void draw_cross_hairs(double);
+        void draw_needles(double, double, double, double);
+        double get_error_info(double, double);
 };
 
 #endif

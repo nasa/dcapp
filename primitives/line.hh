@@ -13,7 +13,7 @@ class dcLine : public dcParent
         void draw(void);
     
     private:
-        float linewidth;
+        double linewidth;
         Kolor color;
 };
 

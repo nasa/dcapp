@@ -20,7 +20,7 @@
 #define VS_PARTIAL_BUFFER     (-5)
 
 #define VS_STRING             (1)
-#define VS_FLOAT              (2)
+#define VS_DECIMAL            (2)
 #define VS_INTEGER            (3)
 #define VS_METHOD             (4)
 

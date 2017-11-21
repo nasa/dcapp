@@ -19,7 +19,7 @@ using namespace std;
 
 static list<textureInfo> textures;
 static list<dcFont> fonts;
-static list<float> floatConstants;
+static list<double> decimalConstants;
 static list<int> integerConstants;
 static list<char *> stringConstants;
 
@@ -99,15 +99,15 @@ dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)
     return id;
 }
 
-float *dcLoadConstant(float fval)
+double *dcLoadConstant(double fval)
 {
-    list<float>::iterator fc;
-    for (fc = floatConstants.begin(); fc != floatConstants.end(); fc++)
+    list<double>::iterator fc;
+    for (fc = decimalConstants.begin(); fc != decimalConstants.end(); fc++)
     {
         if (*fc == fval) return &(*fc);
     }
-    floatConstants.push_back(fval);
-    return &(floatConstants.back());
+    decimalConstants.push_back(fval);
+    return &(decimalConstants.back());
 }
 
 int *dcLoadConstant(int ival)

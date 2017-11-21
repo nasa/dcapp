@@ -18,7 +18,7 @@ void dcLine::setColor(const char *cspec)
 
 void dcLine::setLineWidth(const char *inval)
 {
-    if (inval) linewidth = StrToFloat(inval, 1);
+    if (inval) linewidth = StringToDecimal(inval, 1);
 }
 
 void dcLine::draw(void)

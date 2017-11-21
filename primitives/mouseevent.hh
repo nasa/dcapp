@@ -10,7 +10,7 @@ class dcMouseEvent : public dcGeometric
         dcMouseEvent(dcParent *);
         virtual ~dcMouseEvent();
 
-        void handleMousePress(float, float);
+        void handleMousePress(double, double);
         void handleMouseRelease(void);
 
         dcParent *PressList;

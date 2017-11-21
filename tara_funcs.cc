@@ -6,7 +6,7 @@ extern appdata AppData;
 extern void Idle(void);
 extern void Terminate(int);
 
-extern void HandleMousePress(float, float);
+extern void HandleMousePress(double, double);
 extern void HandleMouseRelease(void);
 extern void HandleKeyboard(unsigned char);
 extern void reshape(int, int);
@@ -23,8 +23,8 @@ static struct
 {
     tdWindow id;
     tdGLContext *gl_context;
-    float width;
-    float height;
+    double width;
+    double height;
 } mywin;
 
 
@@ -49,8 +49,8 @@ void window_init(bool fullscreen, int winOriginX, int winOriginY, int winSizeX, 
     else
     {
         mywin.id = tdOpenWindow("dcapp", (float)winOriginX, usable.top - (float)winOriginY, (float)winSizeX, (float)winSizeY, tdAlignLeft | tdAlignTop);
-        mywin.width = (float)winSizeX;
-        mywin.height = (float)winSizeY;
+        mywin.width = (double)winSizeX;
+        mywin.height = (double)winSizeY;
     }
 
     mywin.gl_context = tdGLCreateContext(mywin.id);

@@ -12,7 +12,7 @@ class dcObject
         virtual void draw(void) { };
         virtual void handleKeyPress(char) { };
         virtual void handleKeyRelease(char) { };
-        virtual void handleMousePress(float, float) { };
+        virtual void handleMousePress(double, double) { };
         virtual void handleMouseRelease(void) { };
         virtual void handleBezelPress(int) { };
         virtual void handleBezelRelease(int) { };
@@ -22,8 +22,8 @@ class dcObject
         virtual void processAnimation(Animation *) { };
         virtual void setParent(dcObject *parentid) { parent = parentid; };
         virtual dcObject *getParent(void) { return parent; };
-        virtual float *getContainerWidth(void) { return parent->getContainerWidth(); };
-        virtual float *getContainerHeight(void) { return parent->getContainerHeight(); };
+        virtual double *getContainerWidth(void) { return parent->getContainerWidth(); };
+        virtual double *getContainerHeight(void) { return parent->getContainerHeight(); };
 
     private:
         dcObject *parent;

@@ -41,7 +41,7 @@ void dcKeyboardEvent::setKey(const char *key)
 
 void dcKeyboardEvent::setKeyAscii(const char *key)
 {
-    if (key) mykey = StrToInt(key, 0);
+    if (key) mykey = StringToInteger(key, 0);
 }
 
 void dcKeyboardEvent::handleKeyPress(char key)

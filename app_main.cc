@@ -186,14 +186,13 @@ static void setenvUsingScript(const char *myenv, const char *myscript, const cha
     }
 
     // strip out leading and trailing white space
-    int i;
-    size_t startbyte = 0, endbyte = bytecount;
+    size_t i, startbyte = 0, endbyte = bytecount;
     for (i=0; i<bytecount; i++)
     {
         if (isspace(buffer[i])) startbyte++;
         else break;
     }
-    for (i=bytecount-1; i>=0; i--)
+    for (i=bytecount-1; (int)i>=0; i--)
     {
         if (isspace(buffer[i])) endbyte--;
         else break;

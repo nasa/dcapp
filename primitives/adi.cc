@@ -5,8 +5,8 @@
 #include "varlist.hh"
 #include "adi.hh"
 
-static const float BLACK[3] = {0.0, 0.0, 0.0};
-static const float YELLOW[3] = {1.0, 1.0, 0.0};
+static const double BLACK[3] = {0.0, 0.0, 0.0};
+static const double YELLOW[3] = {1.0, 1.0, 0.0};
 
 dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(-1), ballID(-1), outerradius(0x0), ballradius(0x0), chevronW(0x0), chevronH(0x0)
 {
@@ -30,35 +30,35 @@ void dcADI::setBallTexture(const char *filename)
 
 void dcADI::setRPY(const char *inroll, const char *inpitch, const char *inyaw)
 {
-    if (inroll) roll = getFloatPointer(inroll);
-    if (inpitch) pitch = getFloatPointer(inpitch);
-    if (inyaw) yaw = getFloatPointer(inyaw);
+    if (inroll) roll = getDecimalPointer(inroll);
+    if (inpitch) pitch = getDecimalPointer(inpitch);
+    if (inyaw) yaw = getDecimalPointer(inyaw);
 }
 
 void dcADI::setRPYerrors(const char *re, const char *pe, const char *ye)
 {
-    if (re) rollError = getFloatPointer(re);
-    if (pe) pitchError = getFloatPointer(pe);
-    if (ye) yawError = getFloatPointer(ye);
+    if (re) rollError = getDecimalPointer(re);
+    if (pe) pitchError = getDecimalPointer(pe);
+    if (ye) yawError = getDecimalPointer(ye);
 }
 
 void dcADI::setRadius(const char *outer, const char *ball)
 {
-    if (outer) outerradius = getFloatPointer(outer);
-    if (ball) ballradius = getFloatPointer(ball);
+    if (outer) outerradius = getDecimalPointer(outer);
+    if (ball) ballradius = getDecimalPointer(ball);
 }
 
 void dcADI::setChevron(const char *widthspec, const char *heightspec)
 {
-    if (widthspec) chevronW = getFloatPointer(widthspec);
-    if (heightspec) chevronH = getFloatPointer(heightspec);
+    if (widthspec) chevronW = getDecimalPointer(widthspec);
+    if (heightspec) chevronH = getDecimalPointer(heightspec);
 }
 
 void dcADI::draw(void)
 {
     computeGeometry();
 
-    float outerrad, ballrad, chevw, chevh;
+    double outerrad, ballrad, chevw, chevh;
 
     if (outerradius) outerrad = *outerradius;
     else outerrad = 0.5 * (fminf(*w, *h));
@@ -88,10 +88,10 @@ void dcADI::draw(void)
     translate_end();
 }
 
-void dcADI::draw_roll_bug(float roll, float width, float height, float radius)
+void dcADI::draw_roll_bug(double roll, double width, double height, double radius)
 {
     short i;
-    float triang[3][2];
+    double triang[3][2];
 
     triang[0][0] = 0;
     triang[0][1] = radius;
@@ -111,12 +111,12 @@ void dcADI::draw_roll_bug(float roll, float width, float height, float radius)
     rotate_end();
 }
 
-void dcADI::draw_cross_hairs(float radius)
+void dcADI::draw_cross_hairs(double radius)
 {
-    float length = 0.21 * radius;
-    float halfwidth = 0.017 * radius;
+    double length = 0.21 * radius;
+    double halfwidth = 0.017 * radius;
 
-    float crosshair[12][2];
+    double crosshair[12][2];
     short i;
 
     crosshair[0][0] = -length;
@@ -161,11 +161,11 @@ void dcADI::draw_cross_hairs(float radius)
     polygon_outline_end();
 }
 
-void dcADI::draw_needles(float radius, float roll_err, float pitch_err, float yaw_err)
+void dcADI::draw_needles(double radius, double roll_err, double pitch_err, double yaw_err)
 {
-    float delta, needle_edge;
-    float length = 0.29 * radius;
-    float halfwidth = 0.017 * radius;
+    double delta, needle_edge;
+    double length = 0.29 * radius;
+    double halfwidth = 0.017 * radius;
 
     delta = get_error_info(yaw_err, radius);
     needle_edge = radius*(cos(asin(delta/radius)));
@@ -216,7 +216,7 @@ void dcADI::draw_needles(float radius, float roll_err, float pitch_err, float ya
     line_end();
 }
 
-float dcADI::get_error_info(float value, float outer_rad)
+double dcADI::get_error_info(double value, double outer_rad)
 {
     if (value < -1.0) return (0.4 * outer_rad);
     else if (value > 1.0) return (-0.4 * outer_rad);

@@ -22,7 +22,7 @@ class VarString
             {
                 switch (datatype)
                 {
-                    case FLOAT_TYPE:   format = "%g"; break;
+                    case DECIMAL_TYPE: format = "%g"; break;
                     case INTEGER_TYPE: format = "%d";   break;
                     case STRING_TYPE:  format = "%s";   break;
                 }
@@ -33,7 +33,7 @@ class VarString
             char *tmp_str = 0x0;
             switch (datatype)
             {
-                case FLOAT_TYPE:   asprintf(&tmp_str, format.c_str(), *(float *)(value)); break;
+                case DECIMAL_TYPE: asprintf(&tmp_str, format.c_str(), *(double *)(value)); break;
                 case INTEGER_TYPE: asprintf(&tmp_str, format.c_str(), *(int *)(value));   break;
                 case STRING_TYPE:  asprintf(&tmp_str, format.c_str(), (char *)value);     break;
             }
@@ -68,8 +68,8 @@ class dcString : public dcGeometric
         std::vector<VarString *> vstring;
         std::vector<std::string> filler;
         flFont *fontID;
-        float *fontSize;
-        float *shadowOffset;
+        double *fontSize;
+        double *shadowOffset;
         flMonoOption forcemono;
 };
 

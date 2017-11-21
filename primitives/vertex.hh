@@ -12,10 +12,10 @@ class dcVertex : public dcObject
         void draw(void);
 
     private:
-        float *x;
-        float *y;
-        float *containerw;
-        float *containerh;
+        double *x;
+        double *y;
+        double *containerw;
+        double *containerh;
 };
 
 #endif

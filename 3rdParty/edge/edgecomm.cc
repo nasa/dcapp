@@ -81,8 +81,8 @@ CommModule::CommStatus EdgeCommModule::read(void)
 
         switch (myitem->type)
         {
-            case VARLIST_FLOAT:
-                *(float *)myitem->dcvalue = strtof(strval, 0x0);
+            case VARLIST_DECIMAL:
+                *(double *)myitem->dcvalue = strtof(strval, 0x0);
                 break;
             case VARLIST_INTEGER:
                 *(int *)myitem->dcvalue = (int)strtol(strval, 0x0, 10);
@@ -125,16 +125,16 @@ CommModule::CommStatus EdgeCommModule::write(void)
     {
         switch (myitem->type)
         {
-            case VARLIST_FLOAT:
-                if (myitem->forcewrite || *(float *)myitem->dcvalue != myitem->prevvalue.f)
+            case VARLIST_DECIMAL:
+                if (myitem->forcewrite || *(double *)myitem->dcvalue != myitem->prevvalue.f)
                 {
-                    if (asprintf(&cmd, "%s %f", myitem->edgecmd, *(float *)(myitem->dcvalue)) == -1)
+                    if (asprintf(&cmd, "%s %f", myitem->edgecmd, *(double *)(myitem->dcvalue)) == -1)
                     {
                         this->active = false;
                         return this->Fail;
                     }
                     status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
-                    myitem->prevvalue.f = *(float *)myitem->dcvalue;
+                    myitem->prevvalue.f = *(double *)myitem->dcvalue;
                     myitem->forcewrite = false;
                     TIDY(cmd);
                 }
@@ -222,7 +222,7 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *e
     return this->Success;
 }
 
-int EdgeCommModule::finishInitialization(const char *host, const char *port, float spec_rate)
+int EdgeCommModule::finishInitialization(const char *host, const char *port, double spec_rate)
 {
     if (this->rcs->initialize(host, port)) return this->Fail;
     this->update_rate = spec_rate;

@@ -212,7 +212,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             trickcomm = new TrickCommModule;
             trickcomm->setHost(get_element_data(node, "Host"));
-            trickcomm->setPort(StrToInt(get_element_data(node, "Port"), 0));
+            trickcomm->setPort(StringToInteger(get_element_data(node, "Port"), 0));
             trickcomm->setDataRate(get_element_data(node, "DataRate"));
             const char *d_a = get_element_data(node, "DisconnectAction");
             if (d_a)
@@ -259,7 +259,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             edgecomm = new EdgeCommModule;
             edgecomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
             process_elements(myparent, node->children);
-            edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StrToFloat(get_element_data(node, "DataRate"), 1.0));
+            edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StringToDecimal(get_element_data(node, "DataRate"), 1.0));
             AppData.commlist.push_back(edgecomm);
         }
         if (NodeCheck(node, "FromEdge"))
@@ -296,14 +296,14 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             if (ccsdsudpcomm)
             {
-                ccsdsudpcomm->read_initialize(get_element_data(node, "Host"), StrToInt(get_element_data(node, "Port"), 0), StrToInt(get_element_data(node, "ThreadID"), 0), StrToFloat(get_element_data(node, "Rate"), 0), StrToBool(get_element_data(node, "LittleEndian"), false));
+                ccsdsudpcomm->read_initialize(get_element_data(node, "Host"), StringToInteger(get_element_data(node, "Port"), 0), StringToInteger(get_element_data(node, "ThreadID"), 0), StringToDecimal(get_element_data(node, "Rate"), 0), StringToBoolean(get_element_data(node, "LittleEndian"), false));
             }
         }
         if (NodeCheck(node, "CcsdsUdpWrite"))
         {
             if (ccsdsudpcomm)
             {
-                ccsdsudpcomm->write_initialize(get_element_data(node, "Host"), StrToInt(get_element_data(node, "Port"), 0));
+                ccsdsudpcomm->write_initialize(get_element_data(node, "Host"), StringToInteger(get_element_data(node, "Port"), 0));
             }
         }
         if (NodeCheck(node, "CAN"))
@@ -367,12 +367,12 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "Window"))
         {
-            AppData.force_update = StrToFloat(get_element_data(node, "ForceUpdate"), 60);
-            window_init(StrToBool(get_element_data(node, "FullScreen"), false),
-                        StrToInt(get_element_data(node, "X"), 0),
-                        StrToInt(get_element_data(node, "Y"), 0),
-                        StrToInt(get_element_data(node, "Width"), 800),
-                        StrToInt(get_element_data(node, "Height"), 800));
+            AppData.force_update = StringToDecimal(get_element_data(node, "ForceUpdate"), 60);
+            window_init(StringToBoolean(get_element_data(node, "FullScreen"), false),
+                        StringToInteger(get_element_data(node, "X"), 0),
+                        StringToInteger(get_element_data(node, "Y"), 0),
+                        StringToInteger(get_element_data(node, "Width"), 800),
+                        StringToInteger(get_element_data(node, "Height"), 800));
             graphics_init();
             AppData.toplevel = new dcWindow();
             AppData.toplevel->setActiveDisplay(get_element_data(node, "ActiveDisplay"));

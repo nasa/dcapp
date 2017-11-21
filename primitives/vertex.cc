@@ -14,13 +14,13 @@ dcVertex::dcVertex(dcParent *myparent) : x(0x0), y(0x0)
 
 void dcVertex::setPosition(const char *inx, const char *iny)
 {
-    if (inx) x = getFloatPointer(inx);
-    if (iny) y = getFloatPointer(iny);
+    if (inx) x = getDecimalPointer(inx);
+    if (iny) y = getDecimalPointer(iny);
 }
 
 void dcVertex::draw(void)
 {
-    float myx, myy;
+    double myx, myy;
 
     if (x)
     {

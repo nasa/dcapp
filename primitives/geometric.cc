@@ -15,19 +15,19 @@ dcGeometric::dcGeometric(dcParent *myparent) : x(0x0), y(0x0), halign(AlignLeft)
 
 void dcGeometric::setPosition(const char *inx, const char *iny)
 {
-    if (inx) x = getFloatPointer(inx);
-    if (iny) y = getFloatPointer(iny);
+    if (inx) x = getDecimalPointer(inx);
+    if (iny) y = getDecimalPointer(iny);
 }
 
 void dcGeometric::setSize(const char *inw, const char *inh)
 {
-    if (inw) w = getFloatPointer(inw);
-    if (inh) h = getFloatPointer(inh);
+    if (inw) w = getDecimalPointer(inw);
+    if (inh) h = getDecimalPointer(inh);
 }
 
 void dcGeometric::setRotation(const char *inr)
 {
-    if (inr) rotate = getFloatPointer(inr);
+    if (inr) rotate = getDecimalPointer(inr);
 }
 
 void dcGeometric::setAlignment(const char *inhal, const char *inval)
@@ -48,7 +48,7 @@ void dcGeometric::setAlignment(const char *inhal, const char *inval)
 
 void dcGeometric::computeGeometry(void)
 {
-    float hwidth, hheight;
+    double hwidth, hheight;
 
     left = GeomX(x, *w, *containerw, halign);
     bottom = GeomY(y, *h, *containerh, valign);
@@ -112,9 +112,9 @@ void dcGeometric::computeGeometry(void)
     }
 }
 
-float dcGeometric::GeomX(float *x, float w, float containerW, int halign)
+double dcGeometric::GeomX(double *x, double w, double containerW, int halign)
 {
-    float val;
+    double val;
 
     if (!x)
     {
@@ -149,9 +149,9 @@ float dcGeometric::GeomX(float *x, float w, float containerW, int halign)
     }
 }
 
-float dcGeometric::GeomY(float *y, float h, float containerH, int valign)
+double dcGeometric::GeomY(double *y, double h, double containerH, int valign)
 {
-    float val;
+    double val;
 
     if (!y)
     {

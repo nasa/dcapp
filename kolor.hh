@@ -17,14 +17,14 @@ class Kolor
             B = dcLoadConstant(0.0f);
             A = dcLoadConstant(1.0f);
         }
-        void set(float r, float g, float b)
+        void set(double r, double g, double b)
         {
             R = dcLoadConstant(r);
             G = dcLoadConstant(g);
             B = dcLoadConstant(b);
             A = dcLoadConstant(1.0f);
         }
-        void set(float r, float g, float b, float a)
+        void set(double r, double g, double b, double a)
         {
             R = dcLoadConstant(r);
             G = dcLoadConstant(g);
@@ -51,16 +51,16 @@ class Kolor
             free(astr);
         }
 
-        float *R;
-        float *G;
-        float *B;
-        float *A;
+        double *R;
+        double *G;
+        double *B;
+        double *A;
 
     private:
-        float *color_element(int index, const char *strval, float defval)
+        double *color_element(int index, const char *strval, double defval)
         {
             if (index < 0) return dcLoadConstant(defval);
-            else if (check_dynamic_element(strval)) return (float *)get_pointer(strval);
+            else if (check_dynamic_element(strval)) return (double *)get_pointer(strval);
             else return dcLoadConstant(strtof(strval, 0x0));
         }
 };

@@ -30,7 +30,7 @@ void dcRectangle::setLineWidth(const char *inval)
 {
     if (inval)
     {
-        linewidth = StrToFloat(inval, 1);
+        linewidth = StringToDecimal(inval, 1);
         outline = true;
     }
 }

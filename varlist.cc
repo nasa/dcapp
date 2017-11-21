@@ -36,9 +36,9 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
 
     if (!strcmp(typestr, "Float"))
     {
-        vinfo.type = VARLIST_FLOAT;
-        vinfo.value = calloc(1, sizeof(float));
-        if (initval) *(float *)vinfo.value = strtof(initval, 0x0);
+        vinfo.type = VARLIST_DECIMAL;
+        vinfo.value = calloc(1, sizeof(double));
+        if (initval) *(double *)vinfo.value = strtof(initval, 0x0);
     }
     else if (!strcmp(typestr, "Integer"))
     {
