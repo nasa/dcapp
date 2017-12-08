@@ -152,7 +152,7 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
         this->path = strdup(pathspec);
     else
         this->path = strdup("video");
-    asprintf(&(this->data_request), "GET /%s HTTP/1.0\n\n", this->path);
+    asprintf(&(this->data_request), "GET /%s HTTP/1.0\r\n\r\n", this->path);
 
     return 0;
 }

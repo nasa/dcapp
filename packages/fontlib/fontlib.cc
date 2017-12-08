@@ -212,6 +212,8 @@ void flFont::render(const char *string, flMonoOption mono=flMonoNone)
     FT_Vector kern;
     FT_UInt myindex, previndex = 0;
     GlyphInfo *ginfo;
+    static GLfloat verts[12] = { 0,64,0, 0,0,0, 64,64,0, 64,0,0 };
+    static GLfloat uvs[8] = { 0,0, 0,1, 1,0, 1,1 };
 
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
@@ -243,16 +245,13 @@ void flFont::render(const char *string, flMonoOption mono=flMonoNone)
             glBindTexture(GL_TEXTURE_2D, ginfo->texture);
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ginfo->width, ginfo->height, GL_ALPHA, GL_UNSIGNED_BYTE, ginfo->bitmap);
 
-            glBegin(GL_QUADS);
-                glTexCoord2f(0, 1);
-                glVertex3f(0, 0, 0);
-                glTexCoord2f(1, 1);
-                glVertex3f(64, 0, 0);
-                glTexCoord2f(1, 0);
-                glVertex3f(64, 64, 0);
-                glTexCoord2f(0, 0);
-                glVertex3f(0, 64, 0);
-            glEnd();
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glVertexPointer(3, GL_FLOAT, 0, verts);
+            glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
 
             if (mono == flMonoAll)
                 glTranslatef(this->max_advance - ginfo->bitmap_left, -ginfo->bitmap_top, 0);
