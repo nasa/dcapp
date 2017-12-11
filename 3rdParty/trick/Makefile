@@ -21,7 +21,7 @@ endif
 
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(SOURCES)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -I../.. $(shell ../../packages/basicutils/bin/basicutils-config --cflags)
+CXXFLAGS += -std=c++11 -Wall -I../.. $(shell ../../packages/basicutils/bin/basicutils-config --cflags)
 
 $(LIBDIR)/libTrickPlugin.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)

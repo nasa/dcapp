@@ -59,13 +59,20 @@ void * VariableServerComm::add_var(const char *param, const char *units, int typ
 
     for (pstruct = this->parray; pstruct; pstruct = pstruct->next)
     {
-        if (!strcmp(pstruct->param, param) &&
-            !strcmp(pstruct->units, units)) return pstruct->value;
+        if (units)
+        {
+            if (!strcmp(pstruct->param, param) && !strcmp(pstruct->units, units)) return pstruct->value;
+        }
+        else
+        {
+            if (!strcmp(pstruct->param, param) && !(pstruct->units)) return pstruct->value;
+        }
     }
 
     pnew = (ParamArray *)calloc(1, sizeof(ParamArray));
     pnew->param = strdup(param);
-    pnew->units = strdup(units);
+    if (units) pnew->units = strdup(units);
+    else pnew->units = nullptr;
     pnew->type = type;
     pnew->nelem = nelem;
     pnew->value = 0x0;
@@ -202,7 +209,7 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
 
     for (pstruct = this->parray; pstruct; pstruct = pstruct->next)
     {
-        if (strcmp(pstruct->units, "--"))
+        if (pstruct->units)
         {
             if (asprintf(&cmd, "trick.var_add(\"%s\", \"%s\")\n", pstruct->param, pstruct->units) == -1) return VS_ERROR;
         }
@@ -278,13 +285,27 @@ int VariableServerComm::put(const char *param, int type, void *value, const char
     switch (type)
     {
         case VS_DECIMAL:
-            if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s {%s} = %f;\")\n", param, units, *(double *)value) == -1) return VS_ERROR;
+            if (units)
+            {
+                if (asprintf(&cmd, "trick.var_set(\"%s\", %f, \"%s\")\n", param, *(double *)value, units) == -1) return VS_ERROR;
+            }
+            else
+            {
+                if (asprintf(&cmd, "trick.var_set(\"%s\", %f)\n", param, *(double *)value) == -1) return VS_ERROR;
+            }
             break;
         case VS_INTEGER:
-            if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s {%s} = %d;\")\n", param, units, *(int *)value) == -1) return VS_ERROR;
+            if (units)
+            {
+                if (asprintf(&cmd, "trick.var_set(\"%s\", %d, \"%s\")\n", param, *(int *)value, units) == -1) return VS_ERROR;
+            }
+            else
+            {
+                if (asprintf(&cmd, "trick.var_set(\"%s\", %d)\n", param, *(int *)value) == -1) return VS_ERROR;
+            }
             break;
         case VS_STRING:
-            if (asprintf(&cmd, "trick.read_checkpoint_from_string(\"%s = %s;\")\n", param, (char *)value) == -1) return VS_ERROR;
+            if (asprintf(&cmd, "trick.var_set(\"%s\", %s)\n", param, (char *)value) == -1) return VS_ERROR;
             break;
         case VS_METHOD:
             if (asprintf(&cmd, "%s()\n", param) == -1) return VS_ERROR;

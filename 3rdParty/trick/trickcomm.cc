@@ -233,7 +233,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
         myparam.trickvar = strdup(trickvar);
 
         if (units) myparam.units = strdup(units);
-        else  myparam.units = strdup("--");
+        else  myparam.units = nullptr;
 
         myparam.type = get_datatype(paramname);
         myparam.dcvalue = valptr;
