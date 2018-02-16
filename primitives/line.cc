@@ -24,10 +24,6 @@ void dcLine::setLineWidth(const char *inval)
 void dcLine::draw(void)
 {
     for (const auto &myobj : children) myobj->draw();
-
-    line_start(linewidth, *(color.R), *(color.G), *(color.B), *(color.A));
-    for (const auto &mypos : AppData.vertices) gfx_vertex(mypos.x, mypos.y);
-    line_end();
-
+    draw_line(AppData.vertices, linewidth, *color.R, *color.G, *color.B, *color.A);
     AppData.vertices.clear();
 }

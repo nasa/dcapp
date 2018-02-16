@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include <vector>
+#include <assert.h>
 #include <GL/glu.h>
 #include "fontlib/fontlib.hh"
 
@@ -170,6 +172,24 @@ void line_end(void)
     glPopMatrix();
 }
 
+void draw_line(const std::vector<float> &pntsA, float linewidth, float red, float green, float blue, float alpha)
+{
+    glPushMatrix();
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glLineWidth(linewidth);
+    glColor4f(red, green, blue, alpha);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, pntsA.data());
+    glDrawArrays(GL_LINE_STRIP, 0, static_cast<int>(pntsA.size()/2));
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisable(GL_BLEND);
+
+    glPopMatrix();
+}
+
 void polygon_outline_start(float linewidth, float red, float green, float blue, float alpha)
 {
     glEnable(GL_BLEND);
@@ -197,36 +217,67 @@ void polygon_fill_end(void)
     glEnd();
 }
 
+void draw_polygon( const std::vector<float> &pntsA, float red, float green, float blue, float alpha)
+{
+    std::vector<float> localPointsL;
+
+    for (size_t iL=0; iL< pntsA.size()-1; iL+=2)
+    {
+        localPointsL.push_back(pntsA[iL]);
+        localPointsL.push_back(pntsA[iL+1]);
+    }
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glColor4f(red, green, blue, alpha);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, localPointsL.data());
+    glDrawArrays(GL_TRIANGLE_FAN, 0, static_cast<int>(localPointsL.size()/2));
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisable(GL_BLEND);
+}
+
 void gfx_vertex(float x, float y)
 {
     glVertex2f(x, y);
 }
 
-void rectangle_outline(float linewidth, float red, float green, float blue, float alpha, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
+void draw_quad( const std::vector<float> &pntsA, float red, float green, float blue, float alpha)
 {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(red, green, blue, alpha);
-    glLineWidth(linewidth);
-    glBegin(GL_LINE_LOOP);
-        glVertex2f(x1, y1);
-        glVertex2f(x2, y2);
-        glVertex2f(x3, y3);
-        glVertex2f(x4, y4);
-    glEnd();
-}
+    assert(pntsA.size() == 8);
+    std::vector< float > localPointsL;
 
-void rectangle_fill(float red, float green, float blue, float alpha, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
-{
+    // tri1
+    localPointsL.push_back( pntsA[0] );
+    localPointsL.push_back( pntsA[1] );
+
+    localPointsL.push_back( pntsA[2] );
+    localPointsL.push_back( pntsA[3] );
+
+    localPointsL.push_back( pntsA[4] );
+    localPointsL.push_back( pntsA[5] );
+
+    // tri1
+    localPointsL.push_back( pntsA[0] );
+    localPointsL.push_back( pntsA[1] );
+
+    localPointsL.push_back( pntsA[4] );
+    localPointsL.push_back( pntsA[5] );
+
+    localPointsL.push_back( pntsA[6] );
+    localPointsL.push_back( pntsA[7] );
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glColor4f(red, green, blue, alpha);
-    glBegin(GL_QUADS);
-        glVertex2f(x1, y1);
-        glVertex2f(x2, y2);
-        glVertex2f(x3, y3);
-        glVertex2f(x4, y4);
-    glEnd();
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, localPointsL.data());
+    glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(localPointsL.size()/2));
+    glDisableClientState(GL_VERTEX_ARRAY);
     glDisable(GL_BLEND);
 }
 
@@ -318,4 +369,26 @@ void draw_textured_sphere(float x, float y, float radius, int textureID, float r
     gluDeleteQuadric(q);
     glDisable(GL_DEPTH_TEST);          // Disable depth testing
     glDisable(GL_TEXTURE_2D);          // Disable texture mapping
+}
+
+void addPoint(std::vector<float> &listA, float xA, float yA)
+{
+    listA.push_back( xA );
+    listA.push_back( yA );
+}
+
+void addPoint(std::vector<float> &listA, float xA, float yA, float zA)
+{
+    listA.push_back( xA );
+    listA.push_back( yA );
+    listA.push_back( zA );
+}
+
+void addPoint(std::vector<float> &listA, float xA, float yA, float zA, float uA, float vA)
+{
+    listA.push_back( xA );
+    listA.push_back( yA );
+    listA.push_back( zA );
+    listA.push_back( uA );
+    listA.push_back( vA );
 }

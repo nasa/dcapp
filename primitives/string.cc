@@ -118,7 +118,14 @@ void dcString::draw(void)
         {
             mytop = mybottom + (*fontSize);
             myright = myleft + get_string_width(fontID, *fontSize, forcemono, tmpstr.c_str());
-            rectangle_fill(*(bgcolor.R), *(bgcolor.G), *(bgcolor.B), *(bgcolor.A), myleft, mybottom, myleft, mytop, myright, mytop, myright, mybottom);
+
+            std::vector<float> pointsL;
+            addPoint(pointsL, myleft, mybottom);
+            addPoint(pointsL, myleft, mytop);
+            addPoint(pointsL, myright, mytop);
+            addPoint(pointsL, myright, mybottom);
+
+            draw_quad(pointsL, *(bgcolor.R), *(bgcolor.G), *(bgcolor.B), *(bgcolor.A));
         }
         if (*shadowOffset)
         {

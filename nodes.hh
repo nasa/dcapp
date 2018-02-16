@@ -2,6 +2,7 @@
 #define _NODES_HH_
 
 #include <list>
+#include <vector>
 #include "basicutils/timer.hh"
 #include "primitives/primitives.hh"
 #include "dc.hh"
@@ -19,7 +20,7 @@ typedef struct
     std::list<PixelStreamItem *> pixelstreams;
     std::list<dcObject *> events;
     std::list<dcObject *> mouseheld;
-    std::list<dcPosition> vertices;
+    std::vector<float> vertices;
     dcWindow *toplevel;
     void (*DisplayPreInit)(void *(*)(const char *));
     void (*DisplayInit)(void);

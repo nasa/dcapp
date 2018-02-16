@@ -36,5 +36,6 @@ void dcVertex::draw(void)
     }
     else myy = 0;
 
-    AppData.vertices.push_back(dcPosition(myx, myy));
+    AppData.vertices.push_back(myx);
+    AppData.vertices.push_back(myy);
 }

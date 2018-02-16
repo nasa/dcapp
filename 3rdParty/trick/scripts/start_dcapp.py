@@ -88,7 +88,7 @@ def inhibit_local_dcapp_clients():
     dcapp_local_args = [ ]
 
 
-def add_local_dcapp_client(local_args):
+def add_local_dcapp_client(local_args = ''):
 
     global dcapp_local_client_count
     global dcapp_local_args
@@ -110,7 +110,7 @@ def inhibit_remote_dcapp_clients():
     dcapp_remote_displays = [ ]
 
 
-def add_remote_dcapp_client(remote_host, remote_display, remote_args):
+def add_remote_dcapp_client(remote_host, remote_display, remote_args = ''):
 
     global dcapp_remote_client_count
     global dcapp_remote_args

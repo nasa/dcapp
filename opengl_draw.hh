@@ -1,6 +1,7 @@
 #ifndef _OPENGL_DRAW_HH_
 #define _OPENGL_DRAW_HH_
 
+#include <vector>
 #include "fontlib/fontlib.hh"
 
 extern void graphics_init(void);
@@ -21,15 +22,20 @@ extern void translate_start(float, float);
 extern void translate_end(void);
 extern void line_start(float, float, float, float, float);
 extern void line_end(void);
+extern void draw_line(const std::vector<float> &, float, float, float, float, float);
 extern void polygon_outline_start(float, float, float, float, float);
 extern void polygon_outline_end(void);
 extern void polygon_fill_start(float, float, float, float);
 extern void polygon_fill_end(void);
+extern void draw_polygon(const std::vector<float> &, float, float, float, float);
 extern void gfx_vertex(float, float);
-extern void rectangle_outline(float, float, float, float, float, float, float, float, float, float, float, float, float);
-extern void rectangle_fill(float, float, float, float, float, float, float, float, float, float, float, float);
+extern void draw_quad(const std::vector<float> &, float, float, float, float);
 extern void circle_outline(float, float, float, int, float, float, float, float, float);
 extern void circle_fill(float, float, float, int, float, float, float, float);
 extern void draw_textured_sphere(float, float, float, int, float, float, float);
+
+extern void addPoint(std::vector<float> &, float, float);
+extern void addPoint(std::vector<float> &, float, float, float);
+extern void addPoint(std::vector<float> &, float, float, float, float, float);
 
 #endif
