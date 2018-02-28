@@ -159,6 +159,7 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
 
 int PixelStreamMjpeg::reader(void)
 {
+#if defined(JPEG_ENABLED) && (JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
     bool updated = false;
     int updatepixels = 0, bytes_to_read, newbytes;
 
@@ -217,6 +218,10 @@ int PixelStreamMjpeg::reader(void)
     }
 
     return updatepixels;
+#else
+    readbufalloc = 0;
+    return 0;
+#endif
 }
 
 void PixelStreamMjpeg::socket_disconnect(void)
@@ -304,7 +309,6 @@ bool PixelStreamMjpeg::RecvHeader(void)
 
 bool PixelStreamMjpeg::RecvData(void)
 {
-#if defined(JPEG_ENABLED) && (JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
     int i, tmpoffset;
     size_t rawsize = 0;
 
@@ -332,15 +336,11 @@ bool PixelStreamMjpeg::RecvData(void)
     }
 
     return false;
-#else
-    dataalloc = 0;
-    this->lastread->restart();
-    return false;
-#endif
 }
 
 void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
 {
+#if defined(JPEG_ENABLED) && (JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
     struct jpeg_decompress_struct jinfo;
     struct jpeg_error_mgr jerr;
     unsigned char *line;
@@ -368,4 +368,7 @@ void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
     }
     jpeg_finish_decompress(&jinfo);
     jpeg_destroy_decompress(&jinfo);
+#else
+    dataalloc = 0;
+#endif
 }
