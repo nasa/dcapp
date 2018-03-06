@@ -290,8 +290,10 @@ void flFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
     {
         for (j=0; j<64; j++)
         {
-            if (i<slot->bitmap.rows && j<slot->bitmap.width) bitmap[i][j] = slot->bitmap.buffer[(i * slot->bitmap.width) + j];
-            else bitmap[i][j] = 0;
+            if (i < (unsigned int)(slot->bitmap.rows) && j < (unsigned int)(slot->bitmap.width))
+                bitmap[i][j] = slot->bitmap.buffer[(i * slot->bitmap.width) + j];
+            else
+                bitmap[i][j] = 0;
         }
     }
     glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 64, 64, 0, GL_ALPHA, GL_UNSIGNED_BYTE, bitmap);

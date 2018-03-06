@@ -1,5 +1,5 @@
 #include <sstream>
-#include <GL/glu.h>
+#include <GL/gl.h>
 #include "PixelStream/PixelStream.hh"
 #include "basicutils/msg.hh"
 #include "doug.h"

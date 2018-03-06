@@ -46,7 +46,7 @@ void dcPolygon::draw(void)
     if (fill)
     {
         draw_polygon(AppData.vertices, *(FillColor.R), *(FillColor.G), *(FillColor.B), *(FillColor.A));
-	}
+    }
     if (outline)
     {
         draw_line(AppData.vertices, linewidth, *(LineColor.R), *(LineColor.G), *(LineColor.B), *(LineColor.A));

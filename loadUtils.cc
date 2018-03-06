@@ -26,15 +26,15 @@ static list<char *> stringConstants;
 static char *getFullPath(const char *fname)
 {
     if (!fname) return 0x0;
-	char *longname = (char *)calloc(PATH_MAX, sizeof(char));
-	if (!realpath(fname, longname))
-	{
-	    free(longname);
-	    return 0x0;
-	}
-	char *shortname = strdup(longname);
-	free(longname);
-	return shortname;
+    char *longname = (char *)calloc(PATH_MAX, sizeof(char));
+    if (!realpath(fname, longname))
+    {
+        free(longname);
+        return 0x0;
+    }
+    char *shortname = strdup(longname);
+    free(longname);
+    return shortname;
 }
 
 dcTexture dcLoadTexture(const char *filename)

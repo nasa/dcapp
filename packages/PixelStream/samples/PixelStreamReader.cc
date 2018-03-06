@@ -3,7 +3,7 @@
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
-#include <GL/glu.h>
+#include <GL/gl.h>
 #include "basicutils/msg.hh"
 #include "TaraDraw/TaraDraw.hh"
 #include "PixelStream/PixelStream.hh"
@@ -18,7 +18,7 @@ static size_t memallocation = 0;
 
 void Draw(void)
 {
-	size_t nbytes, origbytes, newh, pad, padbytes, offset, offsetbytes;
+    size_t nbytes, origbytes, newh, pad, padbytes, offset, offsetbytes;
 
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

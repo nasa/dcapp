@@ -4,7 +4,7 @@
 #include <cmath>
 #include <vector>
 #include <assert.h>
-#include <GL/glu.h>
+#include <GL/gl.h>
 #include "fontlib/fontlib.hh"
 
 
@@ -22,17 +22,6 @@ void graphics_init(void)
     glDepthFunc(GL_LEQUAL);            // The Type Of Depth Testing To Do
 }
 
-/*********************************************************************************
- *
- * This function handles reshaping a window.
- *
- *********************************************************************************/
-void reshape(int w, int h)
-{
-    glClear(GL_COLOR_BUFFER_BIT);
-    glViewport(0, 0, w, h);            // Set the viewport to the whole window.
-}
-
 void setup_panel(float x, float y, int near, int far, float red, float green, float blue, float alpha)
 {
     glClearColor(red, green, blue, alpha);
@@ -42,6 +31,12 @@ void setup_panel(float x, float y, int near, int far, float red, float green, fl
     glOrtho(0, x, 0, y, near, far);
     glMatrixMode(GL_MODELVIEW);
     glColor4f(1, 1, 1, 1);
+}
+
+void reshape_viewport(int w, int h)
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+    glViewport(0, 0, w, h);            // Set the viewport to the whole window.
 }
 
 void init_texture(unsigned int *textureID)
@@ -156,22 +151,6 @@ void translate_end(void)
     glPopMatrix();
 }
 
-void line_start(float linewidth, float red, float green, float blue, float alpha)
-{
-    glPushMatrix();
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glLineWidth(linewidth);
-        glColor4f(red, green, blue, alpha);
-        glBegin(GL_LINE_STRIP);
-}
-
-void line_end(void)
-{
-        glEnd();
-    glPopMatrix();
-}
-
 void draw_line(const std::vector<float> &pntsA, float linewidth, float red, float green, float blue, float alpha)
 {
     glPushMatrix();
@@ -188,33 +167,6 @@ void draw_line(const std::vector<float> &pntsA, float linewidth, float red, floa
     glDisable(GL_BLEND);
 
     glPopMatrix();
-}
-
-void polygon_outline_start(float linewidth, float red, float green, float blue, float alpha)
-{
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(red, green, blue, alpha);
-    glLineWidth(linewidth);
-    glBegin(GL_LINE_LOOP);
-}
-
-void polygon_outline_end(void)
-{
-    glEnd();
-}
-
-void polygon_fill_start(float red, float green, float blue, float alpha)
-{
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(red, green, blue, alpha);
-    glBegin(GL_POLYGON);
-}
-
-void polygon_fill_end(void)
-{
-    glEnd();
 }
 
 void draw_polygon( const std::vector<float> &pntsA, float red, float green, float blue, float alpha)
@@ -239,9 +191,18 @@ void draw_polygon( const std::vector<float> &pntsA, float red, float green, floa
     glDisable(GL_BLEND);
 }
 
-void gfx_vertex(float x, float y)
+void draw_filled_triangles( const std::vector< float >&pntsA, float red, float green, float blue, float alpha)
 {
-    glVertex2f(x, y);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glColor4f(red, green, blue, alpha);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, pntsA.data());
+    glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(pntsA.size() / 2));
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisable(GL_BLEND);
 }
 
 void draw_quad( const std::vector<float> &pntsA, float red, float green, float blue, float alpha)
@@ -339,56 +300,61 @@ void circle_fill(float cx, float cy, float r, int num_segments, float red, float
     glDisable(GL_BLEND);
 }
 
-void draw_textured_sphere(float x, float y, float radius, int textureID, float roll, float pitch, float yaw)
+void draw_textured_sphere(float x, float y, const std::vector<float> &pointsA, float radiusA, int textureID, float roll, float pitch, float yaw)
 {
-    GLUquadricObj *q = gluNewQuadric();         // Create A New Quadratic
-
-    /* Set Up Sphere Mapping */
-    glEnable(GL_TEXTURE_2D);                    // Enable Texture Mapping
-    glEnable(GL_DEPTH_TEST);                    // Enables Depth Testing
-    gluQuadricDrawStyle(q, GL_FILL);            // Generate a filled sphere
-    gluQuadricNormals(q, GL_SMOOTH);            // Generate Smooth Normals For The Quad
-    gluQuadricTexture(q, GL_TRUE);              // Enable Texture Coords For The Quad
-    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-
+//  glEnable(GL_DEPTH_TEST);                    // Enables Depth Testing
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_CULL_FACE);
     glBindTexture(GL_TEXTURE_2D, textureID);
+    glColor4f(1.0, 1.0, 1.0, 1.0);
 
     glPushMatrix();
         glTranslatef(x, y, 0);
-        glScalef(radius, radius, 1);
-        /* Orient the sphere according to the roll, pitch, and yaw */
-        glRotatef(-90,    0, 1, 0);
-        glRotatef( 90,    0, 0, 1);
+        glScalef(radiusA, radiusA, 1.0);
+
+        /* First, orient the sphere for correct rendering at roll=0, pitch=0, and yaw=0 */
+        glRotatef(180, 0, 0, 1);
+        glRotatef(-90, 1, 0, 0);
+
+        /* Then, orient the sphere according to the roll, pitch, and yaw values */
         glRotatef(-roll,  0, 1, 0);
-        glRotatef(-yaw,   1, 0, 0);
-        glRotatef(-pitch, 0, 0, 1);
+        glRotatef( yaw,   0, 0, 1);
+        glRotatef(-pitch, 1, 0, 0);
+
         /* Draw the sphere */
-        gluSphere(q, 1, 32, 32);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 5, pointsA.data() + 3);
+        glVertexPointer(3, GL_FLOAT, sizeof(float) * 5, pointsA.data());
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(pointsA.size() / 5));
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glPopMatrix();
-    gluDeleteQuadric(q);
-    glDisable(GL_DEPTH_TEST);          // Disable depth testing
-    glDisable(GL_TEXTURE_2D);          // Disable texture mapping
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_CULL_FACE);
+//  glDisable(GL_DEPTH_TEST);                    // disables Depth Testing
 }
 
 void addPoint(std::vector<float> &listA, float xA, float yA)
 {
-    listA.push_back( xA );
-    listA.push_back( yA );
+    listA.push_back(xA);
+    listA.push_back(yA);
 }
 
 void addPoint(std::vector<float> &listA, float xA, float yA, float zA)
 {
-    listA.push_back( xA );
-    listA.push_back( yA );
-    listA.push_back( zA );
+    listA.push_back(xA);
+    listA.push_back(yA);
+    listA.push_back(zA);
 }
 
 void addPoint(std::vector<float> &listA, float xA, float yA, float zA, float uA, float vA)
 {
-    listA.push_back( xA );
-    listA.push_back( yA );
-    listA.push_back( zA );
-    listA.push_back( uA );
-    listA.push_back( vA );
+    listA.push_back(xA);
+    listA.push_back(yA);
+    listA.push_back(zA);
+    listA.push_back(uA);
+    listA.push_back(vA);
 }

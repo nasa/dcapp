@@ -1,9 +1,12 @@
 #ifndef _ADI_HH_
 #define _ADI_HH_
 
+#include <vector>
 #include "dc.hh"
 #include "geometric.hh"
 #include "parent.hh"
+
+typedef struct { float m_X, m_Y, m_Z, m_U, m_V; } LocalPoint;
 
 class dcADI : public dcGeometric
 {
@@ -30,11 +33,15 @@ class dcADI : public dcGeometric
         double *rollError;
         double *pitchError;
         double *yawError;
+        std::vector<float> sphereTriangles;
 
         void draw_roll_bug(double, double, double, double);
         void draw_cross_hairs(double);
         void draw_needles(double, double, double, double);
         double get_error_info(double, double);
+
+        void BuildTriangles(std::vector<float> &, const std::vector<LocalPoint> &, const std::vector<LocalPoint> &);
+        std::vector<float> BuildSphere(void);
 };
 
 #endif
