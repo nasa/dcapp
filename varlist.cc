@@ -13,7 +13,7 @@ typedef struct
 
 std::map<std::string, varInfo> varMap;
 
-void varlist_append(const char *paramname, const char *typestr, const char *initval)
+void *varlist_append(const char *paramname, const char *typestr, const char *initval)
 {
     const char *mylabel;
 
@@ -23,13 +23,13 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
     if (!paramname)
     {
         error_msg("Attempting to create a variable without a name");
-        return;
+        return nullptr;
     }
 
     if (!typestr)
     {
         error_msg("Attempting to create the variable \"" << paramname << "\" without a specified type");
-        return;
+        return nullptr;
     }
 
     varInfo vinfo;
@@ -60,6 +60,7 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
     }
 
     varMap[std::string(mylabel)] = vinfo;
+    return vinfo.value;
 }
 
 void varlist_term(void)

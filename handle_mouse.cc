@@ -10,6 +10,17 @@ extern appdata AppData;
 
 int mousebouncemode = 0;
 
+void HandleMouseMotion(double xpct, double ypct)
+{
+    static double prevx=0, prevy=0;
+    if (xpct != prevx || ypct != prevy)
+    {
+        AppData.toplevel->handleMouseMotion(xpct, ypct);
+        prevx = xpct;
+        prevy = ypct;
+    }
+}
+
 void HandleMousePress(double xpct, double ypct)
 {
     AppData.toplevel->handleMousePress(xpct, ypct);

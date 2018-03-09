@@ -12,6 +12,7 @@ class dcContainer : public dcParent, public dcGeometric
         void setVirtualSize(const char *, const char *);
         void draw(void);
         void handleMousePress(double, double);
+        void handleMouseMotion(double, double);
 
 // TODO: why the heck to I need these?
 void handleKeyPress(char key) { dcParent::handleKeyPress(key); };

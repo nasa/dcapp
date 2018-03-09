@@ -8,6 +8,7 @@
 #include "keyboardevent.hh"
 #include "line.hh"
 #include "mouseevent.hh"
+#include "mousemotion.hh"
 #include "object.hh"
 #include "panel.hh"
 #include "parent.hh"

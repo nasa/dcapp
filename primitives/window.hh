@@ -15,6 +15,7 @@ class dcWindow : public dcParent
         void handleKeyRelease(char);
         void handleMousePress(double, double);
         void handleBezelPress(int);
+        void handleMouseMotion(double, double);
         void updateStreams(unsigned);
 
 // note that handleMouseRelease and handleBezelRelease use the methods from the base

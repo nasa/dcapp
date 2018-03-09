@@ -68,6 +68,11 @@ void dcWindow::handleBezelRelease(int key)
 }
 #endif
 
+void dcWindow::handleMouseMotion(double x, double y)
+{
+    if (currentPanel) currentPanel->handleMouseMotion(x, y);
+}
+
 void dcWindow::updateStreams(unsigned passcount)
 {
     if (currentPanel) currentPanel->updateStreams(passcount);

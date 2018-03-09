@@ -18,6 +18,7 @@ class dcCondition : public dcObject
         void handleBezelPress(int);
         void handleBezelRelease(int);
         void handleEvent(void);
+        void handleMouseMotion(double, double);
         void updateStreams(unsigned);
         void processAnimation(Animation *);
         bool checkCondition(void);

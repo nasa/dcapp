@@ -1,4 +1,3 @@
-#include <list>
 #include "nodes.hh"
 #include "mouseevent.hh"
 

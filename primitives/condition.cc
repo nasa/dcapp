@@ -113,6 +113,14 @@ void dcCondition::handleEvent(void)
         FalseList->handleEvent();
 }
 
+void dcCondition::handleMouseMotion(double x, double y)
+{
+    if (checkCondition())
+        TrueList->handleMouseMotion(x, y);
+    else
+        FalseList->handleMouseMotion(x, y);
+}
+
 void dcCondition::updateStreams(unsigned passcount)
 {
     if (checkCondition())

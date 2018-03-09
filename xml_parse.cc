@@ -719,6 +719,10 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRadius(get_element_data(node, "OuterRadius"), get_element_data(node, "BallRadius"));
             myitem->setChevron(get_element_data(node, "ChevronWidth"), get_element_data(node, "ChevronHeight"));
         }
+        if (NodeCheck(node, "MouseMotion"))
+        {
+            new dcMouseMotion(myparent, get_element_data(node, "XVariable"), get_element_data(node, "YVariable"));
+        }
         if (NodeCheck(node, "MouseEvent"))
         {
             dcMouseEvent *myitem = new dcMouseEvent(myparent);

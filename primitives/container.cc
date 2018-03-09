@@ -55,6 +55,22 @@ void dcContainer::handleMousePress(double inx, double iny)
     for (const auto &myobj : children) myobj->handleMousePress(finalx, finaly);
 }
 
+void dcContainer::handleMouseMotion(double inx, double iny)
+{
+    double ang, originx, originy, tmpx, tmpy, finalx, finaly;
+
+    computeGeometry();
+    ang = (*rotate) * 0.01745329252;
+    originx = refx - ((delx * cosf(-ang)) + (dely * sinf(-ang)));
+    originy = refy - ((dely * cosf(-ang)) - (delx * sinf(-ang)));
+    tmpx = (inx - originx) * (*vwidth) / (*w);
+    tmpy = (iny - originy) * (*vheight) / (*h);
+    finalx = (tmpx * cosf(ang)) + (tmpy * sinf(ang));
+    finaly = (tmpy * cosf(ang)) - (tmpx * sinf(ang));
+
+    for (const auto &myobj : children) myobj->handleMouseMotion(finalx, finaly);
+}
+
 double * dcContainer::getContainerWidth(void)
 {
     return vwidth;

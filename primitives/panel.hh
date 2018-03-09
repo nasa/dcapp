@@ -16,6 +16,7 @@ class dcPanel : public dcParent
         double *getContainerHeight(void);
         void draw(void);
         void handleMousePress(double, double);
+        void handleMouseMotion(double, double);
 
     private:
         int displayID;

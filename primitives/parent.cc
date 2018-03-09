@@ -46,6 +46,11 @@ void dcParent::handleEvent(void)
     for (const auto &myobj : children) myobj->handleEvent();
 }
 
+void dcParent::handleMouseMotion(double x, double y)
+{
+    for (const auto &myobj : children) myobj->handleMouseMotion(x, y);
+}
+
 void dcParent::updateData(void)
 {
     for (const auto &myobj : children) myobj->updateData();

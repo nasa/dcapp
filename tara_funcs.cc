@@ -1,11 +1,13 @@
 #include "TaraDraw/TaraDraw.hh"
 #include "nodes.hh"
+#include "varlist.hh"
 
 extern appdata AppData;
 
 extern void Idle(void);
 extern void Terminate(int);
 
+extern void HandleMouseMotion(double, double);
 extern void HandleMousePress(double, double);
 extern void HandleMouseRelease(void);
 extern void HandleKeyboard(unsigned char);
@@ -96,9 +98,13 @@ void win_close(WinCloseEvent wcl)
 static void app_run(void)
 {
     static unsigned passnum = 0;
-    Idle();
-    tdProcessEvents(mouse_click, key_click, win_config, win_close);
+    tdPosition pos;
+
     passnum++;
+    Idle();
+    tdGetPointer(nullptr, &pos);
+    HandleMouseMotion(pos.x/mywin.width, pos.y/mywin.height);
+    tdProcessEvents(mouse_click, key_click, win_config, win_close);
     AppData.toplevel->updateStreams(passnum);
     if (tdNeedsRedraw(mywin.id))
     {

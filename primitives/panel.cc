@@ -50,3 +50,8 @@ void dcPanel::handleMousePress(double x, double y)
 {
     for (const auto &myobj : children) myobj->handleMousePress(orthoX * x, orthoY * y);
 }
+
+void dcPanel::handleMouseMotion(double x, double y)
+{
+    for (const auto &myobj : children) myobj->handleMouseMotion(orthoX * x, orthoY * y);
+}
