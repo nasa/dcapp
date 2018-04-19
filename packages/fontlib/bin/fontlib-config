@@ -7,14 +7,15 @@ Usage: $0 [OPTION]...
 Get package compilation and linking information.
 
 Options:
-    --osspec       default directory name extension
-    --objdir       default directory name for compiled objects
-    --libdir       default directory name for compiled libraries
-    --bindir       default directory name for compiled binaries
-    --cflags       required compilation flags
-    --libs         required linking flags
-    --compdepends  makefile compilation dependencies
-    --linkdepends  makefile linking dependencies
+    --osspec           default directory name extension
+    --objdir           default directory name for compiled objects
+    --libdir           default directory name for compiled libraries
+    --bindir           default directory name for compiled binaries
+    --cflags           required compilation flags
+    --libs             required linking flags
+    --compdepends      makefile compilation dependencies
+    --linkdepends      makefile linking dependencies
+    --cflags_internal  required compilation flags for building the package
 EOF
     exit $1
 }
@@ -74,6 +75,10 @@ while test $# -gt 0 ; do
             ;;
         --linkdepends)
             echo "${mydir}/${libdir}/libfontlib.a"
+            ;;
+        --cflags_internal)
+            freetype_cflags=`freetype-config --cflags`
+            echo "-I${parentdir} ${freetype_cflags}"
             ;;
 ################################################################################
         *)

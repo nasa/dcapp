@@ -3,6 +3,7 @@
 #ifdef JPEG_ENABLED
 #include <jpeglib.h>
 #endif
+#include "basicutils/msg.hh"
 #include "imgload_internal.hh"
 
 /*********************************************************************************
@@ -18,7 +19,7 @@ unsigned int LoadJPG(const char *filename, ImageStruct *image)
 
     if (!file)
     {
-        fprintf(stderr, "%s/%s: ERROR - (%s) does not exist\n", __FILE__, __FUNCTION__, filename);
+        warning_msg("The file " << filename << " does not exist");
         return 1;
     }
 
@@ -45,7 +46,7 @@ unsigned int LoadJPG(const char *filename, ImageStruct *image)
 
     return 0;
 #else
-    fprintf(stderr, "%s/%s: WARNING - Could not find libjpeg or libjpeg-turbo\n", __FILE__, __FUNCTION__);
+    warning_msg("Could not find libjpeg or libjpeg-turbo");
     return 1;
 #endif
 }

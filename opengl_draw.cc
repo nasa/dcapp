@@ -8,12 +8,6 @@
 #include "fontlib/fontlib.hh"
 
 
-/*********************************************************************************
- *
- * This function is a general OpenGL initialization function. It sets all of the
- * initial parameters.
- *
- *********************************************************************************/
 void graphics_init(void)
 {
     glClearColor(0, 0, 0, 0);          // Clear the window to black.
@@ -132,7 +126,7 @@ void container_end(void)
 void rotate_start(float rot)
 {
     glPushMatrix();
-        glRotatef(rot, 0, 0, 1);
+    glRotatef(rot, 0, 0, 1);
 }
 
 void rotate_end(void)
@@ -143,7 +137,7 @@ void rotate_end(void)
 void translate_start(float x, float y)
 {
     glPushMatrix();
-        glTranslatef(x, y, 0);
+    glTranslatef(x, y, 0);
 }
 
 void translate_end(void)

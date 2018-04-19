@@ -7,14 +7,14 @@
 #else
 #include <OpenGLES/ES1/glext.h>
 #endif
+#include "basicutils/msg.hh"
 #include "imgload_internal.hh"
 
 #ifndef IOS_BUILD
 static void ensureValidSizeForTexturing(ImageStruct *, GLint, GLenum);
 #endif
 
-/*********************************************************************************
- *********************************************************************************/
+
 int createTextureFromImage(ImageStruct *image)
 {
     int texture;
@@ -43,7 +43,7 @@ int createTextureFromImage(ImageStruct *image)
             bytesPerPixel = 4;
             break;
         default:
-            fprintf(stderr, "%s %d: Warning pixel specification = %d\n", __FILE__, __LINE__, image->pixelspec);
+            warning_msg("Invalid pixel specification: " << image->pixelspec);
             format = GL_RGB;
             bytesPerPixel = 3;
     }
@@ -56,9 +56,8 @@ int createTextureFromImage(ImageStruct *image)
     glBindTexture(GL_TEXTURE_2D, texture);
 
 // GL_TEXTURE_MAG_FILTER and GL_TEXTURE_MIN_FILTER define how OpenGL magnifies and minifies a texture:
-//   GL_LINEAR tells OpenGL to interpolate the texture using bilinear filtering (in other words, it'd appear smoothed).
-//   GL_NEAREST tells OpenGL to not do any smoothing would occur.
-// Courtesy http://paulyg.f2s.com/prog3.htm
+//   GL_LINEAR tells OpenGL to interpolate the texture using bilinear filtering (in other words, to smooth it).
+//   GL_NEAREST tells OpenGL to not do any smoothing.
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
@@ -67,7 +66,6 @@ int createTextureFromImage(ImageStruct *image)
 // For GL_TEXTURE_ENV:
 //   GL_MODULATE tells OpenGL to blend the texture with the base color of the object.
 //   GL_DECAL or GL_REPLACE tells OpenGL to replace the base color (and any lighting effects) purely with the colors of the texture.
-// Courtesy http://paulyg.f2s.com/prog3.htm
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
     // 3rd argument may need to be "format" instead of "bytesPerPixel"
@@ -79,9 +77,8 @@ int createTextureFromImage(ImageStruct *image)
     return texture;
 }
 
+
 #ifndef IOS_BUILD
-/*********************************************************************************
- *********************************************************************************/
 static int computeNearestPowerOfTwo(int val)
 {
     if (val & (val - 1))
@@ -93,13 +90,12 @@ static int computeNearestPowerOfTwo(int val)
     return val;
 }
 
-/*********************************************************************************
- *********************************************************************************/
+
 static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel, GLenum format)
 {
     if (!(image->data))
     {
-        fprintf(stderr, "%s %d: Cannot scale NULL image.\n", __FILE__, __LINE__);
+        warning_msg("Cannot scale NULL image");
         return;
     }
 
@@ -115,11 +111,11 @@ static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel,
     if (newW != image->width || newH != image->height)
     {
         unsigned int newTotalSize = newW * newH * bytesPerPixel;
-        unsigned char *newData = (unsigned char*)malloc(newTotalSize);
+        unsigned char *newData = (unsigned char *)malloc(newTotalSize);
 
         if (!newData)
         {
-            fprintf(stderr, "%s %d: %s did not succeed : out of memory. %d\n", __FILE__,__LINE__, __FUNCTION__,  newTotalSize);
+            warning_msg("Unable to malloc " << newTotalSize << " bytes");
             return;
         }
 
@@ -132,10 +128,10 @@ static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel,
         {
             image->width = newW;
             image->height = newH;
-            image->data = (unsigned char*)realloc(image->data, newTotalSize);
+            image->data = (unsigned char *)realloc(image->data, newTotalSize);
             memcpy(image->data, newData, newTotalSize);
         }
-        else fprintf(stderr, "%s %d: %s did not succeed : %s\n", __FILE__,__LINE__, __FUNCTION__,  (char *)gluErrorString((GLenum)status));
+        else warning_msg("gluScaleImage failed: " << (char *)gluErrorString((GLenum)status));
     }
 }
 #endif

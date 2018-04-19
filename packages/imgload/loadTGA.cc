@@ -2,76 +2,91 @@
 #include <cstdlib>
 #include <cstring>
 #include <cmath>
+#include "basicutils/msg.hh"
 #include "imgload_internal.hh"
 
 /*********************************************************************************
- * Create ImageStruct data from the contents of a TARGA file.
- * Courtesy: Jeff Molofee (NeHe)  http://nehe.gamedev.net/data/lessons/lesson.asp?lesson=24
+ * Create ImageStruct data from the contents of an uncompressed TARGA file
  *********************************************************************************/
 unsigned int LoadTGA(const char *filename, ImageStruct *image)
 {
-    unsigned int bpp;
-    unsigned char TGAheader[12] = {0,0,2,0,0,0,0,0,0,0,0,0}; // Uncompressed TGA Header
-    unsigned char TGAcompare[12];                            // Used To Compare TGA Header
-    unsigned char header[6];                                 // First 6 Useful Bytes From The Header
-    unsigned int bytesPerPixel;                              // Holds Number Of Bytes Per Pixel Used In The TGA File
-    unsigned int imageSize;                                  // Used To Store The Image Size When Setting Aside Ram
-    unsigned int temp;                                       // Temporary Variable
+    unsigned char expected[12] = {0,0,2,0,0,0,0,0,0,0,0,0}; // Expected header information
+    unsigned char actual[12];                               // Actual header information
+    unsigned char header[6];                                // First 6 useful bytes from the header
+    unsigned int bitsPerPixel;                              // Bits per pixel
+    unsigned int bytesPerPixel;                             // Bytes per pixel
+    unsigned int imageSize;                                 // Size of the image data
+    unsigned int temp;
     unsigned int i;
 
-    FILE *file = fopen(filename, "r"); // Open The TGA File
+    FILE *file = fopen(filename, "r");
 
     if (!file)
     {
-        fprintf(stderr, "%s/%s: ERROR - (%s) does not exist\n", __FILE__, __FUNCTION__, filename);
+        warning_msg("The file " << filename << " does not exist");
         return 1;
     }
 
-    if (fread(TGAcompare, 1, sizeof(TGAcompare), file) != sizeof(TGAcompare) ||  // Are There 12 Bytes To Read?
-        memcmp(TGAheader, TGAcompare, sizeof(TGAheader)) != 0 ||                 // Does The Header Match What We Want?
-        fread(header, 1, sizeof(header), file) != sizeof(header))                // If So Read Next 6 Header Bytes
+    // Confirm that there are 12 bytes to read
+    if (fread(actual, 1, sizeof(actual), file) != sizeof(actual))
     {
-        fprintf(stderr, "%s/%s: ERROR - Something else failed\n", __FILE__, __FUNCTION__);
+        warning_msg("Error reading header in " << filename);
         fclose(file);
         return 2;
     }
 
-    image->width  = header[1] * 256 + header[0]; // Determine The TGA Width (highbyte*256+lowbyte)
-    image->height = header[3] * 256 + header[2]; // Determine The TGA Height (highbyte*256+lowbyte)
-
-    // If width or height is invalid OR the TGA isn't 24- or 32-bit
-    if (image->width <=0 || image->height <=0 || (header[4] != 24 && header[4] !=32 ))
+    // Confirm that the header contains the expected information
+    if (memcmp(expected, actual, sizeof(expected)))
     {
-        fprintf(stderr, "%s/%s: ERROR - Bad bit count %d bits\n", __FILE__, __FUNCTION__, (int)header[0]);
+        warning_msg("Error reading header in " << filename);
         fclose(file);
         return 3;
     }
 
-    bpp = header[4];                                          // Grab The TGA's Bits Per Pixel (24 or 32)
-    bytesPerPixel = bpp/8;                                    // Divide By 8 To Get The Bytes Per Pixel
-    imageSize = image->width * image->height * bytesPerPixel; // Calculate The Memory Required For The TGA Data
+    // Read the next 6 bytes in the header
+    if (fread(header, 1, sizeof(header), file) != sizeof(header))
+    {
+        warning_msg("Error reading header in " << filename);
+        fclose(file);
+        return 4;
+    }
 
-    image->data = (unsigned char *)malloc(imageSize);         // Reserve Memory To Hold The TGA Data
+    image->width  = header[1] * 256 + header[0];
+    image->height = header[3] * 256 + header[2];
+    bitsPerPixel = (unsigned int)header[4];
+
+    // If width or height is invalid OR the TGA isn't 24- or 32-bit
+    if (image->width <=0 || image->height <=0 || (bitsPerPixel != 24 && bitsPerPixel !=32 ))
+    {
+        warning_msg("Bad header in " << filename << ": bits-per-pixel=" << bitsPerPixel << ", width=" << image->width << ", height=" << image->height);
+        fclose(file);
+        return 5;
+    }
+
+    bytesPerPixel = bitsPerPixel/8;
+    imageSize = image->width * image->height * bytesPerPixel;
+    image->data = (unsigned char *)malloc(imageSize);
 
     // If the storage memory doesn't exist or its size doesn't match the memory reserved
     if (!(image->data) || fread(image->data, 1, imageSize, file) != imageSize)
     {
         if (image->data) free(image->data);
-        fprintf(stderr, "%s/%s: ERROR - Image data not loaded\n", __FILE__, __FUNCTION__);
+        warning_msg("Image data not loaded for file " << filename);
         fclose(file);
-        return 4;
+        return 6;
     }
 
-    for (i = 0; i < imageSize; i += bytesPerPixel) // Loop Through The Image Data
-    {                                              // Swaps The 1st And 3rd Bytes ('R'ed and 'B'lue)
-        temp = image->data[i];                     // Temporarily Store The Value At Image Data 'i'
-        image->data[i] = image->data[i + 2];       // Set The 1st Byte To The Value Of The 3rd Byte
-        image->data[i + 2] = temp;                 // Set The 3rd Byte To The Value In 'temp' (1st Byte Value)
+    // Loop through the image data and swap 1st and 3rd bytes (red and blue)
+    for (i = 0; i < imageSize; i += bytesPerPixel)
+    {
+        temp = image->data[i];
+        image->data[i] = image->data[i + 2];
+        image->data[i + 2] = temp;
     }
 
     fclose(file);
 
-    if (bpp == 24) image->pixelspec = PixelRGB;
+    if (bitsPerPixel == 24) image->pixelspec = PixelRGB;
     else image->pixelspec = PixelRGBA;
 
     return 0;

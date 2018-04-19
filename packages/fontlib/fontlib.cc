@@ -3,6 +3,7 @@
 #include <cstring>
 #include <cctype>
 #include <strings.h>
+#include "basicutils/msg.hh"
 #include "fontlib.hh"
 
 FT_Library flFont::library = 0;
@@ -58,7 +59,7 @@ valid(false)
     {
         if (FT_Init_FreeType(&library))
         {
-            printf("ERROR: Couldn't initialize FreeType library\n");
+            warning_msg("Couldn't initialize FreeType library");
             return;
         }
     }
@@ -66,12 +67,12 @@ valid(false)
     ret = FT_New_Face(library, filespec, 0, &(this->face));
     if (ret == FT_Err_Unknown_File_Format)
     {
-        printf("ERROR: The font file %s appears to be in an unsupported format\n", filespec);
+        warning_msg("The font file " << filespec << " appears to be in an unsupported format");
         return;
     }
     else if (ret)
     {
-        printf("ERROR: The font file %s could not be opened or read\n", filespec);
+        warning_msg("The font file " << filespec << " could not be opened or read");
         return;
     }
 
@@ -94,7 +95,7 @@ valid(false)
 
     if (FT_Set_Pixel_Sizes(this->face, basesize, basesize))
     {
-        printf("ERROR: Unable to set pixel size\n");
+        warning_msg("Unable to set pixel size");
     }
 
     // set font-wide settings here

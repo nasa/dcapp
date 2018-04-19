@@ -4,7 +4,7 @@
 
 void DisplayPreInitStub(void *(*get_pointer)(const char *))
 {
-    debug_msg("No DisplayLogic element defined - using generic stub instead");
+    debug_msg("No DisplayPreInit() element defined - using generic stub instead");
 }
 
 void DisplayInitStub(void)
