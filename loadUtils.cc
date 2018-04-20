@@ -123,11 +123,17 @@ int *dcLoadConstant(int ival)
 
 char *dcLoadConstant(const char *sval)
 {
+    const char *myval;
+    const char nulval='\0';
+
+    if (sval) myval = sval;
+    else myval = &nulval;
+
     list<char *>::iterator sc;
     for (sc = stringConstants.begin(); sc != stringConstants.end(); sc++)
     {
-        if (!strcmp(*sc, sval)) return *sc;
+        if (!strcmp(*sc, myval)) return *sc;
     }
-    stringConstants.push_back(strdup(sval));
+    stringConstants.push_back(strdup(myval));
     return stringConstants.back();
 }

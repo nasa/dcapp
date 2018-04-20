@@ -35,7 +35,6 @@ SUBPACKAGE_CONFIGS := \
     osenv/bin/osenv-config \
     primitives/bin/primitives-config \
     3rdParty/can/bin/CanPlugin-config \
-    3rdParty/ccsds/bin/CcsdsPlugin-config \
     3rdParty/edge/bin/EdgePlugin-config \
     3rdParty/trick/bin/TrickPlugin-config \
     3rdParty/uei/bin/UeiPlugin-config \

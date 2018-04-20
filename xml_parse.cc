@@ -11,7 +11,6 @@
 #include "basicutils/pathinfo.hh"
 #include "trick/trickcomm.hh"
 #include "edge/edgecomm.hh"
-#include "ccsds/ccsds_udp_comm.hh"
 #include "can/CAN.hh"
 #include "uei/UEI.hh"
 #include "primitives/primitives.hh"
@@ -37,7 +36,6 @@ extern appdata AppData;
 
 static TrickCommModule *trickcomm = 0x0;
 static EdgeCommModule *edgecomm = 0x0;
-static CcsdsUdpCommModule *ccsdsudpcomm = 0x0;
 static char *transitionid;
 static const char *indid, *indonval, *activeid, *activetrueval, *key, *keyascii, *bezelkey;
 static int bufferID;
@@ -283,27 +281,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             if (edgecomm)
             {
                 edgecomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "RcsCommand"));
-            }
-        }
-        if (NodeCheck(node, "CcsdsUdpIo"))
-        {
-            ccsdsudpcomm = new CcsdsUdpCommModule;
-            ccsdsudpcomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
-            process_elements(myparent, node->children);
-            AppData.commlist.push_back(ccsdsudpcomm);
-        }
-        if (NodeCheck(node, "CcsdsUdpRead"))
-        {
-            if (ccsdsudpcomm)
-            {
-                ccsdsudpcomm->read_initialize(get_element_data(node, "Host"), StringToInteger(get_element_data(node, "Port"), 0), StringToInteger(get_element_data(node, "ThreadID"), 0), StringToDecimal(get_element_data(node, "Rate"), 0), StringToBoolean(get_element_data(node, "LittleEndian"), false));
-            }
-        }
-        if (NodeCheck(node, "CcsdsUdpWrite"))
-        {
-            if (ccsdsudpcomm)
-            {
-                ccsdsudpcomm->write_initialize(get_element_data(node, "Host"), StringToInteger(get_element_data(node, "Port"), 0));
             }
         }
         if (NodeCheck(node, "CAN"))
