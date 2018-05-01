@@ -74,6 +74,7 @@ while test $# -gt 0 ; do
             echo "-I${parentdir}"
             ;;
         --libs)
+            curl_libs=`curl-config --libs`
             if [[ $jpegenabled -ne 0 ]] ; then
                 if test "$jpegpath" ; then
                     jpeg_libs="-L${jpegpath}/lib -ljpeg"
@@ -81,7 +82,7 @@ while test $# -gt 0 ; do
                     jpeg_libs="-ljpeg"
                 fi
             fi
-            echo "-L${mydir}/${libdir} -lPixelStream ${jpeg_libs}"
+            echo "-L${mydir}/${libdir} -lPixelStream ${jpeg_libs} ${curl_libs}"
             ;;
         --compdepends)
             cdlist=""
@@ -95,6 +96,7 @@ while test $# -gt 0 ; do
             echo "${mydir}/${libdir}/libPixelStream.a"
             ;;
         --cflags_internal)
+            curl_cflags=`curl-config --cflags`
             if [[ $jpegenabled -ne 0 ]] ; then
                 if test "$jpegpath" ; then
                     jpeg_cflags="-DJPEG_ENABLED -I${jpegpath}/include"
@@ -102,7 +104,7 @@ while test $# -gt 0 ; do
                     jpeg_cflags="-DJPEG_ENABLED"
                 fi
             fi
-            echo "-I${parentdir} ${jpeg_cflags}"
+            echo "-I${parentdir} ${curl_cflags} ${jpeg_cflags}"
             ;;
 ################################################################################
         *)

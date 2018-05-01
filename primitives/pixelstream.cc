@@ -1,4 +1,5 @@
 #include "nodes.hh"
+#include "varlist.hh"
 #include "string_utils.hh"
 #include "opengl_draw.hh"
 #include "loadUtils.hh"
@@ -17,12 +18,13 @@ dcPixelStream::~dcPixelStream()
     if (psi) delete psi;
 }
 
-void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const char *port, const char *path, const char *shmemkey, const char *filename)
+void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const char *port, const char *path, const char *shmemkey, const char *filename, const char *cameraspec)
 {
     PixelStreamData *mypsd = 0x0;
     PixelStreamFile *psf;
     PixelStreamMjpeg *psm;
     PixelStreamTcp *pst;
+    PixelStreamVsm *psv;
     PixelStreamItem *match = 0x0;
     std::list<PixelStreamItem *>::iterator psitem;
 
@@ -31,6 +33,7 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
     {
         if (!strcasecmp(protocolstr, "MJPEG")) protocol = PixelStreamMjpegProtocol;
         if (!strcasecmp(protocolstr, "TCP")) protocol = PixelStreamTcpProtocol;
+        if (!strcasecmp(protocolstr, "VSM")) protocol = PixelStreamVsmProtocol;
     }
 
     switch (protocol)
@@ -61,6 +64,15 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
                 return;
             }
             mypsd = (PixelStreamData *)pst;
+            break;
+        case PixelStreamVsmProtocol:
+            psv = new PixelStreamVsm;
+            if (psv->readerInitialize(host, StringToInteger(port, 80), getStringPointer(cameraspec)))
+            {
+                delete psv;
+                return;
+            }
+            mypsd = (PixelStreamData *)psv;
             break;
         default:
             break;

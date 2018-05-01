@@ -20,8 +20,6 @@
 #include "xml_stringsub.hh"
 #include "osenv/osenv.hh"
 
-#define CONNECT_ATTEMPT_INTERVAL 2.0
-
 extern void mainloop(void);
 extern void UpdateDisplay(void);
 extern void SetNeedsRedraw(void);
