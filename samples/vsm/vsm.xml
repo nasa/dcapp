@@ -98,11 +98,11 @@
                 </Button>
             </Container>
 
-            <Line Width="3" Color="0.5 0.5 0.5">
+            <Line LineWidth="2" Color="0.5 0.5 0.5">
                 <Vertex X="400" Y="0"/>
                 <Vertex X="400" Y="600"/>
             </Line>
-            <Line Width="3" Color="0.5 0.5 0.5">
+            <Line LineWidth="2" Color="0.5 0.5 0.5">
                 <Vertex X="0" Y="300"/>
                 <Vertex X="800" Y="300"/>
             </Line>

@@ -123,23 +123,29 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
 int PixelStreamVsm::reader(void)
 {
 #if defined(JPEG_ENABLED) && (JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
-    bool updated = false;
+    bool updated = false, first_assign_attempt = false, first_connect_attempt = false;
     int updatepixels = 0, bytes_to_read, newbytes;
 
-    if (cameraassigned && strcmp(curlcamera, prevcamera)) socket_disconnect();
+    // user has requested a new camera
+    if (cameraassigned && strcmp(curlcamera, prevcamera))
+    {
+        socket_disconnect();
+        first_assign_attempt = true;
+    }
 
     if (!cameraassigned)
     {
-        if (this->assigncameraattempt->getSeconds() > CAMERA_ASSIGN_INTERVAL)
+        if (first_assign_attempt || (this->assigncameraattempt->getSeconds() > CAMERA_ASSIGN_INTERVAL))
         {
             assignNewCamera();
             this->assigncameraattempt->restart();
+            if (cameraassigned) first_connect_attempt = true;
         }
     }
 
     if (!connected)
     {
-        if (cameraassigned && (this->lastconnectattempt->getSeconds() > CONNECTION_ATTEMPT_INTERVAL))
+        if (cameraassigned && (first_connect_attempt || (this->lastconnectattempt->getSeconds() > CONNECTION_ATTEMPT_INTERVAL)))
         {
             if (CommSocket < 0) CommSocket = socket_connect();
             if (CommSocket >= 0)
@@ -304,7 +310,9 @@ int PixelStreamVsm::resolveURL(const char *instr)
 
     if (found_addr && found_port && found_path)
     {
-        char host[256], port[256], path[256];
+        char *host = (char *)malloc(mylen);
+        char *port = (char *)malloc(mylen);
+        char *path = (char *)malloc(mylen);
         int portnum;
 
         for (ii=addr_start, jj=0; ii<=addr_end; ii++, jj++) host[jj] = instr[ii];
@@ -333,6 +341,10 @@ int PixelStreamVsm::resolveURL(const char *instr)
 
         if (this->data_request) free(this->data_request);
         asprintf(&(this->data_request), "GET /%s HTTP/1.0\r\n\r\n", path);
+
+        free(path);
+        free(port);
+        free(host);
     }
 
     return 0;
