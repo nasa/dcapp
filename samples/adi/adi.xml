@@ -19,8 +19,6 @@
         <Container X="250" Width="300" Height="5" VirtualWidth="360" HorizontalAlign="Center" VerticalAlign="Middle"/>
     </Defaults>
 
-<!--    <DisplayLogic>logic/mylogic.so</DisplayLogic> -->
-
     <Window X="50" Y="50" Width="500" Height="600" ActiveDisplay="0">
         <Panel DisplayIndex="0" BackgroundColor="0 0 0" VirtualWidth="500" VirtualHeight="600">
             <!-- ROLL -->

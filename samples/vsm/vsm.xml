@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Constant Name="CamID1">CM_Cam</Constant>
+    <Constant Name="CamID2">BASE</Constant>
+    <Constant Name="CamID3">MBS_CAMERA</Constant>
+
+    <Variable Type="String">Camera1</Variable>
+    <Variable Type="String">Camera2</Variable>
+    <Variable Type="String">Camera3</Variable>
+    <Variable Type="String">Camera4</Variable>
+
+    <Defaults>
+        <String Font="fonts/Calibri.ttf" ForceMono="Numeric" HorizontalAlign="Center" VerticalAlign="Middle" Size="16" Color="1 1 1"/>
+        <Button Width="100" Height="20" HorizontalAlign="Bottom" VerticalAlign="Left"/>
+        <Rectangle LineColor="1 1 1"/>
+        <Container Width="400" Height="300"/>
+    </Defaults>
+
+    <Window X="50" Y="50" Width="800" Height="600" ActiveDisplay="0">
+        <Panel DisplayIndex="0" BackgroundColor="0 0 0" VirtualWidth="800" VirtualHeight="600">
+            <Container X="0" Y="300">
+                <PixelStream Width="400" Height="300" Protocol="VSM" Host="localhost" Port="12345" Camera="@Camera1"/>
+
+                <Button X="5" Y="5" Variable="@Camera1" On="#CamID1">
+                    <On><Rectangle FillColor="0.5 0.5 1"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>#CamID1</String>
+                </Button>
+                <Button X="110" Y="5" Variable="@Camera1" On="#CamID2">
+                    <On><Rectangle FillColor="0.5 0.5 1"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>#CamID2</String>
+                </Button>
+                <Button X="215" Y="5" Variable="@Camera1" On="#CamID3">
+                    <On><Rectangle FillColor="0.5 0.5 1"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>#CamID3</String>
+                </Button>
+            </Container>
+
+            <Container X="400" Y="300">
+                <PixelStream Width="400" Height="300" Protocol="VSM" Host="localhost" Port="12345" Camera="@Camera2"/>
+
+                <Button X="5" Y="5" Variable="@Camera2" On="#CamID1">
+                    <On><Rectangle FillColor="0.5 0.5 1"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>#CamID1</String>
+                </Button>
+                <Button X="110" Y="5" Variable="@Camera2" On="#CamID2">
+                    <On><Rectangle FillColor="0.5 0.5 1"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>#CamID2</String>
+                </Button>
+                <Button X="215" Y="5" Variable="@Camera2" On="#CamID3">
+                    <On><Rectangle FillColor="0.5 0.5 1"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>#CamID3</String>
+                </Button>
+            </Container>
+
+            <Container X="0" Y="0">
+                <PixelStream Width="400" Height="300" Protocol="VSM" Host="localhost" Port="12345" Camera="@Camera3"/>
+
+                <Button X="5" Y="5" Variable="@Camera3" On="#CamID1">
+                    <On><Rectangle FillColor="0.5 0.5 1"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>#CamID1</String>
+                </Button>
+                <Button X="110" Y="5" Variable="@Camera3" On="#CamID2">
+                    <On><Rectangle FillColor="0.5 0.5 1"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>#CamID2</String>
+                </Button>
+                <Button X="215" Y="5" Variable="@Camera3" On="#CamID3">
+                    <On><Rectangle FillColor="0.5 0.5 1"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>#CamID3</String>
+                </Button>
+            </Container>
+
+            <Container X="400" Y="0">
+                <PixelStream Width="400" Height="300" Protocol="VSM" Host="localhost" Port="12345" Camera="@Camera4"/>
+
+                <Button X="5" Y="5" Variable="@Camera4" On="#CamID1">
+                    <On><Rectangle FillColor="0.5 0.5 1"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>#CamID1</String>
+                </Button>
+                <Button X="110" Y="5" Variable="@Camera4" On="#CamID2">
+                    <On><Rectangle FillColor="0.5 0.5 1"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>#CamID2</String>
+                </Button>
+                <Button X="215" Y="5" Variable="@Camera4" On="#CamID3">
+                    <On><Rectangle FillColor="0.5 0.5 1"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>#CamID3</String>
+                </Button>
+            </Container>
+
+            <Line Width="3" Color="0.5 0.5 0.5">
+                <Vertex X="400" Y="0"/>
+                <Vertex X="400" Y="600"/>
+            </Line>
+            <Line Width="3" Color="0.5 0.5 0.5">
+                <Vertex X="0" Y="300"/>
+                <Vertex X="800" Y="300"/>
+            </Line>
+        </Panel>
+    </Window>
+</DCAPP>
