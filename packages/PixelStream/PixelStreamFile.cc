@@ -6,6 +6,10 @@
 #include "PixelStreamFile.hh"
 #include "basicutils/msg.hh"
 
+// This is a safe size.  The shmget call will fail if it's too small or too large.  It only needs
+// to be large enough to house the elements of the PixelStreamShmem structure defined below.
+#define SHM_SIZE 1024
+
 PixelStreamFile::PixelStreamFile()
 :
 filename(0x0),

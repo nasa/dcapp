@@ -22,6 +22,12 @@
 #include "basicutils/msg.hh"
 #include "PixelStreamVsm.hh"
 
+#define INITIAL_CAMERA_ASSIGN_INTERVAL 0.1
+#define CAMERA_ASSIGN_INTERVAL 1.0
+#define CONNECTION_ATTEMPT_INTERVAL 2.0
+#define CONNECTION_TIMEOUT 2.0
+#define CONNECTION_TIMEOUT_USEC 10000
+
 PixelStreamVsm::PixelStreamVsm()
 :
 curlhost(0x0),
@@ -123,14 +129,21 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
 int PixelStreamVsm::reader(void)
 {
 #if defined(JPEG_ENABLED) && (JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
-    bool updated = false, first_assign_attempt = false, first_connect_attempt = false;
+    bool updated = false, first_connect_attempt = false;
     int updatepixels = 0, bytes_to_read, newbytes;
 
     // user has requested a new camera
-    if (cameraassigned && strcmp(curlcamera, prevcamera))
+    if (strcmp(curlcamera, prevcamera))
     {
-        socket_disconnect();
+        if (cameraassigned)
+        {
+            socket_disconnect();
+            cameraassigned = false;
+        }
+        this->assigncameraattempt->restart();
         first_assign_attempt = true;
+        if (prevcamera) free(prevcamera);
+        prevcamera = strdup(curlcamera);
     }
 
     if (!cameraassigned)
@@ -141,6 +154,7 @@ int PixelStreamVsm::reader(void)
             assignNewCamera();
             this->assigncameraattempt->restart();
             if (cameraassigned) first_connect_attempt = true;
+            first_assign_attempt = false;
         }
     }
 
@@ -251,8 +265,6 @@ int PixelStreamVsm::assignNewCamera()
             }
             user_msg("Redirected to: " << location);
             resolveURL(location);
-            if (prevcamera) free(prevcamera);
-            prevcamera = strdup(curlcamera);
             cameraassigned = true;
             break;
 
@@ -417,7 +429,6 @@ void PixelStreamVsm::socket_disconnect(void)
         CommSocket = -1;
     }
 
-    cameraassigned = false;
     connected = false;
     data_requested = false;
     header_received = false;

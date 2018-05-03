@@ -8,12 +8,6 @@
 #include "basicutils/timer.hh"
 #include "PixelStreamData.hh"
 
-#define INITIAL_CAMERA_ASSIGN_INTERVAL 0.1
-#define CAMERA_ASSIGN_INTERVAL 1.0
-#define CONNECTION_ATTEMPT_INTERVAL 2
-#define CONNECTION_TIMEOUT 2.0
-#define CONNECTION_TIMEOUT_USEC 10000
-
 class PixelStreamVsm : public PixelStreamData
 {
     public:
@@ -46,6 +40,7 @@ class PixelStreamVsm : public PixelStreamData
         struct sockaddr_in server_address;
         int CommSocket;
         bool cameraassigned;
+        bool first_assign_attempt;
         Timer *assigncameraattempt;
         Timer *lastconnectattempt;
         Timer *lastread;

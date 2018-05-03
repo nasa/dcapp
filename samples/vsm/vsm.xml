@@ -4,10 +4,10 @@
     <Constant Name="CamID2">BASE</Constant>
     <Constant Name="CamID3">MBS_CAMERA</Constant>
 
-    <Variable Type="String">Camera1</Variable>
-    <Variable Type="String">Camera2</Variable>
-    <Variable Type="String">Camera3</Variable>
-    <Variable Type="String">Camera4</Variable>
+    <Variable Type="String" InitialValue="#CamID1">Camera1</Variable>
+    <Variable Type="String" InitialValue="#CamID1">Camera2</Variable>
+    <Variable Type="String" InitialValue="#CamID1">Camera3</Variable>
+    <Variable Type="String" InitialValue="#CamID1">Camera4</Variable>
 
     <Defaults>
         <String Font="fonts/Calibri.ttf" ForceMono="Numeric" HorizontalAlign="Center" VerticalAlign="Middle" Size="16" Color="1 1 1"/>

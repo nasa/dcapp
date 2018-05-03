@@ -21,6 +21,10 @@
 #include "basicutils/msg.hh"
 #include "PixelStreamMjpeg.hh"
 
+#define CONNECTION_ATTEMPT_INTERVAL 2.0
+#define CONNECTION_TIMEOUT 2.0
+#define CONNECTION_TIMEOUT_USEC 10000
+
 PixelStreamMjpeg::PixelStreamMjpeg()
 :
 host(0x0),
