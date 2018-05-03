@@ -135,7 +135,8 @@ int PixelStreamVsm::reader(void)
 
     if (!cameraassigned)
     {
-        if (first_assign_attempt || (this->assigncameraattempt->getSeconds() > CAMERA_ASSIGN_INTERVAL))
+        if ((first_assign_attempt && (this->assigncameraattempt->getSeconds() > INITIAL_CAMERA_ASSIGN_INTERVAL)) ||
+            (!first_assign_attempt && (this->assigncameraattempt->getSeconds() > CAMERA_ASSIGN_INTERVAL)))
         {
             assignNewCamera();
             this->assigncameraattempt->restart();

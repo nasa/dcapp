@@ -1,0 +1,19 @@
+<Dummy>
+    <PixelStream Width="400" Height="300" TestPattern="testpattern.tga" Protocol="VSM" Host="localhost" Port="12345" Camera="#MyCamera"/>
+
+    <Button X="5" Y="5" Variable="#MyCamera" On="#CamID1">
+        <On><Rectangle FillColor="0.5 0.5 1"/></On>
+        <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+        <String>#CamID1</String>
+    </Button>
+    <Button X="110" Y="5" Variable="#MyCamera" On="#CamID2">
+        <On><Rectangle FillColor="0.5 0.5 1"/></On>
+        <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+        <String>#CamID2</String>
+    </Button>
+    <Button X="215" Y="5" Variable="#MyCamera" On="#CamID3">
+        <On><Rectangle FillColor="0.5 0.5 1"/></On>
+        <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+        <String>#CamID3</String>
+    </Button>
+</Dummy>

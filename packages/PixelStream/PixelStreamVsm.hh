@@ -8,7 +8,8 @@
 #include "basicutils/timer.hh"
 #include "PixelStreamData.hh"
 
-#define CAMERA_ASSIGN_INTERVAL 1
+#define INITIAL_CAMERA_ASSIGN_INTERVAL 0.1
+#define CAMERA_ASSIGN_INTERVAL 1.0
 #define CONNECTION_ATTEMPT_INTERVAL 2
 #define CONNECTION_TIMEOUT 2.0
 #define CONNECTION_TIMEOUT_USEC 10000
