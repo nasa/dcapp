@@ -30,10 +30,10 @@
 
 PixelStreamVsm::PixelStreamVsm()
 :
-curlhost(0x0),
-curlport(0),
-curlcamera(0x0),
-prevcamera(0x0),
+host(0x0),
+port(0),
+curr_camera(0x0),
+prev_camera(0x0),
 data_request(0x0),
 CommSocket(-1),
 cameraassigned(false),
@@ -49,24 +49,30 @@ masteroffset(0)
     this->assigncameraattempt = new Timer;
     this->lastconnectattempt = new Timer;
     this->lastread = new Timer;
+#ifdef CURL_ENABLED
     this->curl = curl_easy_init();
+#else
+    this->curl = 0x0;
+#endif
 }
 
 PixelStreamVsm::~PixelStreamVsm()
 {
     this->socket_disconnect();
-    if (this->curlhost) free(this->curlhost);
+    if (this->host) free(this->host);
     if (this->data_request) free(this->data_request);
     if (this->pixels) free(this->pixels);
     delete this->assigncameraattempt;
     delete this->lastconnectattempt;
     delete this->lastread;
+#ifdef CURL_ENABLED
     curl_easy_cleanup(this->curl);
+#endif
 }
 
 bool PixelStreamVsm::operator == (const PixelStreamVsm &that)
 {
-    if (!strcmp(this->curlhost, that.curlhost) && this->curlport == that.curlport && this->curlcamera == that.curlcamera) return true;
+    if (!strcmp(this->host, that.host) && this->port == that.port && this->curr_camera == that.curr_camera) return true;
     else return false;
 }
 
@@ -75,12 +81,14 @@ bool PixelStreamVsm::operator != (const PixelStreamVsm &that)
     return !(*this == that);
 }
 
+#ifdef CURL_ENABLED
 // CURL delivers all recieved data to a callback function, which writes to the console by default.
 // This overrides that default function and simply ignores the data.
 static size_t write_curl_data(void *buffer, size_t size, size_t nmemb, void *userp)
 {
     return (size * nmemb);
 }
+#endif
 
 int PixelStreamVsm::readerInitialize(const char *hostspec, int portspec, char *cameraid)
 {
@@ -91,6 +99,7 @@ warning_msg("Version 80 or higher of libjpeg or libjpeg-turbo is required (curre
 #else
 warning_msg("Could not find libjpeg or libjpeg-turbo");
 #endif
+#ifdef CURL_ENABLED
     CURLcode result;
 
     if (!curl)
@@ -114,26 +123,28 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
         return -1;
     }
 #endif
-
+#else
+warning_msg("Could not find libcurl - VSM functionality disabled");
+#endif
     if (hostspec)
-        this->curlhost = strdup(hostspec);
+        this->host = strdup(hostspec);
     else
-        this->curlhost = strdup("localhost");
-    this->curlport = portspec;
-    this->curlcamera = cameraid;
-    this->prevcamera = strdup("");
+        this->host = strdup("localhost");
+    this->port = portspec;
+    this->curr_camera = cameraid;
+    this->prev_camera = strdup("");
 
     return 0;
 }
 
 int PixelStreamVsm::reader(void)
 {
-#if defined(JPEG_ENABLED) && (JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
+#if defined(CURL_ENABLED) && defined(JPEG_ENABLED) && (JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
     bool updated = false, first_connect_attempt = false;
     int updatepixels = 0, bytes_to_read, newbytes;
 
     // user has requested a new camera
-    if (strcmp(curlcamera, prevcamera))
+    if (strcmp(curr_camera, prev_camera))
     {
         if (cameraassigned)
         {
@@ -142,8 +153,8 @@ int PixelStreamVsm::reader(void)
         }
         this->assigncameraattempt->restart();
         first_assign_attempt = true;
-        if (prevcamera) free(prevcamera);
-        prevcamera = strdup(curlcamera);
+        if (prev_camera) free(prev_camera);
+        prev_camera = strdup(curr_camera);
     }
 
     if (!cameraassigned)
@@ -214,18 +225,20 @@ int PixelStreamVsm::reader(void)
 
     return updatepixels;
 #else
+    first_assign_attempt = false;
     readbufalloc = 0;
     return 0;
 #endif
 }
 
-int PixelStreamVsm::assignNewCamera()
+int PixelStreamVsm::assignNewCamera(void)
 {
+#ifdef CURL_ENABLED
     CURLcode result;
 
     // Build the URL
     std::ostringstream url;
-    url << this->curlhost << ":" << this->curlport << "/streams/" << this->curlcamera;
+    url << this->host << ":" << this->port << "/streams/" << this->curr_camera;
 
     // Tell CURL what URL to GET
     result = curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
@@ -235,11 +248,11 @@ int PixelStreamVsm::assignNewCamera()
         return -1;
     }
 
-    // Perform the HTTP request
+    // Perform the HTTP request - debug_msg here or else this will scroll if VSM server isn't active
     result = curl_easy_perform(curl);
     if (result != CURLE_OK)
     {
-        error_msg("CURL error: " << curl_easy_strerror(result));
+        debug_msg("CURL error: " << curl_easy_strerror(result));
         return -1;
     }
 
@@ -263,27 +276,29 @@ int PixelStreamVsm::assignNewCamera()
                 error_msg("CURL error: " << curl_easy_strerror(result));
                 return -1;
             }
-            user_msg("Redirected to: " << location);
+            debug_msg("Redirected to: " << location);
             resolveURL(location);
             cameraassigned = true;
             break;
 
         case 404:
             // This camera does not exist in any EDGE instance.
-            user_msg("No such camera: " << curlcamera);
+            debug_msg("No such camera: " << curr_camera);
             break;
 
         case 503:
             // This camera exists, but all EDGE instances capable of rendering it are
             // busy rendering other cameras for other clients. (We're out of resources.)
-            user_msg("Camera unavailable: " << curlcamera);
+            debug_msg("Camera unavailable: " << curr_camera);
             break;
 
         default:
-            error_msg("Unhandled reponse code. VSM may have changed!");
+            warning_msg("Unhandled reponse code. VSM may have changed!");
             break;
     }
-
+#else
+    cameraassigned = false;
+#endif
     return 0;
 }
 
@@ -323,27 +338,27 @@ int PixelStreamVsm::resolveURL(const char *instr)
 
     if (found_addr && found_port && found_path)
     {
-        char *host = (char *)malloc(mylen);
-        char *port = (char *)malloc(mylen);
-        char *path = (char *)malloc(mylen);
+        char *tmp_host = (char *)malloc(mylen);
+        char *tmp_port = (char *)malloc(mylen);
+        char *tmp_path = (char *)malloc(mylen);
         int portnum;
 
-        for (ii=addr_start, jj=0; ii<=addr_end; ii++, jj++) host[jj] = instr[ii];
-        host[addr_end + 1 - addr_start] = '\0';
+        for (ii=addr_start, jj=0; ii<=addr_end; ii++, jj++) tmp_host[jj] = instr[ii];
+        tmp_host[addr_end + 1 - addr_start] = '\0';
 
-        for (ii=port_start, jj=0; ii<=port_end; ii++, jj++) port[jj] = instr[ii];
-        port[port_end + 1 - port_start] = '\0';
+        for (ii=port_start, jj=0; ii<=port_end; ii++, jj++) tmp_port[jj] = instr[ii];
+        tmp_port[port_end + 1 - port_start] = '\0';
 
-        for (ii=path_start, jj=0; ii<=path_end; ii++, jj++) path[jj] = instr[ii];
-        path[path_end + 1 - path_start] = '\0';
+        for (ii=path_start, jj=0; ii<=path_end; ii++, jj++) tmp_path[jj] = instr[ii];
+        tmp_path[path_end + 1 - path_start] = '\0';
 
-        portnum = strtol(port, 0x0, 10);
+        portnum = strtol(tmp_port, 0x0, 10);
 
-        struct hostent *server = gethostbyname(host);
+        struct hostent *server = gethostbyname(tmp_host);
 
         if (!server)
         {
-            error_msg("Unable to resolve host name: " << host);
+            error_msg("Unable to resolve host name: " << tmp_host);
             return -1;
         }
 
@@ -353,11 +368,11 @@ int PixelStreamVsm::resolveURL(const char *instr)
         server_address.sin_port = htons(portnum);
 
         if (this->data_request) free(this->data_request);
-        asprintf(&(this->data_request), "GET /%s HTTP/1.0\r\n\r\n", path);
+        asprintf(&(this->data_request), "GET /%s HTTP/1.0\r\n\r\n", tmp_path);
 
-        free(path);
-        free(port);
-        free(host);
+        free(tmp_path);
+        free(tmp_port);
+        free(tmp_host);
     }
 
     return 0;

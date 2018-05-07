@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include <poll.h>
 #include <netinet/in.h>
+#ifdef CURL_ENABLED
 #include <curl/curl.h>
+#endif
 #include "basicutils/timer.hh"
 #include "PixelStreamData.hh"
 
@@ -31,11 +33,15 @@ class PixelStreamVsm : public PixelStreamData
         bool RecvData(void);
         void loadPixels(const char *, size_t);
 
+#ifdef CURL_ENABLED
         CURL *curl;
-        char *curlhost;
-        int curlport;
-        char *curlcamera;
-        char *prevcamera;
+#else
+        void *curl;
+#endif
+        char *host;
+        int port;
+        char *curr_camera;
+        char *prev_camera;
         char *data_request;
         struct sockaddr_in server_address;
         int CommSocket;
