@@ -3,7 +3,7 @@
     <Constant Name="ButtonOutline">1 1 1</Constant>
     <Constant Name="ButtonFill">0.8 0.8 0.8</Constant>
     <Constant Name="ButtonText">0 0 0</Constant>
-    <Constant Name="FontSize">36</Constant>
+    <Constant Name="FontSize">34</Constant>
     <Constant Name="PanelWidth">1600</Constant>
     <Constant Name="PanelHeight">1200</Constant>
     <Constant Name="ButtonWidth">200</Constant>
@@ -16,7 +16,7 @@
     <Defaults>
         <Button HorizontalAlign="Center" VerticalAlign="Middle" Width="#ButtonWidth" Height="#ButtonHeight" Type="Standard"/>
         <Rectangle FillColor="#ButtonFill" LineColor="#ButtonOutline" LineWidth="2"/>
-        <String Font="fonts/Calibri.ttf" Size="#FontSize" HorizontalAlign="Center" VerticalAlign="Middle" Color="#ButtonText" ForceMono="Numeric"/>
+        <String Size="#FontSize" HorizontalAlign="Center" VerticalAlign="Middle" Color="#ButtonText" ForceMono="Numeric"/>
     </Defaults>
 
     <Window X="0" Y="20" Width="640" Height="480" ActiveDisplay="1">

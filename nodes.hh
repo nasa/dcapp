@@ -1,6 +1,7 @@
 #ifndef _NODES_HH_
 #define _NODES_HH_
 
+#include <string>
 #include <list>
 #include <vector>
 #include "basicutils/timer.hh"
@@ -12,6 +13,7 @@
 
 typedef struct
 {
+    std::string dcapphome;
     float force_update;
     Timer *last_update;
     Timer *master_timer;

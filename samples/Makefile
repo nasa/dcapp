@@ -1,9 +1,7 @@
 .PHONY: all clean
 
 all:
-	${MAKE} -C demo
-	${MAKE} -C module
+	${MAKE} -C screensaver
 
 clean:
-	${MAKE} -C demo clean
-	${MAKE} -C module clean
+	${MAKE} -C screensaver clean

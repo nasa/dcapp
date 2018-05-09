@@ -11,11 +11,11 @@
 
         <Defaults>
             <Button Y="7.5" Width="10" Height="10" HorizontalAlign="Center" VerticalAlign="Middle"/>
-            <String Font="fonts/Calibri.ttf" Size="4" Color="0 0 0" HorizontalAlign="Center" VerticalAlign="Middle"/>
+            <String Size="3" Color="0 0 0" HorizontalAlign="Center" VerticalAlign="Middle"/>
         </Defaults>
 
         <Style Name="Button">
-            <String Size="3" Color="1 1 1" ShadowOffset=".2"/>
+            <String Size="2.5" Color="1 1 1" ShadowOffset=".2"/>
         </Style>
 
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="100" VirtualHeight="100">

@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<DCAPP>
-    <Window FullScreen="True" ForceUpdate="1" ActiveDisplay="1">
-        <Panel DisplayIndex="1" BackgroundColor="0 1 0"/>
-    </Window>
-</DCAPP>

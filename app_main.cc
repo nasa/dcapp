@@ -1,3 +1,4 @@
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -214,17 +215,24 @@ static void SetDefaultEnvironment(std::string mypath)
     long hsize = sysconf(_SC_HOST_NAME_MAX)+1;
     char myhost[hsize];
     char *lc_os;
+    std::string tmppath;
 
-    mypath += "/../../../bin/dcapp-config";
-    char *myscript = (char *)calloc(PATH_MAX, sizeof(char));
-    realpath(mypath.c_str(), myscript);
+    char *resolvedpath = (char *)calloc(PATH_MAX, sizeof(char));
 
-    setenvUsingScript("dcappOSTYPE", myscript, "--ostype");
-    setenvUsingScript("dcappOSSPEC", myscript, "--osspec");
-    setenvUsingScript("dcappOBJDIR", myscript, "--objdir");
-    setenvUsingScript("dcappBINDIR", myscript, "--bindir");
+    tmppath = mypath + "/../../../";
+    realpath(tmppath.c_str(), resolvedpath);
 
-    free(myscript);
+    AppData.dcapphome = resolvedpath;
+
+    tmppath = mypath + "/../../../bin/dcapp-config";
+    realpath(tmppath.c_str(), resolvedpath);
+
+    setenvUsingScript("dcappOSTYPE", resolvedpath, "--ostype");
+    setenvUsingScript("dcappOSSPEC", resolvedpath, "--osspec");
+    setenvUsingScript("dcappOBJDIR", resolvedpath, "--objdir");
+    setenvUsingScript("dcappBINDIR", resolvedpath, "--bindir");
+
+    free(resolvedpath);
 
     uname(&minfo);
 

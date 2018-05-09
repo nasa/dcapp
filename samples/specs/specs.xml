@@ -4,7 +4,7 @@
         <Constant Name="BgColor">0 0 0</Constant>
         <Constant Name="FgColor">1 1 1</Constant>
         <Defaults>
-            <String Font="fonts/Calibri.ttf" Size="48" Color="#FgColor" HorizontalAlign="Center" VerticalAlign="Middle"/>
+            <String Size="42" Color="#FgColor" HorizontalAlign="Center" VerticalAlign="Middle"/>
         </Defaults>
 
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="1600" VirtualHeight="1200">

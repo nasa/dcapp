@@ -13,17 +13,17 @@
     <Variable Type="Float" InitialValue="180">YawSlider</Variable>
 
     <Defaults>
-        <String Font="fonts/Calibri.ttf" ForceMono="Numeric" HorizontalAlign="Center" VerticalAlign="Middle" Size="16" Color="1 1 1"/>
+        <String ForceMono="Numeric" HorizontalAlign="Center" VerticalAlign="Middle" Size="14" Color="1 1 1"/>
         <Button Type="Momentary" Width="50" Height="25" HorizontalAlign="Center" VerticalAlign="Middle"/>
         <Rectangle LineColor="1 1 1" HorizontalAlign="Center" VerticalAlign="Middle"/>
-        <Container X="250" Width="300" Height="5" VirtualWidth="360" HorizontalAlign="Center" VerticalAlign="Middle"/>
+        <Container X="250" Width="280" Height="5" VirtualWidth="360" HorizontalAlign="Center" VerticalAlign="Middle"/>
     </Defaults>
 
     <Window X="50" Y="50" Width="500" Height="600" ActiveDisplay="0">
         <Panel DisplayIndex="0" BackgroundColor="0 0 0" VirtualWidth="500" VirtualHeight="600">
             <!-- ROLL -->
             <String X="10" Y="110" HorizontalAlign="Left">Roll:</String>
-            <String X="90" Y="110" HorizontalAlign="Right">@RollAngle(%.1f)</String>
+            <String X="100" Y="110" HorizontalAlign="Right">@RollAngle(%.1f)</String>
 
             <Container Y="110">
                 <Rectangle FillColor="0.25 0.25 0.25" LineColor="0.5 0.5 0.5"/>
@@ -47,7 +47,7 @@
                 </If>
             </Container>
 
-            <Button X="450" Y="110">
+            <Button X="445" Y="110">
                 <OnPress><Set Variable="@RollAngle">0</Set><Set Variable="@RollSlider">180</Set></OnPress>
                 <On><Rectangle FillColor="0.5 1 0.5"/></On>
                 <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
@@ -56,7 +56,7 @@
 
             <!-- PITCH -->
             <String X="10" Y="70" HorizontalAlign="Left">Pitch:</String>
-            <String X="90" Y="70" HorizontalAlign="Right">@PitchAngle(%.1f)</String>
+            <String X="100" Y="70" HorizontalAlign="Right">@PitchAngle(%.1f)</String>
 
             <Container Y="70">
                 <Rectangle FillColor="0.25 0.25 0.25" LineColor="0.5 0.5 0.5"/>
@@ -80,7 +80,7 @@
                 </If>
             </Container>
 
-            <Button X="450" Y="70">
+            <Button X="445" Y="70">
                 <OnPress><Set Variable="@PitchAngle">0</Set><Set Variable="@PitchSlider">180</Set></OnPress>
                 <On><Rectangle FillColor="0.5 1 0.5"/></On>
                 <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
@@ -89,7 +89,7 @@
 
             <!-- YAW -->
             <String X="10" Y="30" HorizontalAlign="Left">Yaw:</String>
-            <String X="90" Y="30" HorizontalAlign="Right">@YawAngle(%.1f)</String>
+            <String X="100" Y="30" HorizontalAlign="Right">@YawAngle(%.1f)</String>
 
             <Container Y="30">
                 <Rectangle FillColor="0.25 0.25 0.25" LineColor="0.5 0.5 0.5"/>
@@ -113,11 +113,22 @@
                 </If>
             </Container>
 
-            <Button X="450" Y="30">
+            <Button X="445" Y="30">
                 <OnPress><Set Variable="@YawAngle">0</Set><Set Variable="@YawSlider">180</Set></OnPress>
                 <On><Rectangle FillColor="0.5 1 0.5"/></On>
                 <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
                 <String ShadowOffset="1">Reset</String>
+            </Button>
+
+            <Button X="445" Y="155" Height="35">
+                <OnPress>
+                    <Set Variable="@RollAngle">0</Set><Set Variable="@RollSlider">180</Set>
+                    <Set Variable="@PitchAngle">0</Set><Set Variable="@PitchSlider">180</Set>
+                    <Set Variable="@YawAngle">0</Set><Set Variable="@YawSlider">180</Set>
+                </OnPress>
+                <On><Rectangle FillColor="0.5 1 0.5"/></On>
+                <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                <String ShadowOffset="1">Reset\nAll</String>
             </Button>
 
             <ADI X="250" Y="150" Width="420" Height="420" HorizontalAlign="Center" VerticalAlign="Bottom"

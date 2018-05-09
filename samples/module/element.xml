@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<Dummy>
-    <Rectangle Y="#yval" Width="200" Height="50" HorizontalAlign="Center" VerticalAlign="Middle" FillColor="0 0 .5" LineColor=".8 .8 .8"/>
-    <String Y="#yval" HorizontalAlign="Center" VerticalAlign="Middle">@MY_STR</String>
-</Dummy>

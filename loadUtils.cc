@@ -69,7 +69,7 @@ dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)
 
     if (!fullpath)
     {
-        error_msg("Unable to locate font file at " << filename);
+        if (filename) error_msg("Unable to locate font file at " << filename);
         return 0x0;
     }
 

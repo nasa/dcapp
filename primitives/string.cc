@@ -1,9 +1,13 @@
+#include <string>
+#include "nodes.hh"
 #include "opengl_draw.hh"
 #include "string_utils.hh"
 #include "loadUtils.hh"
 #include "alignment.hh"
 #include "varlist.hh"
 #include "string.hh"
+
+extern appdata AppData;
 
 dcString::dcString(dcParent *myparent) : dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone)
 {
@@ -29,6 +33,11 @@ void dcString::setBackgroundColor(const char *cspec)
 void dcString::setFont(const char *font, const char *face, const char *size, const char *mono)
 {
     fontID = dcLoadFont(font, face);
+    if (!fontID)
+    {
+        std::string defaultfont = AppData.dcapphome + "/fonts/defaultfont";
+        fontID = dcLoadFont(defaultfont.c_str(), face);
+    }
     if (size) fontSize = getDecimalPointer(size);
     if (mono)
     {
