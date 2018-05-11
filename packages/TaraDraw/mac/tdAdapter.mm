@@ -1,16 +1,12 @@
 #import "tdAdapter.hh"
 #import "tdWindow.hh"
 
-int tdButtLineCapStyle = NSButtLineCapStyle;
-int tdRoundLineCapStyle = NSRoundLineCapStyle;
-int tdSquareLineCapStyle = NSSquareLineCapStyle;
 int tdAlignLeft = 0x00;
 int tdAlignCenter = 0x01;
 int tdAlignRight = 0x02;
 int tdAlignBottom = 0x00;
 int tdAlignMiddle = 0x04;
 int tdAlignTop = 0x08;
-int tdAlignBaseline = 0x10;
 
 @implementation TaraDrawAdapter
 
@@ -28,13 +24,11 @@ int tdAlignBaseline = 0x10;
 
         NSNotificationCenter *center = [ NSNotificationCenter defaultCenter ];
         [ center addObserver:self selector:@selector(applicationDidFinishLaunching:) name:NSApplicationDidFinishLaunchingNotification object:nil ];
-
-        [ self setFont:"Helvetica" size:12 ];
     }
     return self;
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification*)notification
+- (void)applicationDidFinishLaunching:(NSNotification *)notification
 {
     id menubar = [[ NSMenu new ] autorelease ];
     [ NSApp setMainMenu:menubar ];
@@ -162,22 +156,6 @@ int tdAlignBaseline = 0x10;
     return curwin;
 }
 
-- (NSImage *)loadImage:(NSString *)myfile size:(NSSize *)mysize
-{
-    NSImage *myimage;
-    if ([ myfile characterAtIndex:0 ] == '/')
-        myimage = [[ NSImage alloc ] initWithContentsOfFile:myfile ];
-    else
-    {
-        NSString *resourcepath = [[ NSBundle mainBundle ] resourcePath ];
-        NSString *fullpath = [ NSString stringWithFormat:@"%@/%@", resourcepath, myfile ];
-        myimage = [[ NSImage alloc ] initWithContentsOfFile:fullpath ];
-    }
-//    [ myimage setScalesWhenResized:YES ];
-    *mysize = [ myimage size ];
-    return myimage;
-}
-
 - (NSOpenGLContext *)glCreateContext:(tdWindow)winid
 {
     if (!(winview[winid])) return nil;
@@ -210,18 +188,6 @@ int tdAlignBaseline = 0x10;
     [[ curGLcontext view ] setFrame:myrect ];
 }
 
-- (int)registerColor:(int)index red:(float)r green:(float)g blue:(float)b
-{
-    if (index < 0 || index >= MAX_COLORS)
-    {
-        printf("tdRegisterColor: Color index %d is out of bounds\n", index);
-        return (-1);
-    }
-
-    ColorMap[index] = [[ NSColor colorWithCalibratedRed:r green:g blue:b alpha:1.0 ] retain ];
-    return 0;
-}
-
 // Settings routines
 
 - (void)setActiveWindow:(tdWindow)winid
@@ -244,66 +210,12 @@ int tdAlignBaseline = 0x10;
     [ curGLcontext makeCurrentContext ];
 }
 
-- (void)setBackgroundColor:(int)index
-{
-    [[ winview[curwin] window ] setBackgroundColor:ColorMap[index] ];
-}
-
-- (void)setColor:(int)index
-{
-    [ winview[curwin] tdSetColor:ColorMap[index] ];
-}
-
-- (void)setColorRGBred:(float)r green:(float)g blue:(float)b
-{
-    NSColor *mycolor = [ NSColor colorWithCalibratedRed:r green:g blue:b alpha:1.0 ];
-    [ winview[curwin] tdSetColor:mycolor ];
-}
-
-- (void)setFont:(const char *)fontface size:(float)fontsize
-{
-    NSFont *myfont = [ NSFont fontWithName:[ NSString stringWithCString:fontface encoding:NSASCIIStringEncoding ] size:fontsize ];
-    if (myfont) [ winview[curwin] tdSetFont:myfont ];
-}
-
-- (void)setLineCap:(int)capstyle
-{
-    [ winview[curwin] tdSetLineCap: capstyle ];
-}
-
-- (void)setLineWidth:(float)linewidth
-{
-    [ winview[curwin] tdSetLineWidth: linewidth ];
-}
-
 - (void)setNeedsRedraw:(tdWindow)winid
 {
     [ winview[winid] tdSetNeedsRedraw ];
 }
 
 // Query routines
-
-- (int)getColor:(int)index red:(float *)r green:(float *)g blue:(float *)b
-{
-    if (index < 0 || index >= MAX_COLORS)
-    {
-        *r = 0;
-        *g = 0;
-        *b = 0;
-        printf("tdGetColor: Color index %d is out of bounds\n", index);
-        return (-1);
-    }
-
-    *r = [ ColorMap[index] redComponent ];
-    *g = [ ColorMap[index] greenComponent ];
-    *b = [ ColorMap[index] blueComponent ];
-    return 0;
-}
-
-- (NSSize)getStringBounds:(NSString *)string
-{
-    return [ winview[curwin] tdGetStringBounds:string ];
-}
 
 - (NSPoint)getPointerInWindow
 {
@@ -322,59 +234,9 @@ int tdAlignBaseline = 0x10;
     [[ winview[curwin] window ] toggleFullScreen:self ];
 }
 
-- (void)clearWindow
-{
-    [ winview[curwin] tdClearWindow ];
-}
-
-- (void)drawFilledPoly:(NSPointArray)myarray vertices:(int)count
-{
-    [ winview[curwin] tdDrawFilledPoly:myarray count:count ];
-}
-
-- (void)drawFilledRect:(NSRect)myrect align:(int)align
-{
-    if (align & tdAlignCenter)
-        myrect.origin.x -= (myrect.size.width/2);
-    else if (align & tdAlignRight)
-        myrect.origin.x -= myrect.size.width;
-
-    if (align & tdAlignMiddle)
-        myrect.origin.y -= (myrect.size.height/2);
-    else if (align & tdAlignTop)
-        myrect.origin.y -= myrect.size.height;
-
-    [ winview[curwin] tdDrawFilledRect:myrect ];
-}
-
-- (void)drawString:(NSString *)renderString atPoint:(NSPoint)mypoint rotated:(float)rotate aligned:(int)align
-{
-    [ winview[curwin] tdDrawString:renderString atPoint:mypoint rotate:rotate align:align ];
-}
-
-- (void)lineStart:(NSPoint)mypoint
-{
-    [ winview[curwin] tdLineStart:mypoint ];
-}
-
-- (void)lineAppend:(NSPoint)mypoint
-{
-    [ winview[curwin] tdLineAppend:mypoint ];
-}
-
-- (void)drawImage:(NSImage *)myimage atPoint:(NSPoint)mypoint align:(int)align scaleX:(float)scalex scaleY:(float)scaley rotate:(float)rotate
-{
-    [ winview[curwin] tdDrawImage:(NSImage *)myimage atPoint:mypoint align:align scaleX:scalex scaleY:scaley rotate:rotate ];
-}
-
 - (void)glSwapBuffers
 {
     [ curGLcontext flushBuffer ];
-}
-
-- (void)renderGraphics
-{
-    [[ winview[curwin] window ] flushWindow ];
 }
 
 // Event processing
@@ -455,8 +317,6 @@ int tdAlignBaseline = 0x10;
 
 - (void)cleanUp
 {
-    int i;
-
     if (myTimer)
     {
         [ myTimer invalidate ];
@@ -466,11 +326,6 @@ int tdAlignBaseline = 0x10;
 
     NSNotificationCenter *center = [ NSNotificationCenter defaultCenter ];
     [ center removeObserver:self ];
-
-    for (i=0; i<MAX_COLORS; i++)
-    {
-        if (ColorMap[i]) [ ColorMap[i] release ];
-    }
 
     for (int i=0; i<numwin; i++)
     {
@@ -554,7 +409,7 @@ int tdAlignBaseline = 0x10;
                     case 0x77: data.k.specialkey = tdEndKey; break;
                     case 0x74: data.k.specialkey = tdPageUp; break;
                     case 0x79: data.k.specialkey = tdPageDown; break;
-                    default: data.k.specialkey = tdUnknownKey; break;
+                    default:   data.k.specialkey = tdUnknownKey; break;
                 }
             }
             else

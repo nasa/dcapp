@@ -2,7 +2,6 @@
 #define _TDDEFINES_HH_
 
 typedef long tdWindow;
-typedef void tdImage;
 typedef void tdGLContext;
 
 enum { tdPressed, tdReleased };
@@ -31,13 +30,6 @@ typedef struct
     float top;
     float height;
 } tdRegion;
-
-typedef struct
-{
-    float red;
-    float green;
-    float blue;
-} tdColorRGB;
 
 typedef struct
 {
