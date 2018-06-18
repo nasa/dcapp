@@ -20,6 +20,7 @@
 #include "string_utils.hh"
 #include "xml_stringsub.hh"
 #include "osenv/osenv.hh"
+#include "PixelStream/curlLib.hh"
 
 extern void mainloop(void);
 extern void UpdateDisplay(void);
@@ -54,6 +55,8 @@ int main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
 
     Message::setLabel(basename(argv[0]));
+
+    curlLibInit();
 
     AppData.master_timer = new Timer;
     AppData.last_update = new Timer;
@@ -152,6 +155,7 @@ void Terminate(int flag)
         delete (*animitem);
     }
 
+    curlLibTerm();
     varlist_term();
     exit(flag);
 }

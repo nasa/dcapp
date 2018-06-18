@@ -168,7 +168,7 @@ int main(int argc, char **argv)
         else usageError(argv[0]);
 
         PixelStreamMjpeg *psm = new PixelStreamMjpeg;
-        if (psm->readerInitialize(host, port, path)) return -1;
+        if (psm->readerInitialize(host, port, path, 0x0, 0x0)) return -1;
         psd = (PixelStreamData *)psm;
     }
     else if (!strcmp(argv[1], "TCP"))

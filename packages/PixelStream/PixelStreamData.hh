@@ -16,6 +16,7 @@ class PixelStreamData
         virtual int reader(void);
         virtual int writer(void);
         virtual bool writeRequested(void);
+        virtual void updateStatus(void);
 
         unsigned protocol;
         bool connected;

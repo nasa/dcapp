@@ -18,7 +18,7 @@ dcPixelStream::~dcPixelStream()
     if (psi) delete psi;
 }
 
-void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const char *port, const char *path, const char *shmemkey, const char *filename, const char *cameraspec)
+void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const char *port, const char *path, const char *username, const char *password, const char *shmemkey, const char *filename, const char *cameraspec)
 {
     PixelStreamData *mypsd = 0x0;
     PixelStreamFile *psf;
@@ -49,7 +49,7 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
             break;
         case PixelStreamMjpegProtocol:
             psm = new PixelStreamMjpeg;
-            if (psm->readerInitialize(host, StringToInteger(port, 80), path))
+            if (psm->readerInitialize(host, StringToInteger(port, 80), path, username, password))
             {
                 delete psm;
                 return;

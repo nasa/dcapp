@@ -14,52 +14,83 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <arpa/inet.h>
 #ifdef JPEG_ENABLED
 #include <jpeglib.h>
 #endif
 #include "basicutils/timer.hh"
 #include "basicutils/msg.hh"
 #include "PixelStreamMjpeg.hh"
+#include "curlLib.hh"
 
 #define CONNECTION_ATTEMPT_INTERVAL 2.0
 #define CONNECTION_TIMEOUT 2.0
-#define CONNECTION_TIMEOUT_USEC 10000
+#define INVIEW_TIMEOUT 2.0
+
+#define BOUNDARYTAG "--myboundary\r\nContent-Type: image/jpeg\r\nContent-Length: "
+#define BOUNDARYLENGTH strlen(BOUNDARYTAG)
 
 PixelStreamMjpeg::PixelStreamMjpeg()
 :
 host(0x0),
 port(0),
 path(0x0),
-data_request(0x0),
-CommSocket(-1),
+username(0x0),
+password(0x0),
+mjpegIO(0x0),
+imagebytes(0),
 readbuf(0x0),
 readbufalloc(0),
-dataalloc(0),
-data_requested(false),
-header_received(false),
+pixelsalloc(0),
 totalbytes(0),
-masteroffset(0)
+masteroffset(0),
+connectinprogress(false),
+readinprogress(false),
+inview(false),
+updated(false)
 {
     this->protocol = PixelStreamMjpegProtocol;
     this->lastconnectattempt = new Timer;
     this->lastread = new Timer;
+    this->lastinview = new Timer;
 }
 
 PixelStreamMjpeg::~PixelStreamMjpeg()
 {
-    this->socket_disconnect();
+    curlDisconnect();
+#ifdef CURL_ENABLED
+    curl_easy_cleanup(mjpegIO);
+#endif
     if (this->host) free(this->host);
     if (this->path) free(this->path);
-    if (this->data_request) free(this->data_request);
+    if (this->username) free(this->username);
+    if (this->password) free(this->password);
     if (this->pixels) free(this->pixels);
     delete this->lastconnectattempt;
     delete this->lastread;
+    delete this->lastinview;
 }
 
 bool PixelStreamMjpeg::operator == (const PixelStreamMjpeg &that)
 {
-    if (!strcmp(this->host, that.host) && this->port == that.port && !strcmp(this->path, that.path)) return true;
-    else return false;
+    bool usermatch = false, passmatch = false;
+
+    if (this->port == that.port && !strcmp(this->host, that.host) && !strcmp(this->path, that.path))
+    {
+        if (!this->username && !that.username) usermatch = true;
+        else if (this->username && that.username)
+        {
+            if (!strcmp(this->username, that.username)) usermatch = true;
+        }
+        if (!this->password && !that.password) passmatch = true;
+        else if (this->password && that.password)
+        {
+            if (!strcmp(this->password, that.password)) passmatch = true;
+        }
+        if (usermatch && passmatch) return true;
+    }
+
+    return false;
 }
 
 bool PixelStreamMjpeg::operator != (const PixelStreamMjpeg &that)
@@ -67,62 +98,7 @@ bool PixelStreamMjpeg::operator != (const PixelStreamMjpeg &that)
     return !(*this == that);
 }
 
-int PixelStreamMjpeg::socket_connect(void)
-{
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-    {
-        error_msg("Unable to create socket: " << strerror(errno));
-        return (-1);
-    }
-
-    int flags = fcntl(sockfd, F_GETFL, 0);
-    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
-
-    int retval = connect(sockfd, (struct sockaddr *)(&server_address), sizeof(struct sockaddr_in));
-    if (retval < 0)
-    {
-        if (errno == EINPROGRESS)
-        {
-            struct timeval tv;
-            fd_set myset;
-            int valopt = 0;
-
-            tv.tv_sec = 0;
-            tv.tv_usec = CONNECTION_TIMEOUT_USEC;
-
-            FD_ZERO(&myset);
-            FD_SET(sockfd, &myset);
-            if (select(sockfd+1, 0x0, &myset, 0x0, &tv) > 0)
-            {
-                socklen_t optionlen = sizeof(valopt);
-                getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &optionlen);
-                if (valopt)
-                {
-                    debug_msg("Socket not ready to communicate: " << valopt << " - " << strerror(valopt));
-                    close(sockfd);
-                    return -1;
-                }
-            }
-            else
-            {
-                debug_msg("Timeout or error in select: " << valopt << " - " << strerror(valopt));
-                close(sockfd);
-                return -1;
-            }
-        }
-        else
-        {
-            debug_msg("Socket connect error: " << errno);
-            close(sockfd);
-            return -1;
-        }
-    }
-
-    return sockfd;
-}
-
-int PixelStreamMjpeg::readerInitialize(const char *hostspec, int portspec, const char *pathspec)
+int PixelStreamMjpeg::readerInitialize(const char *hostspec, int portspec, const char *pathspec, const char *usrspec, const char *pwdspec)
 {
 #ifdef JPEG_ENABLED
 #if JPEG_LIB_VERSION < 80 && !defined(MEM_SRCDST_SUPPORTED)
@@ -144,19 +120,18 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
         return -1;
     }
 
-    this->host = strdup(server->h_name);
+    this->host = strdup(inet_ntoa(*(in_addr * )server->h_addr));
     this->port = portspec;
-
-    bzero((char *) &server_address, sizeof(server_address));
-    server_address.sin_family = AF_INET;
-    bcopy((char *)server->h_addr, (char *)&server_address.sin_addr.s_addr, server->h_length);
-    server_address.sin_port = htons(this->port);
 
     if (pathspec)
         this->path = strdup(pathspec);
     else
         this->path = strdup("video");
-    asprintf(&(this->data_request), "GET /%s HTTP/1.0\r\n\r\n", this->path);
+
+    if (usrspec) this->username = strdup(usrspec);
+    if (pwdspec) this->password = strdup(pwdspec);
+
+    if (curlCreate()) return -1;
 
     return 0;
 }
@@ -164,182 +139,168 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
 int PixelStreamMjpeg::reader(void)
 {
 #if defined(JPEG_ENABLED) && (JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
-    bool updated = false;
-    int updatepixels = 0, bytes_to_read, newbytes;
+    inview = true;
+    this->lastinview->restart();
 
-    if (!connected)
+    if ((connected || connectinprogress) && this->lastread->getSeconds() > CONNECTION_TIMEOUT)
     {
-        if (this->lastconnectattempt->getSeconds() > CONNECTION_ATTEMPT_INTERVAL)
-        {
-            if (CommSocket < 0) CommSocket = socket_connect();
-            if (CommSocket >= 0)
-            {
-                connected = true;
-                this->lastread->restart();
-            }
-            this->lastconnectattempt->restart();
-        }
-    }
-    else
-    {
-        if (this->lastread->getSeconds() > CONNECTION_TIMEOUT)
-        {
-            debug_msg("Data connection timeout, disconnecting...");
-            socket_disconnect();
-            return 0;
-        }
-        if (!data_requested) data_requested = SendDataRequest(this->data_request);
-        if (data_requested)
-        {
-            do
-            {
-                ioctl(CommSocket, FIONREAD, &bytes_to_read);
-                if (bytes_to_read > 0)
-                {
-                    if ((totalbytes + bytes_to_read) >= (int)readbufalloc)
-                    {
-                        readbufalloc = totalbytes + bytes_to_read;
-                        readbuf = (char *)realloc(readbuf, readbufalloc);
-                    }
-                    newbytes = read(CommSocket, readbuf + totalbytes, bytes_to_read);
-                    if (newbytes > 0) totalbytes += newbytes;
-                }
-            }
-            while (bytes_to_read > 0);
-
-            flushonly = false;
-            if (totalbytes > 0) do
-            {
-                if (!header_received) header_received = RecvHeader();
-                if (header_received) updated = RecvData();
-                if (updated) updatepixels = 1;
-                totalbytes -= masteroffset;
-                for (int i=0; i<totalbytes; i++) readbuf[i] = readbuf[masteroffset+i];
-                masteroffset = 0;
-            }
-            while ((totalbytes > 0) && updated);
-        }
+        debug_msg("Data connection timeout, disconnecting...");
+        curlDisconnect();
+        return 0;
     }
 
-    return updatepixels;
-#else
-    readbufalloc = 0;
-    return 0;
+    if (!connected && !connectinprogress && this->lastconnectattempt->getSeconds() > CONNECTION_ATTEMPT_INTERVAL)
+    {
+        curlConnect();
+    }
+
+    if (updated)
+    {
+        updated = false;
+        return 1;
+    }
 #endif
+    return 0;
 }
 
-void PixelStreamMjpeg::socket_disconnect(void)
+int PixelStreamMjpeg::curlCreate(void)
 {
-    debug_msg("Disconnecting from server...");
+#ifdef CURL_ENABLED
+    CURLcode result;
+    char *myurl, *mycredentials = 0x0;
 
-    if (CommSocket >= 0)
+    asprintf(&myurl, "%s:%d/%s", host, port, path);
+    if (username && password) asprintf(&mycredentials, "%s:%s", username, password);
+
+    mjpegIO = curl_easy_init();
+    if (!mjpegIO)
     {
-        shutdown(CommSocket, SHUT_RDWR);
-        close(CommSocket);
-        CommSocket = -1;
+        error_msg("Failed to initialize CURL");
+        return -1;
     }
 
-    connected = false;
-    data_requested = false;
-    header_received = false;
-    totalbytes = 0;
-    masteroffset = 0;
+    result = curl_easy_setopt(mjpegIO, CURLOPT_WRITEFUNCTION, curlLibProcessBuffer);
+    if (result != CURLE_OK)
+    {
+        error_msg("CURL error: " << curl_easy_strerror(result));
+        return -1;
+    }
+
+    result = curl_easy_setopt(mjpegIO, CURLOPT_WRITEDATA, this);
+    if (result != CURLE_OK)
+    {
+        error_msg("CURL error: " << curl_easy_strerror(result));
+        return -1;
+    }
+
+    result = curl_easy_setopt(mjpegIO, CURLOPT_URL, myurl);
+    if (result != CURLE_OK)
+    {
+        error_msg("CURL error: " << curl_easy_strerror(result));
+        return -1;
+    }
+
+    if (mycredentials)
+    {
+        result = curl_easy_setopt(mjpegIO, CURLOPT_USERPWD, mycredentials);
+        if (result != CURLE_OK)
+        {
+            error_msg("CURL error: " << curl_easy_strerror(result));
+            return -1;
+        }
+
+        result = curl_easy_setopt(mjpegIO, CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
+        if (result != CURLE_OK)
+        {
+            error_msg("CURL error: " << curl_easy_strerror(result));
+            return -1;
+        }
+    }
+
+    if (mycredentials) free(mycredentials);
+    free(myurl);
+#endif
+    return 0;
 }
 
-bool PixelStreamMjpeg::SendDataRequest(const char *command)
+void PixelStreamMjpeg::curlConnect(void)
 {
-    if (write(CommSocket, command, strlen(command)) == (ssize_t)strlen(command)) return true;
+    this->lastconnectattempt->restart();
+    
+    if (!curlLibAddHandle(mjpegIO))
+    {
+        connectinprogress = true;
+        this->lastread->restart();
+    }
+}
+
+void PixelStreamMjpeg::curlDisconnect(void)
+{
+    curlLibRemoveHandle(mjpegIO);
+    connectinprogress = false;
+    connected = false;
+}
+
+void PixelStreamMjpeg::processData(const char *memptr, size_t memsize)
+{
+    connectinprogress = false;
+    connected = true;
+    this->lastread->restart();
+
+    if (readinprogress)
+    {
+        totalbytes += memsize;
+        if (totalbytes > imagebytes) // make sure we don't write into unallocated space
+            memcpy(&readbuf[masteroffset], memptr, memsize + imagebytes - totalbytes);
+        else
+            memcpy(&readbuf[masteroffset], memptr, memsize);
+    }
     else
     {
-        debug_msg("Unable to write data: " << strerror(errno));
-        socket_disconnect();
-        return false;
-    }
-}
-
-int PixelStreamMjpeg::findCrlf(char *bufptr, unsigned buflen)
-{
-    for (unsigned i=1; i<buflen; i++)
-    {
-        if (bufptr[i-1] == '\r' && bufptr[i] == '\n') return i;
-    }
-    return 0;
-}
-
-int PixelStreamMjpeg::findCrlfCrlf(char *bufptr, unsigned buflen)
-{
-    for (unsigned i=3; i<buflen; i++)
-    {
-        if (bufptr[i-3] == '\r' && bufptr[i-2] == '\n' && bufptr[i-1] == '\r' && bufptr[i] == '\n') return i;
-    }
-    return 0;
-}
-
-bool PixelStreamMjpeg::RecvHeader(void)
-{
-    int i, j;
-    char *boundarytag = 0x0;
-
-    int buflen = findCrlfCrlf(readbuf+masteroffset, totalbytes-masteroffset) - 3;
-
-    // this verifies that the header is "HTTP/1.x 200 OK", where x can be any digit
-    if (buflen >= 15 && !strncmp(readbuf+masteroffset, "HTTP/1.", 7) && !strncmp(readbuf+masteroffset+8, " 200 OK", 7))
-    {
-        for (i=0; !boundarytag && i<buflen-9; i++)
+        size_t ii;
+        int boundarystart = -1;
+        for (ii = 0; ii < strlen(memptr) && boundarystart < 0; ii++)
         {
-            if (!strncmp(&readbuf[masteroffset+i], "boundary=", 9))
+            if (memptr[ii] == '-' && memptr[ii+1] == '-')
             {
-                readbuf[buflen+masteroffset] = '\0';
-                boundarytag=&readbuf[masteroffset+i+9];
-                for (j=0; j<buflen-i-9; j++)
-                {
-                    if (isspace(boundarytag[j])) boundarytag[j] = '\0';
-                }
+                if (!strncmp(&memptr[ii], BOUNDARYTAG, BOUNDARYLENGTH)) boundarystart = ii + BOUNDARYLENGTH;
             }
         }
-        if (!boundarytag) return false;
-
-        masteroffset += buflen+4;
-        buflen = findCrlf(readbuf+masteroffset, totalbytes-masteroffset);
-        if (buflen >= (int)strlen(boundarytag) && (!strncmp(readbuf+masteroffset, boundarytag, strlen(boundarytag)) || !strncmp(readbuf+masteroffset+2, boundarytag, strlen(boundarytag))))
+        if (boundarystart > 0)
         {
-            masteroffset += buflen+2;
-            return true;
+            if (sscanf(&memptr[boundarystart], "%ld", &imagebytes) != 1)
+            {
+                warning_msg("ERROR, malformed myboundary");
+                return;
+            }
+            if (imagebytes > readbufalloc)
+            {
+                readbufalloc = imagebytes + 1000; // cushion by 1000 bytes to reduce the number of reallocs
+                readbuf = (char *)realloc(readbuf, readbufalloc);
+            }
+            size_t sizelen = 0, offset;
+            for (ii = boundarystart; ii < memsize && sizelen == 0; ii++)
+            {
+                if (isspace(memptr[ii])) sizelen = ii - boundarystart;
+            }
+            offset = boundarystart + sizelen + 4; // accommodate the \r\n\r\n at the end of the boundary tag
+            memcpy(&readbuf[masteroffset], &memptr[offset], memsize - offset);
+            totalbytes += memsize - offset;
+            readinprogress = true;
         }
     }
 
-    return false;
-}
-
-bool PixelStreamMjpeg::RecvData(void)
-{
-    int i, tmpoffset;
-    size_t rawsize = 0;
-
-    int buflen = findCrlfCrlf(readbuf+masteroffset, totalbytes-masteroffset);
-    for (i=0; !rawsize && i<buflen-15; i++)
+    if (readinprogress && totalbytes >= imagebytes)
     {
-        if (!strncmp(&readbuf[masteroffset+i], "Content-Length:", 15))
-        {
-            if (sscanf(&readbuf[masteroffset+i+15], "%ld", &rawsize) != 1) return false;
-        }
-    }
-    if (!rawsize) return false;
+        loadPixels(readbuf, imagebytes);
+        updated = true;
 
-    tmpoffset = masteroffset + buflen + 1;
-    if ((size_t)(totalbytes - tmpoffset) >= rawsize)
-    {
-        if (!flushonly)
-        {
-            loadPixels(readbuf + tmpoffset, rawsize);
-            flushonly = true;
-        }
-        masteroffset = tmpoffset + rawsize;
-        this->lastread->restart();
-        return true;
+        totalbytes = 0;
+        imagebytes = 0;
+        readinprogress = false;
     }
 
-    return false;
+    masteroffset = totalbytes;
 }
 
 void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
@@ -348,7 +309,7 @@ void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
     struct jpeg_decompress_struct jinfo;
     struct jpeg_error_mgr jerr;
     unsigned char *line;
-    size_t datasize;
+    size_t num_pixels;
 
     jinfo.err = jpeg_std_error(&jerr);
     jpeg_create_decompress(&jinfo);
@@ -357,11 +318,11 @@ void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
 
     width = jinfo.image_width;
     height = jinfo.image_height;
-    datasize = width * height * 3;
-    if (datasize > dataalloc)
+    num_pixels = width * height * 3;
+    if (num_pixels > pixelsalloc)
     {
-        dataalloc = datasize;
-        pixels = (void *)realloc(pixels, dataalloc);
+        pixelsalloc = num_pixels;
+        pixels = (void *)realloc(pixels, pixelsalloc);
     }
 
     jpeg_start_decompress(&jinfo);
@@ -372,7 +333,11 @@ void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
     }
     jpeg_finish_decompress(&jinfo);
     jpeg_destroy_decompress(&jinfo);
-#else
-    dataalloc = 0;
 #endif
 }
+
+void PixelStreamMjpeg::updateStatus(void)
+{
+    if ((connected || connectinprogress) && this->lastinview->getSeconds() > INVIEW_TIMEOUT) curlDisconnect();
+}
+

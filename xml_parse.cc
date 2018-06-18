@@ -446,7 +446,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
-            myitem->setProtocol(get_element_data(node, "Protocol"), get_element_data(node, "Host"), get_element_data(node, "Port"), get_element_data(node, "Path"), get_element_data(node, "SharedMemoryKey"), get_element_data(node, "File"), get_element_data(node, "Camera"));
+            myitem->setProtocol(get_element_data(node, "Protocol"), get_element_data(node, "Host"), get_element_data(node, "Port"), get_element_data(node, "Path"), get_element_data(node, "Username"), get_element_data(node, "Password"), get_element_data(node, "SharedMemoryKey"), get_element_data(node, "File"), get_element_data(node, "Camera"));
             myitem->setTestPattern(get_element_data(node, "TestPattern"));
         }
         if (NodeCheck(node, "Button"))

@@ -1,6 +1,7 @@
 #include "TaraDraw/TaraDraw.hh"
 #include "nodes.hh"
 #include "varlist.hh"
+#include "PixelStream/curlLib.hh"
 
 extern appdata AppData;
 
@@ -99,13 +100,19 @@ static void app_run(void)
 {
     static unsigned passnum = 0;
     tdPosition pos;
+    std::list<PixelStreamItem *>::iterator psitem;
 
     passnum++;
     Idle();
     tdGetPointer(nullptr, &pos);
     HandleMouseMotion(pos.x/mywin.width, pos.y/mywin.height);
     tdProcessEvents(mouse_click, key_click, win_config, win_close);
+
+    for (psitem = AppData.pixelstreams.begin(); psitem != AppData.pixelstreams.end(); psitem++)
+        (*psitem)->psd->updateStatus();
+    curlLibRun();
     AppData.toplevel->updateStreams(passnum);
+
     if (tdNeedsRedraw(mywin.id))
     {
         AppData.toplevel->draw();

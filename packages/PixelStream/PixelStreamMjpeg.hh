@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <poll.h>
 #include <netinet/in.h>
+#ifdef CURL_ENABLED
+#include <curl/curl.h>
+#endif
 #include "basicutils/timer.hh"
 #include "PixelStreamData.hh"
 
@@ -15,35 +18,40 @@ class PixelStreamMjpeg : public PixelStreamData
 
         bool operator == (const PixelStreamMjpeg &);
         bool operator != (const PixelStreamMjpeg &);
+        int readerInitialize(const char *, int, const char *, const char *, const char *);
         int reader(void);
-        int readerInitialize(const char *, int, const char *);
+        void processData(const char *, size_t);
+        void updateStatus(void);
 
     private:
-        int socket_connect(void);
-        void socket_disconnect(void);
-        bool SendDataRequest(const char *);
-        int findCrlf(char *, unsigned);
-        int findCrlfCrlf(char *, unsigned);
-        bool RecvHeader(void);
-        bool RecvData(void);
+        int curlCreate(void);
+        void curlConnect(void);
+        void curlDisconnect(void);
         void loadPixels(const char *, size_t);
 
         char *host;
         int port;
         char *path;
-        char *data_request;
-        struct sockaddr_in server_address;
-        int CommSocket;
+        char *username;
+        char *password;
+#ifdef CURL_ENABLED
+        CURL *mjpegIO;
+#else
+        void *mjpegIO;
+#endif
         Timer *lastconnectattempt;
         Timer *lastread;
+        Timer *lastinview;
+        size_t imagebytes;
         char *readbuf;
         size_t readbufalloc;
-        size_t dataalloc;
-        bool data_requested;
-        bool header_received;
+        size_t pixelsalloc;
         int totalbytes;
         int masteroffset;
-        bool flushonly;
+        bool connectinprogress;
+        bool readinprogress;
+        bool inview;
+        bool updated;
 };
 
 #endif

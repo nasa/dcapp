@@ -63,3 +63,7 @@ bool PixelStreamData::writeRequested(void)
 {
     return true;
 }
+
+void PixelStreamData::updateStatus(void)
+{
+}
