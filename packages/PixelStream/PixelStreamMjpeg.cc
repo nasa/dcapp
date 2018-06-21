@@ -237,8 +237,12 @@ void PixelStreamMjpeg::curlConnect(void)
 void PixelStreamMjpeg::curlDisconnect(void)
 {
     curlLibRemoveHandle(mjpegIO);
-    connectinprogress = false;
     connected = false;
+    connectinprogress = false;
+    readinprogress = false;
+    masteroffset = 0;
+    totalbytes = 0;
+    imagebytes = 0;
 }
 
 void PixelStreamMjpeg::processData(const char *memptr, size_t memsize)
