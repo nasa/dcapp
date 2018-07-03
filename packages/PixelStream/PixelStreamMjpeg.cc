@@ -296,8 +296,12 @@ void PixelStreamMjpeg::processData(const char *memptr, size_t memsize)
 
     if (readinprogress && totalbytes >= imagebytes)
     {
-        loadPixels(readbuf, imagebytes);
-        updated = true;
+        // only loadPixels if we haven't already loaded pixels this pass
+        if (!updated)
+        {
+            loadPixels(readbuf, imagebytes);
+            updated = true;
+        }
 
         totalbytes = 0;
         imagebytes = 0;

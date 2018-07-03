@@ -28,7 +28,6 @@ typedef struct
     void (*DisplayInit)(void);
     void (*DisplayLogic)(void);
     void (*DisplayClose)(void);
-    int *canbus_inhibited;
 } appdata;
 
 #endif

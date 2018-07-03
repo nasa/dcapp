@@ -4,15 +4,16 @@
 #ifdef NTCAN
 #include "ntcan.h"
 
-extern void HandleBezelButton(int, int, int);
+extern void HandleBezelInit(int *);
 extern void HandleBezelControl(int, int, int);
+extern void HandleBezelButton(int, int, int);
 
 static NTCAN_HANDLE ntCanHandle;
 static int CAN_active = 0;
 static uint32_t buttonID = 0, controlID = 0;
 #endif
 
-void CAN_init(const char *networkstr, const char *buttonIDstr, const char *controlIDstr)
+void CAN_init(const char *networkstr, const char *buttonIDstr, const char *controlIDstr, int *inhibit_ptr)
 {
 #ifdef NTCAN
     int network = 0;
@@ -51,6 +52,8 @@ void CAN_init(const char *networkstr, const char *buttonIDstr, const char *contr
         error_msg("canIdAdd failed with code " << retval);
         return;
     }
+
+    HandleBezelInit(inhibit_ptr);
 
     CAN_active = 1;
 #endif

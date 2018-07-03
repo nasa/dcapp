@@ -285,8 +285,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "CAN"))
         {
-            CAN_init(get_element_data(node, "Network"), get_element_data(node, "ButtonID"), get_element_data(node, "ControlID"));
-            AppData.canbus_inhibited = (int *)get_pointer(get_element_data(node, "InhibitVariable"));
+            CAN_init(get_element_data(node, "Network"), get_element_data(node, "ButtonID"), get_element_data(node, "ControlID"), (int *)get_pointer(get_element_data(node, "InhibitVariable")));
         }
         if (NodeCheck(node, "UEI"))
         {

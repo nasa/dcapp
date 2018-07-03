@@ -5,14 +5,21 @@
 
 extern appdata AppData;
 
+static int *canbus_inhibited = 0x0;
+
 extern void ProcessEvents(void);
+
+void HandleBezelInit(int *inhibit_ptr)
+{
+    canbus_inhibited = inhibit_ptr;
+}
 
 void HandleBezelControl(int type, int itemid, int action)
 {
-    if (type == 0xaa && itemid == 0x01)
+    if (type == 0xaa && itemid == 0x01 && canbus_inhibited)
     {
-        if (action) *(AppData.canbus_inhibited) = 0;
-        else *(AppData.canbus_inhibited) = 1;
+        if (action) *canbus_inhibited = 0;
+        else *canbus_inhibited = 1;
     }
 }
 

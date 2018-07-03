@@ -22,6 +22,8 @@
 #include "osenv/osenv.hh"
 #include "PixelStream/curlLib.hh"
 
+#define MINIMUM_REFRESH 0.05 // 50 ms = 20 Hz
+
 extern void mainloop(void);
 extern void UpdateDisplay(void);
 extern void SetNeedsRedraw(void);
@@ -87,9 +89,16 @@ int main(int argc, char **argv)
  *********************************************************************************/
 void Idle(void)
 {
+    static Timer *mytime = new Timer;
     int status;
     std::list<CommModule *>::iterator commitem;
     std::list<Animation *>::iterator animitem;
+
+    float elapsed = mytime->getSeconds();
+    mytime->restart();
+
+    // usleep to the next period of time defined by MINIMUM_REFRESH to temporarily release the CPU
+    if (elapsed < MINIMUM_REFRESH) usleep((useconds_t)((MINIMUM_REFRESH - elapsed) * 1000000));
 
     CAN_read();
     UEI_read();
