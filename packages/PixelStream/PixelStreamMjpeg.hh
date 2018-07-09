@@ -4,9 +4,6 @@
 #include <stdint.h>
 #include <poll.h>
 #include <netinet/in.h>
-#ifdef CURL_ENABLED
-#include <curl/curl.h>
-#endif
 #include "basicutils/timer.hh"
 #include "PixelStreamData.hh"
 
@@ -34,11 +31,7 @@ class PixelStreamMjpeg : public PixelStreamData
         char *path;
         char *username;
         char *password;
-#ifdef CURL_ENABLED
-        CURL *mjpegIO;
-#else
         void *mjpegIO;
-#endif
         Timer *lastconnectattempt;
         Timer *lastread;
         Timer *lastinview;

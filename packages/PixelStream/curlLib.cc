@@ -1,23 +1,91 @@
 #ifdef CURL_ENABLED
+
 #include <curl/curl.h>
-#endif
 #include "basicutils/msg.hh"
 #include "PixelStreamMjpeg.hh"
 
-#ifdef CURL_ENABLED
 static CURLM *multiCURL;
-#endif
+
+static size_t curlLibProcessBuffer(char *buffer, size_t size, size_t nmemb, void *userp)
+{
+    size_t newbytes = size * nmemb;
+    PixelStreamMjpeg *mystream = (PixelStreamMjpeg *)userp;
+    mystream->processData(buffer, newbytes);
+    return newbytes;
+}
 
 void curlLibInit(void)
 {
-#ifdef CURL_ENABLED
     multiCURL = curl_multi_init();
-#endif
+}
+
+void *curlLibCreateHandle(const char *host, int port, const char *path, const char *username, const char *password, PixelStreamMjpeg *ptr)
+{
+    CURL *handle;
+    CURLcode result;
+    char *myurl, *mycredentials = 0x0;
+
+    asprintf(&myurl, "%s:%d/%s", host, port, path);
+    if (username && password) asprintf(&mycredentials, "%s:%s", username, password);
+
+    handle = curl_easy_init();
+    if (!handle)
+    {
+        error_msg("Failed to initialize CURL");
+        return 0x0;
+    }
+
+    result = curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, curlLibProcessBuffer);
+    if (result != CURLE_OK)
+    {
+        error_msg("CURL error: " << curl_easy_strerror(result));
+        return 0x0;
+    }
+
+    result = curl_easy_setopt(handle, CURLOPT_WRITEDATA, ptr);
+    if (result != CURLE_OK)
+    {
+        error_msg("CURL error: " << curl_easy_strerror(result));
+        return 0x0;
+    }
+
+    result = curl_easy_setopt(handle, CURLOPT_URL, myurl);
+    if (result != CURLE_OK)
+    {
+        error_msg("CURL error: " << curl_easy_strerror(result));
+        return 0x0;
+    }
+
+    if (mycredentials)
+    {
+        result = curl_easy_setopt(handle, CURLOPT_USERPWD, mycredentials);
+        if (result != CURLE_OK)
+        {
+            error_msg("CURL error: " << curl_easy_strerror(result));
+            return 0x0;
+        }
+
+        result = curl_easy_setopt(handle, CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
+        if (result != CURLE_OK)
+        {
+            error_msg("CURL error: " << curl_easy_strerror(result));
+            return 0x0;
+        }
+    }
+
+    if (mycredentials) free(mycredentials);
+    free(myurl);
+
+    return (void *)handle;
+}
+
+void curlLibDestroyHandle(void *handle)
+{
+    curl_easy_cleanup((CURL *)handle);
 }
 
 int curlLibAddHandle(void *handle)
 {
-#ifdef CURL_ENABLED
     if (!handle) return 0;
 
     CURLMcode mresult = curl_multi_add_handle(multiCURL, (CURL *)handle);
@@ -27,20 +95,17 @@ int curlLibAddHandle(void *handle)
         error_msg("CURL error " << mresult << ": " << curl_multi_strerror(mresult));
         return -1;
     }
-#endif
+
     return 0;
 }
 
 void curlLibRemoveHandle(void *handle)
 {
-#ifdef CURL_ENABLED
     if (handle) curl_multi_remove_handle(multiCURL, (CURL *)handle);
-#endif
 }
 
 void curlLibRun(void)
 {
-#ifdef CURL_ENABLED
     int running_handles, numfds;
     struct CURLMsg *msg;
 
@@ -65,20 +130,46 @@ void curlLibRun(void)
                 warning_msg("CURL returned an unknown error");
         }
     } while (msg);
-#endif
-}
-
-size_t curlLibProcessBuffer(char *buffer, size_t size, size_t nmemb, void *userp)
-{
-    size_t newbytes = size * nmemb;
-    PixelStreamMjpeg *mystream = (PixelStreamMjpeg *)userp;
-    mystream->processData(buffer, newbytes);
-    return newbytes;
 }
 
 void curlLibTerm(void)
 {
-#ifdef CURL_ENABLED
     curl_multi_cleanup(multiCURL);
-#endif
 }
+
+#else
+
+#include "PixelStreamMjpeg.hh"
+
+void curlLibInit(void)
+{
+    warning_msg("libcurl is required for MJPEG PixelStream");
+}
+
+void *curlLibCreateHandle(const char *host, int port, const char *path, const char *username, const char *password, PixelStreamMjpeg *ptr)
+{
+    return 0x0;
+}
+
+void curlLibDestroyHandle(void *handle)
+{
+}
+
+int curlLibAddHandle(void *handle)
+{
+    return 0;
+}
+
+void curlLibRemoveHandle(void *handle)
+{
+}
+
+void curlLibRun(void)
+{
+}
+
+void curlLibTerm(void)
+{
+}
+
+#endif

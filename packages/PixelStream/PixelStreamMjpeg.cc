@@ -58,9 +58,7 @@ updated(false)
 PixelStreamMjpeg::~PixelStreamMjpeg()
 {
     curlDisconnect();
-#ifdef CURL_ENABLED
-    curl_easy_cleanup(mjpegIO);
-#endif
+    curlLibDestroyHandle(mjpegIO);
     if (this->host) free(this->host);
     if (this->path) free(this->path);
     if (this->username) free(this->username);
@@ -131,7 +129,8 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
     if (usrspec) this->username = strdup(usrspec);
     if (pwdspec) this->password = strdup(pwdspec);
 
-    if (curlCreate()) return -1;
+    mjpegIO = curlLibCreateHandle(this->host, this->port, this->path, this->username, this->password, this);
+    if (!mjpegIO) return -1;
 
     return 0;
 }
@@ -159,66 +158,6 @@ int PixelStreamMjpeg::reader(void)
         updated = false;
         return 1;
     }
-#endif
-    return 0;
-}
-
-int PixelStreamMjpeg::curlCreate(void)
-{
-#ifdef CURL_ENABLED
-    CURLcode result;
-    char *myurl, *mycredentials = 0x0;
-
-    asprintf(&myurl, "%s:%d/%s", host, port, path);
-    if (username && password) asprintf(&mycredentials, "%s:%s", username, password);
-
-    mjpegIO = curl_easy_init();
-    if (!mjpegIO)
-    {
-        error_msg("Failed to initialize CURL");
-        return -1;
-    }
-
-    result = curl_easy_setopt(mjpegIO, CURLOPT_WRITEFUNCTION, curlLibProcessBuffer);
-    if (result != CURLE_OK)
-    {
-        error_msg("CURL error: " << curl_easy_strerror(result));
-        return -1;
-    }
-
-    result = curl_easy_setopt(mjpegIO, CURLOPT_WRITEDATA, this);
-    if (result != CURLE_OK)
-    {
-        error_msg("CURL error: " << curl_easy_strerror(result));
-        return -1;
-    }
-
-    result = curl_easy_setopt(mjpegIO, CURLOPT_URL, myurl);
-    if (result != CURLE_OK)
-    {
-        error_msg("CURL error: " << curl_easy_strerror(result));
-        return -1;
-    }
-
-    if (mycredentials)
-    {
-        result = curl_easy_setopt(mjpegIO, CURLOPT_USERPWD, mycredentials);
-        if (result != CURLE_OK)
-        {
-            error_msg("CURL error: " << curl_easy_strerror(result));
-            return -1;
-        }
-
-        result = curl_easy_setopt(mjpegIO, CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
-        if (result != CURLE_OK)
-        {
-            error_msg("CURL error: " << curl_easy_strerror(result));
-            return -1;
-        }
-    }
-
-    if (mycredentials) free(mycredentials);
-    free(myurl);
 #endif
     return 0;
 }
