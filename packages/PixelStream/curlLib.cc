@@ -81,7 +81,7 @@ void *curlLibCreateHandle(const char *host, int port, const char *path, const ch
 
 void curlLibDestroyHandle(void *handle)
 {
-    curl_easy_cleanup((CURL *)handle);
+    if (handle) curl_easy_cleanup((CURL *)handle);
 }
 
 int curlLibAddHandle(void *handle)

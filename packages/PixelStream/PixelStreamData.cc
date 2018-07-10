@@ -1,4 +1,4 @@
-#include <cstring>
+#include <cstdlib>
 #include "PixelStreamData.hh"
 #include "PixelStreamFile.hh"
 #include "PixelStreamMjpeg.hh"
@@ -17,6 +17,7 @@ height(0)
 
 PixelStreamData::~PixelStreamData()
 {
+    if (this->pixels) free(this->pixels);
 }
 
 bool PixelStreamData::operator == (const PixelStreamData &that)

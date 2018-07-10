@@ -26,7 +26,6 @@ PixelStreamFile::~PixelStreamFile()
     if (this->shm > (void *)0) shmdt(this->shm);
     if (this->fp) fclose(this->fp);
     if (this->filename) free(this->filename);
-    if (this->pixels) free(this->pixels);
 }
 
 bool PixelStreamFile::operator == (const PixelStreamFile &that)

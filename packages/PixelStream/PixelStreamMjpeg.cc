@@ -1,19 +1,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <csignal>
-#include <cerrno>
-#include <stdint.h>
-#include <strings.h>
-#include <unistd.h>
-#include <poll.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <netinet/in.h>
+#include <cctype>
 #include <netdb.h>
-#include <fcntl.h>
 #include <arpa/inet.h>
 #ifdef JPEG_ENABLED
 #include <jpeglib.h>
@@ -32,22 +21,22 @@
 
 PixelStreamMjpeg::PixelStreamMjpeg()
 :
+mjpegIO(0x0),
+connectinprogress(false),
+inview(false),
+updated(false),
 host(0x0),
 port(0),
 path(0x0),
 username(0x0),
 password(0x0),
-mjpegIO(0x0),
 imagebytes(0),
 readbuf(0x0),
 readbufalloc(0),
 pixelsalloc(0),
 totalbytes(0),
 masteroffset(0),
-connectinprogress(false),
-readinprogress(false),
-inview(false),
-updated(false)
+readinprogress(false)
 {
     this->protocol = PixelStreamMjpegProtocol;
     this->lastconnectattempt = new Timer;
@@ -59,11 +48,12 @@ PixelStreamMjpeg::~PixelStreamMjpeg()
 {
     curlDisconnect();
     curlLibDestroyHandle(mjpegIO);
+
     if (this->host) free(this->host);
     if (this->path) free(this->path);
     if (this->username) free(this->username);
     if (this->password) free(this->password);
-    if (this->pixels) free(this->pixels);
+
     delete this->lastconnectattempt;
     delete this->lastread;
     delete this->lastinview;
@@ -287,4 +277,3 @@ void PixelStreamMjpeg::updateStatus(void)
 {
     if ((connected || connectinprogress) && this->lastinview->getSeconds() > INVIEW_TIMEOUT) curlDisconnect();
 }
-

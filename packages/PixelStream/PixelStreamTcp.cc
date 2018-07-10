@@ -46,7 +46,6 @@ PixelStreamTcp::~PixelStreamTcp()
     this->disconnect_all();
     socket_disconnect(&ListenSocket);
     if (this->host) free(this->host);
-    if (this->pixels) free(this->pixels);
     delete this->lastconnectattempt;
     delete this->lastread;
 }

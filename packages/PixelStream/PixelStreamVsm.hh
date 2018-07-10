@@ -1,16 +1,13 @@
 #ifndef _PIXELSTREAMVSM_HH_
 #define _PIXELSTREAMVSM_HH_
 
-#include <stdint.h>
-#include <poll.h>
-#include <netinet/in.h>
 #ifdef CURL_ENABLED
 #include <curl/curl.h>
 #endif
 #include "basicutils/timer.hh"
-#include "PixelStreamData.hh"
+#include "PixelStreamMjpeg.hh"
 
-class PixelStreamVsm : public PixelStreamData
+class PixelStreamVsm : public PixelStreamMjpeg
 {
     public:
         PixelStreamVsm();
@@ -18,46 +15,25 @@ class PixelStreamVsm : public PixelStreamData
 
         bool operator == (const PixelStreamVsm &);
         bool operator != (const PixelStreamVsm &);
-        int reader(void);
         int readerInitialize(const char *, int, char *);
+        int reader(void);
 
     private:
         int assignNewCamera(void);
         int resolveURL(const char *);
-        int socket_connect(void);
-        void socket_disconnect(void);
-        bool SendDataRequest(const char *);
-        int findCrlf(char *, unsigned);
-        int findCrlfCrlf(char *, unsigned);
-        bool RecvHeader(void);
-        bool RecvData(void);
-        void loadPixels(const char *, size_t);
 
 #ifdef CURL_ENABLED
         CURL *curl;
 #else
         void *curl;
 #endif
-        char *host;
-        int port;
+        char *vsmhost;
+        int vsmport;
         char *curr_camera;
         char *prev_camera;
-        char *data_request;
-        struct sockaddr_in server_address;
-        int CommSocket;
         bool cameraassigned;
         bool first_assign_attempt;
         Timer *assigncameraattempt;
-        Timer *lastconnectattempt;
-        Timer *lastread;
-        char *readbuf;
-        size_t readbufalloc;
-        size_t dataalloc;
-        bool data_requested;
-        bool header_received;
-        int totalbytes;
-        int masteroffset;
-        bool flushonly;
 };
 
 #endif
