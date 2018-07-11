@@ -1,5 +1,7 @@
 #ifdef CURL_ENABLED
 
+#include <cstdio>
+#include <cstdlib>
 #include <curl/curl.h>
 #include "basicutils/msg.hh"
 #include "PixelStreamMjpeg.hh"
