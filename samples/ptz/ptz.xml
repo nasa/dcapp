@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="Float" InitialValue="0">PAN</Variable>
+    <Variable Type="Float" InitialValue="0">TILT</Variable>
+    <Variable Type="Float" InitialValue="1">ZOOM</Variable>
+    <Variable Type="Float">IMAGE_X</Variable>
+    <Variable Type="Float">IMAGE_Y</Variable>
+    <Variable Type="Float">IMAGE_WIDTH</Variable>
+    <Variable Type="Float">IMAGE_HEIGHT</Variable>
+
+    <DisplayLogic>logic/mylogic.so</DisplayLogic>
+
+    <Window X="30" Y="30" Width="800" Height="600" ActiveDisplay="1">
+        <Constant Name="BgColor">0 0 0</Constant>
+        <Constant Name="FgColor">1 1 1</Constant>
+
+        <Defaults>
+            <Button Y="7.5" Width="10" Height="10" HorizontalAlign="Center" VerticalAlign="Middle"/>
+            <String Size="3" Color="0 0 0" VerticalAlign="Middle"/>
+        </Defaults>
+
+        <Style Name="Button">
+            <String Size="2.5" Color="1 1 1" ShadowOffset=".2" HorizontalAlign="Center"/>
+        </Style>
+
+        <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="100" VirtualHeight="100">
+            <Image X="@IMAGE_X" Y="@IMAGE_Y" Width="@IMAGE_WIDTH" Height="@IMAGE_HEIGHT" HorizontalAlign="Center" VerticalAlign="Middle">nasa.tga</Image>
+
+            <Rectangle X="0" Width="15" FillColor="0 0 0"/>
+            <Rectangle X="85" Width="15" FillColor="0 0 0"/>
+            <Rectangle Y="0" Height="15" FillColor="0 0 0"/>
+            <Rectangle Y="85" Height="15" FillColor="0 0 0"/>
+
+            <Rectangle Width="70" Height="70" HorizontalAlign="Center" VerticalAlign="Middle" LineColor="1 1 1"/>
+
+            <Line Color="0 1 0">
+                <Vertex X="48" Y="50"/>
+                <Vertex X="52" Y="50"/>
+            </Line>
+            <Line Color="0 1 0">
+                <Vertex X="50" Y="48"/>
+                <Vertex X="50" Y="52"/>
+            </Line>
+
+            <String X="20" Y="92.5" Color="1 1 1" HorizontalAlign="Left">Pan: @PAN(%.1f)</String>
+            <String X="50" Y="92.5" Color="1 1 1" HorizontalAlign="Center">Tilt: @TILT(%.1f)</String>
+            <String X="80" Y="92.5" Color="1 1 1" HorizontalAlign="Right">Zoom: @ZOOM(%.2f)</String>
+
+            <Button Type="Momentary" X="17">
+                <OnPress><Set Variable="@PAN" Operator="+=">.5</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Pan\nLeft</String>
+            </Button>
+            <Button Type="Momentary" X="29">
+                <OnPress><Set Variable="@PAN" Operator="-=">.5</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Pan\nRight</String>
+            </Button>
+            <Button Type="Momentary" X="44">
+                <OnPress><Set Variable="@TILT" Operator="-=">.5</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Tilt\nUp</String>
+            </Button>
+            <Button Type="Momentary" X="56">
+                <OnPress><Set Variable="@TILT" Operator="+=">.5</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Tilt\nDown</String>
+            </Button>
+            <Button Type="Momentary" X="71">
+                <OnPress><Set Variable="@ZOOM" Operator="+=">.05</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Zoom\nIn</String>
+            </Button>
+            <Button Type="Momentary" X="83">
+                <OnPress><Set Variable="@ZOOM" Operator="-=" MinimumValue="0.05">.05</Set></OnPress>
+                <On><Image>button_on.tga</Image></On>
+                <Off><Image>button_off.tga</Image></Off>
+                <String Style="Button">Zoom\nOut</String>
+            </Button>
+        </Panel>
+    </Window>
+</DCAPP>
