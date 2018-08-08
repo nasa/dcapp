@@ -21,6 +21,7 @@ PixelStreamVsm::PixelStreamVsm()
 :
 vsmhost(0x0),
 vsmport(0),
+userpath(0x0),
 curr_camera(0x0),
 prev_camera(0x0),
 cameraassigned(false)
@@ -37,6 +38,7 @@ cameraassigned(false)
 PixelStreamVsm::~PixelStreamVsm()
 {
     if (this->vsmhost) free(this->vsmhost);
+    if (this->userpath) free(this->userpath);
     delete this->assigncameraattempt;
 #ifdef CURL_ENABLED
     curl_easy_cleanup(this->curl);
@@ -63,7 +65,7 @@ static size_t write_curl_data(void *buffer, size_t size, size_t nmemb, void *use
 }
 #endif
 
-int PixelStreamVsm::readerInitialize(const char *hostspec, int portspec, char *cameraid)
+int PixelStreamVsm::readerInitialize(const char *hostspec, int portspec, const char *pathspec, char *cameraid)
 {
 #ifdef JPEG_ENABLED
 #if JPEG_LIB_VERSION < 80 && !defined(MEM_SRCDST_SUPPORTED)
@@ -104,6 +106,7 @@ warning_msg("Could not find libcurl - VSM functionality disabled");
     else
         this->vsmhost = strdup("localhost");
     this->vsmport = portspec;
+    if (pathspec) this->userpath = strdup(pathspec);
     this->curr_camera = cameraid;
     this->prev_camera = strdup("");
 
@@ -278,7 +281,7 @@ int PixelStreamVsm::resolveURL(const char *instr)
         char *tmp_host = (char *)malloc(mylen);
         char *tmp_port = (char *)malloc(mylen);
         char *tmp_path = (char *)malloc(mylen);
-        int portnum;
+        char *mypath;
 
         for (ii=addr_start, jj=0; ii<=addr_end; ii++, jj++) tmp_host[jj] = instr[ii];
         tmp_host[addr_end + 1 - addr_start] = '\0';
@@ -286,10 +289,15 @@ int PixelStreamVsm::resolveURL(const char *instr)
         for (ii=port_start, jj=0; ii<=port_end; ii++, jj++) tmp_port[jj] = instr[ii];
         tmp_port[port_end + 1 - port_start] = '\0';
 
-        for (ii=path_start, jj=0; ii<=path_end; ii++, jj++) tmp_path[jj] = instr[ii];
-        tmp_path[path_end + 1 - path_start] = '\0';
+        if (userpath) mypath = userpath;
+        else
+        {
+            for (ii=path_start, jj=0; ii<=path_end; ii++, jj++) tmp_path[jj] = instr[ii];
+            tmp_path[path_end + 1 - path_start] = '\0';
+            mypath = tmp_path;
+        }
 
-        portnum = strtol(tmp_port, 0x0, 10);
+        int portnum = strtol(tmp_port, 0x0, 10);
 
         struct hostent *server = gethostbyname(tmp_host);
 
@@ -299,7 +307,7 @@ int PixelStreamVsm::resolveURL(const char *instr)
             return -1;
         }
 
-        mjpegIO = curlLibCreateHandle(inet_ntoa(*(in_addr * )server->h_addr), portnum, tmp_path, 0x0, 0x0, this);
+        mjpegIO = curlLibCreateHandle(inet_ntoa(*(in_addr * )server->h_addr), portnum, mypath, 0x0, 0x0, this);
         if (!mjpegIO) return -1;
 
         free(tmp_path);

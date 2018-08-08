@@ -15,7 +15,7 @@ class PixelStreamVsm : public PixelStreamMjpeg
 
         bool operator == (const PixelStreamVsm &);
         bool operator != (const PixelStreamVsm &);
-        int readerInitialize(const char *, int, char *);
+        int readerInitialize(const char *, int, const char *, char *);
         int reader(void);
 
     private:
@@ -29,6 +29,7 @@ class PixelStreamVsm : public PixelStreamMjpeg
 #endif
         char *vsmhost;
         int vsmport;
+        char *userpath;
         char *curr_camera;
         char *prev_camera;
         bool cameraassigned;
