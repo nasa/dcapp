@@ -39,7 +39,11 @@ int tdAlignTop = 0x08;
     [ self addMenuItem:appMenu title:[ @"About " stringByAppendingString:appName ] action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@"" modifier:0 ];
     [ self addMenuSeparator:appMenu ];
     [ self addMenuItem:appMenu title:[ @"Hide " stringByAppendingString:appName ] action:@selector(hide:) keyEquivalent:@"h" modifier:0 ];
+#ifdef NSAppKitVersionNumber10_12
+    [ self addMenuItem:appMenu title:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h" modifier:NSEventModifierFlagCommand|NSEventModifierFlagOption ];
+#else
     [ self addMenuItem:appMenu title:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h" modifier:NSCommandKeyMask|NSAlternateKeyMask ];
+#endif
     [ self addMenuItem:appMenu title:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@"" modifier:0 ];
     [ self addMenuSeparator:appMenu ];
     [ self addMenuItem:appMenu title:[ @"Quit " stringByAppendingString:appName ] action:@selector(terminate:) keyEquivalent:@"q" modifier:0 ];

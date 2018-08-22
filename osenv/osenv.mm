@@ -96,7 +96,11 @@ void storeArgs(char *specfile, char *args)
         id appName = [[NSProcessInfo processInfo] processName];
 
         window = [[[ NSWindow alloc ] initWithContentRect:NSMakeRect(0, 0, 1000, 234)
+#ifdef NSAppKitVersionNumber10_12
+                                      styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable
+#else
                                       styleMask:NSTitledWindowMask|NSClosableWindowMask|NSMiniaturizableWindowMask
+#endif
                                       backing:NSBackingStoreBuffered
                                       defer:NO ] autorelease ];
 

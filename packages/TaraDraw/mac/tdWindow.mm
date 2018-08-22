@@ -5,7 +5,11 @@
 
 - (id)initWithContentRect:(NSRect)contentRect adapter:(id)myadapter
 {
+#ifdef NSAppKitVersionNumber10_12
+    unsigned int mymask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
+#else
     unsigned int mymask = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask;
+#endif
     self = [ super initWithContentRect:contentRect styleMask:mymask backing:NSBackingStoreBuffered defer:YES ];
     if (self) tdAdapter = myadapter;
     return self;
