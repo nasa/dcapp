@@ -4,19 +4,16 @@
 #include <iostream>
 #include <sstream>
 
-#ifdef DEBUG
-#define _debugactive 1
-#else
-#define _debugactive 0
-#endif
-
 class Message
 {
     public:
         static void setLabel(const std::string in) { label = in; };
         static std::string getLabel(void) { return label; };
+        static void enableDebugging(void) { debugFlag = true; };
+        static bool debuggingEnabled(void) { return debugFlag; };
     private:
         static std::string label;
+        static bool debugFlag;
 };
 
 #define user_msg(a) \
@@ -27,7 +24,7 @@ do { \
 } while(0)
 #define debug_msg(a) \
 do { \
-    if (_debugactive) \
+    if (Message::debuggingEnabled()) \
     { \
         std::stringstream _MyTmpStr; \
         _MyTmpStr << Message::getLabel().c_str() << ": function=" << __FUNCTION__ << ", file=" << __FILE__ << ", line=" << __LINE__ << ": " << a; \

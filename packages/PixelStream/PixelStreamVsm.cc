@@ -90,14 +90,15 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
         return -1;
     }
 
-#ifndef DEBUG
-    // Turn off all diagnostic printouts
-    result = curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
-    if (result != CURLE_OK) {
-        error_msg("CURL error: " << curl_easy_strerror(result));
-        return -1;
+    if (!(Message::debuggingEnabled()))
+    {
+        // Turn off all diagnostic printouts
+        result = curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
+        if (result != CURLE_OK) {
+            error_msg("CURL error: " << curl_easy_strerror(result));
+            return -1;
+        }
     }
-#endif
 #else
 warning_msg("Could not find libcurl - VSM functionality disabled");
 #endif

@@ -25,26 +25,27 @@ void HandleBezelControl(int type, int itemid, int action)
 
 void HandleBezelButton(int type, int itemid, int action)
 {
-#ifdef DEBUG
-    std::stringstream debug_string;
-    debug_string << "Type: ";
-    switch (type)
+    if (Message::debuggingEnabled())
     {
-        case BEZEL_BUTTON:           debug_string << "Button";               break;
-        case BEZEL_KNOB:             debug_string << "Knob";                 break;
-        default:                     debug_string << "Unknown";              break;
+        std::stringstream debug_string;
+        debug_string << "Type: ";
+        switch (type)
+        {
+            case BEZEL_BUTTON:           debug_string << "Button";               break;
+            case BEZEL_KNOB:             debug_string << "Knob";                 break;
+            default:                     debug_string << "Unknown";              break;
+        }
+        debug_string << ", ID: " << itemid << ", Action: ";
+        switch (action)
+        {
+            case BEZEL_RELEASED:         debug_string << "Released";             break;
+            case BEZEL_PRESSED:          debug_string << "Pressed";              break;
+            case BEZEL_CLOCKWISE:        debug_string << "Clockwise Tick";       break;
+            case BEZEL_COUNTERCLOCKWISE: debug_string << "Couterclockwise Tick"; break;
+            default:                     debug_string << "Unknown";              break;
+        }
+        debug_msg(debug_string.str());
     }
-    debug_string << ", ID: " << itemid << ", Action: ";
-    switch (action)
-    {
-        case BEZEL_RELEASED:         debug_string << "Released";             break;
-        case BEZEL_PRESSED:          debug_string << "Pressed";              break;
-        case BEZEL_CLOCKWISE:        debug_string << "Clockwise Tick";       break;
-        case BEZEL_COUNTERCLOCKWISE: debug_string << "Couterclockwise Tick"; break;
-        default:                     debug_string << "Unknown";              break;
-    }
-    debug_msg(debug_string.str());
-#endif
 
     if (type == BEZEL_BUTTON)
     {

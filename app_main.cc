@@ -57,6 +57,9 @@ int main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
 
     Message::setLabel(basename(argv[0]));
+#ifdef DEBUG
+    Message::enableDebugging();
+#endif
 
     curlLibInit();
 
