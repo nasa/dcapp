@@ -61,8 +61,6 @@ int main(int argc, char **argv)
     Message::enableDebugging();
 #endif
 
-    curlLibInit();
-
     AppData.master_timer = new Timer;
     AppData.last_update = new Timer;
 
@@ -74,6 +72,7 @@ int main(int argc, char **argv)
     SetDefaultEnvironment(dirname(argv[0]));
     ProcessArgs(argc, argv);
 
+    curlLibInit();
     AppData.DisplayPreInit(get_pointer);
     AppData.DisplayInit();
     UpdateDisplay();
@@ -319,9 +318,13 @@ static void ProcessArgs(int argc, char **argv)
         while (strptr < (args + strlen(args)))
         {
             count = sscanf(strptr, "%[^= ]=%s", key, value);
-            if (count == 2) processArgument(key, value);
+
+            if (count == 1 && !strcmp(key, "-debug")) Message::enableDebugging();
+            else if (count == 2) processArgument(key, value);
+
             if (count >= 1) strptr += strlen(key);
             if (count == 2) strptr += strlen(value) + 1;
+
             while (strptr < (args + strlen(args)) && *strptr == ' ') strptr++;
         }
 
