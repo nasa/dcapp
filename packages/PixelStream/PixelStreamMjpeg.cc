@@ -30,10 +30,10 @@ port(0),
 path(0x0),
 username(0x0),
 password(0x0),
-imagebytes(0),
 readbuf(0x0),
 readbufalloc(0),
 pixelsalloc(0),
+imagebytes(0),
 totalbytes(0),
 masteroffset(0),
 readinprogress(false)
@@ -223,7 +223,7 @@ void PixelStreamMjpeg::processData(const char *memptr, size_t memsize)
         }
     }
 
-    if (readinprogress && totalbytes >= imagebytes)
+    if (readinprogress && (totalbytes >= imagebytes))
     {
         // only loadPixels if we haven't already loaded pixels this pass
         if (!updated)

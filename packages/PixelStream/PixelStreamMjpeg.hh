@@ -37,12 +37,12 @@ class PixelStreamMjpeg : public PixelStreamData
         char *path;
         char *username;
         char *password;
-        size_t imagebytes;
         char *readbuf;
         size_t readbufalloc;
         size_t pixelsalloc;
-        int totalbytes;
-        int masteroffset;
+        size_t imagebytes;
+        size_t totalbytes;
+        size_t masteroffset;
         bool readinprogress;
 };
 
