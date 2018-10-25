@@ -9,11 +9,19 @@ OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(o
 
 CXXFLAGS += -std=c++11 -Wall $(shell ./bin/primitives-config --cflags_internal)
 
+SUBPACKAGE_CONFIGS := \
+	../packages/PixelStream/bin/PixelStream-config \
+	../packages/fontlib/bin/fontlib-config \
+	../packages/basicutils/bin/basicutils-config
+
+COMPDEPENDS := $(wildcard ../*.hh)
+COMPDEPENDS += $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --compdepends))
+
 $(LIBDIR)/libprimitives.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)
 	$(AR) $(ARFLAGS) $@ $^
 
-$(OBJDIR)/%.o: %.cc $(HEADERS)
+$(OBJDIR)/%.o: %.cc $(HEADERS) $(COMPDEPENDS)
 	mkdir -p $(OBJDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
