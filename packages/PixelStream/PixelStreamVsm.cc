@@ -177,6 +177,12 @@ int PixelStreamVsm::assignNewCamera(void)
 #ifdef CURL_ENABLED
     CURLcode result;
 
+    if (!strlen(this->curr_camera))
+    {
+        debug_msg("No camera specified");
+        return 0;
+    }
+
     // Build the URL
     std::ostringstream url;
     url << this->vsmhost << ":" << this->vsmport << "/streams/" << this->curr_camera;
