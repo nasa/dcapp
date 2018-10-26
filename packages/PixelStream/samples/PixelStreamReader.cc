@@ -6,6 +6,7 @@
 #include <GL/gl.h>
 #include "basicutils/msg.hh"
 #include "TaraDraw/TaraDraw.hh"
+#include "PixelStream/curlLib.hh"
 #include "PixelStream/PixelStream.hh"
 
 static tdWindow winid;
@@ -90,6 +91,7 @@ void Draw(void)
 static void app_term(void)
 {
     tdTerminate();
+    curlLibTerm();
     exit(0);
 }
 
@@ -110,6 +112,7 @@ void win_close(WinCloseEvent wcl)
 static void app_run(void)
 {
     tdProcessEvents(0x0, 0x0, win_config, win_close);
+    curlLibRun();
     if (psd->reader()) tdSetNeedsRedraw(winid);
     if (tdNeedsRedraw(winid))
     {
@@ -120,7 +123,7 @@ static void app_run(void)
 
 void usageError(const char *appname)
 {
-    printf("usage:\n  %s filename shared_memory_key\n  %s MJPEG <host> <port> <path>\n  %s TCP <host> port\n", appname, appname, appname);
+    printf("usage:\n  %s filename shared_memory_key\n  %s MJPEG <host> <port> <path> <username> <password>\n  %s TCP <host> port\n", appname, appname, appname);
     exit(0);
 }
 
@@ -130,11 +133,15 @@ int main(int argc, char **argv)
 
     if (argc < 2) usageError(argv[0]);
 
+    curlLibInit();
+
     if (!strcmp(argv[1], "MJPEG"))
     {
         char *host = 0x0;
         int port = 0;
         char *path = 0x0;
+        char *username = 0x0;
+        char *password = 0x0;
 
         if (argc == 2)
         {
@@ -165,10 +172,25 @@ int main(int argc, char **argv)
             port = strtol(argv[3], 0x0, 10);
             path = strdup(argv[4]);
         }
+        else if (argc == 6)
+        {
+            host = strdup(argv[2]);
+            port = strtol(argv[3], 0x0, 10);
+            path = strdup(argv[4]);
+            username = strdup(argv[5]);
+        }
+        else if (argc == 7)
+        {
+            host = strdup(argv[2]);
+            port = strtol(argv[3], 0x0, 10);
+            path = strdup(argv[4]);
+            username = strdup(argv[5]);
+            password = strdup(argv[6]);
+        }
         else usageError(argv[0]);
 
         PixelStreamMjpeg *psm = new PixelStreamMjpeg;
-        if (psm->readerInitialize(host, port, path, 0x0, 0x0)) return -1;
+        if (psm->readerInitialize(host, port, path, username, password)) return -1;
         psd = (PixelStreamData *)psm;
     }
     else if (!strcmp(argv[1], "TCP"))
