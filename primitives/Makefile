@@ -7,7 +7,7 @@ LIBDIR := $(shell ./bin/primitives-config --libdir)
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -std=c++11 -Wall $(shell ./bin/primitives-config --cflags_internal)
+CXXFLAGS += -std=c++11 -Wall -Wextra $(shell ./bin/primitives-config --cflags_internal)
 
 SUBPACKAGE_CONFIGS := \
 	../packages/PixelStream/bin/PixelStream-config \

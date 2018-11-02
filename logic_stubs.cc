@@ -2,7 +2,7 @@
 
 #include "basicutils/msg.hh"
 
-void DisplayPreInitStub(void *(*get_pointer)(const char *))
+void DisplayPreInitStub(void *(* /* get_pointer */)(const char *))
 {
     debug_msg("No DisplayPreInit() element defined - using generic stub instead");
 }

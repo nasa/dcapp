@@ -30,6 +30,8 @@ int tdAlignTop = 0x08;
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification
 {
+    (void)notification; // variable unused
+
     id menubar = [[ NSMenu new ] autorelease ];
     [ NSApp setMainMenu:menubar ];
     id appName = [[ NSProcessInfo processInfo ] processName ];
@@ -112,6 +114,7 @@ int tdAlignTop = 0x08;
 
 - (void)runLoop:(NSTimer *)aTimer
 {
+    (void)aTimer; // variable unused
     if (RunRoutine) RunRoutine();
 }
 
@@ -491,6 +494,7 @@ int tdAlignTop = 0x08;
 
 - (void)applicationTerminated:(NSNotification *)aNotification
 {
+    (void)aNotification; // variable unused
     if (TerminateRoutine) TerminateRoutine();
     [ self cleanUp ];
 }

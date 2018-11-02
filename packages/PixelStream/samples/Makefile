@@ -3,7 +3,7 @@
 OSSPEC := $(shell ../bin/PixelStream-config --osspec)
 BINDIR := $(shell ../bin/PixelStream-config --bindir)
 
-CXXFLAGS += -Wall
+CXXFLAGS += -Wall -Wextra 
 CXXFLAGS += $(shell ../bin/PixelStream-config --cflags)
 CXXFLAGS += $(shell ../../TaraDraw/bin/TaraDraw-config --cflags)
 CXXFLAGS += $(shell ../../basicutils/bin/basicutils-config --cflags)

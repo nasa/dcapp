@@ -7,7 +7,7 @@ LIBDIR := $(shell ./bin/fontlib-config --libdir)
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall $(shell ./bin/fontlib-config --cflags_internal)
+CXXFLAGS += -Wall -Wextra $(shell ./bin/fontlib-config --cflags_internal)
 ifeq ($(OSSPEC), MacOS)
     CXXFLAGS += -I/opt/X11/include
 else

@@ -90,7 +90,7 @@ void win_config(ConfigureEvent cfg)
 }
 
 
-void win_close(WinCloseEvent wcl)
+void win_close(WinCloseEvent /* wcl */)
 {
     app_term();
 }

@@ -10,7 +10,7 @@ endif
 
 mylogic.so: mylogic.cc ../screensaver.xml
 	${GENHEADER} ../screensaver.xml
-	${CXX} -fPIC -Wall -shared $< -o $@
+	${CXX} -fPIC -Wall -Wextra -shared $< -o $@
 
 clean:
 	${RM} dcapp.h mylogic.so

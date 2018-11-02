@@ -44,7 +44,7 @@ SUBPACKAGE_CONFIGS := \
     packages/imgload/bin/imgload-config \
     packages/basicutils/bin/basicutils-config
 
-CXXFLAGS += -std=c++11 -Wall -I.
+CXXFLAGS += -std=c++11 -Wall -Wextra -I.
 
 CXXFLAGS += $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --cflags))
 LINK_LIBS += $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --libs))

@@ -13,9 +13,9 @@ static int CAN_active = 0;
 static uint32_t buttonID = 0, controlID = 0;
 #endif
 
+#ifdef NTCAN
 void CAN_init(const char *networkstr, const char *buttonIDstr, const char *controlIDstr, int *inhibit_ptr)
 {
-#ifdef NTCAN
     int network = 0;
     NTCAN_RESULT retval;
 
@@ -56,8 +56,12 @@ void CAN_init(const char *networkstr, const char *buttonIDstr, const char *contr
     HandleBezelInit(inhibit_ptr);
 
     CAN_active = 1;
-#endif
 }
+#else
+void CAN_init(const char *, const char *, const char *, int *)
+{
+}
+#endif
 
 extern void CAN_read(void)
 {

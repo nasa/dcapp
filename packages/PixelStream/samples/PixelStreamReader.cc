@@ -104,7 +104,7 @@ void win_config(ConfigureEvent cfg)
     tdGLReshapeContext(0, 0, 0, winwidth, winheight);
 }
 
-void win_close(WinCloseEvent wcl)
+void win_close(WinCloseEvent /* wcl */)
 {
     app_term();
 }

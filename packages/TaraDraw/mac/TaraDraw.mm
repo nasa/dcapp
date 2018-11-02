@@ -5,7 +5,7 @@ static TaraDrawAdapter *tda;
 
 // Initialization routines
 
-int tdInitialize(char *unused)
+int tdInitialize(char * /* unused */)
 {
     [ NSApplication sharedApplication ];
     if ( ![ NSApp isRunning ] )

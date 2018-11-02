@@ -59,7 +59,7 @@ bool PixelStreamVsm::operator != (const PixelStreamVsm &that)
 #ifdef CURL_ENABLED
 // CURL delivers all recieved data to a callback function, which writes to the console by default.
 // This overrides that default function and simply ignores the data.
-static size_t write_curl_data(void *buffer, size_t size, size_t nmemb, void *userp)
+static size_t write_curl_data(void * /* buffer */, size_t size, size_t nmemb, void * /* userp */)
 {
     return (size * nmemb);
 }

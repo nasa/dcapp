@@ -171,6 +171,8 @@ void storeArgs(char *specfile, char *args)
 
 - (void)createFile:(id)sender
 {
+    (void)sender; // variable unused
+
     NSSavePanel *panel = [ NSSavePanel savePanel ];
 
     [ panel setNameFieldLabel:@"Create:" ];
@@ -188,6 +190,8 @@ void storeArgs(char *specfile, char *args)
 
 - (void)selectFile:(id)sender
 {
+    (void)sender; // variable unused
+
     NSOpenPanel *panel = [ NSOpenPanel openPanel ];
 
     [ panel setCanChooseFiles:YES ];
@@ -205,6 +209,7 @@ void storeArgs(char *specfile, char *args)
 
 - (void)editFile:(id)sender
 {
+    (void)sender; // variable unused
     [[ NSWorkspace sharedWorkspace ] openFile:[ specfile stringValue ]];
 }
 

@@ -10,7 +10,7 @@ endif
 
 mylogic.so: mylogic.cc ../ptz.xml
 	${GENHEADER} ../ptz.xml
-	${CXX} -fPIC -Wall -shared $< -o $@
+	${CXX} -fPIC -Wall -Wextra -shared $< -o $@
 
 clean:
 	${RM} dcapp.h mylogic.so
