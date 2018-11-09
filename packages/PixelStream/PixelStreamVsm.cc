@@ -67,11 +67,7 @@ static size_t write_curl_data(void * /* buffer */, size_t size, size_t nmemb, vo
 
 int PixelStreamVsm::readerInitialize(const char *hostspec, int portspec, const char *pathspec, char *cameraid)
 {
-#ifdef JPEG_ENABLED
-#if JPEG_LIB_VERSION < 80 && !defined(MEM_SRCDST_SUPPORTED)
-warning_msg("Version 80 or higher of libjpeg or libjpeg-turbo is required (current installed version is " << JPEG_LIB_VERSION);
-#endif
-#else
+#ifndef JPEG_ENABLED
 warning_msg("Could not find libjpeg or libjpeg-turbo");
 #endif
 #ifdef CURL_ENABLED
@@ -116,7 +112,7 @@ warning_msg("Could not find libcurl - VSM functionality disabled");
 
 int PixelStreamVsm::reader(void)
 {
-#if defined(CURL_ENABLED) && defined(JPEG_ENABLED) && (JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
+#if defined(CURL_ENABLED) && defined(JPEG_ENABLED)
     bool first_connect_attempt = false;
 
     inview = true;
