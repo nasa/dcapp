@@ -211,7 +211,7 @@ tdGLContext *tdGLCreateContext(tdWindow winid)
     return (tdGLContext *)curGL;
 }
 
-void tdGLReshapeContext(float x, float y, int align, float width, float height)
+void tdGLReshapeContext(float x, float y, int /* align */, float width, float height)
 {
     XMoveResizeWindow(display, curGL->win, (int)x, curGL->parent->height-(int)(height+y), (int)width, (int)height);
 }
@@ -320,7 +320,7 @@ void tdGLSwapBuffers(void)
 
 // Event processing
 
-void tdMainLoop(void (run_routine)(void), void (terminate_routine)(void))
+void tdMainLoop(void (run_routine)(void), void (*)(void))
 {
     while (1) run_routine();
 }
