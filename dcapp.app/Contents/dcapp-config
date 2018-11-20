@@ -31,8 +31,17 @@ fi
 
 CDPATH=""
 
-mydir="$(cd "$(dirname "$0")/.."; pwd)"
-parentdir="$(cd "$(dirname "$0")/../.."; pwd)"
+# find the true path to the script, even if it's a link
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+    DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+scriptdir="$(cd -P "$(dirname "$SOURCE")" >/dev/null && pwd)"
+
+mydir="$(cd "$scriptdir/.."; pwd)"
+parentdir="$(cd "$scriptdir/../.."; pwd)"
 ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
 machtype=`uname -m`
 if test "$ostype" = "darwin" ; then
