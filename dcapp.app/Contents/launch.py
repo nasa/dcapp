@@ -6,7 +6,7 @@ myfullpath = os.path.abspath(__file__)
 mydir = os.path.dirname(myfullpath)
 mybase = os.path.basename(myfullpath)
 
-myscript = os.path.abspath(os.path.join(mydir, '..', '..', 'bin', 'dcapp-config'))
+myscript = os.path.abspath(os.path.join(mydir, 'dcapp-config'))
 
 # The check_output method is much cleaner than Popen, but it requires Python 2.7 or higher
 #osspec = subprocess.check_output([myscript, '--osspec']).strip()

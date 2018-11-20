@@ -239,7 +239,7 @@ static void SetDefaultEnvironment(std::string mypath)
 
     AppData.dcapphome = resolvedpath;
 
-    tmppath = mypath + "/../../../bin/dcapp-config";
+    tmppath = mypath + "/../dcapp-config";
     realpath(tmppath.c_str(), resolvedpath);
 
     setenvUsingScript("dcappOSTYPE", resolvedpath, "--ostype");
