@@ -40,8 +40,7 @@ while [ -h "$SOURCE" ]; do
 done
 scriptdir="$(cd -P "$(dirname "$SOURCE")" >/dev/null && pwd)"
 
-mydir="$(cd "$scriptdir/.."; pwd)"
-parentdir="$(cd "$scriptdir/../.."; pwd)"
+mydir="$(cd "$scriptdir/../.."; pwd)"
 ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
 machtype=`uname -m`
 if test "$ostype" = "darwin" ; then
