@@ -35,7 +35,7 @@ void dcString::setFont(const char *font, const char *face, const char *size, con
     fontID = dcLoadFont(font, face);
     if (!fontID)
     {
-        std::string defaultfont = AppData.dcapphome + "/fonts/defaultfont";
+        std::string defaultfont = AppData.dcapphome + "/dcapp.app/Contents/Resources/fonts/defaultfont";
         fontID = dcLoadFont(defaultfont.c_str(), face);
     }
     if (size) fontSize = getDecimalPointer(size);
