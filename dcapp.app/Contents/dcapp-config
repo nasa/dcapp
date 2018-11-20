@@ -80,7 +80,7 @@ while test $# -gt 0 ; do
             echo "1.0.0 alpha"
             ;;
         --exepath)
-            echo "${mydir}/dcapp.app/Contents:${mydir}/packages/PixelStream/samples/${bindir}"
+            echo "${mydir}/dcapp.app/Contents"
             ;;            
         --cflags)
             ;;
