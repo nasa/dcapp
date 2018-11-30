@@ -14,6 +14,7 @@
 ##############################################################################
 
 import os
+import subprocess
 import socket
 
 # This specifies where start_dcapp will look for customization files
@@ -42,8 +43,12 @@ def start_dcapp(dc_data_file, input_file_args = ''):
         print 'VERIFYING INPUT FILE: Not starting dcapp.'
         return
 
+    # Define the path to the config file
+    config_exec = os.path.join('externals', 'dcapp', 'dcapp.app', 'Contents', 'dcapp-config')
+
     # Define the path to the executable
-    app_exec = os.path.join('externals', 'dcapp', 'dcapp.app', 'Contents', 'dcapp')
+    app_path = subprocess.check_output(config_exec + ' --exepath', shell=True)
+    app_exec = os.path.join(app_path.strip(), 'dcapp')
 
     # Define the path to the dcapp specfile
     spec_file = os.path.join('externals', 'dcapp', 'displays', dc_data_file)
