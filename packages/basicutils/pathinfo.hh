@@ -18,12 +18,17 @@ class PathInfo
             {
                 char *myabspath = (char *)calloc(PATH_MAX, sizeof(char));
                 realpath(pathspec.c_str(), myabspath);
-
                 fullpath = strdup(myabspath);
-                directory = strdup(dirname(myabspath));
-                file = strdup(basename(myabspath));
+
+                // note that we create dirc and basec because dirname and basename can mangle the passed string
+                char *dirc = strdup(myabspath);
+                char *basec = strdup(myabspath);
+                directory = strdup(dirname(dirc));
+                file = strdup(basename(basec));
 
                 free(myabspath);
+                free(dirc);
+                free(basec);
             }
         };
         virtual ~PathInfo() { if (directory) free(directory); if (file) free(file); };

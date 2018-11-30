@@ -288,8 +288,8 @@ static void SetDefaultEnvironment(std::string pathspec)
     std::string tmppath;
 
     char *resolvedpath = (char *)calloc(PATH_MAX, sizeof(char));
-
     std::string mypath = findExecutablePath(pathspec);
+
     tmppath = mypath + "/../../../";
     realpath(tmppath.c_str(), resolvedpath);
 
