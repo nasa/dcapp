@@ -96,7 +96,7 @@ void storeArgs(char *specfile, char *args)
         id appName = [[NSProcessInfo processInfo] processName];
 
         window = [[[ NSWindow alloc ] initWithContentRect:NSMakeRect(0, 0, 1000, 234)
-#ifdef NSAppKitVersionNumber10_12
+#ifdef MAC_OS_X_VERSION_10_12
                                       styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable
 #else
                                       styleMask:NSTitledWindowMask|NSClosableWindowMask|NSMiniaturizableWindowMask
@@ -178,7 +178,11 @@ void storeArgs(char *specfile, char *args)
     [ panel setNameFieldLabel:@"Create:" ];
     [ panel setPrompt:@"Create" ];
 
+#ifdef MAC_OS_X_VERSION_10_13
+    if ([ panel runModal ] == NSModalResponseOK)
+#else
     if ([ panel runModal ] == NSFileHandlingPanelOKButton)
+#endif
     {
         [ specfile setStringValue:[[ panel URL ] path ]];
         NSString *content = @"<?xml version=\"1.0\"?>\n<DCAPP>\n\n</DCAPP>\n";
@@ -199,7 +203,7 @@ void storeArgs(char *specfile, char *args)
     [ panel setResolvesAliases:YES ];
     [ panel setAllowsMultipleSelection:NO ];
 
-#ifdef NSAppKitVersionNumber10_9
+#ifdef MAC_OS_X_VERSION_10_9
     if ([ panel runModal ] == NSModalResponseOK)
 #else
     if ([ panel runModal ] == NSOKButton)

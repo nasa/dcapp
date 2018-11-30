@@ -1,8 +1,0 @@
-#!/usr/bin/python
-
-import os, subprocess
-
-# dcapp uses subprocess.Popen, so that this script terminates immediately after the real dcapp is spawned
-def launch_app(arglist): subprocess.Popen(arglist)
-
-execfile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'launch.py'))

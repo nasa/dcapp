@@ -80,7 +80,7 @@ while test $# -gt 0 ; do
             echo "1.0.0 alpha"
             ;;
         --exepath)
-            echo "${mydir}/dcapp.app/Contents"
+            echo "${mydir}/dcapp.app/Contents/${osspec}"
             ;;            
         --cflags)
             ;;

@@ -1,8 +1,0 @@
-#!/usr/bin/python
-
-import os, subprocess
-
-# dcapp_genheader uses subprocess.call, so that this script waits until the real dcapp_genheader finishes before terminating
-def launch_app(arglist): subprocess.call(arglist)
-
-execfile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'launch.py'))

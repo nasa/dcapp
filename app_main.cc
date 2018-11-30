@@ -1,3 +1,4 @@
+#include <vector>
 #include <string>
 #include <cstdio>
 #include <cstdlib>
@@ -11,6 +12,7 @@
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include "basicutils/msg.hh"
+#include "basicutils/pathinfo.hh"
 #include "basicutils/timer.hh"
 #include "basicutils/tidy.hh"
 #include "varlist.hh"
@@ -69,7 +71,7 @@ int main(int argc, char **argv)
     AppData.DisplayLogic = &DisplayLogicStub;
     AppData.DisplayClose = &DisplayCloseStub;
 
-    SetDefaultEnvironment(dirname(argv[0]));
+    SetDefaultEnvironment(argv[0]);
     ProcessArgs(argc, argv);
 
     curlLibInit();
@@ -171,6 +173,59 @@ void Terminate(int flag)
     exit(flag);
 }
 
+static std::vector<std::string> parseUserPath(void)
+{
+    std::vector<std::string> retvec;
+
+    char *mypath = getenv("PATH");
+
+    if (!mypath) return retvec;
+
+    std::string userpath = mypath;
+
+    if (userpath.empty()) return retvec;
+
+    size_t start = 0;
+    size_t end = userpath.find(':');
+
+    while (end != std::string::npos)
+    {
+        retvec.push_back(userpath.substr(start, end-start));
+        start = end + 1;
+        end = userpath.find(':', start);
+    }
+    retvec.push_back(userpath.substr(start));
+
+    return retvec;
+}
+
+static char *findExecutablePath(std::string inpath)
+{
+    PathInfo *pinfo;
+
+    if (inpath.find('/') != std::string::npos)
+    {
+        pinfo = new PathInfo(inpath);
+        if (pinfo->isExecutableFile()) return pinfo->getDirectory();
+        else
+        {
+            delete pinfo;
+            return 0x0;
+        }
+    }
+
+    std::vector<std::string> upath = parseUserPath();
+    std::vector<std::string>::iterator item;
+    for (item = upath.begin(); item != upath.end(); item++)
+    {
+        pinfo = new PathInfo(*item + '/' + inpath);
+        if (pinfo->isExecutableFile()) return pinfo->getDirectory();
+        delete pinfo;
+    }
+
+    return 0x0;
+}
+
 static void setenvUsingScript(const char *myenv, const char *myscript, const char *myarg)
 {
     char *cmd;
@@ -222,7 +277,7 @@ static void setenvUsingScript(const char *myenv, const char *myscript, const cha
 /* Set the dcappOSTYPE, dcappOSSPEC, dcappOBJDIR, and dcappBINDIR environment       */
 /* variables in case the user needs them.  Likewise, set the following for the user */
 /* if they have not been set: USER, LOGNAME, HOME, OSTYPE, MACHTYPE, and HOST.      */
-static void SetDefaultEnvironment(std::string mypath)
+static void SetDefaultEnvironment(std::string pathspec)
 {
     int i;
     struct utsname minfo;
@@ -234,6 +289,7 @@ static void SetDefaultEnvironment(std::string mypath)
 
     char *resolvedpath = (char *)calloc(PATH_MAX, sizeof(char));
 
+    std::string mypath = findExecutablePath(pathspec);
     tmppath = mypath + "/../../../";
     realpath(tmppath.c_str(), resolvedpath);
 

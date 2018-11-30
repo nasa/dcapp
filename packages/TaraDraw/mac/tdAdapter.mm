@@ -41,7 +41,7 @@ int tdAlignTop = 0x08;
     [ self addMenuItem:appMenu title:[ @"About " stringByAppendingString:appName ] action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@"" modifier:0 ];
     [ self addMenuSeparator:appMenu ];
     [ self addMenuItem:appMenu title:[ @"Hide " stringByAppendingString:appName ] action:@selector(hide:) keyEquivalent:@"h" modifier:0 ];
-#ifdef NSAppKitVersionNumber10_12
+#ifdef MAC_OS_X_VERSION_10_12
     [ self addMenuItem:appMenu title:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h" modifier:NSEventModifierFlagCommand|NSEventModifierFlagOption ];
 #else
     [ self addMenuItem:appMenu title:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h" modifier:NSCommandKeyMask|NSAlternateKeyMask ];
@@ -393,7 +393,7 @@ int tdAlignTop = 0x08;
     {
         if ([ theEvent window ] == [ winview[i] window ])
         {
-#ifdef NSAppKitVersionNumber10_7
+#ifdef MAC_OS_X_VERSION_10_7
             NSRect mouserect;
             mouserect.origin = [ NSEvent mouseLocation ];
             NSRect myrect = [[ theEvent window ] convertRectFromScreen: mouserect ];

@@ -279,9 +279,9 @@ static void jpeg_mem_src(j_decompress_ptr cinfo, void *buffer, long nbytes)
 }
 #endif
 
+#ifdef JPEG_ENABLED
 void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
 {
-#ifdef JPEG_ENABLED
     struct jpeg_decompress_struct jinfo;
     struct jpeg_error_mgr jerr;
     unsigned char *line;
@@ -309,8 +309,12 @@ void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
     }
     jpeg_finish_decompress(&jinfo);
     jpeg_destroy_decompress(&jinfo);
-#endif
 }
+#else
+void PixelStreamMjpeg::loadPixels(const char * /* memptr */, size_t /* memsize */)
+{
+}
+#endif
 
 void PixelStreamMjpeg::updateStatus(void)
 {
