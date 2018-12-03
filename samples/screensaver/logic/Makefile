@@ -2,8 +2,16 @@
 
 DCAPP_HOME ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../../..)
 
-ifneq ($(wildcard ${DCAPP_HOME}/dcapp.app/Contents/dcapp_genheader),)
-    GENHEADER := ${DCAPP_HOME}/dcapp.app/Contents/dcapp_genheader
+ifneq ($(wildcard ${DCAPP_HOME}/dcapp.app/Contents/dcapp-config),)
+    DCAPPCONFIG := ${DCAPP_HOME}/dcapp.app/Contents/dcapp-config
+else
+    DCAPPCONFIG := dcapp-config
+endif
+
+EXEPATH := $(shell ${DCAPPCONFIG} --exepath)
+
+ifneq ($(wildcard ${EXEPATH}/dcapp_genheader),)
+    GENHEADER := ${EXEPATH}/dcapp_genheader
 else
     GENHEADER := dcapp_genheader
 endif
