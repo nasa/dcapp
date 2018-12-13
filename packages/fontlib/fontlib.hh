@@ -3,11 +3,6 @@
 
 #include <string>
 #include <map>
-#ifndef IOS_BUILD
-#include <GL/glu.h>
-#else
-#include <OpenGLES/ES1/glext.h>
-#endif
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -27,7 +22,7 @@ typedef struct
     float bitmap_left;
     float bitmap_top;
     float advance;
-    GLuint texture;
+    unsigned int texture;
     unsigned char bitmap[64*64];
 } GlyphInfo;
 

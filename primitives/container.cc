@@ -45,12 +45,12 @@ void dcContainer::handleMousePress(double inx, double iny)
 
     computeGeometry();
     ang = (*rotate) * 0.01745329252;
-    originx = refx - ((delx * cosf(-ang)) + (dely * sinf(-ang)));
-    originy = refy - ((dely * cosf(-ang)) - (delx * sinf(-ang)));
-    tmpx = (inx - originx) * (*vwidth) / (*w);
-    tmpy = (iny - originy) * (*vheight) / (*h);
-    finalx = (tmpx * cosf(ang)) + (tmpy * sinf(ang));
-    finaly = (tmpy * cosf(ang)) - (tmpx * sinf(ang));
+    originx = refx - ((delx * cos(-ang)) + (dely * sin(-ang)));
+    originy = refy - ((dely * cos(-ang)) - (delx * sin(-ang)));
+    tmpx = inx - originx;
+    tmpy = iny - originy;
+    finalx = ((tmpx * cos(ang)) + (tmpy * sin(ang))) * (*vwidth) / (*w);
+    finaly = ((tmpy * cos(ang)) - (tmpx * sin(ang))) * (*vheight) / (*h);
 
     for (const auto &myobj : children) myobj->handleMousePress(finalx, finaly);
 }
@@ -61,12 +61,12 @@ void dcContainer::handleMouseMotion(double inx, double iny)
 
     computeGeometry();
     ang = (*rotate) * 0.01745329252;
-    originx = refx - ((delx * cosf(-ang)) + (dely * sinf(-ang)));
-    originy = refy - ((dely * cosf(-ang)) - (delx * sinf(-ang)));
-    tmpx = (inx - originx) * (*vwidth) / (*w);
-    tmpy = (iny - originy) * (*vheight) / (*h);
-    finalx = (tmpx * cosf(ang)) + (tmpy * sinf(ang));
-    finaly = (tmpy * cosf(ang)) - (tmpx * sinf(ang));
+    originx = refx - ((delx * cos(-ang)) + (dely * sin(-ang)));
+    originy = refy - ((dely * cos(-ang)) - (delx * sin(-ang)));
+    tmpx = inx - originx;
+    tmpy = iny - originy;
+    finalx = ((tmpx * cos(ang)) + (tmpy * sin(ang))) * (*vwidth) / (*w);
+    finaly = ((tmpy * cos(ang)) - (tmpx * sin(ang))) * (*vheight) / (*h);
 
     for (const auto &myobj : children) myobj->handleMouseMotion(finalx, finaly);
 }

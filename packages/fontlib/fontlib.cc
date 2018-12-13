@@ -3,6 +3,11 @@
 #include <cstring>
 #include <cctype>
 #include <strings.h>
+#ifndef IOS_BUILD
+#include <GL/gl.h>
+#else
+#include <OpenGLES/ES1/glext.h>
+#endif
 #include "basicutils/msg.hh"
 #include "fontlib.hh"
 

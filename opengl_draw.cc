@@ -113,8 +113,8 @@ void container_start(float refx, float refy, float delx, float dely, float scale
 {
     glPushMatrix();
         glTranslatef(refx, refy, 0);
-        glScalef(scalex, scaley, 1);
         glRotatef(rotate, 0, 0, 1);
+        glScalef(scalex, scaley, 1);
         glTranslatef(-delx/scalex, -dely/scaley, 0);
 }
 
