@@ -163,6 +163,8 @@ int PixelStreamVsm::reader(void)
         updated = false;
         return 1;
     }
+#else
+    first_assign_attempt = false;
 #endif
 
     return 0;

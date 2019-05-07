@@ -142,7 +142,11 @@ void storeArgs(char *specfile, char *args)
 - (id)uiButtonParent:(id)parent x:(float)x y:(float)y w:(float)w h:(float)h label:(NSString *)mystring target:(id)mytarget action:(SEL)myaction
 {
     id mybutton = [[ NSButton alloc ] initWithFrame:NSMakeRect(x, y, w, h) ];
+#ifdef MAC_OS_X_VERSION_10_12
+    [ mybutton setBezelStyle:NSBezelStyleRounded ];
+#else
     [ mybutton setBezelStyle:NSRoundedBezelStyle ];
+#endif
     [ mybutton setTitle:mystring ];
     [ mybutton setTarget:mytarget ];
     [ mybutton setAction:myaction ];

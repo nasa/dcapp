@@ -313,6 +313,7 @@ void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
 #else
 void PixelStreamMjpeg::loadPixels(const char * /* memptr */, size_t /* memsize */)
 {
+    pixelsalloc = 0;
 }
 #endif
 

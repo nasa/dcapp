@@ -9,9 +9,9 @@
 /*********************************************************************************
  * Create ImageStruct data from the contents of a JPEG file.
  *********************************************************************************/
+#ifdef JPEG_ENABLED
 unsigned int LoadJPG(const char *filename, ImageStruct *image)
 {
-#ifdef JPEG_ENABLED
     FILE *file = fopen(filename, "r");
     struct jpeg_decompress_struct jinfo;
     struct jpeg_error_mgr jerr;
@@ -45,8 +45,11 @@ unsigned int LoadJPG(const char *filename, ImageStruct *image)
     fclose(file);
 
     return 0;
+}
 #else
+unsigned int LoadJPG(const char * /* filename */, ImageStruct * /* image */)
+{
     warning_msg("Could not find libjpeg or libjpeg-turbo");
     return 1;
-#endif
 }
+#endif
