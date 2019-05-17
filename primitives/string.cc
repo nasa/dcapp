@@ -2,6 +2,7 @@
 #include "nodes.hh"
 #include "opengl_draw.hh"
 #include "string_utils.hh"
+#include "constants.hh"
 #include "loadUtils.hh"
 #include "alignment.hh"
 #include "varlist.hh"

@@ -5,8 +5,5 @@
 
 extern dcTexture dcLoadTexture(const char *filename);
 extern dcFont dcLoadFont(const char *filename, const char *face=0x0, unsigned int basesize=20);
-extern double *dcLoadConstant(double fval);
-extern int *dcLoadConstant(int ival);
-extern char *dcLoadConstant(const char *sval);
 
 #endif

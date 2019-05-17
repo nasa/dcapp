@@ -6,7 +6,6 @@
 #include <vector>
 #include "basicutils/timer.hh"
 #include "primitives/primitives.hh"
-#include "dc.hh"
 #include "animation.hh"
 #include "comm.hh"
 #include "psi.hh"

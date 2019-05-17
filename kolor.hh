@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include "loadUtils.hh"
+#include "constants.hh"
 #include "varlist.hh"
 
 class Kolor

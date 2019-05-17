@@ -1,6 +1,6 @@
 #include "opengl_draw.hh"
 #include "string_utils.hh"
-#include "loadUtils.hh"
+#include "constants.hh"
 #include "varlist.hh"
 #include "circle.hh"
 

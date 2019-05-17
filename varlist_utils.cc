@@ -1,7 +1,9 @@
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include "types.hh"
 #include "string_utils.hh"
-#include "loadUtils.hh"
+#include "constants.hh"
 
 extern void varlist_append(const char *, const char *, const char *);
 extern void *get_pointer(const char *);

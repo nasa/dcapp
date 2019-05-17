@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cstring>
+#include "constants.hh"
 #include "loadUtils.hh"
 #include "opengl_draw.hh"
 #include "varlist.hh"
