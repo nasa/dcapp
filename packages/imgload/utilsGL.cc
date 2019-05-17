@@ -68,8 +68,7 @@ int createTextureFromImage(ImageStruct *image)
 //   GL_DECAL or GL_REPLACE tells OpenGL to replace the base color (and any lighting effects) purely with the colors of the texture.
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-    // 3rd argument may need to be "format" instead of "bytesPerPixel"
-    glTexImage2D(GL_TEXTURE_2D, 0, bytesPerPixel, image->width, image->height, 0, format, GL_UNSIGNED_BYTE, image->data);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, image->width, image->height, 0, format, GL_UNSIGNED_BYTE, image->data);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);

@@ -12,7 +12,6 @@ extern void HandleMouseMotion(double, double);
 extern void HandleMousePress(double, double);
 extern void HandleMouseRelease(void);
 extern void HandleKeyboard(unsigned char);
-extern void reshape_viewport(int, int);
 
 static void app_run(void);
 static void app_term(void);
@@ -82,7 +81,7 @@ void key_click(KeyboardEvent kbd)
 
 void win_config(ConfigureEvent cfg)
 {
-    reshape_viewport((int)(cfg.size.width), (int)(cfg.size.height));
+    AppData.toplevel->reshape(cfg.size.width, cfg.size.height);
     mywin.width = cfg.size.width;
     mywin.height = cfg.size.height;
     tdGLSetContext(mywin.gl_context);

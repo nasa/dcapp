@@ -1,9 +1,11 @@
 #include "loadUtils.hh"
 #include "varlist.hh"
 #include "window.hh"
+#include "opengl_draw.hh"
 
 dcWindow::dcWindow() : currentPanel(0x0)
 {
+    init_window();
     displayID = dcLoadConstant(0);
 }
 
@@ -25,6 +27,11 @@ void dcWindow::setCurrentPanel(void)
             return;
         }
     }
+}
+
+void dcWindow::reshape(double w, double h)
+{
+    reshape_window((int)w, (int)h);
 }
 
 void dcWindow::draw(void)

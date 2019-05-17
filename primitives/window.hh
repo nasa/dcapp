@@ -10,6 +10,7 @@ class dcWindow : public dcParent
         dcWindow();
         void setActiveDisplay(const char *);
         void setCurrentPanel(void);
+        void reshape(double, double);
         void draw(void);
         void handleKeyPress(char);
         void handleKeyRelease(char);

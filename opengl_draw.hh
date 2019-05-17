@@ -4,14 +4,13 @@
 #include <vector>
 #include "fontlib/fontlib.hh"
 
-extern void graphics_init(void);
-extern void reshape(int, int);
+extern void init_window(void);
+extern void reshape_window(int, int);
+extern void setup_panel(float, float, int, int, float, float, float, float);
 extern void init_texture(unsigned int *);
 extern void set_texture(unsigned int, int, int, void *);
 extern void draw_image(unsigned int, float, float);
 extern void get_image_pixel_RGBA(unsigned char[], unsigned int, float, float);
-extern int build_font(int, int);
-extern void setup_panel(float, float, int, int, float, float, float, float);
 extern float get_string_width(flFont *, float, flMonoOption, const char *);
 extern void draw_string(float, float, float, float, float, float, float, flFont *, flMonoOption, const char *);
 extern void container_start(float, float, float, float, float, float, float);

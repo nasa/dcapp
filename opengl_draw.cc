@@ -7,13 +7,18 @@
 #include <GL/gl.h>
 #include "fontlib/fontlib.hh"
 
-
-void graphics_init(void)
+void init_window(void)
 {
     glClearColor(0, 0, 0, 0);          // Clear the window to black.
     glShadeModel(GL_SMOOTH);
     glClearDepth(1.0f);                // Depth Buffer Setup
     glDepthFunc(GL_LEQUAL);            // The Type Of Depth Testing To Do
+}
+
+void reshape_window(int w, int h)
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+    glViewport(0, 0, w, h);            // Set the viewport to the whole window.
 }
 
 void setup_panel(float x, float y, int near, int far, float red, float green, float blue, float alpha)
@@ -25,12 +30,6 @@ void setup_panel(float x, float y, int near, int far, float red, float green, fl
     glOrtho(0, x, 0, y, near, far);
     glMatrixMode(GL_MODELVIEW);
     glColor4f(1, 1, 1, 1);
-}
-
-void reshape_viewport(int w, int h)
-{
-    glClear(GL_COLOR_BUFFER_BIT);
-    glViewport(0, 0, w, h);            // Set the viewport to the whole window.
 }
 
 void init_texture(unsigned int *textureID)

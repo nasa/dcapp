@@ -16,7 +16,6 @@
 #include "primitives/primitives.hh"
 #include "varlist.hh"
 #include "nodes.hh"
-#include "opengl_draw.hh"
 #include "string_utils.hh"
 #include "xml_utils.hh"
 #include "xml_stringsub.hh"
@@ -349,7 +348,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                         StringToInteger(get_element_data(node, "Y"), 0),
                         StringToInteger(get_element_data(node, "Width"), 800),
                         StringToInteger(get_element_data(node, "Height"), 800));
-            graphics_init();
             AppData.toplevel = new dcWindow();
             AppData.toplevel->setActiveDisplay(get_element_data(node, "ActiveDisplay"));
             process_elements(AppData.toplevel, node->children);

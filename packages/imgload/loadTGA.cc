@@ -56,7 +56,7 @@ unsigned int LoadTGA(const char *filename, ImageStruct *image)
     bitsPerPixel = (unsigned int)header[4];
 
     // If width or height is invalid OR the TGA isn't 24- or 32-bit
-    if (image->width <=0 || image->height <=0 || (bitsPerPixel != 24 && bitsPerPixel !=32 ))
+    if (image->width <=0 || image->height <=0 || (bitsPerPixel != 24 && bitsPerPixel !=32))
     {
         warning_msg("Bad header in " << filename << ": bits-per-pixel=" << bitsPerPixel << ", width=" << image->width << ", height=" << image->height);
         fclose(file);
