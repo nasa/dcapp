@@ -1,5 +1,4 @@
-#include "opengl_draw.hh"
-#include "loadUtils.hh"
+#include "RenderLib/RenderLib.hh"
 #include "image.hh"
 
 dcImage::dcImage(dcParent *myparent) : dcGeometric(myparent)

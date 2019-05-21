@@ -1,8 +1,7 @@
 #include "nodes.hh"
 #include "varlist.hh"
 #include "string_utils.hh"
-#include "opengl_draw.hh"
-#include "loadUtils.hh"
+#include "RenderLib/RenderLib.hh"
 #include "pixelstream.hh"
 
 extern appdata AppData;

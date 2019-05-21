@@ -1,3 +1,4 @@
+#include <strings.h>
 #include "constants.hh"
 #include "alignment.hh"
 #include "varlist.hh"

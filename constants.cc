@@ -1,4 +1,5 @@
 #include <list>
+#include <cstring>
 
 static std::list<double> decimalConstants;
 static std::list<int> integerConstants;

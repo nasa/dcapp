@@ -17,9 +17,7 @@ DCAPP_SOURCES := \
 	handle_keyboard.cc \
 	handle_mouse.cc \
 	handle_utils.cc \
-	loadUtils.cc \
 	logic_stubs.cc \
-	opengl_draw.cc \
 	string_utils.cc \
 	tara_funcs.cc \
 	varlist.cc \
@@ -41,8 +39,7 @@ SUBPACKAGE_CONFIGS := \
     3rdParty/uei/bin/UeiPlugin-config \
     packages/PixelStream/bin/PixelStream-config \
     packages/TaraDraw/bin/TaraDraw-config \
-    packages/fontlib/bin/fontlib-config \
-    packages/imgload/bin/imgload-config \
+    packages/RenderLib/bin/RenderLib-config \
     packages/basicutils/bin/basicutils-config
 
 CXXFLAGS += -std=c++11 -Wall -Wextra -I.
@@ -60,11 +57,10 @@ LINK_LIBS += $(shell xml2-config --exec-prefix=/usr --libs)
 LINK_LIBS += -ldl
 
 ifeq ($(OSSPEC), MacOS)
-    CXXFLAGS += -I/opt/X11/include
-    LINK_LIBS += -framework OpenGL -framework AppKit
+    LINK_LIBS += -framework AppKit
 else
-    CXXFLAGS += -D_GNU_SOURCE -I/usr/X11R6/include
-    LINK_LIBS += -lrt -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL -lGLU
+    CXXFLAGS += -D_GNU_SOURCE
+    LINK_LIBS += -lrt -L/usr/X11R6/lib -lX11 -lXi -lXmu
 endif
 
 DCAPP_OBJECTS := $(DCAPP_SOURCES)

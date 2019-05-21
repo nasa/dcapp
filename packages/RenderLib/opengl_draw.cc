@@ -5,7 +5,7 @@
 #include <vector>
 #include <assert.h>
 #include <GL/gl.h>
-#include "fontlib/fontlib.hh"
+#include "fontlib.hh"
 
 void init_window(void)
 {
@@ -162,7 +162,7 @@ void draw_line(const std::vector<float> &pntsA, float linewidth, float red, floa
     glPopMatrix();
 }
 
-void draw_polygon( const std::vector<float> &pntsA, float red, float green, float blue, float alpha)
+void draw_polygon(const std::vector<float> &pntsA, float red, float green, float blue, float alpha)
 {
     std::vector<float> localPointsL;
 
@@ -184,7 +184,7 @@ void draw_polygon( const std::vector<float> &pntsA, float red, float green, floa
     glDisable(GL_BLEND);
 }
 
-void draw_filled_triangles( const std::vector< float >&pntsA, float red, float green, float blue, float alpha)
+void draw_filled_triangles(const std::vector< float >&pntsA, float red, float green, float blue, float alpha)
 {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -198,7 +198,7 @@ void draw_filled_triangles( const std::vector< float >&pntsA, float red, float g
     glDisable(GL_BLEND);
 }
 
-void draw_quad( const std::vector<float> &pntsA, float red, float green, float blue, float alpha)
+void draw_quad(const std::vector<float> &pntsA, float red, float green, float blue, float alpha)
 {
     assert(pntsA.size() == 8);
     std::vector< float > localPointsL;

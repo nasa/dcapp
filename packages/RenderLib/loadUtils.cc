@@ -3,9 +3,10 @@
 #include <climits>
 #include <list>
 #include "basicutils/msg.hh"
-#include "imgload/imgload.hh"
-#include "fontlib/fontlib.hh"
-#include "dc.hh"
+#include "basicutils/pathinfo.hh"
+#include "imgload.hh"
+#include "fontlib.hh"
+#include "RenderLib_internal.hh"
 
 typedef struct
 {
@@ -16,78 +17,70 @@ typedef struct
 static std::list<textureInfo> textures;
 static std::list<dcFont> fonts;
 
-static char *getFullPath(const char *fname)
-{
-    if (!fname) return 0x0;
-    char *longname = (char *)calloc(PATH_MAX, sizeof(char));
-    if (!realpath(fname, longname))
-    {
-        free(longname);
-        return 0x0;
-    }
-    char *shortname = strdup(longname);
-    free(longname);
-    return shortname;
-}
-
 dcTexture dcLoadTexture(const char *filename)
 {
-    char *fullpath = getFullPath(filename);
+    PathInfo *mypath = new PathInfo(filename);
 
-    if (!fullpath)
+    if (!(mypath->getFullPath()))
     {
-        error_msg("Unable to locate texture file at " << filename);
+        if (filename) error_msg("Unable to locate texture file at " << filename);
+        else error_msg("Invalid filename specified for texture file");
+        delete mypath;
         return -1;
     }
 
     for (std::list<textureInfo>::iterator item = textures.begin(); item != textures.end(); item++)
     {
-        if (!strcmp(item->filename, fullpath))
+        if (!strcmp(item->filename, mypath->getFullPath()))
         {
-            free(fullpath);
+            delete mypath;
             return item->id;
         }
     }
 
     textureInfo newtexture;
-    newtexture.id = imgload(fullpath);;
-    newtexture.filename = fullpath;
+    newtexture.filename = strdup(mypath->getFullPath());
+    newtexture.id = imgload(newtexture.filename);;
     textures.push_back(newtexture);
+    delete mypath;
     return newtexture.id;
 }
 
 dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)
 {
-    char *fullpath = getFullPath(filename);
+    PathInfo *mypath = new PathInfo(filename);
 
-    if (!fullpath)
+    if (!(mypath->getFullPath()))
     {
         if (filename) error_msg("Unable to locate font file at " << filename);
+        else error_msg("Invalid filename specified for font file");
+        delete mypath;
         return 0x0;
     }
 
     for (std::list<dcFont>::iterator item = fonts.begin(); item != fonts.end(); item++)
     {
-        if (((*item)->getFileName() == fullpath) && ((*item)->getBaseSize() == basesize))
+        if (((*item)->getFileName() == mypath->getFullPath()) && ((*item)->getBaseSize() == basesize))
         {
             if (!face && (*item)->getFaceName().empty())
             {
-                free(fullpath);
+                delete mypath;
                 return *item;
             }
             else if (face && !((*item)->getFaceName().empty()))
             {
                 if ((*item)->getFaceName() == face)
                 {
-                    free(fullpath);
+                    delete mypath;
                     return *item;
                 }
             }
         }
     }
 
-    dcFont id = new flFont(fullpath, face, basesize);
+    dcFont id = new flFont(mypath->getFullPath(), face, basesize);
     if (!(id->isValid())) error_msg("Could not load font " << filename);
     fonts.push_back(id);
+    delete mypath;
     return id;
 }

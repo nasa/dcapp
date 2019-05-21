@@ -17,22 +17,25 @@ class PathInfo
             if (!pathspec.empty())
             {
                 char *myabspath = (char *)calloc(PATH_MAX, sizeof(char));
-                realpath(pathspec.c_str(), myabspath);
-                fullpath = strdup(myabspath);
+                if (realpath(pathspec.c_str(), myabspath))
+                {
+                    fullpath = strdup(myabspath);
 
-                // note that we create dirc and basec because dirname and basename can mangle the passed string
-                char *dirc = strdup(myabspath);
-                char *basec = strdup(myabspath);
-                directory = strdup(dirname(dirc));
-                file = strdup(basename(basec));
+                    // note that we create dirc and basec because dirname and basename can mangle the passed string
+                    char *dirc = strdup(myabspath);
+                    char *basec = strdup(myabspath);
+                    directory = strdup(dirname(dirc));
+                    file = strdup(basename(basec));
 
+                    free(dirc);
+                    free(basec);
+                }
                 free(myabspath);
-                free(dirc);
-                free(basec);
             }
         };
-        virtual ~PathInfo() { if (directory) free(directory); if (file) free(file); };
+        virtual ~PathInfo() { if (fullpath) free(fullpath); if (directory) free(directory); if (file) free(file); };
 
+        char *getFullPath(void) { return fullpath; };
         char *getDirectory(void) { return directory; };
         char *getFile(void) { return file; };
         bool isExecutableFile(void)

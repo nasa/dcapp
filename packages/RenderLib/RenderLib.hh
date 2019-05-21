@@ -2,7 +2,8 @@
 #define _OPENGL_DRAW_HH_
 
 #include <vector>
-#include "fontlib/fontlib.hh"
+#include "fontlib.hh"
+#include "RenderLib_internal.hh"
 
 extern void init_window(void);
 extern void reshape_window(int, int);
@@ -30,5 +31,8 @@ extern void draw_textured_sphere(float, float, const std::vector<float> &, float
 extern void addPoint(std::vector<float> &, float, float);
 extern void addPoint(std::vector<float> &, float, float, float);
 extern void addPoint(std::vector<float> &, float, float, float, float, float);
+
+extern dcTexture dcLoadTexture(const char *filename);
+extern dcFont dcLoadFont(const char *filename, const char *face=0x0, unsigned int basesize=20);
 
 #endif

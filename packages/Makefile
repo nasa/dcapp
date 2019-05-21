@@ -1,16 +1,14 @@
 .NOTPARALLEL:
 .PHONY: all clean
 
-all: $(PACKAGES)
+all:
 	${MAKE} -C basicutils
 	${MAKE} -C TaraDraw
 	${MAKE} -C PixelStream
-	${MAKE} -C fontlib
-	${MAKE} -C imgload
+	${MAKE} -C RenderLib
 
-clean: $(PACKAGESCLEAN)
+clean:
 	${MAKE} -C basicutils clean
 	${MAKE} -C TaraDraw clean
 	${MAKE} -C PixelStream clean
-	${MAKE} -C fontlib clean
-	${MAKE} -C imgload clean
+	${MAKE} -C RenderLib clean

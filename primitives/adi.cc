@@ -1,8 +1,7 @@
 #include <cmath>
 #include <cstring>
 #include "constants.hh"
-#include "loadUtils.hh"
-#include "opengl_draw.hh"
+#include "RenderLib/RenderLib.hh"
 #include "varlist.hh"
 #include "adi.hh"
 

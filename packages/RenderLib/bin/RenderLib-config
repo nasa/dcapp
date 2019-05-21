@@ -39,6 +39,22 @@ objdir="obj_${osspec}"
 libdir="lib_${osspec}"
 bindir="bin_${osspec}"
 
+################################################################################
+jpegenabled=0
+if [[ -r /usr/include/jpeglib.h ]] ; then
+    jpegenabled=1
+else
+    if [[ -r /usr/local/include/jpeglib.h ]] ; then
+        jpegenabled=1
+    else
+        if [[ -r /usr/local/opt/jpeg-turbo/include/jpeglib.h ]] ; then
+            jpegenabled=1
+            jpegpath="/usr/local/opt/jpeg-turbo"
+        fi
+    fi
+fi
+################################################################################
+
 while test $# -gt 0 ; do
     case $1 in
         --osspec)
@@ -55,12 +71,7 @@ while test $# -gt 0 ; do
             ;;
 ##### These are the only lines that should differ from package to package. #####
         --cflags)
-            if test "$osspec" = "MacOS" ; then
-                opengl_cflags="-I/opt/X11/include"
-            else
-                opengl_cflags="-I/usr/X11R6/include"
-            fi
-            echo "-I${parentdir} `freetype-config --cflags` ${opengl_cflags}"
+            echo "-I${parentdir} `freetype-config --cflags`"
             ;;
         --libs)
             if test "$osspec" = "MacOS" ; then
@@ -68,17 +79,35 @@ while test $# -gt 0 ; do
             else
                 opengl_libs="-L/usr/X11R6/lib -lGL -lGLU"
             fi
-            echo "-L${mydir}/${libdir} -lfontlib `freetype-config --libs` ${opengl_libs}"
+            if [[ $jpegenabled -ne 0 ]] ; then
+                if test "$jpegpath" ; then
+                    jpeg_libs="-L${jpegpath}/lib -ljpeg"
+                else
+                    jpeg_libs="-ljpeg"
+                fi
+            fi
+            echo "-L${mydir}/${libdir} -lRenderLib `freetype-config --libs` ${opengl_libs} ${jpeg_libs}"
             ;;
         --compdepends)
-            echo "${mydir}/fontlib.hh"
+            echo "${mydir}/RenderLib.hh ${mydir}/RenderLib_internal.hh ${mydir}/fontlib.hh"
             ;;
         --linkdepends)
-            echo "${mydir}/${libdir}/libfontlib.a"
+            echo "${mydir}/${libdir}/libRenderLib.a"
             ;;
         --cflags_internal)
-            freetype_cflags=`freetype-config --cflags`
-            echo "-I${parentdir} ${freetype_cflags}"
+            if test "$osspec" = "MacOS" ; then
+                opengl_cflags="-I/opt/X11/include"
+            else
+                opengl_cflags="-I/usr/X11R6/include"
+            fi
+            if [[ $jpegenabled -ne 0 ]] ; then
+                if test "$jpegpath" ; then
+                    jpeg_cflags="-DJPEG_ENABLED -I${jpegpath}/include"
+                else
+                    jpeg_cflags="-DJPEG_ENABLED"
+                fi
+            fi
+            echo "-I${parentdir} `freetype-config --cflags` ${jpeg_cflags} ${opengl_cflags}"
             ;;
 ################################################################################
         *)

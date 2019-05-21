@@ -1,20 +1,20 @@
 .PHONY: clean
 
-OSSPEC := $(shell ./bin/imgload-config --osspec)
-OBJDIR := $(shell ./bin/imgload-config --objdir)
-LIBDIR := $(shell ./bin/imgload-config --libdir)
+OSSPEC := $(shell ./bin/RenderLib-config --osspec)
+OBJDIR := $(shell ./bin/RenderLib-config --objdir)
+LIBDIR := $(shell ./bin/RenderLib-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -Wextra $(shell ./bin/imgload-config --cflags_internal)
+CXXFLAGS += -Wall -Wextra $(shell ./bin/RenderLib-config --cflags_internal)
 ifeq ($(OSSPEC), MacOS)
     CXXFLAGS += -I/opt/X11/include
 else
     CXXFLAGS += -I/usr/X11R6/include
 endif
 
-$(LIBDIR)/libimgload.a: $(OBJECTS)
+$(LIBDIR)/libRenderLib.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)
 	$(AR) $(ARFLAGS) $@ $^
 

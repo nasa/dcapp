@@ -1,7 +1,7 @@
 #ifndef _IMAGE_HH_
 #define _IMAGE_HH_
 
-#include "dc.hh"
+#include "RenderLib/RenderLib.hh"
 #include "geometric.hh"
 #include "parent.hh"
 

@@ -11,7 +11,7 @@ CXXFLAGS += -std=c++11 -Wall -Wextra $(shell ./bin/primitives-config --cflags_in
 
 SUBPACKAGE_CONFIGS := \
 	../packages/PixelStream/bin/PixelStream-config \
-	../packages/fontlib/bin/fontlib-config \
+	../packages/RenderLib/bin/RenderLib-config \
 	../packages/basicutils/bin/basicutils-config
 
 COMPDEPENDS := $(wildcard ../*.hh)

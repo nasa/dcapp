@@ -84,7 +84,7 @@ while test $# -gt 0 ; do
             echo "${mydir}/${libdir}/libprimitives.a"
             ;;
         --cflags_internal)
-            echo "-I${parentdir} -I${parentdir}/packages `${parentdir}/packages/fontlib/bin/fontlib-config --cflags`"
+            echo "-I${parentdir} -I${parentdir}/packages `${parentdir}/packages/RenderLib/bin/RenderLib-config --cflags`"
             ;;
         --s_overrides)
             ;;
