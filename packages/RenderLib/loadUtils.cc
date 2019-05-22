@@ -19,12 +19,17 @@ static std::list<dcFont> fonts;
 
 dcTexture dcLoadTexture(const char *filename)
 {
+    if (!filename)
+    {
+        warning_msg("Invalid filename specified for texture file");
+        return -1;
+    }
+
     PathInfo *mypath = new PathInfo(filename);
 
     if (!(mypath->getFullPath()))
     {
-        if (filename) error_msg("Unable to locate texture file at " << filename);
-        else error_msg("Invalid filename specified for texture file");
+        warning_msg("Unable to locate texture file at " << filename);
         delete mypath;
         return -1;
     }
@@ -43,17 +48,19 @@ dcTexture dcLoadTexture(const char *filename)
     newtexture.id = imgload(newtexture.filename);;
     textures.push_back(newtexture);
     delete mypath;
+
     return newtexture.id;
 }
 
 dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)
 {
+    if (!filename) return 0x0;
+
     PathInfo *mypath = new PathInfo(filename);
 
     if (!(mypath->getFullPath()))
     {
-        if (filename) error_msg("Unable to locate font file at " << filename);
-        else error_msg("Invalid filename specified for font file");
+        warning_msg("Unable to locate font file at " << filename);
         delete mypath;
         return 0x0;
     }
@@ -82,5 +89,6 @@ dcFont dcLoadFont(const char *filename, const char *face, unsigned int basesize)
     if (!(id->isValid())) error_msg("Could not load font " << filename);
     fonts.push_back(id);
     delete mypath;
+
     return id;
 }

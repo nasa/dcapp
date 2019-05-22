@@ -110,29 +110,33 @@ static void process_elements(xmlNodePtr startnode)
             xmlNodePtr include_element;
             const char *include_filename = get_node_content(node);
 
-            PathInfo *mypath = new PathInfo(include_filename);
-
-            // Store cwd for future use
-            int mycwd = open(".", O_RDONLY);
-
-            // Move to directory containing the new file
-            if (mypath->getDirectory()) chdir(mypath->getDirectory());
-
-            if (XMLFileOpen(&include_file, &include_element, mypath->getFile()))
+            if (include_filename)
             {
-                warning_msg("Couldn't open include file " << include_filename);
-            }
-            else
-            {
-                process_elements(include_element);
-                XMLFileClose(include_file);
-            }
+                PathInfo *mypath = new PathInfo(include_filename);
 
-            // Return to the original working directory
-            fchdir(mycwd);
-            close(mycwd);
+                // Store cwd for future use
+                int mycwd = open(".", O_RDONLY);
 
-            delete mypath;
+                // Move to directory containing the new file
+                if (mypath->getDirectory()) chdir(mypath->getDirectory());
+
+                if (XMLFileOpen(&include_file, &include_element, mypath->getFile()))
+                {
+                    warning_msg("Couldn't open include file " << include_filename);
+                }
+                else
+                {
+                    process_elements(include_element);
+                    XMLFileClose(include_file);
+                }
+
+                // Return to the original working directory
+                fchdir(mycwd);
+                close(mycwd);
+
+                delete mypath;
+            }
+            else warning_msg("No include file specified");
         }
         if (NodeCheck(node, "Variable"))
         {

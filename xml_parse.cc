@@ -47,6 +47,12 @@ int ParseXMLFile(const char *fullpath)
     xmlDocPtr mydoc;
     xmlNodePtr root_element;
 
+    if (!fullpath)
+    {
+        error_msg("No XML file specified");
+        return (-1);
+    }
+
     PathInfo *mypath = new PathInfo(fullpath);
 
     setenv("dcappDisplayHome", mypath->getDirectory(), 1);
@@ -101,29 +107,33 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             xmlNodePtr include_element;
             const char *include_filename = get_node_content(node);
 
-            PathInfo *mypath = new PathInfo(include_filename);
-
-            // Store cwd for future use
-            int mycwd = open(".", O_RDONLY);
-
-            // Move to directory containing the new file
-            if (mypath->getDirectory()) chdir(mypath->getDirectory());
-
-            if (XMLFileOpen(&include_file, &include_element, mypath->getFile()))
+            if (include_filename)
             {
-                warning_msg("Couldn't open include file " << include_filename);
-            }
-            else
-            {
-                process_elements(myparent, include_element);
-                XMLFileClose(include_file);
-            }
+                PathInfo *mypath = new PathInfo(include_filename);
 
-            // Return to the original working directory
-            fchdir(mycwd);
-            close(mycwd);
+                // Store cwd for future use
+                int mycwd = open(".", O_RDONLY);
 
-            delete mypath;
+                // Move to directory containing the new file
+                if (mypath->getDirectory()) chdir(mypath->getDirectory());
+
+                if (XMLFileOpen(&include_file, &include_element, mypath->getFile()))
+                {
+                    warning_msg("Couldn't open include file " << include_filename);
+                }
+                else
+                {
+                    process_elements(myparent, include_element);
+                    XMLFileClose(include_file);
+                }
+
+                // Return to the original working directory
+                fchdir(mycwd);
+                close(mycwd);
+
+                delete mypath;
+            }
+            else warning_msg("No include file specified");
         }
         if (NodeCheck(node, "If"))
         {
@@ -304,39 +314,37 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             else asprintf(&abspath, "./%s", fname);
 
             so_handler = dlopen(abspath, RTLD_NOW);
-            if (!so_handler)
+            if (so_handler)
             {
-                error_msg(dlerror());
-                return (-1);
-            }
+                AppData.DisplayPreInit = (void (*)(void *(*)(const char *)))dlsym(so_handler, "DisplayPreInit");
+                if ((error = dlerror()))
+                {
+                    debug_msg(error);
+                    AppData.DisplayPreInit = &DisplayPreInitStub;
+                }
 
-            AppData.DisplayPreInit = (void (*)(void *(*)(const char *)))dlsym(so_handler, "DisplayPreInit");
-            if ((error = dlerror()))
-            {
-                debug_msg(error);
-                AppData.DisplayPreInit = &DisplayPreInitStub;
-            }
+                AppData.DisplayInit = (void (*)())dlsym(so_handler, "DisplayInit");
+                if ((error = dlerror()))
+                {
+                    debug_msg(error);
+                    AppData.DisplayInit = &DisplayInitStub;
+                }
 
-            AppData.DisplayInit = (void (*)())dlsym(so_handler, "DisplayInit");
-            if ((error = dlerror()))
-            {
-                debug_msg(error);
-                AppData.DisplayInit = &DisplayInitStub;
-            }
+                AppData.DisplayLogic = (void (*)())dlsym(so_handler, "DisplayLogic");
+                if ((error = dlerror()))
+                {
+                    debug_msg(error);
+                    AppData.DisplayLogic = &DisplayLogicStub;
+                }
 
-            AppData.DisplayLogic = (void (*)())dlsym(so_handler, "DisplayLogic");
-            if ((error = dlerror()))
-            {
-                debug_msg(error);
-                AppData.DisplayLogic = &DisplayLogicStub;
+                AppData.DisplayClose = (void (*)())dlsym(so_handler, "DisplayClose");
+                if ((error = dlerror()))
+                {
+                    debug_msg(error);
+                    AppData.DisplayClose = &DisplayCloseStub;
+                }
             }
-
-            AppData.DisplayClose = (void (*)())dlsym(so_handler, "DisplayClose");
-            if ((error = dlerror()))
-            {
-                debug_msg(error);
-                AppData.DisplayClose = &DisplayCloseStub;
-            }
+            else warning_msg(dlerror());
 
             free(abspath);
         }
