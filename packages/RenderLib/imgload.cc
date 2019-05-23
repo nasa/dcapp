@@ -3,7 +3,7 @@
 #include <cstring>
 #include <strings.h>
 #include "basicutils/msg.hh"
-#include "imgload_internal.hh"
+#include "imgload.hh"
 
 extern unsigned int LoadTGA(const char *, ImageStruct *);
 extern int LoadBMP(const char *, ImageStruct *);

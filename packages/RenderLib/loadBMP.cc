@@ -7,7 +7,7 @@
 #include <cstring>
 #include <cmath>
 #include "basicutils/msg.hh"
-#include "imgload_internal.hh"
+#include "imgload.hh"
 
 // BMP format bits - at start of file is 512 bytes of pure garbage
 #define BMPfiletype 0x4d42 // file type identifier -- literally 'B''M'

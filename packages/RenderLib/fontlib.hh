@@ -28,11 +28,11 @@ typedef struct
 
 typedef std::map<UTF32, GlyphInfo *> GlyphSet;
 
-class flFont
+class tdFont
 {
     public:
-        flFont(const char *, const char *, unsigned int);
-        ~flFont();
+        tdFont(const char *, const char *, unsigned int);
+        virtual ~tdFont();
         float getAdvance(const char *, flMonoOption);
         float getDescender(void);
         bool isValid(void);

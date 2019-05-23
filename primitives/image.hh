@@ -13,7 +13,7 @@ class dcImage : public dcGeometric
         void draw(void);
 
     private:
-        dcTexture textureID;
+        tdTexture *textureID;
 };
 
 #endif

@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <GL/gl.h>
 #include "fontlib.hh"
+#include "texturelib.hh"
 
 void init_window(void)
 {
@@ -32,40 +33,48 @@ void setup_panel(float x, float y, int near, int far, float red, float green, fl
     glColor4f(1, 1, 1, 1);
 }
 
-void init_texture(unsigned int *textureID)
+unsigned int init_texture(void)
 {
-    glGenTextures(1, (GLuint *)textureID);
+    unsigned int retval;
+    glGenTextures(1, (GLuint *)&retval);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);  // Make sure that byte unpacking (for PixelStream, etc.) is properyly byte aligned
+    return retval;
 }
 
-void set_texture(unsigned int textureID, int width, int height, void *pixels)
+void set_texture(tdTexture *textureID, int width, int height, void *pixels)
 {
-    glBindTexture(GL_TEXTURE_2D, textureID);
-// GL_LINEAR interpolates using bilinear filtering (smoothing). GL_NEAREST specifies no smoothing.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    if (textureID->isValid())
+    {
+        glBindTexture(GL_TEXTURE_2D, textureID->getID());
+        // GL_LINEAR interpolates using bilinear filtering (smoothing). GL_NEAREST specifies no smoothing.
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    }
 }
 
-void draw_image(unsigned int textureID, float w, float h)
+void draw_image(tdTexture *textureID, float w, float h)
 {
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glColor4f(1, 1, 1, 1);
-    glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        glVertex3f(0, 0, 0);
-        glTexCoord2f(1, 0);
-        glVertex3f(w, 0, 0);
-        glTexCoord2f(1, 1);
-        glVertex3f(w, h, 0);
-        glTexCoord2f(0, 1);
-        glVertex3f(0, h, 0);
-    glEnd();
-    glDisable(GL_BLEND);
-    glDisable(GL_TEXTURE_2D);
+    if (textureID->isValid())
+    {
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBindTexture(GL_TEXTURE_2D, textureID->getID());
+        glColor4f(1, 1, 1, 1);
+        glBegin(GL_QUADS);
+            glTexCoord2f(0, 0);
+            glVertex3f(0, 0, 0);
+            glTexCoord2f(1, 0);
+            glVertex3f(w, 0, 0);
+            glTexCoord2f(1, 1);
+            glVertex3f(w, h, 0);
+            glTexCoord2f(0, 1);
+            glVertex3f(0, h, 0);
+        glEnd();
+        glDisable(GL_BLEND);
+        glDisable(GL_TEXTURE_2D);
+    }
 }
 
 void get_image_pixel_RGBA(unsigned char rgba[], unsigned int textureID, float xpct, float ypct)
@@ -85,13 +94,13 @@ void get_image_pixel_RGBA(unsigned char rgba[], unsigned int textureID, float xp
     for (i=0; i<4; i++) rgba[i] = mypixels[pixy][pixx][i];
 }
 
-float get_string_width(flFont *fontID, float size, flMonoOption mono, const char *string)
+float get_string_width(tdFont *fontID, float size, flMonoOption mono, const char *string)
 {
     if (!fontID || !string) return 0;
     return fontID->getAdvance(string, mono) * size / fontID->getBaseSize();
 }
 
-void draw_string(float xpos, float ypos, float size, float red, float green, float blue, float alpha, flFont *fontID, flMonoOption mono, const char *string)
+void draw_string(float xpos, float ypos, float size, float red, float green, float blue, float alpha, tdFont *fontID, flMonoOption mono, const char *string)
 {
     if (!fontID || !string) return;
     float scale = size / fontID->getBaseSize();
@@ -293,41 +302,44 @@ void circle_fill(float cx, float cy, float r, int num_segments, float red, float
     glDisable(GL_BLEND);
 }
 
-void draw_textured_sphere(float x, float y, const std::vector<float> &pointsA, float radiusA, int textureID, float roll, float pitch, float yaw)
+void draw_textured_sphere(float x, float y, const std::vector<float> &pointsA, float radiusA, tdTexture *textureID, float roll, float pitch, float yaw)
 {
-//  glEnable(GL_DEPTH_TEST);                    // Enables Depth Testing
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_CULL_FACE);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glColor4f(1.0, 1.0, 1.0, 1.0);
+    if (textureID->isValid())
+    {
+    //  glEnable(GL_DEPTH_TEST);                    // Enables Depth Testing
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_CULL_FACE);
+        glBindTexture(GL_TEXTURE_2D, textureID->getID());
+        glColor4f(1.0, 1.0, 1.0, 1.0);
 
-    glPushMatrix();
-        glTranslatef(x, y, 0);
-        glScalef(radiusA, radiusA, 1.0);
+        glPushMatrix();
+            glTranslatef(x, y, 0);
+            glScalef(radiusA, radiusA, 1.0);
 
-        /* First, orient the sphere for correct rendering at roll=0, pitch=0, and yaw=0 */
-        glRotatef(180, 0, 0, 1);
-        glRotatef(-90, 1, 0, 0);
+            /* First, orient the sphere for correct rendering at roll=0, pitch=0, and yaw=0 */
+            glRotatef(180, 0, 0, 1);
+            glRotatef(-90, 1, 0, 0);
 
-        /* Then, orient the sphere according to the roll, pitch, and yaw values */
-        glRotatef(-roll,  0, 1, 0);
-        glRotatef( yaw,   0, 0, 1);
-        glRotatef(-pitch, 1, 0, 0);
+            /* Then, orient the sphere according to the roll, pitch, and yaw values */
+            glRotatef(-roll,  0, 1, 0);
+            glRotatef( yaw,   0, 0, 1);
+            glRotatef(-pitch, 1, 0, 0);
 
-        /* Draw the sphere */
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 5, pointsA.data() + 3);
-        glVertexPointer(3, GL_FLOAT, sizeof(float) * 5, pointsA.data());
-        glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(pointsA.size() / 5));
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glPopMatrix();
+            /* Draw the sphere */
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 5, pointsA.data() + 3);
+            glVertexPointer(3, GL_FLOAT, sizeof(float) * 5, pointsA.data());
+            glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(pointsA.size() / 5));
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glPopMatrix();
 
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_CULL_FACE);
-//  glDisable(GL_DEPTH_TEST);                    // disables Depth Testing
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_CULL_FACE);
+    //  glDisable(GL_DEPTH_TEST);                    // disables Depth Testing
+    }
 }
 
 void addPoint(std::vector<float> &listA, float xA, float yA)

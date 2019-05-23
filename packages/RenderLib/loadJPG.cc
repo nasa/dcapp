@@ -4,7 +4,7 @@
 #include <jpeglib.h>
 #endif
 #include "basicutils/msg.hh"
-#include "imgload_internal.hh"
+#include "imgload.hh"
 
 /*********************************************************************************
  * Create ImageStruct data from the contents of a JPEG file.

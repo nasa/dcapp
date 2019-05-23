@@ -67,7 +67,7 @@ class dcString : public dcGeometric
         Kolor bgcolor;
         std::vector<VarString *> vstring;
         std::vector<std::string> filler;
-        flFont *fontID;
+        tdFont *fontID;
         double *fontSize;
         double *shadowOffset;
         flMonoOption forcemono;

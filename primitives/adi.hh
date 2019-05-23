@@ -21,8 +21,8 @@ class dcADI : public dcGeometric
         void draw(void);
 
     private:
-        dcTexture bkgdID;
-        dcTexture ballID;
+        tdTexture *bkgdID;
+        tdTexture *ballID;
         double *outerradius;
         double *ballradius;
         double *chevronW;

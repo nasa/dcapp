@@ -32,11 +32,11 @@ void dcString::setBackgroundColor(const char *cspec)
 
 void dcString::setFont(const char *font, const char *face, const char *size, const char *mono)
 {
-    fontID = dcLoadFont(font, face);
+    fontID = tdLoadFont(font, face);
     if (!fontID)
     {
         std::string defaultfont = AppData.dcapphome + "/dcapp.app/Contents/Resources/fonts/defaultfont";
-        fontID = dcLoadFont(defaultfont.c_str(), face);
+        fontID = tdLoadFont(defaultfont.c_str(), face);
     }
     if (size) fontSize = getDecimalPointer(size);
     if (mono)

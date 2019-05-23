@@ -8,7 +8,7 @@
 static const double BLACK[3] = { 0.0, 0.0, 0.0 };
 static const double YELLOW[3] = { 1.0, 1.0, 0.0 };
 
-dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(-1), ballID(-1), outerradius(0x0), ballradius(0x0), chevronW(0x0), chevronH(0x0)
+dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(0x0), ballID(0x0), outerradius(0x0), ballradius(0x0), chevronW(0x0), chevronH(0x0)
 {
     roll = dcLoadConstant(0.0f);
     pitch = dcLoadConstant(0.0f);
@@ -22,12 +22,12 @@ dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(-1), ballID(-1)
 
 void dcADI::setBackgrountTexture(const char *filename)
 {
-    if (filename) bkgdID = dcLoadTexture(filename);
+    if (filename) bkgdID = tdLoadTexture(filename);
 }
 
 void dcADI::setBallTexture(const char *filename)
 {
-    if (filename) ballID = dcLoadTexture(filename);
+    if (filename) ballID = tdLoadTexture(filename);
 }
 
 void dcADI::setRPY(const char *inroll, const char *inpitch, const char *inyaw)

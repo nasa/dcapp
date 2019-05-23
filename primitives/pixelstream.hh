@@ -16,8 +16,8 @@ class dcPixelStream : public dcGeometric
         void draw(void);
 
     private:
-        dcTexture textureID;
-        dcTexture testpatternID;
+        tdTexture *textureID;
+        tdTexture *testpatternID;
         PixelStreamItem *psi;
         void *pixels;
         size_t memallocation;

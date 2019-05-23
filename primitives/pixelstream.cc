@@ -7,9 +7,9 @@
 extern appdata AppData;
 extern void SetNeedsRedraw(void); // TODO: put in header file
 
-dcPixelStream::dcPixelStream(dcParent *myparent) : dcGeometric(myparent), testpatternID(-1), psi(0x0), pixels(0x0), memallocation(0)
+dcPixelStream::dcPixelStream(dcParent *myparent) : dcGeometric(myparent), testpatternID(0x0), psi(0x0), pixels(0x0), memallocation(0)
 {
-    init_texture(&textureID);
+    textureID = new tdTexture();
 }
 
 dcPixelStream::~dcPixelStream()
@@ -99,7 +99,7 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
 
 void dcPixelStream::setTestPattern(const char *filename)
 {
-    if (filename) testpatternID = dcLoadTexture(filename);
+    if (filename) testpatternID = tdLoadTexture(filename);
 }
 
 void dcPixelStream::updateStreams(unsigned passcount)
@@ -164,7 +164,7 @@ void dcPixelStream::draw(void)
 
         draw_image(textureID, width, height);
     }
-    else draw_image(testpatternID, width, height);
+    else if (testpatternID) draw_image(testpatternID, width, height);
 
     container_end();
 }

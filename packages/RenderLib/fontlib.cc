@@ -11,7 +11,7 @@
 #include "basicutils/msg.hh"
 #include "fontlib.hh"
 
-FT_Library flFont::library = 0;
+FT_Library tdFont::library = 0;
 
 /*************************/
 /******** UNICODE ********/
@@ -22,7 +22,7 @@ FT_Library flFont::library = 0;
 #define UNI_SUR_HIGH_START   (UTF32)0xD800
 #define UNI_SUR_LOW_END      (UTF32)0xDFFF
 
-const char flFont::trailingBytesForUTF8[] =
+const char tdFont::trailingBytesForUTF8[] =
 {
     0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
@@ -34,14 +34,14 @@ const char flFont::trailingBytesForUTF8[] =
     2,2,2,2,2,2,2,2, 2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3, 4,4,4,4,5,5,5,5
 };
 
-const UTF32 flFont::offsetsFromUTF8[] = { 0x00000000UL, 0x00003080UL, 0x000E2080UL, 0x03C82080UL, 0xFA082080UL, 0x82082080UL };
+const UTF32 tdFont::offsetsFromUTF8[] = { 0x00000000UL, 0x00003080UL, 0x000E2080UL, 0x03C82080UL, 0xFA082080UL, 0x82082080UL };
 
 /*************************/
 /******** UNICODE ********/
 /*************************/
 
 
-flFont::flFont(const char *filespec, const char *facespec, unsigned int basesize)
+tdFont::tdFont(const char *filespec, const char *facespec, unsigned int basesize)
 :
 face(0x0),
 kern_flag(false),
@@ -120,13 +120,13 @@ valid(false)
 }
 
 
-flFont::~flFont()
+tdFont::~tdFont()
 {
     FT_Done_Face(this->face);
 }
 
 
-float flFont::getAdvance(const char *string, flMonoOption mono=flMonoNone)
+float tdFont::getAdvance(const char *string, flMonoOption mono=flMonoNone)
 {
     if (!(this->valid)) return 0;
 
@@ -179,37 +179,37 @@ float flFont::getAdvance(const char *string, flMonoOption mono=flMonoNone)
 }
 
 
-float flFont::getDescender(void)
+float tdFont::getDescender(void)
 {
     return this->descender;
 }
 
 
-bool flFont::isValid(void)
+bool tdFont::isValid(void)
 {
     return this->valid;
 }
 
 
-std::string flFont::getFileName(void)
+std::string tdFont::getFileName(void)
 {
     return this->filename;
 }
 
 
-std::string flFont::getFaceName(void)
+std::string tdFont::getFaceName(void)
 {
     return this->facename;
 }
 
 
-unsigned int flFont::getBaseSize(void)
+unsigned int tdFont::getBaseSize(void)
 {
     return this->basesize;
 }
 
 
-void flFont::render(const char *string, flMonoOption mono=flMonoNone)
+void tdFont::render(const char *string, flMonoOption mono=flMonoNone)
 {
     if (!(this->valid)) return;
 
@@ -275,7 +275,7 @@ void flFont::render(const char *string, flMonoOption mono=flMonoNone)
 }
 
 
-void flFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
+void tdFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
 {
     unsigned int i, j;
     unsigned char bitmap[64][64];
@@ -318,7 +318,7 @@ void flFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
 }
 
 
-GlyphInfo * flFont::getGlyphInfo(UTF32 index)
+GlyphInfo * tdFont::getGlyphInfo(UTF32 index)
 {
     // first, check our pre-load list
     if (index >= PRELOAD_START && index <= PRELOAD_END) return (&(this->gdata[index]));
@@ -334,7 +334,7 @@ GlyphInfo * flFont::getGlyphInfo(UTF32 index)
 }
 
 
-int flFont::convertUTF8toUTF32(UTF8 *source, UTF32 *dest)
+int tdFont::convertUTF8toUTF32(UTF8 *source, UTF32 *dest)
 {
     unsigned short extraBytesToRead = trailingBytesForUTF8[*source];
 
@@ -360,7 +360,7 @@ int flFont::convertUTF8toUTF32(UTF8 *source, UTF32 *dest)
 }
 
 
-bool flFont::isLegalUTF8(const UTF8 *source, int length)
+bool tdFont::isLegalUTF8(const UTF8 *source, int length)
 {
     UTF8 a;
     const UTF8 *srcptr = source+length;

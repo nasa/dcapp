@@ -8,7 +8,7 @@
 #include <OpenGLES/ES1/glext.h>
 #endif
 #include "basicutils/msg.hh"
-#include "imgload_internal.hh"
+#include "imgload.hh"
 
 #ifndef IOS_BUILD
 static void ensureValidSizeForTexturing(ImageStruct *, GLint, GLenum);

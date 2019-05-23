@@ -7,7 +7,7 @@ dcImage::dcImage(dcParent *myparent) : dcGeometric(myparent)
 
 void dcImage::setTexture(const char *filename)
 {
-    textureID = dcLoadTexture(filename);
+    textureID = tdLoadTexture(filename);
 }
 
 void dcImage::draw(void)
