@@ -4,22 +4,22 @@
 #include <jpeglib.h>
 #endif
 #include "basicutils/msg.hh"
-#include "imgload.hh"
+#include "texturelib.hh"
 
 /*********************************************************************************
  * Create ImageStruct data from the contents of a JPEG file.
  *********************************************************************************/
 #ifdef JPEG_ENABLED
-unsigned int LoadJPG(const char *filename, ImageStruct *image)
+int tdTexture::loadJPG(void)
 {
-    FILE *file = fopen(filename, "r");
+    FILE *file = fopen(this->filename.c_str(), "r");
     struct jpeg_decompress_struct jinfo;
     struct jpeg_error_mgr jerr;
     unsigned char *line;
 
     if (!file)
     {
-        warning_msg("The file " << filename << " does not exist");
+        warning_msg("The file " << this->filename << " does not exist");
         return 1;
     }
 
@@ -28,15 +28,15 @@ unsigned int LoadJPG(const char *filename, ImageStruct *image)
     jpeg_stdio_src(&jinfo, file);
     jpeg_read_header(&jinfo, TRUE);
 
-    image->width = jinfo.image_width;
-    image->height = jinfo.image_height;
-    image->data = (unsigned char *)malloc(3 * jinfo.image_width * jinfo.image_height);
-    image->pixelspec = PixelRGB;
+    this->width = jinfo.image_width;
+    this->height = jinfo.image_height;
+    this->data = (unsigned char *)malloc(3 * jinfo.image_width * jinfo.image_height);
+    this->pixelspec = PixelRGB;
 
     jpeg_start_decompress(&jinfo);
     while (jinfo.output_scanline < jinfo.output_height)
     {
-        line = image->data + (3 * jinfo.image_width * (jinfo.output_height - jinfo.output_scanline - 1));
+        line = this->data + (3 * jinfo.image_width * (jinfo.output_height - jinfo.output_scanline - 1));
         jpeg_read_scanlines(&jinfo, &line, 1);
     }
     jpeg_finish_decompress(&jinfo);
@@ -47,7 +47,7 @@ unsigned int LoadJPG(const char *filename, ImageStruct *image)
     return 0;
 }
 #else
-unsigned int LoadJPG(const char * /* filename */, ImageStruct * /* image */)
+int tdTexture::loadJPG(void)
 {
     warning_msg("Could not find libjpeg or libjpeg-turbo");
     return 1;

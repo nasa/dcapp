@@ -2,14 +2,10 @@
 #include "basicutils/msg.hh"
 #include "RenderLib.hh"
 #include "texturelib.hh"
-#include "imgload.hh"
 
-extern int LoadBMP(const char *, ImageStruct *);
-extern unsigned int LoadTGA(const char *, ImageStruct *);
-extern unsigned int LoadJPG(const char *, ImageStruct *);
-extern int createTextureFromImage(ImageStruct *);
+extern void createTextureFromImage(tdTexture *);
 
-tdTexture::tdTexture(const char *filespec) : valid(false), id(-1)
+tdTexture::tdTexture(const char *filespec) : valid(false), id(-1), pixelspec(PixelRGB), data(0x0)
 {
     if (filespec)
     {
@@ -19,7 +15,6 @@ tdTexture::tdTexture(const char *filespec) : valid(false), id(-1)
         if (end == std::string::npos) warning_msg("No detectable filename extension for file " << filespec);
         else
         {
-            ImageStruct image;
             bool success = false;
 
             std::string suffix = this->filename.substr(end + 1);
@@ -28,18 +23,15 @@ tdTexture::tdTexture(const char *filespec) : valid(false), id(-1)
 
             if (suffix == "BMP")
             {
-                if (LoadBMP(filespec, &image) != -1) success = true;
-                else error_msg("LoadBMP returned with error for file " << filespec);
+                if (!this->loadBMP()) success = true;
             }
             else if (suffix == "TGA")
             {
-                if (!LoadTGA(filespec, &image)) success = true;
-                else error_msg("LoadTGA returned with error for file " << filespec);
+                if (!this->loadTGA()) success = true;
             }
             else if (suffix == "JPG" || suffix == "JPEG")
             {
-                if (!LoadJPG(filespec, &image)) success = true;
-                else error_msg("LoadJPG returned with error for file " << filespec);
+                if (!this->loadJPG()) success = true;
             }
             else
             {
@@ -48,11 +40,12 @@ tdTexture::tdTexture(const char *filespec) : valid(false), id(-1)
 
             if (success)
             {
-                this->id = createTextureFromImage(&image);
+                create_texture(this);
+                createTextureFromImage(this);
                 this->valid = true;
             }
 
-            if (image.data) free(image.data);
+            if (this->data) free(this->data);
         }
     }
 }

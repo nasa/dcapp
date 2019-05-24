@@ -7,7 +7,7 @@
 #include <cstring>
 #include <cmath>
 #include "basicutils/msg.hh"
-#include "imgload.hh"
+#include "texturelib.hh"
 
 // BMP format bits - at start of file is 512 bytes of pure garbage
 #define BMPfiletype 0x4d42 // file type identifier -- literally 'B''M'
@@ -63,7 +63,7 @@ static void swapbyte_S(short *i)
 }
 
 
-int LoadBMP(const char *filename, ImageStruct *image)
+int tdTexture::loadBMP(void)
 {
     unsigned char *buffer = 0x0;
     int filelen;
@@ -72,11 +72,11 @@ int LoadBMP(const char *filename, ImageStruct *image)
     BMPheader hd;
     BMPinfo inf;
 
-    FILE *fp = fopen(filename, "rb");
+    FILE *fp = fopen(this->filename.c_str(), "rb");
     if (!fp)
     {
-        warning_msg("The file " << filename << " does not exist");
-        image->data = 0x0;
+        warning_msg("The file " << this->filename << " does not exist");
+        this->data = 0x0;
         return (-1);
     }
 
@@ -145,8 +145,8 @@ int LoadBMP(const char *filename, ImageStruct *image)
 
         if (fread((char *)imbuff, sizeof(unsigned char), inf.ImageSize, fp) != (size_t)inf.ImageSize)
         {
-            warning_msg("Problem retrieving image buffer from " << filename);
-            image->data = 0x0;
+            warning_msg("Problem retrieving image buffer from " << this->filename);
+            this->data = 0x0;
             return (-1);
         }
 
@@ -154,26 +154,26 @@ int LoadBMP(const char *filename, ImageStruct *image)
         switch (ncolors)
         {
         case 1:
-            image->pixelspec = PixelLuminance;
+            this->pixelspec = PixelLuminance;
             ncomp = 1;            // this is a 256 color, paletted image
             inf.ColorBits = 8;    // number of bits per index
             inf.ColorsUsed = 256; // number of colors used
             cols=imbuff;          // color palette address - uses 4 bytes/color
             break;
         case 2:
-            image->pixelspec = PixelLuminanceAlpha;
+            this->pixelspec = PixelLuminanceAlpha;
             ncomp = 2;
             break;
         case 3:
-            image->pixelspec = PixelRGB;
+            this->pixelspec = PixelRGB;
             ncomp = 3;
             break;
         case 4:
-            image->pixelspec = PixelRGBA;
+            this->pixelspec = PixelRGBA;
             ncomp = 4;
             break;
         default:
-            image->pixelspec = PixelUnknown;
+            this->pixelspec = PixelUnknown;
             cols = imbuff;                                 // color palette address - uses 4 bytes/colour
             if (infsize == 12 || infsize == 64) ncpal = 3; // OS2 uses 3 colors per palette entry
             else ncpal = 4;                                // Windows uses 4
@@ -233,15 +233,15 @@ int LoadBMP(const char *filename, ImageStruct *image)
     }
     else
     {
-        warning_msg("Issue with file header in " << filename);
+        warning_msg("Issue with file header in " << this->filename);
         fclose(fp);
-        image->data = 0x0;
+        this->data = 0x0;
         return (-1);
     }
 
-    image->width = inf.width;
-    image->height = inf.height;
-    image->data = buffer;
+    this->width = inf.width;
+    this->height = inf.height;
+    this->data = buffer;
 
     return 0;
 }

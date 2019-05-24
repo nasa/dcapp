@@ -3,6 +3,8 @@
 
 #include <string>
 
+typedef enum { PixelUnknown, PixelLuminance, PixelLuminanceAlpha, PixelRGB, PixelRGBA } PixelSpec;
+
 class tdTexture
 {
     public:
@@ -13,10 +15,19 @@ class tdTexture
         void setID(unsigned int);
         unsigned int getID(void);
         std::string getFileName(void);
+        int loadBMP(void);
+        int loadTGA(void);
+        int loadJPG(void);
     private:
         bool valid;
         unsigned int id;
         std::string filename;
+    public:
+        int width;
+        int height;
+        PixelSpec pixelspec;
+        unsigned int bytesPerPixel;
+        unsigned char *data;
 };
 
 #endif
