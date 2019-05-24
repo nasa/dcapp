@@ -14,6 +14,9 @@ void init_window(void)
     glShadeModel(GL_SMOOTH);
     glClearDepth(1.0f);                // Depth Buffer Setup
     glDepthFunc(GL_LEQUAL);            // The Type Of Depth Testing To Do
+
+glPixelStorei(GL_PACK_ALIGNMENT, 1);
+glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
 
 void reshape_window(int w, int h)
@@ -31,14 +34,6 @@ void setup_panel(float x, float y, int near, int far, float red, float green, fl
     glOrtho(0, x, 0, y, near, far);
     glMatrixMode(GL_MODELVIEW);
     glColor4f(1, 1, 1, 1);
-}
-
-unsigned int init_texture(void)
-{
-    unsigned int retval;
-    glGenTextures(1, (GLuint *)&retval);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);  // Make sure that byte unpacking (for PixelStream, etc.) is properyly byte aligned
-    return retval;
 }
 
 void set_texture(tdTexture *textureID, int width, int height, void *pixels)
@@ -77,12 +72,12 @@ void draw_image(tdTexture *textureID, float w, float h)
     }
 }
 
-void get_image_pixel_RGBA(unsigned char rgba[], unsigned int textureID, float xpct, float ypct)
+void get_image_pixel_RGBA(unsigned char rgba[], tdTexture *textureID, float xpct, float ypct)
 {
     GLint textureWidth, textureHeight;
     int pixx, pixy, i;
 
-    glBindTexture(GL_TEXTURE_2D, textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID->getID());
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &textureWidth);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &textureHeight);
     unsigned char mypixels[textureHeight][textureWidth][4];
@@ -340,26 +335,4 @@ void draw_textured_sphere(float x, float y, const std::vector<float> &pointsA, f
         glDisable(GL_CULL_FACE);
     //  glDisable(GL_DEPTH_TEST);                    // disables Depth Testing
     }
-}
-
-void addPoint(std::vector<float> &listA, float xA, float yA)
-{
-    listA.push_back(xA);
-    listA.push_back(yA);
-}
-
-void addPoint(std::vector<float> &listA, float xA, float yA, float zA)
-{
-    listA.push_back(xA);
-    listA.push_back(yA);
-    listA.push_back(zA);
-}
-
-void addPoint(std::vector<float> &listA, float xA, float yA, float zA, float uA, float vA)
-{
-    listA.push_back(xA);
-    listA.push_back(yA);
-    listA.push_back(zA);
-    listA.push_back(uA);
-    listA.push_back(vA);
 }

@@ -1,4 +1,5 @@
 #include "RenderLib/RenderLib.hh"
+#include "commonutils.hh"
 #include "image.hh"
 
 dcImage::dcImage(dcParent *myparent) : dcGeometric(myparent)

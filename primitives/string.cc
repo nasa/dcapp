@@ -5,6 +5,7 @@
 #include "constants.hh"
 #include "alignment.hh"
 #include "varlist.hh"
+#include "commonutils.hh"
 #include "string.hh"
 
 extern appdata AppData;

@@ -107,8 +107,8 @@ valid(false)
     this->kern_flag = FT_HAS_KERNING(this->face);
     this->descender = (float)(this->face->size->metrics.descender>>6);
 
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+//    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+//    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
 

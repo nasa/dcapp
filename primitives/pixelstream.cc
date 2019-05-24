@@ -2,6 +2,7 @@
 #include "varlist.hh"
 #include "string_utils.hh"
 #include "RenderLib/RenderLib.hh"
+#include "commonutils.hh"
 #include "pixelstream.hh"
 
 extern appdata AppData;

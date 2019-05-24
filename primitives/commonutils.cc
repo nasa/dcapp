@@ -2,10 +2,11 @@
 #include <cstring>
 #include <climits>
 #include <list>
+#include <vector>
 #include "basicutils/msg.hh"
 #include "basicutils/pathinfo.hh"
-#include "fontlib.hh"
-#include "texturelib.hh"
+#include "RenderLib/fontlib.hh"
+#include "RenderLib/texturelib.hh"
 
 static std::list<tdTexture *> textures;
 static std::list<tdFont *> fonts;
@@ -83,4 +84,26 @@ tdFont *tdLoadFont(const char *filename, const char *face, unsigned int basesize
     delete mypath;
 
     return id;
+}
+
+void addPoint(std::vector<float> &listA, float xA, float yA)
+{
+    listA.push_back(xA);
+    listA.push_back(yA);
+}
+
+void addPoint(std::vector<float> &listA, float xA, float yA, float zA)
+{
+    listA.push_back(xA);
+    listA.push_back(yA);
+    listA.push_back(zA);
+}
+
+void addPoint(std::vector<float> &listA, float xA, float yA, float zA, float uA, float vA)
+{
+    listA.push_back(xA);
+    listA.push_back(yA);
+    listA.push_back(zA);
+    listA.push_back(uA);
+    listA.push_back(vA);
 }

@@ -1,6 +1,7 @@
 #include <vector>
 #include "RenderLib/RenderLib.hh"
 #include "string_utils.hh"
+#include "commonutils.hh"
 #include "rectangle.hh"
 
 dcRectangle::dcRectangle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false)

@@ -8,7 +8,6 @@
 extern void init_window(void);
 extern void reshape_window(int, int);
 extern void setup_panel(float, float, int, int, float, float, float, float);
-extern unsigned int init_texture(void);
 extern void set_texture(tdTexture *, int, int, void *);
 extern void draw_image(tdTexture *, float, float);
 extern void get_image_pixel_RGBA(unsigned char[], unsigned int, float, float);
@@ -27,12 +26,5 @@ extern void draw_quad(const std::vector<float> &, float, float, float, float);
 extern void circle_outline(float, float, float, int, float, float, float, float, float);
 extern void circle_fill(float, float, float, int, float, float, float, float);
 extern void draw_textured_sphere(float, float, const std::vector<float> &, float, tdTexture *, float, float, float);
-
-extern void addPoint(std::vector<float> &, float, float);
-extern void addPoint(std::vector<float> &, float, float, float);
-extern void addPoint(std::vector<float> &, float, float, float, float, float);
-
-extern tdTexture *tdLoadTexture(const char *filename);
-extern tdFont *tdLoadFont(const char *filename, const char *face=0x0, unsigned int basesize=20);
 
 #endif

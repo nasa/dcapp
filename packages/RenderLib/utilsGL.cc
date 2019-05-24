@@ -118,8 +118,8 @@ static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel,
             return;
         }
 
-        glPixelStorei(GL_PACK_ALIGNMENT, 1);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+//        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+//        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         GLint status = gluScaleImage(format, image->width, image->height, GL_UNSIGNED_BYTE, image->data, newW, newH, GL_UNSIGNED_BYTE, newData);
 

@@ -3,6 +3,7 @@
 #include "constants.hh"
 #include "RenderLib/RenderLib.hh"
 #include "varlist.hh"
+#include "commonutils.hh"
 #include "adi.hh"
 
 static const double BLACK[3] = { 0.0, 0.0, 0.0 };
