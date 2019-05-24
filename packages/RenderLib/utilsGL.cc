@@ -22,7 +22,6 @@ int createTextureFromImage(ImageStruct *image)
     GLint bytesPerPixel;
 
     glGenTextures(1, (GLuint *)&texture);
-    if (texture < 0) return texture;
 
     switch (image->pixelspec)
     {
@@ -117,9 +116,6 @@ static void ensureValidSizeForTexturing(ImageStruct *image, GLint bytesPerPixel,
             warning_msg("Unable to malloc " << newTotalSize << " bytes");
             return;
         }
-
-//        glPixelStorei(GL_PACK_ALIGNMENT, 1);
-//        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         GLint status = gluScaleImage(format, image->width, image->height, GL_UNSIGNED_BYTE, image->data, newW, newH, GL_UNSIGNED_BYTE, newData);
 

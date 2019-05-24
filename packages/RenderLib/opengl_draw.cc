@@ -10,19 +10,21 @@
 
 void init_window(void)
 {
-    glClearColor(0, 0, 0, 0);          // Clear the window to black.
+    glClearColor(0, 0, 0, 0);          // Clear the window to black
     glShadeModel(GL_SMOOTH);
-    glClearDepth(1.0f);                // Depth Buffer Setup
-    glDepthFunc(GL_LEQUAL);            // The Type Of Depth Testing To Do
+    glClearDepth(1.0f);                // Set the clear value for the depth buffer
+    glDepthFunc(GL_LEQUAL);            // Set the depth buffer comparison method
 
-glPixelStorei(GL_PACK_ALIGNMENT, 1);
-glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    // Make sure that all byte packing and unpacking byte aligned
+    // If a particular call requires different packing/unpacking, be sure to set back to 1 afterward
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
 
 void reshape_window(int w, int h)
 {
     glClear(GL_COLOR_BUFFER_BIT);
-    glViewport(0, 0, w, h);            // Set the viewport to the whole window.
+    glViewport(0, 0, w, h);            // Set the viewport to the whole window
 }
 
 void setup_panel(float x, float y, int near, int far, float red, float green, float blue, float alpha)
@@ -34,6 +36,13 @@ void setup_panel(float x, float y, int near, int far, float red, float green, fl
     glOrtho(0, x, 0, y, near, far);
     glMatrixMode(GL_MODELVIEW);
     glColor4f(1, 1, 1, 1);
+}
+
+void create_texture(tdTexture *textureID)
+{
+    GLuint mytexture;
+    glGenTextures(1, &mytexture);
+    textureID->setID(mytexture);
 }
 
 void set_texture(tdTexture *textureID, int width, int height, void *pixels)

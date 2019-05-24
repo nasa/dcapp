@@ -10,6 +10,7 @@ class tdTexture
         tdTexture(void);
         virtual ~tdTexture();
         bool isValid(void);
+        void setID(unsigned int);
         unsigned int getID(void);
         std::string getFileName(void);
     private:

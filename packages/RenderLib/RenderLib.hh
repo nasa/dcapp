@@ -8,6 +8,7 @@
 extern void init_window(void);
 extern void reshape_window(int, int);
 extern void setup_panel(float, float, int, int, float, float, float, float);
+extern void create_texture(tdTexture *);
 extern void set_texture(tdTexture *, int, int, void *);
 extern void draw_image(tdTexture *, float, float);
 extern void get_image_pixel_RGBA(unsigned char[], unsigned int, float, float);
