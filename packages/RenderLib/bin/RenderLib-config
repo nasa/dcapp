@@ -89,7 +89,7 @@ while test $# -gt 0 ; do
             echo "-L${mydir}/${libdir} -lRenderLib `freetype-config --libs` ${opengl_libs} ${jpeg_libs}"
             ;;
         --compdepends)
-            echo "${mydir}/RenderLib.hh ${mydir}/texturelib.hh ${mydir}/fontlib.hh"
+            echo "${mydir}/RenderLib.hh ${mydir}/texturelib.hh ${mydir}/fontlib.hh ${mydir}/opengl_draw.hh"
             ;;
         --linkdepends)
             echo "${mydir}/${libdir}/libRenderLib.a"

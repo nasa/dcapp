@@ -3,9 +3,7 @@
 #include "RenderLib.hh"
 #include "texturelib.hh"
 
-extern void createTextureFromImage(tdTexture *);
-
-tdTexture::tdTexture(const char *filespec) : valid(false), id(-1), pixelspec(PixelRGB), data(0x0)
+tdTexture::tdTexture(const char *filespec) : valid(false), id(-1), pixelspec(-1), data(0x0)
 {
     if (filespec)
     {
@@ -41,6 +39,7 @@ tdTexture::tdTexture(const char *filespec) : valid(false), id(-1), pixelspec(Pix
             if (success)
             {
                 create_texture(this);
+                this->computeBytesPerPixel();
                 createTextureFromImage(this);
                 this->valid = true;
             }
@@ -50,14 +49,31 @@ tdTexture::tdTexture(const char *filespec) : valid(false), id(-1), pixelspec(Pix
     }
 }
 
-tdTexture::tdTexture(void) : valid(false), id(-1)
+tdTexture::tdTexture(void) : valid(false), id(-1), pixelspec(PixelRGB)
 {
     create_texture(this);
+    this->computeBytesPerPixel();
     this->valid = true;
 }
 
 tdTexture::~tdTexture()
 {
+}
+
+void tdTexture::computeBytesPerPixel(void)
+{
+    switch (this->pixelspec)
+    {
+        case PixelAlpha:          this->bytesPerPixel = 1; break;
+        case PixelLuminance:      this->bytesPerPixel = 1; break;
+        case PixelLuminanceAlpha: this->bytesPerPixel = 2; break;
+        case PixelRGB:            this->bytesPerPixel = 3; break;
+        case PixelRGBA:           this->bytesPerPixel = 4; break;
+        default:
+            warning_msg("Invalid pixel specification: " << this->pixelspec);
+            this->pixelspec = PixelRGB;
+            this->bytesPerPixel = 3;
+    }
 }
 
 bool tdTexture::isValid(void)

@@ -5,8 +5,71 @@
 #include <vector>
 #include <assert.h>
 #include <GL/gl.h>
+#ifndef IOS_BUILD
+#include <GL/glu.h>
+#else
+#include <OpenGLES/ES1/glext.h>
+#endif
+#include "basicutils/msg.hh"
 #include "fontlib.hh"
 #include "texturelib.hh"
+
+#ifndef IOS_BUILD
+static GLint maxTextureSize;
+
+
+static int computeNearestPowerOfTwo(int val)
+{
+    if (val & (val - 1))
+    {
+        float p2 = logf((float)val) / 0.69314718; /* logf(2.0f) = 0.69314718 */
+        float rounded_p2 = floorf(p2 + 0.5);
+        val = (int)(powf(2.0f, rounded_p2));
+    }
+    return val;
+}
+
+
+static void convertToNearestPowerOfTwo(tdTexture *textureID)
+{
+    if (!(textureID->data))
+    {
+        warning_msg("Cannot scale NULL image");
+        return;
+    }
+
+    int newW = computeNearestPowerOfTwo(textureID->width);
+    int newH = computeNearestPowerOfTwo(textureID->height);
+
+    if (newW > maxTextureSize) newW = maxTextureSize;
+    if (newH > maxTextureSize) newH = maxTextureSize;
+
+    if (newW != textureID->width || newH != textureID->height)
+    {
+        unsigned int newTotalSize = newW * newH * textureID->bytesPerPixel;
+        unsigned char *newData = (unsigned char *)malloc(newTotalSize);
+
+        if (!newData)
+        {
+            warning_msg("Unable to malloc " << newTotalSize << " bytes");
+            return;
+        }
+
+        GLint status = gluScaleImage((GLenum)(textureID->pixelspec), textureID->width, textureID->height, GL_UNSIGNED_BYTE, textureID->data, newW, newH, GL_UNSIGNED_BYTE, newData);
+
+        if (!status)
+        {
+            textureID->width = newW;
+            textureID->height = newH;
+            textureID->data = (unsigned char *)realloc(textureID->data, newTotalSize);
+            memcpy(textureID->data, newData, newTotalSize);
+        }
+        else warning_msg("gluScaleImage failed: " << (char *)gluErrorString((GLenum)status));
+
+        free(newData);
+    }
+}
+#endif
 
 void init_window(void)
 {
@@ -14,28 +77,35 @@ void init_window(void)
     glShadeModel(GL_SMOOTH);
     glClearDepth(1.0f);                // Set the clear value for the depth buffer
     glDepthFunc(GL_LEQUAL);            // Set the depth buffer comparison method
+#ifndef IOS_BUILD
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+#endif
+
+    // Establish graphical settings that are universal among the dcapp visual primitives...
 
     // Make sure that all byte packing and unpacking byte aligned
-    // If a particular call requires different packing/unpacking, be sure to set back to 1 afterward
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    // Enable blending for elements with alpha values
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
 }
 
-void reshape_window(int w, int h)
+void reshape_window(int /* w */, int /* h */)
 {
-    glClear(GL_COLOR_BUFFER_BIT);
-    glViewport(0, 0, w, h);            // Set the viewport to the whole window
+//    glClear(GL_COLOR_BUFFER_BIT);
+//    glViewport(0, 0, w, h);            // Set the viewport to the whole window
 }
 
 void setup_panel(float x, float y, int near, int far, float red, float green, float blue, float alpha)
 {
     glClearColor(red, green, blue, alpha);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glMatrixMode(GL_PROJECTION);
+//    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, x, 0, y, near, far);
-    glMatrixMode(GL_MODELVIEW);
-    glColor4f(1, 1, 1, 1);
+//    glMatrixMode(GL_MODELVIEW);
+//    glColor4f(1, 1, 1, 1);
 }
 
 void create_texture(tdTexture *textureID)
@@ -43,6 +113,20 @@ void create_texture(tdTexture *textureID)
     GLuint mytexture;
     glGenTextures(1, &mytexture);
     textureID->setID(mytexture);
+}
+
+void load_texture(unsigned int *mytexture, void *pixels)
+{
+    glGenTextures(1, mytexture);
+    glBindTexture(GL_TEXTURE_2D, *mytexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+// GL_ALPHA could be replaced by a pixelspec value
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 64, 64, 0, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
 }
 
 void set_texture(tdTexture *textureID, int width, int height, void *pixels)
@@ -53,8 +137,54 @@ void set_texture(tdTexture *textureID, int width, int height, void *pixels)
         // GL_LINEAR interpolates using bilinear filtering (smoothing). GL_NEAREST specifies no smoothing.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+        glTexImage2D(GL_TEXTURE_2D, 0, (GLint)(textureID->pixelspec), width, height, 0, (GLenum)(textureID->pixelspec), GL_UNSIGNED_BYTE, pixels);
     }
+}
+
+void createTextureFromImage(tdTexture *textureID)
+{
+    glBindTexture(GL_TEXTURE_2D, textureID->getID());
+
+#ifndef IOS_BUILD // iOS 2+ provides NPOT
+    // Scale the image to power of 2 (may not be necessary)
+    convertToNearestPowerOfTwo(textureID);
+#endif
+
+// GL_TEXTURE_MAG_FILTER and GL_TEXTURE_MIN_FILTER define how OpenGL magnifies and minifies a texture:
+//   GL_LINEAR tells OpenGL to interpolate the texture using bilinear filtering (in other words, to smooth it).
+//   GL_NEAREST tells OpenGL to not do any smoothing.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+// For GL_TEXTURE_ENV:
+//   GL_MODULATE tells OpenGL to blend the texture with the base color of the object.
+//   GL_DECAL or GL_REPLACE tells OpenGL to replace the base color (and any lighting effects) purely with the colors of the texture.
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, (GLint)(textureID->pixelspec), textureID->width, textureID->height, 0, (GLenum)(textureID->pixelspec), GL_UNSIGNED_BYTE, textureID->data);
+}
+
+void draw_texture(unsigned int mytexture, float startx, float starty, float kern, float advance)
+{
+    static GLfloat verts[12] = { 0,64,0, 0,0,0, 64,64,0, 64,0,0 };
+    static GLfloat uvs[8] = { 0,0, 0,1, 1,0, 1,1 };
+
+    glTranslatef(kern + startx, starty, 0);
+
+    glBindTexture(GL_TEXTURE_2D, mytexture);
+//            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ginfo->width, ginfo->height, GL_ALPHA, GL_UNSIGNED_BYTE, ginfo->bitmap);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, verts);
+    glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+
+    glTranslatef(advance - startx, -starty, 0);
 }
 
 void draw_image(tdTexture *textureID, float w, float h)
@@ -62,8 +192,6 @@ void draw_image(tdTexture *textureID, float w, float h)
     if (textureID->isValid())
     {
         glEnable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBindTexture(GL_TEXTURE_2D, textureID->getID());
         glColor4f(1, 1, 1, 1);
         glBegin(GL_QUADS);
@@ -76,26 +204,26 @@ void draw_image(tdTexture *textureID, float w, float h)
             glTexCoord2f(0, 1);
             glVertex3f(0, h, 0);
         glEnd();
-        glDisable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
     }
 }
 
-void get_image_pixel_RGBA(unsigned char rgba[], tdTexture *textureID, float xpct, float ypct)
+void get_image_pixel(unsigned char rgba[], tdTexture *textureID, float xpct, float ypct)
 {
     GLint textureWidth, textureHeight;
-    int pixx, pixy, i;
+    unsigned int pixx, pixy, i;
 
     glBindTexture(GL_TEXTURE_2D, textureID->getID());
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &textureWidth);
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &textureHeight);
-    unsigned char mypixels[textureHeight][textureWidth][4];
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid *)mypixels);
 
-    pixx = (int)(xpct * textureWidth);
-    pixy = (int)(ypct * textureHeight);
+    unsigned char mypixels[textureHeight][textureWidth][textureID->bytesPerPixel];
+    glGetTexImage(GL_TEXTURE_2D, 0, (GLenum)(textureID->pixelspec), GL_UNSIGNED_BYTE, (GLvoid *)mypixels);
 
-    for (i=0; i<4; i++) rgba[i] = mypixels[pixy][pixx][i];
+    pixx = (unsigned int)(xpct * textureWidth);
+    pixy = (unsigned int)(ypct * textureHeight);
+
+    for (i=0; i<(textureID->bytesPerPixel); i++) rgba[i] = mypixels[pixy][pixx][i];
 }
 
 float get_string_width(tdFont *fontID, float size, flMonoOption mono, const char *string)
@@ -111,12 +239,9 @@ void draw_string(float xpos, float ypos, float size, float red, float green, flo
     glColor4f(red, green, blue, alpha);
     glPushMatrix();
         glEnable(GL_TEXTURE_2D);                                       // Enable Texture Mapping
-        glEnable(GL_BLEND);                                            // Blend the transparent part with the background
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glTranslatef(xpos, ypos - (fontID->getDescender() * scale), 0);
         glScalef(scale, scale, 0);
         fontID->render(string, mono);
-        glDisable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 }
@@ -146,6 +271,7 @@ void rotate_end(void)
     glPopMatrix();
 }
 
+#if 0
 void translate_start(float x, float y)
 {
     glPushMatrix();
@@ -156,13 +282,12 @@ void translate_end(void)
 {
     glPopMatrix();
 }
+#endif
 
 void draw_line(const std::vector<float> &pntsA, float linewidth, float red, float green, float blue, float alpha)
 {
     glPushMatrix();
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glLineWidth(linewidth);
     glColor4f(red, green, blue, alpha);
 
@@ -170,7 +295,6 @@ void draw_line(const std::vector<float> &pntsA, float linewidth, float red, floa
     glVertexPointer(2, GL_FLOAT, 0, pntsA.data());
     glDrawArrays(GL_LINE_STRIP, 0, static_cast<int>(pntsA.size()/2));
     glDisableClientState(GL_VERTEX_ARRAY);
-    glDisable(GL_BLEND);
 
     glPopMatrix();
 }
@@ -185,30 +309,22 @@ void draw_polygon(const std::vector<float> &pntsA, float red, float green, float
         localPointsL.push_back(pntsA[iL+1]);
     }
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     glColor4f(red, green, blue, alpha);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(2, GL_FLOAT, 0, localPointsL.data());
     glDrawArrays(GL_TRIANGLE_FAN, 0, static_cast<int>(localPointsL.size()/2));
     glDisableClientState(GL_VERTEX_ARRAY);
-    glDisable(GL_BLEND);
 }
 
 void draw_filled_triangles(const std::vector< float >&pntsA, float red, float green, float blue, float alpha)
 {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     glColor4f(red, green, blue, alpha);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(2, GL_FLOAT, 0, pntsA.data());
     glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(pntsA.size() / 2));
     glDisableClientState(GL_VERTEX_ARRAY);
-    glDisable(GL_BLEND);
 }
 
 void draw_quad(const std::vector<float> &pntsA, float red, float green, float blue, float alpha)
@@ -236,16 +352,12 @@ void draw_quad(const std::vector<float> &pntsA, float red, float green, float bl
     localPointsL.push_back( pntsA[6] );
     localPointsL.push_back( pntsA[7] );
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     glColor4f(red, green, blue, alpha);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(2, GL_FLOAT, 0, localPointsL.data());
     glDrawArrays(GL_TRIANGLES, 0, static_cast<int>(localPointsL.size()/2));
     glDisableClientState(GL_VERTEX_ARRAY);
-    glDisable(GL_BLEND);
 }
 
 void circle_outline(float cx, float cy, float r, int num_segments, float red, float green, float blue, float alpha, float linewidth)
@@ -258,8 +370,6 @@ void circle_outline(float cx, float cy, float r, int num_segments, float red, fl
     float y = 0;
     int i;
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(red, green, blue, alpha);
     glLineWidth(linewidth);
     glEnable(GL_LINE_SMOOTH);
@@ -275,7 +385,6 @@ void circle_outline(float cx, float cy, float r, int num_segments, float red, fl
         y = s * t + c * y;
     }
     glEnd();
-    glDisable(GL_BLEND);
     glDisable(GL_LINE_SMOOTH);
 }
 
@@ -290,8 +399,6 @@ void circle_fill(float cx, float cy, float r, int num_segments, float red, float
     int i;
 
     glColor4f(red, green, blue, alpha);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBegin(GL_POLYGON);
     for (i = 0; i < num_segments; i++)
     {
@@ -303,7 +410,6 @@ void circle_fill(float cx, float cy, float r, int num_segments, float red, float
         y = s * t + c * y;
     }
     glEnd();
-    glDisable(GL_BLEND);
 }
 
 void draw_textured_sphere(float x, float y, const std::vector<float> &pointsA, float radiusA, tdTexture *textureID, float roll, float pitch, float yaw)

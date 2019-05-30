@@ -3,12 +3,8 @@
 #include <cstring>
 #include <cctype>
 #include <strings.h>
-#ifndef IOS_BUILD
-#include <GL/gl.h>
-#else
-#include <OpenGLES/ES1/glext.h>
-#endif
 #include "basicutils/msg.hh"
+#include "RenderLib/RenderLib.hh"
 #include "fontlib.hh"
 
 FT_Library tdFont::library = 0;
@@ -107,14 +103,8 @@ valid(false)
     this->kern_flag = FT_HAS_KERNING(this->face);
     this->descender = (float)(this->face->size->metrics.descender>>6);
 
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
-
     // pre-load commonly-used glyphs
     for (glyph=PRELOAD_START; glyph<=PRELOAD_END; glyph++) this->loadGlyphInfo(&(this->gdata[glyph]), glyph);
-
-    glDisable(GL_BLEND);
-    glDisable(GL_TEXTURE_2D);
 }
 
 
@@ -216,11 +206,7 @@ void tdFont::render(const char *string, flMonoOption mono=flMonoNone)
     FT_Vector kern;
     FT_UInt myindex, previndex = 0;
     GlyphInfo *ginfo;
-    static GLfloat verts[12] = { 0,64,0, 0,0,0, 64,64,0, 64,0,0 };
-    static GLfloat uvs[8] = { 0,0, 0,1, 1,0, 1,1 };
-
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
+    float xkern, xadvance;
 
     while (*current)
     {
@@ -229,47 +215,32 @@ void tdFont::render(const char *string, flMonoOption mono=flMonoNone)
         ginfo = this->getGlyphInfo(out);
         if (ginfo)
         {
-            glTranslatef(ginfo->bitmap_left, ginfo->bitmap_top, 0);
-            if (this->kern_flag)
+            xkern = 0;
+
+            if (mono == flMonoAll)
+                xadvance = this->max_advance;
+            else if (mono == flMonoAlphaNumeric && isalnum(out))
+                xadvance = this->max_advance_alnum;
+            else if (mono == flMonoNumeric && isdigit(out))
+                xadvance = this->max_advance_numeric;
+            else
             {
-                if (mono == flMonoAll || (mono == flMonoAlphaNumeric && isalnum(out)) || (mono == flMonoNumeric && isdigit(out)))
-                    previndex = 0;
-                else
+                xadvance = ginfo->advance;
+                if (this->kern_flag)
                 {
                     myindex = FT_Get_Char_Index(this->face, out);
                     if (myindex)
                     {
                         FT_Get_Kerning(this->face, previndex, myindex, FT_KERNING_DEFAULT, &kern);
-                        glTranslatef((float)(kern.x>>6), 0, 0);
+                        xkern = (float)(kern.x>>6);
                     }
                     previndex = myindex;
                 }
             }
 
-            glBindTexture(GL_TEXTURE_2D, ginfo->texture);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ginfo->width, ginfo->height, GL_ALPHA, GL_UNSIGNED_BYTE, ginfo->bitmap);
-
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            glVertexPointer(3, GL_FLOAT, 0, verts);
-            glTexCoordPointer(2, GL_FLOAT, 0, uvs);
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            glDisableClientState(GL_VERTEX_ARRAY);
-
-            if (mono == flMonoAll)
-                glTranslatef(this->max_advance - ginfo->bitmap_left, -ginfo->bitmap_top, 0);
-            else if (mono == flMonoAlphaNumeric && isalnum(out))
-                glTranslatef(this->max_advance_alnum - ginfo->bitmap_left, -ginfo->bitmap_top, 0);
-            else if (mono == flMonoNumeric && isdigit(out))
-                glTranslatef(this->max_advance_numeric - ginfo->bitmap_left, -ginfo->bitmap_top, 0);
-            else
-                glTranslatef(ginfo->advance - ginfo->bitmap_left, -ginfo->bitmap_top, 0);
+            draw_texture(ginfo->texture, ginfo->bitmap_left, ginfo->bitmap_top, xkern, xadvance);
         }
     }
-
-    glDisable(GL_BLEND);
-    glDisable(GL_TEXTURE_2D);
 }
 
 
@@ -280,14 +251,6 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
 
     FT_Load_Char(this->face, index, FT_LOAD_RENDER);
     FT_GlyphSlot slot = this->face->glyph;
-
-    glGenTextures(1, &(ginfo->texture));
-    glBindTexture(GL_TEXTURE_2D, ginfo->texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // pad image to make it a 64x64 for texture rendering
     for (i=0; i<64; i++)
@@ -300,7 +263,7 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
                 bitmap[i][j] = 0;
         }
     }
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 64, 64, 0, GL_ALPHA, GL_UNSIGNED_BYTE, bitmap);
+
     bcopy(slot->bitmap.buffer, ginfo->bitmap, slot->bitmap.width * slot->bitmap.rows);
 
     ginfo->index = index;
@@ -313,6 +276,8 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
     if (ginfo->advance > this->max_advance) this->max_advance = ginfo->advance;
     if (isalnum(index) && ginfo->advance > this->max_advance_alnum) this->max_advance_alnum = ginfo->advance;
     if (isdigit(index) && ginfo->advance > this->max_advance_numeric) this->max_advance_numeric = ginfo->advance;
+
+    load_texture(&(ginfo->texture), bitmap);
 }
 
 

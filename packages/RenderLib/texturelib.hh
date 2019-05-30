@@ -2,8 +2,7 @@
 #define _TEXTURELIB_HH_
 
 #include <string>
-
-typedef enum { PixelUnknown, PixelLuminance, PixelLuminanceAlpha, PixelRGB, PixelRGBA } PixelSpec;
+#include "opengl_draw.hh"
 
 class tdTexture
 {
@@ -19,13 +18,14 @@ class tdTexture
         int loadTGA(void);
         int loadJPG(void);
     private:
+        void computeBytesPerPixel(void);
         bool valid;
         unsigned int id;
         std::string filename;
     public:
         int width;
         int height;
-        PixelSpec pixelspec;
+        int pixelspec;
         unsigned int bytesPerPixel;
         unsigned char *data;
 };
