@@ -81,7 +81,7 @@ void key_click(KeyboardEvent kbd)
 
 void win_config(ConfigureEvent cfg)
 {
-//    AppData.toplevel->reshape(cfg.size.width, cfg.size.height);
+    AppData.toplevel->reshape(cfg.size.width, cfg.size.height);
     mywin.width = cfg.size.width;
     mywin.height = cfg.size.height;
     tdGLSetContext(mywin.gl_context);

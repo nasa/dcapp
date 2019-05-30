@@ -91,10 +91,10 @@ void init_window(void)
     glEnable(GL_BLEND);
 }
 
-void reshape_window(int /* w */, int /* h */)
+void reshape_window(int w, int h)
 {
 //    glClear(GL_COLOR_BUFFER_BIT);
-//    glViewport(0, 0, w, h);            // Set the viewport to the whole window
+    glViewport(0, 0, w, h);            // Set the viewport to the whole window
 }
 
 void setup_panel(float x, float y, int near, int far, float red, float green, float blue, float alpha)
