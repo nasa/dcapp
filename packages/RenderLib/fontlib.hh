@@ -33,13 +33,13 @@ class tdFont
     public:
         tdFont(const char *, const char *, unsigned int);
         virtual ~tdFont();
-        float getAdvance(const char *, flMonoOption);
+        float getAdvance(std::string, flMonoOption);
         float getDescender(void);
         bool isValid(void);
         std::string getFileName(void);
         std::string getFaceName(void);
         unsigned int getBaseSize(void);
-        void render(const char *, flMonoOption);
+        void render(std::string, flMonoOption);
     private:
         static FT_Library library;
         static const char trailingBytesForUTF8[256];

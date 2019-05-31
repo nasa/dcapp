@@ -28,6 +28,8 @@ class tdTexture
         int pixelspec;
         unsigned int bytesPerPixel;
         unsigned char *data;
+        bool convertNPOT;
+        bool smooth;
 };
 
 #endif

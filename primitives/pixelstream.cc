@@ -154,14 +154,18 @@ void dcPixelStream::draw(void)
             bcopy(psi->psd->pixels, pixels, nbytes);
         }
 
+        textureID->width = psi->psd->width;
+        textureID->height = newh;
         if (newh < psi->psd->height)
         {
             offset = (psi->psd->height - newh) / 2;
             offsetbytes = psi->psd->width * offset * 3;
-            set_texture(textureID, psi->psd->width, newh, (void *)((size_t)pixels + offsetbytes));
+            textureID->data = (unsigned char *)((size_t)pixels + offsetbytes);
         }
         else
-            set_texture(textureID, psi->psd->width, newh, pixels);
+            textureID->data = (unsigned char *)pixels;
+
+        load_texture(textureID);
 
         draw_image(textureID, width, height);
     }

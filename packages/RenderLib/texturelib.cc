@@ -3,7 +3,7 @@
 #include "RenderLib.hh"
 #include "texturelib.hh"
 
-tdTexture::tdTexture(const char *filespec) : valid(false), id(-1), pixelspec(-1), data(0x0)
+tdTexture::tdTexture(const char *filespec) : valid(false), id(-1), pixelspec(-1), data(0x0), convertNPOT(true), smooth(true)
 {
     if (filespec)
     {
@@ -38,10 +38,10 @@ tdTexture::tdTexture(const char *filespec) : valid(false), id(-1), pixelspec(-1)
 
             if (success)
             {
-                create_texture(this);
-                this->computeBytesPerPixel();
-                createTextureFromImage(this);
                 this->valid = true;
+                this->computeBytesPerPixel();
+                create_texture(this);
+                load_texture(this);
             }
 
             if (this->data) free(this->data);
@@ -49,11 +49,11 @@ tdTexture::tdTexture(const char *filespec) : valid(false), id(-1), pixelspec(-1)
     }
 }
 
-tdTexture::tdTexture(void) : valid(false), id(-1), pixelspec(PixelRGB)
+tdTexture::tdTexture(void) : valid(false), id(-1), pixelspec(PixelRGB), convertNPOT(false), smooth(false)
 {
-    create_texture(this);
-    this->computeBytesPerPixel();
     this->valid = true;
+    this->computeBytesPerPixel();
+    create_texture(this);
 }
 
 tdTexture::~tdTexture()

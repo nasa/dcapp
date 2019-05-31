@@ -82,6 +82,7 @@ void dcString::draw(void)
 
     double myleft, myright, mybottom, mytop;
     unsigned num_lines, i, strptr=0, seglen;
+    float stringWidth;
 
     std::string mystring;
     for (i = 0; i < vstring.size(); i++) mystring += filler[i] + vstring[i]->get();
@@ -95,16 +96,19 @@ void dcString::draw(void)
         std::string tmpstr = mystring.substr(strptr, seglen);
         strptr += seglen+2;
 
+        if (background || halign == AlignCenter || halign == AlignRight)
+            stringWidth = fontID->getAdvance(tmpstr, forcemono) * (*fontSize) / fontID->getBaseSize();
+
         switch (halign)
         {
             case AlignLeft:
                 myleft = 0;
                 break;
             case AlignCenter:
-                myleft = - 0.5 * get_string_width(fontID, *fontSize, forcemono, tmpstr.c_str());
+                myleft = -0.5 * stringWidth;
                 break;
             case AlignRight:
-                myleft = - get_string_width(fontID, *fontSize, forcemono, tmpstr.c_str());
+                myleft = -stringWidth;
                 break;
         }
 
@@ -127,7 +131,7 @@ void dcString::draw(void)
         if (background)
         {
             mytop = mybottom + (*fontSize);
-            myright = myleft + get_string_width(fontID, *fontSize, forcemono, tmpstr.c_str());
+            myright = myleft + stringWidth;
 
             std::vector<float> pointsL;
             addPoint(pointsL, myleft, mybottom);
@@ -139,9 +143,9 @@ void dcString::draw(void)
         }
         if (*shadowOffset)
         {
-            draw_string(myleft+(*shadowOffset), mybottom-(*shadowOffset), *fontSize, 0, 0, 0, 1, fontID, forcemono, tmpstr.c_str());
+            draw_string(myleft+(*shadowOffset), mybottom-(*shadowOffset), *fontSize, 0, 0, 0, 1, fontID, forcemono, tmpstr);
         }
-        draw_string(myleft, mybottom, *fontSize, *(color.R), *(color.G), *(color.B), *(color.A), fontID, forcemono, tmpstr.c_str());
+        draw_string(myleft, mybottom, *fontSize, *(color.R), *(color.G), *(color.B), *(color.A), fontID, forcemono, tmpstr);
 
         rotate_end();
         translate_end();

@@ -1,3 +1,4 @@
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -114,11 +115,11 @@ tdFont::~tdFont()
 }
 
 
-float tdFont::getAdvance(const char *string, flMonoOption mono=flMonoNone)
+float tdFont::getAdvance(std::string instring, flMonoOption mono=flMonoNone)
 {
     if (!(this->valid)) return 0;
 
-    UTF8 *current = (UTF8 *)string;
+    UTF8 *current = (UTF8 *)instring.c_str();
     float adv = 0;
     UTF32 out;
     GlyphInfo *ginfo;
@@ -197,11 +198,11 @@ unsigned int tdFont::getBaseSize(void)
 }
 
 
-void tdFont::render(const char *string, flMonoOption mono=flMonoNone)
+void tdFont::render(std::string instring, flMonoOption mono=flMonoNone)
 {
     if (!(this->valid)) return;
 
-    UTF8 *current = (UTF8 *)string;
+    UTF8 *current = (UTF8 *)instring.c_str();
     UTF32 out;
     FT_Vector kern;
     FT_UInt myindex, previndex = 0;
@@ -238,7 +239,7 @@ void tdFont::render(const char *string, flMonoOption mono=flMonoNone)
                 }
             }
 
-            draw_texture(ginfo->texture, ginfo->bitmap_left, ginfo->bitmap_top, xkern, xadvance);
+            draw_glyph(ginfo->texture, ginfo->bitmap_left, ginfo->bitmap_top, xkern, xadvance);
         }
     }
 }
@@ -277,7 +278,7 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
     if (isalnum(index) && ginfo->advance > this->max_advance_alnum) this->max_advance_alnum = ginfo->advance;
     if (isdigit(index) && ginfo->advance > this->max_advance_numeric) this->max_advance_numeric = ginfo->advance;
 
-    load_texture(&(ginfo->texture), bitmap);
+    create_and_load_glyph(&(ginfo->texture), bitmap);
 }
 
 

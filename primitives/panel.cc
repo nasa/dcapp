@@ -42,7 +42,7 @@ double * dcPanel::getContainerHeight(void)
 
 void dcPanel::draw(void)
 {
-    setup_panel(orthoX, orthoY, -1, 1, *(color.R), *(color.G), *(color.B), *(color.A));
+    setup_panel(orthoX, orthoY, *(color.R), *(color.G), *(color.B), *(color.A));
     for (const auto &myobj : children) myobj->draw();
 }
 

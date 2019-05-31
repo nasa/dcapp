@@ -17,7 +17,6 @@
 #ifndef IOS_BUILD
 static GLint maxTextureSize;
 
-
 static int computeNearestPowerOfTwo(int val)
 {
     if (val & (val - 1))
@@ -28,7 +27,6 @@ static int computeNearestPowerOfTwo(int val)
     }
     return val;
 }
-
 
 static void convertToNearestPowerOfTwo(tdTexture *textureID)
 {
@@ -97,25 +95,19 @@ void reshape_window(int w, int h)
     glViewport(0, 0, w, h);            // Set the viewport to the whole window
 }
 
-void setup_panel(float x, float y, int near, int far, float red, float green, float blue, float alpha)
+void setup_panel(float x, float y, float red, float green, float blue, float alpha)
 {
     glClearColor(red, green, blue, alpha);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //    glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, x, 0, y, near, far);
+    glOrtho(0, x, 0, y, -1, 1);
 //    glMatrixMode(GL_MODELVIEW);
 //    glColor4f(1, 1, 1, 1);
 }
 
-void create_texture(tdTexture *textureID)
-{
-    GLuint mytexture;
-    glGenTextures(1, &mytexture);
-    textureID->setID(mytexture);
-}
-
-void load_texture(unsigned int *mytexture, void *pixels)
+// TODO: create_and_load_glyph is very similar to create_texture and load_texture - consider combining
+void create_and_load_glyph(unsigned int *mytexture, void *pixels)
 {
     glGenTextures(1, mytexture);
     glBindTexture(GL_TEXTURE_2D, *mytexture);
@@ -129,44 +121,63 @@ void load_texture(unsigned int *mytexture, void *pixels)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 64, 64, 0, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
 }
 
-void set_texture(tdTexture *textureID, int width, int height, void *pixels)
+void create_texture(tdTexture *textureID)
+{
+    GLuint mytexture;
+    glGenTextures(1, &mytexture);
+    textureID->setID(mytexture);
+}
+
+void load_texture(tdTexture *textureID)
 {
     if (textureID->isValid())
     {
         glBindTexture(GL_TEXTURE_2D, textureID->getID());
-        // GL_LINEAR interpolates using bilinear filtering (smoothing). GL_NEAREST specifies no smoothing.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexImage2D(GL_TEXTURE_2D, 0, (GLint)(textureID->pixelspec), width, height, 0, (GLenum)(textureID->pixelspec), GL_UNSIGNED_BYTE, pixels);
+
+#ifndef IOS_BUILD // iOS 2+ provides NPOT
+        // Scale the image to power of 2 (OpenGL programming encourages, and used to require, this)
+        if (textureID->convertNPOT) convertToNearestPowerOfTwo(textureID);
+#endif
+
+        if (textureID->smooth)
+        {
+            // GL_TEXTURE_MAG_FILTER and GL_TEXTURE_MIN_FILTER define how a texture is magnified and minified:
+            //   GL_LINEAR interpolates the texture using bilinear filtering to smooth it
+            //   GL_NEAREST doesn't do any smoothing
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            // For GL_TEXTURE_ENV:
+            //   GL_MODULATE blends the texture with the base color of the object
+            //   GL_DECAL or GL_REPLACE replaces the base color purely with the colors of the texture
+            glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        }
+        else
+        {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        }
+
+        glTexImage2D(GL_TEXTURE_2D, 0, (GLint)(textureID->pixelspec), textureID->width, textureID->height, 0, (GLenum)(textureID->pixelspec), GL_UNSIGNED_BYTE, textureID->data);
     }
 }
 
-void createTextureFromImage(tdTexture *textureID)
+void draw_string(float xpos, float ypos, float size, float red, float green, float blue, float alpha, tdFont *fontID, flMonoOption mono, std::string instring)
 {
-    glBindTexture(GL_TEXTURE_2D, textureID->getID());
-
-#ifndef IOS_BUILD // iOS 2+ provides NPOT
-    // Scale the image to power of 2 (may not be necessary)
-    convertToNearestPowerOfTwo(textureID);
-#endif
-
-// GL_TEXTURE_MAG_FILTER and GL_TEXTURE_MIN_FILTER define how OpenGL magnifies and minifies a texture:
-//   GL_LINEAR tells OpenGL to interpolate the texture using bilinear filtering (in other words, to smooth it).
-//   GL_NEAREST tells OpenGL to not do any smoothing.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-// For GL_TEXTURE_ENV:
-//   GL_MODULATE tells OpenGL to blend the texture with the base color of the object.
-//   GL_DECAL or GL_REPLACE tells OpenGL to replace the base color (and any lighting effects) purely with the colors of the texture.
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, (GLint)(textureID->pixelspec), textureID->width, textureID->height, 0, (GLenum)(textureID->pixelspec), GL_UNSIGNED_BYTE, textureID->data);
+    float scale = size / fontID->getBaseSize();
+    glColor4f(red, green, blue, alpha);
+    glPushMatrix();
+        glEnable(GL_TEXTURE_2D);                                       // Enable Texture Mapping
+        glTranslatef(xpos, ypos - (fontID->getDescender() * scale), 0);
+        glScalef(scale, scale, 0);
+        fontID->render(instring, mono);
+        glDisable(GL_TEXTURE_2D);
+    glPopMatrix();
 }
 
-void draw_texture(unsigned int mytexture, float startx, float starty, float kern, float advance)
+// TODO: draw_glyph and draw_image are very similar in function - consider combining if it doesn't impact efficiency
+void draw_glyph(unsigned int mytexture, float startx, float starty, float kern, float advance)
 {
     static GLfloat verts[12] = { 0,64,0, 0,0,0, 64,64,0, 64,0,0 };
     static GLfloat uvs[8] = { 0,0, 0,1, 1,0, 1,1 };
@@ -174,7 +185,7 @@ void draw_texture(unsigned int mytexture, float startx, float starty, float kern
     glTranslatef(kern + startx, starty, 0);
 
     glBindTexture(GL_TEXTURE_2D, mytexture);
-//            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ginfo->width, ginfo->height, GL_ALPHA, GL_UNSIGNED_BYTE, ginfo->bitmap);
+//    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ginfo->width, ginfo->height, GL_ALPHA, GL_UNSIGNED_BYTE, ginfo->bitmap);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -224,26 +235,6 @@ void get_image_pixel(unsigned char rgba[], tdTexture *textureID, float xpct, flo
     pixy = (unsigned int)(ypct * textureHeight);
 
     for (i=0; i<(textureID->bytesPerPixel); i++) rgba[i] = mypixels[pixy][pixx][i];
-}
-
-float get_string_width(tdFont *fontID, float size, flMonoOption mono, const char *string)
-{
-    if (!fontID || !string) return 0;
-    return fontID->getAdvance(string, mono) * size / fontID->getBaseSize();
-}
-
-void draw_string(float xpos, float ypos, float size, float red, float green, float blue, float alpha, tdFont *fontID, flMonoOption mono, const char *string)
-{
-    if (!fontID || !string) return;
-    float scale = size / fontID->getBaseSize();
-    glColor4f(red, green, blue, alpha);
-    glPushMatrix();
-        glEnable(GL_TEXTURE_2D);                                       // Enable Texture Mapping
-        glTranslatef(xpos, ypos - (fontID->getDescender() * scale), 0);
-        glScalef(scale, scale, 0);
-        fontID->render(string, mono);
-        glDisable(GL_TEXTURE_2D);
-    glPopMatrix();
 }
 
 void container_start(float refx, float refy, float delx, float dely, float scalex, float scaley, float rotate)
@@ -420,7 +411,7 @@ void draw_textured_sphere(float x, float y, const std::vector<float> &pointsA, f
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_CULL_FACE);
         glBindTexture(GL_TEXTURE_2D, textureID->getID());
-        glColor4f(1.0, 1.0, 1.0, 1.0);
+        glColor4f(1, 1, 1, 1);
 
         glPushMatrix();
             glTranslatef(x, y, 0);
