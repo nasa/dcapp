@@ -23,7 +23,6 @@ typedef struct
     float bitmap_top;
     float advance;
     unsigned int texture;
-    unsigned char bitmap[64*64];
 } GlyphInfo;
 
 typedef std::map<UTF32, GlyphInfo *> GlyphSet;

@@ -265,8 +265,6 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
         }
     }
 
-    bcopy(slot->bitmap.buffer, ginfo->bitmap, slot->bitmap.width * slot->bitmap.rows);
-
     ginfo->index = index;
     ginfo->bitmap_left = (float)(slot->bitmap_left);
     ginfo->bitmap_top = (float)(slot->bitmap_top - 64);
