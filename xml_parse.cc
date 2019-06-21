@@ -63,6 +63,7 @@ int ParseXMLFile(const char *fullpath)
     // Move to directory containing the specfile by default
     if (mypath->getDirectory()) chdir(mypath->getDirectory());
 
+    if (!mypath->getFile()) return (-1);
     if (XMLFileOpen(&mydoc, &root_element, mypath->getFile())) return (-1);
 
     if (!NodeCheck(root_element, "DCAPP"))
@@ -117,7 +118,11 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 // Move to directory containing the new file
                 if (mypath->getDirectory()) chdir(mypath->getDirectory());
 
-                if (XMLFileOpen(&include_file, &include_element, mypath->getFile()))
+                if (mypath->getFile() == 0x0)
+                {
+                    warning_msg("Couldn't open include file " << include_filename);
+                }
+                else if (XMLFileOpen(&include_file, &include_element, mypath->getFile()))
                 {
                     warning_msg("Couldn't open include file " << include_filename);
                 }

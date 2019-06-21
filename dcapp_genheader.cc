@@ -32,7 +32,14 @@ int main(int argc, char **argv)
     Message::setLabel(basename(argv[0]));
 
     if (argc < 2) UsageError(0x0);
+
     if (XMLFileOpen(&mydoc, &root_element, argv[1])) UsageError(0x0);
+    if (!NodeCheck(root_element, "DCAPP"))
+    {
+        error_msg("Bad root element in XML file: \"" << root_element->name << "\" (should be \"DCAPP\")");
+        return (-1);
+    }
+
     if (argc < 3) p_file = fopen("dcapp.h", "w");
     else p_file = fopen(argv[2], "w");
     if (!p_file) UsageError(mydoc);
@@ -120,7 +127,11 @@ static void process_elements(xmlNodePtr startnode)
                 // Move to directory containing the new file
                 if (mypath->getDirectory()) chdir(mypath->getDirectory());
 
-                if (XMLFileOpen(&include_file, &include_element, mypath->getFile()))
+                if (mypath->getFile() == 0x0)
+                {
+                    warning_msg("Couldn't open include file " << include_filename);
+                }
+                else if (XMLFileOpen(&include_file, &include_element, mypath->getFile()))
                 {
                     warning_msg("Couldn't open include file " << include_filename);
                 }

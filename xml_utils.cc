@@ -9,6 +9,14 @@ static bool xmlStrEq(const xmlChar *, const char *);
 
 int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *filename)
 {
+    if (!filename) return (-1);
+
+    if (xmlCheckFilename(filename) != 1)
+    {
+        error_msg("Couldn't process XML file: " << filename);
+        return (-1);
+    }
+
     *mydoc = xmlReadFile(filename, 0x0, 0);
     if (!(*mydoc))
     {
