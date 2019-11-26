@@ -19,7 +19,7 @@ dcString::dcString(dcParent *myparent) : dcGeometric(myparent), background(false
 
 void dcString::setColor(const char *cspec)
 {
-    color.set(cspec);
+    if (cspec) color.set(cspec);
 }
 
 void dcString::setBackgroundColor(const char *cspec)
@@ -33,18 +33,20 @@ void dcString::setBackgroundColor(const char *cspec)
 
 void dcString::setFont(const char *font, const char *face, const char *size, const char *mono)
 {
-    fontID = tdLoadFont(font, face);
-    if (!fontID)
-    {
-        std::string defaultfont = AppData.dcapphome + "/dcapp.app/Contents/Resources/fonts/defaultfont";
-        fontID = tdLoadFont(defaultfont.c_str(), face);
-    }
+    std::string myface;
+    if (face) myface = face;
+
+    if (font) fontID = tdLoadFont(font, myface);
+    if (!fontID) fontID = tdLoadFont(AppData.defaultfont, myface);
+
     if (size) fontSize = getDecimalPointer(size);
+
     if (mono)
     {
-        if (!strcmp(mono, "Numeric")) forcemono = flMonoNumeric;
-        else if (!strcmp(mono, "AlphaNumeric")) forcemono = flMonoAlphaNumeric;
-        else if (!strcmp(mono, "All")) forcemono = flMonoAll;
+        std::string mymono = mono;
+        if (mymono == "Numeric") forcemono = flMonoNumeric;
+        else if (mymono == "AlphaNumeric") forcemono = flMonoAlphaNumeric;
+        else if (mymono == "All") forcemono = flMonoAll;
     }
 }
 

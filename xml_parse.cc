@@ -53,18 +53,22 @@ int ParseXMLFile(const char *fullpath)
         return (-1);
     }
 
-    PathInfo *mypath = new PathInfo(fullpath);
+    PathInfo mypath(fullpath);
+    if (!(mypath.isValid()))
+    {
+        error_msg("Unable to open XML file " << fullpath);
+        return (-1);
+    }
 
-    setenv("dcappDisplayHome", mypath->getDirectory(), 1);
+    setenv("dcappDisplayHome", mypath.getDirectory().c_str(), 1);
 
     // Store cwd for future use
     mycwd = open(".", O_RDONLY);
 
     // Move to directory containing the specfile by default
-    if (mypath->getDirectory()) chdir(mypath->getDirectory());
+    chdir(mypath.getDirectory().c_str());
 
-    if (!mypath->getFile()) return (-1);
-    if (XMLFileOpen(&mydoc, &root_element, mypath->getFile())) return (-1);
+    if (XMLFileOpen(&mydoc, &root_element, mypath.getFile().c_str())) return (-1);
 
     if (!NodeCheck(root_element, "DCAPP"))
     {
@@ -87,8 +91,6 @@ int ParseXMLFile(const char *fullpath)
     fchdir(mycwd);
     close(mycwd);
 
-    delete mypath;
-
     return 0;
 }
 
@@ -110,33 +112,33 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
 
             if (include_filename)
             {
-                PathInfo *mypath = new PathInfo(include_filename);
-
-                // Store cwd for future use
-                int mycwd = open(".", O_RDONLY);
-
-                // Move to directory containing the new file
-                if (mypath->getDirectory()) chdir(mypath->getDirectory());
-
-                if (mypath->getFile() == 0x0)
-                {
-                    warning_msg("Couldn't open include file " << include_filename);
-                }
-                else if (XMLFileOpen(&include_file, &include_element, mypath->getFile()))
+                PathInfo mypath(include_filename);
+                if (!mypath.isValid())
                 {
                     warning_msg("Couldn't open include file " << include_filename);
                 }
                 else
                 {
-                    process_elements(myparent, include_element);
-                    XMLFileClose(include_file);
+                    // Store cwd for future use
+                    int mycwd = open(".", O_RDONLY);
+
+                    // Move to directory containing the new file
+                    chdir(mypath.getDirectory().c_str());
+
+                    if (XMLFileOpen(&include_file, &include_element, mypath.getFile().c_str()))
+                    {
+                        warning_msg("Couldn't open include file " << include_filename);
+                    }
+                    else
+                    {
+                        process_elements(myparent, include_element);
+                        XMLFileClose(include_file);
+                    }
+
+                    // Return to the original working directory
+                    fchdir(mycwd);
+                    close(mycwd);
                 }
-
-                // Return to the original working directory
-                fchdir(mycwd);
-                close(mycwd);
-
-                delete mypath;
             }
             else warning_msg("No include file specified");
         }

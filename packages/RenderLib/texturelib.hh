@@ -7,7 +7,7 @@
 class tdTexture
 {
     public:
-        tdTexture(const char *);
+        tdTexture(std::string);
         tdTexture(void);
         virtual ~tdTexture();
         bool isValid(void);

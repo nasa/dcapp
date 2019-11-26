@@ -1,9 +1,9 @@
 #ifndef _KOLOR_HH_
 #define _KOLOR_HH_
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
+#include <string>
+#include <vector>
+#include <cctype>
 #include "constants.hh"
 #include "varlist.hh"
 
@@ -12,17 +12,17 @@ class Kolor
     public:
         Kolor()
         {
-            R = dcLoadConstant(0.0f);
-            G = dcLoadConstant(0.0f);
-            B = dcLoadConstant(0.0f);
-            A = dcLoadConstant(1.0f);
+            R = dcLoadConstant(0.0);
+            G = dcLoadConstant(0.0);
+            B = dcLoadConstant(0.0);
+            A = dcLoadConstant(1.0);
         }
         void set(double r, double g, double b)
         {
             R = dcLoadConstant(r);
             G = dcLoadConstant(g);
             B = dcLoadConstant(b);
-            A = dcLoadConstant(1.0f);
+            A = dcLoadConstant(1.0);
         }
         void set(double r, double g, double b, double a)
         {
@@ -31,24 +31,41 @@ class Kolor
             B = dcLoadConstant(b);
             A = dcLoadConstant(a);
         }
-        void set (const char *cspec)
+        void set(std::string mystring)
         {
-            if (!cspec) return;
-            size_t itemlen = strlen(cspec) + 1;
-            char *rstr, *gstr, *bstr, *astr;
-            rstr = (char *)malloc(itemlen);
-            gstr = (char *)malloc(itemlen);
-            bstr = (char *)malloc(itemlen);
-            astr = (char *)malloc(itemlen);
-            int count = sscanf(cspec, "%s %s %s %s", rstr, gstr, bstr, astr);
-            R = color_element(count-1, rstr, 0);
-            G = color_element(count-2, gstr, 0);
-            B = color_element(count-3, bstr, 0);
-            A = color_element(count-4, astr, 1);
-            free(rstr);
-            free(gstr);
-            free(bstr);
-            free(astr);
+            size_t pos = 0, startpos;
+            bool started = false;
+            std::vector<std::string> mylist;
+            size_t string_len = mystring.size(), count;
+
+            for (pos = 0; pos < string_len; pos++)
+            {
+                if (!isspace(mystring[pos]))
+                {
+                    if (!started)
+                    {
+                        started = true;
+                        startpos = pos;
+                    }
+                }
+                else if (started)
+                {
+                    started = false;
+                    mylist.push_back(mystring.substr(startpos, pos-startpos));
+                }
+            }
+            if (started) mylist.push_back(mystring.substr(startpos));
+
+            count = mylist.size();
+
+            if (count > 0) R = color_element(mylist[0]);
+            else R = dcLoadConstant(0.0);
+            if (count > 1) G = color_element(mylist[1]);
+            else G = dcLoadConstant(0.0);
+            if (count > 2) B = color_element(mylist[2]);
+            else B = dcLoadConstant(0.0);
+            if (count > 3) A = color_element(mylist[3]);
+            else A = dcLoadConstant(1.0);
         }
 
         double *R;
@@ -57,11 +74,10 @@ class Kolor
         double *A;
 
     private:
-        double *color_element(int index, const char *strval, double defval)
+        double *color_element(std::string strval)
         {
-            if (index < 0) return dcLoadConstant(defval);
-            else if (check_dynamic_element(strval)) return (double *)get_pointer(strval);
-            else return dcLoadConstant(strtof(strval, 0x0));
+            if (check_dynamic_element(strval.c_str())) return (double *)get_pointer(strval.c_str());
+            else return dcLoadConstant(std::stod(strval));
         }
 };
 

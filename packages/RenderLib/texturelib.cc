@@ -3,49 +3,44 @@
 #include "RenderLib.hh"
 #include "texturelib.hh"
 
-tdTexture::tdTexture(const char *filespec) : valid(false), id(-1), pixelspec(-1), data(0x0), convertNPOT(true), smooth(true)
+tdTexture::tdTexture(std::string filespec) : valid(false), id(-1), filename(filespec), pixelspec(-1), data(0x0), convertNPOT(true), smooth(true)
 {
-    if (filespec)
+    size_t end = this->filename.rfind('.');
+    if (end == std::string::npos) warning_msg("No detectable filename extension for file " << this->filename);
+    else
     {
-        this->filename = filespec;
+        bool success = false;
 
-        size_t end = this->filename.rfind('.');
-        if (end == std::string::npos) warning_msg("No detectable filename extension for file " << filespec);
+        std::string suffix = this->filename.substr(end + 1);
+        std::locale loc;
+        for (size_t i=0; i<suffix.length(); i++) suffix[i] = std::toupper(suffix[i], loc);
+
+        if (suffix == "BMP")
+        {
+            if (!this->loadBMP()) success = true;
+        }
+        else if (suffix == "TGA")
+        {
+            if (!this->loadTGA()) success = true;
+        }
+        else if (suffix == "JPG" || suffix == "JPEG")
+        {
+            if (!this->loadJPG()) success = true;
+        }
         else
         {
-            bool success = false;
-
-            std::string suffix = this->filename.substr(end + 1);
-            std::locale loc;
-            for (size_t i=0; i<suffix.length(); i++) suffix[i] = std::toupper(suffix[i], loc);
-
-            if (suffix == "BMP")
-            {
-                if (!this->loadBMP()) success = true;
-            }
-            else if (suffix == "TGA")
-            {
-                if (!this->loadTGA()) success = true;
-            }
-            else if (suffix == "JPG" || suffix == "JPEG")
-            {
-                if (!this->loadJPG()) success = true;
-            }
-            else
-            {
-                warning_msg("Unsupported extension for file " << filespec << ": " << suffix);
-            }
-
-            if (success)
-            {
-                this->valid = true;
-                this->computeBytesPerPixel();
-                create_texture(this);
-                load_texture(this);
-            }
-
-            if (this->data) free(this->data);
+            warning_msg("Unsupported extension for file " << this->filename << ": " << suffix);
         }
+
+        if (success)
+        {
+            this->valid = true;
+            this->computeBytesPerPixel();
+            create_texture(this);
+            load_texture(this);
+        }
+
+        if (this->data) free(this->data);
     }
 }
 

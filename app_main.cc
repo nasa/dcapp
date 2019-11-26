@@ -199,31 +199,23 @@ static std::vector<std::string> parseUserPath(void)
     return retvec;
 }
 
-static char *findExecutablePath(std::string inpath)
+static std::string findExecutablePath(std::string inpath)
 {
-    PathInfo *pinfo;
-
     if (inpath.find('/') != std::string::npos)
     {
-        pinfo = new PathInfo(inpath);
-        if (pinfo->isExecutableFile()) return pinfo->getDirectory();
-        else
-        {
-            delete pinfo;
-            return 0x0;
-        }
+        PathInfo pinfo(inpath);
+        if (pinfo.isExecutableFile()) return pinfo.getDirectory();
+        else return "";
     }
 
     std::vector<std::string> upath = parseUserPath();
     std::vector<std::string>::iterator item;
     for (item = upath.begin(); item != upath.end(); item++)
     {
-        pinfo = new PathInfo(*item + '/' + inpath);
-        if (pinfo->isExecutableFile()) return pinfo->getDirectory();
-        delete pinfo;
+        PathInfo pinfo(*item + '/' + inpath);
+        if (pinfo.isExecutableFile()) return pinfo.getDirectory();
     }
-
-    return 0x0;
+    return "";
 }
 
 static void setenvUsingScript(const char *myenv, const char *myscript, const char *myarg)
@@ -294,6 +286,7 @@ static void SetDefaultEnvironment(std::string pathspec)
     realpath(tmppath.c_str(), resolvedpath);
 
     AppData.dcapphome = resolvedpath;
+    AppData.defaultfont = AppData.dcapphome + "/dcapp.app/Contents/Resources/fonts/defaultfont";
 
     tmppath = mypath + "/../dcapp-config";
     realpath(tmppath.c_str(), resolvedpath);

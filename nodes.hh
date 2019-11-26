@@ -13,6 +13,7 @@
 typedef struct
 {
     std::string dcapphome;
+    std::string defaultfont;
     float force_update;
     Timer *last_update;
     Timer *master_timer;

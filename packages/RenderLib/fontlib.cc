@@ -38,25 +38,19 @@ const UTF32 tdFont::offsetsFromUTF8[] = { 0x00000000UL, 0x00003080UL, 0x000E2080
 /*************************/
 
 
-tdFont::tdFont(const char *filespec, const char *facespec, unsigned int basesize)
+tdFont::tdFont(std::string filespec, std::string facespec, unsigned int basespec)
 :
 face(0x0),
 kern_flag(false),
-basesize(0),
+filename(filespec),
+facename(facespec),
+basesize(basespec),
 descender(0),
 max_advance(0),
 max_advance_alnum(0),
 max_advance_numeric(0),
 valid(false)
 {
-    int ret, i;
-    FT_Face tmpface, newface = 0;
-    UTF32 glyph;
-
-    if (filespec) this->filename = filespec;
-    if (facespec) this->facename = facespec;
-    this->basesize = basesize;
-
     if (!library)
     {
         if (FT_Init_FreeType(&library))
@@ -66,26 +60,27 @@ valid(false)
         }
     }
 
-    ret = FT_New_Face(library, filespec, 0, &(this->face));
+    int ret = FT_New_Face(library, this->filename.c_str(), 0, &(this->face));
     if (ret == FT_Err_Unknown_File_Format)
     {
-        warning_msg("The font file " << filespec << " appears to be in an unsupported format");
+        warning_msg("The font file " << this->filename << " appears to be in an unsupported format");
         return;
     }
     else if (ret)
     {
-        warning_msg("The font file " << filespec << " could not be opened or read");
+        warning_msg("The font file " << this->filename << " could not be opened or read");
         return;
     }
 
     this->valid = true;
 
-    if (facespec)
+    if (!(this->facename.empty()))
     {
-        for (i = 0; i < this->face->num_faces && !newface; i++)
+        FT_Face tmpface, newface = 0;
+        for (int i = 0; i < this->face->num_faces && !newface; i++)
         {
-            FT_New_Face(library, filespec, i, &tmpface);
-            if (!strcasecmp(facespec, tmpface->style_name)) newface = tmpface;
+            FT_New_Face(library, this->filename.c_str(), i, &tmpface);
+            if (!strcasecmp(this->facename.c_str(), tmpface->style_name)) newface = tmpface;
             else FT_Done_Face(tmpface);
         }
         if (newface)
@@ -95,7 +90,7 @@ valid(false)
         }
     }
 
-    if (FT_Set_Pixel_Sizes(this->face, basesize, basesize))
+    if (FT_Set_Pixel_Sizes(this->face, this->basesize, this->basesize))
     {
         warning_msg("Unable to set pixel size");
     }
@@ -105,7 +100,7 @@ valid(false)
     this->descender = (float)(this->face->size->metrics.descender>>6);
 
     // pre-load commonly-used glyphs
-    for (glyph=PRELOAD_START; glyph<=PRELOAD_END; glyph++) this->loadGlyphInfo(&(this->gdata[glyph]), glyph);
+    for (UTF32 glyph=PRELOAD_START; glyph<=PRELOAD_END; glyph++) this->loadGlyphInfo(&(this->gdata[glyph]), glyph);
 }
 
 

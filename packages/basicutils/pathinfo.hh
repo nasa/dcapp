@@ -3,7 +3,6 @@
 
 #include <string>
 #include <cstdlib>
-#include <climits>
 #include <cstring>
 #include <libgen.h>
 #include <unistd.h>
@@ -12,38 +11,40 @@
 class PathInfo
 {
     public:
-        PathInfo(std::string pathspec) : fullpath(0x0), directory(0x0), file(0x0)
+        PathInfo(std::string pathspec) : fullpath(pathspec), valid(false)
         {
-            if (!pathspec.empty())
+            if (!fullpath.empty())
             {
-                char *myabspath = (char *)calloc(PATH_MAX, sizeof(char));
-                if (realpath(pathspec.c_str(), myabspath))
+                char *myabspath = realpath(fullpath.c_str(), 0x0);
+                if (myabspath)
                 {
-                    fullpath = strdup(myabspath);
+                    valid = true;
 
                     // note that we create dirc and basec because dirname and basename can mangle the passed string
                     char *dirc = strdup(myabspath);
                     char *basec = strdup(myabspath);
-                    directory = strdup(dirname(dirc));
-                    file = strdup(basename(basec));
+
+                    directory = dirname(dirc);
+                    file = basename(basec);
 
                     free(dirc);
                     free(basec);
+                    free(myabspath);
                 }
-                free(myabspath);
             }
         };
-        virtual ~PathInfo() { if (fullpath) free(fullpath); if (directory) free(directory); if (file) free(file); };
+        virtual ~PathInfo() { };
 
-        char *getFullPath(void) { return fullpath; };
-        char *getDirectory(void) { return directory; };
-        char *getFile(void) { return file; };
+        std::string getFullPath(void) { return fullpath; };
+        std::string getDirectory(void) { return directory; };
+        std::string getFile(void) { return file; };
+        bool isValid(void) { return valid; };
         bool isExecutableFile(void)
         {
-            if (!access(fullpath, X_OK))
+            if (!access(fullpath.c_str(), X_OK))
             {
                 struct stat finfo;
-                if (!stat(fullpath, &finfo))
+                if (!stat(fullpath.c_str(), &finfo))
                 {
                     if (finfo.st_mode & S_IFREG) return true;
                 }
@@ -52,9 +53,10 @@ class PathInfo
         };
 
     private:
-        char *fullpath;
-        char *directory;
-        char *file;
+        std::string fullpath;
+        std::string directory;
+        std::string file;
+        bool valid;
 };
 
 #endif

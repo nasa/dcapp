@@ -2,13 +2,13 @@
 #include "commonutils.hh"
 #include "image.hh"
 
-dcImage::dcImage(dcParent *myparent) : dcGeometric(myparent)
+dcImage::dcImage(dcParent *myparent) : dcGeometric(myparent), textureID(0x0)
 {
 }
 
 void dcImage::setTexture(const char *filename)
 {
-    textureID = tdLoadTexture(filename);
+    if (filename) textureID = tdLoadTexture(filename);
 }
 
 void dcImage::draw(void)

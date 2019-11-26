@@ -30,7 +30,7 @@ typedef std::map<UTF32, GlyphInfo *> GlyphSet;
 class tdFont
 {
     public:
-        tdFont(const char *, const char *, unsigned int);
+        tdFont(std::string, std::string, unsigned int);
         virtual ~tdFont();
         float getAdvance(std::string, flMonoOption);
         float getDescender(void);

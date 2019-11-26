@@ -45,10 +45,12 @@ int main(int argc, char **argv)
     if (!p_file) UsageError(mydoc);
 
     // move to the folder containing the specfile and set $dcappDisplayHome
-    PathInfo *mypath = new PathInfo(argv[1]);
-    setenv("dcappDisplayHome", mypath->getDirectory(), 1);
-    if (mypath->getDirectory()) chdir(mypath->getDirectory());
-    delete mypath;
+    PathInfo mypath(argv[1]);
+    if (mypath.isValid())
+    {
+        setenv("dcappDisplayHome", mypath.getDirectory().c_str(), 1);
+        chdir(mypath.getDirectory().c_str());
+    }
 
     process_elements(root_element->children);
 
@@ -119,33 +121,33 @@ static void process_elements(xmlNodePtr startnode)
 
             if (include_filename)
             {
-                PathInfo *mypath = new PathInfo(include_filename);
-
-                // Store cwd for future use
-                int mycwd = open(".", O_RDONLY);
-
-                // Move to directory containing the new file
-                if (mypath->getDirectory()) chdir(mypath->getDirectory());
-
-                if (mypath->getFile() == 0x0)
-                {
-                    warning_msg("Couldn't open include file " << include_filename);
-                }
-                else if (XMLFileOpen(&include_file, &include_element, mypath->getFile()))
+                PathInfo mypath(include_filename);
+                if (!mypath.isValid())
                 {
                     warning_msg("Couldn't open include file " << include_filename);
                 }
                 else
                 {
-                    process_elements(include_element);
-                    XMLFileClose(include_file);
+                    // Store cwd for future use
+                    int mycwd = open(".", O_RDONLY);
+
+                    // Move to directory containing the new file
+                    chdir(mypath.getDirectory().c_str());
+
+                    if (XMLFileOpen(&include_file, &include_element, mypath.getFile().c_str()))
+                    {
+                        warning_msg("Couldn't open include file " << include_filename);
+                    }
+                    else
+                    {
+                        process_elements(include_element);
+                        XMLFileClose(include_file);
+                    }
+
+                    // Return to the original working directory
+                    fchdir(mycwd);
+                    close(mycwd);
                 }
-
-                // Return to the original working directory
-                fchdir(mycwd);
-                close(mycwd);
-
-                delete mypath;
             }
             else warning_msg("No include file specified");
         }
