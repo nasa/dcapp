@@ -5,7 +5,7 @@
 #include "basicutils/timer.hh"
 #include "trickcomm.hh"
 #include "string_utils.hh"
-#include "varlist.hh"
+#include "types.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
@@ -54,17 +54,17 @@ CommModule::CommStatus TrickCommModule::read(void)
             {
                 switch (myitem->type)
                 {
-                    case VARLIST_DECIMAL:
+                    case DECIMAL_TYPE:
                         *(double *)myitem->dcvalue = *(double *)myitem->trickvalue;
                         break;
-                    case VARLIST_INTEGER:
+                    case INTEGER_TYPE:
                         *(int *)myitem->dcvalue = *(int *)myitem->trickvalue;
                         break;
-                    case VARLIST_STRING:
+                    case STRING_TYPE:
                         strcpy((char *)myitem->dcvalue, (char *)myitem->trickvalue);
                         break;
                 }
-                if (myitem->type != VARLIST_UNKNOWN_TYPE && myitem->init_only)
+                if (myitem->type != UNDEFINED_TYPE && myitem->init_only)
                 {
                     if (this->tvs->remove_var(myitem->trickvar) == VS_SUCCESS) this->fromSim.erase(myitem);
                 }
@@ -114,21 +114,21 @@ CommModule::CommStatus TrickCommModule::write(void)
             {
                 switch (myitem->type)
                 {
-                    case VARLIST_DECIMAL:
+                    case DECIMAL_TYPE:
                         if (*(double *)myitem->dcvalue)
                         {
                             this->tvs->put(myitem->trickvar, VS_METHOD, 0x0, 0x0);
                             *(double *)myitem->dcvalue = 0;
                         }
                         break;
-                    case VARLIST_INTEGER:
+                    case INTEGER_TYPE:
                         if (*(int *)myitem->dcvalue)
                         {
                             this->tvs->put(myitem->trickvar, VS_METHOD, 0x0, 0x0);
                             *(int *)myitem->dcvalue = 0;
                         }
                         break;
-                    case VARLIST_STRING:
+                    case STRING_TYPE:
                         if (StringToBoolean((char *)myitem->dcvalue, false))
                         {
                             this->tvs->put(myitem->trickvar, VS_METHOD, 0x0, 0x0);
@@ -141,7 +141,7 @@ CommModule::CommStatus TrickCommModule::write(void)
             {
                 switch (myitem->type)
                 {
-                    case VARLIST_DECIMAL:
+                    case DECIMAL_TYPE:
                         if (myitem->forcewrite || *(double *)myitem->dcvalue != myitem->prevvalue.f)
                         {
                             this->tvs->put(myitem->trickvar, VS_DECIMAL, myitem->dcvalue, myitem->units);
@@ -149,7 +149,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                             myitem->forcewrite = false;
                         }
                         break;
-                    case VARLIST_INTEGER:
+                    case INTEGER_TYPE:
                         if (myitem->forcewrite || *(int *)myitem->dcvalue != myitem->prevvalue.i)
                         {
                             this->tvs->put(myitem->trickvar, VS_INTEGER, myitem->dcvalue, myitem->units);
@@ -157,7 +157,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                             myitem->forcewrite = false;
                         }
                         break;
-                    case VARLIST_STRING:
+                    case STRING_TYPE:
                         if (myitem->forcewrite || strcmp((char *)myitem->dcvalue, myitem->prevvalue.str))
                         {
                             this->tvs->put(myitem->trickvar, VS_STRING, myitem->dcvalue, myitem->units);
@@ -262,15 +262,15 @@ void TrickCommModule::finishInitialization(void)
     {
         switch (myitem->type)
         {
-                case VARLIST_DECIMAL:
+                case DECIMAL_TYPE:
                     type = VS_DECIMAL;
                     nelem = 1;
                     break;
-                case VARLIST_INTEGER:
+                case INTEGER_TYPE:
                     type = VS_INTEGER;
                     nelem = 1;
                     break;
-                case VARLIST_STRING:
+                case STRING_TYPE:
                     type = VS_STRING;
                     nelem = STRING_DEFAULT_LENGTH;
                     break;

@@ -4,10 +4,9 @@
 #include "basicutils/timer.hh"
 #include "basicutils/tidy.hh"
 #include "edgecomm.hh"
-#include "varlist.hh"
+#include "types.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
-
 
 EdgeCommModule::EdgeCommModule()
 :
@@ -81,13 +80,13 @@ CommModule::CommStatus EdgeCommModule::read(void)
 
         switch (myitem->type)
         {
-            case VARLIST_DECIMAL:
+            case DECIMAL_TYPE:
                 *(double *)myitem->dcvalue = strtof(strval, 0x0);
                 break;
-            case VARLIST_INTEGER:
+            case INTEGER_TYPE:
                 *(int *)myitem->dcvalue = (int)strtol(strval, 0x0, 10);
                 break;
-            case VARLIST_STRING:
+            case STRING_TYPE:
                 strcpy((char *)myitem->dcvalue, strval);
                 break;
         }
@@ -125,7 +124,7 @@ CommModule::CommStatus EdgeCommModule::write(void)
     {
         switch (myitem->type)
         {
-            case VARLIST_DECIMAL:
+            case DECIMAL_TYPE:
                 if (myitem->forcewrite || *(double *)myitem->dcvalue != myitem->prevvalue.f)
                 {
                     if (asprintf(&cmd, "%s %f", myitem->edgecmd, *(double *)(myitem->dcvalue)) == -1)
@@ -139,7 +138,7 @@ CommModule::CommStatus EdgeCommModule::write(void)
                     TIDY(cmd);
                 }
                 break;
-            case VARLIST_INTEGER:
+            case INTEGER_TYPE:
                 if (myitem->forcewrite || *(int *)myitem->dcvalue != myitem->prevvalue.i)
                 {
                     if (asprintf(&cmd, "%s %d", myitem->edgecmd, *(int *)(myitem->dcvalue)) == -1)
@@ -153,7 +152,7 @@ CommModule::CommStatus EdgeCommModule::write(void)
                     TIDY(cmd);
                 }
                 break;
-            case VARLIST_STRING:
+            case STRING_TYPE:
                 if (myitem->forcewrite || strcmp((char *)myitem->dcvalue, myitem->prevvalue.str))
                 {
                     if (asprintf(&cmd, "%s %s", myitem->edgecmd, (char *)(myitem->dcvalue)) == -1)

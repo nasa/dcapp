@@ -2,6 +2,7 @@
 #include <cstring>
 #include <string>
 #include <map>
+#include "types.hh"
 #include "basicutils/msg.hh"
 #include "varlist_constants.hh"
 
@@ -36,25 +37,25 @@ void *varlist_append(const char *paramname, const char *typestr, const char *ini
 
     if (!strcmp(typestr, "Float"))
     {
-        vinfo.type = VARLIST_DECIMAL;
+        vinfo.type = DECIMAL_TYPE;
         vinfo.value = calloc(1, sizeof(double));
         if (initval) *(double *)vinfo.value = strtof(initval, 0x0);
     }
     else if (!strcmp(typestr, "Integer"))
     {
-        vinfo.type = VARLIST_INTEGER;
+        vinfo.type = INTEGER_TYPE;
         vinfo.value = calloc(1, sizeof(int));
         if (initval) *(int *)vinfo.value = strtol(initval, 0x0, 10);
     }
     else if (!strcmp(typestr, "String"))
     {
-        vinfo.type = VARLIST_STRING;
+        vinfo.type = STRING_TYPE;
         vinfo.value = calloc(STRING_DEFAULT_LENGTH, sizeof(char));
         if (initval) strcpy((char *)vinfo.value, initval);
     }
     else
     {
-        vinfo.type = VARLIST_UNKNOWN_TYPE;
+        vinfo.type = UNDEFINED_TYPE;
         vinfo.value = 0x0;
         error_msg("Attempting to create the variable \"" << paramname << "\" with an unknown type: " << typestr);
     }
@@ -92,7 +93,7 @@ void *get_pointer(const char *label)
 
 int get_datatype(const char *label)
 {
-    if (!label) return VARLIST_UNKNOWN_TYPE;
+    if (!label) return UNDEFINED_TYPE;
 
     const char *mylabel;
 
@@ -103,6 +104,6 @@ int get_datatype(const char *label)
     else
     {
         error_msg("Invalid parameter label: " << label);
-        return VARLIST_UNKNOWN_TYPE;
+        return UNDEFINED_TYPE;
     }
 }
