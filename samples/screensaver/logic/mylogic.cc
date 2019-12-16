@@ -10,9 +10,8 @@ extern "C" void DisplayLogic(void)
     static double deltax = 8, deltay = 8;
 
     gettimeofday(&tp, &tzp);
-
-    strcpy(CURRENT_TIME, asctime(localtime((time_t *)(&tp.tv_sec))));
-    CURRENT_TIME[strlen(CURRENT_TIME)-1] = 0;
+    *CURRENT_TIME = asctime(localtime((time_t *)(&tp.tv_sec)));
+    if (!CURRENT_TIME->empty()) CURRENT_TIME->pop_back();
 
     if (*POS_X < 10) deltax = 8;
     if (*POS_X > 1290) deltax = -8;

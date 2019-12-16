@@ -1,6 +1,0 @@
-#ifndef _VARLIST_CONSTANTS_HH_
-#define _VARLIST_CONSTANTS_HH_
-
-#define STRING_DEFAULT_LENGTH 64
-
-#endif

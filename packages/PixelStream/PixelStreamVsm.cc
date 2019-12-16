@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstddef>
+#include <string>
 #include <sstream>
 #include <netdb.h>
 #include <arpa/inet.h>
@@ -23,7 +24,6 @@ vsmhost(0x0),
 vsmport(0),
 userpath(0x0),
 curr_camera(0x0),
-prev_camera(0x0),
 cameraassigned(false)
 {
     this->protocol = PixelStreamVsmProtocol;
@@ -65,7 +65,7 @@ static size_t write_curl_data(void * /* buffer */, size_t size, size_t nmemb, vo
 }
 #endif
 
-int PixelStreamVsm::readerInitialize(const char *hostspec, int portspec, const char *pathspec, char *cameraid)
+int PixelStreamVsm::readerInitialize(const char *hostspec, int portspec, const char *pathspec, std::string *cameraid)
 {
 #ifndef JPEG_ENABLED
 warning_msg("Could not find libjpeg or libjpeg-turbo");
@@ -105,7 +105,7 @@ warning_msg("Could not find libcurl - VSM functionality disabled");
     this->vsmport = portspec;
     if (pathspec) this->userpath = strdup(pathspec);
     this->curr_camera = cameraid;
-    this->prev_camera = strdup("");
+    this->prev_camera = "";
 
     return 0;
 }
@@ -119,7 +119,7 @@ int PixelStreamVsm::reader(void)
     this->lastinview->restart();
 
     // user has requested a new camera
-    if (strcmp(curr_camera, prev_camera))
+    if (*curr_camera != prev_camera)
     {
         if (cameraassigned)
         {
@@ -129,8 +129,7 @@ int PixelStreamVsm::reader(void)
         }
         this->assigncameraattempt->restart();
         first_assign_attempt = true;
-        if (prev_camera) free(prev_camera);
-        prev_camera = strdup(curr_camera);
+        prev_camera = *curr_camera;
     }
 
     if (!cameraassigned)
@@ -175,7 +174,7 @@ int PixelStreamVsm::assignNewCamera(void)
 #ifdef CURL_ENABLED
     CURLcode result;
 
-    if (!strlen(this->curr_camera))
+    if (this->curr_camera->empty())
     {
         debug_msg("No camera specified");
         return 0;
@@ -183,7 +182,7 @@ int PixelStreamVsm::assignNewCamera(void)
 
     // Build the URL
     std::ostringstream url;
-    url << this->vsmhost << ":" << this->vsmport << "/streams/" << this->curr_camera;
+    url << this->vsmhost << ":" << this->vsmport << "/streams/" << *(this->curr_camera);
 
     // Tell CURL what URL to GET
     result = curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
@@ -228,13 +227,13 @@ int PixelStreamVsm::assignNewCamera(void)
 
         case 404:
             // This camera does not exist in any EDGE instance.
-            debug_msg("No such camera: " << curr_camera);
+            debug_msg("No such camera: " << *(this->curr_camera));
             break;
 
         case 503:
             // This camera exists, but all EDGE instances capable of rendering it are
             // busy rendering other cameras for other clients. (We're out of resources.)
-            debug_msg("Camera unavailable: " << curr_camera);
+            debug_msg("Camera unavailable: " << *(this->curr_camera));
             break;
 
         default:

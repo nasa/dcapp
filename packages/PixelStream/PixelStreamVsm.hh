@@ -1,6 +1,7 @@
 #ifndef _PIXELSTREAMVSM_HH_
 #define _PIXELSTREAMVSM_HH_
 
+#include <string>
 #ifdef CURL_ENABLED
 #include <curl/curl.h>
 #endif
@@ -15,7 +16,7 @@ class PixelStreamVsm : public PixelStreamMjpeg
 
         bool operator == (const PixelStreamVsm &);
         bool operator != (const PixelStreamVsm &);
-        int readerInitialize(const char *, int, const char *, char *);
+        int readerInitialize(const char *, int, const char *, std::string *);
         int reader(void);
 
     private:
@@ -30,8 +31,8 @@ class PixelStreamVsm : public PixelStreamMjpeg
         char *vsmhost;
         int vsmport;
         char *userpath;
-        char *curr_camera;
-        char *prev_camera;
+        std::string *curr_camera;
+        std::string prev_camera;
         bool cameraassigned;
         bool first_assign_attempt;
         Timer *assigncameraattempt;

@@ -1,8 +1,10 @@
 #ifndef _CONSTANTS_HH_
 #define _CONSTANTS_HH_
 
+#include <string>
+
 extern double *dcLoadConstant(double fval);
 extern int *dcLoadConstant(int ival);
-extern char *dcLoadConstant(const char *sval);
+extern std::string *dcLoadConstant(const char *sval);
 
 #endif

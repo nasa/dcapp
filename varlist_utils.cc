@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 #include "types.hh"
 #include "string_utils.hh"
 #include "constants.hh"
@@ -43,9 +44,9 @@ int *getIntegerPointer(const char *valstr)
     else return dcLoadConstant(StringToInteger(valstr, 0));
 }
 
-char *getStringPointer(const char *valstr)
+std::string *getStringPointer(const char *valstr)
 {
-    if (check_dynamic_element(valstr)) return (char *)get_pointer(valstr);
+    if (check_dynamic_element(valstr)) return (std::string *)get_pointer(valstr);
     else return dcLoadConstant(valstr);
 }
 
@@ -69,7 +70,7 @@ void *getVariablePointer(int datatype, const char *valstr)
 int get_data_type(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return get_datatype(valstr);
-    return UNDEFINED_TYPE;
+    else return UNDEFINED_TYPE;
 }
 
 double getDecimalValue(int type, const void *val)
@@ -81,7 +82,7 @@ double getDecimalValue(int type, const void *val)
         case INTEGER_TYPE:
             return (double)(*(int *)val);
         case STRING_TYPE:
-            return strtod((char *)val, 0x0);
+            return std::stod(*(std::string *)val);
     }
     return 0;
 }
@@ -95,7 +96,21 @@ int getIntegerValue(int type, const void *val)
         case INTEGER_TYPE:
             return *(int *)val;
         case STRING_TYPE:
-            return strtol((char *)val, 0x0, 10);
+            return std::stoi(*(std::string *)val);
     }
     return 0;
+}
+
+std::string getStringValue(int type, const void *val)
+{
+    switch (type)
+    {
+        case DECIMAL_TYPE:
+            return std::to_string(*(double *)val);
+        case INTEGER_TYPE:
+            return std::to_string(*(int *)val);
+        case STRING_TYPE:
+            return *(std::string *)val;
+    }
+    return "";
 }

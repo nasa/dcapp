@@ -23,21 +23,30 @@ class VarString
                 switch (datatype)
                 {
                     case DECIMAL_TYPE: format = "%g"; break;
-                    case INTEGER_TYPE: format = "%d";   break;
-                    case STRING_TYPE:  format = "%s";   break;
+                    case INTEGER_TYPE: format = "%d"; break;
+                    case STRING_TYPE:  format = "%s"; break;
                 }
             }
         };
         std::string get(void)
         {
             char *tmp_str = 0x0;
+            std::string ret_str;
             switch (datatype)
             {
-                case DECIMAL_TYPE: asprintf(&tmp_str, format.c_str(), *(double *)(value)); break;
-                case INTEGER_TYPE: asprintf(&tmp_str, format.c_str(), *(int *)(value));   break;
-                case STRING_TYPE:  asprintf(&tmp_str, format.c_str(), (char *)value);     break;
+                case DECIMAL_TYPE:
+                    asprintf(&tmp_str, format.c_str(), *(double *)(value));
+                    break;
+                case INTEGER_TYPE:
+                    asprintf(&tmp_str, format.c_str(), *(int *)(value));
+                    break;
+                case STRING_TYPE:
+                    asprintf(&tmp_str, format.c_str(), ((std::string *)value)->c_str());
+                    break;
+                default:
+                    return ret_str;
             }
-            std::string ret_str = tmp_str;
+            ret_str = tmp_str;
             free(tmp_str);
             return ret_str;
         };

@@ -169,7 +169,6 @@ void Terminate(int flag)
     }
 
     curlLibTerm();
-    varlist_term();
     exit(flag);
 }
 

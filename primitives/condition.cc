@@ -1,4 +1,5 @@
 #include <cstring>
+#include <string>
 #include "string_utils.hh"
 #include "types.hh"
 #include "varlist.hh"
@@ -199,13 +200,13 @@ bool dcCondition::checkCondition(void)
             switch (opspec)
             {
                 case Simple:
-                    if (StringToBoolean((char *)val1, false)) eval = true;
+                    if (StringToBoolean(((std::string *)val1)->c_str(), false)) eval = true;
                     break;
                 case IfEquals:
-                    if (!strcmp((char *)val1, (char *)val2)) eval = true;
+                    if (getStringValue(datatype1, val1) == getStringValue(datatype2, val2)) eval = true;
                     break;
                 case IfNotEquals:
-                    if (strcmp((char *)val1, (char *)val2)) eval = true;
+                    if (getStringValue(datatype1, val1) != getStringValue(datatype2, val2)) eval = true;
                     break;
                 case IfGreaterThan:
                     if (getDecimalValue(datatype1, val1) > getDecimalValue(datatype2, val2)) eval = true;

@@ -1,9 +1,9 @@
 #include <list>
-#include <cstring>
+#include <string>
 
 static std::list<double> decimalConstants;
 static std::list<int> integerConstants;
-static std::list<char *> stringConstants;
+static std::list<std::string> stringConstants;
 
 double *dcLoadConstant(double fval)
 {
@@ -27,19 +27,18 @@ int *dcLoadConstant(int ival)
     return &(integerConstants.back());
 }
 
-char *dcLoadConstant(const char *sval)
+std::string *dcLoadConstant(const char *sval)
 {
-    const char *myval;
-    const char nulval='\0';
+    std::string myval;
 
     if (sval) myval = sval;
-    else myval = &nulval;
+    else myval = "";
 
-    std::list<char *>::iterator sc;
+    std::list<std::string>::iterator sc;
     for (sc = stringConstants.begin(); sc != stringConstants.end(); sc++)
     {
-        if (!strcmp(*sc, myval)) return *sc;
+        if (*sc == myval) return &(*sc);
     }
-    stringConstants.push_back(strdup(myval));
-    return stringConstants.back();
+    stringConstants.push_back(myval);
+    return &(stringConstants.back());
 }

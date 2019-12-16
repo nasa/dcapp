@@ -128,13 +128,7 @@ void dcSetValue::calculateValue(int opspec, int vartype, void *varID, int valtyp
             }
             break;
         case STRING_TYPE:
-            switch (valtype)
-            {
-                case STRING_TYPE:
-                    if (opspec == Equals)
-                        strcpy((char *)varID, (char *)valID);
-                    break;
-            }
+            if (opspec == Equals) *(std::string *)varID = getStringValue(valtype, valID);
             break;
     }
 
