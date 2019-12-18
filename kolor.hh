@@ -74,7 +74,7 @@ class Kolor
         double *A;
 
     private:
-        double *color_element(std::string strval)
+        double *color_element(std::string &strval)
         {
             if (check_dynamic_element(strval.c_str())) return (double *)get_pointer(strval.c_str());
             else return dcLoadConstant(std::stod(strval));

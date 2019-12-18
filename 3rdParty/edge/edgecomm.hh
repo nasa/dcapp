@@ -1,10 +1,10 @@
 #ifndef _EDGEIO_HH_
 #define _EDGEIO_HH_
 
+#include <string>
 #include <list>
 #include "basicutils/timer.hh"
 #include "comm.hh"
-#include "varlist.hh"
 #include "EDGE_rcs.hh"
 
 #define EDGEIO_FROMEDGE           (1)
@@ -28,13 +28,13 @@ class EdgeCommModule : public CommModule
         typedef struct
         {
             int type;
-            char *edgecmd;
+            std::string edgecmd;
             void *dcvalue;
-            union
+            struct
             {
-                int i;
-                double f;
-                char str[STRING_DEFAULT_LENGTH];
+                double decval;
+                int intval;
+                std::string strval;
             } prevvalue;
             bool forcewrite;
         } io_parameter;

@@ -1,10 +1,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 #include "basicutils/timer.hh"
 #include "basicutils/tidy.hh"
 #include "edgecomm.hh"
 #include "types.hh"
+#include "varlist.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
@@ -23,9 +25,7 @@ EdgeCommModule::~EdgeCommModule()
 {
     std::list<io_parameter>::iterator myitem;
 
-    for (myitem = this->fromEdge.begin(); myitem != this->fromEdge.end(); myitem++) TIDY(myitem->edgecmd);
     fromEdge.clear();
-    for (myitem = this->toEdge.begin(); myitem != this->toEdge.end(); myitem++) TIDY(myitem->edgecmd);
     toEdge.clear();
 
     TIDY(this->cmd_group);
@@ -38,40 +38,35 @@ EdgeCommModule::~EdgeCommModule()
 CommModule::CommStatus EdgeCommModule::read(void)
 {
     if (!(this->active)) return this->Inactive;
+    if (this->edge_timer->getSeconds() < this->update_rate) return this->None;
 
     int ret;
     char *result = 0x0;
-    char *cmd = 0x0, *strptr, *strval = 0x0;
+    char *strptr, *substr = 0x0;
+    std::string cmd = "execute_command_group ";
 
-    if (this->edge_timer->getSeconds() < this->update_rate) return this->None;
-
-    if (asprintf(&cmd, "execute_command_group %s", this->cmd_group) == -1)
-    {
-        this->active = false;
-        return this->Fail;
-    }
+    cmd += this->cmd_group;
 
     ret = this->rcs->send_doug_command(cmd, &result, 0x0);
-    TIDY(cmd);
     if (ret)
     {
         this->active = false;
         return this->Fail;
     }
 
-    strval = (char *)calloc(1, strlen(result));
-    if (!strval)
+    substr = (char *)calloc(1, strlen(result));
+    if (!substr)
     {
         this->active = false;
         return this->Fail;
     }
 
-    std::list<io_parameter>::iterator myitem;
     strptr = result;
 
+    std::list<io_parameter>::iterator myitem;
     for (myitem = this->fromEdge.begin(); myitem != this->fromEdge.end(); myitem++)
     {
-        ret = sscanf(strptr, "%s", strval);
+        ret = sscanf(strptr, "%s", substr);
         if (!ret)
         {
             this->active = false;
@@ -81,20 +76,20 @@ CommModule::CommStatus EdgeCommModule::read(void)
         switch (myitem->type)
         {
             case DECIMAL_TYPE:
-                *(double *)myitem->dcvalue = strtof(strval, 0x0);
+                *(double *)myitem->dcvalue = strtof(substr, 0x0);
                 break;
             case INTEGER_TYPE:
-                *(int *)myitem->dcvalue = (int)strtol(strval, 0x0, 10);
+                *(int *)myitem->dcvalue = (int)strtol(substr, 0x0, 10);
                 break;
             case STRING_TYPE:
-                strcpy((char *)myitem->dcvalue, strval);
+                *(std::string *)myitem->dcvalue = substr;
                 break;
         }
 
-        strptr += strlen(strval) + 1;
+        strptr += strlen(substr) + 1;
     }
 
-    TIDY(strval);
+    TIDY(substr);
     TIDY(result);
 
     this->edge_timer->restart();
@@ -116,7 +111,7 @@ CommModule::CommStatus EdgeCommModule::write(void)
     if (!(this->active)) return this->None;
 
     int status = 0;
-    char *cmd = 0x0;
+    std::string cmd;
 
     std::list<io_parameter>::iterator myitem;
 
@@ -125,45 +120,36 @@ CommModule::CommStatus EdgeCommModule::write(void)
         switch (myitem->type)
         {
             case DECIMAL_TYPE:
-                if (myitem->forcewrite || *(double *)myitem->dcvalue != myitem->prevvalue.f)
+                if (myitem->forcewrite || *(double *)myitem->dcvalue != myitem->prevvalue.decval)
                 {
-                    if (asprintf(&cmd, "%s %f", myitem->edgecmd, *(double *)(myitem->dcvalue)) == -1)
-                    {
-                        this->active = false;
-                        return this->Fail;
-                    }
+                    cmd = myitem->edgecmd;
+                    cmd += " ";
+                    cmd += std::to_string(*(double *)(myitem->dcvalue));
                     status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
-                    myitem->prevvalue.f = *(double *)myitem->dcvalue;
+                    myitem->prevvalue.decval = *(double *)myitem->dcvalue;
                     myitem->forcewrite = false;
-                    TIDY(cmd);
                 }
                 break;
             case INTEGER_TYPE:
-                if (myitem->forcewrite || *(int *)myitem->dcvalue != myitem->prevvalue.i)
+                if (myitem->forcewrite || *(int *)myitem->dcvalue != myitem->prevvalue.intval)
                 {
-                    if (asprintf(&cmd, "%s %d", myitem->edgecmd, *(int *)(myitem->dcvalue)) == -1)
-                    {
-                        this->active = false;
-                        return this->Fail;
-                    }
+                    cmd = myitem->edgecmd;
+                    cmd += " ";
+                    cmd += std::to_string(*(int *)(myitem->dcvalue));
                     status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
-                    myitem->prevvalue.i = *(int *)myitem->dcvalue;
+                    myitem->prevvalue.intval = *(int *)myitem->dcvalue;
                     myitem->forcewrite = false;
-                    TIDY(cmd);
                 }
                 break;
             case STRING_TYPE:
-                if (myitem->forcewrite || strcmp((char *)myitem->dcvalue, myitem->prevvalue.str))
+                if (myitem->forcewrite || *(std::string *)myitem->dcvalue != myitem->prevvalue.strval)
                 {
-                    if (asprintf(&cmd, "%s %s", myitem->edgecmd, (char *)(myitem->dcvalue)) == -1)
-                    {
-                        this->active = false;
-                        return this->Fail;
-                    }
+                    cmd = myitem->edgecmd;
+                    cmd += " ";
+                    cmd += *(std::string *)(myitem->dcvalue);
                     status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
-                    strcpy(myitem->prevvalue.str, (char *)myitem->dcvalue);
+                    myitem->prevvalue.strval = *(std::string *)myitem->dcvalue;
                     myitem->forcewrite = false;
-                    TIDY(cmd);
                 }
                 break;
         }
@@ -187,8 +173,10 @@ void EdgeCommModule::flagAsChanged(void *value)
     }
 }
 
-int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *edgecmd)
+int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *cmdspec)
 {
+    if (!paramname || !cmdspec) return this->Fail;
+
     std::list<io_parameter> *io_map;
 
     switch (bufID)
@@ -208,12 +196,12 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *e
     if (valptr)
     {
         io_parameter myparam;
-        myparam.edgecmd = strdup(edgecmd);
+        myparam.edgecmd = cmdspec;
         myparam.type = get_datatype(paramname);
         myparam.dcvalue = valptr;
-        myparam.prevvalue.i = 0;
-        myparam.prevvalue.f = 0;
-        bzero(myparam.prevvalue.str, STRING_DEFAULT_LENGTH);
+        myparam.prevvalue.decval = 0;
+        myparam.prevvalue.intval = 0;
+        myparam.prevvalue.strval = "";
         myparam.forcewrite = false;
         io_map->push_back(myparam);
     }
@@ -232,22 +220,27 @@ int EdgeCommModule::finishInitialization(const char *host, const char *port, dou
 void EdgeCommModule::activate(void)
 {
     int ret;
-    char *cmd = 0x0;
+    std::string basecmd, cmd;
 
     if (!(this->fromEdge.empty()) || !(this->toEdge.empty()))
     {
         TIDY(this->cmd_group);
-        if (this->rcs->send_doug_command("create_command_group", &(this->cmd_group), 0x0)) return;
+        cmd = "create_command_group";
+        if (this->rcs->send_doug_command(cmd, &(this->cmd_group), 0x0)) return;
         if (!(this->cmd_group)) return;
         if (!(this->cmd_group[0])) return;
 
-        std::list<io_parameter>::iterator myitem;
+        basecmd = "add_command_to_group ";
+        basecmd += this->cmd_group;
+        basecmd += " \"";
 
+        std::list<io_parameter>::iterator myitem;
         for (myitem = this->fromEdge.begin(); myitem != this->fromEdge.end(); myitem++)
         {
-            if (asprintf(&cmd, "add_command_to_group %s \"%s\"", this->cmd_group, myitem->edgecmd) == -1) return;
+            cmd = basecmd;
+            cmd += myitem->edgecmd;
+            cmd += "\"";
             ret = this->rcs->send_doug_command(cmd, 0x0, 0x0);
-            TIDY(cmd);
             if (ret) return;
         }
 

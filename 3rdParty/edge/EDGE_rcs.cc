@@ -1,3 +1,4 @@
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -29,19 +30,19 @@ EdgeRcsComm::~EdgeRcsComm()
 
 int EdgeRcsComm::initialize(const char *hoststr, const char *portstr)
 {
-    char *edgehost, *edgeport;
+    std::string edgehost, edgeport;
     struct addrinfo hints;
     int result;
 
     if (hoststr)
-        edgehost = strdup(hoststr);
+        edgehost = hoststr;
     else
-        edgehost = strdup("localhost");
+        edgehost = "localhost";
 
     if (portstr)
-        edgeport = strdup(portstr);
+        edgeport = portstr;
     else
-        edgeport = strdup("5451");
+        edgeport = "5451";
 
     /* Set up the connection hints */
     memset(&hints, 0, sizeof(struct addrinfo));
@@ -51,10 +52,10 @@ int EdgeRcsComm::initialize(const char *hoststr, const char *portstr)
     hints.ai_protocol = 0;          /* Any protocol */
 
     /* resolve into a list of addresses */
-    result = getaddrinfo(edgehost, edgeport, &hints, &(this->server_addr_info));
+    result = getaddrinfo(edgehost.c_str(), edgeport.c_str(), &hints, &(this->server_addr_info));
     if (result)
     {
-        error_msg("Error in getaddrinfo for host " << edgehost << ": " << gai_strerror(result));
+        error_msg("Error in getaddrinfo for port " << edgeport << " on host " << edgehost << ": " << gai_strerror(result));
         return -1;
     }
 
@@ -64,7 +65,7 @@ int EdgeRcsComm::initialize(const char *hoststr, const char *portstr)
 }
 
 /* Send a single command. */
-int EdgeRcsComm::send_doug_command(const char *doug_command, char **command_result, char **rcs_version)
+int EdgeRcsComm::send_doug_command(std::string &doug_command, char **command_result, char **rcs_version)
 {
     struct addrinfo *addr;
     size_t len;
@@ -74,11 +75,10 @@ int EdgeRcsComm::send_doug_command(const char *doug_command, char **command_resu
     fd_set myset; 
     static socklen_t valopt_len = sizeof(valopt); 
 
-    if (!(this->edgercs_active)) return 0;
+    if (!(this->edgercs_active) || doug_command.empty()) return 0;
 
-    len = strlen(doug_command);
-    if (len <= 0) return 0;
-    else if (len >= MAX_SEND_SIZE)
+    len = doug_command.length();
+    if (len >= MAX_SEND_SIZE)
     {
         debug_msg("Command too long.  Ignoring...");
         return 1;
@@ -154,7 +154,7 @@ int EdgeRcsComm::send_doug_command(const char *doug_command, char **command_resu
         return 1;
     }
 
-    if (write(command_socket, doug_command, len) != (int)len)
+    if (write(command_socket, doug_command.c_str(), len) != (int)len)
     {
         debug_msg("Partial/failed write");
         close(command_socket);
