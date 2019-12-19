@@ -1,6 +1,7 @@
 #ifndef _VSCOMM_HH_
 #define _VSCOMM_HH_
 
+#include <string>
 #ifdef TRICK16PLUS
 #include "trick/tc.h"
 #include "trick/tc_proto.h"
@@ -30,7 +31,7 @@ class VariableServerComm
         VariableServerComm();
         virtual ~VariableServerComm();
 
-        void *add_var(const char *, const char *, int, int);
+        void *add_var(const char *, const char *, int);
         int remove_var(const char *);
         int activate(const char *, int, const char *, char *);
         int get(void);
@@ -43,7 +44,9 @@ class VariableServerComm
             char *param;
             char *units;
             int type;
-            int nelem;
+            double decval;
+            int intval;
+            std::string strval;
             void *value;
         } ParamArray;
 

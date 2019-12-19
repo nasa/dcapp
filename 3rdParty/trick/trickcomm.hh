@@ -1,6 +1,7 @@
 #ifndef _TRICKCOMM_HH_
 #define _TRICKCOMM_HH_
 
+#include <string>
 #include <list>
 #include "basicutils/timer.hh"
 #include "comm.hh"
@@ -38,11 +39,11 @@ class TrickCommModule : public CommModule
             char *units;
             void *trickvalue;
             void *dcvalue;
-            union
+            struct
             {
-                int i;
-                double f;
-                char str[STRING_DEFAULT_LENGTH];
+                double decval;
+                int intval;
+                std::string strval;
             } prevvalue;
             bool forcewrite;
             bool init_only;

@@ -3,8 +3,6 @@
 
 #include <string>
 
-#define STRING_DEFAULT_LENGTH 64
-
 extern void varlist_append(const char *, const char *, const char *);
 extern void *get_pointer(const char *);
 extern int get_datatype(const char *);

@@ -41,7 +41,6 @@ VariableServerComm::~VariableServerComm()
         tmp = pstruct->next;
         TIDY(pstruct->param);
         TIDY(pstruct->units);
-        TIDY(pstruct->value);
         TIDY(pstruct);
         pstruct = tmp;
     }
@@ -53,7 +52,7 @@ VariableServerComm::~VariableServerComm()
     TIDY(this->prevbuf);
 }
 
-void * VariableServerComm::add_var(const char *param, const char *units, int type, int nelem)
+void * VariableServerComm::add_var(const char *param, const char *units, int type)
 {
     ParamArray *pstruct, *pnew;
 
@@ -74,20 +73,19 @@ void * VariableServerComm::add_var(const char *param, const char *units, int typ
     if (units) pnew->units = strdup(units);
     else pnew->units = nullptr;
     pnew->type = type;
-    pnew->nelem = nelem;
     pnew->value = 0x0;
     pnew->next = 0x0;
 
     switch (pnew->type)
     {
         case VS_DECIMAL:
-            pnew->value = calloc(1, sizeof(double));
+            pnew->value = &(pnew->decval);
             break;
         case VS_INTEGER:
-            pnew->value = calloc(1, sizeof(int));
+            pnew->value = &(pnew->intval);
             break;
         case VS_STRING:
-            pnew->value = calloc(nelem, sizeof(char));
+            pnew->value = &(pnew->strval);
             break;
     }
 
@@ -121,7 +119,6 @@ int VariableServerComm::remove_var(const char *param)
             else prev->next = pstruct->next;
             TIDY(pstruct->param);
             TIDY(pstruct->units);
-            TIDY(pstruct->value);
             TIDY(pstruct);
         }
         else prev = pstruct;
@@ -305,7 +302,7 @@ int VariableServerComm::put(const char *param, int type, void *value, const char
             }
             break;
         case VS_STRING:
-            if (asprintf(&cmd, "trick.var_set(\"%s\", %s)\n", param, (char *)value) == -1) return VS_ERROR;
+            if (asprintf(&cmd, "trick.var_set(\"%s\", %s)\n", param, ((std::string *)value)->c_str()) == -1) return VS_ERROR;
             break;
         case VS_METHOD:
             if (asprintf(&cmd, "%s()\n", param) == -1) return VS_ERROR;
@@ -355,6 +352,7 @@ int VariableServerComm::update_data(char *curbuf)
     ParamArray *pstruct;
     char *element;
     int len;
+    std::string tmpstr;
 
     this->prevbuf = (char *)realloc(this->prevbuf, this->databuf_size);
 
@@ -368,16 +366,15 @@ int VariableServerComm::update_data(char *curbuf)
         switch (pstruct->type)
         {
         case VS_DECIMAL:
-            *(double *)pstruct->value = strtod(element, 0x0);
+            pstruct->decval = strtod(element, 0x0);
             break;
         case VS_INTEGER:
-            *(int *)pstruct->value = (int)strtol(element, 0x0, 10);
+            pstruct->intval = (int)strtol(element, 0x0, 10);
             break;
         case VS_STRING:
+            tmpstr = element;
             len = this->find_next_token(element, '\t');
-            if (len >= pstruct->nelem) len = pstruct->nelem - 1;
-            strncpy((char *)pstruct->value, element, len);
-            *((char *)(pstruct->value)+len) = '\0';
+            pstruct->strval = tmpstr.substr(0, len);
             break;
         }
     }

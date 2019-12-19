@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 #include "basicutils/msg.hh"
 #include "basicutils/timer.hh"
 #include "trickcomm.hh"
@@ -61,7 +62,7 @@ CommModule::CommStatus TrickCommModule::read(void)
                         *(int *)myitem->dcvalue = *(int *)myitem->trickvalue;
                         break;
                     case STRING_TYPE:
-                        strcpy((char *)myitem->dcvalue, (char *)myitem->trickvalue);
+                        *(std::string *)myitem->dcvalue = *(std::string *)myitem->trickvalue;
                         break;
                 }
                 if (myitem->type != UNDEFINED_TYPE && myitem->init_only)
@@ -129,10 +130,10 @@ CommModule::CommStatus TrickCommModule::write(void)
                         }
                         break;
                     case STRING_TYPE:
-                        if (StringToBoolean((char *)myitem->dcvalue, false))
+                        if (StringToBoolean(((std::string *)myitem->dcvalue)->c_str(), false))
                         {
                             this->tvs->put(myitem->trickvar, VS_METHOD, 0x0, 0x0);
-                            strcpy((char *)myitem->dcvalue, "false");
+                            *(std::string *)myitem->dcvalue = "false";
                         }
                         break;
                 }
@@ -142,26 +143,26 @@ CommModule::CommStatus TrickCommModule::write(void)
                 switch (myitem->type)
                 {
                     case DECIMAL_TYPE:
-                        if (myitem->forcewrite || *(double *)myitem->dcvalue != myitem->prevvalue.f)
+                        if (myitem->forcewrite || *(double *)myitem->dcvalue != myitem->prevvalue.decval)
                         {
                             this->tvs->put(myitem->trickvar, VS_DECIMAL, myitem->dcvalue, myitem->units);
-                            myitem->prevvalue.f = *(double *)myitem->dcvalue;
+                            myitem->prevvalue.decval = *(double *)myitem->dcvalue;
                             myitem->forcewrite = false;
                         }
                         break;
                     case INTEGER_TYPE:
-                        if (myitem->forcewrite || *(int *)myitem->dcvalue != myitem->prevvalue.i)
+                        if (myitem->forcewrite || *(int *)myitem->dcvalue != myitem->prevvalue.intval)
                         {
                             this->tvs->put(myitem->trickvar, VS_INTEGER, myitem->dcvalue, myitem->units);
-                            myitem->prevvalue.i = *(int *)myitem->dcvalue;
+                            myitem->prevvalue.intval = *(int *)myitem->dcvalue;
                             myitem->forcewrite = false;
                         }
                         break;
                     case STRING_TYPE:
-                        if (myitem->forcewrite || strcmp((char *)myitem->dcvalue, myitem->prevvalue.str))
+                        if (myitem->forcewrite || *(std::string *)myitem->dcvalue != myitem->prevvalue.strval)
                         {
                             this->tvs->put(myitem->trickvar, VS_STRING, myitem->dcvalue, myitem->units);
-                            strcpy(myitem->prevvalue.str, (char *)myitem->dcvalue);
+                            myitem->prevvalue.strval = *(std::string *)myitem->dcvalue;
                             myitem->forcewrite = false;
                         }
                         break;
@@ -237,9 +238,9 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
 
         myparam.type = get_datatype(paramname);
         myparam.dcvalue = valptr;
-        myparam.prevvalue.i = 0;
-        myparam.prevvalue.f = 0;
-        bzero(myparam.prevvalue.str, STRING_DEFAULT_LENGTH);
+        myparam.prevvalue.decval = 0;
+        myparam.prevvalue.intval = 0;
+        myparam.prevvalue.strval = "";
         myparam.forcewrite = false;
         myparam.init_only = StringToBoolean(init_only, false);
         myparam.method = method;
@@ -255,7 +256,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
 void TrickCommModule::finishInitialization(void)
 {
 #ifdef TRICKACTIVE
-    int type, nelem;
+    int type;
     std::list<io_parameter>::iterator myitem;
 
     for (myitem = this->fromSim.begin(); myitem != this->fromSim.end(); myitem++)
@@ -264,21 +265,18 @@ void TrickCommModule::finishInitialization(void)
         {
                 case DECIMAL_TYPE:
                     type = VS_DECIMAL;
-                    nelem = 1;
                     break;
                 case INTEGER_TYPE:
                     type = VS_INTEGER;
-                    nelem = 1;
                     break;
                 case STRING_TYPE:
                     type = VS_STRING;
-                    nelem = STRING_DEFAULT_LENGTH;
                     break;
                 default:
                     type = 0;
                     break;
         }
-        if (type) myitem->trickvalue = this->tvs->add_var(myitem->trickvar, myitem->units, type, nelem);
+        if (type) myitem->trickvalue = this->tvs->add_var(myitem->trickvar, myitem->units, type);
     }
 
 #endif
