@@ -4,6 +4,7 @@ Description: Library that facilitates communication between real-time data
 Programmer: M. McFarlane, March 2005
 *******************************************************************************/
 
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -351,8 +352,7 @@ int VariableServerComm::update_data(char *curbuf)
 {
     ParamArray *pstruct;
     char *element;
-    int len;
-    std::string tmpstr;
+    unsigned long len, i;
 
     this->prevbuf = (char *)realloc(this->prevbuf, this->databuf_size);
 
@@ -372,9 +372,10 @@ int VariableServerComm::update_data(char *curbuf)
             pstruct->intval = (int)strtol(element, 0x0, 10);
             break;
         case VS_STRING:
-            tmpstr = element;
             len = this->find_next_token(element, '\t');
-            pstruct->strval = tmpstr.substr(0, len);
+            if (len >= pstruct->strval.max_size()) len = pstruct->strval.max_size() - 1;
+            pstruct->strval.clear();
+            for (i=0; i<len; i++) pstruct->strval += *(element + i);
             break;
         }
     }
