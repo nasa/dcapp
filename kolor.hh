@@ -6,6 +6,7 @@
 #include <cctype>
 #include "constants.hh"
 #include "varlist.hh"
+#include "string_utils.hh"
 
 class Kolor
 {
@@ -77,7 +78,7 @@ class Kolor
         double *color_element(std::string &strval)
         {
             if (check_dynamic_element(strval.c_str())) return (double *)get_pointer(strval.c_str());
-            else return dcLoadConstant(std::stod(strval));
+            else return dcLoadConstant(StringToDecimal(strval));
         }
 };
 

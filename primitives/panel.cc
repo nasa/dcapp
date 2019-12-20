@@ -10,7 +10,7 @@ dcPanel::dcPanel(dcParent *myparent) : displayID(0), orthoX(100), orthoY(100)
 
 void dcPanel::setID(const char *inval)
 {
-    if (inval) displayID = StringToInteger(inval, 0);
+    if (inval) displayID = StringToInteger(inval);
 }
 
 void dcPanel::setColor(const char *cspec)

@@ -200,7 +200,7 @@ bool dcCondition::checkCondition(void)
             switch (opspec)
             {
                 case Simple:
-                    if (StringToBoolean(((std::string *)val1)->c_str(), false)) eval = true;
+                    if (StringToBoolean(*(std::string *)val1)) eval = true;
                     break;
                 case IfEquals:
                     if (getStringValue(datatype1, val1) == getStringValue(datatype2, val2)) eval = true;

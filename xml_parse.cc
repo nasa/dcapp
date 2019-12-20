@@ -226,7 +226,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             trickcomm = new TrickCommModule;
             trickcomm->setHost(get_element_data(node, "Host"));
-            trickcomm->setPort(StringToInteger(get_element_data(node, "Port"), 0));
+            trickcomm->setPort(StringToInteger(get_element_data(node, "Port")));
             trickcomm->setDataRate(get_element_data(node, "DataRate"));
             const char *d_a = get_element_data(node, "DisconnectAction");
             if (d_a)
@@ -358,7 +358,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "Window"))
         {
             AppData.force_update = StringToDecimal(get_element_data(node, "ForceUpdate"), 60);
-            window_init(StringToBoolean(get_element_data(node, "FullScreen"), false),
+            window_init(StringToBoolean(get_element_data(node, "FullScreen")),
                         StringToInteger(get_element_data(node, "X"), 0),
                         StringToInteger(get_element_data(node, "Y"), 0),
                         StringToInteger(get_element_data(node, "Width"), 800),

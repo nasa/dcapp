@@ -130,7 +130,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                         }
                         break;
                     case STRING_TYPE:
-                        if (StringToBoolean(((std::string *)myitem->dcvalue)->c_str(), false))
+                        if (StringToBoolean(*(std::string *)myitem->dcvalue))
                         {
                             this->tvs->put(myitem->trickvar, VS_METHOD, 0x0, 0x0);
                             *(std::string *)myitem->dcvalue = "false";
@@ -242,7 +242,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
         myparam.prevvalue.intval = 0;
         myparam.prevvalue.strval = "";
         myparam.forcewrite = false;
-        myparam.init_only = StringToBoolean(init_only, false);
+        myparam.init_only = StringToBoolean(init_only);
         myparam.method = method;
         io_map->push_back(myparam);
     }

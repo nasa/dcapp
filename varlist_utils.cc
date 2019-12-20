@@ -35,13 +35,13 @@ bool check_dynamic_element(const char *spec)
 double *getDecimalPointer(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return (double *)get_pointer(valstr);
-    else return dcLoadConstant(StringToDecimal(valstr, 0));
+    else return dcLoadConstant(StringToDecimal(valstr));
 }
 
 int *getIntegerPointer(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return (int *)get_pointer(valstr);
-    else return dcLoadConstant(StringToInteger(valstr, 0));
+    else return dcLoadConstant(StringToInteger(valstr));
 }
 
 std::string *getStringPointer(const char *valstr)
@@ -82,7 +82,7 @@ double getDecimalValue(int type, const void *val)
         case INTEGER_TYPE:
             return (double)(*(int *)val);
         case STRING_TYPE:
-            return std::stod(*(std::string *)val);
+            return StringToDecimal(*(std::string *)val);
     }
     return 0;
 }
@@ -96,7 +96,7 @@ int getIntegerValue(int type, const void *val)
         case INTEGER_TYPE:
             return *(int *)val;
         case STRING_TYPE:
-            return std::stoi(*(std::string *)val);
+            return StringToInteger(*(std::string *)val);
     }
     return 0;
 }

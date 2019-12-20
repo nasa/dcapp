@@ -29,7 +29,7 @@ void dcBezelEvent::coreConstructor(dcParent *myparent)
 
 void dcBezelEvent::setKey(const char *key)
 {
-    mykey = StringToInteger(key, 0);
+    mykey = StringToInteger(key);
 }
 
 void dcBezelEvent::handleBezelPress(int key)
