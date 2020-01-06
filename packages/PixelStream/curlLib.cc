@@ -141,6 +141,7 @@ void curlLibTerm(void)
 
 #else
 
+#include "basicutils/msg.hh"
 #include "PixelStreamMjpeg.hh"
 
 void curlLibInit(void)
