@@ -4,22 +4,23 @@
         <Constant Name="BgColor">0 0 0</Constant>
         <Constant Name="FgColor">1 1 1</Constant>
         <Defaults>
-            <String Size="42" Color="#FgColor" HorizontalAlign="Center" VerticalAlign="Middle"/>
+            <String Size="40" Color="#FgColor" HorizontalAlign="Center" VerticalAlign="Middle"/>
         </Defaults>
 
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="1600" VirtualHeight="1200">
-            <String Y="870">\$USER = $USER</String>
-            <String Y="820">\$LOGNAME = $LOGNAME</String>
-            <String Y="770">\$HOME = $HOME</String>
-            <String Y="720">\$HOSTTYPE = $HOSTTYPE</String>
-            <String Y="670">\$VENDOR = $VENDOR</String>
-            <String Y="620">\$OSTYPE = $OSTYPE</String>
-            <String Y="570">\$MACHTYPE = $MACHTYPE</String>
-            <String Y="520">\$HOST = $HOST</String>
-            <String Y="430">\$dcappOSTYPE = $dcappOSTYPE</String>
-            <String Y="380">\$dcappOSSPEC = $dcappOSSPEC</String>
-            <String Y="330">\$dcappOBJDIR = $dcappOBJDIR</String>
-            <String Y="280">\$dcappBINDIR = $dcappBINDIR</String>
+            <String Y="900">\$USER = $USER</String>
+            <String Y="850">\$LOGNAME = $LOGNAME</String>
+            <String Y="800">\$HOME = $HOME</String>
+            <String Y="750">\$HOSTTYPE = $HOSTTYPE</String>
+            <String Y="700">\$VENDOR = $VENDOR</String>
+            <String Y="650">\$OSTYPE = $OSTYPE</String>
+            <String Y="600">\$MACHTYPE = $MACHTYPE</String>
+            <String Y="550">\$HOST = $HOST</String>
+            <String Y="460">\$dcappOSTYPE = $dcappOSTYPE</String>
+            <String Y="410">\$dcappOSSPEC = $dcappOSSPEC</String>
+            <String Y="360">\$dcappOBJDIR = $dcappOBJDIR</String>
+            <String Y="310">\$dcappBINDIR = $dcappBINDIR</String>
+            <String Y="260">\$dcappVERSION = $dcappVERSION</String>
         </Panel>
     </Window>
 </DCAPP>

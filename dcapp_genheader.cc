@@ -57,6 +57,7 @@ int main(int argc, char **argv)
     fprintf(p_file, "// ********************************************* //\n");
     fprintf(p_file, "// THIS FILE IS AUTO-GENERATED -- DO NOT EDIT!!! //\n");
     fprintf(p_file, "// ********************************************* //\n\n");
+    fprintf(p_file, "#define DCAPP_VERSION_1_0\n\n");
     fprintf(p_file, "#include <string>\n\n");
     fprintf(p_file, "#ifndef _DCAPP_EXTERNALS_\n#define _DCAPP_EXTERNALS_\n\n");
     fprintf(p_file, "void *(*get_pointer)(const char *);\n\n");

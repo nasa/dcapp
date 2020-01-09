@@ -294,6 +294,7 @@ static void SetDefaultEnvironment(std::string pathspec)
     setenvUsingScript("dcappOSSPEC", resolvedpath, "--osspec");
     setenvUsingScript("dcappOBJDIR", resolvedpath, "--objdir");
     setenvUsingScript("dcappBINDIR", resolvedpath, "--bindir");
+    setenv("dcappVERSION", "1.0", 1);
 
     free(resolvedpath);
 
