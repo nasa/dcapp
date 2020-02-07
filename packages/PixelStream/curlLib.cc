@@ -1,10 +1,11 @@
+#include "basicutils/msg.hh"
+#include "PixelStreamMjpeg.hh"
+
 #ifdef CURL_ENABLED
 
 #include <cstdio>
 #include <cstdlib>
 #include <curl/curl.h>
-#include "basicutils/msg.hh"
-#include "PixelStreamMjpeg.hh"
 
 static CURLM *multiCURL;
 
@@ -140,9 +141,6 @@ void curlLibTerm(void)
 }
 
 #else
-
-#include "basicutils/msg.hh"
-#include "PixelStreamMjpeg.hh"
 
 void curlLibInit(void)
 {
