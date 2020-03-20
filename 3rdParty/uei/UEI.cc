@@ -11,9 +11,9 @@
 extern void HandleBezelPress(int);
 extern void HandleBezelRelease(int);
 
-static int UEI_active = 0;
+static bool UEI_active = false;
 static int bezelID;
-static int first = 1;
+static bool first = true;
 static SocketInfo *uei_socket = 0x0;
 static char uei_buffer[UEI_BUFFER_SIZE];
 
@@ -25,7 +25,7 @@ void UEI_init(const char *host, const char *port, const char *ID)
 
     bzero(uei_buffer, UEI_BUFFER_SIZE);
 
-    if (uei_socket) UEI_active = 1;
+    if (uei_socket) UEI_active = true;
 }
 
 void UEI_read(void)
@@ -53,7 +53,7 @@ void UEI_read(void)
                 }
             }
         }
-        if (first) first=0;
+        if (first) first = false;
     }
 }
 

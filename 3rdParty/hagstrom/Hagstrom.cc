@@ -13,7 +13,6 @@ static const std::vector<idf::SingleInput *>& inputs = hagstrom.getInputs();
 static int *currkey = 0x0, *prevkey = 0x0;
 static Timer last_connect_attempt;
 static bool requested = false;
-static bool connected = false;
 
 void Hagstrom_init(const char *serialnum)
 {
@@ -36,15 +35,13 @@ void Hagstrom_read(void)
 {
     if (!requested || !currkey || !prevkey) return;
 
-    if (connected || last_connect_attempt.getSeconds() > CONNECT_ATTEMPT_INTERVAL)
+    if (hagstrom.isOpen() || last_connect_attempt.getSeconds() > CONNECT_ATTEMPT_INTERVAL)
     {
-        if (hagstrom.isConnected())
+        std::vector<idf::SingleInput *>::const_iterator key;
+        unsigned i;
+
+        try
         {
-            std::vector<idf::SingleInput *>::const_iterator key;
-            unsigned i;
-
-            connected = true;
-
             while (hagstrom.updateOnce())
             {
                 for (key = inputs.begin(), i = 0; key != inputs.end(); ++key, ++i)
@@ -71,16 +68,14 @@ void Hagstrom_read(void)
                 }
             }
         }
-        else
-        {
-            connected = false;
-            last_connect_attempt.restart();
-        }
+        catch(...) { last_connect_attempt.restart(); }
     }
 }
 
 void Hagstrom_term(void)
 {
+    if (currkey) free(currkey);
+    if (prevkey) free(prevkey);
 }
 #else
 void Hagstrom_init(const char *)
@@ -94,7 +89,5 @@ void Hagstrom_read(void)
 
 void Hagstrom_term(void)
 {
-    if (currkey) free(currkey);
-    if (prevkey) free(prevkey);
 }
 #endif
