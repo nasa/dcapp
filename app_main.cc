@@ -18,6 +18,7 @@
 #include "varlist.hh"
 #include "can/CAN.hh"
 #include "uei/UEI.hh"
+#include "hagstrom/Hagstrom.hh"
 #include "nodes.hh"
 #include "string_utils.hh"
 #include "xml_stringsub.hh"
@@ -106,6 +107,7 @@ void Idle(void)
 
     CAN_read();
     UEI_read();
+    Hagstrom_read();
 
     for (commitem = AppData.commlist.begin(); commitem != AppData.commlist.end(); commitem++)
     {
@@ -153,7 +155,10 @@ void Terminate(int flag)
     if (AppData.DisplayClose) AppData.DisplayClose();
 
     ui_terminate();
+
     CAN_term();
+    UEI_term();
+    Hagstrom_term();
 
     for (commitem = AppData.commlist.begin(); commitem != AppData.commlist.end(); commitem++)
     {

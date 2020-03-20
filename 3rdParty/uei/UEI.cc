@@ -4,12 +4,12 @@
 #include <strings.h>
 #include "basicutils/msg.hh"
 #include "udp_comm.hh"
-#include "bezel.hh"
 
 #define UEI_BUFFER_SIZE 60
 #define NUM_BEZELS 3
 
-extern void HandleBezelButton(int, int, int);
+extern void HandleBezelPress(int);
+extern void HandleBezelRelease(int);
 
 static int UEI_active = 0;
 static int bezelID;
@@ -28,7 +28,7 @@ void UEI_init(const char *host, const char *port, const char *ID)
     if (uei_socket) UEI_active = 1;
 }
 
-extern void UEI_read(void)
+void UEI_read(void)
 {
     int statlen, button[NUM_BEZELS];
     static int prev_button;
@@ -46,8 +46,8 @@ extern void UEI_read(void)
                 {
                     if (!first)
                     {
-                        if (button[bezelID]) HandleBezelButton(BEZEL_BUTTON, button[bezelID], BEZEL_PRESSED);
-                        else HandleBezelButton(BEZEL_BUTTON, prev_button, BEZEL_RELEASED);
+                        if (button[bezelID]) HandleBezelPress(button[bezelID]);
+                        else HandleBezelRelease(prev_button);
                     }
                     prev_button = button[bezelID];
                 }
@@ -55,4 +55,8 @@ extern void UEI_read(void)
         }
         if (first) first=0;
     }
+}
+
+void UEI_term(void)
+{
 }

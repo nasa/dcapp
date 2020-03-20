@@ -1,0 +1,111 @@
+#!/bin/bash
+
+usage()
+{
+    cat <<EOF
+Usage: $0 [OPTION]...
+Get package compilation and linking information.
+
+Options:
+    --osspec           default directory name extension
+    --objdir           default directory name for compiled objects
+    --libdir           default directory name for compiled libraries
+    --bindir           default directory name for compiled binaries
+    --cflags           required compilation flags
+    --libs             required linking flags
+    --compdepends      makefile compilation dependencies
+    --linkdepends      makefile linking dependencies
+    --cflags_internal  required compilation flags for building the package
+EOF
+    exit $1
+}
+
+if test $# -eq 0 ; then
+    usage 1 1>&2
+fi
+
+CDPATH=""
+
+mydir="$(cd "$(dirname "$0")/.."; pwd)"
+parentdir="$(cd "$(dirname "$0")/../.."; pwd)"
+grandparentdir="$(cd "$(dirname "$0")/../../.."; pwd)"
+ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
+machtype=`uname -m`
+if test "$ostype" = "darwin" ; then
+    osspec="MacOS"
+else
+    osspec="${ostype}_${machtype}"
+fi
+objdir="obj_${osspec}"
+libdir="lib_${osspec}"
+bindir="bin_${osspec}"
+
+# check if IDF_HOME is set, if not, try finding IDF at the same level as dcapp
+idf_home=""
+if [ ! -z ${IDF_HOME} ]
+then
+    if [ -d ${IDF_HOME}/include ]
+    then
+        idf_home="${IDF_HOME}"
+    fi
+else
+    if [ -d $(dirname "$0")/../../../../IDF ]
+    then
+        check_idf="$(cd "$(dirname "$0")/../../../../IDF"; pwd)"
+        if [ -d ${check_idf}/include ]
+        then
+            idf_home="${check_idf}"
+        fi
+    fi
+fi
+
+while test $# -gt 0 ; do
+    case $1 in
+        --osspec)
+            echo $osspec
+            ;;
+        --objdir)
+            echo $objdir
+            ;;
+        --libdir)
+            echo $libdir
+            ;;
+        --bindir)
+            echo $bindir
+            ;;
+##### These are the only lines that should differ from package to package. #####
+        --cflags)
+            if [ ! -z ${idf_home} ]
+            then
+                echo "-I${parentdir} -I${idf_home}/include"
+            else
+                echo "-I${parentdir}"
+            fi
+            ;;
+        --libs)
+            if [ ! -z ${idf_home} ]
+            then
+                echo "-L${mydir}/${libdir} -lHagstromPlugin -L${idf_home}/build -lidf -framework IOKit -framework CoreFoundation"
+            else
+                echo "-L${mydir}/${libdir} -lHagstromPlugin"
+            fi
+            ;;
+        --compdepends)
+            echo "${mydir}/Hagstrom.hh"
+            ;;
+        --linkdepends)
+            echo "${mydir}/${libdir}/libHagstromPlugin.a"
+            ;;
+        --cflags_internal)
+            if [ ! -z ${idf_home} ]
+            then
+                echo "-DIDF -I${grandparentdir} -I${idf_home}/include"
+            fi
+            ;;
+################################################################################
+        *)
+            usage 1 1>&2
+            ;;
+    esac
+    shift
+done

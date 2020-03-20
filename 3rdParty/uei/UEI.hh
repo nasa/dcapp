@@ -3,5 +3,6 @@
 
 extern void UEI_init(const char *, const char *, const char *);
 extern void UEI_read(void);
+extern void UEI_term(void);
 
 #endif

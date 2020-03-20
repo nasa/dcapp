@@ -1,0 +1,240 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <!-- set colors -->
+    <Constant Name="BgColor">0 0 0</Constant>
+    <Constant Name="FgColor">1 1 1</Constant>
+    <Constant Name="OffColor">0.3 0.3 0.3</Constant>
+    <Constant Name="OnColor">0.1 0.1 0.6</Constant>
+
+    <!-- set geometry -->
+    <Constant Name="LeftX">60</Constant>
+    <Constant Name="RightX">1220</Constant>
+    <Constant Name="BottomY">40</Constant>
+    <Constant Name="TopY">760</Constant>
+    <Constant Name="Row1">50</Constant>
+    <Constant Name="Row2">150</Constant>
+    <Constant Name="Row3">250</Constant>
+    <Constant Name="Row4">350</Constant>
+    <Constant Name="Row5">450</Constant>
+    <Constant Name="Row6">550</Constant>
+    <Constant Name="Row7">650</Constant>
+    <Constant Name="Row8">750</Constant>
+    <Constant Name="Column1">220</Constant>
+    <Constant Name="Column2">360</Constant>
+    <Constant Name="Column3">500</Constant>
+    <Constant Name="Column4">640</Constant>
+    <Constant Name="Column5">780</Constant>
+    <Constant Name="Column6">920</Constant>
+    <Constant Name="Column7">1060</Constant>
+    <Constant Name="LeftKnobX">190</Constant>
+    <Constant Name="RightKnobX">1090</Constant>
+    <Constant Name="KnobY">150</Constant>
+    <Constant Name="ButtonWidth">120</Constant>
+    <Constant Name="ButtonHeight">80</Constant>
+    <Constant Name="CircleRadius">50</Constant>
+    <Constant Name="FontSize">32</Constant>
+
+    <!-- assign bezel keys -->
+    <Constant Name="Left1">1</Constant>
+    <Constant Name="Left2">2</Constant>
+    <Constant Name="Left3">3</Constant>
+    <Constant Name="Left4">4</Constant>
+    <Constant Name="Left5">5</Constant>
+    <Constant Name="Left6">6</Constant>
+    <Constant Name="Left7">7</Constant>
+    <Constant Name="Left8">8</Constant>
+    <Constant Name="Right1">16</Constant>
+    <Constant Name="Right2">17</Constant>
+    <Constant Name="Right3">18</Constant>
+    <Constant Name="Right4">19</Constant>
+    <Constant Name="Right5">20</Constant>
+    <Constant Name="Right6">21</Constant>
+    <Constant Name="Right7">22</Constant>
+    <Constant Name="Right8">23</Constant>
+    <Constant Name="Bottom1">9</Constant>
+    <Constant Name="Bottom2">10</Constant>
+    <Constant Name="Bottom3">11</Constant>
+    <Constant Name="Bottom4">12</Constant>
+    <Constant Name="Bottom5">13</Constant>
+    <Constant Name="Bottom6">14</Constant>
+    <Constant Name="Bottom7">15</Constant>
+    <Constant Name="Top1">30</Constant>
+    <Constant Name="Top2">29</Constant>
+    <Constant Name="Top3">28</Constant>
+    <Constant Name="Top4">27</Constant>
+    <Constant Name="Top5">26</Constant>
+    <Constant Name="Top6">25</Constant>
+    <Constant Name="Top7">24</Constant>
+    <Constant Name="LeftKnob">36</Constant>
+    <Constant Name="LeftKnobCCW">35</Constant>
+    <Constant Name="LeftKnobCW">34</Constant>
+    <Constant Name="LeftKnob">33</Constant>
+    <Constant Name="LeftKnobCCW">32</Constant>
+    <Constant Name="LeftKnobCW">31</Constant>
+
+    <Variable Type="Integer">LEFT_KNOB_VALUE</Variable>
+    <Variable Type="Integer">RIGHT_KNOB_VALUE</Variable>
+
+    <Hagstrom/>
+
+    <Defaults>
+        <Button Type="Momentary" Width="#ButtonWidth" Height="#ButtonHeight" HorizontalAlign="Center" VerticalAlign="Middle"/>
+        <Rectangle LineColor="#FgColor"/>
+        <Circle LineColor="#FgColor" Radius="#CircleRadius" HorizontalAlign="Center" VerticalAlign="Middle"/>
+        <String Size="#FontSize" Color="#FgColor" HorizontalAlign="Center" VerticalAlign="Middle"/>
+    </Defaults>
+
+    <Window X="30" Y="30" Width="640" Height="400" ActiveDisplay="1">
+        <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="1280" VirtualHeight="800">
+            <Button X="#LeftX" Y="#Row1" BezelKey="#Left1">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#LeftX" Y="#Row2" BezelKey="#Left2">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#LeftX" Y="#Row3" BezelKey="#Left3">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#LeftX" Y="#Row4" BezelKey="#Left4">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#LeftX" Y="#Row5" BezelKey="#Left5">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#LeftX" Y="#Row6" BezelKey="#Left6">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#LeftX" Y="#Row7" BezelKey="#Left7">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#LeftX" Y="#Row8" BezelKey="#Left8">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+
+            <Button X="#RightX" Y="#Row1" BezelKey="#Right1">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#RightX" Y="#Row2" BezelKey="#Right2">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#RightX" Y="#Row3" BezelKey="#Right3">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#RightX" Y="#Row4" BezelKey="#Right4">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#RightX" Y="#Row5" BezelKey="#Right5">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#RightX" Y="#Row6" BezelKey="#Right6">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#RightX" Y="#Row7" BezelKey="#Right7">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#RightX" Y="#Row8" BezelKey="#Right8">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+
+            <Button X="#Column1" Y="#BottomY" BezelKey="#Bottom1">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#Column2" Y="#BottomY" BezelKey="#Bottom2">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#Column3" Y="#BottomY" BezelKey="#Bottom3">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#Column4" Y="#BottomY" BezelKey="#Bottom4">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#Column5" Y="#BottomY" BezelKey="#Bottom5">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#Column6" Y="#BottomY" BezelKey="#Bottom6">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#Column7" Y="#BottomY" BezelKey="#Bottom7">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+
+            <Button X="#Column1" Y="#TopY" BezelKey="#Top1">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#Column2" Y="#TopY" BezelKey="#Top2">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#Column3" Y="#TopY" BezelKey="#Top3">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#Column4" Y="#TopY" BezelKey="#Top4">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#Column5" Y="#TopY" BezelKey="#Top5">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#Column6" Y="#TopY" BezelKey="#Top6">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+            <Button X="#Column7" Y="#TopY" BezelKey="#Top7">
+                <On><Rectangle FillColor="#OnColor"/></On>
+                <Off><Rectangle FillColor="#OffColor"/></Off>
+            </Button>
+
+            <Button BezelKey="#LeftKnobCCW" Key="h">
+                <OnPress><Set Variable="@LEFT_KNOB_VALUE" Operator="-=">1</Set></OnPress>
+            </Button>
+            <Button BezelKey="#LeftKnobCw" Key="j">
+                <OnPress><Set Variable="@LEFT_KNOB_VALUE" Operator="+=">1</Set></OnPress>
+            </Button>
+
+            <Button X="#LeftKnobX" Y="#KnobY" BezelKey="#LeftKnob">
+                <On><Circle FillColor="#OnColor"/></On>
+                <Off><Circle FillColor="#OffColor"/></Off>
+                <String>@LEFT_KNOB_VALUE</String>
+            </Button>
+
+            <Button BezelKey="#RightKnobCCW" Key="k">
+                <OnPress><Set Variable="@RIGHT_KNOB_VALUE" Operator="-=">1</Set></OnPress>
+            </Button>
+            <Button BezelKey="#RightKnobCw" Key="l">
+                <OnPress><Set Variable="@RIGHT_KNOB_VALUE" Operator="+=">1</Set></OnPress>
+            </Button>
+
+            <Button X="#RightKnobX" Y="#KnobY" BezelKey="#RightKnob">
+                <On><Circle FillColor="#OnColor"/></On>
+                <Off><Circle FillColor="#OffColor"/></Off>
+                <String>@RIGHT_KNOB_VALUE</String>
+            </Button>
+        </Panel>
+    </Window>
+</DCAPP>

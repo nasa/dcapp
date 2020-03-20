@@ -35,6 +35,7 @@ SUBPACKAGE_CONFIGS := \
     primitives/bin/primitives-config \
     3rdParty/can/bin/CanPlugin-config \
     3rdParty/edge/bin/EdgePlugin-config \
+    3rdParty/hagstrom/bin/HagstromPlugin-config \
     3rdParty/trick/bin/TrickPlugin-config \
     3rdParty/uei/bin/UeiPlugin-config \
     packages/PixelStream/bin/PixelStream-config \

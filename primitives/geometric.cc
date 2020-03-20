@@ -134,6 +134,7 @@ double dcGeometric::GeomX(double *x, double w, double containerW, int halign)
                 break;
         }
     }
+// TODO: Remove the next line, but first create new way to achieve this and update all known displays
     else if (*x < 0) val = *x + containerW;
     else val = *x;
 
@@ -171,6 +172,7 @@ double dcGeometric::GeomY(double *y, double h, double containerH, int valign)
                 break;
         }
     }
+// TODO: Remove the next line, but first create new way to achieve this and update all known displays
     else if (*y < 0) val = *y + containerH;
     else val = *y;
 

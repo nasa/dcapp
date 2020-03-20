@@ -13,6 +13,7 @@
 #include "edge/edgecomm.hh"
 #include "can/CAN.hh"
 #include "uei/UEI.hh"
+#include "hagstrom/Hagstrom.hh"
 #include "primitives/primitives.hh"
 #include "varlist.hh"
 #include "nodes.hh"
@@ -306,6 +307,10 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "UEI"))
         {
             UEI_init(get_element_data(node, "Host"), get_element_data(node, "Port"), get_element_data(node, "BezelID"));
+        }
+        if (NodeCheck(node, "Hagstrom"))
+        {
+            Hagstrom_init(get_element_data(node, "SerialNumber"));
         }
         if (NodeCheck(node, "DisplayLogic"))
         {

@@ -4,12 +4,18 @@
 #ifdef NTCAN
 #include "ntcan.h"
 
-extern void HandleBezelInit(int *);
-extern void HandleBezelControl(int, int, int);
-extern void HandleBezelButton(int, int, int);
+#define BEZEL_CONTROL_TYPE 0xaa
+#define BEZEL_CONTROL_ID 1
+#define BEZEL_BUTTON 5
+#define BEZEL_PRESSED 1
+#define BEZEL_RELEASED 0
+
+extern void HandleBezelPress(int);
+extern void HandleBezelRelease(int);
 
 static NTCAN_HANDLE ntCanHandle;
-static int CAN_active = 0;
+static bool CAN_active = false;
+static int *canbus_inhibited = 0x0;
 static uint32_t buttonID = 0, controlID = 0;
 #endif
 
@@ -53,9 +59,9 @@ void CAN_init(const char *networkstr, const char *buttonIDstr, const char *contr
         return;
     }
 
-    HandleBezelInit(inhibit_ptr);
+    canbus_inhibited = inhibit_ptr;
 
-    CAN_active = 1;
+    CAN_active = true;
 }
 #else
 void CAN_init(const char *, const char *, const char *, int *)
@@ -63,7 +69,7 @@ void CAN_init(const char *, const char *, const char *, int *)
 }
 #endif
 
-extern void CAN_read(void)
+void CAN_read(void)
 {
 #ifdef NTCAN
     CMSG message;
@@ -78,8 +84,16 @@ extern void CAN_read(void)
         {
             for (i=0; i<length; i++)
             {
-                if (message.id == buttonID) HandleBezelButton(message.data[0], message.data[1], message.data[2]);
-                else if (message.id == controlID) HandleBezelControl(message.data[0], message.data[1], message.data[2]);
+                if (message.id == buttonID && message.data[0] == BEZEL_BUTTON)
+                {
+                    if (message.data[2] == BEZEL_PRESSED) HandleBezelPress(message.data[1]);
+                    else if (message.data[2] == BEZEL_RELEASED) HandleBezelRelease(message.data[1]);
+                }
+                else if (message.id == controlID && message.data[0] == BEZEL_CONTROL_TYPE && message.data[1] == BEZEL_CONTROL_ID && canbus_inhibited)
+                {
+                    if (message.data[2]) *canbus_inhibited = 0;
+                    else *canbus_inhibited = 1;
+                }
             }
         }
         else error_msg("canTake failed with code " << retval);
@@ -87,7 +101,7 @@ extern void CAN_read(void)
 #endif
 }
 
-extern void CAN_term(void)
+void CAN_term(void)
 {
 #ifdef NTCAN
     NTCAN_RESULT retval;
