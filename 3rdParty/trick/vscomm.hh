@@ -1,3 +1,5 @@
+#ifdef TRICKACTIVE
+
 #ifndef _VSCOMM_HH_
 #define _VSCOMM_HH_
 
@@ -66,5 +68,7 @@ class VariableServerComm
         int find_next_token(const char *, char);
         int find_last_token(const char *, char);
 };
+
+#endif
 
 #endif

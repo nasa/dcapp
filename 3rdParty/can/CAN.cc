@@ -1,8 +1,10 @@
+#ifdef NTCAN
+
 #include <cstdio>
 #include <cstdlib>
-#include "basicutils/msg.hh"
-#ifdef NTCAN
 #include "ntcan.h"
+#include "basicutils/msg.hh"
+#include "CAN.hh"
 
 #define BEZEL_CONTROL_TYPE 0xaa
 #define BEZEL_CONTROL_ID 1
@@ -13,24 +15,30 @@
 extern void HandleBezelPress(int);
 extern void HandleBezelRelease(int);
 
-static NTCAN_HANDLE ntCanHandle;
-static bool CAN_active = false;
-static int *canbus_inhibited = 0x0;
-static uint32_t buttonID = 0, controlID = 0;
-#endif
+CanDevice::CanDevice() : CAN_active(false), canbus_inhibited(0x0), buttonID(0), controlID(0) { }
 
-#ifdef NTCAN
-void CAN_init(const char *networkstr, const char *buttonIDstr, const char *controlIDstr, int *inhibit_ptr)
+CanDevice::~CanDevice()
+{
+    NTCAN_RESULT retval;
+
+    if (CAN_active)
+    {
+        retval = canClose(this->ntCanHandle);
+        if (retval != NTCAN_SUCCESS) error_msg("canClose failed with code " << retval);
+    }
+}
+
+void CanDevice::initialize(const char *networkstr, const char *buttonIDstr, const char *controlIDstr, int *inhibit_ptr)
 {
     int network = 0;
     NTCAN_RESULT retval;
 
     if (networkstr) network = strtol(networkstr, 0x0, 10);
-    if (buttonIDstr) buttonID = strtol(buttonIDstr, 0x0, 10);
-    if (controlIDstr) controlID = strtol(controlIDstr, 0x0, 10);
+    if (buttonIDstr) this->buttonID = strtol(buttonIDstr, 0x0, 10);
+    if (controlIDstr) this->controlID = strtol(controlIDstr, 0x0, 10);
 
     // Tell the driver to open a connection and give us a handle.
-    retval = canOpen(network, 0, 1024, 1024, 1000, 0, &ntCanHandle);
+    retval = canOpen(network, 0, 1024, 1024, 1000, 0, &(this->ntCanHandle));
     if (retval != NTCAN_SUCCESS)
     {
         error_msg("canOpen failed with code " << retval);
@@ -38,7 +46,7 @@ void CAN_init(const char *networkstr, const char *buttonIDstr, const char *contr
     }
 
     // Set the baud rate to 1000.
-    retval = canSetBaudrate(ntCanHandle, NTCAN_BAUD_1000);
+    retval = canSetBaudrate(this->ntCanHandle, NTCAN_BAUD_1000);
     if (retval != NTCAN_SUCCESS)
     {
         error_msg("canSetBaudrate failed with code " << retval);
@@ -46,70 +54,61 @@ void CAN_init(const char *networkstr, const char *buttonIDstr, const char *contr
     }
 
     // Tell the driver which message IDs we're interested in.
-    retval = canIdAdd(ntCanHandle, buttonID);
+    retval = canIdAdd(this->ntCanHandle, this->buttonID);
     if (retval != NTCAN_SUCCESS)
     {
         error_msg("canIdAdd failed with code " << retval);
         return;
     }
-    retval = canIdAdd(ntCanHandle, controlID);
+    retval = canIdAdd(this->ntCanHandle, this->controlID);
     if (retval != NTCAN_SUCCESS)
     {
         error_msg("canIdAdd failed with code " << retval);
         return;
     }
 
-    canbus_inhibited = inhibit_ptr;
+    this->canbus_inhibited = inhibit_ptr;
 
-    CAN_active = true;
+    this->CAN_active = true;
 }
-#else
-void CAN_init(const char *, const char *, const char *, int *)
-{
-}
-#endif
 
-void CAN_read(void)
+void CanDevice::read(void)
 {
-#ifdef NTCAN
     CMSG message;
     int32_t length = 1;
     int i;
     NTCAN_RESULT retval;
 
-    if (CAN_active)
+    if (this->CAN_active)
     {
-        retval = canTake(ntCanHandle, &message, &length);
+        retval = canTake(this->ntCanHandle, &message, &length);
         if (retval == NTCAN_SUCCESS)
         {
             for (i=0; i<length; i++)
             {
-                if (message.id == buttonID && message.data[0] == BEZEL_BUTTON)
+                if (message.id == this->buttonID && message.data[0] == BEZEL_BUTTON)
                 {
                     if (message.data[2] == BEZEL_PRESSED) HandleBezelPress(message.data[1]);
                     else if (message.data[2] == BEZEL_RELEASED) HandleBezelRelease(message.data[1]);
                 }
-                else if (message.id == controlID && message.data[0] == BEZEL_CONTROL_TYPE && message.data[1] == BEZEL_CONTROL_ID && canbus_inhibited)
+                else if (message.id == this->controlID && message.data[0] == BEZEL_CONTROL_TYPE && message.data[1] == BEZEL_CONTROL_ID && this->canbus_inhibited)
                 {
-                    if (message.data[2]) *canbus_inhibited = 0;
-                    else *canbus_inhibited = 1;
+                    if (message.data[2]) *(this->canbus_inhibited) = 0;
+                    else *(this->canbus_inhibited) = 1;
                 }
             }
         }
         else error_msg("canTake failed with code " << retval);
     }
-#endif
 }
 
-void CAN_term(void)
-{
-#ifdef NTCAN
-    NTCAN_RESULT retval;
+#else
 
-    if (CAN_active)
-    {
-        retval = canClose(ntCanHandle);
-        if (retval != NTCAN_SUCCESS) error_msg("canClose failed with code " << retval);
-    }
+#include "CAN.hh"
+
+CanDevice::CanDevice() { }
+CanDevice::~CanDevice() { }
+void CanDevice::initialize(const char *, const char *, const char *, int *) { }
+void CanDevice::read(void) { }
+
 #endif
-}

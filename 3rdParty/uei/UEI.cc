@@ -4,6 +4,7 @@
 #include <strings.h>
 #include "basicutils/msg.hh"
 #include "udp_comm.hh"
+#include "UEI.hh"
 
 #define UEI_BUFFER_SIZE 60
 #define NUM_BEZELS 3
@@ -11,52 +12,48 @@
 extern void HandleBezelPress(int);
 extern void HandleBezelRelease(int);
 
-static bool UEI_active = false;
-static int bezelID;
-static bool first = true;
-static SocketInfo *uei_socket = 0x0;
-static char uei_buffer[UEI_BUFFER_SIZE];
-
-void UEI_init(const char *host, const char *port, const char *ID)
+UeiDevice::UeiDevice() : UEI_active(false), first(false), uei_socket(0x0), uei_buffer(0x0)
 {
-    bezelID = strtol(ID, 0x0, 10);
-
-    uei_socket = mycomm_init(host, strtol(port, 0x0, 10), UEI_BUFFER_SIZE, 0, false, 40);
-
-    bzero(uei_buffer, UEI_BUFFER_SIZE);
-
-    if (uei_socket) UEI_active = true;
+    this->uei_buffer = (char *)calloc(UEI_BUFFER_SIZE, sizeof(char));
 }
 
-void UEI_read(void)
+UeiDevice::~UeiDevice()
+{
+    if (this->uei_buffer) free(this->uei_buffer);
+}
+
+void UeiDevice::connect(const char *host, const char *port, const char *ID)
+{
+    this->bezelID = strtol(ID, 0x0, 10);
+    this->uei_socket = mycomm_init(host, strtol(port, 0x0, 10), UEI_BUFFER_SIZE, 0, false, 40);
+    if (this->uei_socket) UEI_active = true;
+}
+
+void UeiDevice::read(void)
 {
     int statlen, button[NUM_BEZELS];
     static int prev_button;
 
-    if (UEI_active)
+    if (this->UEI_active)
     {
-        statlen = mycomm_read(uei_socket, uei_buffer);
+        statlen = mycomm_read(this->uei_socket, this->uei_buffer);
         if (statlen > 0)
         {
-            if (sscanf(uei_buffer, "%d %d %d", &button[0], &button[1], &button[2]) != 3)
+            if (sscanf(this->uei_buffer, "%d %d %d", &button[0], &button[1], &button[2]) != 3)
                 error_msg("Partial buffer received");
             else
             {
-                if (button[bezelID] != prev_button)
+                if (button[this->bezelID] != prev_button)
                 {
-                    if (!first)
+                    if (!(this->first))
                     {
-                        if (button[bezelID]) HandleBezelPress(button[bezelID]);
+                        if (button[this->bezelID]) HandleBezelPress(button[this->bezelID]);
                         else HandleBezelRelease(prev_button);
                     }
-                    prev_button = button[bezelID];
+                    prev_button = button[this->bezelID];
                 }
             }
         }
-        if (first) first = false;
+        if (this->first) this->first = false;
     }
-}
-
-void UEI_term(void)
-{
 }

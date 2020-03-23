@@ -77,7 +77,7 @@ while test $# -gt 0 ; do
         --cflags)
             if [ ! -z ${idf_home} ]
             then
-                echo "-I${parentdir} -I${idf_home}/include"
+                echo "-DIDF -I${parentdir} -I${idf_home}/include"
             else
                 echo "-I${parentdir}"
             fi
@@ -97,10 +97,12 @@ while test $# -gt 0 ; do
             echo "${mydir}/${libdir}/libHagstromPlugin.a"
             ;;
         --cflags_internal)
+            cfi=""
             if [ ! -z ${idf_home} ]
             then
-                echo "-DIDF -I${grandparentdir} -I${idf_home}/include"
+                cfi="-DIDF -I${idf_home}/include"
             fi
+            echo "${cfi} -I${grandparentdir} `${grandparentdir}/packages/basicutils/bin/basicutils-config --cflags`"
             ;;
 ################################################################################
         *)

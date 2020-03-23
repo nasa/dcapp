@@ -6,7 +6,7 @@ LIBDIR := $(shell ./bin/HagstromPlugin-config --libdir)
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -Wextra $(shell ../../packages/basicutils/bin/basicutils-config --cflags) $(shell ./bin/HagstromPlugin-config --cflags_internal)
+CXXFLAGS += -Wall -Wextra $(shell ./bin/HagstromPlugin-config --cflags_internal)
 
 $(LIBDIR)/libHagstromPlugin.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)

@@ -1,3 +1,5 @@
+#ifdef TRICKACTIVE
+
 /*******************************************************************************
 Description: Library that facilitates communication between real-time data
     monitoring applications and the Trick variable server.
@@ -414,3 +416,5 @@ int VariableServerComm::find_last_token(const char *str, char key)
 
     return (-1);
 }
+
+#endif

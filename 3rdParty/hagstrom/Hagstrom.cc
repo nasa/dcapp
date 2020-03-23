@@ -1,5 +1,9 @@
+#include <cstdlib>
 #include "basicutils/msg.hh"
+#include "Hagstrom.hh"
+
 #ifdef IDF
+
 #include "basicutils/timer.hh"
 #include "idf/UsbHagstromKEUSB36FS.hh"
 
@@ -8,48 +12,53 @@
 extern void HandleBezelPress(int);
 extern void HandleBezelRelease(int);
 
-static idf::UsbHagstromKEUSB36FS hagstrom;
-static const std::vector<idf::SingleInput *>& inputs = hagstrom.getInputs();
-static int *currkey = 0x0, *prevkey = 0x0;
-static Timer last_connect_attempt;
-static bool requested = false;
-
-void Hagstrom_init(const char *serialnum)
+HagstromDevice::HagstromDevice() : valid(false)
 {
     user_msg("Connecting Hagstrom...");
+    this->hagstrom = new idf::UsbHagstromKEUSB36FS;
+    this->currkey = (int *)calloc(this->hagstrom->getInputs().size(), sizeof(int));
+    this->prevkey = (int *)calloc(this->hagstrom->getInputs().size(), sizeof(int));
+    if (this->currkey && this->prevkey) this->valid = true;
+}
+
+HagstromDevice::~HagstromDevice()
+{
+    if (this->currkey) free(this->currkey);
+    if (this->prevkey) free(this->prevkey);
+    delete this->hagstrom;
+}
+
+void HagstromDevice::setSerialNumber(const char *serialnum)
+{
     if (serialnum)
     {
         const size_t numchars = strlen(serialnum) + 1;
         std::wstring wideserialnum(numchars, L'#');
         mbstowcs(&wideserialnum[0], serialnum, numchars);
-        hagstrom.setSerialNumber(wideserialnum);
+        this->hagstrom->setSerialNumber(wideserialnum);
     }
-
-    currkey = (int *)calloc(inputs.size(), sizeof(int));
-    prevkey = (int *)calloc(inputs.size(), sizeof(int));
-
-    requested = true;
 }
 
-void Hagstrom_read(void)
+void HagstromDevice::read(void)
 {
-    if (!requested || !currkey || !prevkey) return;
+    if (!(this->valid)) return;
 
-    if (hagstrom.isOpen() || last_connect_attempt.getSeconds() > CONNECT_ATTEMPT_INTERVAL)
+    if (this->hagstrom->isOpen() || this->last_connect_attempt.getSeconds() > CONNECT_ATTEMPT_INTERVAL)
     {
+        const std::vector<idf::SingleInput *>& inputs = this->hagstrom->getInputs();
         std::vector<idf::SingleInput *>::const_iterator key;
         unsigned i;
 
         try
         {
-            while (hagstrom.updateOnce())
+            while (this->hagstrom->updateOnce())
             {
                 for (key = inputs.begin(), i = 0; key != inputs.end(); ++key, ++i)
                 {
-                    currkey[i] = (int)((*key)->getNormalizedValue());
-                    if (currkey[i] != prevkey[i])
+                    this->currkey[i] = (int)((*key)->getNormalizedValue());
+                    if (this->currkey[i] != this->prevkey[i])
                     {
-                        switch (currkey[i])
+                        switch (this->currkey[i])
                         {
                             case 1:
                                 user_msg("Key " << i+1 << " pressed");
@@ -60,34 +69,26 @@ void Hagstrom_read(void)
                                 HandleBezelRelease(i+1);
                                 break;
                             default:
-                                user_msg("Key " << i+1 << ", strange value: " << currkey[i]);
+                                user_msg("Key " << i+1 << ", strange value: " << this->currkey[i]);
                                 break;
                         }
-                        prevkey[i] = currkey[i];
+                        this->prevkey[i] = this->currkey[i];
                     }
                 }
             }
         }
-        catch(...) { last_connect_attempt.restart(); }
+        catch(...) { this->last_connect_attempt.restart(); }
     }
 }
 
-void Hagstrom_term(void)
-{
-    if (currkey) free(currkey);
-    if (prevkey) free(prevkey);
-}
 #else
-void Hagstrom_init(const char *)
+
+HagstromDevice::HagstromDevice()
 {
     warning_msg("Hagstrom device requested, but IDF_HOME not identified...");
 }
+HagstromDevice::~HagstromDevice() { }
+void HagstromDevice::setSerialNumber(const char *) { }
+void HagstromDevice::read(void) { }
 
-void Hagstrom_read(void)
-{
-}
-
-void Hagstrom_term(void)
-{
-}
 #endif

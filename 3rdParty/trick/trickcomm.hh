@@ -5,9 +5,7 @@
 #include <list>
 #include "basicutils/timer.hh"
 #include "comm.hh"
-#ifdef TRICKACTIVE
 #include "vscomm.hh"
-#endif
 #include "varlist.hh"
 
 class TrickCommModule : public CommModule
@@ -54,8 +52,6 @@ class TrickCommModule : public CommModule
         Timer *last_connect_attempt;
 #ifdef TRICKACTIVE
         VariableServerComm *tvs;
-#else
-        void *tvs;
 #endif
         char *host;
         int port;

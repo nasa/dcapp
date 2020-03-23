@@ -7,14 +7,15 @@ Usage: $0 [OPTION]...
 Get package compilation and linking information.
 
 Options:
-    --osspec       default directory name extension
-    --objdir       default directory name for compiled objects
-    --libdir       default directory name for compiled libraries
-    --bindir       default directory name for compiled binaries
-    --cflags       required compilation flags
-    --libs         required linking flags
-    --compdepends  makefile compilation dependencies
-    --linkdepends  makefile linking dependencies
+    --osspec           default directory name extension
+    --objdir           default directory name for compiled objects
+    --libdir           default directory name for compiled libraries
+    --bindir           default directory name for compiled binaries
+    --cflags           required compilation flags
+    --libs             required linking flags
+    --compdepends      makefile compilation dependencies
+    --linkdepends      makefile linking dependencies
+    --cflags_internal  required compilation flags for building the package
 EOF
     exit $1
 }
@@ -27,6 +28,7 @@ CDPATH=""
 
 mydir="$(cd "$(dirname "$0")/.."; pwd)"
 parentdir="$(cd "$(dirname "$0")/../.."; pwd)"
+grandparentdir="$(cd "$(dirname "$0")/../../.."; pwd)"
 ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
 machtype=`uname -m`
 if test "$ostype" = "darwin" ; then
@@ -37,6 +39,30 @@ fi
 objdir="obj_${osspec}"
 libdir="lib_${osspec}"
 bindir="bin_${osspec}"
+
+trickactive=""
+trick16plus=""
+trick64bit=""
+if [ -z "$TRICK_HOME" ]
+then
+    TRICK_HOME=`which trick-gte 2> /dev/null`
+    TRICK_HOME=${TRICK_HOME:=`which gte 2> /dev/null`}
+    TRICK_HOME=${TRICK_HOME:+$(dirname $(dirname ${TRICK_HOME}))}
+fi
+if [ `type -p ${TRICK_HOME}/bin/trick-gte` ]
+then
+    trickactive="true"
+    trick16plus="true"
+    if [ -d "${TRICK_HOME}/lib64" ]
+    then
+        trick64bit="true"
+    fi
+else
+    if [ `type -p ${TRICK_HOME}/bin/gte` ]
+    then
+        trickactive="true"
+    fi
+fi
 
 while test $# -gt 0 ; do
     case $1 in
@@ -54,28 +80,33 @@ while test $# -gt 0 ; do
             ;;
 ##### These are the only lines that should differ from package to package. #####
         --cflags)
-            echo "-I${parentdir}"
+            cf=""
+            if [ ! -z ${trickactive} ]
+            then
+                if [ ! -z ${trick16plus} ]
+                then
+                    cf="-DTRICKACTIVE -DTRICK16PLUS -I${TRICK_HOME}/include"
+                else
+                    cf="-DTRICKACTIVE -I${TRICK_HOME}/trick_source"
+                fi
+            fi
+            echo "${cf} -I${parentdir}"
             ;;
         --libs)
             extra_libs=""
-            if [ -z "$TRICK_HOME" ]
+            if [ ! -z ${trickactive} ]
             then
-                TRICK_HOME=`which trick-gte 2> /dev/null`
-                TRICK_HOME=${TRICK_HOME:=`which gte 2> /dev/null`}
-                TRICK_HOME=${TRICK_HOME:+$(dirname $(dirname ${TRICK_HOME}))}
-            fi
-            if [ `type -p ${TRICK_HOME}/bin/trick-gte` ]
-            then
-                if [ -d "${TRICK_HOME}/lib64" ]
+                if [ ! -z ${trick16plus} ]
                 then
-                    extra_libs="-L${TRICK_HOME}/lib -L${TRICK_HOME}/lib64 -ltrick_comm"
+                    if [ ! -z ${trick64bit} ]
+                    then
+                        extra_libs="-L${TRICK_HOME}/lib -L${TRICK_HOME}/lib64 -ltrick_comm"
+                    else
+                        extra_libs="-L${TRICK_HOME}/lib -ltrick_comm"
+                    fi
                 else
-                    extra_libs="-L${TRICK_HOME}/lib -ltrick_comm"
+                    extra_libs="-L${TRICK_HOME}/trick_source/trick_utils/comm/object_`${TRICK_HOME}/bin/gte TRICK_HOST_TYPE` -ltrick_comm"
                 fi
-            else if [ `type -p ${TRICK_HOME}/bin/gte` ]
-            then
-                extra_libs="-L${TRICK_HOME}/trick_source/trick_utils/comm/object_`${TRICK_HOME}/bin/gte TRICK_HOST_TYPE` -ltrick_comm"
-            fi
             fi
             echo "-L${mydir}/${libdir} -lTrickPlugin ${extra_libs}"
             ;;
@@ -89,6 +120,19 @@ while test $# -gt 0 ; do
             ;;
         --linkdepends)
             echo "${mydir}/${libdir}/libTrickPlugin.a"
+            ;;
+        --cflags_internal)
+            cfi=""
+            if [ ! -z ${trickactive} ]
+            then
+                if [ ! -z ${trick16plus} ]
+                then
+                    cfi="-DTRICKACTIVE -DTRICK16PLUS -I${TRICK_HOME}/include"
+                else
+                    cfi="-DTRICKACTIVE -I${TRICK_HOME}/trick_source"
+                fi
+            fi
+            echo "${cfi} -I${grandparentdir} `${grandparentdir}/packages/basicutils/bin/basicutils-config --cflags`"
             ;;
 ################################################################################
         *)

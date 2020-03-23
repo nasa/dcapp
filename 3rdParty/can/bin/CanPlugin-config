@@ -7,14 +7,15 @@ Usage: $0 [OPTION]...
 Get package compilation and linking information.
 
 Options:
-    --osspec       default directory name extension
-    --objdir       default directory name for compiled objects
-    --libdir       default directory name for compiled libraries
-    --bindir       default directory name for compiled binaries
-    --cflags       required compilation flags
-    --libs         required linking flags
-    --compdepends  makefile compilation dependencies
-    --linkdepends  makefile linking dependencies
+    --osspec           default directory name extension
+    --objdir           default directory name for compiled objects
+    --libdir           default directory name for compiled libraries
+    --bindir           default directory name for compiled binaries
+    --cflags           required compilation flags
+    --libs             required linking flags
+    --compdepends      makefile compilation dependencies
+    --linkdepends      makefile linking dependencies
+    --cflags_internal  required compilation flags for building the package
 EOF
     exit $1
 }
@@ -27,6 +28,7 @@ CDPATH=""
 
 mydir="$(cd "$(dirname "$0")/.."; pwd)"
 parentdir="$(cd "$(dirname "$0")/../.."; pwd)"
+grandparentdir="$(cd "$(dirname "$0")/../../.."; pwd)"
 ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
 machtype=`uname -m`
 if test "$ostype" = "darwin" ; then
@@ -37,6 +39,16 @@ fi
 objdir="obj_${osspec}"
 libdir="lib_${osspec}"
 bindir="bin_${osspec}"
+
+# check if CANBUS_HOME is set
+canbus_home=""
+if [ ! -z ${CANBUS_HOME} ]
+then
+    if [ -d ${CANBUS_HOME} ]
+    then
+        canbus_home="${CANBUS_HOME}"
+    fi
+fi
 
 while test $# -gt 0 ; do
     case $1 in
@@ -54,17 +66,17 @@ while test $# -gt 0 ; do
             ;;
 ##### These are the only lines that should differ from package to package. #####
         --cflags)
-            if [ ! -z ${CANBUS_HOME} ]
+            if [ ! -z ${canbus_home} ]
             then
-                echo "-I${parentdir} -I${CANBUS_HOME}"
+                echo "-DNTCAN -I${parentdir} -I${canbus_home}"
             else
                 echo "-I${parentdir}"
             fi
             ;;
         --libs)
-            if [ ! -z ${CANBUS_HOME} ]
+            if [ ! -z ${canbus_home} ]
             then
-                echo "-L${mydir}/${libdir} -lCanPlugin -L${CANBUS_HOME} -Wl,-Bstatic -lntcan -Wl,-Bdynamic"
+                echo "-L${mydir}/${libdir} -lCanPlugin -L${canbus_home} -Wl,-Bstatic -lntcan -Wl,-Bdynamic"
             else
                 echo "-L${mydir}/${libdir} -lCanPlugin"
             fi
@@ -74,6 +86,14 @@ while test $# -gt 0 ; do
             ;;
         --linkdepends)
             echo "${mydir}/${libdir}/libCanPlugin.a"
+            ;;
+        --cflags_internal)
+            cfi="-I${grandparentdir} `${grandparentdir}/packages/basicutils/bin/basicutils-config --cflags`"
+            if [ ! -z ${canbus_home} ]
+            then
+                cfi+=" -DNTCAN -I${canbus_home}"
+            fi
+            echo $cfi
             ;;
 ################################################################################
         *)

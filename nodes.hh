@@ -8,6 +8,7 @@
 #include "primitives/primitives.hh"
 #include "animation.hh"
 #include "comm.hh"
+#include "device.hh"
 #include "psi.hh"
 
 typedef struct
@@ -19,6 +20,7 @@ typedef struct
     Timer *master_timer;
     std::list<Animation *> animators;
     std::list<CommModule *> commlist;
+    std::list<DeviceModule *> devicelist;
     std::list<PixelStreamItem *> pixelstreams;
     std::list<dcObject *> events;
     std::list<dcObject *> mouseheld;

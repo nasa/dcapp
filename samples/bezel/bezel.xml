@@ -72,6 +72,8 @@
     <Constant Name="LeftKnobCCW">32</Constant>
     <Constant Name="LeftKnobCW">31</Constant>
 
+    <Constant Name="FullScreen">false</Constant>
+
     <Variable Type="Integer">LEFT_KNOB_VALUE</Variable>
     <Variable Type="Integer">RIGHT_KNOB_VALUE</Variable>
 
@@ -84,7 +86,7 @@
         <String Size="#FontSize" Color="#FgColor" HorizontalAlign="Center" VerticalAlign="Middle"/>
     </Defaults>
 
-    <Window X="30" Y="30" Width="640" Height="400" ActiveDisplay="1">
+    <Window X="30" Y="30" Width="640" Height="400" FullScreen="#FullScreen" ActiveDisplay="1">
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="1280" VirtualHeight="800">
             <Button X="#LeftX" Y="#Row1" BezelKey="#Left1">
                 <On><Rectangle FillColor="#OnColor"/></On>
@@ -210,10 +212,10 @@
                 <Off><Rectangle FillColor="#OffColor"/></Off>
             </Button>
 
-            <Button BezelKey="#LeftKnobCCW" Key="h">
+            <Button BezelKey="#LeftKnobCCW">
                 <OnPress><Set Variable="@LEFT_KNOB_VALUE" Operator="-=">1</Set></OnPress>
             </Button>
-            <Button BezelKey="#LeftKnobCw" Key="j">
+            <Button BezelKey="#LeftKnobCw">
                 <OnPress><Set Variable="@LEFT_KNOB_VALUE" Operator="+=">1</Set></OnPress>
             </Button>
 
@@ -223,10 +225,10 @@
                 <String>@LEFT_KNOB_VALUE</String>
             </Button>
 
-            <Button BezelKey="#RightKnobCCW" Key="k">
+            <Button BezelKey="#RightKnobCCW">
                 <OnPress><Set Variable="@RIGHT_KNOB_VALUE" Operator="-=">1</Set></OnPress>
             </Button>
-            <Button BezelKey="#RightKnobCw" Key="l">
+            <Button BezelKey="#RightKnobCw">
                 <OnPress><Set Variable="@RIGHT_KNOB_VALUE" Operator="+=">1</Set></OnPress>
             </Button>
 

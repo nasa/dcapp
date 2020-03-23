@@ -16,9 +16,8 @@
 #include "basicutils/timer.hh"
 #include "basicutils/tidy.hh"
 #include "varlist.hh"
-#include "can/CAN.hh"
-#include "uei/UEI.hh"
-#include "hagstrom/Hagstrom.hh"
+#include "comm.hh"
+#include "device.hh"
 #include "nodes.hh"
 #include "string_utils.hh"
 #include "xml_stringsub.hh"
@@ -96,6 +95,7 @@ void Idle(void)
 {
     static Timer *mytime = new Timer;
     int status;
+    std::list<DeviceModule *>::iterator deviceitem;
     std::list<CommModule *>::iterator commitem;
     std::list<Animation *>::iterator animitem;
 
@@ -105,9 +105,10 @@ void Idle(void)
     // usleep to the next period of time defined by MINIMUM_REFRESH to temporarily release the CPU
     if (elapsed < MINIMUM_REFRESH) usleep((useconds_t)((MINIMUM_REFRESH - elapsed) * 1000000));
 
-    CAN_read();
-    UEI_read();
-    Hagstrom_read();
+    for (deviceitem = AppData.devicelist.begin(); deviceitem != AppData.devicelist.end(); deviceitem++)
+    {
+        (*deviceitem)->read();
+    }
 
     for (commitem = AppData.commlist.begin(); commitem != AppData.commlist.end(); commitem++)
     {
@@ -148,6 +149,7 @@ void Idle(void)
  *********************************************************************************/
 void Terminate(int flag)
 {
+    std::list<DeviceModule *>::iterator deviceitem;
     std::list<CommModule *>::iterator commitem;
     std::list<Animation *>::iterator animitem;
     std::list<PixelStreamItem *>::iterator psitem;
@@ -156,10 +158,10 @@ void Terminate(int flag)
 
     ui_terminate();
 
-    CAN_term();
-    UEI_term();
-    Hagstrom_term();
-
+    for (deviceitem = AppData.devicelist.begin(); deviceitem != AppData.devicelist.end(); deviceitem++)
+    {
+        delete (*deviceitem);
+    }
     for (commitem = AppData.commlist.begin(); commitem != AppData.commlist.end(); commitem++)
     {
         delete (*commitem);

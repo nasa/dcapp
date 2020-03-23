@@ -302,15 +302,21 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "CAN"))
         {
-            CAN_init(get_element_data(node, "Network"), get_element_data(node, "ButtonID"), get_element_data(node, "ControlID"), (int *)get_pointer(get_element_data(node, "InhibitVariable")));
+            CanDevice *can = new CanDevice;
+            can->initialize(get_element_data(node, "Network"), get_element_data(node, "ButtonID"), get_element_data(node, "ControlID"), (int *)get_pointer(get_element_data(node, "InhibitVariable")));
+            AppData.devicelist.push_back(can);
         }
         if (NodeCheck(node, "UEI"))
         {
-            UEI_init(get_element_data(node, "Host"), get_element_data(node, "Port"), get_element_data(node, "BezelID"));
+            UeiDevice *uei = new UeiDevice;
+            uei->connect(get_element_data(node, "Host"), get_element_data(node, "Port"), get_element_data(node, "BezelID"));
+            AppData.devicelist.push_back(uei);
         }
         if (NodeCheck(node, "Hagstrom"))
         {
-            Hagstrom_init(get_element_data(node, "SerialNumber"));
+            HagstromDevice *hagstrom = new HagstromDevice;
+            hagstrom->setSerialNumber(get_element_data(node, "SerialNumber"));
+            AppData.devicelist.push_back(hagstrom);
         }
         if (NodeCheck(node, "DisplayLogic"))
         {

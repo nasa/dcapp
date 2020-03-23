@@ -6,7 +6,7 @@ LIBDIR := $(shell ./bin/CanPlugin-config --libdir)
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -Wextra $(shell ../../packages/basicutils/bin/basicutils-config --cflags)
+CXXFLAGS += -Wall -Wextra $(shell ./bin/CanPlugin-config --cflags_internal)
 ifdef CANBUS_HOME
     CXXFLAGS += -DNTCAN -I$(CANBUS_HOME)
 endif
