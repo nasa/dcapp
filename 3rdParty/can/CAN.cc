@@ -104,11 +104,12 @@ void CanDevice::read(void)
 
 #else
 
+#include "basicutils/msg.hh"
 #include "CAN.hh"
 
-CanDevice::CanDevice() { }
-CanDevice::~CanDevice() { }
-void CanDevice::initialize(const char *, const char *, const char *, int *) { }
-void CanDevice::read(void) { }
+CanDevice::CanDevice()
+{
+    warning_msg("CAN device requested, but CANBUS_HOME not identified...");
+}
 
 #endif

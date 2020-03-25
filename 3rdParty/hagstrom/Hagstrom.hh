@@ -1,11 +1,12 @@
 #ifndef _HAGSTROM_HH_
 #define _HAGSTROM_HH_
 
-#include "basicutils/timer.hh"
-#ifdef IDF
-#include "idf/UsbHagstromKEUSB36FS.hh"
-#endif
 #include "device.hh"
+
+#ifdef IDF
+
+#include "basicutils/timer.hh"
+#include "idf/UsbHagstromKEUSB36FS.hh"
 
 class HagstromDevice : public DeviceModule
 {
@@ -17,13 +18,23 @@ class HagstromDevice : public DeviceModule
         void read(void);
 
     private:
-#ifdef IDF
         idf::UsbHagstromKEUSB36FS *hagstrom;
-#endif
         int *currkey;
         int *prevkey;
         Timer last_connect_attempt;
         bool valid;
 };
+
+#else
+
+class HagstromDevice : public DeviceModule
+{
+    public:
+        HagstromDevice();
+
+        void setSerialNumber(const char *) { };
+};
+
+#endif
 
 #endif

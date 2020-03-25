@@ -1,3 +1,5 @@
+#ifdef TRICKACTIVE
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -7,6 +9,7 @@
 #include "trickcomm.hh"
 #include "string_utils.hh"
 #include "types.hh"
+#include "varlist.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
@@ -18,31 +21,23 @@ port(0),
 datarate(0x0),
 disconnectaction(this->AppTerminate)
 {
-#ifdef TRICKACTIVE
     this->last_connect_attempt = new Timer;
     this->tvs = new VariableServerComm;
-#else
-    this->last_connect_attempt = 0x0;
-    this->tvs = 0x0;
-#endif
 }
 
 TrickCommModule::~TrickCommModule()
 {
     if (this->host) free(this->host);
     if (this->datarate) free(this->datarate);
-#ifdef TRICKACTIVE
     fromSim.clear();
     toSim.clear();
 
     delete this->last_connect_attempt;
     delete this->tvs;
-#endif
 }
 
 CommModule::CommStatus TrickCommModule::read(void)
 {
-#ifdef TRICKACTIVE
     if (!(this->active)) return this->Inactive;
 
     int status = this->tvs->get();
@@ -88,14 +83,10 @@ CommModule::CommStatus TrickCommModule::read(void)
         default:
             return this->None;
     }
-#else
-    return this->Inactive;
-#endif
 }
 
 CommModule::CommStatus TrickCommModule::write(void)
 {
-#ifdef TRICKACTIVE
     if (!(this->active))
     {
         if (this->last_connect_attempt->getSeconds() > CONNECT_ATTEMPT_INTERVAL)
@@ -172,21 +163,16 @@ CommModule::CommStatus TrickCommModule::write(void)
     }
 
     return this->None;
-#else
-    return this->Inactive;
-#endif
 }
 
 void TrickCommModule::flagAsChanged(void *value)
 {
-#ifdef TRICKACTIVE
     std::list<io_parameter>::iterator myitem;
 
     for (myitem = this->toSim.begin(); myitem != this->toSim.end(); myitem++)
     {
         if (myitem->dcvalue == value) myitem->forcewrite = true;
     }
-#endif
 }
 
 void TrickCommModule::setHost(const char *hostspec)
@@ -211,7 +197,6 @@ void TrickCommModule::setReconnectOnDisconnect(void)
 
 int TrickCommModule::addParameter(int bufID, const char *paramname, const char *trickvar, const char *units, const char *init_only, int method)
 {
-#ifdef TRICKACTIVE
     std::list<io_parameter> *io_map;
 
     switch (bufID)
@@ -248,14 +233,10 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
     }
 
     return this->Success;
-#else
-    return this->Inactive;
-#endif
 }
 
 void TrickCommModule::finishInitialization(void)
 {
-#ifdef TRICKACTIVE
     int type;
     std::list<io_parameter>::iterator myitem;
 
@@ -278,21 +259,34 @@ void TrickCommModule::finishInitialization(void)
         }
         if (type) myitem->trickvalue = this->tvs->add_var(myitem->trickvar, myitem->units, type);
     }
-
-#endif
 }
 
 void TrickCommModule::activate(void)
 {
-#ifdef TRICKACTIVE
     if (!(this->fromSim.empty()) || !(this->toSim.empty()))
     {
         if (this->tvs->activate(this->host, this->port, 0x0, this->datarate) == VS_SUCCESS) this->active = true;
     }
-#endif
 }
 
 bool TrickCommModule::isActive(void)
 {
     return this->active;
 }
+
+#else
+
+void TrickCommModule::TrickCommModule() { }
+void TrickCommModule::setHost(const char *) { }
+void TrickCommModule::setPort(int) { }
+void TrickCommModule::setDataRate(const char *) { }
+void TrickCommModule::setReconnectOnDisconnect(void) { }
+
+int TrickCommModule::addParameter(int, const char *, const char *, const char *, const char *, int)
+{
+    return this->Inactive;
+}
+
+void TrickCommModule::finishInitialization(void) { }
+
+#endif

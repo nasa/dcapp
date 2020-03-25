@@ -1,11 +1,10 @@
-#include <cstdlib>
-#include "basicutils/msg.hh"
-#include "Hagstrom.hh"
-
 #ifdef IDF
 
-#include "basicutils/timer.hh"
+#include <cstdlib>
 #include "idf/UsbHagstromKEUSB36FS.hh"
+#include "basicutils/timer.hh"
+#include "basicutils/msg.hh"
+#include "Hagstrom.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.5
 
@@ -83,12 +82,12 @@ void HagstromDevice::read(void)
 
 #else
 
+#include "basicutils/msg.hh"
+#include "Hagstrom.hh"
+
 HagstromDevice::HagstromDevice()
 {
     warning_msg("Hagstrom device requested, but IDF_HOME not identified...");
 }
-HagstromDevice::~HagstromDevice() { }
-void HagstromDevice::setSerialNumber(const char *) { }
-void HagstromDevice::read(void) { }
 
 #endif

@@ -1,17 +1,19 @@
 #ifndef _TRICKCOMM_HH_
 #define _TRICKCOMM_HH_
 
+#ifdef TRICKACTIVE
 #include <string>
 #include <list>
 #include "basicutils/timer.hh"
-#include "comm.hh"
 #include "vscomm.hh"
-#include "varlist.hh"
+#endif
+#include "comm.hh"
 
 class TrickCommModule : public CommModule
 {
     public:
         TrickCommModule();
+#ifdef TRICKACTIVE
         virtual ~TrickCommModule();
 
         typedef enum { FromTrick, ToTrick } BufferType;
@@ -21,6 +23,7 @@ class TrickCommModule : public CommModule
         CommModule::CommStatus write(void);
         void flagAsChanged(void *);
         bool isActive(void);
+#endif
 
         void setHost(const char *);
         void setPort(int);
@@ -30,6 +33,7 @@ class TrickCommModule : public CommModule
         void finishInitialization(void);
 
     private:
+#ifdef TRICKACTIVE
         typedef struct
         {
             int type;
@@ -50,9 +54,7 @@ class TrickCommModule : public CommModule
 
         bool active;
         Timer *last_connect_attempt;
-#ifdef TRICKACTIVE
         VariableServerComm *tvs;
-#endif
         char *host;
         int port;
         char *datarate;
@@ -61,6 +63,7 @@ class TrickCommModule : public CommModule
         std::list<io_parameter> toSim;
 
         void activate(void);
+#endif
 };
 
 #endif
