@@ -276,17 +276,13 @@ bool TrickCommModule::isActive(void)
 
 #else
 
-void TrickCommModule::TrickCommModule() { }
-void TrickCommModule::setHost(const char *) { }
-void TrickCommModule::setPort(int) { }
-void TrickCommModule::setDataRate(const char *) { }
-void TrickCommModule::setReconnectOnDisconnect(void) { }
+#include "trickcomm.hh"
+
+TrickCommModule::TrickCommModule() { }
 
 int TrickCommModule::addParameter(int, const char *, const char *, const char *, const char *, int)
 {
     return this->Inactive;
 }
-
-void TrickCommModule::finishInitialization(void) { }
 
 #endif

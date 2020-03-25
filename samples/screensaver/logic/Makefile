@@ -18,7 +18,7 @@ endif
 
 mylogic.so: mylogic.cc ../screensaver.xml
 	${GENHEADER} ../screensaver.xml
-	${CXX} -fPIC -Wall -Wextra -shared $< -o $@
+	${CXX} -fPIC -std=c++11 -Wall -Wextra -shared $< -o $@
 
 clean:
 	${RM} dcapp.h mylogic.so
