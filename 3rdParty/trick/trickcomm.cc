@@ -276,9 +276,13 @@ bool TrickCommModule::isActive(void)
 
 #else
 
+#include "basicutils/msg.hh"
 #include "trickcomm.hh"
 
-TrickCommModule::TrickCommModule() { }
+TrickCommModule::TrickCommModule()
+{
+    warning_msg("Trick communication requested, but Trick doesn't seem to be properly installed...");
+}
 
 int TrickCommModule::addParameter(int, const char *, const char *, const char *, const char *, int)
 {

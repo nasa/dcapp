@@ -17,7 +17,6 @@ class TrickCommModule : public CommModule
         virtual ~TrickCommModule();
 
         typedef enum { FromTrick, ToTrick } BufferType;
-        typedef enum { AppTerminate, AppReconnect } DisconnectAction;
 
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
@@ -32,6 +31,8 @@ class TrickCommModule : public CommModule
         void finishInitialization(void);
 
     private:
+        typedef enum { AppTerminate, AppReconnect } DisconnectAction;
+
         typedef struct
         {
             int type;
@@ -71,7 +72,6 @@ class TrickCommModule : public CommModule
         TrickCommModule();
 
         typedef enum { FromTrick, ToTrick } BufferType;
-        typedef enum { AppTerminate, AppReconnect } DisconnectAction;
 
         void setHost(const char *) { };
         void setPort(int) { };

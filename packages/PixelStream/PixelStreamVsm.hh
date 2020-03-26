@@ -1,12 +1,13 @@
 #ifndef _PIXELSTREAMVSM_HH_
 #define _PIXELSTREAMVSM_HH_
 
-#include <string>
-#ifdef CURL_ENABLED
-#include <curl/curl.h>
-#endif
-#include "basicutils/timer.hh"
 #include "PixelStreamMjpeg.hh"
+
+#if defined(CURL_ENABLED) && defined(JPEG_ENABLED)
+
+#include <string>
+#include <curl/curl.h>
+#include "basicutils/timer.hh"
 
 class PixelStreamVsm : public PixelStreamMjpeg
 {
@@ -23,19 +24,38 @@ class PixelStreamVsm : public PixelStreamMjpeg
         int assignNewCamera(void);
         int resolveURL(const char *);
 
-#ifdef CURL_ENABLED
         CURL *curl;
-#else
-        void *curl;
-#endif
         char *vsmhost;
         int vsmport;
-        char *userpath;
         std::string *curr_camera;
         std::string prev_camera;
+        char *userpath;
         bool cameraassigned;
         bool first_assign_attempt;
         Timer *assigncameraattempt;
 };
+
+#else
+
+#include <string>
+
+class PixelStreamVsm : public PixelStreamMjpeg
+{
+    public:
+        PixelStreamVsm();
+        virtual ~PixelStreamVsm();
+
+        bool operator == (const PixelStreamVsm &);
+        bool operator != (const PixelStreamVsm &);
+        int readerInitialize(const char *, int, const char *, std::string *);
+        int reader(void);
+
+    private:
+        char *vsmhost;
+        int vsmport;
+        std::string *curr_camera;
+};
+
+#endif
 
 #endif
