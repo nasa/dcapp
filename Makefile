@@ -19,6 +19,7 @@ DCAPP_SOURCES := \
 	handle_mouse.cc \
 	handle_utils.cc \
 	logic_stubs.cc \
+	shell_utils.cc \
 	string_utils.cc \
 	tara_funcs.cc \
 	varlist.cc \
@@ -28,6 +29,7 @@ DCAPP_SOURCES := \
 	xml_utils.cc
 GENHEADER_SOURCES := \
 	dcapp_genheader.cc \
+	shell_utils.cc \
 	xml_stringsub.cc \
 	xml_utils.cc
 

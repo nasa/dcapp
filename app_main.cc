@@ -1,4 +1,3 @@
-#include <vector>
 #include <string>
 #include <cstdio>
 #include <cstdlib>
@@ -12,13 +11,13 @@
 #include <sys/utsname.h>
 #include <sys/stat.h>
 #include "basicutils/msg.hh"
-#include "basicutils/pathinfo.hh"
 #include "basicutils/timer.hh"
 #include "basicutils/tidy.hh"
 #include "varlist.hh"
 #include "comm.hh"
 #include "device.hh"
 #include "nodes.hh"
+#include "shell_utils.hh"
 #include "string_utils.hh"
 #include "xml_stringsub.hh"
 #include "osenv/osenv.hh"
@@ -45,12 +44,6 @@ static void ProcessArgs(int, char **);
 
 appdata AppData;
 
-
-/*********************************************************************************
- *
- *  The main routine. Calls setup, handlers, and event loop.
- *
- *********************************************************************************/
 int main(int argc, char **argv)
 {
     // Set up signal handlers
@@ -85,12 +78,6 @@ int main(int argc, char **argv)
     return(0);
 }
 
-
-/*********************************************************************************
- *
- *  This is where the application sits until it gets an event.
- *
- *********************************************************************************/
 void Idle(void)
 {
     static Timer *mytime = new Timer;
@@ -141,12 +128,6 @@ void Idle(void)
     if (AppData.last_update->getSeconds() > AppData.force_update) UpdateDisplay();
 }
 
-
-/*********************************************************************************
- *
- *  This cleanly shuts down the application.
- *
- *********************************************************************************/
 void Terminate(int flag)
 {
     std::list<DeviceModule *>::iterator deviceitem;
@@ -179,99 +160,6 @@ void Terminate(int flag)
     exit(flag);
 }
 
-static std::vector<std::string> parseUserPath(void)
-{
-    std::vector<std::string> retvec;
-
-    char *mypath = getenv("PATH");
-
-    if (!mypath) return retvec;
-
-    std::string userpath = mypath;
-
-    if (userpath.empty()) return retvec;
-
-    size_t start = 0;
-    size_t end = userpath.find(':');
-
-    while (end != std::string::npos)
-    {
-        retvec.push_back(userpath.substr(start, end-start));
-        start = end + 1;
-        end = userpath.find(':', start);
-    }
-    retvec.push_back(userpath.substr(start));
-
-    return retvec;
-}
-
-static std::string findExecutablePath(std::string inpath)
-{
-    if (inpath.find('/') != std::string::npos)
-    {
-        PathInfo pinfo(inpath);
-        if (pinfo.isExecutableFile()) return pinfo.getDirectory();
-        else return "";
-    }
-
-    std::vector<std::string> upath = parseUserPath();
-    std::vector<std::string>::iterator item;
-    for (item = upath.begin(); item != upath.end(); item++)
-    {
-        PathInfo pinfo(*item + '/' + inpath);
-        if (pinfo.isExecutableFile()) return pinfo.getDirectory();
-    }
-    return "";
-}
-
-static void setenvUsingScript(const char *myenv, const char *myscript, const char *myarg)
-{
-    char *cmd;
-    asprintf(&cmd, "%s %s", myscript, myarg);
-
-    FILE *pipe = popen(cmd, "r");
-    if (!pipe)
-    {
-        free(cmd);
-        return;
-    }
-
-    size_t currentalloc = 256, bytecount = 0;
-    char mychar;
-
-    char *buffer = (char *)malloc(currentalloc);
-
-    while (fread(&mychar, 1, 1, pipe))
-    {
-        bytecount++;
-        if (bytecount > currentalloc)
-        {
-            currentalloc += 256;
-            buffer = (char *)realloc((void *)buffer, currentalloc); fflush(0);
-        }
-        buffer[bytecount-1] = mychar;
-    }
-
-    // strip out leading and trailing white space
-    size_t i, startbyte = 0, endbyte = bytecount;
-    for (i=0; i<bytecount; i++)
-    {
-        if (isspace(buffer[i])) startbyte++;
-        else break;
-    }
-    for (i=bytecount-1; (int)i>=0; i--)
-    {
-        if (isspace(buffer[i])) endbyte--;
-        else break;
-    }
-    buffer[endbyte] = '\0';
-
-    setenv(myenv, &buffer[startbyte], 1);
-
-    free(buffer);
-    free(cmd);
-}
-
 /* Set the dcappOSTYPE, dcappOSSPEC, dcappOBJDIR, and dcappBINDIR environment       */
 /* variables in case the user needs them.  Likewise, set the following for the user */
 /* if they have not been set: USER, LOGNAME, HOME, OSTYPE, MACHTYPE, and HOST.      */
@@ -297,11 +185,11 @@ static void SetDefaultEnvironment(std::string pathspec)
     tmppath = mypath + "/../dcapp-config";
     realpath(tmppath.c_str(), resolvedpath);
 
-    setenvUsingScript("dcappOSTYPE", resolvedpath, "--ostype");
-    setenvUsingScript("dcappOSSPEC", resolvedpath, "--osspec");
-    setenvUsingScript("dcappOBJDIR", resolvedpath, "--objdir");
-    setenvUsingScript("dcappBINDIR", resolvedpath, "--bindir");
-    setenv("dcappVERSION", "1.0", 1);
+    setenv("dcappOSTYPE", getScriptResult(resolvedpath, "--ostype").c_str(), 1);
+    setenv("dcappOSSPEC", getScriptResult(resolvedpath, "--osspec").c_str(), 1);
+    setenv("dcappOBJDIR", getScriptResult(resolvedpath, "--objdir").c_str(), 1);
+    setenv("dcappBINDIR", getScriptResult(resolvedpath, "--bindir").c_str(), 1);
+    setenv("dcappVERSION", getScriptResult(resolvedpath, "--version_short").c_str(), 1);
 
     free(resolvedpath);
 

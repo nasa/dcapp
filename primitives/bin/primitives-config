@@ -7,9 +7,7 @@ Usage: $0 [OPTION]...
 Get package compilation and linking information.
 
 Options:
-    --version          software version
     --prefix           install location
-    --exepath          path(s) to add to the PATH environment variable
     --cflags           required compilation flags
     --libs             required linking flags
     --compdepends      makefile compilation dependencies
@@ -61,11 +59,6 @@ while test $# -gt 0 ; do
             echo $bindir
             ;;
 ##### These are the only lines that should differ from package to package. #####
-        --version)
-            echo "1.0.0 alpha"
-            ;;
-        --exepath)
-            ;;
         --cflags)
             echo "-I${parentdir}"
             ;;
