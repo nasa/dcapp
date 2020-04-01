@@ -53,6 +53,15 @@ else
         fi
     fi
 fi
+if [[ $jpegenabled -ne 0 ]] ; then
+    if test "$jpegpath" ; then
+        jpeg_cflags="-DJPEG_ENABLED -I${jpegpath}/include"
+        jpeg_libs="-L${jpegpath}/lib -ljpeg"
+    else
+        jpeg_cflags="-DJPEG_ENABLED"
+        jpeg_libs="-ljpeg"
+    fi
+fi
 
 # check if curl 7.28.0 or higher is installed
 curlenabled=0
@@ -75,6 +84,10 @@ if test `which curl-config` ; then
         fi
     fi
 fi
+if [[ $curlenabled -ne 0 ]] ; then
+    curl_cflags="-DCURL_ENABLED `curl-config --cflags`"
+    curl_libs=`curl-config --libs`
+fi
 ################################################################################
 
 while test $# -gt 0 ; do
@@ -93,19 +106,9 @@ while test $# -gt 0 ; do
             ;;
 ##### These are the only lines that should differ from package to package. #####
         --cflags)
-            echo "-I${parentdir}"
+            echo "-I${parentdir} ${jpeg_cflags} ${curl_cflags}"
             ;;
         --libs)
-            if [[ $jpegenabled -ne 0 ]] ; then
-                if test "$jpegpath" ; then
-                    jpeg_libs="-L${jpegpath}/lib -ljpeg"
-                else
-                    jpeg_libs="-ljpeg"
-                fi
-            fi
-            if [[ $curlenabled -ne 0 ]] ; then
-                curl_libs=`curl-config --libs`
-            fi
             echo "-L${mydir}/${libdir} -lPixelStream ${jpeg_libs} ${curl_libs}"
             ;;
         --compdepends)
@@ -120,16 +123,6 @@ while test $# -gt 0 ; do
             echo "${mydir}/${libdir}/libPixelStream.a"
             ;;
         --cflags_internal)
-            if [[ $jpegenabled -ne 0 ]] ; then
-                if test "$jpegpath" ; then
-                    jpeg_cflags="-DJPEG_ENABLED -I${jpegpath}/include"
-                else
-                    jpeg_cflags="-DJPEG_ENABLED"
-                fi
-            fi
-            if [[ $curlenabled -ne 0 ]] ; then
-                curl_cflags="-DCURL_ENABLED `curl-config --cflags`"
-            fi
             echo "-I${parentdir} ${jpeg_cflags} ${curl_cflags}"
             ;;
 ################################################################################

@@ -3,7 +3,7 @@
 /*******************************************************************************
 Description: Library that facilitates communication between real-time data
     monitoring applications and the Trick variable server.
-Programmer: M. McFarlane, March 2005
+Programmer: M. McFarlane
 *******************************************************************************/
 
 #include <string>
@@ -15,6 +15,9 @@ Programmer: M. McFarlane, March 2005
 #include <sys/utsname.h>
 #include "basicutils/tidy.hh"
 #include "vscomm.hh"
+
+#define VS_DEFAULT_PORT       7000
+#define VS_DEFAULT_SAMPLERATE "1.0"
 
 VariableServerComm::VariableServerComm()
 :
@@ -58,16 +61,27 @@ VariableServerComm::~VariableServerComm()
 void * VariableServerComm::add_var(const char *param, const char *units, int type)
 {
     ParamArray *pstruct, *pnew;
+    bool match = false;
 
     for (pstruct = this->parray; pstruct; pstruct = pstruct->next)
     {
         if (units)
         {
-            if (!strcmp(pstruct->param, param) && !strcmp(pstruct->units, units)) return pstruct->value;
+            if (!strcmp(pstruct->param, param) && !strcmp(pstruct->units, units)) match = true;
         }
         else
         {
-            if (!strcmp(pstruct->param, param) && !(pstruct->units)) return pstruct->value;
+            if (!strcmp(pstruct->param, param) && !(pstruct->units)) match = true;
+        }
+        if (match)
+        {
+            switch (type)
+            {
+                case VS_DECIMAL: return &(pstruct->decval);
+                case VS_INTEGER: return &(pstruct->intval);
+                case VS_STRING: return &(pstruct->strval);
+                default: return 0x0;
+            }
         }
     }
 
@@ -76,21 +90,7 @@ void * VariableServerComm::add_var(const char *param, const char *units, int typ
     if (units) pnew->units = strdup(units);
     else pnew->units = nullptr;
     pnew->type = type;
-    pnew->value = 0x0;
     pnew->next = 0x0;
-
-    switch (pnew->type)
-    {
-        case VS_DECIMAL:
-            pnew->value = &(pnew->decval);
-            break;
-        case VS_INTEGER:
-            pnew->value = &(pnew->intval);
-            break;
-        case VS_STRING:
-            pnew->value = &(pnew->strval);
-            break;
-    }
 
     if (!(this->parray)) this->parray = pnew;
     else
@@ -101,7 +101,13 @@ void * VariableServerComm::add_var(const char *param, const char *units, int typ
 
     this->paramcount++;
 
-    return pnew->value;
+    switch (type)
+    {
+        case VS_DECIMAL: return &(pnew->decval);
+        case VS_INTEGER: return &(pnew->intval);
+        case VS_STRING: return &(pnew->strval);
+        default: return 0x0;
+    }
 }
 
 int VariableServerComm::remove_var(const char *param)

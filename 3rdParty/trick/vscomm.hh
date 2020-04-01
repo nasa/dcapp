@@ -12,9 +12,6 @@
 #include "trick_utils/comm/include/tc_proto.h"
 #endif
 
-#define VS_DEFAULT_PORT       (7000)
-#define VS_DEFAULT_SAMPLERATE "1.0"
-
 #define VS_SUCCESS            (0)
 #define VS_ERROR              (-1)
 #define VS_NO_NEW_DATA        (-2)
@@ -49,7 +46,6 @@ class VariableServerComm
             double decval;
             int intval;
             std::string strval;
-            void *value;
         } ParamArray;
 
         TCDevice connection;
