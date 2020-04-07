@@ -235,18 +235,9 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
 
 void TrickCommModule::finishInitialization(void)
 {
-    int type = 0;
-    std::list<io_parameter>::iterator myitem;
-
-    for (myitem = this->fromSim.begin(); myitem != this->fromSim.end(); myitem++)
+    for (std::list<io_parameter>::iterator myitem = this->fromSim.begin(); myitem != this->fromSim.end(); myitem++)
     {
-        switch (myitem->type)
-        {
-                case DECIMAL_TYPE: type = VS_DECIMAL; break;
-                case INTEGER_TYPE: type = VS_INTEGER; break;
-                case STRING_TYPE:  type = VS_STRING;  break;
-        }
-        if (type) myitem->trickvalue = this->tvs->add_var(myitem->trickvar, myitem->units, type);
+        myitem->trickvalue = this->tvs->add_var(myitem->trickvar, myitem->units, myitem->type);
     }
 }
 

@@ -24,32 +24,34 @@ ValueData::ValueData() : decval(0), intval(0) { }
 
 ValueData::~ValueData() { }
 
-ParamData::ParamData(const char *label_spec, const char *units_spec, int type_spec)
-{
-    if (label_spec) this->label = label_spec;
-    if (units_spec) this->units = units_spec;
-    this->type = type_spec;
-}
+void ValueData::setType(int type_spec) { this->type = type_spec; }
 
-ParamData::~ParamData() { }
-
-void ParamData::setValue(const char *input, unsigned length)
+void ValueData::setValue(const char *input, unsigned length)
 {
     switch (this->type)
     {
     case VS_DECIMAL:
-        this->value.decval = strtod(input, 0x0);
+        this->decval = strtod(input, 0x0);
         break;
     case VS_INTEGER:
-        this->value.intval = (int)strtol(input, 0x0, 10);
+        this->intval = (int)strtol(input, 0x0, 10);
         break;
     case VS_STRING:
-        if (length >= this->value.strval.max_size()) length = this->value.strval.max_size() - 1;
-        this->value.strval.clear();
-        for (unsigned i=0; i<length; i++) this->value.strval += input[i];
+        if (length >= this->strval.max_size()) length = this->strval.max_size() - 1;
+        this->strval.clear();
+        for (unsigned i=0; i<length; i++) this->strval += input[i];
         break;
     }
 }
+
+ParamData::ParamData(const char *label_spec, const char *units_spec, int type_spec)
+{
+    if (label_spec) this->label = label_spec;
+    if (units_spec) this->units = units_spec;
+    this->value.setType(type_spec);
+}
+
+ParamData::~ParamData() { }
 
 VariableServerComm::VariableServerComm() : databuf(0x0), prevbuf(0x0), databuf_complete(false), databuf_size(0)
 {
@@ -72,7 +74,7 @@ VariableServerComm::~VariableServerComm()
 
 ValueData * VariableServerComm::add_var(const char *label, const char *units, int type)
 {
-    if (!label) return nullptr;
+    if (!label || !type) return nullptr;
 
     ParamData *newparam = new ParamData(label, units, type);
 
@@ -325,7 +327,7 @@ int VariableServerComm::update_data(const char *curbuf)
     for (std::list<ParamData>::iterator it = this->paramlist.begin(); it != this->paramlist.end(); it++)
     {
         element += this->find_next_token(element, '\t') + 1;
-        it->setValue(element, this->find_next_token(element, '\t'));
+        it->value.setValue(element, this->find_next_token(element, '\t'));
     }
 
     return VS_SUCCESS;

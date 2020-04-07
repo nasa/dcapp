@@ -29,10 +29,16 @@ class ValueData
     public:
         ValueData();
         virtual ~ValueData();
+
+        void setType(int);
+        void setValue(const char *, unsigned);
         
         double decval;
         int intval;
         std::string strval;
+
+    private:
+        int type;
 };
 
 class ParamData
@@ -41,14 +47,9 @@ class ParamData
         ParamData(const char *, const char *, int);
         virtual ~ParamData();
 
-        void setValue(const char *, unsigned);
-
         std::string label;
         std::string units;
         ValueData value;
-
-    private:
-        int type;
 };
 
 class VariableServerComm
