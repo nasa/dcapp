@@ -4,6 +4,7 @@
 #define _VSCOMM_HH_
 
 #include <string>
+#include <list>
 #ifdef TRICK16PLUS
 #include "trick/tc.h"
 #include "trick/tc_proto.h"
@@ -22,7 +23,33 @@
 #define VS_STRING             (1)
 #define VS_DECIMAL            (2)
 #define VS_INTEGER            (3)
-#define VS_METHOD             (4)
+
+class ValueData
+{
+    public:
+        ValueData();
+        virtual ~ValueData();
+        
+        double decval;
+        int intval;
+        std::string strval;
+};
+
+class ParamData
+{
+    public:
+        ParamData(const char *, const char *, int);
+        virtual ~ParamData();
+
+        void setValue(const char *, unsigned);
+
+        std::string label;
+        std::string units;
+        ValueData value;
+
+    private:
+        int type;
+};
 
 class VariableServerComm
 {
@@ -30,37 +57,28 @@ class VariableServerComm
         VariableServerComm();
         virtual ~VariableServerComm();
 
-        void *add_var(const char *, const char *, int);
-        int remove_var(const char *);
+        ValueData *add_var(const char *, const char *, int);
+        void remove_var(const char *);
         int activate(const char *, int, const char *, char *);
         int get(void);
-        int put(const char *, int, void *, const char *);
+        int putMethod(const char *);
+        int putValue(const char *, int, const char *);
+        int putValue(const char *, double, const char *);
+        int putValue(const char *, std::string, const char *);
 
     private:
-        typedef struct paramarray
-        {
-            struct paramarray *next;
-            char *param;
-            char *units;
-            int type;
-            double decval;
-            int intval;
-            std::string strval;
-        } ParamArray;
-
+        std::list<ParamData> paramlist;
         TCDevice connection;
-        ParamArray *parray;
         char *databuf;
         char *prevbuf;
         bool databuf_complete;
         int databuf_size;
-        int paramcount;
 
+        int putGeneric(const char *, std::string, const char *);
         void sim_read(void);
-        void sim_write(char *);
         void sim_write(const char *);
-        int update_data(char *);
-        int count_tokens(const char *, char);
+        int update_data(const char *);
+        size_t count_tokens(const char *, char);
         int find_next_token(const char *, char);
         int find_last_token(const char *, char);
 };

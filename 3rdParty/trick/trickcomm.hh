@@ -38,14 +38,9 @@ class TrickCommModule : public CommModule
             int type;
             char *trickvar;
             char *units;
-            void *trickvalue;
             void *dcvalue;
-            struct
-            {
-                double decval;
-                int intval;
-                std::string strval;
-            } prevvalue;
+            ValueData prevvalue;
+            ValueData *trickvalue;
             bool forcewrite;
             bool init_only;
             int method;

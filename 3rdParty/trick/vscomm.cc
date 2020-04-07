@@ -6,35 +6,58 @@ Description: Library that facilitates communication between real-time data
 Programmer: M. McFarlane
 *******************************************************************************/
 
+#include <list>
+#include <sstream>
 #include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
 #include <strings.h>
-#include <sys/utsname.h>
 #include "basicutils/tidy.hh"
 #include "vscomm.hh"
 
 #define VS_DEFAULT_PORT       7000
 #define VS_DEFAULT_SAMPLERATE "1.0"
 
-VariableServerComm::VariableServerComm()
-:
-parray(0x0),
-databuf(0x0),
-prevbuf(0x0),
-databuf_complete(false),
-databuf_size(0),
-paramcount(0)
+ValueData::ValueData() : decval(0), intval(0) { }
+
+ValueData::~ValueData() { }
+
+ParamData::ParamData(const char *label_spec, const char *units_spec, int type_spec)
+{
+    if (label_spec) this->label = label_spec;
+    if (units_spec) this->units = units_spec;
+    this->type = type_spec;
+}
+
+ParamData::~ParamData() { }
+
+void ParamData::setValue(const char *input, unsigned length)
+{
+    switch (this->type)
+    {
+    case VS_DECIMAL:
+        this->value.decval = strtod(input, 0x0);
+        break;
+    case VS_INTEGER:
+        this->value.intval = (int)strtol(input, 0x0, 10);
+        break;
+    case VS_STRING:
+        if (length >= this->value.strval.max_size()) length = this->value.strval.max_size() - 1;
+        this->value.strval.clear();
+        for (unsigned i=0; i<length; i++) this->value.strval += input[i];
+        break;
+    }
+}
+
+VariableServerComm::VariableServerComm() : databuf(0x0), prevbuf(0x0), databuf_complete(false), databuf_size(0)
 {
     bzero(&(this->connection), sizeof(TCDevice));
 }
 
 VariableServerComm::~VariableServerComm()
 {
-    ParamArray *pstruct, *tmp;
-
     if (this->connection.disabled == TC_COMM_ENABLED)
     {
         this->sim_write("trick.var_clear()\n");
@@ -42,107 +65,46 @@ VariableServerComm::~VariableServerComm()
         tc_disconnect(&(this->connection));
     }
 
-    for (pstruct = this->parray; pstruct;)
-    {
-        tmp = pstruct->next;
-        TIDY(pstruct->param);
-        TIDY(pstruct->units);
-        TIDY(pstruct);
-        pstruct = tmp;
-    }
-
-    this->parray = 0x0;
-
     TIDY(this->connection.hostname);
     TIDY(this->databuf);
     TIDY(this->prevbuf);
 }
 
-void * VariableServerComm::add_var(const char *param, const char *units, int type)
+ValueData * VariableServerComm::add_var(const char *label, const char *units, int type)
 {
-    ParamArray *pstruct, *pnew;
-    bool match = false;
+    if (!label) return nullptr;
 
-    for (pstruct = this->parray; pstruct; pstruct = pstruct->next)
+    ParamData *newparam = new ParamData(label, units, type);
+
+    for (std::list<ParamData>::iterator it = this->paramlist.begin(); it != this->paramlist.end(); it++)
     {
-        if (units)
+        if (newparam->label == it->label && newparam->units == it->units)
         {
-            if (!strcmp(pstruct->param, param) && !strcmp(pstruct->units, units)) match = true;
-        }
-        else
-        {
-            if (!strcmp(pstruct->param, param) && !(pstruct->units)) match = true;
-        }
-        if (match)
-        {
-            switch (type)
-            {
-                case VS_DECIMAL: return &(pstruct->decval);
-                case VS_INTEGER: return &(pstruct->intval);
-                case VS_STRING: return &(pstruct->strval);
-                default: return 0x0;
-            }
+            delete newparam;
+            return &(it->value);
         }
     }
 
-    pnew = (ParamArray *)calloc(1, sizeof(ParamArray));
-    pnew->param = strdup(param);
-    if (units) pnew->units = strdup(units);
-    else pnew->units = nullptr;
-    pnew->type = type;
-    pnew->next = 0x0;
-
-    if (!(this->parray)) this->parray = pnew;
-    else
-    {
-        for (pstruct = this->parray; pstruct->next; pstruct = pstruct->next);
-        pstruct->next = pnew;
-    }
-
-    this->paramcount++;
-
-    switch (type)
-    {
-        case VS_DECIMAL: return &(pnew->decval);
-        case VS_INTEGER: return &(pnew->intval);
-        case VS_STRING: return &(pnew->strval);
-        default: return 0x0;
-    }
+    this->paramlist.push_back(*newparam);
+    return &(this->paramlist.back().value);
 }
 
-int VariableServerComm::remove_var(const char *param)
+void VariableServerComm::remove_var(const char *label)
 {
-    char *cmd=0x0;
-    ParamArray *pstruct, *prev=0x0;
-
-    if (asprintf(&cmd, "trick.var_remove(\"%s\")\n", param) == -1) return VS_ERROR;
-
-    this->sim_write(cmd);
-    free(cmd);
-
-    for (pstruct = this->parray; pstruct; pstruct = prev->next)
+    for (std::list<ParamData>::iterator it = this->paramlist.begin(); it != this->paramlist.end(); it++)
     {
-        if (!strcmp(pstruct->param, param))
-        {
-            if (!prev) this->parray = pstruct->next;
-            else prev->next = pstruct->next;
-            TIDY(pstruct->param);
-            TIDY(pstruct->units);
-            TIDY(pstruct);
-        }
-        else prev = pstruct;
+        if (it->label == label) this->paramlist.erase(it);
     }
 
-    this->paramcount--;
-
-    return VS_SUCCESS;
+    std::ostringstream mycmd;
+    mycmd << "trick.var_remove(\"" << label << "\")\n";
+    this->sim_write(mycmd.str().c_str());
 }
 
 int VariableServerComm::activate(const char *host, int port, const char *rate_spec, char *default_rate)
 {
     char *cmd=0x0, *sample_rate=0x0, *default_sample_rate = strdup(VS_DEFAULT_SAMPLERATE);
     int i;
-    ParamArray *pstruct;
 
     if (host)
     {
@@ -182,9 +144,9 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
 
     if (rate_spec)
     {
-        if (asprintf(&cmd, "trick.var_add(\"%s\")\n", rate_spec) == -1) return VS_ERROR;
-        this->sim_write(cmd);
-        TIDY(cmd);
+        std::ostringstream mycmd;
+        mycmd << "trick.var_add(\"" << rate_spec << "\")\n";
+        this->sim_write(mycmd.str().c_str());
         this->sim_write("trick.var_send()\n");
 
         // block until sim returns rate_spec
@@ -213,22 +175,19 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
 
     this->sim_write("trick.var_pause()\n");
 
-    for (pstruct = this->parray; pstruct; pstruct = pstruct->next)
+    for (std::list<ParamData>::iterator it = this->paramlist.begin(); it != this->paramlist.end(); it++)
     {
-        if (pstruct->units)
-        {
-            if (asprintf(&cmd, "trick.var_add(\"%s\", \"%s\")\n", pstruct->param, pstruct->units) == -1) return VS_ERROR;
-        }
-        else
-        {
-            if (asprintf(&cmd, "trick.var_add(\"%s\")\n", pstruct->param) == -1) return VS_ERROR;
-        }
-        this->sim_write(cmd);
+        std::ostringstream mycmd;
+        mycmd << "trick.var_add(\"" << it->label << "\"";
+        if (!(it->units.empty())) mycmd << ", \"" << it->units << "\"";
+        mycmd << ")\n";
+        this->sim_write(mycmd.str().c_str());
         TIDY(cmd);
     }
 
-    if (asprintf(&cmd, "trick.var_cycle(%s)\n", sample_rate) == -1) return VS_ERROR;
-    this->sim_write(cmd);
+    std::ostringstream mycmd;
+    mycmd << "trick.var_cycle(" << sample_rate << ")\n";
+    this->sim_write(mycmd.str().c_str());
 
 //    this->sim_write("trick.var_debug(1)\n"); // FOR DEBUGGING
     this->sim_write("trick.var_unpause()\n");
@@ -260,7 +219,7 @@ int VariableServerComm::get(void)
     end_buf = this->find_next_token(this->databuf, '\n');
     this->databuf_size = end_buf + 1;
 
-    if (this->count_tokens(this->databuf, '\t') != this->paramcount) return VS_MANGLED_BUFFER;
+    if (this->count_tokens(this->databuf, '\t') != this->paramlist.size()) return VS_MANGLED_BUFFER;
 
     this->databuf[end_buf] = '\t'; // replace \n with \t to simplify parsing
     retval = this->update_data(this->databuf);
@@ -282,45 +241,43 @@ int VariableServerComm::get(void)
     return retval;
 }
 
-int VariableServerComm::put(const char *param, int type, void *value, const char *units)
+int VariableServerComm::putMethod(const char *label)
 {
-    char *cmd = 0x0;
-
     if (!tc_isValid(&(this->connection))) return VS_INVALID_CONNECTION;
 
-    switch (type)
-    {
-        case VS_DECIMAL:
-            if (units)
-            {
-                if (asprintf(&cmd, "trick.var_set(\"%s\", %f, \"%s\")\n", param, *(double *)value, units) == -1) return VS_ERROR;
-            }
-            else
-            {
-                if (asprintf(&cmd, "trick.var_set(\"%s\", %f)\n", param, *(double *)value) == -1) return VS_ERROR;
-            }
-            break;
-        case VS_INTEGER:
-            if (units)
-            {
-                if (asprintf(&cmd, "trick.var_set(\"%s\", %d, \"%s\")\n", param, *(int *)value, units) == -1) return VS_ERROR;
-            }
-            else
-            {
-                if (asprintf(&cmd, "trick.var_set(\"%s\", %d)\n", param, *(int *)value) == -1) return VS_ERROR;
-            }
-            break;
-        case VS_STRING:
-            if (asprintf(&cmd, "trick.var_set(\"%s\", %s)\n", param, ((std::string *)value)->c_str()) == -1) return VS_ERROR;
-            break;
-        case VS_METHOD:
-            if (asprintf(&cmd, "%s()\n", param) == -1) return VS_ERROR;
-            break;
-    }
+    std::ostringstream mycmd;
+    mycmd << label << "()\n";
+    this->sim_write(mycmd.str().c_str());
 
-    this->sim_write(cmd);
-    free(cmd);
     return VS_SUCCESS;
+}
+
+int VariableServerComm::putGeneric(const char *label, std::string value, const char *units)
+{
+    if (!tc_isValid(&(this->connection))) return VS_INVALID_CONNECTION;
+
+    std::ostringstream mycmd;
+    mycmd << "trick.var_set(\"" << label << "\", " << value;
+    if (units) mycmd << ", \"" << units << "\"";
+    mycmd << ")\n";
+    this->sim_write(mycmd.str().c_str());
+
+    return VS_SUCCESS;
+}
+
+int VariableServerComm::putValue(const char *label, int value, const char *units)
+{
+    return this->putGeneric(label, std::to_string(value), units);
+}
+
+int VariableServerComm::putValue(const char *label, double value, const char *units)
+{
+    return this->putGeneric(label, std::to_string(value), units);
+}
+
+int VariableServerComm::putValue(const char *label, std::string value, const char *)
+{
+    return this->putGeneric(label, value, 0x0);
 }
 
 void VariableServerComm::sim_read(void)
@@ -343,55 +300,38 @@ void VariableServerComm::sim_read(void)
     if (this->count_tokens(this->databuf, '\n')) this->databuf_complete = true;
 }
 
-void VariableServerComm::sim_write(char *cmd)
-{
-    tc_write(&(this->connection), cmd, strlen(cmd));
-}
-
-// If tc_write is ever updated to take "const char *" as input, then this ugly work-around can be removed
+// If tc_write is ever updated to take "const char *" as input, then this ugly work-around can be removed and sim_write
+// can be effectively replaced by a single call to tc_write:  tc_write(&(this->connection), cmd, strlen(cmd));
 void VariableServerComm::sim_write(const char *cmd)
 {
     char *dyncmd = strdup(cmd);
-    tc_write(&(this->connection), dyncmd, strlen(cmd));
-    TIDY(dyncmd);
+    if (dyncmd)
+    {
+        tc_write(&(this->connection), dyncmd, strlen(cmd));
+        free(dyncmd);
+    }
 }
 
-int VariableServerComm::update_data(char *curbuf)
+int VariableServerComm::update_data(const char *curbuf)
 {
-    ParamArray *pstruct;
-    char *element;
-    unsigned long len, i;
-
     this->prevbuf = (char *)realloc(this->prevbuf, this->databuf_size);
 
     if (!strncmp(this->prevbuf, curbuf, this->databuf_size)) return VS_NO_NEW_DATA;
 
     bcopy(curbuf, this->prevbuf, this->databuf_size);
 
-    for (pstruct = this->parray, element=curbuf; pstruct; pstruct = pstruct->next)
+    const char *element = curbuf;
+
+    for (std::list<ParamData>::iterator it = this->paramlist.begin(); it != this->paramlist.end(); it++)
     {
         element += this->find_next_token(element, '\t') + 1;
-        switch (pstruct->type)
-        {
-        case VS_DECIMAL:
-            pstruct->decval = strtod(element, 0x0);
-            break;
-        case VS_INTEGER:
-            pstruct->intval = (int)strtol(element, 0x0, 10);
-            break;
-        case VS_STRING:
-            len = this->find_next_token(element, '\t');
-            if (len >= pstruct->strval.max_size()) len = pstruct->strval.max_size() - 1;
-            pstruct->strval.clear();
-            for (i=0; i<len; i++) pstruct->strval += *(element + i);
-            break;
-        }
+        it->setValue(element, this->find_next_token(element, '\t'));
     }
 
     return VS_SUCCESS;
 }
 
-int VariableServerComm::count_tokens(const char *str, char key)
+size_t VariableServerComm::count_tokens(const char *str, char key)
 {
     int count = 0;
 
