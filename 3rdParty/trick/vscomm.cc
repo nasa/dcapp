@@ -20,30 +20,6 @@ Programmer: M. McFarlane
 #define VS_DEFAULT_PORT       7000
 #define VS_DEFAULT_SAMPLERATE "1.0"
 
-ValueData::ValueData() : decval(0), intval(0) { }
-
-ValueData::~ValueData() { }
-
-void ValueData::setType(int type_spec) { this->type = type_spec; }
-
-void ValueData::setValue(const char *input, unsigned length)
-{
-    switch (this->type)
-    {
-    case VS_DECIMAL:
-        this->decval = strtod(input, 0x0);
-        break;
-    case VS_INTEGER:
-        this->intval = (int)strtol(input, 0x0, 10);
-        break;
-    case VS_STRING:
-        if (length >= this->strval.max_size()) length = this->strval.max_size() - 1;
-        this->strval.clear();
-        for (unsigned i=0; i<length; i++) this->strval += input[i];
-        break;
-    }
-}
-
 ParamData::ParamData(const char *label_spec, const char *units_spec, int type_spec)
 {
     if (label_spec) this->label = label_spec;

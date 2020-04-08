@@ -12,6 +12,7 @@
 #include "trick_utils/comm/include/tc.h"
 #include "trick_utils/comm/include/tc_proto.h"
 #endif
+#include "valuedata.hh"
 
 #define VS_SUCCESS            (0)
 #define VS_ERROR              (-1)
@@ -23,23 +24,6 @@
 #define VS_STRING             (1)
 #define VS_DECIMAL            (2)
 #define VS_INTEGER            (3)
-
-class ValueData
-{
-    public:
-        ValueData();
-        virtual ~ValueData();
-
-        void setType(int);
-        void setValue(const char *, unsigned);
-        
-        double decval;
-        int intval;
-        std::string strval;
-
-    private:
-        int type;
-};
 
 class ParamData
 {
