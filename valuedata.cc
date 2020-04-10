@@ -3,10 +3,27 @@
 #include "basicutils/msg.hh"
 #include "types.hh"
 #include "valuedata.hh"
+#include "string_utils.hh"
 
 ValueData::ValueData() : decval(0), intval(0) { }
 
 ValueData::~ValueData() { }
+
+bool ValueData::operator == (const ValueData &that)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: if (this->decval == that.decval) return true; break;
+        case INTEGER_TYPE: if (this->intval == that.intval) return true; break;
+        case STRING_TYPE:  if (this->strval == that.strval) return true; break;
+    }
+    return false;
+}
+
+bool ValueData::operator != (const ValueData &that)
+{
+    return !(*this == that);
+}
 
 // Probably don't need two of these routines...
 void ValueData::setType(int type_spec) { this->type = type_spec; } // Should probably verify a valid input type here
@@ -68,16 +85,70 @@ void ValueData::setValue(const char *input, unsigned length)
         break;
     }
 }
+void ValueData::setValue(const ValueData &that)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: this->decval = that.decval; break;
+        case INTEGER_TYPE: this->intval = that.intval; break;
+        case STRING_TYPE:  this->strval = that.strval; break;
+    }
+}
+
+void ValueData::setBoolean(bool input)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE:
+            if (input) this->decval = 1.0;
+            else       this->decval = 0.0;
+            break;
+        case INTEGER_TYPE:
+            if (input) this->intval = 1;
+            else       this->intval = 0;
+            break;
+        case STRING_TYPE:
+            if (input) this->strval = "true";
+            else       this->strval = "false";
+            break;
+    }
+}
 
 int ValueData::getType(void) { return this->type; }
+
+bool ValueData::getBoolean(void)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: if (this->decval) return true; break;
+        case INTEGER_TYPE: if (this->intval) return true; break;
+        case STRING_TYPE:  if (StringToBoolean(this->strval)) return true; break;
+    }
+    return false;
+}
+
+std::string ValueData::getString(void)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: return std::to_string(this->decval); break;
+        case INTEGER_TYPE: return std::to_string(this->intval); break;
+        case STRING_TYPE:  return this->strval; break;
+    }
+    return "";
+}
 
 void * ValueData::getPointer(void)
 {
     switch (this->type)
     {
-        case DECIMAL_TYPE: return (void *)(&(this->decval));
-        case INTEGER_TYPE: return (void *)(&(this->intval));
-        case STRING_TYPE:  return (void *)(&(this->strval));
+        case DECIMAL_TYPE: return (void *)(&(this->decval)); break;
+        case INTEGER_TYPE: return (void *)(&(this->intval)); break;
+        case STRING_TYPE:  return (void *)(&(this->strval)); break;
         default:           return 0x0;
     }
 }
+
+bool ValueData::isDecimal(void) { if (this->type == DECIMAL_TYPE) return true; else return false; }
+bool ValueData::isInteger(void) { if (this->type == INTEGER_TYPE) return true; else return false; }
+bool ValueData::isString(void)  { if (this->type == STRING_TYPE)  return true; else return false; }

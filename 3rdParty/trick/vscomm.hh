@@ -47,9 +47,7 @@ class VariableServerComm
         int activate(const char *, int, const char *, char *);
         int get(void);
         int putMethod(const char *);
-        int putValue(const char *, int, const char *);
-        int putValue(const char *, double, const char *);
-        int putValue(const char *, std::string, const char *);
+        int putValue(const char *, ValueData &, const char *);
 
     private:
         std::list<ParamData> paramlist;
@@ -59,7 +57,6 @@ class VariableServerComm
         bool databuf_complete;
         int databuf_size;
 
-        int putGeneric(const char *, std::string, const char *);
         void sim_read(void);
         void sim_write(const char *);
         int update_data(const char *);

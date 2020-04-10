@@ -5,10 +5,11 @@
 #include "types.hh"
 #include "string_utils.hh"
 #include "constants.hh"
+#include "valuedata.hh"
 
 extern void varlist_append(const char *, const char *, const char *);
+extern ValueData * getValue(const char *);
 extern void *get_pointer(const char *);
-extern int get_datatype(const char *);
 
 char *create_virtual_variable(const char *typestr, const char *initval)
 {
@@ -69,8 +70,12 @@ void *getVariablePointer(int datatype, const char *valstr)
 
 int get_data_type(const char *valstr)
 {
-    if (check_dynamic_element(valstr)) return get_datatype(valstr);
-    else return UNDEFINED_TYPE;
+    if (check_dynamic_element(valstr))
+    {
+        ValueData *myvalue = getValue(valstr);
+        if (myvalue) return myvalue->getType();
+    }
+    return UNDEFINED_TYPE;
 }
 
 double getDecimalValue(int type, const void *val)

@@ -37,6 +37,23 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
     varMap[std::string(mylabel)] = *vinfo;
 }
 
+ValueData * getValue(const char *label)
+{
+    if (!label) return 0x0;
+
+    const char *mylabel;
+
+    if (label[0] == '@') mylabel = &label[1];
+    else mylabel = label;
+
+    if (varMap.find(mylabel) != varMap.end()) return &(varMap[mylabel]);
+    else
+    {
+        error_msg("Invalid parameter label: " << label);
+        return 0x0;
+    }
+}
+
 void *get_pointer(const char *label)
 {
     if (!label) return 0x0;
@@ -51,22 +68,5 @@ void *get_pointer(const char *label)
     {
         error_msg("Invalid parameter label: " << label);
         return 0x0;
-    }
-}
-
-int get_datatype(const char *label)
-{
-    if (!label) return UNDEFINED_TYPE;
-
-    const char *mylabel;
-
-    if (label[0] == '@') mylabel = &label[1];
-    else mylabel = label;
-
-    if (varMap.find(mylabel) != varMap.end()) return varMap[mylabel].getType();
-    else
-    {
-        error_msg("Invalid parameter label: " << label);
-        return UNDEFINED_TYPE;
     }
 }

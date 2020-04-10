@@ -1,26 +1,27 @@
 #include "types.hh"
 #include "varlist.hh"
+#include "valuedata.hh"
 #include "mousemotion.hh"
 
 extern void UpdateDisplay(void);
 
 dcMouseMotion::dcMouseMotion(dcParent *myparent, const char *xvar, const char *yvar)
 :
-pointerX(nullptr), pointerY(nullptr)
+noval(0.0)
 {
-    int datatype;
+    pointerX = &noval;
+    ValueData *xval = getValue(xvar);
+    if (xval)
+    {
+        if (xval->isDecimal()) pointerX = (double *)(xval->getPointer());
+    }
 
-    datatype = get_data_type(xvar);
-    if (datatype == DECIMAL_TYPE)
-        pointerX = (double *)getVariablePointer(datatype, xvar);
-    else
-        pointerX = &noval;
-
-    datatype = get_data_type(yvar);
-    if (datatype == DECIMAL_TYPE)
-        pointerY = (double *)getVariablePointer(datatype, yvar);
-    else
-        pointerY = &noval;
+    pointerY = &noval;
+    ValueData *yval = getValue(yvar);
+    if (yval)
+    {
+        if (yval->isDecimal()) pointerY = (double *)(yval->getPointer());
+    }
 
     if (pointerX != &noval || pointerY != &noval) myparent->addChild(this);
 }

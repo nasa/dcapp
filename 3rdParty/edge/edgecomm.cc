@@ -7,6 +7,7 @@
 #include "edgecomm.hh"
 #include "types.hh"
 #include "varlist.hh"
+#include "valuedata.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
@@ -191,19 +192,24 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *c
             return this->Fail;
     }
 
-    void *valptr = get_pointer(paramname);
+    ValueData *myvalue = getValue(paramname);
 
-    if (valptr)
+    if (myvalue)
     {
-        io_parameter myparam;
-        myparam.edgecmd = cmdspec;
-        myparam.type = get_datatype(paramname);
-        myparam.dcvalue = valptr;
-        myparam.prevvalue.decval = 0;
-        myparam.prevvalue.intval = 0;
-        myparam.prevvalue.strval = "";
-        myparam.forcewrite = false;
-        io_map->push_back(myparam);
+        void *valptr = myvalue->getPointer();
+
+        if (valptr)
+        {
+            io_parameter myparam;
+            myparam.edgecmd = cmdspec;
+            myparam.type = myvalue->getType();
+            myparam.dcvalue = valptr;
+            myparam.prevvalue.decval = 0;
+            myparam.prevvalue.intval = 0;
+            myparam.prevvalue.strval = "";
+            myparam.forcewrite = false;
+            io_map->push_back(myparam);
+        }
     }
 
     return this->Success;

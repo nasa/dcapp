@@ -230,32 +230,17 @@ int VariableServerComm::putMethod(const char *label)
     return VS_SUCCESS;
 }
 
-int VariableServerComm::putGeneric(const char *label, std::string value, const char *units)
+int VariableServerComm::putValue(const char *label, ValueData &value, const char *units)
 {
     if (!tc_isValid(&(this->connection))) return VS_INVALID_CONNECTION;
 
     std::ostringstream mycmd;
-    mycmd << "trick.var_set(\"" << label << "\", " << value;
-    if (units) mycmd << ", \"" << units << "\"";
+    mycmd << "trick.var_set(\"" << label << "\", " << value.getString();
+    if (units && !(value.isString())) mycmd << ", \"" << units << "\"";
     mycmd << ")\n";
     this->sim_write(mycmd.str().c_str());
 
     return VS_SUCCESS;
-}
-
-int VariableServerComm::putValue(const char *label, int value, const char *units)
-{
-    return this->putGeneric(label, std::to_string(value), units);
-}
-
-int VariableServerComm::putValue(const char *label, double value, const char *units)
-{
-    return this->putGeneric(label, std::to_string(value), units);
-}
-
-int VariableServerComm::putValue(const char *label, std::string value, const char *)
-{
-    return this->putGeneric(label, value, 0x0);
 }
 
 void VariableServerComm::sim_read(void)
