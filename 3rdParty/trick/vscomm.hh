@@ -21,10 +21,6 @@
 #define VS_MANGLED_BUFFER     (-4)
 #define VS_PARTIAL_BUFFER     (-5)
 
-#define VS_STRING             (1)
-#define VS_DECIMAL            (2)
-#define VS_INTEGER            (3)
-
 class ParamData
 {
     public:

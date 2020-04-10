@@ -4,10 +4,9 @@
 #include <string>
 #include "basicutils/timer.hh"
 #include "basicutils/tidy.hh"
-#include "edgecomm.hh"
-#include "types.hh"
 #include "varlist.hh"
 #include "valuedata.hh"
+#include "edgecomm.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
@@ -74,18 +73,8 @@ CommModule::CommStatus EdgeCommModule::read(void)
             return this->Fail;
         }
 
-        switch (myitem->type)
-        {
-            case DECIMAL_TYPE:
-                *(double *)myitem->dcvalue = strtof(substr, 0x0);
-                break;
-            case INTEGER_TYPE:
-                *(int *)myitem->dcvalue = (int)strtol(substr, 0x0, 10);
-                break;
-            case STRING_TYPE:
-                *(std::string *)myitem->dcvalue = substr;
-                break;
-        }
+// maybe verify that type is legit here?
+        myitem->currvalue->setValue(substr);
 
         strptr += strlen(substr) + 1;
     }
@@ -118,41 +107,15 @@ CommModule::CommStatus EdgeCommModule::write(void)
 
     for (myitem = this->toEdge.begin(); myitem != this->toEdge.end(); myitem++)
     {
-        switch (myitem->type)
+// maybe verify that type is legit here?
+        if (myitem->forcewrite || *(myitem->currvalue) != myitem->prevvalue)
         {
-            case DECIMAL_TYPE:
-                if (myitem->forcewrite || *(double *)myitem->dcvalue != myitem->prevvalue.decval)
-                {
-                    cmd = myitem->edgecmd;
-                    cmd += " ";
-                    cmd += std::to_string(*(double *)(myitem->dcvalue));
-                    status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
-                    myitem->prevvalue.decval = *(double *)myitem->dcvalue;
-                    myitem->forcewrite = false;
-                }
-                break;
-            case INTEGER_TYPE:
-                if (myitem->forcewrite || *(int *)myitem->dcvalue != myitem->prevvalue.intval)
-                {
-                    cmd = myitem->edgecmd;
-                    cmd += " ";
-                    cmd += std::to_string(*(int *)(myitem->dcvalue));
-                    status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
-                    myitem->prevvalue.intval = *(int *)myitem->dcvalue;
-                    myitem->forcewrite = false;
-                }
-                break;
-            case STRING_TYPE:
-                if (myitem->forcewrite || *(std::string *)myitem->dcvalue != myitem->prevvalue.strval)
-                {
-                    cmd = myitem->edgecmd;
-                    cmd += " ";
-                    cmd += *(std::string *)(myitem->dcvalue);
-                    status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
-                    myitem->prevvalue.strval = *(std::string *)myitem->dcvalue;
-                    myitem->forcewrite = false;
-                }
-                break;
+            cmd = myitem->edgecmd;
+            cmd += " ";
+            cmd += myitem->currvalue->getString();
+            status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
+            myitem->prevvalue.setValue(*(myitem->currvalue));
+            myitem->forcewrite = false;
         }
     }
 
@@ -170,7 +133,7 @@ void EdgeCommModule::flagAsChanged(void *value)
 
     for (myitem = this->toEdge.begin(); myitem != this->toEdge.end(); myitem++)
     {
-        if (myitem->dcvalue == value) myitem->forcewrite = true;
+        if (myitem->currvalue->getPointer() == value) myitem->forcewrite = true;
     }
 }
 
@@ -196,17 +159,13 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *c
 
     if (myvalue)
     {
-        void *valptr = myvalue->getPointer();
-
-        if (valptr)
+// maybe a more elegant "if valid" check below?
+        if (myvalue->getPointer())
         {
             io_parameter myparam;
             myparam.edgecmd = cmdspec;
             myparam.type = myvalue->getType();
-            myparam.dcvalue = valptr;
-            myparam.prevvalue.decval = 0;
-            myparam.prevvalue.intval = 0;
-            myparam.prevvalue.strval = "";
+            myparam.currvalue = myvalue;
             myparam.forcewrite = false;
             io_map->push_back(myparam);
         }

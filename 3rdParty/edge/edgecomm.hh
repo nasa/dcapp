@@ -4,6 +4,7 @@
 #include <string>
 #include <list>
 #include "basicutils/timer.hh"
+#include "valuedata.hh"
 #include "comm.hh"
 #include "EDGE_rcs.hh"
 
@@ -29,13 +30,8 @@ class EdgeCommModule : public CommModule
         {
             int type;
             std::string edgecmd;
-            void *dcvalue;
-            struct
-            {
-                double decval;
-                int intval;
-                std::string strval;
-            } prevvalue;
+            ValueData *currvalue;
+            ValueData prevvalue;
             bool forcewrite;
         } io_parameter;
 

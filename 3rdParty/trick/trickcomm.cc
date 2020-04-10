@@ -3,14 +3,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <string>
-#include "basicutils/msg.hh"
 #include "basicutils/timer.hh"
-#include "trickcomm.hh"
+#include "basicutils/msg.hh"
 #include "string_utils.hh"
-#include "types.hh"
 #include "varlist.hh"
 #include "valuedata.hh"
+#include "trickcomm.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
