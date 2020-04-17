@@ -17,10 +17,14 @@ class ValueData
         void setValue(const char *);
         void setValue(const char *, unsigned);
         void setValue(const ValueData &);
+        void setValue(double);
+        void setValue(int);
         void setBoolean(bool);
 
         int getType(void);
         bool getBoolean(void);
+        double getDecimal(void);
+        int getInteger(void);
         std::string getString(void);
         void *getPointer(void);
 

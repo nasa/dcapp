@@ -10,11 +10,6 @@ static std::map<std::string, ValueData> varMap;
 
 void varlist_append(const char *paramname, const char *typestr, const char *initval)
 {
-    const char *mylabel;
-
-    if (paramname[0] == '@') mylabel = &paramname[1];
-    else mylabel = paramname;
-
     if (!paramname)
     {
         error_msg("Attempting to create a variable without a name");
@@ -26,6 +21,11 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
         error_msg("Attempting to create the variable \"" << paramname << "\" without a specified type");
         return;
     }
+
+    const char *mylabel;
+
+    if (paramname[0] == '@') mylabel = &paramname[1];
+    else mylabel = paramname;
 
     ValueData *vinfo = new ValueData;
     vinfo->setType(typestr);

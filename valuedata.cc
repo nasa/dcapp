@@ -94,6 +94,8 @@ void ValueData::setValue(const ValueData &that)
         case STRING_TYPE:  this->strval = that.strval; break;
     }
 }
+void ValueData::setValue(double val) { this->decval = val; }
+void ValueData::setValue(int val) { this->intval = val; }
 
 void ValueData::setBoolean(bool input)
 {
@@ -127,15 +129,34 @@ bool ValueData::getBoolean(void)
     return false;
 }
 
+double ValueData::getDecimal(void)
+{
+    switch (this->type)
+    {
+        case INTEGER_TYPE: return (double)(this->intval);
+        case STRING_TYPE:  return StringToDecimal(this->strval);
+        default:           return this->decval;
+    }
+}
+
+int ValueData::getInteger(void)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: return (int)(this->decval);
+        case STRING_TYPE:  return StringToInteger(this->strval);
+        default:           return this->intval;
+    }
+}
+
 std::string ValueData::getString(void)
 {
     switch (this->type)
     {
-        case DECIMAL_TYPE: return std::to_string(this->decval); break;
-        case INTEGER_TYPE: return std::to_string(this->intval); break;
-        case STRING_TYPE:  return this->strval; break;
+        case DECIMAL_TYPE: return std::to_string(this->decval);
+        case INTEGER_TYPE: return std::to_string(this->intval);
+        default:           return this->strval;
     }
-    return "";
 }
 
 void * ValueData::getPointer(void)

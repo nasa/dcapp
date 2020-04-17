@@ -19,4 +19,6 @@ extern double getDecimalValue(int, const void *);
 extern int getIntegerValue(int, const void *);
 extern std::string getStringValue(int, const void *);
 
+ValueData *getValueData(const char *);
+
 #endif

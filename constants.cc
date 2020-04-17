@@ -1,9 +1,13 @@
 #include <list>
 #include <string>
+#include "types.hh"
+#include "valuedata.hh"
 
 static std::list<double> decimalConstants;
 static std::list<int> integerConstants;
 static std::list<std::string> stringConstants;
+
+#if 0
 
 double *dcLoadConstant(double fval)
 {
@@ -26,6 +30,69 @@ int *dcLoadConstant(int ival)
     integerConstants.push_back(ival);
     return &(integerConstants.back());
 }
+
+#else
+
+static std::list<ValueData> constants;
+
+double *dcLoadConstant(double fval)
+{
+    std::list<ValueData>::iterator it;
+    for (it = constants.begin(); it != constants.end(); it++)
+    {
+        if (*((double *)(it->getPointer())) == fval)
+        {
+//printf("DEC MATCH: %g\n", fval);
+            return (double *)(it->getPointer());
+        }
+    }
+    ValueData *vinfo = new ValueData;
+    vinfo->setType(DECIMAL_TYPE);
+    vinfo->setValue(fval);
+    constants.push_back(*vinfo);
+//printf("DEC NEW: %g\n", fval);
+    return (double *)(constants.back().getPointer());
+}
+
+int *dcLoadConstant(int ival)
+{
+    std::list<ValueData>::iterator it;
+    for (it = constants.begin(); it != constants.end(); it++)
+    {
+        if (*((int *)(it->getPointer())) == ival)
+        {
+//printf("INT MATCH: %d\n", ival);
+            return (int *)(it->getPointer());
+        }
+    }
+    ValueData *vinfo = new ValueData;
+    vinfo->setType(INTEGER_TYPE);
+    vinfo->setValue(ival);
+    constants.push_back(*vinfo);
+//printf("INT NEW: %d\n", ival);
+    return (int *)(constants.back().getPointer());
+}
+
+ValueData *getConstantValue(int ival)
+{
+    std::list<ValueData>::iterator it;
+    for (it = constants.begin(); it != constants.end(); it++)
+    {
+        if (*((int *)(it->getPointer())) == ival)
+        {
+//printf("INT MATCH: %d\n", ival);
+            return &(*it);
+        }
+    }
+    ValueData *vinfo = new ValueData;
+    vinfo->setType(INTEGER_TYPE);
+    vinfo->setValue(ival);
+    constants.push_back(*vinfo);
+//printf("INT NEW: %d\n", ival);
+    return &(constants.back());
+}
+
+#endif
 
 std::string *dcLoadConstant(const char *sval)
 {

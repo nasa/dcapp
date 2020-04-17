@@ -45,6 +45,12 @@ int *getIntegerPointer(const char *valstr)
     else return dcLoadConstant(StringToInteger(valstr));
 }
 
+ValueData *getValueData(const char *valstr)
+{
+    if (check_dynamic_element(valstr)) return getValue(valstr);
+    else return getConstantValue(StringToInteger(valstr));
+}
+
 std::string *getStringPointer(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return (std::string *)get_pointer(valstr);
