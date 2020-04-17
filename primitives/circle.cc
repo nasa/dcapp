@@ -51,6 +51,6 @@ void dcCircle::setSegments(const char *inval)
 void dcCircle::draw(void)
 {
     computeGeometry();
-    if (fill) circle_fill(refx, refy, radius->getDecimal(), segments, *(FillColor.R), *(FillColor.G), *(FillColor.B), *(FillColor.A));
-    if (outline) circle_outline(refx, refy, radius->getDecimal(), segments, *(LineColor.R), *(LineColor.G), *(LineColor.B), *(LineColor.A), linewidth);
+    if (fill) circle_fill(refx, refy, radius->getDecimal(), segments, FillColor.R->getDecimal(), FillColor.G->getDecimal(), FillColor.B->getDecimal(), FillColor.A->getDecimal());
+    if (outline) circle_outline(refx, refy, radius->getDecimal(), segments, LineColor.R->getDecimal(), LineColor.G->getDecimal(), LineColor.B->getDecimal(), LineColor.A->getDecimal(), linewidth);
 }

@@ -51,12 +51,12 @@ void dcRectangle::draw(void)
 
     if (fill)
     {
-        draw_quad(pointsL, (*(FillColor.R)), (*(FillColor.G)), (*(FillColor.B)), (*(FillColor.A)));
+        draw_quad(pointsL, FillColor.R->getDecimal(), FillColor.G->getDecimal(), FillColor.B->getDecimal(), FillColor.A->getDecimal());
     }
     if (outline)
     {
         addPoint(pointsL, 0, 0);
-        draw_line(pointsL, linewidth, (*LineColor.R), (*LineColor.G), (*LineColor.B), (*LineColor.A));
+        draw_line(pointsL, linewidth, LineColor.R->getDecimal(), LineColor.G->getDecimal(), LineColor.B->getDecimal(), LineColor.A->getDecimal());
     }
     container_end();
 }

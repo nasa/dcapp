@@ -47,14 +47,14 @@ void dcADI::setRPYerrors(const char *re, const char *pe, const char *ye)
 
 void dcADI::setRadius(const char *outer, const char *ball)
 {
-    if (outer) outerradius = getDecimalPointer(outer);
-    if (ball) ballradius = getDecimalPointer(ball);
+    if (outer) outerradius = getValueData(outer);
+    if (ball) ballradius = getValueData(ball);
 }
 
 void dcADI::setChevron(const char *widthspec, const char *heightspec)
 {
-    if (widthspec) chevronW = getDecimalPointer(widthspec);
-    if (heightspec) chevronH = getDecimalPointer(heightspec);
+    if (widthspec) chevronW = getValueData(widthspec);
+    if (heightspec) chevronH = getValueData(heightspec);
 }
 
 void dcADI::draw(void)
@@ -63,16 +63,16 @@ void dcADI::draw(void)
 
     double outerrad, ballrad, chevw, chevh;
 
-    if (outerradius) outerrad = *outerradius;
+    if (outerradius) outerrad = outerradius->getDecimal();
     else outerrad = 0.5 * (fminf(*w, *h));
 
-    if (ballradius) ballrad = *ballradius;
+    if (ballradius) ballrad = ballradius->getDecimal();
     else ballrad = 0.9 * outerrad;
 
-    if (chevronW) chevw = *chevronW;
+    if (chevronW) chevw = chevronW->getDecimal();
     else chevw = 0.2 * outerrad;
 
-    if (chevronH) chevh = *chevronH;
+    if (chevronH) chevh = chevronH->getDecimal();
     else chevh = 0.2 * outerrad;
 
     // Draw the ball

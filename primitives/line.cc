@@ -13,7 +13,7 @@ dcLine::dcLine(dcParent *myparent) : linewidth(1)
 
 void dcLine::setColor(const char *cspec)
 {
-    color.set(cspec);
+    if (cspec) color.set(cspec);
 }
 
 void dcLine::setLineWidth(const char *inval)
@@ -24,6 +24,6 @@ void dcLine::setLineWidth(const char *inval)
 void dcLine::draw(void)
 {
     for (const auto &myobj : children) myobj->draw();
-    draw_line(AppData.vertices, linewidth, *color.R, *color.G, *color.B, *color.A);
+    draw_line(AppData.vertices, linewidth, color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal());
     AppData.vertices.clear();
 }

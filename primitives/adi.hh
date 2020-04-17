@@ -24,10 +24,10 @@ class dcADI : public dcGeometric
     private:
         tdTexture *bkgdID;
         tdTexture *ballID;
-        double *outerradius;
-        double *ballradius;
-        double *chevronW;
-        double *chevronH;
+        ValueData *outerradius;
+        ValueData *ballradius;
+        ValueData *chevronW;
+        ValueData *chevronH;
         ValueData *roll;
         ValueData *pitch;
         ValueData *yaw;

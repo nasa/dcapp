@@ -141,13 +141,13 @@ void dcString::draw(void)
             addPoint(pointsL, myright, mytop);
             addPoint(pointsL, myright, mybottom);
 
-            draw_quad(pointsL, *(bgcolor.R), *(bgcolor.G), *(bgcolor.B), *(bgcolor.A));
+            draw_quad(pointsL, bgcolor.R->getDecimal(), bgcolor.G->getDecimal(), bgcolor.B->getDecimal(), bgcolor.A->getDecimal());
         }
         if (shadowOffset->getBoolean())
         {
             draw_string(myleft + shadowOffset->getDecimal(), mybottom - shadowOffset->getDecimal(), fontSize->getDecimal(), 0, 0, 0, 1, fontID, forcemono, tmpstr);
         }
-        draw_string(myleft, mybottom, fontSize->getDecimal(), *(color.R), *(color.G), *(color.B), *(color.A), fontID, forcemono, tmpstr);
+        draw_string(myleft, mybottom, fontSize->getDecimal(), color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal(), fontID, forcemono, tmpstr);
 
         rotate_end();
         translate_end();

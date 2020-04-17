@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <cctype>
+#include "valuedata.hh"
 #include "constants.hh"
 #include "varlist.hh"
 #include "string_utils.hh"
@@ -13,24 +14,24 @@ class Kolor
     public:
         Kolor()
         {
-            R = dcLoadConstant(0.0);
-            G = dcLoadConstant(0.0);
-            B = dcLoadConstant(0.0);
-            A = dcLoadConstant(1.0);
+            R = getConstantValue(0.0);
+            G = getConstantValue(0.0);
+            B = getConstantValue(0.0);
+            A = getConstantValue(1.0);
         }
         void set(double r, double g, double b)
         {
-            R = dcLoadConstant(r);
-            G = dcLoadConstant(g);
-            B = dcLoadConstant(b);
-            A = dcLoadConstant(1.0);
+            R = getConstantValue(r);
+            G = getConstantValue(g);
+            B = getConstantValue(b);
+            A = getConstantValue(1.0);
         }
         void set(double r, double g, double b, double a)
         {
-            R = dcLoadConstant(r);
-            G = dcLoadConstant(g);
-            B = dcLoadConstant(b);
-            A = dcLoadConstant(a);
+            R = getConstantValue(r);
+            G = getConstantValue(g);
+            B = getConstantValue(b);
+            A = getConstantValue(a);
         }
         void set(std::string mystring)
         {
@@ -60,25 +61,25 @@ class Kolor
             count = mylist.size();
 
             if (count > 0) R = color_element(mylist[0]);
-            else R = dcLoadConstant(0.0);
+            else R = getConstantValue(0.0);
             if (count > 1) G = color_element(mylist[1]);
-            else G = dcLoadConstant(0.0);
+            else G = getConstantValue(0.0);
             if (count > 2) B = color_element(mylist[2]);
-            else B = dcLoadConstant(0.0);
+            else B = getConstantValue(0.0);
             if (count > 3) A = color_element(mylist[3]);
-            else A = dcLoadConstant(1.0);
+            else A = getConstantValue(1.0);
         }
 
-        double *R;
-        double *G;
-        double *B;
-        double *A;
+        ValueData *R;
+        ValueData *G;
+        ValueData *B;
+        ValueData *A;
 
     private:
-        double *color_element(std::string &strval)
+        ValueData *color_element(std::string &strval)
         {
-            if (check_dynamic_element(strval.c_str())) return (double *)get_pointer(strval.c_str());
-            else return dcLoadConstant(StringToDecimal(strval));
+            if (check_dynamic_element(strval.c_str())) return getVariableValue(strval.c_str());
+            else return getConstantValue(StringToDecimal(strval));
         }
 };
 

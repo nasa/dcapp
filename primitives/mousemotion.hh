@@ -13,9 +13,9 @@ class dcMouseMotion : public dcObject
         void handleMouseMotion(double, double);
 
     private:
-        double *pointerX;
-        double *pointerY;
-        double noval;
+        ValueData *pointerX;
+        ValueData *pointerY;
+        ValueData noval;
 };
 
 #endif
