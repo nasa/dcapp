@@ -1,6 +1,7 @@
 #ifndef _GEOMETRIC_HH_
 #define _GEOMETRIC_HH_
 
+#include "valuedata.hh"
 #include "parent.hh"
 #include "object.hh"
 
@@ -23,7 +24,7 @@ class dcGeometric : public dcObject
         double *containerh;
         unsigned halign;
         unsigned valign;
-        double *rotate;
+        ValueData *rotate;
 
         double refx;
         double refy;

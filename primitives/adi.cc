@@ -11,12 +11,12 @@ static const double YELLOW[3] = { 1.0, 1.0, 0.0 };
 
 dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(0x0), ballID(0x0), outerradius(0x0), ballradius(0x0), chevronW(0x0), chevronH(0x0)
 {
-    roll = dcLoadConstant(0.0f);
-    pitch = dcLoadConstant(0.0f);
-    yaw = dcLoadConstant(0.0f);
-    rollError = dcLoadConstant(0.0f);
-    pitchError = dcLoadConstant(0.0f);
-    yawError = dcLoadConstant(0.0f);
+    roll = getConstantValue(0.0f);
+    pitch = getConstantValue(0.0f);
+    yaw = getConstantValue(0.0f);
+    rollError = getConstantValue(0.0f);
+    pitchError = getConstantValue(0.0f);
+    yawError = getConstantValue(0.0f);
 
     sphereTriangles = BuildSphere();
 }
@@ -33,16 +33,16 @@ void dcADI::setBallTexture(const char *filename)
 
 void dcADI::setRPY(const char *inroll, const char *inpitch, const char *inyaw)
 {
-    if (inroll) roll = getDecimalPointer(inroll);
-    if (inpitch) pitch = getDecimalPointer(inpitch);
-    if (inyaw) yaw = getDecimalPointer(inyaw);
+    if (inroll) roll = getValueData(inroll);
+    if (inpitch) pitch = getValueData(inpitch);
+    if (inyaw) yaw = getValueData(inyaw);
 }
 
 void dcADI::setRPYerrors(const char *re, const char *pe, const char *ye)
 {
-    if (re) rollError = getDecimalPointer(re);
-    if (pe) pitchError = getDecimalPointer(pe);
-    if (ye) yawError = getDecimalPointer(ye);
+    if (re) rollError = getValueData(re);
+    if (pe) pitchError = getValueData(pe);
+    if (ye) yawError = getValueData(ye);
 }
 
 void dcADI::setRadius(const char *outer, const char *ball)
@@ -76,7 +76,7 @@ void dcADI::draw(void)
     else chevh = 0.2 * outerrad;
 
     // Draw the ball
-    draw_textured_sphere(center, middle, sphereTriangles, ballrad, ballID, *roll, *pitch, *yaw);
+    draw_textured_sphere(center, middle, sphereTriangles, ballrad, ballID, roll->getDecimal(), pitch->getDecimal(), yaw->getDecimal());
 
     // Draw the surrounding area (i.e. background)
     translate_start(left, bottom);
@@ -85,9 +85,9 @@ void dcADI::draw(void)
 
     // Draw the items on top: roll bug, cross-hairs, needles
     translate_start(center, middle);
-        draw_roll_bug(*roll, chevw, chevh, 0.8 * outerrad);
+        draw_roll_bug(roll->getDecimal(), chevw, chevh, 0.8 * outerrad);
         draw_cross_hairs(outerrad);
-        draw_needles(outerrad, *rollError, *pitchError, *yawError);
+        draw_needles(outerrad, rollError->getDecimal(), pitchError->getDecimal(), yawError->getDecimal());
     translate_end();
 }
 

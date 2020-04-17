@@ -40,7 +40,7 @@ void dcRectangle::setLineWidth(const char *inval)
 void dcRectangle::draw(void)
 {
     computeGeometry();
-    container_start(refx, refy, delx, dely, 1, 1, *rotate);
+    container_start(refx, refy, delx, dely, 1, 1, rotate->getDecimal());
     std::vector<float> pointsL;
     pointsL.reserve(8);
 

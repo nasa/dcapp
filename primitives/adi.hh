@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "RenderLib/RenderLib.hh"
+#include "valuedata.hh"
 #include "geometric.hh"
 #include "parent.hh"
 
@@ -27,12 +28,12 @@ class dcADI : public dcGeometric
         double *ballradius;
         double *chevronW;
         double *chevronH;
-        double *roll;
-        double *pitch;
-        double *yaw;
-        double *rollError;
-        double *pitchError;
-        double *yawError;
+        ValueData *roll;
+        ValueData *pitch;
+        ValueData *yaw;
+        ValueData *rollError;
+        ValueData *pitchError;
+        ValueData *yawError;
         std::vector<float> sphereTriangles;
 
         void draw_roll_bug(double, double, double, double);

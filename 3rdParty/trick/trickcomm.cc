@@ -162,7 +162,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
             return this->Fail;
     }
 
-    ValueData *myvalue = getValue(paramname);
+    ValueData *myvalue = getVariableValue(paramname);
 
     if (myvalue)
     {

@@ -11,7 +11,7 @@ dcGeometric::dcGeometric(dcParent *myparent) : x(0x0), y(0x0), halign(AlignLeft)
     containerh = getContainerHeight();
     w = containerw;
     h = containerh;
-    rotate = dcLoadConstant(0.0f);
+    rotate = getConstantValue(0.0f);
 }
 
 void dcGeometric::setPosition(const char *inx, const char *iny)
@@ -28,7 +28,7 @@ void dcGeometric::setSize(const char *inw, const char *inh)
 
 void dcGeometric::setRotation(const char *inr)
 {
-    if (inr) rotate = getDecimalPointer(inr);
+    if (inr) rotate = getValueData(inr);
 }
 
 void dcGeometric::setAlignment(const char *inhal, const char *inval)

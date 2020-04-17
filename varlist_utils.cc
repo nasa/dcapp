@@ -8,7 +8,7 @@
 #include "valuedata.hh"
 
 extern void varlist_append(const char *, const char *, const char *);
-extern ValueData * getValue(const char *);
+extern ValueData * getVariableValue(const char *);
 extern void *get_pointer(const char *);
 
 char *create_virtual_variable(const char *typestr, const char *initval)
@@ -45,16 +45,16 @@ int *getIntegerPointer(const char *valstr)
     else return dcLoadConstant(StringToInteger(valstr));
 }
 
-ValueData *getValueData(const char *valstr)
-{
-    if (check_dynamic_element(valstr)) return getValue(valstr);
-    else return getConstantValue(StringToInteger(valstr));
-}
-
 std::string *getStringPointer(const char *valstr)
 {
     if (check_dynamic_element(valstr)) return (std::string *)get_pointer(valstr);
     else return dcLoadConstant(valstr);
+}
+
+ValueData *getValueData(const char *valstr)
+{
+    if (check_dynamic_element(valstr)) return getVariableValue(valstr);
+    else return getConstantValue(StringToInteger(valstr));
 }
 
 void *getVariablePointer(int datatype, const char *valstr)
@@ -78,7 +78,7 @@ int get_data_type(const char *valstr)
 {
     if (check_dynamic_element(valstr))
     {
-        ValueData *myvalue = getValue(valstr);
+        ValueData *myvalue = getVariableValue(valstr);
         if (myvalue) return myvalue->getType();
     }
     return UNDEFINED_TYPE;

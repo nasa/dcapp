@@ -34,7 +34,7 @@ void dcContainer::setVirtualSize(const char *inw, const char *inh)
 void dcContainer::draw(void)
 {
     computeGeometry();
-    container_start(refx, refy, delx, dely, (*w)/(*vwidth), (*h)/(*vheight), *rotate);
+    container_start(refx, refy, delx, dely, (*w)/(*vwidth), (*h)/(*vheight), rotate->getDecimal());
     for (const auto &myobj : children) myobj->draw();
     container_end();
 }
@@ -44,7 +44,7 @@ void dcContainer::handleMousePress(double inx, double iny)
     double ang, originx, originy, tmpx, tmpy, finalx, finaly;
 
     computeGeometry();
-    ang = (*rotate) * 0.01745329252;
+    ang = (rotate->getDecimal()) * 0.01745329252;
     originx = refx - ((delx * cos(-ang)) + (dely * sin(-ang)));
     originy = refy - ((dely * cos(-ang)) - (delx * sin(-ang)));
     tmpx = inx - originx;
@@ -60,7 +60,7 @@ void dcContainer::handleMouseMotion(double inx, double iny)
     double ang, originx, originy, tmpx, tmpy, finalx, finaly;
 
     computeGeometry();
-    ang = (*rotate) * 0.01745329252;
+    ang = (rotate->getDecimal()) * 0.01745329252;
     originx = refx - ((delx * cos(-ang)) + (dely * sin(-ang)));
     originy = refy - ((dely * cos(-ang)) - (delx * sin(-ang)));
     tmpx = inx - originx;

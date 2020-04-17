@@ -19,6 +19,7 @@ class ValueData
         void setValue(const ValueData &);
         void setValue(double);
         void setValue(int);
+        void setValue(std::string);
         void setBoolean(bool);
 
         int getType(void);

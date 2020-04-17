@@ -96,6 +96,7 @@ void ValueData::setValue(const ValueData &that)
 }
 void ValueData::setValue(double val) { this->decval = val; }
 void ValueData::setValue(int val) { this->intval = val; }
+void ValueData::setValue(std::string val) { this->strval = val; }
 
 void ValueData::setBoolean(bool input)
 {

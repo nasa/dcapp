@@ -37,7 +37,7 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
     varMap[std::string(mylabel)] = *vinfo;
 }
 
-ValueData * getValue(const char *label)
+ValueData * getVariableValue(const char *label)
 {
     if (!label) return 0x0;
 

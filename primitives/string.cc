@@ -13,8 +13,8 @@ extern appdata AppData;
 dcString::dcString(dcParent *myparent) : dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone)
 {
     color.set(1, 1, 1);
-    fontSize = dcLoadConstant(12.0f);
-    shadowOffset = dcLoadConstant(0.0f);
+    fontSize = getConstantValue(12.0f);
+    shadowOffset = getConstantValue(0.0f);
 }
 
 void dcString::setColor(const char *cspec)
@@ -39,7 +39,7 @@ void dcString::setFont(const char *font, const char *face, const char *size, con
     if (font) fontID = tdLoadFont(font, myface);
     if (!fontID) fontID = tdLoadFont(AppData.defaultfont, myface);
 
-    if (size) fontSize = getDecimalPointer(size);
+    if (size) fontSize = getValueData(size);
 
     if (mono)
     {
@@ -52,7 +52,7 @@ void dcString::setFont(const char *font, const char *face, const char *size, con
 
 void dcString::setShadowOffset(const char *inval)
 {
-    if (inval) shadowOffset = getDecimalPointer(inval);
+    if (inval) shadowOffset = getValueData(inval);
 }
 
 void dcString::setString(std::string mystr)
@@ -99,7 +99,7 @@ void dcString::draw(void)
         strptr += seglen+2;
 
         if (background || halign == AlignCenter || halign == AlignRight)
-            stringWidth = fontID->getAdvance(tmpstr, forcemono) * (*fontSize) / fontID->getBaseSize();
+            stringWidth = fontID->getAdvance(tmpstr, forcemono) * fontSize->getDecimal() / fontID->getBaseSize();
 
         switch (halign)
         {
@@ -117,22 +117,22 @@ void dcString::draw(void)
         switch (valign)
         {
             case AlignBottom:
-                mybottom = (*fontSize) * (double)(num_lines - i);
+                mybottom = (fontSize->getDecimal()) * (double)(num_lines - i);
                 break;
             case AlignMiddle:
-                mybottom = (*fontSize) * (((double)num_lines/2) - (double)i);
+                mybottom = (fontSize->getDecimal()) * (((double)num_lines/2) - (double)i);
                 break;
             case AlignTop:
-                mybottom = -(*fontSize) * (double)i;
+                mybottom = -(fontSize->getDecimal()) * (double)i;
                 break;
         }
 
         translate_start(refx, refy);
-        rotate_start(*rotate);
+        rotate_start(rotate->getDecimal());
 
         if (background)
         {
-            mytop = mybottom + (*fontSize);
+            mytop = mybottom + fontSize->getDecimal();
             myright = myleft + stringWidth;
 
             std::vector<float> pointsL;
@@ -143,11 +143,11 @@ void dcString::draw(void)
 
             draw_quad(pointsL, *(bgcolor.R), *(bgcolor.G), *(bgcolor.B), *(bgcolor.A));
         }
-        if (*shadowOffset)
+        if (shadowOffset->getBoolean())
         {
-            draw_string(myleft+(*shadowOffset), mybottom-(*shadowOffset), *fontSize, 0, 0, 0, 1, fontID, forcemono, tmpstr);
+            draw_string(myleft + shadowOffset->getDecimal(), mybottom - shadowOffset->getDecimal(), fontSize->getDecimal(), 0, 0, 0, 1, fontID, forcemono, tmpstr);
         }
-        draw_string(myleft, mybottom, *fontSize, *(color.R), *(color.G), *(color.B), *(color.A), fontID, forcemono, tmpstr);
+        draw_string(myleft, mybottom, fontSize->getDecimal(), *(color.R), *(color.G), *(color.B), *(color.A), fontID, forcemono, tmpstr);
 
         rotate_end();
         translate_end();

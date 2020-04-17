@@ -5,7 +5,7 @@
 #include "valuedata.hh"
 
 extern void varlist_append(const char *, const char *, const char *);
-extern ValueData * getValue(const char *);
+extern ValueData * getVariableValue(const char *);
 extern void *get_pointer(const char *);
 
 extern char *create_virtual_variable(const char *, const char *);

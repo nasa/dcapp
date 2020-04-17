@@ -10,14 +10,14 @@ dcMouseMotion::dcMouseMotion(dcParent *myparent, const char *xvar, const char *y
 noval(0.0)
 {
     pointerX = &noval;
-    ValueData *xval = getValue(xvar);
+    ValueData *xval = getVariableValue(xvar);
     if (xval)
     {
         if (xval->isDecimal()) pointerX = (double *)(xval->getPointer());
     }
 
     pointerY = &noval;
-    ValueData *yval = getValue(yvar);
+    ValueData *yval = getVariableValue(yvar);
     if (yval)
     {
         if (yval->isDecimal()) pointerY = (double *)(yval->getPointer());

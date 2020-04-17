@@ -6,7 +6,7 @@
 
 dcCircle::dcCircle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), segments(80)
 {
-    radius = dcLoadConstant(10.0);
+    radius = getConstantValue(10.0);
     FillColor.set(0.5, 0.5, 0.5);
     LineColor.set(1, 1, 1);
 }
@@ -40,7 +40,7 @@ void dcCircle::setLineWidth(const char *inval)
 
 void dcCircle::setRadius(const char *inval)
 {
-    if (inval) radius = getDecimalPointer(inval);
+    if (inval) radius = getValueData(inval);
 }
 
 void dcCircle::setSegments(const char *inval)
@@ -51,6 +51,6 @@ void dcCircle::setSegments(const char *inval)
 void dcCircle::draw(void)
 {
     computeGeometry();
-    if (fill) circle_fill(refx, refy, *radius, segments, *(FillColor.R), *(FillColor.G), *(FillColor.B), *(FillColor.A));
-    if (outline) circle_outline(refx, refy, *radius, segments, *(LineColor.R), *(LineColor.G), *(LineColor.B), *(LineColor.A), linewidth);
+    if (fill) circle_fill(refx, refy, radius->getDecimal(), segments, *(FillColor.R), *(FillColor.G), *(FillColor.B), *(FillColor.A));
+    if (outline) circle_outline(refx, refy, radius->getDecimal(), segments, *(LineColor.R), *(LineColor.G), *(LineColor.B), *(LineColor.A), linewidth);
 }

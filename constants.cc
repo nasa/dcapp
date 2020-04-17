@@ -3,36 +3,6 @@
 #include "types.hh"
 #include "valuedata.hh"
 
-static std::list<double> decimalConstants;
-static std::list<int> integerConstants;
-static std::list<std::string> stringConstants;
-
-#if 0
-
-double *dcLoadConstant(double fval)
-{
-    std::list<double>::iterator fc;
-    for (fc = decimalConstants.begin(); fc != decimalConstants.end(); fc++)
-    {
-        if (*fc == fval) return &(*fc);
-    }
-    decimalConstants.push_back(fval);
-    return &(decimalConstants.back());
-}
-
-int *dcLoadConstant(int ival)
-{
-    std::list<int>::iterator ic;
-    for (ic = integerConstants.begin(); ic != integerConstants.end(); ic++)
-    {
-        if (*ic == ival) return &(*ic);
-    }
-    integerConstants.push_back(ival);
-    return &(integerConstants.back());
-}
-
-#else
-
 static std::list<ValueData> constants;
 
 double *dcLoadConstant(double fval)
@@ -42,7 +12,7 @@ double *dcLoadConstant(double fval)
     {
         if (*((double *)(it->getPointer())) == fval)
         {
-//printf("DEC MATCH: %g\n", fval);
+printf("DEC MATCH: %g\n", fval);
             return (double *)(it->getPointer());
         }
     }
@@ -50,7 +20,7 @@ double *dcLoadConstant(double fval)
     vinfo->setType(DECIMAL_TYPE);
     vinfo->setValue(fval);
     constants.push_back(*vinfo);
-//printf("DEC NEW: %g\n", fval);
+printf("DEC NEW: %g\n", fval);
     return (double *)(constants.back().getPointer());
 }
 
@@ -61,7 +31,7 @@ int *dcLoadConstant(int ival)
     {
         if (*((int *)(it->getPointer())) == ival)
         {
-//printf("INT MATCH: %d\n", ival);
+printf("INT MATCH: %d\n", ival);
             return (int *)(it->getPointer());
         }
     }
@@ -69,8 +39,49 @@ int *dcLoadConstant(int ival)
     vinfo->setType(INTEGER_TYPE);
     vinfo->setValue(ival);
     constants.push_back(*vinfo);
-//printf("INT NEW: %d\n", ival);
+printf("INT NEW: %d\n", ival);
     return (int *)(constants.back().getPointer());
+}
+
+std::string *dcLoadConstant(const char *sval)
+{
+    std::string myval;
+    if (sval) myval = sval;
+
+    std::list<ValueData>::iterator it;
+    for (it = constants.begin(); it != constants.end(); it++)
+    {
+        if (*((std::string *)(it->getPointer())) == myval)
+        {
+printf("STR MATCH: %s\n", myval.c_str()); fflush(0);
+            return (std::string *)(it->getPointer());
+        }
+    }
+    ValueData *vinfo = new ValueData;
+    vinfo->setType(STRING_TYPE);
+    vinfo->setValue(myval);
+    constants.push_back(*vinfo);
+printf("STR NEW: %s\n", myval.c_str()); fflush(0);
+    return (std::string *)(constants.back().getPointer());
+}
+
+ValueData *getConstantValue(double fval)
+{
+    std::list<ValueData>::iterator it;
+    for (it = constants.begin(); it != constants.end(); it++)
+    {
+        if (*((double *)(it->getPointer())) == fval)
+        {
+printf("cvDEC MATCH: %g\n", fval);
+            return &(*it);
+        }
+    }
+    ValueData *vinfo = new ValueData;
+    vinfo->setType(DECIMAL_TYPE);
+    vinfo->setValue(fval);
+    constants.push_back(*vinfo);
+printf("cvDEC NEW: %g\n", fval);
+    return &(constants.back());
 }
 
 ValueData *getConstantValue(int ival)
@@ -80,7 +91,7 @@ ValueData *getConstantValue(int ival)
     {
         if (*((int *)(it->getPointer())) == ival)
         {
-//printf("INT MATCH: %d\n", ival);
+printf("cvINT MATCH: %d\n", ival);
             return &(*it);
         }
     }
@@ -88,24 +99,28 @@ ValueData *getConstantValue(int ival)
     vinfo->setType(INTEGER_TYPE);
     vinfo->setValue(ival);
     constants.push_back(*vinfo);
-//printf("INT NEW: %d\n", ival);
+printf("cvINT NEW: %d\n", ival);
     return &(constants.back());
 }
 
-#endif
-
-std::string *dcLoadConstant(const char *sval)
+ValueData *getConstantValue(const char *sval)
 {
     std::string myval;
-
     if (sval) myval = sval;
-    else myval = "";
 
-    std::list<std::string>::iterator sc;
-    for (sc = stringConstants.begin(); sc != stringConstants.end(); sc++)
+    std::list<ValueData>::iterator it;
+    for (it = constants.begin(); it != constants.end(); it++)
     {
-        if (*sc == myval) return &(*sc);
+        if (*((std::string *)(it->getPointer())) == myval)
+        {
+printf("cvSTR MATCH: %s\n", myval.c_str());
+            return &(*it);
+        }
     }
-    stringConstants.push_back(myval);
-    return &(stringConstants.back());
+    ValueData *vinfo = new ValueData;
+    vinfo->setType(STRING_TYPE);
+    vinfo->setValue(myval);
+    constants.push_back(*vinfo);
+printf("cvSTR NEW: %s\n", myval.c_str());
+    return &(constants.back());
 }

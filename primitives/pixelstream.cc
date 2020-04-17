@@ -121,7 +121,7 @@ void dcPixelStream::draw(void)
     size_t nbytes, origbytes, newh, pad, padbytes, offset, offsetbytes;
 
     computeGeometry();
-    container_start(refx, refy, delx, dely, 1, 1, *rotate);
+    container_start(refx, refy, delx, dely, 1, 1, rotate->getDecimal());
 
     if (psi->psd->connected)
     {

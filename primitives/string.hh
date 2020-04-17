@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "RenderLib/RenderLib.hh"
+#include "valuedata.hh"
 #include "kolor.hh"
 #include "types.hh"
 #include "geometric.hh"
@@ -77,8 +78,8 @@ class dcString : public dcGeometric
         std::vector<VarString *> vstring;
         std::vector<std::string> filler;
         tdFont *fontID;
-        double *fontSize;
-        double *shadowOffset;
+        ValueData *fontSize;
+        ValueData *shadowOffset;
         flMonoOption forcemono;
 };
 
