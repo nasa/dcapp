@@ -1,6 +1,7 @@
 #include <string>
 #include "nodes.hh"
 #include "RenderLib/RenderLib.hh"
+#include "valuedata.hh"
 #include "string_utils.hh"
 #include "constants.hh"
 #include "alignment.hh"
@@ -181,10 +182,11 @@ size_t dcString::parse_var(std::string mystr)
     if (var_end == std::string::npos) varstr += mystr.substr(var_start, std::string::npos);
     else varstr += mystr.substr(var_start, var_end - var_start);
 
+    ValueData *myvalue = getValueData(varstr.c_str());
     if (fmt_start != std::string::npos && fmt_end != std::string::npos)
-        vstring.push_back(new VarString(get_data_type(varstr.c_str()), getStringPointer(varstr.c_str()), mystr.substr(fmt_start+1, fmt_end-fmt_start-1).c_str()));
+        vstring.push_back(new VarString(myvalue->getType(), myvalue->getPointer(), mystr.substr(fmt_start+1, fmt_end-fmt_start-1).c_str()));
     else
-        vstring.push_back(new VarString(get_data_type(varstr.c_str()), getStringPointer(varstr.c_str()), 0x0));
+        vstring.push_back(new VarString(myvalue->getType(), myvalue->getPointer(), 0x0));
 
     if (braced) return mystr.find('}') + 1;
     else if (fmt_end != std::string::npos) return fmt_end + 1;

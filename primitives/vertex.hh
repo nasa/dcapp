@@ -15,8 +15,8 @@ class dcVertex : public dcObject
     private:
         ValueData *x;
         ValueData *y;
-        double *containerw;
-        double *containerh;
+        ValueData *containerw;
+        ValueData *containerh;
 };
 
 #endif

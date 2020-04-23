@@ -23,14 +23,14 @@ void dcVertex::draw(void)
 
     if (x)
     {
-        if (x->getDecimal() < 0) myx = x->getDecimal() + *containerw;
+        if (x->getDecimal() < 0) myx = x->getDecimal() + containerw->getDecimal();
         else myx = x->getDecimal();
     }
     else myx = 0;
 
     if (y)
     {
-        if (y->getDecimal() < 0) myy = y->getDecimal() + *containerh;
+        if (y->getDecimal() < 0) myy = y->getDecimal() + containerh->getDecimal();
         else myy = y->getDecimal();
     }
     else myy = 0;

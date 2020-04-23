@@ -1,6 +1,7 @@
 #ifndef _CONTAINER_HH_
 #define _CONTAINER_HH_
 
+#include "valuedata.hh"
 #include "geometric.hh"
 #include "parent.hh"
 
@@ -14,7 +15,6 @@ class dcContainer : public dcParent, public dcGeometric
         void handleMousePress(double, double);
         void handleMouseMotion(double, double);
 
-#if 0
 // TODO: why the heck to I need these?
 void handleKeyPress(char key) { dcParent::handleKeyPress(key); };
 void handleKeyRelease(char key) { dcParent::handleKeyRelease(key); };
@@ -25,14 +25,13 @@ void handleEvent(void) { dcParent::handleEvent(); };
 void updateData(void) { dcParent::updateData(); };
 void updateStreams(unsigned passcount) { dcParent::updateStreams(passcount); };
 void processAnimation(Animation *anim) { dcParent::processAnimation(anim); };
-#endif
 
-        double *getContainerWidth(void);
-        double *getContainerHeight(void);
+        ValueData *getContainerWidth(void);
+        ValueData *getContainerHeight(void);
 
     private:
-        double *vwidth;
-        double *vheight;
+        ValueData *vwidth;
+        ValueData *vheight;
 };
 
 #endif

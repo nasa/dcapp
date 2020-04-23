@@ -117,6 +117,26 @@ void ValueData::setBoolean(bool input)
     }
 }
 
+void ValueData::makeGeneric(void)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE:
+            this->intval = (int)(this->decval);
+            this->strval = std::to_string(this->decval);
+            break;
+        case INTEGER_TYPE:
+            this->decval = (double)(this->intval);
+            this->strval = std::to_string(this->intval);
+            break;
+        case STRING_TYPE:
+            this->decval = StringToDecimal(this->strval);
+            this->intval = StringToInteger(this->strval);
+            break;
+    }
+    this->type = UNDEFINED_TYPE;
+}
+
 int ValueData::getType(void) { return this->type; }
 
 bool ValueData::getBoolean(void)
@@ -127,7 +147,7 @@ bool ValueData::getBoolean(void)
         case INTEGER_TYPE: if (this->intval) return true; break;
         case STRING_TYPE:  if (StringToBoolean(this->strval)) return true; break;
     }
-    return false;
+    return StringToBoolean(this->strval);
 }
 
 double ValueData::getDecimal(void)

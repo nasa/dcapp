@@ -64,7 +64,7 @@ void dcADI::draw(void)
     double outerrad, ballrad, chevw, chevh;
 
     if (outerradius) outerrad = outerradius->getDecimal();
-    else outerrad = 0.5 * (fminf(*w, *h));
+    else outerrad = 0.5 * (fminf(w->getDecimal(), h->getDecimal()));
 
     if (ballradius) ballrad = ballradius->getDecimal();
     else ballrad = 0.9 * outerrad;

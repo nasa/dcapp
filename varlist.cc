@@ -1,10 +1,12 @@
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
 #include <map>
+#include "basicutils/msg.hh"
 #include "types.hh"
 #include "valuedata.hh"
-#include "basicutils/msg.hh"
+#include "constants.hh"
 
 static std::map<std::string, ValueData> varMap;
 
@@ -37,7 +39,7 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
     varMap[std::string(mylabel)] = *vinfo;
 }
 
-ValueData * getVariableValue(const char *label)
+ValueData *getVariableValue(const char *label)
 {
     if (!label) return 0x0;
 
@@ -56,17 +58,35 @@ ValueData * getVariableValue(const char *label)
 
 void *get_pointer(const char *label)
 {
-    if (!label) return 0x0;
+    ValueData *myvar = getVariableValue(label);
+    if (myvar) return myvar->getPointer();
+    else return 0x0;
+}
 
-    const char *mylabel;
+char *create_virtual_variable(const char *typestr, const char *initval)
+{
+    static unsigned id_count = 0;
+    char *vname;
+    asprintf(&vname, "@dcappVirtualVariable%u", id_count);
+    varlist_append(vname, typestr, initval);
+    id_count++;
+    return vname;
+}
 
-    if (label[0] == '@') mylabel = &label[1];
-    else mylabel = label;
-
-    if (varMap.find(mylabel) != varMap.end()) return varMap[mylabel].getPointer();
-    else
+bool check_dynamic_element(const char *spec)
+{
+    if (spec)
     {
-        error_msg("Invalid parameter label: " << label);
-        return 0x0;
+        if (strlen(spec) > 1)
+        {
+            if (spec[0] == '@') return true;
+        }
     }
+    return false;
+}
+
+ValueData *getValueData(const char *valstr)
+{
+    if (check_dynamic_element(valstr)) return getVariableValue(valstr);
+    else return getConstantValue(valstr);
 }

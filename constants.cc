@@ -5,82 +5,25 @@
 
 static std::list<ValueData> constants;
 
-double *dcLoadConstant(double fval)
-{
-    std::list<ValueData>::iterator it;
-    for (it = constants.begin(); it != constants.end(); it++)
-    {
-        if (*((double *)(it->getPointer())) == fval)
-        {
-printf("DEC MATCH: %g\n", fval);
-            return (double *)(it->getPointer());
-        }
-    }
-    ValueData *vinfo = new ValueData;
-    vinfo->setType(DECIMAL_TYPE);
-    vinfo->setValue(fval);
-    constants.push_back(*vinfo);
-printf("DEC NEW: %g\n", fval);
-    return (double *)(constants.back().getPointer());
-}
-
-int *dcLoadConstant(int ival)
-{
-    std::list<ValueData>::iterator it;
-    for (it = constants.begin(); it != constants.end(); it++)
-    {
-        if (*((int *)(it->getPointer())) == ival)
-        {
-printf("INT MATCH: %d\n", ival);
-            return (int *)(it->getPointer());
-        }
-    }
-    ValueData *vinfo = new ValueData;
-    vinfo->setType(INTEGER_TYPE);
-    vinfo->setValue(ival);
-    constants.push_back(*vinfo);
-printf("INT NEW: %d\n", ival);
-    return (int *)(constants.back().getPointer());
-}
-
-std::string *dcLoadConstant(const char *sval)
-{
-    std::string myval;
-    if (sval) myval = sval;
-
-    std::list<ValueData>::iterator it;
-    for (it = constants.begin(); it != constants.end(); it++)
-    {
-        if (*((std::string *)(it->getPointer())) == myval)
-        {
-printf("STR MATCH: %s\n", myval.c_str()); fflush(0);
-            return (std::string *)(it->getPointer());
-        }
-    }
-    ValueData *vinfo = new ValueData;
-    vinfo->setType(STRING_TYPE);
-    vinfo->setValue(myval);
-    constants.push_back(*vinfo);
-printf("STR NEW: %s\n", myval.c_str()); fflush(0);
-    return (std::string *)(constants.back().getPointer());
-}
+#if 0
 
 ValueData *getConstantValue(double fval)
 {
     std::list<ValueData>::iterator it;
     for (it = constants.begin(); it != constants.end(); it++)
     {
-        if (*((double *)(it->getPointer())) == fval)
+        if (it->getDecimal() == fval)
         {
-printf("cvDEC MATCH: %g\n", fval);
+//printf("cvDEC MATCH: %g\n", fval);
             return &(*it);
         }
     }
     ValueData *vinfo = new ValueData;
     vinfo->setType(DECIMAL_TYPE);
     vinfo->setValue(fval);
+    vinfo->makeGeneric();
     constants.push_back(*vinfo);
-printf("cvDEC NEW: %g\n", fval);
+//printf("cvDEC NEW: %g\n", fval);
     return &(constants.back());
 }
 
@@ -89,17 +32,18 @@ ValueData *getConstantValue(int ival)
     std::list<ValueData>::iterator it;
     for (it = constants.begin(); it != constants.end(); it++)
     {
-        if (*((int *)(it->getPointer())) == ival)
+        if (it->getInteger() == ival)
         {
-printf("cvINT MATCH: %d\n", ival);
+//printf("cvINT MATCH: %d\n", ival);
             return &(*it);
         }
     }
     ValueData *vinfo = new ValueData;
     vinfo->setType(INTEGER_TYPE);
     vinfo->setValue(ival);
+    vinfo->makeGeneric();
     constants.push_back(*vinfo);
-printf("cvINT NEW: %d\n", ival);
+//printf("cvINT NEW: %d\n", ival);
     return &(constants.back());
 }
 
@@ -111,16 +55,84 @@ ValueData *getConstantValue(const char *sval)
     std::list<ValueData>::iterator it;
     for (it = constants.begin(); it != constants.end(); it++)
     {
-        if (*((std::string *)(it->getPointer())) == myval)
+        if (it->getString() == myval)
         {
-printf("cvSTR MATCH: %s\n", myval.c_str());
+//printf("cvSTR MATCH: %s\n", myval.c_str());
             return &(*it);
         }
     }
     ValueData *vinfo = new ValueData;
     vinfo->setType(STRING_TYPE);
     vinfo->setValue(myval);
+    vinfo->makeGeneric();
     constants.push_back(*vinfo);
-printf("cvSTR NEW: %s\n", myval.c_str());
+//printf("cvSTR NEW: %s\n", myval.c_str());
     return &(constants.back());
 }
+
+#else
+
+ValueData *getConstantValue(double fval)
+{
+    ValueData *vinfo = new ValueData;
+    vinfo->setType(DECIMAL_TYPE);
+    vinfo->setValue(fval);
+    vinfo->makeGeneric();
+
+    std::list<ValueData>::iterator it;
+    for (it = constants.begin(); it != constants.end(); it++)
+    {
+        if (it->getDecimal() == vinfo->getDecimal() && it->getInteger() == vinfo->getInteger() && it->getString() == vinfo->getString())
+        {
+            delete vinfo;
+            return &(*it);
+        }
+    }
+    constants.push_back(*vinfo);
+    return &(constants.back());
+}
+
+ValueData *getConstantValue(int ival)
+{
+    ValueData *vinfo = new ValueData;
+    vinfo->setType(INTEGER_TYPE);
+    vinfo->setValue(ival);
+    vinfo->makeGeneric();
+
+    std::list<ValueData>::iterator it;
+    for (it = constants.begin(); it != constants.end(); it++)
+    {
+        if (it->getDecimal() == vinfo->getDecimal() && it->getInteger() == vinfo->getInteger() && it->getString() == vinfo->getString())
+        {
+            delete vinfo;
+            return &(*it);
+        }
+    }
+    constants.push_back(*vinfo);
+    return &(constants.back());
+}
+
+ValueData *getConstantValue(const char *sval)
+{
+    if (!sval) return 0x0;
+    std::string myval = sval;
+
+    ValueData *vinfo = new ValueData;
+    vinfo->setType(STRING_TYPE);
+    vinfo->setValue(myval);
+    vinfo->makeGeneric();
+
+    std::list<ValueData>::iterator it;
+    for (it = constants.begin(); it != constants.end(); it++)
+    {
+        if (it->getDecimal() == vinfo->getDecimal() && it->getInteger() == vinfo->getInteger() && it->getString() == vinfo->getString())
+        {
+            delete vinfo;
+            return &(*it);
+        }
+    }
+    constants.push_back(*vinfo);
+    return &(constants.back());
+}
+
+#endif

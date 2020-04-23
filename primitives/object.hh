@@ -1,6 +1,7 @@
 #ifndef _OBJECT_HH_
 #define _OBJECT_HH_
 
+#include "valuedata.hh"
 #include "animation.hh"
 
 class dcObject
@@ -23,8 +24,8 @@ class dcObject
         virtual void processAnimation(Animation *) { };
         virtual void setParent(dcObject *parentid) { parent = parentid; };
         virtual dcObject *getParent(void) { return parent; };
-        virtual double *getContainerWidth(void) { return parent->getContainerWidth(); };
-        virtual double *getContainerHeight(void) { return parent->getContainerHeight(); };
+        virtual ValueData *getContainerWidth(void) { return parent->getContainerWidth(); };
+        virtual ValueData *getContainerHeight(void) { return parent->getContainerHeight(); };
 
     private:
         dcObject *parent;

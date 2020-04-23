@@ -24,7 +24,6 @@ DCAPP_SOURCES := \
 	tara_funcs.cc \
 	valuedata.cc \
 	varlist.cc \
-	varlist_utils.cc \
 	xml_parse.cc \
 	xml_stringsub.cc \
 	xml_utils.cc

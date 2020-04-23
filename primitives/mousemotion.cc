@@ -1,4 +1,3 @@
-#include "types.hh"
 #include "varlist.hh"
 #include "valuedata.hh"
 #include "mousemotion.hh"

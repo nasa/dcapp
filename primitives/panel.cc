@@ -1,11 +1,14 @@
 #include "RenderLib/RenderLib.hh"
+#include "valuedata.hh"
 #include "string_utils.hh"
 #include "panel.hh"
 
-dcPanel::dcPanel(dcParent *myparent) : displayID(0), orthoX(100), orthoY(100)
+dcPanel::dcPanel(dcParent *myparent) : displayID(0)
 {
     myparent->addChild(this);
     color.set(0, 0, 0);
+    orthoX = getConstantValue(100);
+    orthoY = getConstantValue(100);
 }
 
 void dcPanel::setID(const char *inval)
@@ -20,8 +23,8 @@ void dcPanel::setColor(const char *cspec)
 
 void dcPanel::setOrtho(const char *inw, const char *inh)
 {
-    if (inw) orthoX = StringToDecimal(inw, 100);
-    if (inh) orthoY = StringToDecimal(inh, 100);
+    if (inw) orthoX = getValueData(inw);
+    if (inh) orthoY = getValueData(inh);
 }
 
 bool dcPanel::checkID(int id)
@@ -30,28 +33,21 @@ bool dcPanel::checkID(int id)
     else return false;
 }
 
-double * dcPanel::getContainerWidth(void)
-{
-    return &orthoX;
-}
-
-double * dcPanel::getContainerHeight(void)
-{
-    return &orthoY;
-}
+ValueData * dcPanel::getContainerWidth(void) { return orthoX; }
+ValueData * dcPanel::getContainerHeight(void) { return orthoY; }
 
 void dcPanel::draw(void)
 {
-    setup_panel(orthoX, orthoY, color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal());
+    setup_panel(orthoX->getDecimal(), orthoY->getDecimal(), color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal());
     for (const auto &myobj : children) myobj->draw();
 }
 
 void dcPanel::handleMousePress(double x, double y)
 {
-    for (const auto &myobj : children) myobj->handleMousePress(orthoX * x, orthoY * y);
+    for (const auto &myobj : children) myobj->handleMousePress(orthoX->getDecimal() * x, orthoY->getDecimal() * y);
 }
 
 void dcPanel::handleMouseMotion(double x, double y)
 {
-    for (const auto &myobj : children) myobj->handleMouseMotion(orthoX * x, orthoY * y);
+    for (const auto &myobj : children) myobj->handleMouseMotion(orthoX->getDecimal() * x, orthoY->getDecimal() * y);
 }

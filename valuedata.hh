@@ -21,6 +21,7 @@ class ValueData
         void setValue(int);
         void setValue(std::string);
         void setBoolean(bool);
+        void makeGeneric(void);
 
         int getType(void);
         bool getBoolean(void);

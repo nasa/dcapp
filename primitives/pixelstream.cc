@@ -67,7 +67,8 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
             break;
         case PixelStreamVsmProtocol:
             psv = new PixelStreamVsm;
-            if (psv->readerInitialize(host, StringToInteger(port, 80), path, getStringPointer(cameraspec)))
+if (psv->readerInitialize(host, StringToInteger(port, 80), path, (std::string *)(getValueData(cameraspec)->getPointer())))
+//            if (psv->readerInitialize(host, StringToInteger(port, 80), path, getStringPointer(cameraspec)))
             {
                 delete psv;
                 return;
@@ -125,7 +126,7 @@ void dcPixelStream::draw(void)
 
     if (psi->psd->connected)
     {
-        newh = (size_t)((double)(psi->psd->width) * (*h) / (*w));
+        newh = (size_t)((double)(psi->psd->width) * (h->getDecimal()) / (w->getDecimal()));
 
         if (newh > psi->psd->height)
         {
