@@ -180,10 +180,12 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
             myparam.init_only = StringToBoolean(init_only);
             myparam.method = method;
             io_map->push_back(myparam);
+
+            return this->Success;
         }
     }
 
-    return this->Success;
+    return this->Fail;
 }
 
 void TrickCommModule::finishInitialization(void)

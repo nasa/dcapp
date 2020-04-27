@@ -7,7 +7,6 @@
 #include "valuedata.hh"
 #include "constants.hh"
 #include "varlist.hh"
-#include "string_utils.hh"
 
 class Kolor
 {
@@ -60,13 +59,13 @@ class Kolor
 
             count = mylist.size();
 
-            if (count > 0) R = color_element(mylist[0]);
+            if (count > 0) R = getValueData(mylist[0].c_str());
             else R = getConstantValue(0.0);
-            if (count > 1) G = color_element(mylist[1]);
+            if (count > 1) G = getValueData(mylist[1].c_str());
             else G = getConstantValue(0.0);
-            if (count > 2) B = color_element(mylist[2]);
+            if (count > 2) B = getValueData(mylist[2].c_str());
             else B = getConstantValue(0.0);
-            if (count > 3) A = color_element(mylist[3]);
+            if (count > 3) A = getValueData(mylist[3].c_str());
             else A = getConstantValue(1.0);
         }
 
@@ -74,13 +73,6 @@ class Kolor
         ValueData *G;
         ValueData *B;
         ValueData *A;
-
-    private:
-        ValueData *color_element(std::string &strval)
-        {
-            if (check_dynamic_element(strval.c_str())) return getVariableValue(strval.c_str());
-            else return getConstantValue(StringToDecimal(strval));
-        }
 };
 
 #endif

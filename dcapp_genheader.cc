@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 
     for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
-        if (myvitem->type == "Float") fprintf(p_file, "double *");
+        if (myvitem->type == "Decimal" || myvitem->type == "Float") fprintf(p_file, "double *");
         else if (myvitem->type == "Integer") fprintf(p_file, "int *");
         else fprintf(p_file, "std::string *");
         fprintf(p_file, "%s;\n", myvitem->name.c_str());
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
     for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
         fprintf(p_file, "    %s = ", myvitem->name.c_str());
-        if (myvitem->type == "Float") fprintf(p_file, "(double *)");
+        if (myvitem->type == "Decimal" || myvitem->type == "Float") fprintf(p_file, "(double *)");
         else if (myvitem->type == "Integer") fprintf(p_file, "(int *)");
         else fprintf(p_file, "(std::string *)");
         fprintf(p_file, "get_pointer(\"%s\");\n", myvitem->name.c_str());
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 
     for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
-        if (myvitem->type == "Float") fprintf(p_file, "extern double *");
+        if (myvitem->type == "Decimal" || myvitem->type == "Float") fprintf(p_file, "extern double *");
         else if (myvitem->type == "Integer") fprintf(p_file, "extern int *");
         else fprintf(p_file, "extern std::string *");
         fprintf(p_file, "%s;\n", myvitem->name.c_str());

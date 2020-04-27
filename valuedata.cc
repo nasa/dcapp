@@ -29,7 +29,7 @@ bool ValueData::operator != (const ValueData &that)
 void ValueData::setType(int type_spec) { this->type = type_spec; } // Should probably verify a valid input type here
 void ValueData::setType(const char *type_spec)
 {
-    if (!strcmp(type_spec, "Float"))
+    if (!strcmp(type_spec, "Decimal") || !strcmp(type_spec, "Float"))
     {
         this->type = DECIMAL_TYPE;
     }
@@ -187,7 +187,9 @@ void * ValueData::getPointer(void)
         case DECIMAL_TYPE: return (void *)(&(this->decval)); break;
         case INTEGER_TYPE: return (void *)(&(this->intval)); break;
         case STRING_TYPE:  return (void *)(&(this->strval)); break;
-        default:           return 0x0;
+default:  return (void *)(&(this->strval)); break;
+//        default:           return 0x0;
+// this seems weird.  probably shouldn't be a default getPointer, but it's needed in pixelstream.cc
     }
 }
 

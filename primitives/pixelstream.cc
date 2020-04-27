@@ -1,4 +1,5 @@
 #include "nodes.hh"
+#include "valuedata.hh"
 #include "varlist.hh"
 #include "string_utils.hh"
 #include "RenderLib/RenderLib.hh"
@@ -67,6 +68,7 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
             break;
         case PixelStreamVsmProtocol:
             psv = new PixelStreamVsm;
+// the below use of getPointer is purely hideous
 if (psv->readerInitialize(host, StringToInteger(port, 80), path, (std::string *)(getValueData(cameraspec)->getPointer())))
 //            if (psv->readerInitialize(host, StringToInteger(port, 80), path, getStringPointer(cameraspec)))
             {

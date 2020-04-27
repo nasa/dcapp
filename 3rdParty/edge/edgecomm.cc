@@ -168,10 +168,12 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *c
             myparam.currvalue = myvalue;
             myparam.forcewrite = false;
             io_map->push_back(myparam);
+
+            return this->Success;
         }
     }
 
-    return this->Success;
+    return this->Fail;
 }
 
 int EdgeCommModule::finishInitialization(const char *host, const char *port, double spec_rate)

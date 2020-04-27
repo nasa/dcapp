@@ -87,6 +87,10 @@ bool check_dynamic_element(const char *spec)
 
 ValueData *getValueData(const char *valstr)
 {
-    if (check_dynamic_element(valstr)) return getVariableValue(valstr);
+    ValueData *retval = 0x0;
+
+    if (check_dynamic_element(valstr)) retval = getVariableValue(valstr);
+
+    if (retval) return retval;
     else return getConstantValue(valstr);
 }
