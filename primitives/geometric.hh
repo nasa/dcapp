@@ -16,15 +16,15 @@ class dcGeometric : public dcObject
         void computeGeometry(void);
 
     protected:
-        ValueData *x;
-        ValueData *y;
-        ValueData *w;
-        ValueData *h;
-        ValueData *containerw;
-        ValueData *containerh;
+        Value *x;
+        Value *y;
+        Value *w;
+        Value *h;
+        Value *containerw;
+        Value *containerh;
         unsigned halign;
         unsigned valign;
-        ValueData *rotate;
+        Value *rotate;
 
         double refx;
         double refy;
@@ -40,8 +40,8 @@ class dcGeometric : public dcObject
         double middle;
 
     private:
-        double GeomX(ValueData *, double, double, int);
-        double GeomY(ValueData *, double, double, int);
+        double GeomX(Value *, double, double, int);
+        double GeomY(Value *, double, double, int);
 };
 
 #endif

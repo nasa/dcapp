@@ -30,8 +30,8 @@ class EdgeCommModule : public CommModule
         {
             int type;
             std::string edgecmd;
-            ValueData *currvalue;
-            ValueData prevvalue;
+            Variable *currvalue;
+            Variable prevvalue;
             bool forcewrite;
         } io_parameter;
 

@@ -1,49 +1,43 @@
 #include <list>
-#include <string>
-#include "types.hh"
 #include "valuedata.hh"
 
-static std::list<ValueData> constants;
+static std::list<Constant> constants;
 
-static ValueData *getConstantValueData(ValueData &vinfo)
+static Constant *findOrCreateConstant(Constant &vinfo)
 {
-    vinfo.makeGeneric();
-
-    std::list<ValueData>::iterator it;
+    std::list<Constant>::iterator it;
     for (it = constants.begin(); it != constants.end(); it++)
     {
-        if (it->getDecimal() == vinfo.getDecimal() && it->getInteger() == vinfo.getInteger() && it->getString() == vinfo.getString())
-        {
-            return &(*it);
-        }
+        if (*it == vinfo) return &(*it);
     }
     constants.push_back(vinfo);
     return &(constants.back());
 }
 
-ValueData *getConstantValue(double fval)
+Constant *getConstant(double inval)
 {
-    ValueData vinfo;
-    vinfo.setType(DECIMAL_TYPE);
-    vinfo.setValue(fval);
-    return getConstantValueData(vinfo);
+    Constant vinfo;
+    vinfo.setValue(inval);
+    return findOrCreateConstant(vinfo);
 }
 
-ValueData *getConstantValue(int ival)
+Constant *getConstant(int inval)
 {
-    ValueData vinfo;
-    vinfo.setType(INTEGER_TYPE);
-    vinfo.setValue(ival);
-    return getConstantValueData(vinfo);
+    Constant vinfo;
+    vinfo.setValue(inval);
+    return findOrCreateConstant(vinfo);
 }
 
-ValueData *getConstantValue(const char *sval)
+Constant *getConstant(const char *inval)
 {
-    std::string myval;
-    if (sval) myval = sval;
+    Constant vinfo;
+    vinfo.setValue(inval);
+    return findOrCreateConstant(vinfo);
+}
 
-    ValueData vinfo;
-    vinfo.setType(STRING_TYPE);
-    vinfo.setValue(sval);
-    return getConstantValueData(vinfo);
+Constant *getConstant(bool inval)
+{
+    Constant vinfo;
+    vinfo.setValue(inval);
+    return findOrCreateConstant(vinfo);
 }

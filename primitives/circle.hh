@@ -18,7 +18,7 @@ class dcCircle : public dcGeometric
         void draw(void);
 
     private:
-        ValueData *radius;
+        Value *radius;
         double linewidth;
         bool fill;
         bool outline;

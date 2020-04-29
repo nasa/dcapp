@@ -8,7 +8,8 @@
 #include "valuedata.hh"
 #include "constants.hh"
 
-static std::map<std::string, ValueData> varMap;
+static Variable nullval;
+static std::map<std::string, Variable> varMap;
 
 void varlist_append(const char *paramname, const char *typestr, const char *initval)
 {
@@ -29,7 +30,7 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
     if (paramname[0] == '@') mylabel = &paramname[1];
     else mylabel = paramname;
 
-    ValueData *vinfo = new ValueData;
+    Variable *vinfo = new Variable;
     vinfo->setType(typestr);
     vinfo->setValue(initval);
 
@@ -39,9 +40,9 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
     varMap[std::string(mylabel)] = *vinfo;
 }
 
-ValueData *getVariableValue(const char *label)
+Variable *getVariable(const char *label)
 {
-    if (!label) return 0x0;
+    if (!label) return &nullval;
 
     const char *mylabel;
 
@@ -51,16 +52,18 @@ ValueData *getVariableValue(const char *label)
     if (varMap.find(mylabel) != varMap.end()) return &(varMap[mylabel]);
     else
     {
+// maybe guess/create a string variable here?
         error_msg("Invalid parameter label: " << label);
-        return 0x0;
+        return &nullval;
     }
 }
 
 void *get_pointer(const char *label)
 {
-    ValueData *myvar = getVariableValue(label);
+    Variable *myvar = getVariable(label);
     if (myvar) return myvar->getPointer();
     else return 0x0;
+// don't return null pointer. instead, return a pointer to garbage and provide a warning message
 }
 
 char *create_virtual_variable(const char *typestr, const char *initval)
@@ -85,12 +88,12 @@ bool check_dynamic_element(const char *spec)
     return false;
 }
 
-ValueData *getValueData(const char *valstr)
+Value *getValue(const char *valstr)
 {
-    ValueData *retval = 0x0;
+    Value *retval = 0x0;
 
-    if (check_dynamic_element(valstr)) retval = getVariableValue(valstr);
+    if (check_dynamic_element(valstr)) retval = getVariable(valstr);
 
     if (retval) return retval;
-    else return getConstantValue(valstr);
+    else return getConstant(valstr);
 }

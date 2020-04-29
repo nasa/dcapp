@@ -7,14 +7,14 @@ extern void UpdateDisplay(void);
 dcMouseMotion::dcMouseMotion(dcParent *myparent, const char *xvar, const char *yvar)
 {
     pointerX = &noval;
-    ValueData *xval = getVariableValue(xvar);
+    Variable *xval = getVariable(xvar);
     if (xval)
     {
         if (xval->isDecimal()) pointerX = xval;
     }
 
     pointerY = &noval;
-    ValueData *yval = getVariableValue(yvar);
+    Variable *yval = getVariable(yvar);
     if (yval)
     {
         if (yval->isDecimal()) pointerY = yval;

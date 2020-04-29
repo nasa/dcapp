@@ -14,12 +14,13 @@ dcSetValue::dcSetValue(dcParent *myparent, const char *invar, const char *inval)
 {
     if (!invar || !inval) return;
     
-    var = getValueData(invar);
+    var = getVariable(invar);
 
     // don't parent this object if var isn't properly defined
+    if (!var) return;
     if (var->getType() == UNDEFINED_TYPE) return;
 
-    val = getValueData(inval);
+    val = getValue(inval);
 
     // this object doesn't require a parent since it can be used during preprocessing
     if (myparent) myparent->addChild(this);
@@ -34,8 +35,8 @@ void dcSetValue::setOperator(const char *opspec)
 
 void dcSetValue::setRange(const char *minspec, const char *maxspec)
 {
-    if (minspec) min = getValueData(minspec);
-    if (maxspec) max = getValueData(maxspec);
+    if (minspec) min = getValue(minspec);
+    if (maxspec) max = getValue(maxspec);
 }
 
 void dcSetValue::draw(void)
@@ -57,7 +58,7 @@ void dcSetValue::processAnimation(Animation *anim)
 {
     if (var->getType() == DECIMAL_TYPE)
     {
-        ValueData *endval = new ValueData;
+        Variable *endval = new Variable;
         endval->setType(DECIMAL_TYPE);
         endval->setValue(var->getDecimal());
         calculateValue(optype, endval, val, min, max);
@@ -65,7 +66,7 @@ void dcSetValue::processAnimation(Animation *anim)
     }
 }
 
-void dcSetValue::calculateValue(int opspec, ValueData *varID, ValueData *valID, ValueData *minID, ValueData *maxID)
+void dcSetValue::calculateValue(int opspec, Variable *varID, Value *valID, Value *minID, Value *maxID)
 {
     switch (varID->getType())
     {

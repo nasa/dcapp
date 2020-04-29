@@ -31,13 +31,15 @@ dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inv
         else if (!strcasecmp(inspec, "le")) opspec = IfLessOrEquals;
     }
 
-    if (inval1) val1 = getValueData(inval1);
-    else val1 = getConstantValue("1");
-    if (inval2) val2 = getValueData(inval2);
-    else val2 = getConstantValue("1");
+    if (inval1) val1 = getValue(inval1);
+    else val1 = getConstant(true);
+
+    if (inval2) val2 = getValue(inval2);
+    else val2 = getConstant(true);
 
     datatype1 = val1->getType();
     datatype2 = val2->getType();
+
     if (datatype1 == UNDEFINED_TYPE && datatype2 == UNDEFINED_TYPE)
     {
         datatype1 = STRING_TYPE;

@@ -14,13 +14,13 @@ void dcContainer::setSize(const char *inw, const char *inh)
 {
     if (inw)
     {
-        ValueData *tmpptr = getValueData(inw);
+        Value *tmpptr = getValue(inw);
         if (vwidth == w) vwidth = tmpptr;
         w = tmpptr;
     }
     if (inh)
     {
-        ValueData *tmpptr = getValueData(inh);
+        Value *tmpptr = getValue(inh);
         if (vheight == h) vheight = tmpptr;
         h = tmpptr;
     }
@@ -28,8 +28,8 @@ void dcContainer::setSize(const char *inw, const char *inh)
 
 void dcContainer::setVirtualSize(const char *inw, const char *inh)
 {
-    if (inw) vwidth = getValueData(inw);
-    if (inh) vheight = getValueData(inh);
+    if (inw) vwidth = getValue(inw);
+    if (inh) vheight = getValue(inh);
 }
 
 void dcContainer::draw(void)
@@ -72,5 +72,5 @@ void dcContainer::handleMouseMotion(double inx, double iny)
     for (const auto &myobj : children) myobj->handleMouseMotion(finalx, finaly);
 }
 
-ValueData * dcContainer::getContainerWidth(void) { return vwidth; }
-ValueData * dcContainer::getContainerHeight(void) { return vheight; }
+Value * dcContainer::getContainerWidth(void) { return vwidth; }
+Value * dcContainer::getContainerHeight(void) { return vheight; }

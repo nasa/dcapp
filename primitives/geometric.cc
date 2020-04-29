@@ -12,24 +12,24 @@ dcGeometric::dcGeometric(dcParent *myparent) : x(0x0), y(0x0), halign(AlignLeft)
     containerh = getContainerHeight();
     w = containerw;
     h = containerh;
-    rotate = getConstantValue(0);
+    rotate = getConstant(0);
 }
 
 void dcGeometric::setPosition(const char *inx, const char *iny)
 {
-    if (inx) x = getValueData(inx);
-    if (iny) y = getValueData(iny);
+    if (inx) x = getValue(inx);
+    if (iny) y = getValue(iny);
 }
 
 void dcGeometric::setSize(const char *inw, const char *inh)
 {
-    if (inw) w = getValueData(inw);
-    if (inh) h = getValueData(inh);
+    if (inw) w = getValue(inw);
+    if (inh) h = getValue(inh);
 }
 
 void dcGeometric::setRotation(const char *inr)
 {
-    if (inr) rotate = getValueData(inr);
+    if (inr) rotate = getValue(inr);
 }
 
 void dcGeometric::setAlignment(const char *inhal, const char *inval)
@@ -102,7 +102,7 @@ void dcGeometric::computeGeometry(void)
     }
 }
 
-double dcGeometric::GeomX(ValueData *x, double w, double containerW, int halign)
+double dcGeometric::GeomX(Value *x, double w, double containerW, int halign)
 {
     double val;
 
@@ -140,7 +140,7 @@ double dcGeometric::GeomX(ValueData *x, double w, double containerW, int halign)
     }
 }
 
-double dcGeometric::GeomY(ValueData *y, double h, double containerH, int valign)
+double dcGeometric::GeomY(Value *y, double h, double containerH, int valign)
 {
     double val;
 

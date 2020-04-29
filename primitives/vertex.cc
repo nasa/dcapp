@@ -13,8 +13,8 @@ dcVertex::dcVertex(dcParent *myparent) : x(0x0), y(0x0)
 
 void dcVertex::setPosition(const char *inx, const char *iny)
 {
-    if (inx) x = getValueData(inx);
-    if (iny) y = getValueData(iny);
+    if (inx) x = getValue(inx);
+    if (iny) y = getValue(iny);
 }
 
 void dcVertex::draw(void)

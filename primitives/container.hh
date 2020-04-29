@@ -26,12 +26,12 @@ void updateData(void) { dcParent::updateData(); };
 void updateStreams(unsigned passcount) { dcParent::updateStreams(passcount); };
 void processAnimation(Animation *anim) { dcParent::processAnimation(anim); };
 
-        ValueData *getContainerWidth(void);
-        ValueData *getContainerHeight(void);
+        Value *getContainerWidth(void);
+        Value *getContainerHeight(void);
 
     private:
-        ValueData *vwidth;
-        ValueData *vheight;
+        Value *vwidth;
+        Value *vheight;
 };
 
 #endif

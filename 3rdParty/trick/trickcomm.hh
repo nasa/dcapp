@@ -37,9 +37,9 @@ class TrickCommModule : public CommModule
         {
             char *trickvar;
             char *units;
-            ValueData *trickvalue;
-            ValueData *currvalue;
-            ValueData prevvalue;
+            Variable *trickvalue;
+            Variable *currvalue;
+            Variable prevvalue;
             bool forcewrite;
             bool init_only;
             bool method;

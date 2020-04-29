@@ -78,8 +78,8 @@ class dcString : public dcGeometric
         std::vector<VarString *> vstring;
         std::vector<std::string> filler;
         tdFont *fontID;
-        ValueData *fontSize;
-        ValueData *shadowOffset;
+        Value *fontSize;
+        Value *shadowOffset;
         flMonoOption forcemono;
 };
 

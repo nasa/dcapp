@@ -31,8 +31,8 @@ class dcCondition : public dcObject
         int opspec;
         int datatype1;
         int datatype2;
-        ValueData *val1;
-        ValueData *val2;
+        Value *val1;
+        Value *val2;
 };
 
 #endif

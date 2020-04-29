@@ -97,7 +97,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                 if (myitem->currvalue->getBoolean())
                 {
                     this->tvs->putMethod(myitem->trickvar);
-                    myitem->currvalue->setBoolean(false);
+                    myitem->currvalue->setValue(false);
                 }
             }
             else
@@ -162,7 +162,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
             return this->Fail;
     }
 
-    ValueData *myvalue = getVariableValue(paramname);
+    Variable *myvalue = getVariable(paramname);
 
     if (myvalue)
     {

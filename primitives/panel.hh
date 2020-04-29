@@ -13,16 +13,16 @@ class dcPanel : public dcParent
         void setColor(const char *);
         void setOrtho(const char *, const char *);
         bool checkID(int);
-        ValueData *getContainerWidth(void);
-        ValueData *getContainerHeight(void);
+        Value *getContainerWidth(void);
+        Value *getContainerHeight(void);
         void draw(void);
         void handleMousePress(double, double);
         void handleMouseMotion(double, double);
 
     private:
         int displayID;
-        ValueData *orthoX;
-        ValueData *orthoY;
+        Value *orthoX;
+        Value *orthoY;
         Kolor color;
 };
 

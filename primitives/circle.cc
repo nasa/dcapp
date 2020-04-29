@@ -6,7 +6,7 @@
 
 dcCircle::dcCircle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), segments(80)
 {
-    radius = getConstantValue(10.0);
+    radius = getConstant(10.0);
     FillColor.set(0.5, 0.5, 0.5);
     LineColor.set(1, 1, 1);
 }
@@ -40,7 +40,7 @@ void dcCircle::setLineWidth(const char *inval)
 
 void dcCircle::setRadius(const char *inval)
 {
-    if (inval) radius = getValueData(inval);
+    if (inval) radius = getValue(inval);
 }
 
 void dcCircle::setSegments(const char *inval)

@@ -24,7 +24,7 @@ class dcWindow : public dcParent
 // class since ALL panels are checked in case currentPanel changed after the press event
 
     private:
-        ValueData *displayID;
+        Value *displayID;
         dcPanel *currentPanel;
 };
 

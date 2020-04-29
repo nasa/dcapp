@@ -7,8 +7,8 @@ dcPanel::dcPanel(dcParent *myparent) : displayID(0)
 {
     myparent->addChild(this);
     color.set(0, 0, 0);
-    orthoX = getConstantValue(100);
-    orthoY = getConstantValue(100);
+    orthoX = getConstant(100);
+    orthoY = getConstant(100);
 }
 
 void dcPanel::setID(const char *inval)
@@ -23,8 +23,8 @@ void dcPanel::setColor(const char *cspec)
 
 void dcPanel::setOrtho(const char *inw, const char *inh)
 {
-    if (inw) orthoX = getValueData(inw);
-    if (inh) orthoY = getValueData(inh);
+    if (inw) orthoX = getValue(inw);
+    if (inh) orthoY = getValue(inh);
 }
 
 bool dcPanel::checkID(int id)
@@ -33,8 +33,8 @@ bool dcPanel::checkID(int id)
     else return false;
 }
 
-ValueData * dcPanel::getContainerWidth(void) { return orthoX; }
-ValueData * dcPanel::getContainerHeight(void) { return orthoY; }
+Value * dcPanel::getContainerWidth(void) { return orthoX; }
+Value * dcPanel::getContainerHeight(void) { return orthoY; }
 
 void dcPanel::draw(void)
 {

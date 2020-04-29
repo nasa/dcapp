@@ -5,11 +5,83 @@
 #include "valuedata.hh"
 #include "string_utils.hh"
 
-ValueData::ValueData() : decval(0), intval(0) { }
+Value::Value() : decval(0), intval(0) { }
+Value::~Value() { }
 
-ValueData::~ValueData() { }
 
-bool ValueData::operator == (const ValueData &that)
+
+Constant::Constant() : boolval(false) { }
+Constant::~Constant() { }
+
+bool Constant::operator == (const Constant &that)
+{
+    if (this->decval == that.decval && this->intval == that.intval && this->strval == that.strval && this->boolval == that.boolval) return true;
+    else return false;
+}
+
+bool Constant::operator != (const Constant &that)
+{
+    return !(*this == that);
+}
+
+void Constant::setValue(double val)
+{
+    this->decval = val;
+    this->intval = (int)val;
+    this->strval = std::to_string(val);
+    if (val) this->boolval = true;
+    else this->boolval = false;
+}
+
+void Constant::setValue(int val)
+{
+    this->decval = (double)val;
+    this->intval = val;
+    this->strval = std::to_string(val);
+    if (val) this->boolval = true;
+    else this->boolval = false;
+}
+
+void Constant::setValue(const char *val)
+{
+    if (val)
+    {
+        this->decval = strtod(val, 0x0);
+        this->intval = (int)strtol(val, 0x0, 10);
+        this->strval = val;
+        this->boolval = StringToBoolean(val);
+    }
+}
+
+void Constant::setValue(bool val)
+{
+    if (val)
+    {
+        this->decval = 1.0;
+        this->intval = 1;
+        this->strval = "true";
+    }
+    else
+    {
+        this->decval = 0.0;
+        this->intval = 0;
+        this->strval = "false";
+    }
+
+    this->boolval = val;
+}
+
+double Constant::getDecimal(void) { return this->decval; }
+int Constant::getInteger(void) { return this->intval; }
+std::string Constant::getString(void) { return this->strval; }
+bool Constant::getBoolean(void) { return this->boolval; }
+
+
+
+Variable::Variable() : type(UNDEFINED_TYPE) { }
+Variable::~Variable() { }
+
+bool Variable::operator == (const Variable &that)
 {
     switch (this->type)
     {
@@ -20,14 +92,115 @@ bool ValueData::operator == (const ValueData &that)
     return false;
 }
 
-bool ValueData::operator != (const ValueData &that)
+bool Variable::operator != (const Variable &that)
 {
     return !(*this == that);
 }
 
+void Variable::setValue(const char *input, unsigned length = 0)
+{
+    if (input)
+    {
+        switch (this->type)
+        {
+        case DECIMAL_TYPE:
+            this->decval = strtod(input, 0x0);
+            break;
+        case INTEGER_TYPE:
+            this->intval = (int)strtol(input, 0x0, 10);
+            break;
+        case STRING_TYPE:
+            if (length)
+            {
+                if (length >= this->strval.max_size()) length = this->strval.max_size() - 1;
+                this->strval.clear();
+                for (unsigned i=0; i<length; i++) this->strval += input[i];
+            }
+            else this->strval = input;
+            break;
+        }
+    }
+}
+void Variable::setValue(Value &that)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: this->decval = that.getDecimal(); break;
+        case INTEGER_TYPE: this->intval = that.getInteger(); break;
+        case STRING_TYPE:  this->strval = that.getString(); break;
+    }
+}
+
+//void Variable::setValue(double val) { this->decval = val; }
+//void Variable::setValue(int val) { this->intval = val; }
+void Variable::setValue(std::string val) { this->strval = val; }
+
+void Variable::setValue(bool input)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE:
+            if (input) this->decval = 1.0;
+            else       this->decval = 0.0;
+            break;
+        case INTEGER_TYPE:
+            if (input) this->intval = 1;
+            else       this->intval = 0;
+            break;
+        case STRING_TYPE:
+            if (input) this->strval = "true";
+            else       this->strval = "false";
+            break;
+    }
+}
+
+double Variable::getDecimal(void)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: return this->decval;
+        case INTEGER_TYPE: return (double)(this->intval);
+        case STRING_TYPE:  return StringToDecimal(this->strval);
+        default:           return 0.0;
+    }
+}
+
+int Variable::getInteger(void)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: return (int)(this->decval);
+        case INTEGER_TYPE: return this->intval;
+        case STRING_TYPE:  return StringToInteger(this->strval);
+        default:           return 0;
+    }
+}
+
+std::string Variable::getString(void)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: return std::to_string(this->decval);
+        case INTEGER_TYPE: return std::to_string(this->intval);
+        case STRING_TYPE:  return this->strval;
+        default:           return "";
+    }
+}
+
+bool Variable::getBoolean(void)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: if (this->decval) return true; break;
+        case INTEGER_TYPE: if (this->intval) return true; break;
+        case STRING_TYPE:  if (StringToBoolean(this->strval)) return true; break;
+    }
+    return false;
+}
+
 // Probably don't need two of these routines...
-void ValueData::setType(int type_spec) { this->type = type_spec; } // Should probably verify a valid input type here
-void ValueData::setType(const char *type_spec)
+void Variable::setType(int type_spec) { this->type = type_spec; } // Should probably verify a valid input type here
+void Variable::setType(const char *type_spec)
 {
     if (!strcmp(type_spec, "Decimal") || !strcmp(type_spec, "Float"))
     {
@@ -49,138 +222,9 @@ void ValueData::setType(const char *type_spec)
     }
 }
 
-// Probably don't need two of these routines...
-void ValueData::setValue(const char *input)
-{
-    if (input)
-    {
-        switch (this->type)
-        {
-        case DECIMAL_TYPE:
-            this->decval = strtod(input, 0x0);
-            break;
-        case INTEGER_TYPE:
-            this->intval = (int)strtol(input, 0x0, 10);
-            break;
-        case STRING_TYPE:
-            this->strval = input;
-            break;
-        }
-    }
-}
-void ValueData::setValue(const char *input, unsigned length)
-{
-    switch (this->type)
-    {
-    case DECIMAL_TYPE:
-        this->decval = strtod(input, 0x0);
-        break;
-    case INTEGER_TYPE:
-        this->intval = (int)strtol(input, 0x0, 10);
-        break;
-    case STRING_TYPE:
-        if (length >= this->strval.max_size()) length = this->strval.max_size() - 1;
-        this->strval.clear();
-        for (unsigned i=0; i<length; i++) this->strval += input[i];
-        break;
-    }
-}
-void ValueData::setValue(const ValueData &that)
-{
-    switch (this->type)
-    {
-        case DECIMAL_TYPE: this->decval = that.decval; break;
-        case INTEGER_TYPE: this->intval = that.intval; break;
-        case STRING_TYPE:  this->strval = that.strval; break;
-    }
-}
-void ValueData::setValue(double val) { this->decval = val; }
-void ValueData::setValue(int val) { this->intval = val; }
-void ValueData::setValue(std::string val) { this->strval = val; }
+int Variable::getType(void) { return this->type; }
 
-void ValueData::setBoolean(bool input)
-{
-    switch (this->type)
-    {
-        case DECIMAL_TYPE:
-            if (input) this->decval = 1.0;
-            else       this->decval = 0.0;
-            break;
-        case INTEGER_TYPE:
-            if (input) this->intval = 1;
-            else       this->intval = 0;
-            break;
-        case STRING_TYPE:
-            if (input) this->strval = "true";
-            else       this->strval = "false";
-            break;
-    }
-}
-
-void ValueData::makeGeneric(void)
-{
-    switch (this->type)
-    {
-        case DECIMAL_TYPE:
-            this->intval = (int)(this->decval);
-            this->strval = std::to_string(this->decval);
-            break;
-        case INTEGER_TYPE:
-            this->decval = (double)(this->intval);
-            this->strval = std::to_string(this->intval);
-            break;
-        case STRING_TYPE:
-            this->decval = StringToDecimal(this->strval);
-            this->intval = StringToInteger(this->strval);
-            break;
-    }
-    this->type = UNDEFINED_TYPE;
-}
-
-int ValueData::getType(void) { return this->type; }
-
-bool ValueData::getBoolean(void)
-{
-    switch (this->type)
-    {
-        case DECIMAL_TYPE: if (this->decval) return true; break;
-        case INTEGER_TYPE: if (this->intval) return true; break;
-        case STRING_TYPE:  if (StringToBoolean(this->strval)) return true; break;
-    }
-    return StringToBoolean(this->strval);
-}
-
-double ValueData::getDecimal(void)
-{
-    switch (this->type)
-    {
-        case INTEGER_TYPE: return (double)(this->intval);
-        case STRING_TYPE:  return StringToDecimal(this->strval);
-        default:           return this->decval;
-    }
-}
-
-int ValueData::getInteger(void)
-{
-    switch (this->type)
-    {
-        case DECIMAL_TYPE: return (int)(this->decval);
-        case STRING_TYPE:  return StringToInteger(this->strval);
-        default:           return this->intval;
-    }
-}
-
-std::string ValueData::getString(void)
-{
-    switch (this->type)
-    {
-        case DECIMAL_TYPE: return std::to_string(this->decval);
-        case INTEGER_TYPE: return std::to_string(this->intval);
-        default:           return this->strval;
-    }
-}
-
-void * ValueData::getPointer(void)
+void * Variable::getPointer(void)
 {
     switch (this->type)
     {
@@ -193,6 +237,6 @@ default:  return (void *)(&(this->strval)); break;
     }
 }
 
-bool ValueData::isDecimal(void) { if (this->type == DECIMAL_TYPE) return true; else return false; }
-bool ValueData::isInteger(void) { if (this->type == INTEGER_TYPE) return true; else return false; }
-bool ValueData::isString(void)  { if (this->type == STRING_TYPE)  return true; else return false; }
+bool Variable::isDecimal(void) { if (this->type == DECIMAL_TYPE) return true; else return false; }
+bool Variable::isInteger(void) { if (this->type == INTEGER_TYPE) return true; else return false; }
+bool Variable::isString(void)  { if (this->type == STRING_TYPE)  return true; else return false; }

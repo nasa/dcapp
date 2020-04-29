@@ -13,10 +13,10 @@ class dcVertex : public dcObject
         void draw(void);
 
     private:
-        ValueData *x;
-        ValueData *y;
-        ValueData *containerw;
-        ValueData *containerh;
+        Value *x;
+        Value *y;
+        Value *containerw;
+        Value *containerh;
 };
 
 #endif

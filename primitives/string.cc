@@ -14,8 +14,8 @@ extern appdata AppData;
 dcString::dcString(dcParent *myparent) : dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone)
 {
     color.set(1, 1, 1);
-    fontSize = getConstantValue(12.0f);
-    shadowOffset = getConstantValue(0.0f);
+    fontSize = getConstant(12.0f);
+    shadowOffset = getConstant(0.0f);
 }
 
 void dcString::setColor(const char *cspec)
@@ -40,7 +40,7 @@ void dcString::setFont(const char *font, const char *face, const char *size, con
     if (font) fontID = tdLoadFont(font, myface);
     if (!fontID) fontID = tdLoadFont(AppData.defaultfont, myface);
 
-    if (size) fontSize = getValueData(size);
+    if (size) fontSize = getValue(size);
 
     if (mono)
     {
@@ -53,7 +53,7 @@ void dcString::setFont(const char *font, const char *face, const char *size, con
 
 void dcString::setShadowOffset(const char *inval)
 {
-    if (inval) shadowOffset = getValueData(inval);
+    if (inval) shadowOffset = getValue(inval);
 }
 
 void dcString::setString(std::string mystr)
@@ -182,7 +182,7 @@ size_t dcString::parse_var(std::string mystr)
     if (var_end == std::string::npos) varstr += mystr.substr(var_start, std::string::npos);
     else varstr += mystr.substr(var_start, var_end - var_start);
 
-    ValueData *myvalue = getValueData(varstr.c_str());
+    Variable *myvalue = getVariable(varstr.c_str());
     if (fmt_start != std::string::npos && fmt_end != std::string::npos)
         vstring.push_back(new VarString(myvalue->getType(), myvalue->getPointer(), mystr.substr(fmt_start+1, fmt_end-fmt_start-1).c_str()));
     else

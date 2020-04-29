@@ -29,7 +29,7 @@ class ParamData
 
         std::string label;
         std::string units;
-        ValueData value;
+        Variable value;
 };
 
 class VariableServerComm
@@ -38,12 +38,12 @@ class VariableServerComm
         VariableServerComm();
         virtual ~VariableServerComm();
 
-        ValueData *add_var(const char *, const char *, int);
+        Variable *add_var(const char *, const char *, int);
         void remove_var(const char *);
         int activate(const char *, int, const char *, char *);
         int get(void);
         int putMethod(const char *);
-        int putValue(const char *, ValueData &, const char *);
+        int putValue(const char *, Variable &, const char *);
 
     private:
         std::list<ParamData> paramlist;

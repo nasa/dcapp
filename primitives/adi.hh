@@ -24,16 +24,16 @@ class dcADI : public dcGeometric
     private:
         tdTexture *bkgdID;
         tdTexture *ballID;
-        ValueData *outerradius;
-        ValueData *ballradius;
-        ValueData *chevronW;
-        ValueData *chevronH;
-        ValueData *roll;
-        ValueData *pitch;
-        ValueData *yaw;
-        ValueData *rollError;
-        ValueData *pitchError;
-        ValueData *yawError;
+        Value *outerradius;
+        Value *ballradius;
+        Value *chevronW;
+        Value *chevronH;
+        Value *roll;
+        Value *pitch;
+        Value *yaw;
+        Value *rollError;
+        Value *pitchError;
+        Value *yawError;
         std::vector<float> sphereTriangles;
 
         void draw_roll_bug(double, double, double, double);

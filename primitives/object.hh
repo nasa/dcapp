@@ -24,8 +24,8 @@ class dcObject
         virtual void processAnimation(Animation *) { };
         virtual void setParent(dcObject *parentid) { parent = parentid; };
         virtual dcObject *getParent(void) { return parent; };
-        virtual ValueData *getContainerWidth(void) { return parent->getContainerWidth(); };
-        virtual ValueData *getContainerHeight(void) { return parent->getContainerHeight(); };
+        virtual Value *getContainerWidth(void) { return parent->getContainerWidth(); };
+        virtual Value *getContainerHeight(void) { return parent->getContainerHeight(); };
 
     private:
         dcObject *parent;

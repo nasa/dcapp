@@ -18,13 +18,13 @@ class dcSetValue : public dcObject
         void processAnimation(Animation *);
 
     private:
-        void calculateValue(int, ValueData *, ValueData *, ValueData *, ValueData *);
+        void calculateValue(int, Variable *, Value *, Value *, Value *);
 
         int optype;
-        ValueData *var;
-        ValueData *val;
-        ValueData *min;
-        ValueData *max;
+        Variable *var;
+        Value *val;
+        Value *min;
+        Value *max;
 };
 
 #endif

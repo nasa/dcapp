@@ -4,8 +4,8 @@
 #include <string>
 #include "valuedata.hh"
 
-extern ValueData *getConstantValue(int);
-extern ValueData *getConstantValue(double);
-extern ValueData *getConstantValue(const char *);
+extern Constant *getConstant(int);
+extern Constant *getConstant(double);
+extern Constant *getConstant(const char *);
 
 #endif

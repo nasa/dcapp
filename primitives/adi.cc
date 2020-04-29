@@ -11,12 +11,12 @@ static const double YELLOW[3] = { 1.0, 1.0, 0.0 };
 
 dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(0x0), ballID(0x0), outerradius(0x0), ballradius(0x0), chevronW(0x0), chevronH(0x0)
 {
-    roll = getConstantValue(0.0f);
-    pitch = getConstantValue(0.0f);
-    yaw = getConstantValue(0.0f);
-    rollError = getConstantValue(0.0f);
-    pitchError = getConstantValue(0.0f);
-    yawError = getConstantValue(0.0f);
+    roll = getConstant(0.0f);
+    pitch = getConstant(0.0f);
+    yaw = getConstant(0.0f);
+    rollError = getConstant(0.0f);
+    pitchError = getConstant(0.0f);
+    yawError = getConstant(0.0f);
 
     sphereTriangles = BuildSphere();
 }
@@ -33,28 +33,28 @@ void dcADI::setBallTexture(const char *filename)
 
 void dcADI::setRPY(const char *inroll, const char *inpitch, const char *inyaw)
 {
-    if (inroll) roll = getValueData(inroll);
-    if (inpitch) pitch = getValueData(inpitch);
-    if (inyaw) yaw = getValueData(inyaw);
+    if (inroll) roll = getValue(inroll);
+    if (inpitch) pitch = getValue(inpitch);
+    if (inyaw) yaw = getValue(inyaw);
 }
 
 void dcADI::setRPYerrors(const char *re, const char *pe, const char *ye)
 {
-    if (re) rollError = getValueData(re);
-    if (pe) pitchError = getValueData(pe);
-    if (ye) yawError = getValueData(ye);
+    if (re) rollError = getValue(re);
+    if (pe) pitchError = getValue(pe);
+    if (ye) yawError = getValue(ye);
 }
 
 void dcADI::setRadius(const char *outer, const char *ball)
 {
-    if (outer) outerradius = getValueData(outer);
-    if (ball) ballradius = getValueData(ball);
+    if (outer) outerradius = getValue(outer);
+    if (ball) ballradius = getValue(ball);
 }
 
 void dcADI::setChevron(const char *widthspec, const char *heightspec)
 {
-    if (widthspec) chevronW = getValueData(widthspec);
-    if (heightspec) chevronH = getValueData(heightspec);
+    if (widthspec) chevronW = getValue(widthspec);
+    if (heightspec) chevronH = getValue(heightspec);
 }
 
 void dcADI::draw(void)

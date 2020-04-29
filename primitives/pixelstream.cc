@@ -68,9 +68,7 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
             break;
         case PixelStreamVsmProtocol:
             psv = new PixelStreamVsm;
-// the below use of getPointer is purely hideous
-if (psv->readerInitialize(host, StringToInteger(port, 80), path, (std::string *)(getValueData(cameraspec)->getPointer())))
-//            if (psv->readerInitialize(host, StringToInteger(port, 80), path, getStringPointer(cameraspec)))
+            if (psv->readerInitialize(host, StringToInteger(port, 80), path, getValue(cameraspec)))
             {
                 delete psv;
                 return;

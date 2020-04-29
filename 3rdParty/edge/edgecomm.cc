@@ -155,7 +155,7 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *c
             return this->Fail;
     }
 
-    ValueData *myvalue = getVariableValue(paramname);
+    Variable *myvalue = getVariable(paramname);
 
     if (myvalue)
     {

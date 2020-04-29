@@ -13,24 +13,24 @@ class Kolor
     public:
         Kolor()
         {
-            R = getConstantValue(0.0);
-            G = getConstantValue(0.0);
-            B = getConstantValue(0.0);
-            A = getConstantValue(1.0);
+            R = getConstant(0.0);
+            G = getConstant(0.0);
+            B = getConstant(0.0);
+            A = getConstant(1.0);
         }
         void set(double r, double g, double b)
         {
-            R = getConstantValue(r);
-            G = getConstantValue(g);
-            B = getConstantValue(b);
-            A = getConstantValue(1.0);
+            R = getConstant(r);
+            G = getConstant(g);
+            B = getConstant(b);
+            A = getConstant(1.0);
         }
         void set(double r, double g, double b, double a)
         {
-            R = getConstantValue(r);
-            G = getConstantValue(g);
-            B = getConstantValue(b);
-            A = getConstantValue(a);
+            R = getConstant(r);
+            G = getConstant(g);
+            B = getConstant(b);
+            A = getConstant(a);
         }
         void set(std::string mystring)
         {
@@ -59,20 +59,20 @@ class Kolor
 
             count = mylist.size();
 
-            if (count > 0) R = getValueData(mylist[0].c_str());
-            else R = getConstantValue(0.0);
-            if (count > 1) G = getValueData(mylist[1].c_str());
-            else G = getConstantValue(0.0);
-            if (count > 2) B = getValueData(mylist[2].c_str());
-            else B = getConstantValue(0.0);
-            if (count > 3) A = getValueData(mylist[3].c_str());
-            else A = getConstantValue(1.0);
+            if (count > 0) R = getValue(mylist[0].c_str());
+            else R = getConstant(0.0);
+            if (count > 1) G = getValue(mylist[1].c_str());
+            else G = getConstant(0.0);
+            if (count > 2) B = getValue(mylist[2].c_str());
+            else B = getConstant(0.0);
+            if (count > 3) A = getValue(mylist[3].c_str());
+            else A = getConstant(1.0);
         }
 
-        ValueData *R;
-        ValueData *G;
-        ValueData *B;
-        ValueData *A;
+        Value *R;
+        Value *G;
+        Value *B;
+        Value *A;
 };
 
 #endif

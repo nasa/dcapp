@@ -48,7 +48,7 @@ VariableServerComm::~VariableServerComm()
     TIDY(this->prevbuf);
 }
 
-ValueData * VariableServerComm::add_var(const char *label, const char *units, int type)
+Variable * VariableServerComm::add_var(const char *label, const char *units, int type)
 {
     if (!label || !type) return nullptr;
 
@@ -230,7 +230,7 @@ int VariableServerComm::putMethod(const char *label)
     return VS_SUCCESS;
 }
 
-int VariableServerComm::putValue(const char *label, ValueData &value, const char *units)
+int VariableServerComm::putValue(const char *label, Variable &value, const char *units)
 {
     if (!tc_isValid(&(this->connection))) return VS_INVALID_CONNECTION;
 
