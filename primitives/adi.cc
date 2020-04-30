@@ -11,12 +11,12 @@ static const double YELLOW[3] = { 1.0, 1.0, 0.0 };
 
 dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(0x0), ballID(0x0), outerradius(0x0), ballradius(0x0), chevronW(0x0), chevronH(0x0)
 {
-    roll = getConstant(0.0f);
-    pitch = getConstant(0.0f);
-    yaw = getConstant(0.0f);
-    rollError = getConstant(0.0f);
-    pitchError = getConstant(0.0f);
-    yawError = getConstant(0.0f);
+    roll = getConstantFromDecimal(0);
+    pitch = getConstantFromDecimal(0);
+    yaw = getConstantFromDecimal(0);
+    rollError = getConstantFromDecimal(0);
+    pitchError = getConstantFromDecimal(0);
+    yawError = getConstantFromDecimal(0);
 
     sphereTriangles = BuildSphere();
 }

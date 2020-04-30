@@ -6,7 +6,7 @@
 
 dcCircle::dcCircle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), segments(80)
 {
-    radius = getConstant(10.0);
+    radius = getConstantFromDecimal(0);
     FillColor.set(0.5, 0.5, 0.5);
     LineColor.set(1, 1, 1);
 }

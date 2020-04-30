@@ -12,7 +12,7 @@ dcGeometric::dcGeometric(dcParent *myparent) : x(0x0), y(0x0), halign(AlignLeft)
     containerh = getContainerHeight();
     w = containerw;
     h = containerh;
-    rotate = getConstant(0);
+    rotate = getConstantFromDecimal(0);
 }
 
 void dcGeometric::setPosition(const char *inx, const char *iny)

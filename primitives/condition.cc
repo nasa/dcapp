@@ -32,10 +32,10 @@ dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inv
     }
 
     if (inval1) val1 = getValue(inval1);
-    else val1 = getConstant(true);
+    else val1 = getConstantFromBoolean(true);
 
     if (inval2) val2 = getValue(inval2);
-    else val2 = getConstant(true);
+    else val2 = getConstantFromBoolean(true);
 
     datatype1 = val1->getType();
     datatype2 = val2->getType();

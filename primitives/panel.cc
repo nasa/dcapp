@@ -7,8 +7,8 @@ dcPanel::dcPanel(dcParent *myparent) : displayID(0)
 {
     myparent->addChild(this);
     color.set(0, 0, 0);
-    orthoX = getConstant(100);
-    orthoY = getConstant(100);
+    orthoX = getConstantFromDecimal(100);
+    orthoY = getConstantFromDecimal(100);
 }
 
 void dcPanel::setID(const char *inval)

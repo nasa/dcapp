@@ -13,24 +13,24 @@ class Kolor
     public:
         Kolor()
         {
-            R = getConstant(0.0);
-            G = getConstant(0.0);
-            B = getConstant(0.0);
-            A = getConstant(1.0);
+            R = getConstantFromDecimal(0.0);
+            G = getConstantFromDecimal(0.0);
+            B = getConstantFromDecimal(0.0);
+            A = getConstantFromDecimal(1.0);
         }
         void set(double r, double g, double b)
         {
-            R = getConstant(r);
-            G = getConstant(g);
-            B = getConstant(b);
-            A = getConstant(1.0);
+            R = getConstantFromDecimal(r);
+            G = getConstantFromDecimal(g);
+            B = getConstantFromDecimal(b);
+            A = getConstantFromDecimal(1.0);
         }
         void set(double r, double g, double b, double a)
         {
-            R = getConstant(r);
-            G = getConstant(g);
-            B = getConstant(b);
-            A = getConstant(a);
+            R = getConstantFromDecimal(r);
+            G = getConstantFromDecimal(g);
+            B = getConstantFromDecimal(b);
+            A = getConstantFromDecimal(a);
         }
         void set(std::string mystring)
         {
@@ -60,13 +60,13 @@ class Kolor
             count = mylist.size();
 
             if (count > 0) R = getValue(mylist[0].c_str());
-            else R = getConstant(0.0);
+            else R = getConstantFromDecimal(0.0);
             if (count > 1) G = getValue(mylist[1].c_str());
-            else G = getConstant(0.0);
+            else G = getConstantFromDecimal(0.0);
             if (count > 2) B = getValue(mylist[2].c_str());
-            else B = getConstant(0.0);
+            else B = getConstantFromDecimal(0.0);
             if (count > 3) A = getValue(mylist[3].c_str());
-            else A = getConstant(1.0);
+            else A = getConstantFromDecimal(1.0);
         }
 
         Value *R;

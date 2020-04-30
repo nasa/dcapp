@@ -14,30 +14,30 @@ static Constant *findOrCreateConstant(Constant &vinfo)
     return &(constants.back());
 }
 
-Constant *getConstant(double inval)
+Constant *getConstantFromDecimal(double inval)
 {
     Constant vinfo;
-    vinfo.setValue(inval);
+    vinfo.setToDecimal(inval);
     return findOrCreateConstant(vinfo);
 }
 
-Constant *getConstant(int inval)
+Constant *getConstantFromInteger(int inval)
 {
     Constant vinfo;
-    vinfo.setValue(inval);
+    vinfo.setToInteger(inval);
     return findOrCreateConstant(vinfo);
 }
 
-Constant *getConstant(const char *inval)
+Constant *getConstantFromCharstr(const char *inval)
 {
     Constant vinfo;
-    vinfo.setValue(inval);
+    vinfo.setToCharstr(inval);
     return findOrCreateConstant(vinfo);
 }
 
-Constant *getConstant(bool inval)
+Constant *getConstantFromBoolean(bool inval)
 {
     Constant vinfo;
-    vinfo.setValue(inval);
+    vinfo.setToBoolean(inval);
     return findOrCreateConstant(vinfo);
 }

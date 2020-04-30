@@ -6,7 +6,7 @@
 dcWindow::dcWindow() : currentPanel(0x0)
 {
     init_window();
-    displayID = getConstant(0);
+    displayID = getConstantFromInteger(0);
 }
 
 void dcWindow::setActiveDisplay(const char *inval)

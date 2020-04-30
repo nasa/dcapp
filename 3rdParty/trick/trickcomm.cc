@@ -47,7 +47,7 @@ CommModule::CommStatus TrickCommModule::read(void)
         case VS_SUCCESS:
             for (myitem = this->fromSim.begin(); myitem != this->fromSim.end(); myitem++)
             {
-                myitem->currvalue->setValue(*(myitem->trickvalue));
+                myitem->currvalue->setToValue(*(myitem->trickvalue));
 // maybe verify that type is legit here?
                 if (myitem->init_only)
                 {
@@ -97,7 +97,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                 if (myitem->currvalue->getBoolean())
                 {
                     this->tvs->putMethod(myitem->trickvar);
-                    myitem->currvalue->setValue(false);
+                    myitem->currvalue->setToBoolean(false);
                 }
             }
             else
@@ -106,7 +106,7 @@ CommModule::CommStatus TrickCommModule::write(void)
                 if (myitem->forcewrite || *(myitem->currvalue) != myitem->prevvalue)
                 {
                     this->tvs->putValue(myitem->trickvar, *(myitem->currvalue), myitem->units);
-                    myitem->prevvalue.setValue(*(myitem->currvalue));
+                    myitem->prevvalue.setToValue(*(myitem->currvalue));
                     myitem->forcewrite = false;
                 }
             }

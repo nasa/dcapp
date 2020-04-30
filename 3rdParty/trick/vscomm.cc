@@ -288,7 +288,7 @@ int VariableServerComm::update_data(const char *curbuf)
     for (std::list<ParamData>::iterator it = this->paramlist.begin(); it != this->paramlist.end(); it++)
     {
         element += this->find_next_token(element, '\t') + 1;
-        it->value.setValue(element, this->find_next_token(element, '\t'));
+        it->value.setToCharstr(element, this->find_next_token(element, '\t'));
     }
 
     return VS_SUCCESS;

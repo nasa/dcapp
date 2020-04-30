@@ -32,7 +32,7 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
 
     Variable *vinfo = new Variable;
     vinfo->setType(typestr);
-    vinfo->setValue(initval);
+    vinfo->setToCharstr(initval);
 
 //include some kind of error here if there's a problem...
 // error_msg("Attempting to create the variable \"" << paramname << "\" with an unknown type: " << typestr);
@@ -95,5 +95,5 @@ Value *getValue(const char *valstr)
     if (check_dynamic_element(valstr)) retval = getVariable(valstr);
 
     if (retval) return retval;
-    else return getConstant(valstr);
+    else return getConstantFromCharstr(valstr);
 }

@@ -13,7 +13,7 @@ enum { Equals, PlusEquals, MinusEquals };
 dcSetValue::dcSetValue(dcParent *myparent, const char *invar, const char *inval) : optype(Equals), min(0x0), max(0x0)
 {
     if (!invar || !inval) return;
-    
+
     var = getVariable(invar);
 
     // don't parent this object if var isn't properly defined
@@ -60,7 +60,7 @@ void dcSetValue::processAnimation(Animation *anim)
     {
         Variable *endval = new Variable;
         endval->setType(DECIMAL_TYPE);
-        endval->setValue(var->getDecimal());
+        endval->setToDecimal(var->getDecimal());
         calculateValue(optype, endval, val, min, max);
         anim->addItem(var->getPointer(), var->getDecimal(), endval->getDecimal());
     }

@@ -27,7 +27,7 @@ dcMouseMotion::~dcMouseMotion() { }
 
 void dcMouseMotion::handleMouseMotion(double inx, double iny)
 {
-    pointerX->setValue(inx);
-    pointerY->setValue(iny);
+    pointerX->setToDecimal(inx);
+    pointerY->setToDecimal(iny);
     UpdateDisplay();
 }

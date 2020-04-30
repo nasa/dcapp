@@ -14,8 +14,8 @@ extern appdata AppData;
 dcString::dcString(dcParent *myparent) : dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone)
 {
     color.set(1, 1, 1);
-    fontSize = getConstant(12.0f);
-    shadowOffset = getConstant(0.0f);
+    fontSize = getConstantFromDecimal(12);
+    shadowOffset = getConstantFromDecimal(0);
 }
 
 void dcString::setColor(const char *cspec)

@@ -32,10 +32,10 @@ class Constant : public Value
         bool operator == (const Constant &);
         bool operator != (const Constant &);
 
-        void setValue(double);
-        void setValue(int);
-        void setValue(const char *);
-        void setValue(bool);
+        void setToDecimal(double);
+        void setToInteger(int);
+        void setToCharstr(const char *);
+        void setToBoolean(bool);
 
         double getDecimal(void);
         int getInteger(void);
@@ -55,13 +55,12 @@ class Variable : public Value
         bool operator == (const Variable &);
         bool operator != (const Variable &);
 
-//        void setValue(const char *);
-        void setValue(const char *, unsigned);
-        void setValue(Value &);
-//        void setValue(double);
-//        void setValue(int);
-        void setValue(std::string);
-        void setValue(bool);
+        void setToCharstr(const char *, unsigned length = 0);
+        void setToValue(Value &);
+        void setToDecimal(double);
+//        void setToInteger(int);
+//        void setToString(std::string);
+        void setToBoolean(bool);
 
         double getDecimal(void);
         int getInteger(void);

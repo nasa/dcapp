@@ -4,8 +4,9 @@
 #include <string>
 #include "valuedata.hh"
 
-extern Constant *getConstant(int);
-extern Constant *getConstant(double);
-extern Constant *getConstant(const char *);
+extern Constant *getConstantFromDecimal(double);
+extern Constant *getConstantFromInteger(int);
+extern Constant *getConstantFromCharstr(const char *);
+extern Constant *getConstantFromBoolean(bool);
 
 #endif

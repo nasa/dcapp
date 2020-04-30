@@ -24,7 +24,7 @@ bool Constant::operator != (const Constant &that)
     return !(*this == that);
 }
 
-void Constant::setValue(double val)
+void Constant::setToDecimal(double val)
 {
     this->decval = val;
     this->intval = (int)val;
@@ -33,7 +33,7 @@ void Constant::setValue(double val)
     else this->boolval = false;
 }
 
-void Constant::setValue(int val)
+void Constant::setToInteger(int val)
 {
     this->decval = (double)val;
     this->intval = val;
@@ -42,7 +42,7 @@ void Constant::setValue(int val)
     else this->boolval = false;
 }
 
-void Constant::setValue(const char *val)
+void Constant::setToCharstr(const char *val)
 {
     if (val)
     {
@@ -53,7 +53,7 @@ void Constant::setValue(const char *val)
     }
 }
 
-void Constant::setValue(bool val)
+void Constant::setToBoolean(bool val)
 {
     if (val)
     {
@@ -97,7 +97,7 @@ bool Variable::operator != (const Variable &that)
     return !(*this == that);
 }
 
-void Variable::setValue(const char *input, unsigned length = 0)
+void Variable::setToCharstr(const char *input, unsigned length)
 {
     if (input)
     {
@@ -121,7 +121,7 @@ void Variable::setValue(const char *input, unsigned length = 0)
         }
     }
 }
-void Variable::setValue(Value &that)
+void Variable::setToValue(Value &that)
 {
     switch (this->type)
     {
@@ -130,12 +130,10 @@ void Variable::setValue(Value &that)
         case STRING_TYPE:  this->strval = that.getString(); break;
     }
 }
-
-//void Variable::setValue(double val) { this->decval = val; }
-//void Variable::setValue(int val) { this->intval = val; }
-void Variable::setValue(std::string val) { this->strval = val; }
-
-void Variable::setValue(bool input)
+void Variable::setToDecimal(double val) { this->decval = val; }
+//void Variable::setToInteger(int val) { this->intval = val; }
+//void Variable::setToString(std::string val) { this->strval = val; }
+void Variable::setToBoolean(bool input)
 {
     switch (this->type)
     {

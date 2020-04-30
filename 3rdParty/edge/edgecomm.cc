@@ -74,7 +74,7 @@ CommModule::CommStatus EdgeCommModule::read(void)
         }
 
 // maybe verify that type is legit here?
-        myitem->currvalue->setValue(substr);
+        myitem->currvalue->setToCharstr(substr);
 
         strptr += strlen(substr) + 1;
     }
@@ -114,7 +114,7 @@ CommModule::CommStatus EdgeCommModule::write(void)
             cmd += " ";
             cmd += myitem->currvalue->getString();
             status = this->rcs->send_doug_command(cmd, 0x0, 0x0);
-            myitem->prevvalue.setValue(*(myitem->currvalue));
+            myitem->prevvalue.setToValue(*(myitem->currvalue));
             myitem->forcewrite = false;
         }
     }
