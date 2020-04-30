@@ -19,8 +19,7 @@ class EdgeCommModule : public CommModule
 
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
-        void flagAsChanged(void *);
-        bool isActive(void);
+        void flagAsChanged(Variable *);
 
         int addParameter(int, const char *, const char *);
         int finishInitialization(const char *, const char *, double);
@@ -35,7 +34,6 @@ class EdgeCommModule : public CommModule
             bool forcewrite;
         } io_parameter;
 
-        bool active;
         std::list<io_parameter> fromEdge;
         std::list<io_parameter> toEdge;
         Timer *last_connect_attempt;

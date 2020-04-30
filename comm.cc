@@ -1,13 +1,17 @@
+#include "varlist.hh"
 #include "comm.hh"
 
-CommModule::CommModule()
-:
-activeID(0x0)
+CommModule::CommModule() : active(false), activeID(0x0)
 {
 }
 
 CommModule::~CommModule()
 {
+}
+
+void CommModule::setConnectedVariable(const char *spec)
+{
+    if (spec) this->activeID = getVariable(spec);
 }
 
 CommModule::CommStatus CommModule::read(void)
@@ -20,12 +24,12 @@ CommModule::CommStatus CommModule::write(void)
     return this->None;
 }
 
-void CommModule::flagAsChanged(void *)
+void CommModule::flagAsChanged(Variable *)
 {
     return;
 }
 
-bool CommModule::isActive(void)
+void CommModule::updateConnectedVariable(void)
 {
-    return false;
+    if (this->activeID) this->activeID->setToBoolean(this->active);
 }

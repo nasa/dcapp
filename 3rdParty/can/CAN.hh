@@ -1,6 +1,7 @@
 #ifndef _CAN_HH_
 #define _CAN_HH_
 
+#include "valuedata.hh"
 #include "device.hh"
 
 #ifdef NTCAN
@@ -14,13 +15,13 @@ class CanDevice : public DeviceModule
         CanDevice();
         virtual ~CanDevice();
 
-        void initialize(const char *, const char *, const char *, int *);
+        void initialize(const char *, const char *, const char *, const char *);
         void read(void);
 
     private:
         NTCAN_HANDLE ntCanHandle;
         bool CAN_active;
-        int *canbus_inhibited;
+        Variable *canbus_inhibited;
         uint32_t buttonID;
         uint32_t controlID;
 };
@@ -32,7 +33,7 @@ class CanDevice : public DeviceModule
     public:
         CanDevice();
 
-        void initialize(const char *, const char *, const char *, int *) { };
+        void initialize(const char *, const char *, const char *, const char *) { };
 };
 
 #endif

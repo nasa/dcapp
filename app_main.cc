@@ -106,7 +106,7 @@ void Idle(void)
         if (status == CommModule::Success) UpdateDisplay();
         else if (status == CommModule::Terminate) Terminate(0);
 
-        if ((*commitem)->activeID) *((*commitem)->activeID) = (*commitem)->isActive();
+        (*commitem)->updateConnectedVariable();
     }
 
     if (!AppData.animators.empty())

@@ -12,13 +12,7 @@
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
-TrickCommModule::TrickCommModule()
-:
-active(false),
-host(0x0),
-port(0),
-datarate(0x0),
-disconnectaction(this->AppTerminate)
+TrickCommModule::TrickCommModule() : host(0x0), port(0), datarate(0x0), disconnectaction(this->AppTerminate)
 {
     this->last_connect_attempt = new Timer;
     this->tvs = new VariableServerComm;
@@ -116,13 +110,13 @@ CommModule::CommStatus TrickCommModule::write(void)
     return this->None;
 }
 
-void TrickCommModule::flagAsChanged(void *value)
+void TrickCommModule::flagAsChanged(Variable *value)
 {
     std::list<io_parameter>::iterator myitem;
 
     for (myitem = this->toSim.begin(); myitem != this->toSim.end(); myitem++)
     {
-        if (myitem->currvalue->getPointer() == value) myitem->forcewrite = true;
+        if (myitem->currvalue == value) myitem->forcewrite = true;
     }
 }
 
@@ -176,6 +170,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
             else  myparam.units = nullptr;
 
             myparam.currvalue = myvalue;
+            myparam.prevvalue.setType(myvalue->getType());
             myparam.forcewrite = false;
             myparam.init_only = StringToBoolean(init_only);
             myparam.method = method;
@@ -202,11 +197,6 @@ void TrickCommModule::activate(void)
     {
         if (this->tvs->activate(this->host, this->port, 0x0, this->datarate) == VS_SUCCESS) this->active = true;
     }
-}
-
-bool TrickCommModule::isActive(void)
-{
-    return this->active;
 }
 
 #else

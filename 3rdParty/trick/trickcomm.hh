@@ -20,8 +20,7 @@ class TrickCommModule : public CommModule
 
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
-        void flagAsChanged(void *);
-        bool isActive(void);
+        void flagAsChanged(Variable *);
 
         void setHost(const char *);
         void setPort(int);
@@ -45,7 +44,6 @@ class TrickCommModule : public CommModule
             bool method;
         } io_parameter;
 
-        bool active;
         Timer *last_connect_attempt;
         VariableServerComm *tvs;
         char *host;

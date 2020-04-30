@@ -10,11 +10,7 @@
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
-EdgeCommModule::EdgeCommModule()
-:
-active(false),
-cmd_group(0x0),
-rcs(0x0)
+EdgeCommModule::EdgeCommModule() : cmd_group(0x0), rcs(0x0)
 {
     this->last_connect_attempt = new Timer;
     this->edge_timer = new Timer;
@@ -127,13 +123,13 @@ CommModule::CommStatus EdgeCommModule::write(void)
     else return this->Success;
 }
 
-void EdgeCommModule::flagAsChanged(void *value)
+void EdgeCommModule::flagAsChanged(Variable *value)
 {
     std::list<io_parameter>::iterator myitem;
 
     for (myitem = this->toEdge.begin(); myitem != this->toEdge.end(); myitem++)
     {
-        if (myitem->currvalue->getPointer() == value) myitem->forcewrite = true;
+        if (myitem->currvalue == value) myitem->forcewrite = true;
     }
 }
 
@@ -166,6 +162,7 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *c
             myparam.edgecmd = cmdspec;
             myparam.type = myvalue->getType();
             myparam.currvalue = myvalue;
+            myparam.prevvalue.setType(myvalue->getType());
             myparam.forcewrite = false;
             io_map->push_back(myparam);
 
@@ -213,9 +210,4 @@ void EdgeCommModule::activate(void)
 
         this->active = true;
     }
-}
-
-bool EdgeCommModule::isActive(void)
-{
-    return this->active;
 }
