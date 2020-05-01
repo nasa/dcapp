@@ -13,47 +13,18 @@
 class VarString
 {
     public:
-        VarString(int a, void *b, const char *c)
+        VarString(Variable *varin, std::string formatin)
         {
-            if (a == UNDEFINED_TYPE) datatype = STRING_TYPE;
-            else datatype = a;
-            value = b;
-            if (c) format = c;
-            else
-            {
-                switch (datatype)
-                {
-                    case DECIMAL_TYPE: format = "%g"; break;
-                    case INTEGER_TYPE: format = "%d"; break;
-                    case STRING_TYPE:  format = "%s"; break;
-                }
-            }
+            var = varin;
+            format = formatin;
         };
         std::string get(void)
         {
-            char *tmp_str = 0x0;
-            std::string ret_str;
-            switch (datatype)
-            {
-                case DECIMAL_TYPE:
-                    asprintf(&tmp_str, format.c_str(), *(double *)(value));
-                    break;
-                case INTEGER_TYPE:
-                    asprintf(&tmp_str, format.c_str(), *(int *)(value));
-                    break;
-                case STRING_TYPE:
-                    asprintf(&tmp_str, format.c_str(), ((std::string *)value)->c_str());
-                    break;
-                default:
-                    return ret_str;
-            }
-            ret_str = tmp_str;
-            free(tmp_str);
-            return ret_str;
+            return var->getString(format);
         };
+
     private:
-        int datatype;
-        void *value;
+        Variable *var;
         std::string format;
 };
 

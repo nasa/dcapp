@@ -30,7 +30,7 @@ void Constant::setToDecimal(double val)
 {
     this->decval = val;
     this->intval = (int)val;
-    this->strval = std::to_string(val);
+    this->strval = DecimalToString(val);
     if (val) this->boolval = true;
     else this->boolval = false;
 }
@@ -39,7 +39,7 @@ void Constant::setToInteger(int val)
 {
     this->decval = (double)val;
     this->intval = val;
-    this->strval = std::to_string(val);
+    this->strval = IntegerToString(val);
     if (val) this->boolval = true;
     else this->boolval = false;
 }
@@ -75,7 +75,7 @@ void Constant::setToBoolean(bool val)
 
 double Constant::getDecimal(void) { return this->decval; }
 int Constant::getInteger(void) { return this->intval; }
-std::string Constant::getString(void) { return this->strval; }
+std::string Constant::getString(std::string) { return this->strval; }
 bool Constant::getBoolean(void) { return this->boolval; }
 
 
@@ -178,14 +178,48 @@ int Variable::getInteger(void)
     }
 }
 
-std::string Variable::getString(void)
+std::string Variable::getString(std::string format)
 {
-    switch (this->type)
+    if (format.empty())
     {
-        case DECIMAL_TYPE: return std::to_string(this->decval);
-        case INTEGER_TYPE: return std::to_string(this->intval);
-        case STRING_TYPE:  return this->strval;
-        default:           return "";
+        switch (this->type)
+        {
+            case DECIMAL_TYPE:
+                return DecimalToString(this->decval);
+            case INTEGER_TYPE:
+                return IntegerToString(this->intval);
+            case STRING_TYPE:
+                return this->strval;
+            default:
+                return "";
+        }
+    }
+    else
+    {
+        char *tmp_str = 0x0;
+
+        switch (this->type)
+        {
+            case DECIMAL_TYPE:
+                asprintf(&tmp_str, format.c_str(), this->decval);
+                break;
+            case INTEGER_TYPE:
+                asprintf(&tmp_str, format.c_str(), this->intval);
+                break;
+            case STRING_TYPE:
+                asprintf(&tmp_str, format.c_str(), this->strval.c_str());
+                break;
+            default:
+                return "";
+        }
+
+        if (tmp_str)
+        {
+            std::string ret_str = tmp_str;
+            free(tmp_str);
+            return ret_str;
+        }
+        else return "";
     }
 }
 

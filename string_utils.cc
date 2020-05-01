@@ -49,3 +49,33 @@ bool StringToBoolean(std::string &instr, bool default_value = false)
 
     return default_value;
 }
+
+std::string DecimalToString(double val)
+{
+    char *tmp_str = 0x0;
+
+    asprintf(&tmp_str, "%g", val);
+
+    if (tmp_str)
+    {
+        std::string ret_str = tmp_str;
+        free(tmp_str);
+        return ret_str;
+    }
+    else return "";
+}
+
+std::string IntegerToString(int val)
+{
+    char *tmp_str = 0x0;
+
+    asprintf(&tmp_str, "%d", val);
+
+    if (tmp_str)
+    {
+        std::string ret_str = tmp_str;
+        free(tmp_str);
+        return ret_str;
+    }
+    else return "";
+}

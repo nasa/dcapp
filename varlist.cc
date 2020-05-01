@@ -52,7 +52,7 @@ Variable *getVariable(const char *label)
     if (varMap.find(mylabel) != varMap.end()) return &(varMap[mylabel]);
     else
     {
-        warning_msg("Invalid parameter label: " << label);
+        warning_msg("Invalid variable label: " << label);
         return 0x0;
     }
 }

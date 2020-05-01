@@ -11,7 +11,7 @@ class Value
 
         virtual double getDecimal(void) { return 0.0; };
         virtual int getInteger(void) { return 0; };
-        virtual std::string getString(void) { return ""; };
+        virtual std::string getString(std::string = "") { return ""; };
         virtual bool getBoolean(void) { return false; };
 
 // this shouldn't be here, it's a hack
@@ -39,7 +39,7 @@ class Constant : public Value
 
         double getDecimal(void);
         int getInteger(void);
-        std::string getString(void);
+        std::string getString(std::string = "");
         bool getBoolean(void);
 
     private:
@@ -55,7 +55,7 @@ class Variable : public Value
         bool operator == (const Variable &);
         bool operator != (const Variable &);
 
-        void setToCharstr(const char *, unsigned length = 0);
+        void setToCharstr(const char *, unsigned = 0);
         void setToValue(Value &);
         void setToDecimal(double);
         void setToInteger(int);
@@ -63,7 +63,7 @@ class Variable : public Value
 
         double getDecimal(void);
         int getInteger(void);
-        std::string getString(void);
+        std::string getString(std::string = "");
         bool getBoolean(void);
 
         void setType(int);
