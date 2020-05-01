@@ -183,10 +183,14 @@ size_t dcString::parse_var(std::string mystr)
     else varstr += mystr.substr(var_start, var_end - var_start);
 
     Variable *myvalue = getVariable(varstr.c_str());
+if (myvalue)
+{
     if (fmt_start != std::string::npos && fmt_end != std::string::npos)
         vstring.push_back(new VarString(myvalue->getType(), myvalue->getPointer(), mystr.substr(fmt_start+1, fmt_end-fmt_start-1).c_str()));
     else
         vstring.push_back(new VarString(myvalue->getType(), myvalue->getPointer(), 0x0));
+}
+// maybe do something better if varstr isn't a legit variable
 
     if (braced) return mystr.find('}') + 1;
     else if (fmt_end != std::string::npos) return fmt_end + 1;

@@ -42,7 +42,7 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
 
 Variable *getVariable(const char *label)
 {
-    if (!label) return &nullval;
+    if (!label) return 0x0;
 
     const char *mylabel;
 
@@ -52,18 +52,18 @@ Variable *getVariable(const char *label)
     if (varMap.find(mylabel) != varMap.end()) return &(varMap[mylabel]);
     else
     {
-// maybe guess/create a string variable here?
-        error_msg("Invalid parameter label: " << label);
-        return &nullval;
+        warning_msg("Invalid parameter label: " << label);
+        return 0x0;
     }
 }
 
+// get_pointer should only be used in the auto-generated dcapp header files used by the logic plug-ins.  Since they're
+// auto-generated, this routine should never return 0x0.  But if it does return 0x0, a crash could occur.
 void *get_pointer(const char *label)
 {
     Variable *myvar = getVariable(label);
     if (myvar) return myvar->getPointer();
     else return 0x0;
-// don't return null pointer. instead, return a pointer to garbage and provide a warning message
 }
 
 char *create_virtual_variable(const char *typestr, const char *initval)

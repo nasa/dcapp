@@ -5,6 +5,8 @@
 #include "valuedata.hh"
 #include "string_utils.hh"
 
+
+
 Value::Value() : decval(0), intval(0) { }
 Value::~Value() { }
 
@@ -121,18 +123,20 @@ void Variable::setToCharstr(const char *input, unsigned length)
         }
     }
 }
+
 void Variable::setToValue(Value &that)
 {
     switch (this->type)
     {
         case DECIMAL_TYPE: this->decval = that.getDecimal(); break;
         case INTEGER_TYPE: this->intval = that.getInteger(); break;
-        case STRING_TYPE:  this->strval = that.getString(); break;
+        case STRING_TYPE:  this->strval = that.getString();  break;
     }
 }
+
 void Variable::setToDecimal(double val) { this->decval = val; }
-//void Variable::setToInteger(int val) { this->intval = val; }
-//void Variable::setToString(std::string val) { this->strval = val; }
+void Variable::setToInteger(int val) { this->intval = val; }
+
 void Variable::setToBoolean(bool input)
 {
     switch (this->type)
@@ -196,8 +200,8 @@ bool Variable::getBoolean(void)
     return false;
 }
 
-// Probably don't need two of these routines...
-void Variable::setType(int type_spec) { this->type = type_spec; } // Should probably verify a valid input type here
+void Variable::setType(int type_spec) { this->type = type_spec; }
+
 void Variable::setType(const char *type_spec)
 {
     if (!strcmp(type_spec, "Decimal") || !strcmp(type_spec, "Float"))
@@ -214,9 +218,8 @@ void Variable::setType(const char *type_spec)
     }
     else
     {
-        this->type = UNDEFINED_TYPE;
-        error_msg("Attempting to create variable with an unknown type: " << type_spec);
-// Should probably pass back an error here
+        this->type = STRING_TYPE;
+        warning_msg("Attempting to create variable with unknown type (" << type_spec << ") - assuming \"String\"");
     }
 }
 
@@ -226,12 +229,10 @@ void * Variable::getPointer(void)
 {
     switch (this->type)
     {
-        case DECIMAL_TYPE: return (void *)(&(this->decval)); break;
-        case INTEGER_TYPE: return (void *)(&(this->intval)); break;
-        case STRING_TYPE:  return (void *)(&(this->strval)); break;
-default:  return (void *)(&(this->strval)); break;
-//        default:           return 0x0;
-// this seems weird.  probably shouldn't be a default getPointer, but it's needed in pixelstream.cc
+        case DECIMAL_TYPE: return (void *)(&(this->decval));
+        case INTEGER_TYPE: return (void *)(&(this->intval));
+        case STRING_TYPE:  return (void *)(&(this->strval));
+        default:           return 0x0;
     }
 }
 

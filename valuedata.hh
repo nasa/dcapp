@@ -58,8 +58,7 @@ class Variable : public Value
         void setToCharstr(const char *, unsigned length = 0);
         void setToValue(Value &);
         void setToDecimal(double);
-//        void setToInteger(int);
-//        void setToString(std::string);
+        void setToInteger(int);
         void setToBoolean(bool);
 
         double getDecimal(void);

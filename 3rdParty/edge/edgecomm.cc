@@ -69,7 +69,6 @@ CommModule::CommStatus EdgeCommModule::read(void)
             return this->Fail;
         }
 
-// maybe verify that type is legit here?
         myitem->currvalue->setToCharstr(substr);
 
         strptr += strlen(substr) + 1;
@@ -155,22 +154,17 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *c
 
     if (myvalue)
     {
-// maybe a more elegant "if valid" check below?
-        if (myvalue->getPointer())
-        {
-            io_parameter myparam;
-            myparam.edgecmd = cmdspec;
-            myparam.type = myvalue->getType();
-            myparam.currvalue = myvalue;
-            myparam.prevvalue.setType(myvalue->getType());
-            myparam.forcewrite = false;
-            io_map->push_back(myparam);
+        io_parameter myparam;
+        myparam.edgecmd = cmdspec;
+        myparam.type = myvalue->getType();
+        myparam.currvalue = myvalue;
+        myparam.prevvalue.setType(myvalue->getType());
+        myparam.forcewrite = false;
+        io_map->push_back(myparam);
 
-            return this->Success;
-        }
+        return this->Success;
     }
-
-    return this->Fail;
+    else return this->Fail;
 }
 
 int EdgeCommModule::finishInitialization(const char *host, const char *port, double spec_rate)

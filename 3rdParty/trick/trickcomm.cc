@@ -42,7 +42,6 @@ CommModule::CommStatus TrickCommModule::read(void)
             for (myitem = this->fromSim.begin(); myitem != this->fromSim.end(); myitem++)
             {
                 myitem->currvalue->setToValue(*(myitem->trickvalue));
-// maybe verify that type is legit here?
                 if (myitem->init_only)
                 {
                     this->tvs->remove_var(myitem->trickvar);
@@ -96,7 +95,6 @@ CommModule::CommStatus TrickCommModule::write(void)
             }
             else
             {
-// maybe verify that type is legit here?
                 if (myitem->forcewrite || *(myitem->currvalue) != myitem->prevvalue)
                 {
                     this->tvs->putValue(myitem->trickvar, *(myitem->currvalue), myitem->units);
@@ -160,27 +158,22 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
 
     if (myvalue)
     {
-// maybe a more elegant "if valid" check below?
-        if (myvalue->getPointer())
-        {
-            io_parameter myparam;
-            myparam.trickvar = strdup(trickvar);
+        io_parameter myparam;
+        myparam.trickvar = strdup(trickvar);
 
-            if (units) myparam.units = strdup(units);
-            else  myparam.units = nullptr;
+        if (units) myparam.units = strdup(units);
+        else  myparam.units = nullptr;
 
-            myparam.currvalue = myvalue;
-            myparam.prevvalue.setType(myvalue->getType());
-            myparam.forcewrite = false;
-            myparam.init_only = StringToBoolean(init_only);
-            myparam.method = method;
-            io_map->push_back(myparam);
+        myparam.currvalue = myvalue;
+        myparam.prevvalue.setType(myvalue->getType());
+        myparam.forcewrite = false;
+        myparam.init_only = StringToBoolean(init_only);
+        myparam.method = method;
+        io_map->push_back(myparam);
 
-            return this->Success;
-        }
+        return this->Success;
     }
-
-    return this->Fail;
+    else return this->Fail;
 }
 
 void TrickCommModule::finishInitialization(void)

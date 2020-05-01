@@ -18,7 +18,6 @@ dcSetValue::dcSetValue(dcParent *myparent, const char *invar, const char *inval)
 
     // don't parent this object if var isn't properly defined
     if (!var) return;
-    if (var->getType() == UNDEFINED_TYPE) return;
 
     val = getValue(inval);
 
