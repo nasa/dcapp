@@ -38,11 +38,11 @@ class PixelStreamMjpeg : public PixelStreamData
         char *username;
         char *password;
         char *readbuf;
-        size_t readbufalloc;
-        size_t pixelsalloc;
-        size_t imagebytes;
-        size_t totalbytes;
-        size_t masteroffset;
+        size_t readbufalloc; // bytes allocated for storing data received from CURL
+        size_t pixelsalloc;  // bytes allocated for rendering image
+        size_t imagebytes;   // bytes expected for current image
+        size_t totalbytes;   // total bytes in readbuf
+        size_t masteroffset; // stored pointer within readbuf
         bool readinprogress;
 };
 

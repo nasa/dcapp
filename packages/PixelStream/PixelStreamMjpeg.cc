@@ -175,64 +175,72 @@ void PixelStreamMjpeg::processData(const char *memptr, size_t memsize)
     connected = true;
     this->lastread->restart();
 
-    if (readinprogress)
+    size_t newtotal = totalbytes + memsize;
+
+    if (newtotal > readbufalloc)
     {
-        totalbytes += memsize;
-        if (totalbytes > imagebytes) // make sure we don't write into unallocated space
-            memcpy(&readbuf[masteroffset], memptr, memsize + imagebytes - totalbytes);
-        else
-            memcpy(&readbuf[masteroffset], memptr, memsize);
-    }
-    else
-    {
-        size_t ii;
-        int boundarystart = -1;
-        for (ii = 0; ii < strlen(memptr) && boundarystart < 0; ii++)
-        {
-            if (memptr[ii] == '-' && memptr[ii+1] == '-')
-            {
-                if (!strncmp(&memptr[ii], BOUNDARYTAG, BOUNDARYLENGTH)) boundarystart = ii + BOUNDARYLENGTH;
-            }
-        }
-        if (boundarystart > 0)
-        {
-            if (sscanf(&memptr[boundarystart], "%ld", &imagebytes) != 1)
-            {
-                warning_msg("ERROR, malformed myboundary");
-                return;
-            }
-            if (imagebytes > readbufalloc)
-            {
-                readbufalloc = imagebytes + 1000; // cushion by 1000 bytes to reduce the number of reallocs
-                readbuf = (char *)realloc(readbuf, readbufalloc);
-            }
-            size_t sizelen = 0, offset;
-            for (ii = boundarystart; ii < memsize && sizelen == 0; ii++)
-            {
-                if (isspace(memptr[ii])) sizelen = ii - boundarystart;
-            }
-            offset = boundarystart + sizelen + 4; // accommodate the \r\n\r\n at the end of the boundary tag
-            memcpy(&readbuf[masteroffset], &memptr[offset], memsize - offset);
-            totalbytes += memsize - offset;
-            readinprogress = true;
-        }
+        readbufalloc = newtotal + 1000; // cushion by 1000 bytes to reduce the number of reallocs
+        readbuf = (char *)realloc(readbuf, readbufalloc);
     }
 
-    if (readinprogress && (totalbytes >= imagebytes))
+    memcpy(&readbuf[totalbytes], memptr, memsize);
+    totalbytes = newtotal;
+
+    while (masteroffset < totalbytes)
     {
-        // only loadPixels if we haven't already loaded pixels this pass
-        if (!updated)
+        if (!readinprogress)
         {
-            loadPixels(readbuf, imagebytes);
-            updated = true;
+            if (totalbytes - masteroffset > 200) // don't bother starting new image unless there are a healthy number of bytes available
+            {
+                size_t ii;
+                int boundarystart = -1;
+                for (ii = 0; ii < totalbytes && boundarystart < 0; ii++)
+                {
+                    if (readbuf[ii] == '-' && readbuf[ii + 1] == '-')
+                    {
+                        if (!strncmp(&readbuf[ii], BOUNDARYTAG, BOUNDARYLENGTH)) boundarystart = ii + BOUNDARYLENGTH;
+                    }
+                }
+                if (boundarystart > 0)
+                {
+                    if (sscanf(&readbuf[boundarystart], "%ld", &imagebytes) != 1)
+                    {
+                        warning_msg("ERROR, malformed myboundary");
+                        return;
+                    }
+                    size_t sizelen = 0;
+                    for (ii = boundarystart; ii < totalbytes && sizelen == 0; ii++)
+                    {
+                        if (isspace(readbuf[ii])) sizelen = ii - boundarystart;
+                    }
+
+                    masteroffset = boundarystart + sizelen + 4; // accommodate the \r\n\r\n at the end of the boundary tag
+                    readinprogress = true;
+                }
+            }
         }
 
-        totalbytes = 0;
-        imagebytes = 0;
-        readinprogress = false;
-    }
+        size_t imageend = masteroffset + imagebytes;
 
-    masteroffset = totalbytes;
+        if (readinprogress && (totalbytes >= imageend))
+        {
+            // only loadPixels if we haven't already loaded pixels this pass
+            if (!updated)
+            {
+                loadPixels(&readbuf[masteroffset], imagebytes);
+                updated = true;
+            }
+
+            // shift unread bytes to the start of readbuf
+            char *store_buf = &(readbuf[imageend]);
+            for (size_t i=0; i < totalbytes - imageend; i++) readbuf[i] = store_buf[i];
+
+            totalbytes -= imageend;
+            masteroffset = 0;
+            readinprogress = false;
+        }
+        else break;
+    }
 }
 
 #if defined(JPEG_ENABLED) && JPEG_LIB_VERSION < 80 && !defined(MEM_SRCDST_SUPPORTED)
@@ -297,7 +305,7 @@ void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
     num_pixels = width * height * 3;
     if (num_pixels > pixelsalloc)
     {
-        pixelsalloc = num_pixels;
+        pixelsalloc = num_pixels + 1000; // cushion by 1000 bytes to reduce the number of reallocs
         pixels = (void *)realloc(pixels, pixelsalloc);
     }
 
