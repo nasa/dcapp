@@ -18,7 +18,7 @@ void dcPanel::setID(const char *inval)
 
 void dcPanel::setColor(const char *cspec)
 {
-    color.set(cspec);
+    if (cspec) color.set(cspec);
 }
 
 void dcPanel::setOrtho(const char *inw, const char *inh)

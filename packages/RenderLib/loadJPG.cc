@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #ifdef JPEG_ENABLED
+#include <setjmp.h>
 #include <jpeglib.h>
 #endif
 #include "basicutils/msg.hh"
@@ -10,11 +11,27 @@
  * Create ImageStruct data from the contents of a JPEG file.
  *********************************************************************************/
 #ifdef JPEG_ENABLED
+struct jpegErrorManager
+{
+    struct jpeg_error_mgr error_mgr;
+    jmp_buf setjmp_buffer;
+};
+
+static char jpegLastErrorMsg[JMSG_LENGTH_MAX];
+
+static void jpegErrorExit(j_common_ptr cinfo)
+{
+    // form an error message and jump to the setjmp point
+    (*(cinfo->err->format_message))(cinfo, jpegLastErrorMsg);
+    jpegErrorManager *myerr = (jpegErrorManager *)(cinfo->err);
+    longjmp(myerr->setjmp_buffer, 1);
+}
+
 int tdTexture::loadJPG(void)
 {
     FILE *file = fopen(this->filename.c_str(), "r");
     struct jpeg_decompress_struct jinfo;
-    struct jpeg_error_mgr jerr;
+    jpegErrorManager jerr;
     unsigned char *line;
 
     if (!file)
@@ -23,7 +40,17 @@ int tdTexture::loadJPG(void)
         return 1;
     }
 
-    jinfo.err = jpeg_std_error(&jerr);
+    jinfo.err = jpeg_std_error(&jerr.error_mgr);
+    jerr.error_mgr.error_exit = jpegErrorExit;
+
+    if (setjmp(jerr.setjmp_buffer))
+    {
+        // hande the JPEG error, clean up, and return to the calling routine
+        warning_msg(this->filename << ": " << jpegLastErrorMsg);
+        jpeg_destroy_decompress(&jinfo);
+        return 1;
+    }
+
     jpeg_create_decompress(&jinfo);
     jpeg_stdio_src(&jinfo, file);
     jpeg_read_header(&jinfo, TRUE);
