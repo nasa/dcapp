@@ -87,7 +87,7 @@ void HagstromDevice::read(void)
 
 HagstromDevice::HagstromDevice()
 {
-    warning_msg("Hagstrom device requested, but IDF_HOME not identified...");
+    warning_msg("Hagstrom device requested, but IDF isn't properly built or installed...");
 }
 
 #endif
