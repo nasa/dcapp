@@ -9,7 +9,7 @@ dcBezelEvent::dcBezelEvent(dcParent *myparent) : mykey(0), selected(false)
 dcBezelEvent::dcBezelEvent(dcParent *myparent, const char *key) : selected(false)
 {
     coreConstructor(myparent);
-    setKey(key);
+    if (key) setKey(key);
 }
 
 dcBezelEvent::~dcBezelEvent()

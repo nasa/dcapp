@@ -42,6 +42,8 @@ bindir="bin_${osspec}"
 
 # check if IDF_HOME is set, if not, try finding IDF at the same level as dcapp
 idf_home=""
+idf_cflags=""
+idf_libs=""
 if [ ! -z ${IDF_HOME} ]
 then
     if [ -d ${IDF_HOME}/include ]
@@ -57,6 +59,11 @@ else
             idf_home="${check_idf}"
         fi
     fi
+fi
+if [ ! -z ${idf_home} ] && [ -f ${idf_home}/bin/idf-config ] && [ -f ${idf_home}/build/libidf.a ]
+then
+    idf_cflags="-DIDF `${idf_home}/bin/idf-config --cxxflags`"
+    idf_libs="-L${idf_home}/build -lidf `${idf_home}/bin/idf-config --libs`"
 fi
 
 while test $# -gt 0 ; do
@@ -75,20 +82,10 @@ while test $# -gt 0 ; do
             ;;
 ##### These are the only lines that should differ from package to package. #####
         --cflags)
-            if [ ! -z ${idf_home} ]
-            then
-                echo "-DIDF -I${parentdir} -I${idf_home}/include"
-            else
-                echo "-I${parentdir}"
-            fi
+            echo "-I${parentdir} ${idf_cflags}"
             ;;
         --libs)
-            if [ ! -z ${idf_home} ]
-            then
-                echo "-L${mydir}/${libdir} -lHagstromPlugin -L${idf_home}/build -lidf -framework IOKit -framework CoreFoundation"
-            else
-                echo "-L${mydir}/${libdir} -lHagstromPlugin"
-            fi
+            echo "-L${mydir}/${libdir} -lHagstromPlugin ${idf_libs}"
             ;;
         --compdepends)
             echo "${mydir}/Hagstrom.hh"
@@ -97,12 +94,7 @@ while test $# -gt 0 ; do
             echo "${mydir}/${libdir}/libHagstromPlugin.a"
             ;;
         --cflags_internal)
-            cfi=""
-            if [ ! -z ${idf_home} ]
-            then
-                cfi="-DIDF -I${idf_home}/include"
-            fi
-            echo "${cfi} -I${grandparentdir} `${grandparentdir}/packages/basicutils/bin/basicutils-config --cflags`"
+            echo "-I${grandparentdir} `${grandparentdir}/packages/basicutils/bin/basicutils-config --cflags` ${idf_cflags}"
             ;;
 ################################################################################
         *)
