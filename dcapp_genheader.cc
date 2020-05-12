@@ -62,14 +62,16 @@ int main(int argc, char **argv)
     fprintf(p_file, "// ********************************************* //\n");
     fprintf(p_file, "// THIS FILE IS AUTO-GENERATED -- DO NOT EDIT!!! //\n");
     fprintf(p_file, "// ********************************************* //\n\n");
-    fprintf(p_file, "#define %s\n\n", getScriptResult(resolvedpath, "--version_defined").c_str());
-    fprintf(p_file, "#include <string>\n\n");
+//    fprintf(p_file, "#define %s\n\n", getScriptResult(resolvedpath, "--version_defined").c_str());
+    fprintf(p_file, "#define DCAPP_VERSION_1_0\n");
+    fprintf(p_file, "#define DCAPP_VERSION_1_1\n");
+    fprintf(p_file, "\n#include <string>\n\n");
     fprintf(p_file, "#ifndef _DCAPP_EXTERNALS_\n#define _DCAPP_EXTERNALS_\n\n");
     fprintf(p_file, "void *(*get_pointer)(const char *);\n\n");
 
     for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
-        if (myvitem->type == "Float") fprintf(p_file, "double *");
+        if (myvitem->type == "Decimal" || myvitem->type == "Float") fprintf(p_file, "double *");
         else if (myvitem->type == "Integer") fprintf(p_file, "int *");
         else fprintf(p_file, "std::string *");
         fprintf(p_file, "%s;\n", myvitem->name.c_str());
@@ -85,7 +87,7 @@ int main(int argc, char **argv)
     for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
         fprintf(p_file, "    %s = ", myvitem->name.c_str());
-        if (myvitem->type == "Float") fprintf(p_file, "(double *)");
+        if (myvitem->type == "Decimal" || myvitem->type == "Float") fprintf(p_file, "(double *)");
         else if (myvitem->type == "Integer") fprintf(p_file, "(int *)");
         else fprintf(p_file, "(std::string *)");
         fprintf(p_file, "get_pointer(\"%s\");\n", myvitem->name.c_str());
@@ -97,7 +99,7 @@ int main(int argc, char **argv)
 
     for (myvitem = vlist.begin(); myvitem != vlist.end(); myvitem++)
     {
-        if (myvitem->type == "Float") fprintf(p_file, "extern double *");
+        if (myvitem->type == "Decimal" || myvitem->type == "Float") fprintf(p_file, "extern double *");
         else if (myvitem->type == "Integer") fprintf(p_file, "extern int *");
         else fprintf(p_file, "extern std::string *");
         fprintf(p_file, "%s;\n", myvitem->name.c_str());
