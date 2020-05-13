@@ -1,5 +1,6 @@
 #include <string>
 #include <cstdlib>
+#include <cstring>
 #include "basicutils/msg.hh"
 #include "types.hh"
 #include "valuedata.hh"
