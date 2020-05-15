@@ -9,7 +9,8 @@ Get package compilation and linking information.
 Options:
     --version          software version (full version information)
     --version_short    software version (major and minor only)
-    --version_defined  software version (used in compiler defines)
+    --version_major    software major version
+    --version_minor    software minor version
     --prefix           install location
     --exepath          path(s) to add to the PATH environment variable
     --cflags           required compilation flags
@@ -84,8 +85,11 @@ while test $# -gt 0 ; do
         --version_short)
             echo "1.1"
             ;;
-        --version_defined)
-            echo "DCAPP_VERSION_1_1"
+        --version_major)
+            echo "1"
+            ;;
+        --version_minor)
+            echo "1"
             ;;
         --exepath)
             echo "${mydir}/dcapp.app/Contents/${osspec}"
