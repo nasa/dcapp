@@ -6,12 +6,12 @@
 dcWindow::dcWindow() : currentPanel(0x0)
 {
     init_window();
-    displayID = dcLoadConstant(0);
+    displayID = getConstantFromInteger(0);
 }
 
 void dcWindow::setActiveDisplay(const char *inval)
 {
-    if (inval) displayID = getIntegerPointer(inval);
+    if (inval) displayID = getValue(inval);
 }
 
 void dcWindow::setCurrentPanel(void)
@@ -21,7 +21,7 @@ void dcWindow::setCurrentPanel(void)
     for (const auto &myobj : children)
     {
         dcPanel *mypanel = (dcPanel *)myobj; // TODO: fix this
-        if (mypanel->checkID(*displayID))
+        if (mypanel->checkID(displayID->getInteger()))
         {
             currentPanel = mypanel;
             return;

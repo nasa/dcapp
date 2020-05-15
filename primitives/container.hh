@@ -1,6 +1,7 @@
 #ifndef _CONTAINER_HH_
 #define _CONTAINER_HH_
 
+#include "valuedata.hh"
 #include "geometric.hh"
 #include "parent.hh"
 
@@ -25,12 +26,12 @@ void updateData(void) { dcParent::updateData(); };
 void updateStreams(unsigned passcount) { dcParent::updateStreams(passcount); };
 void processAnimation(Animation *anim) { dcParent::processAnimation(anim); };
 
-        double *getContainerWidth(void);
-        double *getContainerHeight(void);
+        Value *getContainerWidth(void);
+        Value *getContainerHeight(void);
 
     private:
-        double *vwidth;
-        double *vheight;
+        Value *vwidth;
+        Value *vheight;
 };
 
 #endif

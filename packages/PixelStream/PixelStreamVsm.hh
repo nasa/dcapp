@@ -1,6 +1,7 @@
 #ifndef _PIXELSTREAMVSM_HH_
 #define _PIXELSTREAMVSM_HH_
 
+#include "valuedata.hh"
 #include "PixelStreamMjpeg.hh"
 
 #if defined(CURL_ENABLED) && defined(JPEG_ENABLED)
@@ -17,7 +18,7 @@ class PixelStreamVsm : public PixelStreamMjpeg
 
         bool operator == (const PixelStreamVsm &);
         bool operator != (const PixelStreamVsm &);
-        int readerInitialize(const char *, int, const char *, std::string *);
+        int readerInitialize(const char *, int, const char *, Value *);
         int reader(void);
 
     private:
@@ -27,7 +28,7 @@ class PixelStreamVsm : public PixelStreamMjpeg
         CURL *curl;
         char *vsmhost;
         int vsmport;
-        std::string *curr_camera;
+        Value *curr_camera;
         std::string prev_camera;
         char *userpath;
         bool cameraassigned;
@@ -47,13 +48,13 @@ class PixelStreamVsm : public PixelStreamMjpeg
 
         bool operator == (const PixelStreamVsm &);
         bool operator != (const PixelStreamVsm &);
-        int readerInitialize(const char *, int, const char *, std::string *);
+        int readerInitialize(const char *, int, const char *, Value *);
         int reader(void);
 
     private:
         char *vsmhost;
         int vsmport;
-        std::string *curr_camera;
+        Value *curr_camera;
 };
 
 #endif

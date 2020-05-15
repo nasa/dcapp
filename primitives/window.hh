@@ -3,6 +3,7 @@
 
 #include "parent.hh"
 #include "panel.hh"
+#include "valuedata.hh"
 
 class dcWindow : public dcParent
 {
@@ -23,7 +24,7 @@ class dcWindow : public dcParent
 // class since ALL panels are checked in case currentPanel changed after the press event
 
     private:
-        int *displayID;
+        Value *displayID;
         dcPanel *currentPanel;
 };
 

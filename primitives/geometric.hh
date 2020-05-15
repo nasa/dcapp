@@ -1,6 +1,7 @@
 #ifndef _GEOMETRIC_HH_
 #define _GEOMETRIC_HH_
 
+#include "valuedata.hh"
 #include "parent.hh"
 #include "object.hh"
 
@@ -15,15 +16,15 @@ class dcGeometric : public dcObject
         void computeGeometry(void);
 
     protected:
-        double *x;
-        double *y;
-        double *w;
-        double *h;
-        double *containerw;
-        double *containerh;
+        Value *x;
+        Value *y;
+        Value *w;
+        Value *h;
+        Value *containerw;
+        Value *containerh;
         unsigned halign;
         unsigned valign;
-        double *rotate;
+        Value *rotate;
 
         double refx;
         double refy;
@@ -39,8 +40,8 @@ class dcGeometric : public dcObject
         double middle;
 
     private:
-        double GeomX(double *, double, double, int);
-        double GeomY(double *, double, double, int);
+        double GeomX(Value *, double, double, int);
+        double GeomY(Value *, double, double, int);
 };
 
 #endif

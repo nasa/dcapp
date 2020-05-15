@@ -2,9 +2,11 @@
 #define _CONSTANTS_HH_
 
 #include <string>
+#include "valuedata.hh"
 
-extern double *dcLoadConstant(double fval);
-extern int *dcLoadConstant(int ival);
-extern std::string *dcLoadConstant(const char *sval);
+extern Constant *getConstantFromDecimal(double);
+extern Constant *getConstantFromInteger(int);
+extern Constant *getConstantFromCharstr(const char *);
+extern Constant *getConstantFromBoolean(bool);
 
 #endif

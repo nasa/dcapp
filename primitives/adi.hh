@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "RenderLib/RenderLib.hh"
+#include "valuedata.hh"
 #include "geometric.hh"
 #include "parent.hh"
 
@@ -23,16 +24,16 @@ class dcADI : public dcGeometric
     private:
         tdTexture *bkgdID;
         tdTexture *ballID;
-        double *outerradius;
-        double *ballradius;
-        double *chevronW;
-        double *chevronH;
-        double *roll;
-        double *pitch;
-        double *yaw;
-        double *rollError;
-        double *pitchError;
-        double *yawError;
+        Value *outerradius;
+        Value *ballradius;
+        Value *chevronW;
+        Value *chevronH;
+        Value *roll;
+        Value *pitch;
+        Value *yaw;
+        Value *rollError;
+        Value *pitchError;
+        Value *yawError;
         std::vector<float> sphereTriangles;
 
         void draw_roll_bug(double, double, double, double);

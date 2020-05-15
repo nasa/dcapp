@@ -10,4 +10,7 @@ extern int StringToInteger(std::string &instr, int default_value = 0);
 extern bool StringToBoolean(const char *instr, bool default_value = false);
 extern bool StringToBoolean(std::string &instr, bool default_value = false);
 
+extern std::string DecimalToString(double);
+extern std::string IntegerToString(int);
+
 #endif

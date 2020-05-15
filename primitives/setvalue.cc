@@ -2,6 +2,7 @@
 #include <list>
 #include "nodes.hh"
 #include "types.hh"
+#include "valuedata.hh"
 #include "varlist.hh"
 #include "setvalue.hh"
 
@@ -9,20 +10,16 @@ extern appdata AppData;
 
 enum { Equals, PlusEquals, MinusEquals };
 
-dcSetValue::dcSetValue(dcParent *myparent, const char *invar, const char *inval)
-:
-optype(Equals), mindatatype(UNDEFINED_TYPE), maxdatatype(UNDEFINED_TYPE), min(0x0), max(0x0)
+dcSetValue::dcSetValue(dcParent *myparent, const char *invar, const char *inval) : optype(Equals), min(0x0), max(0x0)
 {
-    datatype1 = get_data_type(invar);
+    if (!invar || !inval) return;
+
+    var = getVariable(invar);
 
     // don't parent this object if var isn't properly defined
-    if (datatype1 == UNDEFINED_TYPE) return;
+    if (!var) return;
 
-    var = getVariablePointer(datatype1, invar);
-
-    datatype2 = get_data_type(inval);
-    if (datatype2 == UNDEFINED_TYPE) datatype2 = datatype1;
-    val = getVariablePointer(datatype2, inval);
+    val = getValue(inval);
 
     // this object doesn't require a parent since it can be used during preprocessing
     if (myparent) myparent->addChild(this);
@@ -37,24 +34,13 @@ void dcSetValue::setOperator(const char *opspec)
 
 void dcSetValue::setRange(const char *minspec, const char *maxspec)
 {
-    if (minspec)
-    {
-        mindatatype = get_data_type(minspec);
-        if (mindatatype == UNDEFINED_TYPE) mindatatype = datatype1;
-        min = getVariablePointer(mindatatype, minspec);
-    }
-
-    if (maxspec)
-    {
-        maxdatatype = get_data_type(maxspec);
-        if (maxdatatype == UNDEFINED_TYPE) maxdatatype = datatype1;
-        max = getVariablePointer(maxdatatype, maxspec);
-    }
+    if (minspec) min = getValue(minspec);
+    if (maxspec) max = getValue(maxspec);
 }
 
 void dcSetValue::draw(void)
 {
-    calculateValue(optype, datatype1, var, datatype2, val, mindatatype, min, maxdatatype, max);
+    calculateValue(optype, var, val, min, max);
 }
 
 void dcSetValue::handleEvent(void)
@@ -64,71 +50,73 @@ void dcSetValue::handleEvent(void)
 
 void dcSetValue::updateData(void)
 {
-    calculateValue(optype, datatype1, var, datatype2, val, mindatatype, min, maxdatatype, max);
+    calculateValue(optype, var, val, min, max);
 }
 
 void dcSetValue::processAnimation(Animation *anim)
 {
-    if (datatype1 == DECIMAL_TYPE)
+    if (var->getType() == DECIMAL_TYPE)
     {
-        double endval = *(double *)var;
-        calculateValue(optype, DECIMAL_TYPE, (void *)&endval, datatype2, val, mindatatype, min, maxdatatype, max);
-        anim->addItem(var, *(double *)var, endval);
+        Variable *endval = new Variable;
+        endval->setType(DECIMAL_TYPE);
+        endval->setToDecimal(var->getDecimal());
+        calculateValue(optype, endval, val, min, max);
+        anim->addItem(var->getPointer(), var->getDecimal(), endval->getDecimal());
     }
 }
 
-void dcSetValue::calculateValue(int opspec, int vartype, void *varID, int valtype, void *valID, int mintype, void *minID, int maxtype, void *maxID)
+void dcSetValue::calculateValue(int opspec, Variable *varID, Value *valID, Value *minID, Value *maxID)
 {
-    switch (vartype)
+    switch (varID->getType())
     {
         case DECIMAL_TYPE:
             switch (opspec)
             {
                 case PlusEquals:
-                    *(double *)varID += getDecimalValue(valtype, valID);
+                    *(double *)varID->getPointer() += valID->getDecimal();
                     break;
                 case MinusEquals:
-                    *(double *)varID -= getDecimalValue(valtype, valID);
+                    *(double *)varID->getPointer() -= valID->getDecimal();
                     break;
                 default:
-                    *(double *)varID = getDecimalValue(valtype, valID);
+                    *(double *)varID->getPointer() = valID->getDecimal();
             }
             if (minID)
             {
-                double minval = getDecimalValue(mintype, minID);
-                if (*(double *)varID < minval) *(double *)varID = minval;
+                double minval = minID->getDecimal();
+                if (*(double *)varID->getPointer() < minval) *(double *)varID->getPointer() = minval;
             }
             if (maxID)
             {
-                double maxval = getDecimalValue(maxtype, maxID);
-                if (*(double *)varID > maxval) *(double *)varID = maxval;
+                double maxval = maxID->getDecimal();
+                if (*(double *)varID->getPointer() > maxval) *(double *)varID->getPointer() = maxval;
             }
             break;
         case INTEGER_TYPE:
             switch (opspec)
             {
                 case PlusEquals:
-                    *(int *)varID += getIntegerValue(valtype, valID);
+                    *(int *)varID->getPointer() += valID->getInteger();
                     break;
                 case MinusEquals:
-                    *(int *)varID -= getIntegerValue(valtype, valID);
+                    *(int *)varID->getPointer() -= valID->getInteger();
                     break;
                 default:
-                    *(int *)varID = getIntegerValue(valtype, valID);
+                    *(int *)varID->getPointer() = valID->getInteger();
             }
             if (minID)
             {
-                int minval = getIntegerValue(mintype, minID);
-                if (*(int *)varID < minval) *(int *)varID = minval;
+                int minval = minID->getInteger();
+                if (*(int *)varID->getPointer() < minval) *(int *)varID->getPointer() = minval;
             }
             if (maxID)
             {
-                int maxval = getIntegerValue(maxtype, maxID);
-                if (*(int *)varID > maxval) *(int *)varID = maxval;
+                int maxval = maxID->getInteger();
+                if (*(int *)varID->getPointer() > maxval) *(int *)varID->getPointer() = maxval;
             }
             break;
         case STRING_TYPE:
-            if (opspec == Equals) *(std::string *)varID = getStringValue(valtype, valID);
+            if (opspec == Equals) *(std::string *)varID->getPointer() = valID->getString();
             break;
     }
 

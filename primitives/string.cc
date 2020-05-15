@@ -1,6 +1,8 @@
 #include <string>
 #include "nodes.hh"
 #include "RenderLib/RenderLib.hh"
+#include "basicutils/msg.hh"
+#include "valuedata.hh"
 #include "string_utils.hh"
 #include "constants.hh"
 #include "alignment.hh"
@@ -13,8 +15,8 @@ extern appdata AppData;
 dcString::dcString(dcParent *myparent) : dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone)
 {
     color.set(1, 1, 1);
-    fontSize = dcLoadConstant(12.0f);
-    shadowOffset = dcLoadConstant(0.0f);
+    fontSize = getConstantFromDecimal(12);
+    shadowOffset = getConstantFromDecimal(0);
 }
 
 void dcString::setColor(const char *cspec)
@@ -39,7 +41,7 @@ void dcString::setFont(const char *font, const char *face, const char *size, con
     if (font) fontID = tdLoadFont(font, myface);
     if (!fontID) fontID = tdLoadFont(AppData.defaultfont, myface);
 
-    if (size) fontSize = getDecimalPointer(size);
+    if (size) fontSize = getValue(size);
 
     if (mono)
     {
@@ -52,7 +54,7 @@ void dcString::setFont(const char *font, const char *face, const char *size, con
 
 void dcString::setShadowOffset(const char *inval)
 {
-    if (inval) shadowOffset = getDecimalPointer(inval);
+    if (inval) shadowOffset = getValue(inval);
 }
 
 void dcString::setString(std::string mystr)
@@ -99,7 +101,7 @@ void dcString::draw(void)
         strptr += seglen+2;
 
         if (background || halign == AlignCenter || halign == AlignRight)
-            stringWidth = fontID->getAdvance(tmpstr, forcemono) * (*fontSize) / fontID->getBaseSize();
+            stringWidth = fontID->getAdvance(tmpstr, forcemono) * fontSize->getDecimal() / fontID->getBaseSize();
 
         switch (halign)
         {
@@ -117,22 +119,22 @@ void dcString::draw(void)
         switch (valign)
         {
             case AlignBottom:
-                mybottom = (*fontSize) * (double)(num_lines - i);
+                mybottom = (fontSize->getDecimal()) * (double)(num_lines - i);
                 break;
             case AlignMiddle:
-                mybottom = (*fontSize) * (((double)num_lines/2) - (double)i);
+                mybottom = (fontSize->getDecimal()) * (((double)num_lines/2) - (double)i);
                 break;
             case AlignTop:
-                mybottom = -(*fontSize) * (double)i;
+                mybottom = -(fontSize->getDecimal()) * (double)i;
                 break;
         }
 
         translate_start(refx, refy);
-        rotate_start(*rotate);
+        rotate_start(rotate->getDecimal());
 
         if (background)
         {
-            mytop = mybottom + (*fontSize);
+            mytop = mybottom + fontSize->getDecimal();
             myright = myleft + stringWidth;
 
             std::vector<float> pointsL;
@@ -141,13 +143,13 @@ void dcString::draw(void)
             addPoint(pointsL, myright, mytop);
             addPoint(pointsL, myright, mybottom);
 
-            draw_quad(pointsL, *(bgcolor.R), *(bgcolor.G), *(bgcolor.B), *(bgcolor.A));
+            draw_quad(pointsL, bgcolor.R->getDecimal(), bgcolor.G->getDecimal(), bgcolor.B->getDecimal(), bgcolor.A->getDecimal());
         }
-        if (*shadowOffset)
+        if (shadowOffset->getBoolean())
         {
-            draw_string(myleft+(*shadowOffset), mybottom-(*shadowOffset), *fontSize, 0, 0, 0, 1, fontID, forcemono, tmpstr);
+            draw_string(myleft + shadowOffset->getDecimal(), mybottom - shadowOffset->getDecimal(), fontSize->getDecimal(), 0, 0, 0, 1, fontID, forcemono, tmpstr);
         }
-        draw_string(myleft, mybottom, *fontSize, *(color.R), *(color.G), *(color.B), *(color.A), fontID, forcemono, tmpstr);
+        draw_string(myleft, mybottom, fontSize->getDecimal(), color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal(), fontID, forcemono, tmpstr);
 
         rotate_end();
         translate_end();
@@ -181,10 +183,15 @@ size_t dcString::parse_var(std::string mystr)
     if (var_end == std::string::npos) varstr += mystr.substr(var_start, std::string::npos);
     else varstr += mystr.substr(var_start, var_end - var_start);
 
-    if (fmt_start != std::string::npos && fmt_end != std::string::npos)
-        vstring.push_back(new VarString(get_data_type(varstr.c_str()), getStringPointer(varstr.c_str()), mystr.substr(fmt_start+1, fmt_end-fmt_start-1).c_str()));
-    else
-        vstring.push_back(new VarString(get_data_type(varstr.c_str()), getStringPointer(varstr.c_str()), 0x0));
+    Variable *myvalue = getVariable(varstr.c_str());
+    if (myvalue)
+    {
+        if (fmt_start != std::string::npos && fmt_end != std::string::npos)
+            vstring.push_back(new VarString(myvalue, mystr.substr(fmt_start+1, fmt_end-fmt_start-1)));
+        else
+            vstring.push_back(new VarString(myvalue, ""));
+    }
+    else warning_msg("Invalid variable label: " << varstr);
 
     if (braced) return mystr.find('}') + 1;
     else if (fmt_end != std::string::npos) return fmt_end + 1;

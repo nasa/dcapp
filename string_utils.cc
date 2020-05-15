@@ -19,7 +19,7 @@ int StringToInteger(const char *instr, int default_value = 0)
     else return (strtol(instr, 0x0, 10));
 }
 
-double StringToInteger(std::string &instr, int default_value = 0)
+int StringToInteger(std::string &instr, int default_value = 0)
 {
     try { return std::stoi(instr); } catch(...) { return default_value; }
 }
@@ -27,10 +27,12 @@ double StringToInteger(std::string &instr, int default_value = 0)
 bool StringToBoolean(const char *instr, bool default_value = false)
 {
     if (!instr) return default_value;
-    else if (!strcasecmp(instr, "true") || !strcasecmp(instr, "yes") || !strcasecmp(instr, "on")) return true;
-    else if (!strcasecmp(instr, "false") || !strcasecmp(instr, "no") || !strcasecmp(instr, "off")) return false;
-    else if (StringToInteger(instr) || StringToDecimal(instr)) return true;
-    else return default_value;
+
+    if (!strcasecmp(instr, "true") || !strcasecmp(instr, "yes") || !strcasecmp(instr, "on")) return true;
+    if (!strcasecmp(instr, "false") || !strcasecmp(instr, "no") || !strcasecmp(instr, "off")) return false;
+    if (StringToInteger(instr) || StringToDecimal(instr)) return true;
+
+    return default_value;
 }
 
 bool StringToBoolean(std::string &instr, bool default_value = false)
@@ -46,4 +48,34 @@ bool StringToBoolean(std::string &instr, bool default_value = false)
     if (StringToInteger(instr) || StringToDecimal(instr)) return true;
 
     return default_value;
+}
+
+std::string DecimalToString(double val)
+{
+    char *tmp_str = 0x0;
+
+    asprintf(&tmp_str, "%g", val);
+
+    if (tmp_str)
+    {
+        std::string ret_str = tmp_str;
+        free(tmp_str);
+        return ret_str;
+    }
+    else return "";
+}
+
+std::string IntegerToString(int val)
+{
+    char *tmp_str = 0x0;
+
+    asprintf(&tmp_str, "%d", val);
+
+    if (tmp_str)
+    {
+        std::string ret_str = tmp_str;
+        free(tmp_str);
+        return ret_str;
+    }
+    else return "";
 }

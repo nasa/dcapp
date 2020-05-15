@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include "ntcan.h"
+#include "varlist.hh"
 #include "basicutils/msg.hh"
 #include "CAN.hh"
 
@@ -28,7 +29,7 @@ CanDevice::~CanDevice()
     }
 }
 
-void CanDevice::initialize(const char *networkstr, const char *buttonIDstr, const char *controlIDstr, int *inhibit_ptr)
+void CanDevice::initialize(const char *networkstr, const char *buttonIDstr, const char *controlIDstr, int *inhibitstr)
 {
     int network = 0;
     NTCAN_RESULT retval;
@@ -67,7 +68,7 @@ void CanDevice::initialize(const char *networkstr, const char *buttonIDstr, cons
         return;
     }
 
-    this->canbus_inhibited = inhibit_ptr;
+    this->canbus_inhibited = getVariable(inhibitstr);
 
     this->CAN_active = true;
 }
@@ -93,8 +94,8 @@ void CanDevice::read(void)
                 }
                 else if (message.id == this->controlID && message.data[0] == BEZEL_CONTROL_TYPE && message.data[1] == BEZEL_CONTROL_ID && this->canbus_inhibited)
                 {
-                    if (message.data[2]) *(this->canbus_inhibited) = 0;
-                    else *(this->canbus_inhibited) = 1;
+                    if (message.data[2]) this->canbus_inhibited->setToBoolean(false);
+                    else this->canbus_inhibited->setToBoolean(true);
                 }
             }
         }

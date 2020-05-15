@@ -1,6 +1,7 @@
 #ifndef _SETVALUE_HH_
 #define _SETVALUE_HH_
 
+#include "valuedata.hh"
 #include "animation.hh"
 #include "object.hh"
 #include "parent.hh"
@@ -17,17 +18,13 @@ class dcSetValue : public dcObject
         void processAnimation(Animation *);
 
     private:
-        void calculateValue(int, int, void *, int, void *, int, void *, int, void *);
+        void calculateValue(int, Variable *, Value *, Value *, Value *);
 
         int optype;
-        int datatype1;
-        int datatype2;
-        int mindatatype;
-        int maxdatatype;
-        void *var;
-        void *val;
-        void *min;
-        void *max;
+        Variable *var;
+        Value *val;
+        Value *min;
+        Value *max;
 };
 
 #endif

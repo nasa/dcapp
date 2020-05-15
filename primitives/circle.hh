@@ -1,6 +1,7 @@
 #ifndef _CIRCLE_HH_
 #define _CIRCLE_HH_
 
+#include "valuedata.hh"
 #include "kolor.hh"
 #include "geometric.hh"
 #include "parent.hh"
@@ -17,7 +18,7 @@ class dcCircle : public dcGeometric
         void draw(void);
 
     private:
-        double *radius;
+        Value *radius;
         double linewidth;
         bool fill;
         bool outline;

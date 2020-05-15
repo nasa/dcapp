@@ -5,6 +5,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #ifdef JPEG_ENABLED
+#include <setjmp.h>
 #include <jpeglib.h>
 #endif
 #include "basicutils/timer.hh"
@@ -249,7 +250,7 @@ static void init_source(j_decompress_ptr) {}
 
 static boolean fill_input_buffer(j_decompress_ptr)
 {
-    error_msg("Empty input file");
+    error_msg("Input buffer empty");
     return true;
 }
 
@@ -288,14 +289,40 @@ static void jpeg_mem_src(j_decompress_ptr cinfo, void *buffer, long nbytes)
 #endif
 
 #ifdef JPEG_ENABLED
+struct jpegErrorManager
+{
+    struct jpeg_error_mgr error_mgr;
+    jmp_buf setjmp_buffer;
+};
+
+static char jpegLastErrorMsg[JMSG_LENGTH_MAX];
+
+static void jpegErrorExit(j_common_ptr cinfo)
+{
+    // form an error message and jump to the setjmp point
+    (*(cinfo->err->format_message))(cinfo, jpegLastErrorMsg);
+    jpegErrorManager *myerr = (jpegErrorManager *)(cinfo->err);
+    longjmp(myerr->setjmp_buffer, 1);
+}
+
 void PixelStreamMjpeg::loadPixels(const char *memptr, size_t memsize)
 {
     struct jpeg_decompress_struct jinfo;
-    struct jpeg_error_mgr jerr;
+    jpegErrorManager jerr;
     unsigned char *line;
     size_t num_pixels;
 
-    jinfo.err = jpeg_std_error(&jerr);
+    jinfo.err = jpeg_std_error(&jerr.error_mgr);
+    jerr.error_mgr.error_exit = jpegErrorExit;
+
+    if (setjmp(jerr.setjmp_buffer))
+    {
+        // hande the JPEG error, clean up, and return to the calling routine
+        warning_msg("MJPEG PixelStream: " << jpegLastErrorMsg);
+        jpeg_destroy_decompress(&jinfo);
+        return;
+    }
+
     jpeg_create_decompress(&jinfo);
     jpeg_mem_src(&jinfo, (unsigned char *)memptr, memsize);
     jpeg_read_header(&jinfo, TRUE);

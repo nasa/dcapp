@@ -3,23 +3,16 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <string>
-#include "basicutils/msg.hh"
 #include "basicutils/timer.hh"
-#include "trickcomm.hh"
+#include "basicutils/msg.hh"
 #include "string_utils.hh"
-#include "types.hh"
 #include "varlist.hh"
+#include "valuedata.hh"
+#include "trickcomm.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
-TrickCommModule::TrickCommModule()
-:
-active(false),
-host(0x0),
-port(0),
-datarate(0x0),
-disconnectaction(this->AppTerminate)
+TrickCommModule::TrickCommModule() : host(0x0), port(0), datarate(0x0), disconnectaction(this->AppTerminate)
 {
     this->last_connect_attempt = new Timer;
     this->tvs = new VariableServerComm;
@@ -48,21 +41,11 @@ CommModule::CommStatus TrickCommModule::read(void)
         case VS_SUCCESS:
             for (myitem = this->fromSim.begin(); myitem != this->fromSim.end(); myitem++)
             {
-                switch (myitem->type)
+                myitem->currvalue->setToValue(*(myitem->trickvalue));
+                if (myitem->init_only)
                 {
-                    case DECIMAL_TYPE:
-                        *(double *)myitem->dcvalue = *(double *)myitem->trickvalue;
-                        break;
-                    case INTEGER_TYPE:
-                        *(int *)myitem->dcvalue = *(int *)myitem->trickvalue;
-                        break;
-                    case STRING_TYPE:
-                        *(std::string *)myitem->dcvalue = *(std::string *)myitem->trickvalue;
-                        break;
-                }
-                if (myitem->type != UNDEFINED_TYPE && myitem->init_only)
-                {
-                    if (this->tvs->remove_var(myitem->trickvar) == VS_SUCCESS) this->fromSim.erase(myitem);
+                    this->tvs->remove_var(myitem->trickvar);
+                    this->fromSim.erase(myitem);
                 }
             }
             return this->Success;
@@ -104,59 +87,19 @@ CommModule::CommStatus TrickCommModule::write(void)
         {
             if (myitem->method)
             {
-                switch (myitem->type)
+                if (myitem->currvalue->getBoolean())
                 {
-                    case DECIMAL_TYPE:
-                        if (*(double *)myitem->dcvalue)
-                        {
-                            this->tvs->put(myitem->trickvar, VS_METHOD, 0x0, 0x0);
-                            *(double *)myitem->dcvalue = 0;
-                        }
-                        break;
-                    case INTEGER_TYPE:
-                        if (*(int *)myitem->dcvalue)
-                        {
-                            this->tvs->put(myitem->trickvar, VS_METHOD, 0x0, 0x0);
-                            *(int *)myitem->dcvalue = 0;
-                        }
-                        break;
-                    case STRING_TYPE:
-                        if (StringToBoolean(*(std::string *)myitem->dcvalue))
-                        {
-                            this->tvs->put(myitem->trickvar, VS_METHOD, 0x0, 0x0);
-                            *(std::string *)myitem->dcvalue = "false";
-                        }
-                        break;
+                    this->tvs->putMethod(myitem->trickvar);
+                    myitem->currvalue->setToBoolean(false);
                 }
             }
             else
             {
-                switch (myitem->type)
+                if (myitem->forcewrite || *(myitem->currvalue) != myitem->prevvalue)
                 {
-                    case DECIMAL_TYPE:
-                        if (myitem->forcewrite || *(double *)myitem->dcvalue != myitem->prevvalue.decval)
-                        {
-                            this->tvs->put(myitem->trickvar, VS_DECIMAL, myitem->dcvalue, myitem->units);
-                            myitem->prevvalue.decval = *(double *)myitem->dcvalue;
-                            myitem->forcewrite = false;
-                        }
-                        break;
-                    case INTEGER_TYPE:
-                        if (myitem->forcewrite || *(int *)myitem->dcvalue != myitem->prevvalue.intval)
-                        {
-                            this->tvs->put(myitem->trickvar, VS_INTEGER, myitem->dcvalue, myitem->units);
-                            myitem->prevvalue.intval = *(int *)myitem->dcvalue;
-                            myitem->forcewrite = false;
-                        }
-                        break;
-                    case STRING_TYPE:
-                        if (myitem->forcewrite || *(std::string *)myitem->dcvalue != myitem->prevvalue.strval)
-                        {
-                            this->tvs->put(myitem->trickvar, VS_STRING, myitem->dcvalue, myitem->units);
-                            myitem->prevvalue.strval = *(std::string *)myitem->dcvalue;
-                            myitem->forcewrite = false;
-                        }
-                        break;
+                    this->tvs->putValue(myitem->trickvar, *(myitem->currvalue), myitem->units);
+                    myitem->prevvalue.setToValue(*(myitem->currvalue));
+                    myitem->forcewrite = false;
                 }
             }
         }
@@ -165,13 +108,13 @@ CommModule::CommStatus TrickCommModule::write(void)
     return this->None;
 }
 
-void TrickCommModule::flagAsChanged(void *value)
+void TrickCommModule::flagAsChanged(Variable *value)
 {
     std::list<io_parameter>::iterator myitem;
 
     for (myitem = this->toSim.begin(); myitem != this->toSim.end(); myitem++)
     {
-        if (myitem->dcvalue == value) myitem->forcewrite = true;
+        if (myitem->currvalue == value) myitem->forcewrite = true;
     }
 }
 
@@ -195,7 +138,7 @@ void TrickCommModule::setReconnectOnDisconnect(void)
     this->disconnectaction = this->AppReconnect;
 }
 
-int TrickCommModule::addParameter(int bufID, const char *paramname, const char *trickvar, const char *units, const char *init_only, int method)
+int TrickCommModule::addParameter(int bufID, const char *paramname, const char *trickvar, const char *units, const char *init_only, bool method)
 {
     std::list<io_parameter> *io_map;
 
@@ -211,9 +154,9 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
             return this->Fail;
     }
 
-    void *valptr = get_pointer(paramname);
+    Variable *myvalue = getVariable(paramname);
 
-    if (valptr)
+    if (myvalue)
     {
         io_parameter myparam;
         myparam.trickvar = strdup(trickvar);
@@ -221,43 +164,23 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
         if (units) myparam.units = strdup(units);
         else  myparam.units = nullptr;
 
-        myparam.type = get_datatype(paramname);
-        myparam.dcvalue = valptr;
-        myparam.prevvalue.decval = 0;
-        myparam.prevvalue.intval = 0;
-        myparam.prevvalue.strval = "";
+        myparam.currvalue = myvalue;
+        myparam.prevvalue.setType(myvalue->getType());
         myparam.forcewrite = false;
         myparam.init_only = StringToBoolean(init_only);
         myparam.method = method;
         io_map->push_back(myparam);
-    }
 
-    return this->Success;
+        return this->Success;
+    }
+    else return this->Fail;
 }
 
 void TrickCommModule::finishInitialization(void)
 {
-    int type;
-    std::list<io_parameter>::iterator myitem;
-
-    for (myitem = this->fromSim.begin(); myitem != this->fromSim.end(); myitem++)
+    for (std::list<io_parameter>::iterator myitem = this->fromSim.begin(); myitem != this->fromSim.end(); myitem++)
     {
-        switch (myitem->type)
-        {
-                case DECIMAL_TYPE:
-                    type = VS_DECIMAL;
-                    break;
-                case INTEGER_TYPE:
-                    type = VS_INTEGER;
-                    break;
-                case STRING_TYPE:
-                    type = VS_STRING;
-                    break;
-                default:
-                    type = 0;
-                    break;
-        }
-        if (type) myitem->trickvalue = this->tvs->add_var(myitem->trickvar, myitem->units, type);
+        myitem->trickvalue = this->tvs->add_var(myitem->trickvar, myitem->units, myitem->currvalue->getType());
     }
 }
 
@@ -267,11 +190,6 @@ void TrickCommModule::activate(void)
     {
         if (this->tvs->activate(this->host, this->port, 0x0, this->datarate) == VS_SUCCESS) this->active = true;
     }
-}
-
-bool TrickCommModule::isActive(void)
-{
-    return this->active;
 }
 
 #else

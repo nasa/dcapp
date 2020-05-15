@@ -13,8 +13,8 @@ dcVertex::dcVertex(dcParent *myparent) : x(0x0), y(0x0)
 
 void dcVertex::setPosition(const char *inx, const char *iny)
 {
-    if (inx) x = getDecimalPointer(inx);
-    if (iny) y = getDecimalPointer(iny);
+    if (inx) x = getValue(inx);
+    if (iny) y = getValue(iny);
 }
 
 void dcVertex::draw(void)
@@ -23,15 +23,15 @@ void dcVertex::draw(void)
 
     if (x)
     {
-        if (*x < 0) myx = *x + *containerw;
-        else myx = *x;
+        if (x->getDecimal() < 0) myx = x->getDecimal() + containerw->getDecimal();
+        else myx = x->getDecimal();
     }
     else myx = 0;
 
     if (y)
     {
-        if (*y < 0) myy = *y + *containerh;
-        else myy = *y;
+        if (y->getDecimal() < 0) myy = y->getDecimal() + containerh->getDecimal();
+        else myy = y->getDecimal();
     }
     else myy = 0;
 

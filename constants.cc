@@ -1,44 +1,43 @@
 #include <list>
-#include <string>
+#include "valuedata.hh"
 
-static std::list<double> decimalConstants;
-static std::list<int> integerConstants;
-static std::list<std::string> stringConstants;
+static std::list<Constant> constants;
 
-double *dcLoadConstant(double fval)
+static Constant *findOrCreateConstant(Constant &vinfo)
 {
-    std::list<double>::iterator fc;
-    for (fc = decimalConstants.begin(); fc != decimalConstants.end(); fc++)
+    std::list<Constant>::iterator it;
+    for (it = constants.begin(); it != constants.end(); it++)
     {
-        if (*fc == fval) return &(*fc);
+        if (*it == vinfo) return &(*it);
     }
-    decimalConstants.push_back(fval);
-    return &(decimalConstants.back());
+    constants.push_back(vinfo);
+    return &(constants.back());
 }
 
-int *dcLoadConstant(int ival)
+Constant *getConstantFromDecimal(double inval)
 {
-    std::list<int>::iterator ic;
-    for (ic = integerConstants.begin(); ic != integerConstants.end(); ic++)
-    {
-        if (*ic == ival) return &(*ic);
-    }
-    integerConstants.push_back(ival);
-    return &(integerConstants.back());
+    Constant vinfo;
+    vinfo.setToDecimal(inval);
+    return findOrCreateConstant(vinfo);
 }
 
-std::string *dcLoadConstant(const char *sval)
+Constant *getConstantFromInteger(int inval)
 {
-    std::string myval;
+    Constant vinfo;
+    vinfo.setToInteger(inval);
+    return findOrCreateConstant(vinfo);
+}
 
-    if (sval) myval = sval;
-    else myval = "";
+Constant *getConstantFromCharstr(const char *inval)
+{
+    Constant vinfo;
+    vinfo.setToCharstr(inval);
+    return findOrCreateConstant(vinfo);
+}
 
-    std::list<std::string>::iterator sc;
-    for (sc = stringConstants.begin(); sc != stringConstants.end(); sc++)
-    {
-        if (*sc == myval) return &(*sc);
-    }
-    stringConstants.push_back(myval);
-    return &(stringConstants.back());
+Constant *getConstantFromBoolean(bool inval)
+{
+    Constant vinfo;
+    vinfo.setToBoolean(inval);
+    return findOrCreateConstant(vinfo);
 }

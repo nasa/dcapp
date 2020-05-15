@@ -14,7 +14,7 @@ void dcImage::setTexture(const char *filename)
 void dcImage::draw(void)
 {
     computeGeometry();
-    container_start(refx, refy, delx, dely, 1, 1, *rotate);
+    container_start(refx, refy, delx, dely, 1, 1, rotate->getDecimal());
     draw_image(textureID, width, height);
     container_end();
 }

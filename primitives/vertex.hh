@@ -1,6 +1,7 @@
 #ifndef _VERTEX_HH_
 #define _VERTEX_HH_
 
+#include "valuedata.hh"
 #include "object.hh"
 #include "parent.hh"
 
@@ -12,10 +13,10 @@ class dcVertex : public dcObject
         void draw(void);
 
     private:
-        double *x;
-        double *y;
-        double *containerw;
-        double *containerh;
+        Value *x;
+        Value *y;
+        Value *containerw;
+        Value *containerh;
 };
 
 #endif

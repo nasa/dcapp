@@ -234,7 +234,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             {
                 if (!strcasecmp(d_a, "Reconnect")) trickcomm->setReconnectOnDisconnect();
             }
-            trickcomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
+            trickcomm->setConnectedVariable(get_element_data(node, "ConnectedVariable"));
             process_elements(myparent, node->children);
             trickcomm->finishInitialization();
             AppData.commlist.push_back(trickcomm);
@@ -259,20 +259,20 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             if (trickcomm)
             {
-                trickcomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"), get_element_data(node, "InitializationOnly"), 0);
+                trickcomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"), get_element_data(node, "InitializationOnly"), false);
             }
         }
         if (NodeCheck(node, "TrickMethod"))
         {
             if (trickcomm && bufferID == TrickCommModule::ToTrick)
             {
-                trickcomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "Name"), 0x0, 0x0, 1);
+                trickcomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "Name"), 0x0, 0x0, true);
             }
         }
         if (NodeCheck(node, "EdgeIo"))
         {
             edgecomm = new EdgeCommModule;
-            edgecomm->activeID = (int *)get_pointer(get_element_data(node, "ConnectedVariable"));
+            edgecomm->setConnectedVariable(get_element_data(node, "ConnectedVariable"));
             process_elements(myparent, node->children);
             edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StringToDecimal(get_element_data(node, "DataRate"), 1.0));
             AppData.commlist.push_back(edgecomm);
@@ -303,7 +303,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "CAN"))
         {
             CanDevice *can = new CanDevice;
-            can->initialize(get_element_data(node, "Network"), get_element_data(node, "ButtonID"), get_element_data(node, "ControlID"), (int *)get_pointer(get_element_data(node, "InhibitVariable")));
+            can->initialize(get_element_data(node, "Network"), get_element_data(node, "ButtonID"), get_element_data(node, "ControlID"), get_element_data(node, "InhibitVariable"));
             AppData.devicelist.push_back(can);
         }
         if (NodeCheck(node, "UEI"))

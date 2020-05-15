@@ -4,6 +4,7 @@
 #include <string>
 #include <list>
 #include "basicutils/timer.hh"
+#include "valuedata.hh"
 #include "comm.hh"
 #include "EDGE_rcs.hh"
 
@@ -18,8 +19,7 @@ class EdgeCommModule : public CommModule
 
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
-        void flagAsChanged(void *);
-        bool isActive(void);
+        void flagAsChanged(Variable *);
 
         int addParameter(int, const char *, const char *);
         int finishInitialization(const char *, const char *, double);
@@ -27,19 +27,12 @@ class EdgeCommModule : public CommModule
     private:
         typedef struct
         {
-            int type;
             std::string edgecmd;
-            void *dcvalue;
-            struct
-            {
-                double decval;
-                int intval;
-                std::string strval;
-            } prevvalue;
+            Variable *currvalue;
+            Variable prevvalue;
             bool forcewrite;
         } io_parameter;
 
-        bool active;
         std::list<io_parameter> fromEdge;
         std::list<io_parameter> toEdge;
         Timer *last_connect_attempt;

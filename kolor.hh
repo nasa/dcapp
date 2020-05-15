@@ -4,33 +4,33 @@
 #include <string>
 #include <vector>
 #include <cctype>
+#include "valuedata.hh"
 #include "constants.hh"
 #include "varlist.hh"
-#include "string_utils.hh"
 
 class Kolor
 {
     public:
         Kolor()
         {
-            R = dcLoadConstant(0.0);
-            G = dcLoadConstant(0.0);
-            B = dcLoadConstant(0.0);
-            A = dcLoadConstant(1.0);
+            R = getConstantFromDecimal(0.0);
+            G = getConstantFromDecimal(0.0);
+            B = getConstantFromDecimal(0.0);
+            A = getConstantFromDecimal(1.0);
         }
         void set(double r, double g, double b)
         {
-            R = dcLoadConstant(r);
-            G = dcLoadConstant(g);
-            B = dcLoadConstant(b);
-            A = dcLoadConstant(1.0);
+            R = getConstantFromDecimal(r);
+            G = getConstantFromDecimal(g);
+            B = getConstantFromDecimal(b);
+            A = getConstantFromDecimal(1.0);
         }
         void set(double r, double g, double b, double a)
         {
-            R = dcLoadConstant(r);
-            G = dcLoadConstant(g);
-            B = dcLoadConstant(b);
-            A = dcLoadConstant(a);
+            R = getConstantFromDecimal(r);
+            G = getConstantFromDecimal(g);
+            B = getConstantFromDecimal(b);
+            A = getConstantFromDecimal(a);
         }
         void set(std::string mystring)
         {
@@ -59,27 +59,20 @@ class Kolor
 
             count = mylist.size();
 
-            if (count > 0) R = color_element(mylist[0]);
-            else R = dcLoadConstant(0.0);
-            if (count > 1) G = color_element(mylist[1]);
-            else G = dcLoadConstant(0.0);
-            if (count > 2) B = color_element(mylist[2]);
-            else B = dcLoadConstant(0.0);
-            if (count > 3) A = color_element(mylist[3]);
-            else A = dcLoadConstant(1.0);
+            if (count > 0) R = getValue(mylist[0].c_str());
+            else R = getConstantFromDecimal(0.0);
+            if (count > 1) G = getValue(mylist[1].c_str());
+            else G = getConstantFromDecimal(0.0);
+            if (count > 2) B = getValue(mylist[2].c_str());
+            else B = getConstantFromDecimal(0.0);
+            if (count > 3) A = getValue(mylist[3].c_str());
+            else A = getConstantFromDecimal(1.0);
         }
 
-        double *R;
-        double *G;
-        double *B;
-        double *A;
-
-    private:
-        double *color_element(std::string &strval)
-        {
-            if (check_dynamic_element(strval.c_str())) return (double *)get_pointer(strval.c_str());
-            else return dcLoadConstant(StringToDecimal(strval));
-        }
+        Value *R;
+        Value *G;
+        Value *B;
+        Value *A;
 };
 
 #endif

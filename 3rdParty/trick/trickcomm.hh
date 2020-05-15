@@ -5,9 +5,9 @@
 
 #ifdef TRICKACTIVE
 
-#include <string>
 #include <list>
 #include "basicutils/timer.hh"
+#include "valuedata.hh"
 #include "vscomm.hh"
 
 class TrickCommModule : public CommModule
@@ -20,14 +20,13 @@ class TrickCommModule : public CommModule
 
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
-        void flagAsChanged(void *);
-        bool isActive(void);
+        void flagAsChanged(Variable *);
 
         void setHost(const char *);
         void setPort(int);
         void setDataRate(const char *);
         void setReconnectOnDisconnect(void);
-        int addParameter(int, const char *, const char *, const char *, const char *, int);
+        int addParameter(int, const char *, const char *, const char *, const char *, bool);
         void finishInitialization(void);
 
     private:
@@ -35,23 +34,16 @@ class TrickCommModule : public CommModule
 
         typedef struct
         {
-            int type;
             char *trickvar;
             char *units;
-            void *trickvalue;
-            void *dcvalue;
-            struct
-            {
-                double decval;
-                int intval;
-                std::string strval;
-            } prevvalue;
+            Variable *trickvalue;
+            Variable *currvalue;
+            Variable prevvalue;
             bool forcewrite;
             bool init_only;
-            int method;
+            bool method;
         } io_parameter;
 
-        bool active;
         Timer *last_connect_attempt;
         VariableServerComm *tvs;
         char *host;

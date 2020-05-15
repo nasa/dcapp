@@ -1,4 +1,5 @@
 #include "nodes.hh"
+#include "valuedata.hh"
 #include "varlist.hh"
 #include "string_utils.hh"
 #include "RenderLib/RenderLib.hh"
@@ -67,7 +68,7 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
             break;
         case PixelStreamVsmProtocol:
             psv = new PixelStreamVsm;
-            if (psv->readerInitialize(host, StringToInteger(port, 80), path, getStringPointer(cameraspec)))
+            if (psv->readerInitialize(host, StringToInteger(port, 80), path, getValue(cameraspec)))
             {
                 delete psv;
                 return;
@@ -121,11 +122,11 @@ void dcPixelStream::draw(void)
     size_t nbytes, origbytes, newh, pad, padbytes, offset, offsetbytes;
 
     computeGeometry();
-    container_start(refx, refy, delx, dely, 1, 1, *rotate);
+    container_start(refx, refy, delx, dely, 1, 1, rotate->getDecimal());
 
     if (psi->psd->connected)
     {
-        newh = (size_t)((double)(psi->psd->width) * (*h) / (*w));
+        newh = (size_t)((double)(psi->psd->width) * (h->getDecimal()) / (w->getDecimal()));
 
         if (newh > psi->psd->height)
         {

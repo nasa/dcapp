@@ -1,4 +1,5 @@
 #include <strings.h>
+#include "valuedata.hh"
 #include "constants.hh"
 #include "alignment.hh"
 #include "varlist.hh"
@@ -11,24 +12,24 @@ dcGeometric::dcGeometric(dcParent *myparent) : x(0x0), y(0x0), halign(AlignLeft)
     containerh = getContainerHeight();
     w = containerw;
     h = containerh;
-    rotate = dcLoadConstant(0.0f);
+    rotate = getConstantFromDecimal(0);
 }
 
 void dcGeometric::setPosition(const char *inx, const char *iny)
 {
-    if (inx) x = getDecimalPointer(inx);
-    if (iny) y = getDecimalPointer(iny);
+    if (inx) x = getValue(inx);
+    if (iny) y = getValue(iny);
 }
 
 void dcGeometric::setSize(const char *inw, const char *inh)
 {
-    if (inw) w = getDecimalPointer(inw);
-    if (inh) h = getDecimalPointer(inh);
+    if (inw) w = getValue(inw);
+    if (inh) h = getValue(inh);
 }
 
 void dcGeometric::setRotation(const char *inr)
 {
-    if (inr) rotate = getDecimalPointer(inr);
+    if (inr) rotate = getValue(inr);
 }
 
 void dcGeometric::setAlignment(const char *inhal, const char *inval)
@@ -49,34 +50,22 @@ void dcGeometric::setAlignment(const char *inhal, const char *inval)
 
 void dcGeometric::computeGeometry(void)
 {
-    double hwidth, hheight;
+    if (w) width = w->getDecimal();
+    else width = 0;
 
-    left = GeomX(x, *w, *containerw, halign);
-    bottom = GeomY(y, *h, *containerh, valign);
-    if (w)
-    {
-        width = *w;
-        hwidth = (0.5 * width);
-    }
-    else
-    {
-        width = 0;
-        hwidth = 0;
-    }
-    if (h)
-    {
-        height = *h;
-        hheight = (0.5 * height);
-    }
-    else
-    {
-        height = 0;
-        hheight = 0;
-    }
+    if (h) height = h->getDecimal();
+    else height = 0;
+
+    double hwidth = (0.5 * width);
+    double hheight = (0.5 * height);
+
+    left = GeomX(x, width, containerw->getDecimal(), halign);
+    bottom = GeomY(y, height, containerh->getDecimal(), valign);
     right = left + width;
     top = bottom + height;
     center = left + hwidth;
     middle = bottom + hheight;
+
     switch (halign)
     {
         case AlignLeft:
@@ -113,7 +102,7 @@ void dcGeometric::computeGeometry(void)
     }
 }
 
-double dcGeometric::GeomX(double *x, double w, double containerW, int halign)
+double dcGeometric::GeomX(Value *x, double w, double containerW, int halign)
 {
     double val;
 
@@ -135,8 +124,8 @@ double dcGeometric::GeomX(double *x, double w, double containerW, int halign)
         }
     }
 // TODO: Remove the next line, but first create new way to achieve this and update all known displays
-    else if (*x < 0) val = *x + containerW;
-    else val = *x;
+    else if (x->getDecimal() < 0) val = x->getDecimal() + containerW;
+    else val = x->getDecimal();
 
     switch (halign)
     {
@@ -151,7 +140,7 @@ double dcGeometric::GeomX(double *x, double w, double containerW, int halign)
     }
 }
 
-double dcGeometric::GeomY(double *y, double h, double containerH, int valign)
+double dcGeometric::GeomY(Value *y, double h, double containerH, int valign)
 {
     double val;
 
@@ -173,8 +162,8 @@ double dcGeometric::GeomY(double *y, double h, double containerH, int valign)
         }
     }
 // TODO: Remove the next line, but first create new way to achieve this and update all known displays
-    else if (*y < 0) val = *y + containerH;
-    else val = *y;
+    else if (y->getDecimal() < 0) val = y->getDecimal() + containerH;
+    else val = y->getDecimal();
 
     switch (valign)
     {

@@ -11,12 +11,12 @@ static const double YELLOW[3] = { 1.0, 1.0, 0.0 };
 
 dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(0x0), ballID(0x0), outerradius(0x0), ballradius(0x0), chevronW(0x0), chevronH(0x0)
 {
-    roll = dcLoadConstant(0.0f);
-    pitch = dcLoadConstant(0.0f);
-    yaw = dcLoadConstant(0.0f);
-    rollError = dcLoadConstant(0.0f);
-    pitchError = dcLoadConstant(0.0f);
-    yawError = dcLoadConstant(0.0f);
+    roll = getConstantFromDecimal(0);
+    pitch = getConstantFromDecimal(0);
+    yaw = getConstantFromDecimal(0);
+    rollError = getConstantFromDecimal(0);
+    pitchError = getConstantFromDecimal(0);
+    yawError = getConstantFromDecimal(0);
 
     sphereTriangles = BuildSphere();
 }
@@ -33,28 +33,28 @@ void dcADI::setBallTexture(const char *filename)
 
 void dcADI::setRPY(const char *inroll, const char *inpitch, const char *inyaw)
 {
-    if (inroll) roll = getDecimalPointer(inroll);
-    if (inpitch) pitch = getDecimalPointer(inpitch);
-    if (inyaw) yaw = getDecimalPointer(inyaw);
+    if (inroll) roll = getValue(inroll);
+    if (inpitch) pitch = getValue(inpitch);
+    if (inyaw) yaw = getValue(inyaw);
 }
 
 void dcADI::setRPYerrors(const char *re, const char *pe, const char *ye)
 {
-    if (re) rollError = getDecimalPointer(re);
-    if (pe) pitchError = getDecimalPointer(pe);
-    if (ye) yawError = getDecimalPointer(ye);
+    if (re) rollError = getValue(re);
+    if (pe) pitchError = getValue(pe);
+    if (ye) yawError = getValue(ye);
 }
 
 void dcADI::setRadius(const char *outer, const char *ball)
 {
-    if (outer) outerradius = getDecimalPointer(outer);
-    if (ball) ballradius = getDecimalPointer(ball);
+    if (outer) outerradius = getValue(outer);
+    if (ball) ballradius = getValue(ball);
 }
 
 void dcADI::setChevron(const char *widthspec, const char *heightspec)
 {
-    if (widthspec) chevronW = getDecimalPointer(widthspec);
-    if (heightspec) chevronH = getDecimalPointer(heightspec);
+    if (widthspec) chevronW = getValue(widthspec);
+    if (heightspec) chevronH = getValue(heightspec);
 }
 
 void dcADI::draw(void)
@@ -63,20 +63,20 @@ void dcADI::draw(void)
 
     double outerrad, ballrad, chevw, chevh;
 
-    if (outerradius) outerrad = *outerradius;
-    else outerrad = 0.5 * (fminf(*w, *h));
+    if (outerradius) outerrad = outerradius->getDecimal();
+    else outerrad = 0.5 * (fminf(w->getDecimal(), h->getDecimal()));
 
-    if (ballradius) ballrad = *ballradius;
+    if (ballradius) ballrad = ballradius->getDecimal();
     else ballrad = 0.9 * outerrad;
 
-    if (chevronW) chevw = *chevronW;
+    if (chevronW) chevw = chevronW->getDecimal();
     else chevw = 0.2 * outerrad;
 
-    if (chevronH) chevh = *chevronH;
+    if (chevronH) chevh = chevronH->getDecimal();
     else chevh = 0.2 * outerrad;
 
     // Draw the ball
-    draw_textured_sphere(center, middle, sphereTriangles, ballrad, ballID, *roll, *pitch, *yaw);
+    draw_textured_sphere(center, middle, sphereTriangles, ballrad, ballID, roll->getDecimal(), pitch->getDecimal(), yaw->getDecimal());
 
     // Draw the surrounding area (i.e. background)
     translate_start(left, bottom);
@@ -85,9 +85,9 @@ void dcADI::draw(void)
 
     // Draw the items on top: roll bug, cross-hairs, needles
     translate_start(center, middle);
-        draw_roll_bug(*roll, chevw, chevh, 0.8 * outerrad);
+        draw_roll_bug(roll->getDecimal(), chevw, chevh, 0.8 * outerrad);
         draw_cross_hairs(outerrad);
-        draw_needles(outerrad, *rollError, *pitchError, *yawError);
+        draw_needles(outerrad, rollError->getDecimal(), pitchError->getDecimal(), yawError->getDecimal());
     translate_end();
 }
 

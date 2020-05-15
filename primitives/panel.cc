@@ -1,11 +1,14 @@
 #include "RenderLib/RenderLib.hh"
+#include "valuedata.hh"
 #include "string_utils.hh"
 #include "panel.hh"
 
-dcPanel::dcPanel(dcParent *myparent) : displayID(0), orthoX(100), orthoY(100)
+dcPanel::dcPanel(dcParent *myparent) : displayID(0)
 {
     myparent->addChild(this);
     color.set(0, 0, 0);
+    orthoX = getConstantFromDecimal(100);
+    orthoY = getConstantFromDecimal(100);
 }
 
 void dcPanel::setID(const char *inval)
@@ -15,13 +18,13 @@ void dcPanel::setID(const char *inval)
 
 void dcPanel::setColor(const char *cspec)
 {
-    color.set(cspec);
+    if (cspec) color.set(cspec);
 }
 
 void dcPanel::setOrtho(const char *inw, const char *inh)
 {
-    if (inw) orthoX = StringToDecimal(inw, 100);
-    if (inh) orthoY = StringToDecimal(inh, 100);
+    if (inw) orthoX = getValue(inw);
+    if (inh) orthoY = getValue(inh);
 }
 
 bool dcPanel::checkID(int id)
@@ -30,28 +33,21 @@ bool dcPanel::checkID(int id)
     else return false;
 }
 
-double * dcPanel::getContainerWidth(void)
-{
-    return &orthoX;
-}
-
-double * dcPanel::getContainerHeight(void)
-{
-    return &orthoY;
-}
+Value * dcPanel::getContainerWidth(void) { return orthoX; }
+Value * dcPanel::getContainerHeight(void) { return orthoY; }
 
 void dcPanel::draw(void)
 {
-    setup_panel(orthoX, orthoY, *(color.R), *(color.G), *(color.B), *(color.A));
+    setup_panel(orthoX->getDecimal(), orthoY->getDecimal(), color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal());
     for (const auto &myobj : children) myobj->draw();
 }
 
 void dcPanel::handleMousePress(double x, double y)
 {
-    for (const auto &myobj : children) myobj->handleMousePress(orthoX * x, orthoY * y);
+    for (const auto &myobj : children) myobj->handleMousePress(orthoX->getDecimal() * x, orthoY->getDecimal() * y);
 }
 
 void dcPanel::handleMouseMotion(double x, double y)
 {
-    for (const auto &myobj : children) myobj->handleMouseMotion(orthoX * x, orthoY * y);
+    for (const auto &myobj : children) myobj->handleMouseMotion(orthoX->getDecimal() * x, orthoY->getDecimal() * y);
 }

@@ -3,6 +3,7 @@
 #include "string_utils.hh"
 #include "types.hh"
 #include "varlist.hh"
+#include "constants.hh"
 #include "condition.hh"
 
 enum { Simple, IfEquals, IfNotEquals, IfGreaterThan, IfLessThan, IfGreaterOrEquals, IfLessOrEquals };
@@ -30,8 +31,15 @@ dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inv
         else if (!strcasecmp(inspec, "le")) opspec = IfLessOrEquals;
     }
 
-    datatype1 = get_data_type(inval1);
-    datatype2 = get_data_type(inval2);
+    if (inval1) val1 = getValue(inval1);
+    else val1 = getConstantFromBoolean(true);
+
+    if (inval2) val2 = getValue(inval2);
+    else val2 = getConstantFromBoolean(true);
+
+    datatype1 = val1->getType();
+    datatype2 = val2->getType();
+
     if (datatype1 == UNDEFINED_TYPE && datatype2 == UNDEFINED_TYPE)
     {
         datatype1 = STRING_TYPE;
@@ -39,11 +47,6 @@ dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inv
     }
     else if (datatype1 == UNDEFINED_TYPE) datatype1 = datatype2;
     else if (datatype2 == UNDEFINED_TYPE) datatype2 = datatype1;
-
-    if (inval1) val1 = getVariablePointer(datatype1, inval1);
-    else val1 = getVariablePointer(datatype1, "1");
-    if (inval2) val2 = getVariablePointer(datatype2, inval2);
-    else val2 = getVariablePointer(datatype2, "1");
 }
 
 dcCondition::~dcCondition()
@@ -148,25 +151,25 @@ bool dcCondition::checkCondition(void)
             switch (opspec)
             {
                 case Simple:
-                    if (getDecimalValue(datatype1, val1)) eval = true;
+                    if (val1->getBoolean()) eval = true;
                     break;
                 case IfEquals:
-                    if (getDecimalValue(datatype1, val1) == getDecimalValue(datatype2, val2)) eval = true;
+                    if (val1->getDecimal() == val2->getDecimal()) eval = true;
                     break;
                 case IfNotEquals:
-                    if (getDecimalValue(datatype1, val1) != getDecimalValue(datatype2, val2)) eval = true;
+                    if (val1->getDecimal() != val2->getDecimal()) eval = true;
                     break;
                 case IfGreaterThan:
-                    if (getDecimalValue(datatype1, val1) > getDecimalValue(datatype2, val2)) eval = true;
+                    if (val1->getDecimal() > val2->getDecimal()) eval = true;
                     break;
                 case IfLessThan:
-                    if (getDecimalValue(datatype1, val1) < getDecimalValue(datatype2, val2)) eval = true;
+                    if (val1->getDecimal() < val2->getDecimal()) eval = true;
                     break;
                 case IfGreaterOrEquals:
-                    if (getDecimalValue(datatype1, val1) >= getDecimalValue(datatype2, val2)) eval = true;
+                    if (val1->getDecimal() >= val2->getDecimal()) eval = true;
                     break;
                 case IfLessOrEquals:
-                    if (getDecimalValue(datatype1, val1) <= getDecimalValue(datatype2, val2)) eval = true;
+                    if (val1->getDecimal() <= val2->getDecimal()) eval = true;
                     break;
             }
             break;
@@ -174,25 +177,25 @@ bool dcCondition::checkCondition(void)
             switch (opspec)
             {
                 case Simple:
-                    if (getIntegerValue(datatype1, val1)) eval = true;
+                    if (val1->getBoolean()) eval = true;
                     break;
                 case IfEquals:
-                    if (getIntegerValue(datatype1, val1) == getIntegerValue(datatype2, val2)) eval = true;
+                    if (val1->getInteger() == val2->getInteger()) eval = true;
                     break;
                 case IfNotEquals:
-                    if (getIntegerValue(datatype1, val1) != getIntegerValue(datatype2, val2)) eval = true;
+                    if (val1->getInteger() != val2->getInteger()) eval = true;
                     break;
                 case IfGreaterThan:
-                    if (getIntegerValue(datatype1, val1) > getIntegerValue(datatype2, val2)) eval = true;
+                    if (val1->getInteger() > val2->getInteger()) eval = true;
                     break;
                 case IfLessThan:
-                    if (getIntegerValue(datatype1, val1) < getIntegerValue(datatype2, val2)) eval = true;
+                    if (val1->getInteger() < val2->getInteger()) eval = true;
                     break;
                 case IfGreaterOrEquals:
-                    if (getIntegerValue(datatype1, val1) >= getIntegerValue(datatype2, val2)) eval = true;
+                    if (val1->getInteger() >= val2->getInteger()) eval = true;
                     break;
                 case IfLessOrEquals:
-                    if (getIntegerValue(datatype1, val1) <= getIntegerValue(datatype2, val2)) eval = true;
+                    if (val1->getInteger() <= val2->getInteger()) eval = true;
                     break;
             }
             break;
@@ -200,25 +203,25 @@ bool dcCondition::checkCondition(void)
             switch (opspec)
             {
                 case Simple:
-                    if (StringToBoolean(*(std::string *)val1)) eval = true;
+                    if (val1->getBoolean()) eval = true;
                     break;
                 case IfEquals:
-                    if (getStringValue(datatype1, val1) == getStringValue(datatype2, val2)) eval = true;
+                    if (val1->getString() == val2->getString()) eval = true;
                     break;
                 case IfNotEquals:
-                    if (getStringValue(datatype1, val1) != getStringValue(datatype2, val2)) eval = true;
+                    if (val1->getString() != val2->getString()) eval = true;
                     break;
                 case IfGreaterThan:
-                    if (getDecimalValue(datatype1, val1) > getDecimalValue(datatype2, val2)) eval = true;
+                    if (val1->getString() > val2->getString()) eval = true;
                     break;
                 case IfLessThan:
-                    if (getDecimalValue(datatype1, val1) < getDecimalValue(datatype2, val2)) eval = true;
+                    if (val1->getString() < val2->getString()) eval = true;
                     break;
                 case IfGreaterOrEquals:
-                    if (getDecimalValue(datatype1, val1) >= getDecimalValue(datatype2, val2)) eval = true;
+                    if (val1->getString() >= val2->getString()) eval = true;
                     break;
                 case IfLessOrEquals:
-                    if (getDecimalValue(datatype1, val1) <= getDecimalValue(datatype2, val2)) eval = true;
+                    if (val1->getString() <= val2->getString()) eval = true;
                     break;
             }
             break;

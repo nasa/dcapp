@@ -62,9 +62,16 @@ int main(int argc, char **argv)
     fprintf(p_file, "// ********************************************* //\n");
     fprintf(p_file, "// THIS FILE IS AUTO-GENERATED -- DO NOT EDIT!!! //\n");
     fprintf(p_file, "// ********************************************* //\n\n");
+<<<<<<< HEAD
 //    fprintf(p_file, "#define %s\n\n", getScriptResult(resolvedpath, "--version_defined").c_str());
     fprintf(p_file, "#define DCAPP_VERSION_1_0\n");
     fprintf(p_file, "#define DCAPP_VERSION_1_1\n");
+=======
+    // the line below preceded the use of DCAPP_MAJOR_VERSION and DCAPP_MINOR_VERSION, so retain it for backward compatibility
+    fprintf(p_file, "#define DCAPP_VERSION_1_0\n\n");
+    fprintf(p_file, "#define DCAPP_MAJOR_VERSION %s\n", getScriptResult(resolvedpath, "--version_major").c_str());
+    fprintf(p_file, "#define DCAPP_MINOR_VERSION %s\n", getScriptResult(resolvedpath, "--version_minor").c_str());
+>>>>>>> datamodel
     fprintf(p_file, "\n#include <string>\n\n");
     fprintf(p_file, "#ifndef _DCAPP_EXTERNALS_\n#define _DCAPP_EXTERNALS_\n\n");
     fprintf(p_file, "void *(*get_pointer)(const char *);\n\n");

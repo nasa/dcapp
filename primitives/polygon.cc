@@ -45,11 +45,11 @@ void dcPolygon::draw(void)
 
     if (fill)
     {
-        draw_polygon(AppData.vertices, *(FillColor.R), *(FillColor.G), *(FillColor.B), *(FillColor.A));
+        draw_polygon(AppData.vertices, FillColor.R->getDecimal(), FillColor.G->getDecimal(), FillColor.B->getDecimal(), FillColor.A->getDecimal());
     }
     if (outline)
     {
-        draw_line(AppData.vertices, linewidth, *(LineColor.R), *(LineColor.G), *(LineColor.B), *(LineColor.A));
+        draw_line(AppData.vertices, linewidth, LineColor.R->getDecimal(), LineColor.G->getDecimal(), LineColor.B->getDecimal(), LineColor.A->getDecimal());
     }
 
     AppData.vertices.clear();

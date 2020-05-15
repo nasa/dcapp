@@ -1,6 +1,7 @@
 #ifndef _CONDITION_HH_
 #define _CONDITION_HH_
 
+#include "valuedata.hh"
 #include "animation.hh"
 #include "object.hh"
 #include "parent.hh"
@@ -30,8 +31,8 @@ class dcCondition : public dcObject
         int opspec;
         int datatype1;
         int datatype2;
-        void *val1;
-        void *val2;
+        Value *val1;
+        Value *val2;
 };
 
 #endif
