@@ -102,7 +102,6 @@ CommModule::CommStatus EdgeCommModule::write(void)
 
     for (myitem = this->toEdge.begin(); myitem != this->toEdge.end(); myitem++)
     {
-// maybe verify that type is legit here?
         if (myitem->forcewrite || *(myitem->currvalue) != myitem->prevvalue)
         {
             cmd = myitem->edgecmd;
@@ -156,7 +155,6 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *c
     {
         io_parameter myparam;
         myparam.edgecmd = cmdspec;
-        myparam.type = myvalue->getType();
         myparam.currvalue = myvalue;
         myparam.prevvalue.setType(myvalue->getType());
         myparam.forcewrite = false;

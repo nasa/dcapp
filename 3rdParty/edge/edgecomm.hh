@@ -27,7 +27,6 @@ class EdgeCommModule : public CommModule
     private:
         typedef struct
         {
-            int type;
             std::string edgecmd;
             Variable *currvalue;
             Variable prevvalue;

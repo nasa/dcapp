@@ -34,7 +34,7 @@ void varlist_append(const char *paramname, const char *typestr, const char *init
     vinfo->setType(typestr);
     vinfo->setToCharstr(initval);
 
-//include some kind of error here if there's a problem...
+// include some kind of error here if there's a problem...
 // error_msg("Attempting to create the variable \"" << paramname << "\" with an unknown type: " << typestr);
 
     varMap[std::string(mylabel)] = *vinfo;
