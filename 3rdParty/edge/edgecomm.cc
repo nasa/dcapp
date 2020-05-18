@@ -156,7 +156,7 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *c
         io_parameter myparam;
         myparam.edgecmd = cmdspec;
         myparam.currvalue = myvalue;
-        myparam.prevvalue.setType(myvalue->getType());
+        myparam.prevvalue.setAttributes(*myvalue);
         myparam.forcewrite = false;
         io_map->push_back(myparam);
 

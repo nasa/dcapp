@@ -55,7 +55,8 @@ class Variable : public Value
         bool operator == (const Variable &);
         bool operator != (const Variable &);
 
-        void setToCharstr(const char *, unsigned = 0);
+        void setToCharstr(const char *);
+        void setToString(std::string &);
         void setToValue(Value &);
         void setToDecimal(double);
         void setToInteger(int);
@@ -68,6 +69,7 @@ class Variable : public Value
 
         void setType(int);
         void setType(const char *);
+        void setAttributes(Variable &);
 
         int getType(void);
         void *getPointer(void);

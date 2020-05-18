@@ -20,11 +20,11 @@ Programmer: M. McFarlane
 #define VS_DEFAULT_PORT       7000
 #define VS_DEFAULT_SAMPLERATE "1.0"
 
-ParamData::ParamData(const char *label_spec, const char *units_spec, int type_spec)
+ParamData::ParamData(const char *label_spec, const char *units_spec, Variable &invar)
 {
     if (label_spec) this->label = label_spec;
     if (units_spec) this->units = units_spec;
-    this->value.setType(type_spec);
+    this->value.setAttributes(invar);
 }
 
 ParamData::~ParamData() { }
@@ -48,11 +48,11 @@ VariableServerComm::~VariableServerComm()
     TIDY(this->prevbuf);
 }
 
-Variable * VariableServerComm::add_var(const char *label, const char *units, int type)
+Variable * VariableServerComm::add_var(const char *label, const char *units, Variable &invar)
 {
-    if (!label || !type) return nullptr;
+    if (!label) return nullptr;
 
-    ParamData *newparam = new ParamData(label, units, type);
+    ParamData *newparam = new ParamData(label, units, invar);
 
     for (std::list<ParamData>::iterator it = this->paramlist.begin(); it != this->paramlist.end(); it++)
     {
@@ -288,7 +288,9 @@ int VariableServerComm::update_data(const char *curbuf)
     for (std::list<ParamData>::iterator it = this->paramlist.begin(); it != this->paramlist.end(); it++)
     {
         element += this->find_next_token(element, '\t') + 1;
-        it->value.setToCharstr(element, this->find_next_token(element, '\t'));
+        std::string tmpstr;
+        tmpstr.assign(element, this->find_next_token(element, '\t'));
+        it->value.setToString(tmpstr);
     }
 
     return VS_SUCCESS;

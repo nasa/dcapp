@@ -165,7 +165,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
         else  myparam.units = nullptr;
 
         myparam.currvalue = myvalue;
-        myparam.prevvalue.setType(myvalue->getType());
+        myparam.prevvalue.setAttributes(*myvalue);
         myparam.forcewrite = false;
         myparam.init_only = StringToBoolean(init_only);
         myparam.method = method;
@@ -180,7 +180,7 @@ void TrickCommModule::finishInitialization(void)
 {
     for (std::list<io_parameter>::iterator myitem = this->fromSim.begin(); myitem != this->fromSim.end(); myitem++)
     {
-        myitem->trickvalue = this->tvs->add_var(myitem->trickvar, myitem->units, myitem->currvalue->getType());
+        myitem->trickvalue = this->tvs->add_var(myitem->trickvar, myitem->units, *(myitem->currvalue));
     }
 }
 

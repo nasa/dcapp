@@ -41,7 +41,6 @@ class dcString : public dcGeometric
 
     private:
         size_t parse_var(std::string);
-        unsigned count_lines(std::string);
 
         bool background;
         Kolor color;

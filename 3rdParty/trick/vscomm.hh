@@ -24,7 +24,7 @@
 class ParamData
 {
     public:
-        ParamData(const char *, const char *, int);
+        ParamData(const char *, const char *, Variable &);
         virtual ~ParamData();
 
         std::string label;
@@ -38,7 +38,7 @@ class VariableServerComm
         VariableServerComm();
         virtual ~VariableServerComm();
 
-        Variable *add_var(const char *, const char *, int);
+        Variable *add_var(const char *, const char *, Variable &);
         void remove_var(const char *);
         int activate(const char *, int, const char *, char *);
         int get(void);

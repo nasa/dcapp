@@ -1,4 +1,5 @@
 #include <string>
+#include <vector>
 #include "nodes.hh"
 #include "RenderLib/RenderLib.hh"
 #include "basicutils/msg.hh"
@@ -85,23 +86,27 @@ void dcString::draw(void)
     computeGeometry();
 
     double myleft, myright, mybottom, mytop;
-    unsigned num_lines, i, strptr=0, seglen;
+    unsigned i;
     float stringWidth;
 
     std::string mystring;
     for (i = 0; i < vstring.size(); i++) mystring += filler[i] + vstring[i]->get();
     mystring += filler[vstring.size()];
 
-    num_lines = count_lines(mystring);
-
-    for (i = 1; i <= num_lines; i++)
+    // break mystring into a vector of 1-line substrings
+    std::vector <std::string> lines;
+    size_t endptr, strptr=0;
+    do
     {
-        seglen = mystring.find("\\n", strptr) - strptr;
-        std::string tmpstr = mystring.substr(strptr, seglen);
-        strptr += seglen+2;
+        endptr = mystring.find("\\n", strptr);
+        lines.push_back(mystring.substr(strptr, endptr - strptr));
+        strptr = endptr + 2;
+    } while (endptr != std::string::npos);
 
+    for (i=0; i<lines.size(); i++)
+    {
         if (background || halign == AlignCenter || halign == AlignRight)
-            stringWidth = fontID->getAdvance(tmpstr, forcemono) * fontSize->getDecimal() / fontID->getBaseSize();
+            stringWidth = fontID->getAdvance(lines[i], forcemono) * fontSize->getDecimal() / fontID->getBaseSize();
 
         switch (halign)
         {
@@ -119,13 +124,13 @@ void dcString::draw(void)
         switch (valign)
         {
             case AlignBottom:
-                mybottom = (fontSize->getDecimal()) * (double)(num_lines - i);
+                mybottom = (fontSize->getDecimal()) * (double)(lines.size() - (i + 1));
                 break;
             case AlignMiddle:
-                mybottom = (fontSize->getDecimal()) * (((double)num_lines/2) - (double)i);
+                mybottom = (fontSize->getDecimal()) * (((double)lines.size()/2) - (double)(i + 1));
                 break;
             case AlignTop:
-                mybottom = -(fontSize->getDecimal()) * (double)i;
+                mybottom = -(fontSize->getDecimal()) * (double)(i + 1);
                 break;
         }
 
@@ -147,9 +152,9 @@ void dcString::draw(void)
         }
         if (shadowOffset->getBoolean())
         {
-            draw_string(myleft + shadowOffset->getDecimal(), mybottom - shadowOffset->getDecimal(), fontSize->getDecimal(), 0, 0, 0, 1, fontID, forcemono, tmpstr);
+            draw_string(myleft + shadowOffset->getDecimal(), mybottom - shadowOffset->getDecimal(), fontSize->getDecimal(), 0, 0, 0, 1, fontID, forcemono, lines[i]);
         }
-        draw_string(myleft, mybottom, fontSize->getDecimal(), color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal(), fontID, forcemono, tmpstr);
+        draw_string(myleft, mybottom, fontSize->getDecimal(), color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal(), fontID, forcemono, lines[i]);
 
         rotate_end();
         translate_end();
@@ -196,21 +201,4 @@ size_t dcString::parse_var(std::string mystr)
     if (braced) return mystr.find('}') + 1;
     else if (fmt_end != std::string::npos) return fmt_end + 1;
     else return mystr.find(' ');
-}
-
-unsigned dcString::count_lines(std::string instr)
-{
-    if (!(instr.size())) return 0;
-
-    unsigned count = 0;
-    size_t next, pos = 0;
-
-    do
-    {
-        next = instr.find("\\n", pos);
-        count++;
-        pos = next+2;
-    } while (next != std::string::npos);
-
-    return count;
 }

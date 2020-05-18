@@ -100,28 +100,26 @@ bool Variable::operator != (const Variable &that)
     return !(*this == that);
 }
 
-void Variable::setToCharstr(const char *input, unsigned length)
+void Variable::setToCharstr(const char *input)
 {
     if (input)
     {
         switch (this->type)
         {
-        case DECIMAL_TYPE:
-            this->decval = strtod(input, 0x0);
-            break;
-        case INTEGER_TYPE:
-            this->intval = (int)strtol(input, 0x0, 10);
-            break;
-        case STRING_TYPE:
-            if (length)
-            {
-                if (length >= this->strval.max_size()) length = this->strval.max_size() - 1;
-                this->strval.clear();
-                for (unsigned i=0; i<length; i++) this->strval += input[i];
-            }
-            else this->strval = input;
-            break;
+            case DECIMAL_TYPE: this->decval = strtod(input, 0x0);          break;
+            case INTEGER_TYPE: this->intval = (int)strtol(input, 0x0, 10); break;
+            case STRING_TYPE:  this->strval = input;                       break;
         }
+    }
+}
+
+void Variable::setToString(std::string &input)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: this->decval = strtod(input.c_str(), 0x0);          break;
+        case INTEGER_TYPE: this->intval = (int)strtol(input.c_str(), 0x0, 10); break;
+        case STRING_TYPE:  this->strval = input;                               break;
     }
 }
 
@@ -257,6 +255,8 @@ void Variable::setType(const char *type_spec)
         warning_msg("Attempting to create variable with unknown type (" << type_spec << ") - assuming \"String\"");
     }
 }
+
+void Variable::setAttributes(Variable &that) { this->type = that.type; }
 
 int Variable::getType(void) { return this->type; }
 
