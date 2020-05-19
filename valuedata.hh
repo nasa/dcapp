@@ -3,6 +3,11 @@
 
 #include <string>
 
+#define UNDEFINED_TYPE 0
+#define STRING_TYPE    1
+#define DECIMAL_TYPE   2
+#define INTEGER_TYPE   3
+
 class Value
 {
     public:
@@ -57,10 +62,15 @@ class Variable : public Value
 
         void setToCharstr(const char *);
         void setToString(std::string &);
-        void setToValue(Value &);
         void setToDecimal(double);
         void setToInteger(int);
         void setToBoolean(bool);
+        void setToValue(Value &);
+
+        void incrementByValue(Value &);
+        void decrementByValue(Value &);
+        void applyMinimumByValue(Value &);
+        void applyMaximumByValue(Value &);
 
         double getDecimal(void);
         int getInteger(void);

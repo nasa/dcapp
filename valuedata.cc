@@ -2,7 +2,6 @@
 #include <cstdlib>
 #include <cstring>
 #include "basicutils/msg.hh"
-#include "types.hh"
 #include "valuedata.hh"
 #include "string_utils.hh"
 
@@ -123,16 +122,6 @@ void Variable::setToString(std::string &input)
     }
 }
 
-void Variable::setToValue(Value &that)
-{
-    switch (this->type)
-    {
-        case DECIMAL_TYPE: this->decval = that.getDecimal(); break;
-        case INTEGER_TYPE: this->intval = that.getInteger(); break;
-        case STRING_TYPE:  this->strval = that.getString();  break;
-    }
-}
-
 void Variable::setToDecimal(double val) { this->decval = val; }
 void Variable::setToInteger(int val) { this->intval = val; }
 
@@ -153,6 +142,64 @@ void Variable::setToBoolean(bool input)
             else       this->strval = "false";
             break;
     }
+}
+
+void Variable::setToValue(Value &that)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: this->decval = that.getDecimal(); break;
+        case INTEGER_TYPE: this->intval = that.getInteger(); break;
+        case STRING_TYPE:  this->strval = that.getString();  break;
+    }
+}
+
+void Variable::incrementByValue(Value &that)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: this->decval += that.getDecimal(); break;
+        case INTEGER_TYPE: this->intval += that.getInteger(); break;
+        case STRING_TYPE:  this->strval += that.getString();  break;
+    }
+}
+
+void Variable::decrementByValue(Value &that)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: this->decval -= that.getDecimal(); break;
+        case INTEGER_TYPE: this->intval -= that.getInteger(); break;
+// There is no good way to decrement a String variable
+    }
+}
+
+void Variable::applyMinimumByValue(Value &that)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE:
+            if (this->decval < that.getDecimal()) this->decval = that.getDecimal();
+            break;
+        case INTEGER_TYPE:
+            if (this->intval < that.getInteger()) this->intval = that.getInteger();
+            break;
+    }
+// There is no good way to bound a String variable
+}
+
+void Variable::applyMaximumByValue(Value &that)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE:
+            if (this->decval > that.getDecimal()) this->decval = that.getDecimal();
+            break;
+        case INTEGER_TYPE:
+            if (this->intval > that.getInteger()) this->intval = that.getInteger();
+            break;
+    }
+// There is no good way to bound a String variable
 }
 
 double Variable::getDecimal(void)

@@ -6,7 +6,6 @@
 #include "RenderLib/RenderLib.hh"
 #include "valuedata.hh"
 #include "kolor.hh"
-#include "types.hh"
 #include "geometric.hh"
 #include "parent.hh"
 

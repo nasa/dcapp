@@ -1,7 +1,6 @@
 #include <cstring>
 #include <list>
 #include "nodes.hh"
-#include "types.hh"
 #include "valuedata.hh"
 #include "varlist.hh"
 #include "setvalue.hh"
@@ -55,70 +54,28 @@ void dcSetValue::updateData(void)
 
 void dcSetValue::processAnimation(Animation *anim)
 {
-    if (var->getType() == DECIMAL_TYPE)
-    {
-        Variable *endval = new Variable;
-        endval->setType(DECIMAL_TYPE);
-        endval->setToDecimal(var->getDecimal());
-        calculateValue(optype, endval, val, min, max);
-        anim->addItem(var->getPointer(), var->getDecimal(), endval->getDecimal());
-    }
+    Variable endval;
+    endval.setType(DECIMAL_TYPE);
+    endval.setToDecimal(var->getDecimal());
+    calculateValue(optype, &endval, val, min, max);
+    anim->addItem(var->getPointer(), var->getDecimal(), endval.getDecimal());
 }
 
 void dcSetValue::calculateValue(int opspec, Variable *varID, Value *valID, Value *minID, Value *maxID)
 {
-    switch (varID->getType())
+    switch (opspec)
     {
-        case DECIMAL_TYPE:
-            switch (opspec)
-            {
-                case PlusEquals:
-                    *(double *)varID->getPointer() += valID->getDecimal();
-                    break;
-                case MinusEquals:
-                    *(double *)varID->getPointer() -= valID->getDecimal();
-                    break;
-                default:
-                    *(double *)varID->getPointer() = valID->getDecimal();
-            }
-            if (minID)
-            {
-                double minval = minID->getDecimal();
-                if (*(double *)varID->getPointer() < minval) *(double *)varID->getPointer() = minval;
-            }
-            if (maxID)
-            {
-                double maxval = maxID->getDecimal();
-                if (*(double *)varID->getPointer() > maxval) *(double *)varID->getPointer() = maxval;
-            }
+        case PlusEquals:
+            varID->incrementByValue(*valID);
             break;
-        case INTEGER_TYPE:
-            switch (opspec)
-            {
-                case PlusEquals:
-                    *(int *)varID->getPointer() += valID->getInteger();
-                    break;
-                case MinusEquals:
-                    *(int *)varID->getPointer() -= valID->getInteger();
-                    break;
-                default:
-                    *(int *)varID->getPointer() = valID->getInteger();
-            }
-            if (minID)
-            {
-                int minval = minID->getInteger();
-                if (*(int *)varID->getPointer() < minval) *(int *)varID->getPointer() = minval;
-            }
-            if (maxID)
-            {
-                int maxval = maxID->getInteger();
-                if (*(int *)varID->getPointer() > maxval) *(int *)varID->getPointer() = maxval;
-            }
+        case MinusEquals:
+            varID->decrementByValue(*valID);
             break;
-        case STRING_TYPE:
-            if (opspec == Equals) *(std::string *)varID->getPointer() = valID->getString();
-            break;
+        default:
+            varID->setToValue(*valID);
     }
+    if (minID) varID->applyMinimumByValue(*minID);
+    if (maxID) varID->applyMaximumByValue(*maxID);
 
     for (const auto &commitem : AppData.commlist) commitem->flagAsChanged(varID);
 }
