@@ -18,7 +18,7 @@ class dcSetValue : public dcObject
         void processAnimation(Animation *);
 
     private:
-        void calculateValue(int, Variable *, Value *, Value *, Value *);
+        void calculateValue(Variable *);
 
         int optype;
         Variable *var;

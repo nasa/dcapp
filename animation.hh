@@ -2,6 +2,7 @@
 #define _ANIMATION_HH_
 
 #include <list>
+#include "valuedata.hh"
 
 class AnimationItem
 {
@@ -9,11 +10,11 @@ class AnimationItem
         AnimationItem();
         virtual ~AnimationItem();
 
-        void initialize(void *, double, double);
+        void initialize(Variable *, double);
         void update(double);
 
     private:
-        double *variable;
+        Variable *var;
         double startValue;
         double deltaValue;
 };
@@ -25,7 +26,7 @@ class Animation
         virtual ~Animation();
 
         void initialize(double, double);
-        void addItem(void *, double, double);
+        void addItem(Variable *, double);
         int update(double);
 
     private:

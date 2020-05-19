@@ -21,10 +21,10 @@ void Animation::initialize(double start, double dur)
     this->startTime = start;
 }
 
-void Animation::addItem(void *var, double startval, double endval)
+void Animation::addItem(Variable *var, double endval)
 {
     AnimationItem *myitem = new AnimationItem;
-    myitem->initialize(var, startval, endval);
+    myitem->initialize(var, endval);
     this->items.push_back(myitem);
 }
 
@@ -56,14 +56,14 @@ AnimationItem::~AnimationItem()
 {
 }
 
-void AnimationItem::initialize(void *var, double startval, double endval)
+void AnimationItem::initialize(Variable *varin, double endval)
 {
-    this->variable = (double *)var;
-    this->startValue = startval;
-    this->deltaValue = endval - startval;
+    this->var = varin;
+    this->startValue = this->var->getDecimal();
+    this->deltaValue = endval - this->startValue;
 }
 
 void AnimationItem::update(double pct_elapsed)
 {
-    *(this->variable) = this->startValue + (pct_elapsed * this->deltaValue);
+    this->var->setToDecimal(this->startValue + (pct_elapsed * this->deltaValue));
 }

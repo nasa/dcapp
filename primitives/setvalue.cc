@@ -39,7 +39,8 @@ void dcSetValue::setRange(const char *minspec, const char *maxspec)
 
 void dcSetValue::draw(void)
 {
-    calculateValue(optype, var, val, min, max);
+    calculateValue(var);
+    for (const auto &commitem : AppData.commlist) commitem->flagAsChanged(var);
 }
 
 void dcSetValue::handleEvent(void)
@@ -49,7 +50,8 @@ void dcSetValue::handleEvent(void)
 
 void dcSetValue::updateData(void)
 {
-    calculateValue(optype, var, val, min, max);
+    calculateValue(var);
+    for (const auto &commitem : AppData.commlist) commitem->flagAsChanged(var);
 }
 
 void dcSetValue::processAnimation(Animation *anim)
@@ -57,25 +59,23 @@ void dcSetValue::processAnimation(Animation *anim)
     Variable endval;
     endval.setType(DECIMAL_TYPE);
     endval.setToDecimal(var->getDecimal());
-    calculateValue(optype, &endval, val, min, max);
-    anim->addItem(var->getPointer(), var->getDecimal(), endval.getDecimal());
+    calculateValue(&endval);
+    anim->addItem(var, endval.getDecimal());
 }
 
-void dcSetValue::calculateValue(int opspec, Variable *varID, Value *valID, Value *minID, Value *maxID)
+void dcSetValue::calculateValue(Variable *varID)
 {
-    switch (opspec)
+    switch (optype)
     {
         case PlusEquals:
-            varID->incrementByValue(*valID);
+            varID->incrementByValue(*val);
             break;
         case MinusEquals:
-            varID->decrementByValue(*valID);
+            varID->decrementByValue(*val);
             break;
         default:
-            varID->setToValue(*valID);
+            varID->setToValue(*val);
     }
-    if (minID) varID->applyMinimumByValue(*minID);
-    if (maxID) varID->applyMaximumByValue(*maxID);
-
-    for (const auto &commitem : AppData.commlist) commitem->flagAsChanged(varID);
+    if (min) varID->applyMinimumByValue(*min);
+    if (max) varID->applyMaximumByValue(*max);
 }
