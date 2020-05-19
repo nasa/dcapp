@@ -7,6 +7,7 @@
 #include "condition.hh"
 
 enum { Simple, IfEquals, IfNotEquals, IfGreaterThan, IfLessThan, IfGreaterOrEquals, IfLessOrEquals };
+enum { Neither, LHS, RHS };
 
 dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inval1, const char *inval2)
 {
@@ -37,16 +38,12 @@ dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inv
     if (inval2) val2 = getValue(inval2);
     else val2 = getConstantFromBoolean(true);
 
-    datatype1 = val1->getType();
-    datatype2 = val2->getType();
-
-    if (datatype1 == UNDEFINED_TYPE && datatype2 == UNDEFINED_TYPE)
+    if (opspec != Simple)
     {
-        datatype1 = STRING_TYPE;
-        datatype2 = STRING_TYPE;
+        if (val1->isVariable()) dynvar = LHS;
+        else if (val2->isVariable()) dynvar = RHS;
+        else dynvar = Neither;
     }
-    else if (datatype1 == UNDEFINED_TYPE) datatype1 = datatype2;
-    else if (datatype2 == UNDEFINED_TYPE) datatype2 = datatype1;
 }
 
 dcCondition::~dcCondition()
@@ -143,89 +140,59 @@ void dcCondition::processAnimation(Animation *anim)
 
 bool dcCondition::checkCondition(void)
 {
-    bool eval = false;
+    if (opspec == Simple) return val1->getBoolean();
 
-    switch (datatype1)
+    switch (dynvar)
     {
-        case DECIMAL_TYPE:
+        case LHS:
             switch (opspec)
             {
-                case Simple:
-                    if (val1->getBoolean()) eval = true;
-                    break;
-                case IfEquals:
-                    if (val1->getDecimal() == val2->getDecimal()) eval = true;
-                    break;
                 case IfNotEquals:
-                    if (val1->getDecimal() != val2->getDecimal()) eval = true;
-                    break;
+                    if (val1->compareToValue(*val2) != isEqual) return true; else return false;
                 case IfGreaterThan:
-                    if (val1->getDecimal() > val2->getDecimal()) eval = true;
-                    break;
+                    if (val1->compareToValue(*val2) == isGreaterThan) return true; else return false;
                 case IfLessThan:
-                    if (val1->getDecimal() < val2->getDecimal()) eval = true;
-                    break;
+                    if (val1->compareToValue(*val2) == isLessThan) return true; else return false;
                 case IfGreaterOrEquals:
-                    if (val1->getDecimal() >= val2->getDecimal()) eval = true;
-                    break;
+                    if (val1->compareToValue(*val2) != isLessThan) return true; else return false;
                 case IfLessOrEquals:
-                    if (val1->getDecimal() <= val2->getDecimal()) eval = true;
-                    break;
+                    if (val1->compareToValue(*val2) != isGreaterThan) return true; else return false;
+                default:
+                    if (val1->compareToValue(*val2) == isEqual) return true; else return false;
             }
-            break;
-        case INTEGER_TYPE:
+        case RHS:
+            // these look backwards, but it's because we're evaluating the comparison backwards
             switch (opspec)
             {
-                case Simple:
-                    if (val1->getBoolean()) eval = true;
-                    break;
-                case IfEquals:
-                    if (val1->getInteger() == val2->getInteger()) eval = true;
-                    break;
                 case IfNotEquals:
-                    if (val1->getInteger() != val2->getInteger()) eval = true;
-                    break;
+                    if (val2->compareToValue(*val1) != isEqual) return true; else return false;
                 case IfGreaterThan:
-                    if (val1->getInteger() > val2->getInteger()) eval = true;
-                    break;
+                    if (val2->compareToValue(*val1) == isLessThan) return true; else return false;
                 case IfLessThan:
-                    if (val1->getInteger() < val2->getInteger()) eval = true;
-                    break;
+                    if (val2->compareToValue(*val1) == isGreaterThan) return true; else return false;
                 case IfGreaterOrEquals:
-                    if (val1->getInteger() >= val2->getInteger()) eval = true;
-                    break;
+                    if (val2->compareToValue(*val1) != isGreaterThan) return true; else return false;
                 case IfLessOrEquals:
-                    if (val1->getInteger() <= val2->getInteger()) eval = true;
-                    break;
+                    if (val2->compareToValue(*val1) != isLessThan) return true; else return false;
+                default:
+                    if (val2->compareToValue(*val1) == isEqual) return true; else return false;
             }
-            break;
-        case STRING_TYPE:
+        default:
+            // evaluate as strings if both sides are Constants
             switch (opspec)
             {
-                case Simple:
-                    if (val1->getBoolean()) eval = true;
-                    break;
-                case IfEquals:
-                    if (val1->getString() == val2->getString()) eval = true;
-                    break;
                 case IfNotEquals:
-                    if (val1->getString() != val2->getString()) eval = true;
-                    break;
+                    if (val1->getString() != val2->getString()) return true; else return false;
                 case IfGreaterThan:
-                    if (val1->getString() > val2->getString()) eval = true;
-                    break;
+                    if (val1->getString() > val2->getString()) return true; else return false;
                 case IfLessThan:
-                    if (val1->getString() < val2->getString()) eval = true;
-                    break;
+                    if (val1->getString() < val2->getString()) return true; else return false;
                 case IfGreaterOrEquals:
-                    if (val1->getString() >= val2->getString()) eval = true;
-                    break;
+                    if (val1->getString() >= val2->getString()) return true; else return false;
                 case IfLessOrEquals:
-                    if (val1->getString() <= val2->getString()) eval = true;
-                    break;
+                    if (val1->getString() <= val2->getString()) return true; else return false;
+                default:
+                    if (val1->getString() == val2->getString()) return true; else return false;
             }
-            break;
     }
-
-    return eval;
 }

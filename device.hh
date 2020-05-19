@@ -4,10 +4,10 @@
 class DeviceModule
 {
     public:
-        DeviceModule();
-        virtual ~DeviceModule();
+        DeviceModule() { };
+        virtual ~DeviceModule() { };
 
-        virtual void read(void);
+        virtual void read(void) { };
 };
 
 #endif

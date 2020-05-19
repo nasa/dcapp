@@ -13,7 +13,6 @@ DCAPP_SOURCES := \
 	app_main.cc \
 	comm.cc \
 	constants.cc \
-	device.cc \
 	handle_bezel.cc \
 	handle_keyboard.cc \
 	handle_mouse.cc \

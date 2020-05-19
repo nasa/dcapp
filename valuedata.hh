@@ -8,19 +8,23 @@
 #define DECIMAL_TYPE   2
 #define INTEGER_TYPE   3
 
+enum { isEqual, isGreaterThan, isLessThan };
+
 class Value
 {
     public:
         Value();
         virtual ~Value();
 
+        virtual unsigned compareToValue(Value &) { return isEqual; };
+
         virtual double getDecimal(void) { return 0.0; };
         virtual int getInteger(void) { return 0; };
         virtual std::string getString(std::string = "") { return ""; };
         virtual bool getBoolean(void) { return false; };
 
-// this shouldn't be here, it's a hack
-virtual int getType(void) { return 0; };
+        virtual bool isConstant(void) { return false; };
+        virtual bool isVariable(void) { return false; };
 
     protected:
         double decval;
@@ -47,6 +51,8 @@ class Constant : public Value
         std::string getString(std::string = "");
         bool getBoolean(void);
 
+        bool isConstant(void);
+
     private:
         bool boolval;
 };
@@ -72,6 +78,8 @@ class Variable : public Value
         void applyMinimumByValue(Value &);
         void applyMaximumByValue(Value &);
 
+        unsigned compareToValue(Value &);
+
         double getDecimal(void);
         int getInteger(void);
         std::string getString(std::string = "");
@@ -81,12 +89,13 @@ class Variable : public Value
         void setType(const char *);
         void setAttributes(Variable &);
 
-        int getType(void);
         void *getPointer(void);
 
         bool isDecimal(void);
         bool isInteger(void);
         bool isString(void);
+
+        bool isVariable(void);
 
     private:
         int type;

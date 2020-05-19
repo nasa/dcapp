@@ -78,6 +78,8 @@ int Constant::getInteger(void) { return this->intval; }
 std::string Constant::getString(std::string) { return this->strval; }
 bool Constant::getBoolean(void) { return this->boolval; }
 
+bool Constant::isConstant(void) { return true; };
+
 
 
 Variable::Variable() : type(UNDEFINED_TYPE) { }
@@ -170,7 +172,7 @@ void Variable::decrementByValue(Value &that)
     {
         case DECIMAL_TYPE: this->decval -= that.getDecimal(); break;
         case INTEGER_TYPE: this->intval -= that.getInteger(); break;
-// There is no good way to decrement a String variable
+        // There is no good way to decrement a String variable
     }
 }
 
@@ -184,8 +186,8 @@ void Variable::applyMinimumByValue(Value &that)
         case INTEGER_TYPE:
             if (this->intval < that.getInteger()) this->intval = that.getInteger();
             break;
+        // There is no good way to bound a String variable
     }
-// There is no good way to bound a String variable
 }
 
 void Variable::applyMaximumByValue(Value &that)
@@ -198,8 +200,28 @@ void Variable::applyMaximumByValue(Value &that)
         case INTEGER_TYPE:
             if (this->intval > that.getInteger()) this->intval = that.getInteger();
             break;
+        // There is no good way to bound a String variable
     }
-// There is no good way to bound a String variable
+}
+
+unsigned Variable::compareToValue(Value &that)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE:
+            if (this->decval > that.getDecimal()) return isGreaterThan;
+            else if (this->decval < that.getDecimal()) return isLessThan;
+            else return isEqual;
+        case INTEGER_TYPE:
+            if (this->intval > that.getInteger()) return isGreaterThan;
+            else if (this->intval < that.getInteger()) return isLessThan;
+            else return isEqual;
+        case STRING_TYPE:
+            if (this->strval > that.getString()) return isGreaterThan;
+            else if (this->strval < that.getString()) return isLessThan;
+            else return isEqual;
+    }
+    return isEqual; // undefined behavior if type isn't defined
 }
 
 double Variable::getDecimal(void)
@@ -305,8 +327,6 @@ void Variable::setType(const char *type_spec)
 
 void Variable::setAttributes(Variable &that) { this->type = that.type; }
 
-int Variable::getType(void) { return this->type; }
-
 void * Variable::getPointer(void)
 {
     switch (this->type)
@@ -321,3 +341,5 @@ void * Variable::getPointer(void)
 bool Variable::isDecimal(void) { if (this->type == DECIMAL_TYPE) return true; else return false; }
 bool Variable::isInteger(void) { if (this->type == INTEGER_TYPE) return true; else return false; }
 bool Variable::isString(void)  { if (this->type == STRING_TYPE)  return true; else return false; }
+
+bool Variable::isVariable(void) { return true; };

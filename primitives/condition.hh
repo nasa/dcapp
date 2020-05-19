@@ -28,9 +28,8 @@ class dcCondition : public dcObject
         dcParent *FalseList;
 
     private:
-        int opspec;
-        int datatype1;
-        int datatype2;
+        unsigned opspec;
+        unsigned dynvar;
         Value *val1;
         Value *val2;
 };
