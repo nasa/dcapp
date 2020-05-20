@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include "ntcan.h"
 #include "varlist.hh"
+#include "string_utils.hh"
 #include "basicutils/msg.hh"
 #include "CAN.hh"
 
@@ -31,12 +32,12 @@ CanDevice::~CanDevice()
 
 void CanDevice::initialize(const char *networkstr, const char *buttonIDstr, const char *controlIDstr, int *inhibitstr)
 {
-    int network = 0;
+    int network;
     NTCAN_RESULT retval;
 
-    if (networkstr) network = strtol(networkstr, 0x0, 10);
-    if (buttonIDstr) this->buttonID = strtol(buttonIDstr, 0x0, 10);
-    if (controlIDstr) this->controlID = strtol(controlIDstr, 0x0, 10);
+    network = StringToInteger(networkstr);
+    this->buttonID = StringToInteger(buttonIDstr);
+    this->controlID = StringToInteger(controlIDstr);
 
     // Tell the driver to open a connection and give us a handle.
     retval = canOpen(network, 0, 1024, 1024, 1000, 0, &(this->ntCanHandle));

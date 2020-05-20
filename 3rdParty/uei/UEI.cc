@@ -3,6 +3,7 @@
 #include <csignal>
 #include <strings.h>
 #include "basicutils/msg.hh"
+#include "string_utils.hh"
 #include "udp_comm.hh"
 #include "UEI.hh"
 
@@ -24,8 +25,8 @@ UeiDevice::~UeiDevice()
 
 void UeiDevice::connect(const char *host, const char *port, const char *ID)
 {
-    this->bezelID = strtol(ID, 0x0, 10);
-    this->uei_socket = mycomm_init(host, strtol(port, 0x0, 10), UEI_BUFFER_SIZE, 0, false, 40);
+    this->bezelID = StringToInteger(ID);
+    this->uei_socket = mycomm_init(host, StringToInteger(port), UEI_BUFFER_SIZE, 0, false, 40);
     if (this->uei_socket) UEI_active = true;
 }
 

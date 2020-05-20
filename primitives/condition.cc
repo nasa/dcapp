@@ -10,6 +10,8 @@ enum { Simple, IfEquals, IfNotEquals, IfGreaterThan, IfLessThan, IfGreaterOrEqua
 enum { Neither, LHS, RHS };
 
 dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inval1, const char *inval2)
+:
+eval(false), opspec(Simple)
 {
     // don't parent this object if inval1 and inval2 are both nullptr
     if (!inval1 && !inval2) return;
@@ -21,7 +23,6 @@ dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inv
     TrueList->setParent(this);
     FalseList->setParent(this);
 
-    opspec = Simple;
     if (inspec)
     {
         if (!strcasecmp(inspec, "eq")) opspec = IfEquals;
@@ -42,7 +43,26 @@ dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inv
     {
         if (val1->isVariable()) dynvar = LHS;
         else if (val2->isVariable()) dynvar = RHS;
-        else dynvar = Neither;
+        else
+        {
+            dynvar = Neither;
+            // evaluate this logic here once since the result will never change
+            switch (opspec)
+            {
+                case IfNotEquals:
+                    if (val1->compareToValue(*val2) != isEqual) eval = true; break;
+                case IfGreaterThan:
+                    if (val1->compareToValue(*val2) == isGreaterThan) eval = true; break;
+                case IfLessThan:
+                    if (val1->compareToValue(*val2) == isLessThan) eval = true; break;
+                case IfGreaterOrEquals:
+                    if (val1->compareToValue(*val2) != isLessThan) eval = true; break;
+                case IfLessOrEquals:
+                    if (val1->compareToValue(*val2) != isGreaterThan) eval = true; break;
+                default:
+                    if (val1->compareToValue(*val2) == isEqual) eval = true;
+            }
+        }
     }
 }
 
@@ -178,21 +198,6 @@ bool dcCondition::checkCondition(void)
                     if (val2->compareToValue(*val1) == isEqual) return true; else return false;
             }
         default:
-            // evaluate as strings if both sides are Constants
-            switch (opspec)
-            {
-                case IfNotEquals:
-                    if (val1->getString() != val2->getString()) return true; else return false;
-                case IfGreaterThan:
-                    if (val1->getString() > val2->getString()) return true; else return false;
-                case IfLessThan:
-                    if (val1->getString() < val2->getString()) return true; else return false;
-                case IfGreaterOrEquals:
-                    if (val1->getString() >= val2->getString()) return true; else return false;
-                case IfLessOrEquals:
-                    if (val1->getString() <= val2->getString()) return true; else return false;
-                default:
-                    if (val1->getString() == val2->getString()) return true; else return false;
-            }
+            return eval;
     }
 }

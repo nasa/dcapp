@@ -46,6 +46,8 @@ class Constant : public Value
         void setToCharstr(const char *);
         void setToBoolean(bool);
 
+        unsigned compareToValue(Value &);
+
         double getDecimal(void);
         int getInteger(void);
         std::string getString(std::string = "");

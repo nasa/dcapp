@@ -48,8 +48,8 @@ void Constant::setToCharstr(const char *val)
 {
     if (val)
     {
-        this->decval = strtod(val, 0x0);
-        this->intval = (int)strtol(val, 0x0, 10);
+        this->decval = StringToDecimal(val);
+        this->intval = StringToInteger(val);
         this->strval = val;
         this->boolval = StringToBoolean(val);
     }
@@ -71,6 +71,14 @@ void Constant::setToBoolean(bool val)
     }
 
     this->boolval = val;
+}
+
+unsigned Constant::compareToValue(Value &that)
+{
+    // evaluate as String by default
+    if (this->strval > that.getString()) return isGreaterThan;
+    else if (this->strval < that.getString()) return isLessThan;
+    else return isEqual;
 }
 
 double Constant::getDecimal(void) { return this->decval; }
@@ -107,9 +115,9 @@ void Variable::setToCharstr(const char *input)
     {
         switch (this->type)
         {
-            case DECIMAL_TYPE: this->decval = strtod(input, 0x0);          break;
-            case INTEGER_TYPE: this->intval = (int)strtol(input, 0x0, 10); break;
-            case STRING_TYPE:  this->strval = input;                       break;
+            case DECIMAL_TYPE: this->decval = StringToDecimal(input); break;
+            case INTEGER_TYPE: this->intval = StringToInteger(input); break;
+            case STRING_TYPE:  this->strval = input;                  break;
         }
     }
 }
@@ -118,9 +126,9 @@ void Variable::setToString(std::string &input)
 {
     switch (this->type)
     {
-        case DECIMAL_TYPE: this->decval = strtod(input.c_str(), 0x0);          break;
-        case INTEGER_TYPE: this->intval = (int)strtol(input.c_str(), 0x0, 10); break;
-        case STRING_TYPE:  this->strval = input;                               break;
+        case DECIMAL_TYPE: this->decval = StringToDecimal(input); break;
+        case INTEGER_TYPE: this->intval = StringToInteger(input); break;
+        case STRING_TYPE:  this->strval = input;                  break;
     }
 }
 
