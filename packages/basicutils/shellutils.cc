@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cctype>
-#include "basicutils/pathinfo.hh"
+#include "pathinfo.hh"
 
 std::vector<std::string> parseUserPath(void)
 {

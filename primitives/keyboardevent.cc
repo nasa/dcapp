@@ -1,4 +1,4 @@
-#include "string_utils.hh"
+#include "basicutils/stringutils.hh"
 #include "keyboardevent.hh"
 
 dcKeyboardEvent::dcKeyboardEvent(dcParent *myparent) : mykey(0)

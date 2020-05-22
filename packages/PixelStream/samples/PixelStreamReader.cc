@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <GL/gl.h>
 #include "basicutils/msg.hh"
+#include "basicutils/stringutils.hh"
 #include "TaraDraw/TaraDraw.hh"
 #include "PixelStream/curlLib.hh"
 #include "PixelStream/PixelStream.hh"
@@ -151,7 +152,7 @@ int main(int argc, char **argv)
         }
         else if (argc == 3)
         {
-            port = strtol(argv[2], 0x0, 10);
+            port = StringToInteger(argv[2]);
             if (port > 0) host = strdup("localhost");
             else
             {
@@ -163,26 +164,26 @@ int main(int argc, char **argv)
         else if (argc == 4)
         {
             host = strdup(argv[2]);
-            port = strtol(argv[3], 0x0, 10);
+            port = StringToInteger(argv[3]);
             path = strdup("video?nativeresolution=1");
         }
         else if (argc == 5)
         {
             host = strdup(argv[2]);
-            port = strtol(argv[3], 0x0, 10);
+            port = StringToInteger(argv[3]);
             path = strdup(argv[4]);
         }
         else if (argc == 6)
         {
             host = strdup(argv[2]);
-            port = strtol(argv[3], 0x0, 10);
+            port = StringToInteger(argv[3]);
             path = strdup(argv[4]);
             username = strdup(argv[5]);
         }
         else if (argc == 7)
         {
             host = strdup(argv[2]);
-            port = strtol(argv[3], 0x0, 10);
+            port = StringToInteger(argv[3]);
             path = strdup(argv[4]);
             username = strdup(argv[5]);
             password = strdup(argv[6]);
@@ -201,12 +202,12 @@ int main(int argc, char **argv)
         if (argc == 3)
         {
             host = strdup("localhost");
-            port = strtol(argv[2], 0x0, 10);
+            port = StringToInteger(argv[2]);
         }
         else if (argc == 4)
         {
             host = strdup(argv[2]);
-            port = strtol(argv[3], 0x0, 10);
+            port = StringToInteger(argv[3]);
         }
         else usageError(argv[0]);
 
@@ -222,7 +223,7 @@ int main(int argc, char **argv)
         if (argc == 3)
         {
             filename = strdup(argv[1]);
-            shared_memory_key = strtol(argv[2], 0x0, 10);
+            shared_memory_key = StringToInteger(argv[2]);
         }
         else usageError(argv[0]);
 

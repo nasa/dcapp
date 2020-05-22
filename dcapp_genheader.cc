@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include "basicutils/msg.hh"
 #include "basicutils/pathinfo.hh"
-#include "shell_utils.hh"
+#include "basicutils/shellutils.hh"
 #include "xml_utils.hh"
 #include "xml_stringsub.hh"
 

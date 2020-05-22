@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include "ntcan.h"
 #include "varlist.hh"
-#include "string_utils.hh"
+#include "basicutils/stringutils.hh"
 #include "basicutils/msg.hh"
 #include "CAN.hh"
 

@@ -9,6 +9,7 @@
 #include <dlfcn.h>
 #include "basicutils/msg.hh"
 #include "basicutils/pathinfo.hh"
+#include "basicutils/stringutils.hh"
 #include "trick/trickcomm.hh"
 #include "edge/edgecomm.hh"
 #include "can/CAN.hh"
@@ -17,7 +18,6 @@
 #include "primitives/primitives.hh"
 #include "varlist.hh"
 #include "nodes.hh"
-#include "string_utils.hh"
 #include "xml_utils.hh"
 #include "xml_stringsub.hh"
 

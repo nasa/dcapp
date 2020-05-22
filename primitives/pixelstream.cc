@@ -1,7 +1,7 @@
 #include "nodes.hh"
 #include "valuedata.hh"
 #include "varlist.hh"
-#include "string_utils.hh"
+#include "basicutils/stringutils.hh"
 #include "RenderLib/RenderLib.hh"
 #include "commonutils.hh"
 #include "pixelstream.hh"

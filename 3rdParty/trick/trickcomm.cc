@@ -5,7 +5,7 @@
 #include <cstring>
 #include "basicutils/timer.hh"
 #include "basicutils/msg.hh"
-#include "string_utils.hh"
+#include "basicutils/stringutils.hh"
 #include "varlist.hh"
 #include "valuedata.hh"
 #include "trickcomm.hh"

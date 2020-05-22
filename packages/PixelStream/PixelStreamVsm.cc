@@ -10,6 +10,7 @@
 #include <jpeglib.h>
 #include "basicutils/timer.hh"
 #include "basicutils/msg.hh"
+#include "basicutils/stringutils.hh"
 #include "PixelStreamVsm.hh"
 #include "curlLib.hh"
 
@@ -280,17 +281,14 @@ int PixelStreamVsm::resolveURL(const char *instr)
             mypath = tmp_path;
         }
 
-        int portnum = strtol(tmp_port, 0x0, 10);
-
         struct hostent *server = gethostbyname(tmp_host);
-
         if (!server)
         {
             error_msg("Unable to resolve host name: " << tmp_host);
             return -1;
         }
 
-        mjpegIO = curlLibCreateHandle(inet_ntoa(*(in_addr * )server->h_addr), portnum, mypath, 0x0, 0x0, this);
+        mjpegIO = curlLibCreateHandle(inet_ntoa(*(in_addr * )server->h_addr), StringToInteger(tmp_port), mypath, 0x0, 0x0, this);
         if (!mjpegIO) return -1;
 
         free(tmp_path);
@@ -303,6 +301,7 @@ int PixelStreamVsm::resolveURL(const char *instr)
 
 #else
 
+#include <cstdlib>
 #include <cstring>
 #include "basicutils/msg.hh"
 #include "PixelStreamVsm.hh"

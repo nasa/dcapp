@@ -1,6 +1,6 @@
 #include "nodes.hh"
 #include "RenderLib/RenderLib.hh"
-#include "string_utils.hh"
+#include "basicutils/stringutils.hh"
 #include "polygon.hh"
 
 extern appdata AppData;

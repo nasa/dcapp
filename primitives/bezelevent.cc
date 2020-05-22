@@ -1,4 +1,4 @@
-#include "string_utils.hh"
+#include "basicutils/stringutils.hh"
 #include "bezelevent.hh"
 
 dcBezelEvent::dcBezelEvent(dcParent *myparent) : mykey(0), selected(false)
