@@ -6,7 +6,7 @@ LIBDIR := $(shell ./bin/basicutils-config --libdir)
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -Wextra
+CXXFLAGS += -std=c++11 -Wall -Wextra
 
 $(LIBDIR)/libbasicutils.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)

@@ -1,6 +1,7 @@
 #ifdef IDF
 
 #include <cstdlib>
+#include <cstring>
 #include "idf/UsbHagstromKEUSB36FS.hh"
 #include "basicutils/timer.hh"
 #include "basicutils/msg.hh"

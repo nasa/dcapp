@@ -5,16 +5,17 @@
 #include <vector>
 #include <assert.h>
 #include <GL/gl.h>
-#ifndef IOS_BUILD
+#ifdef NPOT_NEEDED
 #include <GL/glu.h>
-#else
+#endif
+#ifdef IOS_BUILD
 #include <OpenGLES/ES1/glext.h>
 #endif
 #include "basicutils/msg.hh"
 #include "fontlib.hh"
 #include "texturelib.hh"
 
-#ifndef IOS_BUILD
+#ifdef NPOT_NEEDED
 static GLint maxTextureSize;
 
 static int computeNearestPowerOfTwo(int val)
@@ -75,7 +76,7 @@ void init_window(void)
     glShadeModel(GL_SMOOTH);
     glClearDepth(1.0f);                // Set the clear value for the depth buffer
     glDepthFunc(GL_LEQUAL);            // Set the depth buffer comparison method
-#ifndef IOS_BUILD
+#ifdef NPOT_NEEDED
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 #endif
 
@@ -134,7 +135,7 @@ void load_texture(tdTexture *textureID)
     {
         glBindTexture(GL_TEXTURE_2D, textureID->getID());
 
-#ifndef IOS_BUILD // iOS 2+ provides NPOT
+#ifdef NPOT_NEEDED
         // Scale the image to power of 2 (OpenGL programming encourages, and used to require, this)
         if (textureID->convertNPOT) convertToNearestPowerOfTwo(textureID);
 #endif
