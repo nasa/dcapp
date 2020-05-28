@@ -86,12 +86,10 @@ while test $# -gt 0 ; do
             echo "${mydir}/${subdir}/${libdir}/libTD.a"
             ;;
         --cflags_internal)
-            if test "$osspec" = "MacOS" ; then
-                opengl_cflags="-I/opt/X11/include"
-            else
+            if test "$osspec" != "MacOS" ; then
                 opengl_cflags="-I/usr/X11R6/include"
             fi
-            echo "-I${parentdir} ${opengl_cflags}"
+            echo "-I${mydir} ${opengl_cflags}"
             ;;
         --subdir)
             echo "${subdir}"

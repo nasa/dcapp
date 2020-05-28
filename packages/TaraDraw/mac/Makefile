@@ -6,7 +6,7 @@ LIBDIR := $(shell ../bin/TaraDraw-config --libdir)
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.mm, %.o, $(wildcard *.mm)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -Wextra -I..
+CXXFLAGS += -Wall -Wextra  $(shell ../bin/TaraDraw-config --cflags_internal)
 
 $(LIBDIR)/libTD.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)
