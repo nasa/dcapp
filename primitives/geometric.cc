@@ -1,11 +1,10 @@
 #include <strings.h>
 #include "valuedata.hh"
 #include "constants.hh"
-#include "alignment.hh"
 #include "varlist.hh"
 #include "geometric.hh"
 
-dcGeometric::dcGeometric(dcParent *myparent) : x(0x0), y(0x0), halign(AlignLeft), valign(AlignBottom)
+dcGeometric::dcGeometric(dcParent *myparent) : x(0x0), y(0x0), halign(dcLeft), valign(dcBottom), originx(dcLeft), originy(dcBottom)
 {
     myparent->addChild(this);
     containerw = getContainerWidth();
@@ -36,15 +35,31 @@ void dcGeometric::setAlignment(const char *inhal, const char *inval)
 {
     if (inhal)
     {
-        if (!strcasecmp(inhal, "Left")) halign = AlignLeft;
-        else if (!strcasecmp(inhal, "Center")) halign = AlignCenter;
-        else if (!strcasecmp(inhal, "Right")) halign = AlignRight;
+        if (!strcasecmp(inhal, "Left")) halign = dcLeft;
+        else if (!strcasecmp(inhal, "Center")) halign = dcCenter;
+        else if (!strcasecmp(inhal, "Right")) halign = dcRight;
     }
     if (inval)
     {
-        if (!strcasecmp(inval, "Bottom")) valign = AlignBottom;
-        else if (!strcasecmp(inval, "Middle")) valign = AlignMiddle;
-        else if (!strcasecmp(inval, "Top")) valign = AlignTop;
+        if (!strcasecmp(inval, "Bottom")) valign = dcBottom;
+        else if (!strcasecmp(inval, "Middle")) valign = dcMiddle;
+        else if (!strcasecmp(inval, "Top")) valign = dcTop;
+    }
+}
+
+void dcGeometric::setOrigin(const char *inx, const char *iny)
+{
+    if (inx)
+    {
+        if (!strcasecmp(inx, "Left")) originx = dcLeft;
+        else if (!strcasecmp(inx, "Center")) originx = dcCenter;
+        else if (!strcasecmp(inx, "Right")) originx = dcRight;
+    }
+    if (iny)
+    {
+        if (!strcasecmp(iny, "Bottom")) originy = dcBottom;
+        else if (!strcasecmp(iny, "Middle")) originy = dcMiddle;
+        else if (!strcasecmp(iny, "Top")) originy = dcTop;
     }
 }
 
@@ -68,15 +83,15 @@ void dcGeometric::computeGeometry(void)
 
     switch (halign)
     {
-        case AlignLeft:
+        case dcLeft:
             refx = left;
             delx = 0;
             break;
-        case AlignCenter:
+        case dcCenter:
             refx = center;
             delx = hwidth;
             break;
-        case AlignRight:
+        case dcRight:
             refx = right;
             delx = width;
             break;
@@ -85,15 +100,15 @@ void dcGeometric::computeGeometry(void)
     }
     switch (valign)
     {
-        case AlignBottom:
+        case dcBottom:
             refy = bottom;
             dely = 0;
             break;
-        case AlignMiddle:
+        case dcMiddle:
             refy = middle;
             dely = hheight;
             break;
-        case AlignTop:
+        case dcTop:
             refy = top;
             dely = height;
             break;
@@ -110,30 +125,33 @@ double dcGeometric::GeomX(Value *x, double w, double containerW, int halign)
     {
         switch (halign)
         {
-            case AlignLeft:
+            case dcLeft:
                 val = 0;
                 break;
-            case AlignCenter:
+            case dcCenter:
                 val = (containerW/2);
                 break;
-            case AlignRight:
+            case dcRight:
                 val = containerW;
                 break;
             default:
                 break;
         }
     }
-// TODO: Remove the next line, but first create new way to achieve this and update all known displays
-    else if (x->getDecimal() < 0) val = x->getDecimal() + containerW;
-    else val = x->getDecimal();
+    else
+{
+//if (x->getDecimal() < 0) printf("WARNING: X in Geometric (%g)\n", x->getDecimal());
+if (originx == dcRight) val = containerw->getDecimal() - x->getDecimal();
+else val = x->getDecimal();
+}
 
     switch (halign)
     {
-        case AlignLeft:
+        case dcLeft:
             return val;
-        case AlignCenter:
+        case dcCenter:
             return (val - (w/2));
-        case AlignRight:
+        case dcRight:
             return (val - w);
         default:
             return 0;
@@ -148,30 +166,33 @@ double dcGeometric::GeomY(Value *y, double h, double containerH, int valign)
     {
         switch (valign)
         {
-            case AlignBottom:
+            case dcBottom:
                 val = 0;
                 break;
-            case AlignMiddle:
+            case dcMiddle:
                 val = (containerH/2);
                 break;
-            case AlignTop:
+            case dcTop:
                 val = containerH;
                 break;
             default:
                 break;
         }
     }
-// TODO: Remove the next line, but first create new way to achieve this and update all known displays
-    else if (y->getDecimal() < 0) val = y->getDecimal() + containerH;
-    else val = y->getDecimal();
+    else
+{
+//if (y->getDecimal() < 0) printf("WARNING: Y in Geometric (%g)\n", y->getDecimal());
+if (originy == dcTop) val = containerh->getDecimal() - y->getDecimal();
+else val = y->getDecimal();
+}
 
     switch (valign)
     {
-        case AlignBottom:
+        case dcBottom:
             return val;
-        case AlignMiddle:
+        case dcMiddle:
             return (val - (h/2));
-        case AlignTop:
+        case dcTop:
             return (val - h);
         default:
             return 0;

@@ -1,18 +1,12 @@
 .PHONY: clean
 
-OSSPEC := $(shell ../bin/TaraDraw-config --osspec)
 OBJDIR := $(shell ../bin/TaraDraw-config --objdir)
 LIBDIR := $(shell ../bin/TaraDraw-config --libdir)
 
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -Wextra -I..
-ifeq ($(OSSPEC), MacOS)
-    CXXFLAGS += -I/opt/X11/include
-else
-    CXXFLAGS += -I/usr/X11R6/include
-endif
+CXXFLAGS += -Wall -Wextra $(shell ./bin/TaraDraw-config --cflags_internal)
 
 $(LIBDIR)/libTD.a: $(OBJECTS)
 	mkdir -p $(LIBDIR)

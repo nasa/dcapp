@@ -17,7 +17,8 @@ ifeq ($(OSSPEC), MacOS)
     LINK_LIBS += -framework OpenGL -framework AppKit
 else
     CXXFLAGS += -I/usr/X11R6/include
-    LINK_LIBS += -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL -lGLU
+# add -lGLU below if NPOT (nearest-power-of-two) conversion is needed
+    LINK_LIBS += -L/usr/X11R6/lib -lX11 -lXi -lXmu -lGL
 endif
 
 $(BINDIR)/PixelStreamReader: PixelStreamReader.cc

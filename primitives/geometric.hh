@@ -5,6 +5,9 @@
 #include "parent.hh"
 #include "object.hh"
 
+enum { dcLeft, dcCenter, dcRight };
+enum { dcBottom, dcMiddle, dcTop };
+
 class dcGeometric : public dcObject
 {
     public:
@@ -13,6 +16,7 @@ class dcGeometric : public dcObject
         void setSize(const char *, const char *);
         void setRotation(const char *);
         void setAlignment(const char *, const char *);
+        void setOrigin(const char *, const char *);
         void computeGeometry(void);
 
     protected:
@@ -24,6 +28,8 @@ class dcGeometric : public dcObject
         Value *containerh;
         unsigned halign;
         unsigned valign;
+        unsigned originx;
+        unsigned originy;
         Value *rotate;
 
         double refx;

@@ -7,15 +7,16 @@ Usage: $0 [OPTION]...
 Get package compilation and linking information.
 
 Options:
-    --osspec       default directory name extension
-    --objdir       default directory name for compiled objects
-    --libdir       default directory name for compiled libraries
-    --bindir       default directory name for compiled binaries
-    --cflags       required compilation flags
-    --libs         required linking flags
-    --compdepends  makefile compilation dependencies
-    --linkdepends  makefile linking dependencies
-    --subdir       subdirectory used for this build
+    --osspec           default directory name extension
+    --objdir           default directory name for compiled objects
+    --libdir           default directory name for compiled libraries
+    --bindir           default directory name for compiled binaries
+    --cflags           required compilation flags
+    --libs             required linking flags
+    --compdepends      makefile compilation dependencies
+    --linkdepends      makefile linking dependencies
+    --cflags_internal  required compilation flags for building the package
+    --subdir           subdirectory used for this build
 EOF
     exit $1
 }
@@ -83,6 +84,14 @@ while test $# -gt 0 ; do
             ;;
         --linkdepends)
             echo "${mydir}/${subdir}/${libdir}/libTD.a"
+            ;;
+        --cflags_internal)
+            if test "$osspec" = "MacOS" ; then
+                opengl_cflags="-I/opt/X11/include"
+            else
+                opengl_cflags="-I/usr/X11R6/include"
+            fi
+            echo "-I${parentdir} ${opengl_cflags}"
             ;;
         --subdir)
             echo "${subdir}"

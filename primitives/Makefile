@@ -1,6 +1,5 @@
 .PHONY: clean
 
-OSSPEC := $(shell ./bin/primitives-config --osspec)
 OBJDIR := $(shell ./bin/primitives-config --objdir)
 LIBDIR := $(shell ./bin/primitives-config --libdir)
 

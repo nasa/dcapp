@@ -6,9 +6,9 @@
 #include "basicutils/stringutils.hh"
 #include "valuedata.hh"
 #include "constants.hh"
-#include "alignment.hh"
 #include "varlist.hh"
 #include "commonutils.hh"
+#include "geometric.hh"
 #include "string.hh"
 
 extern appdata AppData;
@@ -105,31 +105,31 @@ void dcString::draw(void)
 
     for (i=0; i<lines.size(); i++)
     {
-        if (background || halign == AlignCenter || halign == AlignRight)
+        if (background || halign == dcCenter || halign == dcRight)
             stringWidth = fontID->getAdvance(lines[i], forcemono) * fontSize->getDecimal() / fontID->getBaseSize();
 
         switch (halign)
         {
-            case AlignLeft:
+            case dcLeft:
                 myleft = 0;
                 break;
-            case AlignCenter:
+            case dcCenter:
                 myleft = -0.5 * stringWidth;
                 break;
-            case AlignRight:
+            case dcRight:
                 myleft = -stringWidth;
                 break;
         }
 
         switch (valign)
         {
-            case AlignBottom:
+            case dcBottom:
                 mybottom = (fontSize->getDecimal()) * (double)(lines.size() - (i + 1));
                 break;
-            case AlignMiddle:
+            case dcMiddle:
                 mybottom = (fontSize->getDecimal()) * (((double)lines.size()/2) - (double)(i + 1));
                 break;
-            case AlignTop:
+            case dcTop:
                 mybottom = -(fontSize->getDecimal()) * (double)(i + 1);
                 break;
         }

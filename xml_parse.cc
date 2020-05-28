@@ -393,6 +393,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
             myitem->setVirtualSize(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
             process_elements(myitem, node->children);
         }
@@ -400,6 +401,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             dcVertex *myitem = new dcVertex(myparent);
             myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
         }
         if (NodeCheck(node, "Line"))
         {
@@ -423,6 +425,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
             myitem->setFillColor(get_element_data(node, "FillColor"));
             myitem->setLineColor(get_element_data(node, "LineColor"));
             myitem->setLineWidth(get_element_data(node, "LineWidth"));
@@ -432,6 +435,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             dcCircle *myitem = new dcCircle(myparent);
             myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
             myitem->setFillColor(get_element_data(node, "FillColor"));
             myitem->setLineColor(get_element_data(node, "LineColor"));
             myitem->setLineWidth(get_element_data(node, "LineWidth"));
@@ -445,6 +449,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setSize("0", get_element_data(node, "Size"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
             myitem->setColor(get_element_data(node, "Color"));
             myitem->setBackgroundColor(get_element_data(node, "BackgroundColor"));
             myitem->setFont(get_element_data(node, "Font"), get_element_data(node, "Face"), get_element_data(node, "Size"), get_element_data(node, "ForceMono"));
@@ -458,6 +463,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
             myitem->setTexture(get_node_content(node));
         }
         if (NodeCheck(node, "PixelStream"))
@@ -467,6 +473,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
             myitem->setProtocol(get_element_data(node, "Protocol"), get_element_data(node, "Host"), get_element_data(node, "Port"), get_element_data(node, "Path"), get_element_data(node, "Username"), get_element_data(node, "Password"), get_element_data(node, "SharedMemoryKey"), get_element_data(node, "File"), get_element_data(node, "Camera"));
             myitem->setTestPattern(get_element_data(node, "TestPattern"));
         }
@@ -502,6 +509,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
 
             bool toggle = false, momentary = false;
             const char *offval, *zerostr=strdup("0"), *onestr=strdup("1");
@@ -710,6 +718,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
             myitem->setBackgrountTexture(get_element_data(node, "CoverFile"));
             myitem->setBallTexture(get_element_data(node, "BallFile"));
             myitem->setRPY(get_element_data(node, "Roll"), get_element_data(node, "Pitch"), get_element_data(node, "Yaw"));
@@ -728,6 +737,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {

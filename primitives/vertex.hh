@@ -10,6 +10,7 @@ class dcVertex : public dcObject
     public:
         dcVertex(dcParent *);
         void setPosition(const char *, const char *);
+        void setOrigin(const char *, const char *);
         void draw(void);
 
     private:
@@ -17,6 +18,8 @@ class dcVertex : public dcObject
         Value *y;
         Value *containerw;
         Value *containerh;
+        unsigned originx;
+        unsigned originy;
 };
 
 #endif

@@ -82,7 +82,8 @@ while test $# -gt 0 ; do
             if test "$osspec" = "MacOS" ; then
                 opengl_libs="-framework OpenGL"
             else
-                opengl_libs="-L/usr/X11R6/lib -lGL -lGLU"
+# add -lGLU below if NPOT (nearest-power-of-two) conversion is needed
+                opengl_libs="-L/usr/X11R6/lib -lGL"
             fi
             if [[ $jpegenabled -ne 0 ]] ; then
                 if test "$jpegpath" ; then
