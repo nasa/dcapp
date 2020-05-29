@@ -64,8 +64,14 @@ int main(int argc, char **argv)
     AppData.DisplayLogic = &DisplayLogicStub;
     AppData.DisplayClose = &DisplayCloseStub;
 
+    AppData.toplevel = 0;
     SetDefaultEnvironment(argv[0]);
     ProcessArgs(argc, argv);
+    if (!(AppData.toplevel))
+    {
+        error_msg("A Window element must be defined in the specfile");
+        Terminate(0);
+    }
 
     curlLibInit();
     AppData.DisplayPreInit(get_pointer);

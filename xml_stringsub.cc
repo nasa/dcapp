@@ -18,108 +18,63 @@ static std::map<std::string, std::string> ppclist;
 static std::list<xmlNodePtr> xmldefaults;
 static std::list<struct xmlStyle> xmlstyles;
 
-static const char *get_constval(const char *instr)
+static std::string get_constval(std::string &instr)
 {
     // First, check arguments list...
-    if (arglist.find(instr) != arglist.end()) return arglist[instr].c_str();
+    if (arglist.find(instr) != arglist.end()) return arglist[instr];
 
     // Then, check to see if the constant has been set in the XML file hierarchy...
-    if (ppclist.find(instr) != ppclist.end()) return ppclist[instr].c_str();
+    if (ppclist.find(instr) != ppclist.end()) return ppclist[instr];
 
     // If no match found in either list, return NULL
-    return 0x0;
+    return "";
 }
 
-static char *replace_string(const char *instr)
+std::string replace_string(std::string instr)
 {
-    int count = 0, i, j, len, outlen, repl_len, in_start, in_end, start, end, outptr = 0;
-    char *in_val, *outstr = 0x0;
-    const char *repl_val;
+    if (instr.find_first_of("#$") == std::string::npos) return instr;
 
-    if (!instr) return 0x0;
-
-    len = strlen(instr);
-    for (i=0; i<len; i++)
+    std::string outstr;
+    
+    for (unsigned i=0; i<instr.length(); i++)
     {
-        if (instr[i] == '#' || instr[i] == '$') count++;
-    }
-    if (!count) return strdup(instr);
-
-    outlen = len;
-    outstr = (char *)calloc(outlen+1, sizeof(char));
-
-    for (i=0; i<len; i++)
-    {
-        if (instr[i] == '#' || instr[i] == '$')
+        if ((instr[i] == '#' || instr[i] == '$') && (i == 0 || instr[i-1] != '\\'))
         {
-            start = -1;
-            end = -1;
-            in_start = i;
-            if (instr[i+1] == '{')
+            unsigned brackets = 0; // keep track of how many characters are brackets
+            std::string evalstr, tmpstr1, tmpstr2;
+
+            if (i+1 < instr.length() && instr[i+1] == '{')
             {
-                start = i+2;
-                for (j=start; j<len; j++)
+                brackets = 2;
+                for (unsigned j=i+2, count=1; count>0 && j<instr.length(); j++)
                 {
-                    if (instr[j] == '}')
-                    {
-                        end = j-1;
-                        in_end = j;
-                        break;
-                    }
+                    if (instr[j] == '{') count++;
+                    else if (instr[j] == '}') count--;
+                    if (count) evalstr += instr[j];
                 }
             }
             else
             {
-                start = i+1;
-                for (j=start; j<len; j++)
-                {
-                    if (!isalnum(instr[j]) && instr[j] != '_')
-                    {
-                        end = j-1;
-                        in_end = j-1;
-                        break;
-                    }
-                }
-                if (end < 0)
-                {
-                    end = len;
-                    in_end = len;
-                }
+                for (unsigned j=i+1; j<instr.length() && (isalnum(instr[j]) || instr[j] == '_'); j++) evalstr += instr[j];
             }
 
-            if (start >= 0 && end >= start)
-            {
-                in_val = (char *)calloc(2+end-start, sizeof(char));
-                strncpy(in_val, &(instr[start]), 1+end-start);
-
-                if (instr[i] == '#') repl_val = get_constval(in_val);
-                else repl_val = getenv(in_val);
-
-                if (repl_val) repl_len = strlen(repl_val);
-                else repl_len = 0;
-
-                outlen += repl_len - (1+end-start);
-                outstr = (char *)realloc(outstr, outlen+1);
-
-                for (j=0; j<repl_len; j++) outstr[outptr++] = repl_val[j];
-
-                repl_val = 0x0;
-                free(in_val);
-                i += in_end - in_start;
-            }
+            tmpstr1 = replace_string(evalstr);
+            if (instr[i] == '#') tmpstr2 = get_constval(tmpstr1);
+            else tmpstr2 = getenv(tmpstr1.c_str());
+            outstr += tmpstr2;
+            i += evalstr.length() + brackets;
         }
-        else if (instr[i] == '\\' && (instr[i+1] == '#' || instr[i+1] == '$')) outstr[outptr++] = instr[++i];
-        else outstr[outptr++] = instr[i];
+        else outstr += instr[i];
     }
-
-    if (outstr) outstr[outptr] = '\0';
 
     return outstr;
 }
 
 char *get_node_content(xmlNodePtr node)
 {
-    return replace_string(get_XML_content(node));
+    char *mycontent = get_XML_content(node);
+    if (mycontent) return strdup(replace_string(get_XML_content(node)).c_str());
+    else return 0x0;
 }
 
 char *get_element_data(xmlNodePtr innode, const char *key)
@@ -127,7 +82,7 @@ char *get_element_data(xmlNodePtr innode, const char *key)
     char *myattr;
 
     myattr = get_XML_attribute(innode, key);
-    if (myattr) return replace_string(myattr);
+    if (myattr) return strdup(replace_string(myattr).c_str());
 
     char *type = get_node_type(innode);
 
@@ -135,13 +90,14 @@ char *get_element_data(xmlNodePtr innode, const char *key)
     char *style = get_XML_attribute(innode, "Style");
     if (style)
     {
+        std::string mystyle = replace_string(style);
         std::list<struct xmlStyle>::iterator xmls;
         for (xmls = xmlstyles.begin(); xmls != xmlstyles.end(); xmls++)
         {
-            if (NodeCheck(xmls->node, type) && !strcmp(xmls->name, style))
+            if (NodeCheck(xmls->node, type) && mystyle == xmls->name)
             {
                 myattr = get_XML_attribute(xmls->node, key);
-                if (myattr) return replace_string(myattr);
+                if (myattr) return strdup(replace_string(myattr).c_str());
             }
         }
     }
@@ -153,7 +109,7 @@ char *get_element_data(xmlNodePtr innode, const char *key)
         if (NodeCheck(*xmld, type))
         {
             myattr = get_XML_attribute(*xmld, key);
-            if (myattr) return replace_string(myattr);
+            if (myattr) return strdup(replace_string(myattr).c_str());
         }
     }
 
