@@ -1,6 +1,5 @@
 #include "TaraDraw/TaraDraw.hh"
 #include "nodes.hh"
-#include "varlist.hh"
 #include "PixelStream/curlLib.hh"
 
 extern appdata AppData;

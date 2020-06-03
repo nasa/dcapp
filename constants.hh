@@ -1,7 +1,6 @@
 #ifndef _CONSTANTS_HH_
 #define _CONSTANTS_HH_
 
-#include <string>
 #include "valuedata.hh"
 
 extern Constant *getConstantFromDecimal(double);

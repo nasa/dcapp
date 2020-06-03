@@ -15,7 +15,6 @@
 #include "basicutils/tidy.hh"
 #include "basicutils/shellutils.hh"
 #include "basicutils/stringutils.hh"
-#include "varlist.hh"
 #include "comm.hh"
 #include "device.hh"
 #include "nodes.hh"

@@ -219,7 +219,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "Variable"))
         {
-            varlist_append(get_node_content(node), get_element_data(node, "Type"), get_element_data(node, "InitialValue"));
+            registerVariable(get_node_content(node), get_element_data(node, "Type"), get_element_data(node, "InitialValue"));
         }
         if (NodeCheck(node, "TrickIo"))
         {

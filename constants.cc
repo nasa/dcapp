@@ -3,7 +3,7 @@
 
 static std::list<Constant> constants;
 
-static Constant *findOrCreateConstant(Constant &vinfo)
+static Constant *findOrRegisterConstant(Constant &vinfo)
 {
     std::list<Constant>::iterator it;
     for (it = constants.begin(); it != constants.end(); it++)
@@ -18,26 +18,26 @@ Constant *getConstantFromDecimal(double inval)
 {
     Constant vinfo;
     vinfo.setToDecimal(inval);
-    return findOrCreateConstant(vinfo);
+    return findOrRegisterConstant(vinfo);
 }
 
 Constant *getConstantFromInteger(int inval)
 {
     Constant vinfo;
     vinfo.setToInteger(inval);
-    return findOrCreateConstant(vinfo);
+    return findOrRegisterConstant(vinfo);
 }
 
 Constant *getConstantFromCharstr(const char *inval)
 {
     Constant vinfo;
     vinfo.setToCharstr(inval);
-    return findOrCreateConstant(vinfo);
+    return findOrRegisterConstant(vinfo);
 }
 
 Constant *getConstantFromBoolean(bool inval)
 {
     Constant vinfo;
     vinfo.setToBoolean(inval);
-    return findOrCreateConstant(vinfo);
+    return findOrRegisterConstant(vinfo);
 }
