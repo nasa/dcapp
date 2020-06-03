@@ -21,7 +21,7 @@
 	<key>CFBundleSignature</key>
 	<string>dcap</string>
 	<key>CFBundleVersion</key>
-	<string>240</string>
+	<string>241</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2020 NASA</string>
 	<key>NSPrincipalClass</key>

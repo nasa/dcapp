@@ -38,7 +38,12 @@ std::string replace_string(std::string instr)
     
     for (unsigned i=0; i<instr.length(); i++)
     {
-        if ((instr[i] == '#' || instr[i] == '$') && (i == 0 || instr[i-1] != '\\'))
+        if (instr[i] == '\\' && i+1 < instr.length() && (instr[i+1] == '#' || instr[i+1] == '$'))
+        {
+            outstr += instr[i+1];
+            i++;
+        }
+        else if (instr[i] == '#' || instr[i] == '$')
         {
             unsigned brackets = 0; // keep track of how many characters are brackets
             std::string evalstr, tmpstr1, tmpstr2;
