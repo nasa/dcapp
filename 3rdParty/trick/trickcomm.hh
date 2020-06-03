@@ -7,7 +7,7 @@
 
 #include <list>
 #include "basicutils/timer.hh"
-#include "valuedata.hh"
+#include "variables.hh"
 #include "vscomm.hh"
 
 class TrickCommModule : public CommModule

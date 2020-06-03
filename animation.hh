@@ -2,7 +2,7 @@
 #define _ANIMATION_HH_
 
 #include <list>
-#include "valuedata.hh"
+#include "variables.hh"
 
 class AnimationItem
 {

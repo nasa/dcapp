@@ -1,4 +1,4 @@
-#include "varlist.hh"
+#include "variables.hh"
 #include "comm.hh"
 
 CommModule::CommModule() : active(false), activeID(0x0)

@@ -1,6 +1,7 @@
 #include "RenderLib/RenderLib.hh"
 #include "basicutils/stringutils.hh"
-#include "valuedata.hh"
+#include "constants.hh"
+#include "values.hh"
 #include "panel.hh"
 
 dcPanel::dcPanel(dcParent *myparent) : displayID(0)

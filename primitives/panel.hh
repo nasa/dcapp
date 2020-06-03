@@ -1,7 +1,7 @@
 #ifndef _PANEL_HH_
 #define _PANEL_HH_
 
-#include "valuedata.hh"
+#include "values.hh"
 #include "kolor.hh"
 #include "parent.hh"
 

@@ -1,8 +1,8 @@
 #include <cstring>
 #include <list>
-#include "nodes.hh"
-#include "valuedata.hh"
-#include "varlist.hh"
+#include "app_data.hh"
+#include "variables.hh"
+#include "values.hh"
 #include "setvalue.hh"
 
 extern appdata AppData;

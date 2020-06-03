@@ -1,7 +1,7 @@
 #ifndef _COMM_HH_
 #define _COMM_HH_
 
-#include "valuedata.hh"
+#include "variables.hh"
 
 class CommModule
 {

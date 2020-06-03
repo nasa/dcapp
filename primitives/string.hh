@@ -4,7 +4,8 @@
 #include <string>
 #include <vector>
 #include "RenderLib/RenderLib.hh"
-#include "valuedata.hh"
+#include "variables.hh"
+#include "values.hh"
 #include "kolor.hh"
 #include "geometric.hh"
 #include "parent.hh"

@@ -1,7 +1,7 @@
 #ifndef _CONDITION_HH_
 #define _CONDITION_HH_
 
-#include "valuedata.hh"
+#include "values.hh"
 #include "animation.hh"
 #include "object.hh"
 #include "parent.hh"

@@ -1,7 +1,7 @@
 #include <list>
 #include "basicutils/timer.hh"
 #include "primitives/primitives.hh"
-#include "nodes.hh"
+#include "app_data.hh"
 
 extern void ProcessEvents(void);
 extern void UpdateDisplay(void);

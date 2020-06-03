@@ -4,9 +4,8 @@
 #include <string>
 #include <vector>
 #include <cctype>
-#include "valuedata.hh"
 #include "constants.hh"
-#include "varlist.hh"
+#include "values.hh"
 
 class Kolor
 {

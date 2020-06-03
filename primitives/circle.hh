@@ -1,7 +1,7 @@
 #ifndef _CIRCLE_HH_
 #define _CIRCLE_HH_
 
-#include "valuedata.hh"
+#include "values.hh"
 #include "kolor.hh"
 #include "geometric.hh"
 #include "parent.hh"

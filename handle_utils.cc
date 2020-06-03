@@ -1,5 +1,5 @@
 #include <list>
-#include "nodes.hh"
+#include "app_data.hh"
 #include "primitives/primitives.hh"
 
 extern void UpdateDisplay(void);

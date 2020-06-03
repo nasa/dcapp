@@ -1,4 +1,4 @@
-#include "nodes.hh"
+#include "app_data.hh"
 #include "mouseevent.hh"
 
 extern appdata AppData;

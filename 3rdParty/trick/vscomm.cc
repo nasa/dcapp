@@ -15,6 +15,7 @@ Programmer: M. McFarlane
 #include <cctype>
 #include <strings.h>
 #include "basicutils/tidy.hh"
+#include "variables.hh"
 #include "vscomm.hh"
 
 #define VS_DEFAULT_PORT       7000

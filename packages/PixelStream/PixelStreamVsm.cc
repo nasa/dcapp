@@ -1,17 +1,18 @@
-#if defined(CURL_ENABLED) && defined(JPEG_ENABLED)
-
 #include <cstdlib>
 #include <cstring>
+#include "basicutils/msg.hh"
+#include "values.hh"
+#include "PixelStreamVsm.hh"
+
+#if defined(CURL_ENABLED) && defined(JPEG_ENABLED)
+
 #include <cstddef>
-#include <string>
 #include <sstream>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <jpeglib.h>
 #include "basicutils/timer.hh"
-#include "basicutils/msg.hh"
 #include "basicutils/stringutils.hh"
-#include "PixelStreamVsm.hh"
 #include "curlLib.hh"
 
 #define INITIAL_CAMERA_ASSIGN_INTERVAL 0.1
@@ -300,11 +301,6 @@ int PixelStreamVsm::resolveURL(const char *instr)
 }
 
 #else
-
-#include <cstdlib>
-#include <cstring>
-#include "basicutils/msg.hh"
-#include "PixelStreamVsm.hh"
 
 PixelStreamVsm::PixelStreamVsm()
 :

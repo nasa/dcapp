@@ -1,5 +1,5 @@
-#ifndef _NODES_HH_
-#define _NODES_HH_
+#ifndef _APP_DATA_HH_
+#define _APP_DATA_HH_
 
 #include <string>
 #include <list>

@@ -1,7 +1,7 @@
 #include "RenderLib/RenderLib.hh"
 #include "basicutils/stringutils.hh"
 #include "constants.hh"
-#include "varlist.hh"
+#include "values.hh"
 #include "circle.hh"
 
 dcCircle::dcCircle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), segments(80)

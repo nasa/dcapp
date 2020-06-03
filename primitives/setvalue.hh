@@ -1,7 +1,8 @@
 #ifndef _SETVALUE_HH_
 #define _SETVALUE_HH_
 
-#include "valuedata.hh"
+#include "variables.hh"
+#include "values.hh"
 #include "animation.hh"
 #include "object.hh"
 #include "parent.hh"

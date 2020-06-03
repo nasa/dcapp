@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include "ntcan.h"
-#include "varlist.hh"
 #include "basicutils/stringutils.hh"
 #include "basicutils/msg.hh"
 #include "CAN.hh"

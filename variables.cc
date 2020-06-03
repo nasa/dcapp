@@ -1,93 +1,75 @@
+#include <map>
 #include <string>
-#include <cstdlib>
+#include <cstdio>
 #include <cstring>
 #include "basicutils/msg.hh"
 #include "basicutils/stringutils.hh"
-#include "valuedata.hh"
+#include "values.hh"
+#include "variables.hh"
 
+static std::map<std::string, Variable> variables;
 
-
-Value::Value() : decval(0), intval(0) { }
-Value::~Value() { }
-
-
-
-Constant::Constant() : boolval(false) { }
-Constant::~Constant() { }
-
-bool Constant::operator == (const Constant &that)
+void registerVariable(const char *paramname, const char *typestr, const char *initval)
 {
-    if (this->decval == that.decval && this->intval == that.intval && this->strval == that.strval && this->boolval == that.boolval) return true;
-    else return false;
-}
-
-bool Constant::operator != (const Constant &that)
-{
-    return !(*this == that);
-}
-
-void Constant::setToDecimal(double val)
-{
-    this->decval = val;
-    this->intval = (int)val;
-    this->strval = DecimalToString(val);
-    if (val) this->boolval = true;
-    else this->boolval = false;
-}
-
-void Constant::setToInteger(int val)
-{
-    this->decval = (double)val;
-    this->intval = val;
-    this->strval = IntegerToString(val);
-    if (val) this->boolval = true;
-    else this->boolval = false;
-}
-
-void Constant::setToCharstr(const char *val)
-{
-    if (val)
+    if (!paramname)
     {
-        this->decval = StringToDecimal(val);
-        this->intval = StringToInteger(val);
-        this->strval = val;
-        this->boolval = StringToBoolean(val);
+        error_msg("Attempting to create a variable without a name");
+        return;
     }
+
+    if (!typestr)
+    {
+        error_msg("Attempting to create the variable \"" << paramname << "\" without a specified type");
+        return;
+    }
+
+    const char *mylabel;
+
+    if (paramname[0] == '@') mylabel = &paramname[1];
+    else mylabel = paramname;
+
+    Variable *vinfo = new Variable;
+    vinfo->setType(typestr);
+    vinfo->setToCharstr(initval);
+
+    variables[std::string(mylabel)] = *vinfo;
 }
 
-void Constant::setToBoolean(bool val)
+Variable *getVariable(const char *label)
 {
-    if (val)
-    {
-        this->decval = 1.0;
-        this->intval = 1;
-        this->strval = "true";
-    }
+    if (!label) return 0x0;
+
+    const char *mylabel;
+
+    if (label[0] == '@') mylabel = &label[1];
+    else mylabel = label;
+
+    if (variables.find(mylabel) != variables.end()) return &(variables[mylabel]);
     else
     {
-        this->decval = 0.0;
-        this->intval = 0;
-        this->strval = "false";
+        warning_msg("Invalid variable label: " << label);
+        return 0x0;
     }
-
-    this->boolval = val;
 }
 
-unsigned Constant::compareToValue(Value &that)
+// get_pointer should only be used in the auto-generated dcapp header files used by the logic plug-ins.  Since they're
+// auto-generated, this routine should never return 0x0.  But if it does return 0x0, a crash could occur.
+void *get_pointer(const char *label)
 {
-    // evaluate as String by default
-    if (this->strval > that.getString()) return isGreaterThan;
-    else if (this->strval < that.getString()) return isLessThan;
-    else return isEqual;
+    Variable *myvar = getVariable(label);
+    if (myvar) return myvar->getPointer();
+    else return 0x0;
 }
 
-double Constant::getDecimal(void) { return this->decval; }
-int Constant::getInteger(void) { return this->intval; }
-std::string Constant::getString(std::string) { return this->strval; }
-bool Constant::getBoolean(void) { return this->boolval; }
-
-bool Constant::isConstant(void) { return true; };
-
+char *create_virtual_variable(const char *typestr, const char *initval)
+{
+    static unsigned id_count = 0;
+    char *vname;
+    asprintf(&vname, "@dcappVirtualVariable%u", id_count);
+    registerVariable(vname, typestr, initval);
+    id_count++;
+    return vname;
+}
 
 
 Variable::Variable() : type(UNDEFINED_TYPE) { }

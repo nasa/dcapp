@@ -1,5 +1,5 @@
-#include "nodes.hh"
-#include "varlist.hh"
+#include "app_data.hh"
+#include "values.hh"
 #include "vertex.hh"
 
 extern appdata AppData;

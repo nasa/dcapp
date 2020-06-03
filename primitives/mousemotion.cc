@@ -1,5 +1,4 @@
-#include "varlist.hh"
-#include "valuedata.hh"
+#include "variables.hh"
 #include "mousemotion.hh"
 
 extern void UpdateDisplay(void);

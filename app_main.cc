@@ -17,7 +17,7 @@
 #include "basicutils/stringutils.hh"
 #include "comm.hh"
 #include "device.hh"
-#include "nodes.hh"
+#include "app_data.hh"
 #include "xml_stringsub.hh"
 #include "osenv/osenv.hh"
 #include "PixelStream/curlLib.hh"

@@ -1,5 +1,5 @@
 #include "basicutils/stringutils.hh"
-#include "nodes.hh"
+#include "app_data.hh"
 #include "animate.hh"
 
 extern appdata AppData;

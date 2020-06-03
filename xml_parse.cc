@@ -16,8 +16,8 @@
 #include "uei/UEI.hh"
 #include "hagstrom/Hagstrom.hh"
 #include "primitives/primitives.hh"
-#include "varlist.hh"
-#include "nodes.hh"
+#include "variables.hh"
+#include "app_data.hh"
 #include "xml_utils.hh"
 #include "xml_stringsub.hh"
 

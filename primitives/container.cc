@@ -1,7 +1,6 @@
 #include <cmath>
 #include "RenderLib/RenderLib.hh"
-#include "valuedata.hh"
-#include "varlist.hh"
+#include "values.hh"
 #include "container.hh"
 
 dcContainer::dcContainer(dcParent *myparent) : dcGeometric(myparent)

@@ -12,7 +12,7 @@
 #include "trick_utils/comm/include/tc.h"
 #include "trick_utils/comm/include/tc_proto.h"
 #endif
-#include "valuedata.hh"
+#include "variables.hh"
 
 #define VS_SUCCESS            (0)
 #define VS_ERROR              (-1)

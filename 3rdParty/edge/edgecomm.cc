@@ -4,8 +4,7 @@
 #include <string>
 #include "basicutils/timer.hh"
 #include "basicutils/tidy.hh"
-#include "varlist.hh"
-#include "valuedata.hh"
+#include "variables.hh"
 #include "edgecomm.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0

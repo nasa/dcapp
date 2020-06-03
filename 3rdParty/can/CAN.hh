@@ -1,7 +1,7 @@
 #ifndef _CAN_HH_
 #define _CAN_HH_
 
-#include "valuedata.hh"
+#include "variables.hh"
 #include "device.hh"
 
 #ifdef NTCAN

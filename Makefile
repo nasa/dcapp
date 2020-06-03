@@ -19,8 +19,8 @@ DCAPP_SOURCES := \
 	handle_utils.cc \
 	logic_stubs.cc \
 	tara_funcs.cc \
-	valuedata.cc \
-	varlist.cc \
+	values.cc \
+	variables.cc \
 	xml_parse.cc \
 	xml_stringsub.cc \
 	xml_utils.cc

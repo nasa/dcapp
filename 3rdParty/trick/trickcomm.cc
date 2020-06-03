@@ -6,8 +6,7 @@
 #include "basicutils/timer.hh"
 #include "basicutils/msg.hh"
 #include "basicutils/stringutils.hh"
-#include "varlist.hh"
-#include "valuedata.hh"
+#include "variables.hh"
 #include "trickcomm.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0

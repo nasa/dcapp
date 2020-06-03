@@ -1,9 +1,8 @@
 #include <cstring>
 #include <string>
 #include "basicutils/stringutils.hh"
-#include "valuedata.hh"
-#include "varlist.hh"
 #include "constants.hh"
+#include "values.hh"
 #include "condition.hh"
 
 enum { Simple, IfEquals, IfNotEquals, IfGreaterThan, IfLessThan, IfGreaterOrEquals, IfLessOrEquals };

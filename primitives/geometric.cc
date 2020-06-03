@@ -1,7 +1,6 @@
 #include <strings.h>
-#include "valuedata.hh"
 #include "constants.hh"
-#include "varlist.hh"
+#include "values.hh"
 #include "geometric.hh"
 
 dcGeometric::dcGeometric(dcParent *myparent) : x(0x0), y(0x0), halign(dcLeft), valign(dcBottom), originx(dcLeft), originy(dcBottom)

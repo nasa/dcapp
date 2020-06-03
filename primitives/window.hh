@@ -1,9 +1,9 @@
 #ifndef _WINDOW_HH_
 #define _WINDOW_HH_
 
+#include "values.hh"
 #include "parent.hh"
 #include "panel.hh"
-#include "valuedata.hh"
 
 class dcWindow : public dcParent
 {

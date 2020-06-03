@@ -1,7 +1,7 @@
 #ifndef _OBJECT_HH_
 #define _OBJECT_HH_
 
-#include "valuedata.hh"
+#include "values.hh"
 #include "animation.hh"
 
 class dcObject

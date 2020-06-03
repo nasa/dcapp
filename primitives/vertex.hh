@@ -1,7 +1,7 @@
 #ifndef _VERTEX_HH_
 #define _VERTEX_HH_
 
-#include "valuedata.hh"
+#include "values.hh"
 #include "object.hh"
 #include "parent.hh"
 

@@ -1,7 +1,7 @@
 #ifndef _PIXELSTREAMVSM_HH_
 #define _PIXELSTREAMVSM_HH_
 
-#include "valuedata.hh"
+#include "values.hh"
 #include "PixelStreamMjpeg.hh"
 
 #if defined(CURL_ENABLED) && defined(JPEG_ENABLED)
@@ -37,8 +37,6 @@ class PixelStreamVsm : public PixelStreamMjpeg
 };
 
 #else
-
-#include <string>
 
 class PixelStreamVsm : public PixelStreamMjpeg
 {
