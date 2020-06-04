@@ -107,10 +107,25 @@ void setup_panel(float x, float y, float red, float green, float blue, float alp
 //    glColor4f(1, 1, 1, 1);
 }
 
+// allocate textures in blocks, which is much faster on Linux that allocating them one at a time
+#define TEXTURE_BLOCKS 100
+unsigned getTexture(void)
+{
+    static unsigned gltextures[TEXTURE_BLOCKS], mycount = 0;
+    unsigned retval;
+
+    if (!mycount) glGenTextures(TEXTURE_BLOCKS, gltextures);
+    retval = gltextures[mycount];
+    mycount++;
+    if (mycount == TEXTURE_BLOCKS) mycount = 0;
+
+    return retval;
+}
+
 // TODO: create_and_load_glyph is very similar to create_texture and load_texture - consider combining
 void create_and_load_glyph(unsigned int *mytexture, void *pixels)
 {
-    glGenTextures(1, mytexture);
+    *mytexture = getTexture();
     glBindTexture(GL_TEXTURE_2D, *mytexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -124,9 +139,7 @@ void create_and_load_glyph(unsigned int *mytexture, void *pixels)
 
 void create_texture(tdTexture *textureID)
 {
-    GLuint mytexture;
-    glGenTextures(1, &mytexture);
-    textureID->setID(mytexture);
+    textureID->setID(getTexture());
 }
 
 void load_texture(tdTexture *textureID)
