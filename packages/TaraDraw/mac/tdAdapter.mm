@@ -365,16 +365,13 @@ int tdAlignTop = 0x08;
         if ([ theEvent window ] == [ winview[i] window ])
         {
             mypoint = [ theEvent locationInWindow ];
-            if (NSPointInRect(mypoint, [ winview[i] frame ]))
-            {
-                data.b.pos.x = mypoint.x;
-                data.b.pos.y = mypoint.y;
-                data.b.state = state;
-                data.b.window = i;
-                EventList[eventcount].type = tdMouseEvent;
-                EventList[eventcount].data = data;
-                eventcount++;
-            }
+            data.b.pos.x = mypoint.x;
+            data.b.pos.y = mypoint.y;
+            data.b.state = state;
+            data.b.window = i;
+            EventList[eventcount].type = tdMouseEvent;
+            EventList[eventcount].data = data;
+            eventcount++;
             break;
         }
     }
