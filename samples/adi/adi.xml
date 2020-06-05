@@ -42,6 +42,12 @@
                         <Set Variable="@RollAngle" Operator="-=">180</Set>
                     </True>
                     <False>
+                        <If Value1="@RollSlider" Operator="gt" Value2="360">
+                            <Set Variable="@RollSlider">360</Set>
+                        </If>
+                        <If Value1="@RollSlider" Operator="lt" Value2="0">
+                            <Set Variable="@RollSlider">0</Set>
+                        </If>
                         <Rectangle X="@RollSlider" Width="10" Height="20" FillColor="0.5 0.5 0.5"/>
                     </False>
                 </If>
@@ -75,6 +81,12 @@
                         <Set Variable="@PitchAngle" Operator="-=">180</Set>
                     </True>
                     <False>
+                        <If Value1="@PitchSlider" Operator="gt" Value2="360">
+                            <Set Variable="@PitchSlider">360</Set>
+                        </If>
+                        <If Value1="@PitchSlider" Operator="lt" Value2="0">
+                            <Set Variable="@PitchSlider">0</Set>
+                        </If>
                         <Rectangle X="@PitchSlider" Width="10" Height="20" FillColor="0.5 0.5 0.5"/>
                     </False>
                 </If>
@@ -108,6 +120,12 @@
                         <Set Variable="@YawAngle" Operator="-=">180</Set>
                     </True>
                     <False>
+                        <If Value1="@YawSlider" Operator="gt" Value2="360">
+                            <Set Variable="@YawSlider">360</Set>
+                        </If>
+                        <If Value1="@YawSlider" Operator="lt" Value2="0">
+                            <Set Variable="@YawSlider">0</Set>
+                        </If>
                         <Rectangle X="@YawSlider" Width="10" Height="20" FillColor="0.5 0.5 0.5"/>
                     </False>
                 </If>
