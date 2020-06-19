@@ -96,7 +96,7 @@ int tdTexture::loadBMP(void)
     {
         int infsize; // size of BMPinfo in bytes
         unsigned char *cols = 0x0; // dynamic color palette
-        unsigned char *imbuff;
+        unsigned char *imbuff = 0x0;
 
         fread((char *)&infsize, sizeof(int), 1, fp);
         if (swap) swapbyte_L(&infsize);
@@ -143,10 +143,18 @@ int tdTexture::loadBMP(void)
         if (inf.ImageSize < size) inf.ImageSize = size;
         imbuff = (unsigned char *)malloc(inf.ImageSize);
 
+        if (!imbuff)
+        {
+            warning_msg("Memory allocation error");
+            this->data = 0x0;
+            return (-1);
+        }
+
         if (fread((char *)imbuff, sizeof(unsigned char), inf.ImageSize, fp) != (size_t)inf.ImageSize)
         {
             warning_msg("Problem retrieving image buffer from " << this->filename);
             this->data = 0x0;
+            free(imbuff);
             return (-1);
         }
 

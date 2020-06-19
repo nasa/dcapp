@@ -17,11 +17,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.1.0 alpha</string>
+	<string>1.1.0</string>
 	<key>CFBundleSignature</key>
 	<string>dcap</string>
 	<key>CFBundleVersion</key>
-	<string>244</string>
+	<string>245</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2020 NASA</string>
 	<key>NSPrincipalClass</key>

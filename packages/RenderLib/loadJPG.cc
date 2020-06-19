@@ -48,6 +48,7 @@ int tdTexture::loadJPG(void)
         // hande the JPEG error, clean up, and return to the calling routine
         warning_msg(this->filename << ": " << jpegLastErrorMsg);
         jpeg_destroy_decompress(&jinfo);
+        fclose(file);
         return 1;
     }
 

@@ -24,4 +24,6 @@ class Timer
         struct timeval stored;
 };
 
+extern void hibernate(float);
+
 #endif

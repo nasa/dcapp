@@ -94,8 +94,8 @@ void Idle(void)
     float elapsed = mytime->getSeconds();
     mytime->restart();
 
-    // usleep to the next period of time defined by MINIMUM_REFRESH to temporarily release the CPU
-    if (elapsed < MINIMUM_REFRESH) usleep((useconds_t)((MINIMUM_REFRESH - elapsed) * 1000000));
+    // hibernate until the next period of time defined by MINIMUM_REFRESH to temporarily release the CPU
+    if (elapsed < MINIMUM_REFRESH) hibernate(MINIMUM_REFRESH - elapsed);
 
     for (deviceitem = AppData.devicelist.begin(); deviceitem != AppData.devicelist.end(); deviceitem++)
     {
