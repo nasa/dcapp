@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include "basicutils/msg.hh"
+#include "basicutils/tidy.hh"
 #include "udp_comm.hh"
 
 
@@ -235,8 +236,22 @@ static void swap_byte(char *in, char *out, int blen, int wsize)
 SocketInfo *mycomm_init(const char *hostname, int port, int insize, int outsize, bool swap, int timeout)
 {
     SocketInfo *mysock = (SocketInfo *)calloc(sizeof(SocketInfo), 1);
+    if (!mysock)
+    {
+        error_msg("Unable to allocate memory for mysock");
+        return 0x0;
+    }
 
-    if (swap) mysock->swap_space = (char *)calloc(insize, 1);
+    if (swap)
+    {
+        mysock->swap_space = (char *)calloc(insize, 1);
+        if (!mysock->swap_space)
+        {
+            error_msg("Unable to allocate memory for swap_space");
+            free(mysock);
+            return 0x0;
+        }
+    }
 
     debug_msg("Byte Swapping is " << (swap ? "ON" : "OFF"));
 
@@ -291,6 +306,8 @@ SocketInfo *mycomm_init(const char *hostname, int port, int insize, int outsize,
     if (mysock->socket == -1)
     {
         error_msg("create_udp_socket() failed: " << strerror(errno));
+        TIDY(mysock->swap_space);
+        free(mysock);
         return 0x0;
     }
 

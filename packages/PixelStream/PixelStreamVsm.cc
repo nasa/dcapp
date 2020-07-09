@@ -1,3 +1,4 @@
+#include <string>
 #include <cstdlib>
 #include <cstring>
 #include "basicutils/msg.hh"
@@ -25,7 +26,6 @@ PixelStreamVsm::PixelStreamVsm()
 vsmhost(0x0),
 vsmport(0),
 curr_camera(0x0),
-userpath(0x0),
 cameraassigned(false)
 {
     this->protocol = PixelStreamVsmProtocol;
@@ -36,7 +36,6 @@ cameraassigned(false)
 PixelStreamVsm::~PixelStreamVsm()
 {
     if (this->vsmhost) free(this->vsmhost);
-    if (this->userpath) free(this->userpath);
     delete this->assigncameraattempt;
     curl_easy_cleanup(this->curl);
 }
@@ -93,7 +92,7 @@ int PixelStreamVsm::readerInitialize(const char *hostspec, int portspec, const c
     this->vsmport = portspec;
     this->curr_camera = cameraid;
     this->prev_camera = "";
-    if (pathspec) this->userpath = strdup(pathspec);
+    if (pathspec) this->userpath = pathspec;
 
     return 0;
 }
@@ -227,74 +226,38 @@ int PixelStreamVsm::assignNewCamera(void)
     return 0;
 }
 
-int PixelStreamVsm::resolveURL(const char *instr)
+int PixelStreamVsm::resolveURL(std::string instr)
 {
-    size_t ii, jj, kk, mylen = strlen(instr);
-    bool found_addr = false, found_port = false, found_path = false;
-    size_t addr_start, addr_end, port_start, port_end, path_start, path_end;
+    std::string myhost, myport, mypath;
+    size_t delim1, delim2, delim3;
 
-    for (ii = 0; !found_addr && ii < mylen-4; ii++)
+    delim1 = instr.find("://");
+    delim2 = instr.find(':', delim1+3);
+    delim3 = instr.find('/', delim2+1);
+
+    if (delim1 != std::string::npos)
     {
-        if (instr[ii] == ':' && instr[ii+1] == '/' && instr[ii+2] == '/')
+        myhost = instr.substr(delim1+3, delim2-delim1-3);
+        if (delim2 != std::string::npos)
         {
-            addr_start = ii+3;
-            found_addr = true;
-            for (jj = addr_start; !found_port && jj < mylen-2; jj++)
-            {
-                if (instr[jj] == ':')
-                {
-                    addr_end = jj-1;
-                    port_start = jj+1;
-                    found_port = true;
-                    for (kk = port_start; !found_path && kk < mylen-2; kk++)
-                    {
-                        if (instr[kk] == '/')
-                        {
-                            port_end = kk-1;
-                            path_start = kk+1;
-                            path_end = mylen-1;
-                            found_path = true;
-                        }
-                    }
-                }
-            }
+            myport = instr.substr(delim2+1, delim3-delim2-1);
+            if (delim3 != std::string::npos) mypath = instr.substr(delim3+1);
         }
     }
 
-    if (found_addr && found_port && found_path)
+    if (!myhost.empty() && !myport.empty() && !mypath.empty())
     {
-        char *tmp_host = (char *)malloc(mylen);
-        char *tmp_port = (char *)malloc(mylen);
-        char *tmp_path = (char *)malloc(mylen);
-        char *mypath;
+        if (!userpath.empty()) mypath = userpath;
 
-        for (ii=addr_start, jj=0; ii<=addr_end; ii++, jj++) tmp_host[jj] = instr[ii];
-        tmp_host[addr_end + 1 - addr_start] = '\0';
-
-        for (ii=port_start, jj=0; ii<=port_end; ii++, jj++) tmp_port[jj] = instr[ii];
-        tmp_port[port_end + 1 - port_start] = '\0';
-
-        if (userpath) mypath = userpath;
-        else
-        {
-            for (ii=path_start, jj=0; ii<=path_end; ii++, jj++) tmp_path[jj] = instr[ii];
-            tmp_path[path_end + 1 - path_start] = '\0';
-            mypath = tmp_path;
-        }
-
-        struct hostent *server = gethostbyname(tmp_host);
+        struct hostent *server = gethostbyname(myhost.c_str());
         if (!server)
         {
-            error_msg("Unable to resolve host name: " << tmp_host);
+            error_msg("Unable to resolve host name: " << myhost);
             return -1;
         }
 
-        mjpegIO = curlLibCreateHandle(inet_ntoa(*(in_addr * )server->h_addr), StringToInteger(tmp_port), mypath, 0x0, 0x0, this);
+        mjpegIO = curlLibCreateHandle(inet_ntoa(*(in_addr * )server->h_addr), StringToInteger(myport), mypath.c_str(), 0x0, 0x0, this);
         if (!mjpegIO) return -1;
-
-        free(tmp_path);
-        free(tmp_port);
-        free(tmp_host);
     }
 
     return 0;

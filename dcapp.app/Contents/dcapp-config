@@ -80,7 +80,7 @@ while test $# -gt 0 ; do
             echo $machtype
             ;;
         --version)
-            echo "1.1.0 alpha"
+            echo "1.1.1 alpha"
             ;;
         --version_short)
             echo "1.1"

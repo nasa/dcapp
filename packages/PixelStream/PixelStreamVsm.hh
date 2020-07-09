@@ -23,14 +23,14 @@ class PixelStreamVsm : public PixelStreamMjpeg
 
     private:
         int assignNewCamera(void);
-        int resolveURL(const char *);
+        int resolveURL(std::string);
 
         CURL *curl;
         char *vsmhost;
         int vsmport;
         Value *curr_camera;
         std::string prev_camera;
-        char *userpath;
+        std::string userpath;
         bool cameraassigned;
         bool first_assign_attempt;
         Timer *assigncameraattempt;

@@ -64,7 +64,6 @@ void getArgs(char **specfile, char **args)
 /* Store default arguments to the Application Support folder */
 void storeArgs(char *specfile, char *args)
 {
-    char *fullpath;
     FILE *preffile;
 
     NSString *applicationSupportDirectory = [ NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) firstObject ];
@@ -75,15 +74,11 @@ void storeArgs(char *specfile, char *args)
     preffile = fopen([ dcappPrefsFile UTF8String ], "w");
     if (preffile)
     {
-        if (specfile[0] == '/')
-            asprintf(&fullpath, "%s", specfile);
-        else
-            asprintf(&fullpath, "%s/%s", getcwd(0, 0), specfile);
-        fprintf(preffile, "{%s}", fullpath);
+        NSString *fullpath = [[ NSURL fileURLWithPath:[ NSString stringWithCString:specfile encoding:NSASCIIStringEncoding ]] path ];
+        fprintf(preffile, "{%s}", [ fullpath cStringUsingEncoding:NSASCIIStringEncoding ]);
         if (args) fprintf(preffile, "{%s}", args);
         else fprintf(preffile, "{}");
         fclose(preffile);
-        free(fullpath);
     }
 }
 

@@ -46,6 +46,7 @@ CommModule::CommStatus EdgeCommModule::read(void)
     if (ret)
     {
         this->active = false;
+        TIDY(result);
         return this->Fail;
     }
 
@@ -53,6 +54,7 @@ CommModule::CommStatus EdgeCommModule::read(void)
     if (!substr)
     {
         this->active = false;
+        TIDY(result);
         return this->Fail;
     }
 
@@ -65,6 +67,8 @@ CommModule::CommStatus EdgeCommModule::read(void)
         if (!ret)
         {
             this->active = false;
+            TIDY(substr);
+            TIDY(result);
             return this->Fail;
         }
 

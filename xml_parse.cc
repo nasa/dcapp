@@ -1,3 +1,4 @@
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -318,18 +319,16 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "DisplayLogic"))
         {
-            char *error, *fname = get_node_content(node), *abspath;
+            std::string myfile = get_node_content(node);
             void *so_handler;
+            char *error;
 
-            debug_msg("Loading " << fname << "...");
+            debug_msg("Loading " << myfile << "...");
 
             // If path isn't specified, prepend with "./" to avoid searching LD_LIBRARY_PATH, DYLD_LIBRARY_PATH, etc.
-            bool absolute = false;
-            for (size_t i=0; i<strlen(fname) && !absolute; i++) if (fname[i] == '/') absolute = true;
-            if (absolute) abspath = strdup(fname);
-            else asprintf(&abspath, "./%s", fname);
+            if (myfile.find('/') == std::string::npos) myfile.insert(0, "./");
 
-            so_handler = dlopen(abspath, RTLD_NOW);
+            so_handler = dlopen(myfile.c_str(), RTLD_NOW);
             if (so_handler)
             {
                 AppData.DisplayPreInit = (void (*)(void *(*)(const char *)))dlsym(so_handler, "DisplayPreInit");
@@ -361,8 +360,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 }
             }
             else warning_msg(dlerror());
-
-            free(abspath);
         }
         if (NodeCheck(node, "Window"))
         {
