@@ -3,6 +3,7 @@
 
 #ifdef CURL_ENABLED
 
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <curl/curl.h>
@@ -26,10 +27,19 @@ void *curlLibCreateHandle(const char *host, int port, const char *path, const ch
 {
     CURL *handle;
     CURLcode result;
-    char *myurl, *mycredentials = 0x0;
+    std::string myurl, mycredentials;
 
-    asprintf(&myurl, "%s:%d/%s", host, port, path);
-    if (username && password) asprintf(&mycredentials, "%s:%s", username, password);
+    myurl += host;
+    myurl += ':';
+    myurl += std::to_string(port);
+    myurl += '/';
+    myurl += path;
+    if (username && password)
+    {
+        mycredentials += username;
+        mycredentials += ':';
+        mycredentials += password;
+    }
 
     handle = curl_easy_init();
     if (!handle)
@@ -52,16 +62,16 @@ void *curlLibCreateHandle(const char *host, int port, const char *path, const ch
         return 0x0;
     }
 
-    result = curl_easy_setopt(handle, CURLOPT_URL, myurl);
+    result = curl_easy_setopt(handle, CURLOPT_URL, myurl.c_str());
     if (result != CURLE_OK)
     {
         error_msg("CURL error: " << curl_easy_strerror(result));
         return 0x0;
     }
 
-    if (mycredentials)
+    if (!mycredentials.empty())
     {
-        result = curl_easy_setopt(handle, CURLOPT_USERPWD, mycredentials);
+        result = curl_easy_setopt(handle, CURLOPT_USERPWD, mycredentials.c_str());
         if (result != CURLE_OK)
         {
             error_msg("CURL error: " << curl_easy_strerror(result));
@@ -75,9 +85,6 @@ void *curlLibCreateHandle(const char *host, int port, const char *path, const ch
             return 0x0;
         }
     }
-
-    if (mycredentials) free(mycredentials);
-    free(myurl);
 
     return (void *)handle;
 }

@@ -56,7 +56,7 @@ int tdAlignTop = 0x08;
 static WindowSpec *startwin = 0x0;
 static WindowSpec *current = 0x0;
 static GLSpec *curGL = 0x0;
-static Display *display;
+static Display *display =0x0;
 static int screen_num;
 static Atom wm_delete_window, wm_hints;
 
@@ -509,15 +509,18 @@ void tdTerminate(void)
 
     tdGLDestroyContext();
 
-    for (win = startwin; win;)
+    if (display)
     {
-        XFreePixmap(display, win->buffer);
-        XFreeGC(display, win->gc);
-        XDestroyWindow(display, win->win);
-        tmp = win;
-        win = win->next;
-        free(tmp);
-    }
+        for (win = startwin; win;)
+        {
+            XFreePixmap(display, win->buffer);
+            XFreeGC(display, win->gc);
+            XDestroyWindow(display, win->win);
+            tmp = win;
+            win = win->next;
+            free(tmp);
+        }
 
-    XCloseDisplay(display);
+        XCloseDisplay(display);
+    }
 }

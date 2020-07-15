@@ -24,62 +24,44 @@ int checkArgs(int argc, char **argv)
 /* Get default arguments from the Application Support folder */
 void getArgs(char **specfile, char **args)
 {
-    char *defspecfile = 0x0, *defargs = 0x0;
-    FILE *preffile;
-
     NSString *applicationSupportDirectory = [ NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) firstObject ];
     NSString *dcappSupportDirectory = [[ applicationSupportDirectory stringByAppendingString:@"/dcapp" ] stringByStandardizingPath ];
     NSString *dcappPrefsFile = [[ dcappSupportDirectory stringByAppendingString:@"/Preferences" ] stringByStandardizingPath ];
 
-    preffile = fopen([ dcappPrefsFile UTF8String ], "r");
-    if (preffile)
-    {
-        int retval;
-
-        fseek(preffile, 0, SEEK_END);
-        long len = ftell(preffile);
-        rewind(preffile);
-        defspecfile = (char *)malloc(len);
-        defargs = (char *)malloc(len);
-        retval = fscanf(preffile, "{%[^}]}", defspecfile);
-        if (!retval) fseek(preffile, 1, SEEK_CUR);
-        retval = fscanf(preffile, "{%[^}]}", defargs);
-        fclose(preffile);
-    }
+    NSString *contents = [ NSString stringWithContentsOfFile:dcappPrefsFile encoding:NSASCIIStringEncoding error:nil ];
+    NSScanner *myscanner = [ NSScanner scannerWithString:contents ];
+    NSCharacterSet *lbrace = [ NSCharacterSet characterSetWithCharactersInString:@"{" ];
+    NSCharacterSet *rbrace = [ NSCharacterSet characterSetWithCharactersInString:@"}" ];
+    NSString *mypath, *myargs;
 
     MyApp *myapp = [[ MyApp alloc ] init ];
 
-    if (defspecfile) [ myapp setSpecfile:[[ NSString stringWithCString:defspecfile encoding:NSASCIIStringEncoding ] stringByStandardizingPath ]];
-    if (defargs) [ myapp setArgs:[ NSString stringWithCString:defargs encoding:NSASCIIStringEncoding ]];
+    [ myscanner scanCharactersFromSet:lbrace intoString:nil ];
+    if ([ myscanner scanUpToCharactersFromSet:rbrace intoString:&mypath ]) [ myapp setSpecfile:mypath ];
+    [ myscanner scanCharactersFromSet:rbrace intoString:nil ];
+    [ myscanner scanCharactersFromSet:lbrace intoString:nil ];
+    if ([ myscanner scanUpToCharactersFromSet:rbrace intoString:&myargs ]) [ myapp setArgs:myargs ];
 
     [ NSApp run ];
 
     *specfile = strdup([[[ myapp getSpecfile ] stringByStandardizingPath ] cStringUsingEncoding:NSASCIIStringEncoding ]);
     *args = strdup([[ myapp getArgs ] cStringUsingEncoding:NSASCIIStringEncoding ]);
-
-    if (defargs) free(defargs);
-    if (defspecfile) free(defspecfile);
 }
 
 /* Store default arguments to the Application Support folder */
 void storeArgs(char *specfile, char *args)
 {
-    FILE *preffile;
-
     NSString *applicationSupportDirectory = [ NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) firstObject ];
     NSString *dcappSupportDirectory = [[ applicationSupportDirectory stringByAppendingString:@"/dcapp" ] stringByStandardizingPath ];
     NSString *dcappPrefsFile = [[ dcappSupportDirectory stringByAppendingString:@"/Preferences" ] stringByStandardizingPath ];
 
-    mkdir([ dcappSupportDirectory UTF8String ], 0755);
-    preffile = fopen([ dcappPrefsFile UTF8String ], "w");
-    if (preffile)
-    {
-        NSString *fullpath = [[ NSURL fileURLWithPath:[ NSString stringWithCString:specfile encoding:NSASCIIStringEncoding ]] path ];
-        fprintf(preffile, "{%s}", [ fullpath cStringUsingEncoding:NSASCIIStringEncoding ]);
-        if (args) fprintf(preffile, "{%s}", args);
-        else fprintf(preffile, "{}");
-        fclose(preffile);
-    }
+    [[ NSFileManager defaultManager ] createDirectoryAtPath:dcappSupportDirectory withIntermediateDirectories:YES attributes:nil error:nil ];
+    NSString *fullpath = [[ NSURL fileURLWithPath:[ NSString stringWithCString:specfile encoding:NSASCIIStringEncoding ]] path ];
+
+    NSString *mydata;
+    if (args) mydata = [ NSString stringWithFormat:@"{%@}{%s}", fullpath, args ];
+    else mydata = [ NSString stringWithFormat:@"{%@}{}", fullpath ];
+    [ mydata writeToFile:dcappPrefsFile atomically:NO encoding:NSASCIIStringEncoding error:nil ];
 }
 
 @implementation MyApp

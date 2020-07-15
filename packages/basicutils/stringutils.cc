@@ -1,4 +1,5 @@
 #include <string>
+#include <sstream>
 #include <cstdlib>
 #include <strings.h>
 
@@ -52,30 +53,14 @@ bool StringToBoolean(std::string &instr, bool default_value = false)
 
 std::string DecimalToString(double val)
 {
-    char *tmp_str = 0x0;
-
-    asprintf(&tmp_str, "%g", val);
-
-    if (tmp_str)
-    {
-        std::string ret_str = tmp_str;
-        free(tmp_str);
-        return ret_str;
-    }
-    else return "";
+    std::ostringstream mystream;
+    mystream << val;
+    return mystream.str();
 }
 
 std::string IntegerToString(int val)
 {
-    char *tmp_str = 0x0;
-
-    asprintf(&tmp_str, "%d", val);
-
-    if (tmp_str)
-    {
-        std::string ret_str = tmp_str;
-        free(tmp_str);
-        return ret_str;
-    }
-    else return "";
+    std::ostringstream mystream;
+    mystream << val;
+    return mystream.str();
 }
