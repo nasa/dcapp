@@ -7,7 +7,7 @@ LIBDIR := $(shell ./bin/PixelStream-config --libdir)
 HEADERS := $(wildcard *.hh)
 OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(wildcard *.cc)), $(OBJDIR)/$(obj))
 
-CXXFLAGS += -Wall -Wextra $(shell ./bin/PixelStream-config --cflags_internal)
+CXXFLAGS += -std=c++11 -Wall -Wextra $(shell ./bin/PixelStream-config --cflags_internal)
 
 all: $(LIBDIR)/libPixelStream.a postbuild
 

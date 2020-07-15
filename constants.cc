@@ -64,7 +64,7 @@ void Constant::setToDecimal(double val)
 {
     this->decval = val;
     this->intval = (int)val;
-    this->strval = DecimalToString(val);
+    this->strval = ConvertToString(val);
     if (val) this->boolval = true;
     else this->boolval = false;
 }
@@ -73,7 +73,7 @@ void Constant::setToInteger(int val)
 {
     this->decval = (double)val;
     this->intval = val;
-    this->strval = IntegerToString(val);
+    this->strval = ConvertToString(val);
     if (val) this->boolval = true;
     else this->boolval = false;
 }

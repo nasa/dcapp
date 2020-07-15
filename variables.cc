@@ -243,9 +243,9 @@ std::string Variable::getString(std::string format)
         switch (this->type)
         {
             case DECIMAL_TYPE:
-                return DecimalToString(this->decval);
+                return ConvertToString(this->decval);
             case INTEGER_TYPE:
-                return IntegerToString(this->intval);
+                return ConvertToString(this->intval);
             case STRING_TYPE:
                 return this->strval;
             default:

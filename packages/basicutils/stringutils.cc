@@ -1,5 +1,4 @@
 #include <string>
-#include <sstream>
 #include <cstdlib>
 #include <strings.h>
 
@@ -49,18 +48,4 @@ bool StringToBoolean(std::string &instr, bool default_value = false)
     if (StringToInteger(instr) || StringToDecimal(instr)) return true;
 
     return default_value;
-}
-
-std::string DecimalToString(double val)
-{
-    std::ostringstream mystream;
-    mystream << val;
-    return mystream.str();
-}
-
-std::string IntegerToString(int val)
-{
-    std::ostringstream mystream;
-    mystream << val;
-    return mystream.str();
 }
