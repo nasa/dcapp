@@ -54,7 +54,7 @@ class VariableServerComm
         int databuf_size;
 
         void sim_read(void);
-        void sim_write(const char *);
+        void sim_write(std::string);
         int update_data(const char *);
         size_t count_tokens(const char *, char);
         int find_next_token(const char *, char);

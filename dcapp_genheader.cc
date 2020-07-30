@@ -55,17 +55,15 @@ int main(int argc, char **argv)
 
     process_elements(root_element->children);
 
-    char *resolvedpath = (char *)calloc(PATH_MAX, sizeof(char));
-    std::string tmppath = findExecutablePath(argv[0]) + "/../dcapp-config";
-    realpath(tmppath.c_str(), resolvedpath);
+    std::string configscript = PathInfo(findExecutablePath(argv[0]) + "/../dcapp-config").getFullPath();
 
     fprintf(p_file, "// ********************************************* //\n");
     fprintf(p_file, "// THIS FILE IS AUTO-GENERATED -- DO NOT EDIT!!! //\n");
     fprintf(p_file, "// ********************************************* //\n\n");
     // the line below preceded the use of DCAPP_MAJOR_VERSION and DCAPP_MINOR_VERSION, so retain it for backward compatibility
     fprintf(p_file, "#define DCAPP_VERSION_1_0\n\n");
-    fprintf(p_file, "#define DCAPP_MAJOR_VERSION %s\n", getScriptResult(resolvedpath, "--version_major").c_str());
-    fprintf(p_file, "#define DCAPP_MINOR_VERSION %s\n", getScriptResult(resolvedpath, "--version_minor").c_str());
+    fprintf(p_file, "#define DCAPP_MAJOR_VERSION %s\n", getScriptResult(configscript, "--version_major").c_str());
+    fprintf(p_file, "#define DCAPP_MINOR_VERSION %s\n", getScriptResult(configscript, "--version_minor").c_str());
     fprintf(p_file, "\n#include <string>\n\n");
     fprintf(p_file, "#ifndef _DCAPP_EXTERNALS_\n#define _DCAPP_EXTERNALS_\n\n");
     fprintf(p_file, "void *(*get_pointer)(const char *);\n\n");
@@ -127,9 +125,9 @@ static void process_elements(xmlNodePtr startnode)
         {
             xmlDocPtr include_file;
             xmlNodePtr include_element;
-            const char *include_filename = get_node_content(node);
+            std::string include_filename = get_node_content(node);
 
-            if (include_filename)
+            if (!include_filename.empty())
             {
                 PathInfo mypath(include_filename);
                 if (!mypath.isValid())
@@ -164,9 +162,9 @@ static void process_elements(xmlNodePtr startnode)
         if (NodeCheck(node, "Variable"))
         {
             vitem newitem;
-            const char *myname = get_node_content(node);
-            if (myname[0] == '@') myname++;
-            newitem.name = std::string(myname);
+            std::string myname = get_node_content(node);
+            if (myname[0] == '@') myname.erase(0, 1);
+            newitem.name = myname;
             newitem.type = std::string(get_element_data(node, "Type"));
             vlist.push_back(newitem);
         }

@@ -13,6 +13,7 @@
 #include "basicutils/msg.hh"
 #include "basicutils/timer.hh"
 #include "basicutils/tidy.hh"
+#include "basicutils/pathinfo.hh"
 #include "basicutils/shellutils.hh"
 #include "basicutils/stringutils.hh"
 #include "comm.hh"
@@ -176,27 +177,19 @@ static void SetDefaultEnvironment(std::string pathspec)
     long hsize = sysconf(_SC_HOST_NAME_MAX)+1;
     char myhost[hsize];
     char *lc_os;
-    std::string tmppath;
 
-    char *resolvedpath = (char *)calloc(PATH_MAX, sizeof(char));
     std::string mypath = findExecutablePath(pathspec);
 
-    tmppath = mypath + "/../../../";
-    realpath(tmppath.c_str(), resolvedpath);
-
-    AppData.dcapphome = resolvedpath;
+    AppData.dcapphome = PathInfo(mypath + "/../../../").getFullPath();
     AppData.defaultfont = AppData.dcapphome + "/dcapp.app/Contents/Resources/fonts/defaultfont";
 
-    tmppath = mypath + "/../dcapp-config";
-    realpath(tmppath.c_str(), resolvedpath);
+    std::string configscript = PathInfo(mypath + "/../dcapp-config").getFullPath();
 
-    setenv("dcappOSTYPE", getScriptResult(resolvedpath, "--ostype").c_str(), 1);
-    setenv("dcappOSSPEC", getScriptResult(resolvedpath, "--osspec").c_str(), 1);
-    setenv("dcappOBJDIR", getScriptResult(resolvedpath, "--objdir").c_str(), 1);
-    setenv("dcappBINDIR", getScriptResult(resolvedpath, "--bindir").c_str(), 1);
-    setenv("dcappVERSION", getScriptResult(resolvedpath, "--version_short").c_str(), 1);
-
-    free(resolvedpath);
+    setenv("dcappOSTYPE", getScriptResult(configscript, "--ostype").c_str(), 1);
+    setenv("dcappOSSPEC", getScriptResult(configscript, "--osspec").c_str(), 1);
+    setenv("dcappOBJDIR", getScriptResult(configscript, "--objdir").c_str(), 1);
+    setenv("dcappBINDIR", getScriptResult(configscript, "--bindir").c_str(), 1);
+    setenv("dcappVERSION", getScriptResult(configscript, "--version_short").c_str(), 1);
 
     uname(&minfo);
 

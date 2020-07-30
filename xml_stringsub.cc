@@ -30,7 +30,7 @@ static std::string get_constval(std::string &instr)
     return "";
 }
 
-std::string replace_string(std::string instr)
+static std::string replace_string(std::string instr)
 {
     if (instr.find_first_of("#$") == std::string::npos) return instr;
 
@@ -75,11 +75,11 @@ std::string replace_string(std::string instr)
     return outstr;
 }
 
-char *get_node_content(xmlNodePtr node)
+std::string get_node_content(xmlNodePtr node)
 {
     char *mycontent = get_XML_content(node);
-    if (mycontent) return strdup(replace_string(get_XML_content(node)).c_str());
-    else return 0x0;
+    if (mycontent) return replace_string(mycontent);
+    else return "";
 }
 
 char *get_element_data(xmlNodePtr innode, const char *key)
@@ -129,7 +129,7 @@ void processArgument(const char *key, const char *value)
 
 void processConstantNode(xmlNodePtr node)
 {
-    ppclist[std::string(get_element_data(node, "Name"))] = std::string(get_node_content(node));
+    ppclist[std::string(get_element_data(node, "Name"))] = get_node_content(node);
 }
 
 void processStyleNode(xmlNodePtr node)

@@ -21,7 +21,7 @@ class EdgeCommModule : public CommModule
         CommModule::CommStatus write(void);
         void flagAsChanged(Variable *);
 
-        int addParameter(int, const char *, const char *);
+        int addParameter(int, std::string, const char *);
         int finishInitialization(const char *, const char *, double);
 
     private:

@@ -1,6 +1,7 @@
 #ifndef _TRICKCOMM_HH_
 #define _TRICKCOMM_HH_
 
+#include <string>
 #include "comm.hh"
 
 #ifdef TRICKACTIVE
@@ -26,7 +27,7 @@ class TrickCommModule : public CommModule
         void setPort(int);
         void setDataRate(const char *);
         void setReconnectOnDisconnect(void);
-        int addParameter(int, const char *, const char *, const char *, const char *, bool);
+        int addParameter(int, std::string, const char *, const char *, const char *, bool);
         void finishInitialization(void);
 
     private:
@@ -69,7 +70,7 @@ class TrickCommModule : public CommModule
         void setPort(int) { };
         void setDataRate(const char *) { };
         void setReconnectOnDisconnect(void) { };
-        int addParameter(int, const char *, const char *, const char *, const char *, int);
+        int addParameter(int, std::string, const char *, const char *, const char *, int);
         void finishInitialization(void) { };
 
     private:

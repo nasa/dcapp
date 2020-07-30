@@ -1,3 +1,5 @@
+#include <string>
+
 #ifdef TRICKACTIVE
 
 #include <cstdio>
@@ -137,7 +139,7 @@ void TrickCommModule::setReconnectOnDisconnect(void)
     this->disconnectaction = this->AppReconnect;
 }
 
-int TrickCommModule::addParameter(int bufID, const char *paramname, const char *trickvar, const char *units, const char *init_only, bool method)
+int TrickCommModule::addParameter(int bufID, std::string paramname, const char *trickvar, const char *units, const char *init_only, bool method)
 {
     std::list<io_parameter> *io_map;
 
@@ -153,7 +155,7 @@ int TrickCommModule::addParameter(int bufID, const char *paramname, const char *
             return this->Fail;
     }
 
-    Variable *myvalue = getVariable(paramname);
+    Variable *myvalue = getVariable(paramname.c_str());
 
     if (myvalue)
     {
@@ -201,7 +203,7 @@ TrickCommModule::TrickCommModule()
     warning_msg("Trick communication requested, but Trick doesn't seem to be properly installed...");
 }
 
-int TrickCommModule::addParameter(int, const char *, const char *, const char *, const char *, int)
+int TrickCommModule::addParameter(int, std::string, const char *, const char *, const char *, int)
 {
     return this->Inactive;
 }

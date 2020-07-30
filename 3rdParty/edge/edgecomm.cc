@@ -134,9 +134,9 @@ void EdgeCommModule::flagAsChanged(Variable *value)
     }
 }
 
-int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *cmdspec)
+int EdgeCommModule::addParameter(int bufID, std::string paramname, const char *cmdspec)
 {
-    if (!paramname || !cmdspec) return this->Fail;
+    if (paramname.empty() || !cmdspec) return this->Fail;
 
     std::list<io_parameter> *io_map;
 
@@ -152,7 +152,7 @@ int EdgeCommModule::addParameter(int bufID, const char *paramname, const char *c
             return this->Fail;
     }
 
-    Variable *myvalue = getVariable(paramname);
+    Variable *myvalue = getVariable(paramname.c_str());
 
     if (myvalue)
     {

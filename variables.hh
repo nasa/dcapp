@@ -1,6 +1,7 @@
 #ifndef _VARIABLES_HH_
 #define _VARIABLES_HH_
 
+#include <string>
 #include "values.hh"
 
 class Variable : public Value
@@ -47,7 +48,7 @@ class Variable : public Value
         int type;
 };
 
-extern void registerVariable(const char *, const char *, const char *);
+extern void registerVariable(std::string, const char *, const char *);
 extern Variable *getVariable(const char *);
 extern void *get_pointer(const char *);
 extern char *create_virtual_variable(const char *, const char *);

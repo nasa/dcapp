@@ -77,7 +77,7 @@ void VariableServerComm::remove_var(const char *label)
 
     std::ostringstream mycmd;
     mycmd << "trick.var_remove(\"" << label << "\")\n";
-    this->sim_write(mycmd.str().c_str());
+    this->sim_write(mycmd.str());
 }
 
 int VariableServerComm::activate(const char *host, int port, const char *rate_spec, char *default_rate)
@@ -125,7 +125,7 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
     {
         std::ostringstream mycmd;
         mycmd << "trick.var_add(\"" << rate_spec << "\")\n";
-        this->sim_write(mycmd.str().c_str());
+        this->sim_write(mycmd.str());
         this->sim_write("trick.var_send()\n");
 
         // block until sim returns rate_spec
@@ -160,13 +160,13 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
         mycmd << "trick.var_add(\"" << it->label << "\"";
         if (!(it->units.empty())) mycmd << ", \"" << it->units << "\"";
         mycmd << ")\n";
-        this->sim_write(mycmd.str().c_str());
+        this->sim_write(mycmd.str());
         TIDY(cmd);
     }
 
     std::ostringstream mycmd;
     mycmd << "trick.var_cycle(" << sample_rate << ")\n";
-    this->sim_write(mycmd.str().c_str());
+    this->sim_write(mycmd.str());
 
 //    this->sim_write("trick.var_debug(1)\n"); // FOR DEBUGGING
     this->sim_write("trick.var_unpause()\n");
@@ -226,7 +226,7 @@ int VariableServerComm::putMethod(const char *label)
 
     std::ostringstream mycmd;
     mycmd << label << "()\n";
-    this->sim_write(mycmd.str().c_str());
+    this->sim_write(mycmd.str());
 
     return VS_SUCCESS;
 }
@@ -239,7 +239,7 @@ int VariableServerComm::putValue(const char *label, Variable &value, const char 
     mycmd << "trick.var_set(\"" << label << "\", " << value.getString();
     if (units && !(value.isString())) mycmd << ", \"" << units << "\"";
     mycmd << ")\n";
-    this->sim_write(mycmd.str().c_str());
+    this->sim_write(mycmd.str());
 
     return VS_SUCCESS;
 }
@@ -264,16 +264,12 @@ void VariableServerComm::sim_read(void)
     if (this->count_tokens(this->databuf, '\n')) this->databuf_complete = true;
 }
 
-// If tc_write is ever updated to take "const char *" as input, then this ugly work-around can be removed and sim_write
-// can be effectively replaced by a single call to tc_write:  tc_write(&(this->connection), cmd, strlen(cmd));
-void VariableServerComm::sim_write(const char *cmd)
+// The const_cast below is a bit of a hack because tc_write requires "char *" as its 2nd argument.  The const_cast
+// allows tc_write to change the contents of cmd, which may be dangerous.  This hack will go away if tc_write is ever
+// updated to accept "const char *" as its 2nd argument.
+void VariableServerComm::sim_write(std::string cmd)
 {
-    char *dyncmd = strdup(cmd);
-    if (dyncmd)
-    {
-        tc_write(&(this->connection), dyncmd, strlen(cmd));
-        free(dyncmd);
-    }
+    tc_write(&(this->connection), const_cast<char *>(cmd.c_str()), cmd.length());
 }
 
 int VariableServerComm::update_data(const char *curbuf)

@@ -1,3 +1,4 @@
+#include <string>
 #include "RenderLib/RenderLib.hh"
 #include "commonutils.hh"
 #include "image.hh"
@@ -6,9 +7,9 @@ dcImage::dcImage(dcParent *myparent) : dcGeometric(myparent), textureID(0x0)
 {
 }
 
-void dcImage::setTexture(const char *filename)
+void dcImage::setTexture(std::string filename)
 {
-    if (filename) textureID = tdLoadTexture(filename);
+    textureID = tdLoadTexture(filename);
 }
 
 void dcImage::draw(void)

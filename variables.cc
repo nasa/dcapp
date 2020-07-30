@@ -9,9 +9,9 @@
 
 static std::map<std::string, Variable> variables;
 
-void registerVariable(const char *paramname, const char *typestr, const char *initval)
+void registerVariable(std::string paramname, const char *typestr, const char *initval)
 {
-    if (!paramname)
+    if (paramname.empty())
     {
         error_msg("Attempting to create a variable without a name");
         return;
@@ -23,16 +23,16 @@ void registerVariable(const char *paramname, const char *typestr, const char *in
         return;
     }
 
-    const char *mylabel;
+    std::string mylabel;
 
-    if (paramname[0] == '@') mylabel = &paramname[1];
+    if (paramname[0] == '@') mylabel = paramname.substr(1);
     else mylabel = paramname;
 
     Variable *vinfo = new Variable;
     vinfo->setType(typestr);
     vinfo->setToCharstr(initval);
 
-    variables[std::string(mylabel)] = *vinfo;
+    variables[mylabel] = *vinfo;
 }
 
 Variable *getVariable(const char *label)
@@ -66,7 +66,8 @@ char *create_virtual_variable(const char *typestr, const char *initval)
     static unsigned id_count = 0;
     char *vname;
     asprintf(&vname, "@dcappVirtualVariable%u", id_count);
-    registerVariable(vname, typestr, initval);
+std::string myvar = "@dcappVirtualVariable" + std::to_string(id_count);
+    registerVariable(myvar, typestr, initval);
     id_count++;
     return vname;
 }

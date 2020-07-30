@@ -108,9 +108,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             xmlDocPtr include_file;
             xmlNodePtr include_element;
-            const char *include_filename = get_node_content(node);
+            std::string include_filename = get_node_content(node);
 
-            if (include_filename)
+            if (!include_filename.empty())
             {
                 PathInfo mypath(include_filename);
                 if (!mypath.isValid())
@@ -199,7 +199,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             if (preprocessing)
             {
-                dcSetValue *myitem = new dcSetValue(0x0, get_element_data(node, "Variable"), get_node_content(node));
+                dcSetValue *myitem = new dcSetValue(0x0, get_element_data(node, "Variable"), get_node_content(node).c_str());
                 myitem->setOperator(get_element_data(node, "Operator"));
                 myitem->setRange(get_element_data(node, "MinimumValue"), get_element_data(node, "MaximumValue"));
                 myitem->updateData();
@@ -207,7 +207,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             }
             else
             {
-                dcSetValue *myitem = new dcSetValue(myparent, get_element_data(node, "Variable"), get_node_content(node));
+                dcSetValue *myitem = new dcSetValue(myparent, get_element_data(node, "Variable"), get_node_content(node).c_str());
                 myitem->setOperator(get_element_data(node, "Operator"));
                 myitem->setRange(get_element_data(node, "MinimumValue"), get_element_data(node, "MaximumValue"));
             }

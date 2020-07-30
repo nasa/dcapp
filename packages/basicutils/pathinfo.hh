@@ -11,14 +11,15 @@
 class PathInfo
 {
     public:
-        PathInfo(std::string pathspec) : fullpath(pathspec), valid(false)
+        PathInfo(std::string pathspec) : valid(false)
         {
-            if (!fullpath.empty())
+            if (!pathspec.empty())
             {
-                char *myabspath = realpath(fullpath.c_str(), 0x0);
+                char *myabspath = realpath(pathspec.c_str(), 0x0);
                 if (myabspath)
                 {
                     valid = true;
+                    fullpath = myabspath;
 
                     // note that we create dirc and basec because dirname and basename can mangle the passed string
                     char *dirc = strdup(myabspath);
