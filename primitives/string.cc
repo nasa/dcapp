@@ -188,7 +188,7 @@ size_t dcString::parse_var(std::string mystr)
     if (var_end == std::string::npos) varstr += mystr.substr(var_start, std::string::npos);
     else varstr += mystr.substr(var_start, var_end - var_start);
 
-    Variable *myvalue = getVariable(varstr.c_str());
+    Variable *myvalue = getVariableSSTR(varstr);
     if (myvalue)
     {
         if (fmt_start != std::string::npos && fmt_end != std::string::npos)

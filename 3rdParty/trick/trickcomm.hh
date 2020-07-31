@@ -23,11 +23,11 @@ class TrickCommModule : public CommModule
         CommModule::CommStatus write(void);
         void flagAsChanged(Variable *);
 
-        void setHost(const char *);
-        void setPort(int);
-        void setDataRate(const char *);
+        void setHost(std::string);
+        void setPort(std::string);
+        void setDataRate(std::string);
         void setReconnectOnDisconnect(void);
-        int addParameter(int, std::string, const char *, const char *, const char *, bool);
+        int addParameter(int, std::string, std::string, std::string, std::string, bool);
         void finishInitialization(void);
 
     private:
@@ -35,8 +35,8 @@ class TrickCommModule : public CommModule
 
         typedef struct
         {
-            char *trickvar;
-            char *units;
+            std::string trickvar;
+            std::string units;
             Variable *trickvalue;
             Variable *currvalue;
             Variable prevvalue;
@@ -47,9 +47,9 @@ class TrickCommModule : public CommModule
 
         Timer *last_connect_attempt;
         VariableServerComm *tvs;
-        char *host;
+        std::string host;
         int port;
-        char *datarate;
+        std::string datarate;
         TrickCommModule::DisconnectAction disconnectaction;
         std::list<io_parameter> fromSim;
         std::list<io_parameter> toSim;
@@ -66,11 +66,11 @@ class TrickCommModule : public CommModule
 
         typedef enum { FromTrick, ToTrick } BufferType;
 
-        void setHost(const char *) { };
-        void setPort(int) { };
-        void setDataRate(const char *) { };
+        void setHost(std::string) { };
+        void setPort(std::string) { };
+        void setDataRate(std::string) { };
         void setReconnectOnDisconnect(void) { };
-        int addParameter(int, std::string, const char *, const char *, const char *, int);
+        int addParameter(int, std::string, std::string, std::string, std::string, bool);
         void finishInitialization(void) { };
 
     private:

@@ -13,7 +13,7 @@
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
-TrickCommModule::TrickCommModule() : host(0x0), port(0), datarate(0x0), disconnectaction(this->AppTerminate)
+TrickCommModule::TrickCommModule() : port(0), disconnectaction(this->AppTerminate)
 {
     this->last_connect_attempt = new Timer;
     this->tvs = new VariableServerComm;
@@ -21,8 +21,6 @@ TrickCommModule::TrickCommModule() : host(0x0), port(0), datarate(0x0), disconne
 
 TrickCommModule::~TrickCommModule()
 {
-    if (this->host) free(this->host);
-    if (this->datarate) free(this->datarate);
     fromSim.clear();
     toSim.clear();
 
@@ -119,19 +117,19 @@ void TrickCommModule::flagAsChanged(Variable *value)
     }
 }
 
-void TrickCommModule::setHost(const char *hostspec)
+void TrickCommModule::setHost(std::string hostspec)
 {
-    if (hostspec) this->host = strdup(hostspec);
+    this->host = hostspec;
 }
 
-void TrickCommModule::setPort(int portspec)
+void TrickCommModule::setPort(std::string portspec)
 {
-    this->port = portspec;
+    this->port = StringToInteger(portspec);
 }
 
-void TrickCommModule::setDataRate(const char *ratespec)
+void TrickCommModule::setDataRate(std::string ratespec)
 {
-    if (ratespec) this->datarate = strdup(ratespec);
+    this->datarate = ratespec;
 }
 
 void TrickCommModule::setReconnectOnDisconnect(void)
@@ -139,7 +137,7 @@ void TrickCommModule::setReconnectOnDisconnect(void)
     this->disconnectaction = this->AppReconnect;
 }
 
-int TrickCommModule::addParameter(int bufID, std::string paramname, const char *trickvar, const char *units, const char *init_only, bool method)
+int TrickCommModule::addParameter(int bufID, std::string paramname, std::string trickvar, std::string units, std::string init_only, bool method)
 {
     std::list<io_parameter> *io_map;
 
@@ -155,21 +153,20 @@ int TrickCommModule::addParameter(int bufID, std::string paramname, const char *
             return this->Fail;
     }
 
-    Variable *myvalue = getVariable(paramname.c_str());
+    Variable *myvalue = getVariableSSTR(paramname);
 
     if (myvalue)
     {
         io_parameter myparam;
-        myparam.trickvar = strdup(trickvar);
 
-        if (units) myparam.units = strdup(units);
-        else  myparam.units = nullptr;
-
+        myparam.trickvar = trickvar;
+        myparam.units = units;
         myparam.currvalue = myvalue;
         myparam.prevvalue.setAttributes(*myvalue);
         myparam.forcewrite = false;
         myparam.init_only = StringToBoolean(init_only);
         myparam.method = method;
+
         io_map->push_back(myparam);
 
         return this->Success;
@@ -189,7 +186,7 @@ void TrickCommModule::activate(void)
 {
     if (!(this->fromSim.empty()) || !(this->toSim.empty()))
     {
-        if (this->tvs->activate(this->host, this->port, 0x0, this->datarate) == VS_SUCCESS) this->active = true;
+        if (this->tvs->activate(this->host, this->port, this->datarate) == VS_SUCCESS) this->active = true;
     }
 }
 
@@ -203,7 +200,7 @@ TrickCommModule::TrickCommModule()
     warning_msg("Trick communication requested, but Trick doesn't seem to be properly installed...");
 }
 
-int TrickCommModule::addParameter(int, std::string, const char *, const char *, const char *, int)
+int TrickCommModule::addParameter(int, std::string, std::string, std::string, std::string, int)
 {
     return this->Inactive;
 }

@@ -1,3 +1,4 @@
+#include <string>
 #include "basicutils/stringutils.hh"
 #include "app_data.hh"
 #include "animate.hh"
@@ -9,9 +10,9 @@ dcAnimate::dcAnimate(dcParent *myparent) : duration(1)
     myparent->addChild(this);
 }
 
-void dcAnimate::setDuration(const char *inval)
+void dcAnimate::setDuration(std::string inval)
 {
-    if (inval) duration = StringToDecimal(inval, 1);
+    duration = StringToDecimal(inval, 1);
 }
 
 void dcAnimate::handleEvent(void)

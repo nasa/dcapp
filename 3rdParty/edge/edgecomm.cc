@@ -152,7 +152,7 @@ int EdgeCommModule::addParameter(int bufID, std::string paramname, const char *c
             return this->Fail;
     }
 
-    Variable *myvalue = getVariable(paramname.c_str());
+    Variable *myvalue = getVariableSSTR(paramname);
 
     if (myvalue)
     {

@@ -9,9 +9,9 @@ CommModule::~CommModule()
 {
 }
 
-void CommModule::setConnectedVariable(const char *spec)
+void CommModule::setConnectedVariable(std::string spec)
 {
-    if (spec) this->activeID = getVariable(spec);
+    this->activeID = getVariableSSTR(spec);
 }
 
 CommModule::CommStatus CommModule::read(void)

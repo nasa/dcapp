@@ -21,10 +21,10 @@ Programmer: M. McFarlane
 #define VS_DEFAULT_PORT       7000
 #define VS_DEFAULT_SAMPLERATE "1.0"
 
-ParamData::ParamData(const char *label_spec, const char *units_spec, Variable &invar)
+ParamData::ParamData(std::string &label_spec, std::string &units_spec, Variable &invar)
 {
-    if (label_spec) this->label = label_spec;
-    if (units_spec) this->units = units_spec;
+    this->label = label_spec;
+    this->units = units_spec;
     this->value.setAttributes(invar);
 }
 
@@ -49,9 +49,9 @@ VariableServerComm::~VariableServerComm()
     TIDY(this->prevbuf);
 }
 
-Variable * VariableServerComm::add_var(const char *label, const char *units, Variable &invar)
+Variable * VariableServerComm::add_var(std::string &label, std::string &units, Variable &invar)
 {
-    if (!label) return nullptr;
+    if (label.empty()) return nullptr;
 
     ParamData *newparam = new ParamData(label, units, invar);
 
@@ -68,7 +68,7 @@ Variable * VariableServerComm::add_var(const char *label, const char *units, Var
     return &(this->paramlist.back().value);
 }
 
-void VariableServerComm::remove_var(const char *label)
+void VariableServerComm::remove_var(std::string &label)
 {
     for (std::list<ParamData>::iterator it = this->paramlist.begin(); it != this->paramlist.end(); it++)
     {
@@ -80,16 +80,13 @@ void VariableServerComm::remove_var(const char *label)
     this->sim_write(mycmd.str());
 }
 
-int VariableServerComm::activate(const char *host, int port, const char *rate_spec, char *default_rate)
+int VariableServerComm::activate(std::string &host, int port, std::string &datarate)
 {
-    char *cmd=0x0, *sample_rate=0x0, *default_sample_rate = strdup(VS_DEFAULT_SAMPLERATE);
-    int i;
-
-    if (host)
+    if (!(this->connection.hostname))
     {
-        if (strlen(host)) this->connection.hostname = strdup(host);
+        if (host.empty()) this->connection.hostname = strdup("localhost");
+        else this->connection.hostname = strdup(host.c_str());
     }
-    if (!(this->connection.hostname)) this->connection.hostname = strdup("localhost");
 
     if (port) this->connection.port = port;
     else this->connection.port = VS_DEFAULT_PORT;
@@ -121,37 +118,6 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
     free(trickver);
 #endif
 
-    if (rate_spec)
-    {
-        std::ostringstream mycmd;
-        mycmd << "trick.var_add(\"" << rate_spec << "\")\n";
-        this->sim_write(mycmd.str());
-        this->sim_write("trick.var_send()\n");
-
-        // block until sim returns rate_spec
-        while (!(this->databuf_complete)) this->sim_read();
-
-        // extract data up until the first white space
-        for (i=0; i<this->databuf_size; i++)
-        {
-            if (isspace(this->databuf[i]))
-            {
-                this->databuf[i] = '\0';
-                break;
-            }
-        }
-        sample_rate = this->databuf + this->find_next_token(this->databuf, '\t') + 1;
-        this->sim_write("trick.var_clear()\n");
-    }
-    else
-    {
-        if (default_rate)
-        {
-            if (strlen(default_rate)) sample_rate = default_rate;
-        }
-        if (!sample_rate) sample_rate = default_sample_rate;
-    }
-
     this->sim_write("trick.var_pause()\n");
 
     for (std::list<ParamData>::iterator it = this->paramlist.begin(); it != this->paramlist.end(); it++)
@@ -161,18 +127,15 @@ int VariableServerComm::activate(const char *host, int port, const char *rate_sp
         if (!(it->units.empty())) mycmd << ", \"" << it->units << "\"";
         mycmd << ")\n";
         this->sim_write(mycmd.str());
-        TIDY(cmd);
     }
 
     std::ostringstream mycmd;
-    mycmd << "trick.var_cycle(" << sample_rate << ")\n";
+    if (datarate.empty()) mycmd << "trick.var_cycle(" << VS_DEFAULT_SAMPLERATE << ")\n";
+    else mycmd << "trick.var_cycle(" << datarate << ")\n";
     this->sim_write(mycmd.str());
 
 //    this->sim_write("trick.var_debug(1)\n"); // FOR DEBUGGING
     this->sim_write("trick.var_unpause()\n");
-
-    TIDY(cmd);
-    TIDY(default_sample_rate);
 
     return VS_SUCCESS;
 }
@@ -220,7 +183,7 @@ int VariableServerComm::get(void)
     return retval;
 }
 
-int VariableServerComm::putMethod(const char *label)
+int VariableServerComm::putMethod(std::string &label)
 {
     if (!tc_isValid(&(this->connection))) return VS_INVALID_CONNECTION;
 
@@ -231,13 +194,13 @@ int VariableServerComm::putMethod(const char *label)
     return VS_SUCCESS;
 }
 
-int VariableServerComm::putValue(const char *label, Variable &value, const char *units)
+int VariableServerComm::putValue(std::string &label, Variable &value, std::string &units)
 {
     if (!tc_isValid(&(this->connection))) return VS_INVALID_CONNECTION;
 
     std::ostringstream mycmd;
     mycmd << "trick.var_set(\"" << label << "\", " << value.getString();
-    if (units && !(value.isString())) mycmd << ", \"" << units << "\"";
+    if (!(units.empty()) && !(value.isString())) mycmd << ", \"" << units << "\"";
     mycmd << ")\n";
     this->sim_write(mycmd.str());
 

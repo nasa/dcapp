@@ -9,7 +9,7 @@
 
 static std::map<std::string, Variable> variables;
 
-void registerVariable(std::string paramname, const char *typestr, const char *initval)
+void registerVariable(std::string paramname, std::string typestr, std::string initval)
 {
     if (paramname.empty())
     {
@@ -17,7 +17,7 @@ void registerVariable(std::string paramname, const char *typestr, const char *in
         return;
     }
 
-    if (!typestr)
+    if (typestr.empty())
     {
         error_msg("Attempting to create the variable \"" << paramname << "\" without a specified type");
         return;
@@ -30,7 +30,7 @@ void registerVariable(std::string paramname, const char *typestr, const char *in
 
     Variable *vinfo = new Variable;
     vinfo->setType(typestr);
-    vinfo->setToCharstr(initval);
+    vinfo->setToString(initval);
 
     variables[mylabel] = *vinfo;
 }
@@ -42,6 +42,23 @@ Variable *getVariable(const char *label)
     const char *mylabel;
 
     if (label[0] == '@') mylabel = &label[1];
+    else mylabel = label;
+
+    if (variables.find(mylabel) != variables.end()) return &(variables[mylabel]);
+    else
+    {
+        warning_msg("Invalid variable label: " << label);
+        return 0x0;
+    }
+}
+
+Variable *getVariableSSTR(std::string &label)
+{
+    if (label.empty()) return 0x0;
+
+    std::string mylabel;
+
+    if (label[0] == '@') mylabel = label.substr(1);
     else mylabel = label;
 
     if (variables.find(mylabel) != variables.end()) return &(variables[mylabel]);
@@ -295,17 +312,17 @@ bool Variable::getBoolean(void)
 
 void Variable::setType(int type_spec) { this->type = type_spec; }
 
-void Variable::setType(const char *type_spec)
+void Variable::setType(std::string &type_spec)
 {
-    if (!strcmp(type_spec, "Decimal") || !strcmp(type_spec, "Float"))
+    if (type_spec == "Decimal" || type_spec == "Float")
     {
         this->type = DECIMAL_TYPE;
     }
-    else if (!strcmp(type_spec, "Integer"))
+    else if (type_spec == "Integer")
     {
         this->type = INTEGER_TYPE;
     }
-    else if (!strcmp(type_spec, "String"))
+    else if (type_spec == "String")
     {
         this->type = STRING_TYPE;
     }

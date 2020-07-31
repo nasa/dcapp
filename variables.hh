@@ -33,7 +33,7 @@ class Variable : public Value
         bool getBoolean(void);
 
         void setType(int);
-        void setType(const char *);
+        void setType(std::string &);
         void setAttributes(Variable &);
 
         void *getPointer(void);
@@ -48,8 +48,9 @@ class Variable : public Value
         int type;
 };
 
-extern void registerVariable(std::string, const char *, const char *);
+extern void registerVariable(std::string, std::string, std::string);
 extern Variable *getVariable(const char *);
+extern Variable *getVariableSSTR(std::string &);
 extern void *get_pointer(const char *);
 extern char *create_virtual_variable(const char *, const char *);
 

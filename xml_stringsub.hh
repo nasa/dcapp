@@ -5,6 +5,7 @@
 #include <libxml/parser.h>
 
 extern std::string get_node_content(xmlNodePtr);
+extern std::string get_element_dataSSTR(xmlNodePtr, const char *);
 extern char *get_element_data(xmlNodePtr, const char *);
 extern void processArgument(const char *, const char *);
 extern void processConstantNode(xmlNodePtr);

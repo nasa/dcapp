@@ -142,7 +142,7 @@ static void process_elements(xmlNodePtr startnode)
                     // Move to directory containing the new file
                     chdir(mypath.getDirectory().c_str());
 
-                    if (XMLFileOpen(&include_file, &include_element, mypath.getFile().c_str()))
+                    if (XMLFileOpen(&include_file, &include_element, mypath.getFile()))
                     {
                         warning_msg("Couldn't open include file " << include_filename);
                     }

@@ -68,7 +68,7 @@ int ParseXMLFile(const char *fullpath)
     // Move to directory containing the specfile by default
     chdir(mypath.getDirectory().c_str());
 
-    if (XMLFileOpen(&mydoc, &root_element, mypath.getFile().c_str())) return (-1);
+    if (XMLFileOpen(&mydoc, &root_element, mypath.getFile())) return (-1);
 
     if (!NodeCheck(root_element, "DCAPP"))
     {
@@ -125,7 +125,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                     // Move to directory containing the new file
                     chdir(mypath.getDirectory().c_str());
 
-                    if (XMLFileOpen(&include_file, &include_element, mypath.getFile().c_str()))
+                    if (XMLFileOpen(&include_file, &include_element, mypath.getFile()))
                     {
                         warning_msg("Couldn't open include file " << include_filename);
                     }
@@ -215,25 +215,21 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "Animation"))
         {
             dcAnimate *myitem = new dcAnimate(myparent);
-            myitem->setDuration(get_element_data(node, "Duration"));
+            myitem->setDuration(get_element_dataSSTR(node, "Duration"));
             process_elements(myitem, node->children);
         }
         if (NodeCheck(node, "Variable"))
         {
-            registerVariable(get_node_content(node), get_element_data(node, "Type"), get_element_data(node, "InitialValue"));
+            registerVariable(get_node_content(node), get_element_dataSSTR(node, "Type"), get_element_dataSSTR(node, "InitialValue"));
         }
         if (NodeCheck(node, "TrickIo"))
         {
             trickcomm = new TrickCommModule;
-            trickcomm->setHost(get_element_data(node, "Host"));
-            trickcomm->setPort(StringToInteger(get_element_data(node, "Port")));
-            trickcomm->setDataRate(get_element_data(node, "DataRate"));
-            const char *d_a = get_element_data(node, "DisconnectAction");
-            if (d_a)
-            {
-                if (!strcasecmp(d_a, "Reconnect")) trickcomm->setReconnectOnDisconnect();
-            }
-            trickcomm->setConnectedVariable(get_element_data(node, "ConnectedVariable"));
+            trickcomm->setHost(get_element_dataSSTR(node, "Host"));
+            trickcomm->setPort(get_element_dataSSTR(node, "Port"));
+            trickcomm->setDataRate(get_element_dataSSTR(node, "DataRate"));
+            trickcomm->setConnectedVariable(get_element_dataSSTR(node, "ConnectedVariable"));
+            if (get_element_dataSSTR(node, "DisconnectAction") == "Reconnect") trickcomm->setReconnectOnDisconnect();
             process_elements(myparent, node->children);
             trickcomm->finishInitialization();
             AppData.commlist.push_back(trickcomm);
@@ -258,20 +254,20 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             if (trickcomm)
             {
-                trickcomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"), get_element_data(node, "InitializationOnly"), false);
+                trickcomm->addParameter(bufferID, get_node_content(node), get_element_dataSSTR(node, "Name"), get_element_dataSSTR(node, "Units"), get_element_dataSSTR(node, "InitializationOnly"), false);
             }
         }
         if (NodeCheck(node, "TrickMethod"))
         {
             if (trickcomm && bufferID == TrickCommModule::ToTrick)
             {
-                trickcomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "Name"), 0x0, 0x0, true);
+                trickcomm->addParameter(bufferID, get_node_content(node), get_element_dataSSTR(node, "Name"), "", "", true);
             }
         }
         if (NodeCheck(node, "EdgeIo"))
         {
             edgecomm = new EdgeCommModule;
-            edgecomm->setConnectedVariable(get_element_data(node, "ConnectedVariable"));
+            edgecomm->setConnectedVariable(get_element_dataSSTR(node, "ConnectedVariable"));
             process_elements(myparent, node->children);
             edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StringToDecimal(get_element_data(node, "DataRate"), 1.0));
             AppData.commlist.push_back(edgecomm);

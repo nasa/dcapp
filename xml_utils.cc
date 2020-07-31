@@ -1,3 +1,4 @@
+#include <string>
 #include <cstdio>
 #include <cstring>
 #include <libxml/parser.h>
@@ -7,17 +8,15 @@
 bool NodeCheck(xmlNodePtr, const char *);
 static bool xmlStrEq(const xmlChar *, const char *);
 
-int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, const char *filename)
+int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, std::string filename)
 {
-    if (!filename) return (-1);
-
-    if (xmlCheckFilename(filename) != 1)
+    if (xmlCheckFilename(filename.c_str()) != 1)
     {
         error_msg("Couldn't process XML file: " << filename);
         return (-1);
     }
 
-    *mydoc = xmlReadFile(filename, 0x0, 0);
+    *mydoc = xmlReadFile(filename.c_str(), 0x0, 0);
     if (!(*mydoc))
     {
         error_msg("Couldn't process XML file: " << filename);
@@ -86,6 +85,7 @@ bool NodeCheck(xmlNodePtr node, const char *str)
     else return false;
 }
 
+#if 0
 xmlNodePtr NodeFind(xmlNodePtr startnode, const char *key)
 {
     xmlNodePtr node, child;
@@ -102,6 +102,7 @@ xmlNodePtr NodeFind(xmlNodePtr startnode, const char *key)
 
     return 0x0;
 }
+#endif
 
 static bool xmlStrEq(const xmlChar *xmlstr, const char *charstr)
 {

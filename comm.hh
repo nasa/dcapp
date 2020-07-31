@@ -11,7 +11,7 @@ class CommModule
 
         typedef enum { None, Inactive, Success, Fail, Terminate } CommStatus;
 
-        void setConnectedVariable(const char *);
+        void setConnectedVariable(std::string);
         virtual CommModule::CommStatus read(void);
         virtual CommModule::CommStatus write(void);
         virtual void flagAsChanged(Variable *);
