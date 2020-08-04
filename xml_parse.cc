@@ -422,6 +422,11 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setFillColor(get_element_data(node, "FillColor"));
             myitem->setLineColor(get_element_data(node, "LineColor"));
             myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
+            {
+                if (NodeCheck(subnode, "OnPress")) process_elements(myitem->PressList, subnode->children);
+                if (NodeCheck(subnode, "OnRelease")) process_elements(myitem->ReleaseList, subnode->children);
+            }
         }
         if (NodeCheck(node, "Circle"))
         {
@@ -434,6 +439,11 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setLineWidth(get_element_data(node, "LineWidth"));
             myitem->setRadius(get_element_data(node, "Radius"));
             myitem->setSegments(get_element_data(node, "Segments"));
+            for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
+            {
+                if (NodeCheck(subnode, "OnPress")) process_elements(myitem->PressList, subnode->children);
+                if (NodeCheck(subnode, "OnRelease")) process_elements(myitem->ReleaseList, subnode->children);
+            }
         }
         if (NodeCheck(node, "String"))
         {

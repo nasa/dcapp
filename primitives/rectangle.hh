@@ -9,10 +9,17 @@ class dcRectangle : public dcGeometric
 {
     public:
         dcRectangle(dcParent *);
+        virtual ~dcRectangle();
+
         void setFillColor(const char *);
         void setLineColor(const char *);
         void setLineWidth(const char *);
+        void handleMousePress(double, double);
+        void handleMouseRelease(void);
         void draw(void);
+
+        dcParent *PressList;
+        dcParent *ReleaseList;
 
     private:
         double linewidth;
@@ -20,6 +27,7 @@ class dcRectangle : public dcGeometric
         bool outline;
         Kolor FillColor;
         Kolor LineColor;
+        bool selected;
 };
 
 #endif

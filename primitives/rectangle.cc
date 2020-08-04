@@ -4,10 +4,23 @@
 #include "commonutils.hh"
 #include "rectangle.hh"
 
-dcRectangle::dcRectangle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false)
+extern void RegisterPressedPrimitive(dcParent *);
+
+dcRectangle::dcRectangle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), selected(false)
 {
     FillColor.set(0.5, 0.5, 0.5);
     LineColor.set(1, 1, 1);
+
+    PressList = new dcParent;
+    ReleaseList = new dcParent;
+    PressList->setParent(this);
+    ReleaseList->setParent(this);
+}
+
+dcRectangle::~dcRectangle()
+{
+    delete PressList;
+    delete ReleaseList;
 }
 
 void dcRectangle::setFillColor(const char *cspec)
@@ -34,6 +47,26 @@ void dcRectangle::setLineWidth(const char *inval)
     {
         linewidth = StringToDecimal(inval, 1);
         outline = true;
+    }
+}
+
+void dcRectangle::handleMousePress(double inx, double iny)
+{
+    computeGeometry();
+    if ((left < inx) && (inx < right) && (bottom < iny) && (iny < top))
+    {
+        this->selected = true;
+        this->PressList->handleEvent();
+        RegisterPressedPrimitive(this->PressList);
+    }
+}
+
+void dcRectangle::handleMouseRelease(void)
+{
+    if (this->selected)
+    {
+        this->selected = false;
+        this->ReleaseList->handleEvent();
     }
 }
 

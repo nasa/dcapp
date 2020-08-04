@@ -10,12 +10,19 @@ class dcCircle : public dcGeometric
 {
     public:
         dcCircle(dcParent *);
+        virtual ~dcCircle();
+
         void setFillColor(const char *);
         void setLineColor(const char *);
         void setLineWidth(const char *);
         void setRadius(const char *);
         void setSegments(const char *);
+        void handleMousePress(double, double);
+        void handleMouseRelease(void);
         void draw(void);
+
+        dcParent *PressList;
+        dcParent *ReleaseList;
 
     private:
         Value *radius;
@@ -25,6 +32,7 @@ class dcCircle : public dcGeometric
         Kolor FillColor;
         Kolor LineColor;
         unsigned segments;
+        bool selected;
 };
 
 #endif

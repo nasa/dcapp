@@ -4,11 +4,24 @@
 #include "values.hh"
 #include "circle.hh"
 
-dcCircle::dcCircle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), segments(80)
+extern void RegisterPressedPrimitive(dcParent *);
+
+dcCircle::dcCircle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), segments(80), selected(false)
 {
     radius = getConstantFromDecimal(0);
     FillColor.set(0.5, 0.5, 0.5);
     LineColor.set(1, 1, 1);
+
+    PressList = new dcParent;
+    ReleaseList = new dcParent;
+    PressList->setParent(this);
+    ReleaseList->setParent(this);
+}
+
+dcCircle::~dcCircle()
+{
+    delete PressList;
+    delete ReleaseList;
 }
 
 void dcCircle::setFillColor(const char *cspec)
@@ -46,6 +59,30 @@ void dcCircle::setRadius(const char *inval)
 void dcCircle::setSegments(const char *inval)
 {
     if (inval) segments = StringToInteger(inval, 80);
+}
+
+void dcCircle::handleMousePress(double inx, double iny)
+{
+    computeGeometry();
+
+    double deltax = inx - refx;
+    double deltay = iny - refy;
+
+    if ((deltax * deltax) + (deltay * deltay) <= (radius->getDecimal() * radius->getDecimal()))
+    {
+        this->selected = true;
+        this->PressList->handleEvent();
+        RegisterPressedPrimitive(this->PressList);
+    }
+}
+
+void dcCircle::handleMouseRelease(void)
+{
+    if (this->selected)
+    {
+        this->selected = false;
+        this->ReleaseList->handleEvent();
+    }
 }
 
 void dcCircle::draw(void)

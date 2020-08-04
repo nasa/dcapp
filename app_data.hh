@@ -23,7 +23,6 @@ typedef struct
     std::list<DeviceModule *> devicelist;
     std::list<PixelStreamItem *> pixelstreams;
     std::list<dcObject *> events;
-    std::list<dcObject *> mouseheld;
     std::vector<float> vertices;
     dcWindow *toplevel;
     void (*DisplayPreInit)(void *(*)(const char *));
