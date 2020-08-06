@@ -26,7 +26,6 @@ class dcParent : public dcObject
 
         void addChild(dcObject *);
 
-    protected:
         std::list<dcObject *> children;
 };
 

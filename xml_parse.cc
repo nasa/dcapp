@@ -410,6 +410,11 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setLineColor(get_element_data(node, "LineColor"));
             myitem->setLineWidth(get_element_data(node, "LineWidth"));
             process_elements(myitem, node->children);
+            for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
+            {
+                if (NodeCheck(subnode, "OnPress")) process_elements(myitem->PressList, subnode->children);
+                if (NodeCheck(subnode, "OnRelease")) process_elements(myitem->ReleaseList, subnode->children);
+            }
         }
         if (NodeCheck(node, "Rectangle"))
         {
@@ -467,7 +472,14 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
-            myitem->setTexture(get_node_content(node));
+            std::string myfile = get_element_dataSSTR(node, "File");
+            if (myfile.empty()) myfile = get_node_content(node);
+            myitem->setTexture(myfile);
+            for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
+            {
+                if (NodeCheck(subnode, "OnPress")) process_elements(myitem->PressList, subnode->children);
+                if (NodeCheck(subnode, "OnRelease")) process_elements(myitem->ReleaseList, subnode->children);
+            }
         }
         if (NodeCheck(node, "PixelStream"))
         {

@@ -63,6 +63,8 @@ void dcCircle::setSegments(const char *inval)
 
 void dcCircle::handleMousePress(double inx, double iny)
 {
+    if (this->PressList->children.empty() && this->ReleaseList->children.empty()) return;
+
     computeGeometry();
 
     double deltax = inx - refx;

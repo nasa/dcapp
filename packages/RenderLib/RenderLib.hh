@@ -15,13 +15,15 @@ extern void load_texture(tdTexture *);
 extern void draw_string(float, float, float, float, float, float, float, tdFont *, flMonoOption, std::string);
 extern void draw_glyph(unsigned int, float, float, float, float);
 extern void draw_image(tdTexture *, float, float);
-extern void get_image_pixel_RGBA(unsigned char[], unsigned int, float, float);
+extern void get_image_pixel(unsigned char [], tdTexture *, float, float);
 extern void container_start(float, float, float, float, float, float, float);
 extern void container_end(void);
 extern void rotate_start(float);
 extern void rotate_end(void);
-//extern void translate_start(float, float);
-//extern void translate_end(void);
+#if 0
+extern void translate_start(float, float);
+extern void translate_end(void);
+#endif
 extern void draw_line(const std::vector<float> &, float, float, float, float, float);
 extern void draw_polygon(const std::vector<float> &, float, float, float, float);
 extern void draw_filled_triangles(const std::vector<float> &, float, float, float, float);

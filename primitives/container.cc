@@ -41,32 +41,48 @@ void dcContainer::draw(void)
 
 void dcContainer::handleMousePress(double inx, double iny)
 {
-    double ang, originx, originy, tmpx, tmpy, finalx, finaly;
+    double finalx, finaly;
 
     computeGeometry();
-    ang = (rotate->getDecimal()) * 0.01745329252;
-    originx = refx - ((delx * cos(-ang)) + (dely * sin(-ang)));
-    originy = refy - ((dely * cos(-ang)) - (delx * sin(-ang)));
-    tmpx = inx - originx;
-    tmpy = iny - originy;
-    finalx = ((tmpx * cos(ang)) + (tmpy * sin(ang))) * (vwidth->getDecimal()) / (w->getDecimal());
-    finaly = ((tmpy * cos(ang)) - (tmpx * sin(ang))) * (vheight->getDecimal()) / (h->getDecimal());
+    if (rotate->getDecimal())
+    {
+        double ang = (rotate->getDecimal()) * 0.01745329252;
+        double originx = refx - ((delx * cos(-ang)) + (dely * sin(-ang)));
+        double originy = refy - ((dely * cos(-ang)) - (delx * sin(-ang)));
+        double tmpx = inx - originx;
+        double tmpy = iny - originy;
+        finalx = ((tmpx * cos(ang)) + (tmpy * sin(ang))) * (vwidth->getDecimal()) / (w->getDecimal());
+        finaly = ((tmpy * cos(ang)) - (tmpx * sin(ang))) * (vheight->getDecimal()) / (h->getDecimal());
+    }
+    else
+    {
+        finalx = (inx + delx - refx) * (vwidth->getDecimal()) / (w->getDecimal());
+        finaly = (iny + dely - refy) * (vheight->getDecimal()) / (h->getDecimal());
+    }
 
     for (const auto &myobj : children) myobj->handleMousePress(finalx, finaly);
 }
 
 void dcContainer::handleMouseMotion(double inx, double iny)
 {
-    double ang, originx, originy, tmpx, tmpy, finalx, finaly;
+    double finalx, finaly;
 
     computeGeometry();
-    ang = (rotate->getDecimal()) * 0.01745329252;
-    originx = refx - ((delx * cos(-ang)) + (dely * sin(-ang)));
-    originy = refy - ((dely * cos(-ang)) - (delx * sin(-ang)));
-    tmpx = inx - originx;
-    tmpy = iny - originy;
-    finalx = ((tmpx * cos(ang)) + (tmpy * sin(ang))) * (vwidth->getDecimal()) / (w->getDecimal());
-    finaly = ((tmpy * cos(ang)) - (tmpx * sin(ang))) * (vheight->getDecimal()) / (h->getDecimal());
+    if (rotate->getDecimal())
+    {
+        double ang = (rotate->getDecimal()) * 0.01745329252;
+        double originx = refx - ((delx * cos(-ang)) + (dely * sin(-ang)));
+        double originy = refy - ((dely * cos(-ang)) - (delx * sin(-ang)));
+        double tmpx = inx - originx;
+        double tmpy = iny - originy;
+        finalx = ((tmpx * cos(ang)) + (tmpy * sin(ang))) * (vwidth->getDecimal()) / (w->getDecimal());
+        finaly = ((tmpy * cos(ang)) - (tmpx * sin(ang))) * (vheight->getDecimal()) / (h->getDecimal());
+    }
+    else
+    {
+        finalx = (inx + delx - refx) * (vwidth->getDecimal()) / (w->getDecimal());
+        finaly = (iny + dely - refy) * (vheight->getDecimal()) / (h->getDecimal());
+    }
 
     for (const auto &myobj : children) myobj->handleMouseMotion(finalx, finaly);
 }

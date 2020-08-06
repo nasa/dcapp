@@ -1,4 +1,5 @@
 #include <vector>
+#include <cmath>
 #include "RenderLib/RenderLib.hh"
 #include "basicutils/stringutils.hh"
 #include "commonutils.hh"
@@ -52,8 +53,28 @@ void dcRectangle::setLineWidth(const char *inval)
 
 void dcRectangle::handleMousePress(double inx, double iny)
 {
+    if (this->PressList->children.empty() && this->ReleaseList->children.empty()) return;
+
+    double finalx, finaly;
+
     computeGeometry();
-    if ((left < inx) && (inx < right) && (bottom < iny) && (iny < top))
+    if (rotate->getDecimal())
+    {
+        double ang = (rotate->getDecimal()) * 0.01745329252;
+        double originx = refx - ((delx * cos(-ang)) + (dely * sin(-ang)));
+        double originy = refy - ((dely * cos(-ang)) - (delx * sin(-ang)));
+        double tmpx = inx - originx;
+        double tmpy = iny - originy;
+        finalx = (tmpx * cos(ang)) + (tmpy * sin(ang));
+        finaly = (tmpy * cos(ang)) - (tmpx * sin(ang));
+    }
+    else
+    {
+        finalx = inx + delx - refx;
+        finaly = iny + dely - refy;
+    }
+
+    if ((0 < finalx) && (finalx < width) && (0 < finaly) && (finaly < height))
     {
         this->selected = true;
         this->PressList->handleEvent();
