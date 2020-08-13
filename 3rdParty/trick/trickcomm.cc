@@ -13,7 +13,7 @@
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
-TrickCommModule::TrickCommModule() : port(0), disconnectaction(this->AppTerminate)
+TrickCommModule::TrickCommModule() : port(0), disconnectaction(this->AppTerminate), io_map(0x0)
 {
     this->last_connect_attempt = new Timer;
     this->tvs = new VariableServerComm;
@@ -137,21 +137,10 @@ void TrickCommModule::setReconnectOnDisconnect(void)
     this->disconnectaction = this->AppReconnect;
 }
 
-int TrickCommModule::addParameter(int bufID, std::string paramname, std::string trickvar, std::string units, std::string init_only, bool method)
+int TrickCommModule::addParameter(std::string paramname, std::string trickvar, std::string units, std::string init_only, bool method)
 {
-    std::list<io_parameter> *io_map;
-
-    switch (bufID)
-    {
-        case TrickCommModule::FromTrick:
-            io_map = &(this->fromSim);
-            break;
-        case TrickCommModule::ToTrick:
-            io_map = &(this->toSim);
-            break;
-        default:
-            return this->Fail;
-    }
+    if (paramname.empty() || trickvar.empty() || !io_map) return this->Fail;
+    if (method && io_map != &(this->toSim)) return this->Fail;
 
     Variable *myvalue = getVariableSSTR(paramname);
 
@@ -198,11 +187,6 @@ void TrickCommModule::activate(void)
 TrickCommModule::TrickCommModule()
 {
     warning_msg("Trick communication requested, but Trick doesn't seem to be properly installed...");
-}
-
-int TrickCommModule::addParameter(int, std::string, std::string, std::string, std::string, int)
-{
-    return this->Inactive;
 }
 
 #endif

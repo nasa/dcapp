@@ -17,8 +17,6 @@ class TrickCommModule : public CommModule
         TrickCommModule();
         virtual ~TrickCommModule();
 
-        typedef enum { FromTrick, ToTrick } BufferType;
-
         CommModule::CommStatus read(void);
         CommModule::CommStatus write(void);
         void flagAsChanged(Variable *);
@@ -27,7 +25,10 @@ class TrickCommModule : public CommModule
         void setPort(std::string);
         void setDataRate(std::string);
         void setReconnectOnDisconnect(void);
-        int addParameter(int, std::string, std::string, std::string, std::string, bool);
+        void activateFromList(void) { io_map = &(this->fromSim); };
+        void activateToList(void) { io_map = &(this->toSim); };
+        void deactivateList(void) { io_map = 0x0; };
+        int addParameter(std::string, std::string, std::string, std::string, bool);
         void finishInitialization(void);
 
     private:
@@ -53,6 +54,7 @@ class TrickCommModule : public CommModule
         TrickCommModule::DisconnectAction disconnectaction;
         std::list<io_parameter> fromSim;
         std::list<io_parameter> toSim;
+        std::list<io_parameter> *io_map;
 
         void activate(void);
 };
@@ -64,13 +66,11 @@ class TrickCommModule : public CommModule
     public:
         TrickCommModule();
 
-        typedef enum { FromTrick, ToTrick } BufferType;
-
         void setHost(std::string) { };
         void setPort(std::string) { };
         void setDataRate(std::string) { };
         void setReconnectOnDisconnect(void) { };
-        int addParameter(int, std::string, std::string, std::string, std::string, bool);
+        int addParameter(std::string, std::string, std::string, std::string, bool) { return this->Inactive; };
         void finishInitialization(void) { };
 
     private:

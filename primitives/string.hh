@@ -32,10 +32,10 @@ class dcString : public dcGeometric
 {
     public:
         dcString(dcParent *);
-        void setColor(const char *);
-        void setBackgroundColor(const char *);
-        void setFont(const char *, const char *, const char *, const char *);
-        void setShadowOffset(const char *);
+        void setColor(std::string);
+        void setBackgroundColor(std::string);
+        void setFont(std::string, std::string, std::string, std::string);
+        void setShadowOffset(std::string);
         void setString(std::string);
         void draw(void);
 

@@ -5,8 +5,7 @@
 #include <libxml/xinclude.h>
 #include "basicutils/msg.hh"
 
-bool NodeCheck(xmlNodePtr, const char *);
-static bool xmlStrEq(const xmlChar *, const char *);
+#define xmlStrEq(a,b) !strcmp((const char *)a,b)
 
 int XMLFileOpen(xmlDocPtr *mydoc, xmlNodePtr *root_element, std::string filename)
 {
@@ -82,30 +81,5 @@ bool NodeValid(xmlNodePtr node)
 bool NodeCheck(xmlNodePtr node, const char *str)
 {
     if (node->type == XML_ELEMENT_NODE && xmlStrEq(node->name, str)) return true;
-    else return false;
-}
-
-#if 0
-xmlNodePtr NodeFind(xmlNodePtr startnode, const char *key)
-{
-    xmlNodePtr node, child;
-
-    for (node = startnode; node; node = node->next)
-    {
-        if (NodeCheck(node, key)) return node;
-        else
-        {
-            child = NodeFind(node->children, key);
-            if (child) return child;
-        }
-    }
-
-    return 0x0;
-}
-#endif
-
-static bool xmlStrEq(const xmlChar *xmlstr, const char *charstr)
-{
-    if (!strcmp((const char *)xmlstr, charstr)) return true;
     else return false;
 }

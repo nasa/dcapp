@@ -19,7 +19,7 @@ class Message
 #define user_msg(a) \
 do { \
     std::stringstream _MyTmpStr; \
-    _MyTmpStr << Message::getLabel().c_str() << ": " << a; \
+    _MyTmpStr << Message::getLabel() << ": " << a; \
     std::cout << _MyTmpStr.str() << std::endl; \
 } while(0)
 #define debug_msg(a) \
@@ -27,20 +27,20 @@ do { \
     if (Message::debuggingEnabled()) \
     { \
         std::stringstream _MyTmpStr; \
-        _MyTmpStr << Message::getLabel().c_str() << ": function=" << __FUNCTION__ << ", file=" << __FILE__ << ", line=" << __LINE__ << ": " << a; \
+        _MyTmpStr << Message::getLabel() << ": function=" << __FUNCTION__ << ", file=" << __FILE__ << ", line=" << __LINE__ << ": " << a; \
         std::cout << _MyTmpStr.str() << std::endl; \
     } \
 } while(0)
 #define warning_msg(a) \
 do { \
     std::stringstream _MyTmpStr; \
-    _MyTmpStr << Message::getLabel().c_str() << " WARNING: function=" << __FUNCTION__ << ", file=" << __FILE__ << ", line=" << __LINE__ << ": " << a; \
+    _MyTmpStr << Message::getLabel() << " WARNING: function=" << __FUNCTION__ << ", file=" << __FILE__ << ", line=" << __LINE__ << ": " << a; \
     std::cout << _MyTmpStr.str() << std::endl; \
 } while(0)
 #define error_msg(a) \
 do { \
     std::stringstream _MyTmpStr; \
-    _MyTmpStr << Message::getLabel().c_str() << " ERROR: function=" << __FUNCTION__ << ", file=" << __FILE__ << ", line=" << __LINE__ << ": " << a; \
+    _MyTmpStr << Message::getLabel() << " ERROR: function=" << __FUNCTION__ << ", file=" << __FILE__ << ", line=" << __LINE__ << ": " << a; \
     std::cout << _MyTmpStr.str() << std::endl; \
 } while(0)
 

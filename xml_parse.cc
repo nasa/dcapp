@@ -37,7 +37,6 @@ static TrickCommModule *trickcomm = 0x0;
 static EdgeCommModule *edgecomm = 0x0;
 static char *transitionid;
 static const char *indid, *indonval, *activeid, *activetrueval, *key, *keyascii, *bezelkey;
-static int bufferID;
 static bool preprocessing = true;
 
 
@@ -238,30 +237,32 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             if (trickcomm)
             {
-                bufferID = TrickCommModule::FromTrick;
+                trickcomm->activateFromList();
                 process_elements(myparent, node->children);
+                trickcomm->deactivateList();
             }
         }
         if (NodeCheck(node, "ToTrick"))
         {
             if (trickcomm)
             {
-                bufferID = TrickCommModule::ToTrick;
+                trickcomm->activateToList();
                 process_elements(myparent, node->children);
+                trickcomm->deactivateList();
             }
         }
         if (NodeCheck(node, "TrickVariable"))
         {
             if (trickcomm)
             {
-                trickcomm->addParameter(bufferID, get_node_content(node), get_element_dataSSTR(node, "Name"), get_element_dataSSTR(node, "Units"), get_element_dataSSTR(node, "InitializationOnly"), false);
+                trickcomm->addParameter(get_node_content(node), get_element_dataSSTR(node, "Name"), get_element_dataSSTR(node, "Units"), get_element_dataSSTR(node, "InitializationOnly"), false);
             }
         }
         if (NodeCheck(node, "TrickMethod"))
         {
-            if (trickcomm && bufferID == TrickCommModule::ToTrick)
+            if (trickcomm)
             {
-                trickcomm->addParameter(bufferID, get_node_content(node), get_element_dataSSTR(node, "Name"), "", "", true);
+                trickcomm->addParameter(get_node_content(node), get_element_dataSSTR(node, "Name"), "", "", true);
             }
         }
         if (NodeCheck(node, "EdgeIo"))
@@ -269,30 +270,32 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             edgecomm = new EdgeCommModule;
             edgecomm->setConnectedVariable(get_element_dataSSTR(node, "ConnectedVariable"));
             process_elements(myparent, node->children);
-            edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StringToDecimal(get_element_data(node, "DataRate"), 1.0));
+            edgecomm->finishInitialization(get_element_dataSSTR(node, "Host"), get_element_dataSSTR(node, "Port"), StringToDecimal(get_element_data(node, "DataRate"), 1.0));
             AppData.commlist.push_back(edgecomm);
         }
         if (NodeCheck(node, "FromEdge"))
         {
             if (edgecomm)
             {
-                bufferID = EDGEIO_FROMEDGE;
+                edgecomm->activateFromList();
                 process_elements(myparent, node->children);
+                edgecomm->deactivateList();
             }
         }
         if (NodeCheck(node, "ToEdge"))
         {
             if (edgecomm)
             {
-                bufferID = EDGEIO_TOEDGE;
+                edgecomm->activateToList();
                 process_elements(myparent, node->children);
+                edgecomm->deactivateList();
             }
         }
         if (NodeCheck(node, "EdgeVariable"))
         {
             if (edgecomm)
             {
-                edgecomm->addParameter(bufferID, get_node_content(node), get_element_data(node, "RcsCommand"));
+                edgecomm->addParameter(get_node_content(node), get_element_dataSSTR(node, "RcsCommand"));
             }
         }
         if (NodeCheck(node, "CAN"))
@@ -458,10 +461,10 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
-            myitem->setColor(get_element_data(node, "Color"));
-            myitem->setBackgroundColor(get_element_data(node, "BackgroundColor"));
-            myitem->setFont(get_element_data(node, "Font"), get_element_data(node, "Face"), get_element_data(node, "Size"), get_element_data(node, "ForceMono"));
-            myitem->setShadowOffset(get_element_data(node, "ShadowOffset"));
+            myitem->setColor(get_element_dataSSTR(node, "Color"));
+            myitem->setBackgroundColor(get_element_dataSSTR(node, "BackgroundColor"));
+            myitem->setFont(get_element_dataSSTR(node, "Font"), get_element_dataSSTR(node, "Face"), get_element_dataSSTR(node, "Size"), get_element_dataSSTR(node, "ForceMono"));
+            myitem->setShadowOffset(get_element_dataSSTR(node, "ShadowOffset"));
             myitem->setString(get_node_content(node));
         }
         if (NodeCheck(node, "Image"))

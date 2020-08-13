@@ -9,7 +9,7 @@
 
 #define CONNECT_ATTEMPT_INTERVAL 2.0
 
-EdgeCommModule::EdgeCommModule() : cmd_group(0x0), rcs(0x0)
+EdgeCommModule::EdgeCommModule() : io_map(0x0), cmd_group(0x0), rcs(0x0)
 {
     this->last_connect_attempt = new Timer;
     this->edge_timer = new Timer;
@@ -134,23 +134,9 @@ void EdgeCommModule::flagAsChanged(Variable *value)
     }
 }
 
-int EdgeCommModule::addParameter(int bufID, std::string paramname, const char *cmdspec)
+int EdgeCommModule::addParameter(std::string paramname, std::string cmdspec)
 {
-    if (paramname.empty() || !cmdspec) return this->Fail;
-
-    std::list<io_parameter> *io_map;
-
-    switch (bufID)
-    {
-        case EDGEIO_FROMEDGE:
-            io_map = &(this->fromEdge);
-            break;
-        case EDGEIO_TOEDGE:
-            io_map = &(this->toEdge);
-            break;
-        default:
-            return this->Fail;
-    }
+    if (paramname.empty() || cmdspec.empty() || !io_map) return this->Fail;
 
     Variable *myvalue = getVariableSSTR(paramname);
 
@@ -168,7 +154,7 @@ int EdgeCommModule::addParameter(int bufID, std::string paramname, const char *c
     else return this->Fail;
 }
 
-int EdgeCommModule::finishInitialization(const char *host, const char *port, double spec_rate)
+int EdgeCommModule::finishInitialization(std::string host, std::string port, double spec_rate)
 {
     if (this->rcs->initialize(host, port)) return this->Fail;
     this->update_rate = spec_rate;

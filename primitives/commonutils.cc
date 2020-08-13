@@ -33,7 +33,7 @@ tdTexture *tdLoadTexture(std::string filename)
     return id;
 }
 
-tdFont *tdLoadFont(std::string filename, std::string face, unsigned int basesize)
+tdFont *tdLoadFont(std::string &filename, std::string &face, unsigned int basesize)
 {
     PathInfo mypath(filename);
 

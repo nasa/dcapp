@@ -16,35 +16,20 @@
 #define BUF_SIZE_INCREMENT 256
 #define END_OF_MSG_CHAR 0x04
 
-EdgeRcsComm::EdgeRcsComm()
-:
-edgercs_active(0),
-server_addr_info(0x0)
-{
-}
+EdgeRcsComm::EdgeRcsComm() : edgercs_active(false), server_addr_info(0x0) { }
 
 EdgeRcsComm::~EdgeRcsComm()
 {
     freeaddrinfo(this->server_addr_info);
 }
 
-int EdgeRcsComm::initialize(const char *hoststr, const char *portstr)
+int EdgeRcsComm::initialize(std::string &edgehost, std::string &edgeport)
 {
-    std::string edgehost, edgeport;
-    struct addrinfo hints;
-    int result;
-
-    if (hoststr)
-        edgehost = hoststr;
-    else
-        edgehost = "localhost";
-
-    if (portstr)
-        edgeport = portstr;
-    else
-        edgeport = "5451";
+    if (edgehost.empty()) edgehost = "localhost";
+    if (edgeport.empty()) edgeport = "5451";
 
     /* Set up the connection hints */
+    struct addrinfo hints;
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
     hints.ai_socktype = SOCK_STREAM;
@@ -52,14 +37,14 @@ int EdgeRcsComm::initialize(const char *hoststr, const char *portstr)
     hints.ai_protocol = 0;          /* Any protocol */
 
     /* resolve into a list of addresses */
-    result = getaddrinfo(edgehost.c_str(), edgeport.c_str(), &hints, &(this->server_addr_info));
+    int result = getaddrinfo(edgehost.c_str(), edgeport.c_str(), &hints, &(this->server_addr_info));
     if (result)
     {
         error_msg("Error in getaddrinfo for port " << edgeport << " on host " << edgehost << ": " << gai_strerror(result));
         return -1;
     }
 
-    this->edgercs_active = 1;
+    this->edgercs_active = true;
 
     return 0;
 }

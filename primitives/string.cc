@@ -20,42 +20,38 @@ dcString::dcString(dcParent *myparent) : dcGeometric(myparent), background(false
     shadowOffset = getConstantFromDecimal(0);
 }
 
-void dcString::setColor(const char *cspec)
+void dcString::setColor(std::string cspec)
 {
-    if (cspec) color.set(cspec);
+    if (!cspec.empty()) color.set(cspec);
 }
 
-void dcString::setBackgroundColor(const char *cspec)
+void dcString::setBackgroundColor(std::string cspec)
 {
-    if (cspec)
+    if (!cspec.empty())
     {
         bgcolor.set(cspec);
         background = true;
     }
 }
 
-void dcString::setFont(const char *font, const char *face, const char *size, const char *mono)
+void dcString::setFont(std::string font, std::string face, std::string size, std::string mono)
 {
-    std::string myface;
-    if (face) myface = face;
+    if (!font.empty()) fontID = tdLoadFont(font, face);
+    if (!fontID) fontID = tdLoadFont(AppData.defaultfont, face);
 
-    if (font) fontID = tdLoadFont(font, myface);
-    if (!fontID) fontID = tdLoadFont(AppData.defaultfont, myface);
+    if (!size.empty()) fontSize = getValueSSTR(size);
 
-    if (size) fontSize = getValue(size);
-
-    if (mono)
+    if (!mono.empty())
     {
-        std::string mymono = mono;
-        if (mymono == "Numeric") forcemono = flMonoNumeric;
-        else if (mymono == "AlphaNumeric") forcemono = flMonoAlphaNumeric;
-        else if (mymono == "All") forcemono = flMonoAll;
+        if (mono == "Numeric") forcemono = flMonoNumeric;
+        else if (mono == "AlphaNumeric") forcemono = flMonoAlphaNumeric;
+        else if (mono == "All") forcemono = flMonoAll;
     }
 }
 
-void dcString::setShadowOffset(const char *inval)
+void dcString::setShadowOffset(std::string inval)
 {
-    if (inval) shadowOffset = getValue(inval);
+    if (!inval.empty()) shadowOffset = getValueSSTR(inval);
 }
 
 void dcString::setString(std::string mystr)

@@ -12,11 +12,11 @@ class EdgeRcsComm
         EdgeRcsComm();
         virtual ~EdgeRcsComm();
 
-        int initialize(const char *, const char *);
+        int initialize(std::string &, std::string &);
         int send_doug_command(std::string &, char **, char **);
 
     private:
-        int edgercs_active;
+        bool edgercs_active;
         struct addrinfo *server_addr_info;
 
         int read_rcs_message(int, char **);

@@ -8,9 +8,6 @@
 #include "comm.hh"
 #include "EDGE_rcs.hh"
 
-#define EDGEIO_FROMEDGE           (1)
-#define EDGEIO_TOEDGE             (2)
-
 class EdgeCommModule : public CommModule
 {
     public:
@@ -21,8 +18,11 @@ class EdgeCommModule : public CommModule
         CommModule::CommStatus write(void);
         void flagAsChanged(Variable *);
 
-        int addParameter(int, std::string, const char *);
-        int finishInitialization(const char *, const char *, double);
+        void activateFromList(void) { io_map = &(this->fromEdge); };
+        void activateToList(void) { io_map = &(this->toEdge); };
+        void deactivateList(void) { io_map = 0x0; };
+        int addParameter(std::string, std::string);
+        int finishInitialization(std::string, std::string, double);
 
     private:
         typedef struct
@@ -35,6 +35,7 @@ class EdgeCommModule : public CommModule
 
         std::list<io_parameter> fromEdge;
         std::list<io_parameter> toEdge;
+        std::list<io_parameter> *io_map;
         Timer *last_connect_attempt;
         Timer *edge_timer;
         double update_rate;

@@ -33,6 +33,8 @@ class Value
 };
 
 extern bool check_dynamic_element(const char *);
+extern bool check_dynamic_elementSSTR(std::string &);
 extern Value *getValue(const char *);
+extern Value *getValueSSTR(std::string &);
 
 #endif

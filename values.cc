@@ -1,3 +1,4 @@
+#include <string>
 #include <cstring>
 #include "constants.hh"
 #include "variables.hh"
@@ -15,6 +16,15 @@ bool check_dynamic_element(const char *spec)
     return false;
 }
 
+bool check_dynamic_elementSSTR(std::string &spec)
+{
+    if (!spec.empty())
+    {
+        if (spec[0] == '@') return true;
+    }
+    return false;
+}
+
 Value *getValue(const char *valstr)
 {
     Value *retval = 0x0;
@@ -23,6 +33,16 @@ Value *getValue(const char *valstr)
 
     if (retval) return retval;
     else return getConstantFromCharstr(valstr);
+}
+
+Value *getValueSSTR(std::string &valstr)
+{
+    Value *retval = 0x0;
+
+    if (check_dynamic_elementSSTR(valstr)) retval = getVariableSSTR(valstr);
+
+    if (retval) return retval;
+    else return getConstantFromString(valstr);
 }
 
 
