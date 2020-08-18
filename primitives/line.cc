@@ -1,3 +1,4 @@
+#include <string>
 #include "app_data.hh"
 #include "RenderLib/RenderLib.hh"
 #include "basicutils/stringutils.hh"
@@ -11,14 +12,14 @@ dcLine::dcLine(dcParent *myparent) : linewidth(1)
     color.set(1, 1, 1);
 }
 
-void dcLine::setColor(const char *cspec)
+void dcLine::setColor(const std::string &cspec)
 {
-    if (cspec) color.set(cspec);
+    if (!cspec.empty()) color.set(cspec);
 }
 
-void dcLine::setLineWidth(const char *inval)
+void dcLine::setLineWidth(const std::string &inval)
 {
-    if (inval) linewidth = StringToDecimal(inval, 1);
+    if (!inval.empty()) linewidth = StringToDecimal(inval, 1);
 }
 
 void dcLine::draw(void)

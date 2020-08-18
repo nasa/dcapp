@@ -1,3 +1,4 @@
+#include <string>
 #include <cmath>
 #include "RenderLib/RenderLib.hh"
 #include "values.hh"
@@ -25,10 +26,10 @@ void dcContainer::setSize(const char *inw, const char *inh)
     }
 }
 
-void dcContainer::setVirtualSize(const char *inw, const char *inh)
+void dcContainer::setVirtualSize(const std::string &inw, const std::string &inh)
 {
-    if (inw) vwidth = getValue(inw);
-    if (inh) vheight = getValue(inh);
+    if (!inw.empty()) vwidth = getValueSSTR(inw);
+    if (!inh.empty()) vheight = getValueSSTR(inh);
 }
 
 void dcContainer::draw(void)

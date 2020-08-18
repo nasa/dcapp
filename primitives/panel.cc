@@ -1,3 +1,4 @@
+#include <string>
 #include "RenderLib/RenderLib.hh"
 #include "basicutils/stringutils.hh"
 #include "constants.hh"
@@ -12,20 +13,20 @@ dcPanel::dcPanel(dcParent *myparent) : displayID(0)
     orthoY = getConstantFromDecimal(100);
 }
 
-void dcPanel::setID(const char *inval)
+void dcPanel::setID(const std::string &inval)
 {
-    if (inval) displayID = StringToInteger(inval);
+    if (!inval.empty()) displayID = StringToInteger(inval);
 }
 
-void dcPanel::setColor(const char *cspec)
+void dcPanel::setColor(const std::string &cspec)
 {
-    if (cspec) color.set(cspec);
+    if (!cspec.empty()) color.set(cspec);
 }
 
-void dcPanel::setOrtho(const char *inw, const char *inh)
+void dcPanel::setOrtho(const std::string &inw, const std::string &inh)
 {
-    if (inw) orthoX = getValue(inw);
-    if (inh) orthoY = getValue(inh);
+    if (!inw.empty()) orthoX = getValueSSTR(inw);
+    if (!inh.empty()) orthoY = getValueSSTR(inh);
 }
 
 bool dcPanel::checkID(int id)

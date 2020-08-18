@@ -1,3 +1,4 @@
+#include <string>
 #include <vector>
 #include <cmath>
 #include "RenderLib/RenderLib.hh"
@@ -24,27 +25,27 @@ dcRectangle::~dcRectangle()
     delete ReleaseList;
 }
 
-void dcRectangle::setFillColor(const char *cspec)
+void dcRectangle::setFillColor(const std::string &cspec)
 {
-    if (cspec)
+    if (!cspec.empty())
     {
         FillColor.set(cspec);
         fill = true;
     }
 }
 
-void dcRectangle::setLineColor(const char *cspec)
+void dcRectangle::setLineColor(const std::string &cspec)
 {
-    if (cspec)
+    if (!cspec.empty())
     {
         LineColor.set(cspec);
         outline = true;
     }
 }
 
-void dcRectangle::setLineWidth(const char *inval)
+void dcRectangle::setLineWidth(const std::string &inval)
 {
-    if (inval)
+    if (!inval.empty())
     {
         linewidth = StringToDecimal(inval, 1);
         outline = true;

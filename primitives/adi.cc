@@ -1,3 +1,5 @@
+#include <string>
+#include <vector>
 #include <cmath>
 #include <cstring>
 #include "RenderLib/RenderLib.hh"
@@ -21,40 +23,40 @@ dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(0x0), ballID(0x
     sphereTriangles = BuildSphere();
 }
 
-void dcADI::setBackgrountTexture(const char *filename)
+void dcADI::setBackgroundTexture(const std::string &filename)
 {
-    if (filename) bkgdID = tdLoadTexture(filename);
+    if (!filename.empty()) bkgdID = tdLoadTexture(filename);
 }
 
-void dcADI::setBallTexture(const char *filename)
+void dcADI::setBallTexture(const std::string &filename)
 {
-    if (filename) ballID = tdLoadTexture(filename);
+    if (!filename.empty()) ballID = tdLoadTexture(filename);
 }
 
-void dcADI::setRPY(const char *inroll, const char *inpitch, const char *inyaw)
+void dcADI::setRPY(const std::string &inroll, const std::string &inpitch, const std::string &inyaw)
 {
-    if (inroll) roll = getValue(inroll);
-    if (inpitch) pitch = getValue(inpitch);
-    if (inyaw) yaw = getValue(inyaw);
+    if (!inroll.empty()) roll = getValueSSTR(inroll);
+    if (!inpitch.empty()) pitch = getValueSSTR(inpitch);
+    if (!inyaw.empty()) yaw = getValueSSTR(inyaw);
 }
 
-void dcADI::setRPYerrors(const char *re, const char *pe, const char *ye)
+void dcADI::setRPYerrors(const std::string &re, const std::string &pe, const std::string &ye)
 {
-    if (re) rollError = getValue(re);
-    if (pe) pitchError = getValue(pe);
-    if (ye) yawError = getValue(ye);
+    if (!re.empty()) rollError = getValueSSTR(re);
+    if (!pe.empty()) pitchError = getValueSSTR(pe);
+    if (!ye.empty()) yawError = getValueSSTR(ye);
 }
 
-void dcADI::setRadius(const char *outer, const char *ball)
+void dcADI::setRadius(const std::string &outer, const std::string &ball)
 {
-    if (outer) outerradius = getValue(outer);
-    if (ball) ballradius = getValue(ball);
+    if (!outer.empty()) outerradius = getValueSSTR(outer);
+    if (!ball.empty()) ballradius = getValueSSTR(ball);
 }
 
-void dcADI::setChevron(const char *widthspec, const char *heightspec)
+void dcADI::setChevron(const std::string &widthspec, const std::string &heightspec)
 {
-    if (widthspec) chevronW = getValue(widthspec);
-    if (heightspec) chevronH = getValue(heightspec);
+    if (!widthspec.empty()) chevronW = getValueSSTR(widthspec);
+    if (!heightspec.empty()) chevronH = getValueSSTR(heightspec);
 }
 
 void dcADI::draw(void)

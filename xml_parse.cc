@@ -39,7 +39,6 @@ static char *transitionid;
 static const char *indid, *indonval, *activeid, *activetrueval, *key, *keyascii, *bezelkey;
 static bool preprocessing = true;
 
-
 int ParseXMLFile(const char *fullpath)
 {
     int mycwd;
@@ -362,22 +361,22 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "Window"))
         {
-            AppData.force_update = StringToDecimal(get_element_data(node, "ForceUpdate"), 60);
-            window_init(StringToBoolean(get_element_data(node, "FullScreen")),
-                        StringToInteger(get_element_data(node, "X"), 0),
-                        StringToInteger(get_element_data(node, "Y"), 0),
-                        StringToInteger(get_element_data(node, "Width"), 800),
-                        StringToInteger(get_element_data(node, "Height"), 800));
+            AppData.force_update = StringToDecimal(get_element_dataSSTR(node, "ForceUpdate"), 60);
+            window_init(StringToBoolean(get_element_dataSSTR(node, "FullScreen")),
+                        StringToInteger(get_element_dataSSTR(node, "X"), 0),
+                        StringToInteger(get_element_dataSSTR(node, "Y"), 0),
+                        StringToInteger(get_element_dataSSTR(node, "Width"), 800),
+                        StringToInteger(get_element_dataSSTR(node, "Height"), 800));
             AppData.toplevel = new dcWindow();
-            AppData.toplevel->setActiveDisplay(get_element_data(node, "ActiveDisplay"));
+            AppData.toplevel->setActiveDisplay(get_element_dataSSTR(node, "ActiveDisplay"));
             process_elements(AppData.toplevel, node->children);
         }
         if (NodeCheck(node, "Panel"))
         {
             dcPanel *myitem = new dcPanel(myparent);
-            myitem->setID(get_element_data(node, "DisplayIndex"));
-            myitem->setColor(get_element_data(node, "BackgroundColor"));
-            myitem->setOrtho(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
+            myitem->setID(get_element_dataSSTR(node, "DisplayIndex"));
+            myitem->setColor(get_element_dataSSTR(node, "BackgroundColor"));
+            myitem->setOrtho(get_element_dataSSTR(node, "VirtualWidth"), get_element_dataSSTR(node, "VirtualHeight"));
             preprocessing = false;
             process_elements(myitem, node->children);
             preprocessing = true;
@@ -390,28 +389,28 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
-            myitem->setVirtualSize(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
+            myitem->setVirtualSize(get_element_dataSSTR(node, "VirtualWidth"), get_element_dataSSTR(node, "VirtualHeight"));
             process_elements(myitem, node->children);
         }
         if (NodeCheck(node, "Vertex"))
         {
             dcVertex *myitem = new dcVertex(myparent);
-            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
-            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
+            myitem->setPosition(get_element_dataSSTR(node, "X"), get_element_dataSSTR(node, "Y"));
+            myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
         }
         if (NodeCheck(node, "Line"))
         {
             dcLine *myitem = new dcLine(myparent);
-            myitem->setLineWidth(get_element_data(node, "LineWidth"));
-            myitem->setColor(get_element_data(node, "Color"));
+            myitem->setLineWidth(get_element_dataSSTR(node, "LineWidth"));
+            myitem->setColor(get_element_dataSSTR(node, "Color"));
             process_elements(myitem, node->children);
         }
         if (NodeCheck(node, "Polygon"))
         {
             dcPolygon *myitem = new dcPolygon(myparent);
-            myitem->setFillColor(get_element_data(node, "FillColor"));
-            myitem->setLineColor(get_element_data(node, "LineColor"));
-            myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            myitem->setFillColor(get_element_dataSSTR(node, "FillColor"));
+            myitem->setLineColor(get_element_dataSSTR(node, "LineColor"));
+            myitem->setLineWidth(get_element_dataSSTR(node, "LineWidth"));
             process_elements(myitem, node->children);
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
@@ -427,9 +426,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
-            myitem->setFillColor(get_element_data(node, "FillColor"));
-            myitem->setLineColor(get_element_data(node, "LineColor"));
-            myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            myitem->setFillColor(get_element_dataSSTR(node, "FillColor"));
+            myitem->setLineColor(get_element_dataSSTR(node, "LineColor"));
+            myitem->setLineWidth(get_element_dataSSTR(node, "LineWidth"));
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
                 if (NodeCheck(subnode, "OnPress")) process_elements(myitem->PressList, subnode->children);
@@ -442,11 +441,11 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
-            myitem->setFillColor(get_element_data(node, "FillColor"));
-            myitem->setLineColor(get_element_data(node, "LineColor"));
-            myitem->setLineWidth(get_element_data(node, "LineWidth"));
-            myitem->setRadius(get_element_data(node, "Radius"));
-            myitem->setSegments(get_element_data(node, "Segments"));
+            myitem->setFillColor(get_element_dataSSTR(node, "FillColor"));
+            myitem->setLineColor(get_element_dataSSTR(node, "LineColor"));
+            myitem->setLineWidth(get_element_dataSSTR(node, "LineWidth"));
+            myitem->setRadius(get_element_dataSSTR(node, "Radius"));
+            myitem->setSegments(get_element_dataSSTR(node, "Segments"));
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
                 if (NodeCheck(subnode, "OnPress")) process_elements(myitem->PressList, subnode->children);
@@ -492,8 +491,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
-            myitem->setProtocol(get_element_data(node, "Protocol"), get_element_data(node, "Host"), get_element_data(node, "Port"), get_element_data(node, "Path"), get_element_data(node, "Username"), get_element_data(node, "Password"), get_element_data(node, "SharedMemoryKey"), get_element_data(node, "File"), get_element_data(node, "Camera"));
-            myitem->setTestPattern(get_element_data(node, "TestPattern"));
+            myitem->setProtocol(get_element_dataSSTR(node, "Protocol"), get_element_data(node, "Host"), get_element_data(node, "Port"), get_element_data(node, "Path"), get_element_data(node, "Username"), get_element_data(node, "Password"), get_element_data(node, "SharedMemoryKey"), get_element_data(node, "File"), get_element_dataSSTR(node, "Camera"));
+            myitem->setTestPattern(get_element_dataSSTR(node, "TestPattern"));
         }
         if (NodeCheck(node, "Button"))
         {
@@ -737,12 +736,12 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
-            myitem->setBackgrountTexture(get_element_data(node, "CoverFile"));
-            myitem->setBallTexture(get_element_data(node, "BallFile"));
-            myitem->setRPY(get_element_data(node, "Roll"), get_element_data(node, "Pitch"), get_element_data(node, "Yaw"));
-            myitem->setRPYerrors(get_element_data(node, "RollError"), get_element_data(node, "PitchError"), get_element_data(node, "YawError"));
-            myitem->setRadius(get_element_data(node, "OuterRadius"), get_element_data(node, "BallRadius"));
-            myitem->setChevron(get_element_data(node, "ChevronWidth"), get_element_data(node, "ChevronHeight"));
+            myitem->setBackgroundTexture(get_element_dataSSTR(node, "CoverFile"));
+            myitem->setBallTexture(get_element_dataSSTR(node, "BallFile"));
+            myitem->setRPY(get_element_dataSSTR(node, "Roll"), get_element_dataSSTR(node, "Pitch"), get_element_dataSSTR(node, "Yaw"));
+            myitem->setRPYerrors(get_element_dataSSTR(node, "RollError"), get_element_dataSSTR(node, "PitchError"), get_element_dataSSTR(node, "YawError"));
+            myitem->setRadius(get_element_dataSSTR(node, "OuterRadius"), get_element_dataSSTR(node, "BallRadius"));
+            myitem->setChevron(get_element_dataSSTR(node, "ChevronWidth"), get_element_dataSSTR(node, "ChevronHeight"));
         }
         if (NodeCheck(node, "MouseMotion"))
         {

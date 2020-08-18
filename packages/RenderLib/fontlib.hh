@@ -30,15 +30,15 @@ typedef std::map<UTF32, GlyphInfo *> GlyphSet;
 class tdFont
 {
     public:
-        tdFont(std::string, std::string &, unsigned int);
+        tdFont(const std::string &, const std::string &, unsigned int);
         virtual ~tdFont();
-        float getAdvance(std::string &, flMonoOption);
+        float getAdvance(const std::string &, flMonoOption);
         float getDescender(void);
         bool isValid(void);
         std::string getFileName(void);
         std::string getFaceName(void);
         unsigned int getBaseSize(void);
-        void render(std::string &, flMonoOption);
+        void render(const std::string &, flMonoOption);
     private:
         static FT_Library library;
         static const char trailingBytesForUTF8[256];

@@ -1,8 +1,8 @@
 .NOTPARALLEL:
 .PHONY: all prebuild postbuild clean
 
-OSSPEC := $(shell ./bin/dcapp-config --osspec)
-OBJDIR := $(shell ./bin/dcapp-config --objdir)
+OSSPEC := $(shell ./dcapp.app/Contents/dcapp-config --osspec)
+OBJDIR := $(shell ./dcapp.app/Contents/dcapp-config --objdir)
 
 BINDIR := dcapp.app/Contents/$(OSSPEC)
 

@@ -11,7 +11,7 @@
 class PathInfo
 {
     public:
-        PathInfo(std::string pathspec) : valid(false)
+        PathInfo(const std::string &pathspec) : valid(false)
         {
             if (!pathspec.empty())
             {

@@ -12,7 +12,7 @@ class dcImage : public dcGeometric
         dcImage(dcParent *);
         virtual ~dcImage();
 
-        void setTexture(std::string);
+        void setTexture(const std::string &);
         void handleMousePress(double, double);
         void handleMouseRelease(void);
         void draw(void);

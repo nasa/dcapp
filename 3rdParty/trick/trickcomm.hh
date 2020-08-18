@@ -21,14 +21,14 @@ class TrickCommModule : public CommModule
         CommModule::CommStatus write(void);
         void flagAsChanged(Variable *);
 
-        void setHost(std::string);
-        void setPort(std::string);
-        void setDataRate(std::string);
+        void setHost(const std::string &);
+        void setPort(const std::string &);
+        void setDataRate(const std::string &);
         void setReconnectOnDisconnect(void);
         void activateFromList(void) { io_map = &(this->fromSim); };
         void activateToList(void) { io_map = &(this->toSim); };
         void deactivateList(void) { io_map = 0x0; };
-        int addParameter(std::string, std::string, std::string, std::string, bool);
+        int addParameter(const std::string &, const std::string &, const std::string &, const std::string &, bool);
         void finishInitialization(void);
 
     private:
@@ -66,11 +66,11 @@ class TrickCommModule : public CommModule
     public:
         TrickCommModule();
 
-        void setHost(std::string) { };
-        void setPort(std::string) { };
-        void setDataRate(std::string) { };
+        void setHost(const std::string &) { };
+        void setPort(const std::string &) { };
+        void setDataRate(const std::string &) { };
         void setReconnectOnDisconnect(void) { };
-        int addParameter(std::string, std::string, std::string, std::string, bool) { return this->Inactive; };
+        int addParameter(const std::string &, const std::string &, const std::string &, const std::string &, bool) { return this->Inactive; };
         void finishInitialization(void) { };
 
     private:

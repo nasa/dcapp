@@ -177,7 +177,7 @@ void load_texture(tdTexture *textureID)
     }
 }
 
-void draw_string(float xpos, float ypos, float size, float red, float green, float blue, float alpha, tdFont *fontID, flMonoOption mono, std::string instring)
+void draw_string(float xpos, float ypos, float size, float red, float green, float blue, float alpha, tdFont *fontID, flMonoOption mono, const std::string &instring)
 {
     float scale = size / fontID->getBaseSize();
     glColor4f(red, green, blue, alpha);

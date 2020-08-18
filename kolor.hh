@@ -31,7 +31,7 @@ class Kolor
             B = getConstantFromDecimal(b);
             A = getConstantFromDecimal(a);
         }
-        void set(std::string mystring)
+        void set(const std::string &mystring)
         {
             size_t pos = 0, startpos;
             bool started = false;

@@ -6,8 +6,8 @@
 #include "RenderLib/fontlib.hh"
 #include "RenderLib/texturelib.hh"
 
-extern tdTexture *tdLoadTexture(std::string filename);
-extern tdFont *tdLoadFont(std::string &filename, std::string &face, unsigned int basesize=20);
+extern tdTexture *tdLoadTexture(const std::string &);
+extern tdFont *tdLoadFont(const std::string &, const std::string &, unsigned int = 20);
 extern void addPoint(std::vector<float> &, float, float);
 extern void addPoint(std::vector<float> &, float, float, float);
 extern void addPoint(std::vector<float> &, float, float, float, float, float);

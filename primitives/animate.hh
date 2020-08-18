@@ -8,7 +8,7 @@ class dcAnimate : public dcParent
 {
     public:
         dcAnimate(dcParent *);
-        void setDuration(std::string);
+        void setDuration(const std::string &);
         void handleEvent(void);
         void updateData(void);
 

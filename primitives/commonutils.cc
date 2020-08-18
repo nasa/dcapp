@@ -9,7 +9,7 @@
 static std::list<tdTexture *> textures;
 static std::list<tdFont *> fonts;
 
-tdTexture *tdLoadTexture(std::string filename)
+tdTexture *tdLoadTexture(const std::string &filename)
 {
     PathInfo mypath(filename);
 
@@ -33,7 +33,7 @@ tdTexture *tdLoadTexture(std::string filename)
     return id;
 }
 
-tdFont *tdLoadFont(std::string &filename, std::string &face, unsigned int basesize)
+tdFont *tdLoadFont(const std::string &filename, const std::string &face, unsigned int basesize)
 {
     PathInfo mypath(filename);
 

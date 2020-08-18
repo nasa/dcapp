@@ -16,7 +16,7 @@ bool check_dynamic_element(const char *spec)
     return false;
 }
 
-bool check_dynamic_elementSSTR(std::string &spec)
+bool check_dynamic_elementSSTR(const std::string &spec)
 {
     if (!spec.empty())
     {
@@ -35,7 +35,7 @@ Value *getValue(const char *valstr)
     else return getConstantFromCharstr(valstr);
 }
 
-Value *getValueSSTR(std::string &valstr)
+Value *getValueSSTR(const std::string &valstr)
 {
     Value *retval = 0x0;
 

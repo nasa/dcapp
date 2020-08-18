@@ -1,3 +1,4 @@
+#include <string>
 #include "constants.hh"
 #include "values.hh"
 #include "window.hh"
@@ -9,9 +10,9 @@ dcWindow::dcWindow() : currentPanel(0x0)
     displayID = getConstantFromInteger(0);
 }
 
-void dcWindow::setActiveDisplay(const char *inval)
+void dcWindow::setActiveDisplay(const std::string &inval)
 {
-    if (inval) displayID = getValue(inval);
+    if (!inval.empty()) displayID = getValueSSTR(inval);
 }
 
 void dcWindow::setCurrentPanel(void)

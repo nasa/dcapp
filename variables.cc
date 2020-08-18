@@ -52,7 +52,7 @@ Variable *getVariable(const char *label)
     }
 }
 
-Variable *getVariableSSTR(std::string &label)
+Variable *getVariableSSTR(const std::string &label)
 {
     if (label.empty()) return 0x0;
 

@@ -38,7 +38,7 @@ Constant *getConstantFromCharstr(const char *inval)
     return findOrRegisterConstant(vinfo);
 }
 
-Constant *getConstantFromString(std::string &inval)
+Constant *getConstantFromString(const std::string &inval)
 {
     Constant vinfo;
     vinfo.setToString(inval);
@@ -96,7 +96,7 @@ void Constant::setToCharstr(const char *val)
     }
 }
 
-void Constant::setToString(std::string &val)
+void Constant::setToString(const std::string &val)
 {
     this->decval = StringToDecimal(val);
     this->intval = StringToInteger(val);

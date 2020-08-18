@@ -1,6 +1,7 @@
 #ifndef _WINDOW_HH_
 #define _WINDOW_HH_
 
+#include <string>
 #include "values.hh"
 #include "parent.hh"
 #include "panel.hh"
@@ -9,7 +10,7 @@ class dcWindow : public dcParent
 {
     public:
         dcWindow();
-        void setActiveDisplay(const char *);
+        void setActiveDisplay(const std::string &);
         void setCurrentPanel(void);
         void reshape(double, double);
         void draw(void);

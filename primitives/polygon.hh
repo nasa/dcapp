@@ -1,6 +1,7 @@
 #ifndef _POLYGON_HH_
 #define _POLYGON_HH_
 
+#include <string>
 #include "kolor.hh"
 #include "parent.hh"
 
@@ -10,9 +11,9 @@ class dcPolygon : public dcParent
         dcPolygon(dcParent *);
         virtual ~dcPolygon();
 
-        void setFillColor(const char *);
-        void setLineColor(const char *);
-        void setLineWidth(const char *);
+        void setFillColor(const std::string &);
+        void setLineColor(const std::string &);
+        void setLineWidth(const std::string &);
         void handleMousePress(double, double);
         void handleMouseRelease(void);
         void draw(void);

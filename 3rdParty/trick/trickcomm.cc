@@ -1,7 +1,9 @@
-#include <string>
+#include "basicutils/msg.hh"
+#include "trickcomm.hh"
 
 #ifdef TRICKACTIVE
 
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -117,17 +119,17 @@ void TrickCommModule::flagAsChanged(Variable *value)
     }
 }
 
-void TrickCommModule::setHost(std::string hostspec)
+void TrickCommModule::setHost(const std::string &hostspec)
 {
     this->host = hostspec;
 }
 
-void TrickCommModule::setPort(std::string portspec)
+void TrickCommModule::setPort(const std::string &portspec)
 {
     this->port = StringToInteger(portspec);
 }
 
-void TrickCommModule::setDataRate(std::string ratespec)
+void TrickCommModule::setDataRate(const std::string &ratespec)
 {
     this->datarate = ratespec;
 }
@@ -137,7 +139,7 @@ void TrickCommModule::setReconnectOnDisconnect(void)
     this->disconnectaction = this->AppReconnect;
 }
 
-int TrickCommModule::addParameter(std::string paramname, std::string trickvar, std::string units, std::string init_only, bool method)
+int TrickCommModule::addParameter(const std::string &paramname, const std::string &trickvar, const std::string &units,const std::string &init_only, bool method)
 {
     if (paramname.empty() || trickvar.empty() || !io_map) return this->Fail;
     if (method && io_map != &(this->toSim)) return this->Fail;
@@ -180,9 +182,6 @@ void TrickCommModule::activate(void)
 }
 
 #else
-
-#include "basicutils/msg.hh"
-#include "trickcomm.hh"
 
 TrickCommModule::TrickCommModule()
 {

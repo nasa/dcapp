@@ -3,7 +3,7 @@
 #include "RenderLib.hh"
 #include "texturelib.hh"
 
-tdTexture::tdTexture(std::string filespec) : valid(false), id(-1), filename(filespec), pixelspec(-1), data(0x0), convertNPOT(true), smooth(true)
+tdTexture::tdTexture(const std::string &filespec) : valid(false), id(-1), filename(filespec), pixelspec(-1), data(0x0), convertNPOT(true), smooth(true)
 {
     size_t end = this->filename.rfind('.');
     if (end == std::string::npos) warning_msg("No detectable filename extension for file " << this->filename);

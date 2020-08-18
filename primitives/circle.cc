@@ -1,3 +1,4 @@
+#include <string>
 #include "RenderLib/RenderLib.hh"
 #include "basicutils/stringutils.hh"
 #include "constants.hh"
@@ -24,41 +25,41 @@ dcCircle::~dcCircle()
     delete ReleaseList;
 }
 
-void dcCircle::setFillColor(const char *cspec)
+void dcCircle::setFillColor(const std::string &cspec)
 {
-    if (cspec)
+    if (!cspec.empty())
     {
         FillColor.set(cspec);
         fill = true;
     }
 }
 
-void dcCircle::setLineColor(const char *cspec)
+void dcCircle::setLineColor(const std::string &cspec)
 {
-    if (cspec)
+    if (!cspec.empty())
     {
         LineColor.set(cspec);
         outline = true;
     }
 }
 
-void dcCircle::setLineWidth(const char *inval)
+void dcCircle::setLineWidth(const std::string &inval)
 {
-    if (inval)
+    if (!inval.empty())
     {
         linewidth = StringToDecimal(inval, 1);
         outline = true;
     }
 }
 
-void dcCircle::setRadius(const char *inval)
+void dcCircle::setRadius(const std::string &inval)
 {
-    if (inval) radius = getValue(inval);
+    if (!inval.empty()) radius = getValueSSTR(inval);
 }
 
-void dcCircle::setSegments(const char *inval)
+void dcCircle::setSegments(const std::string &inval)
 {
-    if (inval) segments = StringToInteger(inval, 80);
+    if (!inval.empty()) segments = StringToInteger(inval, 80);
 }
 
 void dcCircle::handleMousePress(double inx, double iny)

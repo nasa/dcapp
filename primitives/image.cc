@@ -21,7 +21,7 @@ dcImage::~dcImage()
 }
 
 
-void dcImage::setTexture(std::string filename)
+void dcImage::setTexture(const std::string &filename)
 {
     this->textureID = tdLoadTexture(filename);
 }

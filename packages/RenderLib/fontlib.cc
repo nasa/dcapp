@@ -38,7 +38,7 @@ const UTF32 tdFont::offsetsFromUTF8[] = { 0x00000000UL, 0x00003080UL, 0x000E2080
 /*************************/
 
 
-tdFont::tdFont(std::string filespec, std::string &facespec, unsigned int basespec)
+tdFont::tdFont(const std::string &filespec, const std::string &facespec, unsigned int basespec)
 :
 face(0x0),
 kern_flag(false),
@@ -110,7 +110,7 @@ tdFont::~tdFont()
 }
 
 
-float tdFont::getAdvance(std::string &instring, flMonoOption mono=flMonoNone)
+float tdFont::getAdvance(const std::string &instring, flMonoOption mono=flMonoNone)
 {
     if (!(this->valid)) return 0;
 
@@ -193,7 +193,7 @@ unsigned int tdFont::getBaseSize(void)
 }
 
 
-void tdFont::render(std::string &instring, flMonoOption mono=flMonoNone)
+void tdFont::render(const std::string &instring, flMonoOption mono=flMonoNone)
 {
     if (!(this->valid)) return;
 

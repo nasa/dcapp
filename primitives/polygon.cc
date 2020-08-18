@@ -1,3 +1,4 @@
+#include <string>
 #include "app_data.hh"
 #include "RenderLib/RenderLib.hh"
 #include "basicutils/stringutils.hh"
@@ -25,27 +26,27 @@ dcPolygon::~dcPolygon()
     delete ReleaseList;
 }
 
-void dcPolygon::setFillColor(const char *cspec)
+void dcPolygon::setFillColor(const std::string &cspec)
 {
-    if (cspec)
+    if (!cspec.empty())
     {
         FillColor.set(cspec);
         fill = true;
     }
 }
 
-void dcPolygon::setLineColor(const char *cspec)
+void dcPolygon::setLineColor(const std::string &cspec)
 {
-    if (cspec)
+    if (!cspec.empty())
     {
         LineColor.set(cspec);
         outline = true;
     }
 }
 
-void dcPolygon::setLineWidth(const char *inval)
+void dcPolygon::setLineWidth(const std::string &inval)
 {
-    if (inval)
+    if (!inval.empty())
     {
         linewidth = StringToDecimal(inval, 1);
         outline = true;

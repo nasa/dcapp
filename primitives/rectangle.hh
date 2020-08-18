@@ -1,6 +1,7 @@
 #ifndef _RECTANGLE_HH_
 #define _RECTANGLE_HH_
 
+#include <string>
 #include "kolor.hh"
 #include "geometric.hh"
 #include "parent.hh"
@@ -11,9 +12,9 @@ class dcRectangle : public dcGeometric
         dcRectangle(dcParent *);
         virtual ~dcRectangle();
 
-        void setFillColor(const char *);
-        void setLineColor(const char *);
-        void setLineWidth(const char *);
+        void setFillColor(const std::string &);
+        void setLineColor(const std::string &);
+        void setLineWidth(const std::string &);
         void handleMousePress(double, double);
         void handleMouseRelease(void);
         void draw(void);

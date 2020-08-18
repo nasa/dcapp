@@ -1,6 +1,7 @@
 #ifndef _CIRCLE_HH_
 #define _CIRCLE_HH_
 
+#include <string>
 #include "values.hh"
 #include "kolor.hh"
 #include "geometric.hh"
@@ -12,11 +13,11 @@ class dcCircle : public dcGeometric
         dcCircle(dcParent *);
         virtual ~dcCircle();
 
-        void setFillColor(const char *);
-        void setLineColor(const char *);
-        void setLineWidth(const char *);
-        void setRadius(const char *);
-        void setSegments(const char *);
+        void setFillColor(const std::string &);
+        void setLineColor(const std::string &);
+        void setLineWidth(const std::string &);
+        void setRadius(const std::string &);
+        void setSegments(const std::string &);
         void handleMousePress(double, double);
         void handleMouseRelease(void);
         void draw(void);

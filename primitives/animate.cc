@@ -10,7 +10,7 @@ dcAnimate::dcAnimate(dcParent *myparent) : duration(1)
     myparent->addChild(this);
 }
 
-void dcAnimate::setDuration(std::string inval)
+void dcAnimate::setDuration(const std::string &inval)
 {
     duration = StringToDecimal(inval, 1);
 }

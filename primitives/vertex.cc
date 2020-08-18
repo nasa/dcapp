@@ -1,3 +1,5 @@
+#include <string>
+#include "basicutils/stringutils.hh"
 #include "app_data.hh"
 #include "values.hh"
 #include "vertex.hh"
@@ -11,25 +13,25 @@ dcVertex::dcVertex(dcParent *myparent) : x(0x0), y(0x0), originx(dcLeft), origin
     containerh = getContainerHeight();
 }
 
-void dcVertex::setPosition(const char *inx, const char *iny)
+void dcVertex::setPosition(const std::string &inx, const std::string &iny)
 {
-    if (inx) x = getValue(inx);
-    if (iny) y = getValue(iny);
+    if (!inx.empty()) x = getValueSSTR(inx);
+    if (!iny.empty()) y = getValueSSTR(iny);
 }
 
-void dcVertex::setOrigin(const char *inx, const char *iny)
+void dcVertex::setOrigin(const std::string &inx, const std::string &iny)
 {
-    if (inx)
+    if (!inx.empty())
     {
-        if (!strcasecmp(inx, "Left")) originx = dcLeft;
-        else if (!strcasecmp(inx, "Center")) originx = dcCenter;
-        else if (!strcasecmp(inx, "Right")) originx = dcRight;
+        if (CaseInsensitiveCompare(inx, "Left")) originx = dcLeft;
+        else if (CaseInsensitiveCompare(inx, "Center")) originx = dcCenter;
+        else if (CaseInsensitiveCompare(inx, "Right")) originx = dcRight;
     }
-    if (iny)
+    if (!iny.empty())
     {
-        if (!strcasecmp(iny, "Bottom")) originy = dcBottom;
-        else if (!strcasecmp(iny, "Middle")) originy = dcMiddle;
-        else if (!strcasecmp(iny, "Top")) originy = dcTop;
+        if (CaseInsensitiveCompare(iny, "Bottom")) originy = dcBottom;
+        else if (CaseInsensitiveCompare(iny, "Middle")) originy = dcMiddle;
+        else if (CaseInsensitiveCompare(iny, "Top")) originy = dcTop;
     }
 }
 
@@ -40,16 +42,16 @@ void dcVertex::draw(void)
     if (x)
     {
 //if (x->getDecimal() < 0) printf("WARNING: X in Vertex (%g)\n", x->getDecimal());
-if (originx == dcRight) myx = containerw->getDecimal() - x->getDecimal();
-else myx = x->getDecimal();
+        if (originx == dcRight) myx = containerw->getDecimal() - x->getDecimal();
+        else myx = x->getDecimal();
     }
     else myx = 0;
 
     if (y)
     {
 //if (y->getDecimal() < 0) printf("WARNING: Y in Vertex (%g)\n", y->getDecimal());
-if (originy == dcTop) myy = containerh->getDecimal() - y->getDecimal();
-else myy = y->getDecimal();
+        if (originy == dcTop) myy = containerh->getDecimal() - y->getDecimal();
+        else myy = y->getDecimal();
     }
     else myy = 0;
 

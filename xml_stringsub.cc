@@ -18,7 +18,7 @@ static std::map<std::string, std::string> ppclist;
 static std::list<xmlNodePtr> xmldefaults;
 static std::list<struct xmlStyle> xmlstyles;
 
-static std::string get_constval(std::string &instr)
+static std::string get_constval(const std::string &instr)
 {
     // First, check arguments list...
     if (arglist.find(instr) != arglist.end()) return arglist[instr];
@@ -30,7 +30,7 @@ static std::string get_constval(std::string &instr)
     return "";
 }
 
-static std::string replace_string(std::string instr)
+static std::string replace_string(const std::string &instr)
 {
     if (instr.find_first_of("#$") == std::string::npos) return instr;
 

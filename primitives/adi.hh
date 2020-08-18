@@ -1,6 +1,7 @@
 #ifndef _ADI_HH_
 #define _ADI_HH_
 
+#include <string>
 #include <vector>
 #include "RenderLib/RenderLib.hh"
 #include "values.hh"
@@ -13,12 +14,12 @@ class dcADI : public dcGeometric
 {
     public:
         dcADI(dcParent *);
-        void setBackgrountTexture(const char *);
-        void setBallTexture(const char *);
-        void setRPY(const char *, const char *, const char *);
-        void setRPYerrors(const char *, const char *, const char *);
-        void setRadius(const char *, const char *);
-        void setChevron(const char *, const char *);
+        void setBackgroundTexture(const std::string &);
+        void setBallTexture(const std::string &);
+        void setRPY(const std::string &, const std::string &, const std::string &);
+        void setRPYerrors(const std::string &, const std::string &, const std::string &);
+        void setRadius(const std::string &, const std::string &);
+        void setChevron(const std::string &, const std::string &);
         void draw(void);
 
     private:

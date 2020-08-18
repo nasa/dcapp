@@ -1,3 +1,4 @@
+#include <string>
 #include "app_data.hh"
 #include "values.hh"
 #include "basicutils/stringutils.hh"
@@ -18,7 +19,7 @@ dcPixelStream::~dcPixelStream()
     if (psi) delete psi;
 }
 
-void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const char *port, const char *path, const char *username, const char *password, const char *shmemkey, const char *filename, const char *cameraspec)
+void dcPixelStream::setProtocol(const std::string &protocolstr, const char *host, const char *port, const char *path, const char *username, const char *password, const char *shmemkey, const char *filename, const std::string &cameraspec)
 {
     PixelStreamData *mypsd = 0x0;
     PixelStreamFile *psf;
@@ -29,11 +30,11 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
     std::list<PixelStreamItem *>::iterator psitem;
 
     unsigned protocol = PixelStreamFileProtocol;
-    if (protocolstr)
+    if (!protocolstr.empty())
     {
-        if (!strcasecmp(protocolstr, "MJPEG")) protocol = PixelStreamMjpegProtocol;
-        if (!strcasecmp(protocolstr, "TCP")) protocol = PixelStreamTcpProtocol;
-        if (!strcasecmp(protocolstr, "VSM")) protocol = PixelStreamVsmProtocol;
+        if (CaseInsensitiveCompare(protocolstr, "MJPEG")) protocol = PixelStreamMjpegProtocol;
+        if (CaseInsensitiveCompare(protocolstr, "TCP")) protocol = PixelStreamTcpProtocol;
+        if (CaseInsensitiveCompare(protocolstr, "VSM")) protocol = PixelStreamVsmProtocol;
     }
 
     switch (protocol)
@@ -67,7 +68,7 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
             break;
         case PixelStreamVsmProtocol:
             psv = new PixelStreamVsm;
-            if (psv->readerInitialize(host, StringToInteger(port, 80), path, getValue(cameraspec)))
+            if (psv->readerInitialize(host, StringToInteger(port, 80), path, getValueSSTR(cameraspec)))
             {
                 delete psv;
                 return;
@@ -98,9 +99,9 @@ void dcPixelStream::setProtocol(const char *protocolstr, const char *host, const
     }
 }
 
-void dcPixelStream::setTestPattern(const char *filename)
+void dcPixelStream::setTestPattern(const std::string &filename)
 {
-    if (filename) testpatternID = tdLoadTexture(filename);
+    if (!filename.empty()) testpatternID = tdLoadTexture(filename);
 }
 
 void dcPixelStream::updateStreams(unsigned passcount)

@@ -50,7 +50,7 @@ class Variable : public Value
 
 extern void registerVariable(std::string, std::string, std::string);
 extern Variable *getVariable(const char *);
-extern Variable *getVariableSSTR(std::string &);
+extern Variable *getVariableSSTR(const std::string &);
 extern void *get_pointer(const char *);
 extern char *create_virtual_variable(const char *, const char *);
 

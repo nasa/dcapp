@@ -1,6 +1,7 @@
 #ifndef _CONTAINER_HH_
 #define _CONTAINER_HH_
 
+#include <string>
 #include "values.hh"
 #include "geometric.hh"
 #include "parent.hh"
@@ -10,7 +11,7 @@ class dcContainer : public dcParent, public dcGeometric
     public:
         dcContainer(dcParent *);
         void setSize(const char *, const char *);
-        void setVirtualSize(const char *, const char *);
+        void setVirtualSize(const std::string &, const std::string &);
         void draw(void);
         void handleMousePress(double, double);
         void handleMouseMotion(double, double);

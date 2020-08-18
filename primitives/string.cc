@@ -20,12 +20,12 @@ dcString::dcString(dcParent *myparent) : dcGeometric(myparent), background(false
     shadowOffset = getConstantFromDecimal(0);
 }
 
-void dcString::setColor(std::string cspec)
+void dcString::setColor(const std::string &cspec)
 {
     if (!cspec.empty()) color.set(cspec);
 }
 
-void dcString::setBackgroundColor(std::string cspec)
+void dcString::setBackgroundColor(const std::string &cspec)
 {
     if (!cspec.empty())
     {
@@ -34,7 +34,7 @@ void dcString::setBackgroundColor(std::string cspec)
     }
 }
 
-void dcString::setFont(std::string font, std::string face, std::string size, std::string mono)
+void dcString::setFont(const std::string &font, const std::string &face, const std::string &size, const std::string &mono)
 {
     if (!font.empty()) fontID = tdLoadFont(font, face);
     if (!fontID) fontID = tdLoadFont(AppData.defaultfont, face);
@@ -43,18 +43,18 @@ void dcString::setFont(std::string font, std::string face, std::string size, std
 
     if (!mono.empty())
     {
-        if (mono == "Numeric") forcemono = flMonoNumeric;
-        else if (mono == "AlphaNumeric") forcemono = flMonoAlphaNumeric;
-        else if (mono == "All") forcemono = flMonoAll;
+        if (CaseInsensitiveCompare(mono, "Numeric")) forcemono = flMonoNumeric;
+        else if (CaseInsensitiveCompare(mono, "AlphaNumeric")) forcemono = flMonoAlphaNumeric;
+        else if (CaseInsensitiveCompare(mono, "All")) forcemono = flMonoAll;
     }
 }
 
-void dcString::setShadowOffset(std::string inval)
+void dcString::setShadowOffset(const std::string &inval)
 {
     if (!inval.empty()) shadowOffset = getValueSSTR(inval);
 }
 
-void dcString::setString(std::string mystr)
+void dcString::setString(const std::string &mystr)
 {
     size_t vstart, vlen, curpos = 0;
 
@@ -158,7 +158,7 @@ void dcString::draw(void)
 }
 
 // TODO: The parsing in this file should be simplified and/or combined with string parsing in xml_stringsub.cc
-size_t dcString::parse_var(std::string mystr)
+size_t dcString::parse_var(const std::string &mystr)
 {
     size_t var_start, var_end;
     size_t fmt_start = mystr.find('(');
