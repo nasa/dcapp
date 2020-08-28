@@ -18,18 +18,6 @@ static std::map<std::string, std::string> ppclist;
 static std::list<xmlNodePtr> xmldefaults;
 static std::list<struct xmlStyle> xmlstyles;
 
-static std::string get_constval(const std::string &instr)
-{
-    // First, check arguments list...
-    if (arglist.find(instr) != arglist.end()) return arglist[instr];
-
-    // Then, check to see if the constant has been set in the XML file hierarchy...
-    if (ppclist.find(instr) != ppclist.end()) return ppclist[instr];
-
-    // If no match found in either list, return NULL
-    return "";
-}
-
 static std::string replace_string(const std::string &instr)
 {
     if (instr.find_first_of("#$") == std::string::npos) return instr;
@@ -46,7 +34,7 @@ static std::string replace_string(const std::string &instr)
         else if (instr[i] == '#' || instr[i] == '$')
         {
             unsigned brackets = 0; // keep track of how many characters are brackets
-            std::string evalstr, tmpstr1, tmpstr2;
+            std::string evalstr, tmpstr;
 
             if (i+1 < instr.length() && instr[i+1] == '{')
             {
@@ -63,10 +51,22 @@ static std::string replace_string(const std::string &instr)
                 for (unsigned j=i+1; j<instr.length() && (isalnum(instr[j]) || instr[j] == '_'); j++) evalstr += instr[j];
             }
 
-            tmpstr1 = replace_string(evalstr);
-            if (instr[i] == '#') tmpstr2 = get_constval(tmpstr1);
-            else tmpstr2 = getenv(tmpstr1.c_str());
-            outstr += tmpstr2;
+            tmpstr = replace_string(evalstr);
+
+            if (instr[i] == '#')
+            {
+                // First, check arguments list...
+                std::map<std::string, std::string>::iterator it = arglist.find(tmpstr);
+                if (it != arglist.end()) outstr += it->second;
+                else
+                {
+                    // If not in arguments list, check if the constant has been set in the XML file hierarchy...
+                    it = ppclist.find(tmpstr);
+                    if (it != ppclist.end()) outstr += it->second;
+                }
+            }
+            else outstr += getenv(tmpstr.c_str());
+
             i += evalstr.length() + brackets;
         }
         else outstr += instr[i];

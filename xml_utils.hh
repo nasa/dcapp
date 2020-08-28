@@ -12,6 +12,5 @@ extern char *get_XML_content(xmlNodePtr);
 extern char *get_node_type(xmlNodePtr);
 extern bool NodeValid(xmlNodePtr node);
 extern bool NodeCheck(xmlNodePtr, const char *);
-//extern xmlNodePtr NodeFind(xmlNodePtr, const char *);
 
 #endif

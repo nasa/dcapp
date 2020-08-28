@@ -1,11 +1,17 @@
-#ifdef IDF
-
-#include <cstdlib>
-#include <cstring>
-#include "idf/UsbHagstromKEUSB36FS.hh"
-#include "basicutils/timer.hh"
 #include "basicutils/msg.hh"
 #include "Hagstrom.hh"
+
+#ifdef IDF
+
+#include <string>
+#include <locale>
+#include <codecvt>
+#include <cstdlib>
+#if 0
+#include <cstring> // need this instead of local and codecvt if the setSerialNumber logic doesn't work
+#endif
+#include "idf/UsbHagstromKEUSB36FS.hh"
+#include "basicutils/timer.hh"
 
 #define CONNECT_ATTEMPT_INTERVAL 2.5
 
@@ -28,8 +34,9 @@ HagstromDevice::~HagstromDevice()
     delete this->hagstrom;
 }
 
-void HagstromDevice::setSerialNumber(const char *serialnum)
+void HagstromDevice::setSerialNumber(const std::string &serialnum)
 {
+#if 0
     if (serialnum)
     {
         const size_t numchars = strlen(serialnum) + 1;
@@ -37,6 +44,13 @@ void HagstromDevice::setSerialNumber(const char *serialnum)
         mbstowcs(&wideserialnum[0], serialnum, numchars);
         this->hagstrom->setSerialNumber(wideserialnum);
     }
+#else
+    if (!serialnum.empty())
+    {
+        std::wstring_convert < std::codecvt_utf8_utf16 <wchar_t> > converter;
+        this->hagstrom->setSerialNumber(converter.from_bytes(serialnum));
+    }
+#endif
 }
 
 void HagstromDevice::read(void)
@@ -82,9 +96,6 @@ void HagstromDevice::read(void)
 }
 
 #else
-
-#include "basicutils/msg.hh"
-#include "Hagstrom.hh"
 
 HagstromDevice::HagstromDevice()
 {

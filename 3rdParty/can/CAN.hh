@@ -1,6 +1,7 @@
 #ifndef _CAN_HH_
 #define _CAN_HH_
 
+#include <string>
 #include "variables.hh"
 #include "device.hh"
 
@@ -15,7 +16,7 @@ class CanDevice : public DeviceModule
         CanDevice();
         virtual ~CanDevice();
 
-        void initialize(const char *, const char *, const char *, const char *);
+        void initialize(const std::string &, const std::string &, const std::string &, const std::string &);
         void read(void);
 
     private:
@@ -33,7 +34,7 @@ class CanDevice : public DeviceModule
     public:
         CanDevice();
 
-        void initialize(const char *, const char *, const char *, const char *) { };
+        void initialize(const std::string &, const std::string &, const std::string &, const std::string &) { };
 };
 
 #endif

@@ -1,5 +1,4 @@
-#include <cstring>
-#include <list>
+#include <string>
 #include "app_data.hh"
 #include "variables.hh"
 #include "values.hh"
@@ -24,17 +23,17 @@ dcSetValue::dcSetValue(dcParent *myparent, const char *invar, const char *inval)
     if (myparent) myparent->addChild(this);
 }
 
-void dcSetValue::setOperator(const char *opspec)
+void dcSetValue::setOperator(const std::string &opspec)
 {
-    if (!opspec) return;
-    else if (!strcmp(opspec, "+=")) optype = PlusEquals;
-    else if (!strcmp(opspec, "-=")) optype = MinusEquals;
+    if (opspec.empty()) return;
+    else if (opspec == "+=") optype = PlusEquals;
+    else if (opspec == "-=") optype = MinusEquals;
 }
 
-void dcSetValue::setRange(const char *minspec, const char *maxspec)
+void dcSetValue::setRange(const std::string &minspec, const std::string &maxspec)
 {
-    if (minspec) min = getValue(minspec);
-    if (maxspec) max = getValue(maxspec);
+    if (!minspec.empty()) min = getValueSSTR(minspec);
+    if (!maxspec.empty()) max = getValueSSTR(maxspec);
 }
 
 void dcSetValue::draw(void)

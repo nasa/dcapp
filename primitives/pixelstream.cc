@@ -19,7 +19,7 @@ dcPixelStream::~dcPixelStream()
     if (psi) delete psi;
 }
 
-void dcPixelStream::setProtocol(const std::string &protocolstr, const char *host, const char *port, const char *path, const char *username, const char *password, const char *shmemkey, const char *filename, const std::string &cameraspec)
+void dcPixelStream::setProtocol(const std::string &protocolstr, const char *host, const std::string &port, const char *path, const char *username, const char *password, const std::string &shmemkey, const char *filename, const std::string &cameraspec)
 {
     PixelStreamData *mypsd = 0x0;
     PixelStreamFile *psf;

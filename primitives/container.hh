@@ -10,7 +10,7 @@ class dcContainer : public dcParent, public dcGeometric
 {
     public:
         dcContainer(dcParent *);
-        void setSize(const char *, const char *);
+        void setSize(const std::string &, const std::string &);
         void setVirtualSize(const std::string &, const std::string &);
         void draw(void);
         void handleMousePress(double, double);

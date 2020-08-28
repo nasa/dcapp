@@ -56,24 +56,25 @@ Variable *getVariableSSTR(const std::string &label)
 {
     if (label.empty()) return 0x0;
 
-    std::string mylabel;
-
-    if (label[0] == '@') mylabel = label.substr(1);
-    else mylabel = label;
-
-    if (variables.find(mylabel) != variables.end()) return &(variables[mylabel]);
+    if (label[0] == '@')
+    {
+        std::string mylabel = label.substr(1);
+        if (variables.find(mylabel) != variables.end()) return &(variables[mylabel]);
+    }
     else
     {
-        warning_msg("Invalid variable label: " << label);
-        return 0x0;
+        if (variables.find(label) != variables.end()) return &(variables[label]);
     }
+
+    warning_msg("Invalid variable label: " << label);
+    return 0x0;
 }
 
 // get_pointer should only be used in the auto-generated dcapp header files used by the logic plug-ins.  Since they're
 // auto-generated, this routine should never return 0x0.  But if it does return 0x0, a crash could occur.
 void *get_pointer(const char *label)
 {
-    Variable *myvar = getVariable(label);
+    Variable *myvar = getVariableSSTR(label);
     if (myvar) return myvar->getPointer();
     else return 0x0;
 }

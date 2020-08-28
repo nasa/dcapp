@@ -1,4 +1,6 @@
+#include <string>
 #include <strings.h>
+#include "basicutils/stringutils.hh"
 #include "constants.hh"
 #include "values.hh"
 #include "geometric.hh"
@@ -13,52 +15,52 @@ dcGeometric::dcGeometric(dcParent *myparent) : x(0x0), y(0x0), halign(dcLeft), v
     rotate = getConstantFromDecimal(0);
 }
 
-void dcGeometric::setPosition(const char *inx, const char *iny)
+void dcGeometric::setPosition(const std::string &inx, const std::string &iny)
 {
-    if (inx) x = getValue(inx);
-    if (iny) y = getValue(iny);
+    if (!inx.empty()) x = getValueSSTR(inx);
+    if (!iny.empty()) y = getValueSSTR(iny);
 }
 
-void dcGeometric::setSize(const char *inw, const char *inh)
+void dcGeometric::setSize(const std::string &inw, const std::string &inh)
 {
-    if (inw) w = getValue(inw);
-    if (inh) h = getValue(inh);
+    if (!inw.empty()) w = getValueSSTR(inw);
+    if (!inh.empty()) h = getValueSSTR(inh);
 }
 
-void dcGeometric::setRotation(const char *inr)
+void dcGeometric::setRotation(const std::string &inr)
 {
-    if (inr) rotate = getValue(inr);
+    if (!inr.empty()) rotate = getValueSSTR(inr);
 }
 
-void dcGeometric::setAlignment(const char *inhal, const char *inval)
+void dcGeometric::setAlignment(const std::string &inhal, const std::string &inval)
 {
-    if (inhal)
+    if (!inhal.empty())
     {
-        if (!strcasecmp(inhal, "Left")) halign = dcLeft;
-        else if (!strcasecmp(inhal, "Center")) halign = dcCenter;
-        else if (!strcasecmp(inhal, "Right")) halign = dcRight;
+        if (CaseInsensitiveCompare(inhal, "Left")) halign = dcLeft;
+        else if (CaseInsensitiveCompare(inhal, "Center")) halign = dcCenter;
+        else if (CaseInsensitiveCompare(inhal, "Right")) halign = dcRight;
     }
-    if (inval)
+    if (!inval.empty())
     {
-        if (!strcasecmp(inval, "Bottom")) valign = dcBottom;
-        else if (!strcasecmp(inval, "Middle")) valign = dcMiddle;
-        else if (!strcasecmp(inval, "Top")) valign = dcTop;
+        if (CaseInsensitiveCompare(inval, "Bottom")) valign = dcBottom;
+        else if (CaseInsensitiveCompare(inval, "Middle")) valign = dcMiddle;
+        else if (CaseInsensitiveCompare(inval, "Top")) valign = dcTop;
     }
 }
 
-void dcGeometric::setOrigin(const char *inx, const char *iny)
+void dcGeometric::setOrigin(const std::string &inx, const std::string &iny)
 {
-    if (inx)
+    if (!inx.empty())
     {
-        if (!strcasecmp(inx, "Left")) originx = dcLeft;
-        else if (!strcasecmp(inx, "Center")) originx = dcCenter;
-        else if (!strcasecmp(inx, "Right")) originx = dcRight;
+        if (CaseInsensitiveCompare(inx, "Left")) originx = dcLeft;
+        else if (CaseInsensitiveCompare(inx, "Center")) originx = dcCenter;
+        else if (CaseInsensitiveCompare(inx, "Right")) originx = dcRight;
     }
-    if (iny)
+    if (!iny.empty())
     {
-        if (!strcasecmp(iny, "Bottom")) originy = dcBottom;
-        else if (!strcasecmp(iny, "Middle")) originy = dcMiddle;
-        else if (!strcasecmp(iny, "Top")) originy = dcTop;
+        if (CaseInsensitiveCompare(iny, "Bottom")) originy = dcBottom;
+        else if (CaseInsensitiveCompare(iny, "Middle")) originy = dcMiddle;
+        else if (CaseInsensitiveCompare(iny, "Top")) originy = dcTop;
     }
 }
 
@@ -138,11 +140,11 @@ double dcGeometric::GeomX(Value *x, double w, double containerW, int halign)
         }
     }
     else
-{
+    {
 //if (x->getDecimal() < 0) printf("WARNING: X in Geometric (%g)\n", x->getDecimal());
-if (originx == dcRight) val = containerw->getDecimal() - x->getDecimal();
-else val = x->getDecimal();
-}
+        if (originx == dcRight) val = containerw->getDecimal() - x->getDecimal();
+        else val = x->getDecimal();
+    }
 
     switch (halign)
     {
@@ -179,11 +181,11 @@ double dcGeometric::GeomY(Value *y, double h, double containerH, int valign)
         }
     }
     else
-{
+    {
 //if (y->getDecimal() < 0) printf("WARNING: Y in Geometric (%g)\n", y->getDecimal());
-if (originy == dcTop) val = containerh->getDecimal() - y->getDecimal();
-else val = y->getDecimal();
-}
+        if (originy == dcTop) val = containerh->getDecimal() - y->getDecimal();
+        else val = y->getDecimal();
+    }
 
     switch (valign)
     {

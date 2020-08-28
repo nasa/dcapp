@@ -1,3 +1,4 @@
+#include <string>
 #include "basicutils/stringutils.hh"
 #include "bezelevent.hh"
 
@@ -6,10 +7,10 @@ dcBezelEvent::dcBezelEvent(dcParent *myparent) : mykey(0), selected(false)
     coreConstructor(myparent);
 }
 
-dcBezelEvent::dcBezelEvent(dcParent *myparent, const char *key) : selected(false)
+dcBezelEvent::dcBezelEvent(dcParent *myparent, const std::string &key) : selected(false)
 {
     coreConstructor(myparent);
-    if (key) setKey(key);
+    if (!key.empty()) mykey = StringToInteger(key);
 }
 
 dcBezelEvent::~dcBezelEvent()
@@ -27,7 +28,7 @@ void dcBezelEvent::coreConstructor(dcParent *myparent)
     ReleaseList->setParent(this);
 }
 
-void dcBezelEvent::setKey(const char *key)
+void dcBezelEvent::setKey(const std::string &key)
 {
     mykey = StringToInteger(key);
 }

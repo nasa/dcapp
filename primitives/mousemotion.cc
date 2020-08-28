@@ -1,19 +1,20 @@
+#include <string>
 #include "variables.hh"
 #include "mousemotion.hh"
 
 extern void UpdateDisplay(void);
 
-dcMouseMotion::dcMouseMotion(dcParent *myparent, const char *xvar, const char *yvar)
+dcMouseMotion::dcMouseMotion(dcParent *myparent, const std::string &xvar, const std::string &yvar)
 {
     pointerX = &noval;
-    Variable *xval = getVariable(xvar);
+    Variable *xval = getVariableSSTR(xvar);
     if (xval)
     {
         if (xval->isDecimal()) pointerX = xval;
     }
 
     pointerY = &noval;
-    Variable *yval = getVariable(yvar);
+    Variable *yval = getVariableSSTR(yvar);
     if (yval)
     {
         if (yval->isDecimal()) pointerY = yval;

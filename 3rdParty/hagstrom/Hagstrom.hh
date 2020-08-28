@@ -1,6 +1,7 @@
 #ifndef _HAGSTROM_HH_
 #define _HAGSTROM_HH_
 
+#include <string>
 #include "device.hh"
 
 #ifdef IDF
@@ -14,7 +15,7 @@ class HagstromDevice : public DeviceModule
         HagstromDevice();
         virtual ~HagstromDevice();
 
-        void setSerialNumber(const char *);
+        void setSerialNumber(const std::string &);
         void read(void);
 
     private:
@@ -32,7 +33,7 @@ class HagstromDevice : public DeviceModule
     public:
         HagstromDevice();
 
-        void setSerialNumber(const char *) { };
+        void setSerialNumber(const std::string &) { };
 };
 
 #endif

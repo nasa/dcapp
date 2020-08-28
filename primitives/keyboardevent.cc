@@ -1,3 +1,4 @@
+#include <string>
 #include "basicutils/stringutils.hh"
 #include "keyboardevent.hh"
 
@@ -6,17 +7,17 @@ dcKeyboardEvent::dcKeyboardEvent(dcParent *myparent) : mykey(0)
     coreConstructor(myparent);
 }
 
-dcKeyboardEvent::dcKeyboardEvent(dcParent *myparent, const char *key)
+dcKeyboardEvent::dcKeyboardEvent(dcParent *myparent, const std::string &key)
 {
     coreConstructor(myparent);
-    setKey(key);
+    if (!key.empty()) mykey = key[0];
 }
 
-dcKeyboardEvent::dcKeyboardEvent(dcParent *myparent, const char *key, const char *keyascii)
+dcKeyboardEvent::dcKeyboardEvent(dcParent *myparent, const std::string &key, const std::string &keyascii)
 {
     coreConstructor(myparent);
-    if (key) setKey(key);
-    else setKeyAscii(keyascii);
+    if (!key.empty()) mykey = key[0];
+    else if (!keyascii.empty()) mykey = StringToInteger(keyascii);
 }
 
 dcKeyboardEvent::~dcKeyboardEvent()
@@ -34,14 +35,14 @@ void dcKeyboardEvent::coreConstructor(dcParent *myparent)
     ReleaseList->setParent(this);
 }
 
-void dcKeyboardEvent::setKey(const char *key)
+void dcKeyboardEvent::setKey(const std::string &key)
 {
-    if (key) mykey = key[0];
+    if (!key.empty()) mykey = key[0];
 }
 
-void dcKeyboardEvent::setKeyAscii(const char *key)
+void dcKeyboardEvent::setKeyAscii(const std::string &key)
 {
-    if (key) mykey = StringToInteger(key);
+    if (!key.empty()) mykey = StringToInteger(key);
 }
 
 void dcKeyboardEvent::handleKeyPress(char key)

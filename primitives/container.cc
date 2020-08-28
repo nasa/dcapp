@@ -10,17 +10,17 @@ dcContainer::dcContainer(dcParent *myparent) : dcGeometric(myparent)
     vheight = h;
 }
 
-void dcContainer::setSize(const char *inw, const char *inh)
+void dcContainer::setSize(const std::string &inw, const std::string &inh)
 {
-    if (inw)
+    if (!inw.empty())
     {
-        Value *tmpptr = getValue(inw);
+        Value *tmpptr = getValueSSTR(inw);
         if (vwidth == w) vwidth = tmpptr;
         w = tmpptr;
     }
-    if (inh)
+    if (!inh.empty())
     {
-        Value *tmpptr = getValue(inh);
+        Value *tmpptr = getValueSSTR(inh);
         if (vheight == h) vheight = tmpptr;
         h = tmpptr;
     }

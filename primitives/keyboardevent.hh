@@ -1,6 +1,7 @@
 #ifndef _KEYBOARDEVENT_HH_
 #define _KEYBOARDEVENT_HH_
 
+#include <string>
 #include "object.hh"
 #include "parent.hh"
 
@@ -8,12 +9,12 @@ class dcKeyboardEvent : public dcObject
 {
     public:
         dcKeyboardEvent(dcParent *);
-        dcKeyboardEvent(dcParent *, const char *);
-        dcKeyboardEvent(dcParent *, const char *, const char *);
+        dcKeyboardEvent(dcParent *, const std::string &);
+        dcKeyboardEvent(dcParent *, const std::string &, const std::string &);
         virtual ~dcKeyboardEvent();
         void coreConstructor(dcParent *);
-        void setKey(const char *);
-        void setKeyAscii(const char *);
+        void setKey(const std::string &);
+        void setKeyAscii(const std::string &);
         void handleKeyPress(char);
         void handleKeyRelease(char);
 

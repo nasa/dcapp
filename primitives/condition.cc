@@ -8,7 +8,7 @@
 enum { Simple, IfEquals, IfNotEquals, IfGreaterThan, IfLessThan, IfGreaterOrEquals, IfLessOrEquals };
 enum { Neither, LHS, RHS };
 
-dcCondition::dcCondition(dcParent *myparent, const char *inspec, const char *inval1, const char *inval2)
+dcCondition::dcCondition(dcParent *myparent, const std::string &inspec, const char *inval1, const char *inval2)
 :
 eval(false), opspec(Simple)
 {
@@ -22,14 +22,14 @@ eval(false), opspec(Simple)
     TrueList->setParent(this);
     FalseList->setParent(this);
 
-    if (inspec)
+    if (!inspec.empty())
     {
-        if (!strcasecmp(inspec, "eq")) opspec = IfEquals;
-        else if (!strcasecmp(inspec, "ne")) opspec = IfNotEquals;
-        else if (!strcasecmp(inspec, "gt")) opspec = IfGreaterThan;
-        else if (!strcasecmp(inspec, "lt")) opspec = IfLessThan;
-        else if (!strcasecmp(inspec, "ge")) opspec = IfGreaterOrEquals;
-        else if (!strcasecmp(inspec, "le")) opspec = IfLessOrEquals;
+        if (CaseInsensitiveCompare(inspec, "eq")) opspec = IfEquals;
+        else if (CaseInsensitiveCompare(inspec, "ne")) opspec = IfNotEquals;
+        else if (CaseInsensitiveCompare(inspec, "gt")) opspec = IfGreaterThan;
+        else if (CaseInsensitiveCompare(inspec, "lt")) opspec = IfLessThan;
+        else if (CaseInsensitiveCompare(inspec, "ge")) opspec = IfGreaterOrEquals;
+        else if (CaseInsensitiveCompare(inspec, "le")) opspec = IfLessOrEquals;
     }
 
     if (inval1) val1 = getValue(inval1);

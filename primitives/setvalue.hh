@@ -1,6 +1,7 @@
 #ifndef _SETVALUE_HH_
 #define _SETVALUE_HH_
 
+#include <string>
 #include "variables.hh"
 #include "values.hh"
 #include "animation.hh"
@@ -11,8 +12,8 @@ class dcSetValue : public dcObject
 {
     public:
         dcSetValue(dcParent *, const char *, const char *);
-        void setOperator(const char *);
-        void setRange(const char *, const char *);
+        void setOperator(const std::string &);
+        void setRange(const std::string &, const std::string &);
         void draw(void);
         void handleEvent(void);
         void updateData(void);

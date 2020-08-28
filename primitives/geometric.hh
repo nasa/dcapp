@@ -1,6 +1,7 @@
 #ifndef _GEOMETRIC_HH_
 #define _GEOMETRIC_HH_
 
+#include <string>
 #include "values.hh"
 #include "parent.hh"
 #include "object.hh"
@@ -12,11 +13,11 @@ class dcGeometric : public dcObject
 {
     public:
         dcGeometric(dcParent *);
-        void setPosition(const char *, const char *);
-        void setSize(const char *, const char *);
-        void setRotation(const char *);
-        void setAlignment(const char *, const char *);
-        void setOrigin(const char *, const char *);
+        void setPosition(const std::string &, const std::string &);
+        void setSize(const std::string &, const std::string &);
+        void setRotation(const std::string &);
+        void setAlignment(const std::string &, const std::string &);
+        void setOrigin(const std::string &, const std::string &);
         void computeGeometry(void);
 
     protected:

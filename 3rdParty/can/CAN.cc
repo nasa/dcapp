@@ -1,5 +1,6 @@
 #ifdef NTCAN
 
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include "ntcan.h"
@@ -29,7 +30,7 @@ CanDevice::~CanDevice()
     }
 }
 
-void CanDevice::initialize(const char *networkstr, const char *buttonIDstr, const char *controlIDstr, int *inhibitstr)
+void CanDevice::initialize(const std::string &networkstr, const std::string &buttonIDstr, const std::string &controlIDstr, const std::string &inhibitstr)
 {
     int network;
     NTCAN_RESULT retval;
@@ -68,7 +69,7 @@ void CanDevice::initialize(const char *networkstr, const char *buttonIDstr, cons
         return;
     }
 
-    this->canbus_inhibited = getVariable(inhibitstr);
+    this->canbus_inhibited = getVariableSSTR(inhibitstr);
 
     this->CAN_active = true;
 }

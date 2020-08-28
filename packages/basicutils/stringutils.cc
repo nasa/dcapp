@@ -56,7 +56,7 @@ bool CaseInsensitiveCompare(const std::string &a, const std::string &b)
 
     if (b.size() != size) return false;
 
-    for (unsigned int i = 0; i < size; ++i)
+    for (unsigned int i = 0; i < size; i++)
     {
         if (tolower(a[i]) != tolower(b[i])) return false;
     }

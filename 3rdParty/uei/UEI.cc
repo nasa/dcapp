@@ -1,3 +1,4 @@
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <csignal>
@@ -23,10 +24,10 @@ UeiDevice::~UeiDevice()
     if (this->uei_buffer) free(this->uei_buffer);
 }
 
-void UeiDevice::connect(const char *host, const char *port, const char *ID)
+void UeiDevice::connect(const std::string &host, const std::string &port, const std::string &ID)
 {
     this->bezelID = StringToInteger(ID);
-    this->uei_socket = mycomm_init(host, StringToInteger(port), UEI_BUFFER_SIZE, 0, false, 40);
+    this->uei_socket = mycomm_init(host.c_str(), StringToInteger(port), UEI_BUFFER_SIZE, 0, false, 40);
     if (this->uei_socket) UEI_active = true;
 }
 

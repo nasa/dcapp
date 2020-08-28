@@ -1,6 +1,7 @@
 #ifndef _CONDITION_HH_
 #define _CONDITION_HH_
 
+#include <string>
 #include "values.hh"
 #include "animation.hh"
 #include "object.hh"
@@ -9,7 +10,7 @@
 class dcCondition : public dcObject
 {
     public:
-        dcCondition(dcParent *, const char *, const char *, const char *);
+        dcCondition(dcParent *, const std::string &, const char *, const char *);
         virtual ~dcCondition();
         void draw(void);
         void handleKeyPress(char);
