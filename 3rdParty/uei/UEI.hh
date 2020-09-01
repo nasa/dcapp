@@ -11,7 +11,7 @@ class UeiDevice : public DeviceModule
         UeiDevice();
         virtual ~UeiDevice();
 
-        void connect(const std::string &, const std::string &, const std::string &);
+        void connect(const std::string &, const std::string &);
         void read(void);
 
     private:

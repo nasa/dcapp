@@ -1,3 +1,4 @@
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -25,7 +26,6 @@
 
 PixelStreamTcp::PixelStreamTcp()
 :
-host(0x0),
 port(0),
 ListenSocket(-1),
 ClientToServerSocket(-1),
@@ -45,14 +45,13 @@ PixelStreamTcp::~PixelStreamTcp()
 {
     this->disconnect_all();
     socket_disconnect(&ListenSocket);
-    if (this->host) free(this->host);
     delete this->lastconnectattempt;
     delete this->lastread;
 }
 
 bool PixelStreamTcp::operator == (const PixelStreamTcp &that)
 {
-    if (!strcmp(this->host, that.host) && this->port == that.port) return true;
+    if (this->host == that.host && this->port == that.port) return true;
     else return false;
 }
 
@@ -141,12 +140,12 @@ void PixelStreamTcp::connect_write_sockets(void)
     }
 }
 
-int PixelStreamTcp::readerInitialize(const char *hostspec, int portspec)
+int PixelStreamTcp::readerInitialize(const std::string &hostspec, int portspec)
 {
     struct hostent *server;
 
-    if (hostspec)
-        server = gethostbyname(hostspec);
+    if (!hostspec.empty())
+        server = gethostbyname(hostspec.c_str());
     else
         server = gethostbyname("localhost");
 
@@ -156,7 +155,7 @@ int PixelStreamTcp::readerInitialize(const char *hostspec, int portspec)
         return -1;
     }
 
-    this->host = strdup(server->h_name);
+    this->host = server->h_name;
     this->port = portspec;
 
     bzero((char *) &server_address, sizeof(server_address));

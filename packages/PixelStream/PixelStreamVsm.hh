@@ -18,7 +18,7 @@ class PixelStreamVsm : public PixelStreamMjpeg
 
         bool operator == (const PixelStreamVsm &);
         bool operator != (const PixelStreamVsm &);
-        int readerInitialize(const char *, int, const char *, Value *);
+        int readerInitialize(const std::string &, int, const std::string &, Value *);
         int reader(void);
 
     private:
@@ -26,7 +26,7 @@ class PixelStreamVsm : public PixelStreamMjpeg
         int resolveURL(std::string);
 
         CURL *curl;
-        char *vsmhost;
+        std::string vsmhost;
         int vsmport;
         Value *curr_camera;
         std::string prev_camera;
@@ -42,15 +42,15 @@ class PixelStreamVsm : public PixelStreamMjpeg
 {
     public:
         PixelStreamVsm();
-        virtual ~PixelStreamVsm();
+        virtual ~PixelStreamVsm() { };
 
         bool operator == (const PixelStreamVsm &);
         bool operator != (const PixelStreamVsm &);
-        int readerInitialize(const char *, int, const char *, Value *);
+        int readerInitialize(const std::string &, int, const std::string &, Value *);
         int reader(void);
 
     private:
-        char *vsmhost;
+        std::string vsmhost;
         int vsmport;
         Value *curr_camera;
 };

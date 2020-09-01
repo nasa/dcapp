@@ -1,7 +1,9 @@
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
+#include <cmath>
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/socket.h>
@@ -13,10 +15,6 @@
 #include "basicutils/msg.hh"
 #include "basicutils/tidy.hh"
 #include "udp_comm.hh"
-
-
-#define ENT_SRV_MIN_PORT 29999 /* Smallest # for hard-coded server port */
-#define ENT_BUFLEN_BYTES 61440 /* Max UDP buffer size - SGI default */
 
 
 /*******************************************************************
@@ -68,13 +66,6 @@ static void create_udp_socket(SocketInfo *sinfo)
         return;
     }
 
-    if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&(sinfo->outsize_netbuf), sizeof(sinfo->outsize_netbuf)) == -1)
-    {
-        error_msg("setsocketopt(SO_SNDBUF) failed: " << strerror(errno));
-        close(sd);
-        return;
-    }
-
     /* SET SOCKET TO NON-BLOCKING */
     if (ioctl(sd, FIONBIO, (char *)&noblockflag) == -1)
     {
@@ -84,14 +75,15 @@ static void create_udp_socket(SocketInfo *sinfo)
     }
 
     /* ZERO OUT AND INIT OWN/CLIENT NAME */
-    memset((char *)&(sinfo->my_sckaddr), 0, sizeof(struct sockaddr_in));
-    sinfo->my_sckaddr.sin_family = PF_INET;
-    sinfo->my_sckaddr.sin_addr.s_addr = INADDR_ANY;
-    sinfo->my_sckaddr.sin_port = htons(sinfo->myport);
-    for (i=0; i<8; i++) sinfo->my_sckaddr.sin_zero[i] = 0;
+    struct sockaddr_in my_sckaddr;
+    memset((char *)&my_sckaddr, 0, sizeof(struct sockaddr_in));
+    my_sckaddr.sin_family = PF_INET;
+    my_sckaddr.sin_addr.s_addr = INADDR_ANY;
+    my_sckaddr.sin_port = htons(sinfo->server_port);
+    for (i=0; i<8; i++) my_sckaddr.sin_zero[i] = 0;
 
     /* ASSOCIATE A NAME WITH A SOCKKET */
-    if (bind(sd, (struct sockaddr *)&(sinfo->my_sckaddr), sizeof(struct sockaddr_in)) == -1)
+    if (bind(sd, (struct sockaddr *)&my_sckaddr, sizeof(struct sockaddr_in)) == -1)
     {
         error_msg("bind() failed: " << strerror(errno));
         close(sd);
@@ -113,21 +105,23 @@ static void create_udp_socket(SocketInfo *sinfo)
 *******************************************************************/
 static int peek_read_udp(SocketInfo *sinfo, char *dbuf)
 {
-    static socklen_t len_sckaddr = sizeof(struct sockaddr_in);
     static int peek_counter = 0;
     int statlen = 0;
     fd_set readsfd;
-    struct timeval timeout;
 
     /* POLL SOCKET BEFORE READING */
     FD_ZERO(&readsfd);
     FD_SET(sinfo->socket, &readsfd);
-    timeout.tv_sec = sinfo->tv_sec;
-    timeout.tv_usec = sinfo->tv_usec;
 
-    if (select(sinfo->socket + 1, &readsfd, 0x0, 0x0, &timeout) > 0)
+    if (select(sinfo->socket + 1, &readsfd, 0x0, 0x0, &(sinfo->timeout)) > 0)
     {
-        statlen = recvfrom(sinfo->socket, dbuf, sinfo->in_pack_len, 0, (struct sockaddr*)&sinfo->yo_sckaddr, &len_sckaddr);
+#if 0
+        static socklen_t len_sckaddr = sizeof(struct sockaddr_in);
+        struct sockaddr_in yo_sckaddr;
+        statlen = recvfrom(sinfo->socket, dbuf, sinfo->in_pack_len, 0, (struct sockaddr*)&yo_sckaddr, &len_sckaddr);
+#else
+        statlen = recv(sinfo->socket, dbuf, sinfo->in_pack_len, 0);
+#endif
         peek_counter = 0;
     }
     else
@@ -226,14 +220,12 @@ static void swap_byte(char *in, char *out, int blen, int wsize)
 * Return: Pointer to the socket information
 *
 * Parameters:
-*     hostname - string containing the hostname or IP address
-*     port     - udp port offset (udp port = 30000 + port)
-*     insize   - size of input buffer (read buffer)
-*     outsize  - size of output buffer (write buffer)
-*     swap     - swap byte flag
-*     timeout  - read timeout interval (ms)
+*     port    - udp port offset (udp port = 30000 + port)
+*     insize  - size of input buffer (read buffer)
+*     swap    - swap byte flag
+*     timeout - read timeout interval (in seconds)
 *******************************************************************/
-SocketInfo *mycomm_init(const char *hostname, int port, int insize, int outsize, bool swap, int timeout)
+SocketInfo *mycomm_init(int port, int insize, bool swap, double timeout)
 {
     SocketInfo *mysock = (SocketInfo *)calloc(sizeof(SocketInfo), 1);
     if (!mysock)
@@ -253,53 +245,20 @@ SocketInfo *mycomm_init(const char *hostname, int port, int insize, int outsize,
         }
     }
 
-    debug_msg("Byte Swapping is " << (swap ? "ON" : "OFF"));
-
-    if (!hostname)
-    {
-        hostname = strdup("localhost");
-        warning_msg("Failed to get HOSTNAME variable, using default: " << hostname);
-    }
-    debug_msg("Host name is " << hostname);
-
     mysock->swap_flag = swap;
-    mysock->server_port = ENT_SRV_MIN_PORT + 1 + port; /* Hardcoded port must >= SRV_MIN_PORT */
-    strcpy(mysock->server_ip, hostname);
+    mysock->server_port = 30000 + port;
 
-    debug_msg("Server IP: " << mysock->server_ip << ", host name: " << hostname);
+    debug_msg("Byte Swapping is " << (swap ? "ON" : "OFF"));
+    debug_msg("UEI port: " << mysock->server_port);
 
-    mysock->tv_sec = timeout / 1000;
-    mysock->tv_usec = (timeout - (mysock->tv_sec * 1000)) * 1000;
+    double integer, fractional;
+    fractional = modf(timeout, &integer);
+    mysock->timeout.tv_sec = (time_t)integer;
+    mysock->timeout.tv_usec = (suseconds_t)((fractional * 1000000.0) + 0.5);
 
-    mysock->base_port = 15000;
+    mysock->in_pack_len = insize;  /* input packet length */
 
-    mysock->in_pack_len  = insize;  /* input packet length */
-    mysock->out_pack_len = outsize; /* output packet length */
-
-    if (mysock->insize_netbuf < mysock->in_pack_len + 48) mysock->insize_netbuf = ENT_BUFLEN_BYTES;
-    if (mysock->outsize_netbuf < mysock->out_pack_len + 48) mysock->outsize_netbuf = ENT_BUFLEN_BYTES;
-
-    /* Hard coded server_port prevails if it set to >= ENT_SRV_MIN_PORT */
-    if (mysock->server_port < ENT_SRV_MIN_PORT)
-    {
-        if ((mysock->delta_port < 0) || (mysock->delta_port > 9999))
-        {
-            mysock->delta_port = 0;
-            warning_msg("delta_port default to 0");
-        }
-        /* generate port number for server agent (a user must specify a different delta port value for each server agent) */
-        mysock->server_port = mysock->base_port + mysock->delta_port + (int)getuid();
-    }
-
-    mysock->myport = mysock->server_port;
-
-    if (mysock->server_ip[0] == 0)
-    {
-        gethostname(mysock->server_ip, sizeof(mysock->server_ip));
-        debug_msg("SERVER_IP = " << mysock->server_ip);
-    }
-
-    debug_msg("IP: " << mysock->server_ip << ", port: " << mysock->server_port);
+    if (mysock->insize_netbuf < mysock->in_pack_len + 48) mysock->insize_netbuf = 61440; /* Max UDP buffer size - SGI default */
 
     create_udp_socket(mysock);
 
@@ -346,8 +305,7 @@ int mycomm_read(SocketInfo *mysock, char *r_buffer)
             shutdown(mysock->socket, 2);
             close(mysock->socket);
         }
-        else
-            error_msg("shutdown/close socket: invalid socket: " << mysock->socket);
+        else error_msg("shutdown/close socket: invalid socket: " << mysock->socket);
     }
 
     return statlen;

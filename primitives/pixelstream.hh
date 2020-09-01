@@ -11,7 +11,7 @@ class dcPixelStream : public dcGeometric
     public:
         dcPixelStream(dcParent *);
         ~dcPixelStream();
-        void setProtocol(const std::string &, const char *, const std::string &, const char *, const char *, const char *, const std::string &, const char *, const std::string &);
+        void setProtocol(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
         void setTestPattern(const std::string &);
         void updateStreams(unsigned);
         void draw(void);

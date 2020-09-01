@@ -69,6 +69,7 @@ DCAPP_OBJECTS := $(foreach obj, $(patsubst %, $(OBJDIR)/%, $(DCAPP_OBJECTS)), $(
 GENHEADER_OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(GENHEADER_SOURCES)), $(OBJDIR)/$(obj))
 
 #CXXFLAGS += -DDEBUG
+CXXFLAGS += -DDCAPP_LOGGING
 
 all: prebuild $(BINDIR)/dcapp $(BINDIR)/dcapp_genheader postbuild
 

@@ -21,12 +21,7 @@
 #define CONNECTION_ATTEMPT_INTERVAL 2.0
 #define CONNECTION_TIMEOUT 2.0
 
-PixelStreamVsm::PixelStreamVsm()
-:
-vsmhost(0x0),
-vsmport(0),
-curr_camera(0x0),
-cameraassigned(false)
+PixelStreamVsm::PixelStreamVsm() : vsmport(0), curr_camera(0x0), cameraassigned(false)
 {
     this->protocol = PixelStreamVsmProtocol;
     this->assigncameraattempt = new Timer;
@@ -35,14 +30,13 @@ cameraassigned(false)
 
 PixelStreamVsm::~PixelStreamVsm()
 {
-    if (this->vsmhost) free(this->vsmhost);
     delete this->assigncameraattempt;
     curl_easy_cleanup(this->curl);
 }
 
 bool PixelStreamVsm::operator == (const PixelStreamVsm &that)
 {
-    if (!strcmp(this->vsmhost, that.vsmhost) && this->vsmport == that.vsmport && this->curr_camera == that.curr_camera) return true;
+    if (this->vsmhost == that.vsmhost && this->vsmport == that.vsmport && this->curr_camera == that.curr_camera) return true;
     else return false;
 }
 
@@ -58,7 +52,7 @@ static size_t write_curl_data(void * /* buffer */, size_t size, size_t nmemb, vo
     return (size * nmemb);
 }
 
-int PixelStreamVsm::readerInitialize(const char *hostspec, int portspec, const char *pathspec, Value *cameraid)
+int PixelStreamVsm::readerInitialize(const std::string &hostspec, int portspec, const std::string &pathspec, Value *cameraid)
 {
     CURLcode result;
 
@@ -85,14 +79,14 @@ int PixelStreamVsm::readerInitialize(const char *hostspec, int portspec, const c
         }
     }
 
-    if (hostspec)
-        this->vsmhost = strdup(hostspec);
+    if (!hostspec.empty())
+        this->vsmhost = hostspec;
     else
-        this->vsmhost = strdup("localhost");
+        this->vsmhost = "localhost";
     this->vsmport = portspec;
     this->curr_camera = cameraid;
     this->prev_camera = "";
-    if (pathspec) this->userpath = pathspec;
+    this->userpath = pathspec;
 
     return 0;
 }
@@ -256,7 +250,7 @@ int PixelStreamVsm::resolveURL(std::string instr)
             return -1;
         }
 
-        mjpegIO = curlLibCreateHandle(inet_ntoa(*(in_addr * )server->h_addr), StringToInteger(myport), mypath.c_str(), 0x0, 0x0, this);
+        mjpegIO = curlLibCreateHandle(inet_ntoa(*(in_addr * )server->h_addr), StringToInteger(myport), mypath, "", "", this);
         if (!mjpegIO) return -1;
     }
 
@@ -265,23 +259,14 @@ int PixelStreamVsm::resolveURL(std::string instr)
 
 #else
 
-PixelStreamVsm::PixelStreamVsm()
-:
-vsmhost(0x0),
-vsmport(0),
-curr_camera(0x0)
+PixelStreamVsm::PixelStreamVsm() : vsmport(0), curr_camera(0x0)
 {
     this->protocol = PixelStreamVsmProtocol;
 }
 
-PixelStreamVsm::~PixelStreamVsm()
-{
-    if (this->vsmhost) free(this->vsmhost);
-}
-
 bool PixelStreamVsm::operator == (const PixelStreamVsm &that)
 {
-    if (!strcmp(this->vsmhost, that.vsmhost) && this->vsmport == that.vsmport && this->curr_camera == that.curr_camera) return true;
+    if (this->vsmhost == that.vsmhost && this->vsmport == that.vsmport && this->curr_camera == that.curr_camera) return true;
     else return false;
 }
 
@@ -290,7 +275,7 @@ bool PixelStreamVsm::operator != (const PixelStreamVsm &that)
     return !(*this == that);
 }
 
-int PixelStreamVsm::readerInitialize(const char *hostspec, int portspec, const char *pathspec, Value *cameraid)
+int PixelStreamVsm::readerInitialize(const std::string &hostspec, int portspec, const std::strint &pathspec, Value *cameraid)
 {
 #ifndef CURL_ENABLED
     warning_msg("VSM requested, but unable to locate libcurl");
@@ -299,10 +284,10 @@ int PixelStreamVsm::readerInitialize(const char *hostspec, int portspec, const c
     warning_msg("VSM requested, but unable to locate libjpeg or libjpeg-turbo");
 #endif
 
-    if (hostspec)
-        this->vsmhost = strdup(hostspec);
+    if (!hostspec.empty())
+        this->vsmhost = hostspec;
     else
-        this->vsmhost = strdup("localhost");
+        this->vsmhost = "localhost";
     this->vsmport = portspec;
     this->curr_camera = cameraid;
 

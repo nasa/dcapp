@@ -1,6 +1,7 @@
 #ifndef _PIXELSTREAMMJPEG_HH_
 #define _PIXELSTREAMMJPEG_HH_
 
+#include <string>
 #include <cstddef>
 #include "basicutils/timer.hh"
 #include "PixelStreamData.hh"
@@ -13,7 +14,7 @@ class PixelStreamMjpeg : public PixelStreamData
 
         bool operator == (const PixelStreamMjpeg &);
         bool operator != (const PixelStreamMjpeg &);
-        int readerInitialize(const char *, int, const char *, const char *, const char *);
+        int readerInitialize(const std::string &, int, const std::string &, const std::string &, const std::string &);
         int reader(void);
         void processData(const char *, size_t);
         void updateStatus(void);
@@ -32,11 +33,11 @@ class PixelStreamMjpeg : public PixelStreamData
         bool updated;
 
     private:
-        char *host;
+        std::string host;
         int port;
-        char *path;
-        char *username;
-        char *password;
+        std::string path;
+        std::string username;
+        std::string password;
         char *readbuf;
         size_t readbufalloc; // bytes allocated for storing data received from CURL
         size_t pixelsalloc;  // bytes allocated for rendering image

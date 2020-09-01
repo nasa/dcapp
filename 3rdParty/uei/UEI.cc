@@ -24,10 +24,10 @@ UeiDevice::~UeiDevice()
     if (this->uei_buffer) free(this->uei_buffer);
 }
 
-void UeiDevice::connect(const std::string &host, const std::string &port, const std::string &ID)
+void UeiDevice::connect(const std::string &port, const std::string &ID)
 {
     this->bezelID = StringToInteger(ID);
-    this->uei_socket = mycomm_init(host.c_str(), StringToInteger(port), UEI_BUFFER_SIZE, 0, false, 40);
+    this->uei_socket = mycomm_init(StringToInteger(port), UEI_BUFFER_SIZE, false, 0.04);
     if (this->uei_socket) UEI_active = true;
 }
 

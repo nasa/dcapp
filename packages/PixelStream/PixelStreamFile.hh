@@ -1,6 +1,7 @@
 #ifndef _PIXELSTREAMFILE_HH_
 #define _PIXELSTREAMFILE_HH_
 
+#include <string>
 #include <cstdio>
 #include <stdint.h>
 #include "PixelStreamData.hh"
@@ -27,15 +28,13 @@ class PixelStreamFile : public PixelStreamData
         int writer(void);
         bool writeRequested(void);
 
-        int readerInitialize(const char *, int);
-        int writerInitialize(const char *, int);
-        char *getFileName(void);
-        int getShmemKey(void);
+        int readerInitialize(const std::string &, int);
+        int writerInitialize(const std::string &, int);
 
     private:
-        int genericInitialize(const char *, int);
+        int genericInitialize(const std::string &, int);
 
-        char *filename;
+        std::string filename;
         FILE *fp;
         int shmemkey;
         PixelStreamShmem *shm;

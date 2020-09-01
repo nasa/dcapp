@@ -14,6 +14,7 @@
         pixels
 ***/
 
+#include <string>
 #include <stdint.h>
 #include <poll.h>
 #include <netinet/in.h>
@@ -32,7 +33,7 @@ class PixelStreamTcp : public PixelStreamData
         int writer(void);
         bool writeRequested(void);
 
-        int readerInitialize(const char *, int);
+        int readerInitialize(const std::string &, int);
         int writerInitialize(int);
 
     private:
@@ -48,7 +49,7 @@ class PixelStreamTcp : public PixelStreamData
         bool SendHeader(uint32_t, uint32_t);
         int SendData(char *, uint32_t);
 
-        char *host;
+        std::string host;
         int port;
         struct sockaddr_in server_address;
         int ListenSocket;

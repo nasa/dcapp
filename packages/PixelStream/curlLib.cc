@@ -23,22 +23,18 @@ void curlLibInit(void)
     multiCURL = curl_multi_init();
 }
 
-void *curlLibCreateHandle(const char *host, int port, const char *path, const char *username, const char *password, PixelStreamMjpeg *ptr)
+void *curlLibCreateHandle(const std::string &host, int port, const std::string &path, const std::string &username, const std::string &password, PixelStreamMjpeg *ptr)
 {
     CURL *handle;
     CURLcode result;
     std::string myurl, mycredentials;
 
-    myurl += host;
-    myurl += ':';
-    myurl += std::to_string(port);
-    myurl += '/';
-    myurl += path;
-    if (username && password)
+    myurl = host + ':' + std::to_string(port) + '/' + path;
+
+    if (!username.empty())
     {
-        mycredentials += username;
-        mycredentials += ':';
-        mycredentials += password;
+        mycredentials = username;
+        if (!password.empty()) mycredentials += ':' + password;
     }
 
     handle = curl_easy_init();
@@ -154,7 +150,7 @@ void curlLibInit(void)
     warning_msg("libcurl is required for MJPEG PixelStream");
 }
 
-void *curlLibCreateHandle(const char *host, int port, const char *path, const char *username, const char *password, PixelStreamMjpeg *ptr)
+void *curlLibCreateHandle(const std::string &host, int port, const std::string &path, const std::string &username, const std::string &password, PixelStreamMjpeg *ptr)
 {
     return 0x0;
 }

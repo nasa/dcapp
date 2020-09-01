@@ -1,3 +1,4 @@
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -10,13 +11,7 @@
 // to be large enough to house the elements of the PixelStreamShmem structure defined below.
 #define SHM_SIZE 1024
 
-PixelStreamFile::PixelStreamFile()
-:
-filename(0x0),
-fp(0x0),
-shmemkey(0),
-shm(0x0),
-buffercount(0)
+PixelStreamFile::PixelStreamFile() : fp(0x0), shmemkey(0), shm(0x0), buffercount(0)
 {
     this->protocol = PixelStreamFileProtocol;
 }
@@ -25,12 +20,11 @@ PixelStreamFile::~PixelStreamFile()
 {
     if (this->shm) shmdt(this->shm);
     if (this->fp) fclose(this->fp);
-    if (this->filename) free(this->filename);
 }
 
 bool PixelStreamFile::operator == (const PixelStreamFile &that)
 {
-    if (!strcmp(this->filename, that.filename) && this->shmemkey == that.shmemkey) return true;
+    if (this->filename == that.filename && this->shmemkey == that.shmemkey) return true;
     else return false;
 }
 
@@ -39,10 +33,10 @@ bool PixelStreamFile::operator != (const PixelStreamFile &that)
     return !(*this == that);
 }
 
-int PixelStreamFile::genericInitialize(const char *filenamespec, int shmemkeyspec)
+int PixelStreamFile::genericInitialize(const std::string &filenamespec, int shmemkeyspec)
 {
-    if (!filenamespec) return -1;
-    this->filename = strdup(filenamespec);
+    if (filenamespec.empty()) return -1;
+    this->filename = filenamespec;
     this->shmemkey = shmemkeyspec;
 
     int shmid = shmget(shmemkeyspec, SHM_SIZE, IPC_CREAT | 0666);
@@ -61,18 +55,18 @@ int PixelStreamFile::genericInitialize(const char *filenamespec, int shmemkeyspe
     return 0;
 }
 
-int PixelStreamFile::readerInitialize(const char *filenamespec, int shmemkeyspec)
+int PixelStreamFile::readerInitialize(const std::string &filenamespec, int shmemkeyspec)
 {
     return genericInitialize(filenamespec, shmemkeyspec);
 }
 
-int PixelStreamFile::writerInitialize(const char *filenamespec, int shmemkeyspec)
+int PixelStreamFile::writerInitialize(const std::string &filenamespec, int shmemkeyspec)
 {
     if (genericInitialize(filenamespec, shmemkeyspec)) return -1;
 
     memset(this->shm, 0, SHM_SIZE);
 
-    if (this->filename) this->fp = fopen(this->filename, "w");
+    if (!(this->filename.empty())) this->fp = fopen(this->filename.c_str(), "w");
     if (!(this->fp))
     {
         error_msg("PixelStream: Couldn't open stream file " << this->filename);
@@ -91,7 +85,7 @@ int PixelStreamFile::reader(void)
 
     if (!(this->fp))
     {
-        if (this->filename) this->fp = fopen(this->filename, "r");
+        if (!(this->filename.empty())) this->fp = fopen(this->filename.c_str(), "r");
     }
     else if (this->shm)
     {
@@ -145,14 +139,4 @@ int PixelStreamFile::writer(void)
     (this->buffercount)++;
 
     return 1;
-}
-
-char *PixelStreamFile::getFileName(void)
-{
-    return this->filename;
-}
-
-int PixelStreamFile::getShmemKey(void)
-{
-    return this->shmemkey;
 }
