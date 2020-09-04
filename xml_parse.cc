@@ -40,16 +40,6 @@ static const char *indid, *indonval, *activeid, *activetrueval;
 static std::string key, keyascii, bezelkey;
 static bool preprocessing = true;
 
-#ifdef DCAPP_LOGGING
-#include <fstream>
-std::ofstream logfile;
-void dcapp_log(const std::string &instr, unsigned indent=0)
-{
-    for (unsigned i=0; i<indent; i++) logfile << "    ";
-    logfile << instr << std::endl;
-}
-#endif
-
 int ParseXMLFile(const char *fullpath)
 {
     int mycwd;
@@ -70,11 +60,6 @@ int ParseXMLFile(const char *fullpath)
     }
 
     setenv("dcappDisplayHome", mypath.getDirectory().c_str(), 1);
-
-#ifdef DCAPP_LOGGING
-    logfile.open("dcapplog.xml");
-    dcapp_log("<DCAPPlog>");
-#endif
 
     // Store cwd for future use
     mycwd = open(".", O_RDONLY);
@@ -100,11 +85,6 @@ int ParseXMLFile(const char *fullpath)
 
     XMLFileClose(mydoc);
     XMLEndParsing();
-
-#ifdef DCAPP_LOGGING
-    dcapp_log("</DCAPPlog>");
-    logfile.close();
-#endif
 
     // Return to the original working directory
     fchdir(mycwd);
@@ -249,24 +229,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             trickcomm->setDataRate(get_element_dataSSTR(node, "DataRate"));
             trickcomm->setConnectedVariable(get_element_dataSSTR(node, "ConnectedVariable"));
             if (get_element_dataSSTR(node, "DisconnectAction") == "Reconnect") trickcomm->setReconnectOnDisconnect();
-#ifdef DCAPP_LOGGING
-    std::string logstr = "<TrickIo Host=\"";
-    logstr += get_element_dataSSTR(node, "Host");
-    logstr += "\" Port=\"";
-    logstr += get_element_dataSSTR(node, "Port");
-    logstr += "\" DataRate=\"";
-    logstr += get_element_dataSSTR(node, "DataRate");
-    logstr += "\" ConnectedVariable=\"";
-    logstr += get_element_dataSSTR(node, "ConnectedVariable");
-    logstr += "\" DisconnectAction=\"";
-    logstr += get_element_dataSSTR(node, "DisconnectAction");
-    logstr += "\">";
-    dcapp_log(logstr, 1);
-#endif
             process_elements(myparent, node->children);
-#ifdef DCAPP_LOGGING
-    dcapp_log("</TrickIo>", 1);
-#endif
             trickcomm->finishInitialization();
             AppData.commlist.push_back(trickcomm);
         }
@@ -275,13 +238,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             if (trickcomm)
             {
                 trickcomm->activateFromList();
-#ifdef DCAPP_LOGGING
-    dcapp_log("<FromTrick>", 2);
-#endif
                 process_elements(myparent, node->children);
-#ifdef DCAPP_LOGGING
-    dcapp_log("</FromTrick>", 2);
-#endif
                 trickcomm->deactivateList();
             }
         }
@@ -290,13 +247,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             if (trickcomm)
             {
                 trickcomm->activateToList();
-#ifdef DCAPP_LOGGING
-    dcapp_log("<ToTrick>", 2);
-#endif
                 process_elements(myparent, node->children);
-#ifdef DCAPP_LOGGING
-    dcapp_log("</ToTrick>", 2);
-#endif
                 trickcomm->deactivateList();
             }
         }
@@ -305,26 +256,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             if (trickcomm)
             {
                 trickcomm->addParameter(get_node_content(node), get_element_dataSSTR(node, "Name"), get_element_dataSSTR(node, "Units"), get_element_dataSSTR(node, "InitializationOnly"), false);
-#ifdef DCAPP_LOGGING
-    std::string logstr = "<TrickVariable Name=\"";
-    logstr += get_element_dataSSTR(node, "Name");
-    std::string myunitstr = get_element_dataSSTR(node, "Units");
-    if (!myunitstr.empty())
-    {
-        logstr += "\" Units=\"";
-        logstr += myunitstr;
-    }
-    std::string myinitonlystr = get_element_dataSSTR(node, "InitializationOnly");
-    if (!myinitonlystr.empty())
-    {
-        logstr += "\" InitializationOnly=\"";
-        logstr += myinitonlystr;
-    }
-    logstr += "\">";
-    logstr += get_node_content(node);
-    logstr += "</TrickVariable>";
-    dcapp_log(logstr, 3);
-#endif
             }
         }
         if (NodeCheck(node, "TrickMethod"))
@@ -332,14 +263,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             if (trickcomm)
             {
                 trickcomm->addParameter(get_node_content(node), get_element_dataSSTR(node, "Name"), "", "", true);
-#ifdef DCAPP_LOGGING
-    std::string logstr = "<TrickMethod Name=\"";
-    logstr += get_element_dataSSTR(node, "Name");
-    logstr += "\">";
-    logstr += get_node_content(node);
-    logstr += "</TrickMethod>";
-    dcapp_log(logstr, 3);
-#endif
             }
         }
         if (NodeCheck(node, "EdgeIo"))

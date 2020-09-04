@@ -2,6 +2,7 @@
 .PHONY: all prebuild postbuild clean
 
 OSSPEC := $(shell ./dcapp.app/Contents/dcapp-config --osspec)
+OSMAJOR := $(shell ./dcapp.app/Contents/dcapp-config --osversion_major)
 OBJDIR := $(shell ./dcapp.app/Contents/dcapp-config --objdir)
 
 BINDIR := dcapp.app/Contents/$(OSSPEC)
@@ -28,6 +29,10 @@ GENHEADER_SOURCES := \
 	dcapp_genheader.cc \
 	xml_stringsub.cc \
 	xml_utils.cc
+REPORT_SOURCES := \
+	dcapp_report.cc \
+	xml_stringsub.cc \
+	xml_utils.cc
 
 SUBPACKAGE_CONFIGS := \
     osenv/bin/osenv-config \
@@ -49,10 +54,18 @@ LINK_LIBS += $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) 
 COMPDEPENDS := $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --compdepends))
 LINKDEPENDS := $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --linkdepends))
 
-CXXFLAGS += $(shell xml2-config --cflags)
-# STANKY KLUDGE FOR XCODE 8 ISSUE:
-LINK_LIBS += $(shell xml2-config --exec-prefix=/usr --libs)
-#LINK_LIBS += $(shell xml2-config --libs)
+ifeq ($(OSSPEC), MacOS)
+    ifeq ($(shell test $(OSMAJOR) -gt 18; echo $$?),0)
+        CXXFLAGS += $(shell xml2-config --cflags)/libxml2
+        LINK_LIBS += $(shell xml2-config --libs)
+    else
+        CXXFLAGS += $(shell xml2-config --cflags)
+        LINK_LIBS += $(shell xml2-config --exec-prefix=/usr --libs)
+    endif
+else
+    CXXFLAGS += $(shell xml2-config --cflags)
+    LINK_LIBS += $(shell xml2-config --libs)
+endif
 
 LINK_LIBS += -ldl
 
@@ -67,17 +80,21 @@ DCAPP_OBJECTS := $(DCAPP_SOURCES)
 DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.cc=.o), $(obj))
 DCAPP_OBJECTS := $(foreach obj, $(patsubst %, $(OBJDIR)/%, $(DCAPP_OBJECTS)), $(obj))
 GENHEADER_OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(GENHEADER_SOURCES)), $(OBJDIR)/$(obj))
+REPORT_OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(REPORT_SOURCES)), $(OBJDIR)/$(obj))
 
 #CXXFLAGS += -DDEBUG
-CXXFLAGS += -DDCAPP_LOGGING
 
-all: prebuild $(BINDIR)/dcapp $(BINDIR)/dcapp_genheader postbuild
+all: prebuild $(BINDIR)/dcapp $(BINDIR)/dcapp_genheader $(BINDIR)/dcapp_report postbuild
 
 $(BINDIR)/dcapp: $(DCAPP_OBJECTS) $(LINKDEPENDS)
 	mkdir -p $(BINDIR)
 	$(CXX) $(LDFLAGS) $^ $(LINK_LIBS) -o $@
 
 $(BINDIR)/dcapp_genheader: $(GENHEADER_OBJECTS) $(LINKDEPENDS)
+	mkdir -p $(BINDIR)
+	$(CXX) $(LDFLAGS) $^ $(LINK_LIBS) -o $@
+
+$(BINDIR)/dcapp_report: $(REPORT_OBJECTS) $(LINKDEPENDS)
 	mkdir -p $(BINDIR)
 	$(CXX) $(LDFLAGS) $^ $(LINK_LIBS) -o $@
 
