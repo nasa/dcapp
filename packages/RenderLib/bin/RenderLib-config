@@ -8,6 +8,10 @@ Get package compilation and linking information.
 
 Options:
     --osspec           default directory name extension
+    --osversion        software version (full version information)
+    --osversion_short  software version (major and minor only)
+    --osversion_major  software major version
+    --osversion_minor  software minor version
     --objdir           default directory name for compiled objects
     --libdir           default directory name for compiled libraries
     --bindir           default directory name for compiled binaries
@@ -29,6 +33,7 @@ CDPATH=""
 mydir="$(cd "$(dirname "$0")/.."; pwd)"
 parentdir="$(cd "$(dirname "$0")/../.."; pwd)"
 ostype=`uname -s | tr '[:upper:]' '[:lower:]'`
+osversion=(`uname -r | tr '.' '\n'`)
 machtype=`uname -m`
 if test "$ostype" = "darwin" ; then
     osspec="MacOS"
@@ -70,6 +75,18 @@ while test $# -gt 0 ; do
             echo $bindir
             ;;
 ##### These are the only lines that should differ from package to package. #####
+        --osversion)
+            echo ${osversion[0]}.${osversion[1]}.${osversion[2]}
+            ;;
+        --osversion_short)
+            echo ${osversion[0]}.${osversion[1]}
+            ;;
+        --osversion_major)
+            echo ${osversion[0]}
+            ;;
+        --osversion_minor)
+            echo ${osversion[1]}
+            ;;
         --cflags)
             if test "$osspec" = "MacOS" ; then
                 opengl_cflags="-I/opt/X11/include"

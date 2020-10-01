@@ -54,16 +54,11 @@ LINK_LIBS += $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) 
 COMPDEPENDS := $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --compdepends))
 LINKDEPENDS := $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --linkdepends))
 
-ifeq ($(OSSPEC), MacOS)
-    ifeq ($(shell test $(OSMAJOR) -gt 18; echo $$?),0)
-        CXXFLAGS += $(shell xml2-config --cflags)/libxml2
-        LINK_LIBS += $(shell xml2-config --libs)
-    else
-        CXXFLAGS += $(shell xml2-config --cflags)
-        LINK_LIBS += $(shell xml2-config --exec-prefix=/usr --libs)
-    endif
+CXXFLAGS += $(shell xml2-config --cflags)
+# below is a fix for pre-Catalina (MacOS 10.15) implementation of libxml2
+ifeq ($(OSSPEC)$(shell test $(OSMAJOR) -le 18; echo $$?), MacOS0)
+    LINK_LIBS += $(shell xml2-config --exec-prefix=/usr --libs)
 else
-    CXXFLAGS += $(shell xml2-config --cflags)
     LINK_LIBS += $(shell xml2-config --libs)
 endif
 
