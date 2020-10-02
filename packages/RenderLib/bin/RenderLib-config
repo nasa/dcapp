@@ -130,7 +130,12 @@ while test $# -gt 0 ; do
                     jpeg_cflags="-DJPEG_ENABLED"
                 fi
             fi
-            echo "-I${parentdir} `freetype-config --cflags` ${jpeg_cflags} ${opengl_cflags}"
+            if test "$osspec" = "MacOS" ; then
+                if [[ ${osversion[0]} -gt 18 ]] ; then
+                    os_cflags="-DCATALINA"
+                fi
+            fi
+            echo "-I${parentdir} `freetype-config --cflags` ${jpeg_cflags} ${opengl_cflags} ${os_cflags}"
             ;;
 ################################################################################
         *)

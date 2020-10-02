@@ -458,6 +458,8 @@ int tdAlignTop = 0x08;
             }
 
             NSRect myrect = [ winview[i] frame ];
+// May need to get backing bounds instead so that OpenGL renders correctly:
+//     NSRect myrect = [ winview[i] convertRectToBacking:[ winview[i] bounds ]];
             data.c.window = i;
             data.c.size.width = myrect.size.width;
             data.c.size.height = myrect.size.height;

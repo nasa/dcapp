@@ -90,24 +90,19 @@ void init_window(void)
     glEnable(GL_BLEND);
 }
 
-void reshape_window(int /* w */, int /* h */)
+// This glViewport call is problematic on MacOS.  It apparently requires width and height in the backing bounds frame,
+// while mouse location is calculated in pixels.  We can get the data in the backing bounds frame if needed (see comment
+// in the windowReconfigured routine in tdAdapter.mm), but it would need to be sent separately from the new window size.
+// However, MacOS (starting with Catalina) seems to update glViewport automatically, so the simple solution is to not
+// call it here for modern MacOS systems.
+#ifdef CATALINA
+void reshape_window(int, int) { }
+#else
+void reshape_window(int w, int h)
 {
-// *********************************************************************************************************************
-// TODO:  The glViewport call below resulted in an OpenGL quarter-screen issue on MacOS Catalina.  It appears that the
-// glViewport call may not be needed.  If it is needed, an option may be to get viewport information from OpenGL to use
-// as arguments:
-//     double mydata[4];
-//     glGetDoublev(GL_VIEWPORT, mydata);
-// A better fix in the MacOS logic may be to convert the NSRect to its backing bounds with
-// [ self convertRectToBacking:[ self bounds ]].  Another potential option is to add
-// [[ curGLcontext view ] setWantsBestResolutionOpenGLSurface:NO ] in the MacOS code, but that may result in other
-// undesireable effects.  Perhaps the ugliest fix is to determine which MacOS implementations have the quarter-screen
-// issue and manually doubling the size of the viewport as follows:
-//     glViewport(0, 0, 2*w, 2*h);
-// *********************************************************************************************************************
-
-//    glViewport(0, 0, w, h);
+    glViewport(0, 0, w, h);
 }
+#endif
 
 void setup_panel(float x, float y, float red, float green, float blue, float alpha)
 {
