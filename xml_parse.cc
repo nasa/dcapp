@@ -19,6 +19,7 @@
 #include "primitives/primitives.hh"
 #include "variables.hh"
 #include "app_data.hh"
+#include "xml_data.hh"
 #include "xml_utils.hh"
 #include "xml_stringsub.hh"
 
@@ -35,9 +36,7 @@ extern appdata AppData;
 
 static TrickCommModule *trickcomm = 0x0;
 static EdgeCommModule *edgecomm = 0x0;
-static char *transitionid;
-static const char *indid, *indonval, *activeid, *activetrueval;
-static std::string key, keyascii, bezelkey;
+static xmldata indid, indonval, activeid, activetrueval, transitionid, key, keyascii, bezelkey;
 static bool preprocessing = true;
 
 int ParseXMLFile(const char *fullpath)
@@ -107,7 +106,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             xmlDocPtr include_file;
             xmlNodePtr include_element;
-            std::string include_filename = get_node_content(node);
+            xmldata include_filename = get_node_content(node);
 
             if (!include_filename.empty())
             {
@@ -146,7 +145,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             const char *val = get_element_data(node, "Value");
             const char *val1 = get_element_data(node, "Value1");
             const char *val2 = get_element_data(node, "Value2");
-            std::string myoperator = get_element_dataSSTR(node, "Operator");
+            xmldata myoperator = get_element_dataSSTR(node, "Operator");
             bool subparent_found = false;
 
             if (!val1) val1 = val;
@@ -318,14 +317,14 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "DisplayLogic"))
         {
-            std::string myfile = get_node_content(node);
+            xmldata myfile = get_node_content(node);
             void *so_handler;
             char *error;
 
             debug_msg("Loading " << myfile << "...");
 
             // If path isn't specified, prepend with "./" to avoid searching LD_LIBRARY_PATH, DYLD_LIBRARY_PATH, etc.
-            if (myfile.find('/') == std::string::npos) myfile.insert(0, "./");
+            if (myfile.find('/') == xmldata::npos) myfile.insert(0, "./");
 
             so_handler = dlopen(myfile.c_str(), RTLD_NOW);
             if (so_handler)
@@ -475,7 +474,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRotation(get_element_dataSSTR(node, "Rotate"));
             myitem->setAlignment(get_element_dataSSTR(node, "HorizontalAlign"), get_element_dataSSTR(node, "VerticalAlign"));
             myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
-            std::string myfile = get_element_dataSSTR(node, "File");
+            xmldata myfile = get_element_dataSSTR(node, "File");
             if (myfile.empty()) myfile = get_node_content(node);
             myitem->setTexture(myfile);
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
@@ -500,27 +499,32 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             key = get_element_dataSSTR(node, "Key");
             keyascii = get_element_dataSSTR(node, "KeyASCII");
             bezelkey = get_element_dataSSTR(node, "BezelKey");
-            std::string type = get_element_dataSSTR(node, "Type");
-            const char *buttonid = get_element_data(node, "Variable");
-            const char *buttononval = get_element_data(node, "On");
-            const char *buttonoffval = get_element_data(node, "Off");
-            const char *switchid = get_element_data(node, "SwitchVariable");
-            const char *switchonval = get_element_data(node, "SwitchOn");
-            const char *switchoffval = get_element_data(node, "SwitchOff");
-            indid = get_element_data(node, "IndicatorVariable");
-            indonval = get_element_data(node, "IndicatorOn");
-            activeid = get_element_data(node, "ActiveVariable");
-            activetrueval = get_element_data(node, "ActiveOn");
+            xmldata type = get_element_dataSSTR(node, "Type");
+            xmldata buttonid = get_element_dataSSTR(node, "Variable");
+            xmldata buttononval = get_element_dataSSTR(node, "On");
+            xmldata buttonoffval = get_element_dataSSTR(node, "Off");
+            xmldata switchid = get_element_dataSSTR(node, "SwitchVariable");
+            xmldata switchonval = get_element_dataSSTR(node, "SwitchOn");
+            xmldata switchoffval = get_element_dataSSTR(node, "SwitchOff");
+            indid = get_element_dataSSTR(node, "IndicatorVariable");
+            indonval = get_element_dataSSTR(node, "IndicatorOn");
+            activeid = get_element_dataSSTR(node, "ActiveVariable");
+            activetrueval = get_element_dataSSTR(node, "ActiveOn");
 
-            if (!switchonval) switchonval = buttononval;
-            if (!switchoffval) switchoffval = buttonoffval;
-            if (!indonval) indonval = switchonval;
+            if (!switchonval.defined()) switchonval = buttononval;
+            if (!switchoffval.defined()) switchoffval = buttonoffval;
+//            if (!indonval.defined()) indonval = switchonval;
+if (!indonval.defined())
+{
+if (switchonval.defined()) indonval = switchonval;
+else indonval = "1";
+}
 
-            if (!buttonid && !switchid) buttonid = strdup(create_virtual_variable("Integer", "0"));
-            if (!switchid) switchid = buttonid;
-            if (!indid) indid = switchid;
+            if (buttonid.empty() && switchid.empty()) buttonid = create_virtual_variable("Integer", "0");
+            if (switchid.empty()) switchid = buttonid;
+            if (indid.empty()) indid = switchid;
             if (switchid != indid) transitionid = create_virtual_variable("Integer", "0");
-            else transitionid = 0x0;
+            else transitionid.reset();
 
             dcContainer *myitem = new dcContainer(myparent);
             myitem->setPosition(get_element_dataSSTR(node, "X"), get_element_dataSSTR(node, "Y"));
@@ -530,8 +534,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
 
             bool toggle = false, momentary = false;
-            const char *offval;
-            const std::string zerostr = "0", onestr = "1";
+            xmldata offval;
 
             if (!type.empty())
             {
@@ -540,109 +543,108 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             }
 
             dcParent *mySublist = myitem;
-            if (activeid)
+            if (!activeid.empty())
             {
-                if (!activetrueval) activetrueval = onestr.c_str();
-                dcCondition *mycond = new dcCondition(myitem, "eq", activeid, activetrueval);
+                if (!activetrueval.defined()) activetrueval = "1";
+                dcCondition *mycond = new dcCondition(myitem, "eq", activeid.c_str(), activetrueval.c_str());
                 mySublist = mycond->TrueList;
             }
 
-            if (!switchonval) switchonval = onestr.c_str();
+            if (!switchonval.defined()) switchonval = "1";
             if (toggle || momentary)
             {
-                if (switchoffval) offval = switchoffval;
-                else offval = zerostr.c_str();
+                if (switchoffval.defined()) offval = switchoffval;
+                else offval = "0";
             }
-            else offval = 0x0;
 
             if (toggle)
             {
-                dcCondition *mycond = new dcCondition(mySublist, "eq", indid, indonval);
+                dcCondition *mycond = new dcCondition(mySublist, "eq", indid.c_str(), indonval.c_str());
                 dcMouseEvent *mymouse = new dcMouseEvent(mycond->TrueList);
-                new dcSetValue(mymouse->PressList, switchid, offval);
-                if (transitionid) new dcSetValue(mymouse->PressList, transitionid, "-1");
+                new dcSetValue(mymouse->PressList, switchid.c_str(), offval.c_str());
+                if (!transitionid.empty()) new dcSetValue(mymouse->PressList, transitionid.c_str(), "-1");
                 dcMouseEvent *mymouse1 = new dcMouseEvent(mycond->FalseList);
-                new dcSetValue(mymouse1->PressList, switchid, switchonval);
-                if (transitionid) new dcSetValue(mymouse1->PressList, transitionid, "1");
+                new dcSetValue(mymouse1->PressList, switchid.c_str(), switchonval.c_str());
+                if (!transitionid.empty()) new dcSetValue(mymouse1->PressList, transitionid.c_str(), "1");
                 if (!key.empty() || !keyascii.empty())
                 {
                     dcKeyboardEvent *myevent = new dcKeyboardEvent(mycond->TrueList, key, keyascii);
-                    new dcSetValue(myevent->PressList, switchid, offval);
-                    if (transitionid) new dcSetValue(myevent->PressList, transitionid, "-1");
+                    new dcSetValue(myevent->PressList, switchid.c_str(), offval.c_str());
+                    if (!transitionid.empty()) new dcSetValue(myevent->PressList, transitionid.c_str(), "-1");
                     myevent = new dcKeyboardEvent(mycond->FalseList, key, keyascii);
-                    new dcSetValue(myevent->PressList, switchid, switchonval);
-                    if (transitionid) new dcSetValue(myevent->PressList, transitionid, "1");
+                    new dcSetValue(myevent->PressList, switchid.c_str(), switchonval.c_str());
+                    if (!transitionid.empty()) new dcSetValue(myevent->PressList, transitionid.c_str(), "1");
                 }
                 if (!bezelkey.empty())
                 {
                     dcBezelEvent *myevent1 = new dcBezelEvent(mycond->TrueList, bezelkey);
-                    new dcSetValue(myevent1->PressList, switchid, offval);
-                    if (transitionid) new dcSetValue(myevent1->PressList, transitionid, "-1");
+                    new dcSetValue(myevent1->PressList, switchid.c_str(), offval.c_str());
+                    if (!transitionid.empty()) new dcSetValue(myevent1->PressList, transitionid.c_str(), "-1");
                     dcBezelEvent *myevent2 = new dcBezelEvent(mycond->FalseList, bezelkey);
-                    new dcSetValue(myevent2->PressList, switchid, switchonval);
-                    if (transitionid) new dcSetValue(myevent2->PressList, transitionid, "1");
+                    new dcSetValue(myevent2->PressList, switchid.c_str(), switchonval.c_str());
+                    if (!transitionid.empty()) new dcSetValue(myevent2->PressList, transitionid.c_str(), "1");
                 }
             }
             else
             {
                 dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
-                new dcSetValue(mymouse->PressList, switchid, switchonval);
-                if (transitionid) new dcSetValue(mymouse->PressList, transitionid, "1");
+                new dcSetValue(mymouse->PressList, switchid.c_str(), switchonval.c_str());
+                if (!transitionid.empty()) new dcSetValue(mymouse->PressList, transitionid.c_str(), "1");
                 if (momentary)
                 {
-                    new dcSetValue(mymouse->ReleaseList, switchid, offval);
-                    if (transitionid) new dcSetValue(mymouse->ReleaseList, transitionid, "-1");
+                    new dcSetValue(mymouse->ReleaseList, switchid.c_str(), offval.c_str());
+                    if (!transitionid.empty()) new dcSetValue(mymouse->ReleaseList, transitionid.c_str(), "-1");
                 }
                 if (!key.empty() || !keyascii.empty())
                 {
                     dcKeyboardEvent *myevent = new dcKeyboardEvent(mySublist, key, keyascii);
-                    new dcSetValue(myevent->PressList, switchid, switchonval);
-                    if (transitionid) new dcSetValue(myevent->PressList, transitionid, "1");
+                    new dcSetValue(myevent->PressList, switchid.c_str(), switchonval.c_str());
+                    if (!transitionid.empty()) new dcSetValue(myevent->PressList, transitionid.c_str(), "1");
                     if (momentary)
                     {
-                        new dcSetValue(myevent->ReleaseList, switchid, offval);
-                        if (transitionid) new dcSetValue(myevent->ReleaseList, transitionid, "-1");
+                        new dcSetValue(myevent->ReleaseList, switchid.c_str(), offval.c_str());
+                        if (!transitionid.empty()) new dcSetValue(myevent->ReleaseList, transitionid.c_str(), "-1");
                     }
                 }
                 if (!bezelkey.empty())
                 {
                     dcBezelEvent *myevent1 = new dcBezelEvent(mySublist, bezelkey);
-                    new dcSetValue(myevent1->PressList, switchid, switchonval);
-                    if (transitionid) new dcSetValue(myevent1->PressList, transitionid, "1");
+                    new dcSetValue(myevent1->PressList, switchid.c_str(), switchonval.c_str());
+                    if (!transitionid.empty()) new dcSetValue(myevent1->PressList, transitionid.c_str(), "1");
                     if (momentary)
                     {
-                        new dcSetValue(myevent1->ReleaseList, switchid, offval);
-                        if (transitionid) new dcSetValue(myevent1->ReleaseList, transitionid, "-1");
+                        new dcSetValue(myevent1->ReleaseList, switchid.c_str(), offval.c_str());
+                        if (!transitionid.empty()) new dcSetValue(myevent1->ReleaseList, transitionid.c_str(), "-1");
                     }
                 }
             }
 
-            if (transitionid)
+            if (!transitionid.empty())
             {
                 dcCondition *mylist1, *mylist2, *mylist3;
 
-                mylist1 = new dcCondition(myitem, "eq", transitionid, "1");
-                mylist2 = new dcCondition(mylist1->TrueList, "eq", indid, indonval);
-                new dcSetValue(mylist2->TrueList, transitionid, "0");
-                mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid, switchonval);
-                new dcSetValue(mylist3->FalseList, transitionid, "0");
+                mylist1 = new dcCondition(myitem, "eq", transitionid.c_str(), "1");
+                mylist2 = new dcCondition(mylist1->TrueList, "eq", indid.c_str(), indonval.c_str());
+                new dcSetValue(mylist2->TrueList, transitionid.c_str(), "0");
+                mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid.c_str(), switchonval.c_str());
+                new dcSetValue(mylist3->FalseList, transitionid.c_str(), "0");
 
-                mylist1 = new dcCondition(myitem, "eq", transitionid, "-1");
-                mylist2 = new dcCondition(mylist1->TrueList, "eq", indid, indonval);
-                new dcSetValue(mylist2->FalseList, transitionid, "0");
-                mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid, switchoffval);
-                new dcSetValue(mylist3->TrueList, transitionid, "0");
+                mylist1 = new dcCondition(myitem, "eq", transitionid.c_str(), "-1");
+                mylist2 = new dcCondition(mylist1->TrueList, "eq", indid.c_str(), indonval.c_str());
+                new dcSetValue(mylist2->FalseList, transitionid.c_str(), "0");
+                mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid.c_str(), switchoffval.c_str());
+                new dcSetValue(mylist3->TrueList, transitionid.c_str(), "0");
             }
 
             process_elements(myitem, node->children);
-            if (transitionid) free(transitionid);
+            transitionid.reset();
         }
         if (NodeCheck(node, "OnPress"))
         {
             dcParent *mySublist = myparent;
-            if (activeid)
+            if (!activeid.empty())
             {
-                dcCondition *mycond = new dcCondition(myparent, "eq", activeid, activetrueval);
+                dcCondition *mycond = new dcCondition(myparent, "eq", activeid.c_str(), activetrueval.c_str());
                 mySublist = mycond->TrueList;
             }
             dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
@@ -661,9 +663,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "OnRelease"))
         {
             dcParent *mySublist = myparent;
-            if (activeid)
+            if (!activeid.empty())
             {
-                dcCondition *mycond = new dcCondition(myparent, "eq", activeid, activetrueval);
+                dcCondition *mycond = new dcCondition(myparent, "eq", activeid.c_str(), activetrueval.c_str());
                 mySublist = mycond->TrueList;
             }
             dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
@@ -681,50 +683,50 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "Active"))
         {
-            dcCondition *myitem = new dcCondition(myparent, "eq", activeid, activetrueval);
+            dcCondition *myitem = new dcCondition(myparent, "eq", activeid.c_str(), activetrueval.c_str());
             process_elements(myitem->TrueList, node->children);
         }
         if (NodeCheck(node, "Inactive"))
         {
-            dcCondition *myitem = new dcCondition(myparent, "eq", activeid, activetrueval);
+            dcCondition *myitem = new dcCondition(myparent, "eq", activeid.c_str(), activetrueval.c_str());
             process_elements(myitem->FalseList, node->children);
         }
         if (NodeCheck(node, "On"))
         {
-            if (transitionid)
+            if (!transitionid.empty())
             {
-                dcCondition *myitem = new dcCondition(myparent, "eq", transitionid, "0");
-                dcCondition *mychild = new dcCondition(myitem->TrueList, "eq", indid, indonval);
+                dcCondition *myitem = new dcCondition(myparent, "eq", transitionid.c_str(), "0");
+                dcCondition *mychild = new dcCondition(myitem->TrueList, "eq", indid.c_str(), indonval.c_str());
                 process_elements(mychild->TrueList, node->children);
             }
             else
             {
-                dcCondition *myitem = new dcCondition(myparent, "eq", indid, indonval);
+                dcCondition *myitem = new dcCondition(myparent, "eq", indid.c_str(), indonval.c_str());
                 process_elements(myitem->TrueList, node->children);
             }
         }
         if (NodeCheck(node, "Transition"))
         {
-            if (transitionid)
+            if (!transitionid.empty())
             {
                 dcCondition *myitem;
-                myitem = new dcCondition(myparent, "eq", transitionid, "1");
+                myitem = new dcCondition(myparent, "eq", transitionid.c_str(), "1");
                 process_elements(myitem->TrueList, node->children);
-                myitem = new dcCondition(myparent, "eq", transitionid, "-1");
+                myitem = new dcCondition(myparent, "eq", transitionid.c_str(), "-1");
                 process_elements(myitem->TrueList, node->children);
             }
         }
         if (NodeCheck(node, "Off"))
         {
-            if (transitionid)
+            if (!transitionid.empty())
             {
-                dcCondition *myitem = new dcCondition(myparent, "eq", transitionid, "0");
-                dcCondition *mychild = new dcCondition(myitem->TrueList, "eq", indid, indonval);
+                dcCondition *myitem = new dcCondition(myparent, "eq", transitionid.c_str(), "0");
+                dcCondition *mychild = new dcCondition(myitem->TrueList, "eq", indid.c_str(), indonval.c_str());
                 process_elements(mychild->FalseList, node->children);
             }
             else
             {
-                dcCondition *myitem = new dcCondition(myparent, "eq", indid, indonval);
+                dcCondition *myitem = new dcCondition(myparent, "eq", indid.c_str(), indonval.c_str());
                 process_elements(myitem->FalseList, node->children);
             }
         }

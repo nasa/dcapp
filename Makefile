@@ -22,16 +22,19 @@ DCAPP_SOURCES := \
 	tara_funcs.cc \
 	values.cc \
 	variables.cc \
+	xml_data.cc \
 	xml_parse.cc \
 	xml_stringsub.cc \
 	xml_utils.cc
 GENHEADER_SOURCES := \
 	dcapp_genheader.cc \
 	xml_stringsub.cc \
+	xml_data.cc \
 	xml_utils.cc
 REPORT_SOURCES := \
 	dcapp_report.cc \
 	xml_stringsub.cc \
+	xml_data.cc \
 	xml_utils.cc
 
 SUBPACKAGE_CONFIGS := \

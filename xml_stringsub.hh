@@ -1,11 +1,11 @@
 #ifndef _XML_STRINGSUB_HH_
 #define _XML_STRINGSUB_HH_
 
-#include <string>
 #include <libxml/parser.h>
+#include "xml_data.hh"
 
-extern std::string get_node_content(xmlNodePtr);
-extern std::string get_element_dataSSTR(xmlNodePtr, const char *);
+extern xmldata get_node_content(xmlNodePtr);
+extern xmldata get_element_dataSSTR(xmlNodePtr, const char *);
 extern char *get_element_data(xmlNodePtr, const char *);
 extern void processArgument(const char *, const char *);
 extern void processConstantNode(xmlNodePtr);

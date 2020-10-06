@@ -5,6 +5,7 @@
 #include <cctype>
 #include <cstring>
 #include <libxml/parser.h>
+#include "xml_data.hh"
 #include "xml_utils.hh"
 
 struct xmlStyle
@@ -75,14 +76,14 @@ static std::string replace_string(const std::string &instr)
     return outstr;
 }
 
-std::string get_node_content(xmlNodePtr node)
+xmldata get_node_content(xmlNodePtr node)
 {
     char *mycontent = get_XML_content(node);
     if (mycontent) return replace_string(mycontent);
-    else return "";
+    else return 0x0;
 }
 
-std::string get_element_dataSSTR(xmlNodePtr innode, const char *key)
+xmldata get_element_dataSSTR(xmlNodePtr innode, const char *key)
 {
     char *myattr;
 
@@ -118,8 +119,8 @@ std::string get_element_dataSSTR(xmlNodePtr innode, const char *key)
         }
     }
 
-    // ...if not, return empty string
-    return "";
+    // ...if not, return undefined xmlstring
+    return 0x0;
 }
 
 char *get_element_data(xmlNodePtr innode, const char *key)
