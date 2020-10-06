@@ -17,19 +17,19 @@ dcGeometric::dcGeometric(dcParent *myparent) : x(0x0), y(0x0), halign(dcLeft), v
 
 void dcGeometric::setPosition(const std::string &inx, const std::string &iny)
 {
-    if (!inx.empty()) x = getValueSSTR(inx);
-    if (!iny.empty()) y = getValueSSTR(iny);
+    if (!inx.empty()) x = getValue(inx);
+    if (!iny.empty()) y = getValue(iny);
 }
 
 void dcGeometric::setSize(const std::string &inw, const std::string &inh)
 {
-    if (!inw.empty()) w = getValueSSTR(inw);
-    if (!inh.empty()) h = getValueSSTR(inh);
+    if (!inw.empty()) w = getValue(inw);
+    if (!inh.empty()) h = getValue(inh);
 }
 
 void dcGeometric::setRotation(const std::string &inr)
 {
-    if (!inr.empty()) rotate = getValueSSTR(inr);
+    if (!inr.empty()) rotate = getValue(inr);
 }
 
 void dcGeometric::setAlignment(const std::string &inhal, const std::string &inval)

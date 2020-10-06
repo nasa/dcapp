@@ -171,12 +171,11 @@ void Terminate(int flag)
 /* if they have not been set: USER, LOGNAME, HOME, OSTYPE, MACHTYPE, and HOST.      */
 static void SetDefaultEnvironment(std::string pathspec)
 {
-    int i;
+    unsigned i;
     struct utsname minfo;
     struct passwd *pw = getpwuid(getuid());
     long hsize = sysconf(_SC_HOST_NAME_MAX)+1;
     char myhost[hsize];
-    char *lc_os;
 
     std::string mypath = findExecutablePath(pathspec);
 
@@ -193,10 +192,9 @@ static void SetDefaultEnvironment(std::string pathspec)
 
     uname(&minfo);
 
-    lc_os = strdup(minfo.sysname);
-    for (i=0; i<(int)strlen(lc_os); i++) lc_os[i] = tolower(lc_os[i]);
-    setenv("OSTYPE", lc_os, 0);
-    free(lc_os);
+    std::string lcos, os = minfo.sysname;
+    for (i = 0; i < os.length(); i++) lcos += tolower(os[i]);
+    setenv("OSTYPE", lcos.c_str(), 0);
 
     setenv("USER", pw->pw_name, 0);
     setenv("LOGNAME", pw->pw_name, 0);

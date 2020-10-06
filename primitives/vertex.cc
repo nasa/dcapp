@@ -15,8 +15,8 @@ dcVertex::dcVertex(dcParent *myparent) : x(0x0), y(0x0), originx(dcLeft), origin
 
 void dcVertex::setPosition(const std::string &inx, const std::string &iny)
 {
-    if (!inx.empty()) x = getValueSSTR(inx);
-    if (!iny.empty()) y = getValueSSTR(iny);
+    if (!inx.empty()) x = getValue(inx);
+    if (!iny.empty()) y = getValue(iny);
 }
 
 void dcVertex::setOrigin(const std::string &inx, const std::string &iny)

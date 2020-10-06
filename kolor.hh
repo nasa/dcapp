@@ -58,13 +58,13 @@ class Kolor
 
             count = mylist.size();
 
-            if (count > 0) R = getValueSSTR(mylist[0]);
+            if (count > 0) R = getValue(mylist[0]);
             else R = getConstantFromDecimal(0.0);
-            if (count > 1) G = getValueSSTR(mylist[1]);
+            if (count > 1) G = getValue(mylist[1]);
             else G = getConstantFromDecimal(0.0);
-            if (count > 2) B = getValueSSTR(mylist[2]);
+            if (count > 2) B = getValue(mylist[2]);
             else B = getConstantFromDecimal(0.0);
-            if (count > 3) A = getValueSSTR(mylist[3]);
+            if (count > 3) A = getValue(mylist[3]);
             else A = getConstantFromDecimal(1.0);
         }
 

@@ -39,7 +39,7 @@ void dcString::setFont(const std::string &font, const std::string &face, const s
     if (!font.empty()) fontID = tdLoadFont(font, face);
     if (!fontID) fontID = tdLoadFont(AppData.defaultfont, face);
 
-    if (!size.empty()) fontSize = getValueSSTR(size);
+    if (!size.empty()) fontSize = getValue(size);
 
     if (!mono.empty())
     {
@@ -51,7 +51,7 @@ void dcString::setFont(const std::string &font, const std::string &face, const s
 
 void dcString::setShadowOffset(const std::string &inval)
 {
-    if (!inval.empty()) shadowOffset = getValueSSTR(inval);
+    if (!inval.empty()) shadowOffset = getValue(inval);
 }
 
 void dcString::setString(const std::string &mystr)
@@ -184,7 +184,7 @@ size_t dcString::parse_var(const std::string &mystr)
     if (var_end == std::string::npos) varstr += mystr.substr(var_start, std::string::npos);
     else varstr += mystr.substr(var_start, var_end - var_start);
 
-    Variable *myvalue = getVariableSSTR(varstr);
+    Variable *myvalue = getVariable(varstr);
     if (myvalue)
     {
         if (fmt_start != std::string::npos && fmt_end != std::string::npos)

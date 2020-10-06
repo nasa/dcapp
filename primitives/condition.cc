@@ -1,5 +1,5 @@
 #include <cstring>
-#include <string>
+#include <xml_data.hh>
 #include "basicutils/stringutils.hh"
 #include "constants.hh"
 #include "values.hh"
@@ -8,12 +8,12 @@
 enum { Simple, IfEquals, IfNotEquals, IfGreaterThan, IfLessThan, IfGreaterOrEquals, IfLessOrEquals };
 enum { Neither, LHS, RHS };
 
-dcCondition::dcCondition(dcParent *myparent, const std::string &inspec, const char *inval1, const char *inval2)
+dcCondition::dcCondition(dcParent *myparent, const xmldata &inspec, const xmldata &inval1, const xmldata &inval2)
 :
 eval(false), opspec(Simple)
 {
-    // don't parent this object if inval1 and inval2 are both nullptr
-    if (!inval1 && !inval2) return;
+    // don't parent this object if inval1 and inval2 are both undefined
+    if (!inval1.defined() && !inval2.defined()) return;
 
     // this object doesn't require a parent since it can be used during preprocessing
     if (myparent) myparent->addChild(this);
@@ -32,10 +32,10 @@ eval(false), opspec(Simple)
         else if (CaseInsensitiveCompare(inspec, "le")) opspec = IfLessOrEquals;
     }
 
-    if (inval1) val1 = getValue(inval1);
+    if (inval1.defined()) val1 = getValue(inval1);
     else val1 = getConstantFromBoolean(true);
 
-    if (inval2) val2 = getValue(inval2);
+    if (inval2.defined()) val2 = getValue(inval2);
     else val2 = getConstantFromBoolean(true);
 
     if (opspec != Simple)

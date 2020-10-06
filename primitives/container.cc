@@ -14,13 +14,13 @@ void dcContainer::setSize(const std::string &inw, const std::string &inh)
 {
     if (!inw.empty())
     {
-        Value *tmpptr = getValueSSTR(inw);
+        Value *tmpptr = getValue(inw);
         if (vwidth == w) vwidth = tmpptr;
         w = tmpptr;
     }
     if (!inh.empty())
     {
-        Value *tmpptr = getValueSSTR(inh);
+        Value *tmpptr = getValue(inh);
         if (vheight == h) vheight = tmpptr;
         h = tmpptr;
     }
@@ -28,8 +28,8 @@ void dcContainer::setSize(const std::string &inw, const std::string &inh)
 
 void dcContainer::setVirtualSize(const std::string &inw, const std::string &inh)
 {
-    if (!inw.empty()) vwidth = getValueSSTR(inw);
-    if (!inh.empty()) vheight = getValueSSTR(inh);
+    if (!inw.empty()) vwidth = getValue(inw);
+    if (!inh.empty()) vheight = getValue(inh);
 }
 
 void dcContainer::draw(void)

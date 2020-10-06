@@ -10,7 +10,7 @@
 
 struct xmlStyle
 {
-    const char *name;
+    std::string name;
     xmlNodePtr node;
 };
 
@@ -83,7 +83,7 @@ xmldata get_node_content(xmlNodePtr node)
     else return 0x0;
 }
 
-xmldata get_element_dataSSTR(xmlNodePtr innode, const char *key)
+xmldata get_element_data(xmlNodePtr innode, const char *key)
 {
     char *myattr;
 
@@ -123,46 +123,6 @@ xmldata get_element_dataSSTR(xmlNodePtr innode, const char *key)
     return 0x0;
 }
 
-char *get_element_data(xmlNodePtr innode, const char *key)
-{
-    char *myattr;
-
-    myattr = get_XML_attribute(innode, key);
-    if (myattr) return strdup(replace_string(myattr).c_str());
-
-    char *type = get_node_type(innode);
-
-    // If not explicitly defined, check to see if a Style has been defined...
-    char *style = get_XML_attribute(innode, "Style");
-    if (style)
-    {
-        std::string mystyle = replace_string(style);
-        std::list<struct xmlStyle>::iterator xmls;
-        for (xmls = xmlstyles.begin(); xmls != xmlstyles.end(); xmls++)
-        {
-            if (NodeCheck(xmls->node, type) && mystyle == xmls->name)
-            {
-                myattr = get_XML_attribute(xmls->node, key);
-                if (myattr) return strdup(replace_string(myattr).c_str());
-            }
-        }
-    }
-
-    // ...if not, check to see if a Default has been defined...
-    std::list<xmlNodePtr>::iterator xmld;
-    for (xmld = xmldefaults.begin(); xmld != xmldefaults.end(); xmld++)
-    {
-        if (NodeCheck(*xmld, type))
-        {
-            myattr = get_XML_attribute(*xmld, key);
-            if (myattr) return strdup(replace_string(myattr).c_str());
-        }
-    }
-
-    // ...if not, return NULL
-    return 0x0;
-}
-
 void processArgument(const char *key, const char *value)
 {
     arglist[std::string(key)] = std::string(value);
@@ -170,7 +130,7 @@ void processArgument(const char *key, const char *value)
 
 void processConstantNode(xmlNodePtr node)
 {
-    ppclist[get_element_dataSSTR(node, "Name")] = get_node_content(node);
+    ppclist[get_element_data(node, "Name")] = get_node_content(node);
 }
 
 void processStyleNode(xmlNodePtr node)

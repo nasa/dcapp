@@ -12,7 +12,7 @@ dcWindow::dcWindow() : currentPanel(0x0)
 
 void dcWindow::setActiveDisplay(const std::string &inval)
 {
-    if (!inval.empty()) displayID = getValueSSTR(inval);
+    if (!inval.empty()) displayID = getValue(inval);
 }
 
 void dcWindow::setCurrentPanel(void)

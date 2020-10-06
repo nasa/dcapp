@@ -142,13 +142,13 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "If"))
         {
-            const char *val = get_element_data(node, "Value");
-            const char *val1 = get_element_data(node, "Value1");
-            const char *val2 = get_element_data(node, "Value2");
-            xmldata myoperator = get_element_dataSSTR(node, "Operator");
+            xmldata val = get_element_data(node, "Value");
+            xmldata val1 = get_element_data(node, "Value1");
+            xmldata val2 = get_element_data(node, "Value2");
+            xmldata myoperator = get_element_data(node, "Operator");
             bool subparent_found = false;
 
-            if (!val1) val1 = val;
+            if (!val1.defined()) val1 = val;
 
             if (preprocessing || (!check_dynamic_element(val1) && !check_dynamic_element(val2)))
             {
@@ -197,37 +197,37 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             if (preprocessing)
             {
-                dcSetValue *myitem = new dcSetValue(0x0, get_element_data(node, "Variable"), get_node_content(node).c_str());
-                myitem->setOperator(get_element_dataSSTR(node, "Operator"));
-                myitem->setRange(get_element_dataSSTR(node, "MinimumValue"), get_element_dataSSTR(node, "MaximumValue"));
+                dcSetValue *myitem = new dcSetValue(0x0, get_element_data(node, "Variable"), get_node_content(node));
+                myitem->setOperator(get_element_data(node, "Operator"));
+                myitem->setRange(get_element_data(node, "MinimumValue"), get_element_data(node, "MaximumValue"));
                 myitem->updateData();
                 delete myitem;
             }
             else
             {
-                dcSetValue *myitem = new dcSetValue(myparent, get_element_data(node, "Variable"), get_node_content(node).c_str());
-                myitem->setOperator(get_element_dataSSTR(node, "Operator"));
-                myitem->setRange(get_element_dataSSTR(node, "MinimumValue"), get_element_dataSSTR(node, "MaximumValue"));
+                dcSetValue *myitem = new dcSetValue(myparent, get_element_data(node, "Variable"), get_node_content(node));
+                myitem->setOperator(get_element_data(node, "Operator"));
+                myitem->setRange(get_element_data(node, "MinimumValue"), get_element_data(node, "MaximumValue"));
             }
         }
         if (NodeCheck(node, "Animation"))
         {
             dcAnimate *myitem = new dcAnimate(myparent);
-            myitem->setDuration(get_element_dataSSTR(node, "Duration"));
+            myitem->setDuration(get_element_data(node, "Duration"));
             process_elements(myitem, node->children);
         }
         if (NodeCheck(node, "Variable"))
         {
-            registerVariable(get_node_content(node), get_element_dataSSTR(node, "Type"), get_element_dataSSTR(node, "InitialValue"));
+            registerVariable(get_node_content(node), get_element_data(node, "Type"), get_element_data(node, "InitialValue"));
         }
         if (NodeCheck(node, "TrickIo"))
         {
             trickcomm = new TrickCommModule;
-            trickcomm->setHost(get_element_dataSSTR(node, "Host"));
-            trickcomm->setPort(get_element_dataSSTR(node, "Port"));
-            trickcomm->setDataRate(get_element_dataSSTR(node, "DataRate"));
-            trickcomm->setConnectedVariable(get_element_dataSSTR(node, "ConnectedVariable"));
-            if (get_element_dataSSTR(node, "DisconnectAction") == "Reconnect") trickcomm->setReconnectOnDisconnect();
+            trickcomm->setHost(get_element_data(node, "Host"));
+            trickcomm->setPort(get_element_data(node, "Port"));
+            trickcomm->setDataRate(get_element_data(node, "DataRate"));
+            trickcomm->setConnectedVariable(get_element_data(node, "ConnectedVariable"));
+            if (get_element_data(node, "DisconnectAction") == "Reconnect") trickcomm->setReconnectOnDisconnect();
             process_elements(myparent, node->children);
             trickcomm->finishInitialization();
             AppData.commlist.push_back(trickcomm);
@@ -254,22 +254,22 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             if (trickcomm)
             {
-                trickcomm->addParameter(get_node_content(node), get_element_dataSSTR(node, "Name"), get_element_dataSSTR(node, "Units"), get_element_dataSSTR(node, "InitializationOnly"), false);
+                trickcomm->addParameter(get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"), get_element_data(node, "InitializationOnly"), false);
             }
         }
         if (NodeCheck(node, "TrickMethod"))
         {
             if (trickcomm)
             {
-                trickcomm->addParameter(get_node_content(node), get_element_dataSSTR(node, "Name"), "", "", true);
+                trickcomm->addParameter(get_node_content(node), get_element_data(node, "Name"), "", "", true);
             }
         }
         if (NodeCheck(node, "EdgeIo"))
         {
             edgecomm = new EdgeCommModule;
-            edgecomm->setConnectedVariable(get_element_dataSSTR(node, "ConnectedVariable"));
+            edgecomm->setConnectedVariable(get_element_data(node, "ConnectedVariable"));
             process_elements(myparent, node->children);
-            edgecomm->finishInitialization(get_element_dataSSTR(node, "Host"), get_element_dataSSTR(node, "Port"), StringToDecimal(get_element_dataSSTR(node, "DataRate"), 1.0));
+            edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StringToDecimal(get_element_data(node, "DataRate"), 1.0));
             AppData.commlist.push_back(edgecomm);
         }
         if (NodeCheck(node, "FromEdge"))
@@ -294,25 +294,25 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             if (edgecomm)
             {
-                edgecomm->addParameter(get_node_content(node), get_element_dataSSTR(node, "RcsCommand"));
+                edgecomm->addParameter(get_node_content(node), get_element_data(node, "RcsCommand"));
             }
         }
         if (NodeCheck(node, "CAN"))
         {
             CanDevice *can = new CanDevice;
-            can->initialize(get_element_dataSSTR(node, "Network"), get_element_dataSSTR(node, "ButtonID"), get_element_dataSSTR(node, "ControlID"), get_element_dataSSTR(node, "InhibitVariable"));
+            can->initialize(get_element_data(node, "Network"), get_element_data(node, "ButtonID"), get_element_data(node, "ControlID"), get_element_data(node, "InhibitVariable"));
             AppData.devicelist.push_back(can);
         }
         if (NodeCheck(node, "UEI"))
         {
             UeiDevice *uei = new UeiDevice;
-            uei->connect(get_element_dataSSTR(node, "Port"), get_element_dataSSTR(node, "BezelID"));
+            uei->connect(get_element_data(node, "Port"), get_element_data(node, "BezelID"));
             AppData.devicelist.push_back(uei);
         }
         if (NodeCheck(node, "Hagstrom"))
         {
             HagstromDevice *hagstrom = new HagstromDevice;
-            hagstrom->setSerialNumber(get_element_dataSSTR(node, "SerialNumber"));
+            hagstrom->setSerialNumber(get_element_data(node, "SerialNumber"));
             AppData.devicelist.push_back(hagstrom);
         }
         if (NodeCheck(node, "DisplayLogic"))
@@ -361,22 +361,22 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "Window"))
         {
-            AppData.force_update = StringToDecimal(get_element_dataSSTR(node, "ForceUpdate"), 60);
-            window_init(StringToBoolean(get_element_dataSSTR(node, "FullScreen")),
-                        StringToInteger(get_element_dataSSTR(node, "X"), 0),
-                        StringToInteger(get_element_dataSSTR(node, "Y"), 0),
-                        StringToInteger(get_element_dataSSTR(node, "Width"), 800),
-                        StringToInteger(get_element_dataSSTR(node, "Height"), 800));
+            AppData.force_update = StringToDecimal(get_element_data(node, "ForceUpdate"), 60);
+            window_init(StringToBoolean(get_element_data(node, "FullScreen")),
+                        StringToInteger(get_element_data(node, "X"), 0),
+                        StringToInteger(get_element_data(node, "Y"), 0),
+                        StringToInteger(get_element_data(node, "Width"), 800),
+                        StringToInteger(get_element_data(node, "Height"), 800));
             AppData.toplevel = new dcWindow();
-            AppData.toplevel->setActiveDisplay(get_element_dataSSTR(node, "ActiveDisplay"));
+            AppData.toplevel->setActiveDisplay(get_element_data(node, "ActiveDisplay"));
             process_elements(AppData.toplevel, node->children);
         }
         if (NodeCheck(node, "Panel"))
         {
             dcPanel *myitem = new dcPanel(myparent);
-            myitem->setID(get_element_dataSSTR(node, "DisplayIndex"));
-            myitem->setColor(get_element_dataSSTR(node, "BackgroundColor"));
-            myitem->setOrtho(get_element_dataSSTR(node, "VirtualWidth"), get_element_dataSSTR(node, "VirtualHeight"));
+            myitem->setID(get_element_data(node, "DisplayIndex"));
+            myitem->setColor(get_element_data(node, "BackgroundColor"));
+            myitem->setOrtho(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
             preprocessing = false;
             process_elements(myitem, node->children);
             preprocessing = true;
@@ -384,33 +384,33 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "Container"))
         {
             dcContainer *myitem = new dcContainer(myparent);
-            myitem->setPosition(get_element_dataSSTR(node, "X"), get_element_dataSSTR(node, "Y"));
-            myitem->setSize(get_element_dataSSTR(node, "Width"), get_element_dataSSTR(node, "Height"));
-            myitem->setRotation(get_element_dataSSTR(node, "Rotate"));
-            myitem->setAlignment(get_element_dataSSTR(node, "HorizontalAlign"), get_element_dataSSTR(node, "VerticalAlign"));
-            myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
-            myitem->setVirtualSize(get_element_dataSSTR(node, "VirtualWidth"), get_element_dataSSTR(node, "VirtualHeight"));
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
+            myitem->setVirtualSize(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
             process_elements(myitem, node->children);
         }
         if (NodeCheck(node, "Vertex"))
         {
             dcVertex *myitem = new dcVertex(myparent);
-            myitem->setPosition(get_element_dataSSTR(node, "X"), get_element_dataSSTR(node, "Y"));
-            myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
         }
         if (NodeCheck(node, "Line"))
         {
             dcLine *myitem = new dcLine(myparent);
-            myitem->setLineWidth(get_element_dataSSTR(node, "LineWidth"));
-            myitem->setColor(get_element_dataSSTR(node, "Color"));
+            myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            myitem->setColor(get_element_data(node, "Color"));
             process_elements(myitem, node->children);
         }
         if (NodeCheck(node, "Polygon"))
         {
             dcPolygon *myitem = new dcPolygon(myparent);
-            myitem->setFillColor(get_element_dataSSTR(node, "FillColor"));
-            myitem->setLineColor(get_element_dataSSTR(node, "LineColor"));
-            myitem->setLineWidth(get_element_dataSSTR(node, "LineWidth"));
+            myitem->setFillColor(get_element_data(node, "FillColor"));
+            myitem->setLineColor(get_element_data(node, "LineColor"));
+            myitem->setLineWidth(get_element_data(node, "LineWidth"));
             process_elements(myitem, node->children);
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
@@ -421,14 +421,14 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "Rectangle"))
         {
             dcRectangle *myitem = new dcRectangle(myparent);
-            myitem->setPosition(get_element_dataSSTR(node, "X"), get_element_dataSSTR(node, "Y"));
-            myitem->setSize(get_element_dataSSTR(node, "Width"), get_element_dataSSTR(node, "Height"));
-            myitem->setRotation(get_element_dataSSTR(node, "Rotate"));
-            myitem->setAlignment(get_element_dataSSTR(node, "HorizontalAlign"), get_element_dataSSTR(node, "VerticalAlign"));
-            myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
-            myitem->setFillColor(get_element_dataSSTR(node, "FillColor"));
-            myitem->setLineColor(get_element_dataSSTR(node, "LineColor"));
-            myitem->setLineWidth(get_element_dataSSTR(node, "LineWidth"));
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
+            myitem->setFillColor(get_element_data(node, "FillColor"));
+            myitem->setLineColor(get_element_data(node, "LineColor"));
+            myitem->setLineWidth(get_element_data(node, "LineWidth"));
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
                 if (NodeCheck(subnode, "OnPress")) process_elements(myitem->PressList, subnode->children);
@@ -438,14 +438,14 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "Circle"))
         {
             dcCircle *myitem = new dcCircle(myparent);
-            myitem->setPosition(get_element_dataSSTR(node, "X"), get_element_dataSSTR(node, "Y"));
-            myitem->setAlignment(get_element_dataSSTR(node, "HorizontalAlign"), get_element_dataSSTR(node, "VerticalAlign"));
-            myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
-            myitem->setFillColor(get_element_dataSSTR(node, "FillColor"));
-            myitem->setLineColor(get_element_dataSSTR(node, "LineColor"));
-            myitem->setLineWidth(get_element_dataSSTR(node, "LineWidth"));
-            myitem->setRadius(get_element_dataSSTR(node, "Radius"));
-            myitem->setSegments(get_element_dataSSTR(node, "Segments"));
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
+            myitem->setFillColor(get_element_data(node, "FillColor"));
+            myitem->setLineColor(get_element_data(node, "LineColor"));
+            myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            myitem->setRadius(get_element_data(node, "Radius"));
+            myitem->setSegments(get_element_data(node, "Segments"));
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
                 if (NodeCheck(subnode, "OnPress")) process_elements(myitem->PressList, subnode->children);
@@ -455,26 +455,26 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "String"))
         {
             dcString *myitem = new dcString(myparent);
-            myitem->setPosition(get_element_dataSSTR(node, "X"), get_element_dataSSTR(node, "Y"));
-            myitem->setSize("0", get_element_dataSSTR(node, "Size"));
-            myitem->setRotation(get_element_dataSSTR(node, "Rotate"));
-            myitem->setAlignment(get_element_dataSSTR(node, "HorizontalAlign"), get_element_dataSSTR(node, "VerticalAlign"));
-            myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
-            myitem->setColor(get_element_dataSSTR(node, "Color"));
-            myitem->setBackgroundColor(get_element_dataSSTR(node, "BackgroundColor"));
-            myitem->setFont(get_element_dataSSTR(node, "Font"), get_element_dataSSTR(node, "Face"), get_element_dataSSTR(node, "Size"), get_element_dataSSTR(node, "ForceMono"));
-            myitem->setShadowOffset(get_element_dataSSTR(node, "ShadowOffset"));
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize("0", get_element_data(node, "Size"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
+            myitem->setColor(get_element_data(node, "Color"));
+            myitem->setBackgroundColor(get_element_data(node, "BackgroundColor"));
+            myitem->setFont(get_element_data(node, "Font"), get_element_data(node, "Face"), get_element_data(node, "Size"), get_element_data(node, "ForceMono"));
+            myitem->setShadowOffset(get_element_data(node, "ShadowOffset"));
             myitem->setString(get_node_content(node));
         }
         if (NodeCheck(node, "Image"))
         {
             dcImage *myitem = new dcImage(myparent);
-            myitem->setPosition(get_element_dataSSTR(node, "X"), get_element_dataSSTR(node, "Y"));
-            myitem->setSize(get_element_dataSSTR(node, "Width"), get_element_dataSSTR(node, "Height"));
-            myitem->setRotation(get_element_dataSSTR(node, "Rotate"));
-            myitem->setAlignment(get_element_dataSSTR(node, "HorizontalAlign"), get_element_dataSSTR(node, "VerticalAlign"));
-            myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
-            xmldata myfile = get_element_dataSSTR(node, "File");
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
+            xmldata myfile = get_element_data(node, "File");
             if (myfile.empty()) myfile = get_node_content(node);
             myitem->setTexture(myfile);
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
@@ -486,39 +486,34 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "PixelStream"))
         {
             dcPixelStream *myitem = new dcPixelStream(myparent);
-            myitem->setPosition(get_element_dataSSTR(node, "X"), get_element_dataSSTR(node, "Y"));
-            myitem->setSize(get_element_dataSSTR(node, "Width"), get_element_dataSSTR(node, "Height"));
-            myitem->setRotation(get_element_dataSSTR(node, "Rotate"));
-            myitem->setAlignment(get_element_dataSSTR(node, "HorizontalAlign"), get_element_dataSSTR(node, "VerticalAlign"));
-            myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
-            myitem->setProtocol(get_element_dataSSTR(node, "Protocol"), get_element_dataSSTR(node, "Host"), get_element_dataSSTR(node, "Port"), get_element_dataSSTR(node, "Path"), get_element_dataSSTR(node, "Username"), get_element_dataSSTR(node, "Password"), get_element_dataSSTR(node, "SharedMemoryKey"), get_element_dataSSTR(node, "File"), get_element_dataSSTR(node, "Camera"));
-            myitem->setTestPattern(get_element_dataSSTR(node, "TestPattern"));
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
+            myitem->setProtocol(get_element_data(node, "Protocol"), get_element_data(node, "Host"), get_element_data(node, "Port"), get_element_data(node, "Path"), get_element_data(node, "Username"), get_element_data(node, "Password"), get_element_data(node, "SharedMemoryKey"), get_element_data(node, "File"), get_element_data(node, "Camera"));
+            myitem->setTestPattern(get_element_data(node, "TestPattern"));
         }
         if (NodeCheck(node, "Button"))
         {
-            key = get_element_dataSSTR(node, "Key");
-            keyascii = get_element_dataSSTR(node, "KeyASCII");
-            bezelkey = get_element_dataSSTR(node, "BezelKey");
-            xmldata type = get_element_dataSSTR(node, "Type");
-            xmldata buttonid = get_element_dataSSTR(node, "Variable");
-            xmldata buttononval = get_element_dataSSTR(node, "On");
-            xmldata buttonoffval = get_element_dataSSTR(node, "Off");
-            xmldata switchid = get_element_dataSSTR(node, "SwitchVariable");
-            xmldata switchonval = get_element_dataSSTR(node, "SwitchOn");
-            xmldata switchoffval = get_element_dataSSTR(node, "SwitchOff");
-            indid = get_element_dataSSTR(node, "IndicatorVariable");
-            indonval = get_element_dataSSTR(node, "IndicatorOn");
-            activeid = get_element_dataSSTR(node, "ActiveVariable");
-            activetrueval = get_element_dataSSTR(node, "ActiveOn");
+            key = get_element_data(node, "Key");
+            keyascii = get_element_data(node, "KeyASCII");
+            bezelkey = get_element_data(node, "BezelKey");
+            xmldata type = get_element_data(node, "Type");
+            xmldata buttonid = get_element_data(node, "Variable");
+            xmldata buttononval = get_element_data(node, "On");
+            xmldata buttonoffval = get_element_data(node, "Off");
+            xmldata switchid = get_element_data(node, "SwitchVariable");
+            xmldata switchonval = get_element_data(node, "SwitchOn");
+            xmldata switchoffval = get_element_data(node, "SwitchOff");
+            indid = get_element_data(node, "IndicatorVariable");
+            indonval = get_element_data(node, "IndicatorOn");
+            activeid = get_element_data(node, "ActiveVariable");
+            activetrueval = get_element_data(node, "ActiveOn");
 
             if (!switchonval.defined()) switchonval = buttononval;
             if (!switchoffval.defined()) switchoffval = buttonoffval;
-//            if (!indonval.defined()) indonval = switchonval;
-if (!indonval.defined())
-{
-if (switchonval.defined()) indonval = switchonval;
-else indonval = "1";
-}
+            if (!indonval.defined()) indonval = switchonval;
 
             if (buttonid.empty() && switchid.empty()) buttonid = create_virtual_variable("Integer", "0");
             if (switchid.empty()) switchid = buttonid;
@@ -527,11 +522,11 @@ else indonval = "1";
             else transitionid.reset();
 
             dcContainer *myitem = new dcContainer(myparent);
-            myitem->setPosition(get_element_dataSSTR(node, "X"), get_element_dataSSTR(node, "Y"));
-            myitem->setSize(get_element_dataSSTR(node, "Width"), get_element_dataSSTR(node, "Height"));
-            myitem->setRotation(get_element_dataSSTR(node, "Rotate"));
-            myitem->setAlignment(get_element_dataSSTR(node, "HorizontalAlign"), get_element_dataSSTR(node, "VerticalAlign"));
-            myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
 
             bool toggle = false, momentary = false;
             xmldata offval;
@@ -546,7 +541,7 @@ else indonval = "1";
             if (!activeid.empty())
             {
                 if (!activetrueval.defined()) activetrueval = "1";
-                dcCondition *mycond = new dcCondition(myitem, "eq", activeid.c_str(), activetrueval.c_str());
+                dcCondition *mycond = new dcCondition(myitem, "eq", activeid, activetrueval);
                 mySublist = mycond->TrueList;
             }
 
@@ -559,62 +554,62 @@ else indonval = "1";
 
             if (toggle)
             {
-                dcCondition *mycond = new dcCondition(mySublist, "eq", indid.c_str(), indonval.c_str());
+                dcCondition *mycond = new dcCondition(mySublist, "eq", indid, indonval);
                 dcMouseEvent *mymouse = new dcMouseEvent(mycond->TrueList);
-                new dcSetValue(mymouse->PressList, switchid.c_str(), offval.c_str());
-                if (!transitionid.empty()) new dcSetValue(mymouse->PressList, transitionid.c_str(), "-1");
+                new dcSetValue(mymouse->PressList, switchid, offval);
+                if (!transitionid.empty()) new dcSetValue(mymouse->PressList, transitionid, "-1");
                 dcMouseEvent *mymouse1 = new dcMouseEvent(mycond->FalseList);
-                new dcSetValue(mymouse1->PressList, switchid.c_str(), switchonval.c_str());
-                if (!transitionid.empty()) new dcSetValue(mymouse1->PressList, transitionid.c_str(), "1");
+                new dcSetValue(mymouse1->PressList, switchid, switchonval);
+                if (!transitionid.empty()) new dcSetValue(mymouse1->PressList, transitionid, "1");
                 if (!key.empty() || !keyascii.empty())
                 {
                     dcKeyboardEvent *myevent = new dcKeyboardEvent(mycond->TrueList, key, keyascii);
-                    new dcSetValue(myevent->PressList, switchid.c_str(), offval.c_str());
-                    if (!transitionid.empty()) new dcSetValue(myevent->PressList, transitionid.c_str(), "-1");
+                    new dcSetValue(myevent->PressList, switchid, offval);
+                    if (!transitionid.empty()) new dcSetValue(myevent->PressList, transitionid, "-1");
                     myevent = new dcKeyboardEvent(mycond->FalseList, key, keyascii);
-                    new dcSetValue(myevent->PressList, switchid.c_str(), switchonval.c_str());
-                    if (!transitionid.empty()) new dcSetValue(myevent->PressList, transitionid.c_str(), "1");
+                    new dcSetValue(myevent->PressList, switchid, switchonval);
+                    if (!transitionid.empty()) new dcSetValue(myevent->PressList, transitionid, "1");
                 }
                 if (!bezelkey.empty())
                 {
                     dcBezelEvent *myevent1 = new dcBezelEvent(mycond->TrueList, bezelkey);
-                    new dcSetValue(myevent1->PressList, switchid.c_str(), offval.c_str());
-                    if (!transitionid.empty()) new dcSetValue(myevent1->PressList, transitionid.c_str(), "-1");
+                    new dcSetValue(myevent1->PressList, switchid, offval);
+                    if (!transitionid.empty()) new dcSetValue(myevent1->PressList, transitionid, "-1");
                     dcBezelEvent *myevent2 = new dcBezelEvent(mycond->FalseList, bezelkey);
-                    new dcSetValue(myevent2->PressList, switchid.c_str(), switchonval.c_str());
-                    if (!transitionid.empty()) new dcSetValue(myevent2->PressList, transitionid.c_str(), "1");
+                    new dcSetValue(myevent2->PressList, switchid, switchonval);
+                    if (!transitionid.empty()) new dcSetValue(myevent2->PressList, transitionid, "1");
                 }
             }
             else
             {
                 dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
-                new dcSetValue(mymouse->PressList, switchid.c_str(), switchonval.c_str());
-                if (!transitionid.empty()) new dcSetValue(mymouse->PressList, transitionid.c_str(), "1");
+                new dcSetValue(mymouse->PressList, switchid, switchonval);
+                if (!transitionid.empty()) new dcSetValue(mymouse->PressList, transitionid, "1");
                 if (momentary)
                 {
-                    new dcSetValue(mymouse->ReleaseList, switchid.c_str(), offval.c_str());
-                    if (!transitionid.empty()) new dcSetValue(mymouse->ReleaseList, transitionid.c_str(), "-1");
+                    new dcSetValue(mymouse->ReleaseList, switchid, offval);
+                    if (!transitionid.empty()) new dcSetValue(mymouse->ReleaseList, transitionid, "-1");
                 }
                 if (!key.empty() || !keyascii.empty())
                 {
                     dcKeyboardEvent *myevent = new dcKeyboardEvent(mySublist, key, keyascii);
-                    new dcSetValue(myevent->PressList, switchid.c_str(), switchonval.c_str());
-                    if (!transitionid.empty()) new dcSetValue(myevent->PressList, transitionid.c_str(), "1");
+                    new dcSetValue(myevent->PressList, switchid, switchonval);
+                    if (!transitionid.empty()) new dcSetValue(myevent->PressList, transitionid, "1");
                     if (momentary)
                     {
-                        new dcSetValue(myevent->ReleaseList, switchid.c_str(), offval.c_str());
-                        if (!transitionid.empty()) new dcSetValue(myevent->ReleaseList, transitionid.c_str(), "-1");
+                        new dcSetValue(myevent->ReleaseList, switchid, offval);
+                        if (!transitionid.empty()) new dcSetValue(myevent->ReleaseList, transitionid, "-1");
                     }
                 }
                 if (!bezelkey.empty())
                 {
                     dcBezelEvent *myevent1 = new dcBezelEvent(mySublist, bezelkey);
-                    new dcSetValue(myevent1->PressList, switchid.c_str(), switchonval.c_str());
-                    if (!transitionid.empty()) new dcSetValue(myevent1->PressList, transitionid.c_str(), "1");
+                    new dcSetValue(myevent1->PressList, switchid, switchonval);
+                    if (!transitionid.empty()) new dcSetValue(myevent1->PressList, transitionid, "1");
                     if (momentary)
                     {
-                        new dcSetValue(myevent1->ReleaseList, switchid.c_str(), offval.c_str());
-                        if (!transitionid.empty()) new dcSetValue(myevent1->ReleaseList, transitionid.c_str(), "-1");
+                        new dcSetValue(myevent1->ReleaseList, switchid, offval);
+                        if (!transitionid.empty()) new dcSetValue(myevent1->ReleaseList, transitionid, "-1");
                     }
                 }
             }
@@ -623,17 +618,17 @@ else indonval = "1";
             {
                 dcCondition *mylist1, *mylist2, *mylist3;
 
-                mylist1 = new dcCondition(myitem, "eq", transitionid.c_str(), "1");
-                mylist2 = new dcCondition(mylist1->TrueList, "eq", indid.c_str(), indonval.c_str());
-                new dcSetValue(mylist2->TrueList, transitionid.c_str(), "0");
-                mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid.c_str(), switchonval.c_str());
-                new dcSetValue(mylist3->FalseList, transitionid.c_str(), "0");
+                mylist1 = new dcCondition(myitem, "eq", transitionid, "1");
+                mylist2 = new dcCondition(mylist1->TrueList, "eq", indid, indonval);
+                new dcSetValue(mylist2->TrueList, transitionid, "0");
+                mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid, switchonval);
+                new dcSetValue(mylist3->FalseList, transitionid, "0");
 
-                mylist1 = new dcCondition(myitem, "eq", transitionid.c_str(), "-1");
-                mylist2 = new dcCondition(mylist1->TrueList, "eq", indid.c_str(), indonval.c_str());
-                new dcSetValue(mylist2->FalseList, transitionid.c_str(), "0");
-                mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid.c_str(), switchoffval.c_str());
-                new dcSetValue(mylist3->TrueList, transitionid.c_str(), "0");
+                mylist1 = new dcCondition(myitem, "eq", transitionid, "-1");
+                mylist2 = new dcCondition(mylist1->TrueList, "eq", indid, indonval);
+                new dcSetValue(mylist2->FalseList, transitionid, "0");
+                mylist3 = new dcCondition(mylist2->FalseList, "eq", switchid, switchoffval);
+                new dcSetValue(mylist3->TrueList, transitionid, "0");
             }
 
             process_elements(myitem, node->children);
@@ -644,7 +639,7 @@ else indonval = "1";
             dcParent *mySublist = myparent;
             if (!activeid.empty())
             {
-                dcCondition *mycond = new dcCondition(myparent, "eq", activeid.c_str(), activetrueval.c_str());
+                dcCondition *mycond = new dcCondition(myparent, "eq", activeid, activetrueval);
                 mySublist = mycond->TrueList;
             }
             dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
@@ -665,7 +660,7 @@ else indonval = "1";
             dcParent *mySublist = myparent;
             if (!activeid.empty())
             {
-                dcCondition *mycond = new dcCondition(myparent, "eq", activeid.c_str(), activetrueval.c_str());
+                dcCondition *mycond = new dcCondition(myparent, "eq", activeid, activetrueval);
                 mySublist = mycond->TrueList;
             }
             dcMouseEvent *mymouse = new dcMouseEvent(mySublist);
@@ -683,25 +678,25 @@ else indonval = "1";
         }
         if (NodeCheck(node, "Active"))
         {
-            dcCondition *myitem = new dcCondition(myparent, "eq", activeid.c_str(), activetrueval.c_str());
+            dcCondition *myitem = new dcCondition(myparent, "eq", activeid, activetrueval);
             process_elements(myitem->TrueList, node->children);
         }
         if (NodeCheck(node, "Inactive"))
         {
-            dcCondition *myitem = new dcCondition(myparent, "eq", activeid.c_str(), activetrueval.c_str());
+            dcCondition *myitem = new dcCondition(myparent, "eq", activeid, activetrueval);
             process_elements(myitem->FalseList, node->children);
         }
         if (NodeCheck(node, "On"))
         {
             if (!transitionid.empty())
             {
-                dcCondition *myitem = new dcCondition(myparent, "eq", transitionid.c_str(), "0");
-                dcCondition *mychild = new dcCondition(myitem->TrueList, "eq", indid.c_str(), indonval.c_str());
+                dcCondition *myitem = new dcCondition(myparent, "eq", transitionid, "0");
+                dcCondition *mychild = new dcCondition(myitem->TrueList, "eq", indid, indonval);
                 process_elements(mychild->TrueList, node->children);
             }
             else
             {
-                dcCondition *myitem = new dcCondition(myparent, "eq", indid.c_str(), indonval.c_str());
+                dcCondition *myitem = new dcCondition(myparent, "eq", indid, indonval);
                 process_elements(myitem->TrueList, node->children);
             }
         }
@@ -710,9 +705,9 @@ else indonval = "1";
             if (!transitionid.empty())
             {
                 dcCondition *myitem;
-                myitem = new dcCondition(myparent, "eq", transitionid.c_str(), "1");
+                myitem = new dcCondition(myparent, "eq", transitionid, "1");
                 process_elements(myitem->TrueList, node->children);
-                myitem = new dcCondition(myparent, "eq", transitionid.c_str(), "-1");
+                myitem = new dcCondition(myparent, "eq", transitionid, "-1");
                 process_elements(myitem->TrueList, node->children);
             }
         }
@@ -720,43 +715,43 @@ else indonval = "1";
         {
             if (!transitionid.empty())
             {
-                dcCondition *myitem = new dcCondition(myparent, "eq", transitionid.c_str(), "0");
-                dcCondition *mychild = new dcCondition(myitem->TrueList, "eq", indid.c_str(), indonval.c_str());
+                dcCondition *myitem = new dcCondition(myparent, "eq", transitionid, "0");
+                dcCondition *mychild = new dcCondition(myitem->TrueList, "eq", indid, indonval);
                 process_elements(mychild->FalseList, node->children);
             }
             else
             {
-                dcCondition *myitem = new dcCondition(myparent, "eq", indid.c_str(), indonval.c_str());
+                dcCondition *myitem = new dcCondition(myparent, "eq", indid, indonval);
                 process_elements(myitem->FalseList, node->children);
             }
         }
         if (NodeCheck(node, "ADI"))
         {
             dcADI *myitem = new dcADI(myparent);
-            myitem->setPosition(get_element_dataSSTR(node, "X"), get_element_dataSSTR(node, "Y"));
-            myitem->setSize(get_element_dataSSTR(node, "Width"), get_element_dataSSTR(node, "Height"));
-            myitem->setRotation(get_element_dataSSTR(node, "Rotate"));
-            myitem->setAlignment(get_element_dataSSTR(node, "HorizontalAlign"), get_element_dataSSTR(node, "VerticalAlign"));
-            myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
-            myitem->setBackgroundTexture(get_element_dataSSTR(node, "CoverFile"));
-            myitem->setBallTexture(get_element_dataSSTR(node, "BallFile"));
-            myitem->setRPY(get_element_dataSSTR(node, "Roll"), get_element_dataSSTR(node, "Pitch"), get_element_dataSSTR(node, "Yaw"));
-            myitem->setRPYerrors(get_element_dataSSTR(node, "RollError"), get_element_dataSSTR(node, "PitchError"), get_element_dataSSTR(node, "YawError"));
-            myitem->setRadius(get_element_dataSSTR(node, "OuterRadius"), get_element_dataSSTR(node, "BallRadius"));
-            myitem->setChevron(get_element_dataSSTR(node, "ChevronWidth"), get_element_dataSSTR(node, "ChevronHeight"));
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
+            myitem->setBackgroundTexture(get_element_data(node, "CoverFile"));
+            myitem->setBallTexture(get_element_data(node, "BallFile"));
+            myitem->setRPY(get_element_data(node, "Roll"), get_element_data(node, "Pitch"), get_element_data(node, "Yaw"));
+            myitem->setRPYerrors(get_element_data(node, "RollError"), get_element_data(node, "PitchError"), get_element_data(node, "YawError"));
+            myitem->setRadius(get_element_data(node, "OuterRadius"), get_element_data(node, "BallRadius"));
+            myitem->setChevron(get_element_data(node, "ChevronWidth"), get_element_data(node, "ChevronHeight"));
         }
         if (NodeCheck(node, "MouseMotion"))
         {
-            new dcMouseMotion(myparent, get_element_dataSSTR(node, "XVariable"), get_element_dataSSTR(node, "YVariable"));
+            new dcMouseMotion(myparent, get_element_data(node, "XVariable"), get_element_data(node, "YVariable"));
         }
         if (NodeCheck(node, "MouseEvent"))
         {
             dcMouseEvent *myitem = new dcMouseEvent(myparent);
-            myitem->setPosition(get_element_dataSSTR(node, "X"), get_element_dataSSTR(node, "Y"));
-            myitem->setSize(get_element_dataSSTR(node, "Width"), get_element_dataSSTR(node, "Height"));
-            myitem->setRotation(get_element_dataSSTR(node, "Rotate"));
-            myitem->setAlignment(get_element_dataSSTR(node, "HorizontalAlign"), get_element_dataSSTR(node, "VerticalAlign"));
-            myitem->setOrigin(get_element_dataSSTR(node, "OriginX"), get_element_dataSSTR(node, "OriginY"));
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
@@ -777,8 +772,8 @@ else indonval = "1";
         if (NodeCheck(node, "KeyboardEvent"))
         {
             dcKeyboardEvent *myitem = new dcKeyboardEvent(myparent);
-            myitem->setKey(get_element_dataSSTR(node, "Key"));
-            myitem->setKeyAscii(get_element_dataSSTR(node, "KeyASCII"));
+            myitem->setKey(get_element_data(node, "Key"));
+            myitem->setKeyAscii(get_element_data(node, "KeyASCII"));
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
@@ -799,7 +794,7 @@ else indonval = "1";
         if (NodeCheck(node, "BezelEvent"))
         {
             dcBezelEvent *myitem = new dcBezelEvent(myparent);
-            myitem->setKey(get_element_dataSSTR(node, "Key"));
+            myitem->setKey(get_element_data(node, "Key"));
             bool subparent_found = false;
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {

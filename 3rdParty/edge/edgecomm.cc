@@ -138,7 +138,7 @@ int EdgeCommModule::addParameter(std::string paramname, std::string cmdspec)
 {
     if (paramname.empty() || cmdspec.empty() || !io_map) return this->Fail;
 
-    Variable *myvalue = getVariableSSTR(paramname);
+    Variable *myvalue = getVariable(paramname);
 
     if (myvalue)
     {

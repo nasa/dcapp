@@ -54,7 +54,7 @@ void dcCircle::setLineWidth(const std::string &inval)
 
 void dcCircle::setRadius(const std::string &inval)
 {
-    if (!inval.empty()) radius = getValueSSTR(inval);
+    if (!inval.empty()) radius = getValue(inval);
 }
 
 void dcCircle::setSegments(const std::string &inval)

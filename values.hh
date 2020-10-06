@@ -32,9 +32,7 @@ class Value
         std::string strval;
 };
 
-extern bool check_dynamic_element(const char *);
-extern bool check_dynamic_elementSSTR(const std::string &);
-extern Value *getValue(const char *);
-extern Value *getValueSSTR(const std::string &);
+extern bool check_dynamic_element(const std::string &);
+extern Value *getValue(const std::string &);
 
 #endif

@@ -165,7 +165,7 @@ static void process_elements(xmlNodePtr startnode)
             std::string myname = get_node_content(node);
             if (myname[0] == '@') myname.erase(0, 1);
             newitem.name = myname;
-            newitem.type = std::string(get_element_data(node, "Type"));
+            newitem.type = get_element_data(node, "Type");
             vlist.push_back(newitem);
         }
     }

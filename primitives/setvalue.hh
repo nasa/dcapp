@@ -1,7 +1,7 @@
 #ifndef _SETVALUE_HH_
 #define _SETVALUE_HH_
 
-#include <string>
+#include "xml_data.hh"
 #include "variables.hh"
 #include "values.hh"
 #include "animation.hh"
@@ -11,9 +11,9 @@
 class dcSetValue : public dcObject
 {
     public:
-        dcSetValue(dcParent *, const char *, const char *);
-        void setOperator(const std::string &);
-        void setRange(const std::string &, const std::string &);
+        dcSetValue(dcParent *, const xmldata &, const xmldata &);
+        void setOperator(const xmldata &);
+        void setRange(const xmldata &, const xmldata &);
         void draw(void);
         void handleEvent(void);
         void updateData(void);

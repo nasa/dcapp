@@ -35,28 +35,28 @@ void dcADI::setBallTexture(const std::string &filename)
 
 void dcADI::setRPY(const std::string &inroll, const std::string &inpitch, const std::string &inyaw)
 {
-    if (!inroll.empty()) roll = getValueSSTR(inroll);
-    if (!inpitch.empty()) pitch = getValueSSTR(inpitch);
-    if (!inyaw.empty()) yaw = getValueSSTR(inyaw);
+    if (!inroll.empty()) roll = getValue(inroll);
+    if (!inpitch.empty()) pitch = getValue(inpitch);
+    if (!inyaw.empty()) yaw = getValue(inyaw);
 }
 
 void dcADI::setRPYerrors(const std::string &re, const std::string &pe, const std::string &ye)
 {
-    if (!re.empty()) rollError = getValueSSTR(re);
-    if (!pe.empty()) pitchError = getValueSSTR(pe);
-    if (!ye.empty()) yawError = getValueSSTR(ye);
+    if (!re.empty()) rollError = getValue(re);
+    if (!pe.empty()) pitchError = getValue(pe);
+    if (!ye.empty()) yawError = getValue(ye);
 }
 
 void dcADI::setRadius(const std::string &outer, const std::string &ball)
 {
-    if (!outer.empty()) outerradius = getValueSSTR(outer);
-    if (!ball.empty()) ballradius = getValueSSTR(ball);
+    if (!outer.empty()) outerradius = getValue(outer);
+    if (!ball.empty()) ballradius = getValue(ball);
 }
 
 void dcADI::setChevron(const std::string &widthspec, const std::string &heightspec)
 {
-    if (!widthspec.empty()) chevronW = getValueSSTR(widthspec);
-    if (!heightspec.empty()) chevronH = getValueSSTR(heightspec);
+    if (!widthspec.empty()) chevronW = getValue(widthspec);
+    if (!heightspec.empty()) chevronH = getValue(heightspec);
 }
 
 void dcADI::draw(void)

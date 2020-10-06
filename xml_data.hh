@@ -12,7 +12,7 @@ class xmldata : public std::string
         ~xmldata() {};
 
         void reset(void);
-        bool defined(void) { return isDefined; };
+        bool defined(void) const { return isDefined; };
 
         bool isDefined;
 };

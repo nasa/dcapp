@@ -4,19 +4,7 @@
 #include "variables.hh"
 #include "values.hh"
 
-bool check_dynamic_element(const char *spec)
-{
-    if (spec)
-    {
-        if (strlen(spec) > 1)
-        {
-            if (spec[0] == '@') return true;
-        }
-    }
-    return false;
-}
-
-bool check_dynamic_elementSSTR(const std::string &spec)
+bool check_dynamic_element(const std::string &spec)
 {
     if (!spec.empty())
     {
@@ -25,21 +13,11 @@ bool check_dynamic_elementSSTR(const std::string &spec)
     return false;
 }
 
-Value *getValue(const char *valstr)
+Value *getValue(const std::string &valstr)
 {
     Value *retval = 0x0;
 
     if (check_dynamic_element(valstr)) retval = getVariable(valstr);
-
-    if (retval) return retval;
-    else return getConstantFromCharstr(valstr);
-}
-
-Value *getValueSSTR(const std::string &valstr)
-{
-    Value *retval = 0x0;
-
-    if (check_dynamic_elementSSTR(valstr)) retval = getVariableSSTR(valstr);
 
     if (retval) return retval;
     else return getConstantFromString(valstr);

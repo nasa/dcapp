@@ -144,7 +144,7 @@ int TrickCommModule::addParameter(const std::string &paramname, const std::strin
     if (paramname.empty() || trickvar.empty() || !io_map) return this->Fail;
     if (method && io_map != &(this->toSim)) return this->Fail;
 
-    Variable *myvalue = getVariableSSTR(paramname);
+    Variable *myvalue = getVariable(paramname);
 
     if (myvalue)
     {

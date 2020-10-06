@@ -10,6 +10,7 @@
 #include "basicutils/pathinfo.hh"
 #include "basicutils/shellutils.hh"
 #include "basicutils/stringutils.hh"
+#include "xml_data.hh"
 #include "xml_utils.hh"
 #include "xml_stringsub.hh"
 
@@ -67,14 +68,11 @@ void log_end_tag(const std::string &instr, bool sameline=false)
     logfile << "</" << instr << ">" << std::endl;
 }
 
-bool check_dynamic_element(const char *spec)
+bool check_dynamic_element(const std::string &spec)
 {
-    if (spec)
+    if (!spec.empty())
     {
-        if (strlen(spec) > 1)
-        {
-            if (spec[0] == '@') return true;
-        }
+        if (spec[0] == '@') return true;
     }
     return false;
 }
@@ -176,13 +174,13 @@ static void process_elements(xmlNodePtr startnode)
         }
         if (NodeCheck(node, "If"))
         {
-            const char *val = get_element_data(node, "Value");
-            const char *val1 = get_element_data(node, "Value1");
-            const char *val2 = get_element_data(node, "Value2");
-            std::string myoperator = get_element_dataSSTR(node, "Operator");
+            xmldata val = get_element_data(node, "Value");
+            xmldata val1 = get_element_data(node, "Value1");
+            xmldata val2 = get_element_data(node, "Value2");
+            xmldata myoperator = get_element_data(node, "Operator");
             bool subparent_found = false;
 
-            if (!val1) val1 = val;
+            if (!val1.defined()) val1 = val;
 
             if (check_dynamic_element(val1) || check_dynamic_element(val2))
             {
@@ -215,20 +213,20 @@ static void process_elements(xmlNodePtr startnode)
             }
             else
             {
-                std::string myval1, myval2;
-                if (val1) myval1 = val1;
-                if (val2) myval2 = val2;
+                xmldata myval1, myval2;
+                if (val1.defined()) myval1 = val1;
+                if (val2.defined()) myval2 = val2;
                 if (checkCondition(myoperator, myval1, myval2)) process_elements(node->children);
             }
         }
         if (NodeCheck(node, "TrickIo"))
         {
             log_open_start_tag("TrickIo");
-            log_element("Host", get_element_dataSSTR(node, "Host"));
-            log_element("Port", get_element_dataSSTR(node, "Port"));
-            log_element("DataRate", get_element_dataSSTR(node, "DataRate"));
-            log_element("ConnectedVariable", get_element_dataSSTR(node, "ConnectedVariable"));
-            log_element("DisconnectAction", get_element_dataSSTR(node, "DisconnectAction"));
+            log_element("Host", get_element_data(node, "Host"));
+            log_element("Port", get_element_data(node, "Port"));
+            log_element("DataRate", get_element_data(node, "DataRate"));
+            log_element("ConnectedVariable", get_element_data(node, "ConnectedVariable"));
+            log_element("DisconnectAction", get_element_data(node, "DisconnectAction"));
             log_close_start_tag();
             process_elements(node->children);
             log_end_tag("TrickIo");
@@ -248,9 +246,9 @@ static void process_elements(xmlNodePtr startnode)
         if (NodeCheck(node, "TrickVariable"))
         {
             log_open_start_tag("TrickVariable");
-            log_element("Name", get_element_dataSSTR(node, "Name"));
-            log_element("Units", get_element_dataSSTR(node, "Units"));
-            log_element("InitializationOnly", get_element_dataSSTR(node, "InitializationOnly"));
+            log_element("Name", get_element_data(node, "Name"));
+            log_element("Units", get_element_data(node, "Units"));
+            log_element("InitializationOnly", get_element_data(node, "InitializationOnly"));
             log_close_start_tag(true);
             log_content(get_node_content(node));
             log_end_tag("TrickVariable", true);
@@ -258,7 +256,7 @@ static void process_elements(xmlNodePtr startnode)
         if (NodeCheck(node, "TrickMethod"))
         {
             log_open_start_tag("TrickMethod");
-            log_element("Name", get_element_dataSSTR(node, "Name"));
+            log_element("Name", get_element_data(node, "Name"));
             log_close_start_tag(true);
             log_content(get_node_content(node));
             log_end_tag("TrickMethod", true);
@@ -266,10 +264,10 @@ static void process_elements(xmlNodePtr startnode)
         if (NodeCheck(node, "EdgeIo"))
         {
             log_open_start_tag("EdgeIo");
-            log_element("Host", get_element_dataSSTR(node, "Host"));
-            log_element("Port", get_element_dataSSTR(node, "Port"));
-            log_element("DataRate", get_element_dataSSTR(node, "DataRate"));
-            log_element("ConnectedVariable", get_element_dataSSTR(node, "ConnectedVariable"));
+            log_element("Host", get_element_data(node, "Host"));
+            log_element("Port", get_element_data(node, "Port"));
+            log_element("DataRate", get_element_data(node, "DataRate"));
+            log_element("ConnectedVariable", get_element_data(node, "ConnectedVariable"));
             log_close_start_tag();
             process_elements(node->children);
             log_end_tag("EdgeIo");
@@ -289,7 +287,7 @@ static void process_elements(xmlNodePtr startnode)
         if (NodeCheck(node, "EdgeVariable"))
         {
             log_open_start_tag("EdgeVariable");
-            log_element("RcsCommand", get_element_dataSSTR(node, "RcsCommand"));
+            log_element("RcsCommand", get_element_data(node, "RcsCommand"));
             log_close_start_tag(true);
             log_content(get_node_content(node));
             log_end_tag("EdgeVariable", true);

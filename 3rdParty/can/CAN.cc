@@ -69,7 +69,7 @@ void CanDevice::initialize(const std::string &networkstr, const std::string &but
         return;
     }
 
-    this->canbus_inhibited = getVariableSSTR(inhibitstr);
+    this->canbus_inhibited = getVariable(inhibitstr);
 
     this->CAN_active = true;
 }

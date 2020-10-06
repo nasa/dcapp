@@ -9,7 +9,7 @@
 
 static std::map<std::string, Variable> variables;
 
-void registerVariable(std::string paramname, std::string typestr, std::string initval)
+void registerVariable(const std::string &paramname, const std::string &typestr, const std::string &initval)
 {
     if (paramname.empty())
     {
@@ -35,24 +35,7 @@ void registerVariable(std::string paramname, std::string typestr, std::string in
     variables[mylabel] = *vinfo;
 }
 
-Variable *getVariable(const char *label)
-{
-    if (!label) return 0x0;
-
-    const char *mylabel;
-
-    if (label[0] == '@') mylabel = &label[1];
-    else mylabel = label;
-
-    if (variables.find(mylabel) != variables.end()) return &(variables[mylabel]);
-    else
-    {
-        warning_msg("Invalid variable label: " << label);
-        return 0x0;
-    }
-}
-
-Variable *getVariableSSTR(const std::string &label)
+Variable *getVariable(const std::string &label)
 {
     if (label.empty()) return 0x0;
 
@@ -74,20 +57,18 @@ Variable *getVariableSSTR(const std::string &label)
 // auto-generated, this routine should never return 0x0.  But if it does return 0x0, a crash could occur.
 void *get_pointer(const char *label)
 {
-    Variable *myvar = getVariableSSTR(label);
+    Variable *myvar = getVariable(label);
     if (myvar) return myvar->getPointer();
     else return 0x0;
 }
 
-char *create_virtual_variable(const char *typestr, const char *initval)
+std::string create_virtual_variable(const char *typestr, const char *initval)
 {
     static unsigned id_count = 0;
-    char *vname;
-    asprintf(&vname, "@dcappVirtualVariable%u", id_count);
-std::string myvar = "@dcappVirtualVariable" + std::to_string(id_count);
+    std::string myvar = "@dcappVirtualVariable" + std::to_string(id_count);
     registerVariable(myvar, typestr, initval);
     id_count++;
-    return vname;
+    return myvar;
 }
 
 
@@ -123,7 +104,7 @@ void Variable::setToCharstr(const char *input)
     }
 }
 
-void Variable::setToString(std::string &input)
+void Variable::setToString(const std::string &input)
 {
     switch (this->type)
     {
@@ -313,7 +294,7 @@ bool Variable::getBoolean(void)
 
 void Variable::setType(int type_spec) { this->type = type_spec; }
 
-void Variable::setType(std::string &type_spec)
+void Variable::setType(const std::string &type_spec)
 {
     if (type_spec == "Decimal" || type_spec == "Float")
     {

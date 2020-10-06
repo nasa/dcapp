@@ -68,7 +68,7 @@ void dcPixelStream::setProtocol(const std::string &protocolstr, const std::strin
             break;
         case PixelStreamVsmProtocol:
             psv = new PixelStreamVsm;
-            if (psv->readerInitialize(host, StringToInteger(port, 80), path, getValueSSTR(cameraspec)))
+            if (psv->readerInitialize(host, StringToInteger(port, 80), path, getValue(cameraspec)))
             {
                 delete psv;
                 return;

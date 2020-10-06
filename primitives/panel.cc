@@ -25,8 +25,8 @@ void dcPanel::setColor(const std::string &cspec)
 
 void dcPanel::setOrtho(const std::string &inw, const std::string &inh)
 {
-    if (!inw.empty()) orthoX = getValueSSTR(inw);
-    if (!inh.empty()) orthoY = getValueSSTR(inh);
+    if (!inw.empty()) orthoX = getValue(inw);
+    if (!inh.empty()) orthoY = getValue(inh);
 }
 
 bool dcPanel::checkID(int id)

@@ -1,4 +1,4 @@
-#include <string>
+#include "xml_data.hh"
 #include "app_data.hh"
 #include "variables.hh"
 #include "values.hh"
@@ -8,9 +8,9 @@ extern appdata AppData;
 
 enum { Equals, PlusEquals, MinusEquals };
 
-dcSetValue::dcSetValue(dcParent *myparent, const char *invar, const char *inval) : optype(Equals), min(0x0), max(0x0)
+dcSetValue::dcSetValue(dcParent *myparent, const xmldata &invar, const xmldata &inval) : optype(Equals), min(0x0), max(0x0)
 {
-    if (!invar || !inval) return;
+    if (!invar.defined() || !inval.defined()) return;
 
     var = getVariable(invar);
 
@@ -23,17 +23,17 @@ dcSetValue::dcSetValue(dcParent *myparent, const char *invar, const char *inval)
     if (myparent) myparent->addChild(this);
 }
 
-void dcSetValue::setOperator(const std::string &opspec)
+void dcSetValue::setOperator(const xmldata &opspec)
 {
     if (opspec.empty()) return;
     else if (opspec == "+=") optype = PlusEquals;
     else if (opspec == "-=") optype = MinusEquals;
 }
 
-void dcSetValue::setRange(const std::string &minspec, const std::string &maxspec)
+void dcSetValue::setRange(const xmldata &minspec, const xmldata &maxspec)
 {
-    if (!minspec.empty()) min = getValueSSTR(minspec);
-    if (!maxspec.empty()) max = getValueSSTR(maxspec);
+    if (!minspec.empty()) min = getValue(minspec);
+    if (!maxspec.empty()) max = getValue(maxspec);
 }
 
 void dcSetValue::draw(void)
