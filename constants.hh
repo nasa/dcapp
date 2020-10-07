@@ -15,7 +15,6 @@ class Constant : public Value
 
         void setToDecimal(double);
         void setToInteger(int);
-        void setToCharstr(const char *);
         void setToString(const std::string &);
         void setToBoolean(bool);
 
@@ -34,7 +33,6 @@ class Constant : public Value
 
 extern Constant *getConstantFromDecimal(double);
 extern Constant *getConstantFromInteger(int);
-extern Constant *getConstantFromCharstr(const char *);
 extern Constant *getConstantFromString(const std::string &);
 extern Constant *getConstantFromBoolean(bool);
 

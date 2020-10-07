@@ -7,7 +7,7 @@ class xmldata : public std::string
 {
     public:
         xmldata();
-        xmldata(std::string);
+        xmldata(const std::string &);
         xmldata(const char *);
         ~xmldata() {};
 

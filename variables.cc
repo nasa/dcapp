@@ -91,19 +91,6 @@ bool Variable::operator != (const Variable &that)
     return !(*this == that);
 }
 
-void Variable::setToCharstr(const char *input)
-{
-    if (input)
-    {
-        switch (this->type)
-        {
-            case DECIMAL_TYPE: this->decval = StringToDecimal(input); break;
-            case INTEGER_TYPE: this->intval = StringToInteger(input); break;
-            case STRING_TYPE:  this->strval = input;                  break;
-        }
-    }
-}
-
 void Variable::setToString(const std::string &input)
 {
     switch (this->type)

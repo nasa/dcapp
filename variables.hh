@@ -13,7 +13,6 @@ class Variable : public Value
         bool operator == (const Variable &);
         bool operator != (const Variable &);
 
-        void setToCharstr(const char *);
         void setToString(const std::string &);
         void setToDecimal(double);
         void setToInteger(int);

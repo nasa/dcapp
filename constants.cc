@@ -31,13 +31,6 @@ Constant *getConstantFromInteger(int inval)
     return findOrRegisterConstant(vinfo);
 }
 
-Constant *getConstantFromCharstr(const char *inval)
-{
-    Constant vinfo;
-    vinfo.setToCharstr(inval);
-    return findOrRegisterConstant(vinfo);
-}
-
 Constant *getConstantFromString(const std::string &inval)
 {
     Constant vinfo;
@@ -83,17 +76,6 @@ void Constant::setToInteger(int val)
     this->strval = ConvertToString(val);
     if (val) this->boolval = true;
     else this->boolval = false;
-}
-
-void Constant::setToCharstr(const char *val)
-{
-    if (val)
-    {
-        this->decval = StringToDecimal(val);
-        this->intval = StringToInteger(val);
-        this->strval = val;
-        this->boolval = StringToBoolean(val);
-    }
 }
 
 void Constant::setToString(const std::string &val)

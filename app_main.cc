@@ -207,8 +207,7 @@ static void SetDefaultEnvironment(std::string pathspec)
 static void ProcessArgs(int argc, char **argv)
 {
     int i, count, gotargs;
-    char *xdisplay = 0x0;
-    char *specfile = 0x0, *args = 0x0;
+    char *xdisplay = 0x0, *specfile = 0x0, *args = 0x0;
     size_t argsize;
 
     gotargs = checkArgs(argc, argv);

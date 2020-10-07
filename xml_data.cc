@@ -3,7 +3,7 @@
 
 xmldata::xmldata() : std::string(), isDefined(false) {};
 
-xmldata::xmldata(std::string instr) : std::string(), isDefined(false)
+xmldata::xmldata(const std::string &instr) : std::string(), isDefined(false)
 {
     isDefined = true;
     this->assign(instr);

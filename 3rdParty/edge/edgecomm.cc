@@ -72,7 +72,7 @@ CommModule::CommStatus EdgeCommModule::read(void)
             return this->Fail;
         }
 
-        myitem->currvalue->setToCharstr(substr);
+        myitem->currvalue->setToString(substr);
 
         strptr += strlen(substr) + 1;
     }
