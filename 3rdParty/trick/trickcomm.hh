@@ -70,6 +70,9 @@ class TrickCommModule : public CommModule
         void setPort(const std::string &) { };
         void setDataRate(const std::string &) { };
         void setReconnectOnDisconnect(void) { };
+        void activateFromList(void) { };
+        void activateToList(void) { };
+        void deactivateList(void) { };
         int addParameter(const std::string &, const std::string &, const std::string &, const std::string &, bool) { return this->Inactive; };
         void finishInitialization(void) { };
 
