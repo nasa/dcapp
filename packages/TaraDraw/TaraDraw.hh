@@ -11,7 +11,7 @@ extern int tdAlignMiddle;
 extern int tdAlignTop;
 
 // Initialization routines
-extern int tdInitialize(char *);
+extern int tdInitialize(const char *);
 extern tdWindow tdOpenWindow(const char *, float, float, float, float, int);
 extern tdWindow tdOpenFullScreen(const char *);
 extern tdGLContext *tdGLCreateContext(tdWindow);

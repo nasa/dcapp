@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <DCAPP>
     <Variable Type="String">CURRENT_TIME</Variable>
-    <Variable Type="Float">POS_X</Variable>
-    <Variable Type="Float">POS_Y</Variable>
+    <Variable Type="Decimal">POS_X</Variable>
+    <Variable Type="Decimal">POS_Y</Variable>
 
     <DisplayLogic>logic/mylogic.so</DisplayLogic>
 

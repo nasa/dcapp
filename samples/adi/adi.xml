@@ -2,15 +2,15 @@
 <DCAPP>
     <Constant Name="AngleDelta">2</Constant>
 
-    <Variable Type="Float">RollAngle</Variable>
-    <Variable Type="Float">PitchAngle</Variable>
-    <Variable Type="Float">YawAngle</Variable>
+    <Variable Type="Decimal">RollAngle</Variable>
+    <Variable Type="Decimal">PitchAngle</Variable>
+    <Variable Type="Decimal">YawAngle</Variable>
     <Variable Type="Integer">RollSelected</Variable>
     <Variable Type="Integer">PitchSelected</Variable>
     <Variable Type="Integer">YawSelected</Variable>
-    <Variable Type="Float" InitialValue="180">RollSlider</Variable>
-    <Variable Type="Float" InitialValue="180">PitchSlider</Variable>
-    <Variable Type="Float" InitialValue="180">YawSlider</Variable>
+    <Variable Type="Decimal" InitialValue="180">RollSlider</Variable>
+    <Variable Type="Decimal" InitialValue="180">PitchSlider</Variable>
+    <Variable Type="Decimal" InitialValue="180">YawSlider</Variable>
 
     <Defaults>
         <String ForceMono="Numeric" HorizontalAlign="Center" VerticalAlign="Middle" Size="14" Color="1 1 1"/>

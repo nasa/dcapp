@@ -9,9 +9,9 @@
     <Constant Name="ButtonWidth">200</Constant>
     <Constant Name="ButtonHeight">150</Constant>
 
-    <Variable Type="Float">RED_LEVEL</Variable>
-    <Variable Type="Float">GREEN_LEVEL</Variable>
-    <Variable Type="Float">BLUE_LEVEL</Variable>
+    <Variable Type="Decimal">RED_LEVEL</Variable>
+    <Variable Type="Decimal">GREEN_LEVEL</Variable>
+    <Variable Type="Decimal">BLUE_LEVEL</Variable>
 
     <Defaults>
         <Button HorizontalAlign="Center" VerticalAlign="Middle" Width="#ButtonWidth" Height="#ButtonHeight" Type="Standard"/>

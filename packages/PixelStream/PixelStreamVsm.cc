@@ -275,7 +275,7 @@ bool PixelStreamVsm::operator != (const PixelStreamVsm &that)
     return !(*this == that);
 }
 
-int PixelStreamVsm::readerInitialize(const std::string &hostspec, int portspec, const std::strint &pathspec, Value *cameraid)
+int PixelStreamVsm::readerInitialize(const std::string &hostspec, int portspec, const std::string &, Value *cameraid)
 {
 #ifndef CURL_ENABLED
     warning_msg("VSM requested, but unable to locate libcurl");

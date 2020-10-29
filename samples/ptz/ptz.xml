@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <DCAPP>
-    <Variable Type="Float" InitialValue="0">PAN</Variable>
-    <Variable Type="Float" InitialValue="0">TILT</Variable>
-    <Variable Type="Float" InitialValue="1">ZOOM</Variable>
-    <Variable Type="Float">IMAGE_X</Variable>
-    <Variable Type="Float">IMAGE_Y</Variable>
-    <Variable Type="Float">IMAGE_WIDTH</Variable>
-    <Variable Type="Float">IMAGE_HEIGHT</Variable>
+    <Variable Type="Decimal" InitialValue="0">PAN</Variable>
+    <Variable Type="Decimal" InitialValue="0">TILT</Variable>
+    <Variable Type="Decimal" InitialValue="1">ZOOM</Variable>
+    <Variable Type="Decimal">IMAGE_X</Variable>
+    <Variable Type="Decimal">IMAGE_Y</Variable>
+    <Variable Type="Decimal">IMAGE_WIDTH</Variable>
+    <Variable Type="Decimal">IMAGE_HEIGHT</Variable>
 
     <DisplayLogic>logic/mylogic.so</DisplayLogic>
 

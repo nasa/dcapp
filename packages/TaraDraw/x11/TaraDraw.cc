@@ -62,7 +62,7 @@ static Atom wm_delete_window, wm_hints;
 
 // Initialization routines
 
-int tdInitialize(char *xdisplay)
+int tdInitialize(const char *xdisplay)
 {
     display = XOpenDisplay(xdisplay);
     if (!display)
