@@ -150,30 +150,20 @@ void curlLibInit(void)
     warning_msg("libcurl is required for MJPEG PixelStream");
 }
 
-void *curlLibCreateHandle(const std::string &host, int port, const std::string &path, const std::string &username, const std::string &password, PixelStreamMjpeg *ptr)
+void *curlLibCreateHandle(const std::string &, int, const std::string &, const std::string &, const std::string &, PixelStreamMjpeg *)
 {
     return 0x0;
 }
 
-void curlLibDestroyHandle(void *handle)
-{
-}
+void curlLibDestroyHandle(void *) { }
 
-int curlLibAddHandle(void *handle)
+int curlLibAddHandle(void *)
 {
     return 0;
 }
 
-void curlLibRemoveHandle(void *handle)
-{
-}
-
-void curlLibRun(void)
-{
-}
-
-void curlLibTerm(void)
-{
-}
+void curlLibRemoveHandle(void *) { }
+void curlLibRun(void) { }
+void curlLibTerm(void) { }
 
 #endif

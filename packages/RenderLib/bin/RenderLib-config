@@ -58,6 +58,13 @@ else
         fi
     fi
 fi
+if test `which freetype-config` ; then
+    freetype_cflags=`freetype-config --cflags`
+    freetype_libs=`freetype-config --libs`
+else
+    freetype_cflags=`pkg-config --cflags freetype2`
+    freetype_libs=`pkg-config --libs freetype2`
+fi
 ################################################################################
 
 while test $# -gt 0 ; do
@@ -93,7 +100,7 @@ while test $# -gt 0 ; do
             else
                 opengl_cflags="-I/usr/X11R6/include"
             fi
-            echo "-I${parentdir} `freetype-config --cflags` ${opengl_cflags}"
+            echo "-I${parentdir} ${freetype_cflags} ${opengl_cflags}"
             ;;
         --libs)
             if test "$osspec" = "MacOS" ; then
@@ -109,7 +116,7 @@ while test $# -gt 0 ; do
                     jpeg_libs="-ljpeg"
                 fi
             fi
-            echo "-L${mydir}/${libdir} -lRenderLib `freetype-config --libs` ${opengl_libs} ${jpeg_libs}"
+            echo "-L${mydir}/${libdir} -lRenderLib ${freetype_libs} ${opengl_libs} ${jpeg_libs}"
             ;;
         --compdepends)
             echo "${mydir}/RenderLib.hh ${mydir}/texturelib.hh ${mydir}/fontlib.hh ${mydir}/opengl_draw.hh"
@@ -135,7 +142,7 @@ while test $# -gt 0 ; do
                     os_cflags="-DCATALINA"
                 fi
             fi
-            echo "-I${parentdir} `freetype-config --cflags` ${jpeg_cflags} ${opengl_cflags} ${os_cflags}"
+            echo "-I${parentdir} ${freetype_cflags} ${jpeg_cflags} ${opengl_cflags} ${os_cflags}"
             ;;
 ################################################################################
         *)
