@@ -57,11 +57,18 @@ LINK_LIBS += $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) 
 COMPDEPENDS := $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --compdepends))
 LINKDEPENDS := $(foreach subpackage, $(SUBPACKAGE_CONFIGS), $(shell $(subpackage) --linkdepends))
 
-CXXFLAGS += $(shell xml2-config --cflags)
-# below is a fix for pre-Catalina (MacOS 10.15) implementation of libxml2
-ifeq ($(OSSPEC)$(shell test $(OSMAJOR) -le 18; echo $$?), MacOS0)
-    LINK_LIBS += $(shell xml2-config --exec-prefix=/usr --libs)
+# MacOS does a poor job with the xml2-config tool. Prior to Catalina (10.15), the libs weren't where xml2-config said
+# that they would be. Starting with Catalina, the header files aren't where xml2-config says that they should be.
+ifeq ($(OSSPEC), MacOS)
+    ifeq ($(shell test $(OSMAJOR) -gt 18; echo $$?),0)
+        CXXFLAGS += $(shell xml2-config --cflags)/libxml2
+        LINK_LIBS += $(shell xml2-config --libs)
+    else
+        CXXFLAGS += $(shell xml2-config --cflags)
+        LINK_LIBS += $(shell xml2-config --exec-prefix=/usr --libs)
+    endif
 else
+    CXXFLAGS += $(shell xml2-config --cflags)
     LINK_LIBS += $(shell xml2-config --libs)
 endif
 
