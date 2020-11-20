@@ -66,7 +66,11 @@ static std::string replace_string(const std::string &instr)
                     if (it != ppclist.end()) outstr += it->second;
                 }
             }
-            else outstr += getenv(tmpstr.c_str());
+            else
+            {
+                char *myenv = getenv(tmpstr.c_str());
+                if (myenv) outstr += myenv;
+            }
 
             i += evalstr.length() + brackets;
         }
