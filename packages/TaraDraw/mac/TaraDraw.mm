@@ -1,3 +1,4 @@
+#import <string>
 #import "tdDefines.hh"
 #import "tdAdapter.hh"
 
@@ -5,7 +6,7 @@ static TaraDrawAdapter *tda;
 
 // Initialization routines
 
-int tdInitialize(const char * /* unused */)
+int tdInitialize(const std::string & /* unused */)
 {
     [ NSApplication sharedApplication ];
     if ( ![ NSApp isRunning ] )
@@ -19,19 +20,19 @@ int tdInitialize(const char * /* unused */)
     else return (-1);
 }
 
-tdWindow tdOpenWindow(const char *title, float xpos, float ypos, float width, float height, int align)
+tdWindow tdOpenWindow(const std::string &title, float xpos, float ypos, float width, float height, int align)
 {
     NSRect myrect;
     myrect.origin.x = xpos;
     myrect.origin.y = ypos;
     myrect.size.width = width;
     myrect.size.height = height;
-    return [ tda openWindow:[ NSString stringWithCString:title encoding:NSASCIIStringEncoding ] withFrame:myrect aligned:align ];
+    return [ tda openWindow:[ NSString stringWithCString:title.c_str() encoding:NSASCIIStringEncoding ] withFrame:myrect aligned:align ];
 }
 
-tdWindow tdOpenFullScreen(const char *title)
+tdWindow tdOpenFullScreen(const std::string &title)
 {
-    return [ tda openFullScreen:[ NSString stringWithCString:title encoding:NSASCIIStringEncoding ]];
+    return [ tda openFullScreen:[ NSString stringWithCString:title.c_str() encoding:NSASCIIStringEncoding ]];
 }
 
 tdGLContext *tdGLCreateContext(tdWindow winid)

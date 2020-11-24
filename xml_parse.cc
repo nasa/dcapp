@@ -39,13 +39,13 @@ static EdgeCommModule *edgecomm = 0x0;
 static xmldata indid, indonval, activeid, activetrueval, transitionid, key, keyascii, bezelkey;
 static bool preprocessing = true;
 
-int ParseXMLFile(const char *fullpath)
+int ParseXMLFile(const std::string &fullpath)
 {
     int mycwd;
     xmlDocPtr mydoc;
     xmlNodePtr root_element;
 
-    if (!fullpath)
+    if (fullpath.empty())
     {
         error_msg("No XML file specified");
         return (-1);

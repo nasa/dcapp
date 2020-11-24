@@ -1,15 +1,16 @@
-int checkArgs(int argc, char **argv)
+#include <vector>
+#include <string>
+
+int checkArgs(std::vector<std::string> &arglist)
 {
-    if (argc > 1)
-        return 1;
-    else
-        return (-1);
+    if (arglist.empty()) return (-1);
+    else return 1;
 }
 
-void getArgs(char **specfile, char **args)
+std::vector<std::string> getArgs(void)
 {
+    std::vector<std::string> retvec;
+    return retvec;
 }
 
-void storeArgs(char *specfile, char *args)
-{
-}
+void storeArgs(const std::string &, const std::string &) { }

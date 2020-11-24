@@ -127,9 +127,9 @@ xmldata get_element_data(xmlNodePtr innode, const char *key)
     return 0x0;
 }
 
-void processArgument(const char *key, const char *value)
+void processArgument(const std::string &key, const std::string &value)
 {
-    arglist[std::string(key)] = std::string(value);
+    arglist[key] = value;
 }
 
 void processConstantNode(xmlNodePtr node)

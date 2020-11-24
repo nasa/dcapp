@@ -234,7 +234,7 @@ int main(int argc, char **argv)
 
     if (!psd) return -1;
 
-    tdInitialize(0x0);
+    tdInitialize("");
     winid = tdOpenWindow(argv[0], 100, 100, winwidth, winheight, tdAlignLeft | tdAlignBottom);
     gl_context = tdGLCreateContext(winid);
 

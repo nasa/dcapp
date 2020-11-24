@@ -10,6 +10,7 @@ Programmer: M. McFarlane, March 2005
 #include <X11/keysym.h>
 #include <X11/XKBlib.h>
 #include <GL/glx.h>
+#include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -62,9 +63,16 @@ static Atom wm_delete_window, wm_hints;
 
 // Initialization routines
 
-int tdInitialize(const char *xdisplay)
+int tdInitialize(const std::string &xdisplay)
 {
-    display = XOpenDisplay(xdisplay);
+    if (xdisplay.empty()) display = XOpenDisplay(0x0);
+    else
+    {
+        char *tmpstr = strdup(xdisplay.c_str());
+        display = XOpenDisplay(tmpstr);
+        free(tmpstr);
+    }
+
     if (!display)
     {
         printf("tdInitialize: Can't connect to X server\n");
@@ -78,11 +86,11 @@ int tdInitialize(const char *xdisplay)
     return 0;
 }
 
-tdWindow tdOpenWindow(const char *title, float xpos, float ypos, float width, float height, int align)
+tdWindow tdOpenWindow(const std::string &title, float xpos, float ypos, float width, float height, int align)
 {
     XGCValues values;
     XTextProperty textprop;
-    char *strlist;
+    char *tmpstr;
     XWindowAttributes attr;
     XSizeHints sizehints;
     WindowSpec *newwin;
@@ -109,14 +117,13 @@ tdWindow tdOpenWindow(const char *title, float xpos, float ypos, float width, fl
     sizehints.y = (int)ypos;
     sizehints.width = (int)width;
     sizehints.height = (int)height;
-    XSetStandardProperties(display, newwin->win, title, title, None, 0x0, 0, &sizehints);
 
-    strlist = (char *)malloc(strlen(title)+1);
-    strcpy(strlist, title);
-    XStringListToTextProperty(&strlist, 1, &textprop);
+    tmpstr = strdup(title.c_str());
+    XSetStandardProperties(display, newwin->win, tmpstr, tmpstr, None, 0x0, 0, &sizehints);
+    XStringListToTextProperty(&tmpstr, 1, &textprop);
     XSetWMName(display, newwin->win, &textprop);
     XSetWMIconName(display, newwin->win, &textprop);
-    free(strlist);
+    free(tmpstr);
 
     XGetWindowAttributes(display, newwin->win, &attr);
     newwin->gc = XCreateGC(display, newwin->win, 0, &values);
@@ -149,7 +156,7 @@ tdWindow tdOpenWindow(const char *title, float xpos, float ypos, float width, fl
     return newwin->win;
 }
 
-tdWindow tdOpenFullScreen(const char *title)
+tdWindow tdOpenFullScreen(const std::string &title)
 {
     WmHints hints;
 

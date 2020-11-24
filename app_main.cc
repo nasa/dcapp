@@ -1,4 +1,6 @@
+#include <vector>
 #include <string>
+#include <sstream>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -29,9 +31,9 @@ extern void mainloop(void);
 extern void UpdateDisplay(void);
 extern void SetNeedsRedraw(void);
 extern void CheckMouseBounce(void);
-extern void ui_init(char *);
+extern void ui_init(const std::string &);
 extern void ui_terminate(void);
-extern int ParseXMLFile(const char *);
+extern int ParseXMLFile(const std::string &);
 extern void DisplayPreInitStub(void *(*)(const char *));
 extern void DisplayInitStub(void);
 extern void DisplayLogicStub(void);
@@ -204,13 +206,23 @@ static void SetDefaultEnvironment(std::string pathspec)
     if (!gethostname(myhost, hsize)) setenv("HOST", myhost, 0);
 }
 
+std::vector<std::string> stringsplit(std::string instr, char delimeter)
+{
+    std::stringstream ss(instr);
+    std::string item;
+    std::vector<std::string> retstr;
+    while (std::getline(ss, item, delimeter)) retstr.push_back(item);
+    return retstr;
+}
+
 static void ProcessArgs(int argc, char **argv)
 {
-    int i, count, gotargs;
-    char *xdisplay = 0x0, *specfile = 0x0, *args = 0x0;
-    size_t argsize;
+    int i, gotargs;
+    std::string xdisplay, outfile, specfile, cmdargs;
+    std::vector<std::string> myargs, arglist;
 
-    gotargs = checkArgs(argc, argv);
+    arglist.assign(argv + 1, argv + argc);
+    gotargs = checkArgs(arglist);
 
     switch (gotargs)
     {
@@ -219,62 +231,46 @@ static void ProcessArgs(int argc, char **argv)
             {
                 if (argv[i][0] == '-' && argc > i+1)
                 {
-                    if (!strcmp(argv[i], "-x")) xdisplay = strdup(argv[i+1]);
+                    if (!strcmp(argv[i], "-o")) outfile = argv[i+1];
+                    else if (!strcmp(argv[i], "-x")) xdisplay = argv[i+1];
                     i++;
                 }
                 else
                 {
-                    if (args)
-                    {
-                        argsize = strlen(args) + strlen(argv[i]) + 1;
-                        args = (char *)realloc((void *)args, argsize+1);
-                        sprintf(args, "%s %s", args, argv[i]);
-                        args[argsize] = '\0';
-                    }
-                    else args = strdup(argv[i]);
+                    if (!cmdargs.empty()) cmdargs.append(" ");
+                    cmdargs.append(argv[i]);
                 }
             }
 
-            specfile = strdup(argv[1]);
+            specfile = argv[1];
             ui_init(xdisplay);
-            TIDY(xdisplay);
             break;
         case 0:
-            ui_init(0x0);
-            getArgs(&specfile, &args);
+            ui_init("");
+            myargs = getArgs();
+            if (myargs.size() > 0) specfile = myargs[0];
+            if (myargs.size() > 1) cmdargs = myargs[1];
             break;
         default:
             user_msg("USAGE: dcapp <specfile> [optional arguments]");
             Terminate(-1);
     }
 
-    if (args)
+    std::vector<std::string> splititems = stringsplit(cmdargs, ' ');
+    for (std::vector<std::string>::iterator it = splititems.begin(); it != splititems.end(); it++)
     {
-        char *strptr = args;
-        char *key = (char *)calloc(strlen(args), 1);
-        char *value = (char *)calloc(strlen(args), 1);
-
-        while (strptr < (args + strlen(args)))
+        size_t findequal = it->find_first_of('=');
+        if (findequal == std::string::npos && *it == "-debug") Message::enableDebugging();
+        else
         {
-            count = sscanf(strptr, "%[^= ]=%s", key, value);
-
-            if (count == 1 && !strcmp(key, "-debug")) Message::enableDebugging();
-            else if (count == 2) processArgument(key, value);
-
-            if (count >= 1) strptr += strlen(key);
-            if (count == 2) strptr += strlen(value) + 1;
-
-            while (strptr < (args + strlen(args)) && *strptr == ' ') strptr++;
+            std::string key = it->substr(0, findequal);
+            std::string value = it->substr(findequal+1, std::string::npos);
+            processArgument(key, value);
         }
-
-        free(key);
-        free(value);
     }
 
+if (!outfile.empty()) printf("OUTFILE: %s\n", outfile.c_str());
     if (ParseXMLFile(specfile)) Terminate(-1);
 
-    storeArgs(specfile, args);
-
-    TIDY(specfile);
-    TIDY(args);
+    storeArgs(specfile, cmdargs);
 }

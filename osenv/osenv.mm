@@ -1,4 +1,6 @@
 #import <AppKit/AppKit.h>
+#import <vector>
+#import <string>
 #import <sys/stat.h>
 
 @interface MyApp : NSObject
@@ -14,52 +16,59 @@
 - (void)setArgs:(NSString *)value;
 @end
 
-int checkArgs(int argc, char **argv)
+int checkArgs(std::vector<std::string> &arglist)
 {
-    if (argc > 2) return 1;
-    else if (argc == 2 && strncmp(argv[1], "-psn", 4)) return 1;
+    if (arglist.size() > 1) return 1;
+    else if (arglist.size() == 1 && arglist[0].compare(0, 4, "-psn")) return 1;
     else return 0;
 }
 
 /* Get default arguments from the Application Support folder */
-void getArgs(char **specfile, char **args)
+std::vector<std::string> getArgs(void)
 {
+    std::vector<std::string> retvec;
     NSString *applicationSupportDirectory = [ NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) firstObject ];
     NSString *dcappSupportDirectory = [[ applicationSupportDirectory stringByAppendingString:@"/dcapp" ] stringByStandardizingPath ];
     NSString *dcappPrefsFile = [[ dcappSupportDirectory stringByAppendingString:@"/Preferences" ] stringByStandardizingPath ];
 
-    NSString *contents = [ NSString stringWithContentsOfFile:dcappPrefsFile encoding:NSASCIIStringEncoding error:nil ];
-    NSScanner *myscanner = [ NSScanner scannerWithString:contents ];
-    NSCharacterSet *lbrace = [ NSCharacterSet characterSetWithCharactersInString:@"{" ];
-    NSCharacterSet *rbrace = [ NSCharacterSet characterSetWithCharactersInString:@"}" ];
-    NSString *mypath, *myargs;
-
     MyApp *myapp = [[ MyApp alloc ] init ];
 
-    [ myscanner scanCharactersFromSet:lbrace intoString:nil ];
-    if ([ myscanner scanUpToCharactersFromSet:rbrace intoString:&mypath ]) [ myapp setSpecfile:mypath ];
-    [ myscanner scanCharactersFromSet:rbrace intoString:nil ];
-    [ myscanner scanCharactersFromSet:lbrace intoString:nil ];
-    if ([ myscanner scanUpToCharactersFromSet:rbrace intoString:&myargs ]) [ myapp setArgs:myargs ];
+    NSString *contents = [ NSString stringWithContentsOfFile:dcappPrefsFile encoding:NSASCIIStringEncoding error:nil ];
+    if (contents)
+    {
+        NSScanner *myscanner = [ NSScanner scannerWithString:contents ];
+        NSCharacterSet *lbrace = [ NSCharacterSet characterSetWithCharactersInString:@"{" ];
+        NSCharacterSet *rbrace = [ NSCharacterSet characterSetWithCharactersInString:@"}" ];
+        NSString *mypath, *myargs;
 
-    [ NSApp run ];
+        [ myscanner scanCharactersFromSet:lbrace intoString:nil ];
+        if ([ myscanner scanUpToCharactersFromSet:rbrace intoString:&mypath ]) [ myapp setSpecfile:mypath ];
+        [ myscanner scanCharactersFromSet:rbrace intoString:nil ];
+        [ myscanner scanCharactersFromSet:lbrace intoString:nil ];
+        if ([ myscanner scanUpToCharactersFromSet:rbrace intoString:&myargs ]) [ myapp setArgs:myargs ];
 
-    *specfile = strdup([[[ myapp getSpecfile ] stringByStandardizingPath ] cStringUsingEncoding:NSASCIIStringEncoding ]);
-    *args = strdup([[ myapp getArgs ] cStringUsingEncoding:NSASCIIStringEncoding ]);
+        [ NSApp run ];
+
+        retvec.push_back([[[ myapp getSpecfile ] stringByStandardizingPath ] cStringUsingEncoding:NSASCIIStringEncoding ]);
+        retvec.push_back([[ myapp getArgs ] cStringUsingEncoding:NSASCIIStringEncoding ]);
+    }
+    else [ NSApp run ];
+
+    return retvec;
 }
 
 /* Store default arguments to the Application Support folder */
-void storeArgs(char *specfile, char *args)
+void storeArgs(const std::string &specfile, const std::string &args)
 {
     NSString *applicationSupportDirectory = [ NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) firstObject ];
     NSString *dcappSupportDirectory = [[ applicationSupportDirectory stringByAppendingString:@"/dcapp" ] stringByStandardizingPath ];
     NSString *dcappPrefsFile = [[ dcappSupportDirectory stringByAppendingString:@"/Preferences" ] stringByStandardizingPath ];
 
     [[ NSFileManager defaultManager ] createDirectoryAtPath:dcappSupportDirectory withIntermediateDirectories:YES attributes:nil error:nil ];
-    NSString *fullpath = [[ NSURL fileURLWithPath:[ NSString stringWithCString:specfile encoding:NSASCIIStringEncoding ]] path ];
+    NSString *fullpath = [[ NSURL fileURLWithPath:[ NSString stringWithCString:specfile.c_str() encoding:NSASCIIStringEncoding ]] path ];
 
     NSString *mydata;
-    if (args) mydata = [ NSString stringWithFormat:@"{%@}{%s}", fullpath, args ];
+    if (!args.empty()) mydata = [ NSString stringWithFormat:@"{%@}{%s}", fullpath, args.c_str() ];
     else mydata = [ NSString stringWithFormat:@"{%@}{}", fullpath ];
     [ mydata writeToFile:dcappPrefsFile atomically:NO encoding:NSASCIIStringEncoding error:nil ];
 }

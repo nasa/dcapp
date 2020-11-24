@@ -1,3 +1,4 @@
+#include <string>
 #include "TaraDraw/TaraDraw.hh"
 #include "PixelStream/curlLib.hh"
 #include "app_data.hh"
@@ -29,7 +30,7 @@ static struct
 } mywin;
 
 
-void ui_init(char *xdisplay)
+void ui_init(const std::string &xdisplay)
 {
     tdInitialize(xdisplay);
 }
