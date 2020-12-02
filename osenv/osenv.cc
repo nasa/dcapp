@@ -1,16 +1,24 @@
 #include <vector>
 #include <string>
 
-int checkArgs(std::vector<std::string> &arglist)
-{
-    if (arglist.empty()) return (-1);
-    else return 1;
-}
+extern void ui_init(const std::string &);
 
-std::vector<std::string> getArgs(void)
+std::vector<std::string> OSgetArgs(int argc, char **argv)
 {
-    std::vector<std::string> retvec;
-    return retvec;
-}
+    std::vector<std::string> arglist;
+    std::string xdisplay;
 
-void storeArgs(const std::string &, const std::string &) { }
+    arglist.assign(argv + 1, argv + argc);
+
+    if (!arglist.empty())
+    {
+        for (std::vector<std::string>::iterator it = arglist.begin(); it != arglist.end(); it++)
+        {
+            if (*it == "-x" && it+1 != arglist.end()) xdisplay = *(++it);
+        }
+
+        ui_init(xdisplay);
+    }
+
+    return arglist;
+}

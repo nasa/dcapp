@@ -22,7 +22,6 @@
 #include "device.hh"
 #include "app_data.hh"
 #include "xml_stringsub.hh"
-#include "osenv/osenv.hh"
 #include "PixelStream/curlLib.hh"
 
 #define MINIMUM_REFRESH 0.05 // 50 ms = 20 Hz
@@ -31,8 +30,8 @@ extern void mainloop(void);
 extern void UpdateDisplay(void);
 extern void SetNeedsRedraw(void);
 extern void CheckMouseBounce(void);
-extern void ui_init(const std::string &);
 extern void ui_terminate(void);
+extern std::vector<std::string> OSgetArgs(int, char **);
 extern int ParseXMLFile(const std::string &);
 extern void DisplayPreInitStub(void *(*)(const char *));
 extern void DisplayInitStub(void);
@@ -206,61 +205,27 @@ static void SetDefaultEnvironment(std::string pathspec)
     if (!gethostname(myhost, hsize)) setenv("HOST", myhost, 0);
 }
 
-std::vector<std::string> stringsplit(std::string instr, char delimeter)
-{
-    std::stringstream ss(instr);
-    std::string item;
-    std::vector<std::string> retstr;
-    while (std::getline(ss, item, delimeter)) retstr.push_back(item);
-    return retstr;
-}
-
 static void ProcessArgs(int argc, char **argv)
 {
-    int i, gotargs;
-    std::string xdisplay, outfile, specfile, cmdargs;
-    std::vector<std::string> myargs, arglist;
+    std::vector<std::string> arglist;
+    std::string outfile;
 
-    arglist.assign(argv + 1, argv + argc);
-    gotargs = checkArgs(arglist);
+    arglist = OSgetArgs(argc, argv);
 
-    switch (gotargs)
+    if (arglist.empty())
     {
-        case 1:
-            for (i=2; i<argc; i++)
-            {
-                if (argv[i][0] == '-' && argc > i+1)
-                {
-                    if (!strcmp(argv[i], "-o")) outfile = argv[i+1];
-                    else if (!strcmp(argv[i], "-x")) xdisplay = argv[i+1];
-                    i++;
-                }
-                else
-                {
-                    if (!cmdargs.empty()) cmdargs.append(" ");
-                    cmdargs.append(argv[i]);
-                }
-            }
-
-            specfile = argv[1];
-            ui_init(xdisplay);
-            break;
-        case 0:
-            ui_init("");
-            myargs = getArgs();
-            if (myargs.size() > 0) specfile = myargs[0];
-            if (myargs.size() > 1) cmdargs = myargs[1];
-            break;
-        default:
-            user_msg("USAGE: dcapp <specfile> [optional arguments]");
-            Terminate(-1);
+        user_msg("USAGE: dcapp <specfile> [optional arguments]");
+        Terminate(-1);
     }
 
-    std::vector<std::string> splititems = stringsplit(cmdargs, ' ');
-    for (std::vector<std::string>::iterator it = splititems.begin(); it != splititems.end(); it++)
+    for (std::vector<std::string>::iterator it = arglist.begin()+1; it != arglist.end(); it++)
     {
         size_t findequal = it->find_first_of('=');
-        if (findequal == std::string::npos && *it == "-debug") Message::enableDebugging();
+        if (findequal == std::string::npos)
+        {
+            if (*it == "-debug") Message::enableDebugging();
+            else if (*it == "-o" && it+1 != arglist.end()) outfile = *(++it);
+         }
         else
         {
             std::string key = it->substr(0, findequal);
@@ -270,7 +235,5 @@ static void ProcessArgs(int argc, char **argv)
     }
 
 if (!outfile.empty()) printf("OUTFILE: %s\n", outfile.c_str());
-    if (ParseXMLFile(specfile)) Terminate(-1);
-
-    storeArgs(specfile, cmdargs);
+    if (ParseXMLFile(arglist[0])) Terminate(-1);
 }

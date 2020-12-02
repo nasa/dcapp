@@ -1,6 +1,7 @@
 #import <AppKit/AppKit.h>
 #import <vector>
 #import <string>
+#import <sstream>
 #import <sys/stat.h>
 
 @interface MyApp : NSObject
@@ -16,12 +17,7 @@
 - (void)setArgs:(NSString *)value;
 @end
 
-int checkArgs(std::vector<std::string> &arglist)
-{
-    if (arglist.size() > 1) return 1;
-    else if (arglist.size() == 1 && arglist[0].compare(0, 4, "-psn")) return 1;
-    else return 0;
-}
+extern void ui_init(const std::string &);
 
 /* Get default arguments from the Application Support folder */
 std::vector<std::string> getArgs(void)
@@ -50,7 +46,11 @@ std::vector<std::string> getArgs(void)
         [ NSApp run ];
 
         retvec.push_back([[[ myapp getSpecfile ] stringByStandardizingPath ] cStringUsingEncoding:NSASCIIStringEncoding ]);
-        retvec.push_back([[ myapp getArgs ] cStringUsingEncoding:NSASCIIStringEncoding ]);
+
+        // These lines strip out multiple-consecuctive white spaces...
+        std::stringstream ss([[ myapp getArgs ] cStringUsingEncoding:NSASCIIStringEncoding ]);
+        std::string item;
+        while (std::getline(ss >> std::ws, item, ' ')) retvec.push_back(item);
     }
     else [ NSApp run ];
 
@@ -58,19 +58,43 @@ std::vector<std::string> getArgs(void)
 }
 
 /* Store default arguments to the Application Support folder */
-void storeArgs(const std::string &specfile, const std::string &args)
+void storeArgs(std::vector<std::string> &arglist)
 {
     NSString *applicationSupportDirectory = [ NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) firstObject ];
     NSString *dcappSupportDirectory = [[ applicationSupportDirectory stringByAppendingString:@"/dcapp" ] stringByStandardizingPath ];
     NSString *dcappPrefsFile = [[ dcappSupportDirectory stringByAppendingString:@"/Preferences" ] stringByStandardizingPath ];
 
     [[ NSFileManager defaultManager ] createDirectoryAtPath:dcappSupportDirectory withIntermediateDirectories:YES attributes:nil error:nil ];
-    NSString *fullpath = [[ NSURL fileURLWithPath:[ NSString stringWithCString:specfile.c_str() encoding:NSASCIIStringEncoding ]] path ];
+    NSString *fullpath = [[ NSURL fileURLWithPath:[ NSString stringWithCString:arglist[0].c_str() encoding:NSASCIIStringEncoding ]] path ];
 
-    NSString *mydata;
-    if (!args.empty()) mydata = [ NSString stringWithFormat:@"{%@}{%s}", fullpath, args.c_str() ];
-    else mydata = [ NSString stringWithFormat:@"{%@}{}", fullpath ];
+    std::string cmdargs;
+    if (!arglist.empty())
+    {
+        for (std::vector<std::string>::iterator it = arglist.begin()+1; it != arglist.end(); it++)
+        {
+            cmdargs += *it;
+            cmdargs += ' ';
+        }
+        if (cmdargs.back() == ' ') cmdargs.pop_back();
+    }
+
+    NSString *mydata = [ NSString stringWithFormat:@"{%@}{%s}", fullpath, cmdargs.c_str() ];
     [ mydata writeToFile:dcappPrefsFile atomically:NO encoding:NSASCIIStringEncoding error:nil ];
+}
+
+std::vector<std::string> OSgetArgs(int argc, char **argv)
+{
+    std::vector<std::string> arglist;
+
+    ui_init("");
+
+    arglist.assign(argv + 1, argv + argc);
+
+    if (arglist.empty() || (arglist.size() == 1 && !arglist[0].compare(0, 4, "-psn"))) arglist = getArgs();
+
+    storeArgs(arglist);
+
+    return arglist;
 }
 
 @implementation MyApp
