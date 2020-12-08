@@ -37,6 +37,8 @@ extern void DisplayPreInitStub(void *(*)(const char *));
 extern void DisplayInitStub(void);
 extern void DisplayLogicStub(void);
 extern void DisplayCloseStub(void);
+extern void start_logging(std::string &);
+extern void end_logging(void);
 
 void Terminate(int);
 
@@ -234,6 +236,9 @@ static void ProcessArgs(int argc, char **argv)
         }
     }
 
-if (!outfile.empty()) printf("OUTFILE: %s\n", outfile.c_str());
+    start_logging(outfile);
+
     if (ParseXMLFile(arglist[0])) Terminate(-1);
+
+    end_logging();
 }

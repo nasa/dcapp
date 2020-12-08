@@ -19,6 +19,7 @@ DCAPP_SOURCES := \
 	handle_mouse.cc \
 	handle_utils.cc \
 	logic_stubs.cc \
+	report.cc \
 	tara_funcs.cc \
 	values.cc \
 	variables.cc \
@@ -28,11 +29,6 @@ DCAPP_SOURCES := \
 	xml_utils.cc
 GENHEADER_SOURCES := \
 	dcapp_genheader.cc \
-	xml_stringsub.cc \
-	xml_data.cc \
-	xml_utils.cc
-REPORT_SOURCES := \
-	dcapp_report.cc \
 	xml_stringsub.cc \
 	xml_data.cc \
 	xml_utils.cc
@@ -85,21 +81,16 @@ DCAPP_OBJECTS := $(DCAPP_SOURCES)
 DCAPP_OBJECTS := $(foreach obj, $(DCAPP_OBJECTS:.cc=.o), $(obj))
 DCAPP_OBJECTS := $(foreach obj, $(patsubst %, $(OBJDIR)/%, $(DCAPP_OBJECTS)), $(obj))
 GENHEADER_OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(GENHEADER_SOURCES)), $(OBJDIR)/$(obj))
-REPORT_OBJECTS := $(foreach obj, $(patsubst %.cc, %.o, $(REPORT_SOURCES)), $(OBJDIR)/$(obj))
 
 #CXXFLAGS += -DDEBUG
 
-all: prebuild $(BINDIR)/dcapp $(BINDIR)/dcapp_genheader $(BINDIR)/dcapp_report postbuild
+all: prebuild $(BINDIR)/dcapp $(BINDIR)/dcapp_genheader postbuild
 
 $(BINDIR)/dcapp: $(DCAPP_OBJECTS) $(LINKDEPENDS)
 	mkdir -p $(BINDIR)
 	$(CXX) $(LDFLAGS) $^ $(LINK_LIBS) -o $@
 
 $(BINDIR)/dcapp_genheader: $(GENHEADER_OBJECTS) $(LINKDEPENDS)
-	mkdir -p $(BINDIR)
-	$(CXX) $(LDFLAGS) $^ $(LINK_LIBS) -o $@
-
-$(BINDIR)/dcapp_report: $(REPORT_OBJECTS) $(LINKDEPENDS)
 	mkdir -p $(BINDIR)
 	$(CXX) $(LDFLAGS) $^ $(LINK_LIBS) -o $@
 

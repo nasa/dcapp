@@ -30,6 +30,10 @@ extern void DisplayInitStub(void);
 extern void DisplayLogicStub(void);
 extern void DisplayCloseStub(void);
 
+extern void log_node_start(xmlNodePtr);
+extern void log_node_data(xmlNodePtr);
+extern void log_node_end(xmlNodePtr);
+
 static int process_elements(dcParent *, xmlNodePtr);
 
 extern appdata AppData;
@@ -219,6 +223,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "Variable"))
         {
             registerVariable(get_node_content(node), get_element_data(node, "Type"), get_element_data(node, "InitialValue"));
+            log_node_data(node);
         }
         if (NodeCheck(node, "TrickIo"))
         {
@@ -228,7 +233,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             trickcomm->setDataRate(get_element_data(node, "DataRate"));
             trickcomm->setConnectedVariable(get_element_data(node, "ConnectedVariable"));
             if (get_element_data(node, "DisconnectAction") == "Reconnect") trickcomm->setReconnectOnDisconnect();
+            log_node_start(node);
             process_elements(myparent, node->children);
+            log_node_end(node);
             trickcomm->finishInitialization();
             AppData.commlist.push_back(trickcomm);
         }
@@ -237,7 +244,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             if (trickcomm)
             {
                 trickcomm->activateFromList();
+                log_node_start(node);
                 process_elements(myparent, node->children);
+                log_node_end(node);
                 trickcomm->deactivateList();
             }
         }
@@ -246,7 +255,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             if (trickcomm)
             {
                 trickcomm->activateToList();
+                log_node_start(node);
                 process_elements(myparent, node->children);
+                log_node_end(node);
                 trickcomm->deactivateList();
             }
         }
@@ -255,6 +266,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             if (trickcomm)
             {
                 trickcomm->addParameter(get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"), get_element_data(node, "InitializationOnly"), false);
+                log_node_data(node);
             }
         }
         if (NodeCheck(node, "TrickMethod"))
@@ -262,13 +274,16 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             if (trickcomm)
             {
                 trickcomm->addParameter(get_node_content(node), get_element_data(node, "Name"), "", "", true);
+                log_node_data(node);
             }
         }
         if (NodeCheck(node, "EdgeIo"))
         {
             edgecomm = new EdgeCommModule;
             edgecomm->setConnectedVariable(get_element_data(node, "ConnectedVariable"));
+            log_node_start(node);
             process_elements(myparent, node->children);
+            log_node_end(node);
             edgecomm->finishInitialization(get_element_data(node, "Host"), get_element_data(node, "Port"), StringToDecimal(get_element_data(node, "DataRate"), 1.0));
             AppData.commlist.push_back(edgecomm);
         }
@@ -277,7 +292,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             if (edgecomm)
             {
                 edgecomm->activateFromList();
+                log_node_start(node);
                 process_elements(myparent, node->children);
+                log_node_end(node);
                 edgecomm->deactivateList();
             }
         }
@@ -286,7 +303,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             if (edgecomm)
             {
                 edgecomm->activateToList();
+                log_node_start(node);
                 process_elements(myparent, node->children);
+                log_node_end(node);
                 edgecomm->deactivateList();
             }
         }
@@ -295,6 +314,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             if (edgecomm)
             {
                 edgecomm->addParameter(get_node_content(node), get_element_data(node, "RcsCommand"));
+                log_node_data(node);
             }
         }
         if (NodeCheck(node, "CAN"))
@@ -369,7 +389,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                         StringToInteger(get_element_data(node, "Height"), 800));
             AppData.toplevel = new dcWindow();
             AppData.toplevel->setActiveDisplay(get_element_data(node, "ActiveDisplay"));
+            log_node_start(node);
             process_elements(AppData.toplevel, node->children);
+            log_node_end(node);
         }
         if (NodeCheck(node, "Panel"))
         {
@@ -378,7 +400,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setColor(get_element_data(node, "BackgroundColor"));
             myitem->setOrtho(get_element_data(node, "VirtualWidth"), get_element_data(node, "VirtualHeight"));
             preprocessing = false;
+            log_node_start(node);
             process_elements(myitem, node->children);
+            log_node_end(node);
             preprocessing = true;
         }
         if (NodeCheck(node, "Container"))
@@ -465,6 +489,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setFont(get_element_data(node, "Font"), get_element_data(node, "Face"), get_element_data(node, "Size"), get_element_data(node, "ForceMono"));
             myitem->setShadowOffset(get_element_data(node, "ShadowOffset"));
             myitem->setString(get_node_content(node));
+            log_node_data(node);
         }
         if (NodeCheck(node, "Image"))
         {
