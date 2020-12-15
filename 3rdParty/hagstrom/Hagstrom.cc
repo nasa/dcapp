@@ -46,7 +46,7 @@ void HagstromDevice::setSerialNumber(const std::string &serialnum)
 #else
     if (!serialnum.empty())
     {
-        const size_t numchars = serialnum.length() + 1;
+        const size_t numchars = serialnum.length();
         std::wstring wideserialnum(numchars, L'#');
         mbstowcs(&wideserialnum[0], serialnum.c_str(), numchars);
         this->hagstrom->setSerialNumber(wideserialnum);
