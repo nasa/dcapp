@@ -87,14 +87,10 @@ warning_msg("Could not find libjpeg or libjpeg-turbo");
     this->host = inet_ntoa(*(in_addr * )server->h_addr);
     this->port = portspec;
 
-#if 0
-    if (!pathspec.empty())
-        this->path = pathspec;
-    else
-        this->path = "video";
-#else
+    // Note that the default for path used to be "video" if pathspec was empty, but this is no longer the case since
+    // an empty string is a viable option here.  This may cause some backward-compatibility issues for some displays.
     this->path = pathspec;
-#endif
+
     this->username = usrspec;
     this->password = pwdspec;
 

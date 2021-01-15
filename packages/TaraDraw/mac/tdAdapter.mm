@@ -390,14 +390,11 @@ int tdAlignTop = 0x08;
     {
         if ([ theEvent window ] == [ winview[i] window ])
         {
-#ifdef MAC_OS_X_VERSION_10_7
             NSRect mouserect;
             mouserect.origin = [ NSEvent mouseLocation ];
             NSRect myrect = [[ theEvent window ] convertRectFromScreen: mouserect ];
             mypoint = myrect.origin;
-#else
-            mypoint = [[ theEvent window ] convertScreenToBase: [ NSEvent mouseLocation ]];
-#endif
+
             ukey = [[ theEvent characters ] characterAtIndex:0 ];
             if (ukey > 0xff)
             {

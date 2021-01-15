@@ -2,7 +2,6 @@
 #import <vector>
 #import <string>
 #import <sstream>
-#import <sys/stat.h>
 
 @interface MyApp : NSObject
 {
@@ -17,19 +16,18 @@
 - (void)setArgs:(NSString *)value;
 @end
 
+static NSString *dcappPrefs;
+
 extern void ui_init(const std::string &);
 
 /* Get default arguments from the Application Support folder */
 std::vector<std::string> getArgs(void)
 {
     std::vector<std::string> retvec;
-    NSString *applicationSupportDirectory = [ NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) firstObject ];
-    NSString *dcappSupportDirectory = [[ applicationSupportDirectory stringByAppendingString:@"/dcapp" ] stringByStandardizingPath ];
-    NSString *dcappPrefsFile = [[ dcappSupportDirectory stringByAppendingString:@"/Preferences" ] stringByStandardizingPath ];
 
     MyApp *myapp = [[ MyApp alloc ] init ];
 
-    NSString *contents = [ NSString stringWithContentsOfFile:dcappPrefsFile encoding:NSASCIIStringEncoding error:nil ];
+    NSString *contents = [ NSString stringWithContentsOfFile:dcappPrefs encoding:NSASCIIStringEncoding error:nil ];
     if (contents)
     {
         NSScanner *myscanner = [ NSScanner scannerWithString:contents ];
@@ -60,11 +58,6 @@ std::vector<std::string> getArgs(void)
 /* Store default arguments to the Application Support folder */
 void storeArgs(std::vector<std::string> &arglist)
 {
-    NSString *applicationSupportDirectory = [ NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) firstObject ];
-    NSString *dcappSupportDirectory = [[ applicationSupportDirectory stringByAppendingString:@"/dcapp" ] stringByStandardizingPath ];
-    NSString *dcappPrefsFile = [[ dcappSupportDirectory stringByAppendingString:@"/Preferences" ] stringByStandardizingPath ];
-
-    [[ NSFileManager defaultManager ] createDirectoryAtPath:dcappSupportDirectory withIntermediateDirectories:YES attributes:nil error:nil ];
     NSString *fullpath = [[ NSURL fileURLWithPath:[ NSString stringWithCString:arglist[0].c_str() encoding:NSASCIIStringEncoding ]] path ];
 
     std::string cmdargs;
@@ -79,14 +72,21 @@ void storeArgs(std::vector<std::string> &arglist)
     }
 
     NSString *mydata = [ NSString stringWithFormat:@"{%@}{%s}", fullpath, cmdargs.c_str() ];
-    [ mydata writeToFile:dcappPrefsFile atomically:NO encoding:NSASCIIStringEncoding error:nil ];
+    [ mydata writeToFile:dcappPrefs atomically:NO encoding:NSASCIIStringEncoding error:nil ];
 }
 
 std::vector<std::string> OSgetArgs(int argc, char **argv)
 {
-    std::vector<std::string> arglist;
+    // Set the values for system directories and standard files for subsequent use
+    NSString *applicationSupportDirectory = [ NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) firstObject ];
+    NSString *dcappAppSupport = [[ applicationSupportDirectory stringByAppendingString:@"/dcapp" ] stringByStandardizingPath ];
+    dcappPrefs = [[ dcappAppSupport stringByAppendingString:@"/Preferences" ] stringByStandardizingPath ];
+
+    [[ NSFileManager defaultManager ] createDirectoryAtPath:dcappAppSupport withIntermediateDirectories:YES attributes:nil error:nil ];
 
     ui_init("");
+
+    std::vector<std::string> arglist;
 
     arglist.assign(argv + 1, argv + argc);
 
@@ -217,11 +217,7 @@ std::vector<std::string> OSgetArgs(int argc, char **argv)
     [ panel setResolvesAliases:YES ];
     [ panel setAllowsMultipleSelection:NO ];
 
-#ifdef MAC_OS_X_VERSION_10_9
     if ([ panel runModal ] == NSModalResponseOK)
-#else
-    if ([ panel runModal ] == NSOKButton)
-#endif
         [ specfile setStringValue:[[[ panel URLs ] objectAtIndex: 0 ] path ]];
 }
 
@@ -248,14 +244,7 @@ std::vector<std::string> OSgetArgs(int argc, char **argv)
     return [[ args stringValue ] stringByTrimmingCharactersInSet:[ NSCharacterSet whitespaceCharacterSet ]];
 }
 
-- (void)setSpecfile:(NSString *)value
-{
-    [ specfile setStringValue:value ];
-}
-
-- (void)setArgs:(NSString *)value
-{
-    [ args setStringValue:value ];
-}
+- (void)setSpecfile:(NSString *)value { [ specfile setStringValue:value ]; }
+- (void)setArgs:(NSString *)value { [ args setStringValue:value ]; }
 
 @end
