@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "RenderLib/RenderLib.hh"
+#include "basicutils/timer.hh"
 #include "variables.hh"
 #include "values.hh"
 #include "kolor.hh"
@@ -22,6 +23,10 @@ class VarString
         {
             return var->getString(format);
         };
+        std::string get(Value *zeroTrim)
+        {
+            return var->getString(format, zeroTrim->getDecimal());
+        };
 
     private:
         Variable *var;
@@ -36,6 +41,8 @@ class dcString : public dcGeometric
         void setBackgroundColor(const std::string &);
         void setFont(const std::string &, const std::string &, const std::string &, const std::string &);
         void setShadowOffset(const std::string &);
+        void setUpdateRate(const std::string &);
+        void setZeroTrim(const std::string &);
         void setString(const std::string &);
         void draw(void);
 
@@ -51,6 +58,12 @@ class dcString : public dcGeometric
         Value *fontSize;
         Value *shadowOffset;
         flMonoOption forcemono;
+        Value *zeroTrim;
+        bool trimDefined;
+        Value *updateRate;
+        bool rateDefined;
+        Timer lastUpdate;
+        std::string storedString;
 };
 
 #endif

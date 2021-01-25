@@ -13,11 +13,14 @@
 
 extern appdata AppData;
 
-dcString::dcString(dcParent *myparent) : dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone)
+dcString::dcString(dcParent *myparent) :
+dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone), trimDefined(false), rateDefined(false)
 {
     color.set(1, 1, 1);
     fontSize = getConstantFromDecimal(12);
     shadowOffset = getConstantFromDecimal(0);
+    zeroTrim = getConstantFromDecimal(0);
+    updateRate = getConstantFromDecimal(0);
 }
 
 void dcString::setColor(const std::string &cspec)
@@ -54,6 +57,24 @@ void dcString::setShadowOffset(const std::string &inval)
     if (!inval.empty()) shadowOffset = getValue(inval);
 }
 
+void dcString::setUpdateRate(const std::string &inval)
+{
+    if (!inval.empty())
+    {
+        rateDefined = true;
+        updateRate = getValue(inval);
+    }
+}
+
+void dcString::setZeroTrim(const std::string &inval)
+{
+    if (!inval.empty())
+    {
+        trimDefined = true;
+        zeroTrim = getValue(inval);
+    }
+}
+
 void dcString::setString(const std::string &mystr)
 {
     size_t vstart, vlen, curpos = 0;
@@ -86,8 +107,35 @@ void dcString::draw(void)
     float stringWidth;
 
     std::string mystring;
-    for (i = 0; i < vstring.size(); i++) mystring += filler[i] + vstring[i]->get();
-    mystring += filler[vstring.size()];
+
+    if (rateDefined)
+    {
+        if (lastUpdate.getSeconds() > updateRate->getDecimal())
+        {
+            for (i = 0; i < vstring.size(); i++)
+            {
+                if (trimDefined)
+                    mystring += filler[i] + vstring[i]->get(zeroTrim);
+                else
+                    mystring += filler[i] + vstring[i]->get();
+            }
+            mystring += filler[vstring.size()];
+            lastUpdate.restart();
+            storedString = mystring;
+        }
+        else mystring = storedString;
+    }
+    else
+    {
+        for (i = 0; i < vstring.size(); i++)
+        {
+                if (trimDefined)
+                    mystring += filler[i] + vstring[i]->get(zeroTrim);
+                else
+                    mystring += filler[i] + vstring[i]->get();
+        }
+        mystring += filler[vstring.size()];
+    }
 
     // break mystring into a vector of 1-line substrings
     std::vector <std::string> lines;

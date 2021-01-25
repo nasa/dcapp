@@ -114,7 +114,7 @@ unsigned Constant::compareToValue(Value &that)
 
 double Constant::getDecimal(void) { return this->decval; }
 int Constant::getInteger(void) { return this->intval; }
-std::string Constant::getString(std::string) { return this->strval; }
+std::string Constant::getString(std::string, double) { return this->strval; }
 bool Constant::getBoolean(void) { return this->boolval; }
 
 bool Constant::isConstant(void) { return true; };

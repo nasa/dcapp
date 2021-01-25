@@ -20,7 +20,7 @@ class Value
 
         virtual double getDecimal(void) { return 0.0; };
         virtual int getInteger(void) { return 0; };
-        virtual std::string getString(std::string = "") { return ""; };
+        virtual std::string getString(std::string = "", double = 0) { return ""; };
         virtual bool getBoolean(void) { return false; };
 
         virtual bool isConstant(void) { return false; };

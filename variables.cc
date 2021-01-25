@@ -2,6 +2,7 @@
 #include <string>
 #include <cstdio>
 #include <cstring>
+#include <cmath>
 #include "basicutils/msg.hh"
 #include "basicutils/stringutils.hh"
 #include "values.hh"
@@ -223,14 +224,19 @@ int Variable::getInteger(void)
     }
 }
 
-std::string Variable::getString(std::string format)
+std::string Variable::getString(std::string format, double zeroTrim)
 {
+    double dval;
+
+    if (zeroTrim && (fabs(this->decval) < fabs(zeroTrim))) dval = 0;
+    else dval = this->decval;
+
     if (format.empty())
     {
         switch (this->type)
         {
             case DECIMAL_TYPE:
-                return ConvertToString(this->decval);
+                return ConvertToString(dval);
             case INTEGER_TYPE:
                 return ConvertToString(this->intval);
             case STRING_TYPE:
@@ -246,7 +252,7 @@ std::string Variable::getString(std::string format)
         switch (this->type)
         {
             case DECIMAL_TYPE:
-                asprintf(&tmp_str, format.c_str(), this->decval);
+                asprintf(&tmp_str, format.c_str(), dval);
                 break;
             case INTEGER_TYPE:
                 asprintf(&tmp_str, format.c_str(), this->intval);

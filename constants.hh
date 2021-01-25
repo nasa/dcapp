@@ -22,7 +22,7 @@ class Constant : public Value
 
         double getDecimal(void);
         int getInteger(void);
-        std::string getString(std::string = "");
+        std::string getString(std::string = "", double = 0);
         bool getBoolean(void);
 
         bool isConstant(void);
