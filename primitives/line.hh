@@ -11,11 +11,15 @@ class dcLine : public dcParent
         dcLine(dcParent *);
         void setColor(const std::string &);
         void setLineWidth(const std::string &);
+        void setPattern(const std::string &);
+        void setFactor(const std::string &);
         void draw(void);
     
     private:
         double linewidth;
         Kolor color;
+        uint16_t pattern;
+        int factor;
 };
 
 #endif
