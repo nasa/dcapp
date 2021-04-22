@@ -300,12 +300,14 @@ void translate_end(void)
 }
 #endif
 
-void draw_line(const std::vector<float> &pntsA, float linewidth, float red, float green, float blue, float alpha)
+void draw_line(const std::vector<float> &pntsA, float linewidth, float red, float green, float blue, float alpha, uint16_t pattern, int factor)
 {
     glPushMatrix();
 
     glLineWidth(linewidth);
     glColor4f(red, green, blue, alpha);
+    glLineStipple(factor, pattern);
+    glEnable(GL_LINE_STIPPLE);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(2, GL_FLOAT, 0, pntsA.data());
@@ -313,6 +315,7 @@ void draw_line(const std::vector<float> &pntsA, float linewidth, float red, floa
     glDisableClientState(GL_VERTEX_ARRAY);
 
     glPopMatrix();
+    glDisable(GL_LINE_STIPPLE);
 }
 
 void draw_polygon(const std::vector<float> &pntsA, float red, float green, float blue, float alpha)

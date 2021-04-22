@@ -97,16 +97,16 @@ while test $# -gt 0 ; do
             echo $machtype
             ;;
         --version)
-            echo "1.2.0 alpha"
+            echo "2.0.0 alpha"
             ;;
         --version_short)
-            echo "1.2"
+            echo "2.0"
             ;;
         --version_major)
-            echo "1"
+            echo "2"
             ;;
         --version_minor)
-            echo "2"
+            echo "0"
             ;;
         --exepath)
             echo "${mydir}/dcapp.app/Contents/${osspec}"

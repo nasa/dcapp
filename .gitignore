@@ -2,3 +2,5 @@ obj_*
 lib_*
 bin_*
 *.so
+test_xmls/
+

@@ -427,6 +427,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             dcLine *myitem = new dcLine(myparent);
             myitem->setLineWidth(get_element_data(node, "LineWidth"));
             myitem->setColor(get_element_data(node, "Color"));
+            myitem->setPattern(get_element_data(node, "Pattern"));
+            myitem->setFactor(get_element_data(node, "Factor"));
             process_elements(myitem, node->children);
         }
         if (NodeCheck(node, "Polygon"))

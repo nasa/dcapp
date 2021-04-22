@@ -63,3 +63,14 @@ bool CaseInsensitiveCompare(const std::string &a, const std::string &b)
 
     return true;
 }
+
+int HexStringToInteger(const char *instr, int default_value = 0)
+{
+    if (!instr) return default_value;
+    else return (strtol(instr, 0x0, 16));
+}
+
+int HexStringToInteger(const std::string &instr, int default_value = 0)
+{
+    try { return std::stoi(instr, 0x0, 16); } catch(...) { return default_value; }
+}
