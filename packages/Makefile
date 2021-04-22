@@ -4,8 +4,8 @@
 all:
 	${MAKE} -C basicutils
 	${MAKE} -C TaraDraw
-	${MAKE} -C PixelStream
 	${MAKE} -C RenderLib
+	${MAKE} -C PixelStream
 
 clean:
 	${MAKE} -C basicutils clean

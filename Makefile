@@ -99,12 +99,12 @@ $(OBJDIR)/%.o: %.cc $(HEADERS) $(COMPDEPENDS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 prebuild:
-	${MAKE} -C packages
 	${MAKE} -C 3rdParty
 	${MAKE} -C osenv
 	${MAKE} -C primitives
+	${MAKE} -C packages
 
-postbuild:
+postbuild: prebuild
 	${MAKE} -C samples
 
 clean:
