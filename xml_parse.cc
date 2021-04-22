@@ -437,6 +437,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setFillColor(get_element_data(node, "FillColor"));
             myitem->setLineColor(get_element_data(node, "LineColor"));
             myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            myitem->setLinePattern(get_element_data(node, "LinePattern"));
+            myitem->setLineFactor(get_element_data(node, "LineFactor"));
             process_elements(myitem, node->children);
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
@@ -455,6 +457,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setFillColor(get_element_data(node, "FillColor"));
             myitem->setLineColor(get_element_data(node, "LineColor"));
             myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            myitem->setLinePattern(get_element_data(node, "LinePattern"));
+            myitem->setLineFactor(get_element_data(node, "LineFactor"));
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
                 if (NodeCheck(subnode, "OnPress")) process_elements(myitem->PressList, subnode->children);
@@ -470,6 +474,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setFillColor(get_element_data(node, "FillColor"));
             myitem->setLineColor(get_element_data(node, "LineColor"));
             myitem->setLineWidth(get_element_data(node, "LineWidth"));
+            myitem->setLinePattern(get_element_data(node, "LinePattern"));
+            myitem->setLineFactor(get_element_data(node, "LineFactor"));
             myitem->setRadius(get_element_data(node, "Radius"));
             myitem->setSegments(get_element_data(node, "Segments"));
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)

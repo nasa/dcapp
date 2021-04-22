@@ -15,6 +15,8 @@ class dcRectangle : public dcGeometric
         void setFillColor(const std::string &);
         void setLineColor(const std::string &);
         void setLineWidth(const std::string &);
+        void setLinePattern(const std::string &);
+        void setLineFactor(const std::string &);
         void handleMousePress(double, double);
         void handleMouseRelease(void);
         void draw(void);
@@ -29,6 +31,8 @@ class dcRectangle : public dcGeometric
         Kolor FillColor;
         Kolor LineColor;
         bool selected;
+        uint16_t linePattern;
+        int lineFactor;
 };
 
 #endif

@@ -7,7 +7,7 @@
 
 extern void RegisterPressedPrimitive(dcParent *);
 
-dcCircle::dcCircle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), segments(80), selected(false)
+dcCircle::dcCircle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), segments(80), selected(false), linePattern(0xFFFF), lineFactor(1)
 {
     radius = getConstantFromDecimal(0);
     FillColor.set(0.5, 0.5, 0.5);
@@ -52,6 +52,22 @@ void dcCircle::setLineWidth(const std::string &inval)
     }
 }
 
+void dcCircle::setLinePattern(const std::string &inval)
+{
+    if (!inval.empty()) 
+    {
+        linePattern = HexStringToInteger(inval, 0xFFFF);
+    }
+}
+
+void dcCircle::setLineFactor(const std::string &inval)
+{
+    if (!inval.empty())
+    { 
+        lineFactor = StringToInteger(inval, 1);
+    }
+}
+
 void dcCircle::setRadius(const std::string &inval)
 {
     if (!inval.empty()) radius = getValue(inval);
@@ -92,5 +108,5 @@ void dcCircle::draw(void)
 {
     computeGeometry();
     if (fill) circle_fill(refx, refy, radius->getDecimal(), segments, FillColor.R->getDecimal(), FillColor.G->getDecimal(), FillColor.B->getDecimal(), FillColor.A->getDecimal());
-    if (outline) circle_outline(refx, refy, radius->getDecimal(), segments, LineColor.R->getDecimal(), LineColor.G->getDecimal(), LineColor.B->getDecimal(), LineColor.A->getDecimal(), linewidth);
+    if (outline) circle_outline(refx, refy, radius->getDecimal(), segments, LineColor.R->getDecimal(), LineColor.G->getDecimal(), LineColor.B->getDecimal(), LineColor.A->getDecimal(), linewidth, linePattern, lineFactor);
 }
