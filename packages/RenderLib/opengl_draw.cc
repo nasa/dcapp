@@ -379,7 +379,7 @@ void draw_quad(const std::vector<float> &pntsA, float red, float green, float bl
     glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void circle_outline(float cx, float cy, float r, int num_segments, float red, float green, float blue, float alpha, float linewidth)
+void circle_outline(float cx, float cy, float r, int num_segments, float red, float green, float blue, float alpha, float linewidth, uint16_t linepattern, int linefactor)
 {
     float theta = 2 * 3.1415926 / (float)num_segments;
     float c = cosf(theta); // precalculate the sine and cosine
@@ -391,8 +391,11 @@ void circle_outline(float cx, float cy, float r, int num_segments, float red, fl
 
     glColor4f(red, green, blue, alpha);
     glLineWidth(linewidth);
+    glLineStipple(linefactor, linepattern);
+    glEnable(GL_LINE_STIPPLE);
     glEnable(GL_LINE_SMOOTH);
     glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
+
     glBegin(GL_LINE_LOOP);
     for (i = 0; i < num_segments; i++)
     {
@@ -405,6 +408,7 @@ void circle_outline(float cx, float cy, float r, int num_segments, float red, fl
     }
     glEnd();
     glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_LINE_STIPPLE);
 }
 
 void circle_fill(float cx, float cy, float r, int num_segments, float red, float green, float blue, float alpha)

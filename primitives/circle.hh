@@ -16,6 +16,8 @@ class dcCircle : public dcGeometric
         void setFillColor(const std::string &);
         void setLineColor(const std::string &);
         void setLineWidth(const std::string &);
+        void setLinePattern(const std::string &);
+        void setLineFactor(const std::string &);
         void setRadius(const std::string &);
         void setSegments(const std::string &);
         void handleMousePress(double, double);
@@ -34,6 +36,8 @@ class dcCircle : public dcGeometric
         Kolor LineColor;
         unsigned segments;
         bool selected;
+        uint16_t linePattern;
+        int lineFactor;
 };
 
 #endif

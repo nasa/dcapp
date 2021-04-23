@@ -24,11 +24,11 @@ extern void rotate_end(void);
 extern void translate_start(float, float);
 extern void translate_end(void);
 #endif
-extern void draw_line(const std::vector<float> &, float, float, float, float, float, uint16_t pattern=0xFFFF, int factor=1);
+extern void draw_line(const std::vector<float> &, float, float, float, float, float, uint16_t, int);
 extern void draw_polygon(const std::vector<float> &, float, float, float, float);
 extern void draw_filled_triangles(const std::vector<float> &, float, float, float, float);
 extern void draw_quad(const std::vector<float> &, float, float, float, float);
-extern void circle_outline(float, float, float, int, float, float, float, float, float);
+extern void circle_outline(float, float, float, int, float, float, float, float, float, uint16_t, int);
 extern void circle_fill(float, float, float, int, float, float, float, float);
 extern void draw_textured_sphere(float, float, const std::vector<float> &, float, tdTexture *, float, float, float);
 

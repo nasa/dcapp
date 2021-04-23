@@ -99,7 +99,7 @@ void dcADI::draw_roll_bug(double roll, double width, double height, double radiu
 
     rotate_start(roll);
         draw_filled_triangles(pointsL, YELLOW[0], YELLOW[1], YELLOW[2], 1);
-        draw_line(pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1);
+        draw_line(pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
     rotate_end();
 }
 
@@ -137,7 +137,7 @@ void dcADI::draw_cross_hairs(double radius)
     addPoint(crosshair, -halfwidth, -halfwidth);
     addPoint(crosshair, -length, -halfwidth);
     addPoint(crosshair, -length, halfwidth);
-    draw_line(crosshair, 1, BLACK[0], BLACK[1], BLACK[2], 1);
+    draw_line(crosshair, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
 }
 
 void dcADI::draw_needles(double radius, double roll_err, double pitch_err, double yaw_err)
@@ -161,7 +161,7 @@ void dcADI::draw_needles(double radius, double roll_err, double pitch_err, doubl
     addPoint(pntsL, delta-halfwidth, -length );
     addPoint(pntsL, delta+halfwidth, -length );
     addPoint(pntsL, delta+halfwidth, -needle_edge );
-    draw_line(pntsL, 1, BLACK[0], BLACK[1], BLACK[2], 1);
+    draw_line(pntsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
 
     delta = get_error_info(roll_err, radius);
     needle_edge = radius*(cos(asin(delta/radius)));
@@ -178,7 +178,7 @@ void dcADI::draw_needles(double radius, double roll_err, double pitch_err, doubl
     addPoint(pntsL, delta-halfwidth, length );
     addPoint(pntsL, delta+halfwidth, length );
     addPoint(pntsL, delta+halfwidth, needle_edge );
-    draw_line(pntsL, 1, BLACK[0], BLACK[1], BLACK[2], 1);
+    draw_line(pntsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
 
     delta = get_error_info(pitch_err, radius);
     needle_edge = radius*(cos(asin(delta/radius)));
@@ -195,7 +195,7 @@ void dcADI::draw_needles(double radius, double roll_err, double pitch_err, doubl
     addPoint(pntsL, length, delta-halfwidth );
     addPoint(pntsL, length, delta+halfwidth );
     addPoint(pntsL, needle_edge, delta+halfwidth );
-    draw_line(pntsL, 1, BLACK[0], BLACK[1], BLACK[2], 1);
+    draw_line(pntsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
 }
 
 double dcADI::get_error_info(double value, double outer_rad)

@@ -8,7 +8,7 @@ extern void RegisterPressedPrimitive(dcParent *);
 
 extern appdata AppData;
 
-dcPolygon::dcPolygon(dcParent *myparent) : linewidth(1), fill(false), outline(false), selected(false)
+dcPolygon::dcPolygon(dcParent *myparent) : linewidth(1), fill(false), outline(false), selected(false), linePattern(0xFFFF), lineFactor(1)
 {
     myparent->addChild(this);
     FillColor.set(0.5, 0.5, 0.5);
@@ -50,6 +50,22 @@ void dcPolygon::setLineWidth(const std::string &inval)
     {
         linewidth = StringToDecimal(inval, 1);
         outline = true;
+    }
+}
+
+void dcPolygon::setLinePattern(const std::string &inval)
+{
+    if (!inval.empty()) 
+    {
+        linePattern = HexStringToInteger(inval, 0xFFFF);
+    }
+}
+
+void dcPolygon::setLineFactor(const std::string &inval)
+{
+    if (!inval.empty())
+    { 
+        lineFactor = StringToInteger(inval, 1);
     }
 }
 
@@ -99,7 +115,7 @@ void dcPolygon::draw(void)
     if (fill)
         draw_polygon(this->vertices, FillColor.R->getDecimal(), FillColor.G->getDecimal(), FillColor.B->getDecimal(), FillColor.A->getDecimal());
     if (outline)
-        draw_line(this->vertices, linewidth, LineColor.R->getDecimal(), LineColor.G->getDecimal(), LineColor.B->getDecimal(), LineColor.A->getDecimal());
+        draw_line(this->vertices, linewidth, LineColor.R->getDecimal(), LineColor.G->getDecimal(), LineColor.B->getDecimal(), LineColor.A->getDecimal(), linePattern, lineFactor);
 
     // this clears AppData.vertices for the next primitive (Polygon or Line) that uses it
     AppData.vertices.clear();

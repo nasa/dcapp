@@ -8,7 +8,7 @@
 
 extern void RegisterPressedPrimitive(dcParent *);
 
-dcRectangle::dcRectangle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), selected(false)
+dcRectangle::dcRectangle(dcParent *myparent) : dcGeometric(myparent), linewidth(1), fill(false), outline(false), selected(false), linePattern(0xFFFF), lineFactor(1)
 {
     FillColor.set(0.5, 0.5, 0.5);
     LineColor.set(1, 1, 1);
@@ -49,6 +49,22 @@ void dcRectangle::setLineWidth(const std::string &inval)
     {
         linewidth = StringToDecimal(inval, 1);
         outline = true;
+    }
+}
+
+void dcRectangle::setLinePattern(const std::string &inval)
+{
+    if (!inval.empty()) 
+    {
+        linePattern = HexStringToInteger(inval, 0xFFFF);
+    }
+}
+
+void dcRectangle::setLineFactor(const std::string &inval)
+{
+    if (!inval.empty())
+    { 
+        lineFactor = StringToInteger(inval, 1);
     }
 }
 
@@ -111,7 +127,7 @@ void dcRectangle::draw(void)
     if (outline)
     {
         addPoint(pointsL, 0, 0);
-        draw_line(pointsL, linewidth, LineColor.R->getDecimal(), LineColor.G->getDecimal(), LineColor.B->getDecimal(), LineColor.A->getDecimal());
+        draw_line(pointsL, linewidth, LineColor.R->getDecimal(), LineColor.G->getDecimal(), LineColor.B->getDecimal(), LineColor.A->getDecimal(), linePattern, lineFactor);
     }
     container_end();
 }

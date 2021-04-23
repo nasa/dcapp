@@ -14,6 +14,8 @@ class dcPolygon : public dcParent
         void setFillColor(const std::string &);
         void setLineColor(const std::string &);
         void setLineWidth(const std::string &);
+        void setLinePattern(const std::string &);
+        void setLineFactor(const std::string &);
         void handleMousePress(double, double);
         void handleMouseRelease(void);
         void draw(void);
@@ -29,6 +31,8 @@ class dcPolygon : public dcParent
         Kolor LineColor;
         std::vector<float> vertices;
         bool selected;
+        uint16_t linePattern;
+        int lineFactor;
 };
 
 #endif
