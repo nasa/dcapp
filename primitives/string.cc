@@ -14,8 +14,9 @@
 extern appdata AppData;
 
 dcString::dcString(dcParent *myparent) :
-dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone), trimDefined(false), rateDefined(false)
+dcGeometric(myparent), background(false), fontID(0x0), outlineFontID(0x0), forcemono(flMonoNone), trimDefined(false), rateDefined(false), outlineDefined(false)
 {
+    outlineColor.set(1,1,1);
     color.set(1, 1, 1);
     fontSize = getConstantFromDecimal(12);
     shadowOffset = getConstantFromDecimal(0);
@@ -50,6 +51,12 @@ void dcString::setFont(const std::string &font, const std::string &face, const s
         else if (CaseInsensitiveCompare(mono, "AlphaNumeric")) forcemono = flMonoAlphaNumeric;
         else if (CaseInsensitiveCompare(mono, "All")) forcemono = flMonoAll;
     }
+}
+
+void dcString::setOutlineFont(const std::string &font, const std::string &face)
+{
+    if (!font.empty()) outlineFontID = tdLoadFont(font, face);
+    if (!outlineFontID) outlineFontID = tdLoadFont(AppData.defaultoutlinefont, face);
 }
 
 void dcString::setShadowOffset(const std::string &inval)
@@ -94,6 +101,15 @@ void dcString::setString(const std::string &mystr)
     } while (curpos < mystr.size());
 
     filler.push_back("");
+}
+
+void dcString::setOutlineColor(const std::string &cspec)
+{
+    if (!cspec.empty())
+    {
+        outlineColor.set(cspec);
+        outlineDefined = true;
+    }
 }
 
 void dcString::draw(void)
@@ -198,7 +214,15 @@ void dcString::draw(void)
         {
             draw_string(myleft + shadowOffset->getDecimal(), mybottom - shadowOffset->getDecimal(), fontSize->getDecimal(), 0, 0, 0, 1, fontID, forcemono, lines[i]);
         }
+
         draw_string(myleft, mybottom, fontSize->getDecimal(), color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal(), fontID, forcemono, lines[i]);
+
+        // draw outline
+        if (outlineDefined) 
+        {
+            draw_string(myleft, mybottom, fontSize->getDecimal(), outlineColor.R->getDecimal(), outlineColor.G->getDecimal(), outlineColor.B->getDecimal(), 
+                outlineColor.A->getDecimal(), outlineFontID, forcemono, lines[i]);
+        }
 
         rotate_end();
         translate_end();

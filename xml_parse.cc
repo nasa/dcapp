@@ -495,9 +495,11 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setColor(get_element_data(node, "Color"));
             myitem->setBackgroundColor(get_element_data(node, "BackgroundColor"));
             myitem->setFont(get_element_data(node, "Font"), get_element_data(node, "Face"), get_element_data(node, "Size"), get_element_data(node, "ForceMono"));
+            myitem->setOutlineFont(get_element_data(node, "OutlineFont"), get_element_data(node, "Face"));
             myitem->setShadowOffset(get_element_data(node, "ShadowOffset"));
             myitem->setUpdateRate(get_element_data(node, "UpdateRate"));
             myitem->setZeroTrim(get_element_data(node, "ZeroTrim"));
+            myitem->setOutlineColor(get_element_data(node, "OutlineColor"));
             myitem->setString(get_node_content(node));
             log_node_data(node);
         }

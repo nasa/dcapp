@@ -40,10 +40,12 @@ class dcString : public dcGeometric
         void setColor(const std::string &);
         void setBackgroundColor(const std::string &);
         void setFont(const std::string &, const std::string &, const std::string &, const std::string &);
+        void setOutlineFont(const std::string &, const std::string &);
         void setShadowOffset(const std::string &);
         void setUpdateRate(const std::string &);
         void setZeroTrim(const std::string &);
         void setString(const std::string &);
+        void setOutlineColor(const std::string &);
         void draw(void);
 
     private:
@@ -55,6 +57,7 @@ class dcString : public dcGeometric
         std::vector<VarString *> vstring;
         std::vector<std::string> filler;
         tdFont *fontID;
+        tdFont *outlineFontID;
         Value *fontSize;
         Value *shadowOffset;
         flMonoOption forcemono;
@@ -64,6 +67,8 @@ class dcString : public dcGeometric
         bool rateDefined;
         Timer lastUpdate;
         std::string storedString;
+        bool outlineDefined;
+        Kolor outlineColor;
 };
 
 #endif
