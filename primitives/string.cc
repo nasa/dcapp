@@ -51,6 +51,19 @@ void dcString::setFont(const std::string &font, const std::string &face, const s
         else if (CaseInsensitiveCompare(mono, "AlphaNumeric")) forcemono = flMonoAlphaNumeric;
         else if (CaseInsensitiveCompare(mono, "All")) forcemono = flMonoAll;
     }
+
+    // get file for outline 
+    std::string outlinefont = font;
+    if(!font.empty()) {
+        if (outlinefont[outlinefont.length() - 1] == '/')
+            outlinefont = outlinefont.substr(0, outlinefont.length()-1);
+
+        if (outlinefont.substr(outlinefont.length() - 4) == ".ttf")
+            outlinefont = outlinefont.substr(0, outlinefont.length()-4) + "-Outline.ttf";
+        else
+            outlinefont = outlinefont + "-Outline";
+    }
+    setOutlineFont(outlinefont, face);
 }
 
 void dcString::setOutlineFont(const std::string &font, const std::string &face)
