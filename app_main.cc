@@ -184,6 +184,7 @@ static void SetDefaultEnvironment(std::string pathspec)
 
     AppData.dcapphome = PathInfo(mypath + "/../../../").getFullPath();
     AppData.defaultfont = AppData.dcapphome + "/dcapp.app/Contents/Resources/fonts/defaultfont";
+    AppData.defaultoutlinefont = AppData.dcapphome + "/dcapp.app/Contents/Resources/fonts/defaultfont-Outline";
 
     std::string configscript = PathInfo(mypath + "/../dcapp-config").getFullPath();
 
