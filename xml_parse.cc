@@ -498,7 +498,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setShadowOffset(get_element_data(node, "ShadowOffset"));
             myitem->setUpdateRate(get_element_data(node, "UpdateRate"));
             myitem->setZeroTrim(get_element_data(node, "ZeroTrim"));
-            myitem->setOutlineColor(get_element_data(node, "LineColor"));
             myitem->setString(get_node_content(node));
             log_node_data(node);
         }
