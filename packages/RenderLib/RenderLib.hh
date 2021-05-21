@@ -12,7 +12,7 @@ extern void setup_panel(float, float, float, float, float, float);
 extern void create_and_load_glyph(unsigned int *, void *);
 extern void create_texture(tdTexture *);
 extern void load_texture(tdTexture *);
-extern void draw_string(float, float, float, float, float, float, float, tdFont *, flMonoOption, const std::string &);
+extern void draw_string(float, float, float, float, float, float, float, tdFont *, flMonoOption, const std::string &, bool outline = false);
 extern void draw_glyph(unsigned int, float, float, float, float);
 extern void draw_image(tdTexture *, float, float);
 extern void get_image_pixel(unsigned char [], tdTexture *, float, float);
