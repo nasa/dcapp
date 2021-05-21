@@ -38,7 +38,7 @@ class tdFont
         std::string getFileName(void);
         std::string getFaceName(void);
         unsigned int getBaseSize(void);
-        void render(const std::string &, flMonoOption, bool outline = false);
+        void render(const std::string &, bool, flMonoOption);
     private:
         static FT_Library library;
         static const char trailingBytesForUTF8[256];

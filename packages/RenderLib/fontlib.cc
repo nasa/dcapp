@@ -193,7 +193,7 @@ unsigned int tdFont::getBaseSize(void)
 }
 
 
-void tdFont::render(const std::string &instring, flMonoOption mono=flMonoNone, bool outline)
+void tdFont::render(const std::string &instring, bool outline, flMonoOption mono=flMonoNone)
 {
     if (!(this->valid)) return;
 
@@ -237,10 +237,7 @@ void tdFont::render(const std::string &instring, flMonoOption mono=flMonoNone, b
                     previndex = myindex;
                 }
             }
-            if (!outline)
-        		draw_glyph(ginfo->texture, ginfo->bitmap_left, ginfo->bitmap_top, xkern, xadvance);
-        	else
-        		draw_glyph(ginfo->texture, ginfo->bitmap_left, ginfo->bitmap_top, xkern, xadvance);
+    		draw_glyph(ginfo->texture, ginfo->bitmap_left, ginfo->bitmap_top, xkern, xadvance);
         }
     }
 }
@@ -295,16 +292,6 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, GlyphInfo *ginfo_outline, UTF32 ind
         }
     }
 
-    if (index == 'E') {
-    	for (int a = 0; a < 64; a++) {
-    		for (int b = 0; b < 64; b++) {
-    			printf("%d", (bool)bitmap_outline[a][b]);
-    		}
-    		printf("\n");
-    	}
-    }
-    printf("\n");
-
     ginfo->index = index;
     ginfo->bitmap_left = (float)(slot->bitmap_left);
     ginfo->bitmap_top = (float)(slot->bitmap_top - 64);
@@ -312,20 +299,12 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, GlyphInfo *ginfo_outline, UTF32 ind
     ginfo->height = slot->bitmap.rows;
     ginfo->advance = (float)(slot->advance.x>>6);
 
+    // copy to outline glyphInfo
+    *ginfo_outline = *ginfo;
+
     if (ginfo->advance > this->max_advance) this->max_advance = ginfo->advance;
     if (isalnum(index) && ginfo->advance > this->max_advance_alnum) this->max_advance_alnum = ginfo->advance;
     if (isdigit(index) && ginfo->advance > this->max_advance_numeric) this->max_advance_numeric = ginfo->advance;
-
-    ginfo_outline->index = index;
-    ginfo_outline->bitmap_left = (float)(slot->bitmap_left);
-    ginfo_outline->bitmap_top = (float)(slot->bitmap_top - 64);
-    ginfo_outline->width = slot->bitmap.width;
-    ginfo_outline->height = slot->bitmap.rows;
-    ginfo_outline->advance = (float)(slot->advance.x>>6);
-
-    if (ginfo_outline->advance > this->max_advance) this->max_advance = ginfo_outline->advance;
-    if (isalnum(index) && ginfo_outline->advance > this->max_advance_alnum) this->max_advance_alnum = ginfo_outline->advance;
-    if (isdigit(index) && ginfo_outline->advance > this->max_advance_numeric) this->max_advance_numeric = ginfo_outline->advance;
 
     create_and_load_glyph(&(ginfo->texture), bitmap_translated);
     create_and_load_glyph(&(ginfo_outline->texture), bitmap_outline);
@@ -357,7 +336,13 @@ GlyphInfo * tdFont::getGlyphOutlineInfo(UTF32 index)
     // if not in the pre-load list, check the extras list
     if (extras_outline.find(index) != extras_outline.end()) return extras_outline[index];
 
-    return 0;
+    // if not in either list, learn it and load it into extras
+    GlyphInfo *newglyph = new GlyphInfo;
+    GlyphInfo *newglyphOutline = new GlyphInfo;   
+    this->loadGlyphInfo(newglyph, newglyphOutline, index);
+    extras[index] = newglyph;
+    extras_outline[index] = newglyphOutline;
+    return newglyph;
 }
 
 

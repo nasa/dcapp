@@ -206,13 +206,13 @@ void dcString::draw(void)
         }
         if (shadowOffset->getBoolean())
         {
-            draw_string(myleft + shadowOffset->getDecimal(), mybottom - shadowOffset->getDecimal(), fontSize->getDecimal(), 0, 0, 0, 1, fontID, forcemono, lines[i]);
+            draw_string(myleft + shadowOffset->getDecimal(), mybottom - shadowOffset->getDecimal(), fontSize->getDecimal(), 0, 0, 0, 1, fontID, forcemono, false, lines[i]);
         }
 
         if (outlineDefined) {
-            draw_string(myleft, mybottom, fontSize->getDecimal(), outlineColor.R->getDecimal(), outlineColor.G->getDecimal(), outlineColor.B->getDecimal(), color.A->getDecimal(), fontID, forcemono, lines[i], true);
+            draw_string(myleft, mybottom, fontSize->getDecimal(), outlineColor.R->getDecimal(), outlineColor.G->getDecimal(), outlineColor.B->getDecimal(), color.A->getDecimal(), fontID, forcemono, true, lines[i]);
         }
-        draw_string(myleft, mybottom, fontSize->getDecimal(), color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal(), fontID, forcemono, lines[i]);
+        draw_string(myleft, mybottom, fontSize->getDecimal(), color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal(), fontID, forcemono, false, lines[i]);
         
 
         rotate_end();

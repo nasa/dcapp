@@ -185,7 +185,7 @@ void load_texture(tdTexture *textureID)
     }
 }
 
-void draw_string(float xpos, float ypos, float size, float red, float green, float blue, float alpha, tdFont *fontID, flMonoOption mono, const std::string &instring, bool outline)
+void draw_string(float xpos, float ypos, float size, float red, float green, float blue, float alpha, tdFont *fontID, flMonoOption mono, bool outline, const std::string &instring)
 {
     float scale = size / fontID->getBaseSize();
     glColor4f(red, green, blue, alpha);
@@ -193,7 +193,7 @@ void draw_string(float xpos, float ypos, float size, float red, float green, flo
         glEnable(GL_TEXTURE_2D);                                       // Enable Texture Mapping
         glTranslatef(xpos, ypos - (fontID->getDescender() * scale), 0);
         glScalef(scale, scale, 0);
-        fontID->render(instring, mono, outline);
+        fontID->render(instring, outline, mono);
         glDisable(GL_TEXTURE_2D);
     glPopMatrix();
 }
