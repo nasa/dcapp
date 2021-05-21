@@ -283,9 +283,9 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, GlyphInfo *ginfo_outline, UTF32 ind
             		for ( cj=0; cj<3; cj++ ) {
             			ii = i+ci-1;
             			jj = j+cj-1;
-            			if ( ii >= 0 && ii < 64 && jj >= 0 && jj < 64 && circular_filter[ci][cj] && !bitmap_translated[ii][jj] ) {
+            			if ( ii >= 0 && ii < 64 && jj >= 0 && jj < 64 && circular_filter[ci][cj] && bitmap_translated[ii][jj] < 100 ) {
             				bitmap_outline[ii][jj] = std::min(255, bitmap_translated[i][j] + bitmap_outline[ii][jj]);
-            				bitmap_outline[ii][jj] = std::max(100, (int)bitmap_outline[ii][jj]);
+            				//bitmap_outline[ii][jj] = std::max(150, (int)bitmap_outline[ii][jj]);
             			}
             		}
             }
