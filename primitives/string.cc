@@ -14,10 +14,9 @@
 extern appdata AppData;
 
 dcString::dcString(dcParent *myparent) :
-dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone), trimDefined(false), rateDefined(false), outlineDefined(false)
+dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone), trimDefined(false), rateDefined(false)
 {
     color.set(1, 1, 1);
-    outlineColor.set( 0, 0, 0);
     fontSize = getConstantFromDecimal(12);
     shadowOffset = getConstantFromDecimal(0);
     zeroTrim = getConstantFromDecimal(0);
@@ -27,15 +26,6 @@ dcGeometric(myparent), background(false), fontID(0x0), forcemono(flMonoNone), tr
 void dcString::setColor(const std::string &cspec)
 {
     if (!cspec.empty()) color.set(cspec);
-}
-
-void dcString::setOutlineColor(const std::string &cspec)
-{
-    if (!cspec.empty())
-    {
-        outlineColor.set(cspec);
-        outlineDefined = true;
-    }
 }
 
 void dcString::setBackgroundColor(const std::string &cspec)
@@ -208,12 +198,7 @@ void dcString::draw(void)
         {
             draw_string(myleft + shadowOffset->getDecimal(), mybottom - shadowOffset->getDecimal(), fontSize->getDecimal(), 0, 0, 0, 1, fontID, forcemono, lines[i]);
         }
-
-        if (outlineDefined) {
-            draw_string(myleft, mybottom, fontSize->getDecimal(), outlineColor.R->getDecimal(), outlineColor.G->getDecimal(), outlineColor.B->getDecimal(), color.A->getDecimal(), fontID, forcemono, lines[i], true);
-        }
         draw_string(myleft, mybottom, fontSize->getDecimal(), color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal(), fontID, forcemono, lines[i]);
-        
 
         rotate_end();
         translate_end();

@@ -39,7 +39,6 @@ class dcString : public dcGeometric
         dcString(dcParent *);
         void setColor(const std::string &);
         void setBackgroundColor(const std::string &);
-        void setOutlineColor(const std::string &);
         void setFont(const std::string &, const std::string &, const std::string &, const std::string &);
         void setShadowOffset(const std::string &);
         void setUpdateRate(const std::string &);
@@ -53,7 +52,6 @@ class dcString : public dcGeometric
         bool background;
         Kolor color;
         Kolor bgcolor;
-        Kolor outlineColor;
         std::vector<VarString *> vstring;
         std::vector<std::string> filler;
         tdFont *fontID;
@@ -64,7 +62,6 @@ class dcString : public dcGeometric
         bool trimDefined;
         Value *updateRate;
         bool rateDefined;
-        bool outlineDefined;
         Timer lastUpdate;
         std::string storedString;
 };

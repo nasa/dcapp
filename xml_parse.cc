@@ -492,7 +492,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
-            myitem->setOutlineColor(get_element_data(node, "LineColor"));
             myitem->setColor(get_element_data(node, "Color"));
             myitem->setBackgroundColor(get_element_data(node, "BackgroundColor"));
             myitem->setFont(get_element_data(node, "Font"), get_element_data(node, "Face"), get_element_data(node, "Size"), get_element_data(node, "ForceMono"));
