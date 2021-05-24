@@ -100,7 +100,7 @@ valid(false)
     this->descender = (float)(this->face->size->metrics.descender>>6);
 
     // pre-load commonly-used glyphs
-    for (UTF32 glyph=PRELOAD_START; glyph<=PRELOAD_END; glyph++) this->loadGlyphInfo(&(this->gdata[glyph]), glyph);
+    for (UTF32 glyph=PRELOAD_START; glyph<=PRELOAD_END; glyph++) this->loadGlyphInfo(&(this->gdata[glyph]), &(this->gdata_outline[glyph]), glyph);
 }
 
 
@@ -193,7 +193,7 @@ unsigned int tdFont::getBaseSize(void)
 }
 
 
-void tdFont::render(const std::string &instring, flMonoOption mono=flMonoNone)
+void tdFont::render(const std::string &instring, bool outline, flMonoOption mono=flMonoNone)
 {
     if (!(this->valid)) return;
 
@@ -208,7 +208,11 @@ void tdFont::render(const std::string &instring, flMonoOption mono=flMonoNone)
     {
         current += this->convertUTF8toUTF32(current, &out);
 
-        ginfo = this->getGlyphInfo(out);
+        if (!outline)
+        	ginfo = this->getGlyphInfo(out);
+        else
+        	ginfo = this->getGlyphOutlineInfo(out);
+
         if (ginfo)
         {
             xkern = 0;
@@ -233,14 +237,13 @@ void tdFont::render(const std::string &instring, flMonoOption mono=flMonoNone)
                     previndex = myindex;
                 }
             }
-
-            draw_glyph(ginfo->texture, ginfo->bitmap_left, ginfo->bitmap_top, xkern, xadvance);
+    		draw_glyph(ginfo->texture, ginfo->bitmap_left, ginfo->bitmap_top, xkern, xadvance);
         }
     }
 }
 
 
-void tdFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
+void tdFont::loadGlyphInfo(GlyphInfo *ginfo, GlyphInfo *ginfo_outline, UTF32 index)
 {
     unsigned int i, j;
     unsigned char bitmap[64][64];
@@ -259,6 +262,35 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
                 bitmap[i][j] = 0;
         }
     }
+    unsigned char bitmap_outline[64][64] = {0};
+    static const unsigned char circular_filter[3][3] = {
+    	{1, 1, 1},
+    	{1, 0, 1},
+    	{1, 1, 1}
+    };
+    unsigned char bitmap_translated[64][64] = {0};
+    for (i=0; i<63; i++) {
+        for (j=0; j<63; j++) {
+        	bitmap_translated[i+1][j+1] = bitmap[i][j];
+        }
+    }
+
+    int ci, cj, ii, jj;
+    for (i=0; i<64; i++) {
+        for (j=0; j<64; j++) {
+            if (bitmap_translated[i][j]) {
+            	for( ci=0; ci<3; ci++ )
+            		for ( cj=0; cj<3; cj++ ) {
+            			ii = i+ci-1;
+            			jj = j+cj-1;
+            			if ( ii >= 0 && ii < 64 && jj >= 0 && jj < 64 && circular_filter[ci][cj] && bitmap_translated[ii][jj] < 100 ) {
+            				bitmap_outline[ii][jj] = std::min(255, bitmap_translated[i][j] + bitmap_outline[ii][jj]);
+            				//bitmap_outline[ii][jj] = std::max(150, (int)bitmap_outline[ii][jj]);
+            			}
+            		}
+            }
+        }
+    }
 
     ginfo->index = index;
     ginfo->bitmap_left = (float)(slot->bitmap_left);
@@ -267,11 +299,15 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, UTF32 index)
     ginfo->height = slot->bitmap.rows;
     ginfo->advance = (float)(slot->advance.x>>6);
 
+    // copy to outline glyphInfo
+    *ginfo_outline = *ginfo;
+
     if (ginfo->advance > this->max_advance) this->max_advance = ginfo->advance;
     if (isalnum(index) && ginfo->advance > this->max_advance_alnum) this->max_advance_alnum = ginfo->advance;
     if (isdigit(index) && ginfo->advance > this->max_advance_numeric) this->max_advance_numeric = ginfo->advance;
 
-    create_and_load_glyph(&(ginfo->texture), bitmap);
+    create_and_load_glyph(&(ginfo->texture), bitmap_translated);
+    create_and_load_glyph(&(ginfo_outline->texture), bitmap_outline);
 }
 
 
@@ -284,9 +320,28 @@ GlyphInfo * tdFont::getGlyphInfo(UTF32 index)
     if (extras.find(index) != extras.end()) return extras[index];
 
     // if not in either list, learn it and load it into extras
-    GlyphInfo *newglyph = new GlyphInfo;        
-    this->loadGlyphInfo(newglyph, index);
+    GlyphInfo *newglyph = new GlyphInfo;
+    GlyphInfo *newglyphOutline = new GlyphInfo;   
+    this->loadGlyphInfo(newglyph, newglyphOutline, index);
     extras[index] = newglyph;
+    extras_outline[index] = newglyphOutline;
+    return newglyph;
+}
+
+GlyphInfo * tdFont::getGlyphOutlineInfo(UTF32 index)
+{
+    // first, check our pre-load list
+    if (index >= PRELOAD_START && index <= PRELOAD_END) return (&(this->gdata_outline[index]));
+
+    // if not in the pre-load list, check the extras list
+    if (extras_outline.find(index) != extras_outline.end()) return extras_outline[index];
+
+    // if not in either list, learn it and load it into extras
+    GlyphInfo *newglyph = new GlyphInfo;
+    GlyphInfo *newglyphOutline = new GlyphInfo;   
+    this->loadGlyphInfo(newglyph, newglyphOutline, index);
+    extras[index] = newglyph;
+    extras_outline[index] = newglyphOutline;
     return newglyph;
 }
 

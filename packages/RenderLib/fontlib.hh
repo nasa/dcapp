@@ -38,7 +38,7 @@ class tdFont
         std::string getFileName(void);
         std::string getFaceName(void);
         unsigned int getBaseSize(void);
-        void render(const std::string &, flMonoOption);
+        void render(const std::string &, bool, flMonoOption);
     private:
         static FT_Library library;
         static const char trailingBytesForUTF8[256];
@@ -54,11 +54,14 @@ class tdFont
         float max_advance_alnum;
         float max_advance_numeric;
         GlyphInfo gdata[PRELOAD_END+1];
+        GlyphInfo gdata_outline[PRELOAD_END+1];
         GlyphSet extras;
+        GlyphSet extras_outline;
         bool valid;
 
-        void loadGlyphInfo(GlyphInfo *, UTF32);
+        void loadGlyphInfo(GlyphInfo *, GlyphInfo *, UTF32);
         GlyphInfo *getGlyphInfo(UTF32);
+        GlyphInfo *getGlyphOutlineInfo(UTF32);
         int convertUTF8toUTF32(UTF8 *, UTF32 *);
         bool isLegalUTF8(const UTF8 *, int);
 };
