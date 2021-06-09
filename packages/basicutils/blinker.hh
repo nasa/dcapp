@@ -35,5 +35,5 @@ public:
     void processAllBlinkers();
     void startBlinker(std::string name);
     void stopBlinker(std::string name);
-    void addBlinker(std::string name, int* bs, int reps, int iv);
+    void addBlinker(std::string name, blinker b);
 };
