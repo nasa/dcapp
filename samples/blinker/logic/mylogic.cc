@@ -12,10 +12,8 @@ extern "C" void DisplayInit(void)
         * key for accessing the variable
         * blink manager for setting the DCAPP variable, num iterations, and duration per interval (ms)
     */
-    bh.b_map = {
-        {"IMAGE", blinker(IMAGE_BLINK_STATE, 4, 1000) },
-        {"CLOCK", blinker(CLOCK_BLINK_STATE, 30, 200) }
-    };
+    bh.addBlinker("IMAGE", blinker(IMAGE_BLINK_STATE, 4, 1000));
+    bh.addBlinker("CLOCK", blinker(CLOCK_BLINK_STATE, 30, 200));
 
     bh.startBlinker("IMAGE");
     bh.startBlinker("CLOCK");

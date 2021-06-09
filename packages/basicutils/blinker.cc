@@ -3,9 +3,23 @@
 
 #include "blinker.hh"
 
-blinker::blinker() {}
+blinker::blinker() 
+{}
 
-blinker::blinker(int* bs, int reps, int iv) : blink_state(bs), repetitions(reps), interval_ms(iv), is_blinking(false) {}
+/*
+    initialize a blinker
+
+    params:
+    * bs: pointer to trick variable being toggled. Switches between 0 and 1 on blink cycles
+    * reps: blinks performed per cycle. e.g. reps=4 => on(starting state)-off-on-off-on
+    * iv: interval per blink (ms). e.g. iv=500 => .5s staying on, .5s being off
+*/
+blinker::blinker(int* bs, int reps, int iv) : 
+    blink_state(bs), 
+    repetitions(reps), 
+    interval_ms(iv), 
+    is_blinking(false) 
+{}
 
 /*
     reload the blink manager to restart the blinking process
@@ -29,9 +43,9 @@ void blinker::stop() {
 
 // ##################################################################################################################################################
 
-blink_handler::blink_handler() : b_map() {
-    return;
-}
+blink_handler::blink_handler() : 
+    b_map()
+{}
 
 /*
     handler function for blinking
@@ -50,7 +64,7 @@ void blink_handler::processAllBlinkers() {
 
         b.current_interval_ms -= (t2-t1);
         if (b.current_interval_ms <= 0) {
-            *(b.blink_state) = 1 - *(b.blink_state);
+            *(b.blink_state) = !(*(b.blink_state));
             b.current_interval_ms = b.interval_ms;
             b.repetitions_remainining--;
 
@@ -68,4 +82,8 @@ void blink_handler::startBlinker(std::string name) {
 
 void blink_handler::stopBlinker(std::string name) {
     b_map[name].stop();
+}
+
+void blink_handler::addBlinker(std::string name, blinker b) {
+    b_map[name] = b;
 }
