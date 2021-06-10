@@ -14,11 +14,9 @@
 
 void *(*get_pointer)(const char *);
 
-std::string *CURRENT_TIME;
-double *POS_X;
-double *POS_Y;
-int *IMAGE_BLINK_STATE;
-int *CLOCK_BLINK_STATE;
+int *CIRCLE_BLINK_STATE;
+int *CIRCLE_START_BLINK;
+int *CIRCLE_STOP_BLINK;
 
 #ifdef __cplusplus
 extern "C" void DisplayPreInit(void *(*get_pointer_arg)(const char *))
@@ -28,21 +26,17 @@ void DisplayPreInit(void *(*get_pointer_arg)(const char *))
 {
     get_pointer = get_pointer_arg;
 
-    CURRENT_TIME = (std::string *)get_pointer("CURRENT_TIME");
-    POS_X = (double *)get_pointer("POS_X");
-    POS_Y = (double *)get_pointer("POS_Y");
-    IMAGE_BLINK_STATE = (int *)get_pointer("IMAGE_BLINK_STATE");
-    CLOCK_BLINK_STATE = (int *)get_pointer("CLOCK_BLINK_STATE");
+    CIRCLE_BLINK_STATE = (int *)get_pointer("CIRCLE_BLINK_STATE");
+    CIRCLE_START_BLINK = (int *)get_pointer("CIRCLE_START_BLINK");
+    CIRCLE_STOP_BLINK = (int *)get_pointer("CIRCLE_STOP_BLINK");
 }
 
 #else
 
 extern void *(*get_pointer)(const char *);
 
-extern std::string *CURRENT_TIME;
-extern double *POS_X;
-extern double *POS_Y;
-extern int *IMAGE_BLINK_STATE;
-extern int *CLOCK_BLINK_STATE;
+extern int *CIRCLE_BLINK_STATE;
+extern int *CIRCLE_START_BLINK;
+extern int *CIRCLE_STOP_BLINK;
 
 #endif

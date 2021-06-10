@@ -9,36 +9,30 @@ static blink_handler bh;
 extern "C" void DisplayInit(void)
 {
     /* map defining the different blinkers, with:
-        * key for accessing the variable
-        * blink manager for setting the DCAPP variable, num iterations, and duration per interval (ms)
+        * key for accessing blinker
+        * DCAPP variable being blinked
+        * blink cycles before stopping
+        * time spent per blink state (milliseconds)
     */
-    bh.addBlinker("IMAGE", blinker(IMAGE_BLINK_STATE, 4, 1000));
-    bh.addBlinker("CLOCK", blinker(CLOCK_BLINK_STATE, 30, 200));
-
-    bh.startBlinker("IMAGE");
-    bh.startBlinker("CLOCK");
-
+    bh.addBlinker("CIRCLE", blinker(CIRCLE_BLINK_STATE, 12, 250));          // CIRCLE_BLINK_STATE set to blink 12 times, at 250ms per state
+    // bh.addBlinker("CIRCLE2", blinker(CIRCLE2_BLINK_STATE, 4, 1000));     // runs 4 iterations at 1Hz
+    // bh.addBlinker("TRIANGLE", blinker(TRIANGLE_BLINK_STATE, -1, 100));   // runs indefinitely at 10Hz until stopped
 }
 
 extern "C" void DisplayLogic(void)
 {
-    struct timeval tp;
-    struct timezone tzp;
-    static double deltax = 8, deltay = 8;
+    // if the button is clicked, start the circle blink
+    if ( *CIRCLE_START_BLINK )
+        bh.startBlinker("CIRCLE");
 
-    gettimeofday(&tp, &tzp);
-    *CURRENT_TIME = asctime(localtime((time_t *)(&tp.tv_sec)));
-    if (!CURRENT_TIME->empty()) CURRENT_TIME->pop_back();
+    // if this button is clicked, stop blinking
+    if ( *CIRCLE_STOP_BLINK ) {
+        bh.stopBlinker("CIRCLE");
 
-    if (*POS_X < 10) deltax = 8;
-    if (*POS_X > 1290) deltax = -8;
-    *POS_X += deltax;
+        // set the blink state to 1, in case blinking is stopped while the graphic is "off" (optional)
+        *CIRCLE_BLINK_STATE = 1;
+    }
 
-    if (*POS_Y < 10) deltay = 8;
-    if (*POS_Y > 940) deltay = -8;
-    *POS_Y += deltay;
-
-    // run every refresh cycle, to determine which graphics need to blink
+    // run this every refresh cycle, to update the boolean state of the DCAPP variable
     bh.processAllBlinkers();
-
 }
