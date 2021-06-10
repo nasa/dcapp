@@ -27,7 +27,7 @@ blinker::blinker(int* bs, int reps, int iv) :
 void blinker::start() {
     if (is_blinking) return;
 
-    repetitions_remainining = repetitions;
+    repetitions_remaining = repetitions;
     current_interval_ms = interval_ms;
     is_blinking = true;
 }
@@ -36,7 +36,7 @@ void blinker::start() {
     disable the blinker
 */
 void blinker::stop() {
-    repetitions_remainining = 0;
+    repetitions_remaining = 0;
     current_interval_ms = 0;
     is_blinking = false;
 }
@@ -66,9 +66,11 @@ void blink_handler::processAllBlinkers() {
         if (b.current_interval_ms <= 0) {
             *(b.blink_state) = !(*(b.blink_state));
             b.current_interval_ms = b.interval_ms;
-            b.repetitions_remainining--;
 
-            if (b.repetitions_remainining <= 0)
+            if (b.repetitions_remaining > 0)
+                b.repetitions_remaining--;
+
+            if (b.repetitions_remaining == 0)
                 b.is_blinking = false;
         }
     }

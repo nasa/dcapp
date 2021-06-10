@@ -1,10 +1,8 @@
 <?xml version="1.0"?>
 <DCAPP>
-    <Variable Type="String">CURRENT_TIME</Variable>
-    <Variable Type="Decimal">POS_X</Variable>
-    <Variable Type="Decimal">POS_Y</Variable>
-    <Variable Type="Integer" InitialValue="1">IMAGE_BLINK_STATE</Variable>
-    <Variable Type="Integer" InitialValue="1">CLOCK_BLINK_STATE</Variable>
+    <Variable Type="Integer" InitialValue="1">CIRCLE_BLINK_STATE</Variable>
+    <Variable Type="Integer" InitialValue="0">CIRCLE_START_BLINK</Variable>
+    <Variable Type="Integer" InitialValue="0">CIRCLE_STOP_BLINK</Variable>
 
     <DisplayLogic>logic/mylogic.so</DisplayLogic>
 
@@ -16,12 +14,25 @@
         </Defaults>
 
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="1600" VirtualHeight="1200">
-            <If Value="@IMAGE_BLINK_STATE">
-                <Image X="@POS_X" Y="@POS_Y" Width="300" Height="250">images/nasa.tga</Image>
+            <If Value="@CIRCLE_BLINK_STATE">
+                <Image X="250" Y="380" Width="600" Height="500">images/nasa.tga</Image>
             </If>
-            <If Value="@CLOCK_BLINK_STATE">
-                <String HorizontalAlign="Center" VerticalAlign="Middle">@CURRENT_TIME</String>
-            </If>
+
+            <Button X="1000" Y="650" Width="420" Height="200">
+                <OnPress><Set Variable="@CIRCLE_START_BLINK">1</Set></OnPress>
+                <OnRelease><Set Variable="@CIRCLE_START_BLINK">0</Set></OnRelease>
+                <On><Rectangle FillColor="0 .5 0"/></On>
+                <Off><Rectangle FillColor="0 .5 0"/></Off>
+                <String ShadowOffset="1" HorizontalAlign="Center" VerticalAlign="Middle" Size="150">Start</String>
+            </Button>
+
+            <Button X="1000" Y="350" Width="420" Height="200">
+                <OnPress><Set Variable="@CIRCLE_STOP_BLINK">1</Set></OnPress>
+                <OnRelease><Set Variable="@CIRCLE_STOP_BLINK">0</Set></OnRelease>
+                <On><Rectangle FillColor="0.5 0 0"/></On>
+                <Off><Rectangle FillColor="0.5 0 0"/></Off>
+                <String ShadowOffset="1" HorizontalAlign="Center" VerticalAlign="Middle" Size="150">Stop</String>
+            </Button>
         </Panel>
     </Window>
 </DCAPP>

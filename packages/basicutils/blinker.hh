@@ -7,7 +7,7 @@ public:
     int repetitions;                // number of transition repetitions before stopping blinking
     int interval_ms;                // time interval each blink lasts (ms)
 
-    int repetitions_remainining;
+    int repetitions_remaining;
     int current_interval_ms;
     bool is_blinking;
 
