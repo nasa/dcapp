@@ -15,10 +15,10 @@ public:
         params:
         * bs: DCAPP blink state variable
         * rp: number of repetitions
-        * iv: interval of each blink (in ms)
+        * iv: interval of each blink (s)
     */
     blinker();
-    blinker(int* bs, int reps, int iv);
+    blinker(int* bs, int reps, float iv);
 
     void start();         // start blinker
     void stop();          // stop blinker  

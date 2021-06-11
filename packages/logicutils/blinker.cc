@@ -12,12 +12,12 @@ blinker::blinker()
     params:
     * bs: pointer to trick variable being toggled. Switches between 0 and 1 on blink cycles
     * reps: blinks performed per cycle. e.g. reps=4 => on(starting state)-off-on-off-on
-    * iv: interval per blink (ms). e.g. iv=500 => .5s staying on, .5s being off
+    * iv: interval per blink (s). e.g. iv=0.5 => .5s staying on, .5s being off
 */
-blinker::blinker(int* bs, int reps, int iv) : 
+blinker::blinker(int* bs, int reps, float iv) : 
     blink_state(bs), 
     repetitions(reps), 
-    interval_ms(iv), 
+    interval_ms( (int)(1000 * iv) ), 
     is_blinking(false) 
 {}
 
