@@ -12,11 +12,11 @@ extern "C" void DisplayInit(void)
         * key for accessing blinker
         * DCAPP variable being blinked
         * blink cycles before stopping
-        * time spent per blink state (milliseconds)
+        * time spent per blink state (s)
     */
-    bh.addBlinker("CIRCLE", blinker(CIRCLE_BLINK_STATE, 12, 250));          // CIRCLE_BLINK_STATE set to blink 12 times, at 250ms per state
-    // bh.addBlinker("CIRCLE2", blinker(CIRCLE2_BLINK_STATE, 4, 1000));     // runs 4 iterations at 1Hz
-    // bh.addBlinker("TRIANGLE", blinker(TRIANGLE_BLINK_STATE, -1, 100));   // runs indefinitely at 10Hz until stopped
+    bh.addBlinker("CIRCLE", blinker(CIRCLE_BLINK_STATE, 12, .25));          // CIRCLE_BLINK_STATE set to blink 12 times, at 250ms per state
+    // bh.addBlinker("CIRCLE2", blinker(CIRCLE2_BLINK_STATE, 4, 1));     // runs 4 iterations at 1Hz
+    // bh.addBlinker("TRIANGLE", blinker(TRIANGLE_BLINK_STATE, -1, .1));   // runs indefinitely at 10Hz until stopped
 }
 
 extern "C" void DisplayLogic(void)
