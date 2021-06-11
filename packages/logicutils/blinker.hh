@@ -29,6 +29,7 @@ class blink_handler {
 public:
 
     std::map<std::string, blinker> b_map;
+    long long t1;
 
     blink_handler();
 

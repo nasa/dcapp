@@ -44,8 +44,9 @@ void blinker::stop() {
 // ##################################################################################################################################################
 
 blink_handler::blink_handler() : 
-    b_map()
-{}
+    b_map() {
+    t1 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
 
 /*
     handler function for blinking
@@ -55,8 +56,7 @@ blink_handler::blink_handler() :
     - use startBlinker() on the intended blinker variable to reenable the blinker
 */
 void blink_handler::processAllBlinkers() {
-    static auto t1 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    auto t2 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    long long t2 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
     for ( auto& p : b_map ) {
         blinker& b = p.second;
