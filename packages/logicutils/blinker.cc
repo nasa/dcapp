@@ -3,18 +3,18 @@
 
 #include "blinker.hh"
 
-blinker::blinker() 
+Blinker::Blinker() 
 {}
 
 /*
-    initialize a blinker
+    initialize a Blinker
 
     params:
     * bs: pointer to trick variable being toggled. Switches between 0 and 1 on blink cycles
     * reps: blinks performed per cycle. e.g. reps=4 => on(starting state)-off-on-off-on
     * iv: interval per blink (s). e.g. iv=0.5 => .5s staying on, .5s being off
 */
-blinker::blinker(int* bs, int reps, float iv) : 
+Blinker::Blinker(int* bs, int reps, float iv) : 
     blink_state(bs), 
     repetitions(reps), 
     interval_ms( (int)(1000 * iv) ), 
@@ -24,7 +24,7 @@ blinker::blinker(int* bs, int reps, float iv) :
 /*
     reload the blink manager to restart the blinking process
 */
-void blinker::start() {
+void Blinker::start() {
     if (is_blinking) return;
 
     repetitions_remaining = repetitions;
@@ -33,9 +33,9 @@ void blinker::start() {
 }
 
 /*
-    disable the blinker
+    disable the Blinker
 */
-void blinker::stop() {
+void Blinker::stop() {
     repetitions_remaining = 0;
     current_interval_ms = 0;
     is_blinking = false;
@@ -43,23 +43,23 @@ void blinker::stop() {
 
 // ##################################################################################################################################################
 
-blink_handler::blink_handler() : 
+BlinkerManager::BlinkerManager() : 
     b_map() {
     t1 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 /*
     handler function for blinking
-    * b_map: map of blinker values to process each iteration
+    * b_map: map of Blinker values to process each iteration
 
     - essentially, all this does is toggle a DCAPP variable to 1 or 0 on a set interval for a number of iterations.
-    - use startBlinker() on the intended blinker variable to reenable the blinker
+    - use startBlinker() on the intended Blinker variable to reenable the Blinker
 */
-void blink_handler::processAllBlinkers() {
+void BlinkerManager::processAllBlinkers() {
     long long t2 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
     for ( auto& p : b_map ) {
-        blinker& b = p.second;
+        Blinker& b = p.second;
         if (!b.is_blinking) continue;
 
         b.current_interval_ms -= (t2-t1);
@@ -78,14 +78,14 @@ void blink_handler::processAllBlinkers() {
     t1 = t2;
 }
 
-void blink_handler::startBlinker(std::string name) {
+void BlinkerManager::startBlinker(std::string name) {
     b_map[name].start();
 }
 
-void blink_handler::stopBlinker(std::string name) {
+void BlinkerManager::stopBlinker(std::string name) {
     b_map[name].stop();
 }
 
-void blink_handler::addBlinker(std::string name, blinker b) {
+void BlinkerManager::addBlinker(std::string name, Blinker b) {
     b_map[name] = b;
 }
