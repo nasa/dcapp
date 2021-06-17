@@ -4,7 +4,7 @@
 #include "dcapp.hh"
 #include "blinker.hh"
 
-static blink_handler bh;
+static BlinkerManager bh;
 
 extern "C" void DisplayInit(void)
 {
@@ -14,9 +14,9 @@ extern "C" void DisplayInit(void)
         * blink cycles before stopping
         * time spent per blink state (s)
     */
-    bh.addBlinker("CIRCLE", blinker(CIRCLE_BLINK_STATE, 12, .25));          // CIRCLE_BLINK_STATE set to blink 12 times, at 250ms per state
-    // bh.addBlinker("CIRCLE2", blinker(CIRCLE2_BLINK_STATE, 4, 1));     // runs 4 iterations at 1Hz
-    // bh.addBlinker("TRIANGLE", blinker(TRIANGLE_BLINK_STATE, -1, .1));   // runs indefinitely at 10Hz until stopped
+    bh.addBlinker("CIRCLE", Blinker(CIRCLE_BLINK_STATE, 12, .25));          // CIRCLE_BLINK_STATE set to blink 12 times, at 250ms per state
+    // bh.addBlinker("CIRCLE2", Blinker(CIRCLE2_BLINK_STATE, 4, 1));        // runs 4 iterations at 1Hz
+    // bh.addBlinker("TRIANGLE", Blinker(TRIANGLE_BLINK_STATE, -1, .1));    // runs indefinitely at 10Hz until stopped
 }
 
 extern "C" void DisplayLogic(void)

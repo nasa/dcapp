@@ -1,7 +1,7 @@
 #include <map>
 
 // struct for handling an individual blinker's properties
-class blinker {
+class Blinker {
 public:
     int* blink_state;               // pointer to DCAPP variable for storing on/off state (defined in the XML file)
     int repetitions;                // number of transition repetitions before stopping blinking
@@ -17,24 +17,24 @@ public:
         * rp: number of repetitions
         * iv: interval of each blink (s)
     */
-    blinker();
-    blinker(int* bs, int reps, float iv);
+    Blinker();
+    Blinker(int* bs, int reps, float iv);
 
     void start();         // start blinker
     void stop();          // stop blinker  
 };
 
 // manage multiple blinkers (useful for multiple blinking attributes)
-class blink_handler {
+class BlinkerManager {
 public:
 
-    std::map<std::string, blinker> b_map;
+    std::map<std::string, Blinker> b_map;
     long long t1;
 
-    blink_handler();
+    BlinkerManager();
 
     void processAllBlinkers();
     void startBlinker(std::string name);
     void stopBlinker(std::string name);
-    void addBlinker(std::string name, blinker b);
+    void addBlinker(std::string name, Blinker b);
 };
