@@ -12,6 +12,7 @@ endif
 
 OBJDIR := $(shell $(DCAPPCONFIG) --objdir)
 EXEPATH := $(shell ${DCAPPCONFIG} --exepath)
+LIBDIR := $(shell ${DCAPPCONFIG} --libdir)
 
 ifneq ($(wildcard ${EXEPATH}/dcapp_genheader),)
 	GENHEADER := ${EXEPATH}/dcapp_genheader
@@ -27,7 +28,6 @@ HEADERS := \
 	${BASIC_UTILS}/blinker.hh
 
 OBJECTS := $(foreach obj, $(SOURCES:.cc=.o), $(dir $(obj))$(OBJDIR)/$(notdir $(obj)))
-DCAPP_OBJECTS = ${BASIC_UTILS}/obj_linux_x86_64/blinker.o
 
 CXXFLAGS += -fPIC -Wall -std=c++11
 ifeq ($(shell $(DCAPPCONFIG) --ostype), linux)
@@ -43,7 +43,7 @@ all: dcapp.hh mylogic.so
 dcapp.hh: ${PARAM_FILE}
 	${GENHEADER} ${PARAM_FILE} $@
 
-mylogic.so: ${OBJECTS}  ${DCAPP_OBJECTS}
+mylogic.so: ${OBJECTS}  ${BASIC_UTILS}/$(LIBDIR)/liblogicutils.so
 	${CXX} -Wall -shared $^ -o $@
 
 define BUILDOBJECT
