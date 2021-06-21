@@ -1,3 +1,6 @@
+#ifndef _BLINKER_HH_
+#define _BLINKER_HH_
+
 #include <map>
 
 // struct for handling an individual blinker's properties
@@ -38,3 +41,5 @@ public:
     void stopBlinker(std::string name);
     void addBlinker(std::string name, Blinker b);
 };
+
+#endif
