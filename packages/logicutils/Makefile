@@ -11,9 +11,9 @@ ifeq ($(shell $(DCAPPCONFIG) --ostype), linux)
 CXXFLAGS += -D_GNU_SOURCE
 endif
 
-$(LIBDIR)/liblogicutils.a: $(OBJECTS)
+$(LIBDIR)/liblogicutils.so: $(OBJECTS)
 	mkdir -p $(LIBDIR)
-	$(AR) $(ARFLAGS) $@ $^
+	${CXX} -Wall -shared $^ -o $@
 
 $(OBJDIR)/%.o: %.cc $(HEADERS)
 	mkdir -p $(OBJDIR)
