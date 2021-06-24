@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="Integer" InitialValue="1">CIRCLE_BLINK_STATE</Variable>
+    <Variable Type="Integer" InitialValue="0">CIRCLE_START_BLINK</Variable>
+    <Variable Type="Integer" InitialValue="0">CIRCLE_STOP_BLINK</Variable>
+
+    <DisplayLogic>logic/mylogic.so</DisplayLogic>
+
+    <Window X="30" Y="30" Width="640" Height="480" ForceUpdate="0.01" ActiveDisplay="1">
+        <Constant Name="BgColor">0 0 0</Constant>
+        <Constant Name="FgColor">1 1 1</Constant>
+        <Defaults>
+            <String Size="80" Color="#FgColor"/>
+        </Defaults>
+
+        <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="1600" VirtualHeight="1200">
+            <If Value="@CIRCLE_BLINK_STATE">
+                <Image X="250" Y="380" Width="600" Height="500">images/nasa.tga</Image>
+            </If>
+
+            <Button X="1000" Y="650" Width="420" Height="200">
+                <OnPress><Set Variable="@CIRCLE_START_BLINK">1</Set></OnPress>
+                <OnRelease><Set Variable="@CIRCLE_START_BLINK">0</Set></OnRelease>
+                <On><Rectangle FillColor="0 .5 0"/></On>
+                <Off><Rectangle FillColor="0 .5 0"/></Off>
+                <String ShadowOffset="1" HorizontalAlign="Center" VerticalAlign="Middle" Size="150">Start</String>
+            </Button>
+
+            <Button X="1000" Y="350" Width="420" Height="200">
+                <OnPress><Set Variable="@CIRCLE_STOP_BLINK">1</Set></OnPress>
+                <OnRelease><Set Variable="@CIRCLE_STOP_BLINK">0</Set></OnRelease>
+                <On><Rectangle FillColor="0.5 0 0"/></On>
+                <Off><Rectangle FillColor="0.5 0 0"/></Off>
+                <String ShadowOffset="1" HorizontalAlign="Center" VerticalAlign="Middle" Size="150">Stop</String>
+            </Button>
+        </Panel>
+    </Window>
+</DCAPP>
