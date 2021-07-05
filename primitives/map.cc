@@ -79,11 +79,6 @@ void dcMap::computeGeometry(void)
     lly = (baseh) / (latMax - latMin)* (latitude - latMin);
     llx = (basew) / (longMax - longMin) * (longitude - longMin);
 
-    printf("%f,%f\n", llx, lly);
-    printf("%f, %f, %f, %f\n", latMin, latMax, longMin, longMax);
-    printf("%f, %f\n", basew, baseh);
-    printf("\n");
-
     // find x value
     if (originx == dcRight) val = containerw->getDecimal() - llx;
         else val = llx;

@@ -19,6 +19,8 @@ double *LONGITUDE;
 double *ZOOM;
 int *ZoomSelected;
 double *ZoomSlider;
+int *LonSelected;
+double *LonSlider;
 
 #ifdef __cplusplus
 extern "C" void DisplayPreInit(void *(*get_pointer_arg)(const char *))
@@ -33,6 +35,8 @@ void DisplayPreInit(void *(*get_pointer_arg)(const char *))
     ZOOM = (double *)get_pointer("ZOOM");
     ZoomSelected = (int *)get_pointer("ZoomSelected");
     ZoomSlider = (double *)get_pointer("ZoomSlider");
+    LonSelected = (int *)get_pointer("LonSelected");
+    LonSlider = (double *)get_pointer("LonSlider");
 }
 
 #else
@@ -44,5 +48,7 @@ extern double *LONGITUDE;
 extern double *ZOOM;
 extern int *ZoomSelected;
 extern double *ZoomSlider;
+extern int *LonSelected;
+extern double *LonSlider;
 
 #endif
