@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="Decimal" InitialValue="0">LATITUDE</Variable>
+    <Variable Type="Decimal" InitialValue="0">LONGITUDE</Variable>
+    <Variable Type="Decimal" InitialValue="1">ZOOM</Variable>
+
+    <Variable Type="Integer">ZoomSelected</Variable>
+    <Variable Type="Decimal" InitialValue="1">ZoomSlider</Variable>
+
+    <Defaults>
+        <String ForceMono="Numeric" HorizontalAlign="Center" VerticalAlign="Middle" Size="100" Color="1 1 1" LineColor="0 0 0"/>
+        <Button Type="Momentary" Width="2000" Height="100" HorizontalAlign="Center" VerticalAlign="Middle"/>
+        <Rectangle LineColor="1 1 1" HorizontalAlign="Center" VerticalAlign="Middle" LineWidth="2.0"/>
+        <Container X="250" Width="2000" Height="5" VirtualWidth="360" HorizontalAlign="Center" VerticalAlign="Middle"/>
+    </Defaults>
+
+    <DisplayLogic>logic/mylogic.so</DisplayLogic>
+
+    <Window X="30" Y="30" Width="800" Height="400" ForceUpdate="0.01" ActiveDisplay="1">
+        <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="2500" VirtualHeight="1250">
+            <Map Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" LongMin="-60" LongMax="60" LatMin="-30" LatMax="30" X="1250" Y="625" Width="2500" Height="1250" HorizontalAlign="Center" VerticalAlign="Middle">images/moon.bmp</Map>
+
+            <!-- ZOOM -->
+            <String X="100" Y="70" HorizontalAlign="Left">Zoom:</String>
+            <String X="300" Y="70" HorizontalAlign="Right">@ZOOM(%.1f)</String>
+
+            <Container Y="200">
+                <Rectangle FillColor="0.25 0.25 0.25" LineColor="0.5 0.5 0.5"/>
+                <Button Type="Momentary" X="@ZoomSlider" Width="10" Height="20" Variable="@ZoomSelected"/>
+                <If Value="@ZoomSelected">
+                    <True>
+                        <MouseMotion XVariable="@ZoomSlider"/>
+                        <If Value1="@ZoomSlider" Operator="gt" Value2="5">
+                            <Set Variable="@ZoomSlider">5</Set>
+                        </If>
+                        <If Value1="@ZoomSlider" Operator="lt" Value2="1">
+                            <Set Variable="@ZoomSlider">1</Set>
+                        </If>
+                        <Rectangle X="@ZoomSlider" Width="10" Height="20" FillColor="0.5 1 0.5"/>
+                        <Set Variable="@ZOOM">@ZoomSlider</Set>
+                    </True>
+                    <False>
+                        <If Value1="@ZoomSlider" Operator="gt" Value2="5">
+                            <Set Variable="@ZoomSlider">5</Set>
+                        </If>
+                        <If Value1="@ZoomSlider" Operator="lt" Value2="0">
+                            <Set Variable="@ZoomSlider">0</Set>
+                        </If>
+                        <Rectangle X="@ZoomSlider" Width="10" Height="20" FillColor="0.5 0.5 0.5"/>
+                    </False>
+                </If>
+            </Container>
+        </Panel>
+
+        
+    </Window>
+</DCAPP>

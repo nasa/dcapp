@@ -474,3 +474,27 @@ void draw_textured_sphere(float x, float y, const std::vector<float> &pointsA, f
     //  glDisable(GL_DEPTH_TEST);                    // disables Depth Testing
     }
 }
+
+void draw_map(tdTexture *textureID, float w, float h)
+{
+    if (textureID)
+    {
+        if (textureID->isValid())
+        {
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, textureID->getID());
+            glColor4f(1, 1, 1, 1);
+            glBegin(GL_QUADS);
+                glTexCoord2f(0, 0);
+                glVertex3f(0, 0, 0);
+                glTexCoord2f(1, 0);
+                glVertex3f(w, 0, 0);
+                glTexCoord2f(1, 1);
+                glVertex3f(w, h, 0);
+                glTexCoord2f(0, 1);
+                glVertex3f(0, h, 0);
+            glEnd();
+            glDisable(GL_TEXTURE_2D);
+        }
+    }
+}
