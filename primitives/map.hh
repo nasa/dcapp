@@ -13,8 +13,8 @@ class dcMap : public dcGeometric
         virtual ~dcMap();
 
         void setTexture(const std::string &);
-        void setLatLong(const std::string &, const std::string &);
-        void setLatLongRange(const std::string &, const std::string &, const std::string &, const std::string &);
+        void setLonLat(const std::string &, const std::string &);
+        void setLonLatRange(const std::string &, const std::string &, const std::string &, const std::string &);
         void setZoom(const std::string &);
         void computeGeometry(void);
         void draw(void);
@@ -24,22 +24,26 @@ class dcMap : public dcGeometric
         //void handleMouseRelease(void);
 
     private:
+        void setTextureBounds(void);
+
         tdTexture *textureID;
         Value* lat;
         Value* lon;
         Value *zu;
 
-        double latitude;
         double longitude;
-
+        double latitude;
+        
+        double lonMin;
+        double lonMax;
         double latMin;
         double latMax;
-        double longMin;
-        double longMax;
-        double basew;
-        double baseh;
-
         double zoom;
+
+        double texUp;
+        double texDown;
+        double texLeft;
+        double texRight;
 
         bool selected;
 };

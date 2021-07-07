@@ -27,7 +27,16 @@
 
     <Window X="30" Y="30" Width="800" Height="400" ForceUpdate="0.01" ActiveDisplay="1">
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="2500" VirtualHeight="1250">
-            <Map Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" LongMin="#LonMin" LongMax="#LonMax" LatMin="#LatMin" LatMax="#LatMax" X="1250" Y="625" Width="2500" Height="1250" HorizontalAlign="Center" VerticalAlign="Middle">images/moon.bmp</Map>
+
+
+
+
+
+            <Map Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" LonMin="#LonMin" LonMax="#LonMax" LatMin="#LatMin" LatMax="#LatMax" X="1250" Y="625" Width="1500" Height="750" HorizontalAlign="Center" VerticalAlign="Middle">images/moon.bmp</Map>
+
+
+
+
 
             <!-- ZOOM -->
             <String X="100" Y="200" HorizontalAlign="Left">Zoom:</String>

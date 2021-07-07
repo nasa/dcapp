@@ -31,6 +31,6 @@ extern void draw_quad(const std::vector<float> &, float, float, float, float);
 extern void circle_outline(float, float, float, int, float, float, float, float, float, uint16_t, int);
 extern void circle_fill(float, float, float, int, float, float, float, float);
 extern void draw_textured_sphere(float, float, const std::vector<float> &, float, tdTexture *, float, float, float);
-extern void draw_map(tdTexture *, float, float);
+extern void draw_map(tdTexture *, float, float, float, float, float, float);
 
 #endif
