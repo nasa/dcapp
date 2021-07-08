@@ -2,6 +2,7 @@
 #define _BLINKER_HH_
 
 #include <map>
+#include <string>
 
 // struct for handling an individual blinker's properties
 class Blinker {

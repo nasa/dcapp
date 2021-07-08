@@ -28,6 +28,8 @@ HEADERS := \
 	${BASIC_UTILS}/blinker.hh
 
 OBJECTS := $(foreach obj, $(SOURCES:.cc=.o), $(dir $(obj))$(OBJDIR)/$(notdir $(obj)))
+LOGIC_OBJECTS := \
+	${BASIC_UTILS}/${OBJDIR}/blinker.o 
 
 CXXFLAGS += -fPIC -Wall -std=c++11
 ifeq ($(shell $(DCAPPCONFIG) --ostype), linux)
@@ -43,7 +45,7 @@ all: dcapp.hh mylogic.so
 dcapp.hh: ${PARAM_FILE}
 	${GENHEADER} ${PARAM_FILE} $@
 
-mylogic.so: ${OBJECTS}  ${BASIC_UTILS}/$(LIBDIR)/liblogicutils.so
+mylogic.so: ${OBJECTS} ${LOGIC_OBJECTS}
 	${CXX} -Wall -shared $^ -o $@
 
 define BUILDOBJECT
