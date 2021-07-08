@@ -9,6 +9,8 @@
     <Constant Name="LatMin">-30</Constant>
     <Constant Name="LatMax">30</Constant>
 
+    <Constant Name="BgColor">0 0 0</Constant>
+
     <Variable Type="Integer">ZoomSelected</Variable>
     <Variable Type="Decimal" InitialValue="1">ZoomSlider</Variable>
     <Variable Type="Integer">LonSelected</Variable>
@@ -19,31 +21,29 @@
     <Defaults>
         <String ForceMono="Numeric" HorizontalAlign="Center" VerticalAlign="Middle" Size="100" Color="1 1 1" LineColor="0 0 0"/>
         <Button Type="Momentary" Width="2000" Height="100" HorizontalAlign="Center" VerticalAlign="Middle"/>
-        <Rectangle LineColor="0 0 0" HorizontalAlign="Center" VerticalAlign="Middle" LineWidth="2.0"/>
+        <Rectangle LineColor=".5 .5 .5" HorizontalAlign="Center" VerticalAlign="Middle" LineWidth="2.0" Color = ".5 .5 .5"/>
         <Container X="1250" Width="1200" Height="5" HorizontalAlign="Center" VerticalAlign="Middle"/>
     </Defaults>
 
-    <DisplayLogic>logic/mylogic.so</DisplayLogic>
-
-    <Window X="30" Y="30" Width="800" Height="400" ForceUpdate="0.01" ActiveDisplay="1">
-        <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="2500" VirtualHeight="1250">
+    <Window X="30" Y="30" Width="800" Height="600" ForceUpdate="0.01" ActiveDisplay="1">
+        <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="2500" VirtualHeight="1875">
 
 
 
 
 
-            <Map Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" LonMin="#LonMin" LonMax="#LonMax" LatMin="#LatMin" LatMax="#LatMax" X="1250" Y="625" Width="1500" Height="750" HorizontalAlign="Center" VerticalAlign="Middle">images/moon.bmp</Map>
+            <Map Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" LonMin="#LonMin" LonMax="#LonMax" LatMin="#LatMin" LatMax="#LatMax" X="1250" Y="1250" Width="2500" Height="1250" HorizontalAlign="Center" VerticalAlign="Middle">images/moon.bmp</Map>
 
 
 
 
 
             <!-- ZOOM -->
-            <String X="100" Y="200" HorizontalAlign="Left">Zoom:</String>
-            <String X="2400" Y="200" HorizontalAlign="Right">@ZOOM(%.1f)</String>
+            <String X="100" Y="150" HorizontalAlign="Left">Zoom:</String>
+            <String X="2400" Y="150" HorizontalAlign="Right">@ZOOM(%.1f)</String>
 
-            <Container Y="200" VirtualWidth="10">
-                <Rectangle FillColor="0.25 0.25 0.25"/>
+            <Container Y="150" VirtualWidth="10">
+                <Rectangle FillColor=".5 .5 .5"/>
                 <Button Type="Momentary" X="@ZoomSlider" Width="10" Height="20" Variable="@ZoomSelected"/>
                 <If Value="@ZoomSelected">
                     <True>
@@ -70,10 +70,10 @@
             </Container>
 
             <!-- LONGITUDE -->
-            <String X="100" Y="400" HorizontalAlign="Left">Longitude:</String>
-            <String X="2400" Y="400" HorizontalAlign="Right">@LONGITUDE(%.1f)</String>
+            <String X="100" Y="350" HorizontalAlign="Left">Longitude:</String>
+            <String X="2400" Y="350" HorizontalAlign="Right">@LONGITUDE(%.1f)</String>
 
-            <Container Y="400" VirtualWidth="120">
+            <Container Y="350" VirtualWidth="120">
                 <Rectangle FillColor="0.25 0.25 0.25"/>
                 <Button Type="Momentary" X="@LonSlider" Width="12" Height="20" Variable="@LonSelected"/>
                 <If Value="@LonSelected">
@@ -102,10 +102,10 @@
             </Container>
 
             <!-- LATITUDE -->
-            <String X="100" Y="600" HorizontalAlign="Left">Latitude:</String>
-            <String X="2400" Y="600" HorizontalAlign="Right">@LATITUDE(%.1f)</String>
+            <String X="100" Y="550" HorizontalAlign="Left">Latitude:</String>
+            <String X="2400" Y="550" HorizontalAlign="Right">@LATITUDE(%.1f)</String>
 
-            <Container Y="600" VirtualWidth="60">
+            <Container Y="550" VirtualWidth="60">
                 <Rectangle FillColor="0.25 0.25 0.25"/>
                 <Button Type="Momentary" X="@LatSlider" Width="6" Height="20" Variable="@LatSelected"/>
                 <If Value="@LatSelected">
