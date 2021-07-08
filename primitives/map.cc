@@ -115,7 +115,7 @@ void dcMap::computeGeometry(void)
 void dcMap::setTextureBounds(void)
 {
     // compute unit location of texture to draw (0 .. 1)
-    double mapWidthRatio, lonRatio, latRatio;
+    double mapWidthRatio;
 
     if (lon) longitude = lon->getDecimal();
     else longitude = (lonMin + lonMax)/2;
@@ -155,9 +155,51 @@ void dcMap::setTextureBounds(void)
         texLeft = 0;
         texRight = 2*mapWidthRatio;
     }
+}
 
-    printf("%f, %f\n", texLeft, texDown);
+void dcMap::displayCurrentPosition(void) {
+    float mx, my, mleft, mbottom, mright, mtop, mcenter, mmiddle, mwidth;
 
+    mleft = left + (lonRatio - texLeft) / (texRight - texLeft) * width;
+    mbottom = bottom + (latRatio - texDown) / (texUp - texDown) * height;
+    mwidth = 25;
+
+    mright = mleft + mwidth;
+    mtop = mbottom + mwidth;
+    mcenter = mleft + mwidth/2;
+    mmiddle = mbottom + mwidth/2;
+
+    switch (halign)
+    {
+        case dcLeft:
+            mx = mleft;
+            break;
+        case dcCenter:
+            mx = mcenter;
+            break;
+        case dcRight:
+            mx = mright;
+            break;
+        default:
+            break;
+    }
+    switch (valign)
+    {
+        case dcBottom:
+            my = mbottom;
+            break;
+        case dcMiddle:
+            my = mmiddle;
+            break;
+        case dcTop:
+            my = mtop;
+            break;
+        default:
+            break;
+    }
+
+    circle_fill(mx, my, mwidth, 80, 1, 0, 0, 1);
+    circle_outline(mx, my, mwidth, 80, 0, 0, 0, 1, 10, 0xFFFF, 1);
 }
 
 void dcMap::draw(void)
@@ -166,4 +208,6 @@ void dcMap::draw(void)
     container_start(refx, refy, delx, dely, 1, 1, rotate->getDecimal());
     draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
     container_end();
+
+    displayCurrentPosition();
 }

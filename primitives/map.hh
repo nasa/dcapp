@@ -25,6 +25,7 @@ class dcMap : public dcGeometric
 
     private:
         void setTextureBounds(void);
+        void displayCurrentPosition(void);
 
         tdTexture *textureID;
         Value* lat;
@@ -44,6 +45,9 @@ class dcMap : public dcGeometric
         double texDown;
         double texLeft;
         double texRight;
+
+        double lonRatio;
+        double latRatio;
 
         bool selected;
 };
