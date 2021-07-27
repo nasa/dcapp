@@ -233,11 +233,11 @@ void draw_image(tdTexture *textureID, float w, float h)
                 glTexCoord2f(0, 0);
                 glVertex3f(0, 0, 0);
                 glTexCoord2f(1, 0);
-                glVertex3f(w, 0, 0);
+                glVertex3f(w/2, 0, 0);
                 glTexCoord2f(1, 1);
-                glVertex3f(w, h, 0);
+                glVertex3f(w/2, h/2, 0);
                 glTexCoord2f(0, 1);
-                glVertex3f(0, h, 0);
+                glVertex3f(0, h/2, 0);
             glEnd();
             glDisable(GL_TEXTURE_2D);
         }
@@ -472,5 +472,29 @@ void draw_textured_sphere(float x, float y, const std::vector<float> &pointsA, f
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_CULL_FACE);
     //  glDisable(GL_DEPTH_TEST);                    // disables Depth Testing
+    }
+}
+
+void draw_map(tdTexture *textureID, float w, float h, float tu, float td, float tl, float tr)
+{
+    if (textureID)
+    {
+        if (textureID->isValid())
+        {
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, textureID->getID());
+            glColor4f(1, 1, 1, 1);
+            glBegin(GL_QUADS);
+                glTexCoord2f(tl, td);
+                glVertex3f(0, 0, 0);
+                glTexCoord2f(tr, td);
+                glVertex3f(w, 0, 0);
+                glTexCoord2f(tr, tu);
+                glVertex3f(w, h, 0);
+                glTexCoord2f(tl, tu);
+                glVertex3f(0, h, 0);
+            glEnd();
+            glDisable(GL_TEXTURE_2D);
+        }
     }
 }

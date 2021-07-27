@@ -519,6 +519,21 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 if (NodeCheck(subnode, "OnRelease")) process_elements(myitem->ReleaseList, subnode->children);
             }
         }
+        if (NodeCheck(node, "Map"))
+        {
+            dcMap *myitem = new dcMap(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
+            myitem->setLonLatRange(get_element_data(node, "LonMin"), get_element_data(node, "LonMax"), get_element_data(node, "LatMin"), get_element_data(node, "LatMax"));
+            myitem->setZoom(get_element_data(node, "Zoom"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
+            xmldata myfile = get_element_data(node, "File");
+            if (myfile.empty()) myfile = get_node_content(node);
+            myitem->setTexture(myfile);
+        }
         if (NodeCheck(node, "PixelStream"))
         {
             dcPixelStream *myitem = new dcPixelStream(myparent);
