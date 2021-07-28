@@ -3,25 +3,25 @@
 #include "RenderLib/RenderLib.hh"
 #include "basicutils/stringutils.hh"
 #include "commonutils.hh"
-#include "map.hh"
+#include "utmmap.hh"
 
 
-dcMap::dcMap(dcParent *myparent) : dcGeometric(myparent), textureID(0x0), zoom(1), selected(false)
+dcUtmMap::dcUtmMap(dcParent *myparent) : dcGeometric(myparent), textureID(0x0), zoom(1), selected(false)
 {
     return;
 }
 
-dcMap::~dcMap()
+dcUtmMap::~dcUtmMap()
 {
     return;
 }
 
-void dcMap::setTexture(const std::string &filename)
+void dcUtmMap::setTexture(const std::string &filename)
 {
     this->textureID = tdLoadTexture(filename);
 }
 
-void dcMap::setLonLat(const std::string &lat1, const std::string &lon1)
+void dcUtmMap::setLonLat(const std::string &lat1, const std::string &lon1)
 {
     if (!lat1.empty() and !lon1.empty())
     {
@@ -34,7 +34,7 @@ void dcMap::setLonLat(const std::string &lat1, const std::string &lon1)
     }
 }
 
-void dcMap::setLonLatRange(const std::string &loMin, const std::string &loMax, const std::string &laMin, const std::string &laMax)
+void dcUtmMap::setLonLatRange(const std::string &loMin, const std::string &loMax, const std::string &laMin, const std::string &laMax)
 {
     if (!laMin.empty() && !laMax.empty() && !loMin.empty() && !loMax.empty())
     {
@@ -49,12 +49,12 @@ void dcMap::setLonLatRange(const std::string &loMin, const std::string &loMax, c
     }
 }
 
-void dcMap::setZoom(const std::string &inval)
+void dcUtmMap::setZoom(const std::string &inval)
 {
     if (!inval.empty()) zu = getValue(inval);
 }
 
-void dcMap::computeGeometry(void)
+void dcUtmMap::computeGeometry(void)
 {
     if (w) width = w->getDecimal();
     else width = 0;
@@ -112,7 +112,7 @@ void dcMap::computeGeometry(void)
 }
 
 // get bounds for texture on 0 to 1 range
-void dcMap::setTextureBounds(void)
+void dcUtmMap::setTextureBounds(void)
 {
     // compute unit location of texture to draw (0 .. 1)
     double mapWidthRatio;
@@ -123,8 +123,8 @@ void dcMap::setTextureBounds(void)
     if (lat) latitude = lat->getDecimal();
     else latitude = (latMin + latMax)/2;
 
-    lonRatio = (longitude - lonMin) / (lonMax - lonMin);
-    latRatio = (latitude - latMin) / (latMax - latMin);
+    hRatio = (longitude - lonMin) / (lonMax - lonMin);
+    vRatio = (latitude - latMin) / (latMax - latMin);
 
     // compute unit offset for position
     if (zu) zoom = zu->getDecimal();
@@ -135,10 +135,10 @@ void dcMap::setTextureBounds(void)
 
     mapWidthRatio = 1/zoom/2;
 
-    texUp = latRatio + mapWidthRatio;
-    texDown = latRatio - mapWidthRatio;
-    texLeft = lonRatio - mapWidthRatio;
-    texRight = lonRatio + mapWidthRatio;
+    texUp = vRatio + mapWidthRatio;
+    texDown = vRatio - mapWidthRatio;
+    texLeft = hRatio - mapWidthRatio;
+    texRight = hRatio + mapWidthRatio;
 
     if (texUp > 1) {
         texUp = 1;
@@ -157,11 +157,11 @@ void dcMap::setTextureBounds(void)
     }
 }
 
-void dcMap::displayCurrentPosition(void) {
+void dcUtmMap::displayCurrentPosition(void) {
     float mx, my, mleft, mbottom, mright, mtop, mcenter, mmiddle, mwidth;
 
-    mleft = left + (lonRatio - texLeft) / (texRight - texLeft) * width;
-    mbottom = bottom + (latRatio - texDown) / (texUp - texDown) * height;
+    mleft = left + (hRatio - texLeft) / (texRight - texLeft) * width;
+    mbottom = bottom + (vRatio - texDown) / (texUp - texDown) * height;
     mwidth = 25;
 
     mright = mleft + mwidth;
@@ -202,7 +202,7 @@ void dcMap::displayCurrentPosition(void) {
     circle_outline(mx, my, mwidth, 80, 0, 0, 0, 1, 10, 0xFFFF, 1);
 }
 
-void dcMap::draw(void)
+void dcUtmMap::draw(void)
 {
     computeGeometry();
     container_start(refx, refy, delx, dely, 1, 1, rotate->getDecimal());

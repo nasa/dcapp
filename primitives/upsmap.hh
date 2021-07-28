@@ -1,20 +1,20 @@
-#ifndef _MAP_HH_
-#define _MAP_HH_
+#ifndef _UPSMAP_HH_
+#define _UPSMAP_HH_
 
 #include <string>
 #include "RenderLib/RenderLib.hh"
 #include "geometric.hh"
 #include "parent.hh"
 
-class dcMap : public dcGeometric
+class dcUpsMap : public dcGeometric
 {
     public:
-        dcMap(dcParent *);
-        virtual ~dcMap();
+        dcUpsMap(dcParent *);
+        virtual ~dcUpsMap();
 
         void setTexture(const std::string &);
         void setLonLat(const std::string &, const std::string &);
-        void setLonLatRange(const std::string &, const std::string &, const std::string &, const std::string &);
+        void setLonLatParams(const std::string &, const std::string &, const std::string &);
         void setZoom(const std::string &);
         void computeGeometry(void);
         void draw(void);
@@ -35,10 +35,9 @@ class dcMap : public dcGeometric
         double longitude;
         double latitude;
         
-        double lonMin;
-        double lonMax;
-        double latMin;
-        double latMax;
+        double lonPolarAxis;
+        double latOrigin;
+        double latOuter;
         double zoom;
 
         double texUp;
@@ -46,10 +45,11 @@ class dcMap : public dcGeometric
         double texLeft;
         double texRight;
 
-        double lonRatio;
-        double latRatio;
+        double hRatio;
+        double vRatio;
 
         bool selected;
+        double polarAxisPosition;       // position of polar axis in radians (TODO)
 };
 
 #endif
