@@ -4,3 +4,4 @@ bin_*
 *.so
 *.o
 local/
+.vscode/
