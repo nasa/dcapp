@@ -524,7 +524,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             dcUtmMap *myitem = new dcUtmMap(myparent);
             myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
             myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
-            myitem->setLonLatRange(get_element_data(node, "LonMin"), get_element_data(node, "LonMax"), get_element_data(node, "LatMin"), get_element_data(node, "LatMax"));
+            myitem->setLonLatParams(get_element_data(node, "LonMin"), get_element_data(node, "LonMax"), get_element_data(node, "LatMin"), get_element_data(node, "LatMax"));
             myitem->setZoom(get_element_data(node, "Zoom"));
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
