@@ -14,18 +14,24 @@ class dcMap : public dcGeometric
 
         void setTexture(const std::string &);
         void setLonLat(const std::string &, const std::string &);
-        void setLonLatRange(const std::string &, const std::string &, const std::string &, const std::string &);
         void setZoom(const std::string &);
-        void computeGeometry(void);
         void draw(void);
+
+        // exists in all children, but different number of params 
+        // virtual void setLonLatParams(...) = 0;
 
         // possibly implement mouse press + release for resetting the rover path
         //void handleMousePress(double, double);
         //void handleMouseRelease(void);
 
-    private:
-        void setTextureBounds(void);
+    protected:
+        void computeTextureBounds(void);
         void displayCurrentPosition(void);
+        void computeGeometry(void);
+        void setTextureBounds(void);
+
+        virtual void computeLonLat(void) = 0;
+        virtual void computePosRatios(void) = 0;
 
         tdTexture *textureID;
         Value* lat;
@@ -34,11 +40,6 @@ class dcMap : public dcGeometric
 
         double longitude;
         double latitude;
-        
-        double lonMin;
-        double lonMax;
-        double latMin;
-        double latMax;
         double zoom;
 
         double texUp;
@@ -46,8 +47,8 @@ class dcMap : public dcGeometric
         double texLeft;
         double texRight;
 
-        double lonRatio;
-        double latRatio;
+        double hRatio;
+        double vRatio;
 
         bool selected;
 };

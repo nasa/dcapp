@@ -34,21 +34,6 @@ void dcMap::setLonLat(const std::string &lat1, const std::string &lon1)
     }
 }
 
-void dcMap::setLonLatRange(const std::string &loMin, const std::string &loMax, const std::string &laMin, const std::string &laMax)
-{
-    if (!laMin.empty() && !laMax.empty() && !loMin.empty() && !loMax.empty())
-    {
-        lonMin = getValue(loMin)->getDecimal();
-        lonMax = getValue(loMax)->getDecimal();
-        latMin = getValue(laMin)->getDecimal();
-        latMax = getValue(laMax)->getDecimal();
-    }
-    else
-    {
-        printf("map.setLonLatRange: missing values\n");
-    }
-}
-
 void dcMap::setZoom(const std::string &inval)
 {
     if (!inval.empty()) zu = getValue(inval);
@@ -114,18 +99,6 @@ void dcMap::computeGeometry(void)
 // get bounds for texture on 0 to 1 range
 void dcMap::setTextureBounds(void)
 {
-    // compute unit location of texture to draw (0 .. 1)
-    double mapWidthRatio;
-
-    if (lon) longitude = lon->getDecimal();
-    else longitude = (lonMin + lonMax)/2;
-
-    if (lat) latitude = lat->getDecimal();
-    else latitude = (latMin + latMax)/2;
-
-    lonRatio = (longitude - lonMin) / (lonMax - lonMin);
-    latRatio = (latitude - latMin) / (latMax - latMin);
-
     // compute unit offset for position
     if (zu) zoom = zu->getDecimal();
     else zoom = 1;
@@ -133,12 +106,15 @@ void dcMap::setTextureBounds(void)
     if (zoom < 1) 
         zoom = 1;
 
-    mapWidthRatio = 1/zoom/2;
+    computeLonLat();
+    computePosRatios();
 
-    texUp = latRatio + mapWidthRatio;
-    texDown = latRatio - mapWidthRatio;
-    texLeft = lonRatio - mapWidthRatio;
-    texRight = lonRatio + mapWidthRatio;
+    double mapWidthRatio = 1/zoom/2;
+
+    texUp = vRatio + mapWidthRatio;
+    texDown = vRatio - mapWidthRatio;
+    texLeft = hRatio - mapWidthRatio;
+    texRight = hRatio + mapWidthRatio;
 
     if (texUp > 1) {
         texUp = 1;
@@ -160,8 +136,8 @@ void dcMap::setTextureBounds(void)
 void dcMap::displayCurrentPosition(void) {
     float mx, my, mleft, mbottom, mright, mtop, mcenter, mmiddle, mwidth;
 
-    mleft = left + (lonRatio - texLeft) / (texRight - texLeft) * width;
-    mbottom = bottom + (latRatio - texDown) / (texUp - texDown) * height;
+    mleft = left + (hRatio - texLeft) / (texRight - texLeft) * width;
+    mbottom = bottom + (vRatio - texDown) / (texUp - texDown) * height;
     mwidth = 25;
 
     mright = mleft + mwidth;
@@ -205,7 +181,7 @@ void dcMap::displayCurrentPosition(void) {
 void dcMap::draw(void)
 {
     computeGeometry();
-    container_start(refx, refy, delx, dely, 1, 1, rotate->getDecimal());
+    container_start(refx, refy, delx, dely, 1, 1, 0);   // disable rotation for now
     draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
     container_end();
 
