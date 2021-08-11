@@ -3,6 +3,9 @@
     <Variable Type="Decimal" InitialValue="90">LATITUDE</Variable>
     <Variable Type="Decimal" InitialValue="0">LONGITUDE</Variable>
     <Variable Type="Decimal" InitialValue="1">ZOOM</Variable>
+    <Constant Name="ENABLE_POSITION_INDICATOR">1</Constant>
+    <Variable Type="Decimal" InitialValue="1">ENABLE_MAP_TRAILS</Variable>
+
 
     <Constant Name="LonPolarAxis">0</Constant>
     <Constant Name="LatOrigin">90</Constant>
@@ -27,7 +30,8 @@
     <Window X="30" Y="30" Width="800" Height="600" ForceUpdate="0.01" ActiveDisplay="1">
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="2500" VirtualHeight="1875">
 
-            <UPSMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" Rotate="45" 
+            <UPSMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="15" TrailColor=".25 .25 .25 .7"
+                    EnablePositionIndicator="#ENABLE_POSITION_INDICATOR" EnablePositionTrail="@ENABLE_MAP_TRAILS"
                     LonPolarAxis="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="1250" Y="1250" 
                     Width="1250" Height="1250" HorizontalAlign="Center" VerticalAlign="Middle">images/moon.bmp</UPSMap>
 

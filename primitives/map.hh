@@ -2,9 +2,12 @@
 #define _MAP_HH_
 
 #include <string>
+#include <vector>
 #include "RenderLib/RenderLib.hh"
 #include "geometric.hh"
 #include "parent.hh"
+#include "kolor.hh"
+
 
 class dcMap : public dcGeometric
 {
@@ -15,6 +18,11 @@ class dcMap : public dcGeometric
         void setTexture(const std::string &);
         void setLonLat(const std::string &, const std::string &);
         void setZoom(const std::string &);
+        void setEnablePositionIndicator(const std::string &);
+        void setEnablePositionTrail(const std::string &);
+        void setTrailColor(const std::string &);
+        void setTrailWidth(const std::string &);
+        void setTrailClear(const std::string &);
         void draw(void);
 
         // exists in all children, but different number of params 
@@ -26,9 +34,12 @@ class dcMap : public dcGeometric
 
     protected:
         void computeTextureBounds(void);
-        void displayCurrentPosition(void);
+        void displayPositionIndicator(void);
+        void displayPositionTrail(void);
         void computeGeometry(void);
         void setTextureBounds(void);
+        void updatePositionTrail(void);
+        void remapXYBounds(std::pair<float,float>& p);
 
         virtual void computeLonLat(void) = 0;
         virtual void computePosRatios(void) = 0;
@@ -36,7 +47,7 @@ class dcMap : public dcGeometric
         tdTexture *textureID;
         Value* lat;
         Value* lon;
-        Value *zu;
+        Value* zu;
 
         double longitude;
         double latitude;
@@ -49,6 +60,13 @@ class dcMap : public dcGeometric
 
         double hRatio;
         double vRatio;
+
+        bool enablePositionIndicator;
+        bool enablePositionTrail;
+        double trailWidth;
+        Kolor trailColor;
+        std::vector<std::pair<float,float>> positionHistory;
+        Value* clearTrails;     // more of a function
 
         bool selected;
 };

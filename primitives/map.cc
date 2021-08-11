@@ -6,9 +6,9 @@
 #include "map.hh"
 
 
-dcMap::dcMap(dcParent *myparent) : dcGeometric(myparent), textureID(0x0), zoom(1), selected(false)
+dcMap::dcMap(dcParent *myparent) : dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), selected(false)
 {
-    return;
+    trailColor.set(1, 0, 0, .5);
 }
 
 dcMap::~dcMap()
@@ -37,6 +37,38 @@ void dcMap::setLonLat(const std::string &lat1, const std::string &lon1)
 void dcMap::setZoom(const std::string &inval)
 {
     if (!inval.empty()) zu = getValue(inval);
+}
+
+void dcMap::setTrailClear(const std::string &inval)
+{
+    if (!inval.empty()) 
+        clearTrails = getValue(inval);
+    else
+        clearTrails = NULL;
+}
+
+void dcMap::setEnablePositionIndicator(const std::string &inval)
+{
+    if (!inval.empty()) enablePositionIndicator = getValue(inval)->getBoolean();
+}
+
+void dcMap::setEnablePositionTrail(const std::string &inval)
+{
+    if (!inval.empty()) enablePositionTrail = getValue(inval)->getBoolean();
+}
+
+void dcMap::setTrailColor(const std::string &cspec)
+{
+    if (!cspec.empty())
+    {
+        trailColor.set(cspec);
+        enablePositionTrail = true;
+    }
+}
+
+void dcMap::setTrailWidth(const std::string &inval)
+{
+    if (!inval.empty()) trailWidth = getValue(inval)->getDecimal();
 }
 
 void dcMap::computeGeometry(void)
@@ -133,12 +165,12 @@ void dcMap::setTextureBounds(void)
     }
 }
 
-void dcMap::displayCurrentPosition(void) {
+void dcMap::displayPositionIndicator(void) {
     float mx, my, mleft, mbottom, mright, mtop, mcenter, mmiddle, mwidth;
 
-    mleft = left + (hRatio - texLeft) / (texRight - texLeft) * width;
-    mbottom = bottom + (vRatio - texDown) / (texUp - texDown) * height;
     mwidth = 25;
+    mleft = left + (hRatio - texLeft) / (texRight - texLeft) * width - mwidth/2;
+    mbottom = bottom + (vRatio - texDown) / (texUp - texDown) * height - mwidth/2;
 
     mright = mleft + mwidth;
     mtop = mbottom + mwidth;
@@ -178,6 +210,89 @@ void dcMap::displayCurrentPosition(void) {
     circle_outline(mx, my, mwidth, 80, 0, 0, 0, 1, 10, 0xFFFF, 1);
 }
 
+// bind x,y points to the visible view
+void dcMap::remapXYBounds(std::pair<float,float>& p) 
+{
+    if (p.first < texLeft)
+        p.first = texLeft;
+    else if (p.first > texRight)
+        p.first = texRight;
+
+    if (p.second < texDown)
+        p.second = texDown;
+    else if (p.second > texUp)
+        p.second = texUp;
+}
+
+void dcMap::displayPositionTrail(void)
+{
+    if (positionHistory.size() > 1) {
+        for (uint i = 1; i < positionHistory.size(); i++) {
+            std::pair<float,float> p1 = positionHistory.at(i-1);
+            std::pair<float,float> p2 = positionHistory.at(i);
+            if ( (p1.first > texLeft && p1.first < texRight && p1.second > texDown && p1.second < texUp) ||
+                 (p2.first > texLeft && p2.first < texRight && p2.second > texDown && p2.second < texUp) ) {
+
+                remapXYBounds(p1);
+                remapXYBounds(p2);
+
+                // calculate mx, my for points
+                float mx1 = left + (p1.first - texLeft) / (texRight - texLeft) * width;
+                float my1 = bottom + (p1.second - texDown) / (texUp - texDown) * height;
+                float mx2= left + (p2.first - texLeft) / (texRight - texLeft) * width;
+                float my2 = bottom + (p2.second - texDown) / (texUp - texDown) * height;
+
+                // plot line for current set
+                std::vector<float> pntsA = {mx1, my1, mx2, my2};
+                draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
+            }
+        }
+
+        std::pair<float,float> p = positionHistory.back();
+        remapXYBounds(p);
+
+        float mx1 = left + (p.first - texLeft) / (texRight - texLeft) * width;
+        float my1 = bottom + (p.second - texDown) / (texUp - texDown) * height;
+        float mx2 = left + (hRatio - texLeft) / (texRight - texLeft) * width;
+        float my2 = bottom + (vRatio - texDown) / (texUp - texDown) * height;
+
+        std::vector<float> pntsA = {mx1, my1, mx2, my2};
+        draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
+    }
+
+    if (!positionHistory.empty()) {
+        
+    }
+}
+
+void dcMap::updatePositionTrail(void)
+{
+    static int prev_clear_state = -1;
+
+    // clear stored trails on clearTrails value change
+    if (clearTrails) {
+        int curr_clear_state = clearTrails->getInteger();
+        if (prev_clear_state != curr_clear_state) {
+            positionHistory.clear();
+        }
+        prev_clear_state = curr_clear_state;
+    }
+
+    // add position to list
+    if (positionHistory.empty()) 
+    {
+        positionHistory.push_back({(float)hRatio, (float)vRatio});
+    }
+    else
+    {
+        std::pair<float,float> last_pos = positionHistory.back();
+        float dist = sqrt(pow(hRatio-last_pos.first, 2) + pow(vRatio-last_pos.second, 2)*1.0);
+        if ( dist > .0005) {
+            positionHistory.push_back({hRatio, vRatio});
+        }
+    }
+}
+
 void dcMap::draw(void)
 {
     computeGeometry();
@@ -185,5 +300,11 @@ void dcMap::draw(void)
     draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
     container_end();
 
-    displayCurrentPosition();
+    if (enablePositionTrail)
+        displayPositionTrail();
+
+    if (enablePositionIndicator)
+        displayPositionIndicator();
+
+    updatePositionTrail();
 }
