@@ -33,7 +33,7 @@
             <UPSMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="15" TrailColor=".25 .25 .25 .7"
                     EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS"
                     LonPolarAxis="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="1250" Y="1250" 
-                    IconFile="images/arrow.bmp" IconWidth="100" IconHeight="100" IconRotationOffset="180"
+                    IconFile="images/arrow.bmp" IconWidth="100" IconHeight="100" IconRotationOffset="-90"
                     Width="1250" Height="1250" HorizontalAlign="Center" VerticalAlign="Middle">images/moon.bmp</UPSMap>
 
             <!-- ZOOM -->
