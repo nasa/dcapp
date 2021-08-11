@@ -6,7 +6,8 @@
 #include "map.hh"
 
 
-dcMap::dcMap(dcParent *myparent) : dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), enableCustomIcon(false), iconRotationOffset(0), selected(false)
+dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), fnClearTrail(NULL),
+                                    enableCustomIcon(false), iconRotationOffset(0), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
 }
@@ -39,22 +40,20 @@ void dcMap::setZoom(const std::string &inval)
     if (!inval.empty()) zu = getValue(inval);
 }
 
-void dcMap::setTrailClear(const std::string &inval)
+void dcMap::setFnClearTrail(const std::string &inval)
 {
     if (!inval.empty()) 
-        clearTrails = getValue(inval);
-    else
-        clearTrails = NULL;
+        fnClearTrail = getValue(inval);
 }
 
-void dcMap::setEnablePositionIndicator(const std::string &inval)
+void dcMap::setEnableIcon(const std::string &inval)
 {
-    if (!inval.empty()) enablePositionIndicator = getValue(inval)->getBoolean();
+    if (!inval.empty()) enableIcon = getValue(inval)->getBoolean();
 }
 
-void dcMap::setEnablePositionTrail(const std::string &inval)
+void dcMap::setEnableTrail(const std::string &inval)
 {
-    if (!inval.empty()) enablePositionTrail = getValue(inval)->getBoolean();
+    if (!inval.empty()) enableTrail = getValue(inval)->getBoolean();
 }
 
 void dcMap::setTrailColor(const std::string &cspec)
@@ -62,7 +61,7 @@ void dcMap::setTrailColor(const std::string &cspec)
     if (!cspec.empty())
     {
         trailColor.set(cspec);
-        enablePositionTrail = true;
+        enableTrail = true;
     }
 }
 
@@ -192,7 +191,7 @@ void dcMap::computeTextureBounds(void)
     }
 }
 
-void dcMap::displayPositionIndicator(void) {
+void dcMap::displayIcon(void) {
     float mx, my, mleft, mbottom, mright, mtop, mcenter, mmiddle, mwidth, mheight, mdelx, mdely;
 
     if (enableCustomIcon) 
@@ -275,7 +274,7 @@ void dcMap::remapXYBounds(std::pair<float,float>& p)
         p.second = texUp;
 }
 
-void dcMap::displayPositionTrail(void)
+void dcMap::displayTrail(void)
 {
     if (positionHistory.size() > 1) {
         for (uint i = 1; i < positionHistory.size(); i++) {
@@ -311,18 +310,15 @@ void dcMap::displayPositionTrail(void)
         draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
     }
 
-    if (!positionHistory.empty()) {
-        
-    }
 }
 
-void dcMap::updatePositionTrail(void)
+void dcMap::updateTrail(void)
 {
     static int prev_clear_state = -1;
 
-    // clear stored trails on clearTrails value change
-    if (clearTrails) {
-        int curr_clear_state = clearTrails->getInteger();
+    // clear stored trails on fnClearTrail value change
+    if (fnClearTrail) {
+        int curr_clear_state = fnClearTrail->getInteger();
         if (prev_clear_state != curr_clear_state) {
             positionHistory.clear();
         }
@@ -351,11 +347,11 @@ void dcMap::draw(void)
     draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
     container_end();
 
-    if (enablePositionTrail)
-        displayPositionTrail();
+    if (enableTrail)
+        displayTrail();
 
-    if (enablePositionIndicator)
-        displayPositionIndicator();
+    if (enableIcon)
+        displayIcon();
 
-    updatePositionTrail();
+    updateTrail();
 }

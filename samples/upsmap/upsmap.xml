@@ -31,7 +31,7 @@
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="2500" VirtualHeight="1875">
 
             <UPSMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="15" TrailColor=".25 .25 .25 .7"
-                    EnablePositionIndicator="#ENABLE_POSITION_INDICATOR" EnablePositionTrail="@ENABLE_MAP_TRAILS"
+                    EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS"
                     LonPolarAxis="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="1250" Y="1250" 
                     IconFile="images/arrow.bmp" IconWidth="100" IconHeight="100" IconRotationOffset="180"
                     Width="1250" Height="1250" HorizontalAlign="Center" VerticalAlign="Middle">images/moon.bmp</UPSMap>
