@@ -538,6 +538,13 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             xmldata myfile = get_element_data(node, "File");
             if (myfile.empty()) myfile = get_node_content(node);
             myitem->setTexture(myfile);
+            xmldata iconfile = get_element_data(node, "IconFile");
+            if (!iconfile.empty()) 
+            {
+                myitem->setIconTexture(iconfile);
+                myitem->setIconSize(get_element_data(node, "IconWidth"), get_element_data(node, "IconHeight"));
+                myitem->setIconRotationOffset(get_element_data(node, "IconRotationOffset"));
+            }
         }
         if (NodeCheck(node, "UPSMap"))
         {
@@ -558,6 +565,13 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             xmldata myfile = get_element_data(node, "File");
             if (myfile.empty()) myfile = get_node_content(node);
             myitem->setTexture(myfile);
+            xmldata iconfile = get_element_data(node, "IconFile");
+            if (!iconfile.empty()) 
+            {
+                myitem->setIconTexture(iconfile);
+                myitem->setIconSize(get_element_data(node, "IconWidth"), get_element_data(node, "IconHeight"));
+                myitem->setIconRotationOffset(get_element_data(node, "IconRotationOffset"));
+            }
         }
         if (NodeCheck(node, "PixelStream"))
         {

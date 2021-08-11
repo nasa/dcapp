@@ -42,6 +42,14 @@ void dcUtmMap::computeLonLat(void)
 
 void dcUtmMap::computePosRatios(void) 
 {
+    // save previous ratios
+    double prevHRatio = hRatio;
+    double prevVRatio = vRatio;
+    
     hRatio = (longitude - lonMin) / (lonMax - lonMin);
     vRatio = (latitude - latMin) / (latMax - latMin);
+
+    // calculate current angle of trajectory
+    if ( prevVRatio != vRatio || prevHRatio != hRatio)
+        trajAngle = atan2((vRatio - prevVRatio), ( hRatio - prevHRatio)) * 180 / M_PI;
 }

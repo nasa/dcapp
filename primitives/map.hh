@@ -23,6 +23,9 @@ class dcMap : public dcGeometric
         void setTrailColor(const std::string &);
         void setTrailWidth(const std::string &);
         void setTrailClear(const std::string &);
+        void setIconRotationOffset(const std::string &inval);
+        void setIconTexture(const std::string &);
+        void setIconSize(const std::string &, const std::string &);
         void draw(void);
 
         // exists in all children, but different number of params 
@@ -33,11 +36,10 @@ class dcMap : public dcGeometric
         //void handleMouseRelease(void);
 
     protected:
-        void computeTextureBounds(void);
         void displayPositionIndicator(void);
         void displayPositionTrail(void);
         void computeGeometry(void);
-        void setTextureBounds(void);
+        void computeTextureBounds(void);
         void updatePositionTrail(void);
         void remapXYBounds(std::pair<float,float>& p);
 
@@ -60,6 +62,7 @@ class dcMap : public dcGeometric
 
         double hRatio;
         double vRatio;
+        double trajAngle;
 
         bool enablePositionIndicator;
         bool enablePositionTrail;
@@ -67,6 +70,12 @@ class dcMap : public dcGeometric
         Kolor trailColor;
         std::vector<std::pair<float,float>> positionHistory;
         Value* clearTrails;     // more of a function
+
+        tdTexture *iconTextureID;
+        double iconHeight;
+        double iconWidth;
+        bool enableCustomIcon;
+        double iconRotationOffset;
 
         bool selected;
 };

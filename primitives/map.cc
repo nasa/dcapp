@@ -6,7 +6,7 @@
 #include "map.hh"
 
 
-dcMap::dcMap(dcParent *myparent) : dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), selected(false)
+dcMap::dcMap(dcParent *myparent) : dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), enableCustomIcon(false), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
 }
@@ -71,6 +71,33 @@ void dcMap::setTrailWidth(const std::string &inval)
     if (!inval.empty()) trailWidth = getValue(inval)->getDecimal();
 }
 
+void dcMap::setIconTexture(const std::string &filename) 
+{
+    this->iconTextureID = tdLoadTexture(filename);
+    enableCustomIcon = true;
+}
+
+void dcMap::setIconRotationOffset(const std::string &inval) 
+{
+    if (!inval.empty()) iconRotationOffset = getValue(inval)->getDecimal();
+}
+
+void dcMap::setIconSize(const std::string &inw, const std::string &inh)
+{
+    if (enableCustomIcon)
+    {
+        if (!inw.empty() && !inh.empty())
+        {
+            iconWidth = getValue(inw)->getDecimal();
+            iconHeight= getValue(inh)->getDecimal();
+        }
+        else
+        {
+            printf("map.cc: Missing dimensions for icon\n");
+        }
+    }
+}
+
 void dcMap::computeGeometry(void)
 {
     if (w) width = w->getDecimal();
@@ -125,11 +152,11 @@ void dcMap::computeGeometry(void)
             break;
     }
 
-    setTextureBounds();
+    computeTextureBounds();
 }
 
 // get bounds for texture on 0 to 1 range
-void dcMap::setTextureBounds(void)
+void dcMap::computeTextureBounds(void)
 {
     // compute unit offset for position
     if (zu) zoom = zu->getDecimal();
@@ -166,27 +193,39 @@ void dcMap::setTextureBounds(void)
 }
 
 void dcMap::displayPositionIndicator(void) {
-    float mx, my, mleft, mbottom, mright, mtop, mcenter, mmiddle, mwidth;
+    float mx, my, mleft, mbottom, mright, mtop, mcenter, mmiddle, mwidth, mheight, mdelx, mdely;
 
-    mwidth = 25;
+    if (enableCustomIcon) 
+    {
+        mwidth = iconWidth;
+        mheight = iconHeight;
+    }
+    else
+    {
+        mwidth = mheight = 25;
+    }
+
     mleft = left + (hRatio - texLeft) / (texRight - texLeft) * width - mwidth/2;
-    mbottom = bottom + (vRatio - texDown) / (texUp - texDown) * height - mwidth/2;
+    mbottom = bottom + (vRatio - texDown) / (texUp - texDown) * height - mheight/2;
 
     mright = mleft + mwidth;
-    mtop = mbottom + mwidth;
+    mtop = mbottom + mheight;
     mcenter = mleft + mwidth/2;
-    mmiddle = mbottom + mwidth/2;
+    mmiddle = mbottom + mheight/2;
 
     switch (halign)
     {
         case dcLeft:
             mx = mleft;
+            mdelx = 0;
             break;
         case dcCenter:
             mx = mcenter;
+            mdelx = mwidth/2;
             break;
         case dcRight:
             mx = mright;
+            mdelx = mwidth;
             break;
         default:
             break;
@@ -195,19 +234,31 @@ void dcMap::displayPositionIndicator(void) {
     {
         case dcBottom:
             my = mbottom;
+            mdely = 0;
             break;
         case dcMiddle:
             my = mmiddle;
+            mdely = mheight/2;
             break;
         case dcTop:
             my = mtop;
+            mdely = mheight;
             break;
         default:
             break;
     }
 
-    circle_fill(mx, my, mwidth, 80, 1, 0, 0, 1);
-    circle_outline(mx, my, mwidth, 80, 0, 0, 0, 1, 10, 0xFFFF, 1);
+    if (enableCustomIcon) 
+    {
+        container_start(mx, my, mdelx/2, mdely/2, 1, 1, iconRotationOffset + trajAngle);
+        draw_image(this->iconTextureID, mwidth, mheight);
+        container_end();
+    }
+    else
+    {
+        circle_fill(mx, my, mwidth, 80, 1, 0, 0, 1);
+        circle_outline(mx, my, mwidth, 80, 0, 0, 0, 1, 10, 0xFFFF, 1);
+    }
 }
 
 // bind x,y points to the visible view
