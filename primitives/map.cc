@@ -6,7 +6,7 @@
 #include "map.hh"
 
 
-dcMap::dcMap(dcParent *myparent) : dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), enableCustomIcon(false), selected(false)
+dcMap::dcMap(dcParent *myparent) : dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), enableCustomIcon(false), iconRotationOffset(0), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
 }
