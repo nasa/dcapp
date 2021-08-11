@@ -6,6 +6,8 @@
 #include "RenderLib/RenderLib.hh"
 #include "geometric.hh"
 #include "parent.hh"
+#include "kolor.hh"
+
 
 class dcMap : public dcGeometric
 {
@@ -18,6 +20,9 @@ class dcMap : public dcGeometric
         void setZoom(const std::string &);
         void setEnablePositionIndicator(const std::string &);
         void setEnablePositionTrail(const std::string &);
+        void setTrailColor(const std::string &);
+        void setTrailWidth(const std::string &);
+        void setTrailClear(const std::string &);
         void draw(void);
 
         // exists in all children, but different number of params 
@@ -41,7 +46,7 @@ class dcMap : public dcGeometric
         tdTexture *textureID;
         Value* lat;
         Value* lon;
-        Value *zu;
+        Value* zu;
 
         double longitude;
         double latitude;
@@ -57,7 +62,10 @@ class dcMap : public dcGeometric
 
         bool enablePositionIndicator;
         bool enablePositionTrail;
+        double trailWidth;
+        Kolor trailColor;
         std::vector<std::pair<double,double>> positionHistory;
+        Value* clearTrails;     // more of a function
 
         bool selected;
 };

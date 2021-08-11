@@ -532,6 +532,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
             myitem->setEnablePositionIndicator(get_element_data(node, "EnablePositionIndicator"));
             myitem->setEnablePositionTrail(get_element_data(node, "EnablePositionTrail"));
+            myitem->setTrailColor(get_element_data(node, "TrailColor"));
+            myitem->setTrailWidth(get_element_data(node, "TrailWidth"));
             xmldata myfile = get_element_data(node, "File");
             if (myfile.empty()) myfile = get_node_content(node);
             myitem->setTexture(myfile);
@@ -549,6 +551,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
             myitem->setEnablePositionIndicator(get_element_data(node, "EnablePositionIndicator"));
             myitem->setEnablePositionTrail(get_element_data(node, "EnablePositionTrail"));
+            myitem->setTrailColor(get_element_data(node, "TrailColor"));
+            myitem->setTrailWidth(get_element_data(node, "TrailWidth"));
             xmldata myfile = get_element_data(node, "File");
             if (myfile.empty()) myfile = get_node_content(node);
             myitem->setTexture(myfile);
