@@ -210,19 +210,35 @@ void dcMap::displayPositionIndicator(void) {
     circle_outline(mx, my, mwidth, 80, 0, 0, 0, 1, 10, 0xFFFF, 1);
 }
 
+// bind x,y points to the visible view
+void dcMap::remapXYBounds(std::pair<float,float>& p) 
+{
+    if (p.first < texLeft)
+        p.first = texLeft;
+    else if (p.first > texRight)
+        p.first = texRight;
+
+    if (p.second < texDown)
+        p.second = texDown;
+    else if (p.second > texUp)
+        p.second = texUp;
+}
+
 void dcMap::displayPositionTrail(void)
 {
     if (positionHistory.size() > 1) {
         for (uint i = 1; i < positionHistory.size(); i++) {
-            auto p1 = positionHistory.at(i-1);
-            if (p1.first > texLeft && p1.first < texRight && p1.second > texDown && p1.second < texUp) {
+            std::pair<float,float> p1 = positionHistory.at(i-1);
+            std::pair<float,float> p2 = positionHistory.at(i);
+            if ( (p1.first > texLeft && p1.first < texRight && p1.second > texDown && p1.second < texUp) ||
+                 (p2.first > texLeft && p2.first < texRight && p2.second > texDown && p2.second < texUp) ) {
 
-                // calculate mx, my for p1
+                remapXYBounds(p1);
+                remapXYBounds(p2);
+
+                // calculate mx, my for points
                 float mx1 = left + (p1.first - texLeft) / (texRight - texLeft) * width;
                 float my1 = bottom + (p1.second - texDown) / (texUp - texDown) * height;
-
-                // get p2, calculate mx, my
-                auto p2 = positionHistory.at(i);
                 float mx2= left + (p2.first - texLeft) / (texRight - texLeft) * width;
                 float my2 = bottom + (p2.second - texDown) / (texUp - texDown) * height;
 
@@ -231,10 +247,9 @@ void dcMap::displayPositionTrail(void)
                 draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
             }
         }
-    }
 
-    if (!positionHistory.empty()) {
-        auto p = positionHistory.back();
+        std::pair<float,float> p = positionHistory.back();
+        remapXYBounds(p);
 
         float mx1 = left + (p.first - texLeft) / (texRight - texLeft) * width;
         float my1 = bottom + (p.second - texDown) / (texUp - texDown) * height;
@@ -243,6 +258,10 @@ void dcMap::displayPositionTrail(void)
 
         std::vector<float> pntsA = {mx1, my1, mx2, my2};
         draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
+    }
+
+    if (!positionHistory.empty()) {
+        
     }
 }
 
@@ -262,13 +281,13 @@ void dcMap::updatePositionTrail(void)
     // add position to list
     if (positionHistory.empty()) 
     {
-        positionHistory.push_back({hRatio, vRatio});
+        positionHistory.push_back({(float)hRatio, (float)vRatio});
     }
     else
     {
-        auto last_pos = positionHistory.back();
-        double dist = sqrt(pow(hRatio-last_pos.first, 2) + pow(vRatio-last_pos.second, 2)*1.0);
-        if ( dist > .01) {
+        std::pair<float,float> last_pos = positionHistory.back();
+        float dist = sqrt(pow(hRatio-last_pos.first, 2) + pow(vRatio-last_pos.second, 2)*1.0);
+        if ( dist > .0005) {
             positionHistory.push_back({hRatio, vRatio});
         }
     }

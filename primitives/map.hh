@@ -39,6 +39,7 @@ class dcMap : public dcGeometric
         void computeGeometry(void);
         void setTextureBounds(void);
         void updatePositionTrail(void);
+        void remapXYBounds(std::pair<float,float>& p);
 
         virtual void computeLonLat(void) = 0;
         virtual void computePosRatios(void) = 0;
@@ -64,7 +65,7 @@ class dcMap : public dcGeometric
         bool enablePositionTrail;
         double trailWidth;
         Kolor trailColor;
-        std::vector<std::pair<double,double>> positionHistory;
+        std::vector<std::pair<float,float>> positionHistory;
         Value* clearTrails;     // more of a function
 
         bool selected;
