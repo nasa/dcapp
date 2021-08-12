@@ -6,7 +6,8 @@
 #include "map.hh"
 
 
-dcMap::dcMap(dcParent *myparent) : dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), selected(false)
+dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), fnClearTrail(NULL),
+                                    enableCustomIcon(false), iconRotationOffset(0), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
 }
@@ -39,22 +40,20 @@ void dcMap::setZoom(const std::string &inval)
     if (!inval.empty()) zu = getValue(inval);
 }
 
-void dcMap::setTrailClear(const std::string &inval)
+void dcMap::setFnClearTrail(const std::string &inval)
 {
     if (!inval.empty()) 
-        clearTrails = getValue(inval);
-    else
-        clearTrails = NULL;
+        fnClearTrail = getValue(inval);
 }
 
-void dcMap::setEnablePositionIndicator(const std::string &inval)
+void dcMap::setEnableIcon(const std::string &inval)
 {
-    if (!inval.empty()) enablePositionIndicator = getValue(inval)->getBoolean();
+    if (!inval.empty()) enableIcon = getValue(inval)->getBoolean();
 }
 
-void dcMap::setEnablePositionTrail(const std::string &inval)
+void dcMap::setEnableTrail(const std::string &inval)
 {
-    if (!inval.empty()) enablePositionTrail = getValue(inval)->getBoolean();
+    if (!inval.empty()) enableTrail = getValue(inval)->getBoolean();
 }
 
 void dcMap::setTrailColor(const std::string &cspec)
@@ -62,13 +61,40 @@ void dcMap::setTrailColor(const std::string &cspec)
     if (!cspec.empty())
     {
         trailColor.set(cspec);
-        enablePositionTrail = true;
+        enableTrail = true;
     }
 }
 
 void dcMap::setTrailWidth(const std::string &inval)
 {
     if (!inval.empty()) trailWidth = getValue(inval)->getDecimal();
+}
+
+void dcMap::setIconTexture(const std::string &filename) 
+{
+    this->iconTextureID = tdLoadTexture(filename);
+    enableCustomIcon = true;
+}
+
+void dcMap::setIconRotationOffset(const std::string &inval) 
+{
+    if (!inval.empty()) iconRotationOffset = getValue(inval)->getDecimal();
+}
+
+void dcMap::setIconSize(const std::string &inw, const std::string &inh)
+{
+    if (enableCustomIcon)
+    {
+        if (!inw.empty() && !inh.empty())
+        {
+            iconWidth = getValue(inw)->getDecimal();
+            iconHeight= getValue(inh)->getDecimal();
+        }
+        else
+        {
+            printf("map.cc: Missing dimensions for icon\n");
+        }
+    }
 }
 
 void dcMap::computeGeometry(void)
@@ -125,11 +151,11 @@ void dcMap::computeGeometry(void)
             break;
     }
 
-    setTextureBounds();
+    computeTextureBounds();
 }
 
 // get bounds for texture on 0 to 1 range
-void dcMap::setTextureBounds(void)
+void dcMap::computeTextureBounds(void)
 {
     // compute unit offset for position
     if (zu) zoom = zu->getDecimal();
@@ -165,28 +191,40 @@ void dcMap::setTextureBounds(void)
     }
 }
 
-void dcMap::displayPositionIndicator(void) {
-    float mx, my, mleft, mbottom, mright, mtop, mcenter, mmiddle, mwidth;
+void dcMap::displayIcon(void) {
+    float mx, my, mleft, mbottom, mright, mtop, mcenter, mmiddle, mwidth, mheight, mdelx, mdely;
 
-    mwidth = 25;
+    if (enableCustomIcon) 
+    {
+        mwidth = iconWidth;
+        mheight = iconHeight;
+    }
+    else
+    {
+        mwidth = mheight = 25;
+    }
+
     mleft = left + (hRatio - texLeft) / (texRight - texLeft) * width - mwidth/2;
-    mbottom = bottom + (vRatio - texDown) / (texUp - texDown) * height - mwidth/2;
+    mbottom = bottom + (vRatio - texDown) / (texUp - texDown) * height - mheight/2;
 
     mright = mleft + mwidth;
-    mtop = mbottom + mwidth;
+    mtop = mbottom + mheight;
     mcenter = mleft + mwidth/2;
-    mmiddle = mbottom + mwidth/2;
+    mmiddle = mbottom + mheight/2;
 
     switch (halign)
     {
         case dcLeft:
             mx = mleft;
+            mdelx = 0;
             break;
         case dcCenter:
             mx = mcenter;
+            mdelx = mwidth/2;
             break;
         case dcRight:
             mx = mright;
+            mdelx = mwidth;
             break;
         default:
             break;
@@ -195,19 +233,31 @@ void dcMap::displayPositionIndicator(void) {
     {
         case dcBottom:
             my = mbottom;
+            mdely = 0;
             break;
         case dcMiddle:
             my = mmiddle;
+            mdely = mheight/2;
             break;
         case dcTop:
             my = mtop;
+            mdely = mheight;
             break;
         default:
             break;
     }
 
-    circle_fill(mx, my, mwidth, 80, 1, 0, 0, 1);
-    circle_outline(mx, my, mwidth, 80, 0, 0, 0, 1, 10, 0xFFFF, 1);
+    if (enableCustomIcon) 
+    {
+        container_start(mx, my, mdelx/2, mdely/2, 1, 1, iconRotationOffset + trajAngle);
+        draw_image(this->iconTextureID, mwidth, mheight);
+        container_end();
+    }
+    else
+    {
+        circle_fill(mx, my, mwidth, 80, 1, 0, 0, 1);
+        circle_outline(mx, my, mwidth, 80, 0, 0, 0, 1, 10, 0xFFFF, 1);
+    }
 }
 
 // bind x,y points to the visible view
@@ -224,7 +274,7 @@ void dcMap::remapXYBounds(std::pair<float,float>& p)
         p.second = texUp;
 }
 
-void dcMap::displayPositionTrail(void)
+void dcMap::displayTrail(void)
 {
     if (positionHistory.size() > 1) {
         for (uint i = 1; i < positionHistory.size(); i++) {
@@ -260,18 +310,15 @@ void dcMap::displayPositionTrail(void)
         draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
     }
 
-    if (!positionHistory.empty()) {
-        
-    }
 }
 
-void dcMap::updatePositionTrail(void)
+void dcMap::updateTrail(void)
 {
     static int prev_clear_state = -1;
 
-    // clear stored trails on clearTrails value change
-    if (clearTrails) {
-        int curr_clear_state = clearTrails->getInteger();
+    // clear stored trails on fnClearTrail value change
+    if (fnClearTrail) {
+        int curr_clear_state = fnClearTrail->getInteger();
         if (prev_clear_state != curr_clear_state) {
             positionHistory.clear();
         }
@@ -300,11 +347,11 @@ void dcMap::draw(void)
     draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
     container_end();
 
-    if (enablePositionTrail)
-        displayPositionTrail();
+    if (enableTrail)
+        displayTrail();
 
-    if (enablePositionIndicator)
-        displayPositionIndicator();
+    if (enableIcon)
+        displayIcon();
 
-    updatePositionTrail();
+    updateTrail();
 }

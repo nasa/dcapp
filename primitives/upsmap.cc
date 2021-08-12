@@ -41,9 +41,17 @@ void dcUpsMap::computeLonLat(void)
 
 void dcUpsMap::computePosRatios(void) 
 {
+    // save previous ratios
+    double prevHRatio = hRatio;
+    double prevVRatio = vRatio;
+
     // compute unit ratios for x and y
     double theta = (longitude - lonPolarAxis + 90) * M_PI / 180;
     double radius = (latOrigin - latitude) / (latOrigin - latOuter);    // scale of 0..1
     hRatio = radius * cos(theta) * .5 + .5;
     vRatio = radius * sin(theta) * .5 + .5;
+
+    // calculate current angle of trajectory
+    if ( prevVRatio != vRatio || prevHRatio != hRatio)
+        trajAngle = atan2((vRatio - prevVRatio), ( hRatio - prevHRatio)) * 180 / M_PI;
 }

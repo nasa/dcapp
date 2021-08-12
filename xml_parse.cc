@@ -530,14 +530,21 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
-            myitem->setEnablePositionIndicator(get_element_data(node, "EnablePositionIndicator"));
-            myitem->setEnablePositionTrail(get_element_data(node, "EnablePositionTrail"));
+            myitem->setEnableIcon(get_element_data(node, "EnableIcon"));
+            myitem->setEnableTrail(get_element_data(node, "EnableTrail"));
             myitem->setTrailColor(get_element_data(node, "TrailColor"));
             myitem->setTrailWidth(get_element_data(node, "TrailWidth"));
-            myitem->setTrailClear(get_element_data(node, "TrailClear"));
+            myitem->setFnClearTrail(get_element_data(node, "FnClearTrail"));
             xmldata myfile = get_element_data(node, "File");
             if (myfile.empty()) myfile = get_node_content(node);
             myitem->setTexture(myfile);
+            xmldata iconfile = get_element_data(node, "IconFile");
+            if (!iconfile.empty()) 
+            {
+                myitem->setIconTexture(iconfile);
+                myitem->setIconSize(get_element_data(node, "IconWidth"), get_element_data(node, "IconHeight"));
+                myitem->setIconRotationOffset(get_element_data(node, "IconRotationOffset"));
+            }
         }
         if (NodeCheck(node, "UPSMap"))
         {
@@ -550,14 +557,21 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
             myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
-            myitem->setEnablePositionIndicator(get_element_data(node, "EnablePositionIndicator"));
-            myitem->setEnablePositionTrail(get_element_data(node, "EnablePositionTrail"));
+            myitem->setEnableIcon(get_element_data(node, "EnableIcon"));
+            myitem->setEnableTrail(get_element_data(node, "EnableTrail"));
             myitem->setTrailColor(get_element_data(node, "TrailColor"));
             myitem->setTrailWidth(get_element_data(node, "TrailWidth"));
-            myitem->setTrailClear(get_element_data(node, "TrailClear"));
+            myitem->setFnClearTrail(get_element_data(node, "FnClearTrail"));
             xmldata myfile = get_element_data(node, "File");
             if (myfile.empty()) myfile = get_node_content(node);
             myitem->setTexture(myfile);
+            xmldata iconfile = get_element_data(node, "IconFile");
+            if (!iconfile.empty()) 
+            {
+                myitem->setIconTexture(iconfile);
+                myitem->setIconSize(get_element_data(node, "IconWidth"), get_element_data(node, "IconHeight"));
+                myitem->setIconRotationOffset(get_element_data(node, "IconRotationOffset"));
+            }
         }
         if (NodeCheck(node, "PixelStream"))
         {

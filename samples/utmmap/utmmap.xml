@@ -30,10 +30,10 @@
     <Window X="30" Y="30" Width="800" Height="600" ForceUpdate="0.01" ActiveDisplay="1">
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="2500" VirtualHeight="1875">
             <UTMMap 
-                Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" 
-                EnablePositionIndicator="#ENABLE_POSITION_INDICATOR" EnablePositionTrail="@ENABLE_MAP_TRAILS"
+                Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="15" TrailColor=".25 .25 .25 .7"
+                EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS"
                 LonMin="#LonMin" LonMax="#LonMax" LatMin="#LatMin" LatMax="#LatMax"
-                TrailColor="1 0 1 .25" TrailWidth="10"
+                IconFile="images/arrow.bmp" IconWidth="100" IconHeight="100" IconRotationOffset="-90"
                 X="1250" Y="1250" Width="2500" Height="1250" HorizontalAlign="Center" VerticalAlign="Middle"
             >images/moon.bmp</UTMMap>
 

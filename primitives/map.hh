@@ -18,11 +18,14 @@ class dcMap : public dcGeometric
         void setTexture(const std::string &);
         void setLonLat(const std::string &, const std::string &);
         void setZoom(const std::string &);
-        void setEnablePositionIndicator(const std::string &);
-        void setEnablePositionTrail(const std::string &);
+        void setEnableIcon(const std::string &);
+        void setEnableTrail(const std::string &);
         void setTrailColor(const std::string &);
         void setTrailWidth(const std::string &);
-        void setTrailClear(const std::string &);
+        void setFnClearTrail(const std::string &);
+        void setIconRotationOffset(const std::string &inval);
+        void setIconTexture(const std::string &);
+        void setIconSize(const std::string &, const std::string &);
         void draw(void);
 
         // exists in all children, but different number of params 
@@ -33,12 +36,11 @@ class dcMap : public dcGeometric
         //void handleMouseRelease(void);
 
     protected:
-        void computeTextureBounds(void);
-        void displayPositionIndicator(void);
-        void displayPositionTrail(void);
+        void displayIcon(void);
+        void displayTrail(void);
         void computeGeometry(void);
-        void setTextureBounds(void);
-        void updatePositionTrail(void);
+        void computeTextureBounds(void);
+        void updateTrail(void);
         void remapXYBounds(std::pair<float,float>& p);
 
         virtual void computeLonLat(void) = 0;
@@ -60,13 +62,20 @@ class dcMap : public dcGeometric
 
         double hRatio;
         double vRatio;
+        double trajAngle;
 
-        bool enablePositionIndicator;
-        bool enablePositionTrail;
+        bool enableIcon;
+        bool enableTrail;
         double trailWidth;
         Kolor trailColor;
         std::vector<std::pair<float,float>> positionHistory;
-        Value* clearTrails;     // more of a function
+        Value* fnClearTrail;     // more of a function
+
+        tdTexture *iconTextureID;
+        double iconHeight;
+        double iconWidth;
+        bool enableCustomIcon;
+        double iconRotationOffset;
 
         bool selected;
 };
