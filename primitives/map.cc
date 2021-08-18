@@ -204,13 +204,13 @@ void dcMap::displayIcon(void) {
         mwidth = mheight = 25;
     }
 
-    mleft = left + (hRatio - texLeft) / (texRight - texLeft) * width - mwidth/2;
-    mbottom = bottom + (vRatio - texDown) / (texUp - texDown) * height - mheight/2;
+    mleft = left + (hRatio - texLeft) / (texRight - texLeft) * width;
+    mbottom = bottom + (vRatio - texDown) / (texUp - texDown) * height;
 
-    mright = mleft + mwidth;
-    mtop = mbottom + mheight;
-    mcenter = mleft + mwidth/2;
-    mmiddle = mbottom + mheight/2;
+    mright = mleft;//mleft + mwidth/2;
+    mtop = mbottom;//mbottom + mheight/2;
+    mcenter = mleft;
+    mmiddle = mbottom;
 
     switch (halign)
     {
@@ -246,6 +246,11 @@ void dcMap::displayIcon(void) {
         default:
             break;
     }
+
+    mx = mleft;
+    my = mbottom;
+    mdelx = mwidth/2;
+    mdely = mheight/2;
 
     if (enableCustomIcon) 
     {

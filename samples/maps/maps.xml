@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="Decimal" InitialValue="90">LATITUDE</Variable>
+    <Variable Type="Decimal" InitialValue="0">LONGITUDE</Variable>
+    <Variable Type="Decimal" InitialValue="1">ZOOM</Variable>
+    <Constant Name="ENABLE_POSITION_INDICATOR">1</Constant>
+    <Variable Type="Decimal" InitialValue="1">ENABLE_MAP_TRAILS</Variable>
+
+    <!-- UTM constants -->
+    <Constant Name="LonMin">0</Constant>
+    <Constant Name="LonMax">360</Constant>
+    <Constant Name="LatMin">80</Constant>
+    <Constant Name="LatMax">90</Constant>
+
+    <!-- UPS constants -->
+    <Constant Name="LonPolarAxis">90</Constant>
+    <Constant Name="LatOrigin">90</Constant>
+    <Constant Name="LatOuter">80</Constant>
+
+    <Constant Name="BgColor">0 0 0</Constant>
+    <Variable Type="Integer">ZoomSelected</Variable>
+    <Variable Type="Decimal" InitialValue="1">ZoomSlider</Variable>
+    <Variable Type="Integer">LonSelected</Variable>
+    <Variable Type="Decimal" InitialValue="0">LonSlider</Variable>
+    <Variable Type="Integer">LatSelected</Variable>
+    <Variable Type="Decimal" InitialValue="10">LatSlider</Variable>
+
+    <Defaults>
+        <String ForceMono="Numeric" HorizontalAlign="Center" VerticalAlign="Middle" Size="100" Color="1 1 1" LineColor="0 0 0"/>
+        <Button Type="Momentary" Width="2000" Height="100" HorizontalAlign="Center" VerticalAlign="Middle"/>
+        <Rectangle LineColor=".5 .5 .5" HorizontalAlign="Center" VerticalAlign="Middle" LineWidth="2.0" Color = ".5 .5 .5"/>
+        <Container X="1250" Width="1250" Height="5" HorizontalAlign="Center" VerticalAlign="Middle"/>
+    </Defaults>
+
+    <Window X="30" Y="30" Width="1200" Height="720" ForceUpdate="0.01" ActiveDisplay="1">
+        <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="2500" VirtualHeight="1500">
+
+            <UPSMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="15" TrailColor=".25 .25 .25 .7"
+                    EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS"
+                    LonPolarAxis="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="50" Y="1450" 
+                    IconFile="images/arrow.bmp" IconWidth="100" IconHeight="100" IconRotationOffset="-90"
+                    Width="1175" Height="1225" HorizontalAlign="Left" VerticalAlign="Top">images/moon.bmp</UPSMap>
+
+            <UTMMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="15" TrailColor=".25 .25 .25 .7"
+                    EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS"
+                    LonMin="#LonMin" LonMax="#LonMax" LatMin="#LatMin" LatMax="#LatMax" X="2450" Y="1450" 
+                    IconFile="images/arrow.bmp" IconWidth="100" IconHeight="100" IconRotationOffset="-90" 
+                    Width="1175" Height="1225" HorizontalAlign="Right" VerticalAlign="Top">images/moon.bmp</UTMMap>
+
+            <!-- lat/long -->
+            <String X="2100" Y="125" HorizontalAlign="Right" Size="80">Lat:</String>
+            <String X="2400" Y="125" HorizontalAlign="Right" Size="80">@LATITUDE(%.3f)</String>
+            <String X="1275" Y="125" HorizontalAlign="Left" Size="80">Lon:</String>
+            <String X="1475" Y="125" HorizontalAlign="Left" Size="80">@LONGITUDE(%.3f)</String>
+
+            <!-- ZOOM -->
+            <String X="100" Y="125" HorizontalAlign="Left" Size="80">Zoom:</String>
+            <String X="400" Y="125" HorizontalAlign="Left" Size="80">@ZOOM(%.1f)</String>
+
+            <Container X="50" Y="50" VirtualWidth="10" Width="1175" HorizontalAlign="Left" VerticalAlign="Middle">
+                <Rectangle FillColor=".5 .5 .5"/>
+                <Button Type="Momentary" X="@ZoomSlider" Width="10" Height="20" Variable="@ZoomSelected"/>
+                <If Value="@ZoomSelected">
+                    <True>
+                        <MouseMotion XVariable="@ZoomSlider"/>
+                        <If Value1="@ZoomSlider" Operator="gt" Value2="10">
+                            <Set Variable="@ZoomSlider">10</Set>
+                        </If>
+                        <If Value1="@ZoomSlider" Operator="lt" Value2="1">
+                            <Set Variable="@ZoomSlider">1</Set>
+                        </If>
+                        <Rectangle X="@ZoomSlider" Width="1" Height="20" FillColor="0.5 1 0.5"/>
+                        <Set Variable="@ZOOM">@ZoomSlider</Set>
+                    </True>
+                    <False>
+                        <If Value1="@ZoomSlider" Operator="gt" Value2="10">
+                            <Set Variable="@ZoomSlider">10</Set>
+                        </If>
+                        <If Value1="@ZoomSlider" Operator="lt" Value2="1">
+                            <Set Variable="@ZoomSlider">1</Set>
+                        </If>
+                        <Rectangle X="@ZoomSlider" Width="1" Height="20" FillColor="0.5 0.5 0.5"/>
+                    </False>
+                </If>
+            </Container>
+
+            <KeyboardEvent Key="w">
+                <OnPress>
+                    <Set Variable="@LATITUDE" Operator="+=">.01</Set>
+                </OnPress>
+            </KeyboardEvent>
+            <KeyboardEvent Key="a">
+                <OnPress>
+                    <Set Variable="@LONGITUDE" Operator="-=">.36</Set>
+                </OnPress>
+            </KeyboardEvent>
+            <KeyboardEvent Key="s">
+                <OnPress>
+                    <Set Variable="@LATITUDE" Operator="-=">.01</Set>
+                </OnPress>
+            </KeyboardEvent>
+            <KeyboardEvent Key="d">
+                <OnPress>
+                    <Set Variable="@LONGITUDE" Operator="+=">.36</Set>
+                </OnPress>
+            </KeyboardEvent>
+        </Panel>
+    </Window>
+</DCAPP>

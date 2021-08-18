@@ -33,11 +33,24 @@ void dcUtmMap::setLonLatParams(const std::string &loMin, const std::string &loMa
 
 void dcUtmMap::computeLonLat(void) 
 {
-    if (lon) longitude = lon->getDecimal();
-    else longitude = (lonMin + lonMax)/2;
+    if (lon) {
+        longitude = lon->getDecimal();
+        if (longitude < lonMin) 
+            longitude = lonMin;
+        else if (longitude > lonMax) 
+            longitude = lonMax;
+    } else 
+        longitude = (lonMin + lonMax)/2;
 
-    if (lat) latitude = lat->getDecimal();
-    else latitude = (latMin + latMax)/2;
+    if (lat) {
+        latitude = lat->getDecimal();
+        if (latitude < latMin) 
+            latitude = latMin;
+        else if 
+            (latitude > latMax)
+            latitude = latMax;
+    } else 
+        latitude = (latMin + latMax)/2;
 }
 
 void dcUtmMap::computePosRatios(void) 
