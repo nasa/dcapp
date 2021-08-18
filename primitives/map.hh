@@ -22,6 +22,7 @@ class dcMap : public dcGeometric
         void setEnableTrail(const std::string &);
         void setTrailColor(const std::string &);
         void setTrailWidth(const std::string &);
+        void setTrailResolution(const std::string &);
         void setFnClearTrail(const std::string &);
         void setIconRotationOffset(const std::string &inval);
         void setIconTexture(const std::string &);
@@ -70,6 +71,7 @@ class dcMap : public dcGeometric
         Kolor trailColor;
         std::vector<std::pair<float,float>> positionHistory;
         Value* fnClearTrail;     // more of a function
+        double trailResolution;
 
         tdTexture *iconTextureID;
         double iconHeight;

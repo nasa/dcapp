@@ -7,7 +7,7 @@
 
 
 dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), fnClearTrail(NULL),
-                                    enableCustomIcon(false), iconRotationOffset(0), selected(false)
+                                    trailResolution(.005), enableCustomIcon(false), iconRotationOffset(0), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
 }
@@ -95,6 +95,11 @@ void dcMap::setIconSize(const std::string &inw, const std::string &inh)
             printf("map.cc: Missing dimensions for icon\n");
         }
     }
+}
+
+void dcMap::setTrailResolution(const std::string &inval)
+{
+    if (!inval.empty()) trailResolution = getValue(inval)->getDecimal();
 }
 
 void dcMap::computeGeometry(void)
@@ -337,7 +342,7 @@ void dcMap::updateTrail(void)
     {
         std::pair<float,float> last_pos = positionHistory.back();
         float dist = sqrt(pow(hRatio-last_pos.first, 2) + pow(vRatio-last_pos.second, 2)*1.0);
-        if ( dist > .0005) {
+        if ( dist > trailResolution) {
             positionHistory.push_back({hRatio, vRatio});
         }
     }
