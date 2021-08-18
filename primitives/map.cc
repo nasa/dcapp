@@ -319,8 +319,6 @@ void dcMap::displayTrail(void)
 
 void dcMap::updateTrail(void)
 {
-    static int prev_clear_state = -1;
-
     // clear stored trails on fnClearTrail value change
     if (fnClearTrail) {
         int curr_clear_state = fnClearTrail->getInteger();

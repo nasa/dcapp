@@ -5,6 +5,7 @@
     <Variable Type="Decimal" InitialValue="1">ZOOM</Variable>
     <Constant Name="ENABLE_POSITION_INDICATOR">1</Constant>
     <Variable Type="Decimal" InitialValue="1">ENABLE_MAP_TRAILS</Variable>
+    <Variable Type="Integer" InitialValue="0">CLEAR_TRAILS</Variable>
 
     <!-- UTM constants -->
     <Constant Name="LonMin">0</Constant>
@@ -20,10 +21,7 @@
     <Constant Name="BgColor">0 0 0</Constant>
     <Variable Type="Integer">ZoomSelected</Variable>
     <Variable Type="Decimal" InitialValue="1">ZoomSlider</Variable>
-    <Variable Type="Integer">LonSelected</Variable>
-    <Variable Type="Decimal" InitialValue="0">LonSlider</Variable>
-    <Variable Type="Integer">LatSelected</Variable>
-    <Variable Type="Decimal" InitialValue="10">LatSlider</Variable>
+    <Variable Type="Integer">ClearTrailsSelected</Variable>
 
     <Defaults>
         <String ForceMono="Numeric" HorizontalAlign="Center" VerticalAlign="Middle" Size="100" Color="1 1 1" LineColor="0 0 0"/>
@@ -36,16 +34,28 @@
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="2500" VirtualHeight="1500">
 
             <UPSMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="15" TrailColor=".25 .25 .25 .7"
-                    EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS"
+                    EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS" FnClearTrail="@CLEAR_TRAILS"
                     LonPolarAxis="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="50" Y="1450" 
                     IconFile="images/arrow.bmp" IconWidth="100" IconHeight="100" IconRotationOffset="-90"
                     Width="1175" Height="1225" HorizontalAlign="Left" VerticalAlign="Top">images/moon.bmp</UPSMap>
 
             <UTMMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="15" TrailColor=".25 .25 .25 .7"
-                    EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS"
+                    EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS" FnClearTrail="@CLEAR_TRAILS"
                     LonMin="#LonMin" LonMax="#LonMax" LatMin="#LatMin" LatMax="#LatMax" X="2450" Y="1450" 
                     IconFile="images/arrow.bmp" IconWidth="100" IconHeight="100" IconRotationOffset="-90" 
                     Width="1175" Height="1225" HorizontalAlign="Right" VerticalAlign="Top">images/moon.bmp</UTMMap>
+
+            <!-- clear button -->
+            <Button Type="Momentary" X="1000" Y="135" Width="100" Height="100" Variable="@ClearTrailsSelected"/>
+            <If Value="@ClearTrailsSelected">
+                <True>
+                    <Rectangle X="1000" Y="135" Width="100" Height="100" FillColor="1 1 0.5"/>
+                    <Set Variable="@CLEAR_TRAILS" Operator="+=">1</Set>
+                </True>
+                <False>
+                    <Rectangle X="1000" Y="135" Width="100" Height="100" FillColor="1 0 0.5"/>
+                </False>
+            </If>
 
             <!-- lat/long -->
             <String X="2100" Y="125" HorizontalAlign="Right" Size="80">Lat:</String>
@@ -86,22 +96,22 @@
 
             <KeyboardEvent Key="w">
                 <OnPress>
-                    <Set Variable="@LATITUDE" Operator="+=">.01</Set>
+                    <Set Variable="@LATITUDE" Operator="+=">.05</Set>
                 </OnPress>
             </KeyboardEvent>
             <KeyboardEvent Key="a">
                 <OnPress>
-                    <Set Variable="@LONGITUDE" Operator="-=">.36</Set>
+                    <Set Variable="@LONGITUDE" Operator="-=">1.8</Set>
                 </OnPress>
             </KeyboardEvent>
             <KeyboardEvent Key="s">
                 <OnPress>
-                    <Set Variable="@LATITUDE" Operator="-=">.01</Set>
+                    <Set Variable="@LATITUDE" Operator="-=">.05</Set>
                 </OnPress>
             </KeyboardEvent>
             <KeyboardEvent Key="d">
                 <OnPress>
-                    <Set Variable="@LONGITUDE" Operator="+=">.36</Set>
+                    <Set Variable="@LONGITUDE" Operator="+=">1.8</Set>
                 </OnPress>
             </KeyboardEvent>
         </Panel>

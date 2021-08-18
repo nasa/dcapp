@@ -78,6 +78,9 @@ class dcMap : public dcGeometric
         double iconRotationOffset;
 
         bool selected;
+
+    private:
+        int prev_clear_state;
 };
 
 #endif
