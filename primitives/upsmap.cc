@@ -30,26 +30,17 @@ void dcUpsMap::setLonLatParams(const std::string &loPolarAxis, const std::string
     }
 }
 
+void dcUpsMap::setEnableInverseTheta(const std::string &inval)
+{
+    if (!inval.empty()) enableInverseTheta = getValue(inval)->getInteger();
+}
+
 void dcUpsMap::computeLonLat(void) 
 {
-    if (lon) {
-        longitude = lon->getDecimal();
-        if (longitude < 0) 
-            longitude = 0;
-        else if (longitude > 360) 
-            longitude = 360;
-    } else 
-        longitude = lonPolarAxis;
+    longitude = lon->getDecimal();
+    latitude = lat->getDecimal();
 
-    if (lat) {
-        latitude = lat->getDecimal();
-        if (latitude < latOuter) 
-            latitude = latOuter;
-        else if 
-            (latitude > latOrigin)
-            latitude = latOrigin;
-    } else 
-        latitude = latOrigin;
+    if (enableInverseTheta) longitude *= -1;
 }
 
 void dcUpsMap::computePosRatios(void) 
@@ -59,8 +50,11 @@ void dcUpsMap::computePosRatios(void)
     double prevVRatio = vRatio;
 
     // compute unit ratios for x and y
-    double theta = (longitude - lonPolarAxis) * M_PI / 180;
-    double radius = (latOrigin - latitude) / (latOrigin - latOuter);    // scale of 0..1
+    double theta = (longitude + lonPolarAxis) * M_PI / 180;
+    double radius = fabs((latOrigin - latitude) / (latOrigin - latOuter));    // scale of 0..1
+
+    if ( radius > 1 ) radius = 1;
+
     hRatio = radius * cos(theta) * .5 + .5;
     vRatio = radius * sin(theta) * .5 + .5;
 

@@ -66,3 +66,4 @@ void dcUtmMap::computePosRatios(void)
     if ( prevVRatio != vRatio || prevHRatio != hRatio)
         trajAngle = atan2((vRatio - prevVRatio), ( hRatio - prevHRatio)) * 180 / M_PI;
 }
+

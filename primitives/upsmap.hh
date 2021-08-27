@@ -10,6 +10,7 @@ class dcUpsMap : public dcMap
         virtual ~dcUpsMap();
 
         void setLonLatParams(const std::string &, const std::string &, const std::string &);
+        void setEnableInverseTheta(const std::string &);
 
     private:
         void computeLonLat(void);
@@ -19,6 +20,7 @@ class dcUpsMap : public dcMap
         double latOrigin;
         double latOuter;
         double polarAxisPosition;       // position of polar axis in radians (TODO)
+        bool enableInverseTheta;
 };
 
 #endif

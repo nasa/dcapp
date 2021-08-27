@@ -564,6 +564,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setTrailWidth(get_element_data(node, "TrailWidth"));
             myitem->setFnClearTrail(get_element_data(node, "FnClearTrail"));
             myitem->setTrailResolution(get_element_data(node, "TrailResolution"));
+            myitem->setEnableInverseTheta(get_element_data(node, "EnableInverseTheta"));
             xmldata myfile = get_element_data(node, "File");
             if (myfile.empty()) myfile = get_node_content(node);
             myitem->setTexture(myfile);

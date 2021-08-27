@@ -61,6 +61,8 @@ class dcMap : public dcGeometric
         double texLeft;
         double texRight;
 
+        bool enableInverseTheta;
+
         double hRatio;
         double vRatio;
         double trajAngle;
