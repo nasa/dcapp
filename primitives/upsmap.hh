@@ -15,6 +15,7 @@ class dcUpsMap : public dcMap
     private:
         void computeLonLat(void);
         void computePosRatios(void);
+        void computeZoneRatios(void);
         
         double lonPolarAxis;
         double latOrigin;

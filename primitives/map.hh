@@ -27,6 +27,8 @@ class dcMap : public dcGeometric
         void setIconRotationOffset(const std::string &inval);
         void setIconTexture(const std::string &);
         void setIconSize(const std::string &, const std::string &);
+        void setZoneLonLat(const std::string &, const std::string &, const std::string &, const std::string &, 
+            const std::string &, const std::string &, const std::string &, const std::string &);
         void draw(void);
 
         // exists in all children, but different number of params 
@@ -39,13 +41,14 @@ class dcMap : public dcGeometric
     protected:
         void displayIcon(void);
         void displayTrail(void);
+        void displayZone(void);
         void computeGeometry(void);
         void computeTextureBounds(void);
         void updateTrail(void);
-        void remapXYBounds(std::pair<float,float>& p);
 
         virtual void computeLonLat(void) = 0;
         virtual void computePosRatios(void) = 0;
+        virtual void computeZoneRatios(void) = 0;
 
         tdTexture *textureID;
         Value* lat;
@@ -78,6 +81,10 @@ class dcMap : public dcGeometric
         double iconWidth;
         bool enableCustomIcon;
         double iconRotationOffset;
+
+        std::vector<std::pair<Value*,Value*>> zoneLonLatVals;
+        std::vector<std::pair<double,double>> zoneLonLatRatios;
+        bool enableZone;
 
         bool selected;
 
