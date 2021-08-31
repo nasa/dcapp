@@ -62,3 +62,18 @@ void dcUpsMap::computePosRatios(void)
     if ( prevVRatio != vRatio || prevHRatio != hRatio)
         trajAngle = atan2((vRatio - prevVRatio), ( hRatio - prevHRatio)) * 180 / M_PI;
 }
+
+void dcUpsMap::computeZoneRatios(void)
+{
+    zoneLonLatRatios.clear();
+    for (uint i = 0; i < zoneLonLatVals.size(); i++) {
+
+        // compute unit ratios for x and y
+        double theta = (zoneLonLatVals.at(i).first->getDecimal() + lonPolarAxis) * M_PI / 180;
+        double radius = fabs((latOrigin - zoneLonLatVals.at(i).second->getDecimal() ) / (latOrigin - latOuter));    // scale of 0..1
+        if ( radius > 1 ) radius = 1;
+
+        // add calculated value
+        zoneLonLatRatios.push_back({radius * cos(theta) * .5 + .5, radius * sin(theta) * .5 + .5});
+    }
+}

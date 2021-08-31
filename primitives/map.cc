@@ -24,7 +24,7 @@ void dcMap::setTexture(const std::string &filename)
 
 void dcMap::setLonLat(const std::string &lat1, const std::string &lon1)
 {
-    if (!lat1.empty() and !lon1.empty())
+    if (!lat1.empty() && !lon1.empty())
     {
         lat = getValue(lat1);
         lon = getValue(lon1);
@@ -100,6 +100,24 @@ void dcMap::setIconSize(const std::string &inw, const std::string &inh)
 void dcMap::setTrailResolution(const std::string &inval)
 {
     if (!inval.empty()) trailResolution = getValue(inval)->getDecimal();
+}
+
+void dcMap::setZoneLonLat(const std::string &lon1, const std::string &lat1, const std::string &lon2, const std::string &lat2, 
+    const std::string &lon3, const std::string &lat3, const std::string &lon4, const std::string &lat4) {
+
+    if (!lon1.empty() && !lat1.empty() && !lon2.empty() && !lat2.empty() && !lon3.empty() && !lat3.empty() && !lon4.empty() && !lat4.empty())
+    {
+        zoneLonLatVals.clear();
+        zoneLonLatVals.push_back({getValue(lon1), getValue(lat1)});
+        zoneLonLatVals.push_back({getValue(lon2), getValue(lat2)});
+        zoneLonLatVals.push_back({getValue(lon3), getValue(lat3)});
+        zoneLonLatVals.push_back({getValue(lon4), getValue(lat4)});
+        enableZone = true;
+    }
+    else
+    {
+        enableZone = false;
+    }
 }
 
 void dcMap::computeGeometry(void)
@@ -270,22 +288,9 @@ void dcMap::displayIcon(void) {
     }
 }
 
-// bind x,y points to the visible view
-void dcMap::remapXYBounds(std::pair<float,float>& p) 
-{
-    if (p.first < texLeft)
-        p.first = texLeft;
-    else if (p.first > texRight)
-        p.first = texRight;
-
-    if (p.second < texDown)
-        p.second = texDown;
-    else if (p.second > texUp)
-        p.second = texUp;
-}
-
 void dcMap::displayTrail(void)
 {
+    std::vector<float> pntsA;
     if (positionHistory.size() > 1) {
         for (uint i = 1; i < positionHistory.size(); i++) {
             std::pair<float,float> p1 = positionHistory.at(i-1);
@@ -293,30 +298,38 @@ void dcMap::displayTrail(void)
             if ( (p1.first > texLeft && p1.first < texRight && p1.second > texDown && p1.second < texUp) ||
                  (p2.first > texLeft && p2.first < texRight && p2.second > texDown && p2.second < texUp) ) {
 
-                remapXYBounds(p1);
-                remapXYBounds(p2);
-
                 // calculate mx, my for points
                 float mx1 = left + (p1.first - texLeft) / (texRight - texLeft) * width;
                 float my1 = bottom + (p1.second - texDown) / (texUp - texDown) * height;
                 float mx2= left + (p2.first - texLeft) / (texRight - texLeft) * width;
                 float my2 = bottom + (p2.second - texDown) / (texUp - texDown) * height;
 
-                // plot line for current set
-                std::vector<float> pntsA = {mx1, my1, mx2, my2};
-                draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
+                // add to set of points
+                pntsA.insert(pntsA.end(),{mx1, my1, mx2, my2});
+                
+            } else {
+                if (!pntsA.empty()) {
+                    draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
+                    pntsA.clear();
+                }
             }
         }
 
+        // plot any points remaining 
+        if (!pntsA.empty()) {
+            draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
+            pntsA.clear();
+        }
+
+        // draw last position to current point
         std::pair<float,float> p = positionHistory.back();
-        remapXYBounds(p);
 
         float mx1 = left + (p.first - texLeft) / (texRight - texLeft) * width;
         float my1 = bottom + (p.second - texDown) / (texUp - texDown) * height;
         float mx2 = left + (hRatio - texLeft) / (texRight - texLeft) * width;
         float my2 = bottom + (vRatio - texDown) / (texUp - texDown) * height;
 
-        std::vector<float> pntsA = {mx1, my1, mx2, my2};
+        pntsA.insert(pntsA.end(),{mx1, my1, mx2, my2});
         draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
     }
 
@@ -348,18 +361,70 @@ void dcMap::updateTrail(void)
     }
 }
 
+void dcMap::displayZone(void)
+{
+    computeZoneRatios();
+    std::vector<float> pntsA;
+    for (uint ii = 0; ii < zoneLonLatRatios.size(); ii++) {
+        std::pair<float,float> p = zoneLonLatRatios.at(ii);
+        pntsA.push_back( left + (p.first - texLeft) / (texRight - texLeft) * width );
+        pntsA.push_back( bottom + (p.second - texDown) / (texUp - texDown) * height );
+    }
+
+    draw_quad(pntsA, 1, .5, .5, .5);
+}
+
 void dcMap::draw(void)
 {
+    // plane equation used to mask display bits 
+    static double clipBuffer[4];
+    memset(clipBuffer, 0, 4*sizeof(double));
+
     computeGeometry();
+
+    // left bound
+    clipBuffer[0] = 1;
+    clipBuffer[3] = -1 * (refx - delx);
+    glClipPlane(GL_CLIP_PLANE0, clipBuffer);
+    glEnable(GL_CLIP_PLANE0);
+
+    // right bound
+    clipBuffer[0] = -1;
+    clipBuffer[3] = refx + width - delx;
+    glClipPlane(GL_CLIP_PLANE1, clipBuffer);
+    glEnable(GL_CLIP_PLANE1);
+
+    // lower bound
+    clipBuffer[0] = 0;  // clear A
+    clipBuffer[1] = 1;
+    clipBuffer[3] = -1 * (refy - dely);
+    glClipPlane(GL_CLIP_PLANE2, clipBuffer);
+    glEnable(GL_CLIP_PLANE2);
+
+    // upper bound
+    clipBuffer[1] = -1;
+    clipBuffer[3] = refy + height - dely;
+    glClipPlane(GL_CLIP_PLANE3, clipBuffer);
+    glEnable(GL_CLIP_PLANE3);
+
     container_start(refx, refy, delx, dely, 1, 1, 0);   // disable rotation for now
     draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
     container_end();
+
+    if (enableZone)
+        displayZone();
 
     if (enableTrail)
         displayTrail();
 
     if (enableIcon)
         displayIcon();
+
+    // end alpha mask
+    glDisable(GL_CLIP_PLANE0);
+    glDisable(GL_CLIP_PLANE1);
+    glDisable(GL_CLIP_PLANE2);
+    glDisable(GL_CLIP_PLANE3);
 
     updateTrail();
 }

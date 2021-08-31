@@ -67,3 +67,14 @@ void dcUtmMap::computePosRatios(void)
         trajAngle = atan2((vRatio - prevVRatio), ( hRatio - prevHRatio)) * 180 / M_PI;
 }
 
+void dcUtmMap::computeZoneRatios(void)
+{
+    zoneLonLatRatios.clear();
+    for (uint i = 0; i < zoneLonLatVals.size(); i++) {
+        // add calculated value
+        zoneLonLatRatios.push_back({
+            (zoneLonLatVals.at(i).first->getDecimal() - lonMin) / (lonMax - lonMin), 
+            (zoneLonLatVals.at(i).second->getDecimal() - latMin) / (latMax - latMin)
+        });
+    }
+}

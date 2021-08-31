@@ -14,6 +14,7 @@ class dcUtmMap : public dcMap
     private:
         void computeLonLat(void);
         void computePosRatios(void);
+        void computeZoneRatios(void);
         
         double lonMin;
         double lonMax;
