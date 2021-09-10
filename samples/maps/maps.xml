@@ -35,16 +35,16 @@
 
             <UPSMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="15" TrailColor=".25 .25 .25 .7"
                     EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS" FnClearTrail="@CLEAR_TRAILS"
-                    LonPolarAxis="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="50" Y="1450" 
-                    IconFile="images/arrow.bmp" IconWidth="100" IconHeight="100" IconRotationOffset="-90"
-                    Width="1175" Height="1225" HorizontalAlign="Left" VerticalAlign="Top"
+                    LonPolarAxis="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="50" Y="225" 
+                    IconFile="images/arrow.bmp" IconWidth="50" IconHeight="50" IconRotationOffset="-90"
+                    Width="1175" Height="1225" HorizontalAlign="Left" VerticalAlign="Bottom"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="85" ZoneLat2="85" ZoneLat3="86" ZoneLat4="86"
                     >images/moon.bmp</UPSMap>
 
             <UTMMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="15" TrailColor=".25 .25 .25 .7"
                     EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS" FnClearTrail="@CLEAR_TRAILS"
                     LonMin="#LonMin" LonMax="#LonMax" LatMin="#LatMin" LatMax="#LatMax" X="2450" Y="1450" 
-                    IconFile="images/arrow.bmp" IconWidth="100" IconHeight="100" IconRotationOffset="-90" 
+                    IconFile="images/arrow.bmp" IconWidth="50" IconHeight="50" IconRotationOffset="-90" 
                     Width="1175" Height="1225" HorizontalAlign="Right" VerticalAlign="Top"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="85" ZoneLat2="85" ZoneLat3="86" ZoneLat4="86"
                     >images/moon.bmp</UTMMap>
