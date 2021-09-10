@@ -107,7 +107,12 @@ void dcPolygon::handleMouseRelease(void)
 void dcPolygon::draw(void)
 {
     // this effectively fills AppData.vertices with the individual Vertex primitives associated with this Polygon 
-    for (const auto &myobj : children) myobj->draw();
+    for (const auto &myobj : children) 
+    {
+        myobj->processPreCalculations();
+        myobj->draw();
+        myobj->processPostCalculations();
+    }
 
     // this copies the vertices from AppData to this for subsequent usage, like handleMousePress
     this->vertices = AppData.vertices;
