@@ -61,9 +61,6 @@ void dcUpsMap::computePosRatios(void)
     // calculate current angle of trajectory
     if ( prevVRatio != vRatio || prevHRatio != hRatio)
         trajAngle = atan2((vRatio - prevVRatio), ( hRatio - prevHRatio)) * 180 / M_PI;
-
-//printf("%f %f\n", radius, theta);
-printf("%f %f\n", longitude, latitude);
 }
 
 void dcUpsMap::computeZoneRatios(void)
