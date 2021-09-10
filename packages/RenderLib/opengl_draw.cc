@@ -233,11 +233,11 @@ void draw_image(tdTexture *textureID, float w, float h)
                 glTexCoord2f(0, 0);
                 glVertex3f(0, 0, 0);
                 glTexCoord2f(1, 0);
-                glVertex3f(w/2, 0, 0);
+                glVertex3f(w, 0, 0);
                 glTexCoord2f(1, 1);
-                glVertex3f(w/2, h/2, 0);
+                glVertex3f(w, h, 0);
                 glTexCoord2f(0, 1);
-                glVertex3f(0, h/2, 0);
+                glVertex3f(0, h, 0);
             glEnd();
             glDisable(GL_TEXTURE_2D);
         }
