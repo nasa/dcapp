@@ -38,9 +38,7 @@ void dcLine::draw(void)
 {
     for (const auto &myobj : children) 
     {
-        myobj->processPreCalculations();
         myobj->draw();
-        myobj->processPostCalculations();
     }
     draw_line(AppData.vertices, linewidth, color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal(), pattern, factor);
     AppData.vertices.clear();

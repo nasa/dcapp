@@ -38,9 +38,7 @@ void dcContainer::draw(void)
     container_start(refx, refy, delx, dely, (w->getDecimal())/(vwidth->getDecimal()), (h->getDecimal())/(vheight->getDecimal()), rotate->getDecimal());
     for (const auto &myobj : children) 
     {
-        myobj->processPreCalculations();
         myobj->draw();
-        myobj->processPostCalculations();
     }
     container_end();
 }

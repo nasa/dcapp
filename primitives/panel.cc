@@ -41,12 +41,7 @@ Value * dcPanel::getContainerHeight(void) { return orthoY; }
 void dcPanel::draw(void)
 {
     setup_panel(orthoX->getDecimal(), orthoY->getDecimal(), color.R->getDecimal(), color.G->getDecimal(), color.B->getDecimal(), color.A->getDecimal());
-    for (const auto &myobj : children) 
-    {
-        myobj->processPreCalculations();
-        myobj->draw();
-        myobj->processPostCalculations();
-    }
+    for (const auto &myobj : children) myobj->draw();
 }
 
 void dcPanel::handleMousePress(double x, double y)

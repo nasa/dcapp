@@ -8,12 +8,9 @@ dcParent::~dcParent()
 
 void dcParent::draw(void)
 {
-    for (const auto &myobj : children) 
-    {
-        myobj->processPreCalculations();
-        myobj->draw();
-        myobj->processPostCalculations();
-    }
+    processPreCalculationsAllChildren();
+    for (const auto &myobj : children) myobj->draw();
+    processPostCalculationsAllChildren();
 }
 
 void dcParent::handleKeyPress(char key)
@@ -76,4 +73,22 @@ void dcParent::addChild(dcObject *item)
     if (!item) return;
     children.push_back(item);
     item->setParent(this);
+}
+
+void dcParent::processPreCalculationsAllChildren(void) 
+{
+    for (const auto &myobj : children) 
+    {
+        myobj->processPreCalculations();
+        myobj->processPreCalculationsAllChildren();
+    }
+}
+
+void dcParent::processPostCalculationsAllChildren(void) 
+{
+    for (const auto &myobj : children) 
+    {
+        myobj->processPostCalculations();
+        myobj->processPostCalculationsAllChildren();
+    }
 }
