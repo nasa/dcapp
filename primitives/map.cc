@@ -215,7 +215,7 @@ void dcMap::computeTextureBounds(void)
 }
 
 void dcMap::displayIcon(void) {
-    float mx, my, mleft, mbottom, mright, mtop, mcenter, mmiddle, mwidth, mheight, mdelx, mdely;
+    float mx, my, mwidth, mheight, mdelx, mdely;
 
     if (enableCustomIcon) 
     {
@@ -227,57 +227,14 @@ void dcMap::displayIcon(void) {
         mwidth = mheight = 25;
     }
 
-    mleft = left + (hRatio - texLeft) / (texRight - texLeft) * width;
-    mbottom = bottom + (vRatio - texDown) / (texUp - texDown) * height;
-
-    mright = mleft;//mleft + mwidth/2;
-    mtop = mbottom;//mbottom + mheight/2;
-    mcenter = mleft;
-    mmiddle = mbottom;
-
-    switch (halign)
-    {
-        case dcLeft:
-            mx = mleft;
-            mdelx = 0;
-            break;
-        case dcCenter:
-            mx = mcenter;
-            mdelx = mwidth/2;
-            break;
-        case dcRight:
-            mx = mright;
-            mdelx = mwidth;
-            break;
-        default:
-            break;
-    }
-    switch (valign)
-    {
-        case dcBottom:
-            my = mbottom;
-            mdely = 0;
-            break;
-        case dcMiddle:
-            my = mmiddle;
-            mdely = mheight/2;
-            break;
-        case dcTop:
-            my = mtop;
-            mdely = mheight;
-            break;
-        default:
-            break;
-    }
-
-    mx = mleft;
-    my = mbottom;
+    mx = left + (hRatio - texLeft) / (texRight - texLeft) * width;
+    my = bottom + (vRatio - texDown) / (texUp - texDown) * height;
     mdelx = mwidth/2;
     mdely = mheight/2;
 
     if (enableCustomIcon) 
     {
-        container_start(mx, my, mdelx/2, mdely/2, 1, 1, iconRotationOffset + trajAngle);
+        container_start(mx, my, mdelx, mdely, 1, 1, iconRotationOffset + trajAngle);
         draw_image(this->iconTextureID, mwidth, mheight);
         container_end();
     }
