@@ -23,6 +23,8 @@ class dcParent : public dcObject
         void updateData(void);
         void updateStreams(unsigned);
         void processAnimation(Animation *);
+        void processPreCalculationsAllChildren(void);
+        void processPostCalculationsAllChildren(void);
 
         void addChild(dcObject *);
 

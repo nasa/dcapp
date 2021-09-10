@@ -331,13 +331,19 @@ void dcMap::displayZone(void)
     draw_quad(pntsA, 1, .5, .5, .5);
 }
 
+void dcMap::processPreCalculations(void) {
+    computeGeometry();
+}
+
+void dcMap::processPostCalculations(void) {
+    updateTrail();
+}
+
 void dcMap::draw(void)
 {
     // plane equation used to mask display bits 
     static double clipBuffer[4];
     memset(clipBuffer, 0, 4*sizeof(double));
-
-    computeGeometry();
 
     // left bound
     clipBuffer[0] = 1;
@@ -382,6 +388,4 @@ void dcMap::draw(void)
     glDisable(GL_CLIP_PLANE1);
     glDisable(GL_CLIP_PLANE2);
     glDisable(GL_CLIP_PLANE3);
-
-    updateTrail();
 }

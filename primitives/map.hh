@@ -30,6 +30,8 @@ class dcMap : public dcGeometric
         void setZoneLonLat(const std::string &, const std::string &, const std::string &, const std::string &, 
             const std::string &, const std::string &, const std::string &, const std::string &);
         void draw(void);
+        void processPreCalculations(void);
+        void processPostCalculations(void);
 
         // exists in all children, but different number of params 
         // virtual void setLonLatParams(...) = 0;
