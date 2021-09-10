@@ -8,9 +8,7 @@ dcParent::~dcParent()
 
 void dcParent::draw(void)
 {
-    processPreCalculationsAllChildren();
     for (const auto &myobj : children) myobj->draw();
-    processPostCalculationsAllChildren();
 }
 
 void dcParent::handleKeyPress(char key)
