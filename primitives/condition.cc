@@ -73,16 +73,16 @@ dcCondition::~dcCondition()
 
 void dcCondition::draw(void)
 {
-    if (checkCondition()) {
-        TrueList->processPreCalculations();
+    TrueList->processPreCalculations();
+    FalseList->processPreCalculations();
+
+    if (checkCondition())
         TrueList->draw();
-        TrueList->processPostCalculations();
-    }
-    else {
-        FalseList->processPreCalculations();
+    else
         FalseList->draw();
-        FalseList->processPostCalculations();
-    }
+
+    TrueList->processPostCalculations();
+    FalseList->processPostCalculations();
 }
 
 void dcCondition::handleKeyPress(char key)
