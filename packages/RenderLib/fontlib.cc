@@ -355,11 +355,11 @@ int tdFont::convertUTF8toUTF32(UTF8 *source, UTF32 *dest)
         *dest = 0;
         switch (extraBytesToRead)
         {
-            case 5: *dest += *source++; *dest <<= 6;
-            case 4: *dest += *source++; *dest <<= 6;
-            case 3: *dest += *source++; *dest <<= 6;
-            case 2: *dest += *source++; *dest <<= 6;
-            case 1: *dest += *source++; *dest <<= 6;
+            case 5: *dest += *source++; *dest <<= 6;    // fall through
+            case 4: *dest += *source++; *dest <<= 6;    // fall through
+            case 3: *dest += *source++; *dest <<= 6;    // fall through
+            case 2: *dest += *source++; *dest <<= 6;    // fall through
+            case 1: *dest += *source++; *dest <<= 6;    // fall through
             case 0: *dest += *source++;
         }
         *dest -= offsetsFromUTF8[extraBytesToRead];
@@ -381,9 +381,9 @@ bool tdFont::isLegalUTF8(const UTF8 *source, int length)
     {
         default: return false;
             /* Everything else falls through when "true"... */
-        case 4: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
-        case 3: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
-        case 2: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false;
+        case 4: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false; // fall through
+        case 3: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false; // fall through
+        case 2: if ((a = (*--srcptr)) < 0x80 || a > 0xBF) return false; // fall through
 
             switch (*source)
             {
@@ -391,11 +391,10 @@ bool tdFont::isLegalUTF8(const UTF8 *source, int length)
                 case 0xE0: if (a < 0xA0) return false; break;
                 case 0xED: if (a > 0x9F) return false; break;
                 case 0xF0: if (a < 0x90) return false; break;
-                case 0xF4: if (a > 0x8F) return false; break;
+                case 0xF4: if (a > 0x8F) return false; break;   
                 default:   if (a < 0x80) return false;
-            }
-
-        case 1: if (*source >= 0x80 && *source < 0xC2) return false;
+            } // fall through
+        case 1: if (*source >= 0x80 && *source < 0xC2) return false;    // fall through
     }
 
     if (*source > 0xF4) return false;
