@@ -17,5 +17,7 @@
 #include "rectangle.hh"
 #include "setvalue.hh"
 #include "string.hh"
+#include "upsmap.hh"
+#include "utmmap.hh"
 #include "vertex.hh"
 #include "window.hh"

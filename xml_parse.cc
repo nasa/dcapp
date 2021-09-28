@@ -519,6 +519,73 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 if (NodeCheck(subnode, "OnRelease")) process_elements(myitem->ReleaseList, subnode->children);
             }
         }
+        if (NodeCheck(node, "UTMMap"))
+        {
+            dcUtmMap *myitem = new dcUtmMap(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
+            myitem->setLonLatParams(get_element_data(node, "LonMin"), get_element_data(node, "LonMax"), get_element_data(node, "LatMin"), get_element_data(node, "LatMax"));
+            myitem->setZoom(get_element_data(node, "Zoom"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
+            myitem->setEnableIcon(get_element_data(node, "EnableIcon"));
+            myitem->setEnableTrail(get_element_data(node, "EnableTrail"));
+            myitem->setTrailColor(get_element_data(node, "TrailColor"));
+            myitem->setTrailWidth(get_element_data(node, "TrailWidth"));
+            myitem->setFnClearTrail(get_element_data(node, "FnClearTrail"));
+            myitem->setTrailResolution(get_element_data(node, "TrailResolution"));
+            myitem->setZoneLonLat(
+                get_element_data(node, "ZoneLon1"), get_element_data(node, "ZoneLat1"),
+                get_element_data(node, "ZoneLon2"), get_element_data(node, "ZoneLat2"), 
+                get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
+                get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
+            xmldata myfile = get_element_data(node, "File");
+            if (myfile.empty()) myfile = get_node_content(node);
+            myitem->setTexture(myfile);
+            xmldata iconfile = get_element_data(node, "IconFile");
+            if (!iconfile.empty()) 
+            {
+                myitem->setIconTexture(iconfile);
+                myitem->setIconSize(get_element_data(node, "IconWidth"), get_element_data(node, "IconHeight"));
+                myitem->setIconRotationOffset(get_element_data(node, "IconRotationOffset"));
+            }
+        }
+        if (NodeCheck(node, "UPSMap"))
+        {
+            dcUpsMap *myitem = new dcUpsMap(myparent);
+            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
+            myitem->setLonLatParams(get_element_data(node, "PolarAxisOffset"), get_element_data(node, "LatOrigin"), get_element_data(node, "LatOuter"));
+            myitem->setZoom(get_element_data(node, "Zoom"));
+            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
+            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
+            myitem->setEnableIcon(get_element_data(node, "EnableIcon"));
+            myitem->setEnableTrail(get_element_data(node, "EnableTrail"));
+            myitem->setTrailColor(get_element_data(node, "TrailColor"));
+            myitem->setTrailWidth(get_element_data(node, "TrailWidth"));
+            myitem->setFnClearTrail(get_element_data(node, "FnClearTrail"));
+            myitem->setTrailResolution(get_element_data(node, "TrailResolution"));
+            myitem->setEnableInverseTheta(get_element_data(node, "EnableInverseTheta"));
+            myitem->setZoneLonLat(
+                get_element_data(node, "ZoneLon1"), get_element_data(node, "ZoneLat1"),
+                get_element_data(node, "ZoneLon2"), get_element_data(node, "ZoneLat2"), 
+                get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
+                get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
+            xmldata myfile = get_element_data(node, "File");
+            if (myfile.empty()) myfile = get_node_content(node);
+            myitem->setTexture(myfile);
+            xmldata iconfile = get_element_data(node, "IconFile");
+            if (!iconfile.empty()) 
+            {
+                myitem->setIconTexture(iconfile);
+                myitem->setIconSize(get_element_data(node, "IconWidth"), get_element_data(node, "IconHeight"));
+                myitem->setIconRotationOffset(get_element_data(node, "IconRotationOffset"));
+            }
+        }
         if (NodeCheck(node, "PixelStream"))
         {
             dcPixelStream *myitem = new dcPixelStream(myparent);

@@ -18,7 +18,7 @@ class dcGeometric : public dcObject
         void setRotation(const std::string &);
         void setAlignment(const std::string &, const std::string &);
         void setOrigin(const std::string &, const std::string &);
-        void computeGeometry(void);
+        virtual void computeGeometry(void);
 
     protected:
         Value *x;
@@ -46,7 +46,7 @@ class dcGeometric : public dcObject
         double center;
         double middle;
 
-    private:
+    //private:
         double GeomX(Value *, double, double, int);
         double GeomY(Value *, double, double, int);
 };

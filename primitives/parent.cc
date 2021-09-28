@@ -72,3 +72,21 @@ void dcParent::addChild(dcObject *item)
     children.push_back(item);
     item->setParent(this);
 }
+
+void dcParent::processPreCalculationsAllChildren(void) 
+{
+    for (const auto &myobj : children) 
+    {
+        myobj->processPreCalculations();
+        myobj->processPreCalculationsAllChildren();
+    }
+}
+
+void dcParent::processPostCalculationsAllChildren(void) 
+{
+    for (const auto &myobj : children) 
+    {
+        myobj->processPostCalculations();
+        myobj->processPostCalculationsAllChildren();
+    }
+}
