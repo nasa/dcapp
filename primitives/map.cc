@@ -341,51 +341,43 @@ void dcMap::processPostCalculations(void) {
 
 void dcMap::draw(void)
 {
-    // plane equation used to mask display bits 
-    static double clipBuffer[4];
-    memset(clipBuffer, 0, 4*sizeof(double));
+    circle_fill(1250, 900, 3000, 3000, 1, 0, 0, 1);
 
-    // left bound
-    clipBuffer[0] = 1;
-    clipBuffer[3] = -1 * (refx - delx);
-    glClipPlane(GL_CLIP_PLANE0, clipBuffer);
-    glEnable(GL_CLIP_PLANE0);
+    glEnable(GL_STENCIL_TEST);
+    glClear(GL_STENCIL_BUFFER_BIT);
+    glStencilMask(0xFF);
+    glClearStencil(0);
+    
+    // Write 1's into stencil buffer where the projection will be
+    glColorMask(GL_FALSE,GL_FALSE, GL_FALSE, GL_FALSE);
+    glDepthMask(GL_FALSE);
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    circle_fill(1250, 900, 1175/2, 1225/2, 1, 1, 1, 1);
 
-    // right bound
-    clipBuffer[0] = -1;
-    clipBuffer[3] = refx + width - delx;
-    glClipPlane(GL_CLIP_PLANE1, clipBuffer);
-    glEnable(GL_CLIP_PLANE1);
+    // Draw rectangle, masking out fragments with 1's in the stencil buffer
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glDepthMask(GL_TRUE);
+    glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    circle_fill(1250, 900-500, 400, 400, 0, 0, 1, 1);
+    
+    glDisable(GL_STENCIL_TEST); // enable stencil testing
+    
 
-    // lower bound
-    clipBuffer[0] = 0;  // clear A
-    clipBuffer[1] = 1;
-    clipBuffer[3] = -1 * (refy - dely);
-    glClipPlane(GL_CLIP_PLANE2, clipBuffer);
-    glEnable(GL_CLIP_PLANE2);
+//container_start(refx, refy, delx, dely, 1, 1, 0);   // disable rotation for now
+//draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
 
-    // upper bound
-    clipBuffer[1] = -1;
-    clipBuffer[3] = refy + height - dely;
-    glClipPlane(GL_CLIP_PLANE3, clipBuffer);
-    glEnable(GL_CLIP_PLANE3);
 
-    container_start(refx, refy, delx, dely, 1, 1, 0);   // disable rotation for now
-    draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
-    container_end();
+//container_end();
 
-    if (enableZone)
-        displayZone();
+/*if (enableZone)
+    displayZone();
 
-    if (enableTrail)
-        displayTrail();
+if (enableTrail)
+    displayTrail();
 
-    if (enableIcon)
-        displayIcon();
-
-    // end alpha mask
-    glDisable(GL_CLIP_PLANE0);
-    glDisable(GL_CLIP_PLANE1);
-    glDisable(GL_CLIP_PLANE2);
-    glDisable(GL_CLIP_PLANE3);
+if (enableIcon)
+    displayIcon();*/
+    
 }
