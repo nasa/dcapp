@@ -37,7 +37,7 @@
                     EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS" FnClearTrail="@CLEAR_TRAILS"
                     PolarAxisOffset="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="50" Y="225" 
                     IconFile="images/arrow.bmp" IconWidth="50" IconHeight="50" IconRotationOffset="-90"
-                    Width="1175" Height="1225" HorizontalAlign="Left" VerticalAlign="Bottom"
+                    Width="1175" Height="1225" HorizontalAlign="Left" VerticalAlign="Bottom" EnableCircularMap="1"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="85" ZoneLat2="85" ZoneLat3="86" ZoneLat4="86"
                     >images/moon.bmp</UPSMap>
 

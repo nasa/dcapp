@@ -18,13 +18,14 @@ class dcMap : public dcGeometric
         void setTexture(const std::string &);
         void setLonLat(const std::string &, const std::string &);
         void setZoom(const std::string &);
+        void setEnableCircularMap(const std::string &);
         void setEnableIcon(const std::string &);
         void setEnableTrail(const std::string &);
         void setTrailColor(const std::string &);
         void setTrailWidth(const std::string &);
         void setTrailResolution(const std::string &);
         void setFnClearTrail(const std::string &);
-        void setIconRotationOffset(const std::string &inval);
+        void setIconRotationOffset(const std::string &);
         void setIconTexture(const std::string &);
         void setIconSize(const std::string &, const std::string &);
         void setZoneLonLat(const std::string &, const std::string &, const std::string &, const std::string &, 
@@ -83,6 +84,7 @@ class dcMap : public dcGeometric
         double iconWidth;
         bool enableCustomIcon;
         double iconRotationOffset;
+        bool enableCircularMap;
 
         std::vector<std::pair<Value*,Value*>> zoneLonLatVals;
         std::vector<std::pair<double,double>> zoneLonLatRatios;

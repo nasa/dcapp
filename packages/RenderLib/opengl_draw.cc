@@ -435,6 +435,30 @@ void circle_fill(float cx, float cy, float r, int num_segments, float red, float
     glEnd();
 }
 
+void draw_ellipse(float cx, float cy, float rx, float ry, int num_segments, float red, float green, float blue, float alpha)
+{
+    float theta = 2 * 3.1415926 / (float)num_segments;
+    float c = cosf(theta); // precalculate the sine and cosine
+    float s = sinf(theta);
+    float t;
+    float x = 1; // we start at angle = 0
+    float y = 0;
+    int i;
+
+    glColor4f(red, green, blue, alpha);
+    glBegin(GL_POLYGON);
+    for (i = 0; i < num_segments; i++)
+    {
+        glVertex2f(x * rx + cx, y * ry + cy); // output vertex
+
+        //apply the rotation matrix
+        t = x;
+        x = c * x - s * y;
+        y = s * t + c * y;
+    }
+    glEnd();
+}
+
 void draw_textured_sphere(float x, float y, const std::vector<float> &pointsA, float radiusA, tdTexture *textureID, float roll, float pitch, float yaw)
 {
     if (textureID->isValid())
