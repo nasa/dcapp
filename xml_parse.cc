@@ -526,6 +526,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
             myitem->setLonLatParams(get_element_data(node, "LonMin"), get_element_data(node, "LonMax"), get_element_data(node, "LatMin"), get_element_data(node, "LatMax"));
             myitem->setZoom(get_element_data(node, "Zoom"));
+            myitem->setEnableCircularMap(get_element_data(node, "EnableCircularMap"));
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
@@ -559,6 +560,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
             myitem->setLonLatParams(get_element_data(node, "PolarAxisOffset"), get_element_data(node, "LatOrigin"), get_element_data(node, "LatOuter"));
             myitem->setZoom(get_element_data(node, "Zoom"));
+            myitem->setEnableCircularMap(get_element_data(node, "EnableCircularMap"));
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
             myitem->setRotation(get_element_data(node, "Rotate"));
             myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));

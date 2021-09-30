@@ -7,7 +7,7 @@
 
 
 dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), fnClearTrail(NULL),
-                                    trailResolution(.005), enableCustomIcon(false), iconRotationOffset(0), selected(false)
+                                    trailResolution(.005), enableCustomIcon(false), iconRotationOffset(0), enableCircularMap(0), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
 }
@@ -38,6 +38,11 @@ void dcMap::setLonLat(const std::string &lat1, const std::string &lon1)
 void dcMap::setZoom(const std::string &inval)
 {
     if (!inval.empty()) zu = getValue(inval);
+}
+
+void dcMap::setEnableCircularMap(const std::string &inval)
+{
+    if (!inval.empty()) enableCircularMap = getValue(inval)->getBoolean();
 }
 
 void dcMap::setFnClearTrail(const std::string &inval)
@@ -227,8 +232,8 @@ void dcMap::displayIcon(void) {
         mwidth = mheight = 25;
     }
 
-    mx = left + (hRatio - texLeft) / (texRight - texLeft) * width;
-    my = bottom + (vRatio - texDown) / (texUp - texDown) * height;
+    mx = (hRatio - texLeft) / (texRight - texLeft) * width;
+    my = (vRatio - texDown) / (texUp - texDown) * height;
     mdelx = mwidth/2;
     mdely = mheight/2;
 
@@ -256,10 +261,10 @@ void dcMap::displayTrail(void)
                  (p2.first > texLeft && p2.first < texRight && p2.second > texDown && p2.second < texUp) ) {
 
                 // calculate mx, my for points
-                float mx1 = left + (p1.first - texLeft) / (texRight - texLeft) * width;
-                float my1 = bottom + (p1.second - texDown) / (texUp - texDown) * height;
-                float mx2= left + (p2.first - texLeft) / (texRight - texLeft) * width;
-                float my2 = bottom + (p2.second - texDown) / (texUp - texDown) * height;
+                float mx1 = (p1.first - texLeft) / (texRight - texLeft) * width;
+                float my1 = (p1.second - texDown) / (texUp - texDown) * height;
+                float mx2 = (p2.first - texLeft) / (texRight - texLeft) * width;
+                float my2 = (p2.second - texDown) / (texUp - texDown) * height;
 
                 // add to set of points
                 pntsA.insert(pntsA.end(),{mx1, my1, mx2, my2});
@@ -281,10 +286,10 @@ void dcMap::displayTrail(void)
         // draw last position to current point
         std::pair<float,float> p = positionHistory.back();
 
-        float mx1 = left + (p.first - texLeft) / (texRight - texLeft) * width;
-        float my1 = bottom + (p.second - texDown) / (texUp - texDown) * height;
-        float mx2 = left + (hRatio - texLeft) / (texRight - texLeft) * width;
-        float my2 = bottom + (vRatio - texDown) / (texUp - texDown) * height;
+        float mx1 = (p.first - texLeft) / (texRight - texLeft) * width;
+        float my1 = (p.second - texDown) / (texUp - texDown) * height;
+        float mx2 = (hRatio - texLeft) / (texRight - texLeft) * width;
+        float my2 = (vRatio - texDown) / (texUp - texDown) * height;
 
         pntsA.insert(pntsA.end(),{mx1, my1, mx2, my2});
         draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
@@ -324,8 +329,8 @@ void dcMap::displayZone(void)
     std::vector<float> pntsA;
     for (uint ii = 0; ii < zoneLonLatRatios.size(); ii++) {
         std::pair<float,float> p = zoneLonLatRatios.at(ii);
-        pntsA.push_back( left + (p.first - texLeft) / (texRight - texLeft) * width );
-        pntsA.push_back( bottom + (p.second - texDown) / (texUp - texDown) * height );
+        pntsA.push_back( (p.first - texLeft) / (texRight - texLeft) * width );
+        pntsA.push_back( (p.second - texDown) / (texUp - texDown) * height );
     }
 
     draw_quad(pntsA, 1, .5, .5, .5);
@@ -341,43 +346,53 @@ void dcMap::processPostCalculations(void) {
 
 void dcMap::draw(void)
 {
-    circle_fill(1250, 900, 3000, 3000, 1, 0, 0, 1);
-
+    // start container
+    container_start(refx, refy, delx, dely, 1, 1, 0);   // disable rotation for now
     glEnable(GL_STENCIL_TEST);
+
+    // initialize stencil
     glClear(GL_STENCIL_BUFFER_BIT);
     glStencilMask(0xFF);
     glClearStencil(0);
-    
-    // Write 1's into stencil buffer where the projection will be
+
+    // write 1's into projected area (rectangle or ellipse)
     glColorMask(GL_FALSE,GL_FALSE, GL_FALSE, GL_FALSE);
     glDepthMask(GL_FALSE);
     glStencilFunc(GL_ALWAYS, 1, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    circle_fill(1250, 900, 1175/2, 1225/2, 1, 1, 1, 1);
+    if (enableCircularMap) {
+        draw_ellipse(width/2, height/2, width/2, height/2, 100, 1, 1, 1, 1);
+    } else {
+        std::vector<float> pointsL;
+        pointsL.reserve(8);
 
-    // Draw rectangle, masking out fragments with 1's in the stencil buffer
+        addPoint(pointsL, 0, 0);
+        addPoint(pointsL, 0, height);
+        addPoint(pointsL, width, height);
+        addPoint(pointsL, width, 0);
+        draw_quad(pointsL, 0, 0, 0, 0);
+    }
+
+    // set stencil to only keep fragments with reference != 1
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glDepthMask(GL_TRUE);
     glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    circle_fill(1250, 900-500, 400, 400, 0, 0, 1, 1);
     
-    glDisable(GL_STENCIL_TEST); // enable stencil testing
-    
+    // draw maps, trails, etc.
+    draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
 
-//container_start(refx, refy, delx, dely, 1, 1, 0);   // disable rotation for now
-//draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
+    if (enableZone)
+        displayZone();
+
+    if (enableTrail)
+        displayTrail();
+
+    if (enableIcon)
+        displayIcon();
 
 
-//container_end();
-
-/*if (enableZone)
-    displayZone();
-
-if (enableTrail)
-    displayTrail();
-
-if (enableIcon)
-    displayIcon();*/
+    glDisable(GL_STENCIL_TEST);
+    container_end();
     
 }
