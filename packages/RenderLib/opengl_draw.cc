@@ -287,6 +287,31 @@ void rotate_end(void)
     glPopMatrix();
 }
 
+void stencil_begin(void) {
+    glEnable(GL_STENCIL_TEST);
+    glClear(GL_STENCIL_BUFFER_BIT);
+    glStencilMask(0xFF);
+    glClearStencil(0);
+}
+
+void stencil_init_dest(void) {
+    glColorMask(GL_FALSE,GL_FALSE, GL_FALSE, GL_FALSE);
+    glDepthMask(GL_FALSE);
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+}
+
+void stencil_init_proj(void) {
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glDepthMask(GL_TRUE);
+    glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+}
+
+void stencil_end(void) {
+    glDisable(GL_STENCIL_TEST);
+}
+
 #if 0
 void translate_start(float x, float y)
 {

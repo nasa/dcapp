@@ -7,7 +7,7 @@
 
 
 dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), fnClearTrail(NULL),
-                                    trailResolution(.005), enableCustomIcon(false), iconRotationOffset(0), enableCircularMap(0), selected(false)
+                                    trailResolution(.005), enableCustomIcon(false), iconRotationOffset(0), enableCircularMap(0), enableTrackUp(0), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
 }
@@ -43,6 +43,11 @@ void dcMap::setZoom(const std::string &inval)
 void dcMap::setEnableCircularMap(const std::string &inval)
 {
     if (!inval.empty()) enableCircularMap = getValue(inval)->getBoolean();
+}
+
+void dcMap::setEnableTrackUp(const std::string &inval)
+{
+    if (!inval.empty()) enableTrackUp = getValue(inval)->getBoolean();
 }
 
 void dcMap::setFnClearTrail(const std::string &inval)
@@ -239,7 +244,9 @@ void dcMap::displayIcon(void) {
 
     if (enableCustomIcon) 
     {
-        container_start(mx, my, mdelx, mdely, 1, 1, iconRotationOffset + trajAngle);
+        if (enableTrackUp) container_start(mx, my, mdelx, mdely, 1, 1, iconRotationOffset);
+        else container_start(mx, my, mdelx, mdely, 1, 1, iconRotationOffset + trajAngle);
+
         draw_image(this->iconTextureID, mwidth, mheight);
         container_end();
     }
@@ -346,53 +353,46 @@ void dcMap::processPostCalculations(void) {
 
 void dcMap::draw(void)
 {
-    // start container
-    container_start(refx, refy, delx, dely, 1, 1, 0);   // disable rotation for now
-    glEnable(GL_STENCIL_TEST);
+    stencil_begin();        // enable stencil, clear existing buffer
+    stencil_init_dest();    // setup stencil test to write 1's into destination area 
 
-    // initialize stencil
-    glClear(GL_STENCIL_BUFFER_BIT);
-    glStencilMask(0xFF);
-    glClearStencil(0);
+        container_start(refx, refy, delx, dely, 1, 1, 0);       // start container for masking shape (no rotation)
 
-    // write 1's into projected area (rectangle or ellipse)
-    glColorMask(GL_FALSE,GL_FALSE, GL_FALSE, GL_FALSE);
-    glDepthMask(GL_FALSE);
-    glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-    if (enableCircularMap) {
-        draw_ellipse(width/2, height/2, width/2, height/2, 100, 1, 1, 1, 1);
-    } else {
-        std::vector<float> pointsL;
-        pointsL.reserve(8);
+        if (enableCircularMap) {                                // draw circle or rectangle dest
+            draw_ellipse(width/2, height/2, width/2, height/2, 100, 1, 1, 1, 1);
+        } else {
+            std::vector<float> pointsL;
+            pointsL.reserve(8);
+            addPoint(pointsL, 0, 0);
+            addPoint(pointsL, 0, height);
+            addPoint(pointsL, width, height);
+            addPoint(pointsL, width, 0);
+            draw_quad(pointsL, 0, 0, 0, 0);
+        }
 
-        addPoint(pointsL, 0, 0);
-        addPoint(pointsL, 0, height);
-        addPoint(pointsL, width, height);
-        addPoint(pointsL, width, 0);
-        draw_quad(pointsL, 0, 0, 0, 0);
-    }
+    stencil_init_proj();    // set stencil to only keep fragments with reference != 0
 
-    // set stencil to only keep fragments with reference != 1
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDepthMask(GL_TRUE);
-    glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        if (enableTrackUp) {
+            translate_start(width/2, height/2);
+            rotate_start(-1 * trajAngle + 90);
+            translate_start(-1 * width/2, -1 * height/2);
+        }
     
-    // draw maps, trails, etc.
-    draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
+        // draw remaining projected fragments
+        draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
+        if ( enableZone )   displayZone();
+        if ( enableTrail )  displayTrail();
 
-    if (enableZone)
-        displayZone();
+        if (enableTrackUp) {
+            translate_end();
+            rotate_end();
+            translate_end();
+        }
 
-    if (enableTrail)
-        displayTrail();
+        if ( enableIcon )   displayIcon();
 
-    if (enableIcon)
-        displayIcon();
+        container_end();
 
 
-    glDisable(GL_STENCIL_TEST);
-    container_end();
-    
+    stencil_end();
 }

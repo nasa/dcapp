@@ -19,6 +19,7 @@ class dcMap : public dcGeometric
         void setLonLat(const std::string &, const std::string &);
         void setZoom(const std::string &);
         void setEnableCircularMap(const std::string &);
+        void setEnableTrackUp(const std::string &);
         void setEnableIcon(const std::string &);
         void setEnableTrail(const std::string &);
         void setTrailColor(const std::string &);
@@ -34,10 +35,7 @@ class dcMap : public dcGeometric
         void processPreCalculations(void);
         void processPostCalculations(void);
 
-        // exists in all children, but different number of params 
-        // virtual void setLonLatParams(...) = 0;
-
-        // possibly implement mouse press + release for resetting the rover path
+        // possibly implement mouse press + release for scrolling through the image?
         //void handleMousePress(double, double);
         //void handleMouseRelease(void);
 
@@ -85,6 +83,7 @@ class dcMap : public dcGeometric
         bool enableCustomIcon;
         double iconRotationOffset;
         bool enableCircularMap;
+        bool enableTrackUp;
 
         std::vector<std::pair<Value*,Value*>> zoneLonLatVals;
         std::vector<std::pair<double,double>> zoneLonLatRatios;
