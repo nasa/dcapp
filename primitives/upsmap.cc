@@ -6,7 +6,7 @@
 #include "upsmap.hh"
 
 
-dcUpsMap::dcUpsMap(dcParent *myparent) : dcMap(myparent)
+dcUpsMap::dcUpsMap(dcParent *myparent) : dcMap(myparent), enableInverseTheta(0)
 {
     return;
 }
@@ -20,7 +20,7 @@ void dcUpsMap::setLonLatParams(const std::string &loPolarAxis, const std::string
 {
     if (!loPolarAxis.empty() && !laOrigin.empty() && !laOuter.empty())
     {
-        lonPolarAxis = getValue(loPolarAxis)->getDecimal();
+        polarAxisOffset = getValue(loPolarAxis)->getDecimal();
         latOrigin = getValue(laOrigin)->getDecimal();
         latOuter = getValue(laOuter)->getDecimal();
     }
@@ -37,8 +37,8 @@ void dcUpsMap::setEnableInverseTheta(const std::string &inval)
 
 void dcUpsMap::computeLonLat(void) 
 {
-    longitude = lon->getDecimal();
-    latitude = lat->getDecimal();
+    longitude = vLongitude->getDecimal();
+    latitude = vLatitude->getDecimal();
 
     if (enableInverseTheta) longitude *= -1;
 }
@@ -50,7 +50,7 @@ void dcUpsMap::computePosRatios(void)
     double prevVRatio = vRatio;
 
     // compute unit ratios for x and y
-    double theta = (longitude + lonPolarAxis) * M_PI / 180;
+    double theta = (longitude + polarAxisOffset) * M_PI / 180;
     double radius = fabs((latOrigin - latitude) / (latOrigin - latOuter));    // scale of 0..1
 
     if ( radius > 1 ) radius = 1;
@@ -69,7 +69,7 @@ void dcUpsMap::computeZoneRatios(void)
     for (uint i = 0; i < zoneLonLatVals.size(); i++) {
 
         // compute unit ratios for x and y
-        double theta = (zoneLonLatVals.at(i).first->getDecimal() + lonPolarAxis) * M_PI / 180;
+        double theta = (zoneLonLatVals.at(i).first->getDecimal() + polarAxisOffset) * M_PI / 180;
         double radius = fabs((latOrigin - zoneLonLatVals.at(i).second->getDecimal() ) / (latOrigin - latOuter));    // scale of 0..1
         if ( radius > 1 ) radius = 1;
 

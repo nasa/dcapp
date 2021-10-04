@@ -17,10 +17,9 @@ class dcUpsMap : public dcMap
         void computePosRatios(void);
         void computeZoneRatios(void);
         
-        double lonPolarAxis;
+        double polarAxisOffset;
         double latOrigin;
         double latOuter;
-        double polarAxisPosition;       // position of polar axis in radians (TODO)
         bool enableInverseTheta;
 };
 
