@@ -184,7 +184,7 @@ tdGLContext *tdGLCreateContext(tdWindow winid)
         GLX_GREEN_SIZE, 4,
         GLX_BLUE_SIZE, 4,
         GLX_DEPTH_SIZE, 16,
-        GLX_STENCIL_SIZE, 4,
+        GLX_STENCIL_SIZE, 8,
         None };
 
     curGL = (GLSpec *)malloc(sizeof(GLSpec));

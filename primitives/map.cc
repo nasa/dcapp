@@ -244,8 +244,7 @@ void dcMap::displayIcon(void) {
 
     if (enableCustomIcon) 
     {
-        if (enableTrackUp) container_start(mx, my, mdelx, mdely, 1, 1, iconRotationOffset);
-        else container_start(mx, my, mdelx, mdely, 1, 1, iconRotationOffset + trajAngle);
+        container_start(mx, my, mdelx, mdely, 1, 1, iconRotationOffset + trajAngle);
 
         draw_image(this->iconTextureID, mwidth, mheight);
         container_end();
@@ -374,7 +373,7 @@ void dcMap::draw(void)
 
         if (enableTrackUp) {
             translate_start(width/2, height/2);
-            rotate_start(-1 * trajAngle + 90);
+            rotate_start(-1 * (trajAngle + iconRotationOffset));
             translate_start(-1 * width/2, -1 * height/2);
         }
     
@@ -382,14 +381,13 @@ void dcMap::draw(void)
         draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
         if ( enableZone )   displayZone();
         if ( enableTrail )  displayTrail();
+        if ( enableIcon )   displayIcon();
 
         if (enableTrackUp) {
             translate_end();
             rotate_end();
             translate_end();
         }
-
-        if ( enableIcon )   displayIcon();
 
         container_end();
 
