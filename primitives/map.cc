@@ -7,7 +7,8 @@
 
 
 dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), fnClearTrail(NULL),
-                                    trailResolution(.005), enableCustomIcon(false), iconRotationOffset(0), enableCircularMap(0), enableTrackUp(0), selected(false)
+                                    trailResolution(.005), enableCustomIcon(false), iconRotationOffset(0), enableCircularMap(0), enableTrackUp(0), 
+                                    enableZone(false), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
 }
@@ -52,8 +53,7 @@ void dcMap::setEnableTrackUp(const std::string &inval)
 
 void dcMap::setFnClearTrail(const std::string &inval)
 {
-    if (!inval.empty()) 
-        fnClearTrail = getValue(inval);
+    if (!inval.empty()) fnClearTrail = getValue(inval);
 }
 
 void dcMap::setEnableIcon(const std::string &inval)
@@ -82,8 +82,10 @@ void dcMap::setTrailWidth(const std::string &inval)
 
 void dcMap::setIconTexture(const std::string &filename) 
 {
-    this->iconTextureID = tdLoadTexture(filename);
-    enableCustomIcon = true;
+    if (!filename.empty()) {
+        this->iconTextureID = tdLoadTexture(filename);
+        enableCustomIcon = true;
+    }
 }
 
 void dcMap::setIconRotationOffset(const std::string &inval) 
@@ -123,10 +125,6 @@ void dcMap::setZoneLonLat(const std::string &lon1, const std::string &lat1, cons
         zoneLonLatVals.push_back({getValue(lon3), getValue(lat3)});
         zoneLonLatVals.push_back({getValue(lon4), getValue(lat4)});
         enableZone = true;
-    }
-    else
-    {
-        enableZone = false;
     }
 }
 

@@ -35,9 +35,9 @@
 
             <UPSMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="15" TrailColor=".25 .25 .25 .7"
                     EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS" FnClearTrail="@CLEAR_TRAILS"
-                    PolarAxisOffset="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="50" Y="225" 
+                    PolarAxisOffset="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="50" Y="275" 
                     IconFile="images/arrow.bmp" IconWidth="50" IconHeight="50" IconRotationOffset="-90"
-                    Width="1175" Height="1225" HorizontalAlign="Left" VerticalAlign="Bottom" EnableCircularMap="1" EnableTrackUp="1"
+                    Width="1175" Height="1175" HorizontalAlign="Left" VerticalAlign="Bottom" EnableCircularMap="1" EnableTrackUp="1"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="85" ZoneLat2="85" ZoneLat3="86" ZoneLat4="86"
                     >images/moon.bmp</UPSMap>
 
@@ -45,7 +45,7 @@
                     EnableIcon="#ENABLE_POSITION_INDICATOR" EnableTrail="@ENABLE_MAP_TRAILS" FnClearTrail="@CLEAR_TRAILS"
                     PolarAxisOffset="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="2450" Y="1450" 
                     IconFile="images/arrow.bmp" IconWidth="50" IconHeight="50" IconRotationOffset="-90"
-                    Width="1175" Height="1225" HorizontalAlign="Right" VerticalAlign="Top" EnableCircularMap="1" EnableTrackUp="0"
+                    Width="1175" Height="1175" HorizontalAlign="Right" VerticalAlign="Top" EnableTrackUp="0"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="85" ZoneLat2="85" ZoneLat3="86" ZoneLat4="86"
                     >images/moon.bmp</UPSMap>
 

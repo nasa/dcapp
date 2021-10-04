@@ -6,7 +6,7 @@
 #include "upsmap.hh"
 
 
-dcUpsMap::dcUpsMap(dcParent *myparent) : dcMap(myparent)
+dcUpsMap::dcUpsMap(dcParent *myparent) : dcMap(myparent), enableInverseTheta(0)
 {
     return;
 }
