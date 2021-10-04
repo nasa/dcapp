@@ -6,9 +6,11 @@
 #include "map.hh"
 
 
-dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), textureID(0x0), zoom(1), trailWidth(25), fnClearTrail(NULL),
-                                    trailResolution(.005), enableCustomIcon(false), iconRotationOffset(0), enableCircularMap(0), enableTrackUp(0), 
-                                    enableZone(false), selected(false)
+dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), textureID(0x0), vLatitude(0x0), vLongitude(0x0), vZoom(0x0),
+                                    longitude(0), latitude(0), zoom(1), trajAngle(0),
+                                    enableTrail(true), trailWidth(25), trailResolution(.005), fnClearTrail(0x0),
+                                    enableIcon(true), enableCustomIcon(false), iconRotationOffset(0), iconTextureID(0x0),
+                                    enableCircularMap(0), enableTrackUp(0), enableZone(false), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
 }
@@ -27,8 +29,8 @@ void dcMap::setLonLat(const std::string &lat1, const std::string &lon1)
 {
     if (!lat1.empty() && !lon1.empty())
     {
-        lat = getValue(lat1);
-        lon = getValue(lon1);
+        vLatitude = getValue(lat1);
+        vLongitude = getValue(lon1);
     }
     else
     {
@@ -38,7 +40,7 @@ void dcMap::setLonLat(const std::string &lat1, const std::string &lon1)
 
 void dcMap::setZoom(const std::string &inval)
 {
-    if (!inval.empty()) zu = getValue(inval);
+    if (!inval.empty()) vZoom = getValue(inval);
 }
 
 void dcMap::setEnableCircularMap(const std::string &inval)
@@ -189,7 +191,7 @@ void dcMap::computeGeometry(void)
 void dcMap::computeTextureBounds(void)
 {
     // compute unit offset for position
-    if (zu) zoom = zu->getDecimal();
+    if (vZoom) zoom = vZoom->getDecimal();
     else zoom = 1;
 
     if (zoom < 1) 

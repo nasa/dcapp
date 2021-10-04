@@ -51,40 +51,49 @@ class dcMap : public dcGeometric
         virtual void computePosRatios(void) = 0;
         virtual void computeZoneRatios(void) = 0;
 
+        /* live variable from dcapp panel */
         tdTexture *textureID;
-        Value* lat;
-        Value* lon;
-        Value* zu;
+        Value* vLatitude;
+        Value* vLongitude;
+        Value* vZoom;
 
+        /* variables calculated from above */
         double longitude;
         double latitude;
         double zoom;
 
+        /* (optionally) calculated variables */
+        double trajAngle;
+
+        /* calculated variables */
         double texUp;
         double texDown;
         double texLeft;
         double texRight;
-
         double hRatio;
         double vRatio;
-        double trajAngle;
+        std::vector<std::pair<float,float>> positionHistory;
 
-        bool enableIcon;
+        /* trail params */
         bool enableTrail;
         double trailWidth;
-        Kolor trailColor;
-        std::vector<std::pair<float,float>> positionHistory;
-        Value* fnClearTrail;     // more of a function
         double trailResolution;
+        Kolor trailColor;
+        Value* fnClearTrail;     // more akin to a function
 
-        tdTexture *iconTextureID;
+        /* icon params */
+        bool enableIcon;
+        bool enableCustomIcon;
         double iconHeight;
         double iconWidth;
-        bool enableCustomIcon;
         double iconRotationOffset;
+        tdTexture *iconTextureID;
+
+        /* view params */
         bool enableCircularMap;
         bool enableTrackUp;
 
+        /* zone parameters */
         std::vector<std::pair<Value*,Value*>> zoneLonLatVals;
         std::vector<std::pair<double,double>> zoneLonLatRatios;
         bool enableZone;
@@ -92,7 +101,7 @@ class dcMap : public dcGeometric
         bool selected;
 
     private:
-        int prev_clear_state;
+        int prev_clear_state;   // tied to fnClearTrail
 };
 
 #endif
