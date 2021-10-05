@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include "RenderLib/RenderLib.hh"
 #include "geometric.hh"
 #include "parent.hh"
@@ -15,7 +16,8 @@ class dcMap : public dcGeometric
         dcMap(dcParent *);
         virtual ~dcMap();
 
-        void setTexture(const std::string &);
+        void setTexture(const std::string &, const std::string &);
+        void setTextureIndex(const std::string &);
         void setLonLat(const std::string &, const std::string &);
         void setZoom(const std::string &);
         void setEnableCircularMap(const std::string &);
@@ -52,7 +54,8 @@ class dcMap : public dcGeometric
         virtual void computeZoneRatios(void) = 0;
 
         /* live variable from dcapp panel */
-        tdTexture *textureID;
+        std::map<int,tdTexture*> textureIDs;
+        Value* vTextureIndex;
         Value* vLatitude;
         Value* vLongitude;
         Value* vZoom;

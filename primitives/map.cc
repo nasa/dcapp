@@ -6,7 +6,7 @@
 #include "map.hh"
 
 
-dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), textureID(0x0), vLatitude(0x0), vLongitude(0x0), vZoom(0x0),
+dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), vTextureIndex(0x0), vLatitude(0x0), vLongitude(0x0), vZoom(0x0),
                                     longitude(0), latitude(0), zoom(1), trajAngle(0),
                                     enableTrail(true), trailWidth(25), trailResolution(.005), fnClearTrail(0x0),
                                     enableIcon(true), enableCustomIcon(false), iconRotationOffset(0), iconTextureID(0x0),
@@ -20,9 +20,15 @@ dcMap::~dcMap()
     return;
 }
 
-void dcMap::setTexture(const std::string &filename)
+void dcMap::setTexture(const std::string &pos, const std::string &filename)
 {
-    this->textureID = tdLoadTexture(filename);
+    int index = getValue(pos)->getInteger();
+    if (!filename.empty()) textureIDs[index] = tdLoadTexture(filename);
+}
+
+void dcMap::setTextureIndex(const std::string &inval)
+{
+    if (!inval.empty()) vTextureIndex = getValue(inval);
 }
 
 void dcMap::setLonLat(const std::string &lat1, const std::string &lon1)
@@ -378,7 +384,9 @@ void dcMap::draw(void)
         }
     
         // draw remaining projected fragments
-        draw_map(this->textureID, width, height, texUp, texDown, texLeft, texRight);
+        int curr_tex_index = 0;
+        if (vTextureIndex) curr_tex_index = vTextureIndex->getInteger();
+        draw_map(textureIDs[curr_tex_index], width, height, texUp, texDown, texLeft, texRight);
         if ( enableZone )   displayZone();
         if ( enableTrail )  displayTrail();
         if ( enableIcon )   displayIcon();

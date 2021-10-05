@@ -523,6 +523,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             dcUtmMap *myitem = new dcUtmMap(myparent);
             myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setTextureIndex(get_element_data(node, "TextureIndex"));
             myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
             myitem->setLonLatParams(get_element_data(node, "LonMin"), get_element_data(node, "LonMax"), get_element_data(node, "LatMin"), get_element_data(node, "LatMax"));
             myitem->setZoom(get_element_data(node, "Zoom"));
@@ -544,14 +545,23 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
                 get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
             xmldata myfile = get_element_data(node, "File");
-            if (myfile.empty()) myfile = get_node_content(node);
-            myitem->setTexture(myfile);
+            myitem->setTexture("0", myfile);
             xmldata iconfile = get_element_data(node, "IconFile");
             if (!iconfile.empty()) 
             {
                 myitem->setIconTexture(iconfile);
                 myitem->setIconSize(get_element_data(node, "IconWidth"), get_element_data(node, "IconHeight"));
                 myitem->setIconRotationOffset(get_element_data(node, "IconRotationOffset"));
+            }
+            for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
+            {
+                if (NodeCheck(subnode, "Textures"))
+                {
+                    for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
+                    {
+                        myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
+                    }
+                }
             }
         }
         if (NodeCheck(node, "UPSMap"))
@@ -580,14 +590,23 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
                 get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
             xmldata myfile = get_element_data(node, "File");
-            if (myfile.empty()) myfile = get_node_content(node);
-            myitem->setTexture(myfile);
+            myitem->setTexture("0", myfile);
             xmldata iconfile = get_element_data(node, "IconFile");
             if (!iconfile.empty()) 
             {
                 myitem->setIconTexture(iconfile);
                 myitem->setIconSize(get_element_data(node, "IconWidth"), get_element_data(node, "IconHeight"));
                 myitem->setIconRotationOffset(get_element_data(node, "IconRotationOffset"));
+            }
+            for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
+            {
+                if (NodeCheck(subnode, "Textures"))
+                {
+                    for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
+                    {
+                        myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
+                    }
+                }
             }
         }
         if (NodeCheck(node, "PixelStream"))
