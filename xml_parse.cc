@@ -568,6 +568,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             dcUpsMap *myitem = new dcUpsMap(myparent);
             myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
+            myitem->setTextureIndex(get_element_data(node, "TextureIndex"));
             myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
             myitem->setLonLatParams(get_element_data(node, "PolarAxisOffset"), get_element_data(node, "LatOrigin"), get_element_data(node, "LatOuter"));
             myitem->setZoom(get_element_data(node, "Zoom"));
@@ -604,7 +605,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 {
                     for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
                     {
-                        myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
+                        if (NodeCheck(subsubnode, "Texture"))
+                            myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
                     }
                 }
             }

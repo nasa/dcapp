@@ -23,7 +23,8 @@ dcMap::~dcMap()
 void dcMap::setTexture(const std::string &pos, const std::string &filename)
 {
     int index = getValue(pos)->getInteger();
-    if (!filename.empty()) textureIDs[index] = tdLoadTexture(filename);
+    if (!pos.empty() && !filename.empty()) 
+        textureIDs[index] = tdLoadTexture(filename);
 }
 
 void dcMap::setTextureIndex(const std::string &inval)
@@ -384,8 +385,10 @@ void dcMap::draw(void)
         }
     
         // draw remaining projected fragments
-        int curr_tex_index = 0;
+        int curr_tex_index;
         if (vTextureIndex) curr_tex_index = vTextureIndex->getInteger();
+        else curr_tex_index = 0;
+
         draw_map(textureIDs[curr_tex_index], width, height, texUp, texDown, texLeft, texRight);
         if ( enableZone )   displayZone();
         if ( enableTrail )  displayTrail();
