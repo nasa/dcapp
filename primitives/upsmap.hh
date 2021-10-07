@@ -16,11 +16,12 @@ class dcUpsMap : public dcMap
         void computeLonLat(void);
         void computePosRatios(void);
         void computeZoneRatios(void);
+        void computePointRatios(void);
         
         double polarAxisOffset;
         double latOrigin;
         double latOuter;
-        bool enableInverseTheta;
+        int enableInverseThetaMultiplier;
 };
 
 #endif

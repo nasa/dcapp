@@ -71,6 +71,7 @@ class dcMap : public dcGeometric
         void displayIcon(void);
         void displayTrail(void);
         void displayZone(void);
+        void displayPoints(void);
         void computeGeometry(void);
         void computeTextureBounds(void);
         void updateTrail(void);
@@ -78,6 +79,7 @@ class dcMap : public dcGeometric
         virtual void computeLonLat(void) = 0;
         virtual void computePosRatios(void) = 0;
         virtual void computeZoneRatios(void) = 0;
+        virtual void computePointRatios(void) = 0;
 
         /* live variable from dcapp panel */
         std::map<int,tdTexture*> textureIDs;

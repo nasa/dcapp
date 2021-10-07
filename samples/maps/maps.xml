@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <DCAPP>
     <Variable Type="Decimal" InitialValue="85">LATITUDE</Variable>
-    <Variable Type="Decimal" InitialValue="180">LONGITUDE</Variable>
+    <Variable Type="Decimal" InitialValue="100">LONGITUDE</Variable>
     <Variable Type="Decimal" InitialValue="1">ZOOM</Variable>
     <Variable Type="Integer" InitialValue="0">CLEAR_TRAILS</Variable>
     <Variable Type="Integer" InitialValue="0">CURR_DISPLAY_TEXTURE</Variable>
@@ -21,9 +21,10 @@
     <Variable Type="Integer">ZoomSelected</Variable>
     <Variable Type="Decimal" InitialValue="1">ZoomSlider</Variable>
     <Variable Type="Integer">ClearTrailsSelected</Variable>
+    <Variable Type="Integer">LayerSwapSelected</Variable>
 
     <Defaults>
-        <String ForceMono="Numeric" HorizontalAlign="Center" VerticalAlign="Middle" Size="100" Color="1 1 1" LineColor="0 0 0"/>
+        <String ForceMono="Numeric" HorizontalAlign="Center" VerticalAlign="Middle" Size="100" Color="1 1 1" LineColor="0 0 0" BackgroundColor=".5 0 0"/>
         <Button Type="Momentary" Width="2000" Height="100" HorizontalAlign="Center" VerticalAlign="Middle"/>
         <Rectangle LineColor=".5 .5 .5" HorizontalAlign="Center" VerticalAlign="Middle" LineWidth="2.0" Color = ".5 .5 .5"/>
         <Container X="1250" Width="1250" Height="5" HorizontalAlign="Center" VerticalAlign="Middle"/>
@@ -36,16 +37,16 @@
                     EnableIcon="1" EnableTrail="1" FnClearTrail="@CLEAR_TRAILS"
                     PolarAxisOffset="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="50" Y="275" 
                     IconFile="images/arrow.bmp" IconWidth="50" IconHeight="50" IconRotationOffset="-90" TextureIndex="@CURR_DISPLAY_TEXTURE"
-                    Width="1175" Height="1175" HorizontalAlign="Left" VerticalAlign="Bottom" EnableCircularMap="1" EnableTrackUp="1"
+                    Width="1175" Height="1175" HorizontalAlign="Left" VerticalAlign="Bottom" EnableCircularMap="1" EnableTrackUp="1" EnableInverseTheta="1"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="85" ZoneLat2="85" ZoneLat3="86" ZoneLat4="86">
                 <Textures>
                     <MapTexture File="images/moon.bmp"  Index="0"/>
                     <MapTexture File="images/moon2.bmp" Index="1"/>
                 </Textures>
                 <Points>
-                    <MapImage File="images/point1.bmp" Width="" Height="" Latitude="85" Longitude="100" Layers="0"/>
-                    <MapImage File="images/point2.bmp" Width="" Height="" Latitude="86" Longitude="120" Layers="1"/>
-                    <MapString Size="20" Latitude="37" Longitude="54" Layers="0,1">asdf</String>
+                    <MapImage File="images/point1.bmp" Width="25" Height="25" Latitude="85" Longitude="100" Layers="0"/>
+                    <MapImage File="images/point2.bmp" Width="50" Height="50" Latitude="86" Longitude="120" Layers="1"/>
+                    <MapString Size="20" Latitude="86" Longitude="120" Layers="0,1">asdf</MapString>
                 </Points>
             </UPSMap>
 
@@ -53,7 +54,7 @@
                     EnableIcon="1" EnableTrail="1" FnClearTrail="@CLEAR_TRAILS"
                     PolarAxisOffset="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="2450" Y="1450" 
                     IconFile="images/arrow.bmp" IconWidth="50" IconHeight="50" IconRotationOffset="-90" TextureIndex="@CURR_DISPLAY_TEXTURE"
-                    Width="1175" Height="1175" HorizontalAlign="Right" VerticalAlign="Top" EnableTrackUp="1"
+                    Width="1175" Height="1175" HorizontalAlign="Right" VerticalAlign="Top" EnableTrackUp="1" EnableInverseTheta="1"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="85" ZoneLat2="85" ZoneLat3="86" ZoneLat4="86">
                 <Textures>
                     <MapTexture File="images/moon2.bmp" Index="0"/>
@@ -75,13 +76,24 @@
                 <True>
                     <Rectangle X="1000" Y="135" Width="100" Height="100" FillColor="1 .5 0.5"/>
                     <Set Variable="@CLEAR_TRAILS" Operator="+=">1</Set>
+                </True>
+                <False>
+                    <Rectangle X="1000" Y="135" Width="100" Height="100" FillColor=".5 .5 0.5"/>
+                </False>
+            </If>
+
+            <!-- layer swap button -->
+            <Button Type="Momentary" X="1150" Y="135" Width="100" Height="100" Variable="@LayerSwapSelected"/>
+            <If Value="@LayerSwapSelected">
+                <True>
+                    <Rectangle X="1150" Y="135" Width="100" Height="100" FillColor="1 .5 0.5"/>
                     <Set Variable="@CURR_DISPLAY_TEXTURE" Operator="+=">1</Set>
                     <If Value="@CURR_DISPLAY_TEXTURE" Operator="eq" Value2="2">
                         <Set Variable="@CURR_DISPLAY_TEXTURE">0</Set>
                     </If>
                 </True>
                 <False>
-                    <Rectangle X="1000" Y="135" Width="100" Height="100" FillColor=".5 .5 0.5"/>
+                    <Rectangle X="1150" Y="135" Width="100" Height="100" FillColor=".5 .5 0.5"/>
                 </False>
             </If>
 

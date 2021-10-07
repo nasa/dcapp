@@ -78,3 +78,18 @@ void dcUtmMap::computeZoneRatios(void)
         });
     }
 }
+
+void dcUtmMap::computePointRatios(void)
+{
+    for (uint i = 0; i < mapImagePoints.size(); i++) {
+        mapImagePoint& mip = mapImagePoints.at(i);
+        mip.hRatio = (mip.vLongitude->getDecimal() - lonMin) / (lonMax - lonMin);
+        mip.vRatio = (mip.vLatitude->getDecimal() - latMin) / (latMax - latMin);
+    }
+
+    for (uint i = 0; i < mapStringPoints.size(); i++) {
+        mapStringPoint& msp = mapStringPoints.at(i);
+        msp.hRatio = (msp.vLongitude->getDecimal() - lonMin) / (lonMax - lonMin);
+        msp.vRatio = (msp.vLatitude->getDecimal() - latMin) / (latMax - latMin);
+    }
+}

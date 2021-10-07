@@ -570,7 +570,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                             myitem->setMapImagePoint(get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
                                 get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"), get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "Layers"));
                         } else if (NodeCheck(subsubnode, "MapString")) {
-                            myitem->setMapStringPoint(get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
+                            myitem->setMapStringPoint(get_node_content(subsubnode), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
                                 get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Size"), get_element_data(subsubnode, "Layers"));
                         }
                     }
@@ -629,7 +629,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                             myitem->setMapImagePoint(get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
                                 get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"), get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "Layers"));
                         } else if (NodeCheck(subsubnode, "MapString")) {
-                            myitem->setMapStringPoint(get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
+                            myitem->setMapStringPoint(get_node_content(subsubnode), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
                                 get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Size"), get_element_data(subsubnode, "Layers"));
                         }
                     }

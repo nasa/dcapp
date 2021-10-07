@@ -3,9 +3,12 @@
 #include <cmath>
 #include "RenderLib/RenderLib.hh"
 #include "basicutils/stringutils.hh"
+#include "app_data.hh"
 #include "commonutils.hh"
 #include "map.hh"
+#include <algorithm>
 
+extern appdata AppData;
 
 dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), vTextureIndex(0x0), vLatitude(0x0), vLongitude(0x0), vZoom(0x0),
                                     longitude(0), latitude(0), zoom(1), trajAngle(0),
@@ -173,7 +176,6 @@ void dcMap::setMapImagePoint(const std::string &filename, const std::string &lon
 
 void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, const std::string &lat, const std::string &enable, 
     const std::string &size, const std::string &layers) {
-
     mapStringPoint msp;
     if (!text.empty() && !lon.empty() && !lat.empty() && !size.empty()) 
     {
@@ -415,6 +417,83 @@ void dcMap::displayZone(void)
     draw_quad(pntsA, 1, .5, .5, .5);
 }
 
+void dcMap::displayPoints(void)
+{
+    float mx, my, mwidth, mheight, msize, mdelx, mdely;
+
+    computePointRatios();
+
+    // process images
+    for (uint ii = 0; ii < mapImagePoints.size(); ii++) {
+
+        mapImagePoint& mip = mapImagePoints.at(ii);
+        if (mip.vEnabled->getInteger() && std::count(mip.layers.begin(), mip.layers.end(), vTextureIndex->getInteger()) ) {
+
+            mx = (mip.hRatio - texLeft) / (texRight - texLeft) * width;
+            my = (mip.vRatio - texDown) / (texUp - texDown) * height;
+            mwidth = mip.width * zoom;
+            mheight = mip.height * zoom;
+            mdelx = mwidth/2;
+            mdely = mheight/2;
+
+            // draw image
+            container_start(mx, my, mdelx, mdely, 1, 1, 0);
+            draw_image(mip.textureID, mwidth, mheight);
+            container_end();
+        }
+    }
+
+    // process strings
+    static tdFont* fontID = tdLoadFont(AppData.defaultfont, "");
+    for (uint ii = 0; ii < mapStringPoints.size(); ii++) {
+
+        mapStringPoint& msp = mapStringPoints.at(ii);
+        if (msp.vEnabled->getInteger() && std::count(msp.layers.begin(), msp.layers.end(), vTextureIndex->getInteger()) ) {
+
+            // get string with variables, constants, formatting
+            std::string mystring = msp.vText->getString();
+            // break mystring into a vector of 1-line substrings
+            std::vector <std::string> lines;
+            size_t endptr, strptr=0;
+            do {
+                endptr = mystring.find("\\n", strptr);
+                lines.push_back(mystring.substr(strptr, endptr - strptr));
+                strptr = endptr + 2;
+            } while (endptr != std::string::npos);
+
+            mx = (msp.hRatio - texLeft) / (texRight - texLeft) * width;
+            my = (msp.vRatio - texDown) / (texUp - texDown) * height;
+            msize = msp.size * zoom;
+
+            for (uint jj=0; jj<lines.size(); jj++) {
+                float stringWidth = fontID->getAdvance(lines[jj], flMonoNone, true) * msize / fontID->getBaseSize();
+                double myleft = -0.5 * stringWidth;
+                double mybottom = msize * (((double)lines.size()/2) - (double)(jj + 1));
+
+                translate_start(mx, my);
+
+                    // draw background
+                    double mytop = mybottom + msize;
+                    double myright = myleft + stringWidth;
+                    std::vector<float> pointsL;
+                    addPoint(pointsL, myleft, mybottom);
+                    addPoint(pointsL, myleft, mytop);
+                    addPoint(pointsL, myright, mytop);
+                    addPoint(pointsL, myright, mybottom);
+                    draw_quad(pointsL, 0, 0, 0, .5);
+
+                    // draw outline
+                    draw_string(myleft, mybottom, msize, 0, 0, 0, 1, fontID, flMonoNone, true, lines[jj]);
+                
+                    // draw string
+                    draw_string(myleft, mybottom, msize, 1, 1, 1, 1, fontID, flMonoNone, false, lines[jj]);
+                
+                translate_end();
+            }
+        }
+    }
+}
+
 void dcMap::processPreCalculations(void) {
     computeGeometry();
 }
@@ -457,6 +536,7 @@ void dcMap::draw(void)
 
         draw_map(textureIDs[curr_tex_index], width, height, texUp, texDown, texLeft, texRight);
         if ( enableZone )   displayZone();
+        displayPoints();    // always display points
         if ( enableTrail )  displayTrail();
         if ( enableIcon )   displayIcon();
 
