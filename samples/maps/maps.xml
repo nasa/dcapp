@@ -39,12 +39,13 @@
                     Width="1175" Height="1175" HorizontalAlign="Left" VerticalAlign="Bottom" EnableCircularMap="1" EnableTrackUp="1"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="85" ZoneLat2="85" ZoneLat3="86" ZoneLat4="86">
                 <Textures>
-                    <Texture File="images/moon.bmp"  Index="0"/>
-                    <Texture File="images/moon2.bmp" Index="1"/>
+                    <MapTexture File="images/moon.bmp"  Index="0"/>
+                    <MapTexture File="images/moon2.bmp" Index="1"/>
                 </Textures>
                 <Points>
-                    <Point File="" Width="" Height="" Latitude="37" Longitude="63" Layers="1,2,3"/>
-                    <String Size="" Latitude="37" Longitude="54">asdf</String>
+                    <MapImage File="images/point1.bmp" Width="" Height="" Latitude="85" Longitude="100" Layers="0"/>
+                    <MapImage File="images/point2.bmp" Width="" Height="" Latitude="86" Longitude="120" Layers="1"/>
+                    <MapString Size="20" Latitude="37" Longitude="54" Layers="0,1">asdf</String>
                 </Points>
             </UPSMap>
 
@@ -55,8 +56,8 @@
                     Width="1175" Height="1175" HorizontalAlign="Right" VerticalAlign="Top" EnableTrackUp="1"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="85" ZoneLat2="85" ZoneLat3="86" ZoneLat4="86">
                 <Textures>
-                    <Texture File="images/moon2.bmp" Index="0"/>
-                    <Texture File="images/moon.bmp"  Index="1"/>
+                    <MapTexture File="images/moon2.bmp" Index="0"/>
+                    <MapTexture File="images/moon.bmp"  Index="1"/>
                 </Textures>
             </UPSMap>
 

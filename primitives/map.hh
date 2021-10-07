@@ -31,8 +31,11 @@ class dcMap : public dcGeometric
         void setIconRotationOffset(const std::string &);
         void setIconTexture(const std::string &);
         void setIconSize(const std::string &, const std::string &);
-        void setZoneLonLat(const std::string &, const std::string &, const std::string &, const std::string &, 
-            const std::string &, const std::string &, const std::string &, const std::string &);
+        void setZoneLonLat(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
+                const std::string &, const std::string &);
+        void setMapImagePoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
+                const std::string &);
+        void setMapStringPoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
         void draw(void);
         void processPreCalculations(void);
         void processPostCalculations(void);
@@ -42,6 +45,29 @@ class dcMap : public dcGeometric
         //void handleMouseRelease(void);
 
     protected:
+        typedef struct {
+            tdTexture* textureID;
+            Value* vLongitude;
+            Value* vLatitude;
+            Value* vEnabled;
+            double width;
+            double height;
+            double hRatio;
+            double vRatio;
+            std::vector<int> layers;
+        } mapImagePoint;
+
+        typedef struct {
+            Value* vText;
+            Value* vLongitude;
+            Value* vLatitude;
+            Value* vEnabled;
+            double size;
+            double hRatio;
+            double vRatio;
+            std::vector<int> layers;
+        } mapStringPoint;
+
         void displayIcon(void);
         void displayTrail(void);
         void displayZone(void);
@@ -95,6 +121,10 @@ class dcMap : public dcGeometric
         /* view params */
         bool enableCircularMap;
         bool enableTrackUp;
+
+        /* points */
+        std::vector<mapImagePoint> mapImagePoints;
+        std::vector<mapStringPoint> mapStringPoints;
 
         /* zone parameters */
         std::vector<std::pair<Value*,Value*>> zoneLonLatVals;

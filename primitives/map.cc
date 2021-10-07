@@ -1,4 +1,5 @@
 #include <string>
+#include <sstream>
 #include <cmath>
 #include "RenderLib/RenderLib.hh"
 #include "basicutils/stringutils.hh"
@@ -135,6 +136,71 @@ void dcMap::setZoneLonLat(const std::string &lon1, const std::string &lat1, cons
         zoneLonLatVals.push_back({getValue(lon4), getValue(lat4)});
         enableZone = true;
     }
+}
+
+void dcMap::setMapImagePoint(const std::string &filename, const std::string &lon, const std::string &lat, const std::string &enable, 
+    const std::string &w, const std::string &h, const std::string &layers) {
+
+    mapImagePoint mip;
+    if (!filename.empty() && !lon.empty() && !lat.empty() && !w.empty() && !h.empty()) 
+    {
+        mip.textureID = tdLoadTexture(filename);
+        mip.vLongitude = getValue(lon);
+        mip.vLatitude = getValue(lat);
+        mip.width = getValue(w)->getDecimal();
+        mip.height = getValue(h)->getDecimal();
+    }
+    else
+    {
+        printf("setMapImagePoint: missing a parameter, ignoring. Check documentation\n");
+        return;
+    }
+
+    if (!enable.empty()) mip.vEnabled = getValue(enable);
+    else mip.vEnabled = getValue("1");
+
+    if (!layers.empty()) {
+        std::stringstream ss(layers);
+        for (int temp; ss >> temp;) {
+            mip.layers.push_back(temp);
+            if (ss.peek() == ',')
+                ss.ignore();
+        }
+    }
+
+    mapImagePoints.push_back(mip);
+}
+
+void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, const std::string &lat, const std::string &enable, 
+    const std::string &size, const std::string &layers) {
+
+    mapStringPoint msp;
+    if (!text.empty() && !lon.empty() && !lat.empty() && !size.empty()) 
+    {
+        msp.vText = getValue(text);
+        msp.vLongitude = getValue(lon);
+        msp.vLatitude = getValue(lat);
+        msp.size = getValue(size)->getDecimal();
+    }
+    else
+    {
+        printf("setMapStringPoint: missing a parameter, ignoring. Check documentation\n");
+        return;
+    }
+
+    if (!enable.empty()) msp.vEnabled = getValue(enable);
+    else msp.vEnabled = getValue("1");
+
+    if (!layers.empty()) {
+        std::stringstream ss(layers);
+        for (int temp; ss >> temp;) {
+            msp.layers.push_back(temp);
+            if (ss.peek() == ',')
+                ss.ignore();
+        }
+    }
+
+    mapStringPoints.push_back(msp);
 }
 
 void dcMap::computeGeometry(void)
