@@ -57,7 +57,7 @@ void dcMap::setEnableCircularMap(const std::string &inval)
 
 void dcMap::setEnableTrackUp(const std::string &inval)
 {
-    if (!inval.empty()) enableTrackUp = getValue(inval)->getBoolean();
+    if (!inval.empty() && enableCircularMap) enableTrackUp = getValue(inval)->getBoolean();
 }
 
 void dcMap::setFnClearTrail(const std::string &inval)

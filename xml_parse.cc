@@ -559,7 +559,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 {
                     for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
                     {
-                        myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
+                        if (NodeCheck(subsubnode, "Texture"))
+                            myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
                     }
                 }
             }
