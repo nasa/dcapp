@@ -466,7 +466,7 @@ void dcMap::displayPoints(void)
             msize = msp.size * zoom;
 
             for (uint jj=0; jj<lines.size(); jj++) {
-                float stringWidth = fontID->getAdvance(lines[jj], flMonoNone, true) * msize / fontID->getBaseSize();
+                float stringWidth = fontID->getAdvance(lines[jj], flMonoNone) * msize / fontID->getBaseSize();
                 double myleft = -0.5 * stringWidth;
                 double mybottom = msize * (((double)lines.size()/2) - (double)(jj + 1));
 
