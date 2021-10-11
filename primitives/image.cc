@@ -78,6 +78,18 @@ void dcImage::handleMouseRelease(void)
     }
 }
 
+void dcImage::processPreCalculations(void) 
+{
+    PressList->processPreCalculations();
+    ReleaseList->processPreCalculations();
+}
+
+void dcImage::processPostCalculations(void) 
+{
+    PressList->processPostCalculations();
+    ReleaseList->processPostCalculations();
+}
+
 void dcImage::draw(void)
 {
     computeGeometry();

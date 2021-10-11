@@ -73,20 +73,12 @@ void dcParent::addChild(dcObject *item)
     item->setParent(this);
 }
 
-void dcParent::processPreCalculationsAllChildren(void) 
+void dcParent::processPreCalculations(void) 
 {
-    for (const auto &myobj : children) 
-    {
-        myobj->processPreCalculations();
-        myobj->processPreCalculationsAllChildren();
-    }
+    for (const auto &myobj : children) myobj->processPreCalculations();
 }
 
-void dcParent::processPostCalculationsAllChildren(void) 
+void dcParent::processPostCalculations(void) 
 {
-    for (const auto &myobj : children) 
-    {
-        myobj->processPostCalculations();
-        myobj->processPostCalculationsAllChildren();
-    }
+    for (const auto &myobj : children) myobj->processPostCalculations();
 }

@@ -51,3 +51,15 @@ void dcBezelEvent::handleBezelRelease(int key)
         this->ReleaseList->handleEvent();
     }
 }
+
+void dcBezelEvent::processPreCalculations(void) 
+{
+    PressList->processPreCalculations();
+    ReleaseList->processPreCalculations();
+}
+
+void dcBezelEvent::processPostCalculations(void) 
+{
+    PressList->processPostCalculations();
+    ReleaseList->processPostCalculations();
+}

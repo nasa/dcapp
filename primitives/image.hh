@@ -15,6 +15,8 @@ class dcImage : public dcGeometric
         void setTexture(const std::string &);
         void handleMousePress(double, double);
         void handleMouseRelease(void);
+        void processPreCalculations();
+        void processPostCalculations();
         void draw(void);
 
         dcParent *PressList;
