@@ -24,6 +24,8 @@ class dcCondition : public dcObject
         void updateStreams(unsigned);
         void processAnimation(Animation *);
         bool checkCondition(void);
+        void processPreCalculations();
+        void processPostCalculations();
 
         dcParent *TrueList;
         dcParent *FalseList;

@@ -37,9 +37,9 @@ void dcWindow::reshape(double w, double h)
 
 void dcWindow::draw(void)
 {
-    processPreCalculationsAllChildren();
+    processPreCalculations();
     if (currentPanel) currentPanel->draw();
-    processPostCalculationsAllChildren();
+    processPostCalculations();
 }
 
 void dcWindow::handleKeyPress(char key)

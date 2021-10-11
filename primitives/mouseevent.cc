@@ -54,3 +54,15 @@ void dcMouseEvent::handleMouseRelease(void)
         this->ReleaseList->handleEvent();
     }
 }
+
+void dcMouseEvent::processPreCalculations(void) 
+{
+    PressList->processPreCalculations();
+    ReleaseList->processPreCalculations();
+}
+
+void dcMouseEvent::processPostCalculations(void) 
+{
+    PressList->processPostCalculations();
+    ReleaseList->processPostCalculations();
+}

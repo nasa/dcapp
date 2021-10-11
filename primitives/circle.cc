@@ -104,6 +104,18 @@ void dcCircle::handleMouseRelease(void)
     }
 }
 
+void dcCircle::processPreCalculations(void) 
+{
+    PressList->processPreCalculations();
+    ReleaseList->processPreCalculations();
+}
+
+void dcCircle::processPostCalculations(void) 
+{
+    PressList->processPostCalculations();
+    ReleaseList->processPostCalculations();
+}
+
 void dcCircle::draw(void)
 {
     computeGeometry();

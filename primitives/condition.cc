@@ -205,3 +205,15 @@ bool dcCondition::checkCondition(void)
             return eval;
     }
 }
+
+void dcCondition::processPreCalculations(void) 
+{
+    TrueList->processPreCalculations();
+    FalseList->processPreCalculations();
+}
+
+void dcCondition::processPostCalculations(void) 
+{
+    TrueList->processPostCalculations();
+    FalseList->processPostCalculations();
+}

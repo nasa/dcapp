@@ -22,6 +22,8 @@ class dcCircle : public dcGeometric
         void setSegments(const std::string &);
         void handleMousePress(double, double);
         void handleMouseRelease(void);
+        void processPreCalculations();
+        void processPostCalculations();
         void draw(void);
 
         dcParent *PressList;

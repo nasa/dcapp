@@ -12,6 +12,8 @@ class dcMouseEvent : public dcGeometric
 
         void handleMousePress(double, double);
         void handleMouseRelease(void);
+        void processPreCalculations();
+        void processPostCalculations();
 
         dcParent *PressList;
         dcParent *ReleaseList;

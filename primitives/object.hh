@@ -11,10 +11,6 @@ class dcObject
         virtual ~dcObject() { };
 
         virtual void draw(void) { };
-        virtual void processPreCalculations(void) { };
-        virtual void processPostCalculations(void) { };
-        virtual void processPreCalculationsAllChildren(void) { };
-        virtual void processPostCalculationsAllChildren(void) { };
         virtual void handleKeyPress(char) { };
         virtual void handleKeyRelease(char) { };
         virtual void handleMousePress(double, double) { };
@@ -30,6 +26,8 @@ class dcObject
         virtual dcObject *getParent(void) { return parent; };
         virtual Value *getContainerWidth(void) { return parent->getContainerWidth(); };
         virtual Value *getContainerHeight(void) { return parent->getContainerHeight(); };
+        virtual void processPreCalculations(void) { };
+        virtual void processPostCalculations(void) { };
 
     private:
         dcObject *parent;

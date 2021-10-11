@@ -54,3 +54,15 @@ void dcKeyboardEvent::handleKeyRelease(char key)
 {
     if (mykey == key) this->ReleaseList->handleEvent();
 }
+
+void dcKeyboardEvent::processPreCalculations(void) 
+{
+    PressList->processPreCalculations();
+    ReleaseList->processPreCalculations();
+}
+
+void dcKeyboardEvent::processPostCalculations(void) 
+{
+    PressList->processPostCalculations();
+    ReleaseList->processPostCalculations();
+}
