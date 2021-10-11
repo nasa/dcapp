@@ -504,11 +504,6 @@ void dcMap::processPostCalculations(void) {
 
 void dcMap::draw(void)
 {
-    container_start(refx, refy, delx, dely, 1, 1, 0);
-    draw_ellipse(width/2, height/2, width/2, height/2, 100, 1, 1, 1, 1);
-    container_end();
-
-
     stencil_begin();        // enable stencil, clear existing buffer
     stencil_init_dest();    // setup stencil test to write 1's into destination area 
 
