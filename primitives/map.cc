@@ -10,8 +10,8 @@
 
 extern appdata AppData;
 
-dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), vTextureIndex(0x0), vLatitude(0x0), vLongitude(0x0), vZoom(0x0),
-                                    longitude(0), latitude(0), zoom(1), trajAngle(0),
+dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), vTextureIndex(0x0), vLatitude(0x0), vLongitude(0x0), vZoom(0x0), vYaw(0x0),
+                                    longitude(0), latitude(0), zoom(1), trajAngle(0), yawOffset(0),
                                     enableTrail(true), trailWidth(25), trailResolution(.005), fnClearTrail(0x0),
                                     enableIcon(true), enableCustomIcon(false), iconRotationOffset(0), iconTextureID(0x0),
                                     enableCircularMap(0), enableTrackUp(0), enableZone(false), selected(false)
@@ -52,6 +52,15 @@ void dcMap::setLonLat(const std::string &lat1, const std::string &lon1)
 void dcMap::setZoom(const std::string &inval)
 {
     if (!inval.empty()) vZoom = getValue(inval);
+}
+
+void dcMap::setYaw(const std::string &inval1, const std::string &inval2)
+{
+    if (!inval1.empty()) 
+    {
+        vYaw = getValue(inval1);
+        if (!inval2.empty()) yawOffset = getValue(inval2)->getDecimal();
+    }
 }
 
 void dcMap::setEnableCircularMap(const std::string &inval)

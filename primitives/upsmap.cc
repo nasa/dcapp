@@ -60,7 +60,9 @@ void dcUpsMap::computePosRatios(void)
     vRatio = radius * sin(theta) * .5 + .5;
 
     // calculate current angle of trajectory
-    if ( prevVRatio != vRatio || prevHRatio != hRatio)
+    if ( vYaw ) 
+        trajAngle = vYaw->getDecimal() + yawOffset;
+    else if ( prevVRatio != vRatio || prevHRatio != hRatio)
         trajAngle = atan2((vRatio - prevVRatio), ( hRatio - prevHRatio)) * 180 / M_PI;
 }
 

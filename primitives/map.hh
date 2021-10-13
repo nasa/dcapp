@@ -20,6 +20,7 @@ class dcMap : public dcGeometric
         void setTextureIndex(const std::string &);
         void setLonLat(const std::string &, const std::string &);
         void setZoom(const std::string &);
+        void setYaw(const std::string &, const std::string &);
         void setEnableCircularMap(const std::string &);
         void setEnableTrackUp(const std::string &);
         void setEnableIcon(const std::string &);
@@ -87,6 +88,7 @@ class dcMap : public dcGeometric
         Value* vLatitude;
         Value* vLongitude;
         Value* vZoom;
+        Value* vYaw;
 
         /* variables calculated from above */
         double longitude;
@@ -95,6 +97,7 @@ class dcMap : public dcGeometric
 
         /* (optionally) calculated variables */
         double trajAngle;
+        double yawOffset;
 
         /* calculated variables */
         double texUp;
