@@ -110,7 +110,7 @@ tdFont::~tdFont()
 }
 
 
-float tdFont::getAdvance(const std::string &instring, flMonoOption mono=flMonoNone)
+float tdFont::getAdvance(const std::string &instring, flMonoOption mono=flMonoNone, bool outline)
 {
     if (!(this->valid)) return 0;
 
@@ -142,7 +142,8 @@ float tdFont::getAdvance(const std::string &instring, flMonoOption mono=flMonoNo
         }
         else
         {
-            ginfo = this->getGlyphInfo(out);
+            if (!outline) ginfo = this->getGlyphInfo(out);
+            else ginfo = this->getGlyphOutlineInfo(out);
 
             if (ginfo) adv += ginfo->advance;
 

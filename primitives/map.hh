@@ -54,8 +54,6 @@ class dcMap : public dcGeometric
             Value* vEnabled;
             double width;
             double height;
-            double displayWidth;
-            double displayHeight;
             double hRatio;
             double vRatio;
             std::vector<int> layers;
@@ -97,6 +95,12 @@ class dcMap : public dcGeometric
         double longitude;
         double latitude;
         double zoom;
+
+        /* variables used for render params */
+        double displayWidth;
+        double displayHeight;
+        double widthOffset;
+        double heightOffset;
 
         /* (optionally) calculated variables */
         double trajAngle;
