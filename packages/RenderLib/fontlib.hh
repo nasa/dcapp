@@ -32,7 +32,7 @@ class tdFont
     public:
         tdFont(const std::string &, const std::string &, unsigned int);
         virtual ~tdFont();
-        float getAdvance(const std::string &, flMonoOption, bool outline = false);
+        float getAdvance(const std::string &, flMonoOption);
         float getDescender(void);
         bool isValid(void);
         std::string getFileName(void);
