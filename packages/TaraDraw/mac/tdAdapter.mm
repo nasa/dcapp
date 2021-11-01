@@ -168,7 +168,7 @@ int tdAlignTop = 0x08;
     if (!(winview[winid])) return nil;
 
     NSOpenGLView *myview = [[ NSOpenGLView alloc ] initWithFrame:[ winview[winid] frame ] pixelFormat:[ NSOpenGLView defaultPixelFormat ]];
-    NSOpenGLPixelFormatAttribute attrs[] = { NSOpenGLPFADoubleBuffer, NSOpenGLPFADepthSize, 32, 0, NSOpenGLPFAStencilSize, 4 };
+    NSOpenGLPixelFormatAttribute attrs[] = { NSOpenGLPFADoubleBuffer, NSOpenGLPFADepthSize, 32, NSOpenGLPFAStencilSize, 4, 0 };
     NSOpenGLPixelFormat *pixfmt = [[ NSOpenGLPixelFormat alloc ] initWithAttributes:attrs ];
     curGLcontext = [[ NSOpenGLContext alloc ] initWithFormat:pixfmt shareContext:nil ];
     [ curGLcontext makeCurrentContext ];
