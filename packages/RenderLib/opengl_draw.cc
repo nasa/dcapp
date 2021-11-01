@@ -289,8 +289,8 @@ void rotate_end(void)
 
 void stencil_begin(void) {
     glEnable(GL_STENCIL_TEST);
-    glClear(GL_STENCIL_BUFFER_BIT);
     glStencilMask(0xFF);
+    glClear(GL_STENCIL_BUFFER_BIT);
     glClearStencil(0);
 }
 
