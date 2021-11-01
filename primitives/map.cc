@@ -216,11 +216,15 @@ void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, c
 
 void dcMap::computeGeometry(void)
 {
-    if (w) width = w->getDecimal();
-    else width = 0;
+    if (w) displayWidth = w->getDecimal();
+    else displayWidth = 0;
 
-    if (h) height = h->getDecimal();
-    else height = 0;
+    if (h) displayHeight = h->getDecimal();
+    else displayHeight = 0;
+
+    /* true width/height of map is square to stay proportional and not cutoff portions when rotating */
+    width = std::max(width, height) * SQRT_2;
+    height = width;
 
     double hwidth = (0.5 * width);
     double hheight = (0.5 * height);
@@ -519,14 +523,14 @@ void dcMap::draw(void)
         container_start(refx, refy, delx, dely, 1, 1, 0);       // start container for masking shape (no rotation)
 
         if (enableCircularMap) {                                // draw circle or rectangle dest
-            draw_ellipse(width/2, height/2, width/2, height/2, 100, 1, 1, 1, 1);
+            draw_ellipse(displayWidth/2, displayHeight/2, displayWidth/2, displayHeight/2, 100, 1, 1, 1, 1);
         } else {
             std::vector<float> pointsL;
             pointsL.reserve(8);
             addPoint(pointsL, 0, 0);
-            addPoint(pointsL, 0, height);
-            addPoint(pointsL, width, height);
-            addPoint(pointsL, width, 0);
+            addPoint(pointsL, 0, displayHeight);
+            addPoint(pointsL, displayWidth, displayHeight);
+            addPoint(pointsL, displayWidth, 0);
             draw_quad(pointsL, 0, 0, 0, 0);
         }
 

@@ -9,6 +9,7 @@
 #include "parent.hh"
 #include "kolor.hh"
 
+#define SQRT_2 1.41421356237
 
 class dcMap : public dcGeometric
 {
@@ -53,6 +54,8 @@ class dcMap : public dcGeometric
             Value* vEnabled;
             double width;
             double height;
+            double displayWidth;
+            double displayHeight;
             double hRatio;
             double vRatio;
             std::vector<int> layers;
