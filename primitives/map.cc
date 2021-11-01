@@ -70,7 +70,7 @@ void dcMap::setEnableCircularMap(const std::string &inval)
 
 void dcMap::setEnableTrackUp(const std::string &inval)
 {
-    if (!inval.empty() && enableCircularMap) enableTrackUp = getValue(inval)->getBoolean();
+    if (!inval.empty()) enableTrackUp = getValue(inval)->getBoolean();
 }
 
 void dcMap::setFnClearTrail(const std::string &inval)
@@ -216,17 +216,23 @@ void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, c
 
 void dcMap::computeGeometry(void)
 {
-    if (w) width = w->getDecimal();
-    else width = 0;
+    if (w) displayWidth = w->getDecimal();
+    else displayWidth = 0;
 
-    if (h) height = h->getDecimal();
-    else height = 0;
+    if (h) displayHeight = h->getDecimal();
+    else displayHeight = 0;
+
+    /* true width/height of map is square to stay proportional and not cutoff portions when rotating */
+    width = std::max(displayWidth, displayHeight) * SQRT_2;
+    height = width;
 
     double hwidth = (0.5 * width);
     double hheight = (0.5 * height);
     
-    left = GeomX(x, width, containerw->getDecimal(), halign);
-    bottom = GeomY(y, height, containerh->getDecimal(), valign);
+    widthOffset = (width-displayWidth)/2;
+    heightOffset = (height-displayHeight)/2;
+    left = GeomX(x, displayWidth, containerw->getDecimal(), halign) - widthOffset;
+    bottom = GeomY(y, displayHeight, containerh->getDecimal(), valign) - heightOffset;
 
     right = left + width;
     top = bottom + height;
@@ -280,6 +286,7 @@ void dcMap::computeTextureBounds(void)
 
     if (zoom < 1) 
         zoom = 1;
+
 
     computeLonLat();
     computePosRatios();
@@ -516,19 +523,22 @@ void dcMap::draw(void)
     stencil_begin();        // enable stencil, clear existing buffer
     stencil_init_dest();    // setup stencil test to write 1's into destination area 
 
-        container_start(refx, refy, delx, dely, 1, 1, 0);       // start container for masking shape (no rotation)
+        container_start(refx, refy, delx, dely, 1, 1, 0);   // start container for full map
 
-        if (enableCircularMap) {                                // draw circle or rectangle dest
-            draw_ellipse(width/2, height/2, width/2, height/2, 100, 1, 1, 1, 1);
+        // draw masking shape
+        container_start(widthOffset, heightOffset, 0, 0, 1, 1, 0);
+        if (enableCircularMap) {
+            draw_ellipse(displayWidth/2, displayHeight/2, displayWidth/2, displayHeight/2, 100, 1, 1, 1, 1);
         } else {
             std::vector<float> pointsL;
             pointsL.reserve(8);
             addPoint(pointsL, 0, 0);
-            addPoint(pointsL, 0, height);
-            addPoint(pointsL, width, height);
-            addPoint(pointsL, width, 0);
+            addPoint(pointsL, 0, displayHeight);
+            addPoint(pointsL, displayWidth, displayHeight);
+            addPoint(pointsL, displayWidth, 0);
             draw_quad(pointsL, 0, 0, 0, 0);
         }
+        container_end();
 
     stencil_init_proj();    // set stencil to only keep fragments with reference != 0
 

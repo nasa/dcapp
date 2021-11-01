@@ -9,6 +9,7 @@
 #include "parent.hh"
 #include "kolor.hh"
 
+#define SQRT_2 1.41421356237
 
 class dcMap : public dcGeometric
 {
@@ -94,6 +95,12 @@ class dcMap : public dcGeometric
         double longitude;
         double latitude;
         double zoom;
+
+        /* variables used for render params */
+        double displayWidth;
+        double displayHeight;
+        double widthOffset;
+        double heightOffset;
 
         /* (optionally) calculated variables */
         double trajAngle;
