@@ -237,7 +237,10 @@ void tdFont::render(const std::string &instring, bool outline, flMonoOption mono
                     previndex = myindex;
                 }
             }
-    		draw_glyph(ginfo->texture, ginfo->bitmap_left, ginfo->bitmap_top, xkern, xadvance);
+            if (!outline)
+	            draw_glyph(ginfo->texture, ginfo->bitmap_left, ginfo->bitmap_top, xkern, xadvance);
+            else    // add offsets to account for outline padding
+                draw_glyph(ginfo->texture, ginfo->bitmap_left-1, ginfo->bitmap_top+1, xkern, xadvance);
         }
     }
 }
@@ -285,7 +288,6 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, GlyphInfo *ginfo_outline, UTF32 ind
             			jj = j+cj-1;
             			if ( ii >= 0 && ii < 64 && jj >= 0 && jj < 64 && circular_filter[ci][cj] && bitmap_translated[ii][jj] < 100 ) {
             				bitmap_outline[ii][jj] = std::min(255, bitmap_translated[i][j] + bitmap_outline[ii][jj]);
-            				//bitmap_outline[ii][jj] = std::max(150, (int)bitmap_outline[ii][jj]);
             			}
             		}
             }
@@ -306,7 +308,7 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, GlyphInfo *ginfo_outline, UTF32 ind
     if (isalnum(index) && ginfo->advance > this->max_advance_alnum) this->max_advance_alnum = ginfo->advance;
     if (isdigit(index) && ginfo->advance > this->max_advance_numeric) this->max_advance_numeric = ginfo->advance;
 
-    create_and_load_glyph(&(ginfo->texture), bitmap_translated);
+    create_and_load_glyph(&(ginfo->texture), bitmap);
     create_and_load_glyph(&(ginfo_outline->texture), bitmap_outline);
 }
 
