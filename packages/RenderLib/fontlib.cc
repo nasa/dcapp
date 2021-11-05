@@ -237,7 +237,10 @@ void tdFont::render(const std::string &instring, bool outline, flMonoOption mono
                     previndex = myindex;
                 }
             }
-    		draw_glyph(ginfo->texture, ginfo->bitmap_left, ginfo->bitmap_top, xkern, xadvance);
+            if (!outline)
+	            draw_glyph(ginfo->texture, ginfo->bitmap_left, ginfo->bitmap_top, xkern, xadvance);
+            else    // add offsets to account for outline padding
+                draw_glyph(ginfo->texture, ginfo->bitmap_left-1, ginfo->bitmap_top+1, xkern, xadvance);
         }
     }
 }
@@ -268,26 +271,34 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, GlyphInfo *ginfo_outline, UTF32 ind
     	{1, 0, 1},
     	{1, 1, 1}
     };
-    unsigned char bitmap_translated[64][64] = {0};
-    for (i=0; i<63; i++) {
-        for (j=0; j<63; j++) {
-        	bitmap_translated[i+1][j+1] = bitmap[i][j];
-        }
-    }
 
-    int ci, cj, ii, jj;
+    /*
+        bit complex, but
+            i, j    =>  bitmap position being calculated for outline
+            oi, oj  =>  outline position being calculated with circular filter
+            bi, bj  =>  bitmap position being calculated with circular filter
+            ci, cj  =>  circular filter position
+
+            scale of 0..255 to register outline, 150 seems to be the best overall fit
+    */
+    int ci, cj, oi, oj, bi, bj;
+    char temp_byte;
     for (i=0; i<64; i++) {
         for (j=0; j<64; j++) {
-            if (bitmap_translated[i][j]) {
-            	for( ci=0; ci<3; ci++ )
+            if (bitmap[i][j]) {
+            	for( ci=0; ci<3; ci++ ) {
             		for ( cj=0; cj<3; cj++ ) {
-            			ii = i+ci-1;
-            			jj = j+cj-1;
-            			if ( ii >= 0 && ii < 64 && jj >= 0 && jj < 64 && circular_filter[ci][cj] && bitmap_translated[ii][jj] < 100 ) {
-            				bitmap_outline[ii][jj] = std::min(255, bitmap_translated[i][j] + bitmap_outline[ii][jj]);
-            				//bitmap_outline[ii][jj] = std::max(150, (int)bitmap_outline[ii][jj]);
+            			oi = i+ci;
+            			oj = j+cj;
+                        bi = oi-1;
+                        bj = oj-1;
+                        temp_byte = 0;
+                        if (bi >= 0 && bj >= 0) temp_byte = bitmap[bi][bj];
+            			if ( oi < 64 && oj < 64 && circular_filter[ci][cj] && temp_byte < 150 ) {
+            				bitmap_outline[oi][oj] = std::min(255, bitmap[i][j] + bitmap_outline[oi][oj]);
             			}
             		}
+                }
             }
         }
     }
@@ -306,7 +317,7 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, GlyphInfo *ginfo_outline, UTF32 ind
     if (isalnum(index) && ginfo->advance > this->max_advance_alnum) this->max_advance_alnum = ginfo->advance;
     if (isdigit(index) && ginfo->advance > this->max_advance_numeric) this->max_advance_numeric = ginfo->advance;
 
-    create_and_load_glyph(&(ginfo->texture), bitmap_translated);
+    create_and_load_glyph(&(ginfo->texture), bitmap);
     create_and_load_glyph(&(ginfo_outline->texture), bitmap_outline);
 }
 
