@@ -20,6 +20,10 @@ extern void container_start(float, float, float, float, float, float, float);
 extern void container_end(void);
 extern void rotate_start(float);
 extern void rotate_end(void);
+extern void stencil_begin(void);
+extern void stencil_init_dest(void);
+extern void stencil_init_proj(void);
+extern void stencil_end(void);
 #if 0
 extern void translate_start(float, float);
 extern void translate_end(void);
@@ -30,6 +34,8 @@ extern void draw_filled_triangles(const std::vector<float> &, float, float, floa
 extern void draw_quad(const std::vector<float> &, float, float, float, float);
 extern void circle_outline(float, float, float, int, float, float, float, float, float, uint16_t, int);
 extern void circle_fill(float, float, float, int, float, float, float, float);
+extern void draw_ellipse(float, float, float, float, int, float, float, float, float);
 extern void draw_textured_sphere(float, float, const std::vector<float> &, float, tdTexture *, float, float, float);
+extern void draw_map(tdTexture *, float, float, float, float, float, float);
 
 #endif

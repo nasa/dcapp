@@ -16,7 +16,8 @@ class dcContainer : public dcParent, public dcGeometric
         void handleMousePress(double, double);
         void handleMouseMotion(double, double);
 
-// TODO: why the heck to I need these?
+// why the heck to I need these?
+// answer: diamond problem, explicitly state which parent function to use
 void handleKeyPress(char key) { dcParent::handleKeyPress(key); };
 void handleKeyRelease(char key) { dcParent::handleKeyRelease(key); };
 void handleMouseRelease(void) { dcParent::handleMouseRelease(); };
@@ -26,6 +27,8 @@ void handleEvent(void) { dcParent::handleEvent(); };
 void updateData(void) { dcParent::updateData(); };
 void updateStreams(unsigned passcount) { dcParent::updateStreams(passcount); };
 void processAnimation(Animation *anim) { dcParent::processAnimation(anim); };
+void processPreCalculations(void) { dcParent::processPreCalculations(); };
+void processPostCalculations(void) { dcParent::processPostCalculations(); };
 
         Value *getContainerWidth(void);
         Value *getContainerHeight(void);

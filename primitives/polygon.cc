@@ -104,6 +104,18 @@ void dcPolygon::handleMouseRelease(void)
     }
 }
 
+void dcPolygon::processPreCalculations(void) 
+{
+    PressList->processPreCalculations();
+    ReleaseList->processPreCalculations();
+}
+
+void dcPolygon::processPostCalculations(void) 
+{
+    PressList->processPostCalculations();
+    ReleaseList->processPostCalculations();
+}
+
 void dcPolygon::draw(void)
 {
     // this effectively fills AppData.vertices with the individual Vertex primitives associated with this Polygon 

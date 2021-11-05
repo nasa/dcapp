@@ -49,15 +49,20 @@ eval(false), opspec(Simple)
             switch (opspec)
             {
                 case IfNotEquals:
-                    if (val1->compareToValue(*val2) != isEqual) eval = true; break;
+                    if (val1->compareToValue(*val2) != isEqual) eval = true; 
+                    break;
                 case IfGreaterThan:
-                    if (val1->compareToValue(*val2) == isGreaterThan) eval = true; break;
+                    if (val1->compareToValue(*val2) == isGreaterThan) eval = true; 
+                    break;
                 case IfLessThan:
-                    if (val1->compareToValue(*val2) == isLessThan) eval = true; break;
+                    if (val1->compareToValue(*val2) == isLessThan) eval = true; 
+                    break;
                 case IfGreaterOrEquals:
-                    if (val1->compareToValue(*val2) != isLessThan) eval = true; break;
+                    if (val1->compareToValue(*val2) != isLessThan) eval = true; 
+                    break;
                 case IfLessOrEquals:
-                    if (val1->compareToValue(*val2) != isGreaterThan) eval = true; break;
+                    if (val1->compareToValue(*val2) != isGreaterThan) eval = true; 
+                    break;
                 default:
                     if (val1->compareToValue(*val2) == isEqual) eval = true;
             }
@@ -199,4 +204,16 @@ bool dcCondition::checkCondition(void)
         default:
             return eval;
     }
+}
+
+void dcCondition::processPreCalculations(void) 
+{
+    TrueList->processPreCalculations();
+    FalseList->processPreCalculations();
+}
+
+void dcCondition::processPostCalculations(void) 
+{
+    TrueList->processPostCalculations();
+    FalseList->processPostCalculations();
 }

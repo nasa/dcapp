@@ -17,6 +17,8 @@ class dcKeyboardEvent : public dcObject
         void setKeyAscii(const std::string &);
         void handleKeyPress(char);
         void handleKeyRelease(char);
+        void processPreCalculations();
+        void processPostCalculations();
 
         dcParent *PressList;
         dcParent *ReleaseList;

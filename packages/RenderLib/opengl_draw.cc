@@ -287,6 +287,31 @@ void rotate_end(void)
     glPopMatrix();
 }
 
+void stencil_begin(void) {
+    glEnable(GL_STENCIL_TEST);
+    glStencilMask(0xFF);
+    glClear(GL_STENCIL_BUFFER_BIT);
+    glClearStencil(0);
+}
+
+void stencil_init_dest(void) {
+    glColorMask(GL_FALSE,GL_FALSE, GL_FALSE, GL_FALSE);
+    glDepthMask(GL_FALSE);
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+}
+
+void stencil_init_proj(void) {
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glDepthMask(GL_TRUE);
+    glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+}
+
+void stencil_end(void) {
+    glDisable(GL_STENCIL_TEST);
+}
+
 #if 0
 void translate_start(float x, float y)
 {
@@ -435,6 +460,30 @@ void circle_fill(float cx, float cy, float r, int num_segments, float red, float
     glEnd();
 }
 
+void draw_ellipse(float cx, float cy, float rx, float ry, int num_segments, float red, float green, float blue, float alpha)
+{
+    float theta = 2 * 3.1415926 / (float)num_segments;
+    float c = cosf(theta); // precalculate the sine and cosine
+    float s = sinf(theta);
+    float t;
+    float x = 1; // we start at angle = 0
+    float y = 0;
+    int i;
+
+    glColor4f(red, green, blue, alpha);
+    glBegin(GL_POLYGON);
+    for (i = 0; i < num_segments; i++)
+    {
+        glVertex2f(x * rx + cx, y * ry + cy); // output vertex
+
+        //apply the rotation matrix
+        t = x;
+        x = c * x - s * y;
+        y = s * t + c * y;
+    }
+    glEnd();
+}
+
 void draw_textured_sphere(float x, float y, const std::vector<float> &pointsA, float radiusA, tdTexture *textureID, float roll, float pitch, float yaw)
 {
     if (textureID->isValid())
@@ -472,5 +521,29 @@ void draw_textured_sphere(float x, float y, const std::vector<float> &pointsA, f
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_CULL_FACE);
     //  glDisable(GL_DEPTH_TEST);                    // disables Depth Testing
+    }
+}
+
+void draw_map(tdTexture *textureID, float w, float h, float tu, float td, float tl, float tr)
+{
+    if (textureID)
+    {
+        if (textureID->isValid())
+        {
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, textureID->getID());
+            glColor4f(1, 1, 1, 1);
+            glBegin(GL_QUADS);
+                glTexCoord2f(tl, td);
+                glVertex3f(0, 0, 0);
+                glTexCoord2f(tr, td);
+                glVertex3f(w, 0, 0);
+                glTexCoord2f(tr, tu);
+                glVertex3f(w, h, 0);
+                glTexCoord2f(tl, tu);
+                glVertex3f(0, h, 0);
+            glEnd();
+            glDisable(GL_TEXTURE_2D);
+        }
     }
 }

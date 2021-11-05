@@ -108,6 +108,18 @@ void dcRectangle::handleMouseRelease(void)
     }
 }
 
+void dcRectangle::processPreCalculations(void) 
+{
+    PressList->processPreCalculations();
+    ReleaseList->processPreCalculations();
+}
+
+void dcRectangle::processPostCalculations(void) 
+{
+    PressList->processPostCalculations();
+    ReleaseList->processPostCalculations();
+}
+
 void dcRectangle::draw(void)
 {
     computeGeometry();

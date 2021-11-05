@@ -15,6 +15,8 @@ class dcBezelEvent : public dcObject
         void setKey(const std::string &);
         void handleBezelPress(int);
         void handleBezelRelease(int);
+        void processPreCalculations();
+        void processPostCalculations();
 
         dcParent *PressList;
         dcParent *ReleaseList;
