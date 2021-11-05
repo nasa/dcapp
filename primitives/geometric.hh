@@ -46,7 +46,6 @@ class dcGeometric : public dcObject
         double center;
         double middle;
 
-    //private:
         double GeomX(Value *, double, double, int);
         double GeomY(Value *, double, double, int);
 };

@@ -16,7 +16,7 @@ class dcContainer : public dcParent, public dcGeometric
         void handleMousePress(double, double);
         void handleMouseMotion(double, double);
 
-// TODO: why the heck to I need these?
+// why the heck to I need these?
 // answer: diamond problem, explicitly state which parent function to use
 void handleKeyPress(char key) { dcParent::handleKeyPress(key); };
 void handleKeyRelease(char key) { dcParent::handleKeyRelease(key); };
