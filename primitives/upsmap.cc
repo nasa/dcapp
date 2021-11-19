@@ -103,29 +103,36 @@ void dcUpsMap::computeZoneRatios(void)
     }
 }
 
-// void dcUpsMap::computePointRatios(void)
-// {
-//     for (uint i = 0; i < mapImagePoints.size(); i++) {
+void dcUpsMap::computePointRatios(void)
+{
+    double mipLatitude, mipLongitude;
+    for (uint i = 0; i < mapImagePoints.size(); i++) {
+        mapImagePoint& mip = mapImagePoints.at(i);
+        mipLatitude = (mip.vLatitude)->getDecimal();
+        mipLongitude = (mip.vLongitude)->getDecimal();
 
-//         // compute unit ratios for x and y
-//         mapImagePoint& mip = mapImagePoints.at(i);
-//         double theta = (mip.vLongitude->getDecimal() * enableInverseThetaMultiplier + polarAxisOffset) * M_PI / 180;
-//         double radius = fabs((latOrigin - mip.vLatitude->getDecimal()  ) / (latOrigin - latOuter));    // scale of 0..1
+        // compute unit ratios for x and y
+        double theta = (mipLongitude * enableInverseThetaMultiplier + uliCurrent->polarAxisOffset) * M_PI / 180;
+        double radius = fabs((uliCurrent->latOrigin - mipLatitude) / (uliCurrent->latOrigin - uliCurrent->latOuter));
 
-//         // update position ratios
-//         mip.hRatio = radius * cos(theta) * .5 + .5;
-//         mip.vRatio = radius * sin(theta) * .5 + .5;
-//     }
+        // update position ratios
+        mip.hRatio = radius * cos(theta) * .5 + .5;
+        mip.vRatio = radius * sin(theta) * .5 + .5;
+    }
 
-//     for (uint i = 0; i < mapStringPoints.size(); i++) {
+    double mspLatitude, mspLongitude;
+    for (uint i = 0; i < mapStringPoints.size(); i++) {
 
-//         // compute unit ratios for x and y
-//         mapStringPoint& msp = mapStringPoints.at(i);
-//         double theta = (msp.vLongitude->getDecimal() * enableInverseThetaMultiplier + polarAxisOffset) * M_PI / 180;
-//         double radius = fabs((latOrigin - msp.vLatitude->getDecimal()  ) / (latOrigin - latOuter));    // scale of 0..1
+        mapStringPoint& msp = mapStringPoints.at(i);
+        mspLatitude = (msp.vLatitude)->getDecimal();
+        mspLongitude = (msp.vLongitude)->getDecimal();
 
-//         // update position ratios
-//         msp.hRatio = radius * cos(theta) * .5 + .5;
-//         msp.vRatio = radius * sin(theta) * .5 + .5;
-//     }
-// }
+        // compute unit ratios for x and y
+        double theta = (mspLongitude * enableInverseThetaMultiplier + uliCurrent->polarAxisOffset) * M_PI / 180;
+        double radius = fabs((uliCurrent->latOrigin - mspLatitude) / (uliCurrent->latOrigin - uliCurrent->latOuter));    // scale of 0..1
+
+        // update position ratios
+        msp.hRatio = radius * cos(theta) * .5 + .5;
+        msp.vRatio = radius * sin(theta) * .5 + .5;
+    }
+}

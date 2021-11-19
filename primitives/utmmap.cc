@@ -88,17 +88,25 @@ void dcUtmMap::computeZoneRatios(void)
     }
 }
 
-// void dcUtmMap::computePointRatios(void)
-// {
-//     for (uint i = 0; i < mapImagePoints.size(); i++) {
-//         mapImagePoint& mip = mapImagePoints.at(i);
-//         mip.hRatio = (mip.vLongitude->getDecimal() - lonMin) / (lonMax - lonMin);
-//         mip.vRatio = (mip.vLatitude->getDecimal() - latMin) / (latMax - latMin);
-//     }
+void dcUtmMap::computePointRatios(void)
+{
+    double mipLatitude, mipLongitude;
+    for (uint i = 0; i < mapImagePoints.size(); i++) {
+        mapImagePoint& mip = mapImagePoints.at(i);
+        mipLatitude = (mip.vLatitude)->getDecimal();
+        mipLongitude = (mip.vLongitude)->getDecimal();
 
-//     for (uint i = 0; i < mapStringPoints.size(); i++) {
-//         mapStringPoint& msp = mapStringPoints.at(i);
-//         msp.hRatio = (msp.vLongitude->getDecimal() - lonMin) / (lonMax - lonMin);
-//         msp.vRatio = (msp.vLatitude->getDecimal() - latMin) / (latMax - latMin);
-//     }
-// }
+        mip.hRatio = (mipLongitude- uliCurrent->lonMin) / (uliCurrent->lonMax - uliCurrent->lonMin);
+        mip.vRatio = (mipLatitude - uliCurrent->latMin) / (uliCurrent->latMax - uliCurrent->latMin);
+    }
+
+    double mspLatitude, mspLongitude;
+    for (uint i = 0; i < mapStringPoints.size(); i++) {
+        mapStringPoint& msp = mapStringPoints.at(i);
+        mspLatitude = (msp.vLatitude)->getDecimal();
+        mspLongitude = (msp.vLongitude)->getDecimal();
+
+        msp.hRatio = (mspLongitude - uliCurrent->lonMin) / (uliCurrent->lonMax - uliCurrent->lonMin);
+        msp.vRatio = (mspLatitude - uliCurrent->latMin) / (uliCurrent->latMax - uliCurrent->latMin);
+    }
+}

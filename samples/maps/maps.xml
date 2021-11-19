@@ -39,9 +39,9 @@
                     <MapTexture File="images/moon_75.bmp" Index="1" PolarAxisOffset="90" LatOrigin="90" LatOuter="75" SizeRatio="6"/>
                 </Textures>
                 <Points>
-                    <MapImage File="images/point1.bmp" Width="250" Height="250" Latitude="83.7" Longitude="-135" Layers="0"/>
-                    <MapImage File="images/point2.bmp" Width="100" Height="100" Latitude="83.5" Longitude="-45" Layers="1"/>
-                    <MapString Size="50" Latitude="86" Longitude="0" Layers="0,1">ZONE01</MapString>
+                    <MapImage File="images/point1.bmp" Width="250" Height="250" Latitude="89" Longitude="-135" Layers="0"/>
+                    <MapImage File="images/point2.bmp" Width="100" Height="100" Latitude="88.8" Longitude="-45" Layers="1"/>
+                    <MapString Size="50" Latitude="89" Longitude="0" Layers="0,1">ZONE01</MapString>
                 </Points>
             </UPSMap>
 

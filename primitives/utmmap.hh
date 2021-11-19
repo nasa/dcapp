@@ -26,7 +26,7 @@ class dcUtmMap : public dcMap
         void fetchChildParams(void);
         void computePosRatios(void);
         void computeZoneRatios(void);
-        // void computePointRatios(void);
+        void computePointRatios(void);
 };
 
 #endif

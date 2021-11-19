@@ -9,7 +9,7 @@
 #include "parent.hh"
 #include "kolor.hh"
 
-#define SQRT_2 1.41421356237
+#define SQRT_2 1.414213562373095048802
 
 class dcMap : public dcGeometric
 {
@@ -36,9 +36,9 @@ class dcMap : public dcGeometric
         void setIconSize(const std::string &, const std::string &);
         void setZoneLonLat(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
                 const std::string &, const std::string &);
-        // void setMapImagePoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
-        //         const std::string &);
-        // void setMapStringPoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
+        void setMapImagePoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
+                const std::string &);
+        void setMapStringPoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
         void draw(void);
         void processPreCalculations(void);
         void processPostCalculations(void);
@@ -57,33 +57,33 @@ class dcMap : public dcGeometric
             std::vector<std::pair<float,float>> ratioHistory;
         } mapLayerInfo;
 
-        // typedef struct {
-        //     tdTexture* textureID;
-        //     Value* vLongitude;
-        //     Value* vLatitude;
-        //     Value* vEnabled;
-        //     double width;
-        //     double height;
-        //     double hRatio;
-        //     double vRatio;
-        //     std::vector<int> layers;
-        // } mapImagePoint;
+        typedef struct {
+            tdTexture* textureID;
+            Value* vLongitude;
+            Value* vLatitude;
+            Value* vEnabled;
+            double width;
+            double height;
+            double hRatio;
+            double vRatio;
+            std::vector<int> layers;
+        } mapImagePoint;
 
-        // typedef struct {
-        //     Value* vText;
-        //     Value* vLongitude;
-        //     Value* vLatitude;
-        //     Value* vEnabled;
-        //     double size;
-        //     double hRatio;
-        //     double vRatio;
-        //     std::vector<int> layers;
-        // } mapStringPoint;
+        typedef struct {
+            Value* vText;
+            Value* vLongitude;
+            Value* vLatitude;
+            Value* vEnabled;
+            double size;
+            double hRatio;
+            double vRatio;
+            std::vector<int> layers;
+        } mapStringPoint;
 
         void displayIcon(void);
         void displayTrail(void);
         void displayZone(void);
-        // void displayPoints(void);
+        void displayPoints(void);
         void computeGeometry(void);
         void computeTextureBounds(void);
         void updateTrail(void);
@@ -92,7 +92,7 @@ class dcMap : public dcGeometric
         virtual void fetchChildParams(void) = 0;
         virtual void computePosRatios(void) = 0;
         virtual void computeZoneRatios(void) = 0;
-        // virtual void computePointRatios(void) = 0;
+        virtual void computePointRatios(void) = 0;
 
         /* live variable from dcapp panel */
         std::map<int,mapLayerInfo> mapLayerInfos;
@@ -147,8 +147,8 @@ class dcMap : public dcGeometric
         bool enableTrackUp;
 
         /* points */
-        // std::vector<mapImagePoint> mapImagePoints;
-        // std::vector<mapStringPoint> mapStringPoints;
+        std::vector<mapImagePoint> mapImagePoints;
+        std::vector<mapStringPoint> mapStringPoints;
 
         /* zone parameters */
         std::vector<std::pair<Value*,Value*>> zoneLonLatVals;
