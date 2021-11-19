@@ -525,7 +525,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
             myitem->setTextureIndex(get_element_data(node, "TextureIndex"));
             myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
-            myitem->setLonLatParams(get_element_data(node, "LonMin"), get_element_data(node, "LonMax"), get_element_data(node, "LatMin"), get_element_data(node, "LatMax"));
             myitem->setZoom(get_element_data(node, "Zoom"));
             myitem->setYaw(get_element_data(node, "Yaw"), get_element_data(node, "YawOffset"));
             myitem->setEnableCircularMap(get_element_data(node, "EnableCircularMap"));
@@ -540,11 +539,11 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setTrailWidth(get_element_data(node, "TrailWidth"));
             myitem->setFnClearTrail(get_element_data(node, "FnClearTrail"));
             myitem->setTrailResolution(get_element_data(node, "TrailResolution"));
-            myitem->setZoneLonLat(
-                get_element_data(node, "ZoneLon1"), get_element_data(node, "ZoneLat1"),
-                get_element_data(node, "ZoneLon2"), get_element_data(node, "ZoneLat2"), 
-                get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
-                get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
+            // myitem->setZoneLonLat(
+            //     get_element_data(node, "ZoneLon1"), get_element_data(node, "ZoneLat1"),
+            //     get_element_data(node, "ZoneLon2"), get_element_data(node, "ZoneLat2"), 
+            //     get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
+            //     get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
             xmldata myfile = get_element_data(node, "File");
             myitem->setTexture("0", myfile);
             xmldata iconfile = get_element_data(node, "IconFile");
@@ -560,21 +559,25 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 {
                     for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
                     {
-                        if (NodeCheck(subsubnode, "MapTexture"))
+                        if (NodeCheck(subsubnode, "MapTexture")) 
+                        {
                             myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
+                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), get_element_data(node, "LonMin"), 
+                                get_element_data(node, "LonMax"), get_element_data(node, "LatMin"), get_element_data(node, "LatMax"));
+                        }
                     }
                 } else if (NodeCheck(subnode, "Points"))
                 {
-                    for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
-                    {
-                        if (NodeCheck(subsubnode, "MapImage")) {
-                            myitem->setMapImagePoint(get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
-                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"), get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "Layers"));
-                        } else if (NodeCheck(subsubnode, "MapString")) {
-                            myitem->setMapStringPoint(get_node_content(subsubnode), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
-                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Size"), get_element_data(subsubnode, "Layers"));
-                        }
-                    }
+                    // for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
+                    // {
+                    //     if (NodeCheck(subsubnode, "MapImage")) {
+                    //         myitem->setMapImagePoint(get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
+                    //             get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"), get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "Layers"));
+                    //     } else if (NodeCheck(subsubnode, "MapString")) {
+                    //         myitem->setMapStringPoint(get_node_content(subsubnode), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
+                    //             get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Size"), get_element_data(subsubnode, "Layers"));
+                    //     }
+                    // }
                 }
             }
         }
@@ -584,7 +587,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
             myitem->setTextureIndex(get_element_data(node, "TextureIndex"));
             myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
-            myitem->setLonLatParams(get_element_data(node, "PolarAxisOffset"), get_element_data(node, "LatOrigin"), get_element_data(node, "LatOuter"));
             myitem->setZoom(get_element_data(node, "Zoom"));
             myitem->setYaw(get_element_data(node, "Yaw"), get_element_data(node, "YawOffset"));
             myitem->setEnableCircularMap(get_element_data(node, "EnableCircularMap"));
@@ -600,11 +602,11 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setFnClearTrail(get_element_data(node, "FnClearTrail"));
             myitem->setTrailResolution(get_element_data(node, "TrailResolution"));
             myitem->setEnableInverseTheta(get_element_data(node, "EnableInverseTheta"));
-            myitem->setZoneLonLat(
-                get_element_data(node, "ZoneLon1"), get_element_data(node, "ZoneLat1"),
-                get_element_data(node, "ZoneLon2"), get_element_data(node, "ZoneLat2"), 
-                get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
-                get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
+            // myitem->setZoneLonLat(
+            //     get_element_data(node, "ZoneLon1"), get_element_data(node, "ZoneLat1"),
+            //     get_element_data(node, "ZoneLon2"), get_element_data(node, "ZoneLat2"), 
+            //     get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
+            //     get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
             xmldata myfile = get_element_data(node, "File");
             myitem->setTexture("0", myfile);
             xmldata iconfile = get_element_data(node, "IconFile");
@@ -620,21 +622,24 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 {
                     for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
                     {
-                        if (NodeCheck(subsubnode, "MapTexture"))
+                        if (NodeCheck(subsubnode, "MapTexture")) {
                             myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
+                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), get_element_data(node, "PolarAxisOffset"), 
+                                get_element_data(node, "LatOrigin"), get_element_data(node, "LatOuter"));
+                        }
                     }
                 } else if (NodeCheck(subnode, "Points"))
                 {
-                    for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
-                    {
-                        if (NodeCheck(subsubnode, "MapImage")) {
-                            myitem->setMapImagePoint(get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
-                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"), get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "Layers"));
-                        } else if (NodeCheck(subsubnode, "MapString")) {
-                            myitem->setMapStringPoint(get_node_content(subsubnode), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
-                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Size"), get_element_data(subsubnode, "Layers"));
-                        }
-                    }
+                    // for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
+                    // {
+                    //     if (NodeCheck(subsubnode, "MapImage")) {
+                    //         myitem->setMapImagePoint(get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
+                    //             get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"), get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "Layers"));
+                    //     } else if (NodeCheck(subsubnode, "MapString")) {
+                    //         myitem->setMapStringPoint(get_node_content(subsubnode), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
+                    //             get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Size"), get_element_data(subsubnode, "Layers"));
+                    //     }
+                    // }
                 }
             }
         }

@@ -9,18 +9,22 @@ class dcUtmMap : public dcMap
         dcUtmMap(dcParent *);
         virtual ~dcUtmMap();
 
-        void setLonLatParams(const std::string &, const std::string &, const std::string &, const std::string &);
+        void setLonLatParams(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
 
     private:
-        void computeLonLat(void);
+        typedef struct {
+            double lonMin;
+            double lonMax;
+            double latMin;
+            double latMax;
+        } utmLayerInfo;
+
+        std::map<int,utmLayerInfo> utmLayerInfos;
+
+        void fetchLonLat(void);
         void computePosRatios(void);
-        void computeZoneRatios(void);
-        void computePointRatios(void);
-        
-        double lonMin;
-        double lonMax;
-        double latMin;
-        double latMax;
+        // void computeZoneRatios(void);
+        // void computePointRatios(void);
 };
 
 #endif

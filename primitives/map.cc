@@ -28,7 +28,7 @@ void dcMap::setTexture(const std::string &pos, const std::string &filename)
 {
     int index = getValue(pos)->getInteger();
     if (!pos.empty() && !filename.empty()) 
-        textureIDs[index] = tdLoadTexture(filename);
+        mapLayerInfos[index].textureID = tdLoadTexture(filename);
 }
 
 void dcMap::setTextureIndex(const std::string &inval)
@@ -136,83 +136,83 @@ void dcMap::setTrailResolution(const std::string &inval)
     if (!inval.empty()) trailResolution = getValue(inval)->getDecimal();
 }
 
-void dcMap::setZoneLonLat(const std::string &lon1, const std::string &lat1, const std::string &lon2, const std::string &lat2, 
-    const std::string &lon3, const std::string &lat3, const std::string &lon4, const std::string &lat4) {
+// void dcMap::setZoneLonLat(const std::string &lon1, const std::string &lat1, const std::string &lon2, const std::string &lat2, 
+//     const std::string &lon3, const std::string &lat3, const std::string &lon4, const std::string &lat4) {
 
-    if (!lon1.empty() && !lat1.empty() && !lon2.empty() && !lat2.empty() && !lon3.empty() && !lat3.empty() && !lon4.empty() && !lat4.empty())
-    {
-        zoneLonLatVals.clear();
-        zoneLonLatVals.push_back({getValue(lon1), getValue(lat1)});
-        zoneLonLatVals.push_back({getValue(lon2), getValue(lat2)});
-        zoneLonLatVals.push_back({getValue(lon3), getValue(lat3)});
-        zoneLonLatVals.push_back({getValue(lon4), getValue(lat4)});
-        enableZone = true;
-    }
-}
+//     if (!lon1.empty() && !lat1.empty() && !lon2.empty() && !lat2.empty() && !lon3.empty() && !lat3.empty() && !lon4.empty() && !lat4.empty())
+//     {
+//         zoneLonLatVals.clear();
+//         zoneLonLatVals.push_back({getValue(lon1), getValue(lat1)});
+//         zoneLonLatVals.push_back({getValue(lon2), getValue(lat2)});
+//         zoneLonLatVals.push_back({getValue(lon3), getValue(lat3)});
+//         zoneLonLatVals.push_back({getValue(lon4), getValue(lat4)});
+//         enableZone = true;
+//     }
+// }
 
-void dcMap::setMapImagePoint(const std::string &filename, const std::string &lon, const std::string &lat, const std::string &enable, 
-    const std::string &w, const std::string &h, const std::string &layers) {
+// void dcMap::setMapImagePoint(const std::string &filename, const std::string &lon, const std::string &lat, const std::string &enable, 
+//     const std::string &w, const std::string &h, const std::string &layers) {
 
-    mapImagePoint mip;
-    if (!filename.empty() && !lon.empty() && !lat.empty() && !w.empty() && !h.empty()) 
-    {
-        mip.textureID = tdLoadTexture(filename);
-        mip.vLongitude = getValue(lon);
-        mip.vLatitude = getValue(lat);
-        mip.width = getValue(w)->getDecimal();
-        mip.height = getValue(h)->getDecimal();
-    }
-    else
-    {
-        printf("setMapImagePoint: missing a parameter, ignoring. Check documentation\n");
-        return;
-    }
+//     mapImagePoint mip;
+//     if (!filename.empty() && !lon.empty() && !lat.empty() && !w.empty() && !h.empty()) 
+//     {
+//         mip.textureID = tdLoadTexture(filename);
+//         mip.vLongitude = getValue(lon);
+//         mip.vLatitude = getValue(lat);
+//         mip.width = getValue(w)->getDecimal();
+//         mip.height = getValue(h)->getDecimal();
+//     }
+//     else
+//     {
+//         printf("setMapImagePoint: missing a parameter, ignoring. Check documentation\n");
+//         return;
+//     }
 
-    if (!enable.empty()) mip.vEnabled = getValue(enable);
-    else mip.vEnabled = getValue("1");
+//     if (!enable.empty()) mip.vEnabled = getValue(enable);
+//     else mip.vEnabled = getValue("1");
 
-    if (!layers.empty()) {
-        std::stringstream ss(layers);
-        for (int temp; ss >> temp;) {
-            mip.layers.push_back(temp);
-            if (ss.peek() == ',')
-                ss.ignore();
-        }
-    }
+//     if (!layers.empty()) {
+//         std::stringstream ss(layers);
+//         for (int temp; ss >> temp;) {
+//             mip.layers.push_back(temp);
+//             if (ss.peek() == ',')
+//                 ss.ignore();
+//         }
+//     }
 
-    mapImagePoints.push_back(mip);
-}
+//     mapImagePoints.push_back(mip);
+// }
 
-void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, const std::string &lat, const std::string &enable, 
-    const std::string &size, const std::string &layers) {
-    mapStringPoint msp;
-    if (!text.empty() && !lon.empty() && !lat.empty() && !size.empty()) 
-    {
-        msp.vText = getValue(text);
-        msp.vLongitude = getValue(lon);
-        msp.vLatitude = getValue(lat);
-        msp.size = getValue(size)->getDecimal();
-    }
-    else
-    {
-        printf("setMapStringPoint: missing a parameter, ignoring. Check documentation\n");
-        return;
-    }
+// void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, const std::string &lat, const std::string &enable, 
+//     const std::string &size, const std::string &layers) {
+//     mapStringPoint msp;
+//     if (!text.empty() && !lon.empty() && !lat.empty() && !size.empty()) 
+//     {
+//         msp.vText = getValue(text);
+//         msp.vLongitude = getValue(lon);
+//         msp.vLatitude = getValue(lat);
+//         msp.size = getValue(size)->getDecimal();
+//     }
+//     else
+//     {
+//         printf("setMapStringPoint: missing a parameter, ignoring. Check documentation\n");
+//         return;
+//     }
 
-    if (!enable.empty()) msp.vEnabled = getValue(enable);
-    else msp.vEnabled = getValue("1");
+//     if (!enable.empty()) msp.vEnabled = getValue(enable);
+//     else msp.vEnabled = getValue("1");
 
-    if (!layers.empty()) {
-        std::stringstream ss(layers);
-        for (int temp; ss >> temp;) {
-            msp.layers.push_back(temp);
-            if (ss.peek() == ',')
-                ss.ignore();
-        }
-    }
+//     if (!layers.empty()) {
+//         std::stringstream ss(layers);
+//         for (int temp; ss >> temp;) {
+//             msp.layers.push_back(temp);
+//             if (ss.peek() == ',')
+//                 ss.ignore();
+//         }
+//     }
 
-    mapStringPoints.push_back(msp);
-}
+//     mapStringPoints.push_back(msp);
+// }
 
 void dcMap::computeGeometry(void)
 {
@@ -273,24 +273,30 @@ void dcMap::computeGeometry(void)
         default:
             break;
     }
+}
 
-    computeTextureBounds();
+void dcMap::fetchBaseParams(void)
+{
+    if (vZoom) zoom = vZoom->getDecimal();
+    else zoom = 1;
+    if (zoom < 1) 
+        zoom = 1;
+
+    if (vTextureIndex) textureIndex = textureIndex;
+    else textureIndex = 0;
+
+    mliCurrent = &(mapLayerInfos[textureIndex]);
+}
+
+void dcMap::updateCurrentParams(void)
+{
+    hRatio = mliCurrent->hRatio;
+    vRatio = mliCurrent->vRatio;
 }
 
 // get bounds for texture on 0 to 1 range
 void dcMap::computeTextureBounds(void)
 {
-    // compute unit offset for position
-    if (vZoom) zoom = vZoom->getDecimal();
-    else zoom = 1;
-
-    if (zoom < 1) 
-        zoom = 1;
-
-
-    computeLonLat();
-    computePosRatios();
-
     double mapWidthRatio = 1/zoom/2;
 
     texUp = vRatio + mapWidthRatio;
@@ -350,10 +356,10 @@ void dcMap::displayIcon(void) {
 void dcMap::displayTrail(void)
 {
     std::vector<float> pntsA;
-    if (positionHistory.size() > 1) {
-        for (uint i = 1; i < positionHistory.size(); i++) {
-            std::pair<float,float> p1 = positionHistory.at(i-1);
-            std::pair<float,float> p2 = positionHistory.at(i);
+    if (mliCurrent->ratioHistory.size() > 1) {
+        for (uint i = 1; i < mliCurrent->ratioHistory.size(); i++) {
+            std::pair<float,float> p1 = mliCurrent->ratioHistory.at(i-1);
+            std::pair<float,float> p2 = mliCurrent->ratioHistory.at(i);
             if ( (p1.first > texLeft && p1.first < texRight && p1.second > texDown && p1.second < texUp) ||
                  (p2.first > texLeft && p2.first < texRight && p2.second > texDown && p2.second < texUp) ) {
 
@@ -365,7 +371,6 @@ void dcMap::displayTrail(void)
 
                 // add to set of points
                 pntsA.insert(pntsA.end(),{mx1, my1, mx2, my2});
-                
             } else {
                 if (!pntsA.empty()) {
                     draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
@@ -381,7 +386,7 @@ void dcMap::displayTrail(void)
         }
 
         // draw last position to current point
-        std::pair<float,float> p = positionHistory.back();
+        std::pair<float,float> p = mliCurrent->ratioHistory.back();
 
         float mx1 = (p.first - texLeft) / (texRight - texLeft) * width;
         float my1 = (p.second - texDown) / (texUp - texDown) * height;
@@ -397,121 +402,133 @@ void dcMap::displayTrail(void)
 void dcMap::updateTrail(void)
 {
     // clear stored trails on fnClearTrail value change
+    bool doClear = false;
     if (fnClearTrail) {
         int curr_clear_state = fnClearTrail->getInteger();
         if (prev_clear_state != curr_clear_state) {
-            positionHistory.clear();
+            doClear = true;
         }
         prev_clear_state = curr_clear_state;
     }
 
-    // add position to list
-    if (positionHistory.empty()) 
+    // compute unit ratios for x and y
+    for (auto const& pair : mapLayerInfos) 
     {
-        positionHistory.push_back({(float)hRatio, (float)vRatio});
-    }
-    else
-    {
-        std::pair<float,float> last_pos = positionHistory.back();
-        float dist = sqrt(pow(hRatio-last_pos.first, 2) + pow(vRatio-last_pos.second, 2)*1.0);
-        if ( dist > trailResolution) {
-            positionHistory.push_back({hRatio, vRatio});
-        }
-    }
-}
+        mapLayerInfo* mli = &(mapLayerInfos[pair.first]);
 
-void dcMap::displayZone(void)
-{
-    computeZoneRatios();
-    std::vector<float> pntsA;
-    for (uint ii = 0; ii < zoneLonLatRatios.size(); ii++) {
-        std::pair<float,float> p = zoneLonLatRatios.at(ii);
-        pntsA.push_back( (p.first - texLeft) / (texRight - texLeft) * width );
-        pntsA.push_back( (p.second - texDown) / (texUp - texDown) * height );
-    }
+        // clear trail 
+        if (doClear) mli->ratioHistory.clear();
 
-    draw_quad(pntsA, 1, .5, .5, .5);
-}
-
-void dcMap::displayPoints(void)
-{
-    float mx, my, mwidth, mheight, msize, mdelx, mdely;
-
-    computePointRatios();
-
-    // process images
-    for (uint ii = 0; ii < mapImagePoints.size(); ii++) {
-
-        mapImagePoint& mip = mapImagePoints.at(ii);
-        if (mip.vEnabled->getInteger() && std::count(mip.layers.begin(), mip.layers.end(), vTextureIndex->getInteger()) ) {
-
-            mx = (mip.hRatio - texLeft) / (texRight - texLeft) * width;
-            my = (mip.vRatio - texDown) / (texUp - texDown) * height;
-            mwidth = mip.width * zoom;
-            mheight = mip.height * zoom;
-            mdelx = mwidth/2;
-            mdely = mheight/2;
-
-            // draw image
-            container_start(mx, my, mdelx, mdely, 1, 1, 0);
-            draw_image(mip.textureID, mwidth, mheight);
-            container_end();
-        }
-    }
-
-    // process strings
-    static tdFont* fontID = tdLoadFont(AppData.defaultfont, "");
-    for (uint ii = 0; ii < mapStringPoints.size(); ii++) {
-
-        mapStringPoint& msp = mapStringPoints.at(ii);
-        if (msp.vEnabled->getInteger() && std::count(msp.layers.begin(), msp.layers.end(), vTextureIndex->getInteger()) ) {
-
-            // get string with variables, constants, formatting
-            std::string mystring = msp.vText->getString();
-            // break mystring into a vector of 1-line substrings
-            std::vector <std::string> lines;
-            size_t endptr, strptr=0;
-            do {
-                endptr = mystring.find("\\n", strptr);
-                lines.push_back(mystring.substr(strptr, endptr - strptr));
-                strptr = endptr + 2;
-            } while (endptr != std::string::npos);
-
-            mx = (msp.hRatio - texLeft) / (texRight - texLeft) * width;
-            my = (msp.vRatio - texDown) / (texUp - texDown) * height;
-            msize = msp.size * zoom;
-
-            for (uint jj=0; jj<lines.size(); jj++) {
-                float stringWidth = fontID->getAdvance(lines[jj], flMonoNone) * msize / fontID->getBaseSize();
-                double myleft = -0.5 * stringWidth;
-                double mybottom = msize * (((double)lines.size()/2) - (double)(jj + 1));
-
-                translate_start(mx, my);
-
-                    // draw background
-                    double mytop = mybottom + msize;
-                    double myright = myleft + stringWidth;
-                    std::vector<float> pointsL;
-                    addPoint(pointsL, myleft, mybottom);
-                    addPoint(pointsL, myleft, mytop);
-                    addPoint(pointsL, myright, mytop);
-                    addPoint(pointsL, myright, mybottom);
-                    draw_quad(pointsL, 0, 0, 0, .5);
-
-                    // draw outline
-                    draw_string(myleft, mybottom, msize, 0, 0, 0, 1, fontID, flMonoNone, true, lines[jj]);
-                
-                    // draw string
-                    draw_string(myleft, mybottom, msize, 1, 1, 1, 1, fontID, flMonoNone, false, lines[jj]);
-                
-                translate_end();
+        // add position to list
+        if (mli->ratioHistory.empty()) 
+            mli->ratioHistory.push_back({(float)mli->hRatio, (float)mli->vRatio});
+        else
+        {
+            std::pair<float,float> last_pos = mli->ratioHistory.back();
+            float dist = sqrt(pow(mli->hRatio-last_pos.first, 2) + pow(mli->vRatio-last_pos.second, 2)*1.0);
+            if ( dist > trailResolution) {
+                mli->ratioHistory.push_back({mli->hRatio, mli->vRatio});
             }
         }
     }
 }
 
+// void dcMap::displayZone(void)
+// {
+//     computeZoneRatios();
+//     std::vector<float> pntsA;
+//     for (uint ii = 0; ii < zoneLonLatRatios.size(); ii++) {
+//         std::pair<float,float> p = zoneLonLatRatios.at(ii);
+//         pntsA.push_back( (p.first - texLeft) / (texRight - texLeft) * width );
+//         pntsA.push_back( (p.second - texDown) / (texUp - texDown) * height );
+//     }
+
+//     draw_quad(pntsA, 1, .5, .5, .5);
+// }
+
+// void dcMap::displayPoints(void)
+// {
+//     float mx, my, mwidth, mheight, msize, mdelx, mdely;
+
+//     computePointRatios();
+
+//     // process images
+//     for (uint ii = 0; ii < mapImagePoints.size(); ii++) {
+
+//         mapImagePoint& mip = mapImagePoints.at(ii);
+//         if (mip.vEnabled->getInteger() && std::count(mip.layers.begin(), mip.layers.end(), textureIndex) ) {
+
+//             mx = (mip.hRatio - texLeft) / (texRight - texLeft) * width;
+//             my = (mip.vRatio - texDown) / (texUp - texDown) * height;
+//             mwidth = mip.width * zoom;
+//             mheight = mip.height * zoom;
+//             mdelx = mwidth/2;
+//             mdely = mheight/2;
+
+//             // draw image
+//             container_start(mx, my, mdelx, mdely, 1, 1, 0);
+//             draw_image(mip.textureID, mwidth, mheight);
+//             container_end();
+//         }
+//     }
+
+//     // process strings
+//     static tdFont* fontID = tdLoadFont(AppData.defaultfont, "");
+//     for (uint ii = 0; ii < mapStringPoints.size(); ii++) {
+
+//         mapStringPoint& msp = mapStringPoints.at(ii);
+//         if (msp.vEnabled->getInteger() && std::count(msp.layers.begin(), msp.layers.end(), textureIndex) ) {
+
+//             // get string with variables, constants, formatting
+//             std::string mystring = msp.vText->getString();
+//             // break mystring into a vector of 1-line substrings
+//             std::vector <std::string> lines;
+//             size_t endptr, strptr=0;
+//             do {
+//                 endptr = mystring.find("\\n", strptr);
+//                 lines.push_back(mystring.substr(strptr, endptr - strptr));
+//                 strptr = endptr + 2;
+//             } while (endptr != std::string::npos);
+
+//             mx = (msp.hRatio - texLeft) / (texRight - texLeft) * width;
+//             my = (msp.vRatio - texDown) / (texUp - texDown) * height;
+//             msize = msp.size * zoom;
+
+//             for (uint jj=0; jj<lines.size(); jj++) {
+//                 float stringWidth = fontID->getAdvance(lines[jj], flMonoNone) * msize / fontID->getBaseSize();
+//                 double myleft = -0.5 * stringWidth;
+//                 double mybottom = msize * (((double)lines.size()/2) - (double)(jj + 1));
+
+//                 translate_start(mx, my);
+
+//                     // draw background
+//                     double mytop = mybottom + msize;
+//                     double myright = myleft + stringWidth;
+//                     std::vector<float> pointsL;
+//                     addPoint(pointsL, myleft, mybottom);
+//                     addPoint(pointsL, myleft, mytop);
+//                     addPoint(pointsL, myright, mytop);
+//                     addPoint(pointsL, myright, mybottom);
+//                     draw_quad(pointsL, 0, 0, 0, .5);
+
+//                     // draw outline
+//                     draw_string(myleft, mybottom, msize, 0, 0, 0, 1, fontID, flMonoNone, true, lines[jj]);
+                
+//                     // draw string
+//                     draw_string(myleft, mybottom, msize, 1, 1, 1, 1, fontID, flMonoNone, false, lines[jj]);
+                
+//                 translate_end();
+//             }
+//         }
+//     }
+// }
+
 void dcMap::processPreCalculations(void) {
     computeGeometry();
+    fetchBaseParams();
+    fetchLonLat();      // dependent on UPS/UTM
+    computePosRatios();
+    updateCurrentParams();
 }
 
 void dcMap::processPostCalculations(void) {
@@ -520,6 +537,8 @@ void dcMap::processPostCalculations(void) {
 
 void dcMap::draw(void)
 {
+    computeTextureBounds();
+
     stencil_begin();        // enable stencil, clear existing buffer
     stencil_init_dest();    // setup stencil test to write 1's into destination area 
 
@@ -547,15 +566,10 @@ void dcMap::draw(void)
             rotate_start(-1 * (trajAngle + iconRotationOffset));
             translate_start(-1 * width/2, -1 * height/2);
         }
-    
-        // draw remaining projected fragments
-        int curr_tex_index;
-        if (vTextureIndex) curr_tex_index = vTextureIndex->getInteger();
-        else curr_tex_index = 0;
 
-        draw_map(textureIDs[curr_tex_index], width, height, texUp, texDown, texLeft, texRight);
-        if ( enableZone )   displayZone();
-        displayPoints();    // always display points
+        draw_map(mliCurrent->textureID, width, height, texUp, texDown, texLeft, texRight);
+        //if ( enableZone )   displayZone();
+        //displayPoints();    // always display points
         if ( enableTrail )  displayTrail();
         if ( enableIcon )   displayIcon();
 

@@ -16,17 +16,23 @@ dcUpsMap::~dcUpsMap()
     return;
 }
 
-void dcUpsMap::setLonLatParams(const std::string &loPolarAxis, const std::string &laOrigin, const std::string &laOuter)
+void dcUpsMap::setLonLatParams(const std::string &pos, const std::string &loPolarAxis, const std::string &laOrigin, const std::string &laOuter)
 {
-    if (!loPolarAxis.empty() && !laOrigin.empty() && !laOuter.empty())
+    if (!pos.empty()) 
     {
-        polarAxisOffset = getValue(loPolarAxis)->getDecimal();
-        latOrigin = getValue(laOrigin)->getDecimal();
-        latOuter = getValue(laOuter)->getDecimal();
+        int index = getValue(pos)->getInteger();
+        if (!loPolarAxis.empty() && !laOrigin.empty() && !laOuter.empty())
+        {
+            double polarAxisOffset = getValue(loPolarAxis)->getDecimal();
+            double latOrigin = getValue(laOrigin)->getDecimal();
+            double latOuter = getValue(laOuter)->getDecimal();
+
+            upsLayerInfos[index] = {polarAxisOffset, latOrigin, latOuter};
+        }
     }
     else
     {
-        printf("map.setLonLatParams: missing values\n");
+        printf("upsMap.setLonLatParams: missing values\n");
     }
 }
 
@@ -38,71 +44,79 @@ void dcUpsMap::setEnableInverseTheta(const std::string &inval)
     }
 }
 
-void dcUpsMap::computeLonLat(void) 
+void dcUpsMap::fetchLonLat(void) 
 {
     longitude = vLongitude->getDecimal() * enableInverseThetaMultiplier;
     latitude = vLatitude->getDecimal();
 }
 
+// compute positional ratios, as well as the current trajectory
 void dcUpsMap::computePosRatios(void) 
 {
     // save previous ratios
-    double prevHRatio = hRatio;
-    double prevVRatio = vRatio;
+    double prevHRatio = mliCurrent->hRatio;
+    double prevVRatio = mliCurrent->vRatio;
 
     // compute unit ratios for x and y
-    double theta = (longitude + polarAxisOffset) * M_PI / 180;
-    double radius = fabs((latOrigin - latitude) / (latOrigin - latOuter));    // scale of 0..1
+    for (auto const& pair : upsLayerInfos) 
+    {
+        int id = pair.first;
+        const upsLayerInfo* uli = &(pair.second);
+        mapLayerInfo* mli = &(mapLayerInfos[id]);
 
-    if ( radius > 1 ) radius = 1;
+        double theta = (longitude + uli->polarAxisOffset) * M_PI / 180;
+        double radius = fabs((uli->latOrigin - latitude) / (uli->latOrigin - uli->latOuter));    // scale of 0..1
 
-    hRatio = radius * cos(theta) * .5 + .5;
-    vRatio = radius * sin(theta) * .5 + .5;
+        if ( radius > 1 ) radius = 1;
 
-    // calculate current angle of trajectory
-    if ( vYaw ) 
+        mli->hRatio = radius * cos(theta) * .5 + .5;
+        mli->vRatio = radius * sin(theta) * .5 + .5;
+    }
+
+    // compute trajectory
+    if ( vYaw )
         trajAngle = vYaw->getDecimal() + yawOffset;
-    else if ( prevVRatio != vRatio || prevHRatio != hRatio)
-        trajAngle = atan2((vRatio - prevVRatio), ( hRatio - prevHRatio)) * 180 / M_PI;
+    else if ( prevVRatio != mliCurrent->vRatio || prevHRatio != mliCurrent->hRatio)
+        trajAngle = atan2((mliCurrent->vRatio - prevVRatio), ( mliCurrent->hRatio - prevHRatio)) * 180 / M_PI;
 }
 
-void dcUpsMap::computeZoneRatios(void)
-{
-    zoneLonLatRatios.clear();
-    for (uint i = 0; i < zoneLonLatVals.size(); i++) {
+// void dcUpsMap::computeZoneRatios(void)
+// {
+//     zoneLonLatRatios.clear();
+//     for (uint i = 0; i < zoneLonLatVals.size(); i++) {
 
-        // compute unit ratios for x and y
-        double theta = (zoneLonLatVals.at(i).first->getDecimal() * enableInverseThetaMultiplier + polarAxisOffset) * M_PI / 180;
-        double radius = fabs((latOrigin - zoneLonLatVals.at(i).second->getDecimal() ) / (latOrigin - latOuter));    // scale of 0..1
+//         // compute unit ratios for x and y
+//         double theta = (zoneLonLatVals.at(i).first->getDecimal() * enableInverseThetaMultiplier + polarAxisOffset) * M_PI / 180;
+//         double radius = fabs((latOrigin - zoneLonLatVals.at(i).second->getDecimal() ) / (latOrigin - latOuter));    // scale of 0..1
 
-        // add calculated value
-        zoneLonLatRatios.push_back({radius * cos(theta) * .5 + .5, radius * sin(theta) * .5 + .5});
-    }
-}
+//         // add calculated value
+//         zoneLonLatRatios.push_back({radius * cos(theta) * .5 + .5, radius * sin(theta) * .5 + .5});
+//     }
+// }
 
-void dcUpsMap::computePointRatios(void)
-{
-    for (uint i = 0; i < mapImagePoints.size(); i++) {
+// void dcUpsMap::computePointRatios(void)
+// {
+//     for (uint i = 0; i < mapImagePoints.size(); i++) {
 
-        // compute unit ratios for x and y
-        mapImagePoint& mip = mapImagePoints.at(i);
-        double theta = (mip.vLongitude->getDecimal() * enableInverseThetaMultiplier + polarAxisOffset) * M_PI / 180;
-        double radius = fabs((latOrigin - mip.vLatitude->getDecimal()  ) / (latOrigin - latOuter));    // scale of 0..1
+//         // compute unit ratios for x and y
+//         mapImagePoint& mip = mapImagePoints.at(i);
+//         double theta = (mip.vLongitude->getDecimal() * enableInverseThetaMultiplier + polarAxisOffset) * M_PI / 180;
+//         double radius = fabs((latOrigin - mip.vLatitude->getDecimal()  ) / (latOrigin - latOuter));    // scale of 0..1
 
-        // update position ratios
-        mip.hRatio = radius * cos(theta) * .5 + .5;
-        mip.vRatio = radius * sin(theta) * .5 + .5;
-    }
+//         // update position ratios
+//         mip.hRatio = radius * cos(theta) * .5 + .5;
+//         mip.vRatio = radius * sin(theta) * .5 + .5;
+//     }
 
-    for (uint i = 0; i < mapStringPoints.size(); i++) {
+//     for (uint i = 0; i < mapStringPoints.size(); i++) {
 
-        // compute unit ratios for x and y
-        mapStringPoint& msp = mapStringPoints.at(i);
-        double theta = (msp.vLongitude->getDecimal() * enableInverseThetaMultiplier + polarAxisOffset) * M_PI / 180;
-        double radius = fabs((latOrigin - msp.vLatitude->getDecimal()  ) / (latOrigin - latOuter));    // scale of 0..1
+//         // compute unit ratios for x and y
+//         mapStringPoint& msp = mapStringPoints.at(i);
+//         double theta = (msp.vLongitude->getDecimal() * enableInverseThetaMultiplier + polarAxisOffset) * M_PI / 180;
+//         double radius = fabs((latOrigin - msp.vLatitude->getDecimal()  ) / (latOrigin - latOuter));    // scale of 0..1
 
-        // update position ratios
-        msp.hRatio = radius * cos(theta) * .5 + .5;
-        msp.vRatio = radius * sin(theta) * .5 + .5;
-    }
-}
+//         // update position ratios
+//         msp.hRatio = radius * cos(theta) * .5 + .5;
+//         msp.vRatio = radius * sin(theta) * .5 + .5;
+//     }
+// }
