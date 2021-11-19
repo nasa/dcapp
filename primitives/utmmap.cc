@@ -28,7 +28,10 @@ void dcUtmMap::setLonLatParams(const std::string &pos, const std::string &loMin,
             double latMin = getValue(laMin)->getDecimal();
             double latMax = getValue(laMax)->getDecimal();
 
-            utmLayerInfos[index] = {lonMin, lonMax, latMin, latMax};
+            utmLayerInfos.insert({
+                index,
+                {lonMin, lonMax, latMin, latMax}
+            });
         }
     }
     else

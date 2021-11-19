@@ -562,8 +562,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                         if (NodeCheck(subsubnode, "MapTexture")) 
                         {
                             myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
-                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), get_element_data(node, "LonMin"), 
-                                get_element_data(node, "LonMax"), get_element_data(node, "LatMin"), get_element_data(node, "LatMax"));
+                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "LonMin"), 
+                                get_element_data(subsubnode, "LonMax"), get_element_data(subsubnode, "LatMin"), get_element_data(subsubnode, "LatMax"));
+                            myitem->setSizeRatio(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "SizeRatio"));
                         }
                     }
                 } else if (NodeCheck(subnode, "Points"))
@@ -624,8 +625,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                     {
                         if (NodeCheck(subsubnode, "MapTexture")) {
                             myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
-                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), get_element_data(node, "PolarAxisOffset"), 
-                                get_element_data(node, "LatOrigin"), get_element_data(node, "LatOuter"));
+                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "PolarAxisOffset"), 
+                                get_element_data(subsubnode, "LatOrigin"), get_element_data(subsubnode, "LatOuter"));
+                            myitem->setSizeRatio(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "SizeRatio"));
                         }
                     }
                 } else if (NodeCheck(subnode, "Points"))

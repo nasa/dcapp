@@ -27,7 +27,10 @@ void dcUpsMap::setLonLatParams(const std::string &pos, const std::string &loPola
             double latOrigin = getValue(laOrigin)->getDecimal();
             double latOuter = getValue(laOuter)->getDecimal();
 
-            upsLayerInfos[index] = {polarAxisOffset, latOrigin, latOuter};
+            upsLayerInfos.insert({
+                index,
+                {polarAxisOffset, latOrigin, latOuter}
+            });
         }
     }
     else

@@ -21,6 +21,7 @@ class dcMap : public dcGeometric
         void setTextureIndex(const std::string &);
         void setLonLat(const std::string &, const std::string &);
         void setZoom(const std::string &);
+        void setSizeRatio(const std::string &, const std::string &);
         void setYaw(const std::string &, const std::string &);
         void setEnableCircularMap(const std::string &);
         void setEnableTrackUp(const std::string &);
@@ -51,6 +52,7 @@ class dcMap : public dcGeometric
             tdTexture* textureID;
             double hRatio;
             double vRatio;
+            double sizeRatio;
 
             std::vector<std::pair<float,float>> ratioHistory;
         } mapLayerInfo;

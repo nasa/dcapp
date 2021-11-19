@@ -54,6 +54,15 @@ void dcMap::setZoom(const std::string &inval)
     if (!inval.empty()) vZoom = getValue(inval);
 }
 
+void dcMap::setSizeRatio(const std::string &pos, const std::string &sizeRatio)
+{
+    int index = getValue(pos)->getInteger();
+    if (!pos.empty() && !sizeRatio.empty()) 
+        mapLayerInfos[index].sizeRatio = getValue(sizeRatio)->getDecimal();
+    else 
+        mapLayerInfos[index].sizeRatio = 1;
+}
+
 void dcMap::setYaw(const std::string &inval1, const std::string &inval2)
 {
     if (!inval1.empty()) 
@@ -277,15 +286,15 @@ void dcMap::computeGeometry(void)
 
 void dcMap::fetchBaseParams(void)
 {
+    if (vTextureIndex) textureIndex = vTextureIndex->getInteger();
+    else textureIndex = 0;
+
+    mliCurrent = &(mapLayerInfos[textureIndex]);
+
     if (vZoom) zoom = vZoom->getDecimal();
     else zoom = 1;
     if (zoom < 1) 
         zoom = 1;
-
-    if (vTextureIndex) textureIndex = textureIndex;
-    else textureIndex = 0;
-
-    mliCurrent = &(mapLayerInfos[textureIndex]);
 }
 
 void dcMap::updateCurrentParams(void)
@@ -297,7 +306,7 @@ void dcMap::updateCurrentParams(void)
 // get bounds for texture on 0 to 1 range
 void dcMap::computeTextureBounds(void)
 {
-    double mapWidthRatio = 1/zoom/2;
+    double mapWidthRatio = 1/(mliCurrent->sizeRatio)/zoom/2;
 
     texUp = vRatio + mapWidthRatio;
     texDown = vRatio - mapWidthRatio;
@@ -529,6 +538,9 @@ void dcMap::processPreCalculations(void) {
     fetchLonLat();      // dependent on UPS/UTM
     computePosRatios();
     updateCurrentParams();
+
+//printf("%f %f\n", hRatio, vRatio);
+//printf("%f %f\n", latitude, longitude);
 }
 
 void dcMap::processPostCalculations(void) {
