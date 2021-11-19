@@ -53,6 +53,12 @@ void dcUpsMap::fetchLonLat(void)
     latitude = vLatitude->getDecimal();
 }
 
+void dcUpsMap::fetchChildParams(void) 
+{
+    uliCurrent = &(upsLayerInfos[textureIndex]);
+}
+
+
 // compute positional ratios, as well as the current trajectory
 void dcUpsMap::computePosRatios(void) 
 {
@@ -83,19 +89,19 @@ void dcUpsMap::computePosRatios(void)
         trajAngle = atan2((mliCurrent->vRatio - prevVRatio), ( mliCurrent->hRatio - prevHRatio)) * 180 / M_PI;
 }
 
-// void dcUpsMap::computeZoneRatios(void)
-// {
-//     zoneLonLatRatios.clear();
-//     for (uint i = 0; i < zoneLonLatVals.size(); i++) {
+void dcUpsMap::computeZoneRatios(void)
+{
+    zoneLonLatRatios.clear();
+    for (uint i = 0; i < zoneLonLatVals.size(); i++) {
 
-//         // compute unit ratios for x and y
-//         double theta = (zoneLonLatVals.at(i).first->getDecimal() * enableInverseThetaMultiplier + polarAxisOffset) * M_PI / 180;
-//         double radius = fabs((latOrigin - zoneLonLatVals.at(i).second->getDecimal() ) / (latOrigin - latOuter));    // scale of 0..1
+        // compute unit ratios for x and y
+        double theta = (zoneLonLatVals.at(i).first->getDecimal() * enableInverseThetaMultiplier + uliCurrent->polarAxisOffset) * M_PI / 180;
+        double radius = fabs((uliCurrent->latOrigin - zoneLonLatVals.at(i).second->getDecimal() ) / (uliCurrent->latOrigin - uliCurrent->latOuter));
 
-//         // add calculated value
-//         zoneLonLatRatios.push_back({radius * cos(theta) * .5 + .5, radius * sin(theta) * .5 + .5});
-//     }
-// }
+        // add calculated value
+        zoneLonLatRatios.push_back({radius * cos(theta) * .5 + .5, radius * sin(theta) * .5 + .5});
+    }
+}
 
 // void dcUpsMap::computePointRatios(void)
 // {

@@ -46,6 +46,12 @@ void dcUtmMap::fetchLonLat(void)
     latitude = vLatitude->getDecimal();
 }
 
+void dcUtmMap::fetchChildParams(void) 
+{
+    uliCurrent = &(utmLayerInfos[textureIndex]);
+}
+
+
 void dcUtmMap::computePosRatios(void) 
 {
     // save previous ratios
@@ -70,17 +76,17 @@ void dcUtmMap::computePosRatios(void)
         trajAngle = atan2((mliCurrent->vRatio - prevVRatio), (mliCurrent->hRatio - prevHRatio)) * 180 / M_PI;
 }
 
-// void dcUtmMap::computeZoneRatios(void)
-// {
-//     zoneLonLatRatios.clear();
-//     for (uint i = 0; i < zoneLonLatVals.size(); i++) {
-//         // add calculated value
-//         zoneLonLatRatios.push_back({
-//             (zoneLonLatVals.at(i).first->getDecimal() - lonMin) / (lonMax - lonMin), 
-//             (zoneLonLatVals.at(i).second->getDecimal() - latMin) / (latMax - latMin)
-//         });
-//     }
-// }
+void dcUtmMap::computeZoneRatios(void)
+{
+    zoneLonLatRatios.clear();
+    for (uint i = 0; i < zoneLonLatVals.size(); i++) {
+        // add calculated value
+        zoneLonLatRatios.push_back({
+            (zoneLonLatVals.at(i).first->getDecimal() - uliCurrent->lonMin) / (uliCurrent->lonMax - uliCurrent->lonMin), 
+            (zoneLonLatVals.at(i).second->getDecimal() - uliCurrent->latMin) / (uliCurrent->latMax - uliCurrent->latMin)
+        });
+    }
+}
 
 // void dcUtmMap::computePointRatios(void)
 // {

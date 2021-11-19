@@ -20,10 +20,12 @@ class dcUtmMap : public dcMap
         } utmLayerInfo;
 
         std::map<int,utmLayerInfo> utmLayerInfos;
+        utmLayerInfo* uliCurrent;
 
         void fetchLonLat(void);
+        void fetchChildParams(void);
         void computePosRatios(void);
-        // void computeZoneRatios(void);
+        void computeZoneRatios(void);
         // void computePointRatios(void);
 };
 

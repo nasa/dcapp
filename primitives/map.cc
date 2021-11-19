@@ -145,19 +145,19 @@ void dcMap::setTrailResolution(const std::string &inval)
     if (!inval.empty()) trailResolution = getValue(inval)->getDecimal();
 }
 
-// void dcMap::setZoneLonLat(const std::string &lon1, const std::string &lat1, const std::string &lon2, const std::string &lat2, 
-//     const std::string &lon3, const std::string &lat3, const std::string &lon4, const std::string &lat4) {
+void dcMap::setZoneLonLat(const std::string &lon1, const std::string &lat1, const std::string &lon2, const std::string &lat2, 
+    const std::string &lon3, const std::string &lat3, const std::string &lon4, const std::string &lat4) {
 
-//     if (!lon1.empty() && !lat1.empty() && !lon2.empty() && !lat2.empty() && !lon3.empty() && !lat3.empty() && !lon4.empty() && !lat4.empty())
-//     {
-//         zoneLonLatVals.clear();
-//         zoneLonLatVals.push_back({getValue(lon1), getValue(lat1)});
-//         zoneLonLatVals.push_back({getValue(lon2), getValue(lat2)});
-//         zoneLonLatVals.push_back({getValue(lon3), getValue(lat3)});
-//         zoneLonLatVals.push_back({getValue(lon4), getValue(lat4)});
-//         enableZone = true;
-//     }
-// }
+    if (!lon1.empty() && !lat1.empty() && !lon2.empty() && !lat2.empty() && !lon3.empty() && !lat3.empty() && !lon4.empty() && !lat4.empty())
+    {
+        zoneLonLatVals.clear();
+        zoneLonLatVals.push_back({getValue(lon1), getValue(lat1)});
+        zoneLonLatVals.push_back({getValue(lon2), getValue(lat2)});
+        zoneLonLatVals.push_back({getValue(lon3), getValue(lat3)});
+        zoneLonLatVals.push_back({getValue(lon4), getValue(lat4)});
+        enableZone = true;
+    }
+}
 
 // void dcMap::setMapImagePoint(const std::string &filename, const std::string &lon, const std::string &lat, const std::string &enable, 
 //     const std::string &w, const std::string &h, const std::string &layers) {
@@ -442,18 +442,18 @@ void dcMap::updateTrail(void)
     }
 }
 
-// void dcMap::displayZone(void)
-// {
-//     computeZoneRatios();
-//     std::vector<float> pntsA;
-//     for (uint ii = 0; ii < zoneLonLatRatios.size(); ii++) {
-//         std::pair<float,float> p = zoneLonLatRatios.at(ii);
-//         pntsA.push_back( (p.first - texLeft) / (texRight - texLeft) * width );
-//         pntsA.push_back( (p.second - texDown) / (texUp - texDown) * height );
-//     }
+void dcMap::displayZone(void)
+{
+    computeZoneRatios();
+    std::vector<float> pntsA;
+    for (uint ii = 0; ii < zoneLonLatRatios.size(); ii++) {
+        std::pair<float,float> p = zoneLonLatRatios.at(ii);
+        pntsA.push_back( (p.first - texLeft) / (texRight - texLeft) * width );
+        pntsA.push_back( (p.second - texDown) / (texUp - texDown) * height );
+    }
 
-//     draw_quad(pntsA, 1, .5, .5, .5);
-// }
+    draw_quad(pntsA, 1, .5, .5, .5);
+}
 
 // void dcMap::displayPoints(void)
 // {
@@ -535,6 +535,7 @@ void dcMap::updateTrail(void)
 void dcMap::processPreCalculations(void) {
     computeGeometry();
     fetchBaseParams();
+    fetchChildParams();
     fetchLonLat();      // dependent on UPS/UTM
     computePosRatios();
     updateCurrentParams();
@@ -580,7 +581,7 @@ void dcMap::draw(void)
         }
 
         draw_map(mliCurrent->textureID, width, height, texUp, texDown, texLeft, texRight);
-        //if ( enableZone )   displayZone();
+        if ( enableZone )   displayZone();
         //displayPoints();    // always display points
         if ( enableTrail )  displayTrail();
         if ( enableIcon )   displayIcon();

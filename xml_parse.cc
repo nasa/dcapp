@@ -539,11 +539,11 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setTrailWidth(get_element_data(node, "TrailWidth"));
             myitem->setFnClearTrail(get_element_data(node, "FnClearTrail"));
             myitem->setTrailResolution(get_element_data(node, "TrailResolution"));
-            // myitem->setZoneLonLat(
-            //     get_element_data(node, "ZoneLon1"), get_element_data(node, "ZoneLat1"),
-            //     get_element_data(node, "ZoneLon2"), get_element_data(node, "ZoneLat2"), 
-            //     get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
-            //     get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
+            myitem->setZoneLonLat(
+                get_element_data(node, "ZoneLon1"), get_element_data(node, "ZoneLat1"),
+                get_element_data(node, "ZoneLon2"), get_element_data(node, "ZoneLat2"), 
+                get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
+                get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
             xmldata myfile = get_element_data(node, "File");
             myitem->setTexture("0", myfile);
             xmldata iconfile = get_element_data(node, "IconFile");
@@ -603,11 +603,11 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setFnClearTrail(get_element_data(node, "FnClearTrail"));
             myitem->setTrailResolution(get_element_data(node, "TrailResolution"));
             myitem->setEnableInverseTheta(get_element_data(node, "EnableInverseTheta"));
-            // myitem->setZoneLonLat(
-            //     get_element_data(node, "ZoneLon1"), get_element_data(node, "ZoneLat1"),
-            //     get_element_data(node, "ZoneLon2"), get_element_data(node, "ZoneLat2"), 
-            //     get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
-            //     get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
+            myitem->setZoneLonLat(
+                get_element_data(node, "ZoneLon1"), get_element_data(node, "ZoneLat1"),
+                get_element_data(node, "ZoneLon2"), get_element_data(node, "ZoneLat2"), 
+                get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
+                get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
             xmldata myfile = get_element_data(node, "File");
             myitem->setTexture("0", myfile);
             xmldata iconfile = get_element_data(node, "IconFile");

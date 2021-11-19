@@ -20,11 +20,13 @@ class dcUpsMap : public dcMap
         } upsLayerInfo;
 
         std::map<int,upsLayerInfo> upsLayerInfos;
+        upsLayerInfo* uliCurrent;
         int enableInverseThetaMultiplier;
 
         void fetchLonLat(void);
+        void fetchChildParams(void);
         void computePosRatios(void);
-        // void computeZoneRatios(void);
+        void computeZoneRatios(void);
         // void computePointRatios(void);
 };
 

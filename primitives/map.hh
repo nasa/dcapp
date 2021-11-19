@@ -34,8 +34,8 @@ class dcMap : public dcGeometric
         void setIconRotationOffset(const std::string &);
         void setIconTexture(const std::string &);
         void setIconSize(const std::string &, const std::string &);
-        // void setZoneLonLat(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
-        //         const std::string &, const std::string &);
+        void setZoneLonLat(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
+                const std::string &, const std::string &);
         // void setMapImagePoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
         //         const std::string &);
         // void setMapStringPoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
@@ -82,15 +82,16 @@ class dcMap : public dcGeometric
 
         void displayIcon(void);
         void displayTrail(void);
-        // void displayZone(void);
+        void displayZone(void);
         // void displayPoints(void);
         void computeGeometry(void);
         void computeTextureBounds(void);
         void updateTrail(void);
 
         virtual void fetchLonLat(void) = 0;
+        virtual void fetchChildParams(void) = 0;
         virtual void computePosRatios(void) = 0;
-        // virtual void computeZoneRatios(void) = 0;
+        virtual void computeZoneRatios(void) = 0;
         // virtual void computePointRatios(void) = 0;
 
         /* live variable from dcapp panel */
@@ -150,8 +151,8 @@ class dcMap : public dcGeometric
         // std::vector<mapStringPoint> mapStringPoints;
 
         /* zone parameters */
-        // std::vector<std::pair<Value*,Value*>> zoneLonLatVals;
-        // std::vector<std::pair<double,double>> zoneLonLatRatios;
+        std::vector<std::pair<Value*,Value*>> zoneLonLatVals;
+        std::vector<std::pair<double,double>> zoneLonLatRatios;
         bool enableZone;
 
         bool selected;
