@@ -9,7 +9,7 @@
 #include "parent.hh"
 #include "kolor.hh"
 
-#define SQRT_2 1.41421356237
+#define SQRT_2 1.414213562373095048802
 
 class dcMap : public dcGeometric
 {
@@ -21,6 +21,7 @@ class dcMap : public dcGeometric
         void setTextureIndex(const std::string &);
         void setLonLat(const std::string &, const std::string &);
         void setZoom(const std::string &);
+        void setSizeRatio(const std::string &, const std::string &);
         void setYaw(const std::string &, const std::string &);
         void setEnableCircularMap(const std::string &);
         void setEnableTrackUp(const std::string &);
@@ -47,6 +48,15 @@ class dcMap : public dcGeometric
         //void handleMouseRelease(void);
 
     protected:
+        typedef struct {
+            tdTexture* textureID;
+            double hRatio;
+            double vRatio;
+            double sizeRatio;
+
+            std::vector<std::pair<float,float>> ratioHistory;
+        } mapLayerInfo;
+
         typedef struct {
             tdTexture* textureID;
             Value* vLongitude;
@@ -78,13 +88,14 @@ class dcMap : public dcGeometric
         void computeTextureBounds(void);
         void updateTrail(void);
 
-        virtual void computeLonLat(void) = 0;
+        virtual void fetchLonLat(void) = 0;
+        virtual void fetchChildParams(void) = 0;
         virtual void computePosRatios(void) = 0;
         virtual void computeZoneRatios(void) = 0;
         virtual void computePointRatios(void) = 0;
 
         /* live variable from dcapp panel */
-        std::map<int,tdTexture*> textureIDs;
+        std::map<int,mapLayerInfo> mapLayerInfos;
         Value* vTextureIndex;
         Value* vLatitude;
         Value* vLongitude;
@@ -95,6 +106,8 @@ class dcMap : public dcGeometric
         double longitude;
         double latitude;
         double zoom;
+        double textureIndex;
+        mapLayerInfo* mliCurrent;
 
         /* variables used for render params */
         double displayWidth;
@@ -113,7 +126,6 @@ class dcMap : public dcGeometric
         double texRight;
         double hRatio;
         double vRatio;
-        std::vector<std::pair<float,float>> positionHistory;
 
         /* trail params */
         bool enableTrail;
@@ -147,6 +159,9 @@ class dcMap : public dcGeometric
 
     private:
         int prev_clear_state;   // tied to fnClearTrail
+
+        void fetchBaseParams(void);
+        void updateCurrentParams(void);
 };
 
 #endif

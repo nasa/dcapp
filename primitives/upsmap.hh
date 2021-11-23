@@ -9,19 +9,25 @@ class dcUpsMap : public dcMap
         dcUpsMap(dcParent *);
         virtual ~dcUpsMap();
 
-        void setLonLatParams(const std::string &, const std::string &, const std::string &);
+        void setLonLatParams(const std::string &, const std::string &, const std::string &, const std::string &);
         void setEnableInverseTheta(const std::string &);
 
     private:
-        void computeLonLat(void);
+        typedef struct {
+            double polarAxisOffset;
+            double latOrigin;
+            double latOuter;
+        } upsLayerInfo;
+
+        std::map<int,upsLayerInfo> upsLayerInfos;
+        upsLayerInfo* uliCurrent;
+        int enableInverseThetaMultiplier;
+
+        void fetchLonLat(void);
+        void fetchChildParams(void);
         void computePosRatios(void);
         void computeZoneRatios(void);
         void computePointRatios(void);
-        
-        double polarAxisOffset;
-        double latOrigin;
-        double latOuter;
-        int enableInverseThetaMultiplier;
 };
 
 #endif
