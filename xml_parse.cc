@@ -525,7 +525,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
             myitem->setTextureIndex(get_element_data(node, "TextureIndex"));
             myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
-            myitem->setLonLatParams(get_element_data(node, "LonMin"), get_element_data(node, "LonMax"), get_element_data(node, "LatMin"), get_element_data(node, "LatMax"));
             myitem->setZoom(get_element_data(node, "Zoom"));
             myitem->setYaw(get_element_data(node, "Yaw"), get_element_data(node, "YawOffset"));
             myitem->setEnableCircularMap(get_element_data(node, "EnableCircularMap"));
@@ -560,8 +559,13 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 {
                     for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
                     {
-                        if (NodeCheck(subsubnode, "MapTexture"))
+                        if (NodeCheck(subsubnode, "MapTexture")) 
+                        {
                             myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
+                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "LonMin"), 
+                                get_element_data(subsubnode, "LonMax"), get_element_data(subsubnode, "LatMin"), get_element_data(subsubnode, "LatMax"));
+                            myitem->setSizeRatio(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "SizeRatio"));
+                        }
                     }
                 } else if (NodeCheck(subnode, "Points"))
                 {
@@ -584,7 +588,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
             myitem->setTextureIndex(get_element_data(node, "TextureIndex"));
             myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
-            myitem->setLonLatParams(get_element_data(node, "PolarAxisOffset"), get_element_data(node, "LatOrigin"), get_element_data(node, "LatOuter"));
             myitem->setZoom(get_element_data(node, "Zoom"));
             myitem->setYaw(get_element_data(node, "Yaw"), get_element_data(node, "YawOffset"));
             myitem->setEnableCircularMap(get_element_data(node, "EnableCircularMap"));
@@ -620,8 +623,12 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 {
                     for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
                     {
-                        if (NodeCheck(subsubnode, "MapTexture"))
+                        if (NodeCheck(subsubnode, "MapTexture")) {
                             myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
+                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "PolarAxisOffset"), 
+                                get_element_data(subsubnode, "LatOrigin"), get_element_data(subsubnode, "LatOuter"));
+                            myitem->setSizeRatio(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "SizeRatio"));
+                        }
                     }
                 } else if (NodeCheck(subnode, "Points"))
                 {

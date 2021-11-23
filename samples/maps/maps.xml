@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <DCAPP>
-    <Variable Type="Decimal" InitialValue="85">LATITUDE</Variable>
+    <Variable Type="Decimal" InitialValue="89">LATITUDE</Variable>
     <Variable Type="Decimal" InitialValue="100">LONGITUDE</Variable>
     <Variable Type="Decimal" InitialValue="1">ZOOM</Variable>
     <Variable Type="Integer" InitialValue="0">CLEAR_TRAILS</Variable>
@@ -9,13 +9,8 @@
     <!-- UTM constants -->
     <Constant Name="LonMin">0</Constant>
     <Constant Name="LonMax">360</Constant>
-    <Constant Name="LatMin">80</Constant>
+    <Constant Name="LatMin">75</Constant>
     <Constant Name="LatMax">90</Constant>
-
-    <!-- UPS constants -->
-    <Constant Name="LonPolarAxis">90</Constant>
-    <Constant Name="LatOrigin">90</Constant>
-    <Constant Name="LatOuter">80</Constant>
 
     <Constant Name="BgColor">0 0 0</Constant>
     <Variable Type="Integer">ZoomSelected</Variable>
@@ -34,31 +29,31 @@
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="2500" VirtualHeight="1500">
 
             <UPSMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="5" TrailColor="1 0 0 .7"
-                    EnableIcon="1" EnableTrail="1" FnClearTrail="@CLEAR_TRAILS"
-                    PolarAxisOffset="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="50" Y="275" 
+                    EnableIcon="1" EnableTrail="1" FnClearTrail="@CLEAR_TRAILS" 
+                    X="50" Y="275"
                     IconFile="images/arrow.bmp" IconWidth="50" IconHeight="50" IconRotationOffset="-90" TextureIndex="@CURR_DISPLAY_TEXTURE"
                     Width="1175" Height="1175" HorizontalAlign="Left" VerticalAlign="Bottom" EnableCircularMap="1" EnableTrackUp="1" EnableInverseTheta="1"
-                    ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="85" ZoneLat2="85" ZoneLat3="86" ZoneLat4="86">
+                    ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="88" ZoneLat2="88" ZoneLat3="88.5" ZoneLat4="88.5">
                 <Textures>
-                    <MapTexture File="images/moon.bmp"  Index="0"/>
-                    <MapTexture File="images/moon2.bmp" Index="1"/>
+                    <MapTexture File="images/moon_875_2.bmp"  Index="0" PolarAxisOffset="90" LatOrigin="90" LatOuter="87.5"/>
+                    <MapTexture File="images/moon_75.bmp" Index="1" PolarAxisOffset="90" LatOrigin="90" LatOuter="75" SizeRatio="6"/>
                 </Textures>
                 <Points>
-                    <MapImage File="images/point1.bmp" Width="250" Height="250" Latitude="83.7" Longitude="-135" Layers="0"/>
-                    <MapImage File="images/point2.bmp" Width="100" Height="100" Latitude="83.5" Longitude="-45" Layers="1"/>
-                    <MapString Size="50" Latitude="86" Longitude="0" Layers="0,1">ZONE01</MapString>
+                    <MapImage File="images/point1.bmp" Width="250" Height="250" Latitude="89" Longitude="-135" Layers="0"/>
+                    <MapImage File="images/point2.bmp" Width="100" Height="100" Latitude="88.8" Longitude="-45" Layers="1"/>
+                    <MapString Size="50" Latitude="89" Longitude="0" Layers="0,1">ZONE01</MapString>
                 </Points>
             </UPSMap>
 
             <UPSMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="5" TrailColor="1 0 0 .7"
                     EnableIcon="1" EnableTrail="1" FnClearTrail="@CLEAR_TRAILS"
-                    PolarAxisOffset="#LonPolarAxis" LatOrigin="#LatOrigin" LatOuter="#LatOuter" X="2450" Y="1450" 
+                    X="2450" Y="1450" 
                     IconFile="images/arrow.bmp" IconWidth="50" IconHeight="50" IconRotationOffset="-90" TextureIndex="@CURR_DISPLAY_TEXTURE"
                     Width="1175" Height="1175" HorizontalAlign="Right" VerticalAlign="Top" EnableInverseTheta="1"
-                    ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="85" ZoneLat2="85" ZoneLat3="86" ZoneLat4="86">
+                    ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="88" ZoneLat2="88" ZoneLat3="88.5" ZoneLat4="88.5">
                 <Textures>
-                    <MapTexture File="images/moon2.bmp" Index="0"/>
-                    <MapTexture File="images/moon.bmp"  Index="1"/>
+                    <MapTexture File="images/moon_875_2.bmp" Index="1" PolarAxisOffset="90" LatOrigin="90" LatOuter="87.5"/>
+                    <MapTexture File="images/moon_75.bmp"  Index="0" PolarAxisOffset="90" LatOrigin="90" LatOuter="75" SizeRatio="6"/>
                 </Textures>
             </UPSMap>
 
@@ -131,8 +126,8 @@
             <KeyboardEvent Key="w">
                 <OnPress>
                     <Set Variable="@LATITUDE" Operator="+=">.01</Set>
-                    <If Value1="@LATITUDE" Operator="gt" Value2="#LatOrigin">
-                        <Set Variable="@LATITUDE">#LatOrigin</Set>
+                    <If Value1="@LATITUDE" Operator="gt" Value2="90">
+                        <Set Variable="@LATITUDE">90</Set>
                     </If>
                 </OnPress>
             </KeyboardEvent>
@@ -147,8 +142,8 @@
             <KeyboardEvent Key="s">
                 <OnPress>
                     <Set Variable="@LATITUDE" Operator="-=">.01</Set>
-                    <If Value1="@LATITUDE" Operator="lt" Value2="#LatOuter">
-                        <Set Variable="@LATITUDE">#LatOuter</Set>
+                    <If Value1="@LATITUDE" Operator="lt" Value2="75">
+                        <Set Variable="@LATITUDE">75</Set>
                     </If>
                 </OnPress>
             </KeyboardEvent>

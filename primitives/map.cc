@@ -28,7 +28,7 @@ void dcMap::setTexture(const std::string &pos, const std::string &filename)
 {
     int index = getValue(pos)->getInteger();
     if (!pos.empty() && !filename.empty()) 
-        textureIDs[index] = tdLoadTexture(filename);
+        mapLayerInfos[index].textureID = tdLoadTexture(filename);
 }
 
 void dcMap::setTextureIndex(const std::string &inval)
@@ -52,6 +52,15 @@ void dcMap::setLonLat(const std::string &lat1, const std::string &lon1)
 void dcMap::setZoom(const std::string &inval)
 {
     if (!inval.empty()) vZoom = getValue(inval);
+}
+
+void dcMap::setSizeRatio(const std::string &pos, const std::string &sizeRatio)
+{
+    int index = getValue(pos)->getInteger();
+    if (!pos.empty() && !sizeRatio.empty()) 
+        mapLayerInfos[index].sizeRatio = getValue(sizeRatio)->getDecimal();
+    else 
+        mapLayerInfos[index].sizeRatio = 1;
 }
 
 void dcMap::setYaw(const std::string &inval1, const std::string &inval2)
@@ -273,25 +282,31 @@ void dcMap::computeGeometry(void)
         default:
             break;
     }
+}
 
-    computeTextureBounds();
+void dcMap::fetchBaseParams(void)
+{
+    if (vTextureIndex) textureIndex = vTextureIndex->getInteger();
+    else textureIndex = 0;
+
+    mliCurrent = &(mapLayerInfos[textureIndex]);
+
+    if (vZoom) zoom = vZoom->getDecimal();
+    else zoom = 1;
+    if (zoom < 1) 
+        zoom = 1;
+}
+
+void dcMap::updateCurrentParams(void)
+{
+    hRatio = mliCurrent->hRatio;
+    vRatio = mliCurrent->vRatio;
 }
 
 // get bounds for texture on 0 to 1 range
 void dcMap::computeTextureBounds(void)
 {
-    // compute unit offset for position
-    if (vZoom) zoom = vZoom->getDecimal();
-    else zoom = 1;
-
-    if (zoom < 1) 
-        zoom = 1;
-
-
-    computeLonLat();
-    computePosRatios();
-
-    double mapWidthRatio = 1/zoom/2;
+    double mapWidthRatio = 1/(mliCurrent->sizeRatio)/zoom/2;
 
     texUp = vRatio + mapWidthRatio;
     texDown = vRatio - mapWidthRatio;
@@ -350,10 +365,10 @@ void dcMap::displayIcon(void) {
 void dcMap::displayTrail(void)
 {
     std::vector<float> pntsA;
-    if (positionHistory.size() > 1) {
-        for (uint i = 1; i < positionHistory.size(); i++) {
-            std::pair<float,float> p1 = positionHistory.at(i-1);
-            std::pair<float,float> p2 = positionHistory.at(i);
+    if (mliCurrent->ratioHistory.size() > 1) {
+        for (uint i = 1; i < mliCurrent->ratioHistory.size(); i++) {
+            std::pair<float,float> p1 = mliCurrent->ratioHistory.at(i-1);
+            std::pair<float,float> p2 = mliCurrent->ratioHistory.at(i);
             if ( (p1.first > texLeft && p1.first < texRight && p1.second > texDown && p1.second < texUp) ||
                  (p2.first > texLeft && p2.first < texRight && p2.second > texDown && p2.second < texUp) ) {
 
@@ -365,7 +380,6 @@ void dcMap::displayTrail(void)
 
                 // add to set of points
                 pntsA.insert(pntsA.end(),{mx1, my1, mx2, my2});
-                
             } else {
                 if (!pntsA.empty()) {
                     draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
@@ -381,7 +395,7 @@ void dcMap::displayTrail(void)
         }
 
         // draw last position to current point
-        std::pair<float,float> p = positionHistory.back();
+        std::pair<float,float> p = mliCurrent->ratioHistory.back();
 
         float mx1 = (p.first - texLeft) / (texRight - texLeft) * width;
         float my1 = (p.second - texDown) / (texUp - texDown) * height;
@@ -397,25 +411,33 @@ void dcMap::displayTrail(void)
 void dcMap::updateTrail(void)
 {
     // clear stored trails on fnClearTrail value change
+    bool doClear = false;
     if (fnClearTrail) {
         int curr_clear_state = fnClearTrail->getInteger();
         if (prev_clear_state != curr_clear_state) {
-            positionHistory.clear();
+            doClear = true;
         }
         prev_clear_state = curr_clear_state;
     }
 
-    // add position to list
-    if (positionHistory.empty()) 
+    // compute unit ratios for x and y
+    for (auto const& pair : mapLayerInfos) 
     {
-        positionHistory.push_back({(float)hRatio, (float)vRatio});
-    }
-    else
-    {
-        std::pair<float,float> last_pos = positionHistory.back();
-        float dist = sqrt(pow(hRatio-last_pos.first, 2) + pow(vRatio-last_pos.second, 2)*1.0);
-        if ( dist > trailResolution) {
-            positionHistory.push_back({hRatio, vRatio});
+        mapLayerInfo* mli = &(mapLayerInfos[pair.first]);
+
+        // clear trail 
+        if (doClear) mli->ratioHistory.clear();
+
+        // add position to list
+        if (mli->ratioHistory.empty()) 
+            mli->ratioHistory.push_back({(float)mli->hRatio, (float)mli->vRatio});
+        else
+        {
+            std::pair<float,float> last_pos = mli->ratioHistory.back();
+            float dist = sqrt(pow(mli->hRatio-last_pos.first, 2) + pow(mli->vRatio-last_pos.second, 2)*1.0);
+            if ( dist > trailResolution) {
+                mli->ratioHistory.push_back({mli->hRatio, mli->vRatio});
+            }
         }
     }
 }
@@ -443,7 +465,7 @@ void dcMap::displayPoints(void)
     for (uint ii = 0; ii < mapImagePoints.size(); ii++) {
 
         mapImagePoint& mip = mapImagePoints.at(ii);
-        if (mip.vEnabled->getInteger() && std::count(mip.layers.begin(), mip.layers.end(), vTextureIndex->getInteger()) ) {
+        if (mip.vEnabled->getInteger() && std::count(mip.layers.begin(), mip.layers.end(), textureIndex) ) {
 
             mx = (mip.hRatio - texLeft) / (texRight - texLeft) * width;
             my = (mip.vRatio - texDown) / (texUp - texDown) * height;
@@ -464,7 +486,7 @@ void dcMap::displayPoints(void)
     for (uint ii = 0; ii < mapStringPoints.size(); ii++) {
 
         mapStringPoint& msp = mapStringPoints.at(ii);
-        if (msp.vEnabled->getInteger() && std::count(msp.layers.begin(), msp.layers.end(), vTextureIndex->getInteger()) ) {
+        if (msp.vEnabled->getInteger() && std::count(msp.layers.begin(), msp.layers.end(), textureIndex) ) {
 
             // get string with variables, constants, formatting
             std::string mystring = msp.vText->getString();
@@ -512,6 +534,11 @@ void dcMap::displayPoints(void)
 
 void dcMap::processPreCalculations(void) {
     computeGeometry();
+    fetchBaseParams();
+    fetchChildParams();
+    fetchLonLat();      // dependent on UPS/UTM
+    computePosRatios();
+    updateCurrentParams();
 }
 
 void dcMap::processPostCalculations(void) {
@@ -520,6 +547,8 @@ void dcMap::processPostCalculations(void) {
 
 void dcMap::draw(void)
 {
+    computeTextureBounds();
+
     stencil_begin();        // enable stencil, clear existing buffer
     stencil_init_dest();    // setup stencil test to write 1's into destination area 
 
@@ -547,13 +576,8 @@ void dcMap::draw(void)
             rotate_start(-1 * (trajAngle + iconRotationOffset));
             translate_start(-1 * width/2, -1 * height/2);
         }
-    
-        // draw remaining projected fragments
-        int curr_tex_index;
-        if (vTextureIndex) curr_tex_index = vTextureIndex->getInteger();
-        else curr_tex_index = 0;
 
-        draw_map(textureIDs[curr_tex_index], width, height, texUp, texDown, texLeft, texRight);
+        draw_map(mliCurrent->textureID, width, height, texUp, texDown, texLeft, texRight);
         if ( enableZone )   displayZone();
         displayPoints();    // always display points
         if ( enableTrail )  displayTrail();
