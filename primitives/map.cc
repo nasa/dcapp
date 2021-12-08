@@ -382,7 +382,7 @@ void dcMap::displayTrail(void)
                 pntsA.insert(pntsA.end(),{mx1, my1, mx2, my2});
             } else {
                 if (!pntsA.empty()) {
-                    draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
+                    draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFF00, 1);
                     pntsA.clear();
                 }
             }
@@ -390,7 +390,7 @@ void dcMap::displayTrail(void)
 
         // plot any points remaining 
         if (!pntsA.empty()) {
-            draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
+            draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFF00, 1);
             pntsA.clear();
         }
 
