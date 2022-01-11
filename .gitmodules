@@ -1,0 +1,3 @@
+[submodule "nexsys-lfs"]
+	path = nexsys-lfs
+	url = git@esgl-gitlab.jsc.nasa.gov:NExSyS/nexsys-lfs.git
