@@ -35,8 +35,8 @@
                     Width="1175" Height="1175" HorizontalAlign="Left" VerticalAlign="Bottom" EnableCircularMap="1" EnableTrackUp="1" EnableInverseTheta="1"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="88" ZoneLat2="88" ZoneLat3="88.5" ZoneLat4="88.5">
                 <Textures>
-                    <MapTexture File="images/moon_875_2.bmp"  Index="0" PolarAxisOffset="90" LatOrigin="90" LatOuter="87.5"/>
-                    <MapTexture File="images/moon_75.bmp" Index="1" PolarAxisOffset="90" LatOrigin="90" LatOuter="75" SizeRatio="6"/>
+                    <MapTexture File="../../nexsys-lfs/maps/moon_875_2.bmp"  Index="0" PolarAxisOffset="90" LatOrigin="90" LatOuter="87.5"/>
+                    <MapTexture File="../../nexsys-lfs/maps/moon_75.bmp" Index="1" PolarAxisOffset="90" LatOrigin="90" LatOuter="75" SizeRatio="6"/>
                 </Textures>
                 <Points>
                     <MapImage File="images/point1.bmp" Width="250" Height="250" Latitude="89" Longitude="-135" Layers="0"/>
@@ -52,8 +52,8 @@
                     Width="1175" Height="1175" HorizontalAlign="Right" VerticalAlign="Top" EnableInverseTheta="1"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="88" ZoneLat2="88" ZoneLat3="88.5" ZoneLat4="88.5">
                 <Textures>
-                    <MapTexture File="images/moon_875_2.bmp" Index="1" PolarAxisOffset="90" LatOrigin="90" LatOuter="87.5"/>
-                    <MapTexture File="images/moon_75.bmp"  Index="0" PolarAxisOffset="90" LatOrigin="90" LatOuter="75" SizeRatio="6"/>
+                    <MapTexture File="../../nexsys-lfs/maps/moon_875_2.bmp" Index="1" PolarAxisOffset="90" LatOrigin="90" LatOuter="87.5"/>
+                    <MapTexture File="../../nexsys-lfs/maps/moon_75.bmp"  Index="0" PolarAxisOffset="90" LatOrigin="90" LatOuter="75" SizeRatio="6"/>
                 </Textures>
             </UPSMap>
 
