@@ -197,6 +197,13 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 if (!subparent_found) process_elements(myitem->TrueList, node->children);
             }
         }
+        if (NodeCheck(node, "Blink"))
+        {
+            dcBlink *myitem = new dcBlink(myparent, get_element_data(node, "Frequency"), get_element_data(node, "DutyCycle"));
+            myitem->setDuration(get_element_data(node, "Duration"));
+            myitem->setFnStartBlink(get_element_data(node, "FnStartBlink"));
+            process_elements(myitem->childList, node->children);
+        }
         if (NodeCheck(node, "Set"))
         {
             if (preprocessing)

@@ -1,6 +1,7 @@
 #include "adi.hh"
 #include "animate.hh"
 #include "bezelevent.hh"
+#include "blink.hh"
 #include "circle.hh"
 #include "condition.hh"
 #include "container.hh"
