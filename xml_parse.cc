@@ -588,6 +588,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                     }
                 }
             }
+            myitem->setGhostTrail(get_element_data(node, "GhostTrailFile"));
+            myitem->setGhostTrailColor(get_element_data(node, "GhostTrailColor"));
+            myitem->setGhostTrailWidth(get_element_data(node, "GhostTrailWidth"));
         }
         if (NodeCheck(node, "UPSMap"))
         {
@@ -651,6 +654,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                     }
                 }
             }
+            myitem->setGhostTrail(get_element_data(node, "GhostTrailFile"));
+            myitem->setGhostTrailColor(get_element_data(node, "GhostTrailColor"));
+            myitem->setGhostTrailWidth(get_element_data(node, "GhostTrailWidth"));
         }
         if (NodeCheck(node, "PixelStream"))
         {

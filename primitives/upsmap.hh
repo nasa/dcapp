@@ -26,6 +26,7 @@ class dcUpsMap : public dcMap
         void fetchLonLat(void);
         void fetchChildParams(void);
         void computePosRatios(void);
+        void computeGhostTrailRatios(std::vector<std::pair<double, double>>);
         void computeZoneRatios(void);
         void computePointRatios(void);
 };

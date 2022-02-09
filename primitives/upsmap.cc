@@ -89,6 +89,33 @@ void dcUpsMap::computePosRatios(void)
         trajAngle = atan2((mliCurrent->vRatio - prevVRatio), ( mliCurrent->hRatio - prevHRatio)) * 180 / M_PI;
 }
 
+// compute positional ratios, as well as the current trajectory
+void dcUpsMap::computeGhostTrailRatios(std::vector<std::pair<double, double>> latlons) 
+{
+    // compute unit ratios for x and y
+    for (auto const& pair : upsLayerInfos) 
+    {
+        int id = pair.first;
+        const upsLayerInfo* uli = &(pair.second);
+        mapLayerInfo* mli = &(mapLayerInfos[id]);
+
+        for (auto const& latlon : latlons) {
+            double lat = latlon.first;
+            double lon = latlon.second * enableInverseThetaMultiplier;
+
+            double theta = (lon + uli->polarAxisOffset) * M_PI / 180;
+            double radius = fabs((uli->latOrigin - lat) / (uli->latOrigin - uli->latOuter));    // scale of 0..1
+
+            if ( radius > 1 ) radius = 1;
+
+            mli->ghostRatioHistory.push_back({
+                radius * cos(theta) * .5 + .5, 
+                radius * sin(theta) * .5 + .5
+            });
+        }
+    }
+}
+
 void dcUpsMap::computeZoneRatios(void)
 {
     zoneLonLatRatios.clear();
