@@ -31,6 +31,9 @@ class dcMap : public dcGeometric
         void setTrailWidth(const std::string &);
         void setTrailResolution(const std::string &);
         void setFnClearTrail(const std::string &);
+        void setGhostTrail(const std::string &);
+        void setGhostTrailColor(const std::string &);
+        void setGhostTrailWidth(const std::string &);
         void setIconRotationOffset(const std::string &);
         void setIconTexture(const std::string &);
         void setIconSize(const std::string &, const std::string &);
@@ -55,6 +58,7 @@ class dcMap : public dcGeometric
             double sizeRatio;
 
             std::vector<std::pair<float,float>> ratioHistory;
+            std::vector<std::pair<float,float>> ghostRatioHistory;
         } mapLayerInfo;
 
         typedef struct {
@@ -82,6 +86,7 @@ class dcMap : public dcGeometric
 
         void displayIcon(void);
         void displayTrail(void);
+        void displayGhostTrail(void);
         void displayZone(void);
         void displayPoints(void);
         void computeGeometry(void);
@@ -91,6 +96,7 @@ class dcMap : public dcGeometric
         virtual void fetchLonLat(void) = 0;
         virtual void fetchChildParams(void) = 0;
         virtual void computePosRatios(void) = 0;
+        virtual void computeGhostTrailRatios(std::vector<std::pair<double, double>>) = 0;
         virtual void computeZoneRatios(void) = 0;
         virtual void computePointRatios(void) = 0;
 
@@ -133,6 +139,10 @@ class dcMap : public dcGeometric
         double trailResolution;
         Kolor trailColor;
         Value* fnClearTrail;     // more akin to a function
+
+        bool enableGhostTrail;
+        double ghostTrailWidth;
+        Kolor ghostTrailColor;
 
         /* icon params */
         bool enableIcon;

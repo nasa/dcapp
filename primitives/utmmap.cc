@@ -76,6 +76,28 @@ void dcUtmMap::computePosRatios(void)
         trajAngle = atan2((mliCurrent->vRatio - prevVRatio), (mliCurrent->hRatio - prevHRatio)) * 180 / M_PI;
 }
 
+// compute positional ratios, as well as the current trajectory
+void dcUtmMap::computeGhostTrailRatios(std::vector<std::pair<double, double>> latlons) 
+{
+    // compute unit ratios for x and y
+    for (auto const& pair : utmLayerInfos) 
+    {
+        int id = pair.first;
+        const utmLayerInfo* uli = &(pair.second);
+        mapLayerInfo* mli = &(mapLayerInfos[id]);
+
+        for (auto const& latlon : latlons) {
+            double lat = latlon.first;
+            double lon = latlon.second;
+
+            mli->ghostRatioHistory.push_back({
+                (lon - uli->lonMin) / (uli->lonMax - uli->lonMin),
+                (lat - uli->latMin) / (uli->latMax - uli->latMin)
+            });
+        }
+    }
+}
+
 void dcUtmMap::computeZoneRatios(void)
 {
     zoneLonLatRatios.clear();
