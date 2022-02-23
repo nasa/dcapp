@@ -209,7 +209,7 @@ void dcMap::setZoneLonLat(const std::string &lon1, const std::string &lat1, cons
 }
 
 void dcMap::setMapImagePoint(const std::string &filename, const std::string &lon, const std::string &lat, const std::string &enable, 
-    const std::string &w, const std::string &h, const std::string &layers) {
+    const std::string &w, const std::string &h, const std::string &enableScaling, const std::string &layers) {
 
     mapImagePoint mip;
     if (!filename.empty() && !lon.empty() && !lat.empty() && !w.empty() && !h.empty()) 
@@ -229,6 +229,9 @@ void dcMap::setMapImagePoint(const std::string &filename, const std::string &lon
     if (!enable.empty()) mip.vEnabled = getValue(enable);
     else mip.vEnabled = getValue("1");
 
+    if (!enableScaling.empty()) mip.enableScaling = getValue(enableScaling)->getBoolean();
+    else mip.enableScaling = 0;
+
     if (!layers.empty()) {
         std::stringstream ss(layers);
         for (int temp; ss >> temp;) {
@@ -242,7 +245,7 @@ void dcMap::setMapImagePoint(const std::string &filename, const std::string &lon
 }
 
 void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, const std::string &lat, const std::string &enable, 
-    const std::string &size, const std::string &layers) {
+    const std::string &size, const std::string &enableScaling, const std::string &layers) {
     mapStringPoint msp;
     if (!text.empty() && !lon.empty() && !lat.empty() && !size.empty()) 
     {
@@ -259,6 +262,9 @@ void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, c
 
     if (!enable.empty()) msp.vEnabled = getValue(enable);
     else msp.vEnabled = getValue("1");
+
+    if (!enableScaling.empty()) msp.enableScaling = getValue(enableScaling)->getBoolean();
+    else msp.enableScaling = 0;
 
     if (!layers.empty()) {
         std::stringstream ss(layers);
@@ -550,8 +556,13 @@ void dcMap::displayPoints(void)
 
             mx = (mip.hRatio - texLeft) / (texRight - texLeft) * width;
             my = (mip.vRatio - texDown) / (texUp - texDown) * height;
-            mwidth = mip.width * zoom;
-            mheight = mip.height * zoom;
+            mwidth = mip.width;
+            mheight = mip.height;
+            if (mip.enableScaling)
+            {
+                mwidth *= zoom;
+                mheight *= zoom;
+            }
             mdelx = mwidth/2;
             mdely = mheight/2;
 
@@ -582,7 +593,11 @@ void dcMap::displayPoints(void)
 
             mx = (msp.hRatio - texLeft) / (texRight - texLeft) * width;
             my = (msp.vRatio - texDown) / (texUp - texDown) * height;
-            msize = msp.size * zoom;
+            msize = msp.size;
+            if (msp.enableScaling)
+            {
+                msize *= zoom;
+            }
 
             for (uint jj=0; jj<lines.size(); jj++) {
                 float stringWidth = fontID->getAdvance(lines[jj], flMonoNone) * msize / fontID->getBaseSize();

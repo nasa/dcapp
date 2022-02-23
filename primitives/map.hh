@@ -39,9 +39,9 @@ class dcMap : public dcGeometric
         void setIconSize(const std::string &, const std::string &);
         void setZoneLonLat(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
                 const std::string &, const std::string &);
-        void setMapImagePoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
+        void setMapImagePoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
                 const std::string &);
-        void setMapStringPoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
+        void setMapStringPoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
         void draw(void);
         void processPreCalculations(void);
         void processPostCalculations(void);
@@ -71,6 +71,7 @@ class dcMap : public dcGeometric
             double hRatio;
             double vRatio;
             std::vector<int> layers;
+            bool enableScaling;
         } mapImagePoint;
 
         typedef struct {
@@ -82,6 +83,7 @@ class dcMap : public dcGeometric
             double hRatio;
             double vRatio;
             std::vector<int> layers;
+            bool enableScaling;
         } mapStringPoint;
 
         void displayIcon(void);
