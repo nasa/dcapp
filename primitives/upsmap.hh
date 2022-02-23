@@ -17,6 +17,7 @@ class dcUpsMap : public dcMap
             double polarAxisOffset;
             double latOrigin;
             double latOuter;
+            double baseRadius;
         } upsLayerInfo;
 
         std::map<int,upsLayerInfo> upsLayerInfos;
