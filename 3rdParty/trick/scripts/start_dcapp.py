@@ -40,14 +40,14 @@ def start_dcapp(dc_data_file, input_file_args = ''):
 
     # Don't start dcapp if we're just verifying the input file
     if (trick_ip.ip.verify_input != 0):
-        print 'VERIFYING INPUT FILE: Not starting dcapp.'
+        print('VERIFYING INPUT FILE: Not starting dcapp.')
         return
 
     # Define the path to the config file
     config_exec = os.path.join('externals', 'dcapp', 'dcapp.app', 'Contents', 'dcapp-config')
 
     # Define the path to the executable
-    app_path = subprocess.check_output(config_exec + ' --exepath', shell=True)
+    app_path = subprocess.check_output(config_exec + ' --exepath', shell=True).decode("utf-8")
     app_exec = os.path.join(app_path.strip(), 'dcapp')
 
     # Define the path to the dcapp specfile
@@ -63,9 +63,11 @@ def start_dcapp(dc_data_file, input_file_args = ''):
     host_config_path = os.path.join(customization_dir + '_' + socket.gethostname(), 'config.py')
     user_config_path = os.path.join(customization_dir, 'config.py')
     if os.path.isfile(host_config_path):
-        execfile(host_config_path)
+        f = host_config_path
+        exec(compile(open(f, 'rb').read(), f, 'exec'), globals(), locals())
     elif os.path.isfile(user_config_path):
-        execfile(user_config_path)
+        f = user_config_path
+        exec(compile(open(f, 'rb').read(), f, 'exec'), globals(), locals())
 
     # Append user arguments and arguments specified in input file, if any
     app_cmnd += ' ' + dcapp_user_args +  ' ' + input_file_args
