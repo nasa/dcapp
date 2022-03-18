@@ -17,6 +17,7 @@ class tdTexture
         int loadBMP(void);
         int loadTGA(void);
         int loadJPG(void);
+        int loadS3TC(void);
     private:
         void computeBytesPerPixel(void);
         bool valid;
@@ -30,6 +31,7 @@ class tdTexture
         unsigned char *data;
         bool convertNPOT;
         bool smooth;
+        bool compressed;
 };
 
 #endif

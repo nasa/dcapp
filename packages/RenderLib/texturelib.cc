@@ -3,7 +3,7 @@
 #include "RenderLib.hh"
 #include "texturelib.hh"
 
-tdTexture::tdTexture(const std::string &filespec) : valid(false), id(-1), filename(filespec), pixelspec(-1), data(0x0), convertNPOT(true), smooth(true)
+tdTexture::tdTexture(const std::string &filespec) : valid(false), id(-1), filename(filespec), pixelspec(-1), data(0x0), convertNPOT(true), smooth(true), compressed(false)
 {
     size_t end = this->filename.rfind('.');
     if (end == std::string::npos) warning_msg("No detectable filename extension for file " << this->filename);
@@ -27,6 +27,14 @@ tdTexture::tdTexture(const std::string &filespec) : valid(false), id(-1), filena
         {
             if (!this->loadJPG()) success = true;
         }
+        else if (suffix == "S3TC")
+        {
+            if (!this->loadS3TC())
+            {
+                success = true;
+                this->compressed = true;
+            }
+        }
         else
         {
             warning_msg("Unsupported extension for file " << this->filename << ": " << suffix);
@@ -34,10 +42,19 @@ tdTexture::tdTexture(const std::string &filespec) : valid(false), id(-1), filena
 
         if (success)
         {
-            this->valid = true;
-            this->computeBytesPerPixel();
-            create_texture(this);
-            load_texture(this);
+            if (this->compressed)
+            {
+                this->valid = true;
+                create_texture(this);
+                load_s3tc_texture(this);
+            }
+            else
+            {
+                this->valid = true;
+                this->computeBytesPerPixel();
+                create_texture(this);
+                load_texture(this);
+            }
         }
 
         if (this->data) free(this->data);
