@@ -8,6 +8,16 @@
 /**************************************************************************************
  * Create ImageStruct data from the contents of a GL_COMPRESSED_SRGB_S3TC_DXT1_EXT file
  **************************************************************************************/
+
+typedef struct {
+    uint32_t format;
+    int32_t level;
+    uint32_t width;
+    uint32_t height;
+    uint32_t size;
+    uint8_t padding[44];
+} S3TCheader;
+
 int tdTexture::loadS3TC(void)
 {
     FILE *file = fopen(this->filename.c_str(), "r");
@@ -18,14 +28,17 @@ int tdTexture::loadS3TC(void)
         return 1;
     }
 
-    this->width  = 17625;
-    this->height = 17625;
-    this->data = (unsigned char *)malloc(155373192);
+    S3TCheader header;
+    fread(&header, 1, sizeof(S3TCheader), file);
 
-    fread(this->data, 1, 155373192, file);
+    this->width  = (int)(header.width);
+    this->height = (int)(header.height);
+    this->data = (unsigned char *)malloc(header.size);
+
+    fread(this->data, 1, header.size, file);
     fclose(file);
 
-    this->pixelspec = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+    this->pixelspec = header.format;
 
     return 0;
 }
