@@ -25,7 +25,7 @@ int tdTexture::loadS3TC(void)
     fread(this->data, 1, 155373192, file);
     fclose(file);
 
-    this->pixelspec = GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
+    this->pixelspec = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 
     return 0;
 }
