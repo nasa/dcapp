@@ -33,6 +33,7 @@ int tdTexture::loadS3TC(void)
 
     this->width  = (int)(header.width);
     this->height = (int)(header.height);
+    this->size = (unsigned int)(header.size);
     this->data = (unsigned char *)malloc(header.size);
 
     fread(this->data, 1, header.size, file);

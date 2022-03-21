@@ -31,7 +31,7 @@ class tdTexture
         unsigned char *data;
         bool convertNPOT;
         bool smooth;
-        bool compressed;
+        unsigned int size;
 };
 
 #endif

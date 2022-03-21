@@ -197,7 +197,7 @@ void load_s3tc_texture(tdTexture *textureID)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-        glCompressedTexImage2D(GL_TEXTURE_2D, 0, (GLint)(textureID->pixelspec), textureID->width, textureID->height, 0, 155373192, textureID->data);
+        glCompressedTexImage2D(GL_TEXTURE_2D, 0, (GLint)(textureID->pixelspec), textureID->width, textureID->height, 0, textureID->size, textureID->data);
     }
 }
 

@@ -3,13 +3,13 @@
 #include "RenderLib.hh"
 #include "texturelib.hh"
 
-tdTexture::tdTexture(const std::string &filespec) : valid(false), id(-1), filename(filespec), pixelspec(-1), data(0x0), convertNPOT(true), smooth(true), compressed(false)
+tdTexture::tdTexture(const std::string &filespec) : valid(false), id(-1), filename(filespec), pixelspec(-1), data(0x0), convertNPOT(true), smooth(true)
 {
     size_t end = this->filename.rfind('.');
     if (end == std::string::npos) warning_msg("No detectable filename extension for file " << this->filename);
     else
     {
-        bool success = false;
+        bool success = false, compressed = false;
 
         std::string suffix = this->filename.substr(end + 1);
         std::locale loc;
@@ -32,7 +32,7 @@ tdTexture::tdTexture(const std::string &filespec) : valid(false), id(-1), filena
             if (!this->loadS3TC())
             {
                 success = true;
-                this->compressed = true;
+                compressed = true;
             }
         }
         else
@@ -42,7 +42,7 @@ tdTexture::tdTexture(const std::string &filespec) : valid(false), id(-1), filena
 
         if (success)
         {
-            if (this->compressed)
+            if (compressed)
             {
                 this->valid = true;
                 create_texture(this);
