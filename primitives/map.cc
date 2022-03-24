@@ -17,10 +17,15 @@ dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), vTextureIndex(0x0), v
                                     longitude(0), latitude(0), zoom(1), trajAngle(0), yawOffset(0),
                                     enableTrail(true), trailWidth(25), trailResolution(.005), fnClearTrail(0x0), ghostTrailWidth(25),
                                     enableIcon(true), enableCustomIcon(false), iconRotationOffset(0), iconTextureID(0x0),
-                                    enableCircularMap(0), enableTrackUp(0), enableZone(false), selected(false)
+                                    enableCircularMap(0), enableTrackUp(0), enableZone(false), unlocked(false), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
     ghostTrailColor.set(0, 1, 0, .5);
+
+    PressList = new dcParent;
+    ReleaseList = new dcParent;
+    PressList->setParent(this);
+    ReleaseList->setParent(this);
 }
 
 dcMap::~dcMap()
@@ -278,6 +283,10 @@ void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, c
     mapStringPoints.push_back(msp);
 }
 
+void dcMap::setUnlocked(const std::string &inval) {
+    if (!inval.empty()) vUnlocked = getValue(inval);
+}
+
 void dcMap::computeGeometry(void)
 {
     if (w) displayWidth = w->getDecimal();
@@ -350,6 +359,8 @@ void dcMap::fetchBaseParams(void)
     else zoom = 1;
     if (zoom < 1) 
         zoom = 1;
+
+    //if (vUnlocked) unlocked = vUnlocked->getBoolean();
 }
 
 void dcMap::updateCurrentParams(void)
@@ -450,15 +461,17 @@ void dcMap::displayTrail(void)
         }
 
         // draw last position to current point
-        std::pair<float,float> p = mliCurrent->ratioHistory.back();
+        if (!unlocked && !selected) {
+            std::pair<float,float> p = mliCurrent->ratioHistory.back();
 
-        float mx1 = (p.first - texLeft) / (texRight - texLeft) * width;
-        float my1 = (p.second - texDown) / (texUp - texDown) * height;
-        float mx2 = (hRatio - texLeft) / (texRight - texLeft) * width;
-        float my2 = (vRatio - texDown) / (texUp - texDown) * height;
+            float mx1 = (p.first - texLeft) / (texRight - texLeft) * width;
+            float my1 = (p.second - texDown) / (texUp - texDown) * height;
+            float mx2 = (hRatio - texLeft) / (texRight - texLeft) * width;
+            float my2 = (vRatio - texDown) / (texUp - texDown) * height;
 
-        pntsA.insert(pntsA.end(),{mx1, my1, mx2, my2});
-        draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
+            pntsA.insert(pntsA.end(),{mx1, my1, mx2, my2});
+            draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
+        }
     }
 }
 
@@ -628,17 +641,50 @@ void dcMap::displayPoints(void)
     }
 }
 
+void dcMap::handleMousePress(double inx, double iny) {
+    double truex = refx + widthOffset - delx;
+    double truey = refy + heightOffset - dely;
+
+    if (inx > truex && inx < truex + displayWidth && iny > truey && iny < truey + displayHeight) {
+        selected = true;
+        scrollX = inx;
+        scrollY = iny;
+    }
+}
+
+void dcMap::handleMouseMotion(double inx, double iny) {
+    if (selected) {
+        hRatio -= (inx - scrollX) / width / mliCurrent->sizeRatio / zoom;
+        vRatio -= (iny - scrollY) / height / mliCurrent->sizeRatio / zoom;
+
+        printf("%f %f\n", hRatio, vRatio);
+
+        scrollX = inx;
+        scrollY = iny;
+    }
+}
+
+void dcMap::handleMouseRelease(void) {
+    selected = false;
+}
+
 void dcMap::processPreCalculations(void) {
     computeGeometry();
     fetchBaseParams();
     fetchChildParams();
-    fetchLonLat();      // dependent on UPS/UTM
-    computePosRatios();
-    updateCurrentParams();
+
+    // only run the following if the user is not scrolling
+    if (!selected && !unlocked) {
+        fetchLonLat();      // dependent on UPS/UTM
+        computePosRatios();
+        updateCurrentParams();
+    }
 }
 
 void dcMap::processPostCalculations(void) {
-    updateTrail();
+    if (!selected && !unlocked) {
+        updateTrail();
+    }
 }
 
 void dcMap::draw(void)
@@ -678,7 +724,7 @@ void dcMap::draw(void)
         displayPoints();    // always display points
         if ( enableGhostTrail ) displayGhostTrail();
         if ( enableTrail )  displayTrail();
-        if ( enableIcon )   displayIcon();
+        if ( enableIcon && !selected  && !unlocked) displayIcon();
 
         if (enableTrackUp) {
             translate_end();
