@@ -51,9 +51,6 @@ class dcMap : public dcGeometric
         void handleMouseMotion(double, double);
         void handleMouseRelease(void);
 
-        dcParent *PressList;
-        dcParent *ReleaseList;
-
     protected:
         typedef struct {
             tdTexture* textureID;

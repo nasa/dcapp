@@ -12,20 +12,18 @@
 #include "basicutils/msg.hh"
 
 extern appdata AppData;
+extern void RegisterPressedPrimitive(dcParent *);
+extern void UpdateDisplay(void);
+
 
 dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), vTextureIndex(0x0), vLatitude(0x0), vLongitude(0x0), vZoom(0x0), vYaw(0x0),
                                     longitude(0), latitude(0), zoom(1), trajAngle(0), yawOffset(0),
                                     enableTrail(true), trailWidth(25), trailResolution(.005), fnClearTrail(0x0), ghostTrailWidth(25),
                                     enableIcon(true), enableCustomIcon(false), iconRotationOffset(0), iconTextureID(0x0),
-                                    enableCircularMap(0), enableTrackUp(0), enableZone(false), unlocked(false), selected(false)
+                                    enableCircularMap(0), enableTrackUp(0), enableZone(false), vUnlocked(0x0), unlocked(false), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
     ghostTrailColor.set(0, 1, 0, .5);
-
-    PressList = new dcParent;
-    ReleaseList = new dcParent;
-    PressList->setParent(this);
-    ReleaseList->setParent(this);
 }
 
 dcMap::~dcMap()
@@ -360,7 +358,7 @@ void dcMap::fetchBaseParams(void)
     if (zoom < 1) 
         zoom = 1;
 
-    //if (vUnlocked) unlocked = vUnlocked->getBoolean();
+    if (vUnlocked) unlocked = vUnlocked->getBoolean();
 }
 
 void dcMap::updateCurrentParams(void)
@@ -657,15 +655,16 @@ void dcMap::handleMouseMotion(double inx, double iny) {
         hRatio -= (inx - scrollX) / width / mliCurrent->sizeRatio / zoom;
         vRatio -= (iny - scrollY) / height / mliCurrent->sizeRatio / zoom;
 
-        printf("%f %f\n", hRatio, vRatio);
-
         scrollX = inx;
         scrollY = iny;
+
+        UpdateDisplay();
     }
 }
 
 void dcMap::handleMouseRelease(void) {
     selected = false;
+    UpdateDisplay();
 }
 
 void dcMap::processPreCalculations(void) {
