@@ -411,8 +411,8 @@ void dcMap::displayIcon(void) {
         mwidth = mheight = 25;
     }
 
-    mx = (hRatio - texLeft) / (texRight - texLeft) * width;
-    my = (vRatio - texDown) / (texUp - texDown) * height;
+    mx = (mliCurrent->hRatio - texLeft) / (texRight - texLeft) * width;
+    my = (mliCurrent->vRatio - texDown) / (texUp - texDown) * height;
     mdelx = mwidth/2;
     mdely = mheight/2;
 
@@ -725,7 +725,7 @@ void dcMap::draw(void)
         displayPoints();    // always display points
         if ( enableGhostTrail ) displayGhostTrail();
         if ( enableTrail )  displayTrail();
-        if ( enableIcon && !selected  && !unlocked) displayIcon();
+        if ( enableIcon) displayIcon();
 
         if (enableTrackUp) {
             translate_end();
