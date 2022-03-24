@@ -363,6 +363,7 @@ void dcMap::fetchBaseParams(void)
 
 void dcMap::updateCurrentParams(void)
 {
+    // TODO update this to work with multiple layers
     hRatio = mliCurrent->hRatio;
     vRatio = mliCurrent->vRatio;
 }
@@ -671,19 +672,17 @@ void dcMap::processPreCalculations(void) {
     computeGeometry();
     fetchBaseParams();
     fetchChildParams();
+    fetchLonLat();      // dependent on UPS/UTM
+    computePosRatios();
 
     // only run the following if the user is not scrolling
     if (!selected && !unlocked) {
-        fetchLonLat();      // dependent on UPS/UTM
-        computePosRatios();
         updateCurrentParams();
     }
 }
 
 void dcMap::processPostCalculations(void) {
-    if (!selected && !unlocked) {
-        updateTrail();
-    }
+    updateTrail();
 }
 
 void dcMap::draw(void)
