@@ -364,6 +364,9 @@ void dcMap::fetchBaseParams(void)
 void dcMap::updateCurrentParams(void)
 {
     // TODO update this to work with multiple layers
+    // when switching layers, it won't pop the correct hratio
+    // back into place. therefore the location will be wrong 
+    // on the swapped layer (if it's has different dimensions)
     hRatio = mliCurrent->hRatio;
     vRatio = mliCurrent->vRatio;
 }
