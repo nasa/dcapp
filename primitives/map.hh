@@ -42,13 +42,14 @@ class dcMap : public dcGeometric
         void setMapImagePoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
                 const std::string &);
         void setMapStringPoint(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
+        void setUnlocked(const std::string &);
+
         void draw(void);
         void processPreCalculations(void);
         void processPostCalculations(void);
-
-        // possibly implement mouse press + release for scrolling through the image?
-        //void handleMousePress(double, double);
-        //void handleMouseRelease(void);
+        void handleMousePress(double, double);
+        void handleMouseMotion(double, double);
+        void handleMouseRelease(void);
 
     protected:
         typedef struct {
@@ -167,11 +168,17 @@ class dcMap : public dcGeometric
         std::vector<std::pair<double,double>> zoneLonLatRatios;
         bool enableZone;
 
+        /* map scrolling */
+        Value* vUnlocked;
+        bool unlocked;
+        double scrollX;
+        double scrollY;
         bool selected;
 
     private:
         int prev_clear_state;   // tied to fnClearTrail
-
+        double mapWidthRatio;
+        
         void fetchBaseParams(void);
         void updateCurrentParams(void);
 };

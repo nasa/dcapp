@@ -12,12 +12,15 @@
 #include "basicutils/msg.hh"
 
 extern appdata AppData;
+extern void RegisterPressedPrimitive(dcParent *);
+extern void UpdateDisplay(void);
+
 
 dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), vTextureIndex(0x0), vLatitude(0x0), vLongitude(0x0), vZoom(0x0), vYaw(0x0),
                                     longitude(0), latitude(0), zoom(1), trajAngle(0), yawOffset(0),
                                     enableTrail(true), trailWidth(25), trailResolution(.005), fnClearTrail(0x0), ghostTrailWidth(25),
                                     enableIcon(true), enableCustomIcon(false), iconRotationOffset(0), iconTextureID(0x0),
-                                    enableCircularMap(0), enableTrackUp(0), enableZone(false), selected(false)
+                                    enableCircularMap(0), enableTrackUp(0), enableZone(false), vUnlocked(0x0), unlocked(false), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
     ghostTrailColor.set(0, 1, 0, .5);
@@ -278,6 +281,10 @@ void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, c
     mapStringPoints.push_back(msp);
 }
 
+void dcMap::setUnlocked(const std::string &inval) {
+    if (!inval.empty()) vUnlocked = getValue(inval);
+}
+
 void dcMap::computeGeometry(void)
 {
     if (w) displayWidth = w->getDecimal();
@@ -350,10 +357,16 @@ void dcMap::fetchBaseParams(void)
     else zoom = 1;
     if (zoom < 1) 
         zoom = 1;
+
+    if (vUnlocked) unlocked = vUnlocked->getBoolean();
 }
 
 void dcMap::updateCurrentParams(void)
 {
+    // TODO update this to work with multiple layers
+    // when switching layers, it won't pop the correct hratio
+    // back into place. therefore the location will be wrong 
+    // on the swapped layer (if it's has different dimensions)
     hRatio = mliCurrent->hRatio;
     vRatio = mliCurrent->vRatio;
 }
@@ -361,7 +374,7 @@ void dcMap::updateCurrentParams(void)
 // get bounds for texture on 0 to 1 range
 void dcMap::computeTextureBounds(void)
 {
-    double mapWidthRatio = 1/(mliCurrent->sizeRatio)/zoom/2;
+    mapWidthRatio = 1/(mliCurrent->sizeRatio)/zoom/2;
 
     texUp = vRatio + mapWidthRatio;
     texDown = vRatio - mapWidthRatio;
@@ -398,8 +411,8 @@ void dcMap::displayIcon(void) {
         mwidth = mheight = 25;
     }
 
-    mx = (hRatio - texLeft) / (texRight - texLeft) * width;
-    my = (vRatio - texDown) / (texUp - texDown) * height;
+    mx = (mliCurrent->hRatio - texLeft) / (texRight - texLeft) * width;
+    my = (mliCurrent->vRatio - texDown) / (texUp - texDown) * height;
     mdelx = mwidth/2;
     mdely = mheight/2;
 
@@ -450,15 +463,17 @@ void dcMap::displayTrail(void)
         }
 
         // draw last position to current point
-        std::pair<float,float> p = mliCurrent->ratioHistory.back();
+        if (!unlocked && !selected) {
+            std::pair<float,float> p = mliCurrent->ratioHistory.back();
 
-        float mx1 = (p.first - texLeft) / (texRight - texLeft) * width;
-        float my1 = (p.second - texDown) / (texUp - texDown) * height;
-        float mx2 = (hRatio - texLeft) / (texRight - texLeft) * width;
-        float my2 = (vRatio - texDown) / (texUp - texDown) * height;
+            float mx1 = (p.first - texLeft) / (texRight - texLeft) * width;
+            float my1 = (p.second - texDown) / (texUp - texDown) * height;
+            float mx2 = (hRatio - texLeft) / (texRight - texLeft) * width;
+            float my2 = (vRatio - texDown) / (texUp - texDown) * height;
 
-        pntsA.insert(pntsA.end(),{mx1, my1, mx2, my2});
-        draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
+            pntsA.insert(pntsA.end(),{mx1, my1, mx2, my2});
+            draw_line(pntsA, trailWidth, trailColor.R->getDecimal(), trailColor.G->getDecimal(), trailColor.B->getDecimal(), trailColor.A->getDecimal(), 0xFFFF, 1);
+        }
     }
 }
 
@@ -628,13 +643,49 @@ void dcMap::displayPoints(void)
     }
 }
 
+void dcMap::handleMousePress(double inx, double iny) {
+    double truex = refx + widthOffset - delx;
+    double truey = refy + heightOffset - dely;
+
+    if (inx > truex && inx < truex + displayWidth && iny > truey && iny < truey + displayHeight) {
+        selected = true;
+        scrollX = inx;
+        scrollY = iny;
+    }
+}
+
+void dcMap::handleMouseMotion(double inx, double iny) {
+    if (selected) {
+        hRatio -= (inx - scrollX) / width / mliCurrent->sizeRatio / zoom;
+        vRatio -= (iny - scrollY) / height / mliCurrent->sizeRatio / zoom;
+
+        // don't go out of bounds
+        hRatio = std::min(std::max(hRatio, 0+mapWidthRatio), 1-mapWidthRatio);
+        vRatio = std::min(std::max(vRatio, 0+mapWidthRatio), 1-mapWidthRatio);
+
+        scrollX = inx;
+        scrollY = iny;
+
+        UpdateDisplay();
+    }
+}
+
+void dcMap::handleMouseRelease(void) {
+    selected = false;
+    UpdateDisplay();
+}
+
 void dcMap::processPreCalculations(void) {
     computeGeometry();
     fetchBaseParams();
     fetchChildParams();
     fetchLonLat();      // dependent on UPS/UTM
     computePosRatios();
-    updateCurrentParams();
+
+    // only run the following if the user is not scrolling
+    if (!selected && !unlocked) {
+        updateCurrentParams();
+    }
 }
 
 void dcMap::processPostCalculations(void) {
@@ -678,7 +729,7 @@ void dcMap::draw(void)
         displayPoints();    // always display points
         if ( enableGhostTrail ) displayGhostTrail();
         if ( enableTrail )  displayTrail();
-        if ( enableIcon )   displayIcon();
+        if ( enableIcon) displayIcon();
 
         if (enableTrackUp) {
             translate_end();
