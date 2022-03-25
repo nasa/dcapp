@@ -374,7 +374,7 @@ void dcMap::updateCurrentParams(void)
 // get bounds for texture on 0 to 1 range
 void dcMap::computeTextureBounds(void)
 {
-    double mapWidthRatio = 1/(mliCurrent->sizeRatio)/zoom/2;
+    mapWidthRatio = 1/(mliCurrent->sizeRatio)/zoom/2;
 
     texUp = vRatio + mapWidthRatio;
     texDown = vRatio - mapWidthRatio;
@@ -658,6 +658,10 @@ void dcMap::handleMouseMotion(double inx, double iny) {
     if (selected) {
         hRatio -= (inx - scrollX) / width / mliCurrent->sizeRatio / zoom;
         vRatio -= (iny - scrollY) / height / mliCurrent->sizeRatio / zoom;
+
+        // don't go out of bounds
+        hRatio = std::min(std::max(hRatio, 0+mapWidthRatio), 1-mapWidthRatio);
+        vRatio = std::min(std::max(vRatio, 0+mapWidthRatio), 1-mapWidthRatio);
 
         scrollX = inx;
         scrollY = iny;

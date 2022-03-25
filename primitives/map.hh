@@ -177,7 +177,8 @@ class dcMap : public dcGeometric
 
     private:
         int prev_clear_state;   // tied to fnClearTrail
-
+        double mapWidthRatio;
+        
         void fetchBaseParams(void);
         void updateCurrentParams(void);
 };
