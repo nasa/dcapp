@@ -656,17 +656,22 @@ void dcMap::handleMousePress(double inx, double iny) {
 
 void dcMap::handleMouseMotion(double inx, double iny) {
     if (selected) {
-        hRatio -= (inx - scrollX) / width / mliCurrent->sizeRatio / zoom;
-        vRatio -= (iny - scrollY) / height / mliCurrent->sizeRatio / zoom;
+        double truex = refx + widthOffset - delx;
+        double truey = refy + heightOffset - dely;
 
-        // don't go out of bounds
-        hRatio = std::min(std::max(hRatio, 0+mapWidthRatio), 1-mapWidthRatio);
-        vRatio = std::min(std::max(vRatio, 0+mapWidthRatio), 1-mapWidthRatio);
+        if (inx > truex && inx < truex + displayWidth && iny > truey && iny < truey + displayHeight) {
+            hRatio -= (inx - scrollX) / width / mliCurrent->sizeRatio / zoom;
+            vRatio -= (iny - scrollY) / height / mliCurrent->sizeRatio / zoom;
 
-        scrollX = inx;
-        scrollY = iny;
+            // don't go out of bounds
+            hRatio = std::min(std::max(hRatio, 0+mapWidthRatio), 1-mapWidthRatio);
+            vRatio = std::min(std::max(vRatio, 0+mapWidthRatio), 1-mapWidthRatio);
 
-        UpdateDisplay();
+            scrollX = inx;
+            scrollY = iny;
+
+            UpdateDisplay();
+        }
     }
 }
 
