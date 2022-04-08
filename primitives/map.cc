@@ -725,7 +725,7 @@ void dcMap::draw(void)
 
         if (enableTrackUp) {
             translate_start(width/2, height/2);
-            rotate_start(-1 * (trajAngle + iconRotationOffset));
+            rotate_start(-1 * (trajAngle - 90 ));
             translate_start(-1 * width/2, -1 * height/2);
         }
 
