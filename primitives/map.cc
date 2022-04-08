@@ -660,8 +660,18 @@ void dcMap::handleMouseMotion(double inx, double iny) {
         double truey = refy + heightOffset - dely;
 
         if (inx > truex && inx < truex + displayWidth && iny > truey && iny < truey + displayHeight) {
-            hRatio -= (inx - scrollX) / width / mliCurrent->sizeRatio / zoom;
-            vRatio -= (iny - scrollY) / height / mliCurrent->sizeRatio / zoom;
+
+            double hDiff = (inx - scrollX) / width / mliCurrent->sizeRatio / zoom;
+            double vDiff = (iny - scrollY) / height / mliCurrent->sizeRatio / zoom;
+
+            if (enableTrackUp) {
+                double trajAngleR = (trajAngle - 90) * M_PI / 180;
+                hRatio -= hDiff * cos(trajAngleR) - vDiff * sin(trajAngleR);
+                vRatio -= vDiff * cos(trajAngleR) + hDiff * sin(trajAngleR);
+            } else {
+                hRatio -= hDiff;
+                vRatio -= vDiff;
+            }
 
             // don't go out of bounds
             hRatio = std::min(std::max(hRatio, 0+mapWidthRatio), 1-mapWidthRatio);
