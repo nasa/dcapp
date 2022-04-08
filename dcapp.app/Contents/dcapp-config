@@ -97,7 +97,7 @@ while test $# -gt 0 ; do
             echo $machtype
             ;;
         --version)
-            echo "2.1.3"
+            echo "2.1.4"
             ;;
         --version_short)
             echo "2.1"

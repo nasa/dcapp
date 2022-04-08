@@ -75,7 +75,7 @@ void dcUpsMap::computePosRatios(void)
         mapLayerInfo* mli = &(mapLayerInfos[id]);
 
         double theta = (longitude + uli->polarAxisOffset) * M_PI / 180;
-        double radius = 2*tan(M_PI_4 - fabs(latitude)*M_PI_2/180) / uliCurrent->baseRadius;
+        double radius = 2*tan(M_PI_4 - fabs(latitude)*M_PI_2/180) / uli->baseRadius;
         if ( radius > 1 ) radius = 1;
 
         mli->hRatio = radius * cos(theta) * .5 + .5;
