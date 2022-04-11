@@ -919,6 +919,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
 	    myitem->setRPYRates(get_element_data(node, "RollRate"), get_element_data(node, "PitchRate"), get_element_data(node, "YawRate"), get_element_data(node, "RateMax"));
 	    myitem->setNeedleColor(get_element_data(node, "NeedleColor"));
 	    myitem->hideNeedles(StringToBoolean(get_element_data(node, "HideNeedles")));
+	    myitem->hideRateIndicators(StringToBoolean(get_element_data(node, "HideRateIndicators")));
         }
         if (NodeCheck(node, "MouseMotion"))
         {

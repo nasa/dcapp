@@ -27,6 +27,7 @@ dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(0x0), ballID(0x
     rateMaxDefined = false;
     needleColor.set(YELLOW[0], YELLOW[1], YELLOW[2]);
     hideNeedlesFlag = false;
+    hideRateIndicatorsFlag = true;
     sphereTriangles = BuildSphere();
 }
 
@@ -85,6 +86,12 @@ void dcADI::hideNeedles(bool hn)
     hideNeedlesFlag = hn;
 }
 
+void dcADI::hideRateIndicators(bool hrn)
+{
+    hideRateIndicatorsFlag = hrn;
+}
+  
+
 void dcADI::setRadius(const std::string &outer, const std::string &ball)
 {
     if (!outer.empty()) outerradius = getValue(outer);
@@ -141,6 +148,8 @@ void dcADI::draw(void)
 
 void dcADI::draw_top_rate_indicator(double rate, double width, double height, double radius, double ratemax)
 {
+
+  if (hideRateIndicatorsFlag) return;
     //std::vector<float> pointsL = { 0, (float)radius, (float)width/2.0f, (float)(radius-height), -((float)width/2.0f), (float)(radius-height) };
 
   float vertOffset = 65.0;
@@ -164,6 +173,8 @@ void dcADI::draw_top_rate_indicator(double rate, double width, double height, do
 
 void dcADI::draw_bottom_rate_indicator(double rate, double width, double height, double radius, double ratemax)
 {
+
+  if (hideRateIndicatorsFlag) return;
     //std::vector<float> pointsL = { 0, (float)radius, (float)width/2.0f, (float)(radius-height), -((float)width/2.0f), (float)(radius-height) };
 
   float vertOffset = 65.0;
@@ -185,6 +196,8 @@ void dcADI::draw_bottom_rate_indicator(double rate, double width, double height,
 
 void dcADI::draw_side_rate_indicator(double rate, double width, double height, double radius, double ratemax)
 {
+
+    if (hideRateIndicatorsFlag) return;
     //std::vector<float> pointsL = { 0, (float)radius, (float)width/2.0f, (float)(radius-height), -((float)width/2.0f), (float)(radius-height) };
 
   //float vertOffset = 65.0;
