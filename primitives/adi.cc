@@ -24,6 +24,7 @@ dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(0x0), ballID(0x
     pitchError = getConstantFromDecimal(0);
     yawError = getConstantFromDecimal(0);
     rateMax = getConstantFromDecimal(0);
+    rateMaxDefined = false;
     needleColor.set(YELLOW[0], YELLOW[1], YELLOW[2]);
     hideNeedlesFlag = false;
     sphereTriangles = BuildSphere();
@@ -61,7 +62,12 @@ void dcADI::setRPYRates(const std::string &inrollRate, const std::string &inpitc
     if (!inrollRate.empty()) rollRate = getValue(inrollRate);
     if (!inpitchRate.empty()) pitchRate = getValue(inpitchRate);
     if (!inyawRate.empty()) yawRate = getValue(inyawRate);
-    if (!inrateMax.empty()) rateMax = getValue(inrateMax);
+    if (!inrateMax.empty()) {
+      rateMax = getValue(inrateMax);
+      rateMaxDefined = true;
+    }
+    else rateMaxDefined = false;
+    
 
 }
 
@@ -144,6 +150,9 @@ void dcADI::draw_top_rate_indicator(double rate, double width, double height, do
 
   // scale rate to range [-120, 120]
   //rate = rate * 24.0;
+
+  if (!rateMaxDefined) ratemax = 5.0;
+  
   rate = rate * (120.0 / ratemax);
   if (rate > 120.0) rate = 120.0;
   else if (rate < -120.0) rate = -120.0;
@@ -163,6 +172,8 @@ void dcADI::draw_bottom_rate_indicator(double rate, double width, double height,
 
   // scale rate to range [-120, 120]
   // rate = rate * 24.0;
+  if (!rateMaxDefined) ratemax = 5.0;
+  
   rate = rate * (120.0 / ratemax);
   if (rate > 120.0) rate = 120.0;
   else if (rate < -120.0) rate = -120.0;
@@ -180,6 +191,9 @@ void dcADI::draw_side_rate_indicator(double rate, double width, double height, d
   radius = radius * 1.4;
   std::vector<float> pointsL = { 0, (float)(radius - height), -(float)width/2.0f, (float)(radius), ((float)width/2.0f), (float)(radius) };
 
+
+  if (!rateMaxDefined) ratemax = 5.0;
+  
   // scale rate to range [-120, 120]
   // rate = rate * 24.0;
   rate = rate * (120.0 / ratemax);

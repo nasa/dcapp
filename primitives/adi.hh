@@ -43,6 +43,7 @@ class dcADI : public dcGeometric
         Value *pitchError;
         Value *yawError;
         Value *rateMax;
+        bool rateMaxDefined;
         Kolor needleColor;
         bool  hideNeedlesFlag;
         std::vector<float> sphereTriangles;
