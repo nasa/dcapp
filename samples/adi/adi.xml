@@ -152,7 +152,7 @@
             <ADI X="250" Y="150" Width="420" Height="420" HorizontalAlign="Center" VerticalAlign="Bottom"
                  BallRadius="200" ChevronWidth="32" ChevronHeight="32"
                  CoverFile="adi_simple_bkgd.tga" BallFile="adi_simple_ball.tga"
-                 Pitch="@PitchAngle" Yaw="@YawAngle" Roll="@RollAngle"/>
+                 Pitch="@PitchAngle" Yaw="@YawAngle" Roll="@RollAngle" HideRateIndicators="True"/>
         </Panel>
     </Window>
 </DCAPP>
