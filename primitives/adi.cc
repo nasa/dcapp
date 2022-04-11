@@ -7,6 +7,7 @@
 #include "values.hh"
 #include "commonutils.hh"
 #include "adi.hh"
+#include <iostream>
 
 static const double BLACK[3] = { 0.0, 0.0, 0.0 };
 static const double YELLOW[3] = { 1.0, 1.0, 0.0 };
@@ -16,10 +17,15 @@ dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(0x0), ballID(0x
     roll = getConstantFromDecimal(0);
     pitch = getConstantFromDecimal(0);
     yaw = getConstantFromDecimal(0);
+    rollRate = getConstantFromDecimal(0);
+    pitchRate = getConstantFromDecimal(0);
+    yawRate = getConstantFromDecimal(0);
     rollError = getConstantFromDecimal(0);
     pitchError = getConstantFromDecimal(0);
     yawError = getConstantFromDecimal(0);
-
+    rateMax = getConstantFromDecimal(0);
+    needleColor.set(YELLOW[0], YELLOW[1], YELLOW[2]);
+    hideNeedlesFlag = false;
     sphereTriangles = BuildSphere();
 }
 
@@ -35,9 +41,11 @@ void dcADI::setBallTexture(const std::string &filename)
 
 void dcADI::setRPY(const std::string &inroll, const std::string &inpitch, const std::string &inyaw)
 {
+
     if (!inroll.empty()) roll = getValue(inroll);
     if (!inpitch.empty()) pitch = getValue(inpitch);
     if (!inyaw.empty()) yaw = getValue(inyaw);
+
 }
 
 void dcADI::setRPYerrors(const std::string &re, const std::string &pe, const std::string &ye)
@@ -45,6 +53,30 @@ void dcADI::setRPYerrors(const std::string &re, const std::string &pe, const std
     if (!re.empty()) rollError = getValue(re);
     if (!pe.empty()) pitchError = getValue(pe);
     if (!ye.empty()) yawError = getValue(ye);
+}
+
+void dcADI::setRPYRates(const std::string &inrollRate, const std::string &inpitchRate, const std::string &inyawRate, const std::string &inrateMax)
+{
+  
+    if (!inrollRate.empty()) rollRate = getValue(inrollRate);
+    if (!inpitchRate.empty()) pitchRate = getValue(inpitchRate);
+    if (!inyawRate.empty()) yawRate = getValue(inyawRate);
+    if (!inrateMax.empty()) rateMax = getValue(inrateMax);
+
+}
+
+void dcADI::setNeedleColor(const std::string &nc)
+{
+    if (!nc.empty())
+    {
+        needleColor.set(nc);
+    }
+}
+
+
+void dcADI::hideNeedles(bool hn)
+{
+    hideNeedlesFlag = hn;
 }
 
 void dcADI::setRadius(const std::string &outer, const std::string &ball)
@@ -61,6 +93,7 @@ void dcADI::setChevron(const std::string &widthspec, const std::string &heightsp
 
 void dcADI::draw(void)
 {
+
     computeGeometry();
 
     double outerrad, ballrad, chevw, chevh;
@@ -85,13 +118,80 @@ void dcADI::draw(void)
     draw_image(bkgdID, width, height);
     translate_end();
 
+
     // Draw the items on top: roll bug, cross-hairs, needles
     translate_start(center, middle);
+        draw_top_rate_indicator(rollRate->getDecimal(), chevw, chevh, 0.8 * outerrad, rateMax->getDecimal());
+	draw_bottom_rate_indicator(yawRate->getDecimal(), chevw, chevh, 0.8 * outerrad, rateMax->getDecimal());
+	rotate_start(-90);
+	draw_side_rate_indicator(pitchRate->getDecimal(), chevw, chevh, 0.8 * outerrad, rateMax->getDecimal());
+	rotate_end();
         draw_roll_bug(roll->getDecimal(), chevw, chevh, 0.8 * outerrad);
         draw_cross_hairs(outerrad);
         draw_needles(outerrad, rollError->getDecimal(), pitchError->getDecimal(), yawError->getDecimal());
     translate_end();
 }
+
+
+void dcADI::draw_top_rate_indicator(double rate, double width, double height, double radius, double ratemax)
+{
+    //std::vector<float> pointsL = { 0, (float)radius, (float)width/2.0f, (float)(radius-height), -((float)width/2.0f), (float)(radius-height) };
+
+  float vertOffset = 65.0;
+  //radius += vertOffset;
+  radius = radius * 1.4;
+  std::vector<float> pointsL = { 0, (float)(radius - height), -(float)width/2.0f, (float)(radius), ((float)width/2.0f), (float)(radius) };
+
+  // scale rate to range [-120, 120]
+  //rate = rate * 24.0;
+  rate = rate * (120.0 / ratemax);
+  if (rate > 120.0) rate = 120.0;
+  else if (rate < -120.0) rate = -120.0;
+  translate_start(rate, 0.0);
+        draw_filled_triangles(pointsL, BLACK[0], YELLOW[1], YELLOW[2], 1);
+        draw_line(pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
+	translate_end();
+}
+
+void dcADI::draw_bottom_rate_indicator(double rate, double width, double height, double radius, double ratemax)
+{
+    //std::vector<float> pointsL = { 0, (float)radius, (float)width/2.0f, (float)(radius-height), -((float)width/2.0f), (float)(radius-height) };
+
+  float vertOffset = 65.0;
+  radius = radius * 1.4;
+  std::vector<float> pointsL = { 0, -(float)(radius - height), -(float)width/2.0f, -(float)(radius), ((float)width/2.0f), -(float)(radius) };
+
+  // scale rate to range [-120, 120]
+  // rate = rate * 24.0;
+  rate = rate * (120.0 / ratemax);
+  if (rate > 120.0) rate = 120.0;
+  else if (rate < -120.0) rate = -120.0;
+  translate_start(rate, 0.0);
+        draw_filled_triangles(pointsL, BLACK[0], YELLOW[1], YELLOW[2], 1);
+        draw_line(pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
+	translate_end();
+}
+
+void dcADI::draw_side_rate_indicator(double rate, double width, double height, double radius, double ratemax)
+{
+    //std::vector<float> pointsL = { 0, (float)radius, (float)width/2.0f, (float)(radius-height), -((float)width/2.0f), (float)(radius-height) };
+
+  //float vertOffset = 65.0;
+  radius = radius * 1.4;
+  std::vector<float> pointsL = { 0, (float)(radius - height), -(float)width/2.0f, (float)(radius), ((float)width/2.0f), (float)(radius) };
+
+  // scale rate to range [-120, 120]
+  // rate = rate * 24.0;
+  rate = rate * (120.0 / ratemax);
+  
+  if (rate > 120.0) rate = 120.0;
+  else if (rate < -120.0) rate = -120.0;
+  translate_start(rate, 0.0);
+        draw_filled_triangles(pointsL, BLACK[0], YELLOW[1], YELLOW[2], 1);
+        draw_line(pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
+	translate_end();
+}
+
 
 void dcADI::draw_roll_bug(double roll, double width, double height, double radius)
 {
@@ -105,6 +205,8 @@ void dcADI::draw_roll_bug(double roll, double width, double height, double radiu
 
 void dcADI::draw_cross_hairs(double radius)
 {
+  
+    if (hideNeedlesFlag) return;
     const float length = 0.21 * radius;
     const float halfwidth = 0.017 * radius;
     std::vector<float> polygonH, polygonV, crosshair;
@@ -114,14 +216,16 @@ void dcADI::draw_cross_hairs(double radius)
     addPoint(polygonH,  length,  halfwidth);
     addPoint(polygonH,  length, -halfwidth);
     addPoint(polygonH, -length, -halfwidth);
-    draw_quad(polygonH, YELLOW[0], YELLOW[1], YELLOW[2], 1);
+    //draw_quad(polygonH, YELLOW[0], YELLOW[1], YELLOW[2], 1);
+    draw_quad(polygonH, needleColor.R->getDecimal(), needleColor.G->getDecimal(), needleColor.B->getDecimal(), 1);
 
     // vertical rectangle
     addPoint(polygonV, -halfwidth,  length);
     addPoint(polygonV,  halfwidth,  length);
     addPoint(polygonV,  halfwidth, -length);
     addPoint(polygonV, -halfwidth, -length);
-    draw_quad(polygonV, YELLOW[0], YELLOW[1], YELLOW[2], 1);
+    // draw_quad(polygonV, YELLOW[0], YELLOW[1], YELLOW[2], 1);
+    draw_quad(polygonV, needleColor.R->getDecimal(), needleColor.G->getDecimal(), needleColor.B->getDecimal(), 1);
 
     // outline
     addPoint(crosshair, -length, halfwidth);
@@ -142,7 +246,12 @@ void dcADI::draw_cross_hairs(double radius)
 
 void dcADI::draw_needles(double radius, double roll_err, double pitch_err, double yaw_err)
 {
+
+    if (hideNeedlesFlag) return;
+    // ERROR NEEDLE SIZE SHIFT
+    radius = radius * 0.85;
     const double length = 0.29 * radius;
+    //const double length = 0.01 * radius;
     const double halfwidth = 0.017 * radius;
     double delta, needle_edge;
     std::vector<float> pntsL;
@@ -154,7 +263,8 @@ void dcADI::draw_needles(double radius, double roll_err, double pitch_err, doubl
     addPoint(pntsL, delta-halfwidth, -length);
     addPoint(pntsL, delta+halfwidth, -length);
     addPoint(pntsL, delta+halfwidth, -needle_edge);
-    draw_quad(pntsL, YELLOW[0], YELLOW[1], YELLOW[2], 1);
+    //draw_quad(pntsL, YELLOW[0], YELLOW[1], YELLOW[2], 1);
+    if (!hideNeedlesFlag) draw_quad(pntsL, needleColor.R->getDecimal(), needleColor.G->getDecimal(), needleColor.B->getDecimal(), 1);
 
     pntsL.clear();
     addPoint(pntsL, delta-halfwidth, -needle_edge );
@@ -171,7 +281,8 @@ void dcADI::draw_needles(double radius, double roll_err, double pitch_err, doubl
     addPoint(pntsL, delta-halfwidth, length);
     addPoint(pntsL, delta+halfwidth, length);
     addPoint(pntsL, delta+halfwidth, needle_edge);
-    draw_quad(pntsL, YELLOW[0], YELLOW[1], YELLOW[2], 1);
+    //draw_quad(pntsL, YELLOW[0], YELLOW[1], YELLOW[2], 1);
+    if (!hideNeedlesFlag) draw_quad(pntsL, needleColor.R->getDecimal(), needleColor.G->getDecimal(), needleColor.B->getDecimal(), 1);
 
     pntsL.clear();
     addPoint(pntsL, delta-halfwidth, needle_edge );
@@ -188,7 +299,8 @@ void dcADI::draw_needles(double radius, double roll_err, double pitch_err, doubl
     addPoint(pntsL, length, delta-halfwidth);
     addPoint(pntsL, length, delta+halfwidth);
     addPoint(pntsL, needle_edge, delta+halfwidth);
-    draw_quad(pntsL, YELLOW[0], YELLOW[1], YELLOW[2], 1);
+    //    draw_quad(pntsL, YELLOW[0], YELLOW[1], YELLOW[2], 1);
+    if (!hideNeedlesFlag) draw_quad(pntsL, needleColor.R->getDecimal(), needleColor.G->getDecimal(), needleColor.B->getDecimal(), 1);
 
     pntsL.clear();
     addPoint(pntsL, needle_edge, delta-halfwidth );
