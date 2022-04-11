@@ -20,8 +20,8 @@ class dcADI : public dcGeometric
         void setRPY(const std::string &, const std::string &, const std::string &);
         void setRPYerrors(const std::string &, const std::string &, const std::string &);
         void setNeedleColor(const std::string &);
-        void hideNeedles(bool);
-        void hideRateIndicators(bool);
+        void hideNeedles(const std::string &);
+        void hideRateIndicators(const std::string &);
         void setRadius(const std::string &, const std::string &);
         void setChevron(const std::string &, const std::string &);
   void setRPYRates(const std::string &, const std::string &, const std::string &, const std::string &);

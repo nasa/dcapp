@@ -7,7 +7,6 @@
 #include "values.hh"
 #include "commonutils.hh"
 #include "adi.hh"
-#include <iostream>
 
 static const double BLACK[3] = { 0.0, 0.0, 0.0 };
 static const double YELLOW[3] = { 1.0, 1.0, 0.0 };
@@ -68,8 +67,6 @@ void dcADI::setRPYRates(const std::string &inrollRate, const std::string &inpitc
       rateMaxDefined = true;
     }
     else rateMaxDefined = false;
-    
-
 }
 
 void dcADI::setNeedleColor(const std::string &nc)
@@ -81,14 +78,16 @@ void dcADI::setNeedleColor(const std::string &nc)
 }
 
 
-void dcADI::hideNeedles(bool hn)
+void dcADI::hideNeedles(const std::string &hn)
 {
-    hideNeedlesFlag = hn;
+    if (!hn.empty()) hideNeedlesFlag = getValue(hn)->getBoolean();
+    else hideNeedlesFlag = false;
 }
 
-void dcADI::hideRateIndicators(bool hrn)
+void dcADI::hideRateIndicators(const std::string &hrn)
 {
-    hideRateIndicatorsFlag = hrn;
+    if (!hrn.empty()) hideRateIndicatorsFlag = getValue(hrn)->getBoolean();
+    else hideRateIndicatorsFlag = true;
 }
   
 
