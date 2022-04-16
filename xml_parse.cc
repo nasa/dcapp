@@ -636,8 +636,9 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                     {
                         if (NodeCheck(subsubnode, "MapTexture")) {
                             myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
-                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "PolarAxisOffset"), 
-                                get_element_data(subsubnode, "LatOrigin"), get_element_data(subsubnode, "LatOuter"));
+                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), 
+                                get_element_data(subsubnode, "TopLeftLatitude"), get_element_data(subsubnode, "TopLeftLongitude"),
+                                get_element_data(subsubnode, "BottomRightLatitude"), get_element_data(subsubnode, "BottomRightLongitude"));
                             myitem->setSizeRatio(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "SizeRatio"));
                         }
                     }

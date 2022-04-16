@@ -9,20 +9,20 @@ class dcUpsMap : public dcMap
         dcUpsMap(dcParent *);
         virtual ~dcUpsMap();
 
-        void setLonLatParams(const std::string &, const std::string &, const std::string &, const std::string &);
+        void setLonLatParams(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &);
         void setEnableInverseTheta(const std::string &);
 
     private:
         typedef struct {
-            double polarAxisOffset;
-            double latOrigin;
-            double latOuter;
-            double baseRadius;
+            double topLeftUnitX;
+            double topLeftUnitY;
+            double bottomRightUnitX;
+            double bottomRightUnitY;
         } upsLayerInfo;
 
         std::map<int,upsLayerInfo> upsLayerInfos;
         upsLayerInfo* uliCurrent;
-        int enableInverseThetaMultiplier;
+        int thetaFactor;
 
         void fetchLonLat(void);
         void fetchChildParams(void);
@@ -30,6 +30,9 @@ class dcUpsMap : public dcMap
         void computeGhostTrailRatios(std::vector<std::pair<double, double>>);
         void computeZoneRatios(void);
         void computePointRatios(void);
+
+        double latlonToUnitX(double, double);
+        double latlonToUnitY(double, double);
 };
 
 #endif

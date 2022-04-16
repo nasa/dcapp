@@ -17,7 +17,7 @@ extern void UpdateDisplay(void);
 
 
 dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), vTextureIndex(0x0), vLatitude(0x0), vLongitude(0x0), vZoom(0x0), vYaw(0x0),
-                                    longitude(0), latitude(0), zoom(1), trajAngle(0), yawOffset(0),
+                                    longitude(0), latitude(0), zoom(1), textureIndex(0), trajAngle(0), yawOffset(0),
                                     enableTrail(true), trailWidth(25), trailResolution(.005), fnClearTrail(0x0), ghostTrailWidth(25),
                                     enableIcon(true), enableCustomIcon(false), iconRotationOffset(0), iconTextureID(0x0),
                                     enableCircularMap(0), enableTrackUp(0), enableZone(false), vUnlocked(0x0), unlocked(false), selected(false)
@@ -349,7 +349,6 @@ void dcMap::computeGeometry(void)
 void dcMap::fetchBaseParams(void)
 {
     if (vTextureIndex) textureIndex = vTextureIndex->getInteger();
-    else textureIndex = 0;
 
     mliCurrent = &(mapLayerInfos[textureIndex]);
 

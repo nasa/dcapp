@@ -6,7 +6,7 @@
 #include "upsmap.hh"
 
 
-dcUpsMap::dcUpsMap(dcParent *myparent) : dcMap(myparent), enableInverseThetaMultiplier(1)
+dcUpsMap::dcUpsMap(dcParent *myparent) : dcMap(myparent), thetaFactor(1)
 {
     return;
 }
@@ -16,26 +16,41 @@ dcUpsMap::~dcUpsMap()
     return;
 }
 
-void dcUpsMap::setLonLatParams(const std::string &pos, const std::string &loPolarAxis, const std::string &laOrigin, const std::string &laOuter)
+// convert latlon to x,y position relative to UPS scaling
+double dcUpsMap::latlonToUnitX(double lat, double lon) {
+    return 2 * tan(M_PI_4 - fabs(lat)*M_PI_2/180) * cos((-1*lon+90)*M_PI/180) ;
+}
+
+double dcUpsMap::latlonToUnitY(double lat, double lon) {
+    return 2 * tan(M_PI_4 - fabs(lat)*M_PI_2/180) * sin((-1*lon+90)*M_PI/180);
+}
+
+void dcUpsMap::setLonLatParams(const std::string &pos, 
+    const std::string &topLeftLat, const std::string &topLeftLon, 
+    const std::string &bottomRightLat, const std::string &bottomRightLon) 
 {
     if (!pos.empty()) 
     {
         int index = getValue(pos)->getInteger();
-        if (!loPolarAxis.empty() && !laOrigin.empty() && !laOuter.empty())
-        {
-            double polarAxisOffset = getValue(loPolarAxis)->getDecimal();
-            double latOrigin = getValue(laOrigin)->getDecimal();
-            double latOuter = getValue(laOuter)->getDecimal();
-            double baseRadius = 2 * tan(M_PI_4 - fabs(latOuter)*M_PI_2/180);
+        if (!topLeftLat.empty() && !topLeftLon.empty() && !bottomRightLat.empty() && !bottomRightLon.empty()) {
+            double tllat = getValue(topLeftLat)->getDecimal();
+            double tllon = getValue(topLeftLon)->getDecimal();
+            double brlat = getValue(bottomRightLat)->getDecimal();
+            double brlon = getValue(bottomRightLon)->getDecimal();
+
+            double tlx = latlonToUnitX(tllat, tllon);
+            double tly = latlonToUnitY(tllat, tllon);
+            double brx = latlonToUnitX(brlat, brlon);
+            double bry = latlonToUnitY(brlat, brlon);
 
             upsLayerInfos.insert({
-                index,
-                {polarAxisOffset, latOrigin, latOuter, baseRadius}
+                index, {
+                    tlx, tly, 
+                    brx, bry
+                }
             });
         }
-    }
-    else
-    {
+    } else {
         printf("upsMap.setLonLatParams: missing values\n");
     }
 }
@@ -43,14 +58,13 @@ void dcUpsMap::setLonLatParams(const std::string &pos, const std::string &loPola
 void dcUpsMap::setEnableInverseTheta(const std::string &inval)
 {
     if (!inval.empty()) {        
-        if (getValue(inval)->getInteger()) enableInverseThetaMultiplier = -1;
-        else enableInverseThetaMultiplier = 1;
+        if (getValue(inval)->getBoolean()) thetaFactor = -1;
     }
 }
 
 void dcUpsMap::fetchLonLat(void) 
 {
-    longitude = vLongitude->getDecimal() * enableInverseThetaMultiplier;
+    longitude = vLongitude->getDecimal();
     latitude = vLatitude->getDecimal();
 }
 
@@ -74,12 +88,11 @@ void dcUpsMap::computePosRatios(void)
         const upsLayerInfo* uli = &(pair.second);
         mapLayerInfo* mli = &(mapLayerInfos[id]);
 
-        double theta = (longitude + uli->polarAxisOffset) * M_PI / 180;
-        double radius = 2*tan(M_PI_4 - fabs(latitude)*M_PI_2/180) / uli->baseRadius;
-        if ( radius > 1 ) radius = 1;
+        double ux = latlonToUnitX(latitude, thetaFactor * longitude);
+        double uy = latlonToUnitY(latitude, thetaFactor * longitude);
 
-        mli->hRatio = radius * cos(theta) * .5 + .5;
-        mli->vRatio = radius * sin(theta) * .5 + .5;
+        mli->hRatio = (ux - uli->topLeftUnitX) / (uli->bottomRightUnitX - uli->topLeftUnitX);
+        mli->vRatio = (uy - uli->bottomRightUnitY) / (uli->topLeftUnitY - uli->bottomRightUnitY);
     }
 
     // compute trajectory
@@ -100,16 +113,12 @@ void dcUpsMap::computeGhostTrailRatios(std::vector<std::pair<double, double>> la
         mapLayerInfo* mli = &(mapLayerInfos[id]);
 
         for (auto const& latlon : latlons) {
-            double lat = latlon.first;
-            double lon = latlon.second * enableInverseThetaMultiplier;
-
-            double theta = (lon + uli->polarAxisOffset) * M_PI / 180;
-            double radius = 2*tan(M_PI_4 - fabs(lat)*M_PI_2/180) / uli->baseRadius;
-            if ( radius > 1 ) radius = 1;
+            double ux = latlonToUnitX(latlon.first, thetaFactor * latlon.second);
+            double uy = latlonToUnitY(latlon.first, thetaFactor * latlon.second);
 
             mli->ghostRatioHistory.push_back({
-                radius * cos(theta) * .5 + .5, 
-                radius * sin(theta) * .5 + .5
+                (ux - uli->topLeftUnitX) / (uli->bottomRightUnitX - uli->topLeftUnitX), 
+                (uy - uli->bottomRightUnitY) / (uli->topLeftUnitY - uli->bottomRightUnitY)
             });
         }
     }
@@ -119,15 +128,16 @@ void dcUpsMap::computeZoneRatios(void)
 {
     zoneLonLatRatios.clear();
     for (uint i = 0; i < zoneLonLatVals.size(); i++) {
+        double lon = zoneLonLatVals.at(i).first->getDecimal();
+        double lat = zoneLonLatVals.at(i).second->getDecimal();
 
-        // compute unit ratios for x and y
-        double theta = (zoneLonLatVals.at(i).first->getDecimal() * enableInverseThetaMultiplier + uliCurrent->polarAxisOffset) * M_PI / 180;
-        double radius = 2*tan(M_PI_4 - fabs(zoneLonLatVals.at(i).second->getDecimal())*M_PI_2/180) / uliCurrent->baseRadius;
+        double ux = latlonToUnitX(lat, thetaFactor * lon);
+        double uy = latlonToUnitY(lat, thetaFactor * lon);
 
-        if ( radius > 1 ) radius = 1;
-
-        // add calculated value
-        zoneLonLatRatios.push_back({radius * cos(theta) * .5 + .5, radius * sin(theta) * .5 + .5});
+        zoneLonLatRatios.push_back({
+            (ux - uliCurrent->topLeftUnitX) / (uliCurrent->bottomRightUnitX - uliCurrent->topLeftUnitX),
+            (uy - uliCurrent->bottomRightUnitY) / (uliCurrent->topLeftUnitY - uliCurrent->bottomRightUnitY)
+        });
     }
 }
 
@@ -139,13 +149,11 @@ void dcUpsMap::computePointRatios(void)
         mipLatitude = (mip.vLatitude)->getDecimal();
         mipLongitude = (mip.vLongitude)->getDecimal();
 
-        // compute unit ratios for x and y
-        double theta = (mipLongitude * enableInverseThetaMultiplier + uliCurrent->polarAxisOffset) * M_PI / 180;
-        double radius = 2*tan(M_PI_4 - fabs(mipLatitude)*M_PI_2/180) / uliCurrent->baseRadius;
+        double ux = latlonToUnitX(mipLatitude, thetaFactor * mipLongitude);
+        double uy = latlonToUnitY(mipLatitude, thetaFactor * mipLongitude);
 
-        // update position ratios
-        mip.hRatio = radius * cos(theta) * .5 + .5;
-        mip.vRatio = radius * sin(theta) * .5 + .5;
+        mip.hRatio = (ux - uliCurrent->topLeftUnitX) / (uliCurrent->bottomRightUnitX - uliCurrent->topLeftUnitX);
+        mip.vRatio = (uy - uliCurrent->bottomRightUnitY) / (uliCurrent->topLeftUnitY - uliCurrent->bottomRightUnitY);
     }
 
     double mspLatitude, mspLongitude;
@@ -155,12 +163,10 @@ void dcUpsMap::computePointRatios(void)
         mspLatitude = (msp.vLatitude)->getDecimal();
         mspLongitude = (msp.vLongitude)->getDecimal();
 
-        // compute unit ratios for x and y
-        double theta = (mspLongitude * enableInverseThetaMultiplier + uliCurrent->polarAxisOffset) * M_PI / 180;
-        double radius = 2*tan(M_PI_4 - fabs(mspLatitude)*M_PI_2/180) / uliCurrent->baseRadius;    // scale of 0..1
+        double ux = latlonToUnitX(mspLatitude, thetaFactor * mspLongitude);
+        double uy = latlonToUnitY(mspLatitude, thetaFactor * mspLongitude);
 
-        // update position ratios
-        msp.hRatio = radius * cos(theta) * .5 + .5;
-        msp.vRatio = radius * sin(theta) * .5 + .5;
+        msp.hRatio = (ux - uliCurrent->topLeftUnitX) / (uliCurrent->bottomRightUnitX - uliCurrent->topLeftUnitX);
+        msp.vRatio = (uy - uliCurrent->bottomRightUnitY) / (uliCurrent->topLeftUnitY - uliCurrent->bottomRightUnitY);
     }
 }
