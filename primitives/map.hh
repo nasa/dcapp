@@ -66,7 +66,6 @@ class dcMap : public dcGeometric
             double height;
             double hRatio;
             double vRatio;
-            std::vector<int> layers;
             bool enableScaling;
         } mapImagePoint;
 
@@ -78,7 +77,6 @@ class dcMap : public dcGeometric
             double size;
             double hRatio;
             double vRatio;
-            std::vector<int> layers;
             bool enableScaling;
         } mapStringPoint;
 

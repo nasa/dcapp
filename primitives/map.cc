@@ -209,12 +209,14 @@ void dcMap::setZoneLonLat(const std::string &lon1, const std::string &lat1, cons
     }
 }
 
-void dcMap::setMapImagePoint(const std::string &filename, const std::string &lon, const std::string &lat, const std::string &enable, 
-    const std::string &w, const std::string &h, const std::string &enableScaling, const std::string &layers) {
+void dcMap::setMapImagePoint(const std::string &layer, const std::string &filename, const std::string &lon, const std::string &lat, 
+    const std::string &enable, const std::string &w, const std::string &h, const std::string &enableScaling) {
 
-    /*mapImagePoint mip;
-    if (!filename.empty() && !lon.empty() && !lat.empty() && !w.empty() && !h.empty()) 
+    mapImagePoint mip;
+    int index;
+    if (!layer.empty() && !filename.empty() && !lon.empty() && !lat.empty() && !w.empty() && !h.empty()) 
     {
+        index = getValue(layer)->getInteger();
         mip.textureID = tdLoadTexture(filename);
         mip.vLongitude = getValue(lon);
         mip.vLatitude = getValue(lat);
@@ -233,23 +235,17 @@ void dcMap::setMapImagePoint(const std::string &filename, const std::string &lon
     if (!enableScaling.empty()) mip.enableScaling = getValue(enableScaling)->getBoolean();
     else mip.enableScaling = 0;
 
-    if (!layers.empty()) {
-        std::stringstream ss(layers);
-        for (int temp; ss >> temp;) {
-            mip.layers.push_back(temp);
-            if (ss.peek() == ',')
-                ss.ignore();
-        }
-    }
-
-    mapImagePoints.push_back(mip);*/
+    mapLayerInfos[index].imagePoints.push_back(mip);
 }
 
-void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, const std::string &lat, const std::string &enable, 
-    const std::string &size, const std::string &enableScaling, const std::string &layers) {
-    /*mapStringPoint msp;
-    if (!text.empty() && !lon.empty() && !lat.empty() && !size.empty()) 
+void dcMap::setMapStringPoint(const std::string &layer, const std::string &text, const std::string &lon, const std::string &lat, 
+    const std::string &enable, const std::string &size, const std::string &enableScaling) {
+
+    mapStringPoint msp;
+    int index;
+    if (!layer.empty() && !text.empty() && !lon.empty() && !lat.empty() && !size.empty()) 
     {
+        index = getValue(layer)->getInteger();
         msp.vText = getValue(text);
         msp.vLongitude = getValue(lon);
         msp.vLatitude = getValue(lat);
@@ -267,16 +263,7 @@ void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, c
     if (!enableScaling.empty()) msp.enableScaling = getValue(enableScaling)->getBoolean();
     else msp.enableScaling = 0;
 
-    if (!layers.empty()) {
-        std::stringstream ss(layers);
-        for (int temp; ss >> temp;) {
-            msp.layers.push_back(temp);
-            if (ss.peek() == ',')
-                ss.ignore();
-        }
-    }
-
-    mapStringPoints.push_back(msp);*/
+    mapLayerInfos[index].stringPoints.push_back(msp);
 }
 
 void dcMap::setUnlocked(const std::string &inval) {
@@ -560,15 +547,15 @@ void dcMap::displayZone(void)
 
 void dcMap::displayPoints(void)
 {
-    /*float mx, my, mwidth, mheight, msize, mdelx, mdely;
+    float mx, my, mwidth, mheight, msize, mdelx, mdely;
 
     computePointRatios();
 
     // process images
-    for (uint ii = 0; ii < mapImagePoints.size(); ii++) {
+    for (uint ii = 0; ii < mliCurrent->imagePoints.size(); ii++) {
 
-        mapImagePoint& mip = mapImagePoints.at(ii);
-        if (mip.vEnabled->getInteger() && std::count(mip.layers.begin(), mip.layers.end(), textureIndex) ) {
+        mapImagePoint& mip = mliCurrent->imagePoints.at(ii);
+        if (mip.vEnabled->getInteger()) {
 
             mx = (mip.hRatio - texLeft) / (texRight - texLeft) * width;
             my = (mip.vRatio - texDown) / (texUp - texDown) * height;
@@ -591,10 +578,10 @@ void dcMap::displayPoints(void)
 
     // process strings
     static tdFont* fontID = tdLoadFont(AppData.defaultfont, "");
-    for (uint ii = 0; ii < mapStringPoints.size(); ii++) {
+    for (uint ii = 0; ii < mliCurrent->stringPoints.size(); ii++) {
 
-        mapStringPoint& msp = mapStringPoints.at(ii);
-        if (msp.vEnabled->getInteger() && std::count(msp.layers.begin(), msp.layers.end(), textureIndex) ) {
+        mapStringPoint& msp = mliCurrent->stringPoints.at(ii);
+        if (msp.vEnabled->getInteger()) {
 
             // get string with variables, constants, formatting
             std::string mystring = msp.vText->getString();
@@ -641,7 +628,7 @@ void dcMap::displayPoints(void)
                 translate_end();
             }
         }
-    }*/
+    }
 }
 
 void dcMap::handleMousePress(double inx, double iny) {

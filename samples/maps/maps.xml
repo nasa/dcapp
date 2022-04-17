@@ -37,8 +37,8 @@
                     <MapTexture File="../../nexsys-lfs/maps/moon_875_2.bmp"  Index="0"
                         TopLeftLatitude="87.5" TopLeftLongitude="-45"
                         BottomRightLatitude="87.5" BottomRightLongitude="135">
-                        <MapImage File="images/point1.bmp" Width="250" Height="250" Latitude="89" Longitude="-135" Layers="0"/>
-                        <MapImage File="images/point2.bmp" Width="100" Height="100" Latitude="88.8" Longitude="-45" Layers="1"/>
+                        <MapImage File="images/point1.bmp" Width="250" Height="250" Latitude="89" Longitude="-135"/>
+                        <MapImage File="images/point2.bmp" Width="100" Height="100" Latitude="88.8" Longitude="-45"/>
                         <MapString Size="50" Latitude="89" Longitude="0" Layers="0,1">ZONE01</MapString>    
                     </MapTexture>>
                     <MapTexture File="../../nexsys-lfs/maps/moon_75.bmp" Index="1" SizeRatio="6"
@@ -52,19 +52,18 @@
                     IconFile="images/arrow.bmp" IconWidth="50" IconHeight="50" IconRotationOffset="-90" TextureIndex="@CURR_DISPLAY_TEXTURE"
                      EnableCircularMap="0"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="89" ZoneLat2="89" ZoneLat3="89.5" ZoneLat4="89.5">
-                <Textures>
                     <MapTexture File="../../nexsys-lfs/maps/moon_875_2.bmp"  Index="0"
                         TopLeftLatitude="87.5" TopLeftLongitude="-45"
-                        BottomRightLatitude="87.5" BottomRightLongitude="135"/>
+                        BottomRightLatitude="87.5" BottomRightLongitude="135">
+                        <MapImage File="images/point1.bmp" Width="250" Height="250" Latitude="89" Longitude="-135"/>
+                        <MapString Size="50" Latitude="89" Longitude="0">ZONE01</MapString>
+                    </MapTexture>
                     <MapTexture File="../../nexsys-lfs/maps/moon_75.bmp" Index="1" SizeRatio="6"
                         TopLeftLatitude="75" TopLeftLongitude="-45"
-                        BottomRightLatitude="75" BottomRightLongitude="135"/>
-                </Textures>
-                <Points>
-                    <MapImage File="images/point1.bmp" Width="250" Height="250" Latitude="89" Longitude="-135" Layers="0"/>
-                    <MapImage File="images/point2.bmp" Width="100" Height="100" Latitude="88.8" Longitude="-45" Layers="1"/>
-                    <MapString Size="50" Latitude="89" Longitude="0" Layers="0,1">ZONE01</MapString>
-                </Points>
+                        BottomRightLatitude="75" BottomRightLongitude="135">
+                        <MapImage File="images/point2.bmp" Width="100" Height="100" Latitude="88.8" Longitude="-45"/>
+                        <MapString Size="50" Latitude="89" Longitude="0">ZONE01</MapString>
+                    </MapTexture>
             </UPSMap>
 
             <!-- clear button -->

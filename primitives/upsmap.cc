@@ -141,9 +141,9 @@ void dcUpsMap::computeZoneRatios(void)
 
 void dcUpsMap::computePointRatios(void)
 {
-    /*double mipLatitude, mipLongitude;
-    for (uint i = 0; i < mapImagePoints.size(); i++) {
-        mapImagePoint& mip = mapImagePoints.at(i);
+    double mipLatitude, mipLongitude;
+    for (uint i = 0; i < mliCurrent->imagePoints.size(); i++) {
+        mapImagePoint& mip = mliCurrent->imagePoints.at(i);
         mipLatitude = (mip.vLatitude)->getDecimal();
         mipLongitude = (mip.vLongitude)->getDecimal();
 
@@ -155,9 +155,9 @@ void dcUpsMap::computePointRatios(void)
     }
 
     double mspLatitude, mspLongitude;
-    for (uint i = 0; i < mapStringPoints.size(); i++) {
+    for (uint i = 0; i < mliCurrent->stringPoints.size(); i++) {
 
-        mapStringPoint& msp = mapStringPoints.at(i);
+        mapStringPoint& msp = mliCurrent->stringPoints.at(i);
         mspLatitude = (msp.vLatitude)->getDecimal();
         mspLongitude = (msp.vLongitude)->getDecimal();
 
@@ -166,5 +166,5 @@ void dcUpsMap::computePointRatios(void)
 
         msp.hRatio = (ux - uliCurrent->topLeftUnitX) / (uliCurrent->bottomRightUnitX - uliCurrent->topLeftUnitX);
         msp.vRatio = (uy - uliCurrent->bottomRightUnitY) / (uliCurrent->topLeftUnitY - uliCurrent->bottomRightUnitY);
-    }*/
+    }
 }
