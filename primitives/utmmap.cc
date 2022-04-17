@@ -77,25 +77,23 @@ void dcUtmMap::computePosRatios(void)
 }
 
 // compute positional ratios, as well as the current trajectory
-void dcUtmMap::computeGhostTrailRatios(std::vector<std::pair<double, double>> latlons) 
+std::vector<std::pair<float,float>>
+dcUtmMap::computeGhostTrailRatios(int index, std::vector<std::pair<double, double>> latlons) 
 {
-    // compute unit ratios for x and y
-    for (auto const& pair : utmLayerInfos) 
-    {
-        int id = pair.first;
-        const utmLayerInfo* uli = &(pair.second);
-        mapLayerInfo* mli = &(mapLayerInfos[id]);
+    std::vector<std::pair<float,float>> ghostRatioHistory;
+    utmLayerInfo* uli = &(utmLayerInfos[index]);
 
-        for (auto const& latlon : latlons) {
-            double lat = latlon.first;
-            double lon = latlon.second;
+    for (auto const& latlon : latlons) {
+        double lat = latlon.first;
+        double lon = latlon.second;
 
-            mli->ghostRatioHistory.push_back({
-                (lon - uli->lonMin) / (uli->lonMax - uli->lonMin),
-                (lat - uli->latMin) / (uli->latMax - uli->latMin)
-            });
-        }
+        ghostRatioHistory.push_back({
+            (lon - uli->lonMin) / (uli->lonMax - uli->lonMin),
+            (lat - uli->latMin) / (uli->latMax - uli->latMin)
+        });
     }
+
+    return ghostRatioHistory;
 }
 
 void dcUtmMap::computeZoneRatios(void)
@@ -112,7 +110,7 @@ void dcUtmMap::computeZoneRatios(void)
 
 void dcUtmMap::computePointRatios(void)
 {
-    double mipLatitude, mipLongitude;
+    /*double mipLatitude, mipLongitude;
     for (uint i = 0; i < mapImagePoints.size(); i++) {
         mapImagePoint& mip = mapImagePoints.at(i);
         mipLatitude = (mip.vLatitude)->getDecimal();
@@ -130,5 +128,5 @@ void dcUtmMap::computePointRatios(void)
 
         msp.hRatio = (mspLongitude - uliCurrent->lonMin) / (uliCurrent->lonMax - uliCurrent->lonMin);
         msp.vRatio = (mspLatitude - uliCurrent->latMin) / (uliCurrent->latMax - uliCurrent->latMin);
-    }
+    }*/
 }

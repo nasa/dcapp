@@ -562,35 +562,40 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             }
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
-                if (NodeCheck(subnode, "Textures"))
+                if (NodeCheck(subnode, "MapTexture")) 
                 {
+                    myitem->setTexture(get_element_data(subnode, "Index"), get_element_data(subnode, "File"));
+                    myitem->setLonLatParams(get_element_data(subnode, "Index"), 
+                        get_element_data(subnode, "TopLeftLatitude"), get_element_data(subnode, "TopLeftLongitude"),
+                        get_element_data(subnode, "BottomRightLatitude"), get_element_data(subnode, "BottomRightLongitude"));
+                    myitem->setSizeRatio(get_element_data(subnode, "Index"), get_element_data(subnode, "SizeRatio"));
+
                     for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
                     {
-                        if (NodeCheck(subsubnode, "MapTexture")) 
+                        if (NodeCheck(subsubnode, "MapImage"))
                         {
-                            myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
-                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "LonMin"), 
-                                get_element_data(subsubnode, "LonMax"), get_element_data(subsubnode, "LatMin"), get_element_data(subsubnode, "LatMax"));
-                            myitem->setSizeRatio(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "SizeRatio"));
+                            myitem->setMapImagePoint(get_element_data(subnode, "Index"),
+                                get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), 
+                                get_element_data(subsubnode, "Latitude"), get_element_data(subsubnode, "Enabled"), 
+                                get_element_data(subsubnode, "Width"), get_element_data(subsubnode, "Height"), 
+                                get_element_data(subsubnode, "EnableScaling"));
                         }
-                    }
-                } else if (NodeCheck(subnode, "Points"))
-                {
-                    for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
-                    {
-                        if (NodeCheck(subsubnode, "MapImage")) {
-                            myitem->setMapImagePoint(get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
-                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"), get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "EnableScaling"), get_element_data(subsubnode, "Layers"));
-                        } else if (NodeCheck(subsubnode, "MapString")) {
-                            myitem->setMapStringPoint(get_node_content(subsubnode), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
-                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Size"), get_element_data(subsubnode, "EnableScaling"), get_element_data(subsubnode, "Layers"));
+                        else if (NodeCheck(subsubnode, "MapString"))
+                        {
+                            myitem->setMapStringPoint(get_element_data(subnode, "Index"),
+                                get_node_content(subsubnode), get_element_data(subsubnode, "Longitude"), 
+                                get_element_data(subsubnode, "Latitude"), get_element_data(subsubnode, "Enabled"), 
+                                get_element_data(subsubnode, "Size"), get_element_data(subsubnode, "EnableScaling"));
+                        }
+                        else if (NodeCheck(subsubnode, "MapGhostTrail"))
+                        {
+                            myitem->setGhostTrail(get_element_data(subnode, "Index"),
+                                get_element_data(subsubnode, "File"), get_element_data(subsubnode, "LineColor"),
+                                get_element_data(subsubnode, "LineWidth"));
                         }
                     }
                 }
             }
-            myitem->setGhostTrail(get_element_data(node, "GhostTrailFile"));
-            myitem->setGhostTrailColor(get_element_data(node, "GhostTrailColor"));
-            myitem->setGhostTrailWidth(get_element_data(node, "GhostTrailWidth"));
             myitem->setUnlocked(get_element_data(node, "Unlock"));
         }
         if (NodeCheck(node, "UPSMap"))
@@ -630,35 +635,40 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             }
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
-                if (NodeCheck(subnode, "Textures"))
+                if (NodeCheck(subnode, "MapTexture")) 
                 {
+                    myitem->setTexture(get_element_data(subnode, "Index"), get_element_data(subnode, "File"));
+                    myitem->setLonLatParams(get_element_data(subnode, "Index"), 
+                        get_element_data(subnode, "TopLeftLatitude"), get_element_data(subnode, "TopLeftLongitude"),
+                        get_element_data(subnode, "BottomRightLatitude"), get_element_data(subnode, "BottomRightLongitude"));
+                    myitem->setSizeRatio(get_element_data(subnode, "Index"), get_element_data(subnode, "SizeRatio"));
+
                     for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
                     {
-                        if (NodeCheck(subsubnode, "MapTexture")) {
-                            myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
-                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), 
-                                get_element_data(subsubnode, "TopLeftLatitude"), get_element_data(subsubnode, "TopLeftLongitude"),
-                                get_element_data(subsubnode, "BottomRightLatitude"), get_element_data(subsubnode, "BottomRightLongitude"));
-                            myitem->setSizeRatio(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "SizeRatio"));
+                        if (NodeCheck(subsubnode, "MapImage"))
+                        {
+                            myitem->setMapImagePoint(get_element_data(subnode, "Index"),
+                                get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), 
+                                get_element_data(subsubnode, "Latitude"), get_element_data(subsubnode, "Enabled"), 
+                                get_element_data(subsubnode, "Width"), get_element_data(subsubnode, "Height"), 
+                                get_element_data(subsubnode, "EnableScaling"));
                         }
-                    }
-                } else if (NodeCheck(subnode, "Points"))
-                {
-                    for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
-                    {
-                        if (NodeCheck(subsubnode, "MapImage")) {
-                            myitem->setMapImagePoint(get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
-                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"), get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "EnableScaling"), get_element_data(subsubnode, "Layers"));
-                        } else if (NodeCheck(subsubnode, "MapString")) {
-                            myitem->setMapStringPoint(get_node_content(subsubnode), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
-                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Size"), get_element_data(subsubnode, "EnableScaling"), get_element_data(subsubnode, "Layers"));
+                        else if (NodeCheck(subsubnode, "MapString"))
+                        {
+                            myitem->setMapStringPoint(get_element_data(subnode, "Index"),
+                                get_node_content(subsubnode), get_element_data(subsubnode, "Longitude"), 
+                                get_element_data(subsubnode, "Latitude"), get_element_data(subsubnode, "Enabled"), 
+                                get_element_data(subsubnode, "Size"), get_element_data(subsubnode, "EnableScaling"));
+                        }
+                        else if (NodeCheck(subsubnode, "MapGhostTrail"))
+                        {
+                            myitem->setGhostTrail(get_element_data(subnode, "Index"),
+                                get_element_data(subsubnode, "File"), get_element_data(subsubnode, "LineColor"),
+                                get_element_data(subsubnode, "LineWidth"));
                         }
                     }
                 }
             }
-            myitem->setGhostTrail(get_element_data(node, "GhostTrailFile"));
-            myitem->setGhostTrailColor(get_element_data(node, "GhostTrailColor"));
-            myitem->setGhostTrailWidth(get_element_data(node, "GhostTrailWidth"));
             myitem->setUnlocked(get_element_data(node, "Unlock"));
         }
         if (NodeCheck(node, "PixelStream"))

@@ -103,25 +103,23 @@ void dcUpsMap::computePosRatios(void)
 }
 
 // compute positional ratios, as well as the current trajectory
-void dcUpsMap::computeGhostTrailRatios(std::vector<std::pair<double, double>> latlons) 
+std::vector<std::pair<float,float>>
+dcUpsMap::computeGhostTrailRatios(int index, std::vector<std::pair<double, double>> latlons) 
 {
-    // compute unit ratios for x and y
-    for (auto const& pair : upsLayerInfos) 
-    {
-        int id = pair.first;
-        const upsLayerInfo* uli = &(pair.second);
-        mapLayerInfo* mli = &(mapLayerInfos[id]);
+    std::vector<std::pair<float,float>> ghostRatioHistory;
+    upsLayerInfo* uli = &(upsLayerInfos[index]);
 
-        for (auto const& latlon : latlons) {
-            double ux = latlonToUnitX(latlon.first, thetaFactor * latlon.second);
-            double uy = latlonToUnitY(latlon.first, thetaFactor * latlon.second);
+    for (auto const& latlon : latlons) {
+        double ux = latlonToUnitX(latlon.first, thetaFactor * latlon.second);
+        double uy = latlonToUnitY(latlon.first, thetaFactor * latlon.second);
 
-            mli->ghostRatioHistory.push_back({
-                (ux - uli->topLeftUnitX) / (uli->bottomRightUnitX - uli->topLeftUnitX), 
-                (uy - uli->bottomRightUnitY) / (uli->topLeftUnitY - uli->bottomRightUnitY)
-            });
-        }
+        ghostRatioHistory.push_back({
+            (ux - uli->topLeftUnitX) / (uli->bottomRightUnitX - uli->topLeftUnitX), 
+            (uy - uli->bottomRightUnitY) / (uli->topLeftUnitY - uli->bottomRightUnitY)
+        });
     }
+
+    return ghostRatioHistory;
 }
 
 void dcUpsMap::computeZoneRatios(void)
@@ -143,7 +141,7 @@ void dcUpsMap::computeZoneRatios(void)
 
 void dcUpsMap::computePointRatios(void)
 {
-    double mipLatitude, mipLongitude;
+    /*double mipLatitude, mipLongitude;
     for (uint i = 0; i < mapImagePoints.size(); i++) {
         mapImagePoint& mip = mapImagePoints.at(i);
         mipLatitude = (mip.vLatitude)->getDecimal();
@@ -168,5 +166,5 @@ void dcUpsMap::computePointRatios(void)
 
         msp.hRatio = (ux - uliCurrent->topLeftUnitX) / (uliCurrent->bottomRightUnitX - uliCurrent->topLeftUnitX);
         msp.vRatio = (uy - uliCurrent->bottomRightUnitY) / (uliCurrent->topLeftUnitY - uliCurrent->bottomRightUnitY);
-    }
+    }*/
 }

@@ -18,12 +18,11 @@ extern void UpdateDisplay(void);
 
 dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), vTextureIndex(0x0), vLatitude(0x0), vLongitude(0x0), vZoom(0x0), vYaw(0x0),
                                     longitude(0), latitude(0), zoom(1), textureIndex(0), trajAngle(0), yawOffset(0),
-                                    enableTrail(true), trailWidth(25), trailResolution(.005), fnClearTrail(0x0), ghostTrailWidth(25),
+                                    enableTrail(true), trailWidth(25), trailResolution(.005), fnClearTrail(0x0),
                                     enableIcon(true), enableCustomIcon(false), iconRotationOffset(0), iconTextureID(0x0),
                                     enableCircularMap(0), enableTrackUp(0), enableZone(false), vUnlocked(0x0), unlocked(false), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
-    ghostTrailColor.set(0, 1, 0, .5);
 }
 
 dcMap::~dcMap()
@@ -123,10 +122,11 @@ void dcMap::setTrailResolution(const std::string &inval)
     if (!inval.empty()) trailResolution = getValue(inval)->getDecimal();
 }
 
-void dcMap::setGhostTrail(const std::string &filename)
+void dcMap::setGhostTrail(const std::string &layer, const std::string &filename, const std::string &cspec, const std::string &linewidth)
 {
-    if (!filename.empty()) 
+    if (!layer.empty() && !filename.empty()) 
     {
+        int index = getValue(layer)->getInteger();
         PathInfo mypath(filename);
         if (!(mypath.isValid()))
         {
@@ -150,22 +150,20 @@ void dcMap::setGhostTrail(const std::string &filename)
             result.push_back({lat, lon});
         }
 
-        computeGhostTrailRatios(result);
-        enableGhostTrail = true;
-    }
-}
+        auto gtr = computeGhostTrailRatios(index, result);
+        if (gtr.size() > 1)
+        {
+            ghostTrailInfo gti = {gtr, 25, Kolor()};
+            if (!cspec.empty()) gti.trailColor.set(cspec);
+            if (!linewidth.empty()) gti.trailWidth = getValue(linewidth)->getDecimal();
 
-void dcMap::setGhostTrailColor(const std::string &cspec)
-{
-    if (!cspec.empty())
+            mapLayerInfos[index].ghostTrails.push_back(gti);
+        }
+    }
+    else
     {
-        ghostTrailColor.set(cspec);
+        printf("dcMap.setGhostTrail(): missing parameters\n");
     }
-}
-
-void dcMap::setGhostTrailWidth(const std::string &inval)
-{
-    if (!inval.empty()) ghostTrailWidth = getValue(inval)->getDecimal();
 }
 
 void dcMap::setIconTexture(const std::string &filename) 
@@ -214,7 +212,7 @@ void dcMap::setZoneLonLat(const std::string &lon1, const std::string &lat1, cons
 void dcMap::setMapImagePoint(const std::string &filename, const std::string &lon, const std::string &lat, const std::string &enable, 
     const std::string &w, const std::string &h, const std::string &enableScaling, const std::string &layers) {
 
-    mapImagePoint mip;
+    /*mapImagePoint mip;
     if (!filename.empty() && !lon.empty() && !lat.empty() && !w.empty() && !h.empty()) 
     {
         mip.textureID = tdLoadTexture(filename);
@@ -244,12 +242,12 @@ void dcMap::setMapImagePoint(const std::string &filename, const std::string &lon
         }
     }
 
-    mapImagePoints.push_back(mip);
+    mapImagePoints.push_back(mip);*/
 }
 
 void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, const std::string &lat, const std::string &enable, 
     const std::string &size, const std::string &enableScaling, const std::string &layers) {
-    mapStringPoint msp;
+    /*mapStringPoint msp;
     if (!text.empty() && !lon.empty() && !lat.empty() && !size.empty()) 
     {
         msp.vText = getValue(text);
@@ -278,7 +276,7 @@ void dcMap::setMapStringPoint(const std::string &text, const std::string &lon, c
         }
     }
 
-    mapStringPoints.push_back(msp);
+    mapStringPoints.push_back(msp);*/
 }
 
 void dcMap::setUnlocked(const std::string &inval) {
@@ -512,11 +510,13 @@ void dcMap::updateTrail(void)
 
 void dcMap::displayGhostTrail(void)
 {
-    std::vector<float> pntsA;
-    if (mliCurrent->ghostRatioHistory.size() > 1) {
-        for (uint i = 1; i < mliCurrent->ghostRatioHistory.size(); i++) {
-            std::pair<float,float> p1 = mliCurrent->ghostRatioHistory.at(i-1);
-            std::pair<float,float> p2 = mliCurrent->ghostRatioHistory.at(i);
+    for (uint ii = 0; ii < mliCurrent->ghostTrails.size(); ii++)
+    {
+        auto ghostTrail = &(mliCurrent->ghostTrails[ii]);
+        std::vector<float> pntsA;
+        for (uint i = 1; i < ghostTrail->ghostRatioHistory.size(); i++) {
+            std::pair<float,float> p1 = ghostTrail->ghostRatioHistory.at(i-1);
+            std::pair<float,float> p2 = ghostTrail->ghostRatioHistory.at(i);
             if ( (p1.first > texLeft && p1.first < texRight && p1.second > texDown && p1.second < texUp) ||
                  (p2.first > texLeft && p2.first < texRight && p2.second > texDown && p2.second < texUp) ) {
 
@@ -530,7 +530,8 @@ void dcMap::displayGhostTrail(void)
                 pntsA.insert(pntsA.end(),{mx1, my1, mx2, my2});
             } else {
                 if (!pntsA.empty()) {
-                    draw_line(pntsA, ghostTrailWidth, ghostTrailColor.R->getDecimal(), ghostTrailColor.G->getDecimal(), ghostTrailColor.B->getDecimal(), ghostTrailColor.A->getDecimal(), 0xFFFF, 1);
+                    draw_line(pntsA, ghostTrail->trailWidth, ghostTrail->trailColor.R->getDecimal(), ghostTrail->trailColor.G->getDecimal(), 
+                        ghostTrail->trailColor.B->getDecimal(), ghostTrail->trailColor.A->getDecimal(), 0xFFFF, 1);
                     pntsA.clear();
                 }
             }
@@ -538,7 +539,8 @@ void dcMap::displayGhostTrail(void)
 
         // plot any points remaining 
         if (!pntsA.empty()) {
-            draw_line(pntsA, ghostTrailWidth, ghostTrailColor.R->getDecimal(), ghostTrailColor.G->getDecimal(), ghostTrailColor.B->getDecimal(), ghostTrailColor.A->getDecimal(), 0xFFFF, 1);
+            draw_line(pntsA, ghostTrail->trailWidth, ghostTrail->trailColor.R->getDecimal(), ghostTrail->trailColor.G->getDecimal(), 
+                        ghostTrail->trailColor.B->getDecimal(), ghostTrail->trailColor.A->getDecimal(), 0xFFFF, 1);
         }
     }
 }
@@ -558,7 +560,7 @@ void dcMap::displayZone(void)
 
 void dcMap::displayPoints(void)
 {
-    float mx, my, mwidth, mheight, msize, mdelx, mdely;
+    /*float mx, my, mwidth, mheight, msize, mdelx, mdely;
 
     computePointRatios();
 
@@ -639,7 +641,7 @@ void dcMap::displayPoints(void)
                 translate_end();
             }
         }
-    }
+    }*/
 }
 
 void dcMap::handleMousePress(double inx, double iny) {
@@ -740,8 +742,8 @@ void dcMap::draw(void)
 
         draw_map(mliCurrent->textureID, width, height, texUp, texDown, texLeft, texRight);
         if ( enableZone )   displayZone();
-        displayPoints();    // always display points
-        if ( enableGhostTrail ) displayGhostTrail();
+        displayPoints();     // always display points
+        displayGhostTrail(); // always display trails
         if ( enableTrail )  displayTrail();
         if ( enableIcon) displayIcon();
 
