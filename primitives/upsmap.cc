@@ -81,15 +81,15 @@ void dcUpsMap::computePosRatios(void)
     double prevHRatio = mliCurrent->hRatio;
     double prevVRatio = mliCurrent->vRatio;
 
+    double ux = latlonToUnitX(latitude, thetaFactor * longitude);
+    double uy = latlonToUnitY(latitude, thetaFactor * longitude);
+
     // compute unit ratios for x and y
     for (auto const& pair : upsLayerInfos) 
     {
         int id = pair.first;
         const upsLayerInfo* uli = &(pair.second);
         mapLayerInfo* mli = &(mapLayerInfos[id]);
-
-        double ux = latlonToUnitX(latitude, thetaFactor * longitude);
-        double uy = latlonToUnitY(latitude, thetaFactor * longitude);
 
         mli->hRatio = (ux - uli->topLeftUnitX) / (uli->bottomRightUnitX - uli->topLeftUnitX);
         mli->vRatio = (uy - uli->bottomRightUnitY) / (uli->topLeftUnitY - uli->bottomRightUnitY);
