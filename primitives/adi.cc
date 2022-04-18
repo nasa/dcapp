@@ -152,8 +152,12 @@ void dcADI::draw_top_rate_indicator(double rate, double width, double height, do
     //std::vector<float> pointsL = { 0, (float)radius, (float)width/2.0f, (float)(radius-height), -((float)width/2.0f), (float)(radius-height) };
 
   float vertOffset = 65.0;
+
   //radius += vertOffset;
   radius = radius * 1.4;
+
+  float maxValue = radius * .5; //Fix for green triangle going past bounds
+  
   std::vector<float> pointsL = { 0, (float)(radius - height), -(float)width/2.0f, (float)(radius), ((float)width/2.0f), (float)(radius) };
 
   // scale rate to range [-120, 120]
@@ -161,9 +165,9 @@ void dcADI::draw_top_rate_indicator(double rate, double width, double height, do
 
   if (!rateMaxDefined) ratemax = 5.0;
   
-  rate = rate * (120.0 / ratemax);
-  if (rate > 120.0) rate = 120.0;
-  else if (rate < -120.0) rate = -120.0;
+  rate = rate * (maxValue / ratemax);
+  if (rate > maxValue) rate = maxValue;
+  else if (rate < -1 * maxValue) rate = -1 * maxValue;
   translate_start(rate, 0.0);
         draw_filled_triangles(pointsL, BLACK[0], YELLOW[1], YELLOW[2], 1);
         draw_line(pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
@@ -177,16 +181,20 @@ void dcADI::draw_bottom_rate_indicator(double rate, double width, double height,
     //std::vector<float> pointsL = { 0, (float)radius, (float)width/2.0f, (float)(radius-height), -((float)width/2.0f), (float)(radius-height) };
 
   float vertOffset = 65.0;
+  
   radius = radius * 1.4;
+
+  float maxValue = radius * 0.5; // Fix for green triangle going past bounds
+  
   std::vector<float> pointsL = { 0, -(float)(radius - height), -(float)width/2.0f, -(float)(radius), ((float)width/2.0f), -(float)(radius) };
 
   // scale rate to range [-120, 120]
   // rate = rate * 24.0;
   if (!rateMaxDefined) ratemax = 5.0;
   
-  rate = rate * (120.0 / ratemax);
-  if (rate > 120.0) rate = 120.0;
-  else if (rate < -120.0) rate = -120.0;
+  rate = rate * (maxValue / ratemax);
+  if (rate > maxValue) rate = maxValue;
+  else if (rate < -1 * maxValue) rate = -1 * maxValue;
   translate_start(rate, 0.0);
         draw_filled_triangles(pointsL, BLACK[0], YELLOW[1], YELLOW[2], 1);
         draw_line(pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
@@ -201,6 +209,8 @@ void dcADI::draw_side_rate_indicator(double rate, double width, double height, d
 
   //float vertOffset = 65.0;
   radius = radius * 1.4;
+
+  float maxValue = radius * 0.5; //Fix for green triangles going past bounds
   std::vector<float> pointsL = { 0, (float)(radius - height), -(float)width/2.0f, (float)(radius), ((float)width/2.0f), (float)(radius) };
 
 
@@ -208,10 +218,10 @@ void dcADI::draw_side_rate_indicator(double rate, double width, double height, d
   
   // scale rate to range [-120, 120]
   // rate = rate * 24.0;
-  rate = rate * (120.0 / ratemax);
+  rate = rate * (maxValue / ratemax);
   
-  if (rate > 120.0) rate = 120.0;
-  else if (rate < -120.0) rate = -120.0;
+  if (rate > maxValue) rate = maxValue;
+  else if (rate < -1 * maxValue) rate = -1 * maxValue;
   translate_start(rate, 0.0);
         draw_filled_triangles(pointsL, BLACK[0], YELLOW[1], YELLOW[2], 1);
         draw_line(pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
