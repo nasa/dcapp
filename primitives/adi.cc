@@ -222,7 +222,7 @@ void dcADI::draw_side_rate_indicator(double rate, double width, double height, d
   
   if (rate > maxValue) rate = maxValue;
   else if (rate < -1 * maxValue) rate = -1 * maxValue;
-  translate_start(rate, 0.0);
+  translate_start(-1 * rate, 0.0);
         draw_filled_triangles(pointsL, BLACK[0], YELLOW[1], YELLOW[2], 1);
         draw_line(pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
 	translate_end();
