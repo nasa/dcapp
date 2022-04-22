@@ -25,6 +25,7 @@ dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(0x0), ballID(0x
     rateMax = getConstantFromDecimal(0);
     rateMaxDefined = false;
     needleColor.set(YELLOW[0], YELLOW[1], YELLOW[2]);
+    rateIndicatorColor.set(BLACK[0], YELLOW[1], YELLOW[2]);
     hideNeedlesFlag = false;
     hideRateIndicatorsFlag = true;
     sphereTriangles = BuildSphere();
@@ -74,6 +75,14 @@ void dcADI::setNeedleColor(const std::string &nc)
     if (!nc.empty())
     {
         needleColor.set(nc);
+    }
+}
+
+void dcADI::setRateIndicatorColor(const std::string &ric)
+{
+    if (!ric.empty())
+    {
+        rateIndicatorColor.set(ric);
     }
 }
 
@@ -169,7 +178,7 @@ void dcADI::draw_top_rate_indicator(double rate, double width, double height, do
   if (rate > maxValue) rate = maxValue;
   else if (rate < -1 * maxValue) rate = -1 * maxValue;
   translate_start(rate, 0.0);
-        draw_filled_triangles(pointsL, BLACK[0], YELLOW[1], YELLOW[2], 1);
+  draw_filled_triangles(pointsL, rateIndicatorColor.R->getDecimal(), rateIndicatorColor.G->getDecimal(), rateIndicatorColor.B->getDecimal(), 1);
         draw_line(pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
 	translate_end();
 }
@@ -196,7 +205,7 @@ void dcADI::draw_bottom_rate_indicator(double rate, double width, double height,
   if (rate > maxValue) rate = maxValue;
   else if (rate < -1 * maxValue) rate = -1 * maxValue;
   translate_start(rate, 0.0);
-        draw_filled_triangles(pointsL, BLACK[0], YELLOW[1], YELLOW[2], 1);
+        draw_filled_triangles(pointsL, rateIndicatorColor.R->getDecimal(), rateIndicatorColor.G->getDecimal(), rateIndicatorColor.B->getDecimal(), 1);
         draw_line(pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
 	translate_end();
 }
@@ -223,7 +232,7 @@ void dcADI::draw_side_rate_indicator(double rate, double width, double height, d
   if (rate > maxValue) rate = maxValue;
   else if (rate < -1 * maxValue) rate = -1 * maxValue;
   translate_start(-1 * rate, 0.0);
-        draw_filled_triangles(pointsL, BLACK[0], YELLOW[1], YELLOW[2], 1);
+        draw_filled_triangles(pointsL, rateIndicatorColor.R->getDecimal(), rateIndicatorColor.G->getDecimal(), rateIndicatorColor.B->getDecimal(), 1);
         draw_line(pointsL, 1, BLACK[0], BLACK[1], BLACK[2], 1, 0xFFFF, 1);
 	translate_end();
 }

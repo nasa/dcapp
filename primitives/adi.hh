@@ -20,6 +20,7 @@ class dcADI : public dcGeometric
         void setRPY(const std::string &, const std::string &, const std::string &);
         void setRPYerrors(const std::string &, const std::string &, const std::string &);
         void setNeedleColor(const std::string &);
+        void setRateIndicatorColor(const std::string &);
         void hideNeedles(const std::string &);
         void hideRateIndicators(const std::string &);
         void setRadius(const std::string &, const std::string &);
@@ -46,6 +47,7 @@ class dcADI : public dcGeometric
         Value *rateMax;
         bool rateMaxDefined;
         Kolor needleColor;
+        Kolor rateIndicatorColor;
         bool  hideNeedlesFlag;
         bool  hideRateIndicatorsFlag;
         std::vector<float> sphereTriangles;
