@@ -68,17 +68,14 @@ fi
 curlenabled=0
 if test `which curl-config` ; then
     read -ra components <<< `curl-config --version`
-    IFS='.'
-    read -ra versions <<< ${components[1]}
-    IFS=' '
-    read -ra ver <<< $versions
-    if [ ${ver[0]} -gt 7 ]
+    IFS='.' read -ra versions <<< ${components[1]}
+    if [ ${versions[0]} -gt 7 ]
     then
         curlenabled=1
     else
-        if [ ${ver[0]} -eq 7 ]
+        if [ ${versions[0]} -eq 7 ]
         then
-            if [ ${ver[1]} -ge 28 ]
+            if [ ${versions[1]} -ge 28 ]
             then
                 curlenabled=1
             fi
