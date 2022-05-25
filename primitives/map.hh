@@ -8,8 +8,11 @@
 #include "geometric.hh"
 #include "parent.hh"
 #include "kolor.hh"
+#include "maptexture.hh"
 
 #define SQRT_2 1.414213562373095048802
+
+class dcMapTexture;
 
 class dcMap : public dcGeometric
 {
@@ -17,12 +20,12 @@ class dcMap : public dcGeometric
         dcMap(dcParent *);
         virtual ~dcMap();
 
-        void setTexture(const std::string &, const std::string &);
+        void setTexture(const std::string &, dcMapTexture*);
         void setTextureIndex(const std::string &);
         void setLonLat(const std::string &, const std::string &);
         void setZoom(const std::string &);
         void setSizeRatio(const std::string &, const std::string &);
-        void setYaw(const std::string &, const std::string &);
+        void setYaw(const std::string &);
         void setEnableCircularMap(const std::string &);
         void setEnableTrackUp(const std::string &);
         void setEnableIcon(const std::string &);
@@ -31,16 +34,11 @@ class dcMap : public dcGeometric
         void setTrailWidth(const std::string &);
         void setTrailResolution(const std::string &);
         void setFnClearTrail(const std::string &);
-        void setGhostTrail(const std::string &, const std::string &, const std::string &, const std::string &);
         void setIconRotationOffset(const std::string &);
         void setIconTexture(const std::string &);
         void setIconSize(const std::string &, const std::string &);
         void setZoneLonLat(const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, const std::string &, 
             const std::string &, const std::string &);
-        void setMapImagePoint(const std::string &, const std::string &, const std::string &, const std::string &, 
-            const std::string &, const std::string &, const std::string &, const std::string &);
-        void setMapStringPoint(const std::string &, const std::string &, const std::string &, const std::string &, 
-            const std::string &, const std::string &, const std::string &);
         void setUnlocked(const std::string &);
 
         void draw(void);
@@ -50,48 +48,7 @@ class dcMap : public dcGeometric
         void handleMouseMotion(double, double);
         void handleMouseRelease(void);
 
-    protected:
-        typedef struct {
-            std::vector<std::pair<float,float>> ghostRatioHistory;
-            double trailWidth;
-            Kolor trailColor;
-        } ghostTrailInfo;
-
-        typedef struct {
-            tdTexture* textureID;
-            Value* vLongitude;
-            Value* vLatitude;
-            Value* vEnabled;
-            double width;
-            double height;
-            double hRatio;
-            double vRatio;
-            bool enableScaling;
-        } mapImagePoint;
-
-        typedef struct {
-            Value* vText;
-            Value* vLongitude;
-            Value* vLatitude;
-            Value* vEnabled;
-            double size;
-            double hRatio;
-            double vRatio;
-            bool enableScaling;
-        } mapStringPoint;
-
-        typedef struct {
-            tdTexture* textureID;
-            double hRatio;
-            double vRatio;
-            double sizeRatio;
-
-            std::vector<std::pair<float,float>> ratioHistory;
-            std::vector<ghostTrailInfo> ghostTrails;
-            std::vector<mapImagePoint> imagePoints;
-            std::vector<mapStringPoint> stringPoints;
-        } mapLayerInfo;
-
+    private:
         void displayIcon(void);
         void displayTrail(void);
         void displayGhostTrail(void);
@@ -101,37 +58,31 @@ class dcMap : public dcGeometric
         void computeTextureBounds(void);
         void updateTrail(void);
 
-        virtual void fetchLonLat(void) = 0;
-        virtual void fetchChildParams(void) = 0;
-        virtual void computePosRatios(void) = 0;
-        virtual std::vector<std::pair<float,float>> computeGhostTrailRatios(int, std::vector<std::pair<double, double>>) = 0;
-        virtual void computeZoneRatios(void) = 0;
-        virtual void computePointRatios(void) = 0;
-
         /* live variable from dcapp panel */
-        std::map<int,mapLayerInfo> mapLayerInfos;
         Value* vTextureIndex;
         Value* vLatitude;
         Value* vLongitude;
         Value* vZoom;
-        Value* vYaw;
+    public:
+        Value* vYaw;    // needed for computing yaw in texture classes
 
         /* variables calculated from above */
         double longitude;
         double latitude;
         double zoom;
         double textureIndex;
-        mapLayerInfo* mliCurrent;
+        double trajAngle;
+    private:
+        dcMapTexture* mtCurrent;
+
+        /* list of textures */
+        std::map<int, dcMapTexture*> mapTextures;
 
         /* variables used for render params */
         double displayWidth;
         double displayHeight;
         double widthOffset;
         double heightOffset;
-
-        /* (optionally) calculated variables */
-        double trajAngle;
-        double yawOffset;
 
         /* calculated variables */
         double texUp;
@@ -161,8 +112,9 @@ class dcMap : public dcGeometric
         bool enableTrackUp;
 
         /* zone parameters */
-        std::vector<std::pair<Value*,Value*>> zoneLonLatVals;
-        std::vector<std::pair<double,double>> zoneLonLatRatios;
+    public:
+        std::vector<std::pair<Value*,Value*>> zoneVals;
+    private:
         bool enableZone;
 
         /* map scrolling */
@@ -177,7 +129,7 @@ class dcMap : public dcGeometric
         double mapWidthRatio;
         
         void fetchBaseParams(void);
-        void updateCurrentParams(void);
+        void fetchDisplayRatios(void);
 };
 
 #endif

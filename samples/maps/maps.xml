@@ -28,43 +28,31 @@
     <Window X="30" Y="30" Width="1200" Height="720" ForceUpdate="0.01" ActiveDisplay="1">
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="2500" VirtualHeight="1500">
 
-            <UPSMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="5" TrailColor="1 0 0 .7"
+            <Map Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="5" TrailColor="1 0 0 .7"
                     EnableIcon="1" EnableTrail="1" FnClearTrail="@CLEAR_TRAILS" 
                     X="50" Y="275"
                     IconFile="images/arrow.bmp" IconWidth="50" IconHeight="50" IconRotationOffset="-90" TextureIndex="@CURR_DISPLAY_TEXTURE"
                     Width="1175" Height="1175" HorizontalAlign="Left" VerticalAlign="Bottom" EnableCircularMap="1"
                     ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="89" ZoneLat2="89" ZoneLat3="89.5" ZoneLat4="89.5">
-                    <MapTexture File="../../nexsys-lfs/maps/moon_875_2.bmp"  Index="0"
+                    <UPSMapTexture File="images/moon1.s3tc"  Index="0"
                         TopLeftLatitude="87.5" TopLeftLongitude="-45"
                         BottomRightLatitude="87.5" BottomRightLongitude="135">
                         <MapImage File="images/point1.bmp" Width="250" Height="250" Latitude="89" Longitude="-135"/>
                         <MapImage File="images/point2.bmp" Width="100" Height="100" Latitude="88.8" Longitude="-45"/>
                         <MapString Size="50" Latitude="89" Longitude="0" Layers="0,1">ZONE01</MapString>    
-                    </MapTexture>>
-                    <MapTexture File="../../nexsys-lfs/maps/moon_75.bmp" Index="1" SizeRatio="6"
-                        TopLeftLatitude="75" TopLeftLongitude="-45"
-                        BottomRightLatitude="75" BottomRightLongitude="135"/>
-            </UPSMap>
+                    </UPSMapTexture>
 
-            <UPSMap Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="5" TrailColor="1 0 0 .7"
-                    EnableIcon="1" EnableTrail="1" FnClearTrail="@CLEAR_TRAILS"  EnableTrackUp="1"
-                    X="2450" Y="1450" Width="1175" Height="1175" HorizontalAlign="Right" VerticalAlign="Top"
-                    IconFile="images/arrow.bmp" IconWidth="50" IconHeight="50" IconRotationOffset="-90" TextureIndex="@CURR_DISPLAY_TEXTURE"
-                     EnableCircularMap="0"
-                    ZoneLon1="100" ZoneLon2="120" ZoneLon3="120" ZoneLon4="100" ZoneLat1="89" ZoneLat2="89" ZoneLat3="89.5" ZoneLat4="89.5">
-                    <MapTexture File="../../nexsys-lfs/maps/moon_875_2.bmp"  Index="0"
+                    <UPSMapTexture File="images/moon2.s3tc"  Index="1"
                         TopLeftLatitude="87.5" TopLeftLongitude="-45"
                         BottomRightLatitude="87.5" BottomRightLongitude="135">
+<!--
                         <MapImage File="images/point1.bmp" Width="250" Height="250" Latitude="89" Longitude="-135"/>
-                        <MapString Size="50" Latitude="89" Longitude="0">ZONE01</MapString>
-                    </MapTexture>
-                    <MapTexture File="../../nexsys-lfs/maps/moon_75.bmp" Index="1" SizeRatio="6"
-                        TopLeftLatitude="75" TopLeftLongitude="-45"
-                        BottomRightLatitude="75" BottomRightLongitude="135">
                         <MapImage File="images/point2.bmp" Width="100" Height="100" Latitude="88.8" Longitude="-45"/>
-                        <MapString Size="50" Latitude="89" Longitude="0">ZONE01</MapString>
-                    </MapTexture>
-            </UPSMap>
+                        <MapString Size="50" Latitude="89" Longitude="0" Layers="0,1">ZONE01</MapString>    
+-->
+                    </UPSMapTexture>
+
+            </Map>
 
             <!-- clear button -->
             <Button Type="Momentary" X="1000" Y="135" Width="100" Height="100" Variable="@ClearTrailsSelected"/>

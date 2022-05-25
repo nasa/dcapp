@@ -17,7 +17,7 @@ extern void UpdateDisplay(void);
 
 
 dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), vTextureIndex(0x0), vLatitude(0x0), vLongitude(0x0), vZoom(0x0), vYaw(0x0),
-                                    longitude(0), latitude(0), zoom(1), textureIndex(0), trajAngle(0), yawOffset(0),
+                                    longitude(0), latitude(0), zoom(1), textureIndex(0), trajAngle(0),
                                     enableTrail(true), trailWidth(25), trailResolution(.005), fnClearTrail(0x0),
                                     enableIcon(true), enableCustomIcon(false), iconRotationOffset(0), iconTextureID(0x0),
                                     enableCircularMap(0), enableTrackUp(0), enableZone(false), vUnlocked(0x0), unlocked(false), selected(false)
@@ -30,11 +30,13 @@ dcMap::~dcMap()
     return;
 }
 
-void dcMap::setTexture(const std::string &pos, const std::string &filename)
+void dcMap::setTexture(const std::string &pos, dcMapTexture* mapTex)
 {
-    int index = getValue(pos)->getInteger();
-    if (!pos.empty() && !filename.empty()) 
-        mapLayerInfos[index].textureID = tdLoadTexture(filename);
+    int index = 0;
+    if (!pos.empty()) {
+        index = getValue(pos)->getInteger();
+    }
+    mapTextures[index] = mapTex;
 }
 
 void dcMap::setTextureIndex(const std::string &inval)
@@ -60,22 +62,9 @@ void dcMap::setZoom(const std::string &inval)
     if (!inval.empty()) vZoom = getValue(inval);
 }
 
-void dcMap::setSizeRatio(const std::string &pos, const std::string &sizeRatio)
+void dcMap::setYaw(const std::string &inval)
 {
-    int index = getValue(pos)->getInteger();
-    if (!pos.empty() && !sizeRatio.empty()) 
-        mapLayerInfos[index].sizeRatio = getValue(sizeRatio)->getDecimal();
-    else 
-        mapLayerInfos[index].sizeRatio = 1;
-}
-
-void dcMap::setYaw(const std::string &inval1, const std::string &inval2)
-{
-    if (!inval1.empty()) 
-    {
-        vYaw = getValue(inval1);
-        if (!inval2.empty()) yawOffset = getValue(inval2)->getDecimal();
-    }
+    if (!inval.empty()) vYaw = getValue(inval);
 }
 
 void dcMap::setEnableCircularMap(const std::string &inval)
@@ -122,50 +111,6 @@ void dcMap::setTrailResolution(const std::string &inval)
     if (!inval.empty()) trailResolution = getValue(inval)->getDecimal();
 }
 
-void dcMap::setGhostTrail(const std::string &layer, const std::string &filename, const std::string &cspec, const std::string &linewidth)
-{
-    if (!layer.empty() && !filename.empty()) 
-    {
-        int index = getValue(layer)->getInteger();
-        PathInfo mypath(filename);
-        if (!(mypath.isValid()))
-        {
-            warning_msg("Unable to locate ghost trail file at " + filename);
-            return;
-        }
-        
-        std::string line, word;
-        double lat, lon;
-        std::vector<std::pair<double, double>> result;
-        std::ifstream file(mypath.getFullPath());
-        while ( std::getline(file, line) )
-        {
-            std::stringstream sline(line);
-
-            getline(sline, word, ',');
-            lat = std::stod(word);
-            getline(sline, word, ',');
-            lon = std::stod(word);
-
-            result.push_back({lat, lon});
-        }
-
-        auto gtr = computeGhostTrailRatios(index, result);
-        if (gtr.size() > 1)
-        {
-            ghostTrailInfo gti = {gtr, 25, Kolor()};
-            if (!cspec.empty()) gti.trailColor.set(cspec);
-            if (!linewidth.empty()) gti.trailWidth = getValue(linewidth)->getDecimal();
-
-            mapLayerInfos[index].ghostTrails.push_back(gti);
-        }
-    }
-    else
-    {
-        printf("dcMap.setGhostTrail(): missing parameters\n");
-    }
-}
-
 void dcMap::setIconTexture(const std::string &filename) 
 {
     if (!filename.empty()) {
@@ -200,70 +145,13 @@ void dcMap::setZoneLonLat(const std::string &lon1, const std::string &lat1, cons
 
     if (!lon1.empty() && !lat1.empty() && !lon2.empty() && !lat2.empty() && !lon3.empty() && !lat3.empty() && !lon4.empty() && !lat4.empty())
     {
-        zoneLonLatVals.clear();
-        zoneLonLatVals.push_back({getValue(lon1), getValue(lat1)});
-        zoneLonLatVals.push_back({getValue(lon2), getValue(lat2)});
-        zoneLonLatVals.push_back({getValue(lon3), getValue(lat3)});
-        zoneLonLatVals.push_back({getValue(lon4), getValue(lat4)});
+        zoneVals.clear();
+        zoneVals.push_back({getValue(lon1), getValue(lat1)});
+        zoneVals.push_back({getValue(lon2), getValue(lat2)});
+        zoneVals.push_back({getValue(lon3), getValue(lat3)});
+        zoneVals.push_back({getValue(lon4), getValue(lat4)});
         enableZone = true;
     }
-}
-
-void dcMap::setMapImagePoint(const std::string &layer, const std::string &filename, const std::string &lon, const std::string &lat, 
-    const std::string &enable, const std::string &w, const std::string &h, const std::string &enableScaling) {
-
-    mapImagePoint mip;
-    int index;
-    if (!layer.empty() && !filename.empty() && !lon.empty() && !lat.empty() && !w.empty() && !h.empty()) 
-    {
-        index = getValue(layer)->getInteger();
-        mip.textureID = tdLoadTexture(filename);
-        mip.vLongitude = getValue(lon);
-        mip.vLatitude = getValue(lat);
-        mip.width = getValue(w)->getDecimal();
-        mip.height = getValue(h)->getDecimal();
-    }
-    else
-    {
-        printf("setMapImagePoint: missing a parameter, ignoring. Check documentation\n");
-        return;
-    }
-
-    if (!enable.empty()) mip.vEnabled = getValue(enable);
-    else mip.vEnabled = getValue("1");
-
-    if (!enableScaling.empty()) mip.enableScaling = getValue(enableScaling)->getBoolean();
-    else mip.enableScaling = 0;
-
-    mapLayerInfos[index].imagePoints.push_back(mip);
-}
-
-void dcMap::setMapStringPoint(const std::string &layer, const std::string &text, const std::string &lon, const std::string &lat, 
-    const std::string &enable, const std::string &size, const std::string &enableScaling) {
-
-    mapStringPoint msp;
-    int index;
-    if (!layer.empty() && !text.empty() && !lon.empty() && !lat.empty() && !size.empty()) 
-    {
-        index = getValue(layer)->getInteger();
-        msp.vText = getValue(text);
-        msp.vLongitude = getValue(lon);
-        msp.vLatitude = getValue(lat);
-        msp.size = getValue(size)->getDecimal();
-    }
-    else
-    {
-        printf("setMapStringPoint: missing a parameter, ignoring. Check documentation\n");
-        return;
-    }
-
-    if (!enable.empty()) msp.vEnabled = getValue(enable);
-    else msp.vEnabled = getValue("1");
-
-    if (!enableScaling.empty()) msp.enableScaling = getValue(enableScaling)->getBoolean();
-    else msp.enableScaling = 0;
-
-    mapLayerInfos[index].stringPoints.push_back(msp);
 }
 
 void dcMap::setUnlocked(const std::string &inval) {
@@ -335,30 +223,37 @@ void dcMap::fetchBaseParams(void)
 {
     if (vTextureIndex) textureIndex = vTextureIndex->getInteger();
 
-    mliCurrent = &(mapLayerInfos[textureIndex]);
+    mtCurrent = mapTextures[textureIndex];
 
     if (vZoom) zoom = vZoom->getDecimal();
     else zoom = 1;
-    if (zoom < 1) 
-        zoom = 1;
+    if (zoom < 1) zoom = 1;
 
     if (vUnlocked) unlocked = vUnlocked->getBoolean();
+
+    longitude = vLongitude->getDecimal();
+    latitude = vLatitude->getDecimal();
 }
 
-void dcMap::updateCurrentParams(void)
+void dcMap::fetchDisplayRatios(void)
 {
     // TODO update this to work with multiple layers
     // when switching layers, it won't pop the correct hratio
     // back into place. therefore the location will be wrong 
     // on the swapped layer (if it's has different dimensions)
-    hRatio = mliCurrent->hRatio;
-    vRatio = mliCurrent->vRatio;
+    
+    // only run the following if the user is not scrolling
+    if (!selected && !unlocked) {
+        hRatio = mtCurrent->hRatio;
+        vRatio = mtCurrent->vRatio;
+    }
+    
 }
 
 // get bounds for texture on 0 to 1 range
 void dcMap::computeTextureBounds(void)
 {
-    mapWidthRatio = 1/(mliCurrent->sizeRatio)/zoom/2;
+    mapWidthRatio = 1/(mtCurrent->sizeRatio)/zoom/2;
 
     texUp = vRatio + mapWidthRatio;
     texDown = vRatio - mapWidthRatio;
@@ -395,15 +290,14 @@ void dcMap::displayIcon(void) {
         mwidth = mheight = 25;
     }
 
-    mx = (mliCurrent->hRatio - texLeft) / (texRight - texLeft) * width;
-    my = (mliCurrent->vRatio - texDown) / (texUp - texDown) * height;
+    mx = (mtCurrent->hRatio - texLeft) / (texRight - texLeft) * width;
+    my = (mtCurrent->vRatio - texDown) / (texUp - texDown) * height;
     mdelx = mwidth/2;
     mdely = mheight/2;
 
     if (enableCustomIcon) 
     {
         container_start(mx, my, mdelx, mdely, 1, 1, iconRotationOffset + trajAngle);
-
         draw_image(this->iconTextureID, mwidth, mheight);
         container_end();
     }
@@ -417,10 +311,10 @@ void dcMap::displayIcon(void) {
 void dcMap::displayTrail(void)
 {
     std::vector<float> pntsA;
-    if (mliCurrent->ratioHistory.size() > 1) {
-        for (uint i = 1; i < mliCurrent->ratioHistory.size(); i++) {
-            std::pair<float,float> p1 = mliCurrent->ratioHistory.at(i-1);
-            std::pair<float,float> p2 = mliCurrent->ratioHistory.at(i);
+    if (mtCurrent->ratioHistory.size() > 1) {
+        for (unsigned int i = 1; i < mtCurrent->ratioHistory.size(); i++) {
+            std::pair<float,float> p1 = mtCurrent->ratioHistory.at(i-1);
+            std::pair<float,float> p2 = mtCurrent->ratioHistory.at(i);
             if ( (p1.first > texLeft && p1.first < texRight && p1.second > texDown && p1.second < texUp) ||
                  (p2.first > texLeft && p2.first < texRight && p2.second > texDown && p2.second < texUp) ) {
 
@@ -448,7 +342,7 @@ void dcMap::displayTrail(void)
 
         // draw last position to current point
         if (!unlocked && !selected) {
-            std::pair<float,float> p = mliCurrent->ratioHistory.back();
+            std::pair<float,float> p = mtCurrent->ratioHistory.back();
 
             float mx1 = (p.first - texLeft) / (texRight - texLeft) * width;
             float my1 = (p.second - texDown) / (texUp - texDown) * height;
@@ -474,22 +368,22 @@ void dcMap::updateTrail(void)
     }
 
     // compute unit ratios for x and y
-    for (auto const& pair : mapLayerInfos) 
+    for (auto const& pair : mapTextures)
     {
-        mapLayerInfo* mli = &(mapLayerInfos[pair.first]);
+        dcMapTexture* tex = pair.second;
 
         // clear trail 
-        if (doClear) mli->ratioHistory.clear();
+        if (doClear) tex->ratioHistory.clear();
 
         // add position to list
-        if (mli->ratioHistory.empty()) 
-            mli->ratioHistory.push_back({(float)mli->hRatio, (float)mli->vRatio});
+        if (tex->ratioHistory.empty()) 
+            tex->ratioHistory.push_back({(float)tex->hRatio, (float)tex->vRatio});
         else
         {
-            std::pair<float,float> last_pos = mli->ratioHistory.back();
-            float dist = sqrt(pow(mli->hRatio-last_pos.first, 2) + pow(mli->vRatio-last_pos.second, 2)*1.0);
+            std::pair<float,float> last_pos = tex->ratioHistory.back();
+            float dist = sqrt(pow(tex->hRatio-last_pos.first, 2) + pow(tex->vRatio-last_pos.second, 2)*1.0);
             if ( dist > trailResolution) {
-                mli->ratioHistory.push_back({mli->hRatio, mli->vRatio});
+                tex->ratioHistory.push_back({tex->hRatio, tex->vRatio});
             }
         }
     }
@@ -497,11 +391,11 @@ void dcMap::updateTrail(void)
 
 void dcMap::displayGhostTrail(void)
 {
-    for (uint ii = 0; ii < mliCurrent->ghostTrails.size(); ii++)
+    for (unsigned int ii = 0; ii < mtCurrent->ghostTrails.size(); ii++)
     {
-        auto ghostTrail = &(mliCurrent->ghostTrails[ii]);
+        auto ghostTrail = &(mtCurrent->ghostTrails[ii]);
         std::vector<float> pntsA;
-        for (uint i = 1; i < ghostTrail->ghostRatioHistory.size(); i++) {
+        for (unsigned int i = 1; i < ghostTrail->ghostRatioHistory.size(); i++) {
             std::pair<float,float> p1 = ghostTrail->ghostRatioHistory.at(i-1);
             std::pair<float,float> p2 = ghostTrail->ghostRatioHistory.at(i);
             if ( (p1.first > texLeft && p1.first < texRight && p1.second > texDown && p1.second < texUp) ||
@@ -534,10 +428,10 @@ void dcMap::displayGhostTrail(void)
 
 void dcMap::displayZone(void)
 {
-    computeZoneRatios();
+    mtCurrent->computeZoneRatios();
     std::vector<float> pntsA;
-    for (uint ii = 0; ii < zoneLonLatRatios.size(); ii++) {
-        std::pair<float,float> p = zoneLonLatRatios.at(ii);
+    for (unsigned int ii = 0; ii < mtCurrent->zoneRatios.size(); ii++) {
+        std::pair<float,float> p = mtCurrent->zoneRatios.at(ii);
         pntsA.push_back( (p.first - texLeft) / (texRight - texLeft) * width );
         pntsA.push_back( (p.second - texDown) / (texUp - texDown) * height );
     }
@@ -549,12 +443,12 @@ void dcMap::displayPoints(void)
 {
     float mx, my, mwidth, mheight, msize, mdelx, mdely;
 
-    computePointRatios();
+    mtCurrent->computePointRatios();
 
     // process images
-    for (uint ii = 0; ii < mliCurrent->imagePoints.size(); ii++) {
+    for (unsigned int ii = 0; ii < mtCurrent->imagePoints.size(); ii++) {
 
-        mapImagePoint& mip = mliCurrent->imagePoints.at(ii);
+        mapImagePoint& mip = mtCurrent->imagePoints.at(ii);
         if (mip.vEnabled->getInteger()) {
 
             mx = (mip.hRatio - texLeft) / (texRight - texLeft) * width;
@@ -578,9 +472,9 @@ void dcMap::displayPoints(void)
 
     // process strings
     static tdFont* fontID = tdLoadFont(AppData.defaultfont, "");
-    for (uint ii = 0; ii < mliCurrent->stringPoints.size(); ii++) {
+    for (unsigned int ii = 0; ii < mtCurrent->stringPoints.size(); ii++) {
 
-        mapStringPoint& msp = mliCurrent->stringPoints.at(ii);
+        mapStringPoint& msp = mtCurrent->stringPoints.at(ii);
         if (msp.vEnabled->getInteger()) {
 
             // get string with variables, constants, formatting
@@ -602,7 +496,7 @@ void dcMap::displayPoints(void)
                 msize *= zoom;
             }
 
-            for (uint jj=0; jj<lines.size(); jj++) {
+            for (unsigned int jj=0; jj<lines.size(); jj++) {
                 float stringWidth = fontID->getAdvance(lines[jj], flMonoNone) * msize / fontID->getBaseSize();
                 double myleft = -0.5 * stringWidth;
                 double mybottom = msize * (((double)lines.size()/2) - (double)(jj + 1));
@@ -649,8 +543,8 @@ void dcMap::handleMouseMotion(double inx, double iny) {
 
         if (inx > truex && inx < truex + displayWidth && iny > truey && iny < truey + displayHeight) {
 
-            double hDiff = (inx - scrollX) / width / mliCurrent->sizeRatio / zoom;
-            double vDiff = (iny - scrollY) / height / mliCurrent->sizeRatio / zoom;
+            double hDiff = (inx - scrollX) / width / mtCurrent->sizeRatio / zoom;
+            double vDiff = (iny - scrollY) / height / mtCurrent->sizeRatio / zoom;
 
             if (enableTrackUp) {
                 double trajAngleR = (trajAngle - 90) * M_PI / 180;
@@ -681,14 +575,11 @@ void dcMap::handleMouseRelease(void) {
 void dcMap::processPreCalculations(void) {
     computeGeometry();
     fetchBaseParams();
-    fetchChildParams();
-    fetchLonLat();      // dependent on UPS/UTM
-    computePosRatios();
-
-    // only run the following if the user is not scrolling
-    if (!selected && !unlocked) {
-        updateCurrentParams();
+    for (auto const& pair : mapTextures) {
+        pair.second->computePosRatios();    // updated ratios for all textures
     }
+
+    fetchDisplayRatios();
 }
 
 void dcMap::processPostCalculations(void) {
@@ -727,7 +618,7 @@ void dcMap::draw(void)
             translate_start(-1 * width/2, -1 * height/2);
         }
 
-        draw_map(mliCurrent->textureID, width, height, texUp, texDown, texLeft, texRight);
+        draw_map(mtCurrent->textureID, width, height, texUp, texDown, texLeft, texRight);
         if ( enableZone )   displayZone();
         displayPoints();     // always display points
         displayGhostTrail(); // always display trails
