@@ -22,9 +22,12 @@ class dcUtmMapTexture : public dcMapTexture
         double latMax;
 
         void computePosRatios(void);
+        void computeYaw(void);
         void addGhostTrail(std::vector<std::pair<double, double>>, double, Kolor);
         void computeZoneRatios(void);
         void computePointRatios(void);
+
+        double lonToHRatio(double lon);
 };
 
 #endif

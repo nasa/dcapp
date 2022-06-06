@@ -588,6 +588,7 @@ void dcMap::processPostCalculations(void) {
 
 void dcMap::draw(void)
 {
+    mtCurrent->computeYaw();
     computeTextureBounds();
 
     stencil_begin();        // enable stencil, clear existing buffer

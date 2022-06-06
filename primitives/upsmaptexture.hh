@@ -23,6 +23,7 @@ class dcUpsMapTexture : public dcMapTexture
         int thetaFactor;
 
         void computePosRatios(void);
+        void computeYaw(void);
         void addGhostTrail(std::vector<std::pair<double, double>>, double, Kolor);
         void computeZoneRatios(void);
         void computePointRatios(void);

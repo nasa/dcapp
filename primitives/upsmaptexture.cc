@@ -69,15 +69,18 @@ void dcUpsMapTexture::addGhostTrail(std::vector<std::pair<double, double>> latlo
 void dcUpsMapTexture::computePosRatios(void) 
 {
     // save previous ratios
-    double prevHRatio = hRatio;
-    double prevVRatio = vRatio;
+    prevHRatio = hRatio;
+    prevVRatio = vRatio;
 
     double ux = latlonToUnitX(mapInfo->latitude, thetaFactor * mapInfo->longitude);
     double uy = latlonToUnitY(mapInfo->latitude, thetaFactor * mapInfo->longitude);
 
     hRatio = (ux - topLeftUnitX) / (bottomRightUnitX - topLeftUnitX);
     vRatio = (uy - bottomRightUnitY) / (topLeftUnitY - bottomRightUnitY);
+}
 
+void dcUpsMapTexture::computeYaw(void)
+{
     // compute trajectory
     if ( mapInfo->vYaw )
         mapInfo->trajAngle = mapInfo->vYaw->getDecimal() + yawOffset;

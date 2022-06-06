@@ -16,7 +16,23 @@ dcUtmMapTexture::~dcUtmMapTexture()
     return;
 }
 
-void dcUtmMapTexture::setParams(const std::string &loMin, const std::string &loMax, const std::string &laMin, const std::string &laMax)
+// convert lon to hRatio
+double dcUtmMapTexture::lonToHRatio(double lon) {
+    if (lonMin < lonMax) {
+        return (lon - lonMin) / (lonMax - lonMin);
+    }
+
+    // account for 'wraparound' scenario
+    double unitLon = lon - lonMax;
+    if (lon < lonMin) {
+        unitLon += 360;
+    }
+    return unitLon / (lonMax - lonMin + 360);
+}
+
+
+void dcUtmMapTexture::setParams(const std::string &loMin, const std::string &loMax,
+    const std::string &laMin, const std::string &laMax)
 {
     if (!laMin.empty() && !laMax.empty() && !loMin.empty() && !loMax.empty())
     {
@@ -38,7 +54,7 @@ void dcUtmMapTexture::addGhostTrail(std::vector<std::pair<double, double>> latlo
 
     for (auto const& latlon : latlons) {
         ghostRatioHistory.push_back({
-            (latlon.first - lonMin) / (lonMax - lonMin),
+            lonToHRatio(latlon.first),
             (latlon.second - latMin) / (latMax - latMin)
         });
     }
@@ -49,17 +65,20 @@ void dcUtmMapTexture::addGhostTrail(std::vector<std::pair<double, double>> latlo
 void dcUtmMapTexture::computePosRatios(void) 
 {
     // save previous ratios
-    double prevHRatio = hRatio;
-    double prevVRatio = vRatio;
+    prevHRatio = hRatio;
+    prevVRatio = vRatio;
 
-    hRatio = (mapInfo->longitude - lonMin) / (lonMax - lonMin);
+    hRatio = lonToHRatio(mapInfo->longitude);
     vRatio = (mapInfo->latitude - latMin) / (latMax - latMin);
+}
 
-    // calculate current angle of trajectory
-    if ( mapInfo->vYaw ) 
+void dcUtmMapTexture::computeYaw(void)
+{
+    // compute trajectory
+    if ( mapInfo->vYaw )
         mapInfo->trajAngle = mapInfo->vYaw->getDecimal() + yawOffset;
     else if ( prevVRatio != vRatio || prevHRatio != hRatio)
-        mapInfo->trajAngle = atan2((vRatio - prevVRatio), (hRatio - prevHRatio)) * 180 / M_PI;
+        mapInfo->trajAngle = atan2((vRatio - prevVRatio), ( hRatio - prevHRatio)) * 180 / M_PI;
 }
 
 void dcUtmMapTexture::computeZoneRatios(void)
@@ -68,7 +87,7 @@ void dcUtmMapTexture::computeZoneRatios(void)
     for (unsigned int i = 0; i < mapInfo->zoneVals.size(); i++) {
         // add calculated value
         zoneRatios.push_back({
-            (mapInfo->zoneVals.at(i).first->getDecimal() - lonMin) / (lonMax - lonMin),
+            lonToHRatio(mapInfo->zoneVals.at(i).first->getDecimal()),
             (mapInfo->zoneVals.at(i).second->getDecimal() - latMin) / (latMax - latMin)
         });
     }
@@ -82,7 +101,7 @@ void dcUtmMapTexture::computePointRatios(void)
         mipLatitude = (mip.vLatitude)->getDecimal();
         mipLongitude = (mip.vLongitude)->getDecimal();
 
-        mip.hRatio = (mipLongitude - lonMin) / (lonMax - lonMin);
+        mip.hRatio = (lonToHRatio(mipLongitude) - lonMin) / (lonMax - lonMin);
         mip.vRatio = (mipLatitude - latMin) / (latMax - latMin);
     }
 
@@ -92,7 +111,7 @@ void dcUtmMapTexture::computePointRatios(void)
         mspLatitude = (msp.vLatitude)->getDecimal();
         mspLongitude = (msp.vLongitude)->getDecimal();
 
-        msp.hRatio = (mspLongitude - lonMin) / (lonMax - lonMin);
+        msp.hRatio = (lonToHRatio(mspLongitude) - lonMin) / (lonMax - lonMin);
         msp.vRatio = (mspLatitude - latMin) / (latMax - latMin);
     }
 }

@@ -65,6 +65,8 @@ class dcMapTexture
         double vRatio;
         double sizeRatio;
         double yawOffset;
+        double prevHRatio;
+        double prevVRatio;
 
         std::vector<std::pair<double,double>> ratioHistory;
         std::vector<ghostTrailInfo> ghostTrails;
@@ -73,6 +75,7 @@ class dcMapTexture
         std::vector<std::pair<double,double>> zoneRatios;
 
         virtual void computePosRatios(void) = 0;
+        virtual void computeYaw(void) = 0;
         virtual void addGhostTrail(std::vector<std::pair<double, double>>, double, Kolor) = 0;
         virtual void computeZoneRatios(void) = 0;
         virtual void computePointRatios(void) = 0;
