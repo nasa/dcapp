@@ -526,14 +526,14 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 if (NodeCheck(subnode, "OnRelease")) process_elements(myitem->ReleaseList, subnode->children);
             }
         }
-        if (NodeCheck(node, "UTMMap"))
+        if (NodeCheck(node, "Map"))
         {
-            dcUtmMap *myitem = new dcUtmMap(myparent);
+            dcMap *myitem = new dcMap(myparent);
             myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
             myitem->setTextureIndex(get_element_data(node, "TextureIndex"));
             myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
             myitem->setZoom(get_element_data(node, "Zoom"));
-            myitem->setYaw(get_element_data(node, "Yaw"), get_element_data(node, "YawOffset"));
+            myitem->setYaw(get_element_data(node, "Yaw"));
             myitem->setEnableCircularMap(get_element_data(node, "EnableCircularMap"));
             myitem->setEnableTrackUp(get_element_data(node, "EnableTrackUp"));
             myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
@@ -551,8 +551,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 get_element_data(node, "ZoneLon2"), get_element_data(node, "ZoneLat2"), 
                 get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
                 get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
-            xmldata myfile = get_element_data(node, "File");
-            myitem->setTexture("0", myfile);
             xmldata iconfile = get_element_data(node, "IconFile");
             if (!iconfile.empty()) 
             {
@@ -562,102 +560,76 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             }
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
-                if (NodeCheck(subnode, "Textures"))
+                if (NodeCheck(subnode, "UPSMapTexture"))
                 {
+                    dcUpsMapTexture *mytex = new dcUpsMapTexture(myitem);
+                    mytex->setTexture(get_element_data(subnode, "File"));
+                    mytex->setParams(get_element_data(subnode, "TopLeftLatitude"), get_element_data(subnode, "TopLeftLongitude"),
+                        get_element_data(subnode, "BottomRightLatitude"), get_element_data(subnode, "BottomRightLongitude"),
+                        get_element_data(subnode, "EnableInverseTheta"));
+                    mytex->setYawOffset(get_element_data(node, "YawOffset"));
+                    mytex->setSizeRatio(get_element_data(subnode, "SizeRatio"));
+
                     for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
                     {
-                        if (NodeCheck(subsubnode, "MapTexture")) 
+                        if (NodeCheck(subsubnode, "MapImage"))
                         {
-                            myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
-                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "LonMin"), 
-                                get_element_data(subsubnode, "LonMax"), get_element_data(subsubnode, "LatMin"), get_element_data(subsubnode, "LatMax"));
-                            myitem->setSizeRatio(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "SizeRatio"));
+                            mytex->setMapImagePoint(get_element_data(subsubnode, "File"), 
+                                get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"),
+                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"),
+                                get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "EnableScaling"));
+                        }
+                        else if (NodeCheck(subsubnode, "MapString"))
+                        {
+                            mytex->setMapStringPoint(get_node_content(subsubnode), 
+                            get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"),
+                            get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Size"), 
+                            get_element_data(subsubnode, "EnableScaling"));
+                        }
+                        else if (NodeCheck(subsubnode, "MapGhostTrail"))
+                        {
+                            mytex->setGhostTrail(get_element_data(subsubnode, "File"),
+                                get_element_data(subsubnode, "LineColor"), get_element_data(subsubnode, "LineWidth"));
                         }
                     }
-                } else if (NodeCheck(subnode, "Points"))
+
+                    myitem->setTexture(get_element_data(subnode, "Index"), mytex);
+                }
+                else if (NodeCheck(subnode, "UTMMapTexture"))
                 {
+                    dcUtmMapTexture *mytex = new dcUtmMapTexture(myitem);
+                    mytex->setTexture(get_element_data(subnode, "File"));
+                    mytex->setParams(get_element_data(subnode, "LonMin"), get_element_data(subnode, "LonMax"),
+                        get_element_data(subnode, "LatMin"), get_element_data(subnode, "LatMax"));
+                    mytex->setYawOffset(get_element_data(node, "YawOffset"));
+                    mytex->setSizeRatio(get_element_data(subnode, "SizeRatio"));
+
                     for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
                     {
-                        if (NodeCheck(subsubnode, "MapImage")) {
-                            myitem->setMapImagePoint(get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
-                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"), get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "EnableScaling"), get_element_data(subsubnode, "Layers"));
-                        } else if (NodeCheck(subsubnode, "MapString")) {
-                            myitem->setMapStringPoint(get_node_content(subsubnode), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
-                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Size"), get_element_data(subsubnode, "EnableScaling"), get_element_data(subsubnode, "Layers"));
+                        if (NodeCheck(subsubnode, "MapImage"))
+                        {
+                            mytex->setMapImagePoint(get_element_data(subsubnode, "File"), 
+                                get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"),
+                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"),
+                                get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "EnableScaling"));
+                        }
+                        else if (NodeCheck(subsubnode, "MapString"))
+                        {
+                            mytex->setMapStringPoint(get_node_content(subsubnode), 
+                            get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"),
+                            get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Size"), 
+                            get_element_data(subsubnode, "EnableScaling"));
+                        }
+                        else if (NodeCheck(subsubnode, "MapGhostTrail"))
+                        {
+                            mytex->setGhostTrail(get_element_data(subsubnode, "File"),
+                                get_element_data(subsubnode, "LineColor"), get_element_data(subsubnode, "LineWidth"));
                         }
                     }
+
+                    myitem->setTexture(get_element_data(subnode, "Index"), mytex);
                 }
             }
-            myitem->setGhostTrail(get_element_data(node, "GhostTrailFile"));
-            myitem->setGhostTrailColor(get_element_data(node, "GhostTrailColor"));
-            myitem->setGhostTrailWidth(get_element_data(node, "GhostTrailWidth"));
-            myitem->setUnlocked(get_element_data(node, "Unlock"));
-        }
-        if (NodeCheck(node, "UPSMap"))
-        {
-            dcUpsMap *myitem = new dcUpsMap(myparent);
-            myitem->setPosition(get_element_data(node, "X"), get_element_data(node, "Y"));
-            myitem->setTextureIndex(get_element_data(node, "TextureIndex"));
-            myitem->setLonLat(get_element_data(node, "Latitude"), get_element_data(node, "Longitude"));
-            myitem->setZoom(get_element_data(node, "Zoom"));
-            myitem->setYaw(get_element_data(node, "Yaw"), get_element_data(node, "YawOffset"));
-            myitem->setEnableCircularMap(get_element_data(node, "EnableCircularMap"));
-            myitem->setEnableTrackUp(get_element_data(node, "EnableTrackUp"));
-            myitem->setSize(get_element_data(node, "Width"), get_element_data(node, "Height"));
-            myitem->setRotation(get_element_data(node, "Rotate"));
-            myitem->setAlignment(get_element_data(node, "HorizontalAlign"), get_element_data(node, "VerticalAlign"));
-            myitem->setOrigin(get_element_data(node, "OriginX"), get_element_data(node, "OriginY"));
-            myitem->setEnableIcon(get_element_data(node, "EnableIcon"));
-            myitem->setEnableTrail(get_element_data(node, "EnableTrail"));
-            myitem->setTrailColor(get_element_data(node, "TrailColor"));
-            myitem->setTrailWidth(get_element_data(node, "TrailWidth"));
-            myitem->setFnClearTrail(get_element_data(node, "FnClearTrail"));
-            myitem->setTrailResolution(get_element_data(node, "TrailResolution"));
-            myitem->setEnableInverseTheta(get_element_data(node, "EnableInverseTheta"));
-            myitem->setZoneLonLat(
-                get_element_data(node, "ZoneLon1"), get_element_data(node, "ZoneLat1"),
-                get_element_data(node, "ZoneLon2"), get_element_data(node, "ZoneLat2"), 
-                get_element_data(node, "ZoneLon3"), get_element_data(node, "ZoneLat3"), 
-                get_element_data(node, "ZoneLon4"), get_element_data(node, "ZoneLat4"));
-            xmldata myfile = get_element_data(node, "File");
-            myitem->setTexture("0", myfile);
-            xmldata iconfile = get_element_data(node, "IconFile");
-            if (!iconfile.empty()) 
-            {
-                myitem->setIconTexture(iconfile);
-                myitem->setIconSize(get_element_data(node, "IconWidth"), get_element_data(node, "IconHeight"));
-                myitem->setIconRotationOffset(get_element_data(node, "IconRotationOffset"));
-            }
-            for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
-            {
-                if (NodeCheck(subnode, "Textures"))
-                {
-                    for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
-                    {
-                        if (NodeCheck(subsubnode, "MapTexture")) {
-                            myitem->setTexture(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "File"));
-                            myitem->setLonLatParams(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "PolarAxisOffset"), 
-                                get_element_data(subsubnode, "LatOrigin"), get_element_data(subsubnode, "LatOuter"));
-                            myitem->setSizeRatio(get_element_data(subsubnode, "Index"), get_element_data(subsubnode, "SizeRatio"));
-                        }
-                    }
-                } else if (NodeCheck(subnode, "Points"))
-                {
-                    for (xmlNodePtr subsubnode = subnode->children; subsubnode; subsubnode = subsubnode->next)
-                    {
-                        if (NodeCheck(subsubnode, "MapImage")) {
-                            myitem->setMapImagePoint(get_element_data(subsubnode, "File"), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
-                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"), get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "EnableScaling"), get_element_data(subsubnode, "Layers"));
-                        } else if (NodeCheck(subsubnode, "MapString")) {
-                            myitem->setMapStringPoint(get_node_content(subsubnode), get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"), 
-                                get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Size"), get_element_data(subsubnode, "EnableScaling"), get_element_data(subsubnode, "Layers"));
-                        }
-                    }
-                }
-            }
-            myitem->setGhostTrail(get_element_data(node, "GhostTrailFile"));
-            myitem->setGhostTrailColor(get_element_data(node, "GhostTrailColor"));
-            myitem->setGhostTrailWidth(get_element_data(node, "GhostTrailWidth"));
             myitem->setUnlocked(get_element_data(node, "Unlock"));
         }
         if (NodeCheck(node, "PixelStream"))
@@ -916,11 +888,11 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRPYerrors(get_element_data(node, "RollError"), get_element_data(node, "PitchError"), get_element_data(node, "YawError"));
             myitem->setRadius(get_element_data(node, "OuterRadius"), get_element_data(node, "BallRadius"));
             myitem->setChevron(get_element_data(node, "ChevronWidth"), get_element_data(node, "ChevronHeight"));
-	    myitem->setRPYRates(get_element_data(node, "RollRate"), get_element_data(node, "PitchRate"), get_element_data(node, "YawRate"), get_element_data(node, "RateMax"));
-	    myitem->setNeedleColor(get_element_data(node, "NeedleColor"));
-	    myitem->setRateIndicatorColor(get_element_data(node, "RateIndicatorColor"));
-	    myitem->hideNeedles(get_element_data(node, "HideNeedles"));
-	    myitem->hideRateIndicators(get_element_data(node, "HideRateIndicators"));
+            myitem->setRPYRates(get_element_data(node, "RollRate"), get_element_data(node, "PitchRate"), get_element_data(node, "YawRate"), get_element_data(node, "RateMax"));
+            myitem->setNeedleColor(get_element_data(node, "NeedleColor"));
+            myitem->setRateIndicatorColor(get_element_data(node, "RateIndicatorColor"));
+            myitem->hideNeedles(get_element_data(node, "HideNeedles"));
+            myitem->hideRateIndicators(get_element_data(node, "HideRateIndicators"));
         }
         if (NodeCheck(node, "MouseMotion"))
         {
