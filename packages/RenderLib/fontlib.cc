@@ -282,7 +282,7 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, GlyphInfo *ginfo_outline, UTF32 ind
             scale of 0..255 to register outline, 150 seems to be the best overall fit
     */
     int ci, cj, oi, oj, bi, bj;
-    char temp_byte;
+    unsigned char temp_byte;
     for (i=0; i<64; i++) {
         for (j=0; j<64; j++) {
             if (bitmap[i][j]) {

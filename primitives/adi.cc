@@ -160,7 +160,7 @@ void dcADI::draw_top_rate_indicator(double rate, double width, double height, do
   if (hideRateIndicatorsFlag) return;
     //std::vector<float> pointsL = { 0, (float)radius, (float)width/2.0f, (float)(radius-height), -((float)width/2.0f), (float)(radius-height) };
 
-  float vertOffset = 65.0;
+  // float vertOffset = 65.0;
 
   //radius += vertOffset;
   radius = radius * 1.4;
@@ -189,7 +189,7 @@ void dcADI::draw_bottom_rate_indicator(double rate, double width, double height,
   if (hideRateIndicatorsFlag) return;
     //std::vector<float> pointsL = { 0, (float)radius, (float)width/2.0f, (float)(radius-height), -((float)width/2.0f), (float)(radius-height) };
 
-  float vertOffset = 65.0;
+  // float vertOffset = 65.0;
   
   radius = radius * 1.4;
 
