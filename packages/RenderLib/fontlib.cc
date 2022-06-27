@@ -265,7 +265,7 @@ void tdFont::loadGlyphInfo(GlyphInfo *ginfo, GlyphInfo *ginfo_outline, UTF32 ind
                 bitmap[i][j] = 0;
         }
     }
-    unsigned char bitmap_outline[64][64] = {0};
+    unsigned char bitmap_outline[64][64] = {{0}};
     static const unsigned char circular_filter[3][3] = {
     	{1, 1, 1},
     	{1, 0, 1},

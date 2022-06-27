@@ -30,7 +30,6 @@ class dcBlink : public dcObject
         float onTime;
         float duration;
 
-        float currentOnTime;
         float remainingDuration;
         float lastFrameTime;
         bool  blinkState;
