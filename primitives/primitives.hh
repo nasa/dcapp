@@ -10,6 +10,7 @@
 #include "line.hh"
 #include "map.hh"
 #include "maptexture.hh"
+#include "mask.hh"
 #include "mouseevent.hh"
 #include "mousemotion.hh"
 #include "object.hh"
