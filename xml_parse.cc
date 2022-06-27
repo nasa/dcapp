@@ -204,6 +204,22 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setFnStartBlink(get_element_data(node, "FnStartBlink"));
             process_elements(myitem->childList, node->children);
         }
+        if (NodeCheck(node, "Mask"))
+        {
+            dcMask *myitem = new dcMask(myparent);
+
+            for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
+            {
+                if (NodeCheck(subnode, "Stencil"))
+                {
+                    process_elements(myitem->stencilList, subnode->children);
+                }
+                if (NodeCheck(subnode, "Projection"))
+                {
+                    process_elements(myitem->projectionList, subnode->children);
+                }
+            }
+        }
         if (NodeCheck(node, "Set"))
         {
             if (preprocessing)

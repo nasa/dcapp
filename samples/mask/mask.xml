@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<DCAPP>
+  <Variable Type="Decimal" InitialValue="50">RADIUS1</Variable>
+  <Variable Type="Decimal" InitialValue="50">RADIUS2</Variable>
+  <Variable Type="Decimal" InitialValue="400">RADIUS3</Variable>
+  <Variable Type="Decimal" InitialValue="50">RADIUS4</Variable>
+  <Variable Type="Decimal" InitialValue="50">ROTATION</Variable>
+
+  <DisplayLogic>logic/mylogic.so</DisplayLogic>
+
+  <Window X="30" Y="30" Width="640" Height="480" ForceUpdate="0.01" ActiveDisplay="1">
+
+    <Panel DisplayIndex="1" BackgroundColor="1 1 1" VirtualWidth="1500" VirtualHeight="1200">
+
+      <Rectangle Y="1000" Height="200" FillColor="0 0 0 .5"/>
+      <Rectangle Y="800" Height="200" FillColor=".2 .2 .2 .5"/>
+      <Rectangle Y="600" Height="200" FillColor=".4 .4 .4 .5"/>
+      <Rectangle Y="400" Height="200" FillColor=".6 .6 .6 .5"/>
+      <Rectangle Y="200" Height="200" FillColor=".8 .8 .8 .5"/>
+      <Rectangle Y="0" Height="200" FillColor="1 1 1 .5"/>
+      <Rectangle X="0" Width="250" FillColor="0 0 0 .5"/>
+      <Rectangle X="250" Width="250" FillColor=".2 .2 .2 .5"/>
+      <Rectangle X="500" Width="250" FillColor=".4 .4 .4 .5"/>
+      <Rectangle X="750" Width="250" FillColor=".6 .6 .6 .5"/>
+      <Rectangle X="1000" Width="250" FillColor=".8 .8 .8 .5"/>
+      <Rectangle X="1250" Width="250" FillColor="1 1 1 .5"/>
+
+      <Mask>
+        <Stencil>
+          <Circle X="750" Y="600" Radius="@RADIUS1" FillColor="1 1 1"/>
+          <Circle X="275" Y="200" Radius="@RADIUS2" FillColor="1 1 1"/>
+          <Circle X="1050" Y="400" Radius="@RADIUS3" FillColor="1 1 1"/>
+          <Circle X="1020" Y="835" Radius="@RADIUS4" FillColor="1 1 1"/>
+        </Stencil>
+        <Projection>
+          <Rectangle FillColor="1 1 1"/>
+          <Rectangle Y="1000" Height="200" FillColor="1 0 0 .5"/>
+          <Rectangle Y="800" Height="200" FillColor="1 .5 0 .5"/>
+          <Rectangle Y="600" Height="200" FillColor="1 1 0 .5"/>
+          <Rectangle Y="400" Height="200" FillColor="0 1 0 .5"/>
+          <Rectangle Y="200" Height="200" FillColor="0 0 1 .5"/>
+          <Rectangle Y="0" Height="200" FillColor="1 0 1 .5"/>
+          <Rectangle X="0" Width="250" FillColor="1 0 0 .5"/>
+          <Rectangle X="250" Width="250" FillColor="1 .5 0 .5"/>
+          <Rectangle X="500" Width="250" FillColor="1 1 0 .5"/>
+          <Rectangle X="750" Width="250" FillColor="0 1 0 .5"/>
+          <Rectangle X="1000" Width="250" FillColor="0 0 1 .5"/>
+          <Rectangle X="1250" Width="250" FillColor="1 0 1 .5"/>
+          <String HorizontalAlign="Center" VerticalAlign="Middle" X="750" Y="600" Size="150" Color="0 0 0">MASKING!</String>
+        </Projection>
+      </Mask>
+
+    </Panel>
+  </Window>
+</DCAPP>
