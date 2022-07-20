@@ -615,8 +615,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 {
                     dcUtmMapTexture *mytex = new dcUtmMapTexture(myitem);
                     mytex->setTexture(get_element_data(subnode, "File"));
-                    mytex->setParams(get_element_data(subnode, "LonMin"), get_element_data(subnode, "LonMax"),
-                        get_element_data(subnode, "LatMin"), get_element_data(subnode, "LatMax"));
+                    mytex->setParams(get_element_data(subnode, "TopLeftLongitude"), get_element_data(subnode, "BottomRightLongitude"),
+                        get_element_data(subnode, "BottomRightLatitude"), get_element_data(subnode, "TopLeftLatitude"));
                     mytex->setYawOffset(get_element_data(node, "YawOffset"));
                     mytex->setSizeRatio(get_element_data(subnode, "SizeRatio"));
 
