@@ -101,7 +101,7 @@ void dcUtmMapTexture::computePointRatios(void)
         mipLatitude = (mip.vLatitude)->getDecimal();
         mipLongitude = (mip.vLongitude)->getDecimal();
 
-        mip.hRatio = (lonToHRatio(mipLongitude) - lonMin) / (lonMax - lonMin);
+        mip.hRatio = lonToHRatio(mipLongitude);
         mip.vRatio = (mipLatitude - latMin) / (latMax - latMin);
     }
 
@@ -111,7 +111,7 @@ void dcUtmMapTexture::computePointRatios(void)
         mspLatitude = (msp.vLatitude)->getDecimal();
         mspLongitude = (msp.vLongitude)->getDecimal();
 
-        msp.hRatio = (lonToHRatio(mspLongitude) - lonMin) / (lonMax - lonMin);
+        msp.hRatio = lonToHRatio(mspLongitude);
         msp.vRatio = (mspLatitude - latMin) / (latMax - latMin);
     }
 }
