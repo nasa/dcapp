@@ -172,6 +172,13 @@ void log_node_data(xmlNodePtr node)
             log_content(get_node_content(node));
             log_end_tag("Variable", true);
         }
+        if (NodeCheck(node, "Function"))
+        {
+            log_open_start_tag("Function");
+            log_close_start_tag(true);
+            log_content(get_node_content(node));
+            log_end_tag("Function", true);
+        }
         if (NodeCheck(node, "TrickVariable"))
         {
             log_open_start_tag("TrickVariable");

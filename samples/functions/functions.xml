@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Function>printNum</Function>
+
+    <DisplayLogic File="logic/mylogic.so">
+        <Function>incrementCounter</Function>
+    </DisplayLogic>
+
+    <Window X="30" Y="30" Width="640" Height="480" ForceUpdate="0.01" ActiveDisplay="1">
+        <Constant Name="BgColor">0 0 0</Constant>
+        <Constant Name="FgColor">1 1 1</Constant>
+        <Defaults>
+            <String Size="42" Color="#FgColor"/>
+        </Defaults>
+
+        <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="1600" VirtualHeight="1200">
+            <String HorizontalAlign="Center" VerticalAlign="Middle">123456</String>
+
+            <Call Function="incrementCounter"/>
+        </Panel>
+    </Window>
+</DCAPP>
