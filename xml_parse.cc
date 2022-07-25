@@ -246,7 +246,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "Call"))
         {
-            dcCallFunc *myitem = new dcCallFunc(myparent, get_element_data(node, "Function"));
+            new dcCallFunc(myparent, get_element_data(node, "Function"));
         }
         if (NodeCheck(node, "Variable"))
         {

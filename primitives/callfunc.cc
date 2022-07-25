@@ -1,12 +1,7 @@
-#include "xml_data.hh"
-#include "app_data.hh"
-#include "variables.hh"
+#include "parent.hh"
 #include "values.hh"
 #include "functions.hh"
 #include "callfunc.hh"
-
-extern appdata AppData;
-
 
 dcCallFunc::dcCallFunc(dcParent *myparent, const std::string &name)
 {
