@@ -7,7 +7,7 @@ all:
 	${MAKE} -C screensaver
 
 clean:
-	${MAKE} -C functions
+	${MAKE} -C functions clean
 	${MAKE} -C mask clean
 	${MAKE} -C ptz clean
 	${MAKE} -C screensaver clean
