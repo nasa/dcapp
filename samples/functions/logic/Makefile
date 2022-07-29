@@ -36,8 +36,6 @@ endef
 all: mylogic.so
 
 mylogic.so: ${OBJECTS}
-	
-	${GENHEADER} ../functions.xml
 	${CXX} -Wall -Wextra -shared $^ -o $@
 
 $(foreach source, $(SOURCES), $(eval $(call genObjectRule, $(source))))
