@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<Dummy>
+    <Container X="@_SMILEY_XPOS" Y="@_SMILEY_YPOS" Width="@_SMILEY_WIDTH" Height="@_SMILEY_HEIGHT" Rotate="@_SMILEY_ROTATION"
+            HorizontalAlign="Center" VerticalAlign="Middle" VirtualWidth="100" VirtualHeight="100">
+        <Circle X="50" Y="50" Radius="50" LineWidth="@_SMILEY_LINEWIDTH" LineColor="0 0 0" FillColor="1 1 0"/>
+        <Mask>
+            <Stencil>
+                <Rectangle X="0" Y="0" Width="100" Height="40" FillColor="0 0 0"/>
+            </Stencil>
+            <Projection>
+                <Circle X="50" Y="50" Radius="30" FillColor="1 1 0" LineColor="0 0 0" LineWidth="@_SMILEY_LINEWIDTH"/>
+            </Projection>
+        </Mask>
+
+        <Circle X="30" Y="60" Radius="5" FillColor="0 0 0"/>
+        <Circle X="70" Y="60" Radius="5" FillColor="0 0 0"/>
+    </Container>
+</Dummy>

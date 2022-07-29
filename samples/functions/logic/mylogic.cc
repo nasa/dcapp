@@ -1,5 +1,16 @@
 #include "dcapp.h"
 
-extern "C" void incrementCounter(void) {
-    printf("asdf\n");
+// called once at initialization
+extern "C" void DisplayInit(void) {
+    
+}
+
+// called at the start of each panel update
+extern "C" void DisplayLogic(void) {
+
+}
+
+// called at shutdown
+extern "C" void DisplayClose(void) {
+
 }

@@ -31,7 +31,7 @@ class dcCircle : public dcGeometric
 
     private:
         Value *radius;
-        double linewidth;
+        Value *linewidth;
         bool fill;
         bool outline;
         Kolor FillColor;
