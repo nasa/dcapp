@@ -18,6 +18,7 @@
 #include "hagstrom/Hagstrom.hh"
 #include "primitives/primitives.hh"
 #include "variables.hh"
+#include "functions.hh"
 #include "app_data.hh"
 #include "xml_data.hh"
 #include "xml_utils.hh"
@@ -243,6 +244,10 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setDuration(get_element_data(node, "Duration"));
             process_elements(myitem, node->children);
         }
+        if (NodeCheck(node, "Call"))
+        {
+            new dcCallFunc(myparent, get_element_data(node, "Function"));
+        }
         if (NodeCheck(node, "Variable"))
         {
             registerVariable(get_node_content(node), get_element_data(node, "Type"), get_element_data(node, "InitialValue"));
@@ -360,7 +365,20 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "DisplayLogic"))
         {
-            xmldata myfile = get_node_content(node);
+            bool is_legacy_format;
+            xmldata myfile;
+
+            const std::string filename = get_element_data(node, "File");
+            if (!filename.empty())
+            {
+                myfile = xmldata(filename);
+                is_legacy_format = false;
+            }
+            else
+            {
+                myfile = get_node_content(node);
+                is_legacy_format = true;
+            }
             void *so_handler;
             char *error;
 
@@ -398,6 +416,19 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 {
                     debug_msg(error);
                     AppData.DisplayClose = &DisplayCloseStub;
+                }
+
+                if (!is_legacy_format)
+                {
+                    for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
+                    {
+                        if (NodeCheck(subnode, "Function"))
+                        {
+                            const std::string &funcname = get_node_content(subnode);
+                            registerFunction(funcname, (void (*)())dlsym(so_handler, funcname.c_str()));
+                            log_node_data(subnode);
+                        }
+                    }
                 }
             }
             else warning_msg(dlerror());

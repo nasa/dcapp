@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<DCAPP>
+
+    <Include>smiley/smiley_params.xml</Include>
+
+    <DisplayLogic File="logic/mylogic.so">
+        <Function>computeSmiley</Function>
+    </DisplayLogic>
+
+    <Window X="30" Y="300" Width="640" Height="480" ForceUpdate="0.01" ActiveDisplay="1">
+
+        <Panel DisplayIndex="1" BackgroundColor="1 1 1" VirtualWidth="1600" VirtualHeight="1200">
+
+            <Set Variable="_SMILEY_XPOS">100</Set>
+            <Set Variable="_SMILEY_YPOS">100</Set>
+            <Set Variable="_SMILEY_WIDTH">100</Set>
+            <Set Variable="_SMILEY_HEIGHT">100</Set>
+            <Set Variable="_SMILEY_ROTATION">25</Set>
+            <Include>smiley/smiley.xml</Include>
+
+            <Set Variable="_SMILEY_XPOS">1200</Set>
+            <Set Variable="_SMILEY_YPOS">800</Set>
+            <Set Variable="_SMILEY_WIDTH">800</Set>
+            <Set Variable="_SMILEY_HEIGHT">800</Set>
+            <Set Variable="_SMILEY_ROTATION">180</Set>
+            <Include>smiley/smiley.xml</Include> 
+        </Panel>
+
+    </Window>
+</DCAPP>

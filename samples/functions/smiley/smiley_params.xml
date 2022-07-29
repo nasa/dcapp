@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<Dummy>
+    <!-- user-defined values -->
+    <Variable Type="Integer">_SMILEY_XPOS</Variable>        <!-- x-position (centered) -->
+    <Variable Type="Integer">_SMILEY_YPOS</Variable>        <!-- y-position (centered) -->
+    <Variable Type="Integer">_SMILEY_WIDTH</Variable>       <!-- width -->
+    <Variable Type="Integer">_SMILEY_HEIGHT</Variable>      <!-- height -->
+    <Variable Type="Integer">_SMILEY_ROTATION</Variable>    <!-- rotation -->
+
+    <!-- calculated values (set in logic) -->
+    <Variable Type="Decimal">_SMILEY_LINEWIDTH</Variable>  <!-- linewidth -->
+</Dummy>
