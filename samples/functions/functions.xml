@@ -16,7 +16,6 @@
             <Set Variable="_SMILEY_WIDTH">100</Set>
             <Set Variable="_SMILEY_HEIGHT">100</Set>
             <Set Variable="_SMILEY_ROTATION">25</Set>
-            <Call Function="computeSmiley"/>
             <Include>smiley/smiley.xml</Include>
 
             <Set Variable="_SMILEY_XPOS">1200</Set>
@@ -24,7 +23,6 @@
             <Set Variable="_SMILEY_WIDTH">800</Set>
             <Set Variable="_SMILEY_HEIGHT">800</Set>
             <Set Variable="_SMILEY_ROTATION">180</Set>
-            <Call Function="computeSmiley"/>
             <Include>smiley/smiley.xml</Include> 
         </Panel>
 

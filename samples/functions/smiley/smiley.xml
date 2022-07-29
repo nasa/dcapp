@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-
 <Dummy>
+    <Call Function="computeSmiley"/>
     <Container X="@_SMILEY_XPOS" Y="@_SMILEY_YPOS" Width="@_SMILEY_WIDTH" Height="@_SMILEY_HEIGHT" Rotate="@_SMILEY_ROTATION"
             HorizontalAlign="Center" VerticalAlign="Middle" VirtualWidth="100" VirtualHeight="100">
         <Circle X="50" Y="50" Radius="50" LineWidth="@_SMILEY_LINEWIDTH" LineColor="0 0 0" FillColor="1 1 0"/>
