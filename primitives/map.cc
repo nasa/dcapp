@@ -547,7 +547,7 @@ void dcMap::handleMouseMotion(double inx, double iny) {
             double vDiff = (iny - scrollY) / height / mtCurrent->sizeRatio / zoom;
 
             if (enableTrackUp) {
-                double trajAngleR = (trajAngle - 90) * M_PI / 180;
+                double trajAngleR = (trajAngle) * M_PI / 180;
                 hRatio -= hDiff * cos(trajAngleR) - vDiff * sin(trajAngleR);
                 vRatio -= vDiff * cos(trajAngleR) + hDiff * sin(trajAngleR);
             } else {
@@ -615,7 +615,7 @@ void dcMap::draw(void)
 
         if (enableTrackUp) {
             translate_start(width/2, height/2);
-            rotate_start(-1 * (trajAngle - 90 ));
+            rotate_start(-1 * (trajAngle ));
             translate_start(-1 * width/2, -1 * height/2);
         }
 
