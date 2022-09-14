@@ -36,21 +36,23 @@ void ui_init(const std::string &xdisplay)
 }
 
 
-void window_init(bool fullscreen, int winOriginX, int winOriginY, int winSizeX, int winSizeY)
+void window_init(const std::string &displayId, bool fullscreen, int winOriginX, int winOriginY, int winSizeX, int winSizeY)
 {
     tdRegion usable;
-
     tdGetScreenData(0x0, &usable);
+    
+    std::string d = "dcapp";
+    if (!displayId.empty()) d = displayId;
 
     if (fullscreen)
     {
-        mywin.id = tdOpenFullScreen("dcapp");
+        mywin.id = tdOpenFullScreen(d);
         mywin.width = usable.width;
         mywin.height = usable.height;
     }
     else
     {
-        mywin.id = tdOpenWindow("dcapp", (float)winOriginX, usable.top - (float)winOriginY, (float)winSizeX, (float)winSizeY, tdAlignLeft | tdAlignTop);
+        mywin.id = tdOpenWindow(d, (float)winOriginX, usable.top - (float)winOriginY, (float)winSizeX, (float)winSizeY, tdAlignLeft | tdAlignTop);
         mywin.width = (double)winSizeX;
         mywin.height = (double)winSizeY;
     }
