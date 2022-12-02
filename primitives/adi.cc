@@ -250,8 +250,6 @@ void dcADI::draw_roll_bug(double roll, double width, double height, double radiu
 
 void dcADI::draw_cross_hairs(double radius)
 {
-  
-    if (hideNeedlesFlag) return;
     const float length = 0.21 * radius;
     const float halfwidth = 0.017 * radius;
     std::vector<float> polygonH, polygonV, crosshair;

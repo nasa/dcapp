@@ -25,7 +25,7 @@
         <Container X="1250" Width="1250" Height="5" HorizontalAlign="Center" VerticalAlign="Middle"/>
     </Defaults>
 
-    <Window X="30" Y="30" Width="600" Height="800" ForceUpdate="0.01" ActiveDisplay="1">
+    <Window ID="map" X="30" Y="30" Width="600" Height="800" ForceUpdate="0.01" ActiveDisplay="1">
         <Panel DisplayIndex="1" BackgroundColor="#BgColor" VirtualWidth="1275" VirtualHeight="1667">
 
             <Map Latitude="@LATITUDE" Longitude="@LONGITUDE" Zoom="@ZOOM" TrailWidth="5" TrailColor="1 0 0 .7"

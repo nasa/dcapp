@@ -24,7 +24,7 @@
 #include "xml_utils.hh"
 #include "xml_stringsub.hh"
 
-extern void window_init(bool, int , int, int, int);
+extern void window_init(const std::string &, bool, int , int, int, int);
 
 extern void DisplayPreInitStub(void *(*)(const char *));
 extern void DisplayInitStub(void);
@@ -436,7 +436,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         if (NodeCheck(node, "Window"))
         {
             AppData.force_update = StringToDecimal(get_element_data(node, "ForceUpdate"), 60);
-            window_init(StringToBoolean(get_element_data(node, "FullScreen")),
+            window_init(get_element_data(node, "ID"),
+			StringToBoolean(get_element_data(node, "FullScreen")),
                         StringToInteger(get_element_data(node, "X"), 0),
                         StringToInteger(get_element_data(node, "Y"), 0),
                         StringToInteger(get_element_data(node, "Width"), 800),
