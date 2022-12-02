@@ -221,7 +221,9 @@ void dcMap::computeGeometry(void)
 
 void dcMap::fetchBaseParams(void)
 {
-    if (vTextureIndex) textureIndex = vTextureIndex->getInteger();
+    double prevTextureIndex = textureIndex;
+    if (vTextureIndex)
+        textureIndex = vTextureIndex->getInteger();
 
     mtCurrent = mapTextures[textureIndex];
 
@@ -230,6 +232,10 @@ void dcMap::fetchBaseParams(void)
     if (zoom < 1) zoom = 1;
 
     if (vUnlocked) unlocked = vUnlocked->getBoolean();
+
+    // override if changing layers
+    if (prevTextureIndex != textureIndex)
+        unlocked = 0;
 
     longitude = vLongitude->getDecimal();
     latitude = vLatitude->getDecimal();
