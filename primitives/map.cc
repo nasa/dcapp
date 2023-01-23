@@ -20,7 +20,7 @@ dcMap::dcMap(dcParent *myparent) :  dcGeometric(myparent), vTextureIndex(0x0), v
                                     longitude(0), latitude(0), zoom(1), textureIndex(0), trajAngle(0),
                                     enableTrail(true), trailWidth(25), trailResolution(.005), fnClearTrail(0x0),
                                     enableIcon(true), enableCustomIcon(false), iconRotationOffset(0), iconTextureID(0x0),
-                                    enableCircularMap(0), enableTrackUp(0), enableZone(false), vUnlocked(0x0), unlocked(false), selected(false)
+                                    enableCircularMap(0), vEnableTrackUp(0x0), enableTrackUp(0), enableZone(false), vUnlocked(0x0), unlocked(false), selected(false)
 {
     trailColor.set(1, 0, 0, .5);
 }
@@ -74,7 +74,7 @@ void dcMap::setEnableCircularMap(const std::string &inval)
 
 void dcMap::setEnableTrackUp(const std::string &inval)
 {
-    if (!inval.empty()) enableTrackUp = getValue(inval)->getBoolean();
+    if (!inval.empty()) vEnableTrackUp = getValue(inval);
 }
 
 void dcMap::setFnClearTrail(const std::string &inval)
@@ -239,6 +239,8 @@ void dcMap::fetchBaseParams(void)
 
     longitude = vLongitude->getDecimal();
     latitude = vLatitude->getDecimal();
+
+    if (vEnableTrackUp) enableTrackUp = vEnableTrackUp->getBoolean();
 }
 
 void dcMap::fetchDisplayRatios(void)

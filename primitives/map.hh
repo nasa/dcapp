@@ -109,6 +109,7 @@ class dcMap : public dcGeometric
 
         /* view params */
         bool enableCircularMap;
+        Value* vEnableTrackUp;
         bool enableTrackUp;
 
         /* zone parameters */
