@@ -3,9 +3,7 @@
 
     <Include>smiley/smiley_params.xml</Include>
 
-    <DisplayLogic File="logic/mylogic.so">
-        <Function>computeSmiley</Function>
-    </DisplayLogic>
+    <DisplayLogic File="logic/mylogic.so"></DisplayLogic>
 
     <Window X="30" Y="300" Width="640" Height="480" ForceUpdate="0.01" ActiveDisplay="1">
 

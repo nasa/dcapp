@@ -14,7 +14,6 @@ DCAPP_SOURCES := \
 	app_main.cc \
 	comm.cc \
 	constants.cc \
-	functions.cc \
 	handle_bezel.cc \
 	handle_keyboard.cc \
 	handle_mouse.cc \
