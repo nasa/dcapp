@@ -18,7 +18,7 @@
 #include "hagstrom/Hagstrom.hh"
 #include "primitives/primitives.hh"
 #include "variables.hh"
-#include "functions.hh"
+#include "primitives/function.hh"
 #include "app_data.hh"
 #include "xml_data.hh"
 #include "xml_utils.hh"
@@ -39,6 +39,7 @@ static int process_elements(dcParent *, xmlNodePtr);
 
 extern appdata AppData;
 
+static void *so_handler = 0x0;
 static TrickCommModule *trickcomm = 0x0;
 static EdgeCommModule *edgecomm = 0x0;
 static xmldata indid, indonval, activeid, activetrueval, transitionid, key, keyascii, bezelkey;
@@ -244,9 +245,17 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setDuration(get_element_data(node, "Duration"));
             process_elements(myitem, node->children);
         }
-        if (NodeCheck(node, "Call"))
+        if (NodeCheck(node, "Function"))
         {
-            new dcCallFunc(myparent, get_element_data(node, "Function"));
+            if (so_handler) {
+                const std::string &funcname = get_element_data(node, "Call");
+                void(*funcpointer)()  = getFunction(funcname);
+                if (!funcpointer) {
+                    funcpointer = registerFunction(funcname, (void (*)())dlsym(so_handler, funcname.c_str()));
+                }
+                
+                new dcFunction(myparent, funcpointer);
+            }
         }
         if (NodeCheck(node, "Variable"))
         {
@@ -365,21 +374,17 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         }
         if (NodeCheck(node, "DisplayLogic"))
         {
-            bool is_legacy_format;
             xmldata myfile;
 
             const std::string filename = get_element_data(node, "File");
             if (!filename.empty())
             {
                 myfile = xmldata(filename);
-                is_legacy_format = false;
             }
             else
             {
                 myfile = get_node_content(node);
-                is_legacy_format = true;
             }
-            void *so_handler;
             char *error;
 
             debug_msg("Loading " << myfile << "...");
@@ -416,19 +421,6 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                 {
                     debug_msg(error);
                     AppData.DisplayClose = &DisplayCloseStub;
-                }
-
-                if (!is_legacy_format)
-                {
-                    for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
-                    {
-                        if (NodeCheck(subnode, "Function"))
-                        {
-                            const std::string &funcname = get_node_content(subnode);
-                            registerFunction(funcname, (void (*)())dlsym(so_handler, funcname.c_str()));
-                            log_node_data(subnode);
-                        }
-                    }
                 }
             }
             else warning_msg(dlerror());
