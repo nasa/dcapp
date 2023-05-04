@@ -51,6 +51,11 @@ else
         if [[ -r /usr/local/opt/jpeg-turbo/include/jpeglib.h ]] ; then
             jpegenabled=1
             jpegpath="/usr/local/opt/jpeg-turbo"
+        else
+            if [[ -r /opt/homebrew/include/jpeglib.h ]] ; then
+                jpegenabled=1
+                jpegpath="/opt/homebrew/opt/jpeg-turbo"
+            fi
         fi
     fi
 fi
