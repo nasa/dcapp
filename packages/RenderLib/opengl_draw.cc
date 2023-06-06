@@ -420,9 +420,9 @@ void draw_quad(const std::vector<float> &pntsA, float red, float green, float bl
     glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void circle_outline(float cx, float cy, float r, int num_segments, float red, float green, float blue, float alpha, float linewidth, uint16_t linepattern, int linefactor)
+void circle_outline(float cx, float cy, float r, float angle, int num_segments, float red, float green, float blue, float alpha, float linewidth, uint16_t linepattern, int linefactor)
 {
-    float theta = 2 * 3.1415926 / (float)num_segments;
+    float theta = angle * 0.01745329252 / (float)num_segments;
     float c = cosf(theta); // precalculate the sine and cosine
     float s = sinf(theta);
     float t;
@@ -437,7 +437,16 @@ void circle_outline(float cx, float cy, float r, int num_segments, float red, fl
     glEnable(GL_LINE_SMOOTH);
     glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
 
-    glBegin(GL_LINE_LOOP);
+    // draw center point if not a complete circle
+    if ( ((int)angle) % 360)
+    {
+        glBegin(GL_LINE_STRIP);
+    }
+    else
+    {
+        glBegin(GL_LINE_LOOP);
+    }
+
     for (i = 0; i < num_segments; i++)
     {
         glVertex2f(x + cx, y + cy); // output vertex
@@ -452,9 +461,9 @@ void circle_outline(float cx, float cy, float r, int num_segments, float red, fl
     glDisable(GL_LINE_STIPPLE);
 }
 
-void circle_fill(float cx, float cy, float r, int num_segments, float red, float green, float blue, float alpha)
+void circle_fill(float cx, float cy, float r, float angle, int num_segments, float red, float green, float blue, float alpha)
 {
-    float theta = 2 * 3.1415926 / (float)num_segments;
+    float theta = angle * 0.01745329252 / (float)num_segments;
     float c = cosf(theta); // precalculate the sine and cosine
     float s = sinf(theta);
     float t;
@@ -464,6 +473,12 @@ void circle_fill(float cx, float cy, float r, int num_segments, float red, float
 
     glColor4f(red, green, blue, alpha);
     glBegin(GL_POLYGON);
+
+    // draw center point if not a complete circle
+    if ( ((int)angle) % 360)
+    {
+        glVertex2f(cx, cy);
+    }
     for (i = 0; i < num_segments; i++)
     {
         glVertex2f(x + cx, y + cy); // output vertex

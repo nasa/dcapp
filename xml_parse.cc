@@ -524,6 +524,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setLinePattern(get_element_data(node, "LinePattern"));
             myitem->setLineFactor(get_element_data(node, "LineFactor"));
             myitem->setRadius(get_element_data(node, "Radius"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAngle(get_element_data(node, "Angle"));
             myitem->setSegments(get_element_data(node, "Segments"));
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {
