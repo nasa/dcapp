@@ -183,12 +183,12 @@ int VariableServerComm::get(void)
     return retval;
 }
 
-int VariableServerComm::putMethod(std::string &label)
+int VariableServerComm::putMethod(std::string &label, std::string &params)
 {
     if (!tc_isValid(&(this->connection))) return VS_INVALID_CONNECTION;
 
     std::ostringstream mycmd;
-    mycmd << label << "()\n";
+    mycmd << label << params << "\n";
     this->sim_write(mycmd.str());
 
     return VS_SUCCESS;

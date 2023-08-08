@@ -7,6 +7,7 @@
 #ifdef TRICKACTIVE
 
 #include <list>
+#include <vector>
 #include "basicutils/timer.hh"
 #include "variables.hh"
 #include "vscomm.hh"
@@ -28,7 +29,7 @@ class TrickCommModule : public CommModule
         void activateFromList(void) { io_map = &(this->fromSim); };
         void activateToList(void) { io_map = &(this->toSim); };
         void deactivateList(void) { io_map = 0x0; };
-        int addParameter(const std::string &, const std::string &, const std::string &, const std::string &, bool);
+        int addParameter(const std::string &, const std::string &, const std::string &, const std::string &, std::vector<std::string>, bool);
         void finishInitialization(void);
 
     private:
@@ -43,6 +44,7 @@ class TrickCommModule : public CommModule
             Variable prevvalue;
             bool forcewrite;
             bool init_only;
+            std::vector<Value*> params;
             bool method;
         } io_parameter;
 
