@@ -318,7 +318,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                         params.push_back(get_node_content(subnode));
                     }
                 }
-                trickcomm->addParameter(get_node_content(node), get_element_data(node, "Name"), "", "", params, true);
+                trickcomm->addParameter(get_element_data(node, "Variable"), get_element_data(node, "Name"), "", "", params, true);
                 log_node_data(node);
             }
         }

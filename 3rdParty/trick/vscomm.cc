@@ -189,6 +189,7 @@ int VariableServerComm::putMethod(std::string &label, std::string &params)
 
     std::ostringstream mycmd;
     mycmd << label << params << "\n";
+    printf("%s\n", mycmd.str().c_str());
     this->sim_write(mycmd.str());
 
     return VS_SUCCESS;
