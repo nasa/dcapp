@@ -311,8 +311,8 @@ void dcMap::displayIcon(void) {
     }
     else
     {
-        circle_fill(mx, my, mwidth, 80, 1, 0, 0, 1);
-        circle_outline(mx, my, mwidth, 80, 0, 0, 0, 1, 10, 0xFFFF, 1);
+        circle_fill(mx, my, mwidth, 360, 80, 1, 0, 0, 1);
+        circle_outline(mx, my, mwidth, 360, 80, 0, 0, 0, 1, 10, 0xFFFF, 1);
     }
 }
 

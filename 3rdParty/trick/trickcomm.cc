@@ -90,7 +90,16 @@ CommModule::CommStatus TrickCommModule::write(void)
             {
                 if (myitem->currvalue->getBoolean())
                 {
-                    this->tvs->putMethod(myitem->trickvar);
+                    std::string paramString = "(";
+                    for (auto & param: myitem->params) {
+                        paramString += param->getString();
+                        paramString += ",";
+                    }
+                    if ( myitem->params.size() > 0) {
+                        paramString.pop_back();
+                    }
+                    paramString += ")";
+                    this->tvs->putMethod(myitem->trickvar, paramString);
                     myitem->currvalue->setToBoolean(false);
                 }
             }
@@ -139,7 +148,7 @@ void TrickCommModule::setReconnectOnDisconnect(void)
     this->disconnectaction = this->AppReconnect;
 }
 
-int TrickCommModule::addParameter(const std::string &paramname, const std::string &trickvar, const std::string &units,const std::string &init_only, bool method)
+int TrickCommModule::addParameter(const std::string &paramname, const std::string &trickvar, const std::string &units, const std::string &init_only, std::vector<std::string> paramList, bool method)
 {
     if (paramname.empty() || trickvar.empty() || !io_map) return this->Fail;
     if (method && io_map != &(this->toSim)) return this->Fail;
@@ -157,6 +166,10 @@ int TrickCommModule::addParameter(const std::string &paramname, const std::strin
         myparam.forcewrite = false;
         myparam.init_only = StringToBoolean(init_only);
         myparam.method = method;
+
+        for (auto & param : paramList) {
+            myparam.params.push_back(getValue(param));
+        }
 
         io_map->push_back(myparam);
 

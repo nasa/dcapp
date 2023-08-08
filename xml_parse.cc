@@ -302,7 +302,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             if (trickcomm)
             {
-                trickcomm->addParameter(get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"), get_element_data(node, "InitializationOnly"), false);
+                trickcomm->addParameter(get_node_content(node), get_element_data(node, "Name"), get_element_data(node, "Units"), get_element_data(node, "InitializationOnly"), {}, false);
                 log_node_data(node);
             }
         }
@@ -310,7 +310,15 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
         {
             if (trickcomm)
             {
-                trickcomm->addParameter(get_node_content(node), get_element_data(node, "Name"), "", "", true);
+                std::vector<std::string> params;
+                for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
+                {
+                    if (NodeCheck(subnode, "TrickMethodParameter"))
+                    {
+                        params.push_back(get_node_content(subnode));
+                    }
+                }
+                trickcomm->addParameter(get_element_data(node, "Variable"), get_element_data(node, "Name"), "", "", params, true);
                 log_node_data(node);
             }
         }
@@ -524,6 +532,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setLinePattern(get_element_data(node, "LinePattern"));
             myitem->setLineFactor(get_element_data(node, "LineFactor"));
             myitem->setRadius(get_element_data(node, "Radius"));
+            myitem->setRotation(get_element_data(node, "Rotate"));
+            myitem->setAngle(get_element_data(node, "Angle"));
             myitem->setSegments(get_element_data(node, "Segments"));
             for (xmlNodePtr subnode = node->children; subnode; subnode = subnode->next)
             {

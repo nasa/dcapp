@@ -42,7 +42,7 @@ class VariableServerComm
         void remove_var(std::string &);
         int activate(std::string &, int, std::string &);
         int get(void);
-        int putMethod(std::string &);
+        int putMethod(std::string &, std::string &);
         int putValue(std::string &, Variable &, std::string &);
 
     private:

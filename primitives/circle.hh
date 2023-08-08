@@ -19,6 +19,7 @@ class dcCircle : public dcGeometric
         void setLinePattern(const std::string &);
         void setLineFactor(const std::string &);
         void setRadius(const std::string &);
+        void setAngle(const std::string &);
         void setSegments(const std::string &);
         void handleMousePress(double, double);
         void handleMouseRelease(void);
@@ -32,6 +33,7 @@ class dcCircle : public dcGeometric
     private:
         Value *radius;
         Value *linewidth;
+        Value *angle;
         bool fill;
         bool outline;
         Kolor FillColor;
