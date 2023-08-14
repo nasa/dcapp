@@ -72,6 +72,7 @@ LINK_LIBS += -ldl
 
 ifeq ($(OSSPEC), MacOS)
     LINK_LIBS += -framework AppKit
+    CXXFLAGS += -Wno-deprecated -Wno-deprecated-declarations
 else
     CXXFLAGS += -D_GNU_SOURCE
     LINK_LIBS += -lrt -L/usr/X11R6/lib -lX11 -lXi -lXmu
