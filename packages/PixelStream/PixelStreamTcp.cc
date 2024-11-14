@@ -20,8 +20,8 @@
 #include "PixelStreamTcp.hh"
 
 #define CONNECTION_ATTEMPT_INTERVAL 2.0
-#define CONNECTION_TIMEOUT 2.0
-#define CONNECTION_TIMEOUT_USEC 10000
+#define CONNECTION_TIMEOUT 10.0
+#define CONNECTION_TIMEOUT_USEC 1000000
 #define REQUEST_BUFFER 1
 
 PixelStreamTcp::PixelStreamTcp()

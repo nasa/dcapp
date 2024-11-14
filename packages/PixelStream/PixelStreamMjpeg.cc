@@ -15,8 +15,8 @@
 #include "curlLib.hh"
 
 #define CONNECTION_ATTEMPT_INTERVAL 2.0
-#define CONNECTION_TIMEOUT 2.0
-#define INVIEW_TIMEOUT 2.0
+#define CONNECTION_TIMEOUT 10.0
+#define INVIEW_TIMEOUT 10.0
 
 #define BOUNDARYTAG "--myboundary\r\nContent-Type: image/jpeg\r\nContent-Length: "
 #define BOUNDARYLENGTH strlen(BOUNDARYTAG)
