@@ -5,5 +5,6 @@
 #include "PixelStreamMjpeg.hh"
 #include "PixelStreamTcp.hh"
 #include "PixelStreamVsm.hh"
+#include "PixelStreamDynamicFile.hh"
 
 #endif

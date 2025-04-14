@@ -4,6 +4,7 @@
 #include "PixelStreamMjpeg.hh"
 #include "PixelStreamTcp.hh"
 #include "PixelStreamVsm.hh"
+#include "PixelStreamDynamicFile.hh"
 
 PixelStreamData::PixelStreamData()
 :
@@ -28,6 +29,9 @@ bool PixelStreamData::operator == (const PixelStreamData &that)
         {
         case PixelStreamFileProtocol:
             return (*(PixelStreamFile *)this == *(PixelStreamFile *)&that);
+            break;
+        case PixelStreamDynamicFileProtocol:
+            return (*(PixelStreamDynamicFile *)this == *(PixelStreamDynamicFile *)&that);
             break;
         case PixelStreamMjpegProtocol:
             return (*(PixelStreamMjpeg *)this == *(PixelStreamMjpeg *)&that);
