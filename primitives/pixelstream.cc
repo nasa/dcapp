@@ -23,6 +23,7 @@ void dcPixelStream::setProtocol(const std::string &protocolstr, const std::strin
 {
     PixelStreamData *mypsd = 0x0;
     PixelStreamFile *psf;
+    PixelStreamDynamicFile *psdf;
     PixelStreamMjpeg *psm;
     PixelStreamTcp *pst;
     PixelStreamVsm *psv;
@@ -35,6 +36,7 @@ void dcPixelStream::setProtocol(const std::string &protocolstr, const std::strin
         if (CaseInsensitiveCompare(protocolstr, "MJPEG")) protocol = PixelStreamMjpegProtocol;
         if (CaseInsensitiveCompare(protocolstr, "TCP")) protocol = PixelStreamTcpProtocol;
         if (CaseInsensitiveCompare(protocolstr, "VSM")) protocol = PixelStreamVsmProtocol;
+        if (CaseInsensitiveCompare(protocolstr, "DFILE")) protocol = PixelStreamDynamicFileProtocol;
     }
 
     switch (protocol)
@@ -47,6 +49,15 @@ void dcPixelStream::setProtocol(const std::string &protocolstr, const std::strin
                 return;
             }
             mypsd = (PixelStreamData *)psf;
+            break;
+        case PixelStreamDynamicFileProtocol:
+            psdf = new PixelStreamDynamicFile;
+            if (psdf->readerInitialize(shmemkey))
+            {
+                delete psdf;
+                return;
+            }
+            mypsd = (PixelStreamDynamicFile *)psdf;
             break;
         case PixelStreamMjpegProtocol:
             psm = new PixelStreamMjpeg;
