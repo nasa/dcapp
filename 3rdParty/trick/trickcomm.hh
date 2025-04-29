@@ -2,12 +2,12 @@
 #define _TRICKCOMM_HH_
 
 #include <string>
+#include <vector>
 #include "comm.hh"
 
 #ifdef TRICKACTIVE
 
 #include <list>
-#include <vector>
 #include "basicutils/timer.hh"
 #include "variables.hh"
 #include "vscomm.hh"
@@ -75,7 +75,7 @@ class TrickCommModule : public CommModule
         void activateFromList(void) { };
         void activateToList(void) { };
         void deactivateList(void) { };
-        int addParameter(const std::string &, const std::string &, const std::string &, const std::string &, bool) { return this->Inactive; };
+        int addParameter(const std::string &, const std::string &, const std::string &, const std::string &, std::vector<std::string>, bool) { return this->Inactive; };
         void finishInitialization(void) { };
 
     private:
