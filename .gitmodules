@@ -1,0 +1,3 @@
+[submodule "pilotlight"]
+	path = pilotlight
+	url = git@github.com:PilotLightTech/pilotlight.git

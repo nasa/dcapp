@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<Dummy>
+  <Panel>
+    <Polygon FillColor="1 0 0 .5" LineColor="1 1 1 .5" LineWidth="3">
+      <Vertex X="0" Y="250"/>
+      <Vertex X="-250" Y="-250"/>
+      <Vertex X="250" Y="-250"/>
+    </Polygon>
+  </Panel>
+</Dummy>

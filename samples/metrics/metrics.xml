@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<DCAPP>
+
+  <Variable Type="Decimal" InitialValue="0">ROTATION</Variable>
+
+
+  <!-- <DisplayLogic>logic/mylogic.so</DisplayLogic> -->
+  <Logic File="logic/logic.so"/>
+
+
+  <Window X="30" Y="30" Width="1000" Height="1000">
+    <Panel>
+      
+      <Include>triangles.xml</Include>
+
+      <!-- <Polygon FillColor="1 1 1" LineColor="0 0 1" LineWidth="1">
+        <Vertex X="0"  Y="0"/>
+        <Vertex X="1000" Y="0"/>
+        <Vertex X="500"  Y="1000"/>
+      </Polygon> -->
+
+    </Panel>
+  </Window>
+</DCAPP>
