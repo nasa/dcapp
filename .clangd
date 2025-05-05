@@ -1,0 +1,20 @@
+CompileFlags:
+    Add:
+        # relative paths
+        - -I./src
+        
+        # absolute paths
+        - -I/usr/include/libxml2
+        - -I/usr/include/gdal
+        - -std=c++17
+
+        # quote paths
+        - -iquotepilotlight/src
+        - -iquotepilotlight/libs
+        - -iquotepilotlight/extensions
+        - -iquotepilotlight/dependencies/stb
+        
+        # other flags
+        - -std=c++17
+InlayHints:
+    Enabled: No

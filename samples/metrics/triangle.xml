@@ -1,0 +1,9 @@
+<Dummy>
+  <Container X="#TriangleX" Y="#TriangleY" Width="10" Height="10" Rotate="@ROTATION">
+    <Polygon FillColor="1 1 1" LineColor="0 0 1" LineWidth="1">
+      <Vertex X="0"  Y="0"/>
+      <Vertex X="10" Y="0"/>
+      <Vertex X="5"  Y="10"/>
+    </Polygon>
+  </Container>
+</Dummy>

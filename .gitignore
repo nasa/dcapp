@@ -1,0 +1,9 @@
+bin/
+build/
+cache/
+logs/
+
+**.spv
+**/dcapp.h
+**.so
+**.dSYM/

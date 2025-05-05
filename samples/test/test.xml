@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<DCAPP>
+
+  <Logic File="logic/logic.so"/>
+	<Window Title="dcapp-vk-title" X="30" Y="30" Width="1000" Height="1000" VirtualWidth="1000" VirtualHeight="1000">
+
+    <Constant Name="nested">test1</Constant>
+    <Constant Name="test1">string1asdf</Constant>
+    <Constant Name="test2">string2#{#{nested}}  #test1 $HOME  </Constant>
+
+    <Constant Name="test3">test4</Constant>
+    <Constant Name="test4">HOME</Constant>
+    <Constant Name="test5">$##test3</Constant>
+
+    <Variable Type="Integer" InitialValue="1000">TEST_VAR</Variable>
+    <Variable Type="Double" InitialValue="30">ROTATE</Variable>
+    
+
+    <Panel VirtualWidth="1000" VirtualHeight="1000">
+
+        <!-- <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="1">
+          <Vertex X="0" Y="0"/>
+          <Vertex X="250" Y="0"/>
+          <Vertex X="250" Y="300"/>
+          <Vertex X="0" Y="500"/>
+        </Polygon> -->
+
+        <Polygon FillColor="1 0 0 .5" LineColor="1 1 1" LineWidth="2">
+          <Vertex X="100" Y="0"/>
+          <Vertex X="400" Y="0"/>
+          <Vertex X="100" Y="300"/>
+        </Polygon>
+
+      <!-- <Map X="0" Y="0" Width="500" Height="500" Longitude="0" Latitude="0">
+        <DEM File="/data/nreagan/tifs/LDEM_875S_5M.tif"/>
+        <DEM File="/data/nreagan/tifs/LDEM_45S_100M.tif"/>
+      </Map> -->
+
+      <Container Width="500" Height="500" X="0" Y="0" OriginX="500" OriginY="500" VirtualWidth="1000" VirtualHeight="1000" Rotate="@ROTATE">
+        <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="1">
+          <Vertex X="0"  Y="0"/>
+          <Vertex X="0" Y="-1000"/>
+          <Vertex X="-1000"  Y="-1000"/>
+          <Vertex X="-1000"  Y="0"/>
+        </Polygon>
+      </Container>
+
+      <Container Width="1000" Height="1000" OriginX="500" OriginY="500" X="0" Y="0" VirtualWidth="1000" VirtualHeight="1000" Rotate="@ROTATE" >
+
+        <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="1">
+          <Vertex X="100"  Y="100"/>
+          <Vertex X="200" Y="380"/>
+          <Vertex X="440"  Y="280"/>
+        </Polygon>
+
+        <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="2">
+          <Vertex X="25"  Y="100"/>
+          <Vertex X="125" Y="380"/>
+          <Vertex X="250"  Y="280"/>
+        </Polygon>
+
+        <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="20">
+          <Vertex X="100" Y="250"/>
+          <Vertex X="500" Y="400"/>
+          <Vertex X="600" Y="80"/>
+          <Vertex X="200" Y="80"/>
+        </Polygon>
+
+        <Polygon FillColor="1 0 0 .5" LineColor="1 1 1 .5" LineWidth="3">
+          <Vertex X="0" Y="250"/>
+          <Vertex X="-250" Y="-250"/>
+          <Vertex X="250" Y="-250"/>
+        </Polygon>
+
+        <Container X="500" Y="500" Width="500" Height="500">
+          <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="2">
+            <Vertex X="25"  Y="100"/>
+            <Vertex X="125" Y="380"/>
+            <Vertex X="250"  Y="280"/>
+          </Polygon>
+        </Container>
+
+      </Container>
+
+      
+
+    </Panel>
+
+    <!-- <Include>sub/subtest.xml</Include> -->
+	</Window>
+</DCAPP>
