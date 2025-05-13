@@ -1,0 +1,14 @@
+# BasedOnStyle: Mozilla
+# TabWidth:        4
+# IndentWidth:     4
+# UseTab:          Never
+# ColumnLimit: 100
+
+
+UseTab: Never
+IndentWidth: 4
+BreakBeforeBraces: Allman
+AllowShortIfStatementsOnASingleLine: false
+IndentCaseLabels: false
+ColumnLimit: 0
+NamespaceIndentation: All
