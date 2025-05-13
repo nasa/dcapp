@@ -16,3 +16,5 @@ CompileFlags:
         
         # other flags
         - -std=c++17
+InlayHints:
+    Enabled: No

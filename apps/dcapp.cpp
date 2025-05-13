@@ -4,8 +4,8 @@
 //-----------------------------------------------------------------------------
 
 #include <dcapp-data.hpp>
-#include <utils/xml-utils.hpp>
 #include <utils/string-utils.hpp>
+#include <utils/xml-utils.hpp>
 
 namespace dc
 {
@@ -22,17 +22,19 @@ namespace dc
 // [SECTION] includes
 //-----------------------------------------------------------------------------
 
+#define PL_EXPERIMENTAL // required for experimental functionality
+
+#include "pl.h"
 #include <stdlib.h> // malloc, free
 #include <string.h> // memset
-#include "pl.h"
 
 #define PL_MATH_INCLUDE_FUNCTIONS // required to expose some of the color helpers
 #include "pl_math.h"
 
 // extensions
 #include "pl_draw_ext.h"
-#include "pl_starter_ext.h"
 #include "pl_profile_ext.h"
+#include "pl_starter_ext.h"
 
 //-----------------------------------------------------------------------------
 // [SECTION] dcapp state
@@ -40,9 +42,11 @@ namespace dc
 
 namespace dc
 {
-    static void processNodeChildren(xmlNodePtr xmlNode, DcNodeIndex nodeIndex, const std::string &directory);
-    static DcNodeIndex processNode(xmlNodePtr xmlNode, DcNodeIndex parentNodeIndex, DcNodeIndex previousNodeIndex, std::string directory);
-}
+    static DcNodeIndex processNodeChildren(xmlNodePtr xmlNode, DcNodeIndex nodeIndex, const std::string &directory);
+    static DcNodeIndex processNode(xmlNodePtr xmlNode, DcNodeIndex parentNodeIndex, std::string directory);
+    static void drawNodeList(DcNodeIndex nodeIndex, plMat4 *nodeTransform);
+    static void drawNode(DcNodeIndex nodeIndex, plMat4 *parentTransform);
+} // namespace dc
 
 //-----------------------------------------------------------------------------
 // [SECTION] structs
@@ -52,6 +56,7 @@ typedef struct _plAppData
 {
     // window
     plWindow *ptWindow;
+    plDrawLayer2D *ptFGLayer ;
 
     // console variable
     bool bShowHelpWindow;
@@ -132,7 +137,8 @@ pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
     // if (configRelativePath.empty()) {
     //     throw std::runtime_error("Missing dcapp configuration file");
     // }
-    std::string configRelativePath = "/home/nathan/dcapp-vk/samples/test/test.xml"; //"/data/nreagan/dcapp-vk/samples/test/test.xml";
+    // std::string configRelativePath = "/home/nathan/dcapp-vk/samples/test/test.xml";
+    std::string configRelativePath = "/data/nreagan/dcapp-pl/samples/test/test.xml";
 
     // set paths
     std::filesystem::path fsFilePath = std::filesystem::canonical(configRelativePath);
@@ -148,6 +154,9 @@ pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
     std::filesystem::path fsCachePath = fsExePath.parent_path() / ".." / "cache";
     std::filesystem::create_directory(fsCachePath);
     std::string cacheDirPath = std::filesystem::canonical(fsCachePath).string();
+
+    // init dcData object
+    dc::initData();
 
     // begin setting up dcappData object
     dc::dcData.configFilePath = configFilePath;
@@ -183,13 +192,13 @@ pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
 
     // process XML
     xmlNodePtr rootNode = xmlDocGetRootElement(dc::dcData.doc);
-    dc::processNode(rootNode, dc::DC_NODE_INDEX_UNDEFINED, dc::DC_NODE_INDEX_UNDEFINED, configDirPath);
+    dc::processNode(rootNode, dc::DC_NODE_INDEX_UNDEFINED, configDirPath);
 
     // validate
     // root->validate();
 
     // set initial window params
-    dc::DcNode* windowNode = dc::indexToDcNode(dc::dcData.window);
+    dc::DcNode *windowNode = dc::indexToDcNode(dc::dcData.window);
     plWindowDesc tWindowDesc = {
         .pcTitle = windowNode->window.title,
         .uWidth = (uint32_t)(dc::indexToDcValue(windowNode->window.dimensions.x)->valueInteger),
@@ -256,11 +265,11 @@ pl_app_update(plAppData *ptAppData)
 
     gptProfile->begin_sample(0, "example drawing");
 
-    plDrawLayer2D *ptFGLayer = gptStarter->get_foreground_layer();
-    // DcPrimitive::setPtLayer(ptFGLayer);
+    ptAppData->ptFGLayer = gptStarter->get_foreground_layer();
 
     // draw dcapp
     // root->draw(true);
+    dc::drawNode(dc::dcData.window, nullptr);
 
     gptProfile->end_sample(0);
 
@@ -270,24 +279,58 @@ pl_app_update(plAppData *ptAppData)
 
 namespace dc
 {
-    void processNodeChildren(xmlNodePtr xmlNode, DcNodeIndex nodeIndex, const std::string &directory)
+    // returns the first child (if any)
+    DcNodeIndex processNodeChildren(xmlNodePtr xmlNode, DcNodeIndex nodeIndex, const std::string &directory)
     {
         xmlNodePtr xmlChildNode = xmlNode->children;
-        DcNodeIndex childNodePreviousIndex = DC_NODE_INDEX_UNDEFINED;
+
+        DcNodeIndex firstChildIndex = DC_NODE_INDEX_UNDEFINED;
+        DcNodeIndex previousChildNodeIndex = DC_NODE_INDEX_UNDEFINED;
         while (xmlChildNode)
         {
-            DcNodeIndex childNodeIndex = processNode(xmlChildNode, nodeIndex, childNodePreviousIndex, directory);
+            DcNodeIndex childNodeIndex = processNode(xmlChildNode, nodeIndex, directory);
+
+            // get node addresses here since the address could change per node process
+            DcNode *node = indexToDcNode(nodeIndex);
+            DcNode *childNode = indexToDcNode(childNodeIndex);
+            DcNode *previousChildNode = indexToDcNode(previousChildNodeIndex);
+
+            // if the current node and child exists
+            if (node && childNode)
+            {
+                // set child's parent
+                childNode->parent = nodeIndex;
+
+                // set nodes's first child if this is the first child
+                if (previousChildNodeIndex == DC_NODE_INDEX_UNDEFINED)
+                {
+                    firstChildIndex = childNodeIndex;
+                }
+            }
+
+            // if there is a previous node
+            if (previousChildNode)
+            {
+                // set the next node of the previous node
+                previousChildNode->next = childNodeIndex;
+            }
+
+            // set previous child node
             if (childNodeIndex != DC_NODE_INDEX_UNDEFINED)
             {
-                childNodePreviousIndex = childNodeIndex;
+                previousChildNodeIndex = childNodeIndex;
             }
+
+            // increment pointer
             xmlChildNode = xmlChildNode->next;
         }
+
+        return firstChildIndex;
     }
 
-    DcNodeIndex processNode(xmlNodePtr xmlNode, DcNodeIndex parentNodeIndex, DcNodeIndex previousNodeIndex, std::string directory)
+    DcNodeIndex processNode(xmlNodePtr xmlNode, DcNodeIndex parentNodeIndex, std::string directory)
     {
-        bool isDcNode = false;
+        // by default, the element is not a node
         DcNodeIndex nodeIndex = DC_NODE_INDEX_UNDEFINED;
 
         switch (xmlNodeToElementType(xmlNode))
@@ -296,7 +339,6 @@ namespace dc
         // ignore non-element nodes
         case DC_ELEM_TYPE_NONELEM:
         {
-            isDcNode = false;
             break;
         }
 
@@ -467,9 +509,11 @@ namespace dc
             nodeIndex = registerDcNode(dcNode);
 
             // process children
-            processNodeChildren(xmlNode, nodeIndex, directory);
+            DcNodeIndex firstChildIndex = processNodeChildren(xmlNode, nodeIndex, directory);
 
-            isDcNode = true;
+            // update child index
+            DcNode *node = indexToDcNode(nodeIndex);
+            node->container.child = firstChildIndex;
             break;
         }
 
@@ -480,24 +524,99 @@ namespace dc
             break;
         }
 
-        // case DC_ELEM_TYPE_DEM:
-        // {
-        //     DcNodeType parentType = indexToDcNode(parentNodeIndex)->type;
-        //     switch (parentType)
-        //     {
-        //     case DC_ELEM_TYPE_MAP:
-        //     {
-        //         std::string filename = filepathToCanonical(getAttributeString(node, "File"), directory);
-        //         ((DcMap *)parent)->addDem(filename);
-        //         break;
-        //     }
+            // case DC_ELEM_TYPE_DEM:
+            // {
+            //     DcNodeType parentType = indexToDcNode(parentNodeIndex)->type;
+            //     switch (parentType)
+            //     {
+            //     case DC_ELEM_TYPE_MAP:
+            //     {
+            //         std::string filename = filepathToCanonical(getAttributeString(node, "File"), directory);
+            //         ((DcMap *)parent)->addDem(filename);
+            //         break;
+            //     }
 
-        //     default:
-        //         throw std::runtime_error("Adding DEM to invalid parent of type " + std::to_string(parentType));
-        //         break;
-        //     }
-        //     break;
-        // }
+            //     default:
+            //         throw std::runtime_error("Adding DEM to invalid parent of type " + std::to_string(parentType));
+            //         break;
+            //     }
+            //     break;
+            // }
+
+        case DC_ELEM_TYPE_IF:
+        {
+            DcNode dcNode = (DcNode){
+                .type = DC_NODE_TYPE_CONDITIONAL,
+                .conditional = (DcNodeConditional){
+                    .value1 = DC_VALUE_INDEX_UNDEFINED,
+                    .value2 = DC_VALUE_INDEX_UNDEFINED,
+                    .childTrue = DC_NODE_INDEX_UNDEFINED,
+                    .childFalse = DC_NODE_INDEX_UNDEFINED,
+                }};
+
+            // conditional type
+            char *cType = getAttributeString(xmlNode, "Operation");
+            if (cType)
+            {
+                dcNode.conditional.type = createAndRegisterDcValueFromString(dereferenceConstants(cType));
+                free(cType);
+            }
+            else
+            {
+                dcNode.conditional.type = registerDcValue(createValueInteger(DC_CONDITIONAL_TYPE_TRUE));
+            }
+
+            // value1
+            char *cValue = getAttributeString(xmlNode, "Value");
+            if (cValue)
+            {
+                dcNode.conditional.value1 = createAndRegisterDcValueFromString(dereferenceConstants(cValue));
+                free(cValue);
+            }
+            else
+            {
+                cValue = getAttributeString(xmlNode, "Value1");
+                if (cValue)
+                {
+                    dcNode.conditional.value1 = createAndRegisterDcValueFromString(dereferenceConstants(cValue));
+                    free(cValue);
+                }
+                else
+                {
+                    throw std::runtime_error("Invalid conditional; no value specified");
+                }
+            }
+
+            // value2
+            char *cValue2 = getAttributeString(xmlNode, "Value2");
+            if (cValue2)
+            {
+                dcNode.conditional.value2 = createAndRegisterDcValueFromString(dereferenceConstants(cValue2));
+                free(cValue2);
+            }
+
+            // register node
+            nodeIndex = registerDcNode(dcNode);
+
+            // process children (assigning to true/false handled in separate cases, e.g. DC_ELEM_TYPE_TRUE)
+            DcNodeIndex firstChildIndex = processNodeChildren(xmlNode, nodeIndex, directory);
+
+            // handle implicit <True> elements
+            if (firstChildIndex != DC_NODE_INDEX_UNDEFINED)
+            {
+                // ignore if True element already exists
+                DcNode *node = indexToDcNode(nodeIndex);
+                if (node->conditional.childTrue == DC_NODE_INDEX_UNDEFINED)
+                {
+                    node->conditional.childTrue = firstChildIndex;
+                }
+                else
+                {
+                    printf("Warning: <If> element has <True> explicit and implicit elements. Ignoring the implicit definitions\n");
+                }
+            }
+            break;
+        }
 
         // at this point, just used to set the directory path
         case DC_ELEM_TYPE_INCLUDE:
@@ -505,7 +624,7 @@ namespace dc
             char *cDirectory = getAttributeString(xmlNode, "Directory");
             if (cDirectory)
             {
-                processNodeChildren(xmlNode, nodeIndex, dereferenceConstants(cDirectory));
+                nodeIndex = processNodeChildren(xmlNode, parentNodeIndex, dereferenceConstants(cDirectory));
                 free(cDirectory);
             }
             else
@@ -551,6 +670,10 @@ namespace dc
                 .type = DC_NODE_TYPE_PANEL,
             };
 
+            // parent dimensions
+            // TODO probably don't need this.....must be a better way to architect
+            dcNode.panel.parentDimensions = indexToDcNode(parentNodeIndex)->window.virtualDimensions;
+
             // virtual x dimension
             char *cXVirtualDimension = getAttributeString(xmlNode, "VirtualWidth");
             if (cXVirtualDimension)
@@ -579,9 +702,12 @@ namespace dc
             nodeIndex = registerDcNode(dcNode);
 
             // process children
-            processNodeChildren(xmlNode, nodeIndex, directory);
+            DcNodeIndex firstChildIndex = processNodeChildren(xmlNode, nodeIndex, directory);
 
-            isDcNode = true;
+            // update child index
+            DcNode *node = indexToDcNode(nodeIndex);
+            node->panel.child = firstChildIndex;
+
             break;
         }
 
@@ -697,9 +823,15 @@ namespace dc
                 dcNode.polygon.lineWidth = registerDcValue(createValueFloat(0.0f));
             }
 
+            // initialize points to 0
+            dcNode.polygon.numPoints = 0;
+            dcNode.polygon.points = nullptr;
+
             // register node
             nodeIndex = registerDcNode(dcNode);
-            isDcNode = true;
+
+            // process children
+            processNodeChildren(xmlNode, nodeIndex, directory);
             break;
         }
 
@@ -743,23 +875,41 @@ namespace dc
             break;
         }
 
-            // case DC_ELEM_TYPE_VERTEX:
-            // {
-            //     elem_t parentType = parent->getType();
-            //     switch (parentType)
-            //     {
-            //     case DC_ELEM_TYPE_POLYGON:
-            //     {
-            //         ((DcPolygon *)parent)->addVertex(attributeToDcValue(node, "X"), attributeToDcValue(node, "Y"));
-            //         break;
-            //     }
+        case DC_ELEM_TYPE_VERTEX:
+        {
+            DcNode *parentNode = indexToDcNode(parentNodeIndex);
+            switch (parentNode->type)
+            {
+            case DC_NODE_TYPE_POLYGON:
+            {
+                // xPosition
+                char *cXPosition = getAttributeString(xmlNode, "X");
+                if (!cXPosition)
+                {
+                    throw std::runtime_error("Invalid Vertex: No X attribute");
+                }
 
-            //     default:
-            //         throw std::runtime_error("Adding vertex to invalid parent of type " + std::to_string(parentType));
-            //         break;
-            //     }
-            //     break;
-            // }
+                // yPosition
+                char *cYPosition = getAttributeString(xmlNode, "Y");
+                if (!cYPosition)
+                {
+                    throw std::runtime_error("Invalid Vertex: No Y attribute");
+                }
+
+                // reallocate and add vertices
+                parentNode->polygon.numPoints++;
+                parentNode->polygon.points = (DcValueIndex2 *)realloc(parentNode->polygon.points, parentNode->polygon.numPoints * sizeof(DcValueIndex2));
+                parentNode->polygon.points[parentNode->polygon.numPoints - 1] = (DcValueIndex2){
+                    createAndRegisterDcValueFromString(dereferenceConstants(cXPosition)),
+                    createAndRegisterDcValueFromString(dereferenceConstants(cYPosition))};
+                break;
+            }
+            default:
+                // TODO add a nodeTypeToString() function
+                throw std::runtime_error("Invalid parent of type " + std::string("<Unknown>") + "for vertex.");
+            }
+            break;
+        }
 
         case DC_ELEM_TYPE_WINDOW:
         {
@@ -851,45 +1001,187 @@ namespace dc
             }
 
             // register node
-            dcData.window = registerDcNode(dcNode);
-            isDcNode = true;
+            nodeIndex = registerDcNode(dcNode);
+
+            // process children
+            DcNodeIndex firstChildIndex = processNodeChildren(xmlNode, nodeIndex, directory);
+
+            // update child index
+            DcNode *node = indexToDcNode(nodeIndex);
+            node->window.child = firstChildIndex;
+
+            // set global window
+            dcData.window = nodeIndex;
             break;
         }
         }
 
-        if (isDcNode)
+        return nodeIndex;
+    }
+
+    // TODO decouple parentDimensions from this function call
+    // not used for all nodes, and can probably be another DcValue in the Node itself if needed
+    // e.g. {.parentDimensions} (since it's pointing the parent's values)
+    void drawNodeList(DcNodeIndex nodeIndex, plMat4 *nodeTransform)
+    {
+        DcNodeIndex currentNodeIndex = nodeIndex;
+        while (currentNodeIndex != DC_NODE_INDEX_UNDEFINED)
         {
-            DcNode *node = indexToDcNode(nodeIndex);
-            DcNode *parentNode = indexToDcNode(parentNodeIndex);
-            DcNode *previousNode = indexToDcNode(previousNodeIndex);
-
-            // if there is a parent
-            if (parentNodeIndex != DC_NODE_INDEX_UNDEFINED)
-            {
-                // set parent
-                node->parent = parentNodeIndex;
-
-                // set parent's first child if this is the first child
-                if (previousNodeIndex == DC_NODE_INDEX_UNDEFINED)
-                {
-                    parentNode->child = nodeIndex;
-                }
-            }
-
-            // if there is a previous node
-            if (previousNodeIndex != DC_NODE_INDEX_UNDEFINED)
-            {
-                // set the next node of the previous node
-                previousNode->next = nodeIndex;
-            }
-
-            // return node index
-            return nodeIndex;
-        }
-        else
-        {
-            return DC_NODE_INDEX_UNDEFINED;
+            drawNode(currentNodeIndex, nodeTransform);
+            currentNodeIndex = indexToDcNode(currentNodeIndex)->next;
         }
     }
 
-}
+    void drawNode(DcNodeIndex nodeIndex, plMat4 *parentTransform)
+    {
+        if (nodeIndex == DC_NODE_INDEX_UNDEFINED)
+        {
+            throw std::runtime_error("Attempting to draw undefined node index");
+        }
+
+        DcNode *node = indexToDcNode(nodeIndex);
+        switch (node->type)
+        {
+        case DC_NODE_TYPE_CONTAINER:
+        {
+            float xPosition = 0;
+            switch (indexToDcValue(node->container.alignment.x)->valueInteger)
+            {
+            case DC_ALIGN_TYPE_LEFT:
+                xPosition = indexToDcValue(node->container.position.x)->valueFloat;
+                break;
+            case DC_ALIGN_TYPE_CENTER:
+                xPosition = indexToDcValue(node->container.position.x)->valueFloat - indexToDcValue(node->container.dimensions.x)->valueFloat / 2;
+                break;
+            case DC_ALIGN_TYPE_RIGHT:
+                xPosition = indexToDcValue(node->container.position.x)->valueFloat - indexToDcValue(node->container.dimensions.x)->valueFloat;
+                break;
+            }
+
+            float yPosition = 0;
+            switch (indexToDcValue(node->container.alignment.y)->valueInteger)
+            {
+            case DC_ALIGN_TYPE_LEFT:
+                yPosition = indexToDcValue(node->container.position.y)->valueFloat;
+                break;
+            case DC_ALIGN_TYPE_CENTER:
+                yPosition = indexToDcValue(node->container.position.y)->valueFloat - indexToDcValue(node->container.dimensions.y)->valueFloat / 2;
+                break;
+            case DC_ALIGN_TYPE_RIGHT:
+                yPosition = indexToDcValue(node->container.position.y)->valueFloat - indexToDcValue(node->container.dimensions.y)->valueFloat;
+                break;
+            }
+
+            plMat4 transOriginMatrix = pl_mat4_translate_xyz(
+                indexToDcValue(node->container.origin.x)->valueFloat,
+                indexToDcValue(node->container.origin.y)->valueFloat,
+                0.0f);
+            plMat4 rotateMatrix = pl_mat4_rotate_vec3(
+                indexToDcValue(node->container.rotation)->valueFloat,
+                (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 transPositionMatrix = pl_mat4_translate_xyz(
+                indexToDcValue(node->container.position.x)->valueFloat,
+                indexToDcValue(node->container.position.y)->valueFloat,
+                0.0f);
+            plMat4 scaleMatrix = pl_mat4_scale_xyz(
+                indexToDcValue(node->container.dimensions.x)->valueFloat / indexToDcValue(node->container.virtualDimensions.x)->valueFloat,
+                indexToDcValue(node->container.dimensions.y)->valueFloat / indexToDcValue(node->container.virtualDimensions.y)->valueFloat,
+                1.0f);
+
+            plMat4 transform = (plMat4){0};
+            transform = pl_mul_mat4t(parentTransform, &transOriginMatrix);
+            transform = pl_mul_mat4t(&transform, &rotateMatrix);
+            transform = pl_mul_mat4t(&transform, &transPositionMatrix);
+            transform = pl_mul_mat4t(&transform, &scaleMatrix);
+            drawNodeList(node->container.child, &transform);
+            break;
+        }
+
+        case DC_NODE_TYPE_CONDITIONAL:
+        {
+            // TODO implement this
+            break;
+        }
+
+        case DC_NODE_TYPE_MAP:
+        {
+            // TODO implement this
+            break;
+        }
+
+        case DC_NODE_TYPE_PANEL:
+        {
+            plMat4 scaleMatrix = pl_mat4_scale_xyz(
+                indexToDcValue(node->panel.parentDimensions.x)->valueFloat / indexToDcValue(node->panel.virtualDimensions.x)->valueFloat,
+                indexToDcValue(node->panel.parentDimensions.y)->valueFloat / indexToDcValue(node->panel.virtualDimensions.y)->valueFloat,
+                1.0f);
+
+            plMat4 transform = (plMat4){0};
+            transform = pl_mul_mat4t(parentTransform, &scaleMatrix);
+            drawNodeList(node->panel.child, &transform);
+            break;
+        }
+
+        case DC_NODE_TYPE_POLYGON:
+        {
+            // get points
+            std::vector<plVec2> points;
+            points.resize(node->polygon.numPoints);
+            for (int ii = 0; ii < node->polygon.numPoints; ii++)
+            {
+                points.push_back((plVec2){
+                    indexToDcValue(node->polygon.points[ii].x)->valueFloat,
+                    indexToDcValue(node->polygon.points[ii].y)->valueFloat,
+                });
+            }
+
+            // draw fill
+            if (node->polygon.fillEnabled)
+            {
+                uint32_t fillColor = PL_COLOR_32_RGBA(
+                    indexToDcValue(node->polygon.fillColor.r)->valueFloat,
+                    indexToDcValue(node->polygon.fillColor.g)->valueFloat,
+                    indexToDcValue(node->polygon.fillColor.b)->valueFloat,
+                    indexToDcValue(node->polygon.fillColor.a)->valueFloat);
+                gptDraw->add_polygon(ptAppData->)
+            }
+
+            // draw outline
+            if (node->polygon.lineEnabled)
+            {
+
+            }
+
+            // get line thickness
+            float lineThickness = indexToDcValue(node->polygon.lineWidth)->valueFloat;
+
+            // get colors
+            uint32_t lineColor = PL_COLOR_32_RGBA(
+                indexToDcValue(node->polygon.lineColor.r)->valueFloat,
+                indexToDcValue(node->polygon.lineColor.g)->valueFloat,
+                indexToDcValue(node->polygon.lineColor.b)->valueFloat,
+                indexToDcValue(node->polygon.lineColor.a)->valueFloat);
+            
+
+            
+
+            break;
+        }
+
+        case DC_NODE_TYPE_SET:
+        {
+            // todo implement this
+            break;
+        }
+
+        case DC_NODE_TYPE_WINDOW:
+        {
+            break;
+        }
+
+        default:
+            break;
+        }
+    }
+
+} // namespace dc

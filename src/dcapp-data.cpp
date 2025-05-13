@@ -344,6 +344,9 @@ namespace dc
 
     DcNode *indexToDcNode(DcNodeIndex index)
     {
+        if (index == DC_NODE_INDEX_UNDEFINED) {
+            return nullptr;
+        }
         return &(dcData.nodes[index]);
     }
 
@@ -550,6 +553,16 @@ namespace dc
         setConstant("_align_bottom_", std::to_string(DC_ALIGN_TYPE_BOTTOM));
         setConstant("_align_middle_", std::to_string(DC_ALIGN_TYPE_MIDDLE));
         setConstant("_align_top_", std::to_string(DC_ALIGN_TYPE_TOP));
+
+        setConstant("_conditional_true_", std::to_string(DC_CONDITIONAL_TYPE_TRUE));
+        setConstant("_conditional_false_", std::to_string(DC_CONDITIONAL_TYPE_FALSE));
+        setConstant("_conditional_eq_", std::to_string(DC_CONDITIONAL_TYPE_EQ));
+        setConstant("_conditional_ne_", std::to_string(DC_CONDITIONAL_TYPE_NE));
+        setConstant("_conditional_lt_", std::to_string(DC_CONDITIONAL_TYPE_LT));
+        setConstant("_conditional_gt_", std::to_string(DC_CONDITIONAL_TYPE_GT));
+        setConstant("_conditional_lte_", std::to_string(DC_CONDITIONAL_TYPE_LTE));
+        setConstant("_conditional_gte_", std::to_string(DC_CONDITIONAL_TYPE_GTE));
+    
         setConstant("_color_black_", "0 0 0");
         setConstant("_color_blue_", "0 0 1");
         setConstant("_color_green_", "0 1 0");
