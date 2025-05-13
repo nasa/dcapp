@@ -37,18 +37,6 @@ namespace dc
 #include "pl_starter_ext.h"
 
 //-----------------------------------------------------------------------------
-// [SECTION] dcapp state
-//-----------------------------------------------------------------------------
-
-namespace dc
-{
-    static DcNodeIndex processNodeChildren(xmlNodePtr xmlNode, DcNodeIndex nodeIndex, const std::string &directory);
-    static DcNodeIndex processNode(xmlNodePtr xmlNode, DcNodeIndex parentNodeIndex, std::string directory);
-    static void drawNodeList(DcNodeIndex nodeIndex, plMat4 *nodeTransform);
-    static void drawNode(DcNodeIndex nodeIndex, plMat4 *parentTransform);
-} // namespace dc
-
-//-----------------------------------------------------------------------------
 // [SECTION] structs
 //-----------------------------------------------------------------------------
 
@@ -56,11 +44,23 @@ typedef struct _plAppData
 {
     // window
     plWindow *ptWindow;
-    plDrawLayer2D *ptFGLayer ;
+    plDrawLayer2D *ptFGLayer;
 
     // console variable
     bool bShowHelpWindow;
 } plAppData;
+
+//-----------------------------------------------------------------------------
+// [SECTION] dcapp state
+//-----------------------------------------------------------------------------
+
+namespace dc
+{
+    static DcNodeIndex processNodeChildren(xmlNodePtr xmlNode, DcNodeIndex nodeIndex, const std::string &directory);
+    static DcNodeIndex processNode(xmlNodePtr xmlNode, DcNodeIndex parentNodeIndex, std::string directory);
+    static void drawNodeList(plAppData *ptAppData, DcNodeIndex nodeIndex, plMat4 *nodeTransform);
+    static void drawNode(plAppData *ptAppData, DcNodeIndex nodeIndex, plMat4 *parentTransform);
+} // namespace dc
 
 //-----------------------------------------------------------------------------
 // [SECTION] apis
@@ -269,7 +269,7 @@ pl_app_update(plAppData *ptAppData)
 
     // draw dcapp
     // root->draw(true);
-    dc::drawNode(dc::dcData.window, nullptr);
+    dc::drawNode(ptAppData, dc::dcData.window, nullptr);
 
     gptProfile->end_sample(0);
 
@@ -1022,17 +1022,17 @@ namespace dc
     // TODO decouple parentDimensions from this function call
     // not used for all nodes, and can probably be another DcValue in the Node itself if needed
     // e.g. {.parentDimensions} (since it's pointing the parent's values)
-    void drawNodeList(DcNodeIndex nodeIndex, plMat4 *nodeTransform)
+    void drawNodeList(plAppData *ptAppData, DcNodeIndex nodeIndex, plMat4 *nodeTransform)
     {
         DcNodeIndex currentNodeIndex = nodeIndex;
         while (currentNodeIndex != DC_NODE_INDEX_UNDEFINED)
         {
-            drawNode(currentNodeIndex, nodeTransform);
+            drawNode(ptAppData, currentNodeIndex, nodeTransform);
             currentNodeIndex = indexToDcNode(currentNodeIndex)->next;
         }
     }
 
-    void drawNode(DcNodeIndex nodeIndex, plMat4 *parentTransform)
+    void drawNode(plAppData *ptAppData, DcNodeIndex nodeIndex, plMat4 *parentTransform)
     {
         if (nodeIndex == DC_NODE_INDEX_UNDEFINED)
         {
@@ -1093,7 +1093,7 @@ namespace dc
             transform = pl_mul_mat4t(&transform, &rotateMatrix);
             transform = pl_mul_mat4t(&transform, &transPositionMatrix);
             transform = pl_mul_mat4t(&transform, &scaleMatrix);
-            drawNodeList(node->container.child, &transform);
+            drawNodeList(ptAppData, node->container.child, &transform);
             break;
         }
 
@@ -1118,7 +1118,7 @@ namespace dc
 
             plMat4 transform = (plMat4){0};
             transform = pl_mul_mat4t(parentTransform, &scaleMatrix);
-            drawNodeList(node->panel.child, &transform);
+            drawNodeList(ptAppData, node->panel.child, &transform);
             break;
         }
 
@@ -1143,27 +1143,22 @@ namespace dc
                     indexToDcValue(node->polygon.fillColor.g)->valueFloat,
                     indexToDcValue(node->polygon.fillColor.b)->valueFloat,
                     indexToDcValue(node->polygon.fillColor.a)->valueFloat);
-                gptDraw->add_polygon(ptAppData->)
+
+                gptDraw->add_convex_polygon_filled(ptAppData->ptFGLayer, points.data(), points.size(), (plDrawSolidOptions){.uColor = fillColor});
             }
 
             // draw outline
             if (node->polygon.lineEnabled)
             {
+                float lineThickness = indexToDcValue(node->polygon.lineWidth)->valueFloat;
+                uint32_t lineColor = PL_COLOR_32_RGBA(
+                    indexToDcValue(node->polygon.lineColor.r)->valueFloat,
+                    indexToDcValue(node->polygon.lineColor.g)->valueFloat,
+                    indexToDcValue(node->polygon.lineColor.b)->valueFloat,
+                    indexToDcValue(node->polygon.lineColor.a)->valueFloat);
 
+                gptDraw->add_polygon(ptAppData->ptFGLayer, points.data(), points.size(), (plDrawLineOptions){.uColor = lineColor, .fThickness = lineThickness});
             }
-
-            // get line thickness
-            float lineThickness = indexToDcValue(node->polygon.lineWidth)->valueFloat;
-
-            // get colors
-            uint32_t lineColor = PL_COLOR_32_RGBA(
-                indexToDcValue(node->polygon.lineColor.r)->valueFloat,
-                indexToDcValue(node->polygon.lineColor.g)->valueFloat,
-                indexToDcValue(node->polygon.lineColor.b)->valueFloat,
-                indexToDcValue(node->polygon.lineColor.a)->valueFloat);
-            
-
-            
 
             break;
         }
@@ -1176,6 +1171,7 @@ namespace dc
 
         case DC_NODE_TYPE_WINDOW:
         {
+            
             break;
         }
 
