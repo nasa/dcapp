@@ -3,7 +3,8 @@
 // [SECTION] dcapp includes
 //-----------------------------------------------------------------------------
 
-#include "value.hpp"
+#include <utils/file-utils.hpp>
+#include <value.hpp>
 #include <dcapp-data.hpp>
 #include <utils/string-utils.hpp>
 #include <utils/xml-utils.hpp>
@@ -57,6 +58,7 @@ typedef struct _plAppData
 
 namespace dc
 {
+    static void refreshVariables();
     static DcNodeIndex processNodeChildren(xmlNodePtr xmlNode, DcNodeIndex nodeIndex, const std::string &directory);
     static DcNodeIndex processNode(xmlNodePtr xmlNode, DcNodeIndex parentNodeIndex, std::string directory);
     static void drawNodeList(plAppData *ptAppData, DcNodeIndex nodeIndex, plMat4 *nodeTransform);
@@ -72,6 +74,7 @@ const plDrawI *gptDraw = NULL;
 const plStarterI *gptStarter = NULL;
 const plProfileI *gptProfile = NULL;
 const plMemoryI *gptMemory = NULL;
+const plLibraryI *gptLibrary = NULL;
 
 #define PL_ALLOC(x) gptMemory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_REALLOC(x, y) gptMemory->tracked_realloc((x), (y), __FILE__, __LINE__)
@@ -119,6 +122,7 @@ pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
     gptStarter = pl_get_api_latest(ptApiRegistry, plStarterI);
     gptProfile = pl_get_api_latest(ptApiRegistry, plProfileI);
     gptMemory = pl_get_api_latest(ptApiRegistry, plMemoryI);
+    gptLibrary = pl_get_api_latest(ptApiRegistry, plLibraryI);
 
     // allocate app memory
     ptAppData = (plAppData *)PL_ALLOC(sizeof(plAppData));
@@ -195,6 +199,22 @@ pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
     xmlNodePtr rootNode = xmlDocGetRootElement(dc::dcData.doc);
     dc::processNode(rootNode, dc::DC_NODE_INDEX_UNDEFINED, configDirPath);
 
+    // configure logic file
+    if (dc::dcData.logic.library)
+    {
+        // set logic functions
+        dc::dcData.logic.preInit = (void (*)(void))gptLibrary->load_function(dc::dcData.logic.library, "DisplayPreInit");
+        dc::dcData.logic.init = (void (*)(void))gptLibrary->load_function(dc::dcData.logic.library, "DisplayInit");
+        dc::dcData.logic.draw = (void (*)(void))gptLibrary->load_function(dc::dcData.logic.library, "DisplayDraw");
+        dc::dcData.logic.close = (void (*)(void))gptLibrary->load_function(dc::dcData.logic.library, "DisplayClose");
+
+        // set variables
+        for (auto const &[name, variable] : dc::dcData.variables)
+        {
+            dc::dcData.variables[name].externData = gptLibrary->load_function(dc::dcData.logic.library, name.c_str());
+        }
+    }
+
     // validate
     // root->validate();
 
@@ -261,6 +281,7 @@ pl_app_update(plAppData *ptAppData)
     gptProfile->begin_sample(0, "example drawing");
 
     ptAppData->ptFGLayer = gptStarter->get_foreground_layer();
+    dc::refreshVariables();
     dc::drawNode(ptAppData, dc::dcData.window, nullptr);
 
     gptProfile->end_sample(0);
@@ -271,6 +292,44 @@ pl_app_update(plAppData *ptAppData)
 
 namespace dc
 {
+    // update all variables
+    void refreshVariables()
+    {
+        for (auto const &[name, variable] : dc::dcData.variables)
+        {
+            DcValue *value = indexToDcValue(variable.valueIndex);
+            void *externData = variable.externData;
+
+            switch (value->type)
+            {
+            case DC_VALUE_TYPE_FLOAT:
+            {
+                value->valueFloat = *((float *)(variable.externData));
+                break;
+            }
+            case DC_VALUE_TYPE_INTEGER:
+            {
+                value->valueInteger = *((int *)(variable.externData));
+                break;
+            }
+            case DC_VALUE_TYPE_STRING:
+            {
+                value->valueString = *((std::string *)(variable.externData));
+                break;
+            }
+            case DC_VALUE_TYPE_BOOLEAN:
+            {
+                value->valueBoolean = *((bool *)(variable.externData));
+                break;
+            }
+            default:
+                throw std::runtime_error("invalid DcValue type for variable");
+                break;
+            }
+            refreshValue(value);
+        }
+    }
+
     // returns the first child (if any)
     DcNodeIndex processNodeChildren(xmlNodePtr xmlNode, DcNodeIndex nodeIndex, const std::string &directory)
     {
@@ -627,14 +686,40 @@ namespace dc
             break;
         }
 
-            // case DC_ELEM_TYPE_LOGIC:
-            // {
-            //     std::string filePath = filepathToCanonical(getAttributeString(node, "File"), directory);
-            //     DcValue *file = new DcValue(filePath);
-            //     DcLogic *logic = new DcLogic((DcParent *)parent, file);
-            //     DcVariable::setLogic(logic);
-            //     break;
-            // }
+        case DC_ELEM_TYPE_LOGIC:
+        {
+            if (dcData.logic.library)
+            {
+                throw std::runtime_error("Duplicate <Logic> definitions");
+            }
+            char *cFilePath = getAttributeString(xmlNode, "File");
+            if (cFilePath)
+            {
+                std::string filePath = filepathToCanonical(std::string(cFilePath), directory);
+                free(cFilePath);
+
+                // verify filepath
+                if (filePath.empty())
+                {
+                    throw std::runtime_error("Invalid logic file of empty filename");
+                }
+
+                // open .so file
+                const plLibraryDesc logicSoDesc = {
+                    .tFlags = PL_LIBRARY_FLAGS_NONE,
+                    .pcName = filePath.c_str(),
+                };
+                if (gptLibrary->load(logicSoDesc, &dcData.logic.library) != PL_LIBRARY_RESULT_SUCCESS)
+                {
+                    throw std::runtime_error("Failed to load logic .so file");
+                }
+            }
+            else
+            {
+                throw std::runtime_error("Invalid condition; <Logic> node with no file");
+            }
+            break;
+        }
 
             // case DC_ELEM_TYPE_MAP:
             // {

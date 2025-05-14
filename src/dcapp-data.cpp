@@ -261,7 +261,7 @@ namespace dc
             std::string variableName = cleanedValue.substr(1);
             if (dcData.variables.count(variableName))
             {
-                return dcData.variables[variableName];
+                return dcData.variables[variableName].valueIndex;
             }
             throw std::runtime_error("Non-existant variable @" + variableName);
         }
@@ -333,13 +333,16 @@ namespace dc
         return result;
     }
 
-    void setVariable(const std::string &name, DcValueIndex value)
+    void setVariable(const std::string &name, DcValueIndex valueIndex)
     {
         if (dcData.variables.count(name))
         {
             throw std::runtime_error("Duplicate variable for name " + name);
         }
-        dcData.variables[name] = value;
+        dcData.variables[name] = (DcVariable){
+            nullptr,
+            valueIndex,
+        };
     }
 
     std::string dcNodeTypeToString(DcNodeType type)
@@ -568,6 +571,13 @@ namespace dc
         dcData.values.resize(1);
         dcData.nodes.resize(1);
         dcData.window = DC_NODE_INDEX_UNDEFINED;
+        dcData.logic = (DcLogic){
+            .library = nullptr,
+            .preInit = nullptr,
+            .init = nullptr,
+            .draw = nullptr,
+            .close = nullptr,
+        };
         dcData.doc = nullptr;
 
         // set default constants

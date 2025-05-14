@@ -1,6 +1,8 @@
 #pragma once
 
 // dcapp includes
+#define PL_EXPERIMENTAL 
+#include "pl.h"
 #include <value.hpp>
 
 // library includes
@@ -215,14 +217,22 @@ namespace dc
         };
     } DcNode;
 
-    // logic utils
+    // logic
     typedef struct _DcLogic
     {
+        plSharedLibrary *library;
         void (*preInit)();
         void (*init)();
         void (*draw)();
         void (*close)();
     } DcLogic;
+
+    // variables
+    typedef struct _DcVariable
+    {
+        void *externData;
+        DcValueIndex valueIndex;
+    } DcVariable;
 
     // constant utils
     void setConstant(const std::string &name, const std::string &text);
@@ -239,7 +249,7 @@ namespace dc
     DcValueIndex4 attributeToDcValueIndex4(xmlNodePtr node, const std::string &attr);
 
     // variable utils
-    void setVariable(const std::string &name, DcValueIndex value);
+    void setVariable(const std::string &name, DcValueIndex valueIndex);
 
     // node utils
     std::string dcNodeTypeToString(DcNodeType type);
@@ -261,7 +271,7 @@ namespace dc
 
         // values
         std::map<std::string, std::string> constants;
-        std::map<std::string, DcValueIndex> variables;
+        std::map<std::string, DcVariable> variables;
         std::vector<DcValue> values;
 
         // nodes
@@ -278,4 +288,4 @@ namespace dc
     } DcappData;
 
     extern DcappData dcData;
-}
+} // namespace dc
