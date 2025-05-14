@@ -21,7 +21,7 @@ namespace dc
     std::string elemToString(DcElemType type)
     {
         switch (type)
- {
+        {
         case DC_ELEM_TYPE_CONSTANT:
             return "Constant";
         case DC_ELEM_TYPE_CONTAINER:
@@ -342,9 +342,33 @@ namespace dc
         dcData.variables[name] = value;
     }
 
+    std::string dcNodeTypeToString(DcNodeType type)
+    {
+        switch (type)
+        {
+        case DC_NODE_TYPE_CONTAINER:
+            return "Container";
+        case DC_NODE_TYPE_CONDITIONAL:
+            return "Conditional";
+        case DC_NODE_TYPE_MAP:
+            return "Map";
+        case DC_NODE_TYPE_PANEL:
+            return "Panel";
+        case DC_NODE_TYPE_POLYGON:
+            return "Polygon";
+        case DC_NODE_TYPE_SET:
+            return "Set";
+        case DC_NODE_TYPE_WINDOW:
+            return "Window";
+        default:
+            throw std::runtime_error("Invalid DcNode type");
+        }
+    }
+
     DcNode *indexToDcNode(DcNodeIndex index)
     {
-        if (index == DC_NODE_INDEX_UNDEFINED) {
+        if (index == DC_NODE_INDEX_UNDEFINED)
+        {
             return nullptr;
         }
         return &(dcData.nodes[index]);
@@ -562,7 +586,7 @@ namespace dc
         setConstant("_conditional_gt_", std::to_string(DC_CONDITIONAL_TYPE_GT));
         setConstant("_conditional_lte_", std::to_string(DC_CONDITIONAL_TYPE_LTE));
         setConstant("_conditional_gte_", std::to_string(DC_CONDITIONAL_TYPE_GTE));
-    
+
         setConstant("_color_black_", "0 0 0");
         setConstant("_color_blue_", "0 0 1");
         setConstant("_color_green_", "0 1 0");
@@ -572,4 +596,4 @@ namespace dc
         setConstant("_color_yellow_", "1 1 0");
         setConstant("_color_white_", "1 1 1");
     }
-}
+} // namespace dc

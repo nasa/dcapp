@@ -242,6 +242,7 @@ namespace dc
     void setVariable(const std::string &name, DcValueIndex value);
 
     // node utils
+    std::string dcNodeTypeToString(DcNodeType type);
     DcNode *indexToDcNode(DcNodeIndex index);
     DcNodeIndex registerDcNode(DcNode node);
 

@@ -72,7 +72,7 @@ typedef struct _DcValue4
 } DcValue4;
 
 DcValueType valueTypeFromString(const std::string& type);
-DcValue createValueFromString(DcValueType type, const std::string &value);
+DcValue createTypedValueFromString(DcValueType type, const std::string &value);
 DcValue createValueString(const std::string &value);
 DcValue createValueInteger(int value);
 DcValue createValueFloat(float value);

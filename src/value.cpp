@@ -1,10 +1,11 @@
 // dcapp includes
-#include <value.hpp>
 #include <utils/string-utils.hpp>
+#include <value.hpp>
 
 // library includes
 
 // c++ standard includes
+#include <stdexcept>
 
 DcValueType valueTypeFromString(const std::string &type)
 {
@@ -19,7 +20,7 @@ DcValueType valueTypeFromString(const std::string &type)
     return DC_VALUE_TYPE_UNDEFINED;
 }
 
-DcValue createValueFromString(DcValueType type, const std::string &value)
+DcValue createTypedValueFromString(DcValueType type, const std::string &value)
 {
     DcValue newValue = (DcValue){
         .type = type,
@@ -39,6 +40,9 @@ DcValue createValueFromString(DcValueType type, const std::string &value)
         break;
     case DC_VALUE_TYPE_STRING:
         newValue.valueString = value;
+        break;
+    default:
+        throw std::runtime_error("Invalid DcValue type");
         break;
     }
     refreshValue(&newValue);

@@ -3,6 +3,7 @@
 // [SECTION] dcapp includes
 //-----------------------------------------------------------------------------
 
+#include "value.hpp"
 #include <dcapp-data.hpp>
 #include <utils/string-utils.hpp>
 #include <utils/xml-utils.hpp>
@@ -250,12 +251,6 @@ pl_app_resize(plAppData *ptAppData)
 PL_EXPORT void
 pl_app_update(plAppData *ptAppData)
 {
-
-    // resize
-    uint32_t xSize, ySize;
-    gptWindows->get_size(ptAppData->ptWindow, &xSize, &ySize);
-    // root->getWindows().front()->resize(xSize, ySize);
-
     // this needs to be the first call when using the starter
     // extension. You must return if it returns false (usually a swapchain recreation).
     if (!gptStarter->begin_frame())
@@ -266,9 +261,6 @@ pl_app_update(plAppData *ptAppData)
     gptProfile->begin_sample(0, "example drawing");
 
     ptAppData->ptFGLayer = gptStarter->get_foreground_layer();
-
-    // draw dcapp
-    // root->draw(true);
     dc::drawNode(ptAppData, dc::dcData.window, nullptr);
 
     gptProfile->end_sample(0);
@@ -683,7 +675,7 @@ namespace dc
             }
             else
             {
-                dcNode.panel.virtualDimensions.x = registerDcValue(createValueFloat(0.0f));
+                dcNode.panel.virtualDimensions.x = dcNode.panel.parentDimensions.x;
             }
 
             // virtual y dimension
@@ -695,7 +687,7 @@ namespace dc
             }
             else
             {
-                dcNode.panel.virtualDimensions.y = registerDcValue(createValueFloat(0.0f));
+                dcNode.panel.virtualDimensions.y = dcNode.panel.parentDimensions.y;
             }
 
             // register node
@@ -715,7 +707,10 @@ namespace dc
         {
             DcNode dcNode = {
                 .type = DC_NODE_TYPE_POLYGON,
-            };
+                .polygon = (DcNodePolygon){
+                    .fillEnabled = false,
+                    .lineEnabled = false,
+                }};
 
             // fill color
             char *cFillColor = getAttributeString(xmlNode, "FillColor");
@@ -757,11 +752,8 @@ namespace dc
                 {
                     dcNode.polygon.fillColor.r = registerDcValue(createValueFloat(0.0f));
                 }
+                dcNode.polygon.fillEnabled = true;
                 free(cFillColor);
-            }
-            else
-            {
-                dcNode.polygon.fillEnabled = false;
             }
 
             // line color
@@ -804,11 +796,8 @@ namespace dc
                 {
                     dcNode.polygon.lineColor.r = registerDcValue(createValueFloat(0.0f));
                 }
+                dcNode.polygon.lineEnabled = true;
                 free(cLineColor);
-            }
-            else
-            {
-                dcNode.polygon.fillEnabled = false;
             }
 
             // line width
@@ -932,7 +921,8 @@ namespace dc
             char *cXPosition = getAttributeString(xmlNode, "X");
             if (cXPosition)
             {
-                dcNode.window.position.x = createAndRegisterDcValueFromString(dereferenceConstants(cXPosition));
+                DcValue value = createTypedValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cXPosition));
+                dcNode.window.position.x = registerDcValue(value);
                 free(cXPosition);
             }
             else
@@ -944,7 +934,8 @@ namespace dc
             char *cYPosition = getAttributeString(xmlNode, "Y");
             if (cYPosition)
             {
-                dcNode.window.position.y = createAndRegisterDcValueFromString(dereferenceConstants(cYPosition));
+                DcValue value = createTypedValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cYPosition));
+                dcNode.window.position.y = registerDcValue(value);
                 free(cYPosition);
             }
             else
@@ -956,7 +947,8 @@ namespace dc
             char *cXDimension = getAttributeString(xmlNode, "Width");
             if (cXDimension)
             {
-                dcNode.window.dimensions.x = createAndRegisterDcValueFromString(dereferenceConstants(cXDimension));
+                DcValue value = createTypedValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cXDimension));
+                dcNode.window.dimensions.x = registerDcValue(value);
                 free(cXDimension);
             }
             else
@@ -968,7 +960,8 @@ namespace dc
             char *cYDimension = getAttributeString(xmlNode, "Height");
             if (cYDimension)
             {
-                dcNode.window.dimensions.y = createAndRegisterDcValueFromString(dereferenceConstants(cYDimension));
+                DcValue value = createTypedValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cYDimension));
+                dcNode.window.dimensions.y = registerDcValue(value);
                 free(cYDimension);
             }
             else
@@ -980,7 +973,8 @@ namespace dc
             char *cXVirtualDimension = getAttributeString(xmlNode, "VirtualWidth");
             if (cXVirtualDimension)
             {
-                dcNode.window.virtualDimensions.x = createAndRegisterDcValueFromString(dereferenceConstants(cXVirtualDimension));
+                DcValue value = createTypedValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXVirtualDimension));
+                dcNode.window.virtualDimensions.x = registerDcValue(value);
                 free(cXVirtualDimension);
             }
             else
@@ -992,7 +986,8 @@ namespace dc
             char *cYVirtualDimension = getAttributeString(xmlNode, "VirtualHeight");
             if (cYVirtualDimension)
             {
-                dcNode.window.virtualDimensions.y = createAndRegisterDcValueFromString(dereferenceConstants(cYVirtualDimension));
+                DcValue value = createTypedValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYVirtualDimension));
+                dcNode.window.virtualDimensions.y = registerDcValue(value);
                 free(cYVirtualDimension);
             }
             else
@@ -1019,9 +1014,6 @@ namespace dc
         return nodeIndex;
     }
 
-    // TODO decouple parentDimensions from this function call
-    // not used for all nodes, and can probably be another DcValue in the Node itself if needed
-    // e.g. {.parentDimensions} (since it's pointing the parent's values)
     void drawNodeList(plAppData *ptAppData, DcNodeIndex nodeIndex, plMat4 *nodeTransform)
     {
         DcNodeIndex currentNodeIndex = nodeIndex;
@@ -1080,8 +1072,8 @@ namespace dc
                 indexToDcValue(node->container.rotation)->valueFloat,
                 (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 transPositionMatrix = pl_mat4_translate_xyz(
-                indexToDcValue(node->container.position.x)->valueFloat,
-                indexToDcValue(node->container.position.y)->valueFloat,
+                xPosition,
+                yPosition,
                 0.0f);
             plMat4 scaleMatrix = pl_mat4_scale_xyz(
                 indexToDcValue(node->container.dimensions.x)->valueFloat / indexToDcValue(node->container.virtualDimensions.x)->valueFloat,
@@ -1099,13 +1091,13 @@ namespace dc
 
         case DC_NODE_TYPE_CONDITIONAL:
         {
-            // TODO implement this
+            // TODO implement
             break;
         }
 
         case DC_NODE_TYPE_MAP:
         {
-            // TODO implement this
+            // TODO implement
             break;
         }
 
@@ -1115,7 +1107,6 @@ namespace dc
                 indexToDcValue(node->panel.parentDimensions.x)->valueFloat / indexToDcValue(node->panel.virtualDimensions.x)->valueFloat,
                 indexToDcValue(node->panel.parentDimensions.y)->valueFloat / indexToDcValue(node->panel.virtualDimensions.y)->valueFloat,
                 1.0f);
-
             plMat4 transform = (plMat4){0};
             transform = pl_mul_mat4t(parentTransform, &scaleMatrix);
             drawNodeList(ptAppData, node->panel.child, &transform);
@@ -1129,10 +1120,12 @@ namespace dc
             points.resize(node->polygon.numPoints);
             for (int ii = 0; ii < node->polygon.numPoints; ii++)
             {
-                points.push_back((plVec2){
+                plVec4 point4 = (plVec4){
                     indexToDcValue(node->polygon.points[ii].x)->valueFloat,
                     indexToDcValue(node->polygon.points[ii].y)->valueFloat,
-                });
+                    0, 1};
+                point4 = pl_mul_mat4_vec4(parentTransform, point4);
+                points[ii] = (plVec2){point4.x, point4.y};
             }
 
             // draw fill
@@ -1143,7 +1136,6 @@ namespace dc
                     indexToDcValue(node->polygon.fillColor.g)->valueFloat,
                     indexToDcValue(node->polygon.fillColor.b)->valueFloat,
                     indexToDcValue(node->polygon.fillColor.a)->valueFloat);
-
                 gptDraw->add_convex_polygon_filled(ptAppData->ptFGLayer, points.data(), points.size(), (plDrawSolidOptions){.uColor = fillColor});
             }
 
@@ -1156,7 +1148,6 @@ namespace dc
                     indexToDcValue(node->polygon.lineColor.g)->valueFloat,
                     indexToDcValue(node->polygon.lineColor.b)->valueFloat,
                     indexToDcValue(node->polygon.lineColor.a)->valueFloat);
-
                 gptDraw->add_polygon(ptAppData->ptFGLayer, points.data(), points.size(), (plDrawLineOptions){.uColor = lineColor, .fThickness = lineThickness});
             }
 
@@ -1171,7 +1162,33 @@ namespace dc
 
         case DC_NODE_TYPE_WINDOW:
         {
-            
+            // TODO move this code to only the resize() function
+            // update dimensions
+            uint32_t dimensionX, dimensionY;
+            gptWindows->get_size(ptAppData->ptWindow, &dimensionX, &dimensionY);
+            DcValue *dimensionValueX = indexToDcValue(node->window.dimensions.x);
+            DcValue *dimensionValueY = indexToDcValue(node->window.dimensions.y);
+            dimensionValueX->valueInteger = (int)dimensionX;
+            dimensionValueY->valueInteger = (int)dimensionY;
+            refreshValue(dimensionValueX);
+            refreshValue(dimensionValueY);
+
+            // compute transforms
+            // translate from negative to positive range
+            plMat4 transMatrix = pl_mat4_translate_xyz(
+                0.0f,
+                indexToDcValue(node->window.dimensions.y)->valueFloat,
+                0.0f);
+
+            // scale from virtual to real dimensions, flip y axis
+            plMat4 scaleMatrix = pl_mat4_scale_xyz(
+                indexToDcValue(node->window.dimensions.x)->valueFloat / indexToDcValue(node->window.virtualDimensions.x)->valueFloat,
+                indexToDcValue(node->window.dimensions.y)->valueFloat / indexToDcValue(node->window.virtualDimensions.y)->valueFloat * -1.0f,
+                1.0f);
+
+            plMat4 transform;
+            transform = pl_mul_mat4t(&transMatrix, &scaleMatrix);
+            drawNodeList(ptAppData, node->window.child, &transform);
             break;
         }
 
