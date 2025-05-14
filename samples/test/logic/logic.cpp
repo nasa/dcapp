@@ -9,7 +9,8 @@ void DisplayInit() {
 }
 
 void DisplayDraw() {
-    ROTATE += .1;
+    printf("asfd\n");
+    ROTATE += 5;
     if (ROTATE > 360) {
         ROTATE = 0;
     }

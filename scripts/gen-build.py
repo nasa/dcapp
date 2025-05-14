@@ -216,48 +216,48 @@ with pl.project("dcapp"):
                 with pl.compiler("clang"):
                     pass
 
-    # with pl.target("dcapp-genheader", pl.TargetType.EXECUTABLE, True):
+    with pl.target("dcapp-genheader", pl.TargetType.EXECUTABLE, True):
 
-    #     sourceFiles  = list_files_recursive("src", ".cpp")
-    #     pl.add_source_files(*sourceFiles, "apps/dcapp-genheader.cpp")
+        sourceFiles  = list_files_recursive("src", ".cpp")
+        pl.add_source_files(*sourceFiles, "apps/dcapp-genheader.cpp")
 
-    #     pl.set_output_binary("dcapp-genheader")
+        pl.set_output_binary("dcapp-genheader")
 
-    #     # default config
-    #     with pl.configuration("debug"):
+        # default config
+        with pl.configuration("debug"):
 
-    #         # win32
-    #         with pl.platform("Windows"):
-    #             with pl.compiler("msvc"):
-    #                 pass
+            # win32
+            with pl.platform("Windows"):
+                with pl.compiler("msvc"):
+                    pass
             
-    #         # linux
-    #         with pl.platform("Linux"):
-    #             with pl.compiler("gcc"):
-    #                 pass
+            # linux
+            with pl.platform("Linux"):
+                with pl.compiler("gcc"):
+                    pass
 
-    #         # mac os
-    #         with pl.platform("Darwin"):
-    #             with pl.compiler("clang"):
-    #                 pass
+            # mac os
+            with pl.platform("Darwin"):
+                with pl.compiler("clang"):
+                    pass
 
-    #     # release
-    #     with pl.configuration("release"):
+        # release
+        with pl.configuration("release"):
 
-    #         # win32
-    #         with pl.platform("Windows"):
-    #             with pl.compiler("msvc"):
-    #                 pass
+            # win32
+            with pl.platform("Windows"):
+                with pl.compiler("msvc"):
+                    pass
 
-    #         # linux
-    #         with pl.platform("Linux"):
-    #             with pl.compiler("gcc"):
-    #                 pass
+            # linux
+            with pl.platform("Linux"):
+                with pl.compiler("gcc"):
+                    pass
 
-    #         # mac os
-    #         with pl.platform("Darwin"):
-    #             with pl.compiler("clang"):
-    #                 pass
+            # mac os
+            with pl.platform("Darwin"):
+                with pl.compiler("clang"):
+                    pass
 
     # with pl.target("dcapp-gendem", pl.TargetType.EXECUTABLE, True):
 
