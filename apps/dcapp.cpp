@@ -551,7 +551,6 @@ namespace dc
             if (cRotation)
             {
                 dcNode.container.rotation = createAndRegisterDcValueFromString(dereferenceConstants(cRotation));
-                printf("%s\n", indexToDcValue(dcNode.container.rotation)->isDynamic ? "true" : "false");
                 free(cRotation);
             }
             else
@@ -1159,7 +1158,6 @@ namespace dc
             plMat4 rotateMatrix = pl_mat4_rotate_vec3(
                 indexToDcValue(node->container.rotation)->valueFloat,
                 (plVec3){0.0f, 0.0f, 1.0f});
-            printf("%f\n", indexToDcValue(node->container.rotation)->valueFloat);
             plMat4 transPositionMatrix = pl_mat4_translate_xyz(
                 xPosition,
                 yPosition,
