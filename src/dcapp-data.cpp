@@ -1,5 +1,6 @@
 
 // dcapp includes
+#include "value.hpp"
 #include <dcapp-data.hpp>
 #include <utils/file-utils.hpp>
 #include <utils/string-utils.hpp>
@@ -247,12 +248,12 @@ namespace dc
         return dcData.values.size() - 1;
     }
 
-    DcValueIndex createAndRegisterDcValueFromString(const char *text)
+    DcValueIndex createAndRegisterTypedDcValueFromString(DcValueType type, const char *text)
     {
-        return createAndRegisterDcValueFromString(std::string(text));
+        return createAndRegisterTypedDcValueFromString(type, std::string(text));
     }
 
-    DcValueIndex createAndRegisterDcValueFromString(std::string text)
+    DcValueIndex createAndRegisterTypedDcValueFromString(DcValueType type, std::string text)
     {
         // check for variable
         std::string cleanedValue = trimWhitespace(text);
@@ -267,70 +268,7 @@ namespace dc
         }
 
         // otherwise create new DcValue and return its index
-        return registerDcValue(createValueString(text));
-    }
-
-    DcValueIndex attributeToDcValue(xmlNodePtr node, const std::string &attr)
-    {
-        xmlChar *nodeContent = xmlGetProp(node, (xmlChar *)(attr.c_str()));
-        if (nodeContent)
-        {
-            std::string text = (char *)nodeContent;
-            xmlFree(nodeContent);
-            return createAndRegisterDcValueFromString(text);
-        }
-        return DC_VALUE_INDEX_UNDEFINED;
-    }
-
-    DcValueIndex4 attributeToDcValueIndex4(xmlNodePtr node, const std::string &attr)
-    {
-        // default return value
-        DcValueIndex4 result = DcValueIndex4{
-            .r = DC_VALUE_INDEX_UNDEFINED,
-            .g = DC_VALUE_INDEX_UNDEFINED,
-            .b = DC_VALUE_INDEX_UNDEFINED,
-            .a = DC_VALUE_INDEX_UNDEFINED,
-        };
-
-        // check for content
-        xmlChar *nodeContent = xmlGetProp(node, (xmlChar *)(attr.c_str()));
-        if (nodeContent)
-        {
-            std::string text = (char *)nodeContent;
-            xmlFree(nodeContent);
-
-            // expand constants/environment variables
-            text = dereferenceConstants(text);
-
-            // split string by whitespace
-            static const std::string whitespace = " \t\n\v\f\r";
-            std::vector<std::string> substrings = splitStringByDelimiters(text, whitespace);
-
-            // check validity of parsed string
-            if (substrings.size() > 4)
-            {
-                throw std::runtime_error("Invalid DcValueIndex4 string format: expected 4 (or less) values, got " + text);
-            }
-
-            // fill result up to 4 values
-            if (substrings.size() > 0)
-            {
-                result.r = createAndRegisterDcValueFromString(substrings[0]);
-                if (substrings.size() > 1)
-                {
-                    result.g = createAndRegisterDcValueFromString(substrings[1]);
-                    if (substrings.size() > 2)
-                    {
-                        result.b = createAndRegisterDcValueFromString(substrings[2]);
-                        if (substrings.size() > 3)
-                        {
-                            result.a = createAndRegisterDcValueFromString(substrings[3]);
-                        }
-                    }
-                }
-            }
-        }
-        return result;
+        return registerDcValue(createTypedValueFromString(type, text));
     }
 
     void setVariable(const std::string &name, DcValueIndex valueIndex)

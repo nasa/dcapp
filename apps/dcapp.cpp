@@ -306,7 +306,6 @@ namespace dc
             case DC_VALUE_TYPE_FLOAT:
             {
                 value->valueFloat = *((float *)(variable.externData));
-                printf("%s %f\n", name.c_str(), value->valueFloat);
                 break;
             }
             case DC_VALUE_TYPE_INTEGER:
@@ -430,7 +429,7 @@ namespace dc
             char *cXPosition = getAttributeString(xmlNode, "X");
             if (cXPosition)
             {
-                dcNode.container.position.x = createAndRegisterDcValueFromString(dereferenceConstants(cXPosition));
+                dcNode.container.position.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXPosition));
                 free(cXPosition);
             }
             else
@@ -442,7 +441,7 @@ namespace dc
             char *cYPosition = getAttributeString(xmlNode, "Y");
             if (cYPosition)
             {
-                dcNode.container.position.y = createAndRegisterDcValueFromString(dereferenceConstants(cYPosition));
+                dcNode.container.position.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYPosition));
                 free(cYPosition);
             }
             else
@@ -454,7 +453,7 @@ namespace dc
             char *cXOrigin = getAttributeString(xmlNode, "OriginX");
             if (cXOrigin)
             {
-                dcNode.container.origin.x = createAndRegisterDcValueFromString(dereferenceConstants(cXOrigin));
+                dcNode.container.origin.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXOrigin));
                 free(cXOrigin);
             }
             else
@@ -466,7 +465,7 @@ namespace dc
             char *cYOrigin = getAttributeString(xmlNode, "OriginY");
             if (cYOrigin)
             {
-                dcNode.container.origin.y = createAndRegisterDcValueFromString(dereferenceConstants(cYOrigin));
+                dcNode.container.origin.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYOrigin));
                 free(cYOrigin);
             }
             else
@@ -478,7 +477,7 @@ namespace dc
             char *cXDimension = getAttributeString(xmlNode, "Width");
             if (cXDimension)
             {
-                dcNode.container.dimensions.x = createAndRegisterDcValueFromString(dereferenceConstants(cXDimension));
+                dcNode.container.dimensions.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXDimension));
                 free(cXDimension);
             }
             else
@@ -490,7 +489,7 @@ namespace dc
             char *cYDimension = getAttributeString(xmlNode, "Height");
             if (cYDimension)
             {
-                dcNode.container.dimensions.y = createAndRegisterDcValueFromString(dereferenceConstants(cYDimension));
+                dcNode.container.dimensions.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYDimension));
                 free(cYDimension);
             }
             else
@@ -502,7 +501,7 @@ namespace dc
             char *cXVirtualDimension = getAttributeString(xmlNode, "VirtualWidth");
             if (cXVirtualDimension)
             {
-                dcNode.container.virtualDimensions.x = createAndRegisterDcValueFromString(dereferenceConstants(cXVirtualDimension));
+                dcNode.container.virtualDimensions.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXVirtualDimension));
                 free(cXVirtualDimension);
             }
             else
@@ -514,7 +513,7 @@ namespace dc
             char *cYVirtualDimension = getAttributeString(xmlNode, "VirtualHeight");
             if (cYVirtualDimension)
             {
-                dcNode.container.virtualDimensions.y = createAndRegisterDcValueFromString(dereferenceConstants(cYVirtualDimension));
+                dcNode.container.virtualDimensions.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYVirtualDimension));
                 free(cYVirtualDimension);
             }
             else
@@ -526,7 +525,7 @@ namespace dc
             char *cXAlign = getAttributeString(xmlNode, "HorizontalAlign");
             if (cXAlign)
             {
-                dcNode.container.alignment.x = createAndRegisterDcValueFromString(dereferenceConstants(cXAlign));
+                dcNode.container.alignment.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cXAlign));
                 free(cXAlign);
             }
             else
@@ -538,7 +537,7 @@ namespace dc
             char *cYAlign = getAttributeString(xmlNode, "VerticalAlign");
             if (cYAlign)
             {
-                dcNode.container.alignment.y = createAndRegisterDcValueFromString(dereferenceConstants(cYAlign));
+                dcNode.container.alignment.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cYAlign));
                 free(cYAlign);
             }
             else
@@ -550,7 +549,7 @@ namespace dc
             char *cRotation = getAttributeString(xmlNode, "Rotate");
             if (cRotation)
             {
-                dcNode.container.rotation = createAndRegisterDcValueFromString(dereferenceConstants(cRotation));
+                dcNode.container.rotation = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cRotation));
                 free(cRotation);
             }
             else
@@ -611,7 +610,7 @@ namespace dc
             char *cType = getAttributeString(xmlNode, "Operation");
             if (cType)
             {
-                dcNode.conditional.type = createAndRegisterDcValueFromString(dereferenceConstants(cType));
+                dcNode.conditional.type = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cType));
                 free(cType);
             }
             else
@@ -623,7 +622,7 @@ namespace dc
             char *cValue = getAttributeString(xmlNode, "Value");
             if (cValue)
             {
-                dcNode.conditional.value1 = createAndRegisterDcValueFromString(dereferenceConstants(cValue));
+                dcNode.conditional.value1 = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_STRING, dereferenceConstants(cValue));
                 free(cValue);
             }
             else
@@ -631,7 +630,7 @@ namespace dc
                 cValue = getAttributeString(xmlNode, "Value1");
                 if (cValue)
                 {
-                    dcNode.conditional.value1 = createAndRegisterDcValueFromString(dereferenceConstants(cValue));
+                    dcNode.conditional.value1 = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_STRING, dereferenceConstants(cValue));
                     free(cValue);
                 }
                 else
@@ -644,7 +643,7 @@ namespace dc
             char *cValue2 = getAttributeString(xmlNode, "Value2");
             if (cValue2)
             {
-                dcNode.conditional.value2 = createAndRegisterDcValueFromString(dereferenceConstants(cValue2));
+                dcNode.conditional.value2 = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_STRING, dereferenceConstants(cValue2));
                 free(cValue2);
             }
 
@@ -757,7 +756,7 @@ namespace dc
             char *cXVirtualDimension = getAttributeString(xmlNode, "VirtualWidth");
             if (cXVirtualDimension)
             {
-                dcNode.panel.virtualDimensions.x = createAndRegisterDcValueFromString(dereferenceConstants(cXVirtualDimension));
+                dcNode.panel.virtualDimensions.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXVirtualDimension));
                 free(cXVirtualDimension);
             }
             else
@@ -769,7 +768,7 @@ namespace dc
             char *cYVirtualDimension = getAttributeString(xmlNode, "VirtualHeight");
             if (cYVirtualDimension)
             {
-                dcNode.panel.virtualDimensions.y = createAndRegisterDcValueFromString(dereferenceConstants(cYVirtualDimension));
+                dcNode.panel.virtualDimensions.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYVirtualDimension));
                 free(cYVirtualDimension);
             }
             else
@@ -809,16 +808,16 @@ namespace dc
 
                 if (substrings.size() > 0)
                 {
-                    dcNode.polygon.fillColor.r = createAndRegisterDcValueFromString(substrings[0]);
+                    dcNode.polygon.fillColor.r = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[0]);
                     if (substrings.size() > 1)
                     {
-                        dcNode.polygon.fillColor.g = createAndRegisterDcValueFromString(substrings[1]);
+                        dcNode.polygon.fillColor.g = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[1]);
                         if (substrings.size() > 2)
                         {
-                            dcNode.polygon.fillColor.b = createAndRegisterDcValueFromString(substrings[2]);
+                            dcNode.polygon.fillColor.b = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[2]);
                             if (substrings.size() > 3)
                             {
-                                dcNode.polygon.fillColor.a = createAndRegisterDcValueFromString(substrings[3]);
+                                dcNode.polygon.fillColor.a = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[3]);
                             }
                             else
                             {
@@ -853,16 +852,16 @@ namespace dc
 
                 if (substrings.size() > 0)
                 {
-                    dcNode.polygon.lineColor.r = createAndRegisterDcValueFromString(substrings[0]);
+                    dcNode.polygon.lineColor.r = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[0]);
                     if (substrings.size() > 1)
                     {
-                        dcNode.polygon.lineColor.g = createAndRegisterDcValueFromString(substrings[1]);
+                        dcNode.polygon.lineColor.g = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[1]);
                         if (substrings.size() > 2)
                         {
-                            dcNode.polygon.lineColor.b = createAndRegisterDcValueFromString(substrings[2]);
+                            dcNode.polygon.lineColor.b = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[2]);
                             if (substrings.size() > 3)
                             {
-                                dcNode.polygon.lineColor.a = createAndRegisterDcValueFromString(substrings[3]);
+                                dcNode.polygon.lineColor.a = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[3]);
                             }
                             else
                             {
@@ -891,7 +890,7 @@ namespace dc
             char *cLineWidth = getAttributeString(xmlNode, "LineWidth");
             if (cLineWidth)
             {
-                dcNode.polygon.lineWidth = createAndRegisterDcValueFromString(dereferenceConstants(cLineWidth));
+                dcNode.polygon.lineWidth = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cLineWidth));
                 free(cLineWidth);
             }
             else
@@ -976,8 +975,8 @@ namespace dc
                 parentNode->polygon.numPoints++;
                 parentNode->polygon.points = (DcValueIndex2 *)realloc(parentNode->polygon.points, parentNode->polygon.numPoints * sizeof(DcValueIndex2));
                 parentNode->polygon.points[parentNode->polygon.numPoints - 1] = (DcValueIndex2){
-                    createAndRegisterDcValueFromString(dereferenceConstants(cXPosition)),
-                    createAndRegisterDcValueFromString(dereferenceConstants(cYPosition))};
+                    createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXPosition)),
+                    createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYPosition))};
                 break;
             }
             default:
@@ -1008,60 +1007,55 @@ namespace dc
             char *cXPosition = getAttributeString(xmlNode, "X");
             if (cXPosition)
             {
-                DcValue value = createTypedValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cXPosition));
-                dcNode.window.position.x = registerDcValue(value);
+                dcNode.window.position.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cXPosition));
                 free(cXPosition);
             }
             else
             {
-                dcNode.window.position.x = registerDcValue(createValueFloat(0.0f));
+                dcNode.window.position.x = registerDcValue(createValueInteger(0.0f));
             }
 
             // y position
             char *cYPosition = getAttributeString(xmlNode, "Y");
             if (cYPosition)
             {
-                DcValue value = createTypedValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cYPosition));
-                dcNode.window.position.y = registerDcValue(value);
+                dcNode.window.position.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cYPosition));
                 free(cYPosition);
             }
             else
             {
-                dcNode.window.position.y = registerDcValue(createValueFloat(0.0f));
+                dcNode.window.position.y = registerDcValue(createValueInteger(0.0f));
             }
 
             // x dimension
             char *cXDimension = getAttributeString(xmlNode, "Width");
             if (cXDimension)
             {
-                DcValue value = createTypedValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cXDimension));
-                dcNode.window.dimensions.x = registerDcValue(value);
+                dcNode.window.dimensions.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cXDimension));
                 free(cXDimension);
             }
             else
             {
-                dcNode.window.dimensions.x = registerDcValue(createValueFloat(0.0f));
+                dcNode.window.dimensions.x = registerDcValue(createValueInteger(0.0f));
             }
 
             // y dimension
             char *cYDimension = getAttributeString(xmlNode, "Height");
             if (cYDimension)
             {
-                DcValue value = createTypedValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cYDimension));
-                dcNode.window.dimensions.y = registerDcValue(value);
+                dcNode.window.dimensions.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cYDimension));
                 free(cYDimension);
             }
             else
             {
-                dcNode.window.dimensions.y = registerDcValue(createValueFloat(0.0f));
+                dcNode.window.dimensions.y = registerDcValue(createValueInteger(0.0f));
             }
 
             // virtual x dimension
             char *cXVirtualDimension = getAttributeString(xmlNode, "VirtualWidth");
             if (cXVirtualDimension)
             {
-                DcValue value = createTypedValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXVirtualDimension));
-                dcNode.window.virtualDimensions.x = registerDcValue(value);
+                dcNode.window.virtualDimensions.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXVirtualDimension));
                 free(cXVirtualDimension);
             }
             else
@@ -1073,8 +1067,7 @@ namespace dc
             char *cYVirtualDimension = getAttributeString(xmlNode, "VirtualHeight");
             if (cYVirtualDimension)
             {
-                DcValue value = createTypedValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYVirtualDimension));
-                dcNode.window.virtualDimensions.y = registerDcValue(value);
+                dcNode.window.virtualDimensions.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYVirtualDimension));
                 free(cYVirtualDimension);
             }
             else
@@ -1156,7 +1149,7 @@ namespace dc
                 indexToDcValue(node->container.origin.y)->valueFloat,
                 0.0f);
             plMat4 rotateMatrix = pl_mat4_rotate_vec3(
-                indexToDcValue(node->container.rotation)->valueFloat,
+                pl_radiansf(indexToDcValue(node->container.rotation)->valueFloat),
                 (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 transPositionMatrix = pl_mat4_translate_xyz(
                 xPosition,

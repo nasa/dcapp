@@ -243,10 +243,8 @@ namespace dc
     // value utils
     DcValue *indexToDcValue(DcValueIndex index);
     DcValueIndex registerDcValue(DcValue value);
-    DcValueIndex createAndRegisterDcValueFromString(const char *text);
-    DcValueIndex createAndRegisterDcValueFromString(std::string text);
-    DcValueIndex attributeToDcValue(xmlNodePtr node, const std::string &attr);
-    DcValueIndex4 attributeToDcValueIndex4(xmlNodePtr node, const std::string &attr);
+    DcValueIndex createAndRegisterTypedDcValueFromString(DcValueType type, const char *text);
+    DcValueIndex createAndRegisterTypedDcValueFromString(DcValueType type, std::string text);
 
     // variable utils
     void setVariable(const std::string &name, DcValueIndex valueIndex);
