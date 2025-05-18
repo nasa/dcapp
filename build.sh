@@ -81,10 +81,10 @@ fi
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES="-D_DEBUG -DPL_CONFIG_DEBUG "
-PL_INCLUDE_DIRECTORIES="-Iapps -Isrc -Ipilotlight/src -Ipilotlight/libs -Ipilotlight/extensions -Ipilotlight/dependencies/stb -I/usr/include/gdal -I/usr/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-Isrc -Ipilotlight/src -Ipilotlight/libs -Ipilotlight/extensions -Ipilotlight/dependencies/stb -I/usr/include/gdal -I/usr/include/libxml2 "
 PL_LINK_DIRECTORIES="-Lpilotlight/out -Wl,-rpath,pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-std=c++17 -fPIC --debug -g -O0 "
-PL_LINKER_FLAGS="-lstdc++ -lstdc++fs -lxml2 -lSDL2 -lpthread -lgdal -ldl -lz -ldl -lm "
+PL_LINKER_FLAGS="-lstdc++ -ldl -lm -lstdc++fs -lxml2 -lpthread -lgdal -ldl -lz "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
 PL_SOURCES="src/value.cpp src/dcapp-data.cpp src/utils/math-utils.cpp src/utils/string-utils.cpp src/utils/file-utils.cpp src/utils/xml-utils.cpp apps/dcapp.cpp "
@@ -110,10 +110,10 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES="-D_DEBUG -DPL_CONFIG_DEBUG "
-PL_INCLUDE_DIRECTORIES="-Iapps -Isrc -Ipilotlight/src -Ipilotlight/libs -Ipilotlight/extensions -Ipilotlight/dependencies/stb -I/usr/include/gdal -I/usr/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-Isrc -I/usr/include/libxml2 "
 PL_LINK_DIRECTORIES="-Lpilotlight/out -Wl,-rpath,pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-std=c++17 -fPIC --debug -g -O0 "
-PL_LINKER_FLAGS="-lstdc++ -lstdc++fs -lxml2 -lSDL2 -lpthread -lgdal -ldl -lz -ldl -lm "
+PL_LINKER_FLAGS="-lstdc++ -ldl -lm -lstdc++fs -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
 PL_SOURCES="src/value.cpp src/dcapp-data.cpp src/utils/math-utils.cpp src/utils/string-utils.cpp src/utils/file-utils.cpp src/utils/xml-utils.cpp apps/dcapp-genheader.cpp "
@@ -140,101 +140,6 @@ rm -f pilotlight/out/lock.tmp
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # end of debug
-fi
-
-# ################################################################################
-# #                           configuration | release                            #
-# ################################################################################
-
-if [[ "$PL_CONFIG" == "release" ]]; then
-
-# create output directory(s)
-mkdir -p "pilotlight/out"
-
-# create lock file(s)
-echo LOCKING > "pilotlight/out/lock.tmp"
-
-# check if this is a reload
-PL_HOT_RELOAD_STATUS=0
-
-# # let user know if hot reloading
-if pidof -x "pilot_light" -o $$ >/dev/null;then
-    PL_HOT_RELOAD_STATUS=1
-    echo
-    echo ${BOLD}${WHITE}${RED_BG}--------${GREEN_BG} HOT RELOADING ${RED_BG}--------${NC}
-    echo
-else
-    # cleanup binaries if not hot reloading
-    PL_HOT_RELOAD_STATUS=0
-    rm -f pilotlight/out/dcapp.so
-    rm -f pilotlight/out/dcapp_*.so
-    rm -f pilotlight/out/dcapp-genheader
-
-
-fi
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-PL_RESULT=${BOLD}${GREEN}Successful.${NC}
-PL_DEFINES="-DNDEBUG -DPL_CONFIG_RELEASE "
-PL_INCLUDE_DIRECTORIES="-Iapps -Isrc -Ipilotlight/src -Ipilotlight/libs -Ipilotlight/extensions -Ipilotlight/dependencies/stb -I/usr/include/gdal -I/usr/include/libxml2 "
-PL_LINK_DIRECTORIES="-Lpilotlight/out -Wl,-rpath,pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-std=c++17 -fPIC -O2 "
-PL_LINKER_FLAGS="-lstdc++ -lstdc++fs -lxml2 -lSDL2 -lpthread -lgdal -ldl -lz -ldl -lm "
-PL_STATIC_LINK_LIBRARIES=""
-PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="src/value.cpp src/dcapp-data.cpp src/utils/math-utils.cpp src/utils/string-utils.cpp src/utils/file-utils.cpp src/utils/xml-utils.cpp apps/dcapp.cpp "
-
-# run compiler (and linker)
-echo
-echo ${YELLOW}Step: dcapp${NC}
-echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
-echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./pilotlight/out/dcapp.so"
-
-# check build status
-if [ $? -ne 0 ]
-then
-    PL_RESULT=${BOLD}${RED}Failed.${NC}
-fi
-
-# print results
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-genheader | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-PL_RESULT=${BOLD}${GREEN}Successful.${NC}
-PL_DEFINES="-DNDEBUG -DPL_CONFIG_RELEASE "
-PL_INCLUDE_DIRECTORIES="-Iapps -Isrc -Ipilotlight/src -Ipilotlight/libs -Ipilotlight/extensions -Ipilotlight/dependencies/stb -I/usr/include/gdal -I/usr/include/libxml2 "
-PL_LINK_DIRECTORIES="-Lpilotlight/out -Wl,-rpath,pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-std=c++17 -fPIC -O2 "
-PL_LINKER_FLAGS="-lstdc++ -lstdc++fs -lxml2 -lSDL2 -lpthread -lgdal -ldl -lz -ldl -lm "
-PL_STATIC_LINK_LIBRARIES=""
-PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="src/value.cpp src/dcapp-data.cpp src/utils/math-utils.cpp src/utils/string-utils.cpp src/utils/file-utils.cpp src/utils/xml-utils.cpp apps/dcapp-genheader.cpp "
-
-# run compiler (and linker)
-echo
-echo ${YELLOW}Step: dcapp-genheader${NC}
-echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
-echo ${CYAN}Compiling and Linking...${NC}
-gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./pilotlight/out/dcapp-genheader"
-
-# check build status
-if [ $? -ne 0 ]
-then
-    PL_RESULT=${BOLD}${RED}Failed.${NC}
-fi
-
-# print results
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-
-# delete lock file(s)
-rm -f pilotlight/out/lock.tmp
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# end of release
 fi
 
 

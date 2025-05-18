@@ -9,4 +9,4 @@ gcc -std=c++17 -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so
 
 cd $dcappHome/pilotlight/out
 chmod +x ./pilot_light
-./pilot_light -a dcapp
+./pilot_light -a dcapp lasdkf lkasdjfl aksjdf laksjdfl kasjdflkj

@@ -2,7 +2,6 @@
 
 // dcapp includes
 #define PL_EXPERIMENTAL 
-#include "pl.h"
 #include <value.hpp>
 
 // library includes
@@ -17,6 +16,10 @@
 // NOTE this file is a complete mess, but the intention is to not
 // clutter the apps themselves. These utils are specifically to
 // be used in the app space.
+
+// forward declarations
+// TODO implement this better
+typedef struct _plSharedLibrary plSharedLibrary;
 
 namespace dc
 {

@@ -3,11 +3,11 @@
 // [SECTION] dcapp includes
 //-----------------------------------------------------------------------------
 
-#include <utils/file-utils.hpp>
-#include <value.hpp>
 #include <dcapp-data.hpp>
+#include <utils/file-utils.hpp>
 #include <utils/string-utils.hpp>
 #include <utils/xml-utils.hpp>
+#include <value.hpp>
 
 namespace dc
 {
@@ -75,6 +75,7 @@ const plStarterI *gptStarter = NULL;
 const plProfileI *gptProfile = NULL;
 const plMemoryI *gptMemory = NULL;
 const plLibraryI *gptLibrary = NULL;
+const plIOI *gptIOI = NULL;
 
 #define PL_ALLOC(x) gptMemory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_REALLOC(x, y) gptMemory->tracked_realloc((x), (y), __FILE__, __LINE__)
@@ -101,6 +102,8 @@ pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
         gptStarter = pl_get_api_latest(ptApiRegistry, plStarterI);
         gptProfile = pl_get_api_latest(ptApiRegistry, plProfileI);
         gptMemory = pl_get_api_latest(ptApiRegistry, plMemoryI);
+        gptLibrary = pl_get_api_latest(ptApiRegistry, plLibraryI);
+        gptIOI = pl_get_api_latest(ptApiRegistry, plIOI);
 
         return ptAppData;
     }
@@ -123,6 +126,7 @@ pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
     gptProfile = pl_get_api_latest(ptApiRegistry, plProfileI);
     gptMemory = pl_get_api_latest(ptApiRegistry, plMemoryI);
     gptLibrary = pl_get_api_latest(ptApiRegistry, plLibraryI);
+    gptIOI = pl_get_api_latest(ptApiRegistry, plIOI);
 
     // allocate app memory
     ptAppData = (plAppData *)PL_ALLOC(sizeof(plAppData));
@@ -143,6 +147,18 @@ pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
     //     throw std::runtime_error("Missing dcapp configuration file");
     // }
     // std::string configRelativePath = "/home/nathan/dcapp-vk/samples/test/test.xml";
+
+    // parse input arguments
+    plIO *gptIo = gptIOI->get_io();
+    for (int ii = 0; ii < gptIo->iArgc; ii++)
+    {
+        printf("%s\n", gptIo->apArgv[ii]);
+    }
+    if (gptIo->iArgc < 2)
+    {
+        throw std::runtime_error("Missing dcapp configuration file");
+    }
+
     std::string configRelativePath = "/data/nreagan/dcapp-pl/samples/test/test.xml";
 
     // set paths
