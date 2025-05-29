@@ -83,7 +83,7 @@ int PixelStreamDynamicFile::reader(void)
                 this->height = this->shm->height;
                 FILE *fpTemp = fopen(this->keyfilename.c_str(), "r");
                 rewind(fpTemp);
-                size_t nbytes = (size_t)(this->width * this->height * 3);
+                size_t nbytes = (size_t)(this->width * this->height * 4);
                 this->pixels = realloc(this->pixels, nbytes);
                 fread(this->pixels, 1, nbytes, fpTemp);
                 updated = 1;
@@ -137,7 +137,7 @@ int PixelStreamDynamicFile::writer(void)
             memcpy(&(this->shm->writing), &on, 4);
             FILE *fpTemp = fopen(this->keyfilename.c_str(), "w");
             rewind(fpTemp);
-            fwrite(this->pixels, 1, (size_t)(this->width * this->height * 3), fpTemp);
+            fwrite(this->pixels, 1, (size_t)(this->width * this->height * 4), fpTemp);
             memcpy(&(this->shm->buffercount), &(this->buffercount), 8);
             memcpy(&(this->shm->width), &(this->width), 4);
             memcpy(&(this->shm->height), &(this->height), 4);

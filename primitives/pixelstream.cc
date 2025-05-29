@@ -9,7 +9,7 @@
 extern appdata AppData;
 extern void SetNeedsRedraw(void); // TODO: put in header file
 
-dcPixelStream::dcPixelStream(dcParent *myparent) : dcGeometric(myparent), testpatternID(0x0), psi(0x0), pixels(0x0), memallocation(0)
+dcPixelStream::dcPixelStream(dcParent *myparent) : dcGeometric(myparent), testpatternID(0x0), psi(0x0), pixels(0x0), memallocation(0), channels(3)
 {
     textureID = new tdTexture();
 }
@@ -52,6 +52,8 @@ void dcPixelStream::setProtocol(const std::string &protocolstr, const std::strin
             break;
         case PixelStreamDynamicFileProtocol:
             psdf = new PixelStreamDynamicFile;
+            this->channels = 4;
+            this->textureID->setPixelSpec(PixelRGBA);
             if (psdf->readerInitialize(shmemkey))
             {
                 delete psdf;
@@ -141,11 +143,11 @@ void dcPixelStream::draw(void)
 
         if (newh > psi->psd->height)
         {
-            origbytes = psi->psd->width * psi->psd->height * 3;
+            origbytes = psi->psd->width * psi->psd->height * this->channels;
             // overpad the pad by 1 so that no unfilled rows show up
             pad = ((newh - psi->psd->height) / 2) + 1;
-            padbytes = psi->psd->width * pad * 3;
-            nbytes = (size_t)(psi->psd->width * newh * 3);
+            padbytes = psi->psd->width * pad * this->channels;
+            nbytes = (size_t)(psi->psd->width * newh * this->channels);
             if (nbytes > memallocation)
             {
                 pixels = realloc(pixels, nbytes);
@@ -157,7 +159,7 @@ void dcPixelStream::draw(void)
         }
         else
         {
-            nbytes = (size_t)(psi->psd->width * psi->psd->height * 3);
+            nbytes = (size_t)(psi->psd->width * psi->psd->height * this->channels);
             if (nbytes > memallocation)
             {
                 pixels = realloc(pixels, nbytes);
@@ -171,7 +173,7 @@ void dcPixelStream::draw(void)
         if (newh < psi->psd->height)
         {
             offset = (psi->psd->height - newh) / 2;
-            offsetbytes = psi->psd->width * offset * 3;
+            offsetbytes = psi->psd->width * offset * this->channels;
             textureID->data = (unsigned char *)((size_t)pixels + offsetbytes);
         }
         else
@@ -179,7 +181,10 @@ void dcPixelStream::draw(void)
 
         load_texture(textureID);
 
-        draw_image(textureID, width, height);
+        if(this->channels == 3)
+            draw_image(textureID, width, height);
+        else if(this->channels == 4)
+            draw_image_flipped(textureID, width, height);
     }
     else if (testpatternID) draw_image(testpatternID, width, height);
 

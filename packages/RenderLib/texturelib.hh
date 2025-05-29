@@ -18,6 +18,7 @@ class tdTexture
         int loadTGA(void);
         int loadJPG(void);
         int loadS3TC(void);
+	void setPixelSpec(int);
     private:
         void computeBytesPerPixel(void);
         bool valid;

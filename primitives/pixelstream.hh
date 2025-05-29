@@ -22,6 +22,7 @@ class dcPixelStream : public dcGeometric
         PixelStreamItem *psi;
         void *pixels;
         size_t memallocation;
+        int channels;
 };
 
 #endif

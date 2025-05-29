@@ -72,6 +72,12 @@ tdTexture::~tdTexture()
 {
 }
 
+void tdTexture::setPixelSpec(int spec)
+{
+    this->pixelspec = spec;
+    this->computeBytesPerPixel();
+}
+
 void tdTexture::computeBytesPerPixel(void)
 {
     switch (this->pixelspec)
@@ -83,8 +89,8 @@ void tdTexture::computeBytesPerPixel(void)
         case PixelRGBA:           this->bytesPerPixel = 4; break;
         default:
             warning_msg("Invalid pixel specification: " << this->pixelspec);
-            this->pixelspec = PixelRGB;
-            this->bytesPerPixel = 3;
+            this->pixelspec = PixelRGBA;
+            this->bytesPerPixel = 4;
     }
 }
 
