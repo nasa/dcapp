@@ -16,6 +16,7 @@ extern void load_s3tc_texture(tdTexture *);
 extern void draw_string(float, float, float, float, float, float, float, tdFont *, flMonoOption, bool, const std::string &);
 extern void draw_glyph(unsigned int, float, float, float, float);
 extern void draw_image(tdTexture *, float, float);
+extern void draw_image_flipped(tdTexture*, float, float);
 extern void get_image_pixel(unsigned char [], tdTexture *, float, float);
 extern void container_start(float, float, float, float, float, float, float);
 extern void container_end(void);
