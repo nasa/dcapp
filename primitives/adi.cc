@@ -23,6 +23,7 @@ dcADI::dcADI(dcParent *myparent) : dcGeometric(myparent), bkgdID(0x0), ballID(0x
     pitchError = getConstantFromDecimal(0);
     yawError = getConstantFromDecimal(0);
     rateMax = getConstantFromDecimal(0);
+    scale = getConstantFromDecimal(1);
     rateMaxDefined = false;
     needleColor.set(YELLOW[0], YELLOW[1], YELLOW[2]);
     rateIndicatorColor.set(BLACK[0], YELLOW[1], YELLOW[2]);
@@ -106,6 +107,11 @@ void dcADI::setRadius(const std::string &outer, const std::string &ball)
     if (!ball.empty()) ballradius = getValue(ball);
 }
 
+void dcADI::setScale(const std::string &sc)
+{
+    if (!sc.empty()) scale = getValue(sc);
+}
+
 void dcADI::setChevron(const std::string &widthspec, const std::string &heightspec)
 {
     if (!widthspec.empty()) chevronW = getValue(widthspec);
@@ -132,7 +138,12 @@ void dcADI::draw(void)
     else chevh = 0.2 * outerrad;
 
     // Draw the ball
-    draw_textured_sphere(center, middle, sphereTriangles, ballrad, ballID, roll->getDecimal(), pitch->getDecimal(), yaw->getDecimal());
+    stencil_begin();        // enable stencil, clear existing buffer
+    stencil_init_dest();    // setup stencil test to write 1's into destination area
+        circle_fill(center, middle, ballrad, 360, 80, 1, 1, 1, 1);
+    stencil_init_proj();    // set stencil to only keep fragments with reference != 0
+        draw_textured_sphere(center, middle, sphereTriangles, ballrad * scale->getDecimal(), ballID, roll->getDecimal(), pitch->getDecimal(), yaw->getDecimal());
+    stencil_end();
 
     // Draw the surrounding area (i.e. background)
     translate_start(left, bottom);
@@ -293,7 +304,7 @@ void dcADI::draw_needles(double radius, double roll_err, double pitch_err, doubl
     if (hideNeedlesFlag) return;
     // ERROR NEEDLE SIZE SHIFT
     radius = radius * 0.85;
-    const double length = 0.29 * radius;
+    const double length = 0.65 * radius;
     //const double length = 0.01 * radius;
     const double halfwidth = 0.017 * radius;
     double delta, needle_edge;

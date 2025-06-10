@@ -937,6 +937,7 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
             myitem->setRPY(get_element_data(node, "Roll"), get_element_data(node, "Pitch"), get_element_data(node, "Yaw"));
             myitem->setRPYerrors(get_element_data(node, "RollError"), get_element_data(node, "PitchError"), get_element_data(node, "YawError"));
             myitem->setRadius(get_element_data(node, "OuterRadius"), get_element_data(node, "BallRadius"));
+            myitem->setScale(get_element_data(node, "Scale"));
             myitem->setChevron(get_element_data(node, "ChevronWidth"), get_element_data(node, "ChevronHeight"));
             myitem->setRPYRates(get_element_data(node, "RollRate"), get_element_data(node, "PitchRate"), get_element_data(node, "YawRate"), get_element_data(node, "RateMax"));
             myitem->setNeedleColor(get_element_data(node, "NeedleColor"));
