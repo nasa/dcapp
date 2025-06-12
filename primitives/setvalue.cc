@@ -6,7 +6,7 @@
 
 extern appdata AppData;
 
-enum { Equals, PlusEquals, MinusEquals };
+enum { Equals, PlusEquals, MinusEquals, MultiplyEquals, DivideEquals };
 
 dcSetValue::dcSetValue(dcParent *myparent, const xmldata &invar, const xmldata &inval) : optype(Equals), min(0x0), max(0x0)
 {
@@ -28,6 +28,8 @@ void dcSetValue::setOperator(const xmldata &opspec)
     if (opspec.empty()) return;
     else if (opspec == "+=") optype = PlusEquals;
     else if (opspec == "-=") optype = MinusEquals;
+    else if (opspec == "*=") optype = MultiplyEquals;
+    else if (opspec == "/=") optype = DivideEquals;
 }
 
 void dcSetValue::setRange(const xmldata &minspec, const xmldata &maxspec)
@@ -71,6 +73,12 @@ void dcSetValue::calculateValue(Variable *varID)
             break;
         case MinusEquals:
             varID->decrementByValue(*val);
+            break;
+        case MultiplyEquals:
+            varID->multiplyByValue(*val);
+            break;
+        case DivideEquals:
+            varID->divideByValue(*val);
             break;
         default:
             varID->setToValue(*val);
