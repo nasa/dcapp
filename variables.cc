@@ -154,6 +154,25 @@ void Variable::decrementByValue(Value &that)
     }
 }
 
+void Variable::multiplyByValue(Value &that)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: this->decval *= that.getDecimal(); break;
+        case INTEGER_TYPE: this->intval *= that.getInteger(); break;
+    }
+}
+
+void Variable::divideByValue(Value &that)
+{
+    switch (this->type)
+    {
+        case DECIMAL_TYPE: this->decval /= that.getDecimal(); break;
+        case INTEGER_TYPE: this->intval /= that.getInteger(); break;
+        // There is no good way to decrement a String variable
+    }
+}
+
 void Variable::applyMinimumByValue(Value &that)
 {
     switch (this->type)
