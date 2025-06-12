@@ -24,6 +24,7 @@ class dcADI : public dcGeometric
         void hideNeedles(const std::string &);
         void hideRateIndicators(const std::string &);
         void setRadius(const std::string &, const std::string &);
+        void setScale(const std::string &);
         void setChevron(const std::string &, const std::string &);
   void setRPYRates(const std::string &, const std::string &, const std::string &, const std::string &);
         void draw(void);
@@ -45,6 +46,7 @@ class dcADI : public dcGeometric
         Value *pitchError;
         Value *yawError;
         Value *rateMax;
+        Value* scale;
         bool rateMaxDefined;
         Kolor needleColor;
         Kolor rateIndicatorColor;
