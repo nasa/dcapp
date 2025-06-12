@@ -6,11 +6,6 @@ extern appdata AppData;
 dcMask::dcMask(dcParent *myparent)
 {
     myparent->addChild(this);
-
-    stencilList = new dcParent;
-    stencilList->setParent(this);
-    projectionList = new dcParent;
-    projectionList->setParent(this);
 }
 
 dcMask::~dcMask()
@@ -20,22 +15,34 @@ dcMask::~dcMask()
 
 void dcMask::processPreCalculations()
 {
-    projectionList->processPreCalculations();
+    for (StencilList stencil : stencils) {
+        stencil.stencils->processPreCalculations();
+    }
 }
 
 void dcMask::processPostCalculations()
 {
-    projectionList->processPostCalculations();
+    for (StencilList stencil : stencils) {
+        stencil.stencils->processPostCalculations();
+    }
 }
 
 void dcMask::draw(void)
 {
     stencil_begin();        // enable stencil, clear existing buffer
-    stencil_init_dest();    // setup stencil test to write 1's into destination area 
-    stencilList->draw();
-
-    stencil_init_proj();    // set stencil to only keep fragments with reference != 0
-    projectionList->draw();
-
+    for (StencilList stencil : stencils) {
+        switch(stencil.type) {
+            case MASK_STENCIL_DEST_ADD:
+                stencil_init_dest_add();
+                break;
+            case MASK_STENCIL_DEST_SUB:
+                stencil_init_dest_sub();
+                break;
+            case MASK_STENCIL_PROJ:
+                stencil_init_proj();
+                break;
+        }
+        stencil.stencils->draw();
+    }
     stencil_end();
 }

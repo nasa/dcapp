@@ -600,7 +600,7 @@ void dcMap::draw(void)
     computeTextureBounds();
 
     stencil_begin();        // enable stencil, clear existing buffer
-    stencil_init_dest();    // setup stencil test to write 1's into destination area 
+    stencil_init_dest_add();    // setup stencil test to write 1's into destination area 
 
         container_start(refx, refy, delx, dely, 1, 1, 0);   // start container for full map
 

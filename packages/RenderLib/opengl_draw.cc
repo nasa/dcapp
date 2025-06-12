@@ -334,10 +334,17 @@ void stencil_begin(void) {
     glClearStencil(0);
 }
 
-void stencil_init_dest(void) {
+void stencil_init_dest_add(void) {
     glColorMask(GL_FALSE,GL_FALSE, GL_FALSE, GL_FALSE);
     glDepthMask(GL_FALSE);
     glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+}
+
+void stencil_init_dest_sub(void) {
+    glColorMask(GL_FALSE,GL_FALSE, GL_FALSE, GL_FALSE);
+    glDepthMask(GL_FALSE);
+    glStencilFunc(GL_ALWAYS, 0, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 }
 

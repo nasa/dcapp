@@ -23,7 +23,8 @@ extern void container_end(void);
 extern void rotate_start(float);
 extern void rotate_end(void);
 extern void stencil_begin(void);
-extern void stencil_init_dest(void);
+extern void stencil_init_dest_add(void);
+extern void stencil_init_dest_sub(void);
 extern void stencil_init_proj(void);
 extern void stencil_end(void);
 #if 0
