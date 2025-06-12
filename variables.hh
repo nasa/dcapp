@@ -21,6 +21,8 @@ class Variable : public Value
 
         void incrementByValue(Value &);
         void decrementByValue(Value &);
+        void multiplyByValue(Value &);
+        void divideByValue(Value &);
         void applyMinimumByValue(Value &);
         void applyMaximumByValue(Value &);
 
