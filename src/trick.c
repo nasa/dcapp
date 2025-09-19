@@ -1,412 +1,417 @@
+#include "trick.h"
+#include "sb.h"
+#include "sock.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
-#else
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#endif
+typedef struct __DcTrickContext {
+    char  ip[20];
+    int   port;
+    float data_rate;
+    int   timeout_s;
 
+    // socket
+    DcSock      sock;
+    DcSockState state;
 
-#include "sb.h"
-#include "trick.h"
+    // time between reconnects
+    time_t reconnect_start;
 
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 7000
-#define BUFFER_SIZE 1024
+    // stretchy buffers
+    char *rx_cmds;
+    int  *rx_cmd_offsets;
+    char *tx_cmds;
+    int  *tx_cmd_offsets;
+    char *rx_oads;
+    int  *rx_oad_offsets;
+    char *tx_buffer;
+    char *rx_buffer;
+    char *rx_var_values;
+    int  *rx_var_offsets;
 
+    // general use buffer
+    char *temp_buffer;
+} _DcTrickContext;
 
+static _DcTrickContext *_contexts = NULL; // stretchy buffer
 
-#define TX_CMD_BUFFER_ALLOC_SIZE 512
-#define TX_MAX_  256
+// connect to trick variable server
+static void _dc_trick_connect(DcTrick *trick);
 
-static int socketCount = 0;
+// disconnect from trick variable server
+static void _dc_trick_close(DcTrick *trick);
 
-static char *resolveHostname(const char *host) {
+// append data to tx buffer
+static void _dc_trick_append_to_tx_buffer(DcTrick *trick, const char *in, size_t in_size);
 
-    // Check if already a valid IP address
-    struct in_addr addr4;
-    struct in6_addr addr6;
-    if (inet_pton(AF_INET, host, &addr4) == 1 || inet_pton(AF_INET6, host, &addr6) == 1) {
-        return strdup(host);
-    }
+// send chunk of tx buffer, update internal tx buffer offset
+static DcTrickResult _dc_trick_send(DcTrick *trick);
 
-    struct addrinfo hints = {0}, *result, *entry;
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+// receive chunk of rx buffer, process data if full packet, update internal tx buffer offset
+static DcTrickResult _dc_trick_receive(DcTrick *trick);
 
-    if (getaddrinfo(host, NULL, &hints, &result) != 0) {
-        fprintf(stderr, "Failed to resolve hostname: %s\n", host);
-        return NULL;
-    }
+DcTrick dc_trick_create(char *host, int port, float data_rate, int timeout_s) {
 
-    char ipStr[INET6_ADDRSTRLEN] = {0};
-    void *addrPtr = NULL;
-    int family = 0;
+    _DcTrickContext context;
+    dc_sock_host_to_ip(host, context.ip);
+    context.port            = port;
+    context.data_rate       = data_rate;
+    context.timeout_s       = timeout_s;
+    context.sock            = dc_sock_create((DcSockFlags)(DC_SOCK_FLAGS_NON_BLOCKING | DC_SOCK_FLAGS_NON_NAGLE));
+    context.state           = DC_SOCK_STATE_DISCONNECTED;
+    context.reconnect_start = 0;
+    context.rx_cmds         = NULL;
+    context.rx_cmd_offsets  = NULL;
+    context.tx_cmds         = NULL;
+    context.tx_cmd_offsets  = NULL;
+    context.rx_oads         = NULL;
+    context.rx_oad_offsets  = NULL;
+    context.tx_buffer       = NULL;
+    context.rx_buffer       = NULL;
+    context.rx_var_values   = NULL;
+    context.rx_var_offsets  = NULL;
+    context.temp_buffer     = (char *)malloc(16384);
+    sbpush(_contexts, context);
 
-    // default to ipv4
-    for (entry = result; entry != NULL; entry = entry->ai_next) {
-        if (entry->ai_family == AF_INET) {
-            struct sockaddr_in *ipv4 = (struct sockaddr_in *)entry->ai_addr;
-            addrPtr = &(ipv4->sin_addr);
-            family = AF_INET;
+    DcTrick trick;
+    trick._index       = sbcount(_contexts) - 1;
+    trick.has_new_data = false;
+    return trick;
+}
+
+void dc_trick_cleanup(DcTrick *trick) {
+
+    _DcTrickContext *context = &(_contexts[trick->_index]);
+
+    _dc_trick_close(trick);
+    sbfree(context->rx_cmds);
+    sbfree(context->rx_cmd_offsets);
+    sbfree(context->rx_oads);
+    sbfree(context->rx_oad_offsets);
+    sbfree(context->tx_cmds);
+    sbfree(context->tx_cmd_offsets);
+    sbfree(context->tx_buffer);
+    sbfree(context->rx_buffer);
+    sbfree(context->rx_var_values);
+    sbfree(context->rx_var_offsets);
+    free(context->temp_buffer);
+}
+
+// main update, called each frame
+void dc_trick_update(DcTrick *trick) {
+
+    _DcTrickContext *context = &(_contexts[trick->_index]);
+
+    DcSockState last_state = context->state;
+    switch (last_state) {
+        case DC_SOCK_STATE_DISCONNECTED:
+        case DC_SOCK_STATE_CONNECTING: {
+            DcSockState curr_state = dc_sock_connection_status(&(context->sock));
+            switch (curr_state) {
+
+                // if it's still disconnected, check the timeout and reconnect if needed
+                case DC_SOCK_STATE_DISCONNECTED:
+                case DC_SOCK_STATE_CONNECTING:
+
+                    if (difftime(time(NULL), context->reconnect_start) > context->timeout_s) {
+                        if (curr_state == DC_SOCK_STATE_CONNECTING) {
+                            _dc_trick_close(trick);
+                        }
+                        printf("attempting reconnect..\n");
+                        _dc_trick_connect(trick);
+                    }
+                    break;
+
+                // if it is now connected, send the initial conditions
+                case DC_SOCK_STATE_CONNECTED:
+
+                    // clear buffers
+                    sbclear(context->tx_buffer);
+                    sbclear(context->rx_buffer);
+
+                    // send initial conditions
+                    // 1) pause variable server
+                    strcpy(context->temp_buffer, "trick.var_pause()\n");
+                    _dc_trick_append_to_tx_buffer(trick, context->temp_buffer, strlen(context->temp_buffer));
+
+                    // 2) set sample rate
+                    sprintf(context->temp_buffer, "trick.var_cycle(%f)\n", context->data_rate);
+                    _dc_trick_append_to_tx_buffer(trick, context->temp_buffer, strlen(context->temp_buffer));
+
+                    // TODO implement this...not using OAD variables for now
+                    // 3) write list of one-and-done rx variables to get
+                    // char *oadBuffer = NULL; // stretchy buffer
+                    // strcpy(cmdBuffer, "trick.var_send_once(\"");
+                    // sbpushn(oadBuffer, cmdBuffer, strlen(cmdBuffer));
+                    // for (int ii = 0; ii < sbcount(context->_rx_oad_offsets); ii++) {
+                    //     char *oadVar = &(context->_rx_oads[context->_rx_oad_offsets[ii]]);
+                    //     sbpushn(oadBuffer, oadVar, strlen(oadVar));
+                    //     if (ii < sbcount(context->_rx_oad_offsets) - 1) {
+                    //         sbpushn(oadBuffer, ", ", strlen(", "));
+                    //     }
+                    // }
+                    // sprintf(cmdBuffer, "\", %d)\n", sbcount(context->_rx_oad_offsets));
+                    // sbpushn(oadBuffer, cmdBuffer, strlen(cmdBuffer));
+                    // send(context->_sockFd, oadBuffer, sbcount(oadBuffer), 0);
+                    // sbfree(oadBuffer);
+
+                    // 3) write list of variables to listen to
+                    for (int ii = 0; ii < sbcount(context->rx_cmd_offsets); ii++) {
+                        char *varAddCmd = &(context->rx_cmds[context->rx_cmd_offsets[ii]]);
+                        _dc_trick_append_to_tx_buffer(trick, varAddCmd, strlen(varAddCmd));
+                    }
+
+                    // 4) unpause
+                    strcpy(context->temp_buffer, "trick.var_unpause()\n");
+                    _dc_trick_append_to_tx_buffer(trick, context->temp_buffer, strlen(context->temp_buffer));
+
+                    // 5) send
+                    DcTrickResult result = _dc_trick_send(trick);
+                    if (result == DC_TRICK_RESULT_FAIL) {
+                        curr_state = DC_SOCK_STATE_DISCONNECTED;
+                    }
+
+                    // update connection state
+                    context->state = curr_state;
+
+                    break;
+
+                default:
+                    break;
+            }
             break;
         }
-    }
+        case DC_SOCK_STATE_CONNECTED: {
+            // send updated variable values here
+            DcTrickResult result = _dc_trick_send(trick);
+            if (result == DC_TRICK_RESULT_SUCCESS) {
 
-    // fallback to ipv6
-    if (!addrPtr) {
-        for (entry = result; entry != NULL; entry = entry->ai_next) {
-            if (entry->ai_family == AF_INET6) {
-                struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)entry->ai_addr;
-                addrPtr = &(ipv6->sin6_addr);
-                family = AF_INET6;
-                break;
+                // receive updated values
+                result = _dc_trick_receive(trick);
             }
+
+            // if now disconnected, cleanup the socket
+            if (result == DC_TRICK_RESULT_FAIL) {
+                _dc_trick_close(trick);
+            }
+
+            break;
         }
+        default:
+            fprintf(stderr, "Unknown sock state: %d\n", last_state);
+            break;
     }
-
-    char *resolved = NULL;
-    if (addrPtr && inet_ntop(family, addrPtr, ipStr, sizeof(ipStr))) {
-        resolved = strdup(ipStr);
-    } else {
-        perror("resolve hostname inet_ntop");
-    }
-
-    freeaddrinfo(result);
-    return resolved;
 }
 
+DcTrickIndex dc_trick_add_tx_var(DcTrick *trick, const char *path, const char *units, bool is_string) {
 
-void trickInitContext(TrickContext* context) {
-
-#ifdef _WIN32
-    if (!socketCount) {
-        WSADATA wsaData;
-        WSAStartup(MAKEWORD(2, 2), &wsaData);
-    }
-#endif
-    socketCount++;
-
-    // resolve host
-    context->_ip = resolveHostname(context->host);
-
-    // connection
-    context->_sockFd = -1;
-
-    // rx
-    context->_rxCmds = NULL;
-    context->_rxCmdOffsets = NULL;
-    context->_rxBuffer = (char*)malloc(2048);
-
-    // rx oad
-    context->_rxOads = NULL;
-    context->_rxOadOffsets = NULL;
-    context->_rxOadBuffer = (char*)malloc(2048);
-
-    // tx
-    context->_txCmds = NULL;
-    context->_txCmdOffsets = NULL;
-    context->_txBuffer = (char*)malloc(2048);
-}
-
-void trickCleanupContext(TrickContext* context) {
-
-    socketCount--;
-#ifdef _WIN32
-    closesocket(context->_sockFd);
-    if (!socketCount) {
-        WSACleanup();
-    }
-#else
-    close(context->_sockFd);
-#endif
-
-    sbfree(context->_rxCmds);
-    sbfree(context->_rxCmdOffsets);
-    sbfree(context->_rxOads);
-    sbfree(context->_rxOadOffsets);
-    sbfree(context->_txCmds);
-    sbfree(context->_txCmdOffsets);
-
-    free(context->_rxBuffer);
-    free(context->_txBuffer);
-}
-
-int trickAddTxVariable(TrickContext* context, const char* path, const char* units, bool isString) {
+    _DcTrickContext *context = &(_contexts[trick->_index]);
 
     // create cmd
-    if (isString) {
-        sprintf(context->_txBuffer, "trick.var_set(\"%s\", \"%%s\"", path);
+    if (is_string) {
+        sprintf(context->temp_buffer, "trick.var_set(\"%s\", \"%%s\"", path);
     } else {
-        sprintf(context->_txBuffer, "trick.var_set(\"%s\", %%s", path);
+        sprintf(context->temp_buffer, "trick.var_set(\"%s\", %%s", path);
     }
     if (units) {
-        strcat(context->_txBuffer, ", \"");
-        strcat(context->_txBuffer, units);
-        strcat(context->_txBuffer, "\")\n");
+        strcat(context->temp_buffer, ", \"");
+        strcat(context->temp_buffer, units);
+        strcat(context->temp_buffer, "\")\n");
     } else {
-        strcat(context->_txBuffer, ")\n");
+        strcat(context->temp_buffer, ")\n");
     }
 
     // copy
-    int start = sbcount(context->_txCmds);
-    sbpush(context->_txCmdOffsets, start);
-    sbcat(context->_txCmds, context->_txBuffer, strlen(context->_txBuffer));
-    sbpush(context->_txCmds, '\0');
+    int start = sbcount(context->tx_cmds);
+    sbpush(context->tx_cmd_offsets, start);
+    sbpushn(context->tx_cmds, context->temp_buffer, strlen(context->temp_buffer));
+    sbpush(context->tx_cmds, '\0');
 
     // return index
-    return sbcount(context->_txCmdOffsets);
+    return sbcount(context->tx_cmd_offsets) - 1;
 }
 
-// leaves the calling context responsible for converting the value to a string
-// not sure if this is correct....but okay for now
-void trickSetVariable(TrickContext* context, int cmdIndex, const char* value) {
-    sprintf(context->_txBuffer, &(context->_txCmds[context->_txCmdOffsets[cmdIndex]]), value);
-    printf(context->_txBuffer);
-    send(context->_sockFd, context->_txBuffer, strlen(context->_txBuffer), 0);
-}
-
-int trickAddRxVariable(TrickContext* context, const char* path, const char* units) {
+DcTrickIndex dc_trick_add_rx_var(DcTrick *trick, const char *path, const char *units) {
+    _DcTrickContext *context = &(_contexts[trick->_index]);
 
     // create cmd
-    sprintf(context->_rxBuffer, "trick.var_add(\"%s\"", path);
+    sprintf(context->temp_buffer, "trick.var_add(\"%s\"", path);
     if (units) {
-        strcat(context->_rxBuffer, ", \"");
-        strcat(context->_rxBuffer, units);
-        strcat(context->_rxBuffer, "\")\n");
+        strcat(context->temp_buffer, ", \"");
+        strcat(context->temp_buffer, units);
+        strcat(context->temp_buffer, "\")\n");
     } else {
-        strcat(context->_rxBuffer, ")\n");
+        strcat(context->temp_buffer, ")\n");
     }
 
     // copy
-    int start = sbcount(context->_rxCmds);
-    sbpush(context->_rxCmdOffsets, start);
-    sbcat(context->_rxCmds, context->_rxBuffer, strlen(context->_rxBuffer));
-    sbpush(context->_rxCmds, '\0');
+    int start = sbcount(context->rx_cmds);
+    sbpush(context->rx_cmd_offsets, start);
+    sbpushn(context->rx_cmds, context->temp_buffer, strlen(context->temp_buffer));
+    sbpush(context->rx_cmds, '\0');
 
     // return index
-    return sbcount(context->_rxCmdOffsets);
+    return sbcount(context->rx_cmd_offsets) - 1;
 }
 
-int trickAddRxOadVariable(TrickContext* context, const char* path) {
+DcTrickIndex dc_trick_add_rx_oad_var(DcTrick *trick, const char *path, const char *units) {
+    _DcTrickContext *context = &(_contexts[trick->_index]);
 
     // copy
-    int start = sbcount(context->_rxOads);
-    sbpush(context->_rxOadOffsets, start);
-    sbcat(context->_rxOads, path, strlen(path));
-    sbpush(context->_rxOads, '\0');
+    int start = sbcount(context->rx_oads);
+    sbpush(context->rx_oad_offsets, start);
+    sbpushn(context->rx_oads, path, strlen(path));
+    sbpush(context->rx_oads, '\0');
 
     // return index
-    return sbcount(context->_rxCmdOffsets);
+    return sbcount(context->rx_cmd_offsets) - 1;
 }
 
-int trickConnectToServer(TrickContext* context) {
-
-    struct sockaddr_in addr4;
-    struct sockaddr_in6 addr6;
-    socklen_t socketAddrLen;
-    int family;
-    struct sockaddr *addrPtr = NULL;
-
-    // setup ipv4 vs. v6
-    if (inet_pton(AF_INET, context->_ip, &addr4.sin_addr) == 1) {
-        family = AF_INET;
-        addr4.sin_family = AF_INET;
-        addr4.sin_port = htons(context->port);
-        socketAddrLen = sizeof(addr4);
-        addrPtr = (struct sockaddr *)&addr4;
-    } else if (inet_pton(AF_INET6, context->_ip, &addr6.sin6_addr) == 1) {
-        family = AF_INET6;
-        addr6.sin6_family = AF_INET6;
-        addr6.sin6_port = htons(context->port);
-        socketAddrLen = sizeof(addr6);
-        addrPtr = (struct sockaddr *)&addr6;
-    }
-    else {
-        fprintf(stderr, "Invalid IP address: %s\n", context->_ip);
-        return -1;
-    }
-
-    // create socket
-    context->_sockFd = socket(family, SOCK_STREAM, 0);
-    if (context->_sockFd < 0) {
-        perror("Failed to create trick socket");
-        return -1;
-    }
-
-    // TODO make this nonblocking
-
-    // connect
-    if (connect(context->_sockFd, addrPtr, socketAddrLen) < 0) {
-        perror("Failed to connect to trick socket");
-        close(context->_sockFd);
-        return -1;
-    }
-
-    // set initial comm params
-    // pause variable server
-    char cmdBuffer[2048];
-    strcpy(cmdBuffer, "trick.var_pause()\n");
-    send(context->_sockFd, cmdBuffer, strlen(cmdBuffer), 0);
-    // set sample rate
-    sprintf(cmdBuffer, "trick.var_cycle(%f)\n", context->dataRate);
-    send(context->_sockFd, cmdBuffer, strlen(cmdBuffer), 0);
-    // write list of one-and-done rx variables to get
-    // TODO cleanup
-    char *oadBuffer = NULL; // stretchy buffer
-    strcpy(cmdBuffer, "trick.var_send_once(\"");
-    sbcat(oadBuffer, cmdBuffer, strlen(cmdBuffer));
-    for (int ii = 0; ii < sbcount(context->_rxOadOffsets); ii++) {
-        char *oadVar = &(context->_rxOads[context->_rxOadOffsets[ii]]);
-        sbcat(oadBuffer, oadVar, strlen(oadVar));
-        if (ii < sbcount(context->_rxOadOffsets) - 1) {
-            sbcat(oadBuffer, ", ", strlen(", "));
-        }
-    }
-    sprintf(cmdBuffer, "\", %d)\n", sbcount(context->_rxOadOffsets));
-    sbcat(oadBuffer, cmdBuffer, strlen(cmdBuffer));
-    send(context->_sockFd, oadBuffer, sbcount(oadBuffer), 0);
-    // write list of variables to listen to
-    for (int ii = 0; ii < sbcount(context->_rxCmdOffsets); ii++) {
-        char *varAddCmd = &(context->_rxCmds[context->_rxCmdOffsets[ii]]);
-        send(context->_sockFd, varAddCmd, strlen(varAddCmd), 0);
-    }
-    // unpause
-    strcpy(cmdBuffer, "trick.var_unpause()\n");
-    send(context->_sockFd, cmdBuffer, strlen(cmdBuffer), 0);
-
-    // connection now active
-    context->isAlive = true;
-    return 0;
+DcTrickResult dc_trick_set_tx_var(DcTrick *trick, DcTrickIndex var, const char *value) {
+    _DcTrickContext *context = &(_contexts[trick->_index]);
+    sprintf(context->temp_buffer, &(context->tx_cmds[context->tx_cmd_offsets[var]]), value);
+    _dc_trick_append_to_tx_buffer(trick, context->temp_buffer, strlen(context->temp_buffer));
 }
 
-int trickReceive(TrickContext *context) {
-    int bytes = recv(context->_sockFd, context->_rxBuffer, 2047, 0);
-    if (bytes > 0) {
-        context->_rxBuffer[bytes] = '\0';
-        printf("Update: %s", context->_rxBuffer);
+DcTrickResult dc_trick_get_rx_var_value(DcTrick *trick, DcTrickIndex var_index, char *out) {
+    _DcTrickContext *context = &(_contexts[trick->_index]);
+}
+
+DcTrickResult dc_trick_get_rx_oad_value(DcTrick *trick, DcTrickIndex oad_index, char *out) {
+    _DcTrickContext *context = &(_contexts[trick->_index]);
+}
+
+// static helpers
+
+void _dc_trick_append_to_tx_buffer(DcTrick *trick, const char *in, size_t in_size) {
+    _DcTrickContext *context = &(_contexts[trick->_index]);
+    sbpushn(context->tx_buffer, in, in_size);
+}
+
+// send chunk of tx buffer, update internal tx buffer offset
+DcTrickResult _dc_trick_send(DcTrick *trick) {
+    _DcTrickContext *context = &(_contexts[trick->_index]);
+
+    int          sent_count;
+    DcSockResult result = dc_sock_send(&(context->sock), context->tx_buffer, sbcount(context->tx_buffer), &sent_count);
+    switch (result) {
+        case DC_SOCK_RESULT_FAIL:
+        case DC_SOCK_RESULT_CONN_CLOSED:
+            return DC_TRICK_RESULT_FAIL;
+            break;
+
+        case DC_SOCK_RESULT_CONN_WOULD_BLOCK:
+        case DC_SOCK_RESULT_CONN_INTERRUPTED:
+            return DC_TRICK_RESULT_SUCCESS;
+            break;
+
+        case DC_SOCK_RESULT_SUCCESS:
+            // remove the sent elements from the buffer
+            sbshiftn(context->tx_buffer, sent_count);
+            return DC_TRICK_RESULT_SUCCESS;
+            break;
+
+        default:
+            fprintf(stderr, "dc_trick_send(): unknown result from dc_sock_send() %d", result);
+            return DC_TRICK_RESULT_FAIL;
+            break;
     }
 }
 
-int main() {
+DcTrickResult _dc_trick_receive(DcTrick *trick) {
+    _DcTrickContext *context = &(_contexts[trick->_index]);
 
-    TrickContext context;
-    context.host     = strdup("localhost");
-    context.port     = 7000;
-    context.dataRate = .2;
-    trickInitContext(&context);
+    int          recv_count;
+    DcSockResult result = dc_sock_receive(&(context->sock), context->temp_buffer, 16384, &recv_count);
+    switch (result) {
+        case DC_SOCK_RESULT_FAIL:
+        case DC_SOCK_RESULT_CONN_CLOSED:
+            return DC_TRICK_RESULT_FAIL;
+            break;
 
-    trickAddRxVariable(&context, "dyn.cannon.init_speed", NULL);
-    trickAddRxVariable(&context, "dyn.cannon.time", NULL);
-    trickAddRxVariable(&context, "dyn.cannon.init_fspeed", NULL);
-    trickAddRxVariable(&context, "dyn.cannon.init_speed", NULL);
+        case DC_SOCK_RESULT_CONN_WOULD_BLOCK:
+        case DC_SOCK_RESULT_CONN_INTERRUPTED:
+            return DC_TRICK_RESULT_SUCCESS;
+            break;
 
-    trickAddRxOadVariable(&context, "dyn.cannon.time");
+        case DC_SOCK_RESULT_SUCCESS:
 
-    trickAddTxVariable(&context, "dyn.cannon.init_speed", NULL, false);
+            // add it to the existing buffer
+            sbpushn(context->rx_buffer, context->temp_buffer, recv_count);
 
-    for (int ii = 0; ii < sbcount(context._rxCmdOffsets); ii++) {
-        printf(&(context._rxCmds[context._rxCmdOffsets[ii]]));
+            // find start and end indices (filtered by newlines)
+            int end_index;
+            for (end_index = sbcount(context->rx_buffer) - 1; end_index >= 0; end_index--) {
+                if (context->rx_buffer[end_index] == '\n') {
+                    break;
+                }
+            }
+
+            int start_index;
+            if (end_index > 0) {
+                for (start_index = end_index - 1; start_index >= 0; start_index--) {
+                    if (context->rx_buffer[start_index] == '\n') {
+                        break;
+                    }
+                }
+            }
+
+            // if there is a valid result
+            if (start_index && end_index && start_index != end_index) {
+                int key_index = start_index + 1;
+
+                // result from var updates
+                if (context->rx_buffer[key_index] == '0' && context->rx_buffer[key_index + 1] == '\t') {
+
+                    // copy to value buffer
+                    sbclear(context->rx_var_values);
+                    int first_value_index = key_index + 2;
+                    sbpushn(context->rx_var_values, &(context->rx_buffer[first_value_index + 2]), end_index - first_value_index);
+                    printf("ff %s", context->rx_var_values);
+
+                    // for loop to replace tabs with nulls, set indices
+                    sbclear(context->rx_var_offsets);
+                    sbpush(context->rx_var_offsets, 0);
+                    for (int ii = 0; ii < sbcount(context->rx_var_values); ii++) {
+                        if (context->rx_var_values[ii] == '\t') {
+                            if (ii + 1 < sbcount(context->rx_var_values) - 1) {
+                                sbpush(context->rx_var_offsets, ii + 1);
+                            }
+                            context->rx_var_values[ii] = '\0';
+                        }
+                    }
+
+                    // remove everything up to end_index in buffer
+                    sbshiftn(context->rx_buffer, end_index);
+
+                    // raise fag that there are new values
+                    trick->has_new_data = true;
+                }
+            } else {
+                trick->has_new_data = false;
+            }
+
+            return DC_TRICK_RESULT_SUCCESS;
+            break;
+
+        default:
+            fprintf(stderr, "dc_trick_send(): unknown result from dc_sock_send() %d", result);
+            break;
     }
-
-    printf(context._ip);
-
-    trickConnectToServer(&context);
-    if (!context.isAlive) {
-        perror("Failed to connect to trick server");
-        return 1;
-    }
-
-
-    // Simulate reading updates and sending new values
-    // for (int i = 0; i < 10; i++) {
-    //     read_updates();
-    //     send_update("dyn.cannon.g", 1000.0 + i * 10);
-    //     sleep(1);
-    // }
-    while (1) {
-        trickReceive(&context);
-        trickSetVariable(&context, 0, "10");
-    }
-
-    trickCleanupContext(&context);
-    return 0;
 }
 
-// int sockfd;
+void _dc_trick_connect(DcTrick *trick) {
+    _DcTrickContext *context = &(_contexts[trick->_index]);
+    dc_sock_connect(&(context->sock), context->ip, context->port);
+    context->reconnect_start = time(NULL);
+}
 
-// // Connect to the Trick Variable Server
-// int connect_to_server() {
-//     struct sockaddr_in server_addr;
-
-//     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-//     if (sockfd < 0) {
-//         perror("Socket creation failed");
-//         return -1;
-//     }
-
-//     server_addr.sin_family = AF_INET;
-//     server_addr.sin_port = htons(SERVER_PORT);
-//     inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr);
-
-//     if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-//         perror("Connection failed");
-//         return -1;
-//     }
-
-//     return 0;
-// }
-
-// // Register a variable to monitor
-// void add_variable(const char *var_name) {
-//     char cmd[BUFFER_SIZE];
-//     snprintf(cmd, sizeof(cmd), "trick.var_add(\"%s\")\n", var_name);
-//     send(sockfd, cmd, strlen(cmd), 0);
-// }
-
-// // Read variable updates
-// void read_updates() {
-//     char buffer[BUFFER_SIZE];
-//     int bytes = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
-//     if (bytes > 0) {
-//         buffer[bytes] = '\0';
-//         printf("Update: %s", buffer);
-//     }
-// }
-
-// // Send updated value to sim
-// void send_update(const char *var_name, double value) {
-//     char cmd[BUFFER_SIZE];
-//     snprintf(cmd, sizeof(cmd), "trick.var_set(\"%s\", %lf)\n", var_name, value);
-//     send(sockfd, cmd, strlen(cmd), 0);
-// }
-
-// int main() {
-//     if (connect_to_server() != 0) {
-//         return 1;
-//     }
-
-//     // Example usage
-//     add_variable("dyn.cannon.init_speed");
-//     add_variable("dyn.cannon.time");
-//     add_variable("dyn.cannon.init_fspeed");
-//     add_variable("dyn.cannon.init_speed");
-
-//     // Simulate reading updates and sending new values
-//     for (int i = 0; i < 10; i++) {
-//         read_updates();
-//         send_update("dyn.cannon.g", 1000.0 + i * 10);
-//         sleep(1);
-//     }
-
-//     close(sockfd);
-//     return 0;
-// }
+void _dc_trick_close(DcTrick *trick) {
+    _DcTrickContext *context = &(_contexts[trick->_index]);
+    dc_sock_close(&(context->sock));
+    context->state = DC_SOCK_STATE_DISCONNECTED;
+}
