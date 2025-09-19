@@ -1,16 +1,31 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-      {
-        "label": "build dcapp-debug (linux)",
-        "type": "shell",
-        "command": "./build-dcapp-linux.sh",
-        "args": ["-c", "debug"],
-        "options": {
-          "cwd": "${workspaceFolder}/scripts"
-        },
-        "group": "build"
-      }
-    ]
-  }
-  
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build dcapp-debug (linux)",
+      "type": "shell",
+      "command": "./build-dcapp-linux.sh",
+      "args": [
+        "-c",
+        "debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/scripts"
+      },
+      "group": "build"
+    },
+    {
+      "label": "build dcapp-debug (macos)",
+      "type": "shell",
+      "command": "./build-dcapp-macos.sh",
+      "args": [
+        "-c",
+        "debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/scripts"
+      },
+      "group": "build"
+    }
+  ]
+}
