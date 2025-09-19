@@ -79,5 +79,7 @@
         "*.inc": "cpp",
         "*.mm": "cpp"
     },
-    "C_Cpp.default.compilerPath": "/usr/bin/gcc"
+    // "C_Cpp.default.compilerPath": "/usr/bin/gcc",
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "C_Cpp.errorSquiggles": "disabled"
 }
