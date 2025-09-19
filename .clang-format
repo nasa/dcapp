@@ -1,14 +1,25 @@
-# BasedOnStyle: Mozilla
-# TabWidth:        4
-# IndentWidth:     4
-# UseTab:          Never
-# ColumnLimit: 100
-
-
-UseTab: Never
+BasedOnStyle: LLVM
 IndentWidth: 4
-BreakBeforeBraces: Allman
+TabWidth: 4
+UseTab: Never
 AllowShortIfStatementsOnASingleLine: false
-IndentCaseLabels: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortBlocksOnASingleLine: false
 ColumnLimit: 0
-NamespaceIndentation: All
+PointerAlignment: Right
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceInEmptyParentheses: false
+Cpp11BracedListStyle: true
+DerivePointerAlignment: false
+SortIncludes: false
+IncludeBlocks: Preserve
+IndentCaseLabels: true
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignTrailingComments: true
+BreakBeforeBraces: Attach
+BraceWrapping:
+  AfterEnum: true
+AllowShortEnumsOnASingleLine: false

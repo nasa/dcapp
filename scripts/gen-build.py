@@ -13,7 +13,10 @@ import sys
 import platform as plat
 
 # default pilotlight location (absolute)
-pl_dir_abs = os.path.abspath(os.path.dirname(__file__) + "/../pilotlight")
+file_dir_rel = os.path.dirname(__file__)
+if not file_dir_rel:
+    file_dir_rel = "."
+pl_dir_abs = os.path.abspath(file_dir_rel + "/../pilotlight")
 
 # if provided, use pilotlight location in input (absolute)
 if len(sys.argv) > 1:
@@ -50,7 +53,7 @@ def list_files_recursive(directory, *extensions):
 #-----------------------------------------------------------------------------
 
 # where to output build scripts (absolute)
-dcapp_home_abs = os.path.abspath(os.path.dirname(__file__) + "/..")
+dcapp_home_abs = os.path.abspath(file_dir_rel + "/..")
 output_dir_abs = os.path.abspath(dcapp_home_abs + "/scripts")
 bin_dir_abs = os.path.abspath(pl_dir_abs + "/out")
 
@@ -236,12 +239,12 @@ with pl.project("dcapp"):
 #-----------------------------------------------------------------------------
 
 if plat.system() == "Windows":
-    win32.generate_build(output_dir_abs + '/' + "build-dcapp.bat")
+    win32.generate_build(output_dir_abs + '/' + "build-dcapp-windows.bat")
 elif plat.system() == "Darwin":
-    outScript = output_dir_abs + '/' + "build-dcapp.sh"
+    outScript = output_dir_abs + '/' + "build-dcapp-macos.sh"
     apple.generate_build(outScript)
     os.chmod(outScript, 0o755)
 elif plat.system() == "Linux":
-    outScript = output_dir_abs + '/' + "build-dcapp.sh"
+    outScript = output_dir_abs + '/' + "build-dcapp-linux.sh"
     linux.generate_build(outScript)
     os.chmod(outScript, 0o755)

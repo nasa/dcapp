@@ -3,6 +3,8 @@ build/
 cache/
 logs/
 
+scripts/build-dcapp*
+
 **.spv
 **/dcapp.h
 **.so

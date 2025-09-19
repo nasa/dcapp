@@ -1,0 +1,37 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "dcapp (linux)",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/pilotlight/out/pilot_light",
+        "args": ["-a", "dcapp"],
+        "cwd": "${workspaceFolder}/pilotlight/out",
+        "MIMode": "gdb",
+        "miDebuggerPath": "/usr/bin/gdb",
+        "preLaunchTask": "build dcapp-debug (linux)"
+      },
+      {
+        "name": "dcapp (macOS)",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/pilotlight/out/pilot_light",
+        "args": ["-a", "dcapp"],
+        "cwd": "${workspaceFolder}/pilotlight/out",
+        "MIMode": "lldb",
+        "miDebuggerPath": "/usr/bin/lldb"
+      },
+      {
+        "name": "dcapp (windows)",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}\\pilotlight\\out\\pilot_light.exe",
+        "args": ["-a", "dcapp"],
+        "cwd": "${workspaceFolder}\\pilotlight\\out",
+        "MIMode": "gdb",
+        "miDebuggerPath": "C:\\MinGW\\bin\\gdb.exe"
+      }
+    ]
+  }
+  
