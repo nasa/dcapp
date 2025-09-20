@@ -7,7 +7,7 @@
 
 typedef enum {
     DC_TRICK_RESULT_SUCCESS = 0,
-    DC_TRICK_RESULT_FAILß
+    DC_TRICK_RESULT_FAIL
 } DcTrickResult;
 
 typedef uint8_t DcTrickIndex;
