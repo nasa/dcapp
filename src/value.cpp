@@ -22,75 +22,75 @@ DcValueType dc_value_type_from_string(const std::string &type)
 
 DcValue dc_value_create_typed_value_from_string(DcValueType type, const std::string &value)
 {
-    DcValue newValue = (DcValue){
+    DcValue new_value = (DcValue){
         .type = type,
-        .isDynamic = false,
+        .is_dynamic = false,
     };
 
     switch (type)
     {
     case DC_APP_VALUE_TYPE_BOOLEAN:
-        newValue.valueBoolean = dc_utils_string_to_boolean(value);
+        new_value.value_boolean = dc_utils_string_to_boolean(value);
         break;
     case DC_APP_VALUE_TYPE_FLOAT:
-        newValue.valueFloat = dc_utils_string_to_float(value);
+        new_value.value_float = dc_utils_string_to_float(value);
         break;
     case DC_APP_VALUE_TYPE_INTEGER:
-        newValue.valueInteger = dc_utils_string_to_integer(value);
+        new_value.value_integer = dc_utils_string_to_integer(value);
         break;
     case DC_APP_VALUE_TYPE_STRING:
-        newValue.valueString = value;
+        new_value.value_string = value;
         break;
     default:
         throw std::runtime_error("Invalid DcValue type");
         break;
     }
-    dc_value_refresh_value(&newValue);
-    return newValue;
+    dc_value_refresh_value(&new_value);
+    return new_value;
 }
 
 DcValue dc_value_create_value_string(const std::string &value)
 {
-    DcValue newValue = (DcValue){
+    DcValue new_value = (DcValue){
         .type = DC_APP_VALUE_TYPE_STRING,
-        .valueString = value,
-        .isDynamic = false,
+        .value_string = value,
+        .is_dynamic = false,
     };
-    dc_value_refresh_value(&newValue);
-    return newValue;
+    dc_value_refresh_value(&new_value);
+    return new_value;
 }
 
 DcValue dc_value_create_value_integer(int value)
 {
-    DcValue newValue = (DcValue){
+    DcValue new_value = (DcValue){
         .type = DC_APP_VALUE_TYPE_INTEGER,
-        .valueInteger = value,
-        .isDynamic = false,
+        .value_integer = value,
+        .is_dynamic = false,
     };
-    dc_value_refresh_value(&newValue);
-    return newValue;
+    dc_value_refresh_value(&new_value);
+    return new_value;
 }
 
 DcValue dc_value_create_value_float(float value)
 {
-    DcValue newValue = (DcValue){
+    DcValue new_value = (DcValue){
         .type = DC_APP_VALUE_TYPE_FLOAT,
-        .valueFloat = value,
-        .isDynamic = false,
+        .value_float = value,
+        .is_dynamic = false,
     };
-    dc_value_refresh_value(&newValue);
-    return newValue;
+    dc_value_refresh_value(&new_value);
+    return new_value;
 }
 
 DcValue dc_value_create_value_boolean(bool value)
 {
-    DcValue newValue = (DcValue){
+    DcValue new_value = (DcValue){
         .type = DC_APP_VALUE_TYPE_BOOLEAN,
-        .valueBoolean = value,
-        .isDynamic = false,
+        .value_boolean = value,
+        .is_dynamic = false,
     };
-    dc_value_refresh_value(&newValue);
-    return newValue;
+    dc_value_refresh_value(&new_value);
+    return new_value;
 }
 
 void dc_value_refresh_value(DcValue *value)
@@ -98,24 +98,24 @@ void dc_value_refresh_value(DcValue *value)
     switch (value->type)
     {
     case DC_APP_VALUE_TYPE_BOOLEAN:
-        value->valueInteger = (int)value->valueBoolean;
-        value->valueBoolean = (double)value->valueBoolean;
-        value->valueString = value->valueBoolean ? "true" : "false";
+        value->value_integer = (int)value->value_boolean;
+        value->value_boolean = (double)value->value_boolean;
+        value->value_string = value->value_boolean ? "true" : "false";
         break;
     case DC_APP_VALUE_TYPE_INTEGER:
-        value->valueBoolean = (bool)value->valueInteger;
-        value->valueFloat = (double)value->valueInteger;
-        value->valueString = std::to_string(value->valueInteger);
+        value->value_boolean = (bool)value->value_integer;
+        value->value_float = (double)value->value_integer;
+        value->value_string = std::to_string(value->value_integer);
         break;
     case DC_APP_VALUE_TYPE_FLOAT:
-        value->valueBoolean = (bool)value->valueFloat;
-        value->valueInteger = (int)value->valueFloat;
-        value->valueString = std::to_string(value->valueFloat);
+        value->value_boolean = (bool)value->value_float;
+        value->value_integer = (int)value->value_float;
+        value->value_string = std::to_string(value->value_float);
         break;
     case DC_APP_VALUE_TYPE_STRING:
-        value->valueBoolean = dc_utils_string_to_boolean(value->valueString);
-        value->valueFloat = dc_utils_string_to_float(value->valueString);
-        value->valueInteger = dc_utils_string_to_integer(value->valueString);
+        value->value_boolean = dc_utils_string_to_boolean(value->value_string);
+        value->value_float = dc_utils_string_to_float(value->value_string);
+        value->value_integer = dc_utils_string_to_integer(value->value_string);
         break;
     default:
         throw std::runtime_error("Invalid value tyep");

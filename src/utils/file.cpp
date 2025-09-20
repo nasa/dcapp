@@ -15,11 +15,11 @@
 
 std::string dc_utils_filepath_to_canonical(std::string file, const std::string &directory)
 {
-    std::filesystem::path filePath = std::filesystem::path(file);
-    if (!file.empty() && filePath.is_relative())
+    std::filesystem::path file_path = std::filesystem::path(file);
+    if (!file.empty() && file_path.is_relative())
     {
-        std::filesystem::path cleanedFilePath = std::filesystem::path(directory) / file;
-        file = cleanedFilePath.string();
+        std::filesystem::path cleaned_file_path = std::filesystem::path(directory) / file;
+        file = cleaned_file_path.string();
     }
 
     // convert to canonical

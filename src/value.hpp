@@ -15,12 +15,12 @@ typedef struct _DcValue
 {
     DcValueType type;
 
-    std::string valueString;
-    int valueInteger;
-    float valueFloat;
-    bool valueBoolean;
+    std::string value_string;
+    int value_integer;
+    float value_float;
+    bool value_boolean;
 
-    bool isDynamic;
+    bool is_dynamic;
 } DcValue;
 
 typedef struct _DcValue2

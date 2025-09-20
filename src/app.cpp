@@ -151,55 +151,55 @@ std::string dc_app_dereference_constants(std::string text)
             // find ending index for constant/env variable reference (account for both
             // non-squigglied and squigglied references)
             std::string subtext;
-            size_t subtextStartIndex;
-            size_t subtextLength;
-            size_t subtextLengthWithSymbols;
+            size_t subtext_start_index;
+            size_t subtext_length;
+            size_t subtext_length_with_symbols;
             if (text[ii + 1] == '{')
             {
-                int numOpenBrackets = 1;
+                int num_open_brackets = 1;
                 int jj;
                 for (jj = ii + 2; jj < text.length(); jj++)
                 {
                     if (text[jj] == '{')
                     {
-                        numOpenBrackets++;
+                        num_open_brackets++;
                     }
                     else if (text[jj] == '}')
                     {
-                        numOpenBrackets--;
+                        num_open_brackets--;
                     }
 
-                    if (numOpenBrackets == 0)
+                    if (num_open_brackets == 0)
                     {
                         break;
                     }
                 }
 
-                if (numOpenBrackets > 0)
+                if (num_open_brackets > 0)
                 {
                     throw std::runtime_error("Invalid string format: mismatch with squiggly braces. " + text);
                 }
 
-                subtextStartIndex = ii + 2;
-                subtextLength = jj - subtextStartIndex;
-                subtextLengthWithSymbols = subtextLength + 2;
+                subtext_start_index = ii + 2;
+                subtext_length = jj - subtext_start_index;
+                subtext_length_with_symbols = subtext_length + 2;
             }
             else
             {
                 static const std::string validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_#$";
-                size_t subtextEndIndex = text.find_first_not_of(validChars, ii + 1);
-                if (subtextEndIndex == std::string::npos)
+                size_t subtext_end_index = text.find_first_not_of(validChars, ii + 1);
+                if (subtext_end_index == std::string::npos)
                 {
-                    subtextEndIndex = text.length();
+                    subtext_end_index = text.length();
                 }
 
-                subtextStartIndex = ii + 1;
-                subtextLength = subtextEndIndex - subtextStartIndex;
-                subtextLengthWithSymbols = subtextLength;
+                subtext_start_index = ii + 1;
+                subtext_length = subtext_end_index - subtext_start_index;
+                subtext_length_with_symbols = subtext_length;
             }
 
             // get substring, ensure no strange values within
-            subtext = text.substr(subtextStartIndex, subtextLength);
+            subtext = text.substr(subtext_start_index, subtext_length);
             if (subtext.find('@') != std::string::npos)
             {
                 throw std::runtime_error("Invalid string format: cannot have variable nested inside variable/constant expansion. " + text);
@@ -216,15 +216,15 @@ std::string dc_app_dereference_constants(std::string text)
             // otherwise use the environment
             else if (text[ii] == '$')
             {
-                char *envValue = getenv(subtext.c_str());
-                if (envValue)
+                char *env_value = getenv(subtext.c_str());
+                if (env_value)
                 {
-                    output += std::string(envValue);
+                    output += std::string(env_value);
                 }
             }
 
             // increment ii by the cleaned amount
-            ii += subtextLengthWithSymbols;
+            ii += subtext_length_with_symbols;
         }
         else
         {
@@ -259,7 +259,7 @@ DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType t
         std::string variableName = cleanedValue.substr(1);
         if (dc_app_data.variables.count(variableName))
         {
-            return dc_app_data.variables[variableName].valueIndex;
+            return dc_app_data.variables[variableName].value_index;
         }
         throw std::runtime_error("Non-existant variable @" + variableName);
     }
@@ -268,7 +268,7 @@ DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType t
     return dc_app_register_dc_value(dc_value_create_typed_value_from_string(type, text));
 }
 
-void dc_app_set_variable(const std::string &name, DcAppValueIndex valueIndex)
+void dc_app_set_variable(const std::string &name, DcAppValueIndex value_index)
 {
     if (dc_app_data.variables.count(name))
     {
@@ -276,7 +276,7 @@ void dc_app_set_variable(const std::string &name, DcAppValueIndex valueIndex)
     }
     dc_app_data.variables[name] = (DcAppVariable){
         nullptr,
-        valueIndex,
+        value_index,
     };
 }
 
@@ -305,7 +305,7 @@ std::string dc_app_node_type_to_string(DcAppNodeType type)
 
 DcAppNode *dc_app_index_to_node(DcAppNodeIndex index)
 {
-    if (index == DC_NODE_INDEX_UNDEFINED)
+    if (index == DC_APP_NODE_INDEX_UNDEFINED)
     {
         return nullptr;
     }
@@ -353,21 +353,21 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory)
 
         case DC_APP_ELEM_TYPE_CONSTANT:
         {
-            char *cName = dc_utils_get_attribute_string(node, "Name");
-            if (!cName)
+            char *c_name = dc_utils_get_attribute_string(node, "Name");
+            if (!c_name)
             {
                 throw std::runtime_error("Non-existent node 'Name' in <Constant> definition");
             }
-            std::string name = dc_app_dereference_constants(cName);
-            free(cName);
+            std::string name = dc_app_dereference_constants(c_name);
+            free(c_name);
 
-            char *cValue = dc_utils_get_node_content_string(node);
-            if (!cValue)
+            char *c_value = dc_utils_get_node_content_string(node);
+            if (!c_value)
             {
                 throw std::runtime_error("Non-existent node content in <Constant> definition");
             }
-            std::string value = dc_app_dereference_constants(cValue);
-            free(cValue);
+            std::string value = dc_app_dereference_constants(c_value);
+            free(c_value);
 
             dc_app_set_constant(name, value);
             break;
@@ -380,7 +380,7 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory)
             if (node->children)
             {
                 xmlNodePtr firstChild = node->children;
-                xmlNodePtr lastChild = node->last;
+                xmlNodePtr last_child = node->last;
 
                 // update parent
                 if (node->parent)
@@ -391,7 +391,7 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory)
                     }
                     if (node->parent->last == node)
                     {
-                        node->parent->last = lastChild;
+                        node->parent->last = last_child;
                     }
                 }
 
@@ -402,16 +402,16 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory)
                 }
                 if (node->next)
                 {
-                    node->next->prev = lastChild;
+                    node->next->prev = last_child;
                 }
 
                 // update children
-                for (xmlNodePtr currChild = firstChild; currChild; currChild = currChild->next)
+                for (xmlNodePtr curr_child = firstChild; curr_child; curr_child = curr_child->next)
                 {
-                    currChild->parent = node->parent;
+                    curr_child->parent = node->parent;
                 }
                 firstChild->prev = node->prev;
-                lastChild->next = node->next;
+                last_child->next = node->next;
 
                 // unlink node
                 node->children = NULL;
@@ -432,42 +432,42 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory)
         {
 
             // get include file name
-            char *cIncludeFilePath = dc_utils_get_node_content_string(node);
-            if (cIncludeFilePath == nullptr)
+            char *c_include_file_path = dc_utils_get_node_content_string(node);
+            if (c_include_file_path == nullptr)
             {
                 throw std::runtime_error("Missing file path for <Include> element");
             }
-            std::string includeFilePath = dc_app_dereference_constants(cIncludeFilePath);
-            free(cIncludeFilePath);
+            std::string include_file_path = dc_app_dereference_constants(c_include_file_path);
+            free(c_include_file_path);
 
             // expand constants, go to canonical
-            includeFilePath = dc_utils_filepath_to_canonical(includeFilePath, directory);
+            include_file_path = dc_utils_filepath_to_canonical(include_file_path, directory);
 
             // create new prop, assign to <Include> node
             xmlAttrPtr directoryProp = xmlNewProp(node, (xmlChar *)("Directory"), (xmlChar *)(directory.c_str()));
 
             // read XML file
-            xmlDocPtr subDoc = xmlReadFile(includeFilePath.c_str(), NULL, XML_PARSE_NOBLANKS);
-            if (!subDoc)
+            xmlDocPtr sub_doc = xmlReadFile(include_file_path.c_str(), NULL, XML_PARSE_NOBLANKS);
+            if (!sub_doc)
             {
-                throw std::runtime_error("Unable to read configuration file: " + includeFilePath);
+                throw std::runtime_error("Unable to read configuration file: " + include_file_path);
             }
 
             // get root element
-            xmlNodePtr subNode = xmlDocGetRootElement(subDoc);
-            if (subNode == NULL)
+            xmlNodePtr sub_node = xmlDocGetRootElement(sub_doc);
+            if (sub_node == NULL)
             {
-                throw std::runtime_error("Unable to get root element of configuration file: " + includeFilePath);
+                throw std::runtime_error("Unable to get root element of configuration file: " + include_file_path);
             }
 
             // replace child (text) with subnode
-            xmlNodePtr newNode = xmlDocCopyNode(subNode, subNode->doc, 1);
-            xmlNodePtr oldNode = xmlReplaceNode(node->children, newNode);
+            xmlNodePtr new_node = xmlDocCopyNode(sub_node, sub_node->doc, 1);
+            xmlNodePtr old_node = xmlReplaceNode(node->children, new_node);
 
             // free old node/doc
-            xmlUnlinkNode(oldNode);
-            xmlFreeNode(oldNode);
-            xmlFreeDoc(subDoc);
+            xmlUnlinkNode(old_node);
+            xmlFreeNode(old_node);
+            xmlFreeDoc(sub_doc);
             break;
         }
         default:
@@ -478,9 +478,9 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory)
         xmlNodePtr child = node->children;
         while (child)
         {
-            xmlNodePtr childNext = child->next;
+            xmlNodePtr child_next = child->next;
             _dc_app_clean_xml_node(child, directory);
-            child = childNext;
+            child = child_next;
         }
     }
 }
@@ -489,17 +489,17 @@ void dc_app_init_data()
 {
     // initialize members
     dc_app_data.configFilePath = "";
-    dc_app_data.configDirPath = "";
-    dc_app_data.cacheDirPath = "";
-    dc_app_data.logDirPath = "";
+    dc_app_data.config_dir_path = "";
+    dc_app_data.cache_dir_path = "";
+    dc_app_data.log_dir_path = "";
     dc_app_data.constants.clear();
     dc_app_data.variables.clear();
     dc_app_data.values.resize(1);
     dc_app_data.nodes.resize(1);
-    dc_app_data.window = DC_NODE_INDEX_UNDEFINED;
+    dc_app_data.window = DC_APP_NODE_INDEX_UNDEFINED;
     dc_app_data.logic = (DcAppLogic){
         .library = nullptr,
-        .preInit = nullptr,
+        .pre_init = nullptr,
         .init = nullptr,
         .draw = nullptr,
         .close = nullptr,
