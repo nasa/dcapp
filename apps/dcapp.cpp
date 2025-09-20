@@ -41,7 +41,7 @@ DcAppData dc_app_data;
 
 typedef struct _plAppData {
     // window
-    plWindow      *ptWindow;
+    plWindow      *pt_window;
     plDrawLayer2D *pt_fg_layer;
 
     // console variable
@@ -100,15 +100,15 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     }
 
     // retrieve extension registry
-    const plExtensionRegistryI *ptExtensionRegistry = pl_get_api_latest(pt_api_registry, plExtensionRegistryI);
+    const plExtensionRegistryI *pt_extension_registry = pl_get_api_latest(pt_api_registry, plExtensionRegistryI);
 
     // load extensions
     //   * first argument is the shared library name WITHOUT the extension
     //   * second & third argument is the load/unload functions names (use NULL for the default of "pl_load_ext" &
     //     "pl_unload_ext")
     //   * fourth argument indicates if the extension is reloadable (should we check for changes and reload if changed)
-    ptExtensionRegistry->load("pl_unity_ext", NULL, NULL, true);
-    ptExtensionRegistry->load("pl_platform_ext", NULL, NULL, false); // provides the file API used by the drawing ext
+    pt_extension_registry->load("pl_unity_ext", NULL, NULL, true);
+    pt_extension_registry->load("pl_platform_ext", NULL, NULL, false); // provides the file API used by the drawing ext
 
     // load required apis
     gpt_windows = pl_get_api_latest(pt_api_registry, plWindowI);
@@ -133,11 +133,11 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     // std::vector<std::string> args(argv + 1, argv + argc);
 
     // // check for config file
-    // std::string configRelativePath = args.front();
-    // if (configRelativePath.empty()) {
+    // std::string config_relative_path = args.front();
+    // if (config_relative_path.empty()) {
     //     throw std::runtime_error("Missing dcapp configuration file");
     // }
-    // std::string configRelativePath = "/home/nathan/dcapp-vk/samples/test/test.xml";
+    // std::string config_relative_path = "/home/nathan/dcapp-vk/samples/test/test.xml";
 
     // parse input arguments
     plIO *gpt_io = gpt_ioi->get_io();
@@ -147,20 +147,20 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     std::vector<std::string> args(gpt_io->apArgv + 3, gpt_io->apArgv + gpt_io->iArgc);
 
     // TODO process input arguments (constant setting)
-    std::string configRelativePath = args[0];
+    std::string config_relative_path = args[0];
 
     // set paths
-    std::filesystem::path fsFilePath      = std::filesystem::canonical(configRelativePath);
-    std::filesystem::path fs_dir_path     = fsFilePath.parent_path();
-    std::string           configFilePath  = fsFilePath.string();
-    std::string           config_dir_path = fs_dir_path.string();
+    std::filesystem::path fsFilePath       = std::filesystem::canonical(config_relative_path);
+    std::filesystem::path fs_dir_path      = fsFilePath.parent_path();
+    std::string           config_file_path = fsFilePath.string();
+    std::string           config_dir_path  = fs_dir_path.string();
 
     // create cache and log dirs
-    std::filesystem::path fsExePath   = dc_utils_get_exe_filepath();
-    std::filesystem::path fs_log_path = fsExePath.parent_path() / ".." / "logs";
+    std::filesystem::path fs_exe_path = dc_utils_get_exe_filepath();
+    std::filesystem::path fs_log_path = fs_exe_path.parent_path() / ".." / "logs";
     std::filesystem::create_directory(fs_log_path);
     std::string           log_dir_path  = std::filesystem::canonical(fs_log_path).string();
-    std::filesystem::path fs_cache_path = fsExePath.parent_path() / ".." / "cache";
+    std::filesystem::path fs_cache_path = fs_exe_path.parent_path() / ".." / "cache";
     std::filesystem::create_directory(fs_cache_path);
     std::string cache_dir_path = std::filesystem::canonical(fs_cache_path).string();
 
@@ -168,26 +168,26 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     dc_app_init_data();
 
     // begin setting up dcappData object
-    dc_app_data.configFilePath  = configFilePath;
-    dc_app_data.config_dir_path = config_dir_path;
-    dc_app_data.log_dir_path    = log_dir_path;
-    dc_app_data.cache_dir_path  = cache_dir_path;
+    dc_app_data.config_file_path = config_file_path;
+    dc_app_data.config_dir_path  = config_dir_path;
+    dc_app_data.log_dir_path     = log_dir_path;
+    dc_app_data.cache_dir_path   = cache_dir_path;
 
     // set environment (used for dcapp XMLs)
     setenv("dcappDisplayHome", dc_app_data.config_dir_path.c_str(), 1);
 
     // load XML file
-    dc_app_data.doc = xmlReadFile(configFilePath.c_str(), "UTF-8", XML_PARSE_NOBLANKS);
+    dc_app_data.doc = xmlReadFile(config_file_path.c_str(), "UTF-8", XML_PARSE_NOBLANKS);
     if (!dc_app_data.doc) {
-        throw std::runtime_error("Unable to read configuration file: " + configFilePath);
+        throw std::runtime_error("Unable to read configuration file: " + config_file_path);
     }
 
     // clean XML file
     dc_app_clean_xml_data();
 
     // save cleaned xml to file
-    std::filesystem::path fsOutFile = std::filesystem::path(log_dir_path) / "config.xml";
-    xmlSaveFormatFile(fsOutFile.string().c_str(), dc_app_data.doc, 1);
+    std::filesystem::path fs_out_file = std::filesystem::path(log_dir_path) / "config.xml";
+    xmlSaveFormatFile(fs_out_file.string().c_str(), dc_app_data.doc, 1);
 
     // process XML
     xmlNodePtr root_node = xmlDocGetRootElement(dc_app_data.doc);
@@ -203,7 +203,7 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
 
         // set variables
         for (auto const &[name, variable] : dc_app_data.variables) {
-            dc_app_data.variables[name].externData = gpt_library->load_function(dc_app_data.logic.library, name.c_str());
+            dc_app_data.variables[name].extern_data = gpt_library->load_function(dc_app_data.logic.library, name.c_str());
         }
     }
 
@@ -211,22 +211,22 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     // root->validate();
 
     // set initial window params
-    DcAppNode   *windowNode    = dc_app_index_to_node(dc_app_data.window);
+    DcAppNode   *window_node   = dc_app_index_to_node(dc_app_data.window);
     plWindowDesc t_window_desc = {
-        .pcTitle = windowNode->window.title,
-        .uWidth  = (uint32_t)(dc_app_index_to_dc_value(windowNode->window.dimensions.x)->value_integer),
-        .uHeight = (uint32_t)(dc_app_index_to_dc_value(windowNode->window.dimensions.y)->value_integer),
-        .iXPos   = dc_app_index_to_dc_value(windowNode->window.position.x)->value_integer,
-        .iYPos   = dc_app_index_to_dc_value(windowNode->window.position.y)->value_integer,
+        .pcTitle = window_node->window.title,
+        .uWidth  = (uint32_t)(dc_app_index_to_dc_value(window_node->window.dimensions.x)->value_integer),
+        .uHeight = (uint32_t)(dc_app_index_to_dc_value(window_node->window.dimensions.y)->value_integer),
+        .iXPos   = dc_app_index_to_dc_value(window_node->window.position.x)->value_integer,
+        .iYPos   = dc_app_index_to_dc_value(window_node->window.position.y)->value_integer,
     };
 
-    gpt_windows->create(t_window_desc, &pt_app_data->ptWindow);
-    gpt_windows->show(pt_app_data->ptWindow);
+    gpt_windows->create(t_window_desc, &pt_app_data->pt_window);
+    gpt_windows->show(pt_app_data->pt_window);
 
     // initialize the starter API (handles alot of boilerplate)
     plStarterInit tStarterInit = {
         .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS,
-        .ptWindow = pt_app_data->ptWindow};
+        .ptWindow = pt_app_data->pt_window};
     gpt_starter->initialize(tStarterInit);
     gpt_starter->finalize();
 
@@ -241,7 +241,7 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
 PL_EXPORT void
 pl_app_shutdown(pl_app_data *pt_app_data) {
     gpt_starter->cleanup();
-    gpt_windows->destroy(pt_app_data->ptWindow);
+    gpt_windows->destroy(pt_app_data->pt_window);
     PL_FREE(pt_app_data);
 }
 
@@ -283,24 +283,24 @@ pl_app_update(pl_app_data *pt_app_data) {
 // update all variables
 void _refresh_variables() {
     for (auto const &[name, variable] : dc_app_data.variables) {
-        DcValue *value      = dc_app_index_to_dc_value(variable.value_index);
-        void    *externData = variable.externData;
+        DcValue *value       = dc_app_index_to_dc_value(variable.value_index);
+        void    *extern_data = variable.extern_data;
 
         switch (value->type) {
             case DC_APP_VALUE_TYPE_FLOAT: {
-                value->value_float = *((float *)(variable.externData));
+                value->value_float = *((float *)(variable.extern_data));
                 break;
             }
             case DC_APP_VALUE_TYPE_INTEGER: {
-                value->value_integer = *((int *)(variable.externData));
+                value->value_integer = *((int *)(variable.extern_data));
                 break;
             }
             case DC_APP_VALUE_TYPE_STRING: {
-                value->value_string = *((std::string *)(variable.externData));
+                value->value_string = *((std::string *)(variable.extern_data));
                 break;
             }
             case DC_APP_VALUE_TYPE_BOOLEAN: {
-                value->value_boolean = *((bool *)(variable.externData));
+                value->value_boolean = *((bool *)(variable.extern_data));
                 break;
             }
             default:
@@ -616,11 +616,11 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 }
 
                 // open .so file
-                const plLibraryDesc logicSoDesc = {
+                const plLibraryDesc logic_so_desc = {
                     .tFlags = PL_LIBRARY_FLAGS_NONE,
                     .pcName = filePath.c_str(),
                 };
-                if (gpt_library->load(logicSoDesc, &dc_app_data.logic.library) != PL_LIBRARY_RESULT_SUCCESS) {
+                if (gpt_library->load(logic_so_desc, &dc_app_data.logic.library) != PL_LIBRARY_RESULT_SUCCESS) {
                     throw std::runtime_error("Failed to load logic .so file");
                 }
             } else {
@@ -656,7 +656,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
 
             // parent dimensions
             // TODO probably don't need this.....must be a better way to architect
-            dc_node.panel.parentDimensions = dc_app_index_to_node(parent_node_index)->window.virtual_dimensions;
+            dc_node.panel.parent_dimensions = dc_app_index_to_node(parent_node_index)->window.virtual_dimensions;
 
             // virtual x dimension
             char *c_x_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualWidth");
@@ -664,7 +664,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 dc_node.panel.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
                 free(c_x_virtual_dimension);
             } else {
-                dc_node.panel.virtual_dimensions.x = dc_node.panel.parentDimensions.x;
+                dc_node.panel.virtual_dimensions.x = dc_node.panel.parent_dimensions.x;
             }
 
             // virtual y dimension
@@ -673,7 +673,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 dc_node.panel.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
                 free(c_y_virtual_dimension);
             } else {
-                dc_node.panel.virtual_dimensions.y = dc_node.panel.parentDimensions.y;
+                dc_node.panel.virtual_dimensions.y = dc_node.panel.parent_dimensions.y;
             }
 
             // register node
@@ -705,24 +705,24 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
 
                 if (substrings.size() > 0) {
-                    dc_node.polygon.fillColor.r = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[0]);
+                    dc_node.polygon.fill_color.r = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[0]);
                     if (substrings.size() > 1) {
-                        dc_node.polygon.fillColor.g = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[1]);
+                        dc_node.polygon.fill_color.g = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[1]);
                         if (substrings.size() > 2) {
-                            dc_node.polygon.fillColor.b = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[2]);
+                            dc_node.polygon.fill_color.b = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[2]);
                             if (substrings.size() > 3) {
-                                dc_node.polygon.fillColor.a = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[3]);
+                                dc_node.polygon.fill_color.a = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[3]);
                             } else {
-                                dc_node.polygon.fillColor.a = dc_app_register_dc_value(dc_value_create_value_float(1.0f));
+                                dc_node.polygon.fill_color.a = dc_app_register_dc_value(dc_value_create_value_float(1.0f));
                             }
                         } else {
-                            dc_node.polygon.fillColor.b = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
+                            dc_node.polygon.fill_color.b = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
                         }
                     } else {
-                        dc_node.polygon.fillColor.g = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
+                        dc_node.polygon.fill_color.g = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
                     }
                 } else {
-                    dc_node.polygon.fillColor.r = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
+                    dc_node.polygon.fill_color.r = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
                 }
                 dc_node.polygon.fill_enabled = true;
                 free(c_fill_color);
@@ -1014,8 +1014,8 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
 
         case DC_APP_NODE_TYPE_PANEL: {
             plMat4 scale_matrix = pl_mat4_scale_xyz(
-                dc_app_index_to_dc_value(node->panel.parentDimensions.x)->value_float / dc_app_index_to_dc_value(node->panel.virtual_dimensions.x)->value_float,
-                dc_app_index_to_dc_value(node->panel.parentDimensions.y)->value_float / dc_app_index_to_dc_value(node->panel.virtual_dimensions.y)->value_float,
+                dc_app_index_to_dc_value(node->panel.parent_dimensions.x)->value_float / dc_app_index_to_dc_value(node->panel.virtual_dimensions.x)->value_float,
+                dc_app_index_to_dc_value(node->panel.parent_dimensions.y)->value_float / dc_app_index_to_dc_value(node->panel.virtual_dimensions.y)->value_float,
                 1.0f);
             plMat4 transform = (plMat4){0};
             transform        = pl_mul_mat4t(parent_transform, &scale_matrix);
@@ -1038,12 +1038,12 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
 
             // draw fill
             if (node->polygon.fill_enabled) {
-                uint32_t fillColor = PL_COLOR_32_RGBA(
-                    dc_app_index_to_dc_value(node->polygon.fillColor.r)->value_float,
-                    dc_app_index_to_dc_value(node->polygon.fillColor.g)->value_float,
-                    dc_app_index_to_dc_value(node->polygon.fillColor.b)->value_float,
-                    dc_app_index_to_dc_value(node->polygon.fillColor.a)->value_float);
-                gpt_draw->add_convex_polygon_filled(pt_app_data->pt_fg_layer, points.data(), points.size(), (plDrawSolidOptions){.uColor = fillColor});
+                uint32_t fill_color = PL_COLOR_32_RGBA(
+                    dc_app_index_to_dc_value(node->polygon.fill_color.r)->value_float,
+                    dc_app_index_to_dc_value(node->polygon.fill_color.g)->value_float,
+                    dc_app_index_to_dc_value(node->polygon.fill_color.b)->value_float,
+                    dc_app_index_to_dc_value(node->polygon.fill_color.a)->value_float);
+                gpt_draw->add_convex_polygon_filled(pt_app_data->pt_fg_layer, points.data(), points.size(), (plDrawSolidOptions){.uColor = fill_color});
             }
 
             // draw outline
@@ -1071,7 +1071,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
             uint32_t dimensionX, dimensionY;
 
             // TODO fix this in pilotlight for macos
-            gpt_windows->get_size(pt_app_data->ptWindow, &dimensionX, &dimensionY);
+            gpt_windows->get_size(pt_app_data->pt_window, &dimensionX, &dimensionY);
             DcValue *dimension_value_x       = dc_app_index_to_dc_value(node->window.dimensions.x);
             DcValue *dimension_value_y       = dc_app_index_to_dc_value(node->window.dimensions.y);
             dimension_value_x->value_integer = (int)dimensionX;
