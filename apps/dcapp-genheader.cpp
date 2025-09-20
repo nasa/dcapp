@@ -33,13 +33,13 @@ int main(int argc, char **argv) {
     // TODO check that it exists
 
     // set paths
-    std::filesystem::path fs_file_path      = std::filesystem::canonical(config_relative_path);
-    std::filesystem::path fs_dir_path     = fs_file_path.parent_path();
-    std::string           config_file_path  = fs_file_path.string();
-    std::string           config_dir_path = fs_dir_path.string();
+    std::filesystem::path fs_file_path     = std::filesystem::canonical(config_relative_path);
+    std::filesystem::path fs_dir_path      = fs_file_path.parent_path();
+    std::string           config_file_path = fs_file_path.string();
+    std::string           config_dir_path  = fs_dir_path.string();
 
     // create cache and log dirs
-    std::filesystem::path fs_exe_path   = dc_utils_get_exe_filepath();
+    std::filesystem::path fs_exe_path = dc_utils_get_exe_filepath();
     std::filesystem::path fs_log_path = fs_exe_path.parent_path() / ".." / "logs";
     std::filesystem::create_directory(fs_log_path);
     std::string           log_dir_path  = std::filesystem::canonical(fs_log_path).string();
@@ -51,10 +51,10 @@ int main(int argc, char **argv) {
     dc_app_init_data();
 
     // begin setting up dcappData object
-    dc_app_data.config_file_path  = config_file_path;
-    dc_app_data.config_dir_path = config_dir_path;
-    dc_app_data.log_dir_path    = log_dir_path;
-    dc_app_data.cache_dir_path  = cache_dir_path;
+    dc_app_data.config_file_path = config_file_path;
+    dc_app_data.config_dir_path  = config_dir_path;
+    dc_app_data.log_dir_path     = log_dir_path;
+    dc_app_data.cache_dir_path   = cache_dir_path;
 
     // set environment (used for dcapp XMLs)
     setenv("dcappDisplayHome", dc_app_data.config_dir_path.c_str(), 1);

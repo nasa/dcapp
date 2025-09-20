@@ -322,7 +322,7 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory) {
                 // requires some finagling if it contains children. Otherwise, unlink it normally
                 if (node->children) {
                     xmlNodePtr first_child = node->children;
-                    xmlNodePtr last_child = node->last;
+                    xmlNodePtr last_child  = node->last;
 
                     // update parent
                     if (node->parent) {
@@ -347,7 +347,7 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory) {
                         curr_child->parent = node->parent;
                     }
                     first_child->prev = node->prev;
-                    last_child->next = node->next;
+                    last_child->next  = node->next;
 
                     // unlink node
                     node->children = NULL;
@@ -416,10 +416,10 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory) {
 
 void dc_app_init_data() {
     // initialize members
-    dc_app_data.config_file_path  = "";
-    dc_app_data.config_dir_path = "";
-    dc_app_data.cache_dir_path  = "";
-    dc_app_data.log_dir_path    = "";
+    dc_app_data.config_file_path = "";
+    dc_app_data.config_dir_path  = "";
+    dc_app_data.cache_dir_path   = "";
+    dc_app_data.log_dir_path     = "";
     dc_app_data.constants.clear();
     dc_app_data.variables.clear();
     dc_app_data.values.resize(1);

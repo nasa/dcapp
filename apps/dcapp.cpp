@@ -150,13 +150,13 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     std::string config_relative_path = args[0];
 
     // set paths
-    std::filesystem::path fsFilePath      = std::filesystem::canonical(config_relative_path);
-    std::filesystem::path fs_dir_path     = fsFilePath.parent_path();
-    std::string           config_file_path  = fsFilePath.string();
-    std::string           config_dir_path = fs_dir_path.string();
+    std::filesystem::path fsFilePath       = std::filesystem::canonical(config_relative_path);
+    std::filesystem::path fs_dir_path      = fsFilePath.parent_path();
+    std::string           config_file_path = fsFilePath.string();
+    std::string           config_dir_path  = fs_dir_path.string();
 
     // create cache and log dirs
-    std::filesystem::path fs_exe_path   = dc_utils_get_exe_filepath();
+    std::filesystem::path fs_exe_path = dc_utils_get_exe_filepath();
     std::filesystem::path fs_log_path = fs_exe_path.parent_path() / ".." / "logs";
     std::filesystem::create_directory(fs_log_path);
     std::string           log_dir_path  = std::filesystem::canonical(fs_log_path).string();
@@ -168,10 +168,10 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     dc_app_init_data();
 
     // begin setting up dcappData object
-    dc_app_data.config_file_path  = config_file_path;
-    dc_app_data.config_dir_path = config_dir_path;
-    dc_app_data.log_dir_path    = log_dir_path;
-    dc_app_data.cache_dir_path  = cache_dir_path;
+    dc_app_data.config_file_path = config_file_path;
+    dc_app_data.config_dir_path  = config_dir_path;
+    dc_app_data.log_dir_path     = log_dir_path;
+    dc_app_data.cache_dir_path   = cache_dir_path;
 
     // set environment (used for dcapp XMLs)
     setenv("dcappDisplayHome", dc_app_data.config_dir_path.c_str(), 1);
@@ -211,7 +211,7 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     // root->validate();
 
     // set initial window params
-    DcAppNode   *window_node    = dc_app_index_to_node(dc_app_data.window);
+    DcAppNode   *window_node   = dc_app_index_to_node(dc_app_data.window);
     plWindowDesc t_window_desc = {
         .pcTitle = window_node->window.title,
         .uWidth  = (uint32_t)(dc_app_index_to_dc_value(window_node->window.dimensions.x)->value_integer),
@@ -283,7 +283,7 @@ pl_app_update(pl_app_data *pt_app_data) {
 // update all variables
 void _refresh_variables() {
     for (auto const &[name, variable] : dc_app_data.variables) {
-        DcValue *value      = dc_app_index_to_dc_value(variable.value_index);
+        DcValue *value       = dc_app_index_to_dc_value(variable.value_index);
         void    *extern_data = variable.extern_data;
 
         switch (value->type) {
