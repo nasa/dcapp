@@ -277,16 +277,16 @@ void dc_app_clean_xml_data() {
     // get root element
     xmlNodePtr node = xmlDocGetRootElement(dc_app_data.doc);
     if (node == NULL) {
-        throw std::runtime_error("Unable to get root element of configuration file: " + dc_app_data.configFilePath);
+        throw std::runtime_error("Unable to get root element of configuration file: " + dc_app_data.config_file_path);
     }
 
     // verify root node is valid
     if (dc_app_xml_node_to_elem_type(node) != DC_APP_ELEM_TYPE_DCAPP) {
-        throw std::runtime_error("Configuration root element is not DCAPP: " + dc_app_data.configFilePath);
+        throw std::runtime_error("Configuration root element is not DCAPP: " + dc_app_data.config_file_path);
     }
 
     // clean XML file
-    _dc_app_clean_xml_node(node, dc_app_data.configFilePath);
+    _dc_app_clean_xml_node(node, dc_app_data.config_file_path);
 }
 
 void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory) {
@@ -321,13 +321,13 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory) {
             case DC_APP_ELEM_TYPE_DUMMY: {
                 // requires some finagling if it contains children. Otherwise, unlink it normally
                 if (node->children) {
-                    xmlNodePtr firstChild = node->children;
+                    xmlNodePtr first_child = node->children;
                     xmlNodePtr last_child = node->last;
 
                     // update parent
                     if (node->parent) {
                         if (node->parent->children == node) {
-                            node->parent->children = firstChild;
+                            node->parent->children = first_child;
                         }
                         if (node->parent->last == node) {
                             node->parent->last = last_child;
@@ -336,17 +336,17 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory) {
 
                     // update siblings
                     if (node->prev) {
-                        node->prev->next = firstChild;
+                        node->prev->next = first_child;
                     }
                     if (node->next) {
                         node->next->prev = last_child;
                     }
 
                     // update children
-                    for (xmlNodePtr curr_child = firstChild; curr_child; curr_child = curr_child->next) {
+                    for (xmlNodePtr curr_child = first_child; curr_child; curr_child = curr_child->next) {
                         curr_child->parent = node->parent;
                     }
-                    firstChild->prev = node->prev;
+                    first_child->prev = node->prev;
                     last_child->next = node->next;
 
                     // unlink node
@@ -376,7 +376,7 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory) {
                 include_file_path = dc_utils_filepath_to_canonical(include_file_path, directory);
 
                 // create new prop, assign to <Include> node
-                xmlAttrPtr directoryProp = xmlNewProp(node, (xmlChar *)("Directory"), (xmlChar *)(directory.c_str()));
+                xmlAttrPtr directory_prop = xmlNewProp(node, (xmlChar *)("Directory"), (xmlChar *)(directory.c_str()));
 
                 // read XML file
                 xmlDocPtr sub_doc = xmlReadFile(include_file_path.c_str(), NULL, XML_PARSE_NOBLANKS);
@@ -416,7 +416,7 @@ void _dc_app_clean_xml_node(xmlNodePtr node, std::string directory) {
 
 void dc_app_init_data() {
     // initialize members
-    dc_app_data.configFilePath  = "";
+    dc_app_data.config_file_path  = "";
     dc_app_data.config_dir_path = "";
     dc_app_data.cache_dir_path  = "";
     dc_app_data.log_dir_path    = "";

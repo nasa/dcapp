@@ -156,14 +156,14 @@ typedef struct _DcAppNodeMap {
 } DcAppNodeMap;
 
 typedef struct _DcAppNodePanel {
-    DcAppValueIndex2 parentDimensions;
+    DcAppValueIndex2 parent_dimensions;
     DcAppValueIndex2 virtual_dimensions;
     DcAppValueIndex  index;
     DcAppNodeIndex   child;
 } DcAppNodePanel;
 
 typedef struct _DcAppNodePolygon {
-    DcAppValueIndex4  fillColor;
+    DcAppValueIndex4  fill_color;
     DcAppValueIndex4  line_color;
     DcAppValueIndex   line_width;
     DcAppValueIndex2 *points;
@@ -205,7 +205,7 @@ typedef struct _DcAppLogic {
 
 // variables
 typedef struct _DcAppVariable {
-    void           *externData;
+    void           *extern_data;
     DcAppValueIndex value_index;
 } DcAppVariable;
 
@@ -236,7 +236,7 @@ void dc_app_clean_xml_data();
 // app data
 typedef struct _DcAppData {
     // string path to config file, directories
-    std::string configFilePath;
+    std::string config_file_path;
     std::string config_dir_path;
     std::string cache_dir_path;
     std::string log_dir_path;
