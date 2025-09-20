@@ -3,16 +3,13 @@
 // [SECTION] dcapp includes
 //-----------------------------------------------------------------------------
 
-#include <dcapp-data.hpp>
-#include <utils/file-utils.hpp>
-#include <utils/string-utils.hpp>
-#include <utils/xml-utils.hpp>
+#include <app.hpp>
+#include <utils/file.hpp>
+#include <utils/string.hpp>
+#include <utils/xml.hpp>
 #include <value.hpp>
 
-namespace dc
-{
-    DcappData dcData;
-}
+DcAppData dc_app_data;
 
 #include <cstdio>
 #include <filesystem>
@@ -42,74 +39,68 @@ namespace dc
 // [SECTION] structs
 //-----------------------------------------------------------------------------
 
-typedef struct _plAppData
-{
+typedef struct _plAppData {
     // window
-    plWindow *ptWindow;
-    plDrawLayer2D *ptFGLayer;
+    plWindow      *ptWindow;
+    plDrawLayer2D *pt_fg_layer;
 
     // console variable
-    bool bShowHelpWindow;
-} plAppData;
+    bool b_show_help_window;
+} pl_app_data;
 
 //-----------------------------------------------------------------------------
 // [SECTION] dcapp state
 //-----------------------------------------------------------------------------
 
-namespace dc
-{
-    static void refreshVariables();
-    static DcNodeIndex processNodeChildren(xmlNodePtr xmlNode, DcNodeIndex nodeIndex, const std::string &directory);
-    static DcNodeIndex processNode(xmlNodePtr xmlNode, DcNodeIndex parentNodeIndex, std::string directory);
-    static void drawNodeList(plAppData *ptAppData, DcNodeIndex nodeIndex, plMat4 *nodeTransform);
-    static void drawNode(plAppData *ptAppData, DcNodeIndex nodeIndex, plMat4 *parentTransform);
-} // namespace dc
+static void           _refresh_variables();
+static DcAppNodeIndex _process_node_children(xmlNodePtr xml_node, DcAppNodeIndex node_index, const std::string &directory);
+static DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, std::string directory);
+static void           _draw_node_list(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *node_transform);
+static void           _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *parent_transform);
 
 //-----------------------------------------------------------------------------
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-const plWindowI *gptWindows = NULL;
-const plDrawI *gptDraw = NULL;
-const plStarterI *gptStarter = NULL;
-const plProfileI *gptProfile = NULL;
-const plMemoryI *gptMemory = NULL;
-const plLibraryI *gptLibrary = NULL;
-const plIOI *gptIOI = NULL;
+const plWindowI  *gpt_windows = NULL;
+const plDrawI    *gpt_draw    = NULL;
+const plStarterI *gpt_starter = NULL;
+const plProfileI *gpt_profile = NULL;
+const plMemoryI  *gpt_memory  = NULL;
+const plLibraryI *gpt_library = NULL;
+const plIOI      *gpt_ioi     = NULL;
 
-#define PL_ALLOC(x) gptMemory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
-#define PL_REALLOC(x, y) gptMemory->tracked_realloc((x), (y), __FILE__, __LINE__)
-#define PL_FREE(x) gptMemory->tracked_realloc((x), 0, __FILE__, __LINE__)
+#define PL_ALLOC(x) gpt_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
+#define PL_REALLOC(x, y) gpt_memory->tracked_realloc((x), (y), __FILE__, __LINE__)
+#define PL_FREE(x) gpt_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
 //-----------------------------------------------------------------------------
 // [SECTION] pl_app_load
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void *
-pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
-{
+pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     // NOTE: on first load, "pAppData" will be NULL but on reloads
     //       it will be the value returned from this function
 
     // if "ptAppData" is a valid pointer, then this function is being called
     // during a hot reload.
-    if (ptAppData)
-    {
+    if (pt_app_data) {
         // re-retrieve the apis since we are now in
         // a different dll/so
-        gptWindows = pl_get_api_latest(ptApiRegistry, plWindowI);
-        gptDraw = pl_get_api_latest(ptApiRegistry, plDrawI);
-        gptStarter = pl_get_api_latest(ptApiRegistry, plStarterI);
-        gptProfile = pl_get_api_latest(ptApiRegistry, plProfileI);
-        gptMemory = pl_get_api_latest(ptApiRegistry, plMemoryI);
-        gptLibrary = pl_get_api_latest(ptApiRegistry, plLibraryI);
-        gptIOI = pl_get_api_latest(ptApiRegistry, plIOI);
+        gpt_windows = pl_get_api_latest(pt_api_registry, plWindowI);
+        gpt_draw    = pl_get_api_latest(pt_api_registry, plDrawI);
+        gpt_starter = pl_get_api_latest(pt_api_registry, plStarterI);
+        gpt_profile = pl_get_api_latest(pt_api_registry, plProfileI);
+        gpt_memory  = pl_get_api_latest(pt_api_registry, plMemoryI);
+        gpt_library = pl_get_api_latest(pt_api_registry, plLibraryI);
+        gpt_ioi     = pl_get_api_latest(pt_api_registry, plIOI);
 
-        return ptAppData;
+        return pt_app_data;
     }
 
     // retrieve extension registry
-    const plExtensionRegistryI *ptExtensionRegistry = pl_get_api_latest(ptApiRegistry, plExtensionRegistryI);
+    const plExtensionRegistryI *ptExtensionRegistry = pl_get_api_latest(pt_api_registry, plExtensionRegistryI);
 
     // load extensions
     //   * first argument is the shared library name WITHOUT the extension
@@ -120,20 +111,20 @@ pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
     ptExtensionRegistry->load("pl_platform_ext", NULL, NULL, false); // provides the file API used by the drawing ext
 
     // load required apis
-    gptWindows = pl_get_api_latest(ptApiRegistry, plWindowI);
-    gptDraw = pl_get_api_latest(ptApiRegistry, plDrawI);
-    gptStarter = pl_get_api_latest(ptApiRegistry, plStarterI);
-    gptProfile = pl_get_api_latest(ptApiRegistry, plProfileI);
-    gptMemory = pl_get_api_latest(ptApiRegistry, plMemoryI);
-    gptLibrary = pl_get_api_latest(ptApiRegistry, plLibraryI);
-    gptIOI = pl_get_api_latest(ptApiRegistry, plIOI);
+    gpt_windows = pl_get_api_latest(pt_api_registry, plWindowI);
+    gpt_draw    = pl_get_api_latest(pt_api_registry, plDrawI);
+    gpt_starter = pl_get_api_latest(pt_api_registry, plStarterI);
+    gpt_profile = pl_get_api_latest(pt_api_registry, plProfileI);
+    gpt_memory  = pl_get_api_latest(pt_api_registry, plMemoryI);
+    gpt_library = pl_get_api_latest(pt_api_registry, plLibraryI);
+    gpt_ioi     = pl_get_api_latest(pt_api_registry, plIOI);
 
     // allocate app memory
-    ptAppData = (plAppData *)PL_ALLOC(sizeof(plAppData));
-    memset(ptAppData, 0, sizeof(plAppData));
+    pt_app_data = (pl_app_data *)PL_ALLOC(sizeof(pl_app_data));
+    memset(pt_app_data, 0, sizeof(pl_app_data));
 
     // default values
-    ptAppData->bShowHelpWindow = true;
+    pt_app_data->b_show_help_window = true;
 
     // parse input arguments
     // if (argc < 2) {
@@ -149,74 +140,70 @@ pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
     // std::string configRelativePath = "/home/nathan/dcapp-vk/samples/test/test.xml";
 
     // parse input arguments
-    plIO *gptIo = gptIOI->get_io();
-    if (gptIo->iArgc < 4)
-    {
+    plIO *gpt_io = gpt_ioi->get_io();
+    if (gpt_io->iArgc < 4) {
         throw std::runtime_error("Missing dcapp configuration file");
     }
-    std::vector<std::string> args(gptIo->apArgv + 3, gptIo->apArgv + gptIo->iArgc);
+    std::vector<std::string> args(gpt_io->apArgv + 3, gpt_io->apArgv + gpt_io->iArgc);
 
     // TODO process input arguments (constant setting)
     std::string configRelativePath = args[0];
 
     // set paths
-    std::filesystem::path fsFilePath = std::filesystem::canonical(configRelativePath);
-    std::filesystem::path fsDirPath = fsFilePath.parent_path();
-    std::string configFilePath = fsFilePath.string();
-    std::string configDirPath = fsDirPath.string();
+    std::filesystem::path fsFilePath      = std::filesystem::canonical(configRelativePath);
+    std::filesystem::path fs_dir_path     = fsFilePath.parent_path();
+    std::string           configFilePath  = fsFilePath.string();
+    std::string           config_dir_path = fs_dir_path.string();
 
     // create cache and log dirs
-    std::filesystem::path fsExePath = getExeFilepath();
-    std::filesystem::path fsLogPath = fsExePath.parent_path() / ".." / "logs";
-    std::filesystem::create_directory(fsLogPath);
-    std::string logDirPath = std::filesystem::canonical(fsLogPath).string();
-    std::filesystem::path fsCachePath = fsExePath.parent_path() / ".." / "cache";
-    std::filesystem::create_directory(fsCachePath);
-    std::string cacheDirPath = std::filesystem::canonical(fsCachePath).string();
+    std::filesystem::path fsExePath   = dc_utils_get_exe_filepath();
+    std::filesystem::path fs_log_path = fsExePath.parent_path() / ".." / "logs";
+    std::filesystem::create_directory(fs_log_path);
+    std::string           log_dir_path  = std::filesystem::canonical(fs_log_path).string();
+    std::filesystem::path fs_cache_path = fsExePath.parent_path() / ".." / "cache";
+    std::filesystem::create_directory(fs_cache_path);
+    std::string cache_dir_path = std::filesystem::canonical(fs_cache_path).string();
 
-    // init dcData object
-    dc::initData();
+    // init dc_app_data object
+    dc_app_init_data();
 
     // begin setting up dcappData object
-    dc::dcData.configFilePath = configFilePath;
-    dc::dcData.configDirPath = configDirPath;
-    dc::dcData.logDirPath = logDirPath;
-    dc::dcData.cacheDirPath = cacheDirPath;
+    dc_app_data.configFilePath  = configFilePath;
+    dc_app_data.config_dir_path = config_dir_path;
+    dc_app_data.log_dir_path    = log_dir_path;
+    dc_app_data.cache_dir_path  = cache_dir_path;
 
     // set environment (used for dcapp XMLs)
-    setenv("dcappDisplayHome", dc::dcData.configDirPath.c_str(), 1);
+    setenv("dcappDisplayHome", dc_app_data.config_dir_path.c_str(), 1);
 
     // load XML file
-    dc::dcData.doc = xmlReadFile(configFilePath.c_str(), "UTF-8", XML_PARSE_NOBLANKS);
-    if (!dc::dcData.doc)
-    {
+    dc_app_data.doc = xmlReadFile(configFilePath.c_str(), "UTF-8", XML_PARSE_NOBLANKS);
+    if (!dc_app_data.doc) {
         throw std::runtime_error("Unable to read configuration file: " + configFilePath);
     }
 
     // clean XML file
-    dc::cleanXmlData();
+    dc_app_clean_xml_data();
 
     // save cleaned xml to file
-    std::filesystem::path fsOutFile = std::filesystem::path(logDirPath) / "config.xml";
-    xmlSaveFormatFile(fsOutFile.string().c_str(), dc::dcData.doc, 1);
+    std::filesystem::path fsOutFile = std::filesystem::path(log_dir_path) / "config.xml";
+    xmlSaveFormatFile(fsOutFile.string().c_str(), dc_app_data.doc, 1);
 
     // process XML
-    xmlNodePtr rootNode = xmlDocGetRootElement(dc::dcData.doc);
-    dc::processNode(rootNode, dc::DC_NODE_INDEX_UNDEFINED, configDirPath);
+    xmlNodePtr root_node = xmlDocGetRootElement(dc_app_data.doc);
+    _process_node(root_node, DC_APP_NODE_INDEX_UNDEFINED, config_dir_path);
 
     // configure logic file
-    if (dc::dcData.logic.library)
-    {
+    if (dc_app_data.logic.library) {
         // set logic functions
-        dc::dcData.logic.preInit = (void (*)(void))gptLibrary->load_function(dc::dcData.logic.library, "DisplayPreInit");
-        dc::dcData.logic.init = (void (*)(void))gptLibrary->load_function(dc::dcData.logic.library, "DisplayInit");
-        dc::dcData.logic.draw = (void (*)(void))gptLibrary->load_function(dc::dcData.logic.library, "DisplayDraw");
-        dc::dcData.logic.close = (void (*)(void))gptLibrary->load_function(dc::dcData.logic.library, "DisplayClose");
+        dc_app_data.logic.pre_init = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayPreInit");
+        dc_app_data.logic.init     = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayInit");
+        dc_app_data.logic.draw     = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayDraw");
+        dc_app_data.logic.close    = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayClose");
 
         // set variables
-        for (auto const &[name, variable] : dc::dcData.variables)
-        {
-            dc::dcData.variables[name].externData = gptLibrary->load_function(dc::dcData.logic.library, name.c_str());
+        for (auto const &[name, variable] : dc_app_data.variables) {
+            dc_app_data.variables[name].externData = gpt_library->load_function(dc_app_data.logic.library, name.c_str());
         }
     }
 
@@ -224,27 +211,27 @@ pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
     // root->validate();
 
     // set initial window params
-    dc::DcNode *windowNode = dc::indexToDcNode(dc::dcData.window);
-    plWindowDesc tWindowDesc = {
+    DcAppNode   *windowNode    = dc_app_index_to_node(dc_app_data.window);
+    plWindowDesc t_window_desc = {
         .pcTitle = windowNode->window.title,
-        .uWidth = (uint32_t)(dc::indexToDcValue(windowNode->window.dimensions.x)->valueInteger),
-        .uHeight = (uint32_t)(dc::indexToDcValue(windowNode->window.dimensions.y)->valueInteger),
-        .iXPos = dc::indexToDcValue(windowNode->window.position.x)->valueInteger,
-        .iYPos = dc::indexToDcValue(windowNode->window.position.y)->valueInteger,
+        .uWidth  = (uint32_t)(dc_app_index_to_dc_value(windowNode->window.dimensions.x)->value_integer),
+        .uHeight = (uint32_t)(dc_app_index_to_dc_value(windowNode->window.dimensions.y)->value_integer),
+        .iXPos   = dc_app_index_to_dc_value(windowNode->window.position.x)->value_integer,
+        .iYPos   = dc_app_index_to_dc_value(windowNode->window.position.y)->value_integer,
     };
 
-    gptWindows->create(tWindowDesc, &ptAppData->ptWindow);
-    gptWindows->show(ptAppData->ptWindow);
+    gpt_windows->create(t_window_desc, &pt_app_data->ptWindow);
+    gpt_windows->show(pt_app_data->ptWindow);
 
     // initialize the starter API (handles alot of boilerplate)
     plStarterInit tStarterInit = {
-        .tFlags = PL_STARTER_FLAGS_ALL_EXTENSIONS,
-        .ptWindow = ptAppData->ptWindow};
-    gptStarter->initialize(tStarterInit);
-    gptStarter->finalize();
+        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS,
+        .ptWindow = pt_app_data->ptWindow};
+    gpt_starter->initialize(tStarterInit);
+    gpt_starter->finalize();
 
     // return app memory
-    return ptAppData;
+    return pt_app_data;
 }
 
 //-----------------------------------------------------------------------------
@@ -252,11 +239,10 @@ pl_app_load(plApiRegistryI *ptApiRegistry, plAppData *ptAppData)
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void
-pl_app_shutdown(plAppData *ptAppData)
-{
-    gptStarter->cleanup();
-    gptWindows->destroy(ptAppData->ptWindow);
-    PL_FREE(ptAppData);
+pl_app_shutdown(pl_app_data *pt_app_data) {
+    gpt_starter->cleanup();
+    gpt_windows->destroy(pt_app_data->ptWindow);
+    PL_FREE(pt_app_data);
 }
 
 //-----------------------------------------------------------------------------
@@ -264,9 +250,8 @@ pl_app_shutdown(plAppData *ptAppData)
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void
-pl_app_resize(plAppData *ptAppData)
-{
-    gptStarter->resize();
+pl_app_resize(pl_app_data *pt_app_data) {
+    gpt_starter->resize();
 }
 
 //-----------------------------------------------------------------------------
@@ -274,321 +259,264 @@ pl_app_resize(plAppData *ptAppData)
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void
-pl_app_update(plAppData *ptAppData)
-{
+pl_app_update(pl_app_data *pt_app_data) {
     // this needs to be the first call when using the starter
     // extension. You must return if it returns false (usually a swapchain recreation).
-    if (!gptStarter->begin_frame())
+    if (!gpt_starter->begin_frame())
         return;
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    gptProfile->begin_sample(0, "example drawing");
+    gpt_profile->begin_sample(0, "example drawing");
 
-    ptAppData->ptFGLayer = gptStarter->get_foreground_layer();
-    dc::dcData.logic.draw();
-    dc::refreshVariables();
-    dc::drawNode(ptAppData, dc::dcData.window, nullptr);
+    pt_app_data->pt_fg_layer = gpt_starter->get_foreground_layer();
+    dc_app_data.logic.draw();
+    _refresh_variables();
+    _draw_node(pt_app_data, dc_app_data.window, nullptr);
 
-    gptProfile->end_sample(0);
+    gpt_profile->end_sample(0);
 
     // must be the last function called when using the starter extension
-    gptStarter->end_frame();
+    gpt_starter->end_frame();
 }
 
-namespace dc
-{
-    // update all variables
-    void refreshVariables()
-    {
-        for (auto const &[name, variable] : dc::dcData.variables)
-        {
-            DcValue *value = indexToDcValue(variable.valueIndex);
-            void *externData = variable.externData;
+// update all variables
+void _refresh_variables() {
+    for (auto const &[name, variable] : dc_app_data.variables) {
+        DcValue *value      = dc_app_index_to_dc_value(variable.value_index);
+        void    *externData = variable.externData;
 
-            switch (value->type)
-            {
-            case DC_VALUE_TYPE_FLOAT:
-            {
-                value->valueFloat = *((float *)(variable.externData));
+        switch (value->type) {
+            case DC_APP_VALUE_TYPE_FLOAT: {
+                value->value_float = *((float *)(variable.externData));
                 break;
             }
-            case DC_VALUE_TYPE_INTEGER:
-            {
-                value->valueInteger = *((int *)(variable.externData));
+            case DC_APP_VALUE_TYPE_INTEGER: {
+                value->value_integer = *((int *)(variable.externData));
                 break;
             }
-            case DC_VALUE_TYPE_STRING:
-            {
-                value->valueString = *((std::string *)(variable.externData));
+            case DC_APP_VALUE_TYPE_STRING: {
+                value->value_string = *((std::string *)(variable.externData));
                 break;
             }
-            case DC_VALUE_TYPE_BOOLEAN:
-            {
-                value->valueBoolean = *((bool *)(variable.externData));
+            case DC_APP_VALUE_TYPE_BOOLEAN: {
+                value->value_boolean = *((bool *)(variable.externData));
                 break;
             }
             default:
                 throw std::runtime_error("invalid DcValue type for variable");
                 break;
-            }
-            refreshValue(value);
         }
+        dc_value_refresh_value(value);
     }
+}
 
-    // returns the first child (if any)
-    DcNodeIndex processNodeChildren(xmlNodePtr xmlNode, DcNodeIndex nodeIndex, const std::string &directory)
-    {
-        xmlNodePtr xmlChildNode = xmlNode->children;
+// returns the first child (if any)
+DcAppNodeIndex _process_node_children(xmlNodePtr xml_node, DcAppNodeIndex node_index, const std::string &directory) {
+    xmlNodePtr xml_child_node = xml_node->children;
 
-        DcNodeIndex firstChildIndex = DC_NODE_INDEX_UNDEFINED;
-        DcNodeIndex previousChildNodeIndex = DC_NODE_INDEX_UNDEFINED;
-        while (xmlChildNode)
-        {
-            DcNodeIndex childNodeIndex = processNode(xmlChildNode, nodeIndex, directory);
+    DcAppNodeIndex first_child_index         = DC_APP_NODE_INDEX_UNDEFINED;
+    DcAppNodeIndex previous_child_node_index = DC_APP_NODE_INDEX_UNDEFINED;
+    while (xml_child_node) {
+        DcAppNodeIndex child_node_index = _process_node(xml_child_node, node_index, directory);
 
-            // get node addresses here since the address could change per node process
-            DcNode *node = indexToDcNode(nodeIndex);
-            DcNode *childNode = indexToDcNode(childNodeIndex);
-            DcNode *previousChildNode = indexToDcNode(previousChildNodeIndex);
+        // get node addresses here since the address could change per node process
+        DcAppNode *node                = dc_app_index_to_node(node_index);
+        DcAppNode *child_node          = dc_app_index_to_node(child_node_index);
+        DcAppNode *previous_child_node = dc_app_index_to_node(previous_child_node_index);
 
-            // if the current node and child exists
-            if (node && childNode)
-            {
-                // set child's parent
-                childNode->parent = nodeIndex;
+        // if the current node and child exists
+        if (node && child_node) {
+            // set child's parent
+            child_node->parent = node_index;
 
-                // set nodes's first child if this is the first child
-                if (previousChildNodeIndex == DC_NODE_INDEX_UNDEFINED)
-                {
-                    firstChildIndex = childNodeIndex;
-                }
+            // set nodes's first child if this is the first child
+            if (previous_child_node_index == DC_APP_NODE_INDEX_UNDEFINED) {
+                first_child_index = child_node_index;
             }
-
-            // if there is a previous node
-            if (previousChildNode)
-            {
-                // set the next node of the previous node
-                previousChildNode->next = childNodeIndex;
-            }
-
-            // set previous child node
-            if (childNodeIndex != DC_NODE_INDEX_UNDEFINED)
-            {
-                previousChildNodeIndex = childNodeIndex;
-            }
-
-            // increment pointer
-            xmlChildNode = xmlChildNode->next;
         }
 
-        return firstChildIndex;
+        // if there is a previous node
+        if (previous_child_node) {
+            // set the next node of the previous node
+            previous_child_node->next = child_node_index;
+        }
+
+        // set previous child node
+        if (child_node_index != DC_APP_NODE_INDEX_UNDEFINED) {
+            previous_child_node_index = child_node_index;
+        }
+
+        // increment pointer
+        xml_child_node = xml_child_node->next;
     }
 
-    DcNodeIndex processNode(xmlNodePtr xmlNode, DcNodeIndex parentNodeIndex, std::string directory)
-    {
-        // by default, the element is not a node
-        DcNodeIndex nodeIndex = DC_NODE_INDEX_UNDEFINED;
+    return first_child_index;
+}
 
-        switch (xmlNodeToElementType(xmlNode))
-        {
+DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, std::string directory) {
+    // by default, the element is not a node
+    DcAppNodeIndex node_index = DC_APP_NODE_INDEX_UNDEFINED;
+
+    switch (dc_app_xml_node_to_elem_type(xml_node)) {
 
         // ignore non-element nodes
-        case DC_ELEM_TYPE_NONELEM:
-        {
+        case DC_APP_ELEM_TYPE_NONELEM: {
             break;
         }
 
-        case DC_ELEM_TYPE_CONSTANT:
-        {
+        case DC_APP_ELEM_TYPE_CONSTANT: {
             // name
-            char *cName = getAttributeString(xmlNode, "Name");
-            if (!cName)
-            {
+            char *c_name = dc_utils_get_attribute_string(xml_node, "Name");
+            if (!c_name) {
                 throw std::runtime_error("Non-existent node 'Name' in <Constant> definition");
             }
-            std::string name = dereferenceConstants(cName);
-            free(cName);
+            std::string name = dc_app_dereference_constants(c_name);
+            free(c_name);
 
             // value
-            char *cValue = getNodeContentString(xmlNode);
-            if (!cValue)
-            {
+            char *c_value = dc_utils_get_node_content_string(xml_node);
+            if (!c_value) {
                 throw std::runtime_error("Non-existent node content in <Constant> definition");
             }
-            std::string value = dereferenceConstants(cValue);
-            free(cValue);
+            std::string value = dc_app_dereference_constants(c_value);
+            free(c_value);
 
             // set constant value
-            setConstant(name, value);
+            dc_app_set_constant(name, value);
             break;
         }
 
-        case DC_ELEM_TYPE_CONTAINER:
-        {
-            DcNode dcNode = {
-                .type = DC_NODE_TYPE_CONTAINER,
+        case DC_APP_ELEM_TYPE_CONTAINER: {
+            DcAppNode dc_node = {
+                .type = DC_APP_NODE_TYPE_CONTAINER,
             };
 
             // xPosition
-            char *cXPosition = getAttributeString(xmlNode, "X");
-            if (cXPosition)
-            {
-                dcNode.container.position.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXPosition));
-                free(cXPosition);
-            }
-            else
-            {
-                dcNode.container.position.x = registerDcValue(createValueFloat(0.0f));
+            char *c_x_position = dc_utils_get_attribute_string(xml_node, "X");
+            if (c_x_position) {
+                dc_node.container.position.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position));
+                free(c_x_position);
+            } else {
+                dc_node.container.position.x = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
             }
 
             // y position
-            char *cYPosition = getAttributeString(xmlNode, "Y");
-            if (cYPosition)
-            {
-                dcNode.container.position.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYPosition));
-                free(cYPosition);
-            }
-            else
-            {
-                dcNode.container.position.y = registerDcValue(createValueFloat(0.0f));
+            char *c_y_position = dc_utils_get_attribute_string(xml_node, "Y");
+            if (c_y_position) {
+                dc_node.container.position.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position));
+                free(c_y_position);
+            } else {
+                dc_node.container.position.y = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
             }
 
             // x origin
-            char *cXOrigin = getAttributeString(xmlNode, "OriginX");
-            if (cXOrigin)
-            {
-                dcNode.container.origin.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXOrigin));
-                free(cXOrigin);
-            }
-            else
-            {
-                dcNode.container.origin.x = registerDcValue(createValueFloat(0.0f));
+            char *c_x_origin = dc_utils_get_attribute_string(xml_node, "OriginX");
+            if (c_x_origin) {
+                dc_node.container.origin.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_origin));
+                free(c_x_origin);
+            } else {
+                dc_node.container.origin.x = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
             }
 
             // y origin
-            char *cYOrigin = getAttributeString(xmlNode, "OriginY");
-            if (cYOrigin)
-            {
-                dcNode.container.origin.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYOrigin));
-                free(cYOrigin);
-            }
-            else
-            {
-                dcNode.container.origin.y = registerDcValue(createValueFloat(0.0f));
+            char *c_y_origin = dc_utils_get_attribute_string(xml_node, "OriginY");
+            if (c_y_origin) {
+                dc_node.container.origin.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_origin));
+                free(c_y_origin);
+            } else {
+                dc_node.container.origin.y = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
             }
 
             // x dimension
-            char *cXDimension = getAttributeString(xmlNode, "Width");
-            if (cXDimension)
-            {
-                dcNode.container.dimensions.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXDimension));
-                free(cXDimension);
-            }
-            else
-            {
-                dcNode.container.dimensions.x = registerDcValue(createValueFloat(0.0f));
+            char *c_x_dimension = dc_utils_get_attribute_string(xml_node, "Width");
+            if (c_x_dimension) {
+                dc_node.container.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_dimension));
+                free(c_x_dimension);
+            } else {
+                dc_node.container.dimensions.x = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
             }
 
             // y dimension
-            char *cYDimension = getAttributeString(xmlNode, "Height");
-            if (cYDimension)
-            {
-                dcNode.container.dimensions.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYDimension));
-                free(cYDimension);
-            }
-            else
-            {
-                dcNode.container.dimensions.y = registerDcValue(createValueFloat(0.0f));
+            char *c_y_dimension = dc_utils_get_attribute_string(xml_node, "Height");
+            if (c_y_dimension) {
+                dc_node.container.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_dimension));
+                free(c_y_dimension);
+            } else {
+                dc_node.container.dimensions.y = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
             }
 
             // virtual x dimension
-            char *cXVirtualDimension = getAttributeString(xmlNode, "VirtualWidth");
-            if (cXVirtualDimension)
-            {
-                dcNode.container.virtualDimensions.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXVirtualDimension));
-                free(cXVirtualDimension);
-            }
-            else
-            {
-                dcNode.container.virtualDimensions.x = registerDcValue(createValueFloat(0.0f));
+            char *c_x_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualWidth");
+            if (c_x_virtual_dimension) {
+                dc_node.container.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
+                free(c_x_virtual_dimension);
+            } else {
+                dc_node.container.virtual_dimensions.x = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
             }
 
             // virtual y dimension
-            char *cYVirtualDimension = getAttributeString(xmlNode, "VirtualHeight");
-            if (cYVirtualDimension)
-            {
-                dcNode.container.virtualDimensions.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYVirtualDimension));
-                free(cYVirtualDimension);
-            }
-            else
-            {
-                dcNode.container.virtualDimensions.y = registerDcValue(createValueFloat(0.0f));
+            char *c_y_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualHeight");
+            if (c_y_virtual_dimension) {
+                dc_node.container.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
+                free(c_y_virtual_dimension);
+            } else {
+                dc_node.container.virtual_dimensions.y = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
             }
 
             // x align
-            char *cXAlign = getAttributeString(xmlNode, "HorizontalAlign");
-            if (cXAlign)
-            {
-                dcNode.container.alignment.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cXAlign));
-                free(cXAlign);
-            }
-            else
-            {
-                dcNode.container.alignment.x = registerDcValue(createValueInteger(DC_ALIGN_TYPE_LEFT));
+            char *c_x_align = dc_utils_get_attribute_string(xml_node, "HorizontalAlign");
+            if (c_x_align) {
+                dc_node.container.alignment.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_align));
+                free(c_x_align);
+            } else {
+                dc_node.container.alignment.x = dc_app_register_dc_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_LEFT));
             }
 
             // y align
-            char *cYAlign = getAttributeString(xmlNode, "VerticalAlign");
-            if (cYAlign)
-            {
-                dcNode.container.alignment.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cYAlign));
-                free(cYAlign);
-            }
-            else
-            {
-                dcNode.container.alignment.y = registerDcValue(createValueInteger(DC_ALIGN_TYPE_BOTTOM));
+            char *c_y_align = dc_utils_get_attribute_string(xml_node, "VerticalAlign");
+            if (c_y_align) {
+                dc_node.container.alignment.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_align));
+                free(c_y_align);
+            } else {
+                dc_node.container.alignment.y = dc_app_register_dc_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM));
             }
 
             // rotation
-            char *cRotation = getAttributeString(xmlNode, "Rotate");
-            if (cRotation)
-            {
-                dcNode.container.rotation = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cRotation));
-                free(cRotation);
-            }
-            else
-            {
-                dcNode.container.rotation = registerDcValue(createValueFloat(0.0f));
+            char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotate");
+            if (c_rotation) {
+                dc_node.container.rotation = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_rotation));
+                free(c_rotation);
+            } else {
+                dc_node.container.rotation = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
             }
 
             // register node
-            nodeIndex = registerDcNode(dcNode);
+            node_index = dc_app_register_node(dc_node);
 
             // process children
-            DcNodeIndex firstChildIndex = processNodeChildren(xmlNode, nodeIndex, directory);
+            DcAppNodeIndex first_child_index = _process_node_children(xml_node, node_index, directory);
 
             // update child index
-            DcNode *node = indexToDcNode(nodeIndex);
-            node->container.child = firstChildIndex;
+            DcAppNode *node       = dc_app_index_to_node(node_index);
+            node->container.child = first_child_index;
             break;
         }
 
         // really just the root element, left in for legacy reasons
-        case DC_ELEM_TYPE_DCAPP:
-        {
-            processNodeChildren(xmlNode, nodeIndex, directory);
+        case DC_APP_ELEM_TYPE_DCAPP: {
+            _process_node_children(xml_node, node_index, directory);
             break;
         }
 
-            // case DC_ELEM_TYPE_DEM:
+            // case DC_APP_ELEM_TYPE_DEM:
             // {
-            //     DcNodeType parentType = indexToDcNode(parentNodeIndex)->type;
+            //     DcAppNodeType parentType = dc_app_index_to_node(parentNodeIndex)->type;
             //     switch (parentType)
             //     {
-            //     case DC_ELEM_TYPE_MAP:
+            //     case DC_APP_ELEM_TYPE_MAP:
             //     {
-            //         std::string filename = filepathToCanonical(getAttributeString(node, "File"), directory);
+            //         std::string filename = dc_utils_filepath_to_canonical(dc_utils_get_attribute_string(node, "File"), directory);
             //         ((DcMap *)parent)->addDem(filename);
             //         break;
             //     }
@@ -600,75 +528,60 @@ namespace dc
             //     break;
             // }
 
-        case DC_ELEM_TYPE_IF:
-        {
-            DcNode dcNode = (DcNode){
-                .type = DC_NODE_TYPE_CONDITIONAL,
-                .conditional = (DcNodeConditional){
-                    .value1 = DC_VALUE_INDEX_UNDEFINED,
-                    .value2 = DC_VALUE_INDEX_UNDEFINED,
-                    .childTrue = DC_NODE_INDEX_UNDEFINED,
-                    .childFalse = DC_NODE_INDEX_UNDEFINED,
+        case DC_APP_ELEM_TYPE_IF: {
+            DcAppNode dc_node = (DcAppNode){
+                .type        = DC_APP_NODE_TYPE_CONDITIONAL,
+                .conditional = (DcAppNodeConditional){
+                    .value1      = dc_value_index_undefined,
+                    .value2      = dc_value_index_undefined,
+                    .child_true  = DC_APP_NODE_INDEX_UNDEFINED,
+                    .child_false = DC_APP_NODE_INDEX_UNDEFINED,
                 }};
 
             // conditional type
-            char *cType = getAttributeString(xmlNode, "Operation");
-            if (cType)
-            {
-                dcNode.conditional.type = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cType));
-                free(cType);
-            }
-            else
-            {
-                dcNode.conditional.type = registerDcValue(createValueInteger(DC_CONDITIONAL_TYPE_TRUE));
+            char *c_type = dc_utils_get_attribute_string(xml_node, "Operation");
+            if (c_type) {
+                dc_node.conditional.type = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_type));
+                free(c_type);
+            } else {
+                dc_node.conditional.type = dc_app_register_dc_value(dc_value_create_value_integer(DC_APP_CONDITIONAL_TYPE_TRUE));
             }
 
             // value1
-            char *cValue = getAttributeString(xmlNode, "Value");
-            if (cValue)
-            {
-                dcNode.conditional.value1 = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_STRING, dereferenceConstants(cValue));
-                free(cValue);
-            }
-            else
-            {
-                cValue = getAttributeString(xmlNode, "Value1");
-                if (cValue)
-                {
-                    dcNode.conditional.value1 = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_STRING, dereferenceConstants(cValue));
-                    free(cValue);
-                }
-                else
-                {
+            char *c_value = dc_utils_get_attribute_string(xml_node, "Value");
+            if (c_value) {
+                dc_node.conditional.value1 = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_STRING, dc_app_dereference_constants(c_value));
+                free(c_value);
+            } else {
+                c_value = dc_utils_get_attribute_string(xml_node, "Value1");
+                if (c_value) {
+                    dc_node.conditional.value1 = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_STRING, dc_app_dereference_constants(c_value));
+                    free(c_value);
+                } else {
                     throw std::runtime_error("Invalid conditional; no value specified");
                 }
             }
 
             // value2
-            char *cValue2 = getAttributeString(xmlNode, "Value2");
-            if (cValue2)
-            {
-                dcNode.conditional.value2 = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_STRING, dereferenceConstants(cValue2));
-                free(cValue2);
+            char *c_value2 = dc_utils_get_attribute_string(xml_node, "Value2");
+            if (c_value2) {
+                dc_node.conditional.value2 = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_STRING, dc_app_dereference_constants(c_value2));
+                free(c_value2);
             }
 
             // register node
-            nodeIndex = registerDcNode(dcNode);
+            node_index = dc_app_register_node(dc_node);
 
-            // process children (assigning to true/false handled in separate cases, e.g. DC_ELEM_TYPE_TRUE)
-            DcNodeIndex firstChildIndex = processNodeChildren(xmlNode, nodeIndex, directory);
+            // process children (assigning to true/false handled in separate cases, e.g. DC_APP_ELEM_TYPE_TRUE)
+            DcAppNodeIndex first_child_index = _process_node_children(xml_node, node_index, directory);
 
             // handle implicit <True> elements
-            if (firstChildIndex != DC_NODE_INDEX_UNDEFINED)
-            {
+            if (first_child_index != DC_APP_NODE_INDEX_UNDEFINED) {
                 // ignore if True element already exists
-                DcNode *node = indexToDcNode(nodeIndex);
-                if (node->conditional.childTrue == DC_NODE_INDEX_UNDEFINED)
-                {
-                    node->conditional.childTrue = firstChildIndex;
-                }
-                else
-                {
+                DcAppNode *node = dc_app_index_to_node(node_index);
+                if (node->conditional.child_true == DC_APP_NODE_INDEX_UNDEFINED) {
+                    node->conditional.child_true = first_child_index;
+                } else {
                     printf("Warning: <If> element has <True> explicit and implicit elements. Ignoring the implicit definitions\n");
                 }
             }
@@ -676,37 +589,29 @@ namespace dc
         }
 
         // at this point, just used to set the directory path
-        case DC_ELEM_TYPE_INCLUDE:
-        {
-            char *cDirectory = getAttributeString(xmlNode, "Directory");
-            if (cDirectory)
-            {
-                nodeIndex = processNodeChildren(xmlNode, parentNodeIndex, dereferenceConstants(cDirectory));
-                free(cDirectory);
-            }
-            else
-            {
+        case DC_APP_ELEM_TYPE_INCLUDE: {
+            char *c_directory = dc_utils_get_attribute_string(xml_node, "Directory");
+            if (c_directory) {
+                node_index = _process_node_children(xml_node, parent_node_index, dc_app_dereference_constants(c_directory));
+                free(c_directory);
+            } else {
                 // should never get here
                 throw std::runtime_error("Invalid condition; <Include> node with no directory");
             }
             break;
         }
 
-        case DC_ELEM_TYPE_LOGIC:
-        {
-            if (dcData.logic.library)
-            {
+        case DC_APP_ELEM_TYPE_LOGIC: {
+            if (dc_app_data.logic.library) {
                 throw std::runtime_error("Duplicate <Logic> definitions");
             }
-            char *cFilePath = getAttributeString(xmlNode, "File");
-            if (cFilePath)
-            {
-                std::string filePath = filepathToCanonical(dereferenceConstants(cFilePath), directory);
-                free(cFilePath);
+            char *c_file_path = dc_utils_get_attribute_string(xml_node, "File");
+            if (c_file_path) {
+                std::string filePath = dc_utils_filepath_to_canonical(dc_app_dereference_constants(c_file_path), directory);
+                free(c_file_path);
 
                 // verify filepath
-                if (filePath.empty())
-                {
+                if (filePath.empty()) {
                     throw std::runtime_error("Invalid logic file of empty filename");
                 }
 
@@ -715,19 +620,16 @@ namespace dc
                     .tFlags = PL_LIBRARY_FLAGS_NONE,
                     .pcName = filePath.c_str(),
                 };
-                if (gptLibrary->load(logicSoDesc, &dcData.logic.library) != PL_LIBRARY_RESULT_SUCCESS)
-                {
+                if (gpt_library->load(logicSoDesc, &dc_app_data.logic.library) != PL_LIBRARY_RESULT_SUCCESS) {
                     throw std::runtime_error("Failed to load logic .so file");
                 }
-            }
-            else
-            {
+            } else {
                 throw std::runtime_error("Invalid condition; <Logic> node with no file");
             }
             break;
         }
 
-            // case DC_ELEM_TYPE_MAP:
+            // case DC_APP_ELEM_TYPE_MAP:
             // {
             //     DcValue *xPosition = attributeToDcValue(node, "X");
             //     DcValue *yPosition = attributeToDcValue(node, "Y");
@@ -747,543 +649,456 @@ namespace dc
             //     break;
             // }
 
-        case DC_ELEM_TYPE_PANEL:
-        {
-            DcNode dcNode = {
-                .type = DC_NODE_TYPE_PANEL,
+        case DC_APP_ELEM_TYPE_PANEL: {
+            DcAppNode dc_node = {
+                .type = DC_APP_NODE_TYPE_PANEL,
             };
 
             // parent dimensions
             // TODO probably don't need this.....must be a better way to architect
-            dcNode.panel.parentDimensions = indexToDcNode(parentNodeIndex)->window.virtualDimensions;
+            dc_node.panel.parentDimensions = dc_app_index_to_node(parent_node_index)->window.virtual_dimensions;
 
             // virtual x dimension
-            char *cXVirtualDimension = getAttributeString(xmlNode, "VirtualWidth");
-            if (cXVirtualDimension)
-            {
-                dcNode.panel.virtualDimensions.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXVirtualDimension));
-                free(cXVirtualDimension);
-            }
-            else
-            {
-                dcNode.panel.virtualDimensions.x = dcNode.panel.parentDimensions.x;
+            char *c_x_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualWidth");
+            if (c_x_virtual_dimension) {
+                dc_node.panel.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
+                free(c_x_virtual_dimension);
+            } else {
+                dc_node.panel.virtual_dimensions.x = dc_node.panel.parentDimensions.x;
             }
 
             // virtual y dimension
-            char *cYVirtualDimension = getAttributeString(xmlNode, "VirtualHeight");
-            if (cYVirtualDimension)
-            {
-                dcNode.panel.virtualDimensions.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYVirtualDimension));
-                free(cYVirtualDimension);
-            }
-            else
-            {
-                dcNode.panel.virtualDimensions.y = dcNode.panel.parentDimensions.y;
+            char *c_y_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualHeight");
+            if (c_y_virtual_dimension) {
+                dc_node.panel.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
+                free(c_y_virtual_dimension);
+            } else {
+                dc_node.panel.virtual_dimensions.y = dc_node.panel.parentDimensions.y;
             }
 
             // register node
-            nodeIndex = registerDcNode(dcNode);
+            node_index = dc_app_register_node(dc_node);
 
             // process children
-            DcNodeIndex firstChildIndex = processNodeChildren(xmlNode, nodeIndex, directory);
+            DcAppNodeIndex first_child_index = _process_node_children(xml_node, node_index, directory);
 
             // update child index
-            DcNode *node = indexToDcNode(nodeIndex);
-            node->panel.child = firstChildIndex;
+            DcAppNode *node   = dc_app_index_to_node(node_index);
+            node->panel.child = first_child_index;
 
             break;
         }
 
-        case DC_ELEM_TYPE_POLYGON:
-        {
-            DcNode dcNode = {
-                .type = DC_NODE_TYPE_POLYGON,
-                .polygon = (DcNodePolygon){
-                    .fillEnabled = false,
-                    .lineEnabled = false,
+        case DC_APP_ELEM_TYPE_POLYGON: {
+            DcAppNode dc_node = {
+                .type    = DC_APP_NODE_TYPE_POLYGON,
+                .polygon = (DcAppNodePolygon){
+                    .fill_enabled = false,
+                    .line_enabled = false,
                 }};
 
             // fill color
-            char *cFillColor = getAttributeString(xmlNode, "FillColor");
-            if (cFillColor)
-            {
+            char *c_fill_color = dc_utils_get_attribute_string(xml_node, "FillColor");
+            if (c_fill_color) {
                 // split string by whitespace
-                std::string sFillColor = dereferenceConstants(cFillColor);
-                std::vector<std::string> substrings = splitStringByDelimiters(sFillColor, stringWhitespace);
+                std::string              s_fill_color = dc_app_dereference_constants(c_fill_color);
+                std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
 
-                if (substrings.size() > 0)
-                {
-                    dcNode.polygon.fillColor.r = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[0]);
-                    if (substrings.size() > 1)
-                    {
-                        dcNode.polygon.fillColor.g = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[1]);
-                        if (substrings.size() > 2)
-                        {
-                            dcNode.polygon.fillColor.b = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[2]);
-                            if (substrings.size() > 3)
-                            {
-                                dcNode.polygon.fillColor.a = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[3]);
+                if (substrings.size() > 0) {
+                    dc_node.polygon.fillColor.r = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[0]);
+                    if (substrings.size() > 1) {
+                        dc_node.polygon.fillColor.g = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[1]);
+                        if (substrings.size() > 2) {
+                            dc_node.polygon.fillColor.b = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[2]);
+                            if (substrings.size() > 3) {
+                                dc_node.polygon.fillColor.a = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[3]);
+                            } else {
+                                dc_node.polygon.fillColor.a = dc_app_register_dc_value(dc_value_create_value_float(1.0f));
                             }
-                            else
-                            {
-                                dcNode.polygon.fillColor.a = registerDcValue(createValueFloat(1.0f));
-                            }
+                        } else {
+                            dc_node.polygon.fillColor.b = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
                         }
-                        else
-                        {
-                            dcNode.polygon.fillColor.b = registerDcValue(createValueFloat(0.0f));
-                        }
+                    } else {
+                        dc_node.polygon.fillColor.g = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
                     }
-                    else
-                    {
-                        dcNode.polygon.fillColor.g = registerDcValue(createValueFloat(0.0f));
-                    }
+                } else {
+                    dc_node.polygon.fillColor.r = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
                 }
-                else
-                {
-                    dcNode.polygon.fillColor.r = registerDcValue(createValueFloat(0.0f));
-                }
-                dcNode.polygon.fillEnabled = true;
-                free(cFillColor);
+                dc_node.polygon.fill_enabled = true;
+                free(c_fill_color);
             }
 
             // line color
-            char *cLineColor = getAttributeString(xmlNode, "LineColor");
-            if (cLineColor)
-            {
+            char *c_line_color = dc_utils_get_attribute_string(xml_node, "LineColor");
+            if (c_line_color) {
                 // split string by whitespace
-                std::string sFillColor = dereferenceConstants(cLineColor);
-                std::vector<std::string> substrings = splitStringByDelimiters(sFillColor, stringWhitespace);
+                std::string              s_fill_color = dc_app_dereference_constants(c_line_color);
+                std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
 
-                if (substrings.size() > 0)
-                {
-                    dcNode.polygon.lineColor.r = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[0]);
-                    if (substrings.size() > 1)
-                    {
-                        dcNode.polygon.lineColor.g = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[1]);
-                        if (substrings.size() > 2)
-                        {
-                            dcNode.polygon.lineColor.b = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[2]);
-                            if (substrings.size() > 3)
-                            {
-                                dcNode.polygon.lineColor.a = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, substrings[3]);
+                if (substrings.size() > 0) {
+                    dc_node.polygon.line_color.r = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[0]);
+                    if (substrings.size() > 1) {
+                        dc_node.polygon.line_color.g = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[1]);
+                        if (substrings.size() > 2) {
+                            dc_node.polygon.line_color.b = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[2]);
+                            if (substrings.size() > 3) {
+                                dc_node.polygon.line_color.a = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[3]);
+                            } else {
+                                dc_node.polygon.line_color.a = dc_app_register_dc_value(dc_value_create_value_float(1.0f));
                             }
-                            else
-                            {
-                                dcNode.polygon.lineColor.a = registerDcValue(createValueFloat(1.0f));
-                            }
+                        } else {
+                            dc_node.polygon.line_color.b = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
                         }
-                        else
-                        {
-                            dcNode.polygon.lineColor.b = registerDcValue(createValueFloat(0.0f));
-                        }
+                    } else {
+                        dc_node.polygon.line_color.g = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
                     }
-                    else
-                    {
-                        dcNode.polygon.lineColor.g = registerDcValue(createValueFloat(0.0f));
-                    }
+                } else {
+                    dc_node.polygon.line_color.r = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
                 }
-                else
-                {
-                    dcNode.polygon.lineColor.r = registerDcValue(createValueFloat(0.0f));
-                }
-                dcNode.polygon.lineEnabled = true;
-                free(cLineColor);
+                dc_node.polygon.line_enabled = true;
+                free(c_line_color);
             }
 
             // line width
-            char *cLineWidth = getAttributeString(xmlNode, "LineWidth");
-            if (cLineWidth)
-            {
-                dcNode.polygon.lineWidth = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cLineWidth));
-                free(cLineWidth);
-            }
-            else
-            {
-                dcNode.polygon.lineWidth = registerDcValue(createValueFloat(0.0f));
+            char *c_line_width = dc_utils_get_attribute_string(xml_node, "LineWidth");
+            if (c_line_width) {
+                dc_node.polygon.line_width = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_line_width));
+                free(c_line_width);
+            } else {
+                dc_node.polygon.line_width = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
             }
 
             // initialize points to 0
-            dcNode.polygon.numPoints = 0;
-            dcNode.polygon.points = nullptr;
+            dc_node.polygon.num_points = 0;
+            dc_node.polygon.points     = nullptr;
 
             // register node
-            nodeIndex = registerDcNode(dcNode);
+            node_index = dc_app_register_node(dc_node);
 
             // process children
-            processNodeChildren(xmlNode, nodeIndex, directory);
+            _process_node_children(xml_node, node_index, directory);
             break;
         }
 
-        case DC_ELEM_TYPE_VARIABLE:
-        {
+        case DC_APP_ELEM_TYPE_VARIABLE: {
             // name
-            char *cName = getNodeContentString(xmlNode);
-            if (!cName)
-            {
+            char *c_name = dc_utils_get_node_content_string(xml_node);
+            if (!c_name) {
                 throw std::runtime_error("Non-existent node content in <Variable> definition");
             }
-            std::string name = dereferenceConstants(cName);
-            free(cName);
+            std::string name = dc_app_dereference_constants(c_name);
+            free(c_name);
 
             // type
-            char *cType = getAttributeString(xmlNode, "Type");
-            DcValueType type = DC_VALUE_TYPE_STRING;
-            if (cType)
-            {
-                type = valueTypeFromString(dereferenceConstants(cType));
+            char       *c_type = dc_utils_get_attribute_string(xml_node, "Type");
+            DcValueType type   = DC_APP_VALUE_TYPE_STRING;
+            if (c_type) {
+                type = dc_value_type_from_string(dc_app_dereference_constants(c_type));
             }
 
             // value
-            char *cInitialValue = getAttributeString(xmlNode, "InitialValue");
-            DcValue initialValue;
-            if (cInitialValue)
-            {
-                initialValue = createValueString(dereferenceConstants(cInitialValue));
+            char   *c_initial_value = dc_utils_get_attribute_string(xml_node, "InitialValue");
+            DcValue initial_value;
+            if (c_initial_value) {
+                initial_value = dc_value_create_value_string(dc_app_dereference_constants(c_initial_value));
+            } else {
+                initial_value = dc_value_create_value_string("");
             }
-            else
-            {
-                initialValue = createValueString("");
-            }
-            initialValue.type = type;
-            initialValue.isDynamic = true;
+            initial_value.type       = type;
+            initial_value.is_dynamic = true;
 
             // register variable
-            DcValueIndex index = registerDcValue(initialValue);
-            setVariable(name, index);
+            DcAppValueIndex index = dc_app_register_dc_value(initial_value);
+            dc_app_set_variable(name, index);
 
             break;
         }
 
-        case DC_ELEM_TYPE_VERTEX:
-        {
-            DcNode *parentNode = indexToDcNode(parentNodeIndex);
-            switch (parentNode->type)
-            {
-            case DC_NODE_TYPE_POLYGON:
-            {
-                // xPosition
-                char *cXPosition = getAttributeString(xmlNode, "X");
-                if (!cXPosition)
-                {
-                    throw std::runtime_error("Invalid Vertex: No X attribute");
-                }
+        case DC_APP_ELEM_TYPE_VERTEX: {
+            DcAppNode *parent_node = dc_app_index_to_node(parent_node_index);
+            switch (parent_node->type) {
+                case DC_APP_NODE_TYPE_POLYGON: {
+                    // xPosition
+                    char *c_x_position = dc_utils_get_attribute_string(xml_node, "X");
+                    if (!c_x_position) {
+                        throw std::runtime_error("Invalid Vertex: No X attribute");
+                    }
 
-                // yPosition
-                char *cYPosition = getAttributeString(xmlNode, "Y");
-                if (!cYPosition)
-                {
-                    throw std::runtime_error("Invalid Vertex: No Y attribute");
-                }
+                    // yPosition
+                    char *c_y_position = dc_utils_get_attribute_string(xml_node, "Y");
+                    if (!c_y_position) {
+                        throw std::runtime_error("Invalid Vertex: No Y attribute");
+                    }
 
-                // reallocate and add vertices
-                parentNode->polygon.numPoints++;
-                parentNode->polygon.points = (DcValueIndex2 *)realloc(parentNode->polygon.points, parentNode->polygon.numPoints * sizeof(DcValueIndex2));
-                parentNode->polygon.points[parentNode->polygon.numPoints - 1] = (DcValueIndex2){
-                    createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXPosition)),
-                    createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYPosition))};
-                break;
-            }
-            default:
-                // TODO add a nodeTypeToString() function
-                throw std::runtime_error("Invalid parent of type " + std::string("<Unknown>") + "for vertex.");
+                    // reallocate and add vertices
+                    parent_node->polygon.num_points++;
+                    parent_node->polygon.points                                      = (DcAppValueIndex2 *)realloc(parent_node->polygon.points, parent_node->polygon.num_points * sizeof(DcAppValueIndex2));
+                    parent_node->polygon.points[parent_node->polygon.num_points - 1] = (DcAppValueIndex2){
+                        dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position)),
+                        dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position))};
+                    break;
+                }
+                default:
+                    // TODO add a nodeTypeToString() function
+                    throw std::runtime_error("Invalid parent of type " + std::string("<Unknown>") + "for vertex.");
             }
             break;
         }
 
-        case DC_ELEM_TYPE_WINDOW:
-        {
-            DcNode dcNode = {
-                .type = DC_NODE_TYPE_WINDOW,
+        case DC_APP_ELEM_TYPE_WINDOW: {
+            DcAppNode dc_node = {
+                .type = DC_APP_NODE_TYPE_WINDOW,
             };
 
             // title
-            std::string title = "dcapp";
-            char *cTitle = getAttributeString(xmlNode, "Title");
-            if (cTitle)
-            {
-                title = dereferenceConstants(cTitle);
-                free(cTitle);
+            std::string title   = "dcapp";
+            char       *c_title = dc_utils_get_attribute_string(xml_node, "Title");
+            if (c_title) {
+                title = dc_app_dereference_constants(c_title);
+                free(c_title);
             }
-            dcNode.window.title = (char *)malloc(title.length() + 1);
-            memcpy(dcNode.window.title, title.c_str(), title.length() + 1);
+            dc_node.window.title = (char *)malloc(title.length() + 1);
+            memcpy(dc_node.window.title, title.c_str(), title.length() + 1);
 
             // xPosition
-            char *cXPosition = getAttributeString(xmlNode, "X");
-            if (cXPosition)
-            {
-                dcNode.window.position.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cXPosition));
-                free(cXPosition);
-            }
-            else
-            {
-                dcNode.window.position.x = registerDcValue(createValueInteger(0.0f));
+            char *c_x_position = dc_utils_get_attribute_string(xml_node, "X");
+            if (c_x_position) {
+                dc_node.window.position.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_position));
+                free(c_x_position);
+            } else {
+                dc_node.window.position.x = dc_app_register_dc_value(dc_value_create_value_integer(0.0f));
             }
 
             // y position
-            char *cYPosition = getAttributeString(xmlNode, "Y");
-            if (cYPosition)
-            {
-                dcNode.window.position.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cYPosition));
-                free(cYPosition);
-            }
-            else
-            {
-                dcNode.window.position.y = registerDcValue(createValueInteger(0.0f));
+            char *c_y_position = dc_utils_get_attribute_string(xml_node, "Y");
+            if (c_y_position) {
+                dc_node.window.position.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_position));
+                free(c_y_position);
+            } else {
+                dc_node.window.position.y = dc_app_register_dc_value(dc_value_create_value_integer(0.0f));
             }
 
             // x dimension
-            char *cXDimension = getAttributeString(xmlNode, "Width");
-            if (cXDimension)
-            {
-                dcNode.window.dimensions.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cXDimension));
-                free(cXDimension);
-            }
-            else
-            {
-                dcNode.window.dimensions.x = registerDcValue(createValueInteger(0.0f));
+            char *c_x_dimension = dc_utils_get_attribute_string(xml_node, "Width");
+            if (c_x_dimension) {
+                dc_node.window.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_dimension));
+                free(c_x_dimension);
+            } else {
+                dc_node.window.dimensions.x = dc_app_register_dc_value(dc_value_create_value_integer(0.0f));
             }
 
             // y dimension
-            char *cYDimension = getAttributeString(xmlNode, "Height");
-            if (cYDimension)
-            {
-                dcNode.window.dimensions.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_INTEGER, dereferenceConstants(cYDimension));
-                free(cYDimension);
-            }
-            else
-            {
-                dcNode.window.dimensions.y = registerDcValue(createValueInteger(0.0f));
+            char *c_y_dimension = dc_utils_get_attribute_string(xml_node, "Height");
+            if (c_y_dimension) {
+                dc_node.window.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_dimension));
+                free(c_y_dimension);
+            } else {
+                dc_node.window.dimensions.y = dc_app_register_dc_value(dc_value_create_value_integer(0.0f));
             }
 
             // virtual x dimension
-            char *cXVirtualDimension = getAttributeString(xmlNode, "VirtualWidth");
-            if (cXVirtualDimension)
-            {
-                dcNode.window.virtualDimensions.x = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cXVirtualDimension));
-                free(cXVirtualDimension);
-            }
-            else
-            {
-                dcNode.window.virtualDimensions.x = registerDcValue(createValueFloat(0.0f));
+            char *c_x_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualWidth");
+            if (c_x_virtual_dimension) {
+                dc_node.window.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
+                free(c_x_virtual_dimension);
+            } else {
+                dc_node.window.virtual_dimensions.x = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
             }
 
             // virtual y dimension
-            char *cYVirtualDimension = getAttributeString(xmlNode, "VirtualHeight");
-            if (cYVirtualDimension)
-            {
-                dcNode.window.virtualDimensions.y = createAndRegisterTypedDcValueFromString(DC_VALUE_TYPE_FLOAT, dereferenceConstants(cYVirtualDimension));
-                free(cYVirtualDimension);
-            }
-            else
-            {
-                dcNode.window.virtualDimensions.y = registerDcValue(createValueFloat(0.0f));
+            char *c_y_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualHeight");
+            if (c_y_virtual_dimension) {
+                dc_node.window.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
+                free(c_y_virtual_dimension);
+            } else {
+                dc_node.window.virtual_dimensions.y = dc_app_register_dc_value(dc_value_create_value_float(0.0f));
             }
 
             // register node
-            nodeIndex = registerDcNode(dcNode);
+            node_index = dc_app_register_node(dc_node);
 
             // process children
-            DcNodeIndex firstChildIndex = processNodeChildren(xmlNode, nodeIndex, directory);
+            DcAppNodeIndex first_child_index = _process_node_children(xml_node, node_index, directory);
 
             // update child index
-            DcNode *node = indexToDcNode(nodeIndex);
-            node->window.child = firstChildIndex;
+            DcAppNode *node    = dc_app_index_to_node(node_index);
+            node->window.child = first_child_index;
 
             // set global window
-            dcData.window = nodeIndex;
+            dc_app_data.window = node_index;
             break;
         }
         default:
-            throw std::runtime_error("Invalid node in processNode()");
-        }
-
-        return nodeIndex;
+            throw std::runtime_error("Invalid node in _process_node()");
     }
 
-    void drawNodeList(plAppData *ptAppData, DcNodeIndex nodeIndex, plMat4 *nodeTransform)
-    {
-        DcNodeIndex currentNodeIndex = nodeIndex;
-        while (currentNodeIndex != DC_NODE_INDEX_UNDEFINED)
-        {
-            drawNode(ptAppData, currentNodeIndex, nodeTransform);
-            currentNodeIndex = indexToDcNode(currentNodeIndex)->next;
-        }
+    return node_index;
+}
+
+void _draw_node_list(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *node_transform) {
+    DcAppNodeIndex current_node_index = node_index;
+    while (current_node_index != DC_APP_NODE_INDEX_UNDEFINED) {
+        _draw_node(pt_app_data, current_node_index, node_transform);
+        current_node_index = dc_app_index_to_node(current_node_index)->next;
+    }
+}
+
+void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *parent_transform) {
+    if (node_index == DC_APP_NODE_INDEX_UNDEFINED) {
+        throw std::runtime_error("Attempting to draw undefined node index");
     }
 
-    void drawNode(plAppData *ptAppData, DcNodeIndex nodeIndex, plMat4 *parentTransform)
-    {
-        if (nodeIndex == DC_NODE_INDEX_UNDEFINED)
-        {
-            throw std::runtime_error("Attempting to draw undefined node index");
-        }
-
-        DcNode *node = indexToDcNode(nodeIndex);
-        switch (node->type)
-        {
-        case DC_NODE_TYPE_CONTAINER:
-        {
-            float xPosition = 0;
-            switch (indexToDcValue(node->container.alignment.x)->valueInteger)
-            {
-            case DC_ALIGN_TYPE_LEFT:
-                xPosition = indexToDcValue(node->container.position.x)->valueFloat;
-                break;
-            case DC_ALIGN_TYPE_CENTER:
-                xPosition = indexToDcValue(node->container.position.x)->valueFloat - indexToDcValue(node->container.dimensions.x)->valueFloat / 2;
-                break;
-            case DC_ALIGN_TYPE_RIGHT:
-                xPosition = indexToDcValue(node->container.position.x)->valueFloat - indexToDcValue(node->container.dimensions.x)->valueFloat;
-                break;
+    DcAppNode *node = dc_app_index_to_node(node_index);
+    switch (node->type) {
+        case DC_APP_NODE_TYPE_CONTAINER: {
+            float x_position = 0;
+            switch (dc_app_index_to_dc_value(node->container.alignment.x)->value_integer) {
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    x_position = dc_app_index_to_dc_value(node->container.position.x)->value_float;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    x_position = dc_app_index_to_dc_value(node->container.position.x)->value_float - dc_app_index_to_dc_value(node->container.dimensions.x)->value_float / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    x_position = dc_app_index_to_dc_value(node->container.position.x)->value_float - dc_app_index_to_dc_value(node->container.dimensions.x)->value_float;
+                    break;
             }
 
-            float yPosition = 0;
-            switch (indexToDcValue(node->container.alignment.y)->valueInteger)
-            {
-            case DC_ALIGN_TYPE_LEFT:
-                yPosition = indexToDcValue(node->container.position.y)->valueFloat;
-                break;
-            case DC_ALIGN_TYPE_CENTER:
-                yPosition = indexToDcValue(node->container.position.y)->valueFloat - indexToDcValue(node->container.dimensions.y)->valueFloat / 2;
-                break;
-            case DC_ALIGN_TYPE_RIGHT:
-                yPosition = indexToDcValue(node->container.position.y)->valueFloat - indexToDcValue(node->container.dimensions.y)->valueFloat;
-                break;
+            float y_position = 0;
+            switch (dc_app_index_to_dc_value(node->container.alignment.y)->value_integer) {
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    y_position = dc_app_index_to_dc_value(node->container.position.y)->value_float;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    y_position = dc_app_index_to_dc_value(node->container.position.y)->value_float - dc_app_index_to_dc_value(node->container.dimensions.y)->value_float / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    y_position = dc_app_index_to_dc_value(node->container.position.y)->value_float - dc_app_index_to_dc_value(node->container.dimensions.y)->value_float;
+                    break;
             }
 
-            plMat4 transOriginMatrix = pl_mat4_translate_xyz(
-                indexToDcValue(node->container.origin.x)->valueFloat,
-                indexToDcValue(node->container.origin.y)->valueFloat,
+            plMat4 trans_origin_matrix = pl_mat4_translate_xyz(
+                dc_app_index_to_dc_value(node->container.origin.x)->value_float,
+                dc_app_index_to_dc_value(node->container.origin.y)->value_float,
                 0.0f);
-            plMat4 rotateMatrix = pl_mat4_rotate_vec3(
-                pl_radiansf(indexToDcValue(node->container.rotation)->valueFloat),
+            plMat4 rotate_matrix = pl_mat4_rotate_vec3(
+                pl_radiansf(dc_app_index_to_dc_value(node->container.rotation)->value_float),
                 (plVec3){0.0f, 0.0f, 1.0f});
-            plMat4 transPositionMatrix = pl_mat4_translate_xyz(
-                xPosition,
-                yPosition,
+            plMat4 trans_position_matrix = pl_mat4_translate_xyz(
+                x_position,
+                y_position,
                 0.0f);
-            plMat4 scaleMatrix = pl_mat4_scale_xyz(
-                indexToDcValue(node->container.dimensions.x)->valueFloat / indexToDcValue(node->container.virtualDimensions.x)->valueFloat,
-                indexToDcValue(node->container.dimensions.y)->valueFloat / indexToDcValue(node->container.virtualDimensions.y)->valueFloat,
+            plMat4 scale_matrix = pl_mat4_scale_xyz(
+                dc_app_index_to_dc_value(node->container.dimensions.x)->value_float / dc_app_index_to_dc_value(node->container.virtual_dimensions.x)->value_float,
+                dc_app_index_to_dc_value(node->container.dimensions.y)->value_float / dc_app_index_to_dc_value(node->container.virtual_dimensions.y)->value_float,
                 1.0f);
 
             plMat4 transform = (plMat4){0};
-            transform = pl_mul_mat4t(parentTransform, &transOriginMatrix);
-            transform = pl_mul_mat4t(&transform, &rotateMatrix);
-            transform = pl_mul_mat4t(&transform, &transPositionMatrix);
-            transform = pl_mul_mat4t(&transform, &scaleMatrix);
-            drawNodeList(ptAppData, node->container.child, &transform);
+            transform        = pl_mul_mat4t(parent_transform, &trans_origin_matrix);
+            transform        = pl_mul_mat4t(&transform, &rotate_matrix);
+            transform        = pl_mul_mat4t(&transform, &trans_position_matrix);
+            transform        = pl_mul_mat4t(&transform, &scale_matrix);
+            _draw_node_list(pt_app_data, node->container.child, &transform);
             break;
         }
 
-        case DC_NODE_TYPE_CONDITIONAL:
-        {
+        case DC_APP_NODE_TYPE_CONDITIONAL: {
             // TODO implement
             break;
         }
 
-        case DC_NODE_TYPE_MAP:
-        {
+        case DC_APP_NODE_TYPE_MAP: {
             // TODO implement
             break;
         }
 
-        case DC_NODE_TYPE_PANEL:
-        {
-            plMat4 scaleMatrix = pl_mat4_scale_xyz(
-                indexToDcValue(node->panel.parentDimensions.x)->valueFloat / indexToDcValue(node->panel.virtualDimensions.x)->valueFloat,
-                indexToDcValue(node->panel.parentDimensions.y)->valueFloat / indexToDcValue(node->panel.virtualDimensions.y)->valueFloat,
+        case DC_APP_NODE_TYPE_PANEL: {
+            plMat4 scale_matrix = pl_mat4_scale_xyz(
+                dc_app_index_to_dc_value(node->panel.parentDimensions.x)->value_float / dc_app_index_to_dc_value(node->panel.virtual_dimensions.x)->value_float,
+                dc_app_index_to_dc_value(node->panel.parentDimensions.y)->value_float / dc_app_index_to_dc_value(node->panel.virtual_dimensions.y)->value_float,
                 1.0f);
             plMat4 transform = (plMat4){0};
-            transform = pl_mul_mat4t(parentTransform, &scaleMatrix);
-            drawNodeList(ptAppData, node->panel.child, &transform);
+            transform        = pl_mul_mat4t(parent_transform, &scale_matrix);
+            _draw_node_list(pt_app_data, node->panel.child, &transform);
             break;
         }
 
-        case DC_NODE_TYPE_POLYGON:
-        {
+        case DC_APP_NODE_TYPE_POLYGON: {
             // get points
             std::vector<plVec2> points;
-            points.resize(node->polygon.numPoints);
-            for (int ii = 0; ii < node->polygon.numPoints; ii++)
-            {
+            points.resize(node->polygon.num_points);
+            for (int ii = 0; ii < node->polygon.num_points; ii++) {
                 plVec4 point4 = (plVec4){
-                    indexToDcValue(node->polygon.points[ii].x)->valueFloat,
-                    indexToDcValue(node->polygon.points[ii].y)->valueFloat,
+                    dc_app_index_to_dc_value(node->polygon.points[ii].x)->value_float,
+                    dc_app_index_to_dc_value(node->polygon.points[ii].y)->value_float,
                     0, 1};
-                point4 = pl_mul_mat4_vec4(parentTransform, point4);
+                point4     = pl_mul_mat4_vec4(parent_transform, point4);
                 points[ii] = (plVec2){point4.x, point4.y};
             }
 
             // draw fill
-            if (node->polygon.fillEnabled)
-            {
+            if (node->polygon.fill_enabled) {
                 uint32_t fillColor = PL_COLOR_32_RGBA(
-                    indexToDcValue(node->polygon.fillColor.r)->valueFloat,
-                    indexToDcValue(node->polygon.fillColor.g)->valueFloat,
-                    indexToDcValue(node->polygon.fillColor.b)->valueFloat,
-                    indexToDcValue(node->polygon.fillColor.a)->valueFloat);
-                gptDraw->add_convex_polygon_filled(ptAppData->ptFGLayer, points.data(), points.size(), (plDrawSolidOptions){.uColor = fillColor});
+                    dc_app_index_to_dc_value(node->polygon.fillColor.r)->value_float,
+                    dc_app_index_to_dc_value(node->polygon.fillColor.g)->value_float,
+                    dc_app_index_to_dc_value(node->polygon.fillColor.b)->value_float,
+                    dc_app_index_to_dc_value(node->polygon.fillColor.a)->value_float);
+                gpt_draw->add_convex_polygon_filled(pt_app_data->pt_fg_layer, points.data(), points.size(), (plDrawSolidOptions){.uColor = fillColor});
             }
 
             // draw outline
-            if (node->polygon.lineEnabled)
-            {
-                float lineThickness = indexToDcValue(node->polygon.lineWidth)->valueFloat;
-                uint32_t lineColor = PL_COLOR_32_RGBA(
-                    indexToDcValue(node->polygon.lineColor.r)->valueFloat,
-                    indexToDcValue(node->polygon.lineColor.g)->valueFloat,
-                    indexToDcValue(node->polygon.lineColor.b)->valueFloat,
-                    indexToDcValue(node->polygon.lineColor.a)->valueFloat);
-                gptDraw->add_polygon(ptAppData->ptFGLayer, points.data(), points.size(), (plDrawLineOptions){.uColor = lineColor, .fThickness = lineThickness});
+            if (node->polygon.line_enabled) {
+                float    lineThickness = dc_app_index_to_dc_value(node->polygon.line_width)->value_float;
+                uint32_t line_color    = PL_COLOR_32_RGBA(
+                    dc_app_index_to_dc_value(node->polygon.line_color.r)->value_float,
+                    dc_app_index_to_dc_value(node->polygon.line_color.g)->value_float,
+                    dc_app_index_to_dc_value(node->polygon.line_color.b)->value_float,
+                    dc_app_index_to_dc_value(node->polygon.line_color.a)->value_float);
+                gpt_draw->add_polygon(pt_app_data->pt_fg_layer, points.data(), points.size(), (plDrawLineOptions){.uColor = line_color, .fThickness = lineThickness});
             }
 
             break;
         }
 
-        case DC_NODE_TYPE_SET:
-        {
+        case DC_APP_NODE_TYPE_SET: {
             // todo implement this
             break;
         }
 
-        case DC_NODE_TYPE_WINDOW:
-        {
+        case DC_APP_NODE_TYPE_WINDOW: {
             // TODO move this code to only the resize() function
             // update dimensions
             uint32_t dimensionX, dimensionY;
 
             // TODO fix this in pilotlight for macos
-            gptWindows->get_size(ptAppData->ptWindow, &dimensionX, &dimensionY);
-            DcValue *dimensionValueX = indexToDcValue(node->window.dimensions.x);
-            DcValue *dimensionValueY = indexToDcValue(node->window.dimensions.y);
-            dimensionValueX->valueInteger = (int)dimensionX;
-            dimensionValueY->valueInteger = (int)dimensionY;
-            refreshValue(dimensionValueX);
-            refreshValue(dimensionValueY);
+            gpt_windows->get_size(pt_app_data->ptWindow, &dimensionX, &dimensionY);
+            DcValue *dimension_value_x       = dc_app_index_to_dc_value(node->window.dimensions.x);
+            DcValue *dimension_value_y       = dc_app_index_to_dc_value(node->window.dimensions.y);
+            dimension_value_x->value_integer = (int)dimensionX;
+            dimension_value_y->value_integer = (int)dimensionY;
+            dc_value_refresh_value(dimension_value_x);
+            dc_value_refresh_value(dimension_value_y);
 
             // compute transforms
             // translate from negative to positive range
-            plMat4 transMatrix = pl_mat4_translate_xyz(
+            plMat4 trans_matrix = pl_mat4_translate_xyz(
                 0.0f,
-                indexToDcValue(node->window.dimensions.y)->valueFloat,
+                dc_app_index_to_dc_value(node->window.dimensions.y)->value_float,
                 0.0f);
 
             // scale from virtual to real dimensions, flip y axis
-            plMat4 scaleMatrix = pl_mat4_scale_xyz(
-                indexToDcValue(node->window.dimensions.x)->valueFloat / indexToDcValue(node->window.virtualDimensions.x)->valueFloat,
-                indexToDcValue(node->window.dimensions.y)->valueFloat / indexToDcValue(node->window.virtualDimensions.y)->valueFloat * -1.0f,
+            plMat4 scale_matrix = pl_mat4_scale_xyz(
+                dc_app_index_to_dc_value(node->window.dimensions.x)->value_float / dc_app_index_to_dc_value(node->window.virtual_dimensions.x)->value_float,
+                dc_app_index_to_dc_value(node->window.dimensions.y)->value_float / dc_app_index_to_dc_value(node->window.virtual_dimensions.y)->value_float * -1.0f,
                 1.0f);
 
             plMat4 transform;
-            transform = pl_mul_mat4t(&transMatrix, &scaleMatrix);
-            drawNodeList(ptAppData, node->window.child, &transform);
+            transform = pl_mul_mat4t(&trans_matrix, &scale_matrix);
+            _draw_node_list(pt_app_data, node->window.child, &transform);
             break;
         }
 
         default:
             break;
-        }
     }
-
-} // namespace dc
+}

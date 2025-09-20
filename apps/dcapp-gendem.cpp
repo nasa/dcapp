@@ -1,13 +1,9 @@
-#include <dcapp-data.hpp>
-#include <utils/xml-utils.hpp>
-#include <utils/string-utils.hpp>
+#include <app.hpp>
+#include <utils/xml.hpp>
+#include <utils/string.hpp>
 
-namespace dc
-{
-    DcappData dcData;
-}
+DcAppData dc_app_data;
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     return 0;
 }

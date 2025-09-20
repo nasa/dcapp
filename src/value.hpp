@@ -2,79 +2,65 @@
 
 #include <string>
 
-enum DcValueType
-{
-    DC_VALUE_TYPE_UNDEFINED,
-    DC_VALUE_TYPE_STRING,
-    DC_VALUE_TYPE_INTEGER,
-    DC_VALUE_TYPE_FLOAT,
-    DC_VALUE_TYPE_BOOLEAN,
+enum DcValueType {
+    DC_APP_VALUE_TYPE_UNDEFINED,
+    DC_APP_VALUE_TYPE_STRING,
+    DC_APP_VALUE_TYPE_INTEGER,
+    DC_APP_VALUE_TYPE_FLOAT,
+    DC_APP_VALUE_TYPE_BOOLEAN,
 };
 
-typedef struct _DcValue
-{
+typedef struct _DcValue {
     DcValueType type;
 
-    std::string valueString;
-    int valueInteger;
-    float valueFloat;
-    bool valueBoolean;
+    std::string value_string;
+    int         value_integer;
+    float       value_float;
+    bool        value_boolean;
 
-    bool isDynamic;
+    bool is_dynamic;
 } DcValue;
 
-typedef struct _DcValue2
-{
-    union
-    {
+typedef struct _DcValue2 {
+    union {
         DcValue x, r, lat;
     };
-    union
-    {
+    union {
         DcValue y, g, lon;
     };
 } DcValue2;
 
-typedef struct _DcValue3
-{
-    union
-    {
+typedef struct _DcValue3 {
+    union {
         DcValue x, r, lat;
     };
-    union
-    {
+    union {
         DcValue y, g, lon;
     };
-    union
-    {
+    union {
         DcValue z, b, ele;
     };
 } DcValue3;
 
-typedef struct _DcValue4
-{
-    union
-    {
+typedef struct _DcValue4 {
+    union {
         DcValue x, r;
     };
-    union
-    {
+    union {
         DcValue y, g;
     };
-    union
-    {
+    union {
         DcValue z, b;
     };
-    union
-    {
+    union {
         DcValue w, a;
     };
 } DcValue4;
 
-DcValueType valueTypeFromString(const std::string& type);
-DcValue createTypedValueFromString(DcValueType type, const std::string &value);
-DcValue createValueString(const std::string &value);
-DcValue createValueInteger(int value);
-DcValue createValueFloat(float value);
-DcValue createValueBoolean(bool value);
-void refreshValue(DcValue *value);
+DcValueType dc_value_type_from_string(const std::string &type);
+DcValue     dc_value_create_typed_value_from_string(DcValueType type, const std::string &value);
+DcValue     dc_value_create_value_string(const std::string &value);
+DcValue     dc_value_create_value_integer(int value);
+DcValue     dc_value_create_value_float(float value);
+DcValue     dc_value_create_value_boolean(bool value);
+void        dc_value_refresh_value(DcValue *value);

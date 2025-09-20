@@ -3,6 +3,7 @@ build/
 cache/
 logs/
 
+.DS_Store
 scripts/build-dcapp*
 
 **.spv
