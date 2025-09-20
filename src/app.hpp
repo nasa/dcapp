@@ -1,7 +1,7 @@
 #pragma once
 
 // dcapp includes
-#define PL_EXPERIMENTAL 
+#define PL_EXPERIMENTAL
 #include <value.hpp>
 
 // library includes
@@ -22,8 +22,7 @@
 typedef struct _plSharedLibrary plSharedLibrary;
 
 // element utils
-typedef enum
-{
+typedef enum {
     DC_APP_ELEM_TYPE_UNDEFINED,
     DC_APP_ELEM_TYPE_CONSTANT,
     DC_APP_ELEM_TYPE_CONTAINER,
@@ -43,65 +42,52 @@ typedef enum
     DC_APP_ELEM_TYPE_VERTEX,
     DC_APP_ELEM_TYPE_WINDOW,
 } DcAppElemType;
-std::string dc_app_elem_type_to_string(DcAppElemType type);
+std::string   dc_app_elem_type_to_string(DcAppElemType type);
 DcAppElemType dc_app_string_to_elem_type(std::string name);
 DcAppElemType dc_app_xml_node_to_elem_type(xmlNodePtr node);
 
 // value utils
-typedef uint32_t DcAppValueIndex;
+typedef uint32_t      DcAppValueIndex;
 const DcAppValueIndex dc_value_index_undefined = 0;
 
-typedef struct _DcAppValueIndex2
-{
-    union
-    {
+typedef struct _DcAppValueIndex2 {
+    union {
         DcAppValueIndex x, r, lat;
     };
-    union
-    {
+    union {
         DcAppValueIndex y, g, lon;
     };
 } DcAppValueIndex2;
 
-typedef struct _DcAppValueIndex3
-{
-    union
-    {
+typedef struct _DcAppValueIndex3 {
+    union {
         DcAppValueIndex x, r, lat;
     };
-    union
-    {
+    union {
         DcAppValueIndex y, g, lon;
     };
-    union
-    {
+    union {
         DcAppValueIndex z, b, ele;
     };
 } DcAppValueIndex3;
 
-typedef struct _DcAppValueIndex4
-{
-    union
-    {
+typedef struct _DcAppValueIndex4 {
+    union {
         DcAppValueIndex x, r;
     };
-    union
-    {
+    union {
         DcAppValueIndex y, g;
     };
-    union
-    {
+    union {
         DcAppValueIndex z, b;
     };
-    union
-    {
+    union {
         DcAppValueIndex w, a;
     };
 } DcAppValueIndex4;
 
 // alignment utils
-enum DcAppAlignType
-{
+enum DcAppAlignType {
     DC_APP_ALIGN_TYPE_UNDEFINED,
     DC_APP_ALIGN_TYPE_LEFT,
     DC_APP_ALIGN_TYPE_CENTER,
@@ -112,8 +98,7 @@ enum DcAppAlignType
 };
 
 // conditional utils
-enum DcAppConditionalType
-{
+enum DcAppConditionalType {
     DC_APP_CONDITIONAL_TYPE_UNDEFINED,
     DC_APP_CONDITIONAL_TYPE_TRUE,
     DC_APP_CONDITIONAL_TYPE_FALSE,
@@ -126,8 +111,7 @@ enum DcAppConditionalType
 };
 
 // node utils
-enum DcAppNodeType
-{
+enum DcAppNodeType {
     DC_APP_NODE_TYPE_UNDEFINED,
     DC_APP_NODE_TYPE_CONTAINER,
     DC_APP_NODE_TYPE_CONDITIONAL,
@@ -138,89 +122,80 @@ enum DcAppNodeType
     DC_APP_NODE_TYPE_WINDOW,
 };
 
-typedef uint32_t DcAppNodeIndex;
+typedef uint32_t     DcAppNodeIndex;
 const DcAppNodeIndex DC_APP_NODE_INDEX_UNDEFINED = 0;
 
-typedef struct _DcAppNodeConditional
-{
+typedef struct _DcAppNodeConditional {
     DcAppValueIndex type;
     DcAppValueIndex value1;
     DcAppValueIndex value2;
-    DcAppNodeIndex child_true;
-    DcAppNodeIndex child_false;
+    DcAppNodeIndex  child_true;
+    DcAppNodeIndex  child_false;
 } DcAppNodeConditional;
 
-typedef struct _DcAppNodeContainer
-{
+typedef struct _DcAppNodeContainer {
     DcAppValueIndex2 position;
     DcAppValueIndex2 origin;
     DcAppValueIndex2 dimensions;
     DcAppValueIndex2 virtual_dimensions;
     DcAppValueIndex2 alignment;
-    DcAppValueIndex rotation;
-    DcAppNodeIndex child;
+    DcAppValueIndex  rotation;
+    DcAppNodeIndex   child;
 } DcAppNodeContainer;
 
-typedef struct _DcAppNodeMap
-{
+typedef struct _DcAppNodeMap {
     DcAppValueIndex2 position;
     DcAppValueIndex2 origin;
     DcAppValueIndex2 dimensions;
     DcAppValueIndex2 virtual_dimensions;
     DcAppValueIndex2 alignment;
     DcAppValueIndex3 lle;
-    DcAppValueIndex yaw;
-    DcAppValueIndex rotation;
+    DcAppValueIndex  yaw;
+    DcAppValueIndex  rotation;
     // DcDemManager *demManager;
 } DcAppNodeMap;
 
-typedef struct _DcAppNodePanel
-{
+typedef struct _DcAppNodePanel {
     DcAppValueIndex2 parentDimensions;
     DcAppValueIndex2 virtual_dimensions;
-    DcAppValueIndex index;
-    DcAppNodeIndex child;
+    DcAppValueIndex  index;
+    DcAppNodeIndex   child;
 } DcAppNodePanel;
 
-typedef struct _DcAppNodePolygon
-{
-    DcAppValueIndex4 fillColor;
-    DcAppValueIndex4 line_color;
-    DcAppValueIndex line_width;
+typedef struct _DcAppNodePolygon {
+    DcAppValueIndex4  fillColor;
+    DcAppValueIndex4  line_color;
+    DcAppValueIndex   line_width;
     DcAppValueIndex2 *points;
-    uint32_t num_points;
-    bool fill_enabled;
-    bool line_enabled;
+    uint32_t          num_points;
+    bool              fill_enabled;
+    bool              line_enabled;
 } DcAppNodePolygon;
 
-typedef struct _DcAppNodeWindow
-{
+typedef struct _DcAppNodeWindow {
     DcAppValueIndex2 position;
     DcAppValueIndex2 dimensions;
     DcAppValueIndex2 virtual_dimensions;
-    DcAppNodeIndex child;
-    char *title;
+    DcAppNodeIndex   child;
+    char            *title;
 } DcAppNodeWindow;
 
-typedef struct _DcAppNode
-{
-    DcAppNodeType type;
+typedef struct _DcAppNode {
+    DcAppNodeType  type;
     DcAppNodeIndex parent;
     DcAppNodeIndex next;
-    union
-    {
+    union {
         DcAppNodeConditional conditional;
-        DcAppNodeContainer container;
-        DcAppNodeMap map;
-        DcAppNodePanel panel;
-        DcAppNodePolygon polygon;
-        DcAppNodeWindow window;
+        DcAppNodeContainer   container;
+        DcAppNodeMap         map;
+        DcAppNodePanel       panel;
+        DcAppNodePolygon     polygon;
+        DcAppNodeWindow      window;
     };
 } DcAppNode;
 
 // logic
-typedef struct _DcAppLogic
-{
+typedef struct _DcAppLogic {
     plSharedLibrary *library;
     void (*pre_init)();
     void (*init)();
@@ -229,20 +204,19 @@ typedef struct _DcAppLogic
 } DcAppLogic;
 
 // variables
-typedef struct _DcAppVariable
-{
-    void *externData;
+typedef struct _DcAppVariable {
+    void           *externData;
     DcAppValueIndex value_index;
 } DcAppVariable;
 
 // constant utils
-void dc_app_set_constant(const std::string &name, const std::string &text);
+void        dc_app_set_constant(const std::string &name, const std::string &text);
 std::string dc_app_get_constant(const std::string &name);
 std::string dc_app_dereference_constants(const char *text);
 std::string dc_app_dereference_constants(std::string text);
 
 // value utils
-DcValue *dc_app_index_to_dc_value(DcAppValueIndex index);
+DcValue        *dc_app_index_to_dc_value(DcAppValueIndex index);
 DcAppValueIndex dc_app_register_dc_value(DcValue value);
 DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType type, const char *text);
 DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType type, std::string text);
@@ -251,8 +225,8 @@ DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType t
 void dc_app_set_variable(const std::string &name, DcAppValueIndex value_index);
 
 // node utils
-std::string dc_app_node_type_to_string(DcAppNodeType type);
-DcAppNode *dc_app_index_to_node(DcAppNodeIndex index);
+std::string    dc_app_node_type_to_string(DcAppNodeType type);
+DcAppNode     *dc_app_index_to_node(DcAppNodeIndex index);
 DcAppNodeIndex dc_app_register_node(DcAppNode node);
 
 // larger scale functions
@@ -260,8 +234,7 @@ void dc_app_init_data();
 void dc_app_clean_xml_data();
 
 // app data
-typedef struct _DcAppData
-{
+typedef struct _DcAppData {
     // string path to config file, directories
     std::string configFilePath;
     std::string config_dir_path;
@@ -269,9 +242,9 @@ typedef struct _DcAppData
     std::string log_dir_path;
 
     // values
-    std::map<std::string, std::string> constants;
+    std::map<std::string, std::string>   constants;
     std::map<std::string, DcAppVariable> variables;
-    std::vector<DcValue> values;
+    std::vector<DcValue>                 values;
 
     // nodes
     std::vector<DcAppNode> nodes;

@@ -6,12 +6,10 @@
 // c++ standard includes
 #include <cmath>
 
-bool dc_utils_double_equals(double value1, double value2, double precision)
-{
+bool dc_utils_double_equals(double value1, double value2, double precision) {
     return fabs(value1 - value2) < precision;
 }
 
-bool dc_utils_float_equals(float value1, float value2, float precision)
-{
+bool dc_utils_float_equals(float value1, float value2, float precision) {
     return fabs(value1 - value2) < precision;
 }

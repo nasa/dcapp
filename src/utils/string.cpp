@@ -9,63 +9,46 @@
 #include <vector>
 
 // convert a string to a double
-double dc_utils_string_to_float(const std::string &text)
-{
+double dc_utils_string_to_float(const std::string &text) {
     double result = 0;
-    try
-    {
+    try {
         result = std::stod(text);
-    }
-    catch (const std::invalid_argument)
-    {
+    } catch (const std::invalid_argument) {
         result = (double)dc_utils_string_to_integer(text);
-    }
-    catch (const std::out_of_range)
-    {
+    } catch (const std::out_of_range) {
         result = (double)dc_utils_string_to_integer(text);
     }
     return result;
 }
 
 // convert a string to an integer
-int dc_utils_string_to_integer(const std::string &text)
-{
+int dc_utils_string_to_integer(const std::string &text) {
     int result = 0;
-    try
-    {
+    try {
         result = std::stoi(text);
-    }
-    catch (const std::invalid_argument)
-    {
+    } catch (const std::invalid_argument) {
         result = (int)dc_utils_string_to_boolean(text);
-    }
-    catch (const std::out_of_range)
-    {
+    } catch (const std::out_of_range) {
         result = (int)dc_utils_string_to_boolean(text);
     }
     return result;
 }
 
 // convert a string to a boolean
-bool dc_utils_string_to_boolean(std::string text)
-{
+bool dc_utils_string_to_boolean(std::string text) {
     text = dc_utils_trim_whitespace(text);
-    if (text.empty())
-    {
+    if (text.empty()) {
         return false;
     }
 
     // to lowercase
-    for (char &c : text)
-    {
-        if (c >= 'A' && c <= 'Z')
-        {
+    for (char &c : text) {
+        if (c >= 'A' && c <= 'Z') {
             c += 32;
         }
     }
 
-    if (text == "false" || text == "no" || text == "off")
-    {
+    if (text == "false" || text == "no" || text == "off") {
         return false;
     }
 
@@ -73,11 +56,9 @@ bool dc_utils_string_to_boolean(std::string text)
 }
 
 // compute an sdbm hash from a string
-std::string dc_utils_string_to_hash(const std::string &text)
-{
+std::string dc_utils_string_to_hash(const std::string &text) {
     uint64_t hash = 0;
-    for (const char &c : text)
-    {
+    for (const char &c : text) {
         hash = c + (hash << 6) + (hash << 16) - hash;
     }
     std::string string_hash = std::to_string(hash);
@@ -86,31 +67,26 @@ std::string dc_utils_string_to_hash(const std::string &text)
 }
 
 // trim whitespace from string
-std::string dc_utils_trim_whitespace(std::string text)
-{
-    if (text.length() > 0)
-    {
+std::string dc_utils_trim_whitespace(std::string text) {
+    if (text.length() > 0) {
         static const std::string whitespace = " \t\n\v\f\r";
 
         // if no characters, use empty string
         std::size_t first_char = text.find_first_not_of(whitespace);
-        if (first_char == std::string::npos)
-        {
+        if (first_char == std::string::npos) {
             return "";
         }
 
         // if whitespace occurs before first character, trim it
         std::size_t first_whitespace = text.find_first_of(whitespace);
-        if (first_whitespace != std::string::npos && first_whitespace < first_char)
-        {
+        if (first_whitespace != std::string::npos && first_whitespace < first_char) {
             text = text.substr(first_char, std::string::npos);
         }
 
         // if whitespace occurs after last character, trim it
         std::size_t last_whitespace = text.find_last_of(whitespace);
-        std::size_t last_char = text.find_last_not_of(whitespace);
-        if (last_whitespace != std::string::npos && last_whitespace > last_char)
-        {
+        std::size_t last_char       = text.find_last_not_of(whitespace);
+        if (last_whitespace != std::string::npos && last_whitespace > last_char) {
             text = text.substr(0, last_char + 1);
         }
     }
@@ -119,25 +95,20 @@ std::string dc_utils_trim_whitespace(std::string text)
 }
 
 // split string by delimiters provided
-std::vector<std::string> dc_utils_split_string_by_delimiters(std::string input, const std::string &delimiters)
-{
+std::vector<std::string> dc_utils_split_string_by_delimiters(std::string input, const std::string &delimiters) {
     std::vector<std::string> output;
-    if (input.length() > 0)
-    {
+    if (input.length() > 0) {
         std::size_t start_index = 0;
-        while (start_index != std::string::npos)
-        {
+        while (start_index != std::string::npos) {
 
             // get indices of next space-delimited string
             std::size_t string_start_index = input.find_first_not_of(delimiters, start_index);
-            std::size_t string_end_index = input.find_first_of(delimiters, string_start_index);
+            std::size_t string_end_index   = input.find_first_of(delimiters, string_start_index);
 
             // if the string exists, get the substring
-            if (string_start_index != std::string::npos)
-            {
+            if (string_start_index != std::string::npos) {
                 size_t substring_length = string_end_index - string_start_index;
-                if (string_end_index == std::string::npos)
-                {
+                if (string_end_index == std::string::npos) {
                     substring_length = std::string::npos;
                 }
                 output.push_back(input.substr(string_start_index, substring_length));

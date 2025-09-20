@@ -8,5 +8,5 @@
 // c++ standard includes
 #include <string>
 
-char* dc_utils_get_attribute_string(xmlNodePtr node, std::string attr);
-char* dc_utils_get_node_content_string(xmlNodePtr node);
+char *dc_utils_get_attribute_string(xmlNodePtr node, std::string attr);
+char *dc_utils_get_node_content_string(xmlNodePtr node);
