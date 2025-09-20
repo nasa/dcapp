@@ -2,16 +2,13 @@
 // [SECTION] dcapp includes
 //-----------------------------------------------------------------------------
 
-#include <dcapp-data.hpp>
-#include <utils/file-utils.hpp>
-#include <utils/string-utils.hpp>
-#include <utils/xml-utils.hpp>
+#include <app.hpp>
+#include <utils/file.hpp>
+#include <utils/string.hpp>
+#include <utils/xml.hpp>
 #include <value.hpp>
 
-namespace dc
-{
-    DcappData dcData;
-}
+DcAppData dc_app_data;
 
 #include <cstdio>
 #include <filesystem>
@@ -24,11 +21,8 @@ namespace dc
 // [SECTION] dcapp state
 //-----------------------------------------------------------------------------
 
-namespace dc
-{
-    static void processNodeChildren(xmlNodePtr xmlNode);
-    static void processNode(xmlNodePtr xmlNode);
-} // namespace dc
+static void _process_node_children(xmlNodePtr xmlNode);
+static void _process_node(xmlNodePtr xmlNode);
 
 int main(int argc, char **argv)
 {
@@ -47,7 +41,7 @@ int main(int argc, char **argv)
     std::string configDirPath = fsDirPath.string();
 
     // create cache and log dirs
-    std::filesystem::path fsExePath = getExeFilepath();
+    std::filesystem::path fsExePath = dc_utils_get_exe_filepath();
     std::filesystem::path fsLogPath = fsExePath.parent_path() / ".." / "logs";
     std::filesystem::create_directory(fsLogPath);
     std::string logDirPath = std::filesystem::canonical(fsLogPath).string();
@@ -55,34 +49,34 @@ int main(int argc, char **argv)
     std::filesystem::create_directory(fsCachePath);
     std::string cacheDirPath = std::filesystem::canonical(fsCachePath).string();
 
-    // init dcData object
-    dc::initData();
+    // init dc_app_data object
+    dc_app_init_data();
 
     // begin setting up dcappData object
-    dc::dcData.configFilePath = configFilePath;
-    dc::dcData.configDirPath = configDirPath;
-    dc::dcData.logDirPath = logDirPath;
-    dc::dcData.cacheDirPath = cacheDirPath;
+    dc_app_data.configFilePath = configFilePath;
+    dc_app_data.configDirPath = configDirPath;
+    dc_app_data.logDirPath = logDirPath;
+    dc_app_data.cacheDirPath = cacheDirPath;
 
     // set environment (used for dcapp XMLs)
-    setenv("dcappDisplayHome", dc::dcData.configDirPath.c_str(), 1);
+    setenv("dcappDisplayHome", dc_app_data.configDirPath.c_str(), 1);
 
     // load XML file
-    dc::dcData.doc = xmlReadFile(configFilePath.c_str(), "UTF-8", XML_PARSE_NOBLANKS);
-    if (!dc::dcData.doc)
+    dc_app_data.doc = xmlReadFile(configFilePath.c_str(), "UTF-8", XML_PARSE_NOBLANKS);
+    if (!dc_app_data.doc)
     {
         throw std::runtime_error("Unable to read configuration file: " + configFilePath);
     }
 
     // clean XML file
-    dc::cleanXmlData();
+    dc_app_clean_xml_data();
 
     // process XML
-    xmlNodePtr rootNode = xmlDocGetRootElement(dc::dcData.doc);
-    dc::processNode(rootNode);
+    xmlNodePtr rootNode = xmlDocGetRootElement(dc_app_data.doc);
+    _process_node(rootNode);
 
     // create directory
-    std::filesystem::path directory = std::filesystem::path(dc::dcData.configDirPath) / "logic";
+    std::filesystem::path directory = std::filesystem::path(dc_app_data.configDirPath) / "logic";
     std::filesystem::create_directory(directory);
 
     // create file
@@ -112,20 +106,20 @@ int main(int argc, char **argv)
     outFile << "\n";
 
     // file variable definitions
-    for (auto &[name, variable] : dc::dcData.variables)
+    for (auto &[name, variable] : dc_app_data.variables)
     {
-        switch (dc::indexToDcValue(variable.valueIndex)->type)
+        switch (dc_app_index_to_dc_value(variable.valueIndex)->type)
         {
-        case DC_VALUE_TYPE_STRING:
+        case DC_APP_VALUE_TYPE_STRING:
             outFile << "std::string ";
             break;
-        case DC_VALUE_TYPE_FLOAT:
+        case DC_APP_VALUE_TYPE_FLOAT:
             outFile << "float       ";
             break;
-        case DC_VALUE_TYPE_INTEGER:
+        case DC_APP_VALUE_TYPE_INTEGER:
             outFile << "int         ";
             break;
-        case DC_VALUE_TYPE_BOOLEAN:
+        case DC_APP_VALUE_TYPE_BOOLEAN:
             outFile << "bool        ";
             break;
         default:
@@ -146,126 +140,123 @@ int main(int argc, char **argv)
     return 0;
 }
 
-namespace dc
+// returns the first child (if any)
+void _process_node_children(xmlNodePtr xmlNode)
 {
-    // returns the first child (if any)
-    void processNodeChildren(xmlNodePtr xmlNode)
+    xmlNodePtr xmlChildNode = xmlNode->children;
+    while (xmlChildNode)
     {
-        xmlNodePtr xmlChildNode = xmlNode->children;
-        while (xmlChildNode)
-        {
-            processNode(xmlChildNode);
-            xmlChildNode = xmlChildNode->next;
-        }
+        _process_node(xmlChildNode);
+        xmlChildNode = xmlChildNode->next;
+    }
+}
+
+void _process_node(xmlNodePtr xmlNode)
+{
+    // by default, the element is not a node
+    DcAppNodeIndex nodeIndex = DC_NODE_INDEX_UNDEFINED;
+
+    switch (dc_app_xml_node_to_elem_type(xmlNode))
+    {
+
+    // ignore non-element nodes
+    case DC_APP_ELEM_TYPE_NONELEM:
+    {
+        return;
     }
 
-    void processNode(xmlNodePtr xmlNode)
+    case DC_APP_ELEM_TYPE_CONSTANT:
     {
-        // by default, the element is not a node
-        DcNodeIndex nodeIndex = DC_NODE_INDEX_UNDEFINED;
-
-        switch (xmlNodeToElementType(xmlNode))
+        // name
+        char *cName = dc_utils_get_attribute_string(xmlNode, "Name");
+        if (!cName)
         {
+            throw std::runtime_error("Non-existent node 'Name' in <Constant> definition");
+        }
+        std::string name = dc_app_dereference_constants(cName);
+        free(cName);
 
-        // ignore non-element nodes
-        case DC_ELEM_TYPE_NONELEM:
+        // value
+        char *cValue = dc_utils_get_node_content_string(xmlNode);
+        if (!cValue)
         {
-            return;
+            throw std::runtime_error("Non-existent node content in <Constant> definition");
         }
+        std::string value = dc_app_dereference_constants(cValue);
+        free(cValue);
 
-        case DC_ELEM_TYPE_CONSTANT:
-        {
-            // name
-            char *cName = getAttributeString(xmlNode, "Name");
-            if (!cName)
-            {
-                throw std::runtime_error("Non-existent node 'Name' in <Constant> definition");
-            }
-            std::string name = dereferenceConstants(cName);
-            free(cName);
-
-            // value
-            char *cValue = getNodeContentString(xmlNode);
-            if (!cValue)
-            {
-                throw std::runtime_error("Non-existent node content in <Constant> definition");
-            }
-            std::string value = dereferenceConstants(cValue);
-            free(cValue);
-
-            // set constant value
-            setConstant(name, value);
-            break;
-        }
-
-        // really just the root element, left in for legacy reasons
-        case DC_ELEM_TYPE_DCAPP:
-        {
-            processNodeChildren(xmlNode);
-            break;
-        }
-
-        // at this point, just used to set the directory path
-        case DC_ELEM_TYPE_INCLUDE:
-        {
-            char *cDirectory = getAttributeString(xmlNode, "Directory");
-            if (cDirectory)
-            {
-                processNodeChildren(xmlNode);
-                free(cDirectory);
-            }
-            else
-            {
-                // should never get here
-                throw std::runtime_error("Invalid condition; <Include> node with no directory");
-            }
-            break;
-        }
-
-        case DC_ELEM_TYPE_VARIABLE:
-        {
-            // name
-            char *cName = getNodeContentString(xmlNode);
-            if (!cName)
-            {
-                throw std::runtime_error("Non-existent node content in <Variable> definition");
-            }
-            std::string name = dereferenceConstants(cName);
-            free(cName);
-
-            // type
-            char *cType = getAttributeString(xmlNode, "Type");
-            DcValueType type = DC_VALUE_TYPE_STRING;
-            if (cType)
-            {
-                type = valueTypeFromString(dereferenceConstants(cType));
-            }
-
-            // value
-            char *cInitialValue = getAttributeString(xmlNode, "InitialValue");
-            DcValue initialValue;
-            if (cInitialValue)
-            {
-                initialValue = createValueString(dereferenceConstants(cInitialValue));
-            }
-            else
-            {
-                initialValue = createValueString("");
-            }
-            initialValue.type = type;
-            initialValue.isDynamic = true;
-
-            // register variable
-            DcValueIndex index = registerDcValue(initialValue);
-            setVariable(name, index);
-            break;
-        }
-
-        default:
-        {
-            processNodeChildren(xmlNode);
-            break;
-        }
-        }
+        // set constant value
+        dc_app_set_constant(name, value);
+        break;
     }
-} // namespace dc
+
+    // really just the root element, left in for legacy reasons
+    case DC_APP_ELEM_TYPE_DCAPP:
+    {
+        _process_node_children(xmlNode);
+        break;
+    }
+
+    // at this point, just used to set the directory path
+    case DC_APP_ELEM_TYPE_INCLUDE:
+    {
+        char *cDirectory = dc_utils_get_attribute_string(xmlNode, "Directory");
+        if (cDirectory)
+        {
+            _process_node_children(xmlNode);
+            free(cDirectory);
+        }
+        else
+        {
+            // should never get here
+            throw std::runtime_error("Invalid condition; <Include> node with no directory");
+        }
+        break;
+    }
+
+    case DC_APP_ELEM_TYPE_VARIABLE:
+    {
+        // name
+        char *cName = dc_utils_get_node_content_string(xmlNode);
+        if (!cName)
+        {
+            throw std::runtime_error("Non-existent node content in <Variable> definition");
+        }
+        std::string name = dc_app_dereference_constants(cName);
+        free(cName);
+
+        // type
+        char *cType = dc_utils_get_attribute_string(xmlNode, "Type");
+        DcValueType type = DC_APP_VALUE_TYPE_STRING;
+        if (cType)
+        {
+            type = dc_value_type_from_string(dc_app_dereference_constants(cType));
+        }
+
+        // value
+        char *cInitialValue = dc_utils_get_attribute_string(xmlNode, "InitialValue");
+        DcValue initialValue;
+        if (cInitialValue)
+        {
+            initialValue = dc_value_create_value_string(dc_app_dereference_constants(cInitialValue));
+        }
+        else
+        {
+            initialValue = dc_value_create_value_string("");
+        }
+        initialValue.type = type;
+        initialValue.isDynamic = true;
+
+        // register variable
+        DcAppValueIndex index = dc_app_register_dc_value(initialValue);
+        dc_app_set_variable(name, index);
+        break;
+    }
+
+    default:
+    {
+        _process_node_children(xmlNode);
+        break;
+    }
+    }
+}

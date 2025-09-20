@@ -1,16 +1,16 @@
 // dcapp includes
-#include <utils/xml-utils.hpp>
+#include <utils/xml.hpp>
 
 // library includes
 
 // c++ standard includes
 
-char *getAttributeString(xmlNodePtr node, std::string attr)
+char *dc_utils_get_attribute_string(xmlNodePtr node, std::string attr)
 {
     return (char *)xmlGetProp(node, (xmlChar *)(attr.c_str()));
 }
 
-char *getNodeContentString(xmlNodePtr node)
+char *dc_utils_get_node_content_string(xmlNodePtr node)
 {
     return (char *)xmlNodeGetContent(node);
 }

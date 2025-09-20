@@ -1,6 +1,6 @@
 // dcapp includes
 #include <stdexcept>
-#include <utils/file-utils.hpp>
+#include <utils/file.hpp>
 
 // library includes
 // TODO CLEAN THIS UP
@@ -13,7 +13,7 @@
 // c++ standard includes
 #include <filesystem>
 
-std::string filepathToCanonical(std::string file, const std::string &directory)
+std::string dc_utils_filepath_to_canonical(std::string file, const std::string &directory)
 {
     std::filesystem::path filePath = std::filesystem::path(file);
     if (!file.empty() && filePath.is_relative())
@@ -26,7 +26,7 @@ std::string filepathToCanonical(std::string file, const std::string &directory)
     return std::filesystem::weakly_canonical(file);
 }
 
-std::string getExeFilepath()
+std::string dc_utils_get_exe_filepath()
 {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
    // TODO implement

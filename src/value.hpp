@@ -4,11 +4,11 @@
 
 enum DcValueType
 {
-    DC_VALUE_TYPE_UNDEFINED,
-    DC_VALUE_TYPE_STRING,
-    DC_VALUE_TYPE_INTEGER,
-    DC_VALUE_TYPE_FLOAT,
-    DC_VALUE_TYPE_BOOLEAN,
+    DC_APP_VALUE_TYPE_UNDEFINED,
+    DC_APP_VALUE_TYPE_STRING,
+    DC_APP_VALUE_TYPE_INTEGER,
+    DC_APP_VALUE_TYPE_FLOAT,
+    DC_APP_VALUE_TYPE_BOOLEAN,
 };
 
 typedef struct _DcValue
@@ -71,10 +71,10 @@ typedef struct _DcValue4
     };
 } DcValue4;
 
-DcValueType valueTypeFromString(const std::string& type);
-DcValue createTypedValueFromString(DcValueType type, const std::string &value);
-DcValue createValueString(const std::string &value);
-DcValue createValueInteger(int value);
-DcValue createValueFloat(float value);
-DcValue createValueBoolean(bool value);
-void refreshValue(DcValue *value);
+DcValueType dc_value_type_from_string(const std::string& type);
+DcValue dc_value_create_typed_value_from_string(DcValueType type, const std::string &value);
+DcValue dc_value_create_value_string(const std::string &value);
+DcValue dc_value_create_value_integer(int value);
+DcValue dc_value_create_value_float(float value);
+DcValue dc_value_create_value_boolean(bool value);
+void dc_value_refresh_value(DcValue *value);

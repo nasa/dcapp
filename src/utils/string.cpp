@@ -1,5 +1,5 @@
 // dcapp includes
-#include <utils/string-utils.hpp>
+#include <utils/string.hpp>
 
 // library includes
 
@@ -9,7 +9,7 @@
 #include <vector>
 
 // convert a string to a double
-double stringToFloat(const std::string &text)
+double dc_utils_string_to_float(const std::string &text)
 {
     double result = 0;
     try
@@ -18,17 +18,17 @@ double stringToFloat(const std::string &text)
     }
     catch (const std::invalid_argument)
     {
-        result = (double)stringToInteger(text);
+        result = (double)dc_utils_string_to_integer(text);
     }
     catch (const std::out_of_range)
     {
-        result = (double)stringToInteger(text);
+        result = (double)dc_utils_string_to_integer(text);
     }
     return result;
 }
 
 // convert a string to an integer
-int stringToInteger(const std::string &text)
+int dc_utils_string_to_integer(const std::string &text)
 {
     int result = 0;
     try
@@ -37,19 +37,19 @@ int stringToInteger(const std::string &text)
     }
     catch (const std::invalid_argument)
     {
-        result = (int)stringToBoolean(text);
+        result = (int)dc_utils_string_to_boolean(text);
     }
     catch (const std::out_of_range)
     {
-        result = (int)stringToBoolean(text);
+        result = (int)dc_utils_string_to_boolean(text);
     }
     return result;
 }
 
 // convert a string to a boolean
-bool stringToBoolean(std::string text)
+bool dc_utils_string_to_boolean(std::string text)
 {
-    text = trimWhitespace(text);
+    text = dc_utils_trim_whitespace(text);
     if (text.empty())
     {
         return false;
@@ -73,7 +73,7 @@ bool stringToBoolean(std::string text)
 }
 
 // compute an sdbm hash from a string
-std::string stringToHash(const std::string &text)
+std::string dc_utils_string_to_hash(const std::string &text)
 {
     uint64_t hash = 0;
     for (const char &c : text)
@@ -86,7 +86,7 @@ std::string stringToHash(const std::string &text)
 }
 
 // trim whitespace from string
-std::string trimWhitespace(std::string text)
+std::string dc_utils_trim_whitespace(std::string text)
 {
     if (text.length() > 0)
     {
@@ -119,7 +119,7 @@ std::string trimWhitespace(std::string text)
 }
 
 // split string by delimiters provided
-std::vector<std::string> splitStringByDelimiters(std::string input, const std::string &delimiters)
+std::vector<std::string> dc_utils_split_string_by_delimiters(std::string input, const std::string &delimiters)
 {
     std::vector<std::string> output;
     if (input.length() > 0)
