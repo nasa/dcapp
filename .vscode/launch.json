@@ -31,7 +31,15 @@
         "MIMode": "gdb",
         "miDebuggerPath": "C:\\MinGW\\bin\\gdb.exe",
         "preLaunchTask": "build dcapp-debug (windows)"
-      }
+      },
+      {
+        "name": "test trick (macos)",
+        "type": "lldb",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/test-trick",
+        "cwd": "${workspaceFolder}/bin",
+        "preLaunchTask": "build tests"
+      },
     ]
   }
   

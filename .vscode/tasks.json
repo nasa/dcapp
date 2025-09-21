@@ -39,6 +39,15 @@
         "cwd": "${workspaceFolder}/scripts"
       },
       "group": "build"
+    },
+    {
+      "label": "build tests",
+      "type": "shell",
+      "command": "./tests/build-tests.py",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build"
     }
   ]
 }
