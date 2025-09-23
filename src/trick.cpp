@@ -402,6 +402,7 @@ DcTrickResult _dc_trick_receive(DcTrick *trick) {
 
         default:
             fprintf(stderr, "dc_trick_send(): unknown result from dc_sock_send() %d", result);
+            return DC_TRICK_RESULT_FAIL;
             break;
     }
 }
