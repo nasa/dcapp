@@ -1,4 +1,4 @@
-#include "sock.h"
+#include "sock.hpp"
 
 #include <errno.h>
 #include <stdio.h>
@@ -191,29 +191,33 @@ void dc_sock_close(DcSock *sock) {
 #endif
 }
 
-DcSockState dc_sock_connection_status(DcSock *sock) {
+DcSockState dc_sock_connection_status(DcSock *s) {
+    if (!s || s->sock_fd < 0) return DC_SOCK_STATE_DISCONNECTED;
 
-    if (sock->flags & DC_SOCK_FLAGS_NON_BLOCKING) {
-        fd_set write_fds;
-        FD_ZERO(&write_fds);
-        FD_SET(sock->sock_fd, &write_fds);
-
-        struct timeval tv = { .tv_sec = 0, .tv_usec = 0 };
-        int ret = select(sock->sock_fd + 1, NULL, &write_fds, NULL, &tv);
-        if (ret < 0) {
-            return DC_SOCK_STATE_DISCONNECTED;
-        } else if (ret == 0) {
+    if (s->flags & DC_SOCK_FLAGS_NON_BLOCKING) {
+        fd_set wfds, efds;
+        FD_ZERO(&wfds); FD_ZERO(&efds);
+        FD_SET(s->sock_fd, &wfds);
+        FD_SET(s->sock_fd, &efds);
+        struct timeval tv; tv.tv_sec = 0; tv.tv_usec = 0;
+        int ret = select(s->sock_fd + 1, NULL, &wfds, &efds, &tv);
+        if (ret < 0) return DC_SOCK_STATE_DISCONNECTED;
+        if (ret == 0) return DC_SOCK_STATE_CONNECTING;
+        if (!FD_ISSET(s->sock_fd, &wfds) && !FD_ISSET(s->sock_fd, &efds))
             return DC_SOCK_STATE_CONNECTING;
-        }
     }
 
-    int err = 0;
-    socklen_t len = sizeof(err);
-    if (getsockopt(sock->sock_fd, SOL_SOCKET, SO_ERROR, &err, &len) < 0) {
+    int err = 0; socklen_t len = sizeof(err);
+    if (getsockopt(s->sock_fd, SOL_SOCKET, SO_ERROR, &err, &len) < 0 || err != 0)
         return DC_SOCK_STATE_DISCONNECTED;
-    }
-    return (err == 0) ? DC_SOCK_STATE_CONNECTED : DC_SOCK_STATE_DISCONNECTED;
+
+    struct sockaddr_storage peer; socklen_t plen = sizeof(peer);
+    if (getpeername(s->sock_fd, (struct sockaddr*)&peer, &plen) == 0)
+        return DC_SOCK_STATE_CONNECTED;
+
+    return (errno == ENOTCONN) ? DC_SOCK_STATE_CONNECTING : DC_SOCK_STATE_DISCONNECTED;
 }
+
 
 DcSockResult dc_sock_send(DcSock *sock, const char *in, size_t in_size, int *sent_size) {
     int sent = send(sock->sock_fd, in, in_size, 0);

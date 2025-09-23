@@ -7,7 +7,7 @@
 
 typedef enum {
     DC_TRICK_RESULT_SUCCESS = 0,
-    DC_TRICK_RESULT_FAILß
+    DC_TRICK_RESULT_FAIL
 } DcTrickResult;
 
 typedef uint8_t DcTrickIndex;
@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 // main "draw" functions
-DcTrick dc_trick_create(char *host, int port, float data_rate, int timeout_ms);
+DcTrick dc_trick_create(char *host, int port, float data_rate, int timeout_s);
 void    dc_trick_cleanup(DcTrick *trick);
 void    dc_trick_update(DcTrick *trick);
 
@@ -32,9 +32,9 @@ DcTrickIndex dc_trick_add_rx_var(DcTrick *trick, const char *path, const char *u
 DcTrickIndex dc_trick_add_rx_oad_var(DcTrick *trick, const char *path, const char *units);
 
 // variable set/get functions
-DcTrickResult dc_trick_set_tx_var(DcTrick *trick, DcTrickIndex var, const char *value);
-DcTrickResult dc_trick_get_rx_var_value(DcTrick *trick, DcTrickIndex var_index, char *out);
-DcTrickResult dc_trick_get_rx_oad_value(DcTrick *trick, DcTrickIndex oad_index, char *out);
+void dc_trick_set_tx_var(DcTrick *trick, DcTrickIndex var, const char *value);
+void dc_trick_get_rx_var_value(DcTrick *trick, DcTrickIndex var_index, char *out);
+void dc_trick_get_rx_oad_value(DcTrick *trick, DcTrickIndex oad_index, char *out);
 
 #ifdef __cplusplus
 }

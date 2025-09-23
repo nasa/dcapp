@@ -26,6 +26,28 @@
         "cwd": "${workspaceFolder}/scripts"
       },
       "group": "build"
+    },
+    {
+      "label": "build dcapp-debug (windows)",
+      "type": "shell",
+      "command": "./build-dcapp-windows.bat",
+      "args": [
+        "-c",
+        "debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/scripts"
+      },
+      "group": "build"
+    },
+    {
+      "label": "build tests",
+      "type": "shell",
+      "command": "./tests/build-tests.py",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build"
     }
   ]
 }

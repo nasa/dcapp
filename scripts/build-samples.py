@@ -7,7 +7,10 @@ import sys
 if __name__ == "__main__":
 
     # get dcapp home
-    dcappHome = os.path.abspath(os.path.dirname(__file__) + "/..")
+    file_dir_rel = os.path.dirname(__file__)
+    if not file_dir_rel:
+        file_dir_rel = "."
+    dcappHome = os.path.abspath(file_dir_rel + "/..")
 
     # paths
     genHeader = dcappHome + "/pilotlight/out/dcapp-genheader"
