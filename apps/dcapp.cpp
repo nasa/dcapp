@@ -202,8 +202,8 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
         dc_app_data.logic.close    = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayClose");
 
         // set variables
-        for (auto const &[name, variable] : dc_app_data.variables) {
-            dc_app_data.variables[name].extern_data = gpt_library->load_function(dc_app_data.logic.library, name.c_str());
+        for (auto const &[name, variable_index] : dc_app_data.variable_indices) {
+            dc_app_data.variables[variable_index].extern_data = gpt_library->load_function(dc_app_data.logic.library, name.c_str());
         }
     }
 
@@ -282,25 +282,26 @@ pl_app_update(pl_app_data *pt_app_data) {
 
 // update all variables
 void _refresh_variables() {
-    for (auto const &[name, variable] : dc_app_data.variables) {
-        DcValue *value       = dc_app_index_to_dc_value(variable.value_index);
-        void    *extern_data = variable.extern_data;
+    for (auto const &[name, variable_index] : dc_app_data.variable_indices) {
+        DcAppVariable *variable    = &dc_app_data.variables[variable_index];
+        DcValue       *value       = dc_app_index_to_dc_value(variable->value_index);
+        void          *extern_data = variable->extern_data;
 
         switch (value->type) {
             case DC_APP_VALUE_TYPE_FLOAT: {
-                value->value_float = *((float *)(variable.extern_data));
+                value->value_float = *((float *)(extern_data));
                 break;
             }
             case DC_APP_VALUE_TYPE_INTEGER: {
-                value->value_integer = *((int *)(variable.extern_data));
+                value->value_integer = *((int *)(extern_data));
                 break;
             }
             case DC_APP_VALUE_TYPE_STRING: {
-                value->value_string = *((std::string *)(variable.extern_data));
+                value->value_string = *((std::string *)(extern_data));
                 break;
             }
             case DC_APP_VALUE_TYPE_BOOLEAN: {
-                value->value_boolean = *((bool *)(variable.extern_data));
+                value->value_boolean = *((bool *)(extern_data));
                 break;
             }
             default:
@@ -809,7 +810,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
 
             // register variable
             DcAppValueIndex index = dc_app_register_dc_value(initial_value);
-            dc_app_set_variable(name, index);
+            dc_app_register_variable(name, index);
 
             break;
         }

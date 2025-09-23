@@ -2,7 +2,7 @@
 
 // dcapp includes
 #define PL_EXPERIMENTAL
-#include <value.hpp>
+#include "value.hpp"
 
 // library includes
 #include <libxml2/libxml/parser.h>
@@ -203,7 +203,8 @@ typedef struct _DcAppLogic {
     void (*close)();
 } DcAppLogic;
 
-// variables
+// variable utils
+typedef uint32_t DcAppVariableIndex;
 typedef struct _DcAppVariable {
     void           *extern_data;
     DcAppValueIndex value_index;
@@ -222,7 +223,7 @@ DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType t
 DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType type, std::string text);
 
 // variable utils
-void dc_app_set_variable(const std::string &name, DcAppValueIndex value_index);
+void dc_app_register_variable(const std::string &name, DcAppValueIndex value_index);
 
 // node utils
 std::string    dc_app_node_type_to_string(DcAppNodeType type);
@@ -242,9 +243,10 @@ typedef struct _DcAppData {
     std::string log_dir_path;
 
     // values
-    std::map<std::string, std::string>   constants;
-    std::map<std::string, DcAppVariable> variables;
-    std::vector<DcValue>                 values;
+    std::map<std::string, std::string>        constants;
+    std::map<std::string, DcAppVariableIndex> variable_indices;
+    std::vector<DcAppVariable>                variables;
+    std::vector<DcValue>                      values;
 
     // nodes
     std::vector<DcAppNode> nodes;

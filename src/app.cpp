@@ -220,8 +220,8 @@ DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType t
     std::string cleanedValue = dc_utils_trim_whitespace(text);
     if (cleanedValue.length() > 1 && cleanedValue[0] == '@') {
         std::string variableName = cleanedValue.substr(1);
-        if (dc_app_data.variables.count(variableName)) {
-            return dc_app_data.variables[variableName].value_index;
+        if (dc_app_data.variable_indices.count(variableName)) {
+            return dc_app_data.variables[dc_app_data.variable_indices[variableName]].value_index;
         }
         throw std::runtime_error("Non-existant variable @" + variableName);
     }
@@ -230,14 +230,15 @@ DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType t
     return dc_app_register_dc_value(dc_value_create_typed_value_from_string(type, text));
 }
 
-void dc_app_set_variable(const std::string &name, DcAppValueIndex value_index) {
-    if (dc_app_data.variables.count(name)) {
+void dc_app_register_variable(const std::string &name, DcAppValueIndex value_index) {
+    if (dc_app_data.variable_indices.count(name)) {
         throw std::runtime_error("Duplicate variable for name " + name);
     }
-    dc_app_data.variables[name] = (DcAppVariable){
+    dc_app_data.variables.push_back((DcAppVariable){
         nullptr,
         value_index,
-    };
+    });
+    dc_app_data.variable_indices[name] = dc_app_data.variables.size() - 1;
 }
 
 std::string dc_app_node_type_to_string(DcAppNodeType type) {
@@ -421,8 +422,9 @@ void dc_app_init_data() {
     dc_app_data.cache_dir_path   = "";
     dc_app_data.log_dir_path     = "";
     dc_app_data.constants.clear();
-    dc_app_data.variables.clear();
+    dc_app_data.variable_indices.clear();
     dc_app_data.values.resize(1);
+    dc_app_data.variables.resize(1);
     dc_app_data.nodes.resize(1);
     dc_app_data.window = DC_APP_NODE_INDEX_UNDEFINED;
     dc_app_data.logic  = (DcAppLogic){
