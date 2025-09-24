@@ -4,34 +4,41 @@
 // library includes
 
 // c++ standard includes
-#include <stdexcept>
 #include <string>
 #include <vector>
 
+static bool _string_is_float(const std::string &text) {
+    char* end = nullptr;
+    errno = 0;
+    std::strtof(text.c_str(), &end);
+    return (end != text.c_str() && *end == '\0' && errno == 0);
+}
+
+static bool _string_is_int(const std::string& text) {
+    char* end = nullptr;
+    errno = 0;
+    std::strtol(text.c_str(), &end, 10);
+    return (end != text.c_str() && *end == '\0' && errno == 0);
+}
+
 // convert a string to a double
 double dc_utils_string_to_float(const std::string &text) {
-    double result = 0;
-    try {
-        result = std::stod(text);
-    } catch (const std::invalid_argument) {
-        result = (double)dc_utils_string_to_integer(text);
-    } catch (const std::out_of_range) {
-        result = (double)dc_utils_string_to_integer(text);
+    if (_string_is_float(text)) {
+        return std::stod(text);
+    } else {
+        return (double)dc_utils_string_to_boolean(text);
     }
-    return result;
 }
 
 // convert a string to an integer
 int dc_utils_string_to_integer(const std::string &text) {
-    int result = 0;
-    try {
-        result = std::stoi(text);
-    } catch (const std::invalid_argument) {
-        result = (int)dc_utils_string_to_boolean(text);
-    } catch (const std::out_of_range) {
-        result = (int)dc_utils_string_to_boolean(text);
+    if (_string_is_int(text)) {
+        return std::stoi(text);
+    } else if (_string_is_float(text)){
+        return (int)std::stod(text);
+    } else {
+        return (bool)dc_utils_string_to_boolean(text);
     }
-    return result;
 }
 
 // convert a string to a boolean
