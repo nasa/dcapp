@@ -240,8 +240,8 @@ std::string dc_app_dereference_constants(const char *text);
 std::string dc_app_dereference_constants(std::string text);
 
 // value utils
-DcValue        *dc_app_index_to_dc_value(DcAppValueIndex index);
-DcAppValueIndex dc_app_register_dc_value(DcValue value);
+DcValue        *dc_app_get_value(DcAppValueIndex index);
+DcAppValueIndex dc_app_register_value(DcValue value);
 DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType type, const char *text);
 DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType type, std::string text);
 

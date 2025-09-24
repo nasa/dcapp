@@ -218,11 +218,11 @@ std::string dc_app_dereference_constants(std::string text) {
     return output;
 }
 
-DcValue *dc_app_index_to_dc_value(DcAppValueIndex index) {
+DcValue *dc_app_get_value(DcAppValueIndex index) {
     return &(dc_app_data.values[index]);
 }
 
-DcAppValueIndex dc_app_register_dc_value(DcValue value) {
+DcAppValueIndex dc_app_register_value(DcValue value) {
     dc_app_data.values.push_back(value);
     return dc_app_data.values.size() - 1;
 }
@@ -240,7 +240,7 @@ DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType t
     }
 
     // otherwise create new DcValue and return its index
-    return dc_app_register_dc_value(dc_value_create_typed_value_from_string(type, text));
+    return dc_app_register_value(dc_value_create_typed_value_from_string(type, text));
 }
 
 void dc_app_register_var(const std::string &name, DcAppValueIndex value_index) {
@@ -262,14 +262,14 @@ DcAppVarIndex dc_app_get_var_index(const std::string &name) {
 }
 
 void dc_app_set_var_to_string(DcAppVar *var, const std::string new_string) {
-    DcValue *value = dc_app_index_to_dc_value(var->value_index);
+    DcValue *value = dc_app_get_value(var->value_index);
     dc_value_set_from_string(value, new_string);
     dc_app_refresh_var_from_value(var);
 }
 
 // update the variable using the extern as the reference
 void dc_app_refresh_var_from_extern(DcAppVar *var) {
-    DcValue *value       = dc_app_index_to_dc_value(var->value_index);
+    DcValue *value       = dc_app_get_value(var->value_index);
     void    *extern_data = var->extern_data;
 
     switch (value->type) {
@@ -298,7 +298,7 @@ void dc_app_refresh_var_from_extern(DcAppVar *var) {
 
 // update the variable using the value as reference
 void dc_app_refresh_var_from_value(DcAppVar *var) {
-    DcValue *value       = dc_app_index_to_dc_value(var->value_index);
+    DcValue *value       = dc_app_get_value(var->value_index);
     void    *extern_data = var->extern_data;
 
     switch (value->type) {
