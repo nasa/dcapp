@@ -40,6 +40,14 @@ std::string dc_app_elem_type_to_string(DcAppElemType type) {
             return "Panel";
         case DC_APP_ELEM_TYPE_POLYGON:
             return "Polygon";
+        case DC_APP_ELEM_TYPE_TRICK_FROM:
+            return "FromTrick";
+        case DC_APP_ELEM_TYPE_TRICK_IO:
+            return "TrickIO";
+        case DC_APP_ELEM_TYPE_TRICK_TO:
+            return "ToTrick";
+        case DC_APP_ELEM_TYPE_TRICK_VARIABLE:
+            return "TrickVariable";
         case DC_APP_ELEM_TYPE_VARIABLE:
             return "Variable";
         case DC_APP_ELEM_TYPE_VERTEX:
@@ -63,6 +71,8 @@ DcAppElemType dc_app_string_to_elem_type(std::string name) {
         return DC_APP_ELEM_TYPE_DEM;
     if (name == "Dummy")
         return DC_APP_ELEM_TYPE_DUMMY;
+    if (name == "FromTrick")
+        return DC_APP_ELEM_TYPE_TRICK_FROM;
     if (name == "Include")
         return DC_APP_ELEM_TYPE_INCLUDE;
     if (name == "Logic")
@@ -73,6 +83,12 @@ DcAppElemType dc_app_string_to_elem_type(std::string name) {
         return DC_APP_ELEM_TYPE_PANEL;
     if (name == "Polygon")
         return DC_APP_ELEM_TYPE_POLYGON;
+    if (name == "ToTrick")
+        return DC_APP_ELEM_TYPE_TRICK_TO;
+    if (name == "TrickIO")
+        return DC_APP_ELEM_TYPE_TRICK_IO;
+    if (name == "TrickVariable")
+        return DC_APP_ELEM_TYPE_TRICK_VARIABLE;
     if (name == "Variable")
         return DC_APP_ELEM_TYPE_VARIABLE;
     if (name == "Vertex")
@@ -216,29 +232,96 @@ DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType t
 }
 
 DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType type, std::string text) {
-    // check for variable
-    std::string cleanedValue = dc_utils_trim_whitespace(text);
-    if (cleanedValue.length() > 1 && cleanedValue[0] == '@') {
-        std::string variableName = cleanedValue.substr(1);
-        if (dc_app_data.variable_indices.count(variableName)) {
-            return dc_app_data.variables[dc_app_data.variable_indices[variableName]].value_index;
-        }
-        throw std::runtime_error("Non-existant variable @" + variableName);
+    // check for var
+    std::string cleaned_text = dc_utils_trim_whitespace(text);
+    if (cleaned_text.length() > 1 && cleaned_text[0] == '@') {
+        std::string var_name = cleaned_text.substr(1);
+        return dc_app_get_var_index(var_name);
     }
 
     // otherwise create new DcValue and return its index
     return dc_app_register_dc_value(dc_value_create_typed_value_from_string(type, text));
 }
 
-void dc_app_register_variable(const std::string &name, DcAppValueIndex value_index) {
-    if (dc_app_data.variable_indices.count(name)) {
+void dc_app_register_var(const std::string &name, DcAppValueIndex value_index) {
+    if (dc_app_data.var_indices.count(name)) {
         throw std::runtime_error("Duplicate variable for name " + name);
     }
-    dc_app_data.variables.push_back((DcAppVariable){
+    dc_app_data.vars.push_back((DcAppVar){
         nullptr,
         value_index,
     });
-    dc_app_data.variable_indices[name] = dc_app_data.variables.size() - 1;
+    dc_app_data.var_indices[name] = dc_app_data.vars.size() - 1;
+}
+
+DcAppVarIndex dc_app_get_var_index(const std::string &name) {
+    if (dc_app_data.var_indices.count(name)) {
+        return dc_app_data.vars[dc_app_data.var_indices[name]].value_index;
+    }
+    throw std::runtime_error("Non-existant variable @" + name);
+}
+
+void dc_app_set_var_to_string(DcAppVar *var, const std::string new_string) {
+    DcValue *value = dc_app_index_to_dc_value(var->value_index);
+    dc_value_set_from_string(value, new_string);
+    dc_app_refresh_var_from_value(var);
+}
+
+// update the variable using the extern as the reference
+void dc_app_refresh_var_from_extern(DcAppVar *var) {
+    DcValue *value       = dc_app_index_to_dc_value(var->value_index);
+    void    *extern_data = var->extern_data;
+
+    switch (value->type) {
+        case DC_APP_VALUE_TYPE_FLOAT: {
+            value->value_float = *((float *)(extern_data));
+            break;
+        }
+        case DC_APP_VALUE_TYPE_INTEGER: {
+            value->value_integer = *((int *)(extern_data));
+            break;
+        }
+        case DC_APP_VALUE_TYPE_STRING: {
+            value->value_string = *((std::string *)(extern_data));
+            break;
+        }
+        case DC_APP_VALUE_TYPE_BOOLEAN: {
+            value->value_boolean = *((bool *)(extern_data));
+            break;
+        }
+        default:
+            throw std::runtime_error("invalid DcValue type for variable");
+            break;
+    }
+    dc_value_refresh(value);
+}
+
+// update the variable using the value as reference
+void dc_app_refresh_var_from_value(DcAppVar *var) {
+    DcValue *value       = dc_app_index_to_dc_value(var->value_index);
+    void    *extern_data = var->extern_data;
+
+    switch (value->type) {
+        case DC_APP_VALUE_TYPE_FLOAT: {
+            *((float *)(extern_data)) = value->value_float;
+            break;
+        }
+        case DC_APP_VALUE_TYPE_INTEGER: {
+            *((int *)(extern_data)) = value->value_integer;
+            break;
+        }
+        case DC_APP_VALUE_TYPE_STRING: {
+            *((std::string *)(extern_data)) = value->value_string;
+            break;
+        }
+        case DC_APP_VALUE_TYPE_BOOLEAN: {
+            *((bool *)(extern_data)) = value->value_boolean;
+            break;
+        }
+        default:
+            throw std::runtime_error("invalid DcValue type for variable");
+            break;
+    }
 }
 
 std::string dc_app_node_type_to_string(DcAppNodeType type) {
@@ -422,9 +505,9 @@ void dc_app_init_data() {
     dc_app_data.cache_dir_path   = "";
     dc_app_data.log_dir_path     = "";
     dc_app_data.constants.clear();
-    dc_app_data.variable_indices.clear();
+    dc_app_data.var_indices.clear();
     dc_app_data.values.resize(1);
-    dc_app_data.variables.resize(1);
+    dc_app_data.vars.resize(1);
     dc_app_data.nodes.resize(1);
     dc_app_data.window = DC_APP_NODE_INDEX_UNDEFINED;
     dc_app_data.logic  = (DcAppLogic){

@@ -3,7 +3,8 @@
 // [SECTION] dcapp includes
 //-----------------------------------------------------------------------------
 
-#include <app.hpp>
+#include "../src/app.hpp"
+#include "trick.hpp"
 #include <utils/file.hpp>
 #include <utils/string.hpp>
 #include <utils/xml.hpp>
@@ -52,9 +53,8 @@ typedef struct _plAppData {
 // [SECTION] dcapp state
 //-----------------------------------------------------------------------------
 
-static void           _refresh_variables();
-static DcAppNodeIndex _process_node_children(xmlNodePtr xml_node, DcAppNodeIndex node_index, const std::string &directory);
-static DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, std::string directory);
+static DcAppNodeIndex _process_node_children(xmlNodePtr xml_node, DcAppNodeIndex node_index, DcAppElemType parent_elem_type, const std::string &directory);
+static DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppElemType parent_elem_type, std::string directory);
 static void           _draw_node_list(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *node_transform);
 static void           _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *parent_transform);
 
@@ -76,7 +76,7 @@ const plIOI      *gpt_ioi     = NULL;
 
 //-----------------------------------------------------------------------------
 // [SECTION] pl_app_load
-//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------s
 
 PL_EXPORT void *
 pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
@@ -191,7 +191,7 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
 
     // process XML
     xmlNodePtr root_node = xmlDocGetRootElement(dc_app_data.doc);
-    _process_node(root_node, DC_APP_NODE_INDEX_UNDEFINED, config_dir_path);
+    _process_node(root_node, DC_APP_NODE_INDEX_UNDEFINED, DC_APP_ELEM_TYPE_UNDEFINED, config_dir_path);
 
     // configure logic file
     if (dc_app_data.logic.library) {
@@ -201,9 +201,10 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
         dc_app_data.logic.draw     = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayDraw");
         dc_app_data.logic.close    = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayClose");
 
-        // set variables
-        for (auto const &[name, variable_index] : dc_app_data.variable_indices) {
-            dc_app_data.variables[variable_index].extern_data = gpt_library->load_function(dc_app_data.logic.library, name.c_str());
+        // link variables to extern logic data
+        for (auto const &[name, var_index] : dc_app_data.var_indices) {
+            DcAppVar *var    = &(dc_app_data.vars[var_index]);
+            var->extern_data = gpt_library->load_function(dc_app_data.logic.library, name.c_str());
         }
     }
 
@@ -268,10 +269,56 @@ pl_app_update(pl_app_data *pt_app_data) {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     gpt_profile->begin_sample(0, "example drawing");
-
     pt_app_data->pt_fg_layer = gpt_starter->get_foreground_layer();
+
+    // send trick data
+    for (int ii = 0; ii < dc_app_data.trick_contexts.size(); ii++) {
+
+        DcAppTrickContext *trick_context = dc_app_data.trick_contexts[ii];
+        DcTrick           *trick         = trick_context->trick;
+
+        // add tx commands to buffer
+        if (trick->is_connected) {
+            for (int jj = 0; jj < trick_context->tx_var_contexts.size(); jj++) {
+
+                DcAppTrickTxVarContext *tx_var_context = &(trick_context->tx_var_contexts[jj]);
+                DcAppVar               *dc_app_var     = &dc_app_data.vars[tx_var_context->dcapp_var_index];
+                DcValue                *curr_value     = &dc_app_data.values[dc_app_var->value_index];
+                DcValue                *prev_value     = &tx_var_context->prev_value;
+
+                // send if new value is different
+                if (!dc_value_is_equal(curr_value, prev_value)) {
+                    dc_trick_set_tx_var(trick, tx_var_context->trick_var_index, curr_value->value_string.c_str());
+                    dc_value_copy(prev_value, curr_value);
+                }
+            }
+        }
+
+        // send the updated buffer, receive the new data, update the connection status
+        dc_trick_update(trick);
+
+        // receive the new data
+        if (trick->has_new_data && trick->is_connected) {
+            char rx_buffer[256];
+            for (int jj = 0; jj < trick_context->rx_var_contexts.size(); jj++) {
+
+                DcAppTrickRxVarContext *rx_var_context = &(trick_context->rx_var_contexts[jj]);
+                DcAppVar               *dc_app_var     = &dc_app_data.vars[rx_var_context->dcapp_var_index];
+                DcValue                *value          = &dc_app_data.values[dc_app_var->value_index];
+
+                dc_trick_get_rx_var_value(trick, rx_var_context->trick_var_index, rx_buffer);
+                dc_app_set_var_to_string(dc_app_var, (std::string)rx_buffer);
+            }
+        }
+    }
+
+    // process logic, update vars from extern_data
     dc_app_data.logic.draw();
-    _refresh_variables();
+    for (auto const &[name, var_index] : dc_app_data.var_indices) {
+        DcAppVar *var = &dc_app_data.vars[var_index];
+        dc_app_refresh_var_from_extern(var);
+    }
+
     _draw_node(pt_app_data, dc_app_data.window, nullptr);
 
     gpt_profile->end_sample(0);
@@ -280,72 +327,43 @@ pl_app_update(pl_app_data *pt_app_data) {
     gpt_starter->end_frame();
 }
 
-// update all variables
-void _refresh_variables() {
-    for (auto const &[name, variable_index] : dc_app_data.variable_indices) {
-        DcAppVariable *variable    = &dc_app_data.variables[variable_index];
-        DcValue       *value       = dc_app_index_to_dc_value(variable->value_index);
-        void          *extern_data = variable->extern_data;
-
-        switch (value->type) {
-            case DC_APP_VALUE_TYPE_FLOAT: {
-                value->value_float = *((float *)(extern_data));
-                break;
-            }
-            case DC_APP_VALUE_TYPE_INTEGER: {
-                value->value_integer = *((int *)(extern_data));
-                break;
-            }
-            case DC_APP_VALUE_TYPE_STRING: {
-                value->value_string = *((std::string *)(extern_data));
-                break;
-            }
-            case DC_APP_VALUE_TYPE_BOOLEAN: {
-                value->value_boolean = *((bool *)(extern_data));
-                break;
-            }
-            default:
-                throw std::runtime_error("invalid DcValue type for variable");
-                break;
-        }
-        dc_value_refresh_value(value);
-    }
-}
-
 // returns the first child (if any)
-DcAppNodeIndex _process_node_children(xmlNodePtr xml_node, DcAppNodeIndex node_index, const std::string &directory) {
+DcAppNodeIndex _process_node_children(xmlNodePtr xml_node, DcAppNodeIndex node_index, DcAppElemType elem_type, const std::string &directory) {
     xmlNodePtr xml_child_node = xml_node->children;
 
     DcAppNodeIndex first_child_index         = DC_APP_NODE_INDEX_UNDEFINED;
     DcAppNodeIndex previous_child_node_index = DC_APP_NODE_INDEX_UNDEFINED;
     while (xml_child_node) {
-        DcAppNodeIndex child_node_index = _process_node(xml_child_node, node_index, directory);
+        DcAppNodeIndex child_node_index = _process_node(xml_child_node, node_index, elem_type, directory);
 
-        // get node addresses here since the address could change per node process
-        DcAppNode *node                = dc_app_index_to_node(node_index);
-        DcAppNode *child_node          = dc_app_index_to_node(child_node_index);
-        DcAppNode *previous_child_node = dc_app_index_to_node(previous_child_node_index);
-
-        // if the current node and child exists
-        if (node && child_node) {
-            // set child's parent
-            child_node->parent = node_index;
-
-            // set nodes's first child if this is the first child
-            if (previous_child_node_index == DC_APP_NODE_INDEX_UNDEFINED) {
-                first_child_index = child_node_index;
-            }
-        }
-
-        // if there is a previous node
-        if (previous_child_node) {
-            // set the next node of the previous node
-            previous_child_node->next = child_node_index;
-        }
-
-        // set previous child node
         if (child_node_index != DC_APP_NODE_INDEX_UNDEFINED) {
-            previous_child_node_index = child_node_index;
+
+            // get node addresses here since the address could change per node process
+            DcAppNode *node                = dc_app_index_to_node(node_index);
+            DcAppNode *child_node          = dc_app_index_to_node(child_node_index);
+            DcAppNode *previous_child_node = dc_app_index_to_node(previous_child_node_index);
+
+            // if the current node and child exists
+            if (node && child_node) {
+                // set child's parent
+                child_node->parent = node_index;
+
+                // set nodes's first child if this is the first child
+                if (previous_child_node_index == DC_APP_NODE_INDEX_UNDEFINED) {
+                    first_child_index = child_node_index;
+                }
+            }
+
+            // if there is a previous node
+            if (previous_child_node) {
+                // set the next node of the previous node
+                previous_child_node->next = child_node_index;
+            }
+
+            // set previous child node
+            if (child_node_index != DC_APP_NODE_INDEX_UNDEFINED) {
+                previous_child_node_index = child_node_index;
+            }
         }
 
         // increment pointer
@@ -355,11 +373,12 @@ DcAppNodeIndex _process_node_children(xmlNodePtr xml_node, DcAppNodeIndex node_i
     return first_child_index;
 }
 
-DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, std::string directory) {
+DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppElemType parent_elem_type, std::string directory) {
     // by default, the element is not a node
     DcAppNodeIndex node_index = DC_APP_NODE_INDEX_UNDEFINED;
 
-    switch (dc_app_xml_node_to_elem_type(xml_node)) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+    switch (elem_type) {
 
         // ignore non-element nodes
         case DC_APP_ELEM_TYPE_NONELEM: {
@@ -496,7 +515,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             node_index = dc_app_register_node(dc_node);
 
             // process children
-            DcAppNodeIndex first_child_index = _process_node_children(xml_node, node_index, directory);
+            DcAppNodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
 
             // update child index
             DcAppNode *node       = dc_app_index_to_node(node_index);
@@ -506,7 +525,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
 
         // really just the root element, left in for legacy reasons
         case DC_APP_ELEM_TYPE_DCAPP: {
-            _process_node_children(xml_node, node_index, directory);
+            _process_node_children(xml_node, node_index, elem_type, directory);
             break;
         }
 
@@ -574,7 +593,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             node_index = dc_app_register_node(dc_node);
 
             // process children (assigning to true/false handled in separate cases, e.g. DC_APP_ELEM_TYPE_TRUE)
-            DcAppNodeIndex first_child_index = _process_node_children(xml_node, node_index, directory);
+            DcAppNodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
 
             // handle implicit <True> elements
             if (first_child_index != DC_APP_NODE_INDEX_UNDEFINED) {
@@ -593,7 +612,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
         case DC_APP_ELEM_TYPE_INCLUDE: {
             char *c_directory = dc_utils_get_attribute_string(xml_node, "Directory");
             if (c_directory) {
-                node_index = _process_node_children(xml_node, parent_node_index, dc_app_dereference_constants(c_directory));
+                node_index = _process_node_children(xml_node, parent_node_index, parent_elem_type, dc_app_dereference_constants(c_directory));
                 free(c_directory);
             } else {
                 // should never get here
@@ -681,7 +700,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             node_index = dc_app_register_node(dc_node);
 
             // process children
-            DcAppNodeIndex first_child_index = _process_node_children(xml_node, node_index, directory);
+            DcAppNodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
 
             // update child index
             DcAppNode *node   = dc_app_index_to_node(node_index);
@@ -777,7 +796,139 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             node_index = dc_app_register_node(dc_node);
 
             // process children
-            _process_node_children(xml_node, node_index, directory);
+            _process_node_children(xml_node, node_index, elem_type, directory);
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_TRICK_FROM: {
+            switch (parent_elem_type) {
+                case DC_APP_ELEM_TYPE_TRICK_IO: {
+                    _process_node_children(xml_node, DC_APP_NODE_INDEX_UNDEFINED, elem_type, directory);
+                    break;
+                }
+                default:
+                    throw std::runtime_error("Invalid elem parent of type " + dc_app_elem_type_to_string(parent_elem_type) + " for FromTrick.");
+            }
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_TRICK_IO: {
+
+            // host
+            char *c_host = dc_utils_get_attribute_string(xml_node, "Host");
+            if (!c_host) {
+                throw std::runtime_error("Missing attribute 'Host' in <TrickIO> element");
+            }
+            std::string host = dc_app_dereference_constants(c_host);
+            free(c_host);
+
+            // port
+            char *c_port = dc_utils_get_attribute_string(xml_node, "Port");
+            if (!c_port) {
+                throw std::runtime_error("Missing attribute 'Port' in <TrickIO> element");
+            }
+            int port = dc_utils_string_to_integer(dc_app_dereference_constants(c_port));
+            free(c_port);
+
+            // data rate
+            char *c_data_rate = dc_utils_get_attribute_string(xml_node, "Type");
+            float data_rate   = .1;
+            if (c_data_rate) {
+                data_rate = dc_utils_string_to_float(dc_app_dereference_constants(c_data_rate));
+            }
+            free(c_data_rate);
+
+            // create trick instance
+            DcAppTrickContext *dc_app_trick = new DcAppTrickContext();
+            dc_app_trick->trick             = dc_trick_create(host.c_str(), port, data_rate, 1);
+            dc_app_trick->rx_var_contexts.clear();
+            dc_app_trick->tx_var_contexts.clear();
+            dc_app_data.trick_contexts.push_back(dc_app_trick);
+
+            // process children
+            _process_node_children(xml_node, DC_APP_NODE_INDEX_UNDEFINED, elem_type, directory);
+
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_TRICK_TO: {
+            switch (parent_elem_type) {
+                case DC_APP_ELEM_TYPE_TRICK_IO: {
+                    _process_node_children(xml_node, DC_APP_NODE_INDEX_UNDEFINED, elem_type, directory);
+                    break;
+                }
+                default:
+                    throw std::runtime_error("Invalid elem parent of type " + dc_app_elem_type_to_string(parent_elem_type) + " for ToTrick.");
+            }
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_TRICK_VARIABLE: {
+
+            // check for invalid elem type
+            switch (parent_elem_type) {
+                case DC_APP_ELEM_TYPE_TRICK_FROM:
+                case DC_APP_ELEM_TYPE_TRICK_TO:
+                    break;
+                default:
+                    throw std::runtime_error("Invalid elem parent of type " + dc_app_elem_type_to_string(parent_elem_type) + " for ToTrick.");
+            }
+
+            // trick var path
+            char *c_trick_path = dc_utils_get_attribute_string(xml_node, "Name");
+            if (!c_trick_path) {
+                throw std::runtime_error("Missing attribute 'Name' in <TrickVar> element");
+            }
+            std::string trick_path = dc_app_dereference_constants(c_trick_path);
+            free(c_trick_path);
+
+            // dcapp var
+            char *c_dcapp_var = dc_utils_get_node_content_string(xml_node);
+            if (!c_dcapp_var) {
+                throw std::runtime_error("Missing attribute 'Name' in <TrickVar> element");
+            }
+            std::string dcapp_var = dc_app_dereference_constants(c_dcapp_var);
+            free(c_dcapp_var);
+
+            // units (know this is convoluted)
+            char       *c_units = dc_utils_get_attribute_string(xml_node, "Units");
+            std::string units_string;
+            if (c_units) {
+                units_string = dc_app_dereference_constants(c_units);
+                free(c_units);
+                c_units = (char *)units_string.c_str();
+            }
+
+            // get current trick context
+            DcAppTrickContext *dc_app_trick = dc_app_data.trick_contexts.back();
+
+            // handle depending on parent
+            switch (parent_elem_type) {
+                case DC_APP_ELEM_TYPE_TRICK_FROM: {
+
+                    // create + add rx var
+                    DcAppTrickRxVarContext var;
+                    var.trick_var_index = dc_trick_add_rx_var(dc_app_trick->trick, c_trick_path, c_units);
+                    var.dcapp_var_index = dc_app_get_var_index(dcapp_var);
+                    dc_app_trick->rx_var_contexts.push_back(var);
+                    break;
+                }
+                case DC_APP_ELEM_TYPE_TRICK_TO: {
+
+                    // create + add tx var
+                    DcAppTrickTxVarContext var;
+                    DcValue               *dc_value = dc_app_index_to_dc_value(dc_app_data.vars[var.dcapp_var_index].value_index);
+
+                    var.dcapp_var_index = dc_app_get_var_index(dcapp_var);
+                    var.trick_var_index = dc_trick_add_tx_var(dc_app_trick->trick, c_trick_path, c_units, dc_value->type == DC_APP_VALUE_TYPE_STRING);
+                    dc_value_copy(&var.prev_value, dc_value);
+                    dc_app_trick->tx_var_contexts.push_back(var);
+                    break;
+                }
+                default:
+                    // should never reach here
+                    break;
+            }
             break;
         }
 
@@ -808,9 +959,9 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             initial_value.type       = type;
             initial_value.is_dynamic = true;
 
-            // register variable
+            // register var
             DcAppValueIndex index = dc_app_register_dc_value(initial_value);
-            dc_app_register_variable(name, index);
+            dc_app_register_var(name, index);
 
             break;
         }
@@ -919,7 +1070,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             node_index = dc_app_register_node(dc_node);
 
             // process children
-            DcAppNodeIndex first_child_index = _process_node_children(xml_node, node_index, directory);
+            DcAppNodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
 
             // update child index
             DcAppNode *node    = dc_app_index_to_node(node_index);
@@ -1077,8 +1228,8 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
             DcValue *dimension_value_y       = dc_app_index_to_dc_value(node->window.dimensions.y);
             dimension_value_x->value_integer = (int)dimensionX;
             dimension_value_y->value_integer = (int)dimensionY;
-            dc_value_refresh_value(dimension_value_x);
-            dc_value_refresh_value(dimension_value_y);
+            dc_value_refresh(dimension_value_x);
+            dc_value_refresh(dimension_value_y);
 
             // compute transforms
             // translate from negative to positive range

@@ -103,8 +103,8 @@ int main(int argc, char **argv) {
     out_file << "\n";
 
     // file variable definitions
-    for (auto &[name, variable_index] : dc_app_data.variable_indices) {
-        switch (dc_app_index_to_dc_value(dc_app_data.variables[variable_index].value_index)->type) {
+    for (auto &[name, var_index] : dc_app_data.var_indices) {
+        switch (dc_app_index_to_dc_value(dc_app_data.vars[var_index].value_index)->type) {
             case DC_APP_VALUE_TYPE_STRING:
                 out_file << "std::string ";
                 break;
@@ -225,7 +225,7 @@ void _process_node(xmlNodePtr xml_node) {
 
             // register variable
             DcAppValueIndex index = dc_app_register_dc_value(initial_value);
-            dc_app_register_variable(name, index);
+            dc_app_register_var(name, index);
             break;
         }
 
