@@ -1,45 +1,59 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "name": "dcapp (linux)",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}/pilotlight/out/pilot_light",
-        "args": ["-a", "dcapp", "${workspaceFolder}/samples/test/test.xml"],
-        "cwd": "${workspaceFolder}/pilotlight/out",
-        "MIMode": "gdb",
-        "miDebuggerPath": "/usr/bin/gdb",
-        "preLaunchTask": "build dcapp-debug (linux)"
-      },
-      {
-        "name": "dcapp (macos)",
-        "type": "lldb",
-        "request": "launch",
-        "program": "${workspaceFolder}/pilotlight/out/pilot_light",
-        "args": ["-a", "dcapp", "${workspaceFolder}/samples/test/test.xml"],
-        "cwd": "${workspaceFolder}/pilotlight/out",
-        "preLaunchTask": "build dcapp-debug (macos)"
-      },
-      {
-        "name": "dcapp (windows)",
-        "type": "cppdbg",
-        "request": "launch",
-        "program": "${workspaceFolder}\\pilotlight\\out\\pilot_light.exe",
-        "args": ["-a", "dcapp", "${workspaceFolder}/samples/test/test.xml"],
-        "cwd": "${workspaceFolder}\\pilotlight\\out",
-        "MIMode": "gdb",
-        "miDebuggerPath": "C:\\MinGW\\bin\\gdb.exe",
-        "preLaunchTask": "build dcapp-debug (windows)"
-      },
-      {
-        "name": "test trick (macos)",
-        "type": "lldb",
-        "request": "launch",
-        "program": "${workspaceFolder}/bin/test-trick",
-        "cwd": "${workspaceFolder}/bin",
-        "preLaunchTask": "build tests"
-      },
-    ]
-  }
-  
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "dcapp (linux)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/pilotlight/out/pilot_light",
+      "args": [
+        "-a",
+        "dcapp",
+        "${workspaceFolder}/samples/test/test.xml"
+      ],
+      "cwd": "${workspaceFolder}/pilotlight/out",
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "preLaunchTask": "build dcapp-debug (linux)",
+      "exceptionBreakpoints": {
+        "all": false,
+        "uncaught": true
+      }    },
+    {
+      "name": "dcapp (macos)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/pilotlight/out/pilot_light",
+      "args": [
+        "-a",
+        "dcapp",
+        "${workspaceFolder}/samples/test/test.xml"
+      ],
+      "cwd": "${workspaceFolder}/pilotlight/out",
+      "preLaunchTask": "build dcapp-debug (macos)"
+    },
+    {
+      "name": "dcapp (windows)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}\\pilotlight\\out\\pilot_light.exe",
+      "args": [
+        "-a",
+        "dcapp",
+        "${workspaceFolder}/samples/test/test.xml"
+      ],
+      "cwd": "${workspaceFolder}\\pilotlight\\out",
+      "MIMode": "gdb",
+      "miDebuggerPath": "C:\\MinGW\\bin\\gdb.exe",
+      "preLaunchTask": "build dcapp-debug (windows)"
+    },
+    {
+      "name": "test trick (macos)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/test-trick",
+      "cwd": "${workspaceFolder}/bin",
+      "preLaunchTask": "build tests"
+    },
+  ]
+}

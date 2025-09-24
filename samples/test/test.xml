@@ -14,6 +14,23 @@
 
     <Variable Type="Integer" InitialValue="1000">TEST_VAR</Variable>
     <Variable Type="Double" InitialValue="30">ROTATE</Variable>
+
+    <Variable Type="Float">POS_X</Variable>
+    <Variable Type="Float">POS_Y</Variable>
+    <Variable Type="Float">VEL_Y</Variable>
+
+    <Variable Type="Float">G</Variable>
+
+    <TrickIO Host="localhost" Port="9123">
+      <FromTrick>
+        <TrickVariable Name="dyn.cannon.pos[0]">POS_X</TrickVariable>
+        <TrickVariable Name="dyn.cannon.pos[1]">POS_Y</TrickVariable>
+        <TrickVariable Name="dyn.cannon.vel[1]">VEL_Y</TrickVariable>
+      </FromTrick>
+      <ToTrick>
+        <TrickVariable Name="dyn.cannon.g">G</TrickVariable>
+      </ToTrick>
+    </TrickIO>
     
 
     <Panel VirtualWidth="1000" VirtualHeight="1000">

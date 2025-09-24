@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     std::filesystem::create_directory(directory);
 
     // create file
-    std::filesystem::path file_path = directory / "dcapp.h";
+    std::filesystem::path file_path = directory / "dcapp.hpp";
     std::ofstream         out_file;
     out_file.open(file_path.string());
 

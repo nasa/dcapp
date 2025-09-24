@@ -81,5 +81,6 @@
     },
     // "C_Cpp.default.compilerPath": "/usr/bin/gcc",
     "C_Cpp.intelliSenseEngine": "disabled",
-    "C_Cpp.errorSquiggles": "disabled"
+    "C_Cpp.errorSquiggles": "disabled",
+    "debug.onTaskErrors": "showErrors"
 }

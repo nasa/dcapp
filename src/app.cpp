@@ -236,7 +236,7 @@ DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType t
     std::string cleaned_text = dc_utils_trim_whitespace(text);
     if (cleaned_text.length() > 1 && cleaned_text[0] == '@') {
         std::string var_name = cleaned_text.substr(1);
-        return dc_app_get_var_index(var_name);
+        return dc_app_data.vars[dc_app_get_var_index(var_name)].value_index;
     }
 
     // otherwise create new DcValue and return its index
@@ -256,7 +256,7 @@ void dc_app_register_var(const std::string &name, DcAppValueIndex value_index) {
 
 DcAppVarIndex dc_app_get_var_index(const std::string &name) {
     if (dc_app_data.var_indices.count(name)) {
-        return dc_app_data.vars[dc_app_data.var_indices[name]].value_index;
+        return dc_app_data.var_indices[name];
     }
     throw std::runtime_error("Non-existant variable @" + name);
 }

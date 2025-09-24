@@ -45,7 +45,7 @@ DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
     struct in6_addr addr6;
     if (inet_pton(AF_INET, host, &addr4) == 1 || inet_pton(AF_INET6, host, &addr6) == 1) {
         strcpy(out, host);
-        return DC_SOCK_RESULT_FAIL;
+        return DC_SOCK_RESULT_SUCCESS;
     }
 
     struct addrinfo hints = {0}, *result, *entry;
