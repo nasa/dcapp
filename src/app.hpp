@@ -2,6 +2,7 @@
 
 // dcapp includes
 #define PL_EXPERIMENTAL
+#include "trick.hpp"
 #include "value.hpp"
 
 // library includes
@@ -37,6 +38,10 @@ typedef enum {
     DC_APP_ELEM_TYPE_NONELEM,
     DC_APP_ELEM_TYPE_PANEL,
     DC_APP_ELEM_TYPE_POLYGON,
+    DC_APP_ELEM_TYPE_TRICK_FROM,
+    DC_APP_ELEM_TYPE_TRICK_IO,
+    DC_APP_ELEM_TYPE_TRICK_TO,
+    DC_APP_ELEM_TYPE_TRICK_VARIABLE,
     DC_APP_ELEM_TYPE_TRUE,
     DC_APP_ELEM_TYPE_VARIABLE,
     DC_APP_ELEM_TYPE_VERTEX,
@@ -204,11 +209,29 @@ typedef struct _DcAppLogic {
 } DcAppLogic;
 
 // variable utils
-typedef uint32_t DcAppVariableIndex;
-typedef struct _DcAppVariable {
+typedef uint32_t DcAppVarIndex;
+typedef struct _DcAppVar {
     void           *extern_data;
     DcAppValueIndex value_index;
-} DcAppVariable;
+} DcAppVar;
+
+// trick utils
+typedef struct _DcAppTrickTxVarContext {
+    DcAppVarIndex   dcapp_var_index;
+    DcTrickVarIndex trick_var_index;
+    DcValue         prev_value;
+} DcAppTrickTxVarContext;
+
+typedef struct _DcAppTrickRxVarContext {
+    DcAppVarIndex   dcapp_var_index;
+    DcTrickVarIndex trick_var_index;
+} DcAppTrickRxVarContext;
+
+typedef struct _DcAppTrickContext {
+    DcTrick                            *trick;
+    std::vector<DcAppTrickTxVarContext> tx_var_contexts;
+    std::vector<DcAppTrickRxVarContext> rx_var_contexts;
+} DcAppTrickContext;
 
 // constant utils
 void        dc_app_set_constant(const std::string &name, const std::string &text);
@@ -217,13 +240,17 @@ std::string dc_app_dereference_constants(const char *text);
 std::string dc_app_dereference_constants(std::string text);
 
 // value utils
-DcValue        *dc_app_index_to_dc_value(DcAppValueIndex index);
-DcAppValueIndex dc_app_register_dc_value(DcValue value);
+DcValue        *dc_app_get_value(DcAppValueIndex index);
+DcAppValueIndex dc_app_register_value(DcValue value);
 DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType type, const char *text);
 DcAppValueIndex dc_app_create_and_register_typed_value_from_string(DcValueType type, std::string text);
 
 // variable utils
-void dc_app_register_variable(const std::string &name, DcAppValueIndex value_index);
+void          dc_app_register_var(const std::string &name, DcAppValueIndex value_index);
+DcAppVarIndex dc_app_get_var_index(const std::string &name);
+void          dc_app_set_var_to_string(DcAppVar *var, const std::string value);
+void          dc_app_refresh_var_from_extern(DcAppVar *var);
+void          dc_app_refresh_var_from_value(DcAppVar *var);
 
 // node utils
 std::string    dc_app_node_type_to_string(DcAppNodeType type);
@@ -243,10 +270,10 @@ typedef struct _DcAppData {
     std::string log_dir_path;
 
     // values
-    std::map<std::string, std::string>        constants;
-    std::map<std::string, DcAppVariableIndex> variable_indices;
-    std::vector<DcAppVariable>                variables;
-    std::vector<DcValue>                      values;
+    std::map<std::string, std::string>   constants;
+    std::map<std::string, DcAppVarIndex> var_indices;
+    std::vector<DcAppVar>                vars;
+    std::vector<DcValue>                 values;
 
     // nodes
     std::vector<DcAppNode> nodes;
@@ -256,6 +283,9 @@ typedef struct _DcAppData {
 
     // logic
     DcAppLogic logic;
+
+    // trick
+    std::vector<DcAppTrickContext *> trick_contexts;
 
     // xml data
     xmlDocPtr doc;

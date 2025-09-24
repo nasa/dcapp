@@ -1,4 +1,4 @@
-#include "dcapp.h"
+#include "dcapp.hpp"
 
 void DisplayPreInit() {
     return;
@@ -13,6 +13,9 @@ void DisplayDraw() {
     if (ROTATE > 360) {
         ROTATE = 0;
     }
+    printf("%f %f %f\n", POS_X, POS_Y, VEL_Y);
+
+    G += .001;
     return;
 }
 
