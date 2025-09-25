@@ -800,6 +800,42 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             break;
         }
 
+        case DC_APP_ELEM_TYPE_SET: {
+
+            DcAppNode dc_node = {
+                .type = DC_APP_NODE_TYPE_SET,
+            };
+
+            // variable
+            char *c_variable = dc_utils_get_attribute_string(xml_node, "Variable");
+            if (!c_variable) {
+                throw std::runtime_error("Missing attribute 'Variable' in <Set> element");
+            }
+            dc_node.set.var_index = dc_app_get_var_index(dc_app_dereference_constants(c_variable));
+            free(c_variable);
+
+            // operand
+            char *c_operand = dc_utils_get_node_content_string(xml_node);
+            if (!c_operand) {
+                throw std::runtime_error("Missing content (operand) in <Set> element");
+            }
+            dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_operand));
+            free(c_operand);
+
+            // operator
+            char *c_operation = dc_utils_get_attribute_string(xml_node, "Operator");
+            if (c_operation) {
+                dc_node.set.operation = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_operation));
+                free(c_operation);
+            } else {
+                dc_node.set.operation = dc_app_register_value(dc_value_create_value_integer(DC_APP_SET_TYPE_EQUAL));
+            }
+
+            // register node
+            node_index = dc_app_register_node(dc_node);
+            break;
+        }
+
         case DC_APP_ELEM_TYPE_TRICK_FROM: {
             switch (parent_elem_type) {
                 case DC_APP_ELEM_TYPE_TRICK_IO: {
@@ -991,8 +1027,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                     break;
                 }
                 default:
-                    // TODO add a nodeTypeToString() function
-                    throw std::runtime_error("Invalid parent of type " + std::string("<Unknown>") + "for vertex.");
+                    throw std::runtime_error("Invalid parent of type " + dc_app_node_type_to_string(parent_node->type) + "for vertex.");
             }
             break;
         }
@@ -1213,7 +1248,110 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
         }
 
         case DC_APP_NODE_TYPE_SET: {
-            // todo implement this
+
+            DcAppVar    *var       = &dc_app_data.vars[node->set.var_index];
+            DcValue     *var_value = dc_app_get_value(var->value_index);
+            DcValue     *op_value  = dc_app_get_value(node->set.operand);
+            DcAppSetType operation = (DcAppSetType)(dc_app_get_value(node->set.operation)->value_integer);
+
+            // apply operation
+            switch (operation) {
+                case DC_APP_SET_TYPE_EQUAL:
+                    switch (var_value->type) {
+                        case DC_APP_VALUE_TYPE_STRING:
+                            var_value->value_string = op_value->value_string;
+                            break;
+                        case DC_APP_VALUE_TYPE_INTEGER:
+                            var_value->value_integer = op_value->value_integer;
+                            break;
+                        case DC_APP_VALUE_TYPE_FLOAT:
+                            var_value->value_float = op_value->value_float;
+                            break;
+                        case DC_APP_VALUE_TYPE_BOOLEAN:
+                            var_value->value_boolean = op_value->value_boolean;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+
+                case DC_APP_SET_TYPE_ADD:
+                    switch (var_value->type) {
+                        case DC_APP_VALUE_TYPE_STRING:
+                            var_value->value_string += op_value->value_string;
+                            break;
+                        case DC_APP_VALUE_TYPE_INTEGER:
+                            var_value->value_integer += op_value->value_integer;
+                            break;
+                        case DC_APP_VALUE_TYPE_FLOAT:
+                            var_value->value_float += op_value->value_float;
+                            break;
+                        case DC_APP_VALUE_TYPE_BOOLEAN:
+                            var_value->value_boolean += op_value->value_boolean;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case DC_APP_SET_TYPE_SUBTRACT:
+                    switch (var_value->type) {
+                        case DC_APP_VALUE_TYPE_STRING:
+                            break;
+                        case DC_APP_VALUE_TYPE_INTEGER:
+                            var_value->value_integer -= op_value->value_integer;
+                            break;
+                        case DC_APP_VALUE_TYPE_FLOAT:
+                            var_value->value_float -= op_value->value_float;
+                            break;
+                        case DC_APP_VALUE_TYPE_BOOLEAN:
+                            var_value->value_boolean -= op_value->value_boolean;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case DC_APP_SET_TYPE_MULTIPLY:
+                    switch (var_value->type) {
+                        case DC_APP_VALUE_TYPE_STRING:
+                            break;
+                        case DC_APP_VALUE_TYPE_INTEGER:
+                            var_value->value_integer *= op_value->value_integer;
+                            break;
+                        case DC_APP_VALUE_TYPE_FLOAT:
+                            var_value->value_float *= op_value->value_float;
+                            break;
+                        case DC_APP_VALUE_TYPE_BOOLEAN:
+                            var_value->value_boolean *= op_value->value_boolean;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case DC_APP_SET_TYPE_DIVIDE:
+                    switch (var_value->type) {
+                        case DC_APP_VALUE_TYPE_STRING:
+                            break;
+                        case DC_APP_VALUE_TYPE_INTEGER:
+                            var_value->value_integer /= op_value->value_integer;
+                            break;
+                        case DC_APP_VALUE_TYPE_FLOAT:
+                            var_value->value_float /= op_value->value_float;
+                            break;
+                        case DC_APP_VALUE_TYPE_BOOLEAN:
+                            var_value->value_boolean /= op_value->value_boolean;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                default:
+                    throw std::runtime_error("Invalid <Set> Operator value of enum " + std::to_string(operation));
+                    break;
+            }
+
+            // refresh variable
+            dc_value_refresh(var_value);
+            dc_app_refresh_var_from_value(var);
             break;
         }
 
