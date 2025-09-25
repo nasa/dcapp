@@ -66,4 +66,10 @@ DcValue     dc_value_create_value_float(float value);
 DcValue     dc_value_create_value_boolean(bool value);
 void        dc_value_refresh(DcValue *value);
 void        dc_value_set_from_string(DcValue *value, const std::string &string_value);
-bool        dc_value_is_equal(DcValue *value1, DcValue *value2);
+
+bool dc_value_is_equal(DcValue *value1, DcValue *value2);
+bool dc_value_is_not_equal(DcValue *value1, DcValue *value2);
+bool dc_value_is_greater(DcValue *value1, DcValue *value2);
+bool dc_value_is_greater_or_equal(DcValue *value1, DcValue *value2);
+bool dc_value_is_less(DcValue *value1, DcValue *value2);
+bool dc_value_is_less_or_equal(DcValue *value1, DcValue *value2);

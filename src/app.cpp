@@ -28,6 +28,10 @@ std::string dc_app_elem_type_to_string(DcAppElemType type) {
             return "DEM";
         case DC_APP_ELEM_TYPE_DUMMY:
             return "Dummy";
+        case DC_APP_ELEM_TYPE_FALSE:
+            return "False";
+        case DC_APP_ELEM_TYPE_IF:
+            return "If";
         case DC_APP_ELEM_TYPE_INCLUDE:
             return "Include";
         case DC_APP_ELEM_TYPE_LOGIC:
@@ -50,6 +54,8 @@ std::string dc_app_elem_type_to_string(DcAppElemType type) {
             return "ToTrick";
         case DC_APP_ELEM_TYPE_TRICK_VARIABLE:
             return "TrickVariable";
+        case DC_APP_ELEM_TYPE_TRUE:
+            return "True";
         case DC_APP_ELEM_TYPE_VARIABLE:
             return "Variable";
         case DC_APP_ELEM_TYPE_VERTEX:
@@ -73,8 +79,12 @@ DcAppElemType dc_app_string_to_elem_type(std::string name) {
         return DC_APP_ELEM_TYPE_DEM;
     if (name == "Dummy")
         return DC_APP_ELEM_TYPE_DUMMY;
+    if (name == "False")
+        return DC_APP_ELEM_TYPE_FALSE;
     if (name == "FromTrick")
         return DC_APP_ELEM_TYPE_TRICK_FROM;
+    if (name == "If")
+        return DC_APP_ELEM_TYPE_IF;
     if (name == "Include")
         return DC_APP_ELEM_TYPE_INCLUDE;
     if (name == "Logic")
@@ -93,6 +103,8 @@ DcAppElemType dc_app_string_to_elem_type(std::string name) {
         return DC_APP_ELEM_TYPE_TRICK_IO;
     if (name == "TrickVariable")
         return DC_APP_ELEM_TYPE_TRICK_VARIABLE;
+    if (name == "True")
+        return DC_APP_ELEM_TYPE_TRUE;
     if (name == "Variable")
         return DC_APP_ELEM_TYPE_VARIABLE;
     if (name == "Vertex")

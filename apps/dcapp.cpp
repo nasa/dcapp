@@ -205,6 +205,9 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
         for (auto const &[name, var_index] : dc_app_data.var_indices) {
             DcAppVar *var    = &(dc_app_data.vars[var_index]);
             var->extern_data = gpt_library->load_function(dc_app_data.logic.library, name.c_str());
+
+            // set the extern data to the initial value
+            dc_app_refresh_var_from_value(var);
         }
     }
 
@@ -547,6 +550,23 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             //     }
             //     break;
             // }
+
+        case DC_APP_ELEM_TYPE_FALSE:
+            switch (parent_elem_type) {
+                case DC_APP_ELEM_TYPE_IF: {
+
+                    // process children
+                    DcAppNodeIndex first_child_index = _process_node_children(xml_node, parent_node_index, elem_type, directory);
+
+                    // update child false node
+                    DcAppNode *parent_node               = dc_app_index_to_node(parent_node_index);
+                    parent_node->conditional.child_false = first_child_index;
+                    break;
+                }
+                default:
+                    throw std::runtime_error("Invalid elem parent of type " + dc_app_elem_type_to_string(parent_elem_type) + " for <False>.");
+            }
+            break;
 
         case DC_APP_ELEM_TYPE_IF: {
             DcAppNode dc_node = (DcAppNode){
@@ -968,6 +988,23 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             break;
         }
 
+        case DC_APP_ELEM_TYPE_TRUE:
+            switch (parent_elem_type) {
+                case DC_APP_ELEM_TYPE_IF: {
+
+                    // process children
+                    DcAppNodeIndex first_child_index = _process_node_children(xml_node, parent_node_index, elem_type, directory);
+
+                    // update child true node
+                    DcAppNode *parent_node              = dc_app_index_to_node(parent_node_index);
+                    parent_node->conditional.child_true = first_child_index;
+                    break;
+                }
+                default:
+                    throw std::runtime_error("Invalid elem parent of type " + dc_app_elem_type_to_string(parent_elem_type) + " for <True>.");
+            }
+            break;
+
         case DC_APP_ELEM_TYPE_VARIABLE: {
             // name
             char *c_name = dc_utils_get_node_content_string(xml_node);
@@ -1190,7 +1227,47 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
         }
 
         case DC_APP_NODE_TYPE_CONDITIONAL: {
-            // TODO implement
+            DcValue             *val1 = dc_app_get_value(node->conditional.value1);
+            DcValue             *val2 = dc_app_get_value(node->conditional.value2);
+            DcAppConditionalType type = (DcAppConditionalType)dc_app_get_value(node->conditional.type)->value_integer;
+
+            // evaluate
+            bool result;
+            switch (type) {
+                case DC_APP_CONDITIONAL_TYPE_TRUE:
+                    result = val1->value_boolean;
+                    break;
+                case DC_APP_CONDITIONAL_TYPE_FALSE:
+                    result = !(val1->value_boolean);
+                    break;
+                case DC_APP_CONDITIONAL_TYPE_EQ:
+                    result = dc_value_is_equal(val1, val2);
+                    break;
+                case DC_APP_CONDITIONAL_TYPE_NE:
+                    result = dc_value_is_not_equal(val1, val2);
+                    break;
+                case DC_APP_CONDITIONAL_TYPE_LT:
+                    result = dc_value_is_less(val1, val2);
+                    break;
+                case DC_APP_CONDITIONAL_TYPE_GT:
+                    result = dc_value_is_greater(val1, val2);
+                    break;
+                case DC_APP_CONDITIONAL_TYPE_LTE:
+                    result = dc_value_is_less_or_equal(val1, val2);
+                    break;
+                case DC_APP_CONDITIONAL_TYPE_GTE:
+                    result = dc_value_is_greater_or_equal(val1, val2);
+                default:
+                    throw std::runtime_error("Unknown conditional_type on evaluation: " + std::to_string(type));
+                    break;
+            }
+
+            // process children
+            if (result) {
+                _draw_node_list(pt_app_data, node->conditional.child_true, parent_transform);
+            } else {
+                _draw_node_list(pt_app_data, node->conditional.child_false, parent_transform);
+            }
             break;
         }
 

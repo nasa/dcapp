@@ -19,7 +19,6 @@ float       G;
 float       POS_X;
 float       POS_Y;
 float       ROTATE;
-int         TEST_VAR;
 float       VEL_Y;
 
 #ifdef __cplusplus

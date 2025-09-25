@@ -124,7 +124,6 @@ void dc_value_set_from_string(DcValue *value, const std::string &string_value) {
     dc_value_refresh(value);
 }
 
-
 bool dc_value_is_equal(DcValue *value1, DcValue *value2) {
     switch (value1->type) {
         case DC_VALUE_TYPE_BOOLEAN:
@@ -141,5 +140,64 @@ bool dc_value_is_equal(DcValue *value1, DcValue *value2) {
             break;
         default:
             throw std::runtime_error("Invalid value tyep");
+    }
+}
+
+bool dc_value_is_not_equal(DcValue *value1, DcValue *value2) {
+    switch (value1->type) {
+        case DC_VALUE_TYPE_BOOLEAN:
+            return value1->value_boolean != value2->value_boolean;
+        case DC_VALUE_TYPE_INTEGER:
+            return value1->value_integer != value2->value_integer;
+        case DC_VALUE_TYPE_FLOAT:
+            return value1->value_float != value2->value_float;
+        case DC_VALUE_TYPE_STRING:
+            return value1->value_string != value2->value_string;
+        default:
+            throw std::runtime_error("Invalid value type");
+    }
+}
+
+bool dc_value_is_greater(DcValue *value1, DcValue *value2) {
+    switch (value1->type) {
+        case DC_VALUE_TYPE_INTEGER:
+            return value1->value_integer > value2->value_integer;
+        case DC_VALUE_TYPE_FLOAT:
+            return value1->value_float > value2->value_float;
+        default:
+            throw std::runtime_error("Invalid type for greater-than comparison: " + std::to_string(value1->type));
+    }
+}
+
+bool dc_value_is_greater_or_equal(DcValue *value1, DcValue *value2) {
+    switch (value1->type) {
+        case DC_VALUE_TYPE_INTEGER:
+            return value1->value_integer >= value2->value_integer;
+        case DC_VALUE_TYPE_FLOAT:
+            return value1->value_float >= value2->value_float;
+        default:
+            throw std::runtime_error("Invalid type for greater-than comparison: " + std::to_string(value1->type));
+    }
+}
+
+bool dc_value_is_less(DcValue *value1, DcValue *value2) {
+    switch (value1->type) {
+        case DC_VALUE_TYPE_INTEGER:
+            return value1->value_integer < value2->value_integer;
+        case DC_VALUE_TYPE_FLOAT:
+            return value1->value_float < value2->value_float;
+        default:
+            throw std::runtime_error("Invalid type for greater-than comparison: " + std::to_string(value1->type));
+    }
+}
+
+bool dc_value_is_less_or_equal(DcValue *value1, DcValue *value2) {
+    switch (value1->type) {
+        case DC_VALUE_TYPE_INTEGER:
+            return value1->value_integer <= value2->value_integer;
+        case DC_VALUE_TYPE_FLOAT:
+            return value1->value_float <= value2->value_float;
+        default:
+            throw std::runtime_error("Invalid type for greater-than comparison: " + std::to_string(value1->type));
     }
 }
