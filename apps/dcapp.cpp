@@ -415,7 +415,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // xPosition
             char *c_x_position = dc_utils_get_attribute_string(xml_node, "X");
             if (c_x_position) {
-                dc_node.container.position.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position));
+                dc_node.container.position.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position));
                 free(c_x_position);
             } else {
                 dc_node.container.position.x = dc_app_register_value(dc_value_create_value_float(0.0f));
@@ -424,7 +424,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // y position
             char *c_y_position = dc_utils_get_attribute_string(xml_node, "Y");
             if (c_y_position) {
-                dc_node.container.position.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position));
+                dc_node.container.position.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position));
                 free(c_y_position);
             } else {
                 dc_node.container.position.y = dc_app_register_value(dc_value_create_value_float(0.0f));
@@ -433,7 +433,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // x origin
             char *c_x_origin = dc_utils_get_attribute_string(xml_node, "OriginX");
             if (c_x_origin) {
-                dc_node.container.origin.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_origin));
+                dc_node.container.origin.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_origin));
                 free(c_x_origin);
             } else {
                 dc_node.container.origin.x = dc_app_register_value(dc_value_create_value_float(0.0f));
@@ -442,7 +442,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // y origin
             char *c_y_origin = dc_utils_get_attribute_string(xml_node, "OriginY");
             if (c_y_origin) {
-                dc_node.container.origin.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_origin));
+                dc_node.container.origin.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_origin));
                 free(c_y_origin);
             } else {
                 dc_node.container.origin.y = dc_app_register_value(dc_value_create_value_float(0.0f));
@@ -451,7 +451,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // x dimension
             char *c_x_dimension = dc_utils_get_attribute_string(xml_node, "Width");
             if (c_x_dimension) {
-                dc_node.container.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_dimension));
+                dc_node.container.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_dimension));
                 free(c_x_dimension);
             } else {
                 dc_node.container.dimensions.x = dc_app_register_value(dc_value_create_value_float(0.0f));
@@ -460,7 +460,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // y dimension
             char *c_y_dimension = dc_utils_get_attribute_string(xml_node, "Height");
             if (c_y_dimension) {
-                dc_node.container.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_dimension));
+                dc_node.container.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_dimension));
                 free(c_y_dimension);
             } else {
                 dc_node.container.dimensions.y = dc_app_register_value(dc_value_create_value_float(0.0f));
@@ -469,7 +469,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // virtual x dimension
             char *c_x_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualWidth");
             if (c_x_virtual_dimension) {
-                dc_node.container.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
+                dc_node.container.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
                 free(c_x_virtual_dimension);
             } else {
                 dc_node.container.virtual_dimensions.x = dc_app_register_value(dc_value_create_value_float(0.0f));
@@ -478,7 +478,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // virtual y dimension
             char *c_y_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualHeight");
             if (c_y_virtual_dimension) {
-                dc_node.container.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
+                dc_node.container.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
                 free(c_y_virtual_dimension);
             } else {
                 dc_node.container.virtual_dimensions.y = dc_app_register_value(dc_value_create_value_float(0.0f));
@@ -487,7 +487,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // x align
             char *c_x_align = dc_utils_get_attribute_string(xml_node, "HorizontalAlign");
             if (c_x_align) {
-                dc_node.container.alignment.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_align));
+                dc_node.container.alignment.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_align));
                 free(c_x_align);
             } else {
                 dc_node.container.alignment.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_LEFT));
@@ -496,7 +496,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // y align
             char *c_y_align = dc_utils_get_attribute_string(xml_node, "VerticalAlign");
             if (c_y_align) {
-                dc_node.container.alignment.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_align));
+                dc_node.container.alignment.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_align));
                 free(c_y_align);
             } else {
                 dc_node.container.alignment.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM));
@@ -505,7 +505,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // rotation
             char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotate");
             if (c_rotation) {
-                dc_node.container.rotation = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_rotation));
+                dc_node.container.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_rotation));
                 free(c_rotation);
             } else {
                 dc_node.container.rotation = dc_app_register_value(dc_value_create_value_float(0.0f));
@@ -552,8 +552,8 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             DcAppNode dc_node = (DcAppNode){
                 .type        = DC_APP_NODE_TYPE_CONDITIONAL,
                 .conditional = (DcAppNodeConditional){
-                    .value1      = dc_value_index_undefined,
-                    .value2      = dc_value_index_undefined,
+                    .value1      = DC_VALUE_INDEX_UNDEFINED,
+                    .value2      = DC_VALUE_INDEX_UNDEFINED,
                     .child_true  = DC_APP_NODE_INDEX_UNDEFINED,
                     .child_false = DC_APP_NODE_INDEX_UNDEFINED,
                 }};
@@ -561,7 +561,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // conditional type
             char *c_type = dc_utils_get_attribute_string(xml_node, "Operation");
             if (c_type) {
-                dc_node.conditional.type = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_type));
+                dc_node.conditional.type = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_type));
                 free(c_type);
             } else {
                 dc_node.conditional.type = dc_app_register_value(dc_value_create_value_integer(DC_APP_CONDITIONAL_TYPE_TRUE));
@@ -570,12 +570,12 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // value1
             char *c_value = dc_utils_get_attribute_string(xml_node, "Value");
             if (c_value) {
-                dc_node.conditional.value1 = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_STRING, dc_app_dereference_constants(c_value));
+                dc_node.conditional.value1 = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_STRING, dc_app_dereference_constants(c_value));
                 free(c_value);
             } else {
                 c_value = dc_utils_get_attribute_string(xml_node, "Value1");
                 if (c_value) {
-                    dc_node.conditional.value1 = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_STRING, dc_app_dereference_constants(c_value));
+                    dc_node.conditional.value1 = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_STRING, dc_app_dereference_constants(c_value));
                     free(c_value);
                 } else {
                     throw std::runtime_error("Invalid conditional; no value specified");
@@ -585,7 +585,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // value2
             char *c_value2 = dc_utils_get_attribute_string(xml_node, "Value2");
             if (c_value2) {
-                dc_node.conditional.value2 = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_STRING, dc_app_dereference_constants(c_value2));
+                dc_node.conditional.value2 = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_STRING, dc_app_dereference_constants(c_value2));
                 free(c_value2);
             }
 
@@ -681,7 +681,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // virtual x dimension
             char *c_x_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualWidth");
             if (c_x_virtual_dimension) {
-                dc_node.panel.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
+                dc_node.panel.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
                 free(c_x_virtual_dimension);
             } else {
                 dc_node.panel.virtual_dimensions.x = dc_node.panel.parent_dimensions.x;
@@ -690,7 +690,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // virtual y dimension
             char *c_y_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualHeight");
             if (c_y_virtual_dimension) {
-                dc_node.panel.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
+                dc_node.panel.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
                 free(c_y_virtual_dimension);
             } else {
                 dc_node.panel.virtual_dimensions.y = dc_node.panel.parent_dimensions.y;
@@ -725,13 +725,13 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
 
                 if (substrings.size() > 0) {
-                    dc_node.polygon.fill_color.r = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[0]);
+                    dc_node.polygon.fill_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[0]);
                     if (substrings.size() > 1) {
-                        dc_node.polygon.fill_color.g = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[1]);
+                        dc_node.polygon.fill_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[1]);
                         if (substrings.size() > 2) {
-                            dc_node.polygon.fill_color.b = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[2]);
+                            dc_node.polygon.fill_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[2]);
                             if (substrings.size() > 3) {
-                                dc_node.polygon.fill_color.a = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[3]);
+                                dc_node.polygon.fill_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[3]);
                             } else {
                                 dc_node.polygon.fill_color.a = dc_app_register_value(dc_value_create_value_float(1.0f));
                             }
@@ -756,13 +756,13 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
 
                 if (substrings.size() > 0) {
-                    dc_node.polygon.line_color.r = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[0]);
+                    dc_node.polygon.line_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[0]);
                     if (substrings.size() > 1) {
-                        dc_node.polygon.line_color.g = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[1]);
+                        dc_node.polygon.line_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[1]);
                         if (substrings.size() > 2) {
-                            dc_node.polygon.line_color.b = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[2]);
+                            dc_node.polygon.line_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[2]);
                             if (substrings.size() > 3) {
-                                dc_node.polygon.line_color.a = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, substrings[3]);
+                                dc_node.polygon.line_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[3]);
                             } else {
                                 dc_node.polygon.line_color.a = dc_app_register_value(dc_value_create_value_float(1.0f));
                             }
@@ -782,7 +782,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // line width
             char *c_line_width = dc_utils_get_attribute_string(xml_node, "LineWidth");
             if (c_line_width) {
-                dc_node.polygon.line_width = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_line_width));
+                dc_node.polygon.line_width = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_line_width));
                 free(c_line_width);
             } else {
                 dc_node.polygon.line_width = dc_app_register_value(dc_value_create_value_float(0.0f));
@@ -797,6 +797,42 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
 
             // process children
             _process_node_children(xml_node, node_index, elem_type, directory);
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_SET: {
+
+            DcAppNode dc_node = {
+                .type = DC_APP_NODE_TYPE_SET,
+            };
+
+            // variable
+            char *c_variable = dc_utils_get_attribute_string(xml_node, "Variable");
+            if (!c_variable) {
+                throw std::runtime_error("Missing attribute 'Variable' in <Set> element");
+            }
+            dc_node.set.var_index = dc_app_get_var_index(dc_app_dereference_constants(c_variable));
+            free(c_variable);
+
+            // operand
+            char *c_operand = dc_utils_get_node_content_string(xml_node);
+            if (!c_operand) {
+                throw std::runtime_error("Missing content (operand) in <Set> element");
+            }
+            dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_operand));
+            free(c_operand);
+
+            // operator
+            char *c_operation = dc_utils_get_attribute_string(xml_node, "Operator");
+            if (c_operation) {
+                dc_node.set.operation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_operation));
+                free(c_operation);
+            } else {
+                dc_node.set.operation = dc_app_register_value(dc_value_create_value_integer(DC_APP_SET_TYPE_EQUAL));
+            }
+
+            // register node
+            node_index = dc_app_register_node(dc_node);
             break;
         }
 
@@ -920,7 +956,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                     DcValue               *dc_value = dc_app_get_value(dc_app_data.vars[var.dcapp_var_index].value_index);
 
                     var.dcapp_var_index = dc_app_get_var_index(dcapp_var);
-                    var.trick_var_index = dc_trick_add_tx_var(dc_app_trick->trick, trick_path.c_str(), c_units, dc_value->type == DC_APP_VALUE_TYPE_STRING);
+                    var.trick_var_index = dc_trick_add_tx_var(dc_app_trick->trick, trick_path.c_str(), c_units, dc_value->type == DC_VALUE_TYPE_STRING);
                     dc_value_copy(&var.prev_value, dc_value);
                     dc_app_trick->tx_var_contexts.push_back(var);
                     break;
@@ -943,7 +979,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
 
             // type
             char       *c_type = dc_utils_get_attribute_string(xml_node, "Type");
-            DcValueType type   = DC_APP_VALUE_TYPE_STRING;
+            DcValueType type   = DC_VALUE_TYPE_STRING;
             if (c_type) {
                 type = dc_value_type_from_string(dc_app_dereference_constants(c_type));
             }
@@ -986,13 +1022,12 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                     parent_node->polygon.num_points++;
                     parent_node->polygon.points                                      = (DcAppValueIndex2 *)realloc(parent_node->polygon.points, parent_node->polygon.num_points * sizeof(DcAppValueIndex2));
                     parent_node->polygon.points[parent_node->polygon.num_points - 1] = (DcAppValueIndex2){
-                        dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position)),
-                        dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position))};
+                        dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position)),
+                        dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position))};
                     break;
                 }
                 default:
-                    // TODO add a nodeTypeToString() function
-                    throw std::runtime_error("Invalid parent of type " + std::string("<Unknown>") + "for vertex.");
+                    throw std::runtime_error("Invalid parent of type " + dc_app_node_type_to_string(parent_node->type) + "for vertex.");
             }
             break;
         }
@@ -1015,7 +1050,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // xPosition
             char *c_x_position = dc_utils_get_attribute_string(xml_node, "X");
             if (c_x_position) {
-                dc_node.window.position.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_position));
+                dc_node.window.position.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_position));
                 free(c_x_position);
             } else {
                 dc_node.window.position.x = dc_app_register_value(dc_value_create_value_integer(0.0f));
@@ -1024,7 +1059,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // y position
             char *c_y_position = dc_utils_get_attribute_string(xml_node, "Y");
             if (c_y_position) {
-                dc_node.window.position.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_position));
+                dc_node.window.position.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_position));
                 free(c_y_position);
             } else {
                 dc_node.window.position.y = dc_app_register_value(dc_value_create_value_integer(0.0f));
@@ -1033,7 +1068,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // x dimension
             char *c_x_dimension = dc_utils_get_attribute_string(xml_node, "Width");
             if (c_x_dimension) {
-                dc_node.window.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_dimension));
+                dc_node.window.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_dimension));
                 free(c_x_dimension);
             } else {
                 dc_node.window.dimensions.x = dc_app_register_value(dc_value_create_value_integer(0.0f));
@@ -1042,7 +1077,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // y dimension
             char *c_y_dimension = dc_utils_get_attribute_string(xml_node, "Height");
             if (c_y_dimension) {
-                dc_node.window.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_dimension));
+                dc_node.window.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_dimension));
                 free(c_y_dimension);
             } else {
                 dc_node.window.dimensions.y = dc_app_register_value(dc_value_create_value_integer(0.0f));
@@ -1051,7 +1086,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // virtual x dimension
             char *c_x_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualWidth");
             if (c_x_virtual_dimension) {
-                dc_node.window.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
+                dc_node.window.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
                 free(c_x_virtual_dimension);
             } else {
                 dc_node.window.virtual_dimensions.x = dc_app_register_value(dc_value_create_value_float(0.0f));
@@ -1060,7 +1095,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // virtual y dimension
             char *c_y_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualHeight");
             if (c_y_virtual_dimension) {
-                dc_node.window.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_APP_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
+                dc_node.window.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
                 free(c_y_virtual_dimension);
             } else {
                 dc_node.window.virtual_dimensions.y = dc_app_register_value(dc_value_create_value_float(0.0f));
@@ -1213,7 +1248,110 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
         }
 
         case DC_APP_NODE_TYPE_SET: {
-            // todo implement this
+
+            DcAppVar    *var       = &dc_app_data.vars[node->set.var_index];
+            DcValue     *var_value = dc_app_get_value(var->value_index);
+            DcValue     *op_value  = dc_app_get_value(node->set.operand);
+            DcAppSetType operation = (DcAppSetType)(dc_app_get_value(node->set.operation)->value_integer);
+
+            // apply operation
+            switch (operation) {
+                case DC_APP_SET_TYPE_EQUAL:
+                    switch (var_value->type) {
+                        case DC_VALUE_TYPE_STRING:
+                            var_value->value_string = op_value->value_string;
+                            break;
+                        case DC_VALUE_TYPE_INTEGER:
+                            var_value->value_integer = op_value->value_integer;
+                            break;
+                        case DC_VALUE_TYPE_FLOAT:
+                            var_value->value_float = op_value->value_float;
+                            break;
+                        case DC_VALUE_TYPE_BOOLEAN:
+                            var_value->value_boolean = op_value->value_boolean;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+
+                case DC_APP_SET_TYPE_ADD:
+                    switch (var_value->type) {
+                        case DC_VALUE_TYPE_STRING:
+                            var_value->value_string += op_value->value_string;
+                            break;
+                        case DC_VALUE_TYPE_INTEGER:
+                            var_value->value_integer += op_value->value_integer;
+                            break;
+                        case DC_VALUE_TYPE_FLOAT:
+                            var_value->value_float += op_value->value_float;
+                            break;
+                        case DC_VALUE_TYPE_BOOLEAN:
+                            var_value->value_boolean += op_value->value_boolean;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case DC_APP_SET_TYPE_SUBTRACT:
+                    switch (var_value->type) {
+                        case DC_VALUE_TYPE_STRING:
+                            break;
+                        case DC_VALUE_TYPE_INTEGER:
+                            var_value->value_integer -= op_value->value_integer;
+                            break;
+                        case DC_VALUE_TYPE_FLOAT:
+                            var_value->value_float -= op_value->value_float;
+                            break;
+                        case DC_VALUE_TYPE_BOOLEAN:
+                            var_value->value_boolean -= op_value->value_boolean;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case DC_APP_SET_TYPE_MULTIPLY:
+                    switch (var_value->type) {
+                        case DC_VALUE_TYPE_STRING:
+                            break;
+                        case DC_VALUE_TYPE_INTEGER:
+                            var_value->value_integer *= op_value->value_integer;
+                            break;
+                        case DC_VALUE_TYPE_FLOAT:
+                            var_value->value_float *= op_value->value_float;
+                            break;
+                        case DC_VALUE_TYPE_BOOLEAN:
+                            var_value->value_boolean *= op_value->value_boolean;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case DC_APP_SET_TYPE_DIVIDE:
+                    switch (var_value->type) {
+                        case DC_VALUE_TYPE_STRING:
+                            break;
+                        case DC_VALUE_TYPE_INTEGER:
+                            var_value->value_integer /= op_value->value_integer;
+                            break;
+                        case DC_VALUE_TYPE_FLOAT:
+                            var_value->value_float /= op_value->value_float;
+                            break;
+                        case DC_VALUE_TYPE_BOOLEAN:
+                            var_value->value_boolean /= op_value->value_boolean;
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                default:
+                    throw std::runtime_error("Invalid <Set> Operator value of enum " + std::to_string(operation));
+                    break;
+            }
+
+            // refresh variable
+            dc_value_refresh(var_value);
+            dc_app_refresh_var_from_value(var);
             break;
         }
 

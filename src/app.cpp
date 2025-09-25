@@ -40,6 +40,8 @@ std::string dc_app_elem_type_to_string(DcAppElemType type) {
             return "Panel";
         case DC_APP_ELEM_TYPE_POLYGON:
             return "Polygon";
+        case DC_APP_ELEM_TYPE_SET:
+            return "Set";
         case DC_APP_ELEM_TYPE_TRICK_FROM:
             return "FromTrick";
         case DC_APP_ELEM_TYPE_TRICK_IO:
@@ -83,6 +85,8 @@ DcAppElemType dc_app_string_to_elem_type(std::string name) {
         return DC_APP_ELEM_TYPE_PANEL;
     if (name == "Polygon")
         return DC_APP_ELEM_TYPE_POLYGON;
+    if (name == "Set")
+        return DC_APP_ELEM_TYPE_SET;
     if (name == "ToTrick")
         return DC_APP_ELEM_TYPE_TRICK_TO;
     if (name == "TrickIO")
@@ -273,19 +277,19 @@ void dc_app_refresh_var_from_extern(DcAppVar *var) {
     void    *extern_data = var->extern_data;
 
     switch (value->type) {
-        case DC_APP_VALUE_TYPE_FLOAT: {
+        case DC_VALUE_TYPE_FLOAT: {
             value->value_float = *((float *)(extern_data));
             break;
         }
-        case DC_APP_VALUE_TYPE_INTEGER: {
+        case DC_VALUE_TYPE_INTEGER: {
             value->value_integer = *((int *)(extern_data));
             break;
         }
-        case DC_APP_VALUE_TYPE_STRING: {
+        case DC_VALUE_TYPE_STRING: {
             value->value_string = *((std::string *)(extern_data));
             break;
         }
-        case DC_APP_VALUE_TYPE_BOOLEAN: {
+        case DC_VALUE_TYPE_BOOLEAN: {
             value->value_boolean = *((bool *)(extern_data));
             break;
         }
@@ -302,19 +306,19 @@ void dc_app_refresh_var_from_value(DcAppVar *var) {
     void    *extern_data = var->extern_data;
 
     switch (value->type) {
-        case DC_APP_VALUE_TYPE_FLOAT: {
+        case DC_VALUE_TYPE_FLOAT: {
             *((float *)(extern_data)) = value->value_float;
             break;
         }
-        case DC_APP_VALUE_TYPE_INTEGER: {
+        case DC_VALUE_TYPE_INTEGER: {
             *((int *)(extern_data)) = value->value_integer;
             break;
         }
-        case DC_APP_VALUE_TYPE_STRING: {
+        case DC_VALUE_TYPE_STRING: {
             *((std::string *)(extern_data)) = value->value_string;
             break;
         }
-        case DC_APP_VALUE_TYPE_BOOLEAN: {
+        case DC_VALUE_TYPE_BOOLEAN: {
             *((bool *)(extern_data)) = value->value_boolean;
             break;
         }
@@ -535,6 +539,12 @@ void dc_app_init_data() {
     dc_app_set_constant("_conditional_gt_", std::to_string(DC_APP_CONDITIONAL_TYPE_GT));
     dc_app_set_constant("_conditional_lte_", std::to_string(DC_APP_CONDITIONAL_TYPE_LTE));
     dc_app_set_constant("_conditional_gte_", std::to_string(DC_APP_CONDITIONAL_TYPE_GTE));
+
+    dc_app_set_constant("_set_equal_", std::to_string(DC_APP_SET_TYPE_EQUAL));
+    dc_app_set_constant("_set_add_", std::to_string(DC_APP_SET_TYPE_ADD));
+    dc_app_set_constant("_set_subtract_", std::to_string(DC_APP_SET_TYPE_SUBTRACT));
+    dc_app_set_constant("_set_multiply_", std::to_string(DC_APP_SET_TYPE_MULTIPLY));
+    dc_app_set_constant("_set_divide_", std::to_string(DC_APP_SET_TYPE_DIVIDE));
 
     dc_app_set_constant("_color_black_", "0 0 0");
     dc_app_set_constant("_color_blue_", "0 0 1");

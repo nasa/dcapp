@@ -16,3 +16,19 @@ steps:
 3) build dcapp (./scripts/build-dcapp.sh)
 4) build samples (./scripts/build-samples.py)
 5) run dcapp (./start-dcapp.py)
+
+ORDER OF EXECUTION (legacy):
+* reads device inputs (bezel buttons, keyboard?)
+* process comm interfaces (trick, edge)
+*** write, then read
+* sets current panel index
+* runs display logic (.cpp files)
+* runs animators
+* potentially runs display logic again???
+* gets mouse position, process mouse events
+*** pass mouse positions to each node
+*** use mouse actions for events (click, keyclick, close, etc.)
+* updates pixelstreams?
+* draw nodes
+* swaps buffers
+*** for double buffering

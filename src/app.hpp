@@ -38,6 +38,7 @@ typedef enum {
     DC_APP_ELEM_TYPE_NONELEM,
     DC_APP_ELEM_TYPE_PANEL,
     DC_APP_ELEM_TYPE_POLYGON,
+    DC_APP_ELEM_TYPE_SET,
     DC_APP_ELEM_TYPE_TRICK_FROM,
     DC_APP_ELEM_TYPE_TRICK_IO,
     DC_APP_ELEM_TYPE_TRICK_TO,
@@ -53,7 +54,7 @@ DcAppElemType dc_app_xml_node_to_elem_type(xmlNodePtr node);
 
 // value utils
 typedef uint32_t      DcAppValueIndex;
-const DcAppValueIndex dc_value_index_undefined = 0;
+const DcAppValueIndex DC_VALUE_INDEX_UNDEFINED = 0;
 
 typedef struct _DcAppValueIndex2 {
     union {
@@ -91,6 +92,13 @@ typedef struct _DcAppValueIndex4 {
     };
 } DcAppValueIndex4;
 
+// variable utils
+typedef uint32_t DcAppVarIndex;
+typedef struct _DcAppVar {
+    void           *extern_data;
+    DcAppValueIndex value_index;
+} DcAppVar;
+
 // alignment utils
 enum DcAppAlignType {
     DC_APP_ALIGN_TYPE_UNDEFINED,
@@ -113,6 +121,16 @@ enum DcAppConditionalType {
     DC_APP_CONDITIONAL_TYPE_GT,
     DC_APP_CONDITIONAL_TYPE_LTE,
     DC_APP_CONDITIONAL_TYPE_GTE,
+};
+
+// set operator utils
+enum DcAppSetType {
+    DC_APP_SET_TYPE_UNDEFINED,
+    DC_APP_SET_TYPE_EQUAL,
+    DC_APP_SET_TYPE_ADD,
+    DC_APP_SET_TYPE_SUBTRACT,
+    DC_APP_SET_TYPE_MULTIPLY,
+    DC_APP_SET_TYPE_DIVIDE,
 };
 
 // node utils
@@ -177,6 +195,12 @@ typedef struct _DcAppNodePolygon {
     bool              line_enabled;
 } DcAppNodePolygon;
 
+typedef struct _DcAppNodeSet {
+    DcAppVarIndex   var_index;
+    DcAppValueIndex operation; // because operator was taken :(
+    DcAppValueIndex operand;
+} DcAppNodeSet;
+
 typedef struct _DcAppNodeWindow {
     DcAppValueIndex2 position;
     DcAppValueIndex2 dimensions;
@@ -195,6 +219,7 @@ typedef struct _DcAppNode {
         DcAppNodeMap         map;
         DcAppNodePanel       panel;
         DcAppNodePolygon     polygon;
+        DcAppNodeSet         set;
         DcAppNodeWindow      window;
     };
 } DcAppNode;
@@ -207,13 +232,6 @@ typedef struct _DcAppLogic {
     void (*draw)();
     void (*close)();
 } DcAppLogic;
-
-// variable utils
-typedef uint32_t DcAppVarIndex;
-typedef struct _DcAppVar {
-    void           *extern_data;
-    DcAppValueIndex value_index;
-} DcAppVar;
 
 // trick utils
 typedef struct _DcAppTrickTxVarContext {
