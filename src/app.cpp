@@ -277,19 +277,19 @@ void dc_app_refresh_var_from_extern(DcAppVar *var) {
     void    *extern_data = var->extern_data;
 
     switch (value->type) {
-        case DC_APP_VALUE_TYPE_FLOAT: {
+        case DC_VALUE_TYPE_FLOAT: {
             value->value_float = *((float *)(extern_data));
             break;
         }
-        case DC_APP_VALUE_TYPE_INTEGER: {
+        case DC_VALUE_TYPE_INTEGER: {
             value->value_integer = *((int *)(extern_data));
             break;
         }
-        case DC_APP_VALUE_TYPE_STRING: {
+        case DC_VALUE_TYPE_STRING: {
             value->value_string = *((std::string *)(extern_data));
             break;
         }
-        case DC_APP_VALUE_TYPE_BOOLEAN: {
+        case DC_VALUE_TYPE_BOOLEAN: {
             value->value_boolean = *((bool *)(extern_data));
             break;
         }
@@ -306,19 +306,19 @@ void dc_app_refresh_var_from_value(DcAppVar *var) {
     void    *extern_data = var->extern_data;
 
     switch (value->type) {
-        case DC_APP_VALUE_TYPE_FLOAT: {
+        case DC_VALUE_TYPE_FLOAT: {
             *((float *)(extern_data)) = value->value_float;
             break;
         }
-        case DC_APP_VALUE_TYPE_INTEGER: {
+        case DC_VALUE_TYPE_INTEGER: {
             *((int *)(extern_data)) = value->value_integer;
             break;
         }
-        case DC_APP_VALUE_TYPE_STRING: {
+        case DC_VALUE_TYPE_STRING: {
             *((std::string *)(extern_data)) = value->value_string;
             break;
         }
-        case DC_APP_VALUE_TYPE_BOOLEAN: {
+        case DC_VALUE_TYPE_BOOLEAN: {
             *((bool *)(extern_data)) = value->value_boolean;
             break;
         }

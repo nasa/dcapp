@@ -105,16 +105,16 @@ int main(int argc, char **argv) {
     // file variable definitions
     for (auto &[name, var_index] : dc_app_data.var_indices) {
         switch (dc_app_get_value(dc_app_data.vars[var_index].value_index)->type) {
-            case DC_APP_VALUE_TYPE_STRING:
+            case DC_VALUE_TYPE_STRING:
                 out_file << "std::string ";
                 break;
-            case DC_APP_VALUE_TYPE_FLOAT:
+            case DC_VALUE_TYPE_FLOAT:
                 out_file << "float       ";
                 break;
-            case DC_APP_VALUE_TYPE_INTEGER:
+            case DC_VALUE_TYPE_INTEGER:
                 out_file << "int         ";
                 break;
-            case DC_APP_VALUE_TYPE_BOOLEAN:
+            case DC_VALUE_TYPE_BOOLEAN:
                 out_file << "bool        ";
                 break;
             default:
@@ -207,7 +207,7 @@ void _process_node(xmlNodePtr xml_node) {
 
             // type
             char       *c_type = dc_utils_get_attribute_string(xml_node, "Type");
-            DcValueType type   = DC_APP_VALUE_TYPE_STRING;
+            DcValueType type   = DC_VALUE_TYPE_STRING;
             if (c_type) {
                 type = dc_value_type_from_string(dc_app_dereference_constants(c_type));
             }
