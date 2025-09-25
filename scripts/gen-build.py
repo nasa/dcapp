@@ -1,4 +1,4 @@
-# gen_build.py
+#!/usr/bin/env python3
 
 # Index of this file:
 # [SECTION] imports
