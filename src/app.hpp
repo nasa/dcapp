@@ -54,7 +54,7 @@ DcAppElemType dc_app_xml_node_to_elem_type(xmlNodePtr node);
 
 // value utils
 typedef uint32_t      DcAppValueIndex;
-const DcAppValueIndex dc_value_index_undefined = 0;
+const DcAppValueIndex DC_VALUE_INDEX_UNDEFINED = 0;
 
 typedef struct _DcAppValueIndex2 {
     union {

@@ -552,8 +552,8 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             DcAppNode dc_node = (DcAppNode){
                 .type        = DC_APP_NODE_TYPE_CONDITIONAL,
                 .conditional = (DcAppNodeConditional){
-                    .value1      = dc_value_index_undefined,
-                    .value2      = dc_value_index_undefined,
+                    .value1      = DC_VALUE_INDEX_UNDEFINED,
+                    .value2      = DC_VALUE_INDEX_UNDEFINED,
                     .child_true  = DC_APP_NODE_INDEX_UNDEFINED,
                     .child_false = DC_APP_NODE_INDEX_UNDEFINED,
                 }};
