@@ -1066,11 +1066,10 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
 
                     // create + add tx var
                     DcAppTrickTxVarContext var;
-                    DcValue               *dc_value = dc_app_get_value(dc_app_data.vars[var.dcapp_var_index].value_index);
-
                     var.dcapp_var_index = dc_app_get_var_index(dcapp_var);
-                    var.trick_var_index = dc_trick_add_tx_var(dc_app_trick->trick, trick_path.c_str(), c_units, dc_value->type == DC_VALUE_TYPE_STRING);
-                    dc_value_copy(&var.prev_value, dc_value);
+                    DcValue *dc_var_value   = dc_app_get_value(dc_app_data.vars[var.dcapp_var_index].value_index);
+                    var.trick_var_index = dc_trick_add_tx_var(dc_app_trick->trick, trick_path.c_str(), c_units, dc_var_value->type == DC_VALUE_TYPE_STRING);
+                    dc_value_copy(&var.prev_value, dc_var_value);
                     dc_app_trick->tx_var_contexts.push_back(var);
                     break;
                 }
