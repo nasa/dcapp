@@ -4,6 +4,7 @@
 //-----------------------------------------------------------------------------
 
 #include "../src/app.hpp"
+#include "sb.hpp"
 #include "trick.hpp"
 #include <utils/file.hpp>
 #include <utils/string.hpp>
@@ -856,9 +857,14 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
         }
 
         case DC_APP_ELEM_TYPE_TEXT: {
-            DcAppNode dc_node = {
-                .type = DC_APP_NODE_TYPE_TEXT,
-            };
+            DcAppNode dc_node;
+            dc_node.type                   = DC_APP_NODE_TYPE_TEXT;
+            dc_node.text.sb_vals           = NULL;
+            dc_node.text.sb_fillers        = NULL;
+            dc_node.text.sb_filler_indices = NULL;
+            dc_node.text.sb_formats        = NULL;
+            dc_node.text.sb_format_indices = NULL;
+            dc_node.text.sb_format_types   = NULL;
 
             // text
             char *c_text = dc_utils_get_node_content_string(xml_node);
@@ -868,83 +874,121 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             std::string raw_text = dc_app_dereference_constants(c_text);
             free(c_text);
 
-            std::vector<std::string> variables;
-            std::vector<std::string> formats;
-            std::string              result;
-            size_t                   i = 0;
-            while (i < raw_text.size()) {
-                if (raw_text[i] == '\\') {
+            char *sb_curr_filler = NULL;
+            for (size_t ii = 0; ii < raw_text.size();) {
+                if (raw_text[ii] == '\\') {
                     // Escape character: skip and add next character to result
-                    if (i + 1 < raw_text.size()) {
-                        result += raw_text[i + 1];
-                        i += 2;
+                    if (ii + 1 < raw_text.size()) {
+                        sbpush(sb_curr_filler, raw_text[ii + 1]);
+                        ii += 2;
                     } else {
-                        result += raw_text[i++];
+                        sbpush(sb_curr_filler, raw_text[ii++]);
                     }
                     continue;
                 }
 
-                if (raw_text[i] == '@') {
-                    size_t start = i;
-                    ++i;
+                if (raw_text[ii] == '@') {
+                    size_t start = ii;
+                    ii++;
 
                     std::string var;
                     bool        is_braced = false;
 
-                    if (i < raw_text.size() && raw_text[i] == '{') {
+                    if (ii < raw_text.size() && raw_text[ii] == '{') {
                         is_braced = true;
-                        ++i;
-                        size_t end = raw_text.find('}', i);
+                        ii++;
+                        size_t end = raw_text.find('}', ii);
                         if (end == std::string::npos) {
                             // No closing brace, treat as normal text
-                            result += raw_text.substr(start, i - start);
+                            std::string substr = raw_text.substr(start, ii - start);
+                            sbpushn(sb_curr_filler, substr.c_str(), substr.length());
                             continue;
                         }
-                        var = raw_text.substr(i, end - i);
-                        i   = end + 1;
+                        var = raw_text.substr(ii, end - ii);
+                        ii  = end + 1;
                     } else {
-                        size_t start_var = i;
-                        while (i < raw_text.size() && !isspace(static_cast<unsigned char>(raw_text[i])) && raw_text[i] != '(') {
-                            ++i;
+                        size_t start_var = ii;
+                        while (ii < raw_text.size() &&
+                               !isspace(static_cast<unsigned char>(raw_text[ii])) &&
+                               raw_text[ii] != '(') {
+                            ii++;
                         }
-                        var = raw_text.substr(start_var, i - start_var);
+                        var = raw_text.substr(start_var, ii - start_var);
                     }
 
-                    variables.emplace_back(var);
+                    DcAppValueIndex val_index = dc_app_data.vars[dc_app_get_var_index(var)].value_index;
+                    sbpush(dc_node.text.sb_vals, val_index);
 
                     // Check for format specifier
                     std::string format_spec;
-                    if (i < raw_text.size() && raw_text[i] == '(') {
-                        size_t close = raw_text.find(')', i);
-                        if (close != std::string_view::npos && (i == 0 || raw_text[i - 1] != '\\')) {
-                            format_spec = raw_text.substr(i + 1, close - i - 1);
-                            i           = close + 1;
+                    if (ii < raw_text.size() && raw_text[ii] == '(') {
+                        size_t close = raw_text.find(')', ii);
+                        if (close != std::string_view::npos && (ii == 0 || raw_text[ii - 1] != '\\')) {
+                            format_spec = raw_text.substr(ii + 1, close - ii - 1);
+                            ii          = close + 1;
 
-                            size_t len = 0;
-                            if ((len = dc_utils_format_specifier_length_bool(format_spec)) > 0 ||
-                                (len = dc_utils_format_specifier_length_int(format_spec)) > 0 ||
-                                (len = dc_utils_format_specifier_length_float(format_spec)) > 0 ||
-                                (len = dc_utils_format_specifier_length_string(format_spec)) > 0) {
-                                formats.emplace_back(format_spec.substr(0, len));
+                            // get format + type
+                            if (dc_utils_is_format_specifier_int(format_spec)) {
+                                sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_INTEGER);
+                                sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                                sbpushn(dc_node.text.sb_formats, format_spec.c_str(), format_spec.length() + 1);
+                            } else if (dc_utils_is_format_specifier_float(format_spec)) {
+                                sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_FLOAT);
+                                sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                                sbpushn(dc_node.text.sb_formats, format_spec.c_str(), format_spec.length() + 1);
+                            } else if (dc_utils_is_format_specifier_string(format_spec)) {
+                                sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
+                                sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                                sbpushn(dc_node.text.sb_formats, format_spec.c_str(), format_spec.length() + 1);
+                            } else if (dc_utils_is_format_specifier_bool(format_spec)) {
+                                sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_BOOLEAN);
+                                sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                                sbpushn(dc_node.text.sb_formats, format_spec.c_str(), format_spec.length() + 1);
                             } else {
-                                formats.emplace_back("%s");
+                                // unsupported type
+                                throw std::runtime_error("Unknown format specifier in Text element: " + format_spec);
                             }
                         } else {
-                            formats.emplace_back("%s");
+                            sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
+                            sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                            sbpushn(dc_node.text.sb_formats, "%s", 3);
                         }
                     } else {
-                        formats.emplace_back("%s");
+                        sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
+                        sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                        sbpushn(dc_node.text.sb_formats, "%s", 3);
                     }
+
+                    // add the current filler to list of fillers
+                    sbpush(dc_node.text.sb_filler_indices, sbcount(dc_node.text.sb_fillers));
+                    sbpushn(dc_node.text.sb_fillers, sb_curr_filler, sbcount(sb_curr_filler));
+                    sbpush(dc_node.text.sb_fillers, '\0');
+                    sbclear(sb_curr_filler);
 
                     continue;
                 }
 
                 // Default: append character to result
-                result += raw_text[i++];
+                sbpush(sb_curr_filler, raw_text[ii++]);
             }
 
+            // append the remaining filler
+            sbpush(dc_node.text.sb_filler_indices, sbcount(dc_node.text.sb_fillers));
+            sbpushn(dc_node.text.sb_fillers, sb_curr_filler, sbcount(sb_curr_filler));
+            sbpush(dc_node.text.sb_fillers, '\0');
+
             // Print final result
-            printf("result: %s\n", result.c_str());
+            for (int ii = 0; ii < sbcount(dc_node.text.sb_vals); ii++) {
+                printf("%s**%s**%s**%d\n",
+                       &(dc_node.text.sb_fillers[dc_node.text.sb_filler_indices[ii]]),
+                       dc_app_get_value(dc_node.text.sb_vals[ii])->value_string.c_str(),
+                       &(dc_node.text.sb_formats[dc_node.text.sb_format_indices[ii]]),
+                       dc_node.text.sb_format_types[ii]);
+            }
+            printf("%s**\n", &(dc_node.text.sb_fillers[sbpop(dc_node.text.sb_filler_indices)]));
+
+            // clear temp buffer
+            sbclear(sb_curr_filler);
 
             break;
         }
@@ -1066,9 +1110,9 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
 
                     // create + add tx var
                     DcAppTrickTxVarContext var;
-                    var.dcapp_var_index = dc_app_get_var_index(dcapp_var);
-                    DcValue *dc_var_value   = dc_app_get_value(dc_app_data.vars[var.dcapp_var_index].value_index);
-                    var.trick_var_index = dc_trick_add_tx_var(dc_app_trick->trick, trick_path.c_str(), c_units, dc_var_value->type == DC_VALUE_TYPE_STRING);
+                    var.dcapp_var_index   = dc_app_get_var_index(dcapp_var);
+                    DcValue *dc_var_value = dc_app_get_value(dc_app_data.vars[var.dcapp_var_index].value_index);
+                    var.trick_var_index   = dc_trick_add_tx_var(dc_app_trick->trick, trick_path.c_str(), c_units, dc_var_value->type == DC_VALUE_TYPE_STRING);
                     dc_value_copy(&var.prev_value, dc_var_value);
                     dc_app_trick->tx_var_contexts.push_back(var);
                     break;

@@ -10,7 +10,7 @@
     <Variable Type="Float">POS_X</Variable>
     <Variable Type="Float">POS_Y</Variable>
     <Variable Type="Float">VEL_Y</Variable>
-    <Variable Type="Float">G</Variable>
+    <Variable Type="Float" InitialValue="404">G</Variable>
     <TrickIO Host="localhost" Port="9123">
       <FromTrick>
         <TrickVariable Name="dyn.cannon.pos[0]">POS_X</TrickVariable>

@@ -18,7 +18,7 @@ std::vector<std::string> dc_utils_split_string_by_delimiters(std::string input, 
 
 const std::string dc_utils_string_whitespace = " \t\n\v\f\r";
 
-size_t dc_utils_format_specifier_length_bool(const std::string &value);
-size_t dc_utils_format_specifier_length_int(const std::string &value);
-size_t dc_utils_format_specifier_length_float(const std::string &value);
-size_t dc_utils_format_specifier_length_string(const std::string &value);
+bool dc_utils_is_format_specifier_bool(const std::string &value);
+bool dc_utils_is_format_specifier_int(const std::string &value);
+bool dc_utils_is_format_specifier_float(const std::string &value);
+bool dc_utils_is_format_specifier_string(const std::string &value);

@@ -213,13 +213,14 @@ typedef struct _DcAppNodeText {
     // DcAppValueIndex4 outline_color;
     // DcAppValueIndex  font;
 
-    // contains values and formats
+    // stretchy buffers contains values and formats
     // TODO hate how this is structured, and know it's bad
+    DcAppValueIndex *sb_vals;
     char            *sb_fillers;
-    int             *sb_filler_indices;
+    uint8_t         *sb_filler_indices;
     char            *sb_formats;
-    int             *sb_format_indices;
-    DcAppValueIndex *vals;
+    uint8_t         *sb_format_indices;
+    DcValueType     *sb_format_types;
 } DcAppNodeText;
 
 typedef struct _DcAppNodeWindow {

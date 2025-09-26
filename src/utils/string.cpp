@@ -8,8 +8,6 @@
 #include <vector>
 #include <cstdint>
 
-static size_t _extract_format_specifier_length(const std::string &value, const std::string &valid_specifiers);
-
 static bool _string_is_float(const std::string &text) {
     char *end = nullptr;
     errno     = 0;
@@ -131,56 +129,60 @@ std::vector<std::string> dc_utils_split_string_by_delimiters(std::string input, 
     return output;
 }
 
-// set of utilities to check if a string is a format specifier
-// * returns the length of the specifier (0 if not one)
-// ** this set of functions should be pretty quick, but sure there's a better
-// ** way to handle this
-size_t dc_utils_format_specifier_length_bool(const std::string &value) {
-    return _extract_format_specifier_length(value, "dis");
-}
-
-size_t dc_utils_format_specifier_length_int(const std::string &value) {
-    return _extract_format_specifier_length(value, "diuxXo");
-}
-
-size_t dc_utils_format_specifier_length_float(const std::string &value) {
-    return _extract_format_specifier_length(value, "fFeEgG");
-}
-
-size_t dc_utils_format_specifier_length_string(const std::string &value) {
-    return _extract_format_specifier_length(value, "s");
-}
-
-size_t _extract_format_specifier_length(const std::string &value, const std::string &valid_specifiers) {
-    if (value.empty() || value[0] != '%')
-        return 0;
-
-    size_t i = 1;
-
-    // Optional flags: -, +, 0, space, #
-    while (i < value.size() && (value[i] == '-' || value[i] == '+' || value[i] == '0' || value[i] == ' ' || value[i] == '#')) {
-        i++;
+static bool _is_format_specifier(const std::string &value, const std::string &valid_specifiers) {
+    if (value.empty() || value[0] != '%') {
+        return false;
     }
 
-    // Optional width: digits
-    while (i < value.size() && std::isdigit(value[i])) {
-        i++;
+    size_t ii = 1;
+
+    // Skip optional flags
+    while (ii < value.size() &&
+           std::string("-+0 #").find(value[ii]) != std::string::npos) {
+        ii++;
     }
 
-    // Optional precision: .digits
-    if (i < value.size() && value[i] == '.') {
-        i++;
-        while (i < value.size() && std::isdigit(value[i])) {
-            i++;
+    // Skip optional width
+    while (ii < value.size() &&
+           std::isdigit(static_cast<unsigned char>(value[ii]))) {
+        ii++;
+    }
+
+    // Skip optional precision
+    if (ii < value.size() && value[ii] == '.') {
+        ii++;
+        while (ii < value.size() &&
+               std::isdigit(static_cast<unsigned char>(value[ii]))) {
+            ii++;
         }
     }
 
-    // Optional length modifiers (ignored for now)
+    // (Optional length modifiers ignored)
 
-    // Final specifier
-    if (i < value.size() && valid_specifiers.find(value[i]) != std::string::npos) {
-        return i + 1; // include the specifier
+    if (ii < value.size() &&
+        valid_specifiers.find(value[ii]) != std::string::npos) {
+        return true;
     }
 
-    return 0;
+    return false;
+}
+
+bool dc_utils_is_format_specifier_bool(const std::string &value) {
+    static const std::string chars = "dis";
+    return _is_format_specifier(value, chars);
+}
+
+bool dc_utils_is_format_specifier_int(const std::string &value) {
+    static const std::string chars = "diuxXo";
+    return _is_format_specifier(value, chars);
+}
+
+bool dc_utils_is_format_specifier_float(const std::string &value) {
+    static const std::string chars = "fFeEgG";
+    return _is_format_specifier(value, chars);
+}
+
+bool dc_utils_is_format_specifier_string(const std::string &value) {
+    static const std::string chars = "s";
+    return _is_format_specifier(value, chars);
 }
