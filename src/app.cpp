@@ -46,6 +46,8 @@ std::string dc_app_elem_type_to_string(DcAppElemType type) {
             return "Polygon";
         case DC_APP_ELEM_TYPE_SET:
             return "Set";
+        case DC_APP_ELEM_TYPE_TEXT:
+            return "Text";
         case DC_APP_ELEM_TYPE_TRICK_FROM:
             return "FromTrick";
         case DC_APP_ELEM_TYPE_TRICK_IO:
@@ -97,6 +99,8 @@ DcAppElemType dc_app_string_to_elem_type(std::string name) {
         return DC_APP_ELEM_TYPE_POLYGON;
     if (name == "Set")
         return DC_APP_ELEM_TYPE_SET;
+    if (name == "Text")
+        return DC_APP_ELEM_TYPE_TEXT;
     if (name == "ToTrick")
         return DC_APP_ELEM_TYPE_TRICK_TO;
     if (name == "TrickIO")
@@ -354,6 +358,8 @@ std::string dc_app_node_type_to_string(DcAppNodeType type) {
             return "Polygon";
         case DC_APP_NODE_TYPE_SET:
             return "Set";
+        case DC_APP_NODE_TYPE_TEXT:
+            return "Text";
         case DC_APP_NODE_TYPE_WINDOW:
             return "Window";
         default:

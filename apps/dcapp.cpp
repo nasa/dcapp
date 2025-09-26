@@ -823,8 +823,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
         case DC_APP_ELEM_TYPE_SET: {
 
             DcAppNode dc_node = {
-                .type = DC_APP_NODE_TYPE_SET,
-            };
+                .type = DC_APP_NODE_TYPE_SET};
 
             // variable
             char *c_variable = dc_utils_get_attribute_string(xml_node, "Variable");
@@ -853,6 +852,100 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
 
             // register node
             node_index = dc_app_register_node(dc_node);
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_TEXT: {
+            DcAppNode dc_node = {
+                .type = DC_APP_NODE_TYPE_TEXT,
+            };
+
+            // text
+            char *c_text = dc_utils_get_node_content_string(xml_node);
+            if (!c_text) {
+                throw std::runtime_error("Missing content (text) in <Text> element");
+            }
+            std::string raw_text = dc_app_dereference_constants(c_text);
+            free(c_text);
+
+            std::vector<std::string> variables;
+            std::vector<std::string> formats;
+            std::string              result;
+            size_t                   i = 0;
+            while (i < raw_text.size()) {
+                if (raw_text[i] == '\\') {
+                    // Escape character: skip and add next character to result
+                    if (i + 1 < raw_text.size()) {
+                        result += raw_text[i + 1];
+                        i += 2;
+                    } else {
+                        result += raw_text[i++];
+                    }
+                    continue;
+                }
+
+                if (raw_text[i] == '@') {
+                    size_t start = i;
+                    ++i;
+
+                    std::string var;
+                    bool        is_braced = false;
+
+                    if (i < raw_text.size() && raw_text[i] == '{') {
+                        is_braced = true;
+                        ++i;
+                        size_t end = raw_text.find('}', i);
+                        if (end == std::string::npos) {
+                            // No closing brace, treat as normal text
+                            result += raw_text.substr(start, i - start);
+                            continue;
+                        }
+                        var = raw_text.substr(i, end - i);
+                        i   = end + 1;
+                    } else {
+                        size_t start_var = i;
+                        while (i < raw_text.size() && !isspace(static_cast<unsigned char>(raw_text[i])) && raw_text[i] != '(') {
+                            ++i;
+                        }
+                        var = raw_text.substr(start_var, i - start_var);
+                    }
+
+                    variables.emplace_back(var);
+
+                    // Check for format specifier
+                    std::string format_spec;
+                    if (i < raw_text.size() && raw_text[i] == '(') {
+                        size_t close = raw_text.find(')', i);
+                        if (close != std::string_view::npos && (i == 0 || raw_text[i - 1] != '\\')) {
+                            format_spec = raw_text.substr(i + 1, close - i - 1);
+                            i           = close + 1;
+
+                            size_t len = 0;
+                            if ((len = dc_utils_format_specifier_length_bool(format_spec)) > 0 ||
+                                (len = dc_utils_format_specifier_length_int(format_spec)) > 0 ||
+                                (len = dc_utils_format_specifier_length_float(format_spec)) > 0 ||
+                                (len = dc_utils_format_specifier_length_string(format_spec)) > 0) {
+                                formats.emplace_back(format_spec.substr(0, len));
+                            } else {
+                                formats.emplace_back("%s");
+                            }
+                        } else {
+                            formats.emplace_back("%s");
+                        }
+                    } else {
+                        formats.emplace_back("%s");
+                    }
+
+                    continue;
+                }
+
+                // Default: append character to result
+                result += raw_text[i++];
+            }
+
+            // Print final result
+            printf("result: %s\n", result.c_str());
+
             break;
         }
 

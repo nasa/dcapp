@@ -39,6 +39,7 @@ typedef enum {
     DC_APP_ELEM_TYPE_PANEL,
     DC_APP_ELEM_TYPE_POLYGON,
     DC_APP_ELEM_TYPE_SET,
+    DC_APP_ELEM_TYPE_TEXT,
     DC_APP_ELEM_TYPE_TRICK_FROM,
     DC_APP_ELEM_TYPE_TRICK_IO,
     DC_APP_ELEM_TYPE_TRICK_TO,
@@ -142,6 +143,7 @@ enum DcAppNodeType {
     DC_APP_NODE_TYPE_PANEL,
     DC_APP_NODE_TYPE_POLYGON,
     DC_APP_NODE_TYPE_SET,
+    DC_APP_NODE_TYPE_TEXT,
     DC_APP_NODE_TYPE_WINDOW,
 };
 
@@ -201,6 +203,25 @@ typedef struct _DcAppNodeSet {
     DcAppValueIndex operand;
 } DcAppNodeSet;
 
+typedef struct _DcAppNodeText {
+    DcAppValueIndex2 position;
+    DcAppValueIndex2 origin;
+    DcAppValueIndex2 alignment;
+    DcAppValueIndex  size;
+    // DcAppValueIndex  rotation;
+    // DcAppValueIndex4 color;
+    // DcAppValueIndex4 outline_color;
+    // DcAppValueIndex  font;
+
+    // contains values and formats
+    // TODO hate how this is structured, and know it's bad
+    char            *sb_fillers;
+    int             *sb_filler_indices;
+    char            *sb_formats;
+    int             *sb_format_indices;
+    DcAppValueIndex *vals;
+} DcAppNodeText;
+
 typedef struct _DcAppNodeWindow {
     DcAppValueIndex2 position;
     DcAppValueIndex2 dimensions;
@@ -220,6 +241,7 @@ typedef struct _DcAppNode {
         DcAppNodePanel       panel;
         DcAppNodePolygon     polygon;
         DcAppNodeSet         set;
+        DcAppNodeText        text;
         DcAppNodeWindow      window;
     };
 } DcAppNode;

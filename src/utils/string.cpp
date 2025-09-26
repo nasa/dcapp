@@ -6,17 +6,20 @@
 // c++ standard includes
 #include <string>
 #include <vector>
+#include <cstdint>
+
+static size_t _extract_format_specifier_length(const std::string &value, const std::string &valid_specifiers);
 
 static bool _string_is_float(const std::string &text) {
-    char* end = nullptr;
-    errno = 0;
+    char *end = nullptr;
+    errno     = 0;
     std::strtof(text.c_str(), &end);
     return (end != text.c_str() && *end == '\0' && errno == 0);
 }
 
-static bool _string_is_int(const std::string& text) {
-    char* end = nullptr;
-    errno = 0;
+static bool _string_is_int(const std::string &text) {
+    char *end = nullptr;
+    errno     = 0;
     std::strtol(text.c_str(), &end, 10);
     return (end != text.c_str() && *end == '\0' && errno == 0);
 }
@@ -34,7 +37,7 @@ double dc_utils_string_to_float(const std::string &text) {
 int dc_utils_string_to_integer(const std::string &text) {
     if (_string_is_int(text)) {
         return std::stoi(text);
-    } else if (_string_is_float(text)){
+    } else if (_string_is_float(text)) {
         return (int)std::stod(text);
     } else {
         return (bool)dc_utils_string_to_boolean(text);
@@ -126,4 +129,58 @@ std::vector<std::string> dc_utils_split_string_by_delimiters(std::string input, 
         }
     }
     return output;
+}
+
+// set of utilities to check if a string is a format specifier
+// * returns the length of the specifier (0 if not one)
+// ** this set of functions should be pretty quick, but sure there's a better
+// ** way to handle this
+size_t dc_utils_format_specifier_length_bool(const std::string &value) {
+    return _extract_format_specifier_length(value, "dis");
+}
+
+size_t dc_utils_format_specifier_length_int(const std::string &value) {
+    return _extract_format_specifier_length(value, "diuxXo");
+}
+
+size_t dc_utils_format_specifier_length_float(const std::string &value) {
+    return _extract_format_specifier_length(value, "fFeEgG");
+}
+
+size_t dc_utils_format_specifier_length_string(const std::string &value) {
+    return _extract_format_specifier_length(value, "s");
+}
+
+size_t _extract_format_specifier_length(const std::string &value, const std::string &valid_specifiers) {
+    if (value.empty() || value[0] != '%')
+        return 0;
+
+    size_t i = 1;
+
+    // Optional flags: -, +, 0, space, #
+    while (i < value.size() && (value[i] == '-' || value[i] == '+' || value[i] == '0' || value[i] == ' ' || value[i] == '#')) {
+        i++;
+    }
+
+    // Optional width: digits
+    while (i < value.size() && std::isdigit(value[i])) {
+        i++;
+    }
+
+    // Optional precision: .digits
+    if (i < value.size() && value[i] == '.') {
+        i++;
+        while (i < value.size() && std::isdigit(value[i])) {
+            i++;
+        }
+    }
+
+    // Optional length modifiers (ignored for now)
+
+    // Final specifier
+    if (i < value.size() && valid_specifiers.find(value[i]) != std::string::npos) {
+        return i + 1; // include the specifier
+    }
+
+    return 0;
 }

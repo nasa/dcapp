@@ -9,7 +9,7 @@ void DisplayInit() {
 }
 
 void DisplayDraw() {
-    printf("%f %f\n", ROTATE, G);
+    // printf("%f %f\n", ROTATE, G);
     return;
 }
 

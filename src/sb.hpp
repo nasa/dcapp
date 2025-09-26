@@ -1,3 +1,6 @@
+#ifndef _DC_SB_
+#define _DC_SB_
+
 #include <cstdlib>  // malloc, realloc, free, exit
 #include <cstddef>  // size_t
 #include <cstring>  // memmove
@@ -96,3 +99,5 @@ static inline T sbshift_fn(T*& a) {
         if (a) std::free(sbheader(a)); \
         (a) = nullptr; \
     } while (0)
+
+#endif
