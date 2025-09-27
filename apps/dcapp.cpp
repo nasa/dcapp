@@ -43,14 +43,14 @@ DcAppData dc_app_data;
 
 typedef struct _plAppData {
     // window
-    plWindow      *pt_window;
-    plDrawLayer2D *pt_fg_layer;
+    plWindow      *window;
+    plDrawLayer2D *layer;
 
     // font
-    plFont *pt_cousine_sdf_font;
+    plFont *cousine_sdf_font;
 
     // console variable
-    bool b_show_help_window;
+    bool show_help_window;
 } pl_app_data;
 
 //-----------------------------------------------------------------------------
@@ -59,76 +59,76 @@ typedef struct _plAppData {
 
 static DcAppNodeIndex _process_node_children(xmlNodePtr xml_node, DcAppNodeIndex node_index, DcAppElemType parent_elem_type, const std::string &directory);
 static DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppElemType parent_elem_type, std::string directory);
-static void           _draw_node_list(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *node_transform);
-static void           _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *parent_transform);
+static void           _draw_node_list(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *node_transform);
+static void           _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent_transform);
 
 //-----------------------------------------------------------------------------
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-const plWindowI  *gpt_windows = NULL;
-const plDrawI    *gpt_draw    = NULL;
-const plStarterI *gpt_starter = NULL;
-const plProfileI *gpt_profile = NULL;
-const plMemoryI  *gpt_memory  = NULL;
-const plLibraryI *gpt_library = NULL;
-const plIOI      *gpt_ioi     = NULL;
+const plWindowI  *ext_windows = NULL;
+const plDrawI    *ext_draw    = NULL;
+const plStarterI *ext_starter = NULL;
+const plProfileI *ext_profile = NULL;
+const plMemoryI  *ext_memory  = NULL;
+const plLibraryI *ext_library = NULL;
+const plIOI      *ext_ioi     = NULL;
 
-#define PL_ALLOC(x) gpt_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
-#define PL_REALLOC(x, y) gpt_memory->tracked_realloc((x), (y), __FILE__, __LINE__)
-#define PL_FREE(x) gpt_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+#define PL_ALLOC(x) ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
+#define PL_REALLOC(x, y) ext_memory->tracked_realloc((x), (y), __FILE__, __LINE__)
+#define PL_FREE(x) ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
 //-----------------------------------------------------------------------------
 // [SECTION] pl_app_load
 //-----------------------------------------------------------------------------s
 
 PL_EXPORT void *
-pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
+pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     // NOTE: on first load, "pAppData" will be NULL but on reloads
     //       it will be the value returned from this function
 
     // if "ptAppData" is a valid pointer, then this function is being called
     // during a hot reload.
-    if (pt_app_data) {
+    if (app_data) {
         // re-retrieve the apis since we are now in
         // a different dll/so
-        gpt_windows = pl_get_api_latest(pt_api_registry, plWindowI);
-        gpt_draw    = pl_get_api_latest(pt_api_registry, plDrawI);
-        gpt_starter = pl_get_api_latest(pt_api_registry, plStarterI);
-        gpt_profile = pl_get_api_latest(pt_api_registry, plProfileI);
-        gpt_memory  = pl_get_api_latest(pt_api_registry, plMemoryI);
-        gpt_library = pl_get_api_latest(pt_api_registry, plLibraryI);
-        gpt_ioi     = pl_get_api_latest(pt_api_registry, plIOI);
+        ext_windows = pl_get_api_latest(api_registry, plWindowI);
+        ext_draw    = pl_get_api_latest(api_registry, plDrawI);
+        ext_starter = pl_get_api_latest(api_registry, plStarterI);
+        ext_profile = pl_get_api_latest(api_registry, plProfileI);
+        ext_memory  = pl_get_api_latest(api_registry, plMemoryI);
+        ext_library = pl_get_api_latest(api_registry, plLibraryI);
+        ext_ioi     = pl_get_api_latest(api_registry, plIOI);
 
-        return pt_app_data;
+        return app_data;
     }
 
     // retrieve extension registry
-    const plExtensionRegistryI *pt_extension_registry = pl_get_api_latest(pt_api_registry, plExtensionRegistryI);
+    const plExtensionRegistryI *extension_registry = pl_get_api_latest(api_registry, plExtensionRegistryI);
 
     // load extensions
     //   * first argument is the shared library name WITHOUT the extension
     //   * second & third argument is the load/unload functions names (use NULL for the default of "pl_load_ext" &
     //     "pl_unload_ext")
     //   * fourth argument indicates if the extension is reloadable (should we check for changes and reload if changed)
-    pt_extension_registry->load("pl_unity_ext", NULL, NULL, true);
-    pt_extension_registry->load("pl_platform_ext", NULL, NULL, false); // provides the file API used by the drawing ext
+    extension_registry->load("pl_unity_ext", NULL, NULL, true);
+    extension_registry->load("pl_platform_ext", NULL, NULL, false); // provides the file API used by the drawing ext
 
     // load required apis
-    gpt_windows = pl_get_api_latest(pt_api_registry, plWindowI);
-    gpt_draw    = pl_get_api_latest(pt_api_registry, plDrawI);
-    gpt_starter = pl_get_api_latest(pt_api_registry, plStarterI);
-    gpt_profile = pl_get_api_latest(pt_api_registry, plProfileI);
-    gpt_memory  = pl_get_api_latest(pt_api_registry, plMemoryI);
-    gpt_library = pl_get_api_latest(pt_api_registry, plLibraryI);
-    gpt_ioi     = pl_get_api_latest(pt_api_registry, plIOI);
+    ext_windows = pl_get_api_latest(api_registry, plWindowI);
+    ext_draw    = pl_get_api_latest(api_registry, plDrawI);
+    ext_starter = pl_get_api_latest(api_registry, plStarterI);
+    ext_profile = pl_get_api_latest(api_registry, plProfileI);
+    ext_memory  = pl_get_api_latest(api_registry, plMemoryI);
+    ext_library = pl_get_api_latest(api_registry, plLibraryI);
+    ext_ioi     = pl_get_api_latest(api_registry, plIOI);
 
     // allocate app memory
-    pt_app_data = (pl_app_data *)PL_ALLOC(sizeof(pl_app_data));
-    memset(pt_app_data, 0, sizeof(pl_app_data));
+    app_data = (pl_app_data *)PL_ALLOC(sizeof(pl_app_data));
+    memset(app_data, 0, sizeof(pl_app_data));
 
     // default values
-    pt_app_data->b_show_help_window = true;
+    app_data->show_help_window = true;
 
     // parse input arguments
     // if (argc < 2) {
@@ -144,19 +144,19 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     // std::string config_relative_path = "/home/nathan/dcapp-vk/samples/test/test.xml";
 
     // parse input arguments
-    plIO *gpt_io = gpt_ioi->get_io();
-    if (gpt_io->iArgc < 4) {
+    plIO *ext_io = ext_ioi->get_io();
+    if (ext_io->iArgc < 4) {
         throw std::runtime_error("Missing dcapp configuration file");
     }
-    std::vector<std::string> args(gpt_io->apArgv + 3, gpt_io->apArgv + gpt_io->iArgc);
+    std::vector<std::string> args(ext_io->apArgv + 3, ext_io->apArgv + ext_io->iArgc);
 
     // TODO process input arguments (constant setting)
     std::string config_relative_path = args[0];
 
     // set paths
-    std::filesystem::path fsFilePath       = std::filesystem::canonical(config_relative_path);
-    std::filesystem::path fs_dir_path      = fsFilePath.parent_path();
-    std::string           config_file_path = fsFilePath.string();
+    std::filesystem::path fs_file_path     = std::filesystem::canonical(config_relative_path);
+    std::filesystem::path fs_dir_path      = fs_file_path.parent_path();
+    std::string           config_file_path = fs_file_path.string();
     std::string           config_dir_path  = fs_dir_path.string();
 
     // create cache and log dirs
@@ -200,15 +200,15 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     // configure logic file
     if (dc_app_data.logic.library) {
         // set logic functions
-        dc_app_data.logic.pre_init = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayPreInit");
-        dc_app_data.logic.init     = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayInit");
-        dc_app_data.logic.draw     = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayDraw");
-        dc_app_data.logic.close    = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayClose");
+        dc_app_data.logic.pre_init = (void (*)(void))ext_library->load_function(dc_app_data.logic.library, "DisplayPreInit");
+        dc_app_data.logic.init     = (void (*)(void))ext_library->load_function(dc_app_data.logic.library, "DisplayInit");
+        dc_app_data.logic.draw     = (void (*)(void))ext_library->load_function(dc_app_data.logic.library, "DisplayDraw");
+        dc_app_data.logic.close    = (void (*)(void))ext_library->load_function(dc_app_data.logic.library, "DisplayClose");
 
         // link variables to extern logic data
         for (auto const &[name, var_index] : dc_app_data.var_indices) {
             DcAppVar *var    = &(dc_app_data.vars[var_index]);
-            var->extern_data = gpt_library->load_function(dc_app_data.logic.library, name.c_str());
+            var->extern_data = ext_library->load_function(dc_app_data.logic.library, name.c_str());
 
             // set the extern data to the initial value
             dc_app_refresh_var_from_value(var);
@@ -219,8 +219,8 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     // root->validate();
 
     // create font atlas
-    plFontAtlas *pt_atlas = gpt_draw->create_font_atlas();
-    gpt_draw->set_font_atlas(pt_atlas);
+    plFontAtlas *atlas = ext_draw->create_font_atlas();
+    ext_draw->set_font_atlas(atlas);
 
     // typical font range (you can also add individual characters)
     const plFontRange range = {
@@ -237,7 +237,7 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
         .iSdfPadding    = 1,
         .uRangeCount    = 1,
         .ptRanges       = &range};
-    pt_app_data->pt_cousine_sdf_font = gpt_draw->add_font_from_file_ttf(gpt_draw->get_current_font_atlas(), font_config, "../data/pilotlight-assets-master/fonts/Cousine-Regular.ttf");
+    app_data->cousine_sdf_font = ext_draw->add_font_from_file_ttf(ext_draw->get_current_font_atlas(), font_config, "../data/pilotlight-assets-master/fonts/Cousine-Regular.ttf");
 
     // set initial window params
     DcAppNode   *window_node   = dc_app_index_to_node(dc_app_data.window);
@@ -249,18 +249,18 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
         .iYPos   = dc_app_get_value(window_node->window.position.y)->value_integer,
     };
 
-    gpt_windows->create(t_window_desc, &pt_app_data->pt_window);
-    gpt_windows->show(pt_app_data->pt_window);
+    ext_windows->create(t_window_desc, &app_data->window);
+    ext_windows->show(app_data->window);
 
     // initialize the starter API (handles alot of boilerplate)
     plStarterInit tStarterInit = {
         .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS,
-        .ptWindow = pt_app_data->pt_window};
-    gpt_starter->initialize(tStarterInit);
-    gpt_starter->finalize();
+        .ptWindow = app_data->window};
+    ext_starter->initialize(tStarterInit);
+    ext_starter->finalize();
 
     // return app memory
-    return pt_app_data;
+    return app_data;
 }
 
 //-----------------------------------------------------------------------------
@@ -268,10 +268,10 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void
-pl_app_shutdown(pl_app_data *pt_app_data) {
-    gpt_starter->cleanup();
-    gpt_windows->destroy(pt_app_data->pt_window);
-    PL_FREE(pt_app_data);
+pl_app_shutdown(pl_app_data *app_data) {
+    ext_starter->cleanup();
+    ext_windows->destroy(app_data->window);
+    PL_FREE(app_data);
 }
 
 //-----------------------------------------------------------------------------
@@ -279,8 +279,8 @@ pl_app_shutdown(pl_app_data *pt_app_data) {
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void
-pl_app_resize(pl_app_data *pt_app_data) {
-    gpt_starter->resize();
+pl_app_resize(pl_app_data *app_data) {
+    ext_starter->resize();
 }
 
 //-----------------------------------------------------------------------------
@@ -288,16 +288,16 @@ pl_app_resize(pl_app_data *pt_app_data) {
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void
-pl_app_update(pl_app_data *pt_app_data) {
+pl_app_update(pl_app_data *app_data) {
     // this needs to be the first call when using the starter
     // extension. You must return if it returns false (usually a swapchain recreation).
-    if (!gpt_starter->begin_frame())
+    if (!ext_starter->begin_frame())
         return;
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    gpt_profile->begin_sample(0, "example drawing");
-    pt_app_data->pt_fg_layer = gpt_starter->get_foreground_layer();
+    ext_profile->begin_sample(0, "example drawing");
+    app_data->layer = ext_starter->get_foreground_layer();
 
     // send trick data
     for (int ii = 0; ii < dc_app_data.trick_contexts.size(); ii++) {
@@ -347,12 +347,12 @@ pl_app_update(pl_app_data *pt_app_data) {
         dc_app_refresh_var_from_extern(var);
     }
 
-    _draw_node(pt_app_data, dc_app_data.window, nullptr);
+    _draw_node(app_data, dc_app_data.window, nullptr);
 
-    gpt_profile->end_sample(0);
+    ext_profile->end_sample(0);
 
     // must be the last function called when using the starter extension
-    gpt_starter->end_frame();
+    ext_starter->end_frame();
 }
 
 // returns the first child (if any)
@@ -685,7 +685,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                     .tFlags = PL_LIBRARY_FLAGS_NONE,
                     .pcName = filePath.c_str(),
                 };
-                if (gpt_library->load(logic_so_desc, &dc_app_data.logic.library) != PL_LIBRARY_RESULT_SUCCESS) {
+                if (ext_library->load(logic_so_desc, &dc_app_data.logic.library) != PL_LIBRARY_RESULT_SUCCESS) {
                     throw std::runtime_error("Failed to load logic .so file");
                 }
             } else {
@@ -1374,15 +1374,15 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
     return node_index;
 }
 
-void _draw_node_list(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *node_transform) {
+void _draw_node_list(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *node_transform) {
     DcAppNodeIndex current_node_index = node_index;
     while (current_node_index != DC_APP_NODE_INDEX_UNDEFINED) {
-        _draw_node(pt_app_data, current_node_index, node_transform);
+        _draw_node(app_data, current_node_index, node_transform);
         current_node_index = dc_app_index_to_node(current_node_index)->next;
     }
 }
 
-void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *parent_transform) {
+void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent_transform) {
     if (node_index == DC_APP_NODE_INDEX_UNDEFINED) {
         throw std::runtime_error("Attempting to draw undefined node index");
     }
@@ -1437,7 +1437,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
             transform        = pl_mul_mat4t(&transform, &rotate_matrix);
             transform        = pl_mul_mat4t(&transform, &trans_position_matrix);
             transform        = pl_mul_mat4t(&transform, &scale_matrix);
-            _draw_node_list(pt_app_data, node->container.child, &transform);
+            _draw_node_list(app_data, node->container.child, &transform);
             break;
         }
 
@@ -1479,9 +1479,9 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
 
             // process children
             if (result) {
-                _draw_node_list(pt_app_data, node->conditional.child_true, parent_transform);
+                _draw_node_list(app_data, node->conditional.child_true, parent_transform);
             } else {
-                _draw_node_list(pt_app_data, node->conditional.child_false, parent_transform);
+                _draw_node_list(app_data, node->conditional.child_false, parent_transform);
             }
             break;
         }
@@ -1498,7 +1498,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
                 1.0f);
             plMat4 transform = (plMat4){0};
             transform        = pl_mul_mat4t(parent_transform, &scale_matrix);
-            _draw_node_list(pt_app_data, node->panel.child, &transform);
+            _draw_node_list(app_data, node->panel.child, &transform);
             break;
         }
 
@@ -1522,7 +1522,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
                     dc_app_get_value(node->polygon.fill_color.g)->value_float,
                     dc_app_get_value(node->polygon.fill_color.b)->value_float,
                     dc_app_get_value(node->polygon.fill_color.a)->value_float);
-                gpt_draw->add_convex_polygon_filled(pt_app_data->pt_fg_layer, points.data(), points.size(), (plDrawSolidOptions){.uColor = fill_color});
+                ext_draw->add_convex_polygon_filled(app_data->layer, points.data(), points.size(), (plDrawSolidOptions){.uColor = fill_color});
             }
 
             // draw outline
@@ -1533,7 +1533,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
                     dc_app_get_value(node->polygon.line_color.g)->value_float,
                     dc_app_get_value(node->polygon.line_color.b)->value_float,
                     dc_app_get_value(node->polygon.line_color.a)->value_float);
-                gpt_draw->add_polygon(pt_app_data->pt_fg_layer, points.data(), points.size(), (plDrawLineOptions){.uColor = line_color, .fThickness = lineThickness});
+                ext_draw->add_polygon(app_data->layer, points.data(), points.size(), (plDrawLineOptions){.uColor = line_color, .fThickness = lineThickness});
             }
 
             break;
@@ -1741,7 +1741,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
             // transform        = pl_mul_mat4t(&transform, &scale_matrix);
 
             //
-            gpt_draw->add_text(pt_app_data->pt_fg_layer, (plVec2){500.0f, 500.0f}, "Cousine @ 100, sdf (loaded at 18)", (plDrawTextOptions){.ptFont = pt_app_data->pt_cousine_sdf_font, .uColor = PL_COLOR_32_WHITE, .fSize = 100.0f});
+            ext_draw->add_text(app_data->layer, (plVec2){500.0f, 500.0f}, "Cousine @ 100, sdf (loaded at 18)", (plDrawTextOptions){.ptFont = app_data->cousine_sdf_font, .uColor = PL_COLOR_32_WHITE, .fSize = 100.0f});
 
             break;
         }
@@ -1752,7 +1752,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
             uint32_t dimensionX, dimensionY;
 
             // TODO fix this in pilotlight for macos
-            gpt_windows->get_size(pt_app_data->pt_window, &dimensionX, &dimensionY);
+            ext_windows->get_size(app_data->window, &dimensionX, &dimensionY);
             DcValue *dimension_value_x       = dc_app_get_value(node->window.dimensions.x);
             DcValue *dimension_value_y       = dc_app_get_value(node->window.dimensions.y);
             dimension_value_x->value_integer = (int)dimensionX;
@@ -1775,7 +1775,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
 
             plMat4 transform;
             transform = pl_mul_mat4t(&trans_matrix, &scale_matrix);
-            _draw_node_list(pt_app_data, node->window.child, &transform);
+            _draw_node_list(app_data, node->window.child, &transform);
             break;
         }
 
