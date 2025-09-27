@@ -46,6 +46,9 @@ typedef struct _plAppData {
     plWindow      *pt_window;
     plDrawLayer2D *pt_fg_layer;
 
+    // font
+    plFont *pt_cousine_sdf_font;
+
     // console variable
     bool b_show_help_window;
 } pl_app_data;
@@ -214,6 +217,27 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
 
     // validate
     // root->validate();
+
+    // create font atlas
+    plFontAtlas *pt_atlas = gpt_draw->create_font_atlas();
+    gpt_draw->set_font_atlas(pt_atlas);
+
+    // typical font range (you can also add individual characters)
+    const plFontRange range = {
+        .iFirstCodePoint = 0x0020,
+        .uCharCount      = 0x00FF - 0x0020};
+
+    // adding previous font but as a signed distance field (SDF)
+    plFontConfig font_config = {
+        .bSdf           = true, // only works with ttf
+        .fSize          = 18.0f,
+        .uHOverSampling = 1,
+        .uVOverSampling = 1,
+        .ucOnEdgeValue  = 180,
+        .iSdfPadding    = 1,
+        .uRangeCount    = 1,
+        .ptRanges       = &range};
+    pt_app_data->pt_cousine_sdf_font = gpt_draw->add_font_from_file_ttf(gpt_draw->get_current_font_atlas(), font_config, "../data/pilotlight-assets-master/fonts/Cousine-Regular.ttf");
 
     // set initial window params
     DcAppNode   *window_node   = dc_app_index_to_node(dc_app_data.window);
@@ -977,19 +1001,74 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             sbpushn(dc_node.text.sb_fillers, sb_curr_filler, sbcount(sb_curr_filler));
             sbpush(dc_node.text.sb_fillers, '\0');
 
-            // Print final result
-            for (int ii = 0; ii < sbcount(dc_node.text.sb_vals); ii++) {
-                printf("%s**%s**%s**%d\n",
-                       &(dc_node.text.sb_fillers[dc_node.text.sb_filler_indices[ii]]),
-                       dc_app_get_value(dc_node.text.sb_vals[ii])->value_string.c_str(),
-                       &(dc_node.text.sb_formats[dc_node.text.sb_format_indices[ii]]),
-                       dc_node.text.sb_format_types[ii]);
-            }
-            printf("%s**\n", &(dc_node.text.sb_fillers[sbpop(dc_node.text.sb_filler_indices)]));
-
             // clear temp buffer
             sbclear(sb_curr_filler);
 
+            // xPosition
+            char *c_x_position = dc_utils_get_attribute_string(xml_node, "X");
+            if (c_x_position) {
+                dc_node.text.position.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position));
+                free(c_x_position);
+            } else {
+                dc_node.text.position.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // y position
+            char *c_y_position = dc_utils_get_attribute_string(xml_node, "Y");
+            if (c_y_position) {
+                dc_node.text.position.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position));
+                free(c_y_position);
+            } else {
+                dc_node.text.position.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // x origin
+            char *c_x_origin = dc_utils_get_attribute_string(xml_node, "OriginX");
+            if (c_x_origin) {
+                dc_node.text.origin.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_origin));
+                free(c_x_origin);
+            } else {
+                dc_node.text.origin.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // y origin
+            char *c_y_origin = dc_utils_get_attribute_string(xml_node, "OriginY");
+            if (c_y_origin) {
+                dc_node.text.origin.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_origin));
+                free(c_y_origin);
+            } else {
+                dc_node.text.origin.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // x align
+            char *c_x_align = dc_utils_get_attribute_string(xml_node, "HorizontalAlign");
+            if (c_x_align) {
+                dc_node.text.alignment.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_align));
+                free(c_x_align);
+            } else {
+                dc_node.text.alignment.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_LEFT));
+            }
+
+            // y align
+            char *c_y_align = dc_utils_get_attribute_string(xml_node, "VerticalAlign");
+            if (c_y_align) {
+                dc_node.text.alignment.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_align));
+                free(c_y_align);
+            } else {
+                dc_node.text.alignment.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM));
+            }
+
+            // size
+            char *c_size = dc_utils_get_attribute_string(xml_node, "Size");
+            if (c_size) {
+                dc_node.text.size = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_size));
+                free(c_size);
+            } else {
+                dc_node.text.size = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // register node
+            node_index = dc_app_register_node(dc_node);
             break;
         }
 
@@ -1565,6 +1644,105 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
             // refresh variable
             dc_value_refresh(var_value);
             dc_app_refresh_var_from_value(var);
+            break;
+        }
+
+        case DC_APP_NODE_TYPE_TEXT: {
+
+            // expand text
+            static char *sb_text = NULL;
+            sbclear(sb_text);
+            for (int ii = 0; ii < sbcount(node->text.sb_vals); ii++) {
+
+                // filler
+                char *filler = &(node->text.sb_fillers[node->text.sb_filler_indices[ii]]);
+                sbpushn(sb_text, filler, strlen(filler));
+
+                // value
+                DcValueType format_type = node->text.sb_format_types[ii];
+                char       *format      = &(node->text.sb_formats[node->text.sb_format_indices[ii]]);
+                DcValue    *val         = dc_app_get_value(node->text.sb_vals[ii]);
+                static char val_str[256]; // assume text won't be that long..
+                switch (format_type) {
+                    case DC_VALUE_TYPE_STRING:
+                        snprintf(val_str, sizeof(val_str), format, val->value_string.c_str());
+                        break;
+                    case DC_VALUE_TYPE_INTEGER:
+                        snprintf(val_str, sizeof(val_str), format, val->value_integer);
+                        break;
+                    case DC_VALUE_TYPE_FLOAT:
+                        snprintf(val_str, sizeof(val_str), format, val->value_float);
+                        break;
+                    case DC_VALUE_TYPE_BOOLEAN:
+                        snprintf(val_str, sizeof(val_str), format, val->value_boolean);
+                        break;
+                    default:
+                        throw std::runtime_error("Uknown value type for text: " + std::to_string(format_type));
+                }
+                sbpushn(sb_text, val_str, strlen(val_str));
+            }
+
+            // ending filler
+            char *filler = &(node->text.sb_fillers[node->text.sb_filler_indices[sbcount(node->text.sb_vals)]]);
+            sbpushn(sb_text, filler, strlen(filler));
+
+            // print
+            printf("%s\n", sb_text);
+
+            // get text dimensions
+            plVec2 dimensions;
+
+            float x_position = 0;
+            switch (dc_app_get_value(node->text.alignment.x)->value_integer) {
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    x_position = dc_app_get_value(node->text.position.x)->value_float;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    x_position = dc_app_get_value(node->text.position.x)->value_float - dc_app_get_value(dimensions.x)->value_float / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    x_position = dc_app_get_value(node->text.position.x)->value_float - dc_app_get_value(dimensions.x)->value_float;
+                    break;
+            }
+
+            float y_position = 0;
+            switch (dc_app_get_value(node->text.alignment.y)->value_integer) {
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    y_position = dc_app_get_value(node->text.position.y)->value_float;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    y_position = dc_app_get_value(node->text.position.y)->value_float - dc_app_get_value(dimensions.y)->value_float / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    y_position = dc_app_get_value(node->text.position.y)->value_float - dc_app_get_value(dimensions.y)->value_float;
+                    break;
+            }
+
+            // plMat4 trans_origin_matrix = pl_mat4_translate_xyz(
+            //     dc_app_get_value(node->text.origin.x)->value_float,
+            //     dc_app_get_value(node->text.origin.y)->value_float,
+            //     0.0f);
+            // plMat4 rotate_matrix = pl_mat4_rotate_vec3(
+            //     pl_radiansf(dc_app_get_value(node->text.rotation)->value_float),
+            //     (plVec3){0.0f, 0.0f, 1.0f});
+            // plMat4 trans_position_matrix = pl_mat4_translate_xyz(
+            //     x_position,
+            //     y_position,
+            //     0.0f);
+            // plMat4 scale_matrix = pl_mat4_scale_xyz(
+            //     dc_app_get_value(node->text.dimensions.x)->value_float / dc_app_get_value(node->text.virtual_dimensions.x)->value_float,
+            //     dc_app_get_value(node->text.dimensions.y)->value_float / dc_app_get_value(node->text.virtual_dimensions.y)->value_float,
+            //     1.0f);
+
+            // plMat4 transform = (plMat4){0};
+            // transform        = pl_mul_mat4t(parent_transform, &trans_origin_matrix);
+            // transform        = pl_mul_mat4t(&transform, &rotate_matrix);
+            // transform        = pl_mul_mat4t(&transform, &trans_position_matrix);
+            // transform        = pl_mul_mat4t(&transform, &scale_matrix);
+
+            //
+            gpt_draw->add_text(pt_app_data->pt_fg_layer, (plVec2){500.0f, 500.0f}, "Cousine @ 100, sdf (loaded at 18)", (plDrawTextOptions){.ptFont = pt_app_data->pt_cousine_sdf_font, .uColor = PL_COLOR_32_WHITE, .fSize = 100.0f});
+
             break;
         }
 

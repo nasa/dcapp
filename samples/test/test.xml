@@ -25,7 +25,6 @@
     <!-- panel -->
     <Panel VirtualWidth="1000" VirtualHeight="1000">
 
-      <Text>sample text@G(%s) here @G @{G}</Text>
       <!-- modify some variables -->
       <Set Variable="G" Operator="#_set_add_">.001</Set>
       <Set Variable="ROTATE" Operator="#_set_multiply_">1.05</Set>
@@ -86,6 +85,7 @@
 
       </Container>
 
+      <Text>sample text@G(%s) here @G(%0.1f) @{G}</Text>
 
     </Panel>
 
