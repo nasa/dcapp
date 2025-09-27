@@ -4,6 +4,7 @@
 //-----------------------------------------------------------------------------
 
 #include "../src/app.hpp"
+#include "pl_draw_backend_ext.h"
 #include "sb.hpp"
 #include "trick.hpp"
 #include <utils/file.hpp>
@@ -36,6 +37,7 @@ DcAppData dc_app_data;
 #include "pl_draw_ext.h"
 #include "pl_profile_ext.h"
 #include "pl_starter_ext.h"
+#include "pl_graphics_ext.h"
 
 //-----------------------------------------------------------------------------
 // [SECTION] structs
@@ -45,6 +47,7 @@ typedef struct _plAppData {
     // window
     plWindow      *window;
     plDrawLayer2D *layer;
+    plDrawList2D  *draw_list;
 
     // font
     plFont *cousine_sdf_font;
@@ -66,13 +69,15 @@ static void           _draw_node(pl_app_data *app_data, DcAppNodeIndex node_inde
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-const plWindowI  *ext_windows = NULL;
-const plDrawI    *ext_draw    = NULL;
-const plStarterI *ext_starter = NULL;
-const plProfileI *ext_profile = NULL;
-const plMemoryI  *ext_memory  = NULL;
-const plLibraryI *ext_library = NULL;
-const plIOI      *ext_ioi     = NULL;
+const plWindowI      *ext_windows      = NULL;
+const plDrawI        *ext_draw         = NULL;
+const plDrawBackendI *ext_draw_backend = NULL;
+const plStarterI     *ext_starter      = NULL;
+const plProfileI     *ext_profile      = NULL;
+const plMemoryI      *ext_memory       = NULL;
+const plLibraryI     *ext_library      = NULL;
+const plIOI          *ext_ioi          = NULL;
+const plGraphicsI    *ext_gfx          = NULL;
 
 #define PL_ALLOC(x) ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_REALLOC(x, y) ext_memory->tracked_realloc((x), (y), __FILE__, __LINE__)
@@ -92,13 +97,15 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     if (app_data) {
         // re-retrieve the apis since we are now in
         // a different dll/so
-        ext_windows = pl_get_api_latest(api_registry, plWindowI);
-        ext_draw    = pl_get_api_latest(api_registry, plDrawI);
-        ext_starter = pl_get_api_latest(api_registry, plStarterI);
-        ext_profile = pl_get_api_latest(api_registry, plProfileI);
-        ext_memory  = pl_get_api_latest(api_registry, plMemoryI);
-        ext_library = pl_get_api_latest(api_registry, plLibraryI);
-        ext_ioi     = pl_get_api_latest(api_registry, plIOI);
+        ext_windows      = pl_get_api_latest(api_registry, plWindowI);
+        ext_draw         = pl_get_api_latest(api_registry, plDrawI);
+        ext_draw_backend = pl_get_api_latest(api_registry, plDrawBackendI);
+        ext_starter      = pl_get_api_latest(api_registry, plStarterI);
+        ext_profile      = pl_get_api_latest(api_registry, plProfileI);
+        ext_memory       = pl_get_api_latest(api_registry, plMemoryI);
+        ext_library      = pl_get_api_latest(api_registry, plLibraryI);
+        ext_ioi          = pl_get_api_latest(api_registry, plIOI);
+        ext_gfx          = pl_get_api_latest(api_registry, plGraphicsI);
 
         return app_data;
     }
@@ -115,13 +122,15 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     extension_registry->load("pl_platform_ext", NULL, NULL, false); // provides the file API used by the drawing ext
 
     // load required apis
-    ext_windows = pl_get_api_latest(api_registry, plWindowI);
-    ext_draw    = pl_get_api_latest(api_registry, plDrawI);
-    ext_starter = pl_get_api_latest(api_registry, plStarterI);
-    ext_profile = pl_get_api_latest(api_registry, plProfileI);
-    ext_memory  = pl_get_api_latest(api_registry, plMemoryI);
-    ext_library = pl_get_api_latest(api_registry, plLibraryI);
-    ext_ioi     = pl_get_api_latest(api_registry, plIOI);
+    ext_windows      = pl_get_api_latest(api_registry, plWindowI);
+    ext_draw         = pl_get_api_latest(api_registry, plDrawI);
+    ext_draw_backend = pl_get_api_latest(api_registry, plDrawBackendI);
+    ext_starter      = pl_get_api_latest(api_registry, plStarterI);
+    ext_profile      = pl_get_api_latest(api_registry, plProfileI);
+    ext_memory       = pl_get_api_latest(api_registry, plMemoryI);
+    ext_library      = pl_get_api_latest(api_registry, plLibraryI);
+    ext_ioi          = pl_get_api_latest(api_registry, plIOI);
+    ext_gfx          = pl_get_api_latest(api_registry, plGraphicsI);
 
     // allocate app memory
     app_data = (pl_app_data *)PL_ALLOC(sizeof(pl_app_data));
@@ -218,12 +227,38 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     // validate
     // root->validate();
 
+    // set initial window params
+    DcAppNode   *window_node = dc_app_index_to_node(dc_app_data.window);
+    plWindowDesc window_desc = {
+        .pcTitle = window_node->window.title,
+        .uWidth  = (uint32_t)(dc_app_get_value(window_node->window.dimensions.x)->value_integer),
+        .uHeight = (uint32_t)(dc_app_get_value(window_node->window.dimensions.y)->value_integer),
+        .iXPos   = dc_app_get_value(window_node->window.position.x)->value_integer,
+        .iYPos   = dc_app_get_value(window_node->window.position.y)->value_integer,
+    };
+
+    ext_windows->create(window_desc, &app_data->window);
+    ext_windows->show(app_data->window);
+
+    // initialize the starter API (handles alot of boilerplate)
+    plStarterInit tStarterInit = {
+        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS & ~PL_STARTER_FLAGS_DRAW_EXT,
+        .ptWindow = app_data->window};
+    ext_starter->initialize(tStarterInit);
+
+    // init draw extension
+    ext_draw->initialize(NULL);
+
+    // init draw backend
+    plDevice *device = ext_starter->get_device();
+    ext_draw_backend->initialize(device);
+
     // create font atlas
-    plFontAtlas *atlas = ext_draw->create_font_atlas();
-    ext_draw->set_font_atlas(atlas);
+    plFontAtlas *pt_atlas = ext_draw->create_font_atlas();
+    ext_draw->set_font_atlas(pt_atlas);
 
     // typical font range (you can also add individual characters)
-    const plFontRange range = {
+    const plFontRange font_range = {
         .iFirstCodePoint = 0x0020,
         .uCharCount      = 0x00FF - 0x0020};
 
@@ -236,28 +271,31 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
         .ucOnEdgeValue  = 180,
         .iSdfPadding    = 1,
         .uRangeCount    = 1,
-        .ptRanges       = &range};
+        .ptRanges       = &font_range};
     app_data->cousine_sdf_font = ext_draw->add_font_from_file_ttf(ext_draw->get_current_font_atlas(), font_config, "../data/pilotlight-assets-master/fonts/Cousine-Regular.ttf");
 
-    // set initial window params
-    DcAppNode   *window_node   = dc_app_index_to_node(dc_app_data.window);
-    plWindowDesc t_window_desc = {
-        .pcTitle = window_node->window.title,
-        .uWidth  = (uint32_t)(dc_app_get_value(window_node->window.dimensions.x)->value_integer),
-        .uHeight = (uint32_t)(dc_app_get_value(window_node->window.dimensions.y)->value_integer),
-        .iXPos   = dc_app_get_value(window_node->window.position.x)->value_integer,
-        .iYPos   = dc_app_get_value(window_node->window.position.y)->value_integer,
-    };
+    // register our app drawlist
+    app_data->draw_list = ext_draw->request_2d_drawlist();
 
-    ext_windows->create(t_window_desc, &app_data->window);
-    ext_windows->show(app_data->window);
+    // request layers (allows drawing out of order)
+    app_data->layer = ext_draw->request_2d_layer(app_data->draw_list);
 
-    // initialize the starter API (handles alot of boilerplate)
-    plStarterInit tStarterInit = {
-        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS,
-        .ptWindow = app_data->window};
-    ext_starter->initialize(tStarterInit);
+    // wraps up
     ext_starter->finalize();
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~font atlas texture~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // draw backend handles creating the font atlas texture and
+    // uploading to the GPU but it requires a command buffer (in an non recording state).
+    // Later examples will go into command buffers without using the starter ext
+
+    plCommandBuffer *cmd_buffer = ext_starter->get_raw_command_buffer(); // not recording
+
+    // actually record, submit, & wait
+    ext_draw_backend->build_font_atlas(cmd_buffer, ext_draw->get_current_font_atlas());
+
+    // return back to the pool
+    ext_starter->return_raw_command_buffer(cmd_buffer);
 
     // return app memory
     return app_data;
@@ -269,6 +307,14 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
 
 PL_EXPORT void
 pl_app_shutdown(pl_app_data *app_data) {
+
+    // ensure device is done with resources
+    plDevice *device = ext_starter->get_device();
+    ext_gfx->flush_device(device); // waits for the GPU to be done with all work
+
+    // cleans up texture and other resources
+    ext_draw_backend->cleanup_font_atlas(ext_draw->get_current_font_atlas());
+
     ext_starter->cleanup();
     ext_windows->destroy(app_data->window);
     PL_FREE(app_data);
@@ -296,8 +342,7 @@ pl_app_update(pl_app_data *app_data) {
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    ext_profile->begin_sample(0, "example drawing");
-    app_data->layer = ext_starter->get_foreground_layer();
+    ext_draw_backend->new_frame();
 
     // send trick data
     for (int ii = 0; ii < dc_app_data.trick_contexts.size(); ii++) {
@@ -349,7 +394,18 @@ pl_app_update(pl_app_data *app_data) {
 
     _draw_node(app_data, dc_app_data.window, nullptr);
 
-    ext_profile->end_sample(0);
+    // submit draw layer
+    ext_draw->submit_2d_layer(app_data->layer);
+
+    // start main pass & return the encoder being used
+    plRenderEncoder* encoder = ext_starter->begin_main_pass();
+
+    // submit our drawlist
+    plIO* ptIO = ext_ioi->get_io();
+    ext_draw_backend->submit_2d_drawlist(app_data->draw_list, encoder, ptIO->tMainViewportSize.x, ptIO->tMainViewportSize.y, 1);
+
+    // allows the starter extension to handle some things then ends the main pass
+    ext_starter->end_main_pass();
 
     // must be the last function called when using the starter extension
     ext_starter->end_frame();
