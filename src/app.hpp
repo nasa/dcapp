@@ -207,10 +207,14 @@ typedef struct _DcAppNodeText {
     DcAppValueIndex2 position;
     DcAppValueIndex2 origin;
     DcAppValueIndex2 alignment;
+    DcAppValueIndex2 pivot_align;
+    DcAppValueIndex2 pivot_point;
+    DcAppValueIndex  rotation;
     DcAppValueIndex  size;
-    // DcAppValueIndex  rotation;
-    // DcAppValueIndex4 color;
-    // DcAppValueIndex4 outline_color;
+    DcAppValueIndex4 fill_color;
+    DcAppValueIndex4 line_color;
+    bool             fill_enabled;
+    bool             line_enabled;
     // DcAppValueIndex  font;
 
     // stretchy buffers contains values and formats

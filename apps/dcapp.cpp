@@ -398,10 +398,10 @@ pl_app_update(pl_app_data *app_data) {
     ext_draw->submit_2d_layer(app_data->layer);
 
     // start main pass & return the encoder being used
-    plRenderEncoder* encoder = ext_starter->begin_main_pass();
+    plRenderEncoder *encoder = ext_starter->begin_main_pass();
 
     // submit our drawlist
-    plIO* ptIO = ext_ioi->get_io();
+    plIO *ptIO = ext_ioi->get_io();
     ext_draw_backend->submit_2d_drawlist(app_data->draw_list, encoder, ptIO->tMainViewportSize.x, ptIO->tMainViewportSize.y, 1);
 
     // allows the starter extension to handle some things then ends the main pass
@@ -431,6 +431,9 @@ DcAppNodeIndex _process_node_children(xmlNodePtr xml_node, DcAppNodeIndex node_i
             if (node && child_node) {
                 // set child's parent
                 child_node->parent = node_index;
+
+                // set child's next (empty for now)
+                child_node->next = DC_APP_NODE_INDEX_UNDEFINED;
 
                 // set nodes's first child if this is the first child
                 if (previous_child_node_index == DC_APP_NODE_INDEX_UNDEFINED) {
@@ -587,7 +590,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             }
 
             // rotation
-            char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotate");
+            char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotation");
             if (c_rotation) {
                 dc_node.container.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_rotation));
                 free(c_rotation);
@@ -1114,13 +1117,115 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 dc_node.text.alignment.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM));
             }
 
+            // rotation
+            char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotation");
+            if (c_rotation) {
+                dc_node.text.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_rotation));
+                free(c_rotation);
+            } else {
+                dc_node.text.rotation = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // pivots
+            char *c_pivot_point_x = dc_utils_get_attribute_string(xml_node, "PivotPointX");
+            char *c_pivot_point_y = dc_utils_get_attribute_string(xml_node, "PivotPointY");
+            if (c_pivot_point_x && c_pivot_point_y) {
+                dc_node.text.pivot_point.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pivot_point_x));
+                dc_node.text.pivot_align.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED));
+                free(c_pivot_point_x);
+
+                dc_node.text.pivot_point.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pivot_point_y));
+                dc_node.text.pivot_align.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED));
+                free(c_pivot_point_y);
+            } else if (!c_pivot_point_x && !c_pivot_point_y) {
+                char *c_pivot_align_x = dc_utils_get_attribute_string(xml_node, "PivotAlignX");
+                if (c_pivot_align_x) {
+                    dc_node.text.pivot_align.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_pivot_align_x));
+                    free(c_pivot_align_x);
+                } else {
+                    dc_node.text.pivot_align.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_CENTER));
+                }
+
+                char *c_pivot_align_y = dc_utils_get_attribute_string(xml_node, "PivotAlignY");
+                if (c_pivot_align_y) {
+                    dc_node.text.pivot_align.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_pivot_align_y));
+                    free(c_pivot_align_y);
+                } else {
+                    dc_node.text.pivot_align.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_MIDDLE));
+                }
+            } else {
+                throw std::runtime_error("Invalid Pivot parameters: must use both PivotPoint params, or none. Using just one is not allowed.");
+            }
+
             // size
             char *c_size = dc_utils_get_attribute_string(xml_node, "Size");
             if (c_size) {
                 dc_node.text.size = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_size));
                 free(c_size);
             } else {
-                dc_node.text.size = dc_app_register_value(dc_value_create_value_float(0.0f));
+                throw std::runtime_error("Missing field 'Size' on <Text> element");
+            }
+
+            // fill color
+            char *c_fill_color = dc_utils_get_attribute_string(xml_node, "FillColor");
+            if (c_fill_color) {
+                // split string by whitespace
+                std::string              s_fill_color = dc_app_dereference_constants(c_fill_color);
+                std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
+
+                if (substrings.size() > 0) {
+                    dc_node.text.fill_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[0]);
+                    if (substrings.size() > 1) {
+                        dc_node.text.fill_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[1]);
+                        if (substrings.size() > 2) {
+                            dc_node.text.fill_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[2]);
+                            if (substrings.size() > 3) {
+                                dc_node.text.fill_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[3]);
+                            } else {
+                                dc_node.text.fill_color.a = dc_app_register_value(dc_value_create_value_float(1.0f));
+                            }
+                        } else {
+                            dc_node.text.fill_color.b = dc_app_register_value(dc_value_create_value_float(0.0f));
+                        }
+                    } else {
+                        dc_node.text.fill_color.g = dc_app_register_value(dc_value_create_value_float(0.0f));
+                    }
+                } else {
+                    dc_node.text.fill_color.r = dc_app_register_value(dc_value_create_value_float(0.0f));
+                }
+                dc_node.text.fill_enabled = true;
+                free(c_fill_color);
+            }
+
+            // line color
+            char *c_line_color = dc_utils_get_attribute_string(xml_node, "LineColor");
+            if (c_line_color) {
+                // split string by whitespace
+                std::string              s_fill_color = dc_app_dereference_constants(c_line_color);
+                std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
+
+                if (substrings.size() > 0) {
+                    dc_node.text.line_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[0]);
+                    if (substrings.size() > 1) {
+                        dc_node.text.line_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[1]);
+                        if (substrings.size() > 2) {
+                            dc_node.text.line_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[2]);
+                            if (substrings.size() > 3) {
+                                dc_node.text.line_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[3]);
+                            } else {
+                                dc_node.text.line_color.a = dc_app_register_value(dc_value_create_value_float(1.0f));
+                            }
+                        } else {
+                            dc_node.text.line_color.b = dc_app_register_value(dc_value_create_value_float(0.0f));
+                        }
+                    } else {
+                        dc_node.text.line_color.g = dc_app_register_value(dc_value_create_value_float(0.0f));
+                    }
+                } else {
+                    dc_node.text.line_color.r = dc_app_register_value(dc_value_create_value_float(0.0f));
+                }
+                dc_node.text.line_enabled = true;
+                free(c_line_color);
             }
 
             // register node
@@ -1461,13 +1566,13 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
 
             float y_position = 0;
             switch (dc_app_get_value(node->container.alignment.y)->value_integer) {
-                case DC_APP_ALIGN_TYPE_LEFT:
+                case DC_APP_ALIGN_TYPE_BOTTOM:
                     y_position = dc_app_get_value(node->container.position.y)->value_float;
                     break;
-                case DC_APP_ALIGN_TYPE_CENTER:
+                case DC_APP_ALIGN_TYPE_MIDDLE:
                     y_position = dc_app_get_value(node->container.position.y)->value_float - dc_app_get_value(node->container.dimensions.y)->value_float / 2;
                     break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
+                case DC_APP_ALIGN_TYPE_TOP:
                     y_position = dc_app_get_value(node->container.position.y)->value_float - dc_app_get_value(node->container.dimensions.y)->value_float;
                     break;
             }
@@ -1741,63 +1846,178 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
             // ending filler
             char *filler = &(node->text.sb_fillers[node->text.sb_filler_indices[sbcount(node->text.sb_vals)]]);
             sbpushn(sb_text, filler, strlen(filler));
-
-            // print
-            printf("%s\n", sb_text);
+            sbpush(sb_text, '\0');
 
             // get text dimensions
-            plVec2 dimensions;
+            plDrawTextOptions text_options = {0};
+            text_options.ptFont            = app_data->cousine_sdf_font;
+            text_options.uColor            = PL_COLOR_32_RGBA(
+                dc_app_get_value(node->text.fill_color.r)->value_float,
+                dc_app_get_value(node->text.fill_color.g)->value_float,
+                dc_app_get_value(node->text.fill_color.b)->value_float,
+                dc_app_get_value(node->text.fill_color.a)->value_float);
+            text_options.fSize = dc_app_get_value(node->text.size)->value_float;
+            plVec2 pl_size     = ext_draw->calculate_text_size(sb_text, text_options);
 
-            float x_position = 0;
-            switch (dc_app_get_value(node->text.alignment.x)->value_integer) {
+            // all transform parameters
+            float          position[2]    = {dc_app_get_value(node->text.position.x)->value_float, dc_app_get_value(node->text.position.y)->value_float};
+            float          origin[2]      = {dc_app_get_value(node->text.origin.x)->value_float, dc_app_get_value(node->text.origin.y)->value_float};
+            DcAppAlignType alignment[2]   = {(DcAppAlignType)dc_app_get_value(node->text.alignment.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->text.alignment.y)->value_integer};
+            DcAppAlignType pivot_align[2] = {(DcAppAlignType)dc_app_get_value(node->text.pivot_align.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->text.pivot_align.y)->value_integer};
+            float          rotation       = dc_app_get_value(node->text.rotation)->value_float;
+            float          size[2]        = {pl_size.x, pl_size.y};
+
+            // local flip over x axis
+            plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(
+                1.0f,
+                -1.0f,
+                1.0f);
+
+            // move position
+            plMat4 trans_position_xform = pl_mat4_translate_xyz(
+                position[0],
+                position[1],
+                0.0f);
+
+            // move from top-left reference to bottom-left
+            plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(
+                0,
+                size[1],
+                0.0f);
+
+            // move origin
+            plMat4 trans_origin_xform = pl_mat4_translate_xyz(
+                origin[0],
+                origin[1],
+                0.0f);
+
+            // move alignment
+            float trans_align_vec[2];
+            switch (alignment[0]) {
+                break;
                 case DC_APP_ALIGN_TYPE_LEFT:
-                    x_position = dc_app_get_value(node->text.position.x)->value_float;
+                    trans_align_vec[0] = 0;
                     break;
                 case DC_APP_ALIGN_TYPE_CENTER:
-                    x_position = dc_app_get_value(node->text.position.x)->value_float - dc_app_get_value(dimensions.x)->value_float / 2;
+                    trans_align_vec[0] = -1 * size[0] / 2;
                     break;
                 case DC_APP_ALIGN_TYPE_RIGHT:
-                    x_position = dc_app_get_value(node->text.position.x)->value_float - dc_app_get_value(dimensions.x)->value_float;
+                    trans_align_vec[0] = -1 * size[0];
+                    break;
+                default:
+                    throw std::runtime_error("Unknown alignment in <Text> draw call: " + std::to_string(alignment[0]));
                     break;
             }
-
-            float y_position = 0;
-            switch (dc_app_get_value(node->text.alignment.y)->value_integer) {
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    y_position = dc_app_get_value(node->text.position.y)->value_float;
+            switch (alignment[1]) {
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    trans_align_vec[1] = 0;
                     break;
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    y_position = dc_app_get_value(node->text.position.y)->value_float - dc_app_get_value(dimensions.y)->value_float / 2;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    trans_align_vec[1] = -1 * size[1] / 2;
                     break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    y_position = dc_app_get_value(node->text.position.y)->value_float - dc_app_get_value(dimensions.y)->value_float;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    trans_align_vec[1] = -1 * size[1];
+                    break;
+                default:
+                    throw std::runtime_error("Unknown alignment in <Text> draw call: " + std::to_string(alignment[1]));
                     break;
             }
+            plMat4 trans_align_xform = pl_mat4_translate_xyz(
+                trans_align_vec[0],
+                trans_align_vec[1],
+                0.0f);
 
-            // plMat4 trans_origin_matrix = pl_mat4_translate_xyz(
-            //     dc_app_get_value(node->text.origin.x)->value_float,
-            //     dc_app_get_value(node->text.origin.y)->value_float,
-            //     0.0f);
-            // plMat4 rotate_matrix = pl_mat4_rotate_vec3(
-            //     pl_radiansf(dc_app_get_value(node->text.rotation)->value_float),
-            //     (plVec3){0.0f, 0.0f, 1.0f});
-            // plMat4 trans_position_matrix = pl_mat4_translate_xyz(
-            //     x_position,
-            //     y_position,
-            //     0.0f);
-            // plMat4 scale_matrix = pl_mat4_scale_xyz(
-            //     dc_app_get_value(node->text.dimensions.x)->value_float / dc_app_get_value(node->text.virtual_dimensions.x)->value_float,
-            //     dc_app_get_value(node->text.dimensions.y)->value_float / dc_app_get_value(node->text.virtual_dimensions.y)->value_float,
-            //     1.0f);
+            // move to pivot
+            // either both pivot points need to be set, or neither
+            bool  use_local_pivot = pivot_align[0] != DC_APP_ALIGN_TYPE_UNDEFINED;
+            float trans_pivot_vec[2];
+            if (use_local_pivot) {
+                switch (pivot_align[0]) {
+                    case DC_APP_ALIGN_TYPE_LEFT:
+                        trans_pivot_vec[0] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_CENTER:
+                        trans_pivot_vec[0] = -1 * size[0] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:
+                        trans_pivot_vec[0] = -1 * size[0];
+                        break;
+                    default:
+                        throw std::runtime_error("Unknown pivot alignment in <Text> draw call: " + std::to_string(pivot_align[0]));
+                        break;
+                }
+                switch (pivot_align[1]) {
+                    case DC_APP_ALIGN_TYPE_BOTTOM:
+                        trans_pivot_vec[1] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_MIDDLE:
+                        trans_pivot_vec[1] = -1 * size[1] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_TOP:
+                        trans_pivot_vec[1] = -1 * size[1];
+                        break;
+                    default:
+                        throw std::runtime_error("Unknown pivot alignment in <Text> draw call: " + std::to_string(pivot_align[1]));
+                        break;
+                }
+            } else {
+                float pivot_point_x = dc_app_get_value(node->text.pivot_point.x)->value_float;
+                trans_pivot_vec[0]  = -1 * pivot_point_x;
+                float pivot_point_y = dc_app_get_value(node->text.pivot_point.y)->value_float;
+                trans_pivot_vec[1]  = -1 * pivot_point_y;
+            }
+            plMat4 trans_to_pivot_xform = pl_mat4_translate_xyz(
+                trans_pivot_vec[0],
+                trans_pivot_vec[1],
+                0.0f);
 
-            // plMat4 transform = (plMat4){0};
-            // transform        = pl_mul_mat4t(parent_transform, &trans_origin_matrix);
-            // transform        = pl_mul_mat4t(&transform, &rotate_matrix);
-            // transform        = pl_mul_mat4t(&transform, &trans_position_matrix);
-            // transform        = pl_mul_mat4t(&transform, &scale_matrix);
+            // rotate
+            plMat4 rotate_xform = pl_mat4_rotate_vec3(
+                pl_radiansf(rotation),
+                (plVec3){0.0f, 0.0f, 1.0f});
 
-            //
-            ext_draw->add_text(app_data->layer, (plVec2){500.0f, 500.0f}, "Cousine @ 100, sdf (loaded at 18)", (plDrawTextOptions){.ptFont = app_data->cousine_sdf_font, .uColor = PL_COLOR_32_WHITE, .fSize = 100.0f});
+            // reverse pivot move
+            plMat4 trans_from_pivot_xform = pl_mat4_translate_xyz(
+                -1 * trans_pivot_vec[0],
+                -1 * trans_pivot_vec[1],
+                0.0f);
+
+            // compute transform
+            plMat4 transform4 = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+            if (!use_local_pivot) {
+                transform4 = pl_mul_mat4t(&transform4, &trans_from_pivot_xform);
+                transform4 = pl_mul_mat4t(&transform4, &rotate_xform);
+                transform4 = pl_mul_mat4t(&transform4, &trans_to_pivot_xform);
+            }
+            transform4 = pl_mul_mat4t(&transform4, &trans_align_xform);
+            transform4 = pl_mul_mat4t(&transform4, &trans_position_xform);
+            transform4 = pl_mul_mat4t(&transform4, &trans_origin_xform);
+            if (use_local_pivot) {
+                transform4 = pl_mul_mat4t(&transform4, &trans_from_pivot_xform);
+                transform4 = pl_mul_mat4t(&transform4, &rotate_xform);
+                transform4 = pl_mul_mat4t(&transform4, &trans_to_pivot_xform);
+            }
+            transform4 = pl_mul_mat4t(&transform4, &trans_pl_origin_xform);
+            transform4 = pl_mul_mat4t(&transform4, &scale_invert_y_xform);
+            transform4 = pl_mul_mat4t(parent_transform, &transform4);
+
+            // convert to 3D matrix
+            plMat3 transform3 = (plMat3){0};
+            transform3.x11    = transform4.x11;
+            transform3.x12    = transform4.x12;
+            transform3.x13    = transform4.x14;
+            transform3.x21    = transform4.x21;
+            transform3.x22    = transform4.x22;
+            transform3.x23    = transform4.x24;
+            transform3.x31    = transform4.x31;
+            transform3.x32    = transform4.x32;
+            transform3.x33    = transform4.x33;
+
+            // update text options
+            text_options.tTransform = transform3;
+
+            // draw
+            ext_draw->add_text(app_data->layer, (plVec2){0, 0}, sb_text, text_options);
 
             break;
         }
