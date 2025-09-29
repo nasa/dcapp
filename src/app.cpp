@@ -24,8 +24,6 @@ std::string dc_app_elem_type_to_string(DcAppElemType type) {
             return "Container";
         case DC_APP_ELEM_TYPE_DCAPP:
             return "DCAPP";
-        case DC_APP_ELEM_TYPE_DEM:
-            return "DEM";
         case DC_APP_ELEM_TYPE_DUMMY:
             return "Dummy";
         case DC_APP_ELEM_TYPE_FALSE:
@@ -36,8 +34,6 @@ std::string dc_app_elem_type_to_string(DcAppElemType type) {
             return "Include";
         case DC_APP_ELEM_TYPE_LOGIC:
             return "Logic";
-        case DC_APP_ELEM_TYPE_MAP:
-            return "Map";
         case DC_APP_ELEM_TYPE_NONELEM:
             return "<Non-Element>";
         case DC_APP_ELEM_TYPE_PANEL:
@@ -46,6 +42,10 @@ std::string dc_app_elem_type_to_string(DcAppElemType type) {
             return "Polygon";
         case DC_APP_ELEM_TYPE_SET:
             return "Set";
+        case DC_APP_ELEM_TYPE_TERRAIN:
+            return "Terrain";
+        case DC_APP_ELEM_TYPE_TERRAIN_DEM:
+            return "TerrainDEM";
         case DC_APP_ELEM_TYPE_TEXT:
             return "Text";
         case DC_APP_ELEM_TYPE_TRICK_FROM:
@@ -77,8 +77,6 @@ DcAppElemType dc_app_string_to_elem_type(std::string name) {
         return DC_APP_ELEM_TYPE_CONTAINER;
     if (name == "DCAPP")
         return DC_APP_ELEM_TYPE_DCAPP;
-    if (name == "DEM")
-        return DC_APP_ELEM_TYPE_DEM;
     if (name == "Dummy")
         return DC_APP_ELEM_TYPE_DUMMY;
     if (name == "False")
@@ -91,14 +89,16 @@ DcAppElemType dc_app_string_to_elem_type(std::string name) {
         return DC_APP_ELEM_TYPE_INCLUDE;
     if (name == "Logic")
         return DC_APP_ELEM_TYPE_LOGIC;
-    if (name == "Map")
-        return DC_APP_ELEM_TYPE_MAP;
     if (name == "Panel")
         return DC_APP_ELEM_TYPE_PANEL;
     if (name == "Polygon")
         return DC_APP_ELEM_TYPE_POLYGON;
     if (name == "Set")
         return DC_APP_ELEM_TYPE_SET;
+    if (name == "Terrain")
+        return DC_APP_ELEM_TYPE_TERRAIN;
+    if (name == "TerrainDEM")
+        return DC_APP_ELEM_TYPE_TERRAIN_DEM;
     if (name == "Text")
         return DC_APP_ELEM_TYPE_TEXT;
     if (name == "ToTrick")
@@ -350,14 +350,14 @@ std::string dc_app_node_type_to_string(DcAppNodeType type) {
             return "Container";
         case DC_APP_NODE_TYPE_CONDITIONAL:
             return "Conditional";
-        case DC_APP_NODE_TYPE_MAP:
-            return "Map";
         case DC_APP_NODE_TYPE_PANEL:
             return "Panel";
         case DC_APP_NODE_TYPE_POLYGON:
             return "Polygon";
         case DC_APP_NODE_TYPE_SET:
             return "Set";
+        case DC_APP_NODE_TYPE_TERRAIN:
+            return "Terrain";
         case DC_APP_NODE_TYPE_TEXT:
             return "Text";
         case DC_APP_NODE_TYPE_WINDOW:

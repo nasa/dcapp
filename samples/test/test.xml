@@ -10,7 +10,7 @@
     <Variable Type="Float">POS_X</Variable>
     <Variable Type="Float">POS_Y</Variable>
     <Variable Type="Float">VEL_Y</Variable>
-    <Variable Type="Float">G</Variable>
+    <Variable Type="Float" InitialValue="404">G</Variable>
     <TrickIO Host="localhost" Port="9123">
       <FromTrick>
         <TrickVariable Name="dyn.cannon.pos[0]">POS_X</TrickVariable>
@@ -25,10 +25,9 @@
     <!-- panel -->
     <Panel VirtualWidth="1000" VirtualHeight="1000">
 
-      <Text>sample text@G(%s) here @G @{G}</Text>
       <!-- modify some variables -->
       <Set Variable="G" Operator="#_set_add_">.001</Set>
-      <Set Variable="ROTATE" Operator="#_set_multiply_">1.05</Set>
+      <Set Variable="ROTATE" Operator="#_set_add_">2</Set>
       <If Value1="@ROTATE" Operation="#_conditional_gt_" Value2="360">
         <Set Variable="ROTATE" Operator="#_set_equal_">1</Set>
       </If>
@@ -40,7 +39,7 @@
         <Vertex X="100" Y="300" />
       </Polygon>
 
-      <Container Width="500" Height="500" X="0" Y="0" OriginX="500" OriginY="500" VirtualWidth="1000" VirtualHeight="1000" Rotate="@ROTATE">
+      <Container Width="500" Height="500" X="0" Y="0" OriginX="500" OriginY="500" VirtualWidth="1000" VirtualHeight="1000" Rotation="@ROTATE">
         <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="1">
           <Vertex X="0" Y="0" />
           <Vertex X="0" Y="-1000" />
@@ -49,7 +48,7 @@
         </Polygon>
       </Container>
 
-      <Container Width="1000" Height="1000" OriginX="500" OriginY="500" X="0" Y="0" VirtualWidth="1000" VirtualHeight="1000" Rotate="@ROTATE">
+      <Container Width="1000" Height="1000" OriginX="500" OriginY="500" X="0" Y="0" VirtualWidth="1000" VirtualHeight="1000" Rotation="@ROTATE">
 
         <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="1">
           <Vertex X="100" Y="100" />
@@ -86,6 +85,20 @@
 
       </Container>
 
+      <Polygon FillColor="1 0 0 1" LineColor="1 1 1" LineWidth="2">
+        <Vertex X="500" Y="250" />
+        <Vertex X="510" Y="250" />
+        <Vertex X="510" Y="260" />
+        <Vertex X="500" Y="260" />
+      </Polygon>
+
+      <Text Size="75" X="500" Y="750" HorizontalAlign="#_align_center_" VerticalAlign="#_align_middle_" PivotAlignX="#_align_right_" PivotAlignY="#_align_top_" Rotation="@ROTATE" FillColor="@ROTATE .5 .5 1">TOP RIGHT</Text>
+      <Text Size="75" X="500" Y="500" HorizontalAlign="#_align_center_" VerticalAlign="#_align_middle_" PivotAlignX="#_align_center_" PivotAlignY="#_align_middle_" Rotation="@ROTATE" FillColor="@ROTATE .5 .5 1">CENTER MIDDLE</Text>
+      <Text Size="75" X="500" Y="250" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" PivotAlignX="#_align_left_" PivotAlignY="#_align_bottom_" Rotation="@ROTATE" FillColor="@ROTATE .5 .5 1">BOTTOM LEFT</Text>
+
+      <Terrain X="100" Y="100" Width="200" Height="200" Latitude="0" Longitude="0" Elevation="0" Roll="0" Pitch="0" Yaw="0">
+        <TerrainDEM File="asdf.txt"/>
+      </Terrain>
 
     </Panel>
 

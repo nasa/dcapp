@@ -4,6 +4,8 @@
 //-----------------------------------------------------------------------------
 
 #include "../src/app.hpp"
+#include "pl_draw_backend_ext.h"
+#include "sb.hpp"
 #include "trick.hpp"
 #include <utils/file.hpp>
 #include <utils/string.hpp>
@@ -35,6 +37,7 @@ DcAppData dc_app_data;
 #include "pl_draw_ext.h"
 #include "pl_profile_ext.h"
 #include "pl_starter_ext.h"
+#include "pl_graphics_ext.h"
 
 //-----------------------------------------------------------------------------
 // [SECTION] structs
@@ -42,11 +45,15 @@ DcAppData dc_app_data;
 
 typedef struct _plAppData {
     // window
-    plWindow      *pt_window;
-    plDrawLayer2D *pt_fg_layer;
+    plWindow      *window;
+    plDrawLayer2D *layer;
+    plDrawList2D  *draw_list;
+
+    // font
+    plFont *cousine_sdf_font;
 
     // console variable
-    bool b_show_help_window;
+    bool show_help_window;
 } pl_app_data;
 
 //-----------------------------------------------------------------------------
@@ -55,76 +62,82 @@ typedef struct _plAppData {
 
 static DcAppNodeIndex _process_node_children(xmlNodePtr xml_node, DcAppNodeIndex node_index, DcAppElemType parent_elem_type, const std::string &directory);
 static DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_index, DcAppElemType parent_elem_type, std::string directory);
-static void           _draw_node_list(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *node_transform);
-static void           _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *parent_transform);
+static void           _draw_node_list(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *node_transform);
+static void           _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent_transform);
 
 //-----------------------------------------------------------------------------
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-const plWindowI  *gpt_windows = NULL;
-const plDrawI    *gpt_draw    = NULL;
-const plStarterI *gpt_starter = NULL;
-const plProfileI *gpt_profile = NULL;
-const plMemoryI  *gpt_memory  = NULL;
-const plLibraryI *gpt_library = NULL;
-const plIOI      *gpt_ioi     = NULL;
+const plWindowI      *ext_windows      = NULL;
+const plDrawI        *ext_draw         = NULL;
+const plDrawBackendI *ext_draw_backend = NULL;
+const plStarterI     *ext_starter      = NULL;
+const plProfileI     *ext_profile      = NULL;
+const plMemoryI      *ext_memory       = NULL;
+const plLibraryI     *ext_library      = NULL;
+const plIOI          *ext_ioi          = NULL;
+const plGraphicsI    *ext_gfx          = NULL;
 
-#define PL_ALLOC(x) gpt_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
-#define PL_REALLOC(x, y) gpt_memory->tracked_realloc((x), (y), __FILE__, __LINE__)
-#define PL_FREE(x) gpt_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+#define PL_ALLOC(x) ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
+#define PL_REALLOC(x, y) ext_memory->tracked_realloc((x), (y), __FILE__, __LINE__)
+#define PL_FREE(x) ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
 //-----------------------------------------------------------------------------
 // [SECTION] pl_app_load
 //-----------------------------------------------------------------------------s
 
 PL_EXPORT void *
-pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
+pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     // NOTE: on first load, "pAppData" will be NULL but on reloads
     //       it will be the value returned from this function
 
     // if "ptAppData" is a valid pointer, then this function is being called
     // during a hot reload.
-    if (pt_app_data) {
+    if (app_data) {
         // re-retrieve the apis since we are now in
         // a different dll/so
-        gpt_windows = pl_get_api_latest(pt_api_registry, plWindowI);
-        gpt_draw    = pl_get_api_latest(pt_api_registry, plDrawI);
-        gpt_starter = pl_get_api_latest(pt_api_registry, plStarterI);
-        gpt_profile = pl_get_api_latest(pt_api_registry, plProfileI);
-        gpt_memory  = pl_get_api_latest(pt_api_registry, plMemoryI);
-        gpt_library = pl_get_api_latest(pt_api_registry, plLibraryI);
-        gpt_ioi     = pl_get_api_latest(pt_api_registry, plIOI);
+        ext_windows      = pl_get_api_latest(api_registry, plWindowI);
+        ext_draw         = pl_get_api_latest(api_registry, plDrawI);
+        ext_draw_backend = pl_get_api_latest(api_registry, plDrawBackendI);
+        ext_starter      = pl_get_api_latest(api_registry, plStarterI);
+        ext_profile      = pl_get_api_latest(api_registry, plProfileI);
+        ext_memory       = pl_get_api_latest(api_registry, plMemoryI);
+        ext_library      = pl_get_api_latest(api_registry, plLibraryI);
+        ext_ioi          = pl_get_api_latest(api_registry, plIOI);
+        ext_gfx          = pl_get_api_latest(api_registry, plGraphicsI);
 
-        return pt_app_data;
+        return app_data;
     }
 
     // retrieve extension registry
-    const plExtensionRegistryI *pt_extension_registry = pl_get_api_latest(pt_api_registry, plExtensionRegistryI);
+    const plExtensionRegistryI *extension_registry = pl_get_api_latest(api_registry, plExtensionRegistryI);
 
     // load extensions
     //   * first argument is the shared library name WITHOUT the extension
     //   * second & third argument is the load/unload functions names (use NULL for the default of "pl_load_ext" &
     //     "pl_unload_ext")
     //   * fourth argument indicates if the extension is reloadable (should we check for changes and reload if changed)
-    pt_extension_registry->load("pl_unity_ext", NULL, NULL, true);
-    pt_extension_registry->load("pl_platform_ext", NULL, NULL, false); // provides the file API used by the drawing ext
+    extension_registry->load("pl_unity_ext", NULL, NULL, true);
+    extension_registry->load("pl_platform_ext", NULL, NULL, false); // provides the file API used by the drawing ext
 
     // load required apis
-    gpt_windows = pl_get_api_latest(pt_api_registry, plWindowI);
-    gpt_draw    = pl_get_api_latest(pt_api_registry, plDrawI);
-    gpt_starter = pl_get_api_latest(pt_api_registry, plStarterI);
-    gpt_profile = pl_get_api_latest(pt_api_registry, plProfileI);
-    gpt_memory  = pl_get_api_latest(pt_api_registry, plMemoryI);
-    gpt_library = pl_get_api_latest(pt_api_registry, plLibraryI);
-    gpt_ioi     = pl_get_api_latest(pt_api_registry, plIOI);
+    ext_windows      = pl_get_api_latest(api_registry, plWindowI);
+    ext_draw         = pl_get_api_latest(api_registry, plDrawI);
+    ext_draw_backend = pl_get_api_latest(api_registry, plDrawBackendI);
+    ext_starter      = pl_get_api_latest(api_registry, plStarterI);
+    ext_profile      = pl_get_api_latest(api_registry, plProfileI);
+    ext_memory       = pl_get_api_latest(api_registry, plMemoryI);
+    ext_library      = pl_get_api_latest(api_registry, plLibraryI);
+    ext_ioi          = pl_get_api_latest(api_registry, plIOI);
+    ext_gfx          = pl_get_api_latest(api_registry, plGraphicsI);
 
     // allocate app memory
-    pt_app_data = (pl_app_data *)PL_ALLOC(sizeof(pl_app_data));
-    memset(pt_app_data, 0, sizeof(pl_app_data));
+    app_data = (pl_app_data *)PL_ALLOC(sizeof(pl_app_data));
+    memset(app_data, 0, sizeof(pl_app_data));
 
     // default values
-    pt_app_data->b_show_help_window = true;
+    app_data->show_help_window = true;
 
     // parse input arguments
     // if (argc < 2) {
@@ -140,19 +153,19 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     // std::string config_relative_path = "/home/nathan/dcapp-vk/samples/test/test.xml";
 
     // parse input arguments
-    plIO *gpt_io = gpt_ioi->get_io();
-    if (gpt_io->iArgc < 4) {
+    plIO *ext_io = ext_ioi->get_io();
+    if (ext_io->iArgc < 4) {
         throw std::runtime_error("Missing dcapp configuration file");
     }
-    std::vector<std::string> args(gpt_io->apArgv + 3, gpt_io->apArgv + gpt_io->iArgc);
+    std::vector<std::string> args(ext_io->apArgv + 3, ext_io->apArgv + ext_io->iArgc);
 
     // TODO process input arguments (constant setting)
     std::string config_relative_path = args[0];
 
     // set paths
-    std::filesystem::path fsFilePath       = std::filesystem::canonical(config_relative_path);
-    std::filesystem::path fs_dir_path      = fsFilePath.parent_path();
-    std::string           config_file_path = fsFilePath.string();
+    std::filesystem::path fs_file_path     = std::filesystem::canonical(config_relative_path);
+    std::filesystem::path fs_dir_path      = fs_file_path.parent_path();
+    std::string           config_file_path = fs_file_path.string();
     std::string           config_dir_path  = fs_dir_path.string();
 
     // create cache and log dirs
@@ -196,15 +209,15 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     // configure logic file
     if (dc_app_data.logic.library) {
         // set logic functions
-        dc_app_data.logic.pre_init = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayPreInit");
-        dc_app_data.logic.init     = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayInit");
-        dc_app_data.logic.draw     = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayDraw");
-        dc_app_data.logic.close    = (void (*)(void))gpt_library->load_function(dc_app_data.logic.library, "DisplayClose");
+        dc_app_data.logic.pre_init = (void (*)(void))ext_library->load_function(dc_app_data.logic.library, "DisplayPreInit");
+        dc_app_data.logic.init     = (void (*)(void))ext_library->load_function(dc_app_data.logic.library, "DisplayInit");
+        dc_app_data.logic.draw     = (void (*)(void))ext_library->load_function(dc_app_data.logic.library, "DisplayDraw");
+        dc_app_data.logic.close    = (void (*)(void))ext_library->load_function(dc_app_data.logic.library, "DisplayClose");
 
         // link variables to extern logic data
         for (auto const &[name, var_index] : dc_app_data.var_indices) {
             DcAppVar *var    = &(dc_app_data.vars[var_index]);
-            var->extern_data = gpt_library->load_function(dc_app_data.logic.library, name.c_str());
+            var->extern_data = ext_library->load_function(dc_app_data.logic.library, name.c_str());
 
             // set the extern data to the initial value
             dc_app_refresh_var_from_value(var);
@@ -215,8 +228,8 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
     // root->validate();
 
     // set initial window params
-    DcAppNode   *window_node   = dc_app_index_to_node(dc_app_data.window);
-    plWindowDesc t_window_desc = {
+    DcAppNode   *window_node = dc_app_index_to_node(dc_app_data.window);
+    plWindowDesc window_desc = {
         .pcTitle = window_node->window.title,
         .uWidth  = (uint32_t)(dc_app_get_value(window_node->window.dimensions.x)->value_integer),
         .uHeight = (uint32_t)(dc_app_get_value(window_node->window.dimensions.y)->value_integer),
@@ -224,18 +237,68 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
         .iYPos   = dc_app_get_value(window_node->window.position.y)->value_integer,
     };
 
-    gpt_windows->create(t_window_desc, &pt_app_data->pt_window);
-    gpt_windows->show(pt_app_data->pt_window);
+    ext_windows->create(window_desc, &app_data->window);
+    ext_windows->show(app_data->window);
 
     // initialize the starter API (handles alot of boilerplate)
     plStarterInit tStarterInit = {
-        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS,
-        .ptWindow = pt_app_data->pt_window};
-    gpt_starter->initialize(tStarterInit);
-    gpt_starter->finalize();
+        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS & ~PL_STARTER_FLAGS_DRAW_EXT,
+        .ptWindow = app_data->window};
+    ext_starter->initialize(tStarterInit);
+
+    // init draw extension
+    ext_draw->initialize(NULL);
+
+    // init draw backend
+    plDevice *device = ext_starter->get_device();
+    ext_draw_backend->initialize(device);
+
+    // create font atlas
+    plFontAtlas *pt_atlas = ext_draw->create_font_atlas();
+    ext_draw->set_font_atlas(pt_atlas);
+
+    // typical font range (you can also add individual characters)
+    const plFontRange font_range = {
+        .iFirstCodePoint = 0x0020,
+        .uCharCount      = 0x00FF - 0x0020};
+
+    // adding previous font but as a signed distance field (SDF)
+    plFontConfig font_config = {
+        .bSdf           = true, // only works with ttf
+        .fSize          = 18.0f,
+        .uHOverSampling = 1,
+        .uVOverSampling = 1,
+        .ucOnEdgeValue  = 180,
+        .iSdfPadding    = 1,
+        .uRangeCount    = 1,
+        .ptRanges       = &font_range};
+    app_data->cousine_sdf_font = ext_draw->add_font_from_file_ttf(ext_draw->get_current_font_atlas(), font_config, "../data/pilotlight-assets-master/fonts/Cousine-Regular.ttf");
+
+    // register our app drawlist
+    app_data->draw_list = ext_draw->request_2d_drawlist();
+
+    // request layers (allows drawing out of order)
+    app_data->layer = ext_draw->request_2d_layer(app_data->draw_list);
+
+    // wraps up
+    ext_starter->finalize();
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~font atlas texture~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // draw backend handles creating the font atlas texture and
+    // uploading to the GPU but it requires a command buffer (in an non recording state).
+    // Later examples will go into command buffers without using the starter ext
+
+    plCommandBuffer *cmd_buffer = ext_starter->get_raw_command_buffer(); // not recording
+
+    // actually record, submit, & wait
+    ext_draw_backend->build_font_atlas(cmd_buffer, ext_draw->get_current_font_atlas());
+
+    // return back to the pool
+    ext_starter->return_raw_command_buffer(cmd_buffer);
 
     // return app memory
-    return pt_app_data;
+    return app_data;
 }
 
 //-----------------------------------------------------------------------------
@@ -243,10 +306,18 @@ pl_app_load(plApiRegistryI *pt_api_registry, pl_app_data *pt_app_data) {
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void
-pl_app_shutdown(pl_app_data *pt_app_data) {
-    gpt_starter->cleanup();
-    gpt_windows->destroy(pt_app_data->pt_window);
-    PL_FREE(pt_app_data);
+pl_app_shutdown(pl_app_data *app_data) {
+
+    // ensure device is done with resources
+    plDevice *device = ext_starter->get_device();
+    ext_gfx->flush_device(device); // waits for the GPU to be done with all work
+
+    // cleans up texture and other resources
+    ext_draw_backend->cleanup_font_atlas(ext_draw->get_current_font_atlas());
+
+    ext_starter->cleanup();
+    ext_windows->destroy(app_data->window);
+    PL_FREE(app_data);
 }
 
 //-----------------------------------------------------------------------------
@@ -254,8 +325,8 @@ pl_app_shutdown(pl_app_data *pt_app_data) {
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void
-pl_app_resize(pl_app_data *pt_app_data) {
-    gpt_starter->resize();
+pl_app_resize(pl_app_data *app_data) {
+    ext_starter->resize();
 }
 
 //-----------------------------------------------------------------------------
@@ -263,16 +334,15 @@ pl_app_resize(pl_app_data *pt_app_data) {
 //-----------------------------------------------------------------------------
 
 PL_EXPORT void
-pl_app_update(pl_app_data *pt_app_data) {
+pl_app_update(pl_app_data *app_data) {
     // this needs to be the first call when using the starter
     // extension. You must return if it returns false (usually a swapchain recreation).
-    if (!gpt_starter->begin_frame())
+    if (!ext_starter->begin_frame())
         return;
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    gpt_profile->begin_sample(0, "example drawing");
-    pt_app_data->pt_fg_layer = gpt_starter->get_foreground_layer();
+    ext_draw_backend->new_frame();
 
     // send trick data
     for (int ii = 0; ii < dc_app_data.trick_contexts.size(); ii++) {
@@ -322,12 +392,23 @@ pl_app_update(pl_app_data *pt_app_data) {
         dc_app_refresh_var_from_extern(var);
     }
 
-    _draw_node(pt_app_data, dc_app_data.window, nullptr);
+    _draw_node(app_data, dc_app_data.window, nullptr);
 
-    gpt_profile->end_sample(0);
+    // submit draw layer
+    ext_draw->submit_2d_layer(app_data->layer);
+
+    // start main pass & return the encoder being used
+    plRenderEncoder *encoder = ext_starter->begin_main_pass();
+
+    // submit our drawlist
+    plIO *ptIO = ext_ioi->get_io();
+    ext_draw_backend->submit_2d_drawlist(app_data->draw_list, encoder, ptIO->tMainViewportSize.x, ptIO->tMainViewportSize.y, 1);
+
+    // allows the starter extension to handle some things then ends the main pass
+    ext_starter->end_main_pass();
 
     // must be the last function called when using the starter extension
-    gpt_starter->end_frame();
+    ext_starter->end_frame();
 }
 
 // returns the first child (if any)
@@ -350,6 +431,9 @@ DcAppNodeIndex _process_node_children(xmlNodePtr xml_node, DcAppNodeIndex node_i
             if (node && child_node) {
                 // set child's parent
                 child_node->parent = node_index;
+
+                // set child's next (empty for now)
+                child_node->next = DC_APP_NODE_INDEX_UNDEFINED;
 
                 // set nodes's first child if this is the first child
                 if (previous_child_node_index == DC_APP_NODE_INDEX_UNDEFINED) {
@@ -506,7 +590,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             }
 
             // rotation
-            char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotate");
+            char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotation");
             if (c_rotation) {
                 dc_node.container.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_rotation));
                 free(c_rotation);
@@ -531,25 +615,6 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             _process_node_children(xml_node, node_index, elem_type, directory);
             break;
         }
-
-            // case DC_APP_ELEM_TYPE_DEM:
-            // {
-            //     DcAppNodeType parentType = dc_app_index_to_node(parentNodeIndex)->type;
-            //     switch (parentType)
-            //     {
-            //     case DC_APP_ELEM_TYPE_MAP:
-            //     {
-            //         std::string filename = dc_utils_filepath_to_canonical(dc_utils_get_attribute_string(node, "File"), directory);
-            //         ((DcMap *)parent)->addDem(filename);
-            //         break;
-            //     }
-
-            //     default:
-            //         throw std::runtime_error("Adding DEM to invalid parent of type " + std::to_string(parentType));
-            //         break;
-            //     }
-            //     break;
-            // }
 
         case DC_APP_ELEM_TYPE_FALSE:
             switch (parent_elem_type) {
@@ -660,7 +725,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                     .tFlags = PL_LIBRARY_FLAGS_NONE,
                     .pcName = filePath.c_str(),
                 };
-                if (gpt_library->load(logic_so_desc, &dc_app_data.logic.library) != PL_LIBRARY_RESULT_SUCCESS) {
+                if (ext_library->load(logic_so_desc, &dc_app_data.logic.library) != PL_LIBRARY_RESULT_SUCCESS) {
                     throw std::runtime_error("Failed to load logic .so file");
                 }
             } else {
@@ -668,26 +733,6 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             }
             break;
         }
-
-            // case DC_APP_ELEM_TYPE_MAP:
-            // {
-            //     DcValue *xPosition = attributeToDcValue(node, "X");
-            //     DcValue *yPosition = attributeToDcValue(node, "Y");
-            //     DcValue *xOrigin = attributeToDcValue(node, "OriginX");
-            //     DcValue *yOrigin = attributeToDcValue(node, "OriginY");
-            //     DcValue *width = attributeToDcValue(node, "Width");
-            //     DcValue *height = attributeToDcValue(node, "Height");
-            //     DcValue *horizontalAlign = attributeToDcValue(node, "HorizontalAlign");
-            //     DcValue *verticalAlign = attributeToDcValue(node, "VerticalAlign");
-            //     DcValue *rotation = attributeToDcValue(node, "Rotation");
-            //     DcValue *latitude = attributeToDcValue(node, "Latitude");
-            //     DcValue *longitude = attributeToDcValue(node, "Longitude");
-            //     DcValue *yaw = attributeToDcValue(node, "Yaw");
-
-            //     DcMap *map = new DcMap((DcParent *)parent, xPosition, yPosition, xOrigin, yOrigin, width, height, horizontalAlign, verticalAlign, rotation, latitude, longitude, yaw);
-            //     processElementChildren(map, node, directory);
-            //     break;
-            // }
 
         case DC_APP_ELEM_TYPE_PANEL: {
             DcAppNode dc_node = {
@@ -855,10 +900,217 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             break;
         }
 
+        case DC_APP_ELEM_TYPE_TERRAIN: {
+            DcAppNode dc_node = {};
+            dc_node.type      = DC_APP_NODE_TYPE_TERRAIN;
+
+            // xPosition
+            char *c_x_position = dc_utils_get_attribute_string(xml_node, "X");
+            if (c_x_position) {
+                dc_node.terrain.position.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position));
+                free(c_x_position);
+            } else {
+                dc_node.terrain.position.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // y position
+            char *c_y_position = dc_utils_get_attribute_string(xml_node, "Y");
+            if (c_y_position) {
+                dc_node.terrain.position.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position));
+                free(c_y_position);
+            } else {
+                dc_node.terrain.position.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // x origin
+            char *c_x_origin = dc_utils_get_attribute_string(xml_node, "OriginX");
+            if (c_x_origin) {
+                dc_node.terrain.origin.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_origin));
+                free(c_x_origin);
+            } else {
+                dc_node.terrain.origin.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // y origin
+            char *c_y_origin = dc_utils_get_attribute_string(xml_node, "OriginY");
+            if (c_y_origin) {
+                dc_node.terrain.origin.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_origin));
+                free(c_y_origin);
+            } else {
+                dc_node.terrain.origin.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // x align
+            char *c_x_align = dc_utils_get_attribute_string(xml_node, "HorizontalAlign");
+            if (c_x_align) {
+                dc_node.terrain.alignment.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_align));
+                free(c_x_align);
+            } else {
+                dc_node.terrain.alignment.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_LEFT));
+            }
+
+            // y align
+            char *c_y_align = dc_utils_get_attribute_string(xml_node, "VerticalAlign");
+            if (c_y_align) {
+                dc_node.terrain.alignment.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_align));
+                free(c_y_align);
+            } else {
+                dc_node.terrain.alignment.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM));
+            }
+
+            // rotation
+            char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotation");
+            if (c_rotation) {
+                dc_node.terrain.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_rotation));
+                free(c_rotation);
+            } else {
+                dc_node.terrain.rotation = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // pivots
+            char *c_pivot_point_x = dc_utils_get_attribute_string(xml_node, "PivotPointX");
+            char *c_pivot_point_y = dc_utils_get_attribute_string(xml_node, "PivotPointY");
+            if (c_pivot_point_x && c_pivot_point_y) {
+                dc_node.terrain.pivot_point.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pivot_point_x));
+                dc_node.terrain.pivot_align.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED));
+                free(c_pivot_point_x);
+
+                dc_node.terrain.pivot_point.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pivot_point_y));
+                dc_node.terrain.pivot_align.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED));
+                free(c_pivot_point_y);
+            } else if (!c_pivot_point_x && !c_pivot_point_y) {
+                char *c_pivot_align_x = dc_utils_get_attribute_string(xml_node, "PivotAlignX");
+                if (c_pivot_align_x) {
+                    dc_node.terrain.pivot_align.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_pivot_align_x));
+                    free(c_pivot_align_x);
+                } else {
+                    dc_node.terrain.pivot_align.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_CENTER));
+                }
+
+                char *c_pivot_align_y = dc_utils_get_attribute_string(xml_node, "PivotAlignY");
+                if (c_pivot_align_y) {
+                    dc_node.terrain.pivot_align.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_pivot_align_y));
+                    free(c_pivot_align_y);
+                } else {
+                    dc_node.terrain.pivot_align.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_MIDDLE));
+                }
+            } else {
+                throw std::runtime_error("Invalid Pivot parameters: must use both PivotPoint params, or none. Using just one is not allowed.");
+            }
+
+            // x dimension
+            char *c_x_dimension = dc_utils_get_attribute_string(xml_node, "Width");
+            if (c_x_dimension) {
+                dc_node.terrain.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_dimension));
+                free(c_x_dimension);
+            } else {
+                dc_node.terrain.dimensions.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // y dimension
+            char *c_y_dimension = dc_utils_get_attribute_string(xml_node, "Height");
+            if (c_y_dimension) {
+                dc_node.terrain.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_dimension));
+                free(c_y_dimension);
+            } else {
+                dc_node.terrain.dimensions.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // lat
+            char *c_lat = dc_utils_get_attribute_string(xml_node, "Latitude");
+            if (c_lat) {
+                dc_node.terrain.lle.lat = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_lat));
+                free(c_lat);
+            } else {
+                throw std::runtime_error("Must supply attribute Latitude with Terrain primitive");
+            }
+
+            // lon
+            char *c_lon = dc_utils_get_attribute_string(xml_node, "Longitude");
+            if (c_lon) {
+                dc_node.terrain.lle.lon = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_lon));
+                free(c_lon);
+            } else {
+                throw std::runtime_error("Must supply attribute Longitude with Terrain primitive");
+            }
+
+            // ele
+            char *c_ele = dc_utils_get_attribute_string(xml_node, "Elevation");
+            if (c_ele) {
+                dc_node.terrain.lle.ele = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_ele));
+                free(c_ele);
+            } else {
+                throw std::runtime_error("Must supply attribute Elevation with Terrain primitive");
+            }
+
+            // roll
+            char *c_roll = dc_utils_get_attribute_string(xml_node, "Roll");
+            if (c_roll) {
+                dc_node.terrain.rpy.roll = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_roll));
+                free(c_roll);
+            } else {
+                throw std::runtime_error("Must supply attribute Roll with Terrain primitive");
+            }
+
+            // pitch
+            char *c_pitch = dc_utils_get_attribute_string(xml_node, "Pitch");
+            if (c_pitch) {
+                dc_node.terrain.rpy.pitch = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pitch));
+                free(c_pitch);
+            } else {
+                throw std::runtime_error("Must supply attribute Pitch with Terrain primitive");
+            }
+
+            // yaw
+            char *c_yaw = dc_utils_get_attribute_string(xml_node, "Yaw");
+            if (c_yaw) {
+                dc_node.terrain.rpy.yaw = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_yaw));
+                free(c_yaw);
+            } else {
+                throw std::runtime_error("Must supply attribute Yaw with Terrain primitive");
+            }
+
+            // register node
+            node_index = dc_app_register_node(dc_node);
+
+            // process children
+            _process_node_children(xml_node, node_index, elem_type, directory);
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_TERRAIN_DEM: {
+
+            DcAppNode *parent_node = dc_app_index_to_node(parent_node_index);
+            switch (parent_node->type) {
+                case DC_APP_NODE_TYPE_TERRAIN: {
+
+                    // file
+                    char *c_file = dc_utils_get_attribute_string(xml_node, "File");
+                    if (!c_file) {
+                        throw std::runtime_error("Invalid TerrainDEM: No File attribute");
+                    }
+                    std::string file = dc_utils_filepath_to_canonical(dc_app_dereference_constants(c_file), directory);
+
+                    // TODO open file
+                    // print for now
+                    printf("TerrainDEM file: %s\n", file.c_str());
+                    break;
+                }
+                default:
+                    throw std::runtime_error("Invalid parent of type " + dc_app_node_type_to_string(parent_node->type) + "for TerrainDEM.");
+            }
+            break;
+        }
+
         case DC_APP_ELEM_TYPE_TEXT: {
-            DcAppNode dc_node = {
-                .type = DC_APP_NODE_TYPE_TEXT,
-            };
+            DcAppNode dc_node;
+            dc_node.type                   = DC_APP_NODE_TYPE_TEXT;
+            dc_node.text.sb_vals           = NULL;
+            dc_node.text.sb_fillers        = NULL;
+            dc_node.text.sb_filler_indices = NULL;
+            dc_node.text.sb_formats        = NULL;
+            dc_node.text.sb_format_indices = NULL;
+            dc_node.text.sb_format_types   = NULL;
 
             // text
             char *c_text = dc_utils_get_node_content_string(xml_node);
@@ -868,84 +1120,279 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             std::string raw_text = dc_app_dereference_constants(c_text);
             free(c_text);
 
-            std::vector<std::string> variables;
-            std::vector<std::string> formats;
-            std::string              result;
-            size_t                   i = 0;
-            while (i < raw_text.size()) {
-                if (raw_text[i] == '\\') {
+            char *sb_curr_filler = NULL;
+            for (size_t ii = 0; ii < raw_text.size();) {
+                if (raw_text[ii] == '\\') {
                     // Escape character: skip and add next character to result
-                    if (i + 1 < raw_text.size()) {
-                        result += raw_text[i + 1];
-                        i += 2;
+                    if (ii + 1 < raw_text.size()) {
+                        sbpush(sb_curr_filler, raw_text[ii + 1]);
+                        ii += 2;
                     } else {
-                        result += raw_text[i++];
+                        sbpush(sb_curr_filler, raw_text[ii++]);
                     }
                     continue;
                 }
 
-                if (raw_text[i] == '@') {
-                    size_t start = i;
-                    ++i;
+                if (raw_text[ii] == '@') {
+                    size_t start = ii;
+                    ii++;
 
                     std::string var;
                     bool        is_braced = false;
 
-                    if (i < raw_text.size() && raw_text[i] == '{') {
+                    if (ii < raw_text.size() && raw_text[ii] == '{') {
                         is_braced = true;
-                        ++i;
-                        size_t end = raw_text.find('}', i);
+                        ii++;
+                        size_t end = raw_text.find('}', ii);
                         if (end == std::string::npos) {
                             // No closing brace, treat as normal text
-                            result += raw_text.substr(start, i - start);
+                            std::string substr = raw_text.substr(start, ii - start);
+                            sbpushn(sb_curr_filler, substr.c_str(), substr.length());
                             continue;
                         }
-                        var = raw_text.substr(i, end - i);
-                        i   = end + 1;
+                        var = raw_text.substr(ii, end - ii);
+                        ii  = end + 1;
                     } else {
-                        size_t start_var = i;
-                        while (i < raw_text.size() && !isspace(static_cast<unsigned char>(raw_text[i])) && raw_text[i] != '(') {
-                            ++i;
+                        size_t start_var = ii;
+                        while (ii < raw_text.size() &&
+                               !isspace(static_cast<unsigned char>(raw_text[ii])) &&
+                               raw_text[ii] != '(') {
+                            ii++;
                         }
-                        var = raw_text.substr(start_var, i - start_var);
+                        var = raw_text.substr(start_var, ii - start_var);
                     }
 
-                    variables.emplace_back(var);
+                    DcAppValueIndex val_index = dc_app_data.vars[dc_app_get_var_index(var)].value_index;
+                    sbpush(dc_node.text.sb_vals, val_index);
 
                     // Check for format specifier
                     std::string format_spec;
-                    if (i < raw_text.size() && raw_text[i] == '(') {
-                        size_t close = raw_text.find(')', i);
-                        if (close != std::string_view::npos && (i == 0 || raw_text[i - 1] != '\\')) {
-                            format_spec = raw_text.substr(i + 1, close - i - 1);
-                            i           = close + 1;
+                    if (ii < raw_text.size() && raw_text[ii] == '(') {
+                        size_t close = raw_text.find(')', ii);
+                        if (close != std::string_view::npos && (ii == 0 || raw_text[ii - 1] != '\\')) {
+                            format_spec = raw_text.substr(ii + 1, close - ii - 1);
+                            ii          = close + 1;
 
-                            size_t len = 0;
-                            if ((len = dc_utils_format_specifier_length_bool(format_spec)) > 0 ||
-                                (len = dc_utils_format_specifier_length_int(format_spec)) > 0 ||
-                                (len = dc_utils_format_specifier_length_float(format_spec)) > 0 ||
-                                (len = dc_utils_format_specifier_length_string(format_spec)) > 0) {
-                                formats.emplace_back(format_spec.substr(0, len));
+                            // get format + type
+                            if (dc_utils_is_format_specifier_int(format_spec)) {
+                                sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_INTEGER);
+                                sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                                sbpushn(dc_node.text.sb_formats, format_spec.c_str(), format_spec.length() + 1);
+                            } else if (dc_utils_is_format_specifier_float(format_spec)) {
+                                sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_FLOAT);
+                                sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                                sbpushn(dc_node.text.sb_formats, format_spec.c_str(), format_spec.length() + 1);
+                            } else if (dc_utils_is_format_specifier_string(format_spec)) {
+                                sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
+                                sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                                sbpushn(dc_node.text.sb_formats, format_spec.c_str(), format_spec.length() + 1);
+                            } else if (dc_utils_is_format_specifier_bool(format_spec)) {
+                                sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_BOOLEAN);
+                                sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                                sbpushn(dc_node.text.sb_formats, format_spec.c_str(), format_spec.length() + 1);
                             } else {
-                                formats.emplace_back("%s");
+                                // unsupported type
+                                throw std::runtime_error("Unknown format specifier in Text element: " + format_spec);
                             }
                         } else {
-                            formats.emplace_back("%s");
+                            sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
+                            sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                            sbpushn(dc_node.text.sb_formats, "%s", 3);
                         }
                     } else {
-                        formats.emplace_back("%s");
+                        sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
+                        sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                        sbpushn(dc_node.text.sb_formats, "%s", 3);
                     }
+
+                    // add the current filler to list of fillers
+                    sbpush(dc_node.text.sb_filler_indices, sbcount(dc_node.text.sb_fillers));
+                    sbpushn(dc_node.text.sb_fillers, sb_curr_filler, sbcount(sb_curr_filler));
+                    sbpush(dc_node.text.sb_fillers, '\0');
+                    sbclear(sb_curr_filler);
 
                     continue;
                 }
 
                 // Default: append character to result
-                result += raw_text[i++];
+                sbpush(sb_curr_filler, raw_text[ii++]);
             }
 
-            // Print final result
-            printf("result: %s\n", result.c_str());
+            // append the remaining filler
+            sbpush(dc_node.text.sb_filler_indices, sbcount(dc_node.text.sb_fillers));
+            sbpushn(dc_node.text.sb_fillers, sb_curr_filler, sbcount(sb_curr_filler));
+            sbpush(dc_node.text.sb_fillers, '\0');
 
+            // clear temp buffer
+            sbclear(sb_curr_filler);
+
+            // xPosition
+            char *c_x_position = dc_utils_get_attribute_string(xml_node, "X");
+            if (c_x_position) {
+                dc_node.text.position.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position));
+                free(c_x_position);
+            } else {
+                dc_node.text.position.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // y position
+            char *c_y_position = dc_utils_get_attribute_string(xml_node, "Y");
+            if (c_y_position) {
+                dc_node.text.position.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position));
+                free(c_y_position);
+            } else {
+                dc_node.text.position.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // x origin
+            char *c_x_origin = dc_utils_get_attribute_string(xml_node, "OriginX");
+            if (c_x_origin) {
+                dc_node.text.origin.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_origin));
+                free(c_x_origin);
+            } else {
+                dc_node.text.origin.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // y origin
+            char *c_y_origin = dc_utils_get_attribute_string(xml_node, "OriginY");
+            if (c_y_origin) {
+                dc_node.text.origin.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_origin));
+                free(c_y_origin);
+            } else {
+                dc_node.text.origin.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // x align
+            char *c_x_align = dc_utils_get_attribute_string(xml_node, "HorizontalAlign");
+            if (c_x_align) {
+                dc_node.text.alignment.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_align));
+                free(c_x_align);
+            } else {
+                dc_node.text.alignment.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_LEFT));
+            }
+
+            // y align
+            char *c_y_align = dc_utils_get_attribute_string(xml_node, "VerticalAlign");
+            if (c_y_align) {
+                dc_node.text.alignment.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_align));
+                free(c_y_align);
+            } else {
+                dc_node.text.alignment.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM));
+            }
+
+            // rotation
+            char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotation");
+            if (c_rotation) {
+                dc_node.text.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_rotation));
+                free(c_rotation);
+            } else {
+                dc_node.text.rotation = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // pivots
+            char *c_pivot_point_x = dc_utils_get_attribute_string(xml_node, "PivotPointX");
+            char *c_pivot_point_y = dc_utils_get_attribute_string(xml_node, "PivotPointY");
+            if (c_pivot_point_x && c_pivot_point_y) {
+                dc_node.text.pivot_point.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pivot_point_x));
+                dc_node.text.pivot_align.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED));
+                free(c_pivot_point_x);
+
+                dc_node.text.pivot_point.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pivot_point_y));
+                dc_node.text.pivot_align.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED));
+                free(c_pivot_point_y);
+            } else if (!c_pivot_point_x && !c_pivot_point_y) {
+                char *c_pivot_align_x = dc_utils_get_attribute_string(xml_node, "PivotAlignX");
+                if (c_pivot_align_x) {
+                    dc_node.text.pivot_align.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_pivot_align_x));
+                    free(c_pivot_align_x);
+                } else {
+                    dc_node.text.pivot_align.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_CENTER));
+                }
+
+                char *c_pivot_align_y = dc_utils_get_attribute_string(xml_node, "PivotAlignY");
+                if (c_pivot_align_y) {
+                    dc_node.text.pivot_align.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_pivot_align_y));
+                    free(c_pivot_align_y);
+                } else {
+                    dc_node.text.pivot_align.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_MIDDLE));
+                }
+            } else {
+                throw std::runtime_error("Invalid Pivot parameters: must use both PivotPoint params, or none. Using just one is not allowed.");
+            }
+
+            // size
+            char *c_size = dc_utils_get_attribute_string(xml_node, "Size");
+            if (c_size) {
+                dc_node.text.size = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_size));
+                free(c_size);
+            } else {
+                throw std::runtime_error("Missing field 'Size' on <Text> element");
+            }
+
+            // fill color
+            char *c_fill_color = dc_utils_get_attribute_string(xml_node, "FillColor");
+            if (c_fill_color) {
+                // split string by whitespace
+                std::string              s_fill_color = dc_app_dereference_constants(c_fill_color);
+                std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
+
+                if (substrings.size() > 0) {
+                    dc_node.text.fill_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[0]);
+                    if (substrings.size() > 1) {
+                        dc_node.text.fill_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[1]);
+                        if (substrings.size() > 2) {
+                            dc_node.text.fill_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[2]);
+                            if (substrings.size() > 3) {
+                                dc_node.text.fill_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[3]);
+                            } else {
+                                dc_node.text.fill_color.a = dc_app_register_value(dc_value_create_value_float(1.0f));
+                            }
+                        } else {
+                            dc_node.text.fill_color.b = dc_app_register_value(dc_value_create_value_float(0.0f));
+                        }
+                    } else {
+                        dc_node.text.fill_color.g = dc_app_register_value(dc_value_create_value_float(0.0f));
+                    }
+                } else {
+                    dc_node.text.fill_color.r = dc_app_register_value(dc_value_create_value_float(0.0f));
+                }
+                dc_node.text.fill_enabled = true;
+                free(c_fill_color);
+            }
+
+            // line color
+            char *c_line_color = dc_utils_get_attribute_string(xml_node, "LineColor");
+            if (c_line_color) {
+                // split string by whitespace
+                std::string              s_fill_color = dc_app_dereference_constants(c_line_color);
+                std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
+
+                if (substrings.size() > 0) {
+                    dc_node.text.line_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[0]);
+                    if (substrings.size() > 1) {
+                        dc_node.text.line_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[1]);
+                        if (substrings.size() > 2) {
+                            dc_node.text.line_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[2]);
+                            if (substrings.size() > 3) {
+                                dc_node.text.line_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[3]);
+                            } else {
+                                dc_node.text.line_color.a = dc_app_register_value(dc_value_create_value_float(1.0f));
+                            }
+                        } else {
+                            dc_node.text.line_color.b = dc_app_register_value(dc_value_create_value_float(0.0f));
+                        }
+                    } else {
+                        dc_node.text.line_color.g = dc_app_register_value(dc_value_create_value_float(0.0f));
+                    }
+                } else {
+                    dc_node.text.line_color.r = dc_app_register_value(dc_value_create_value_float(0.0f));
+                }
+                dc_node.text.line_enabled = true;
+                free(c_line_color);
+            }
+
+            // register node
+            node_index = dc_app_register_node(dc_node);
             break;
         }
 
@@ -1066,11 +1513,10 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
 
                     // create + add tx var
                     DcAppTrickTxVarContext var;
-                    DcValue               *dc_value = dc_app_get_value(dc_app_data.vars[var.dcapp_var_index].value_index);
-
-                    var.dcapp_var_index = dc_app_get_var_index(dcapp_var);
-                    var.trick_var_index = dc_trick_add_tx_var(dc_app_trick->trick, trick_path.c_str(), c_units, dc_value->type == DC_VALUE_TYPE_STRING);
-                    dc_value_copy(&var.prev_value, dc_value);
+                    var.dcapp_var_index   = dc_app_get_var_index(dcapp_var);
+                    DcValue *dc_var_value = dc_app_get_value(dc_app_data.vars[var.dcapp_var_index].value_index);
+                    var.trick_var_index   = dc_trick_add_tx_var(dc_app_trick->trick, trick_path.c_str(), c_units, dc_var_value->type == DC_VALUE_TYPE_STRING);
+                    dc_value_copy(&var.prev_value, dc_var_value);
                     dc_app_trick->tx_var_contexts.push_back(var);
                     break;
                 }
@@ -1252,15 +1698,15 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
     return node_index;
 }
 
-void _draw_node_list(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *node_transform) {
+void _draw_node_list(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *node_transform) {
     DcAppNodeIndex current_node_index = node_index;
     while (current_node_index != DC_APP_NODE_INDEX_UNDEFINED) {
-        _draw_node(pt_app_data, current_node_index, node_transform);
+        _draw_node(app_data, current_node_index, node_transform);
         current_node_index = dc_app_index_to_node(current_node_index)->next;
     }
 }
 
-void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *parent_transform) {
+void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent_transform) {
     if (node_index == DC_APP_NODE_INDEX_UNDEFINED) {
         throw std::runtime_error("Attempting to draw undefined node index");
     }
@@ -1283,13 +1729,13 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
 
             float y_position = 0;
             switch (dc_app_get_value(node->container.alignment.y)->value_integer) {
-                case DC_APP_ALIGN_TYPE_LEFT:
+                case DC_APP_ALIGN_TYPE_BOTTOM:
                     y_position = dc_app_get_value(node->container.position.y)->value_float;
                     break;
-                case DC_APP_ALIGN_TYPE_CENTER:
+                case DC_APP_ALIGN_TYPE_MIDDLE:
                     y_position = dc_app_get_value(node->container.position.y)->value_float - dc_app_get_value(node->container.dimensions.y)->value_float / 2;
                     break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
+                case DC_APP_ALIGN_TYPE_TOP:
                     y_position = dc_app_get_value(node->container.position.y)->value_float - dc_app_get_value(node->container.dimensions.y)->value_float;
                     break;
             }
@@ -1315,7 +1761,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
             transform        = pl_mul_mat4t(&transform, &rotate_matrix);
             transform        = pl_mul_mat4t(&transform, &trans_position_matrix);
             transform        = pl_mul_mat4t(&transform, &scale_matrix);
-            _draw_node_list(pt_app_data, node->container.child, &transform);
+            _draw_node_list(app_data, node->container.child, &transform);
             break;
         }
 
@@ -1357,15 +1803,10 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
 
             // process children
             if (result) {
-                _draw_node_list(pt_app_data, node->conditional.child_true, parent_transform);
+                _draw_node_list(app_data, node->conditional.child_true, parent_transform);
             } else {
-                _draw_node_list(pt_app_data, node->conditional.child_false, parent_transform);
+                _draw_node_list(app_data, node->conditional.child_false, parent_transform);
             }
-            break;
-        }
-
-        case DC_APP_NODE_TYPE_MAP: {
-            // TODO implement
             break;
         }
 
@@ -1376,7 +1817,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
                 1.0f);
             plMat4 transform = (plMat4){0};
             transform        = pl_mul_mat4t(parent_transform, &scale_matrix);
-            _draw_node_list(pt_app_data, node->panel.child, &transform);
+            _draw_node_list(app_data, node->panel.child, &transform);
             break;
         }
 
@@ -1400,7 +1841,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
                     dc_app_get_value(node->polygon.fill_color.g)->value_float,
                     dc_app_get_value(node->polygon.fill_color.b)->value_float,
                     dc_app_get_value(node->polygon.fill_color.a)->value_float);
-                gpt_draw->add_convex_polygon_filled(pt_app_data->pt_fg_layer, points.data(), points.size(), (plDrawSolidOptions){.uColor = fill_color});
+                ext_draw->add_convex_polygon_filled(app_data->layer, points.data(), points.size(), (plDrawSolidOptions){.uColor = fill_color});
             }
 
             // draw outline
@@ -1411,7 +1852,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
                     dc_app_get_value(node->polygon.line_color.g)->value_float,
                     dc_app_get_value(node->polygon.line_color.b)->value_float,
                     dc_app_get_value(node->polygon.line_color.a)->value_float);
-                gpt_draw->add_polygon(pt_app_data->pt_fg_layer, points.data(), points.size(), (plDrawLineOptions){.uColor = line_color, .fThickness = lineThickness});
+                ext_draw->add_polygon(app_data->layer, points.data(), points.size(), (plDrawLineOptions){.uColor = line_color, .fThickness = lineThickness});
             }
 
             break;
@@ -1525,13 +1966,391 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
             break;
         }
 
+        case DC_APP_NODE_TYPE_TERRAIN: {
+
+            // all transform parameters
+            float          position[2]    = {dc_app_get_value(node->terrain.position.x)->value_float, dc_app_get_value(node->terrain.position.y)->value_float};
+            float          origin[2]      = {dc_app_get_value(node->terrain.origin.x)->value_float, dc_app_get_value(node->terrain.origin.y)->value_float};
+            DcAppAlignType alignment[2]   = {(DcAppAlignType)dc_app_get_value(node->terrain.alignment.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->terrain.alignment.y)->value_integer};
+            DcAppAlignType pivot_align[2] = {(DcAppAlignType)dc_app_get_value(node->terrain.pivot_align.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->terrain.pivot_align.y)->value_integer};
+            float          rotation       = dc_app_get_value(node->terrain.rotation)->value_float;
+            float          size[2]        = {dc_app_get_value(node->terrain.dimensions.x)->value_float, dc_app_get_value(node->terrain.dimensions.y)->value_float};
+
+            // local flip over x axis
+            plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(
+                1.0f,
+                -1.0f,
+                1.0f);
+
+            // move position
+            plMat4 trans_position_xform = pl_mat4_translate_xyz(
+                position[0],
+                position[1],
+                0.0f);
+
+            // move from top-left reference to bottom-left
+            plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(
+                0,
+                size[1],
+                0.0f);
+
+            // move origin
+            plMat4 trans_origin_xform = pl_mat4_translate_xyz(
+                origin[0],
+                origin[1],
+                0.0f);
+
+            // move alignment
+            float trans_align_vec[2];
+            switch (alignment[0]) {
+                break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    trans_align_vec[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    trans_align_vec[0] = -1 * size[0] / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    trans_align_vec[0] = -1 * size[0];
+                    break;
+                default:
+                    throw std::runtime_error("Unknown alignment in <Text> draw call: " + std::to_string(alignment[0]));
+                    break;
+            }
+            switch (alignment[1]) {
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    trans_align_vec[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    trans_align_vec[1] = -1 * size[1] / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    trans_align_vec[1] = -1 * size[1];
+                    break;
+                default:
+                    throw std::runtime_error("Unknown alignment in <Text> draw call: " + std::to_string(alignment[1]));
+                    break;
+            }
+            plMat4 trans_align_xform = pl_mat4_translate_xyz(
+                trans_align_vec[0],
+                trans_align_vec[1],
+                0.0f);
+
+            // move to pivot
+            // either both pivot points need to be set, or neither
+            bool  use_local_pivot = pivot_align[0] != DC_APP_ALIGN_TYPE_UNDEFINED;
+            float trans_pivot_vec[2];
+            if (use_local_pivot) {
+                switch (pivot_align[0]) {
+                    case DC_APP_ALIGN_TYPE_LEFT:
+                        trans_pivot_vec[0] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_CENTER:
+                        trans_pivot_vec[0] = -1 * size[0] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:
+                        trans_pivot_vec[0] = -1 * size[0];
+                        break;
+                    default:
+                        throw std::runtime_error("Unknown pivot alignment in <Text> draw call: " + std::to_string(pivot_align[0]));
+                        break;
+                }
+                switch (pivot_align[1]) {
+                    case DC_APP_ALIGN_TYPE_BOTTOM:
+                        trans_pivot_vec[1] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_MIDDLE:
+                        trans_pivot_vec[1] = -1 * size[1] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_TOP:
+                        trans_pivot_vec[1] = -1 * size[1];
+                        break;
+                    default:
+                        throw std::runtime_error("Unknown pivot alignment in <Text> draw call: " + std::to_string(pivot_align[1]));
+                        break;
+                }
+            } else {
+                float pivot_point_x = dc_app_get_value(node->terrain.pivot_point.x)->value_float;
+                trans_pivot_vec[0]  = -1 * pivot_point_x;
+                float pivot_point_y = dc_app_get_value(node->terrain.pivot_point.y)->value_float;
+                trans_pivot_vec[1]  = -1 * pivot_point_y;
+            }
+            plMat4 trans_to_pivot_xform = pl_mat4_translate_xyz(
+                trans_pivot_vec[0],
+                trans_pivot_vec[1],
+                0.0f);
+
+            // rotate
+            plMat4 rotate_xform = pl_mat4_rotate_vec3(
+                pl_radiansf(rotation),
+                (plVec3){0.0f, 0.0f, 1.0f});
+
+            // reverse pivot move
+            plMat4 trans_from_pivot_xform = pl_mat4_translate_xyz(
+                -1 * trans_pivot_vec[0],
+                -1 * trans_pivot_vec[1],
+                0.0f);
+
+            // compute transform
+            plMat4 transform4 = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+            if (!use_local_pivot) {
+                transform4 = pl_mul_mat4t(&transform4, &trans_from_pivot_xform);
+                transform4 = pl_mul_mat4t(&transform4, &rotate_xform);
+                transform4 = pl_mul_mat4t(&transform4, &trans_to_pivot_xform);
+            }
+            transform4 = pl_mul_mat4t(&transform4, &trans_align_xform);
+            transform4 = pl_mul_mat4t(&transform4, &trans_position_xform);
+            transform4 = pl_mul_mat4t(&transform4, &trans_origin_xform);
+            if (use_local_pivot) {
+                transform4 = pl_mul_mat4t(&transform4, &trans_from_pivot_xform);
+                transform4 = pl_mul_mat4t(&transform4, &rotate_xform);
+                transform4 = pl_mul_mat4t(&transform4, &trans_to_pivot_xform);
+            }
+            transform4 = pl_mul_mat4t(&transform4, &trans_pl_origin_xform);
+            transform4 = pl_mul_mat4t(&transform4, &scale_invert_y_xform);
+            transform4 = pl_mul_mat4t(parent_transform, &transform4);
+
+            // convert to 3D matrix
+            plMat3 transform3 = (plMat3){0};
+            transform3.x11    = transform4.x11;
+            transform3.x12    = transform4.x12;
+            transform3.x13    = transform4.x14;
+            transform3.x21    = transform4.x21;
+            transform3.x22    = transform4.x22;
+            transform3.x23    = transform4.x24;
+            transform3.x31    = transform4.x31;
+            transform3.x32    = transform4.x32;
+            transform3.x33    = transform4.x33;
+
+            // update text options
+            // text_options.tTransform = transform3;
+
+            // draw
+            // ext_draw->add_text(app_data->layer, (plVec2){0, 0}, sb_text, text_options);
+            break;
+        }
+
+        case DC_APP_NODE_TYPE_TEXT: {
+
+            // expand text
+            static char *sb_text = NULL;
+            sbclear(sb_text);
+            for (int ii = 0; ii < sbcount(node->text.sb_vals); ii++) {
+
+                // filler
+                char *filler = &(node->text.sb_fillers[node->text.sb_filler_indices[ii]]);
+                sbpushn(sb_text, filler, strlen(filler));
+
+                // value
+                DcValueType format_type = node->text.sb_format_types[ii];
+                char       *format      = &(node->text.sb_formats[node->text.sb_format_indices[ii]]);
+                DcValue    *val         = dc_app_get_value(node->text.sb_vals[ii]);
+                static char val_str[256]; // assume text won't be that long..
+                switch (format_type) {
+                    case DC_VALUE_TYPE_STRING:
+                        snprintf(val_str, sizeof(val_str), format, val->value_string.c_str());
+                        break;
+                    case DC_VALUE_TYPE_INTEGER:
+                        snprintf(val_str, sizeof(val_str), format, val->value_integer);
+                        break;
+                    case DC_VALUE_TYPE_FLOAT:
+                        snprintf(val_str, sizeof(val_str), format, val->value_float);
+                        break;
+                    case DC_VALUE_TYPE_BOOLEAN:
+                        snprintf(val_str, sizeof(val_str), format, val->value_boolean);
+                        break;
+                    default:
+                        throw std::runtime_error("Uknown value type for text: " + std::to_string(format_type));
+                }
+                sbpushn(sb_text, val_str, strlen(val_str));
+            }
+
+            // ending filler
+            char *filler = &(node->text.sb_fillers[node->text.sb_filler_indices[sbcount(node->text.sb_vals)]]);
+            sbpushn(sb_text, filler, strlen(filler));
+            sbpush(sb_text, '\0');
+
+            // get text dimensions
+            plDrawTextOptions text_options = {0};
+            text_options.ptFont            = app_data->cousine_sdf_font;
+            text_options.uColor            = PL_COLOR_32_RGBA(
+                dc_app_get_value(node->text.fill_color.r)->value_float,
+                dc_app_get_value(node->text.fill_color.g)->value_float,
+                dc_app_get_value(node->text.fill_color.b)->value_float,
+                dc_app_get_value(node->text.fill_color.a)->value_float);
+            text_options.fSize = dc_app_get_value(node->text.size)->value_float;
+            plVec2 pl_size     = ext_draw->calculate_text_size(sb_text, text_options);
+
+            // all transform parameters
+            float          position[2]    = {dc_app_get_value(node->text.position.x)->value_float, dc_app_get_value(node->text.position.y)->value_float};
+            float          origin[2]      = {dc_app_get_value(node->text.origin.x)->value_float, dc_app_get_value(node->text.origin.y)->value_float};
+            DcAppAlignType alignment[2]   = {(DcAppAlignType)dc_app_get_value(node->text.alignment.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->text.alignment.y)->value_integer};
+            DcAppAlignType pivot_align[2] = {(DcAppAlignType)dc_app_get_value(node->text.pivot_align.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->text.pivot_align.y)->value_integer};
+            float          rotation       = dc_app_get_value(node->text.rotation)->value_float;
+            float          size[2]        = {pl_size.x, pl_size.y};
+
+            // local flip over x axis
+            plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(
+                1.0f,
+                -1.0f,
+                1.0f);
+
+            // move position
+            plMat4 trans_position_xform = pl_mat4_translate_xyz(
+                position[0],
+                position[1],
+                0.0f);
+
+            // move from top-left reference to bottom-left
+            plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(
+                0,
+                size[1],
+                0.0f);
+
+            // move origin
+            plMat4 trans_origin_xform = pl_mat4_translate_xyz(
+                origin[0],
+                origin[1],
+                0.0f);
+
+            // move alignment
+            float trans_align_vec[2];
+            switch (alignment[0]) {
+                break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    trans_align_vec[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    trans_align_vec[0] = -1 * size[0] / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    trans_align_vec[0] = -1 * size[0];
+                    break;
+                default:
+                    throw std::runtime_error("Unknown alignment in <Text> draw call: " + std::to_string(alignment[0]));
+                    break;
+            }
+            switch (alignment[1]) {
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    trans_align_vec[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    trans_align_vec[1] = -1 * size[1] / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    trans_align_vec[1] = -1 * size[1];
+                    break;
+                default:
+                    throw std::runtime_error("Unknown alignment in <Text> draw call: " + std::to_string(alignment[1]));
+                    break;
+            }
+            plMat4 trans_align_xform = pl_mat4_translate_xyz(
+                trans_align_vec[0],
+                trans_align_vec[1],
+                0.0f);
+
+            // move to pivot
+            // either both pivot points need to be set, or neither
+            bool  use_local_pivot = pivot_align[0] != DC_APP_ALIGN_TYPE_UNDEFINED;
+            float trans_pivot_vec[2];
+            if (use_local_pivot) {
+                switch (pivot_align[0]) {
+                    case DC_APP_ALIGN_TYPE_LEFT:
+                        trans_pivot_vec[0] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_CENTER:
+                        trans_pivot_vec[0] = -1 * size[0] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:
+                        trans_pivot_vec[0] = -1 * size[0];
+                        break;
+                    default:
+                        throw std::runtime_error("Unknown pivot alignment in <Text> draw call: " + std::to_string(pivot_align[0]));
+                        break;
+                }
+                switch (pivot_align[1]) {
+                    case DC_APP_ALIGN_TYPE_BOTTOM:
+                        trans_pivot_vec[1] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_MIDDLE:
+                        trans_pivot_vec[1] = -1 * size[1] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_TOP:
+                        trans_pivot_vec[1] = -1 * size[1];
+                        break;
+                    default:
+                        throw std::runtime_error("Unknown pivot alignment in <Text> draw call: " + std::to_string(pivot_align[1]));
+                        break;
+                }
+            } else {
+                float pivot_point_x = dc_app_get_value(node->text.pivot_point.x)->value_float;
+                trans_pivot_vec[0]  = -1 * pivot_point_x;
+                float pivot_point_y = dc_app_get_value(node->text.pivot_point.y)->value_float;
+                trans_pivot_vec[1]  = -1 * pivot_point_y;
+            }
+            plMat4 trans_to_pivot_xform = pl_mat4_translate_xyz(
+                trans_pivot_vec[0],
+                trans_pivot_vec[1],
+                0.0f);
+
+            // rotate
+            plMat4 rotate_xform = pl_mat4_rotate_vec3(
+                pl_radiansf(rotation),
+                (plVec3){0.0f, 0.0f, 1.0f});
+
+            // reverse pivot move
+            plMat4 trans_from_pivot_xform = pl_mat4_translate_xyz(
+                -1 * trans_pivot_vec[0],
+                -1 * trans_pivot_vec[1],
+                0.0f);
+
+            // compute transform
+            plMat4 transform4 = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+            if (!use_local_pivot) {
+                transform4 = pl_mul_mat4t(&transform4, &trans_from_pivot_xform);
+                transform4 = pl_mul_mat4t(&transform4, &rotate_xform);
+                transform4 = pl_mul_mat4t(&transform4, &trans_to_pivot_xform);
+            }
+            transform4 = pl_mul_mat4t(&transform4, &trans_align_xform);
+            transform4 = pl_mul_mat4t(&transform4, &trans_position_xform);
+            transform4 = pl_mul_mat4t(&transform4, &trans_origin_xform);
+            if (use_local_pivot) {
+                transform4 = pl_mul_mat4t(&transform4, &trans_from_pivot_xform);
+                transform4 = pl_mul_mat4t(&transform4, &rotate_xform);
+                transform4 = pl_mul_mat4t(&transform4, &trans_to_pivot_xform);
+            }
+            transform4 = pl_mul_mat4t(&transform4, &trans_pl_origin_xform);
+            transform4 = pl_mul_mat4t(&transform4, &scale_invert_y_xform);
+            transform4 = pl_mul_mat4t(parent_transform, &transform4);
+
+            // convert to 3D matrix
+            plMat3 transform3 = (plMat3){0};
+            transform3.x11    = transform4.x11;
+            transform3.x12    = transform4.x12;
+            transform3.x13    = transform4.x14;
+            transform3.x21    = transform4.x21;
+            transform3.x22    = transform4.x22;
+            transform3.x23    = transform4.x24;
+            transform3.x31    = transform4.x31;
+            transform3.x32    = transform4.x32;
+            transform3.x33    = transform4.x33;
+
+            // update text options
+            text_options.tTransform = transform3;
+
+            // draw
+            ext_draw->add_text(app_data->layer, (plVec2){0, 0}, sb_text, text_options);
+
+            break;
+        }
+
         case DC_APP_NODE_TYPE_WINDOW: {
             // TODO move this code to only the resize() function
             // update dimensions
             uint32_t dimensionX, dimensionY;
 
             // TODO fix this in pilotlight for macos
-            gpt_windows->get_size(pt_app_data->pt_window, &dimensionX, &dimensionY);
+            ext_windows->get_size(app_data->window, &dimensionX, &dimensionY);
             DcValue *dimension_value_x       = dc_app_get_value(node->window.dimensions.x);
             DcValue *dimension_value_y       = dc_app_get_value(node->window.dimensions.y);
             dimension_value_x->value_integer = (int)dimensionX;
@@ -1554,7 +2373,7 @@ void _draw_node(pl_app_data *pt_app_data, DcAppNodeIndex node_index, plMat4 *par
 
             plMat4 transform;
             transform = pl_mul_mat4t(&trans_matrix, &scale_matrix);
-            _draw_node_list(pt_app_data, node->window.child, &transform);
+            _draw_node_list(app_data, node->window.child, &transform);
             break;
         }
 

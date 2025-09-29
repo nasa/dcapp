@@ -28,17 +28,17 @@ typedef enum {
     DC_APP_ELEM_TYPE_CONSTANT,
     DC_APP_ELEM_TYPE_CONTAINER,
     DC_APP_ELEM_TYPE_DCAPP,
-    DC_APP_ELEM_TYPE_DEM,
     DC_APP_ELEM_TYPE_DUMMY,
     DC_APP_ELEM_TYPE_FALSE,
     DC_APP_ELEM_TYPE_IF,
     DC_APP_ELEM_TYPE_INCLUDE,
     DC_APP_ELEM_TYPE_LOGIC,
-    DC_APP_ELEM_TYPE_MAP,
     DC_APP_ELEM_TYPE_NONELEM,
     DC_APP_ELEM_TYPE_PANEL,
     DC_APP_ELEM_TYPE_POLYGON,
     DC_APP_ELEM_TYPE_SET,
+    DC_APP_ELEM_TYPE_TERRAIN,
+    DC_APP_ELEM_TYPE_TERRAIN_DEM,
     DC_APP_ELEM_TYPE_TEXT,
     DC_APP_ELEM_TYPE_TRICK_FROM,
     DC_APP_ELEM_TYPE_TRICK_IO,
@@ -59,22 +59,22 @@ const DcAppValueIndex DC_VALUE_INDEX_UNDEFINED = 0;
 
 typedef struct _DcAppValueIndex2 {
     union {
-        DcAppValueIndex x, r, lat;
+        DcAppValueIndex x, r, lat, roll;
     };
     union {
-        DcAppValueIndex y, g, lon;
+        DcAppValueIndex y, g, lon, pitch;
     };
 } DcAppValueIndex2;
 
 typedef struct _DcAppValueIndex3 {
     union {
-        DcAppValueIndex x, r, lat;
+        DcAppValueIndex x, r, lat, roll;
     };
     union {
-        DcAppValueIndex y, g, lon;
+        DcAppValueIndex y, g, lon, pitch;
     };
     union {
-        DcAppValueIndex z, b, ele;
+        DcAppValueIndex z, b, ele, yaw;
     };
 } DcAppValueIndex3;
 
@@ -139,10 +139,10 @@ enum DcAppNodeType {
     DC_APP_NODE_TYPE_UNDEFINED,
     DC_APP_NODE_TYPE_CONTAINER,
     DC_APP_NODE_TYPE_CONDITIONAL,
-    DC_APP_NODE_TYPE_MAP,
     DC_APP_NODE_TYPE_PANEL,
     DC_APP_NODE_TYPE_POLYGON,
     DC_APP_NODE_TYPE_SET,
+    DC_APP_NODE_TYPE_TERRAIN,
     DC_APP_NODE_TYPE_TEXT,
     DC_APP_NODE_TYPE_WINDOW,
 };
@@ -207,20 +207,43 @@ typedef struct _DcAppNodeText {
     DcAppValueIndex2 position;
     DcAppValueIndex2 origin;
     DcAppValueIndex2 alignment;
+    DcAppValueIndex2 pivot_align;
+    DcAppValueIndex2 pivot_point;
+    DcAppValueIndex  rotation;
     DcAppValueIndex  size;
-    // DcAppValueIndex  rotation;
-    // DcAppValueIndex4 color;
-    // DcAppValueIndex4 outline_color;
+    DcAppValueIndex4 fill_color;
+    DcAppValueIndex4 line_color;
+    bool             fill_enabled;
+    bool             line_enabled;
     // DcAppValueIndex  font;
 
-    // contains values and formats
+    // stretchy buffers contains values and formats
     // TODO hate how this is structured, and know it's bad
+    DcAppValueIndex *sb_vals;
     char            *sb_fillers;
-    int             *sb_filler_indices;
+    uint8_t         *sb_filler_indices;
     char            *sb_formats;
-    int             *sb_format_indices;
-    DcAppValueIndex *vals;
+    uint8_t         *sb_format_indices;
+    DcValueType     *sb_format_types;
 } DcAppNodeText;
+
+typedef struct _DcAppNodeTerrain {
+
+    // general positioning of display
+    DcAppValueIndex2 dimensions;
+    DcAppValueIndex2 position;
+    DcAppValueIndex2 origin;
+    DcAppValueIndex2 alignment;
+    DcAppValueIndex2 pivot_align;
+    DcAppValueIndex2 pivot_point;
+    DcAppValueIndex  rotation;
+
+    // terrain specific
+    DcAppValueIndex3 lle;
+    DcAppValueIndex3 rpy;
+    uint8_t          terrain_index;
+
+} DcAppNodeTerrain;
 
 typedef struct _DcAppNodeWindow {
     DcAppValueIndex2 position;
@@ -241,6 +264,7 @@ typedef struct _DcAppNode {
         DcAppNodePanel       panel;
         DcAppNodePolygon     polygon;
         DcAppNodeSet         set;
+        DcAppNodeTerrain     terrain;
         DcAppNodeText        text;
         DcAppNodeWindow      window;
     };
