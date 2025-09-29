@@ -96,6 +96,10 @@
       <Text Size="75" X="500" Y="500" HorizontalAlign="#_align_center_" VerticalAlign="#_align_middle_" PivotAlignX="#_align_center_" PivotAlignY="#_align_middle_" Rotation="@ROTATE" FillColor="@ROTATE .5 .5 1">CENTER MIDDLE</Text>
       <Text Size="75" X="500" Y="250" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" PivotAlignX="#_align_left_" PivotAlignY="#_align_bottom_" Rotation="@ROTATE" FillColor="@ROTATE .5 .5 1">BOTTOM LEFT</Text>
 
+      <Terrain X="100" Y="100" Width="200" Height="200" Latitude="0" Longitude="0" Elevation="0" Roll="0" Pitch="0" Yaw="0">
+        <TerrainDEM File="asdf.txt"/>
+      </Terrain>
+
     </Panel>
 
     <!-- <Include>sub/subtest.xml</Include> -->

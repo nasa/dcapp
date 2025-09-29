@@ -616,25 +616,6 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             break;
         }
 
-            // case DC_APP_ELEM_TYPE_DEM:
-            // {
-            //     DcAppNodeType parentType = dc_app_index_to_node(parentNodeIndex)->type;
-            //     switch (parentType)
-            //     {
-            //     case DC_APP_ELEM_TYPE_MAP:
-            //     {
-            //         std::string filename = dc_utils_filepath_to_canonical(dc_utils_get_attribute_string(node, "File"), directory);
-            //         ((DcMap *)parent)->addDem(filename);
-            //         break;
-            //     }
-
-            //     default:
-            //         throw std::runtime_error("Adding DEM to invalid parent of type " + std::to_string(parentType));
-            //         break;
-            //     }
-            //     break;
-            // }
-
         case DC_APP_ELEM_TYPE_FALSE:
             switch (parent_elem_type) {
                 case DC_APP_ELEM_TYPE_IF: {
@@ -752,26 +733,6 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             }
             break;
         }
-
-            // case DC_APP_ELEM_TYPE_MAP:
-            // {
-            //     DcValue *xPosition = attributeToDcValue(node, "X");
-            //     DcValue *yPosition = attributeToDcValue(node, "Y");
-            //     DcValue *xOrigin = attributeToDcValue(node, "OriginX");
-            //     DcValue *yOrigin = attributeToDcValue(node, "OriginY");
-            //     DcValue *width = attributeToDcValue(node, "Width");
-            //     DcValue *height = attributeToDcValue(node, "Height");
-            //     DcValue *horizontalAlign = attributeToDcValue(node, "HorizontalAlign");
-            //     DcValue *verticalAlign = attributeToDcValue(node, "VerticalAlign");
-            //     DcValue *rotation = attributeToDcValue(node, "Rotation");
-            //     DcValue *latitude = attributeToDcValue(node, "Latitude");
-            //     DcValue *longitude = attributeToDcValue(node, "Longitude");
-            //     DcValue *yaw = attributeToDcValue(node, "Yaw");
-
-            //     DcMap *map = new DcMap((DcParent *)parent, xPosition, yPosition, xOrigin, yOrigin, width, height, horizontalAlign, verticalAlign, rotation, latitude, longitude, yaw);
-            //     processElementChildren(map, node, directory);
-            //     break;
-            // }
 
         case DC_APP_ELEM_TYPE_PANEL: {
             DcAppNode dc_node = {
@@ -936,6 +897,208 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
 
             // register node
             node_index = dc_app_register_node(dc_node);
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_TERRAIN: {
+            DcAppNode dc_node = {};
+            dc_node.type      = DC_APP_NODE_TYPE_TERRAIN;
+
+            // xPosition
+            char *c_x_position = dc_utils_get_attribute_string(xml_node, "X");
+            if (c_x_position) {
+                dc_node.terrain.position.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position));
+                free(c_x_position);
+            } else {
+                dc_node.terrain.position.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // y position
+            char *c_y_position = dc_utils_get_attribute_string(xml_node, "Y");
+            if (c_y_position) {
+                dc_node.terrain.position.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position));
+                free(c_y_position);
+            } else {
+                dc_node.terrain.position.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // x origin
+            char *c_x_origin = dc_utils_get_attribute_string(xml_node, "OriginX");
+            if (c_x_origin) {
+                dc_node.terrain.origin.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_origin));
+                free(c_x_origin);
+            } else {
+                dc_node.terrain.origin.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // y origin
+            char *c_y_origin = dc_utils_get_attribute_string(xml_node, "OriginY");
+            if (c_y_origin) {
+                dc_node.terrain.origin.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_origin));
+                free(c_y_origin);
+            } else {
+                dc_node.terrain.origin.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // x align
+            char *c_x_align = dc_utils_get_attribute_string(xml_node, "HorizontalAlign");
+            if (c_x_align) {
+                dc_node.terrain.alignment.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_align));
+                free(c_x_align);
+            } else {
+                dc_node.terrain.alignment.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_LEFT));
+            }
+
+            // y align
+            char *c_y_align = dc_utils_get_attribute_string(xml_node, "VerticalAlign");
+            if (c_y_align) {
+                dc_node.terrain.alignment.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_align));
+                free(c_y_align);
+            } else {
+                dc_node.terrain.alignment.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM));
+            }
+
+            // rotation
+            char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotation");
+            if (c_rotation) {
+                dc_node.terrain.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_rotation));
+                free(c_rotation);
+            } else {
+                dc_node.terrain.rotation = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // pivots
+            char *c_pivot_point_x = dc_utils_get_attribute_string(xml_node, "PivotPointX");
+            char *c_pivot_point_y = dc_utils_get_attribute_string(xml_node, "PivotPointY");
+            if (c_pivot_point_x && c_pivot_point_y) {
+                dc_node.terrain.pivot_point.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pivot_point_x));
+                dc_node.terrain.pivot_align.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED));
+                free(c_pivot_point_x);
+
+                dc_node.terrain.pivot_point.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pivot_point_y));
+                dc_node.terrain.pivot_align.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED));
+                free(c_pivot_point_y);
+            } else if (!c_pivot_point_x && !c_pivot_point_y) {
+                char *c_pivot_align_x = dc_utils_get_attribute_string(xml_node, "PivotAlignX");
+                if (c_pivot_align_x) {
+                    dc_node.terrain.pivot_align.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_pivot_align_x));
+                    free(c_pivot_align_x);
+                } else {
+                    dc_node.terrain.pivot_align.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_CENTER));
+                }
+
+                char *c_pivot_align_y = dc_utils_get_attribute_string(xml_node, "PivotAlignY");
+                if (c_pivot_align_y) {
+                    dc_node.terrain.pivot_align.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_pivot_align_y));
+                    free(c_pivot_align_y);
+                } else {
+                    dc_node.terrain.pivot_align.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_MIDDLE));
+                }
+            } else {
+                throw std::runtime_error("Invalid Pivot parameters: must use both PivotPoint params, or none. Using just one is not allowed.");
+            }
+
+            // x dimension
+            char *c_x_dimension = dc_utils_get_attribute_string(xml_node, "Width");
+            if (c_x_dimension) {
+                dc_node.terrain.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_dimension));
+                free(c_x_dimension);
+            } else {
+                dc_node.terrain.dimensions.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // y dimension
+            char *c_y_dimension = dc_utils_get_attribute_string(xml_node, "Height");
+            if (c_y_dimension) {
+                dc_node.terrain.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_dimension));
+                free(c_y_dimension);
+            } else {
+                dc_node.terrain.dimensions.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+            }
+
+            // lat
+            char *c_lat = dc_utils_get_attribute_string(xml_node, "Latitude");
+            if (c_lat) {
+                dc_node.terrain.lle.lat = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_lat));
+                free(c_lat);
+            } else {
+                throw std::runtime_error("Must supply attribute Latitude with Terrain primitive");
+            }
+
+            // lon
+            char *c_lon = dc_utils_get_attribute_string(xml_node, "Longitude");
+            if (c_lon) {
+                dc_node.terrain.lle.lon = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_lon));
+                free(c_lon);
+            } else {
+                throw std::runtime_error("Must supply attribute Longitude with Terrain primitive");
+            }
+
+            // ele
+            char *c_ele = dc_utils_get_attribute_string(xml_node, "Elevation");
+            if (c_ele) {
+                dc_node.terrain.lle.ele = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_ele));
+                free(c_ele);
+            } else {
+                throw std::runtime_error("Must supply attribute Elevation with Terrain primitive");
+            }
+
+            // roll
+            char *c_roll = dc_utils_get_attribute_string(xml_node, "Roll");
+            if (c_roll) {
+                dc_node.terrain.rpy.roll = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_roll));
+                free(c_roll);
+            } else {
+                throw std::runtime_error("Must supply attribute Roll with Terrain primitive");
+            }
+
+            // pitch
+            char *c_pitch = dc_utils_get_attribute_string(xml_node, "Pitch");
+            if (c_pitch) {
+                dc_node.terrain.rpy.pitch = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pitch));
+                free(c_pitch);
+            } else {
+                throw std::runtime_error("Must supply attribute Pitch with Terrain primitive");
+            }
+
+            // yaw
+            char *c_yaw = dc_utils_get_attribute_string(xml_node, "Yaw");
+            if (c_yaw) {
+                dc_node.terrain.rpy.yaw = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_yaw));
+                free(c_yaw);
+            } else {
+                throw std::runtime_error("Must supply attribute Yaw with Terrain primitive");
+            }
+
+            // register node
+            node_index = dc_app_register_node(dc_node);
+
+            // process children
+            _process_node_children(xml_node, node_index, elem_type, directory);
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_TERRAIN_DEM: {
+
+            DcAppNode *parent_node = dc_app_index_to_node(parent_node_index);
+            switch (parent_node->type) {
+                case DC_APP_NODE_TYPE_TERRAIN: {
+
+                    // file
+                    char *c_file = dc_utils_get_attribute_string(xml_node, "File");
+                    if (!c_file) {
+                        throw std::runtime_error("Invalid TerrainDEM: No File attribute");
+                    }
+                    std::string file = dc_utils_filepath_to_canonical(dc_app_dereference_constants(c_file), directory);
+
+                    // TODO open file
+                    // print for now
+                    printf("TerrainDEM file: %s\n", file.c_str());
+                    break;
+                }
+                default:
+                    throw std::runtime_error("Invalid parent of type " + dc_app_node_type_to_string(parent_node->type) + "for TerrainDEM.");
+            }
             break;
         }
 
@@ -1647,11 +1810,6 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
             break;
         }
 
-        case DC_APP_NODE_TYPE_MAP: {
-            // TODO implement
-            break;
-        }
-
         case DC_APP_NODE_TYPE_PANEL: {
             plMat4 scale_matrix = pl_mat4_scale_xyz(
                 dc_app_get_value(node->panel.parent_dimensions.x)->value_float / dc_app_get_value(node->panel.virtual_dimensions.x)->value_float,
@@ -1805,6 +1963,170 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
             // refresh variable
             dc_value_refresh(var_value);
             dc_app_refresh_var_from_value(var);
+            break;
+        }
+
+        case DC_APP_NODE_TYPE_TERRAIN: {
+
+            // all transform parameters
+            float          position[2]    = {dc_app_get_value(node->terrain.position.x)->value_float, dc_app_get_value(node->terrain.position.y)->value_float};
+            float          origin[2]      = {dc_app_get_value(node->terrain.origin.x)->value_float, dc_app_get_value(node->terrain.origin.y)->value_float};
+            DcAppAlignType alignment[2]   = {(DcAppAlignType)dc_app_get_value(node->terrain.alignment.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->terrain.alignment.y)->value_integer};
+            DcAppAlignType pivot_align[2] = {(DcAppAlignType)dc_app_get_value(node->terrain.pivot_align.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->terrain.pivot_align.y)->value_integer};
+            float          rotation       = dc_app_get_value(node->terrain.rotation)->value_float;
+            float          size[2]        = {dc_app_get_value(node->terrain.dimensions.x)->value_float, dc_app_get_value(node->terrain.dimensions.y)->value_float};
+
+            // local flip over x axis
+            plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(
+                1.0f,
+                -1.0f,
+                1.0f);
+
+            // move position
+            plMat4 trans_position_xform = pl_mat4_translate_xyz(
+                position[0],
+                position[1],
+                0.0f);
+
+            // move from top-left reference to bottom-left
+            plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(
+                0,
+                size[1],
+                0.0f);
+
+            // move origin
+            plMat4 trans_origin_xform = pl_mat4_translate_xyz(
+                origin[0],
+                origin[1],
+                0.0f);
+
+            // move alignment
+            float trans_align_vec[2];
+            switch (alignment[0]) {
+                break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    trans_align_vec[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    trans_align_vec[0] = -1 * size[0] / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    trans_align_vec[0] = -1 * size[0];
+                    break;
+                default:
+                    throw std::runtime_error("Unknown alignment in <Text> draw call: " + std::to_string(alignment[0]));
+                    break;
+            }
+            switch (alignment[1]) {
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    trans_align_vec[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    trans_align_vec[1] = -1 * size[1] / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    trans_align_vec[1] = -1 * size[1];
+                    break;
+                default:
+                    throw std::runtime_error("Unknown alignment in <Text> draw call: " + std::to_string(alignment[1]));
+                    break;
+            }
+            plMat4 trans_align_xform = pl_mat4_translate_xyz(
+                trans_align_vec[0],
+                trans_align_vec[1],
+                0.0f);
+
+            // move to pivot
+            // either both pivot points need to be set, or neither
+            bool  use_local_pivot = pivot_align[0] != DC_APP_ALIGN_TYPE_UNDEFINED;
+            float trans_pivot_vec[2];
+            if (use_local_pivot) {
+                switch (pivot_align[0]) {
+                    case DC_APP_ALIGN_TYPE_LEFT:
+                        trans_pivot_vec[0] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_CENTER:
+                        trans_pivot_vec[0] = -1 * size[0] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:
+                        trans_pivot_vec[0] = -1 * size[0];
+                        break;
+                    default:
+                        throw std::runtime_error("Unknown pivot alignment in <Text> draw call: " + std::to_string(pivot_align[0]));
+                        break;
+                }
+                switch (pivot_align[1]) {
+                    case DC_APP_ALIGN_TYPE_BOTTOM:
+                        trans_pivot_vec[1] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_MIDDLE:
+                        trans_pivot_vec[1] = -1 * size[1] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_TOP:
+                        trans_pivot_vec[1] = -1 * size[1];
+                        break;
+                    default:
+                        throw std::runtime_error("Unknown pivot alignment in <Text> draw call: " + std::to_string(pivot_align[1]));
+                        break;
+                }
+            } else {
+                float pivot_point_x = dc_app_get_value(node->terrain.pivot_point.x)->value_float;
+                trans_pivot_vec[0]  = -1 * pivot_point_x;
+                float pivot_point_y = dc_app_get_value(node->terrain.pivot_point.y)->value_float;
+                trans_pivot_vec[1]  = -1 * pivot_point_y;
+            }
+            plMat4 trans_to_pivot_xform = pl_mat4_translate_xyz(
+                trans_pivot_vec[0],
+                trans_pivot_vec[1],
+                0.0f);
+
+            // rotate
+            plMat4 rotate_xform = pl_mat4_rotate_vec3(
+                pl_radiansf(rotation),
+                (plVec3){0.0f, 0.0f, 1.0f});
+
+            // reverse pivot move
+            plMat4 trans_from_pivot_xform = pl_mat4_translate_xyz(
+                -1 * trans_pivot_vec[0],
+                -1 * trans_pivot_vec[1],
+                0.0f);
+
+            // compute transform
+            plMat4 transform4 = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+            if (!use_local_pivot) {
+                transform4 = pl_mul_mat4t(&transform4, &trans_from_pivot_xform);
+                transform4 = pl_mul_mat4t(&transform4, &rotate_xform);
+                transform4 = pl_mul_mat4t(&transform4, &trans_to_pivot_xform);
+            }
+            transform4 = pl_mul_mat4t(&transform4, &trans_align_xform);
+            transform4 = pl_mul_mat4t(&transform4, &trans_position_xform);
+            transform4 = pl_mul_mat4t(&transform4, &trans_origin_xform);
+            if (use_local_pivot) {
+                transform4 = pl_mul_mat4t(&transform4, &trans_from_pivot_xform);
+                transform4 = pl_mul_mat4t(&transform4, &rotate_xform);
+                transform4 = pl_mul_mat4t(&transform4, &trans_to_pivot_xform);
+            }
+            transform4 = pl_mul_mat4t(&transform4, &trans_pl_origin_xform);
+            transform4 = pl_mul_mat4t(&transform4, &scale_invert_y_xform);
+            transform4 = pl_mul_mat4t(parent_transform, &transform4);
+
+            // convert to 3D matrix
+            plMat3 transform3 = (plMat3){0};
+            transform3.x11    = transform4.x11;
+            transform3.x12    = transform4.x12;
+            transform3.x13    = transform4.x14;
+            transform3.x21    = transform4.x21;
+            transform3.x22    = transform4.x22;
+            transform3.x23    = transform4.x24;
+            transform3.x31    = transform4.x31;
+            transform3.x32    = transform4.x32;
+            transform3.x33    = transform4.x33;
+
+            // update text options
+            // text_options.tTransform = transform3;
+
+            // draw
+            // ext_draw->add_text(app_data->layer, (plVec2){0, 0}, sb_text, text_options);
             break;
         }
 
