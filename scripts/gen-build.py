@@ -228,6 +228,62 @@ with pl.project("dcapp"):
                     pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
                     pl.add_linker_flags("-lstdc++", "-lm", "-lxml2", "-lpthread", "-ldl")
 
+    # dcapp
+    with pl.target("terrain", pl.TargetType.DYNAMIC_LIBRARY, True):
+
+        pl.set_output_binary("terrain")
+
+        # used to decide hot reloading
+        pl.set_hot_reload_target(pl_dir_rel + "/out/pilot_light")
+
+        # release config
+        with pl.configuration("release"):
+
+            pl.add_static_link_libraries("dearimguid")
+
+            # win32
+            with pl.platform("Windows"):
+                with pl.compiler("msvc"):
+                    pl.add_linker_flags("-incremental:no", "-nologo", "-noimplib", "-noexp")
+                    pl.add_compiler_flags("-nologo", "-std:c++17", "-W3", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-Od", "-MDd", "-Zi", "-permissive")
+            
+            # linux
+            with pl.platform("Linux"):
+                with pl.compiler("gcc"):
+                    pl.add_include_directories("/usr/include/libxml2")
+                    pl.add_compiler_flags("-fPIC", "-std=c++17")
+                    pl.add_linker_flags("-lstdc++", "-lstdc++fs", "-lxml2", "-lpthread", "-ldl", "-lm")
+
+            # mac os
+            with pl.platform("Darwin"):
+                with pl.compiler("clang"):
+                    pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
+                    pl.add_linker_flags("-lstdc++", "-lm", "-lxml2", "-lpthread", "-ldl")
+
+        # debug config
+        with pl.configuration("debug"):
+
+            pl.add_static_link_libraries("dearimguid")
+
+            # win32
+            with pl.platform("Windows"):
+                with pl.compiler("msvc"):
+                    pl.add_linker_flags("-incremental:no", "-nologo", "-noimplib", "-noexp")
+                    pl.add_compiler_flags("-nologo", "-std:c++17", "-W3", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-Od", "-MDd", "-Zi", "-permissive")
+            
+            # linux
+            with pl.platform("Linux"):
+                with pl.compiler("gcc"):
+                    pl.add_include_directories("/usr/include/libxml2")
+                    pl.add_compiler_flags("-fPIC", "-std=c++17", "--debug", "-g")
+                    pl.add_linker_flags("-lstdc++", "-lstdc++fs", "-lxml2", "-lpthread", "-ldl", "-lm")
+
+            # mac os
+            with pl.platform("Darwin"):
+                with pl.compiler("clang"):
+                    pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
+                    pl.add_linker_flags("-lstdc++", "-lm", "-lxml2", "-lpthread", "-ldl")
+
     # dcapp-genheader
     with pl.target("dcapp-genheader", pl.TargetType.EXECUTABLE):
 

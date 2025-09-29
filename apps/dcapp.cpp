@@ -38,6 +38,11 @@ DcAppData dc_app_data;
 #include "pl_profile_ext.h"
 #include "pl_starter_ext.h"
 #include "pl_graphics_ext.h"
+#include "pl_vfs_ext.h"
+#include "pl_shader_ext.h"
+
+// our extensions
+#include "../extensions/pl_terrain_ext.h"
 
 //-----------------------------------------------------------------------------
 // [SECTION] structs
@@ -54,6 +59,8 @@ typedef struct _plAppData {
 
     // console variable
     bool show_help_window;
+
+    plTerrain *terrain;
 } pl_app_data;
 
 //-----------------------------------------------------------------------------
@@ -78,10 +85,15 @@ const plMemoryI      *ext_memory       = NULL;
 const plLibraryI     *ext_library      = NULL;
 const plIOI          *ext_ioi          = NULL;
 const plGraphicsI    *ext_gfx          = NULL;
+const plTerrainI     *ext_terrain      = NULL;
+const plVfsI         *ext_vfs          = NULL;
+const plShaderI      *ext_shader       = NULL;
 
 #define PL_ALLOC(x) ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_REALLOC(x, y) ext_memory->tracked_realloc((x), (y), __FILE__, __LINE__)
 #define PL_FREE(x) ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
+
+#define PL_UNIT_CONVERSION 100.0f
 
 //-----------------------------------------------------------------------------
 // [SECTION] pl_app_load
@@ -106,6 +118,9 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
         ext_library      = pl_get_api_latest(api_registry, plLibraryI);
         ext_ioi          = pl_get_api_latest(api_registry, plIOI);
         ext_gfx          = pl_get_api_latest(api_registry, plGraphicsI);
+        ext_vfs          = pl_get_api_latest(api_registry, plVfsI);
+        ext_shader       = pl_get_api_latest(api_registry, plShaderI);
+        ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
 
         return app_data;
     }
@@ -120,6 +135,7 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     //   * fourth argument indicates if the extension is reloadable (should we check for changes and reload if changed)
     extension_registry->load("pl_unity_ext", NULL, NULL, true);
     extension_registry->load("pl_platform_ext", NULL, NULL, false); // provides the file API used by the drawing ext
+    extension_registry->load("pl_terrain_ext", NULL, NULL, true);
 
     // load required apis
     ext_windows      = pl_get_api_latest(api_registry, plWindowI);
@@ -131,6 +147,9 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     ext_library      = pl_get_api_latest(api_registry, plLibraryI);
     ext_ioi          = pl_get_api_latest(api_registry, plIOI);
     ext_gfx          = pl_get_api_latest(api_registry, plGraphicsI);
+    ext_vfs          = pl_get_api_latest(api_registry, plVfsI);
+    ext_shader       = pl_get_api_latest(api_registry, plShaderI);
+    ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
 
     // allocate app memory
     app_data = (pl_app_data *)PL_ALLOC(sizeof(pl_app_data));
@@ -202,7 +221,10 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     std::filesystem::path fs_out_file = std::filesystem::path(log_dir_path) / "config.xml";
     xmlSaveFormatFile(fs_out_file.string().c_str(), dc_app_data.doc, 1);
 
-    // process XML
+    // validate
+    // root->validate();
+
+    // build dcapp node tree
     xmlNodePtr root_node = xmlDocGetRootElement(dc_app_data.doc);
     _process_node(root_node, DC_APP_NODE_INDEX_UNDEFINED, DC_APP_ELEM_TYPE_UNDEFINED, config_dir_path);
 
@@ -224,8 +246,12 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
         }
     }
 
-    // validate
-    // root->validate();
+    // mount VFS dirs
+    ext_vfs->mount_directory("/shaders-terrain", "../../shaders", PL_VFS_MOUNT_FLAGS_NONE);
+    ext_vfs->mount_directory("/assets", "../../data", PL_VFS_MOUNT_FLAGS_NONE);
+    ext_vfs->mount_directory("/cache", "cache", PL_VFS_MOUNT_FLAGS_NONE);
+    ext_vfs->mount_directory("/shaders", "../shaders", PL_VFS_MOUNT_FLAGS_NONE);
+    ext_vfs->mount_directory("/shader-temp", "../shader-temp", PL_VFS_MOUNT_FLAGS_NONE);
 
     // set initial window params
     DcAppNode   *window_node = dc_app_index_to_node(dc_app_data.window);
@@ -242,7 +268,7 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
 
     // initialize the starter API (handles alot of boilerplate)
     plStarterInit tStarterInit = {
-        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS & (~PL_STARTER_FLAGS_DRAW_EXT) | PL_STARTER_FLAGS_MSAA,
+        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS & (~PL_STARTER_FLAGS_DRAW_EXT) & (~PL_STARTER_FLAGS_SHADER_EXT) | PL_STARTER_FLAGS_MSAA,
         .ptWindow = app_data->window};
     ext_starter->initialize(tStarterInit);
 
@@ -281,8 +307,57 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     // request layers (allows drawing out of order)
     app_data->layer = ext_draw->request_2d_layer(app_data->draw_list);
 
+    // initialize shader compiler
+    plShaderOptions shader_options = {};
+    shader_options.apcIncludeDirectories[0] = "/shaders/";
+    shader_options.apcIncludeDirectories[1] = "/shaders-terrain/";
+    shader_options.apcDirectories[0] = "/shaders/";
+    shader_options.apcDirectories[1] = "/shaders-terrain/";
+    shader_options.pcCacheOutputDirectory = "/shader-temp/";
+    shader_options.tFlags = PL_SHADER_FLAGS_AUTO_OUTPUT | PL_SHADER_FLAGS_INCLUDE_DEBUG | PL_SHADER_FLAGS_ALWAYS_COMPILE;
+    ext_shader->initialize(&shader_options);
+
     // wraps up
     ext_starter->finalize();
+
+    // init terrain backend
+    ext_starter->get_device();
+    ext_terrain->initialize(ext_starter->get_device());
+    plCommandBuffer *temp_cmd_buffer = ext_starter->get_temporary_command_buffer();
+    ext_terrain->load_mesh(temp_cmd_buffer, "/assets/terrain.bin", 7, 128);
+
+    plTerrainInit tTerrainInit = {};
+    tTerrainInit.fUnitConversion = PL_UNIT_CONVERSION;
+    tTerrainInit.uHeightMapResolution = 2048 * 2;
+    tTerrainInit.uTileSize = 128 * 2;
+    tTerrainInit.uPrefetchRadius = 2;
+    tTerrainInit.fMetersPerTexel = 5.0f;
+    tTerrainInit.tMinPosition = {-40960.0f * tTerrainInit.fMetersPerTexel * 0.5f, -40960.0f * tTerrainInit.fMetersPerTexel * 0.5f};
+    tTerrainInit.tMaxPosition = { 40960.0f * tTerrainInit.fMetersPerTexel * 0.5f, 40960.0f * tTerrainInit.fMetersPerTexel * 0.5f};
+    tTerrainInit.tFlags = PL_TERRAIN_FLAGS_TILE_STREAMING;
+    tTerrainInit.fMaxElevation = 2713.087f;
+    tTerrainInit.fMinElevation = -4380.518f;
+    tTerrainInit.uOutputWidth = 1000;
+    tTerrainInit.uOutputHeight = 1000;
+    
+    app_data->terrain = ext_terrain->create_terrain(temp_cmd_buffer, tTerrainInit);
+
+    for(uint32_t i = 0; i < 10; i++)
+    {
+        for(uint32_t j = 0; j < 10; j++)
+        {
+            plTerrainTilingInfo tTilingInfo = {};
+            tTilingInfo.fMaxHeight = 2713.087f;
+            tTilingInfo.fMinHeight = -4380.518f;
+            sprintf(tTilingInfo.pcFile, "/assets/moon_%u_%u.png", i, j);
+            tTilingInfo.tOrigin = {
+                tTerrainInit.tMinPosition.x + (float)i * 4096.0f * tTerrainInit.fMetersPerTexel,
+                tTerrainInit.tMinPosition.y + (float)j * 4096.0f * tTerrainInit.fMetersPerTexel
+            };
+            ext_terrain->tile_height_map(app_data->terrain, tTilingInfo);
+        }
+    }
+    ext_starter->submit_temporary_command_buffer(temp_cmd_buffer);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~font atlas texture~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -290,13 +365,13 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     // uploading to the GPU but it requires a command buffer (in an non recording state).
     // Later examples will go into command buffers without using the starter ext
 
-    plCommandBuffer *cmd_buffer = ext_starter->get_raw_command_buffer(); // not recording
+    plCommandBuffer *raw_cmd_buffer = ext_starter->get_raw_command_buffer(); // not recording
 
     // actually record, submit, & wait
-    ext_draw_backend->build_font_atlas(cmd_buffer, ext_draw->get_current_font_atlas());
+    ext_draw_backend->build_font_atlas(raw_cmd_buffer, ext_draw->get_current_font_atlas());
 
     // return back to the pool
-    ext_starter->return_raw_command_buffer(cmd_buffer);
+    ext_starter->return_raw_command_buffer(raw_cmd_buffer);
 
     // return app memory
     return app_data;
@@ -393,7 +468,14 @@ pl_app_update(pl_app_data *app_data) {
         dc_app_refresh_var_from_extern(var);
     }
 
+    // draw node
     _draw_node(app_data, dc_app_data.window, nullptr);
+
+    // start terrain rendering
+    plCommandBuffer* cmd_buffer = ext_starter->get_command_buffer();
+    ext_terrain->render(app_data->terrain, cmd_buffer);
+    ext_starter->submit_command_buffer(cmd_buffer);
+    ext_draw->add_image(app_data->layer, ext_terrain->get_terrain_texture(app_data->terrain).uIndex, {0.0f, 0.0f}, {1000.0f, 1000.0f});
 
     // submit draw layer
     ext_draw->submit_2d_layer(app_data->layer);
@@ -401,11 +483,12 @@ pl_app_update(pl_app_data *app_data) {
     // start main pass & return the encoder being used
     plRenderEncoder *encoder = ext_starter->begin_main_pass();
 
-    // submit our drawlist
+    // submit our 2d drawlist
     plIO *ptIO = ext_ioi->get_io();
     ext_draw_backend->submit_2d_drawlist(app_data->draw_list, encoder, ptIO->tMainViewportSize.x, ptIO->tMainViewportSize.y, ext_gfx->get_swapchain_info(ext_starter->get_swapchain()).tSampleCount);
+    
 
-    // allows the starter extension to handle some things then ends the main pass
+    
     ext_starter->end_main_pass();
 
     // must be the last function called when using the starter extension

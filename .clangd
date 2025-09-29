@@ -2,6 +2,8 @@ CompileFlags:
     Add:
         # relative paths
         - -I./src
+        - -I./apps
+        - -I./extensions
         
         # absolute paths
         - -I/usr/include/libxml2
