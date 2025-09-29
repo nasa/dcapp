@@ -1648,7 +1648,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 dc_node.window.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_x_dimension));
                 free(c_x_dimension);
             } else {
-                dc_node.window.dimensions.x = dc_app_register_value(dc_value_create_value_integer(0.0f));
+                throw std::runtime_error("Missing Attribute 'Width' for Window");
             }
 
             // y dimension
@@ -1657,7 +1657,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 dc_node.window.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_INTEGER, dc_app_dereference_constants(c_y_dimension));
                 free(c_y_dimension);
             } else {
-                dc_node.window.dimensions.y = dc_app_register_value(dc_value_create_value_integer(0.0f));
+                throw std::runtime_error("Missing Attribute 'Height' for Window");
             }
 
             // virtual x dimension
@@ -1666,7 +1666,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 dc_node.window.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_virtual_dimension));
                 free(c_x_virtual_dimension);
             } else {
-                dc_node.window.virtual_dimensions.x = dc_app_register_value(dc_value_create_value_double(0.0f));
+                dc_node.window.virtual_dimensions.x = dc_app_register_value(dc_value_create_value_double(dc_app_get_value(dc_node.window.dimensions.x)->value_double));
             }
 
             // virtual y dimension
@@ -1675,7 +1675,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 dc_node.window.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_virtual_dimension));
                 free(c_y_virtual_dimension);
             } else {
-                dc_node.window.virtual_dimensions.y = dc_app_register_value(dc_value_create_value_double(0.0f));
+                dc_node.window.virtual_dimensions.y = dc_app_register_value(dc_value_create_value_double(dc_app_get_value(dc_node.window.dimensions.y)->value_double));
             }
 
             // register node
