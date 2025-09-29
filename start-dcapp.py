@@ -15,12 +15,12 @@ if __name__ == "__main__":
     dcappHome = os.path.dirname(os.path.abspath(__file__))
 
     # get config file
-    dcappArgs = os.path.abspath(dcappHome + "/samples/test/test.xml")
+    dcappArgs = [os.path.abspath(dcappHome + "/samples/test/test.xml")]
     if len(sys.argv) > 1:
         dcappArgs = sys.argv[1:]
 
     # run test sample
     os.chdir(f"{dcappHome}/pilotlight/out")
-    cmd = f"./pilot_light -a dcapp {dcappArgs}"
+    cmd = f"./pilot_light -a dcapp {', '.join(map(str, dcappArgs))}"
     print(cmd)
     os.system(cmd)

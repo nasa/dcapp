@@ -15,14 +15,14 @@ void DisplayInit();
 void DisplayDraw();
 void DisplayClose();
 
-float       COLOR_B;
-float       COLOR_G;
-float       COLOR_R;
-float       G;
-float       POS_X;
-float       POS_Y;
-float       ROTATE;
-float       VEL_Y;
+double      COLOR_B;
+double      COLOR_G;
+double      COLOR_R;
+double      G;
+double      POS_X;
+double      POS_Y;
+double      ROTATE;
+double      VEL_Y;
 
 #ifdef __cplusplus
 }

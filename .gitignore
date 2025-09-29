@@ -2,6 +2,7 @@ bin/
 build/
 cache/
 logs/
+samples/local/
 
 .DS_Store
 scripts/build-dcapp*

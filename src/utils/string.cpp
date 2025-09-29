@@ -8,7 +8,7 @@
 #include <vector>
 #include <cstdint>
 
-static bool _string_is_float(const std::string &text) {
+static bool _string_is_double(const std::string &text) {
     char *end = nullptr;
     errno     = 0;
     std::strtof(text.c_str(), &end);
@@ -23,8 +23,8 @@ static bool _string_is_int(const std::string &text) {
 }
 
 // convert a string to a double
-double dc_utils_string_to_float(const std::string &text) {
-    if (_string_is_float(text)) {
+double dc_utils_string_to_double(const std::string &text) {
+    if (_string_is_double(text)) {
         return std::stod(text);
     } else {
         return (double)dc_utils_string_to_boolean(text);
@@ -35,7 +35,7 @@ double dc_utils_string_to_float(const std::string &text) {
 int dc_utils_string_to_integer(const std::string &text) {
     if (_string_is_int(text)) {
         return std::stoi(text);
-    } else if (_string_is_float(text)) {
+    } else if (_string_is_double(text)) {
         return (int)std::stod(text);
     } else {
         return (bool)dc_utils_string_to_boolean(text);
@@ -177,7 +177,7 @@ bool dc_utils_is_format_specifier_int(const std::string &value) {
     return _is_format_specifier(value, chars);
 }
 
-bool dc_utils_is_format_specifier_float(const std::string &value) {
+bool dc_utils_is_format_specifier_double(const std::string &value) {
     static const std::string chars = "fFeEgG";
     return _is_format_specifier(value, chars);
 }

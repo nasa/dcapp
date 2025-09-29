@@ -263,7 +263,7 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
         .uCharCount      = 0x00FF - 0x0020};
 
     // adding previous font but as a signed distance field (SDF)
-    plFontConfig font_config = {};
+    plFontConfig font_config   = {};
     font_config.bSdf           = true; // only works with ttf
     font_config.fSize          = 100.0f;
     font_config.uHOverSampling = 1;
@@ -503,73 +503,73 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // xPosition
             char *c_x_position = dc_utils_get_attribute_string(xml_node, "X");
             if (c_x_position) {
-                dc_node.container.position.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position));
+                dc_node.container.position.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_position));
                 free(c_x_position);
             } else {
-                dc_node.container.position.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.container.position.x = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // y position
             char *c_y_position = dc_utils_get_attribute_string(xml_node, "Y");
             if (c_y_position) {
-                dc_node.container.position.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position));
+                dc_node.container.position.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_position));
                 free(c_y_position);
             } else {
-                dc_node.container.position.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.container.position.y = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // x origin
             char *c_x_origin = dc_utils_get_attribute_string(xml_node, "OriginX");
             if (c_x_origin) {
-                dc_node.container.origin.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_origin));
+                dc_node.container.origin.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_origin));
                 free(c_x_origin);
             } else {
-                dc_node.container.origin.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.container.origin.x = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // y origin
             char *c_y_origin = dc_utils_get_attribute_string(xml_node, "OriginY");
             if (c_y_origin) {
-                dc_node.container.origin.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_origin));
+                dc_node.container.origin.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_origin));
                 free(c_y_origin);
             } else {
-                dc_node.container.origin.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.container.origin.y = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // x dimension
             char *c_x_dimension = dc_utils_get_attribute_string(xml_node, "Width");
             if (c_x_dimension) {
-                dc_node.container.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_dimension));
+                dc_node.container.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_dimension));
                 free(c_x_dimension);
             } else {
-                dc_node.container.dimensions.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.container.dimensions.x = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // y dimension
             char *c_y_dimension = dc_utils_get_attribute_string(xml_node, "Height");
             if (c_y_dimension) {
-                dc_node.container.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_dimension));
+                dc_node.container.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_dimension));
                 free(c_y_dimension);
             } else {
-                dc_node.container.dimensions.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.container.dimensions.y = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // virtual x dimension
             char *c_x_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualWidth");
             if (c_x_virtual_dimension) {
-                dc_node.container.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
+                dc_node.container.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_virtual_dimension));
                 free(c_x_virtual_dimension);
             } else {
-                dc_node.container.virtual_dimensions.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.container.virtual_dimensions.x = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // virtual y dimension
             char *c_y_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualHeight");
             if (c_y_virtual_dimension) {
-                dc_node.container.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
+                dc_node.container.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_virtual_dimension));
                 free(c_y_virtual_dimension);
             } else {
-                dc_node.container.virtual_dimensions.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.container.virtual_dimensions.y = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // x align
@@ -593,10 +593,10 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // rotation
             char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotation");
             if (c_rotation) {
-                dc_node.container.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_rotation));
+                dc_node.container.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_rotation));
                 free(c_rotation);
             } else {
-                dc_node.container.rotation = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.container.rotation = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // register node
@@ -747,7 +747,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // virtual x dimension
             char *c_x_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualWidth");
             if (c_x_virtual_dimension) {
-                dc_node.panel.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
+                dc_node.panel.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_virtual_dimension));
                 free(c_x_virtual_dimension);
             } else {
                 dc_node.panel.virtual_dimensions.x = dc_node.panel.parent_dimensions.x;
@@ -756,7 +756,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // virtual y dimension
             char *c_y_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualHeight");
             if (c_y_virtual_dimension) {
-                dc_node.panel.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
+                dc_node.panel.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_virtual_dimension));
                 free(c_y_virtual_dimension);
             } else {
                 dc_node.panel.virtual_dimensions.y = dc_node.panel.parent_dimensions.y;
@@ -791,24 +791,24 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
 
                 if (substrings.size() > 0) {
-                    dc_node.polygon.fill_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[0]);
+                    dc_node.polygon.fill_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[0]);
                     if (substrings.size() > 1) {
-                        dc_node.polygon.fill_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[1]);
+                        dc_node.polygon.fill_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[1]);
                         if (substrings.size() > 2) {
-                            dc_node.polygon.fill_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[2]);
+                            dc_node.polygon.fill_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[2]);
                             if (substrings.size() > 3) {
-                                dc_node.polygon.fill_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[3]);
+                                dc_node.polygon.fill_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[3]);
                             } else {
-                                dc_node.polygon.fill_color.a = dc_app_register_value(dc_value_create_value_float(1.0f));
+                                dc_node.polygon.fill_color.a = dc_app_register_value(dc_value_create_value_double(1.0f));
                             }
                         } else {
-                            dc_node.polygon.fill_color.b = dc_app_register_value(dc_value_create_value_float(0.0f));
+                            dc_node.polygon.fill_color.b = dc_app_register_value(dc_value_create_value_double(0.0f));
                         }
                     } else {
-                        dc_node.polygon.fill_color.g = dc_app_register_value(dc_value_create_value_float(0.0f));
+                        dc_node.polygon.fill_color.g = dc_app_register_value(dc_value_create_value_double(0.0f));
                     }
                 } else {
-                    dc_node.polygon.fill_color.r = dc_app_register_value(dc_value_create_value_float(0.0f));
+                    dc_node.polygon.fill_color.r = dc_app_register_value(dc_value_create_value_double(0.0f));
                 }
                 dc_node.polygon.fill_enabled = true;
                 free(c_fill_color);
@@ -822,24 +822,24 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
 
                 if (substrings.size() > 0) {
-                    dc_node.polygon.line_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[0]);
+                    dc_node.polygon.line_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[0]);
                     if (substrings.size() > 1) {
-                        dc_node.polygon.line_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[1]);
+                        dc_node.polygon.line_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[1]);
                         if (substrings.size() > 2) {
-                            dc_node.polygon.line_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[2]);
+                            dc_node.polygon.line_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[2]);
                             if (substrings.size() > 3) {
-                                dc_node.polygon.line_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[3]);
+                                dc_node.polygon.line_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[3]);
                             } else {
-                                dc_node.polygon.line_color.a = dc_app_register_value(dc_value_create_value_float(1.0f));
+                                dc_node.polygon.line_color.a = dc_app_register_value(dc_value_create_value_double(1.0f));
                             }
                         } else {
-                            dc_node.polygon.line_color.b = dc_app_register_value(dc_value_create_value_float(0.0f));
+                            dc_node.polygon.line_color.b = dc_app_register_value(dc_value_create_value_double(0.0f));
                         }
                     } else {
-                        dc_node.polygon.line_color.g = dc_app_register_value(dc_value_create_value_float(0.0f));
+                        dc_node.polygon.line_color.g = dc_app_register_value(dc_value_create_value_double(0.0f));
                     }
                 } else {
-                    dc_node.polygon.line_color.r = dc_app_register_value(dc_value_create_value_float(0.0f));
+                    dc_node.polygon.line_color.r = dc_app_register_value(dc_value_create_value_double(0.0f));
                 }
                 dc_node.polygon.line_enabled = true;
                 free(c_line_color);
@@ -848,10 +848,10 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // line width
             char *c_line_width = dc_utils_get_attribute_string(xml_node, "LineWidth");
             if (c_line_width) {
-                dc_node.polygon.line_width = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_line_width));
+                dc_node.polygon.line_width = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_line_width));
                 free(c_line_width);
             } else {
-                dc_node.polygon.line_width = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.polygon.line_width = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // initialize points to 0
@@ -884,7 +884,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             if (!c_operand) {
                 throw std::runtime_error("Missing content (operand) in <Set> element");
             }
-            dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_operand));
+            dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_operand));
             free(c_operand);
 
             // operator
@@ -908,37 +908,37 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // xPosition
             char *c_x_position = dc_utils_get_attribute_string(xml_node, "X");
             if (c_x_position) {
-                dc_node.terrain.position.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position));
+                dc_node.terrain.position.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_position));
                 free(c_x_position);
             } else {
-                dc_node.terrain.position.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.terrain.position.x = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // y position
             char *c_y_position = dc_utils_get_attribute_string(xml_node, "Y");
             if (c_y_position) {
-                dc_node.terrain.position.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position));
+                dc_node.terrain.position.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_position));
                 free(c_y_position);
             } else {
-                dc_node.terrain.position.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.terrain.position.y = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // x origin
             char *c_x_origin = dc_utils_get_attribute_string(xml_node, "OriginX");
             if (c_x_origin) {
-                dc_node.terrain.origin.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_origin));
+                dc_node.terrain.origin.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_origin));
                 free(c_x_origin);
             } else {
-                dc_node.terrain.origin.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.terrain.origin.x = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // y origin
             char *c_y_origin = dc_utils_get_attribute_string(xml_node, "OriginY");
             if (c_y_origin) {
-                dc_node.terrain.origin.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_origin));
+                dc_node.terrain.origin.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_origin));
                 free(c_y_origin);
             } else {
-                dc_node.terrain.origin.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.terrain.origin.y = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // x align
@@ -962,21 +962,21 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // rotation
             char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotation");
             if (c_rotation) {
-                dc_node.terrain.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_rotation));
+                dc_node.terrain.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_rotation));
                 free(c_rotation);
             } else {
-                dc_node.terrain.rotation = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.terrain.rotation = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // pivots
             char *c_pivot_point_x = dc_utils_get_attribute_string(xml_node, "PivotPointX");
             char *c_pivot_point_y = dc_utils_get_attribute_string(xml_node, "PivotPointY");
             if (c_pivot_point_x && c_pivot_point_y) {
-                dc_node.terrain.pivot_point.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pivot_point_x));
+                dc_node.terrain.pivot_point.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_pivot_point_x));
                 dc_node.terrain.pivot_align.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED));
                 free(c_pivot_point_x);
 
-                dc_node.terrain.pivot_point.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pivot_point_y));
+                dc_node.terrain.pivot_point.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_pivot_point_y));
                 dc_node.terrain.pivot_align.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED));
                 free(c_pivot_point_y);
             } else if (!c_pivot_point_x && !c_pivot_point_y) {
@@ -1002,25 +1002,25 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // x dimension
             char *c_x_dimension = dc_utils_get_attribute_string(xml_node, "Width");
             if (c_x_dimension) {
-                dc_node.terrain.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_dimension));
+                dc_node.terrain.dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_dimension));
                 free(c_x_dimension);
             } else {
-                dc_node.terrain.dimensions.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.terrain.dimensions.x = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // y dimension
             char *c_y_dimension = dc_utils_get_attribute_string(xml_node, "Height");
             if (c_y_dimension) {
-                dc_node.terrain.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_dimension));
+                dc_node.terrain.dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_dimension));
                 free(c_y_dimension);
             } else {
-                dc_node.terrain.dimensions.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.terrain.dimensions.y = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // lat
             char *c_lat = dc_utils_get_attribute_string(xml_node, "Latitude");
             if (c_lat) {
-                dc_node.terrain.lle.lat = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_lat));
+                dc_node.terrain.lle.lat = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_lat));
                 free(c_lat);
             } else {
                 throw std::runtime_error("Must supply attribute Latitude with Terrain primitive");
@@ -1029,7 +1029,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // lon
             char *c_lon = dc_utils_get_attribute_string(xml_node, "Longitude");
             if (c_lon) {
-                dc_node.terrain.lle.lon = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_lon));
+                dc_node.terrain.lle.lon = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_lon));
                 free(c_lon);
             } else {
                 throw std::runtime_error("Must supply attribute Longitude with Terrain primitive");
@@ -1038,7 +1038,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // ele
             char *c_ele = dc_utils_get_attribute_string(xml_node, "Elevation");
             if (c_ele) {
-                dc_node.terrain.lle.ele = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_ele));
+                dc_node.terrain.lle.ele = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_ele));
                 free(c_ele);
             } else {
                 throw std::runtime_error("Must supply attribute Elevation with Terrain primitive");
@@ -1047,7 +1047,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // roll
             char *c_roll = dc_utils_get_attribute_string(xml_node, "Roll");
             if (c_roll) {
-                dc_node.terrain.rpy.roll = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_roll));
+                dc_node.terrain.rpy.roll = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_roll));
                 free(c_roll);
             } else {
                 throw std::runtime_error("Must supply attribute Roll with Terrain primitive");
@@ -1056,7 +1056,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // pitch
             char *c_pitch = dc_utils_get_attribute_string(xml_node, "Pitch");
             if (c_pitch) {
-                dc_node.terrain.rpy.pitch = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pitch));
+                dc_node.terrain.rpy.pitch = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_pitch));
                 free(c_pitch);
             } else {
                 throw std::runtime_error("Must supply attribute Pitch with Terrain primitive");
@@ -1065,7 +1065,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // yaw
             char *c_yaw = dc_utils_get_attribute_string(xml_node, "Yaw");
             if (c_yaw) {
-                dc_node.terrain.rpy.yaw = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_yaw));
+                dc_node.terrain.rpy.yaw = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_yaw));
                 free(c_yaw);
             } else {
                 throw std::runtime_error("Must supply attribute Yaw with Terrain primitive");
@@ -1179,8 +1179,8 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                                 sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_INTEGER);
                                 sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
                                 sbpushn(dc_node.text.sb_formats, format_spec.c_str(), format_spec.length() + 1);
-                            } else if (dc_utils_is_format_specifier_float(format_spec)) {
-                                sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_FLOAT);
+                            } else if (dc_utils_is_format_specifier_double(format_spec)) {
+                                sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_DOUBLE);
                                 sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
                                 sbpushn(dc_node.text.sb_formats, format_spec.c_str(), format_spec.length() + 1);
                             } else if (dc_utils_is_format_specifier_string(format_spec)) {
@@ -1230,37 +1230,37 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // xPosition
             char *c_x_position = dc_utils_get_attribute_string(xml_node, "X");
             if (c_x_position) {
-                dc_node.text.position.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position));
+                dc_node.text.position.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_position));
                 free(c_x_position);
             } else {
-                dc_node.text.position.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.text.position.x = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // y position
             char *c_y_position = dc_utils_get_attribute_string(xml_node, "Y");
             if (c_y_position) {
-                dc_node.text.position.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position));
+                dc_node.text.position.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_position));
                 free(c_y_position);
             } else {
-                dc_node.text.position.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.text.position.y = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // x origin
             char *c_x_origin = dc_utils_get_attribute_string(xml_node, "OriginX");
             if (c_x_origin) {
-                dc_node.text.origin.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_origin));
+                dc_node.text.origin.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_origin));
                 free(c_x_origin);
             } else {
-                dc_node.text.origin.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.text.origin.x = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // y origin
             char *c_y_origin = dc_utils_get_attribute_string(xml_node, "OriginY");
             if (c_y_origin) {
-                dc_node.text.origin.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_origin));
+                dc_node.text.origin.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_origin));
                 free(c_y_origin);
             } else {
-                dc_node.text.origin.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.text.origin.y = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // x align
@@ -1284,21 +1284,21 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // rotation
             char *c_rotation = dc_utils_get_attribute_string(xml_node, "Rotation");
             if (c_rotation) {
-                dc_node.text.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_rotation));
+                dc_node.text.rotation = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_rotation));
                 free(c_rotation);
             } else {
-                dc_node.text.rotation = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.text.rotation = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // pivots
             char *c_pivot_point_x = dc_utils_get_attribute_string(xml_node, "PivotPointX");
             char *c_pivot_point_y = dc_utils_get_attribute_string(xml_node, "PivotPointY");
             if (c_pivot_point_x && c_pivot_point_y) {
-                dc_node.text.pivot_point.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pivot_point_x));
+                dc_node.text.pivot_point.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_pivot_point_x));
                 dc_node.text.pivot_align.x = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED));
                 free(c_pivot_point_x);
 
-                dc_node.text.pivot_point.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_pivot_point_y));
+                dc_node.text.pivot_point.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_pivot_point_y));
                 dc_node.text.pivot_align.y = dc_app_register_value(dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED));
                 free(c_pivot_point_y);
             } else if (!c_pivot_point_x && !c_pivot_point_y) {
@@ -1324,7 +1324,7 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // size
             char *c_size = dc_utils_get_attribute_string(xml_node, "Size");
             if (c_size) {
-                dc_node.text.size = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_size));
+                dc_node.text.size = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_size));
                 free(c_size);
             } else {
                 throw std::runtime_error("Missing field 'Size' on <Text> element");
@@ -1338,24 +1338,24 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
 
                 if (substrings.size() > 0) {
-                    dc_node.text.fill_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[0]);
+                    dc_node.text.fill_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[0]);
                     if (substrings.size() > 1) {
-                        dc_node.text.fill_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[1]);
+                        dc_node.text.fill_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[1]);
                         if (substrings.size() > 2) {
-                            dc_node.text.fill_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[2]);
+                            dc_node.text.fill_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[2]);
                             if (substrings.size() > 3) {
-                                dc_node.text.fill_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[3]);
+                                dc_node.text.fill_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[3]);
                             } else {
-                                dc_node.text.fill_color.a = dc_app_register_value(dc_value_create_value_float(1.0f));
+                                dc_node.text.fill_color.a = dc_app_register_value(dc_value_create_value_double(1.0f));
                             }
                         } else {
-                            dc_node.text.fill_color.b = dc_app_register_value(dc_value_create_value_float(0.0f));
+                            dc_node.text.fill_color.b = dc_app_register_value(dc_value_create_value_double(0.0f));
                         }
                     } else {
-                        dc_node.text.fill_color.g = dc_app_register_value(dc_value_create_value_float(0.0f));
+                        dc_node.text.fill_color.g = dc_app_register_value(dc_value_create_value_double(0.0f));
                     }
                 } else {
-                    dc_node.text.fill_color.r = dc_app_register_value(dc_value_create_value_float(0.0f));
+                    dc_node.text.fill_color.r = dc_app_register_value(dc_value_create_value_double(0.0f));
                 }
                 dc_node.text.fill_enabled = true;
                 free(c_fill_color);
@@ -1369,24 +1369,24 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                 std::vector<std::string> substrings   = dc_utils_split_string_by_delimiters(s_fill_color, dc_utils_string_whitespace);
 
                 if (substrings.size() > 0) {
-                    dc_node.text.line_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[0]);
+                    dc_node.text.line_color.r = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[0]);
                     if (substrings.size() > 1) {
-                        dc_node.text.line_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[1]);
+                        dc_node.text.line_color.g = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[1]);
                         if (substrings.size() > 2) {
-                            dc_node.text.line_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[2]);
+                            dc_node.text.line_color.b = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[2]);
                             if (substrings.size() > 3) {
-                                dc_node.text.line_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, substrings[3]);
+                                dc_node.text.line_color.a = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, substrings[3]);
                             } else {
-                                dc_node.text.line_color.a = dc_app_register_value(dc_value_create_value_float(1.0f));
+                                dc_node.text.line_color.a = dc_app_register_value(dc_value_create_value_double(1.0f));
                             }
                         } else {
-                            dc_node.text.line_color.b = dc_app_register_value(dc_value_create_value_float(0.0f));
+                            dc_node.text.line_color.b = dc_app_register_value(dc_value_create_value_double(0.0f));
                         }
                     } else {
-                        dc_node.text.line_color.g = dc_app_register_value(dc_value_create_value_float(0.0f));
+                        dc_node.text.line_color.g = dc_app_register_value(dc_value_create_value_double(0.0f));
                     }
                 } else {
-                    dc_node.text.line_color.r = dc_app_register_value(dc_value_create_value_float(0.0f));
+                    dc_node.text.line_color.r = dc_app_register_value(dc_value_create_value_double(0.0f));
                 }
                 dc_node.text.line_enabled = true;
                 free(c_line_color);
@@ -1428,10 +1428,10 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             free(c_port);
 
             // data rate
-            char *c_data_rate = dc_utils_get_attribute_string(xml_node, "Type");
+            char *c_data_rate = dc_utils_get_attribute_string(xml_node, "DataRate");
             float data_rate   = .1;
             if (c_data_rate) {
-                data_rate = dc_utils_string_to_float(dc_app_dereference_constants(c_data_rate));
+                data_rate = (float)dc_utils_string_to_double(dc_app_dereference_constants(c_data_rate));
             }
             free(c_data_rate);
 
@@ -1599,8 +1599,8 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
                     parent_node->polygon.num_points++;
                     parent_node->polygon.points                                      = (DcAppValueIndex2 *)realloc(parent_node->polygon.points, parent_node->polygon.num_points * sizeof(DcAppValueIndex2));
                     parent_node->polygon.points[parent_node->polygon.num_points - 1] = (DcAppValueIndex2){
-                        dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_position)),
-                        dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_position))};
+                        dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_position)),
+                        dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_position))};
                     break;
                 }
                 default:
@@ -1663,19 +1663,19 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             // virtual x dimension
             char *c_x_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualWidth");
             if (c_x_virtual_dimension) {
-                dc_node.window.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_x_virtual_dimension));
+                dc_node.window.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_x_virtual_dimension));
                 free(c_x_virtual_dimension);
             } else {
-                dc_node.window.virtual_dimensions.x = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.window.virtual_dimensions.x = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // virtual y dimension
             char *c_y_virtual_dimension = dc_utils_get_attribute_string(xml_node, "VirtualHeight");
             if (c_y_virtual_dimension) {
-                dc_node.window.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_FLOAT, dc_app_dereference_constants(c_y_virtual_dimension));
+                dc_node.window.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(DC_VALUE_TYPE_DOUBLE, dc_app_dereference_constants(c_y_virtual_dimension));
                 free(c_y_virtual_dimension);
             } else {
-                dc_node.window.virtual_dimensions.y = dc_app_register_value(dc_value_create_value_float(0.0f));
+                dc_node.window.virtual_dimensions.y = dc_app_register_value(dc_value_create_value_double(0.0f));
             }
 
             // register node
@@ -1715,46 +1715,46 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
     DcAppNode *node = dc_app_index_to_node(node_index);
     switch (node->type) {
         case DC_APP_NODE_TYPE_CONTAINER: {
-            float x_position = 0;
+            double x_position = 0;
             switch (dc_app_get_value(node->container.alignment.x)->value_integer) {
                 case DC_APP_ALIGN_TYPE_LEFT:
-                    x_position = dc_app_get_value(node->container.position.x)->value_float;
+                    x_position = dc_app_get_value(node->container.position.x)->value_double;
                     break;
                 case DC_APP_ALIGN_TYPE_CENTER:
-                    x_position = dc_app_get_value(node->container.position.x)->value_float - dc_app_get_value(node->container.dimensions.x)->value_float / 2;
+                    x_position = dc_app_get_value(node->container.position.x)->value_double - dc_app_get_value(node->container.dimensions.x)->value_double / 2;
                     break;
                 case DC_APP_ALIGN_TYPE_RIGHT:
-                    x_position = dc_app_get_value(node->container.position.x)->value_float - dc_app_get_value(node->container.dimensions.x)->value_float;
+                    x_position = dc_app_get_value(node->container.position.x)->value_double - dc_app_get_value(node->container.dimensions.x)->value_double;
                     break;
             }
 
-            float y_position = 0;
+            double y_position = 0;
             switch (dc_app_get_value(node->container.alignment.y)->value_integer) {
                 case DC_APP_ALIGN_TYPE_BOTTOM:
-                    y_position = dc_app_get_value(node->container.position.y)->value_float;
+                    y_position = dc_app_get_value(node->container.position.y)->value_double;
                     break;
                 case DC_APP_ALIGN_TYPE_MIDDLE:
-                    y_position = dc_app_get_value(node->container.position.y)->value_float - dc_app_get_value(node->container.dimensions.y)->value_float / 2;
+                    y_position = dc_app_get_value(node->container.position.y)->value_double - dc_app_get_value(node->container.dimensions.y)->value_double / 2;
                     break;
                 case DC_APP_ALIGN_TYPE_TOP:
-                    y_position = dc_app_get_value(node->container.position.y)->value_float - dc_app_get_value(node->container.dimensions.y)->value_float;
+                    y_position = dc_app_get_value(node->container.position.y)->value_double - dc_app_get_value(node->container.dimensions.y)->value_double;
                     break;
             }
 
             plMat4 trans_origin_matrix = pl_mat4_translate_xyz(
-                dc_app_get_value(node->container.origin.x)->value_float,
-                dc_app_get_value(node->container.origin.y)->value_float,
+                dc_app_get_value(node->container.origin.x)->value_double,
+                dc_app_get_value(node->container.origin.y)->value_double,
                 0.0f);
             plMat4 rotate_matrix = pl_mat4_rotate_vec3(
-                pl_radiansf(dc_app_get_value(node->container.rotation)->value_float),
+                pl_radiansf(dc_app_get_value(node->container.rotation)->value_double),
                 (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_position_matrix = pl_mat4_translate_xyz(
                 x_position,
                 y_position,
                 0.0f);
             plMat4 scale_matrix = pl_mat4_scale_xyz(
-                dc_app_get_value(node->container.dimensions.x)->value_float / dc_app_get_value(node->container.virtual_dimensions.x)->value_float,
-                dc_app_get_value(node->container.dimensions.y)->value_float / dc_app_get_value(node->container.virtual_dimensions.y)->value_float,
+                dc_app_get_value(node->container.dimensions.x)->value_double / dc_app_get_value(node->container.virtual_dimensions.x)->value_double,
+                dc_app_get_value(node->container.dimensions.y)->value_double / dc_app_get_value(node->container.virtual_dimensions.y)->value_double,
                 1.0f);
 
             plMat4 transform = (plMat4){0};
@@ -1813,8 +1813,8 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
 
         case DC_APP_NODE_TYPE_PANEL: {
             plMat4 scale_matrix = pl_mat4_scale_xyz(
-                dc_app_get_value(node->panel.parent_dimensions.x)->value_float / dc_app_get_value(node->panel.virtual_dimensions.x)->value_float,
-                dc_app_get_value(node->panel.parent_dimensions.y)->value_float / dc_app_get_value(node->panel.virtual_dimensions.y)->value_float,
+                dc_app_get_value(node->panel.parent_dimensions.x)->value_double / dc_app_get_value(node->panel.virtual_dimensions.x)->value_double,
+                dc_app_get_value(node->panel.parent_dimensions.y)->value_double / dc_app_get_value(node->panel.virtual_dimensions.y)->value_double,
                 1.0f);
             plMat4 transform = (plMat4){0};
             transform        = pl_mul_mat4t(parent_transform, &scale_matrix);
@@ -1828,8 +1828,8 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
             points.resize(node->polygon.num_points);
             for (int ii = 0; ii < node->polygon.num_points; ii++) {
                 plVec4 point4 = (plVec4){
-                    dc_app_get_value(node->polygon.points[ii].x)->value_float,
-                    dc_app_get_value(node->polygon.points[ii].y)->value_float,
+                    (float)dc_app_get_value(node->polygon.points[ii].x)->value_double,
+                    (float)dc_app_get_value(node->polygon.points[ii].y)->value_double,
                     0, 1};
                 point4     = pl_mul_mat4_vec4(parent_transform, point4);
                 points[ii] = (plVec2){point4.x, point4.y};
@@ -1838,21 +1838,21 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
             // draw fill
             if (node->polygon.fill_enabled) {
                 uint32_t fill_color = PL_COLOR_32_RGBA(
-                    dc_app_get_value(node->polygon.fill_color.r)->value_float,
-                    dc_app_get_value(node->polygon.fill_color.g)->value_float,
-                    dc_app_get_value(node->polygon.fill_color.b)->value_float,
-                    dc_app_get_value(node->polygon.fill_color.a)->value_float);
+                    dc_app_get_value(node->polygon.fill_color.r)->value_double,
+                    dc_app_get_value(node->polygon.fill_color.g)->value_double,
+                    dc_app_get_value(node->polygon.fill_color.b)->value_double,
+                    dc_app_get_value(node->polygon.fill_color.a)->value_double);
                 ext_draw->add_convex_polygon_filled(app_data->layer, points.data(), points.size(), (plDrawSolidOptions){.uColor = fill_color});
             }
 
             // draw outline
             if (node->polygon.line_enabled) {
-                float    lineThickness = dc_app_get_value(node->polygon.line_width)->value_float;
+                float    lineThickness = (float)dc_app_get_value(node->polygon.line_width)->value_double;
                 uint32_t line_color    = PL_COLOR_32_RGBA(
-                    dc_app_get_value(node->polygon.line_color.r)->value_float,
-                    dc_app_get_value(node->polygon.line_color.g)->value_float,
-                    dc_app_get_value(node->polygon.line_color.b)->value_float,
-                    dc_app_get_value(node->polygon.line_color.a)->value_float);
+                    dc_app_get_value(node->polygon.line_color.r)->value_double,
+                    dc_app_get_value(node->polygon.line_color.g)->value_double,
+                    dc_app_get_value(node->polygon.line_color.b)->value_double,
+                    dc_app_get_value(node->polygon.line_color.a)->value_double);
                 ext_draw->add_polygon(app_data->layer, points.data(), points.size(), (plDrawLineOptions){.uColor = line_color, .fThickness = lineThickness});
             }
 
@@ -1876,8 +1876,8 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
                         case DC_VALUE_TYPE_INTEGER:
                             var_value->value_integer = op_value->value_integer;
                             break;
-                        case DC_VALUE_TYPE_FLOAT:
-                            var_value->value_float = op_value->value_float;
+                        case DC_VALUE_TYPE_DOUBLE:
+                            var_value->value_double = op_value->value_double;
                             break;
                         case DC_VALUE_TYPE_BOOLEAN:
                             var_value->value_boolean = op_value->value_boolean;
@@ -1895,8 +1895,8 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
                         case DC_VALUE_TYPE_INTEGER:
                             var_value->value_integer += op_value->value_integer;
                             break;
-                        case DC_VALUE_TYPE_FLOAT:
-                            var_value->value_float += op_value->value_float;
+                        case DC_VALUE_TYPE_DOUBLE:
+                            var_value->value_double += op_value->value_double;
                             break;
                         case DC_VALUE_TYPE_BOOLEAN:
                             var_value->value_boolean += op_value->value_boolean;
@@ -1912,8 +1912,8 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
                         case DC_VALUE_TYPE_INTEGER:
                             var_value->value_integer -= op_value->value_integer;
                             break;
-                        case DC_VALUE_TYPE_FLOAT:
-                            var_value->value_float -= op_value->value_float;
+                        case DC_VALUE_TYPE_DOUBLE:
+                            var_value->value_double -= op_value->value_double;
                             break;
                         case DC_VALUE_TYPE_BOOLEAN:
                             var_value->value_boolean -= op_value->value_boolean;
@@ -1929,8 +1929,8 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
                         case DC_VALUE_TYPE_INTEGER:
                             var_value->value_integer *= op_value->value_integer;
                             break;
-                        case DC_VALUE_TYPE_FLOAT:
-                            var_value->value_float *= op_value->value_float;
+                        case DC_VALUE_TYPE_DOUBLE:
+                            var_value->value_double *= op_value->value_double;
                             break;
                         case DC_VALUE_TYPE_BOOLEAN:
                             var_value->value_boolean *= op_value->value_boolean;
@@ -1946,8 +1946,8 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
                         case DC_VALUE_TYPE_INTEGER:
                             var_value->value_integer /= op_value->value_integer;
                             break;
-                        case DC_VALUE_TYPE_FLOAT:
-                            var_value->value_float /= op_value->value_float;
+                        case DC_VALUE_TYPE_DOUBLE:
+                            var_value->value_double /= op_value->value_double;
                             break;
                         case DC_VALUE_TYPE_BOOLEAN:
                             var_value->value_boolean /= op_value->value_boolean;
@@ -1970,12 +1970,12 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
         case DC_APP_NODE_TYPE_TERRAIN: {
 
             // all transform parameters
-            float          position[2]    = {dc_app_get_value(node->terrain.position.x)->value_float, dc_app_get_value(node->terrain.position.y)->value_float};
-            float          origin[2]      = {dc_app_get_value(node->terrain.origin.x)->value_float, dc_app_get_value(node->terrain.origin.y)->value_float};
+            float          position[2]    = {(float)dc_app_get_value(node->terrain.position.x)->value_double, (float)dc_app_get_value(node->terrain.position.y)->value_double};
+            float          origin[2]      = {(float)dc_app_get_value(node->terrain.origin.x)->value_double, (float)dc_app_get_value(node->terrain.origin.y)->value_double};
             DcAppAlignType alignment[2]   = {(DcAppAlignType)dc_app_get_value(node->terrain.alignment.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->terrain.alignment.y)->value_integer};
             DcAppAlignType pivot_align[2] = {(DcAppAlignType)dc_app_get_value(node->terrain.pivot_align.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->terrain.pivot_align.y)->value_integer};
-            float          rotation       = dc_app_get_value(node->terrain.rotation)->value_float;
-            float          size[2]        = {dc_app_get_value(node->terrain.dimensions.x)->value_float, dc_app_get_value(node->terrain.dimensions.y)->value_float};
+            float          rotation       = dc_app_get_value(node->terrain.rotation)->value_double;
+            float          size[2]        = {(float)dc_app_get_value(node->terrain.dimensions.x)->value_double, (float)dc_app_get_value(node->terrain.dimensions.y)->value_double};
 
             // local flip over x axis
             plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(
@@ -2071,9 +2071,9 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
                         break;
                 }
             } else {
-                float pivot_point_x = dc_app_get_value(node->terrain.pivot_point.x)->value_float;
+                float pivot_point_x = dc_app_get_value(node->terrain.pivot_point.x)->value_double;
                 trans_pivot_vec[0]  = -1 * pivot_point_x;
-                float pivot_point_y = dc_app_get_value(node->terrain.pivot_point.y)->value_float;
+                float pivot_point_y = dc_app_get_value(node->terrain.pivot_point.y)->value_double;
                 trans_pivot_vec[1]  = -1 * pivot_point_y;
             }
             plMat4 trans_to_pivot_xform = pl_mat4_translate_xyz(
@@ -2154,8 +2154,8 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
                     case DC_VALUE_TYPE_INTEGER:
                         snprintf(val_str, sizeof(val_str), format, val->value_integer);
                         break;
-                    case DC_VALUE_TYPE_FLOAT:
-                        snprintf(val_str, sizeof(val_str), format, val->value_float);
+                    case DC_VALUE_TYPE_DOUBLE:
+                        snprintf(val_str, sizeof(val_str), format, val->value_double);
                         break;
                     case DC_VALUE_TYPE_BOOLEAN:
                         snprintf(val_str, sizeof(val_str), format, val->value_boolean);
@@ -2175,19 +2175,19 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
             plDrawTextOptions text_options = {0};
             text_options.ptFont            = app_data->cousine_sdf_font;
             text_options.uColor            = PL_COLOR_32_RGBA(
-                dc_app_get_value(node->text.fill_color.r)->value_float,
-                dc_app_get_value(node->text.fill_color.g)->value_float,
-                dc_app_get_value(node->text.fill_color.b)->value_float,
-                dc_app_get_value(node->text.fill_color.a)->value_float);
-            text_options.fSize = dc_app_get_value(node->text.size)->value_float;
+                dc_app_get_value(node->text.fill_color.r)->value_double,
+                dc_app_get_value(node->text.fill_color.g)->value_double,
+                dc_app_get_value(node->text.fill_color.b)->value_double,
+                dc_app_get_value(node->text.fill_color.a)->value_double);
+            text_options.fSize = (float)dc_app_get_value(node->text.size)->value_double;
             plVec2 pl_size     = ext_draw->calculate_text_size(sb_text, text_options);
 
             // all transform parameters
-            float          position[2]    = {dc_app_get_value(node->text.position.x)->value_float, dc_app_get_value(node->text.position.y)->value_float};
-            float          origin[2]      = {dc_app_get_value(node->text.origin.x)->value_float, dc_app_get_value(node->text.origin.y)->value_float};
+            float          position[2]    = {(float)(dc_app_get_value(node->text.position.x)->value_double), (float)(dc_app_get_value(node->text.position.y)->value_double)};
+            float          origin[2]      = {(float)dc_app_get_value(node->text.origin.x)->value_double, (float)(dc_app_get_value(node->text.origin.y)->value_double)};
             DcAppAlignType alignment[2]   = {(DcAppAlignType)dc_app_get_value(node->text.alignment.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->text.alignment.y)->value_integer};
             DcAppAlignType pivot_align[2] = {(DcAppAlignType)dc_app_get_value(node->text.pivot_align.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->text.pivot_align.y)->value_integer};
-            float          rotation       = dc_app_get_value(node->text.rotation)->value_float;
+            float          rotation       = dc_app_get_value(node->text.rotation)->value_double;
             float          size[2]        = {pl_size.x, text_options.fSize};
 
             // local flip over x axis
@@ -2284,9 +2284,9 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
                         break;
                 }
             } else {
-                float pivot_point_x = dc_app_get_value(node->text.pivot_point.x)->value_float;
+                float pivot_point_x = (float)dc_app_get_value(node->text.pivot_point.x)->value_double;
                 trans_pivot_vec[0]  = -1 * pivot_point_x;
-                float pivot_point_y = dc_app_get_value(node->text.pivot_point.y)->value_float;
+                float pivot_point_y = (float)dc_app_get_value(node->text.pivot_point.y)->value_double;
                 trans_pivot_vec[1]  = -1 * pivot_point_y;
             }
             plMat4 trans_to_pivot_xform = pl_mat4_translate_xyz(
@@ -2363,13 +2363,13 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
             // translate from negative to positive range
             plMat4 trans_matrix = pl_mat4_translate_xyz(
                 0.0f,
-                dc_app_get_value(node->window.dimensions.y)->value_float,
+                dc_app_get_value(node->window.dimensions.y)->value_double,
                 0.0f);
 
             // scale from virtual to real dimensions, flip y axis
             plMat4 scale_matrix = pl_mat4_scale_xyz(
-                dc_app_get_value(node->window.dimensions.x)->value_float / dc_app_get_value(node->window.virtual_dimensions.x)->value_float,
-                dc_app_get_value(node->window.dimensions.y)->value_float / dc_app_get_value(node->window.virtual_dimensions.y)->value_float * -1.0f,
+                dc_app_get_value(node->window.dimensions.x)->value_double / dc_app_get_value(node->window.virtual_dimensions.x)->value_double,
+                dc_app_get_value(node->window.dimensions.y)->value_double / dc_app_get_value(node->window.virtual_dimensions.y)->value_double * -1.0f,
                 1.0f);
 
             plMat4 transform;

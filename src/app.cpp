@@ -293,8 +293,8 @@ void dc_app_refresh_var_from_extern(DcAppVar *var) {
     void    *extern_data = var->extern_data;
 
     switch (value->type) {
-        case DC_VALUE_TYPE_FLOAT: {
-            value->value_float = *((float *)(extern_data));
+        case DC_VALUE_TYPE_DOUBLE: {
+            value->value_double = *((double *)(extern_data));
             break;
         }
         case DC_VALUE_TYPE_INTEGER: {
@@ -322,8 +322,8 @@ void dc_app_refresh_var_from_value(DcAppVar *var) {
     void    *extern_data = var->extern_data;
 
     switch (value->type) {
-        case DC_VALUE_TYPE_FLOAT: {
-            *((float *)(extern_data)) = value->value_float;
+        case DC_VALUE_TYPE_DOUBLE: {
+            *((double *)(extern_data)) = value->value_double;
             break;
         }
         case DC_VALUE_TYPE_INTEGER: {

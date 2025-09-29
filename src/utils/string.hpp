@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-double dc_utils_string_to_float(const std::string &text);
+double dc_utils_string_to_double(const std::string &text);
 int    dc_utils_string_to_integer(const std::string &text);
 bool   dc_utils_string_to_boolean(std::string text);
 
@@ -20,5 +20,5 @@ const std::string dc_utils_string_whitespace = " \t\n\v\f\r";
 
 bool dc_utils_is_format_specifier_bool(const std::string &value);
 bool dc_utils_is_format_specifier_int(const std::string &value);
-bool dc_utils_is_format_specifier_float(const std::string &value);
+bool dc_utils_is_format_specifier_double(const std::string &value);
 bool dc_utils_is_format_specifier_string(const std::string &value);

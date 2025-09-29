@@ -6,7 +6,7 @@ enum DcValueType {
     DC_VALUE_TYPE_UNDEFINED,
     DC_VALUE_TYPE_STRING,
     DC_VALUE_TYPE_INTEGER,
-    DC_VALUE_TYPE_FLOAT,
+    DC_VALUE_TYPE_DOUBLE,
     DC_VALUE_TYPE_BOOLEAN,
 };
 
@@ -15,7 +15,7 @@ typedef struct _DcValue {
 
     std::string value_string;
     int         value_integer;
-    float       value_float;
+    double       value_double;
     bool        value_boolean;
 
     bool is_dynamic;
@@ -62,7 +62,7 @@ DcValueType dc_value_type_from_string(const std::string &type);
 DcValue     dc_value_create_typed_value_from_string(DcValueType type, const std::string &value);
 DcValue     dc_value_create_value_string(const std::string &value);
 DcValue     dc_value_create_value_integer(int value);
-DcValue     dc_value_create_value_float(float value);
+DcValue     dc_value_create_value_double(double value);
 DcValue     dc_value_create_value_boolean(bool value);
 void        dc_value_refresh(DcValue *value);
 void        dc_value_set_from_string(DcValue *value, const std::string &string_value);

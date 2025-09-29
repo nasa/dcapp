@@ -14,16 +14,21 @@ if __name__ == "__main__":
 
     # paths
     genHeader = dcappHome + "/pilotlight/out/dcapp-genheader"
-    testDir = dcappHome + "/samples/test"
+
+    testDirs = [dcappHome + "/samples/test", dcappHome + "/samples/local"]
 
     # platform specific execution
     if plat.system() == "Windows":
         pass # TODO implement
     elif plat.system() == "Darwin":
-        os.chdir(testDir)
-        os.system(f"{genHeader} test.xml")
-        os.system("clang -std=c++17 -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so")
+        for testDir in testDirs:
+            if os.path.exists(testDir):
+                os.chdir(testDir)
+                os.system(f"{genHeader} test.xml")
+                os.system("clang -std=c++17 -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so")
     elif plat.system() == "Linux":
-        os.chdir(testDir)
-        os.system(f"{genHeader} test.xml")
-        os.system("gcc -std=c++17 -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so")
+        for testDir in testDirs:
+            if os.path.exists(testDir):
+                os.chdir(testDir)
+                os.system(f"{genHeader} test.xml")
+                os.system("gcc -std=c++17 -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so")

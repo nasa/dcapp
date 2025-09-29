@@ -108,8 +108,8 @@ int main(int argc, char **argv) {
             case DC_VALUE_TYPE_STRING:
                 out_file << "std::string ";
                 break;
-            case DC_VALUE_TYPE_FLOAT:
-                out_file << "float       ";
+            case DC_VALUE_TYPE_DOUBLE:
+                out_file << "double      ";
                 break;
             case DC_VALUE_TYPE_INTEGER:
                 out_file << "int         ";
