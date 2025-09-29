@@ -63,6 +63,17 @@ bin_dir_rel = os.path.relpath(bin_dir_abs, output_dir_abs)
 
 with pl.project("dcapp"):
 
+    # project wide settings
+    pl.set_output_directory(bin_dir_rel)
+    pl.add_link_directories(bin_dir_rel)
+    pl.add_include_directories(
+        os.path.relpath(dcapp_home_abs + "/src", output_dir_abs),
+        os.path.relpath(dcapp_home_abs + "/extensions", output_dir_abs),
+        pl_dir_rel + "/src",
+        pl_dir_rel + "/libs",
+        pl_dir_rel + "/extensions",
+        pl_dir_rel + "/dependencies/stb")
+
     #-----------------------------------------------------------------------------
     # [SECTION] profiles
     #-----------------------------------------------------------------------------
@@ -74,37 +85,80 @@ with pl.project("dcapp"):
     
     pl.add_profile(compiler_filter=["msvc"],
                     linker_flags=["-incremental:no"],
-                    compiler_flags=["-Zc:preprocessor", "-nologo", "-std:c11", "-W4", "-WX", "-wd4201",
-                                "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-permissive-"])
+                    compiler_flags=["-Zc:preprocessor", "-nologo", "-W4", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-permissive-"])
     pl.add_profile(compiler_filter=["msvc"],
                     configuration_filter=["debug"],
                     compiler_flags=["-Od", "-MDd", "-Zi"])
+    pl.add_profile(compiler_filter=["msvc"],
+                    configuration_filter=["release"],
+                    compiler_flags=["-O2", "-MD"])
+
 
     # linux or gcc only
     pl.add_profile(platform_filter=["Linux"],
-                    link_directories=["/usr/lib/x86_64-linux-gnu"],
-                    linker_flags=["-lstdc++"],
-                    compiler_flags=[])
+                    link_directories=["/usr/lib/x86_64-linux-gnu"])
     pl.add_profile(compiler_filter=["gcc"],
-                    linker_flags=["-lm"],
-                    compiler_flags=["-std=c++17", "-fPIC"])
+                    linker_flags=["-ldl", "-lm"],
+                    compiler_flags=["-fPIC"])
     pl.add_profile(compiler_filter=["gcc"],
                     configuration_filter=["debug"],
                     compiler_flags=["--debug", "-g", "-O0"])
 
     # macos or clang only
     pl.add_profile(platform_filter=["Darwin"],
-                    link_frameworks=["Metal", "MetalKit", "Cocoa", "IOKit", "CoreVideo", "QuartzCore"],
-                    linker_flags=["-lstdc++"])
+                    link_frameworks=["Metal", "MetalKit", "Cocoa", "IOKit", "CoreVideo", "QuartzCore"])
     pl.add_profile(compiler_filter=["clang"],
                     linker_flags=["-Wl,-rpath,/usr/local/lib"],
-                    compiler_flags=["-std=c++17", "-fmodules", "-fPIC"])
+                    compiler_flags=["-fmodules", "-ObjC", "-fPIC"])
     pl.add_profile(compiler_filter=["clang"],
                     configuration_filter=["debug"],
                     compiler_flags=["--debug", "-g"])
 
-    # configs
-    pl.add_profile(configuration_filter=["debug"], definitions=["_DEBUG", "PL_CONFIG_DEBUG"])
+    #-----------------------------------------------------------------------------
+    # [SECTION] extensions
+    #-----------------------------------------------------------------------------
+
+    with pl.target("pl_terrain_ext", pl.TargetType.DYNAMIC_LIBRARY, True):
+
+        pl.add_source_files(dcapp_home_abs + "/extensions/pl_terrain_ext.c")
+        pl.add_include_directories(dcapp_home_abs + "/shaders")
+        pl.set_output_binary("pl_terrain_ext")
+
+        # default config
+        with pl.configuration("debug"):
+
+            # win32
+            with pl.platform("Windows"):
+                with pl.compiler("msvc"):
+                    pl.add_compiler_flags("-std:c11")
+
+            # linux
+            with pl.platform("Linux"):
+                with pl.compiler("gcc"):
+                    pl.add_compiler_flags("-std=gnu11")
+
+            # macos
+            with pl.platform("Darwin"):
+                with pl.compiler("clang"):
+                    pass
+
+        # release
+        with pl.configuration("release"):
+
+            # win32
+            with pl.platform("Windows"):
+                with pl.compiler("msvc"):
+                    pl.add_compiler_flags("-std:c11")
+
+            # linux
+            with pl.platform("Linux"):
+                with pl.compiler("gcc"):
+                    pl.add_compiler_flags("-std=gnu11")
+
+            # macos
+            with pl.platform("Darwin"):
+                with pl.compiler("clang"):
+                    pass
 
     #-----------------------------------------------------------------------------
     # [SECTION] app
@@ -114,48 +168,65 @@ with pl.project("dcapp"):
     with pl.target("dcapp", pl.TargetType.DYNAMIC_LIBRARY, True):
 
         pl.set_output_binary("dcapp")
-        pl.set_output_directory(bin_dir_rel)
-        pl.add_link_directories(bin_dir_rel)
-        pl.add_include_directories(
-            os.path.relpath(dcapp_home_abs + "/src", output_dir_abs),
-            pl_dir_rel + "/src",
-            pl_dir_rel + "/libs",
-            pl_dir_rel + "/extensions",
-            pl_dir_rel + "/dependencies/stb")
 
         # used to decide hot reloading
         pl.set_hot_reload_target(pl_dir_rel + "/out/pilot_light")
 
         # list source files relative to the output directory
-        src_files_abs = list_files_recursive(dcapp_home_abs + "/src", ".cpp")
+        src_files_abs = list_files_recursive(dcapp_home_abs + "/src", ".c", ".cpp")
         sources_files_rel = [os.path.relpath(src_file, output_dir_abs) for src_file in src_files_abs]
         pl.add_source_files(
             *sources_files_rel,
             os.path.relpath(dcapp_home_abs + "/apps/dcapp.cpp", output_dir_abs)
         )
 
-        # default config
-        with pl.configuration("debug"):
+        # release config
+        with pl.configuration("release"):
+
+            pl.add_static_link_libraries("dearimguid")
 
             # win32
             with pl.platform("Windows"):
                 with pl.compiler("msvc"):
-                    pass
+                    pl.add_linker_flags("-incremental:no", "-nologo", "-noimplib", "-noexp")
+                    pl.add_compiler_flags("-nologo", "-std:c++17", "-W3", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-Od", "-MDd", "-Zi", "-permissive")
             
             # linux
             with pl.platform("Linux"):
                 with pl.compiler("gcc"):
-                    pl.add_include_directories("/usr/include/gdal", "/usr/include/libxml2")
-                    pl.add_linker_flags("-lstdc++fs", "-lxml2", "-lpthread", "-lgdal", "-ldl", "-lz")
-                    pass
+                    pl.add_include_directories("/usr/include/libxml2")
+                    pl.add_compiler_flags("-fPIC", "-std=c++17")
+                    pl.add_linker_flags("-lstdc++", "-lstdc++fs", "-lxml2", "-lpthread", "-ldl", "-lm")
 
             # mac os
             with pl.platform("Darwin"):
                 with pl.compiler("clang"):
-                    pl.add_include_directories("/usr/include/gdal", "/opt/homebrew/opt/libxml2/include/libxml2")
-                    pl.add_linker_flags("-lxml2", "-lpthread", "-lgdal", "-ldl", "-lz")
-                    pl.add_link_directories("/opt/homebrew/opt/gdal/lib")
-                    pass
+                    pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
+                    pl.add_linker_flags("-lstdc++", "-lm", "-lxml2", "-lpthread", "-ldl")
+
+        # debug config
+        with pl.configuration("debug"):
+
+            pl.add_static_link_libraries("dearimguid")
+
+            # win32
+            with pl.platform("Windows"):
+                with pl.compiler("msvc"):
+                    pl.add_linker_flags("-incremental:no", "-nologo", "-noimplib", "-noexp")
+                    pl.add_compiler_flags("-nologo", "-std:c++17", "-W3", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-Od", "-MDd", "-Zi", "-permissive")
+            
+            # linux
+            with pl.platform("Linux"):
+                with pl.compiler("gcc"):
+                    pl.add_include_directories("/usr/include/libxml2")
+                    pl.add_compiler_flags("-fPIC", "-std=c++17", "--debug", "-g")
+                    pl.add_linker_flags("-lstdc++", "-lstdc++fs", "-lxml2", "-lpthread", "-ldl", "-lm")
+
+            # mac os
+            with pl.platform("Darwin"):
+                with pl.compiler("clang"):
+                    pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
+                    pl.add_linker_flags("-lstdc++", "-lm", "-lxml2", "-lpthread", "-ldl")
 
     # dcapp-genheader
     with pl.target("dcapp-genheader", pl.TargetType.EXECUTABLE):
@@ -168,71 +239,58 @@ with pl.project("dcapp"):
         )
 
         # list source files relative to the output directory
-        src_files_abs = list_files_recursive(dcapp_home_abs + "/src", ".cpp")
+        src_files_abs = list_files_recursive(dcapp_home_abs + "/src", ".c", ".cpp")
         sources_files_rel = [os.path.relpath(src_file, output_dir_abs) for src_file in src_files_abs]
         pl.add_source_files(
             *sources_files_rel,
             os.path.relpath(dcapp_home_abs + "/apps/dcapp-genheader.cpp", output_dir_abs)
         )
 
-        # default config
-        with pl.configuration("debug"):
+        # release config
+        with pl.configuration("release"):
 
             # win32
             with pl.platform("Windows"):
                 with pl.compiler("msvc"):
-                    pass
+                    pl.add_linker_flags("-incremental:no", "-nologo", "-noimplib", "-noexp")
+                    pl.add_compiler_flags("-nologo", "-std:c++17", "-W3", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-Od", "-MDd", "-Zi", "-permissive")
             
             # linux
             with pl.platform("Linux"):
                 with pl.compiler("gcc"):
                     pl.add_include_directories("/usr/include/libxml2")
-                    pl.add_linker_flags("-lstdc++fs", "-lxml2")
-                    pass
+                    pl.add_compiler_flags("-fPIC", "-std=c++17")
+                    pl.add_linker_flags("-lstdc++", "-lstdc++fs", "-lxml2")
 
             # mac os
             with pl.platform("Darwin"):
                 with pl.compiler("clang"):
                     pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
-                    pl.add_linker_flags("-lxml2")
-                    pass
+                    pl.add_linker_flags("-lstdc++", "-lxml2")
 
-    # sample "test"
-    # with pl.target("sample-test", pl.TargetType.DYNAMIC_LIBRARY):
+        # debug config
+        with pl.configuration("debug"):
 
-    #     sample_test_location_abs = dcapp_home_abs + "/samples/test"
-    #     sample_test_location_rel = os.path.relpath(dcapp_home_abs, sample_test_location_abs)
+            pl.add_static_link_libraries("dearimguid")
 
-    #     pl.set_output_directory(sample_test_location_rel + "/logic")
-    #     pl.add_link_directories(bin_dir_rel)
-    #     pl.add_include_directories("src")
-
-    #     # list source files relative to the output directory
-    #     os.chdir(dcapp_home_abs)
-    #     sourceFiles  = list_files_recursive("src", ".cpp")
-    #     pl.add_source_files(*sourceFiles, "apps/dcapp-genheader.cpp")
-
-    #     pl.set_output_binary("dcapp-genheader")
-
-    #     # default config
-    #     with pl.configuration("debug"):
-
-    #         # win32
-    #         with pl.platform("Windows"):
-    #             with pl.compiler("msvc"):
-    #                 pass
+            # win32
+            with pl.platform("Windows"):
+                with pl.compiler("msvc"):
+                    pl.add_linker_flags("-incremental:no", "-nologo", "-noimplib", "-noexp")
+                    pl.add_compiler_flags("-nologo", "-std:c++17", "-W3", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-Od", "-MDd", "-Zi", "-permissive")
             
-    #         # linux
-    #         with pl.platform("Linux"):
-    #             with pl.compiler("gcc"):
-    #                 pl.add_include_directories("/usr/include/libxml2")
-    #                 pl.add_linker_flags("-lstdc++fs", "-lxml2")
-    #                 pass
+            # linux
+            with pl.platform("Linux"):
+                with pl.compiler("gcc"):
+                    pl.add_include_directories("/usr/include/libxml2")
+                    pl.add_compiler_flags("-fPIC", "-std=c++17", "--debug", "-g")
+                    pl.add_linker_flags("-lstdc++", "-lstdc++fs", "-lxml2")
 
-    #         # mac os
-    #         with pl.platform("Darwin"):
-    #             with pl.compiler("clang"):
-    #                 pass
+            # mac os
+            with pl.platform("Darwin"):
+                with pl.compiler("clang"):
+                    pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
+                    pl.add_linker_flags("-lstdc++", "-lxml2")
 
 #-----------------------------------------------------------------------------
 # [SECTION] generate scripts
