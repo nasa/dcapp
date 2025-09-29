@@ -263,15 +263,16 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
         .uCharCount      = 0x00FF - 0x0020};
 
     // adding previous font but as a signed distance field (SDF)
-    plFontConfig font_config = {
-        .bSdf           = true, // only works with ttf
-        .fSize          = 18.0f,
-        .uHOverSampling = 1,
-        .uVOverSampling = 1,
-        .ucOnEdgeValue  = 180,
-        .iSdfPadding    = 1,
-        .uRangeCount    = 1,
-        .ptRanges       = &font_range};
+    plFontConfig font_config = {};
+    font_config.bSdf           = true; // only works with ttf
+    font_config.fSize          = 18.0f;
+    font_config.uHOverSampling = 1;
+    font_config.uVOverSampling = 1;
+    font_config.ucOnEdgeValue  = 180;
+    font_config.iSdfPadding    = 1;
+    font_config.uRangeCount    = 1;
+    font_config.ptRanges       = &font_range;
+
     app_data->cousine_sdf_font = ext_draw->add_font_from_file_ttf(ext_draw->get_current_font_atlas(), font_config, "../data/pilotlight-assets-master/fonts/Cousine-Regular.ttf");
 
     // register our app drawlist
