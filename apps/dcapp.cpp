@@ -265,7 +265,7 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     // adding previous font but as a signed distance field (SDF)
     plFontConfig font_config = {};
     font_config.bSdf           = true; // only works with ttf
-    font_config.fSize          = 18.0f;
+    font_config.fSize          = 100.0f;
     font_config.uHOverSampling = 1;
     font_config.uVOverSampling = 1;
     font_config.ucOnEdgeValue  = 180;
@@ -2188,7 +2188,7 @@ void _draw_node(pl_app_data *app_data, DcAppNodeIndex node_index, plMat4 *parent
             DcAppAlignType alignment[2]   = {(DcAppAlignType)dc_app_get_value(node->text.alignment.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->text.alignment.y)->value_integer};
             DcAppAlignType pivot_align[2] = {(DcAppAlignType)dc_app_get_value(node->text.pivot_align.x)->value_integer, (DcAppAlignType)dc_app_get_value(node->text.pivot_align.y)->value_integer};
             float          rotation       = dc_app_get_value(node->text.rotation)->value_float;
-            float          size[2]        = {pl_size.x, pl_size.y};
+            float          size[2]        = {pl_size.x, text_options.fSize};
 
             // local flip over x axis
             plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(

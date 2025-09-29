@@ -85,15 +85,29 @@
 
       </Container>
 
+      
       <Polygon FillColor="1 0 0 1" LineColor="1 1 1" LineWidth="2">
-        <Vertex X="500" Y="250" />
-        <Vertex X="510" Y="250" />
-        <Vertex X="510" Y="260" />
-        <Vertex X="500" Y="260" />
+        <Vertex X="495" Y="745" />
+        <Vertex X="505" Y="745" />
+        <Vertex X="505" Y="755" />
+        <Vertex X="495" Y="755" />
       </Polygon>
-
-      <Text Size="75" X="500" Y="750" HorizontalAlign="#_align_center_" VerticalAlign="#_align_middle_" PivotAlignX="#_align_right_" PivotAlignY="#_align_top_" Rotation="@ROTATE" FillColor="@ROTATE .5 .5 1">TOP RIGHT</Text>
+      <Text Size="75" X="500" Y="750" HorizontalAlign="#_align_right_" VerticalAlign="#_align_top_" PivotAlignX="#_align_right_" PivotAlignY="#_align_top_" Rotation="@ROTATE" FillColor="@ROTATE .5 .5 1">TOP RIGHT</Text>
+    
+      <Polygon FillColor="1 0 0 1" LineColor="1 1 1" LineWidth="2">
+        <Vertex X="495" Y="495" />
+        <Vertex X="505" Y="495" />
+        <Vertex X="505" Y="505" />
+        <Vertex X="495" Y="505" />
+      </Polygon>
       <Text Size="75" X="500" Y="500" HorizontalAlign="#_align_center_" VerticalAlign="#_align_middle_" PivotAlignX="#_align_center_" PivotAlignY="#_align_middle_" Rotation="@ROTATE" FillColor="@ROTATE .5 .5 1">CENTER MIDDLE</Text>
+
+      <Polygon FillColor="1 0 0 1" LineColor="1 1 1" LineWidth="2">
+        <Vertex X="495" Y="245" />
+        <Vertex X="505" Y="245" />
+        <Vertex X="505" Y="255" />
+        <Vertex X="495" Y="255" />
+      </Polygon>
       <Text Size="75" X="500" Y="250" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" PivotAlignX="#_align_left_" PivotAlignY="#_align_bottom_" Rotation="@ROTATE" FillColor="@ROTATE .5 .5 1">BOTTOM LEFT</Text>
 
       <Terrain X="100" Y="100" Width="200" Height="200" Latitude="0" Longitude="0" Elevation="0" Roll="0" Pitch="0" Yaw="0">
