@@ -15,6 +15,9 @@ void DisplayInit();
 void DisplayDraw();
 void DisplayClose();
 
+float       COLOR_B;
+float       COLOR_G;
+float       COLOR_R;
 float       G;
 float       POS_X;
 float       POS_Y;

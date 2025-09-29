@@ -6,6 +6,10 @@
 
     <Variable Type="Double" InitialValue="30">ROTATE</Variable>
 
+    <Variable Type="Float" InitialValue="0">COLOR_R</Variable>
+    <Variable Type="Float" InitialValue=".25">COLOR_G</Variable>
+    <Variable Type="Float" InitialValue=".5">COLOR_B</Variable>
+
     <!-- Trick (connected to cannonball sim)-->
     <Variable Type="Float">POS_X</Variable>
     <Variable Type="Float">POS_Y</Variable>
@@ -27,9 +31,9 @@
 
       <!-- modify some variables -->
       <Set Variable="G" Operator="#_set_add_">.001</Set>
-      <Set Variable="ROTATE" Operator="#_set_add_">2</Set>
+      <Set Variable="ROTATE" Operator="#_set_add_">.5</Set>
       <If Value1="@ROTATE" Operation="#_conditional_gt_" Value2="360">
-        <Set Variable="ROTATE" Operator="#_set_equal_">1</Set>
+        <Set Variable="ROTATE" Operator="#_set_equal_">0</Set>
       </If>
 
       <!-- draw -->
@@ -85,14 +89,29 @@
 
       </Container>
 
-      
+      <Set Variable="COLOR_R" Operator="#_set_add_">.01</Set>
+      <If Value1="@COLOR_R" Operation="#_conditional_gt_" Value2="1">
+        <Set Variable="COLOR_R" Operator="#_set_equal_">0</Set>
+      </If>
+
+      <Set Variable="COLOR_G" Operator="#_set_add_">.02</Set>
+      <If Value1="@COLOR_G" Operation="#_conditional_gt_" Value2="1">
+        <Set Variable="COLOR_G" Operator="#_set_equal_">0</Set>
+      </If>
+
+      <Set Variable="COLOR_B" Operator="#_set_add_">.03</Set>
+      <If Value1="@COLOR_B" Operation="#_conditional_gt_" Value2="1">
+        <Set Variable="COLOR_B" Operator="#_set_equal_">0</Set>
+      </If>
+
+
       <Polygon FillColor="1 0 0 1" LineColor="1 1 1" LineWidth="2">
         <Vertex X="495" Y="745" />
         <Vertex X="505" Y="745" />
         <Vertex X="505" Y="755" />
         <Vertex X="495" Y="755" />
       </Polygon>
-      <Text Size="75" X="500" Y="750" HorizontalAlign="#_align_right_" VerticalAlign="#_align_top_" PivotAlignX="#_align_right_" PivotAlignY="#_align_top_" Rotation="@ROTATE" FillColor="@ROTATE .5 .5 1">TOP RIGHT</Text>
+      <Text Size="75" X="500" Y="750" HorizontalAlign="#_align_right_" VerticalAlign="#_align_top_" PivotAlignX="#_align_right_" PivotAlignY="#_align_top_" Rotation="@ROTATE" FillColor="@COLOR_R @COLOR_G @COLOR_B 1">TOP RIGHT</Text>
     
       <Polygon FillColor="1 0 0 1" LineColor="1 1 1" LineWidth="2">
         <Vertex X="495" Y="495" />
@@ -100,7 +119,7 @@
         <Vertex X="505" Y="505" />
         <Vertex X="495" Y="505" />
       </Polygon>
-      <Text Size="75" X="500" Y="500" HorizontalAlign="#_align_center_" VerticalAlign="#_align_middle_" PivotAlignX="#_align_center_" PivotAlignY="#_align_middle_" Rotation="@ROTATE" FillColor="@ROTATE .5 .5 1">CENTER MIDDLE</Text>
+      <Text Size="75" X="500" Y="500" HorizontalAlign="#_align_center_" VerticalAlign="#_align_middle_" PivotAlignX="#_align_center_" PivotAlignY="#_align_middle_" Rotation="@ROTATE" FillColor="@COLOR_G @COLOR_B @COLOR_R 1">CENTER MIDDLE</Text>
 
       <Polygon FillColor="1 0 0 1" LineColor="1 1 1" LineWidth="2">
         <Vertex X="495" Y="245" />
@@ -108,7 +127,9 @@
         <Vertex X="505" Y="255" />
         <Vertex X="495" Y="255" />
       </Polygon>
-      <Text Size="75" X="500" Y="250" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" PivotAlignX="#_align_left_" PivotAlignY="#_align_bottom_" Rotation="@ROTATE" FillColor="@ROTATE .5 .5 1">BOTTOM LEFT</Text>
+      <Text Size="75" X="500" Y="250" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" PivotAlignX="#_align_left_" PivotAlignY="#_align_bottom_" Rotation="@ROTATE" FillColor="@COLOR_B @COLOR_R @COLOR_G 1">BOTTOM LEFT</Text>
+
+      <Text Size="1000" X="0" Y="0" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" FillColor="0 0 1 .25">E</Text>
 
       <Terrain X="100" Y="100" Width="200" Height="200" Latitude="0" Longitude="0" Elevation="0" Roll="0" Pitch="0" Yaw="0">
         <TerrainDEM File="asdf.txt"/>

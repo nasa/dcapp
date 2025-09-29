@@ -242,7 +242,7 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
 
     // initialize the starter API (handles alot of boilerplate)
     plStarterInit tStarterInit = {
-        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS & ~PL_STARTER_FLAGS_DRAW_EXT,
+        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS & (~PL_STARTER_FLAGS_DRAW_EXT) | PL_STARTER_FLAGS_MSAA,
         .ptWindow = app_data->window};
     ext_starter->initialize(tStarterInit);
 
@@ -403,7 +403,7 @@ pl_app_update(pl_app_data *app_data) {
 
     // submit our drawlist
     plIO *ptIO = ext_ioi->get_io();
-    ext_draw_backend->submit_2d_drawlist(app_data->draw_list, encoder, ptIO->tMainViewportSize.x, ptIO->tMainViewportSize.y, 1);
+    ext_draw_backend->submit_2d_drawlist(app_data->draw_list, encoder, ptIO->tMainViewportSize.x, ptIO->tMainViewportSize.y, ext_gfx->get_swapchain_info(ext_starter->get_swapchain()).tSampleCount);
 
     // allows the starter extension to handle some things then ends the main pass
     ext_starter->end_main_pass();
