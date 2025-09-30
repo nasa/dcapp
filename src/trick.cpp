@@ -379,12 +379,21 @@ DcTrickResult _dc_trick_receive(DcTrick *trick) {
                     sbpush(context->rx_var_offsets, 0);
                     for (int ii = 0; ii < sbcount(context->rx_var_values); ii++) {
                         if (context->rx_var_values[ii] == '\t') {
-                            if (ii + 1 < sbcount(context->rx_var_values) - 1) {
+                            if (ii + 1 < sbcount(context->rx_var_values)) {
                                 sbpush(context->rx_var_offsets, ii + 1);
                             }
                             context->rx_var_values[ii] = '\0';
+                            
+                        } else if (context->rx_var_values[ii] == ' ') {
+                            if (ii + 1 < sbcount(context->rx_var_values) && context->rx_var_values[ii + 1] == '{') {
+                                // also put a null before the units, if it exists
+                                context->rx_var_values[ii] = '\0';
+                            }
                         }
                     }
+
+                    // push last value
+
 
                     // set last character to null
                     sbpush(context->rx_var_values, '\0');
@@ -394,6 +403,10 @@ DcTrickResult _dc_trick_receive(DcTrick *trick) {
 
                     // raise fag that there are new values
                     trick->has_new_data = true;
+                    if (sbcount(context->rx_var_offsets) != sbcount(context->rx_cmd_offsets)) {
+                        printf("size mismatch\n");
+                        trick->has_new_data = false;
+                    }
                 }
             } else {
                 trick->has_new_data = false;
