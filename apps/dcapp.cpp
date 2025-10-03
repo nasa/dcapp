@@ -9,7 +9,7 @@
 #include "trick.hpp"
 #include "utils/math.hpp"
 #include <cmath>
-#include <utils/file.hpp>
+#include "utils/file.h"
 #include <utils/string.hpp>
 #include <utils/xml.hpp>
 #include <value.hpp>
@@ -797,8 +797,20 @@ DcAppNodeIndex _process_node(xmlNodePtr xml_node, DcAppNodeIndex parent_node_ind
             if (dc_app_data.logic.library) {
                 throw std::runtime_error("Duplicate <Logic> definitions");
             }
-            char *c_file_path = dc_utils_get_attribute_string(xml_node, "File");
-            if (c_file_path) {
+            char *filepath = dc_utils_get_attribute_string(xml_node, "File");
+            if (filepath) {
+
+                char abspath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+                if (dc_utils_is_relative_path(filepath)) {
+                    dc_utils_join_paths(directory.c_str(), filepath, abspath, DC_UTILS_FILEPATH_BUFFER_SIZE);
+                } else {
+                    strcpy(abspath, filepath);
+                }
+                free(filepath);
+
+                // expand constants
+                dc_app_dereference_constants();
+
                 std::string filePath = dc_utils_filepath_to_canonical(dc_app_dereference_constants(c_file_path), directory);
                 free(c_file_path);
 

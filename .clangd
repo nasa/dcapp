@@ -8,7 +8,7 @@ CompileFlags:
         # absolute paths
         - -I/usr/include/libxml2
         - -I/usr/include/gdal
-        - -std=c++17
+#         - -std=c++17
 
         # quote paths
         - -iquotepilotlight/src
