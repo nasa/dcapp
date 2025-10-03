@@ -82,5 +82,6 @@
     // "C_Cpp.default.compilerPath": "/usr/bin/gcc",
     "C_Cpp.intelliSenseEngine": "disabled",
     "C_Cpp.errorSquiggles": "disabled",
-    "debug.onTaskErrors": "showErrors"
+    "debug.onTaskErrors": "showErrors",
+    "lldb.library": "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Versions/A/LLDB"
 }

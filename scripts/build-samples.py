@@ -25,10 +25,10 @@ if __name__ == "__main__":
             if os.path.exists(testDir):
                 os.chdir(testDir)
                 os.system(f"{genHeader} test.xml")
-                os.system("clang -std=c++17 -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so")
+                os.system("clang -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so")
     elif plat.system() == "Linux":
         for testDir in testDirs:
             if os.path.exists(testDir):
                 os.chdir(testDir)
                 os.system(f"{genHeader} test.xml")
-                os.system("gcc -std=c++17 -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so")
+                os.system("gcc -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so")

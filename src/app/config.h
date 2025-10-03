@@ -1,0 +1,39 @@
+#ifndef _DC_APP_CONFIG_
+#define _DC_APP_CONFIG_
+
+#include <stdbool.h>
+
+// forward declarations
+typedef struct _DcAppLookup DcAppLookup;
+typedef struct _xmlDoc     *xmlDocPtr;
+
+// config type
+typedef struct _DcAppConfig {
+
+    // xml pointer
+    xmlDocPtr xml_doc;
+    bool      xml_doc_is_cleaned;
+
+    // filepaths
+    char *config_file_path;
+    char *config_dir_path;
+    char *cache_dir_path;
+    char *log_dir_path;
+
+} DcAppConfig;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// config functions
+DcAppConfig *dc_app_config_create(const char *config_path);
+void         dc_app_config_cleanup(DcAppConfig *config);
+void         dc_app_config_clean_xml(DcAppConfig *config, DcAppLookup *lookup);
+void         dc_app_config_save_to_file(DcAppConfig *config, const char *filepath);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

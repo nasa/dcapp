@@ -30,7 +30,7 @@
         "${workspaceFolder}/samples/test/test.xml"
       ],
       "cwd": "${workspaceFolder}/pilotlight/out",
-      "preLaunchTask": "build dcapp-debug (macos)"
+      "preLaunchTask": "build dcapp-debug (macos)",
     },
     {
       "name": "dcapp (windows)",
@@ -55,5 +55,15 @@
       "cwd": "${workspaceFolder}/bin",
       "preLaunchTask": "build tests"
     },
+    {
+      "name": "dcapp-genheader",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/pilotlight/out/dcapp-genheader",
+      "args": [
+        "samples/test/test.xml"
+      ],
+      "cwd": "${workspaceFolder}"
+    }
   ]
 }

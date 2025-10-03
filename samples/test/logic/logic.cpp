@@ -1,4 +1,4 @@
-#include "dcapp.hpp"
+#include "dcapp.h"
 
 void DisplayPreInit() {
     return;

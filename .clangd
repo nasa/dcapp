@@ -1,14 +1,15 @@
 CompileFlags:
     Add:
         # relative paths
-        - -I./src
+#         - -I./src
+        - -I./src2
         - -I./apps
         - -I./extensions
         
         # absolute paths
         - -I/usr/include/libxml2
         - -I/usr/include/gdal
-        - -std=c++17
+#         - -std=c++17
 
         # quote paths
         - -iquotepilotlight/src
@@ -17,6 +18,6 @@ CompileFlags:
         - -iquotepilotlight/dependencies/stb
         
         # other flags
-        - -std=c++17
+#        - -std=c++17
 InlayHints:
     Enabled: No
