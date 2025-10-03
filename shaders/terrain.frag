@@ -122,6 +122,51 @@ void main()
 
     outColor.xyz = diffuse * (max(0.0, dot(shadingNormal, w_i)) * sunlightColor + ambient) +
             sunlightColor * (0.1 * pow(max(0.0, dot(shadingNormal, w_h)), 6));
+
+
+
+    // vec2 tHazardMin = vec2(100, 100);
+    // vec2 tHazardMax = vec2(200, 200);
+    vec2 tHazardMin = vec2(-22785, 14486);
+    vec2 tHazardMax = tHazardMin + vec2(2000, 2000);
+
+    tHazardMin /= tObjectInfo.tInfo.fUnitConversion;
+    tHazardMax /= tObjectInfo.tInfo.fUnitConversion;
+
+    // -11397.171875 7246.453125
+
+
+    if(shadingPosition.x < tHazardMax.x && shadingPosition.x > tHazardMin.x &&
+        shadingPosition.z < tHazardMax.y && shadingPosition.z > tHazardMin.y)
+    {
+        float costheta = dot(shadingNormal, vec3(0.0, 1.0, 0.0));
+        if(costheta > 0.99) // 6 degrees
+        {
+            outColor.r *= 0.5;
+            outColor.g *= 2.0;
+            outColor.b *= 0.5;
+        }
+        else if(costheta > 0.97) // 15 degrees
+        {
+            outColor.r *= 2.0;
+            outColor.g *= 2.0;
+            outColor.b *= 0.5;
+           
+        }
+        else
+        {
+            outColor.r *= 2.0;
+            outColor.g *= 0.5;
+            outColor.b *= 0.5;
+        }
+    }
+
+
+
     outColor.a = 1.0;
+
+
+
+
     // outColor = vec4(shadingNormal, 1.0); 
 }

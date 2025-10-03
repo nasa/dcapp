@@ -6,7 +6,10 @@
 Index of this file:
 // [SECTION] header mess
 // [SECTION] apis
+// [SECTION] includes
+// [SECTION] forward declarations
 // [SECTION] public api
+// [SECTION] structs
 */
 
 //-----------------------------------------------------------------------------
@@ -62,8 +65,9 @@ typedef struct _plTerrainI
     void (*cleanup)   (void);
 
     // terrains/scenes
-    plTerrain*        (*create_terrain)     (plCommandBuffer*, plTerrainInit);
-    plBindGroupHandle (*get_terrain_texture)(plTerrain*);
+    plTerrain*        (*create_terrain_from_file)(plCommandBuffer*, const char* file);
+    plTerrain*        (*create_terrain)          (plCommandBuffer*, plTerrainInit);
+    plBindGroupHandle (*get_terrain_texture)     (plTerrain*);
     
     // camera
     void (*set_camera_pos)        (plTerrain*, float fX, float fY, float fZ);
@@ -93,40 +97,22 @@ typedef struct _plTerrainI
 
 typedef struct _plTerrainInit
 {
-    plTerrainFlags tFlags;
-     
-    uint32_t       uHeightMapResolution;
-    uint32_t       uTileSize;
-    float          fUnitConversion;
-    float          fMetersPerTexel;
-    float          fMaxElevation;
-    float          fMinElevation;
-    uint32_t       uPrefetchRadius;
-    plVec2         tMinPosition;
-    plVec2         tMaxPosition;
-    
-    uint32_t       uOutputWidth;
-    uint32_t       uOutputHeight;
+    float    fUnitConversion;
+    float    fMetersPerTexel;
+    float    fMaxElevation;
+    float    fMinElevation;
+    plVec2   tMinPosition;
+    plVec2   tMaxPosition;
+    uint32_t uOutputWidth;
+    uint32_t uOutputHeight;
 } plTerrainInit;
 
 typedef struct _plTerrainTilingInfo
 {
-    char        pcFile[64];
-    plVec2      tOrigin;    // world coordinates
-    float       fMinHeight;
-    float       fMaxHeight;
-
+    char   pcFile[64];
+    plVec2 tOrigin;    // world coordinates
+    float  fMinHeight;
+    float  fMaxHeight;
 } plTerrainTilingInfo;
-
-//-----------------------------------------------------------------------------
-// [SECTION] enums
-//-----------------------------------------------------------------------------
-
-enum _plTerrainFlags
-{
-    PL_TERRAIN_FLAGS_NONE           = 0,
-    PL_TERRAIN_FLAGS_WIREFRAME      = 1 << 0,
-    PL_TERRAIN_FLAGS_TILE_STREAMING = 1 << 1,
-};
 
 #endif // PL_TERRAIN_EXT_H

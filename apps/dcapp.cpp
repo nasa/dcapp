@@ -7,6 +7,8 @@
 #include "pl_draw_backend_ext.h"
 #include "sb.hpp"
 #include "trick.hpp"
+#include "utils/math.hpp"
+#include <cmath>
 #include <utils/file.hpp>
 #include <utils/string.hpp>
 #include <utils/xml.hpp>
@@ -34,6 +36,7 @@ DcAppData dc_app_data;
 #include "pl_math.h"
 
 // extensions
+#include "pl_camera_ext.h"
 #include "pl_draw_ext.h"
 #include "pl_profile_ext.h"
 #include "pl_starter_ext.h"
@@ -88,6 +91,7 @@ const plGraphicsI    *ext_gfx          = NULL;
 const plTerrainI     *ext_terrain      = NULL;
 const plVfsI         *ext_vfs          = NULL;
 const plShaderI      *ext_shader       = NULL;
+const plCameraI      *ext_camera       = NULL;
 
 #define PL_ALLOC(x) ext_memory->tracked_realloc(NULL, (x), __FILE__, __LINE__)
 #define PL_REALLOC(x, y) ext_memory->tracked_realloc((x), (y), __FILE__, __LINE__)
@@ -121,6 +125,7 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
         ext_vfs          = pl_get_api_latest(api_registry, plVfsI);
         ext_shader       = pl_get_api_latest(api_registry, plShaderI);
         ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
+        ext_camera       = pl_get_api_latest(api_registry, plCameraI);
 
         return app_data;
     }
@@ -150,6 +155,7 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     ext_vfs          = pl_get_api_latest(api_registry, plVfsI);
     ext_shader       = pl_get_api_latest(api_registry, plShaderI);
     ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
+    ext_camera       = pl_get_api_latest(api_registry, plCameraI);
 
     // allocate app memory
     app_data = (pl_app_data *)PL_ALLOC(sizeof(pl_app_data));
@@ -252,6 +258,7 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     ext_vfs->mount_directory("/cache", "cache", PL_VFS_MOUNT_FLAGS_NONE);
     ext_vfs->mount_directory("/shaders", "../shaders", PL_VFS_MOUNT_FLAGS_NONE);
     ext_vfs->mount_directory("/shader-temp", "../shader-temp", PL_VFS_MOUNT_FLAGS_NONE);
+    ext_vfs->mount_directory("/tiles", "../../data", PL_VFS_MOUNT_FLAGS_NONE);
 
     // set initial window params
     DcAppNode   *window_node = dc_app_index_to_node(dc_app_data.window);
@@ -291,7 +298,7 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     // adding previous font but as a signed distance field (SDF)
     plFontConfig font_config   = {};
     font_config.bSdf           = true; // only works with ttf
-    font_config.fSize          = 100.0f;
+    font_config.fSize          = 25.0f;
     font_config.uHOverSampling = 1;
     font_config.uVOverSampling = 1;
     font_config.ucOnEdgeValue  = 180;
@@ -308,13 +315,13 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     app_data->layer = ext_draw->request_2d_layer(app_data->draw_list);
 
     // initialize shader compiler
-    plShaderOptions shader_options = {};
+    plShaderOptions shader_options          = {};
     shader_options.apcIncludeDirectories[0] = "/shaders/";
     shader_options.apcIncludeDirectories[1] = "/shaders-terrain/";
-    shader_options.apcDirectories[0] = "/shaders/";
-    shader_options.apcDirectories[1] = "/shaders-terrain/";
-    shader_options.pcCacheOutputDirectory = "/shader-temp/";
-    shader_options.tFlags = PL_SHADER_FLAGS_AUTO_OUTPUT | PL_SHADER_FLAGS_INCLUDE_DEBUG | PL_SHADER_FLAGS_ALWAYS_COMPILE;
+    shader_options.apcDirectories[0]        = "/shaders/";
+    shader_options.apcDirectories[1]        = "/shaders-terrain/";
+    shader_options.pcCacheOutputDirectory   = "/shader-temp/";
+    shader_options.tFlags                   = PL_SHADER_FLAGS_AUTO_OUTPUT | PL_SHADER_FLAGS_INCLUDE_DEBUG | PL_SHADER_FLAGS_ALWAYS_COMPILE;
     ext_shader->initialize(&shader_options);
 
     // wraps up
@@ -327,36 +334,7 @@ pl_app_load(plApiRegistryI *api_registry, pl_app_data *app_data) {
     ext_terrain->load_mesh(temp_cmd_buffer, "/assets/terrain.bin", 7, 128);
 
     plTerrainInit tTerrainInit = {};
-    tTerrainInit.fUnitConversion = PL_UNIT_CONVERSION;
-    tTerrainInit.uHeightMapResolution = 2048 * 2;
-    tTerrainInit.uTileSize = 128 * 2;
-    tTerrainInit.uPrefetchRadius = 2;
-    tTerrainInit.fMetersPerTexel = 5.0f;
-    tTerrainInit.tMinPosition = {-40960.0f * tTerrainInit.fMetersPerTexel * 0.5f, -40960.0f * tTerrainInit.fMetersPerTexel * 0.5f};
-    tTerrainInit.tMaxPosition = { 40960.0f * tTerrainInit.fMetersPerTexel * 0.5f, 40960.0f * tTerrainInit.fMetersPerTexel * 0.5f};
-    tTerrainInit.tFlags = PL_TERRAIN_FLAGS_TILE_STREAMING;
-    tTerrainInit.fMaxElevation = 2713.087f;
-    tTerrainInit.fMinElevation = -4380.518f;
-    tTerrainInit.uOutputWidth = 1000;
-    tTerrainInit.uOutputHeight = 1000;
-    
-    app_data->terrain = ext_terrain->create_terrain(temp_cmd_buffer, tTerrainInit);
-
-    for(uint32_t i = 0; i < 10; i++)
-    {
-        for(uint32_t j = 0; j < 10; j++)
-        {
-            plTerrainTilingInfo tTilingInfo = {};
-            tTilingInfo.fMaxHeight = 2713.087f;
-            tTilingInfo.fMinHeight = -4380.518f;
-            sprintf(tTilingInfo.pcFile, "/assets/moon_%u_%u.png", i, j);
-            tTilingInfo.tOrigin = {
-                tTerrainInit.tMinPosition.x + (float)i * 4096.0f * tTerrainInit.fMetersPerTexel,
-                tTerrainInit.tMinPosition.y + (float)j * 4096.0f * tTerrainInit.fMetersPerTexel
-            };
-            ext_terrain->tile_height_map(app_data->terrain, tTilingInfo);
-        }
-    }
+    app_data->terrain = ext_terrain->create_terrain_from_file(temp_cmd_buffer, "/assets/moon_terrain.json");
     ext_starter->submit_temporary_command_buffer(temp_cmd_buffer);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~font atlas texture~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -468,14 +446,41 @@ pl_app_update(pl_app_data *app_data) {
         dc_app_refresh_var_from_extern(var);
     }
 
-    // draw node
-    _draw_node(app_data, dc_app_data.window, nullptr);
+    // double lat   = dc_utils_degrees_to_radians(dc_app_get_value((&dc_app_data.vars[dc_app_data.var_indices["LATITUDE_deg"]])->value_index)->value_double);
+    // double lon   = dc_utils_degrees_to_radians(dc_app_get_value((&dc_app_data.vars[dc_app_data.var_indices["LONGITUDE_deg"]])->value_index)->value_double);
+    // double alt   = dc_app_get_value((&dc_app_data.vars[dc_app_data.var_indices["ALTITUDE_m"]])->value_index)->value_double;
+    // double roll  = dc_utils_degrees_to_radians(dc_app_get_value((&dc_app_data.vars[dc_app_data.var_indices["ROLL_deg"]])->value_index)->value_double);
+    // double pitch = dc_utils_degrees_to_radians(dc_app_get_value((&dc_app_data.vars[dc_app_data.var_indices["PITCH_deg"]])->value_index)->value_double);
+    // double yaw   = dc_utils_degrees_to_radians(dc_app_get_value((&dc_app_data.vars[dc_app_data.var_indices["YAW_deg"]])->value_index)->value_double);
+
+    // // calculate x, y, z
+    // //  r = 2 * R * tan(pi/4 - lat/2)
+    // //  theta = lon
+    // //  x = r * sin(theta)
+    // //  y = altitude
+    // //  z = r * cos(theta)
+    // double r = 2 * 1737400 * tan(M_PI_4 - fabs(lat) / 2);
+    // double x = r * sin(lon);
+    // double y = alt;
+    // double z = r * cos(lon);
+
+    // // set rotation
+    // pitch = 270.0;
+    // roll = 0.0;
+    // yaw = 0.0;
+
+    // // process camera
+    // // ext_terrain->set_camera_pos(app_data->terrain, x, y, z);
+    // ext_terrain->set_camera_orientation(app_data->terrain, pitch, yaw, roll);
 
     // start terrain rendering
-    plCommandBuffer* cmd_buffer = ext_starter->get_command_buffer();
-    ext_terrain->render(app_data->terrain, cmd_buffer);
-    ext_starter->submit_command_buffer(cmd_buffer);
-    ext_draw->add_image(app_data->layer, ext_terrain->get_terrain_texture(app_data->terrain).uIndex, {0.0f, 0.0f}, {1000.0f, 1000.0f});
+    // plCommandBuffer *cmd_buffer = ext_starter->get_command_buffer();
+    // ext_terrain->render(app_data->terrain, cmd_buffer);
+    // ext_starter->submit_command_buffer(cmd_buffer);
+    // ext_draw->add_image(app_data->layer, ext_terrain->get_terrain_texture(app_data->terrain).uIndex, {0.0f, 0.0f}, {1000.0f, 1000.0f});
+
+    // draw node
+    _draw_node(app_data, dc_app_data.window, nullptr);
 
     // submit draw layer
     ext_draw->submit_2d_layer(app_data->layer);
@@ -486,9 +491,7 @@ pl_app_update(pl_app_data *app_data) {
     // submit our 2d drawlist
     plIO *ptIO = ext_ioi->get_io();
     ext_draw_backend->submit_2d_drawlist(app_data->draw_list, encoder, ptIO->tMainViewportSize.x, ptIO->tMainViewportSize.y, ext_gfx->get_swapchain_info(ext_starter->get_swapchain()).tSampleCount);
-    
 
-    
     ext_starter->end_main_pass();
 
     // must be the last function called when using the starter extension
