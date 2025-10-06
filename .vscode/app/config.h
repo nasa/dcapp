@@ -1,11 +1,8 @@
-#ifndef _DC_APP_CONFIG_
-#define _DC_APP_CONFIG_
+#ifndef _DC_APP_
+#define _DC_APP_
 
 #include <stddef.h>
 #include <stdint.h>
-
-typedef struct _xmlDoc  *xmlDocPtr;
-typedef struct _xmlNode *xmlNodePtr;
 
 // element
 typedef enum _DcAppXmlElemType {
@@ -35,25 +32,9 @@ typedef enum _DcAppXmlElemType {
     DC_APP_XML_ELEM_TYPE_WINDOW,
 } DcAppXmlElemType;
 
-typedef struct _DcAppConfig {
-    const char *config_file_path;
-    const char *config_dir_path;
-    const char *cache_dir_path;
-    const char *log_dir_path;
-
-    xmlDocPtr doc;
-} DcAppConfig;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-const char      *dc_app_elem_type_to_string(DcAppXmlElemType type);
-DcAppXmlElemType dc_app_string_to_elem_type(const char *name);
-DcAppXmlElemType dc_app_xml_node_to_elem_type(xmlNodePtr node);
-
-void dc_app_init_();
-void dc_app_clean_xml_data();
 
 #ifdef __cplusplus
 }

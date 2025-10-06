@@ -2,6 +2,7 @@
 
 #include "../utils/string.h"
 #include "../utils/stb_sb.h"
+#include "enums.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -28,10 +29,44 @@ static _LookupContext *_sb_contexts;
 static DcAppLookupIndex _lookup_get_const_index(_LookupContext *context, const char *name);
 static void             _lookup_set_const(_LookupContext *context, DcAppLookupIndex index, const char *new_value);
 static void             _lookup_add_const(_LookupContext *context, const char *name, const char *value);
+static void             _lookup_add_const_int(_LookupContext *context, const char *name, int);
 
 // create an app lookup
 DcAppLookup *dc_app_lookup_create() {
     _LookupContext context = {0};
+
+    // set initial values
+    _lookup_add_const_int(&context, "_align_left_", DC_APP_ALIGN_TYPE_LEFT);
+    _lookup_add_const_int(&context, "_align_center_", DC_APP_ALIGN_TYPE_CENTER);
+    _lookup_add_const_int(&context, "_align_right_", DC_APP_ALIGN_TYPE_RIGHT);
+    _lookup_add_const_int(&context, "_align_bottom_", DC_APP_ALIGN_TYPE_BOTTOM);
+    _lookup_add_const_int(&context, "_align_middle_", DC_APP_ALIGN_TYPE_MIDDLE);
+    _lookup_add_const_int(&context, "_align_top_", DC_APP_ALIGN_TYPE_TOP);
+
+    _lookup_add_const_int(&context, "_conditional_true_", DC_APP_CONDITIONAL_TYPE_TRUE);
+    _lookup_add_const_int(&context, "_conditional_false_", DC_APP_CONDITIONAL_TYPE_FALSE);
+    _lookup_add_const_int(&context, "_conditional_eq_", DC_APP_CONDITIONAL_TYPE_EQ);
+    _lookup_add_const_int(&context, "_conditional_ne_", DC_APP_CONDITIONAL_TYPE_NE);
+    _lookup_add_const_int(&context, "_conditional_lt_", DC_APP_CONDITIONAL_TYPE_LT);
+    _lookup_add_const_int(&context, "_conditional_gt_", DC_APP_CONDITIONAL_TYPE_GT);
+    _lookup_add_const_int(&context, "_conditional_lte_", DC_APP_CONDITIONAL_TYPE_LTE);
+    _lookup_add_const_int(&context, "_conditional_gte_", DC_APP_CONDITIONAL_TYPE_GTE);
+
+    _lookup_add_const_int(&context, "_set_equal_", DC_APP_SET_TYPE_EQUAL);
+    _lookup_add_const_int(&context, "_set_add_", DC_APP_SET_TYPE_ADD);
+    _lookup_add_const_int(&context, "_set_subtract_", DC_APP_SET_TYPE_SUBTRACT);
+    _lookup_add_const_int(&context, "_set_multiply_", DC_APP_SET_TYPE_MULTIPLY);
+    _lookup_add_const_int(&context, "_set_divide_", DC_APP_SET_TYPE_DIVIDE);
+
+    _lookup_add_const_int(&context, "_color_black_", "0 0 0");
+    _lookup_add_const_int(&context, "_color_blue_", "0 0 1");
+    _lookup_add_const_int(&context, "_color_green_", "0 1 0");
+    _lookup_add_const_int(&context, "_color_cyan_", "0 1 1");
+    _lookup_add_const_int(&context, "_color_red_", "1 0 0");
+    _lookup_add_const_int(&context, "_color_magenta_", "1 0 1");
+    _lookup_add_const_int(&context, "_color_yellow_", "1 1 0");
+    _lookup_add_const_int(&context, "_color_white_", "1 1 1");
+
     sbpush(_sb_contexts, context);
 
     DcAppLookup *lookup = (DcAppLookup *)malloc(sizeof(DcAppLookup));
@@ -73,6 +108,12 @@ void _lookup_add_const(_LookupContext *context, const char *name, const char *va
     sbpushn(buffer, value, strlen(value));
     sbpush(buffer, '\0');
     sbpush(context->sb_const_vals, buffer);
+}
+
+static void _lookup_add_const_int(_LookupContext *context, const char *name, int value) {
+    char value_str[20];
+    snprintf(value, 20, "%d", value);
+    _lookup_add_const(context, name, value_str);
 }
 
 // set a consts value

@@ -17,6 +17,6 @@ CompileFlags:
         - -iquotepilotlight/dependencies/stb
         
         # other flags
-        - -std=c++17
+#        - -std=c++17
 InlayHints:
     Enabled: No
