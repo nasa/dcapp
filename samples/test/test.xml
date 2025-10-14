@@ -4,7 +4,10 @@
   <Logic File="logic/logic.so" />
   <Window Title="dcapp-vk-title" X="30" Y="30" Width="1000" Height="1000" VirtualWidth="1000" VirtualHeight="1000">
 
-    <Variable Type="Double" InitialValue="30">ROTATE</Variable>
+    <Constant Name="Constant1">Constant2</Constant>
+    <Constant Name="Constant2">30</Constant>
+
+    <Variable Type="Double" InitialValue="#Constant2">ROTATE</Variable>
 
     <Variable Type="Float" InitialValue="0">COLOR_R</Variable>
     <Variable Type="Float" InitialValue=".25">COLOR_G</Variable>

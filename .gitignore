@@ -9,6 +9,6 @@ samples/local/
 scripts/build-dcapp*
 
 **.spv
-**/dcapp.h
+samples/**/dcapp.h
 **.so
 **.dSYM/

@@ -1,4 +1,4 @@
-#include "sock.hpp"
+#include "sock.h"
 
 #include <errno.h>
 #include <stdio.h>

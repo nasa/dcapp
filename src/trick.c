@@ -1,6 +1,6 @@
-#include "trick.hpp"
-#include "sb.hpp"
-#include "sock.hpp"
+#include "trick.h"
+#include "utils/stb_sb.h"
+#include "sock.h"
 
 #include <stdio.h>
 #include <stdlib.h>

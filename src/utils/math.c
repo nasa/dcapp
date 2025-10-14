@@ -1,10 +1,6 @@
-// dcapp includes
-#include <utils/math.hpp>
+#include "math.h"
 
-// library includes
-
-// c++ standard includes
-#include <cmath>
+#include <math.h>
 
 bool dc_utils_double_equals(double value1, double value2, double precision) {
     return fabs(value1 - value2) < precision;
