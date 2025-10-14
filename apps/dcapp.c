@@ -65,7 +65,7 @@ PL_EXPORT void  pl_app_update(_PlAppData *pl_app_data);
 #include "../src/app/lookup.h"
 #include "../src/app/config.h"
 #include "../src/trick.h"
-#include "libxml/parser.h" // IWYU pragma: keep
+#include <libxml/parser.h>
 
 // dcapp node structs
 typedef struct __ValIndex2 {
