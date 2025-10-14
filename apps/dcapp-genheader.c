@@ -7,7 +7,7 @@
 #include <libxml/parser.h>
 
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
 
 static void _process_node_children(xmlNodePtr xml_node, DcAppLookup *lookup);
 static void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup);
@@ -30,6 +30,12 @@ int main(int argc, char **argv) {
 
     // clean XML file
     dc_app_config_clean_xml(config, lookup);
+
+    // dump to file
+    char log_file[256];
+    dc_utils_join_paths(config->cache_dir_path, "xml.log", log_file, sizeof(log_file));
+    printf("%s\n", log_file);
+    dc_app_config_save_to_file(config, log_file);
 
     // process XML
     xmlNodePtr root_node = xmlDocGetRootElement(config->xml_doc);
@@ -127,63 +133,37 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup) {
             return;
         }
 
-        case DC_APP_ELEM_TYPE_CONSTANT: {
-            char *raw_name = (char *)xmlGetProp(xml_node, (xmlChar *)("Name"));
-            if (!raw_name) {
-                fprintf(stderr, "DCAPP _process_node(): 'Name' attribute missing in <Constant> definition\n");
-            }
-            char cleaned_name[DC_VALUE_STRING_BUFFER_SIZE];
-            dc_app_lookup_dereference_constants(lookup, raw_name, cleaned_name, sizeof(cleaned_name));
-            free(raw_name);
-
-            char *raw_value = (char *)xmlNodeGetContent(xml_node);
-            if (!raw_value) {
-                fprintf(stderr, "DCAPP _process_node(): Node content missing in <Constant> definition\n");
-            }
-            char cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
-            dc_app_lookup_dereference_constants(lookup, raw_value, cleaned_value, sizeof(cleaned_value));
-            free(raw_value);
-
-            dc_app_lookup_set_const_by_name(lookup, cleaned_name, cleaned_value);
-            break;
-        }
-
         case DC_APP_ELEM_TYPE_VARIABLE: {
 
-            char *raw_name = (char *)xmlNodeGetContent(xml_node);
-            if (!raw_name) {
+            // name
+            xmlChar *raw_name = xmlNodeGetContent(xml_node);
+            char     clean_name[DC_VALUE_STRING_BUFFER_SIZE];
+            if (raw_name) {
+                strncpy(clean_name, (const char *)raw_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_name);
+            } else {
                 fprintf(stderr, "DCAPP _process_node(): Node content missing in <Variable> definition\n");
             }
-            char cleaned_name[DC_VALUE_STRING_BUFFER_SIZE];
-            dc_app_lookup_dereference_constants(lookup, raw_name, cleaned_name, sizeof(cleaned_name));
-            free(raw_name);
 
             // type
-            char *raw_type = (char *)xmlGetProp(xml_node, (xmlChar *)("Type"));
-            if (!raw_type) {
+            xmlChar *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");
+            char     clean_type[DC_VALUE_STRING_BUFFER_SIZE];
+            if (raw_type) {
+                strncpy(clean_type, (const char *)raw_type, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_type);
+            } else {
                 fprintf(stderr, "DCAPP _process_node(): Attribute Type missing in <Variable> definition\n");
             }
-            char cleaned_type[DC_VALUE_STRING_BUFFER_SIZE];
-            dc_app_lookup_dereference_constants(lookup, raw_type, cleaned_type, sizeof(cleaned_type));
-            free(raw_type);
 
-            // value
-            char *raw_initial_value = (char *)xmlGetProp(xml_node, (xmlChar *)("InitialValue"));
-            if (!raw_initial_value) {
-                raw_initial_value    = (char *)malloc(1);
-                raw_initial_value[0] = '\0';
-            }
-            char cleaned_initial_value[DC_VALUE_STRING_BUFFER_SIZE];
-            dc_app_lookup_dereference_constants(lookup, raw_initial_value, cleaned_initial_value, sizeof(cleaned_initial_value));
-            free(raw_initial_value);
+            // don't care about initial value here
+            // xmlChar *raw_init_value = xmlGetProp(xml_node, BAD_CAST "InitialValue");
 
             // register variable
-            DcValueType    value_type          = dc_app_value_type_from_string(cleaned_type);
-            DcAppValIndex  initial_value_index = dc_app_create_and_register_typed_value_from_string(lookup, value_type, cleaned_initial_value);
-            DcAppLookupVar var;
-            var.value_index = initial_value_index;
-            var.extern_data = NULL; // don't care for now
-            dc_app_lookup_register_var(lookup, cleaned_name, &var);
+            DcValue value      = {};
+            value.type         = dc_app_value_type_from_string(clean_type);
+            DcAppLookupVar var = {};
+            var.value_index    = dc_app_lookup_register_value(lookup, &value);
+            dc_app_lookup_register_var(lookup, clean_name, &var);
             break;
         }
 

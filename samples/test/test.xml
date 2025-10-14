@@ -7,7 +7,7 @@
     <Constant Name="Constant1">Constant2</Constant>
     <Constant Name="Constant2">30</Constant>
 
-    <Variable Type="Double" InitialValue="#Constant2">ROTATE</Variable>
+    <Variable Type="Double" InitialValue="#Constant1">ROTATE</Variable>
 
     <Variable Type="Float" InitialValue="0">COLOR_R</Variable>
     <Variable Type="Float" InitialValue=".25">COLOR_G</Variable>
@@ -130,7 +130,12 @@
         <Vertex X="505" Y="255" />
         <Vertex X="495" Y="255" />
       </Polygon>
-      <Text Size="75" X="500" Y="250" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" PivotAlignX="#_align_left_" PivotAlignY="#_align_bottom_" Rotation="@ROTATE" FillColor="@COLOR_B @COLOR_R @COLOR_G 1">BOTTOM LEFT</Text>
+
+      <Style Name="Test Style">
+        <Text FillColor="@COLOR_B @COLOR_R @COLOR_G 1"/>
+      </Style>
+
+      <Text Style="Test Style" Size="75" X="500" Y="250" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" PivotAlignX="#_align_left_" PivotAlignY="#_align_bottom_" Rotation="@ROTATE">BOTTOM LEFT</Text>
 
       <Text Size="1000" X="0" Y="0" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" FillColor="0 0 1 .25">E</Text>
 
