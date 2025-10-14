@@ -114,6 +114,8 @@ typedef enum __NodeType {
     NODE_TYPE_TERRAIN,
     NODE_TYPE_TEXT,
     NODE_TYPE_WINDOW,
+    NODE_TYPE__COUNT,
+    NODE_TYPE__MAX = NODE_TYPE__COUNT - 1,
 } _NodeType;
 
 typedef uint32_t _NodeIndex;
@@ -288,6 +290,11 @@ typedef struct __DcAppData {
 
 } _DcAppData;
 static _DcAppData data;
+
+// styles (index 0 reserved for defaults)
+char *sb_node_style_names;
+int  *sb_node_style_name_offsets;
+static _Node (*_sb_node_styles)[NODE_TYPE__COUNT];
 
 // node utils
 static const char *_node_type_to_string(_NodeType type);
