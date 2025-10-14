@@ -1,5 +1,4 @@
 // PL includes
-#include <ctype.h>
 #define PL_EXPERIMENTAL
 #include "../pilotlight/src/pl.h"
 #define PL_MATH_INCLUDE_FUNCTIONS
@@ -17,6 +16,7 @@
 #include "../extensions/pl_terrain_ext.h"
 
 // general includes
+#include <ctype.h>
 #include <string.h>
 
 // PL macros
@@ -291,11 +291,6 @@ typedef struct __DcAppData {
 } _DcAppData;
 static _DcAppData data;
 
-// styles (index 0 reserved for defaults)
-char *sb_node_style_names;
-int  *sb_node_style_name_offsets;
-static _Node (*_sb_node_styles)[NODE_TYPE__COUNT];
-
 // node utils
 static const char *_node_type_to_string(_NodeType type);
 static _Node      *_index_to_node(_NodeIndex index);
@@ -375,29 +370,16 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
 
     // clean XML file
     dc_app_config_clean_xml(data.config, data.lookup);
-    dc_app_config_save_to_file(data.config, "/Users/nreagan/dcapp/xml.log");
+
+    // save to file
+    char log_file[256];
+    dc_utils_join_paths(data.config->cache_dir_path, "xml.log", log_file, sizeof(log_file));
+    printf("%s\n", log_file);
+    dc_app_config_save_to_file(data.config, log_file);
 
     // build dcapp node tree
     xmlNodePtr root_node = xmlDocGetRootElement(data.config->xml_doc);
     _process_node(root_node, NODE_INDEX_UNDEFINED, DC_APP_ELEM_TYPE_UNDEFINED, (_ValIndex2){0, 0}, data.config->config_dir_path);
-
-    // configure logic file
-    // if (dc_app_data.logic.library) {
-    //     // set logic functions
-    //     dc_app_data.logic.pre_init = (void (*)(void))_ext_library->load_function(dc_app_data.logic.library, "DisplayPreInit");
-    //     dc_app_data.logic.init     = (void (*)(void))_ext_library->load_function(dc_app_data.logic.library, "DisplayInit");
-    //     dc_app_data.logic.draw     = (void (*)(void))_ext_library->load_function(dc_app_data.logic.library, "DisplayDraw");
-    //     dc_app_data.logic.close    = (void (*)(void))_ext_library->load_function(dc_app_data.logic.library, "DisplayClose");
-
-    //     // link variables to extern logic data
-    //     for (auto const &[name, var_index] : dc_app_data.var_indices) {
-    //         DcAppVar *var    = &(dc_app_data.vars[var_index]);
-    //         var->extern_data = _ext_library->load_function(dc_app_data.logic.library, name.c_str());
-
-    //         // set the extern data to the initial value
-    //         dc_app_refresh_var_from_value(var);
-    //     }
-    // }
 
     // mount VFS dirs
     _ext_vfs->mount_directory("/shaders-terrain", "../../shaders", PL_VFS_MOUNT_FLAGS_NONE);
@@ -672,7 +654,7 @@ static bool _load_color_from_string(xmlNodePtr xml_node, const char *attr_name, 
 
         // clean raw string
         char cleaned_color[DC_VALUE_STRING_BUFFER_SIZE];
-        dc_app_lookup_dereference_constants(data.lookup, raw_color, cleaned_color, sizeof(cleaned_color));
+        strncpy(cleaned_color, raw_color, DC_VALUE_STRING_BUFFER_SIZE - 1);
         free(raw_color);
 
         // split by whitespace
@@ -782,12 +764,14 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
         }
 
         case DC_APP_ELEM_TYPE_CONSTANT: {
+
+            
             char *raw_name = (char *)xmlGetProp(xml_node, (xmlChar *)("Name"));
             if (!raw_name) {
                 fprintf(stderr, "DCAPP _process_node(): 'Name' attribute missing in <Constant> definition\n");
             }
             char cleaned_name[DC_VALUE_STRING_BUFFER_SIZE];
-            dc_app_lookup_dereference_constants(data.lookup, raw_name, cleaned_name, sizeof(cleaned_name));
+            strncpy(cleaned_name, raw_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
             free(raw_name);
 
             char *raw_value = (char *)xmlNodeGetContent(xml_node);
@@ -795,7 +779,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 fprintf(stderr, "DCAPP _process_node(): Node content missing in <Constant> definition\n");
             }
             char cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
-            dc_app_lookup_dereference_constants(data.lookup, raw_value, cleaned_value, sizeof(cleaned_value));
+            strncpy(cleaned_value, raw_value, DC_VALUE_STRING_BUFFER_SIZE - 1);
             free(raw_value);
 
             dc_app_lookup_set_const_by_name(data.lookup, cleaned_name, cleaned_value);
@@ -810,7 +794,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_position = (char *)xmlGetProp(xml_node, (xmlChar *)("X"));
             if (raw_x_position) {
                 char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_position, cleaned_x_position, sizeof(cleaned_x_position));
+                strncpy(cleaned_x_position, raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_position);
                 dc_node.container.position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
             } else {
@@ -822,7 +806,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_position = (char *)xmlGetProp(xml_node, (xmlChar *)("Y"));
             if (raw_y_position) {
                 char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_position, cleaned_y_position, sizeof(cleaned_y_position));
+                strncpy(cleaned_y_position, raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_position);
                 dc_node.container.position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
             } else {
@@ -834,7 +818,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_origin = (char *)xmlGetProp(xml_node, (xmlChar *)("OriginX"));
             if (raw_x_origin) {
                 char cleaned_x_origin[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_origin, cleaned_x_origin, sizeof(cleaned_x_origin));
+                strncpy(cleaned_x_origin, raw_x_origin, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_origin);
                 dc_node.container.origin.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_origin);
             } else {
@@ -846,7 +830,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_origin = (char *)xmlGetProp(xml_node, (xmlChar *)("OriginY"));
             if (raw_y_origin) {
                 char cleaned_y_origin[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_origin, cleaned_y_origin, sizeof(cleaned_y_origin));
+                strncpy(cleaned_y_origin, raw_y_origin, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_origin);
                 dc_node.container.origin.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_origin);
             } else {
@@ -858,7 +842,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_dimension = (char *)xmlGetProp(xml_node, (xmlChar *)("Width"));
             if (raw_x_dimension) {
                 char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_dimension, cleaned_x_dimension, sizeof(cleaned_x_dimension));
+                strncpy(cleaned_x_dimension, raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_dimension);
                 dc_node.container.dimensions.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
             } else {
@@ -869,7 +853,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_dimension = (char *)xmlGetProp(xml_node, (xmlChar *)("Height"));
             if (raw_y_dimension) {
                 char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_dimension, cleaned_y_dimension, sizeof(cleaned_y_dimension));
+                strncpy(cleaned_y_dimension, raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_dimension);
                 dc_node.container.dimensions.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
             } else {
@@ -880,7 +864,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_virtual_dimension = (char *)xmlGetProp(xml_node, (xmlChar *)("VirtualWidth"));
             if (raw_x_virtual_dimension) {
                 char cleaned_x_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_virtual_dimension, cleaned_x_virtual_dimension, sizeof(cleaned_x_virtual_dimension));
+                strncpy(cleaned_x_virtual_dimension, raw_x_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_virtual_dimension);
                 dc_node.container.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
             } else {
@@ -891,7 +875,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_virtual_dimension = (char *)xmlGetProp(xml_node, (xmlChar *)("VirtualHeight"));
             if (raw_y_virtual_dimension) {
                 char cleaned_y_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_virtual_dimension, cleaned_y_virtual_dimension, sizeof(cleaned_y_virtual_dimension));
+                strncpy(cleaned_y_virtual_dimension, raw_y_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_virtual_dimension);
                 dc_node.container.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
             } else {
@@ -902,7 +886,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_align = (char *)xmlGetProp(xml_node, (xmlChar *)("HorizontalAlign"));
             if (raw_x_align) {
                 char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_align, cleaned_x_align, sizeof(cleaned_x_align));
+                strncpy(cleaned_x_align, raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_align);
                 dc_node.container.alignment.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
             } else {
@@ -914,7 +898,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_align = (char *)xmlGetProp(xml_node, (xmlChar *)("VerticalAlign"));
             if (raw_y_align) {
                 char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_align, cleaned_y_align, sizeof(cleaned_y_align));
+                strncpy(cleaned_y_align, raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_align);
                 dc_node.container.alignment.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
             } else {
@@ -926,7 +910,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_rotation = (char *)xmlGetProp(xml_node, (xmlChar *)("Rotation"));
             if (raw_rotation) {
                 char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_rotation, cleaned_rotation, sizeof(cleaned_rotation));
+                strncpy(cleaned_rotation, raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_rotation);
                 dc_node.container.rotation = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
             } else {
@@ -940,12 +924,12 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             if (raw_pivot_point_x && raw_pivot_point_y) {
 
                 char cleaned_pivot_point_x[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_pivot_point_x, cleaned_pivot_point_x, sizeof(cleaned_pivot_point_x));
+                strncpy(cleaned_pivot_point_x, raw_pivot_point_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_pivot_point_x);
                 dc_node.container.pivot_point.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_x);
 
                 char cleaned_pivot_point_y[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_pivot_point_y, cleaned_pivot_point_y, sizeof(cleaned_pivot_point_y));
+                strncpy(cleaned_pivot_point_y, raw_pivot_point_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_pivot_point_y);
                 dc_node.container.pivot_point.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_y);
 
@@ -958,7 +942,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 char *raw_pivot_align_x = (char *)xmlGetProp(xml_node, (xmlChar *)("PivotAlignX"));
                 if (raw_pivot_align_x) {
                     char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
-                    dc_app_lookup_dereference_constants(data.lookup, raw_pivot_align_x, cleaned_pivot_align_x, sizeof(cleaned_pivot_align_x));
+                    strncpy(cleaned_pivot_align_x, raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
                     free(raw_pivot_align_x);
                     dc_node.container.pivot_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
                 } else {
@@ -969,7 +953,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 char *raw_pivot_align_y = (char *)xmlGetProp(xml_node, (xmlChar *)("PivotAlignY"));
                 if (raw_pivot_align_y) {
                     char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
-                    dc_app_lookup_dereference_constants(data.lookup, raw_pivot_align_y, cleaned_pivot_align_y, sizeof(cleaned_pivot_align_y));
+                    strncpy(cleaned_pivot_align_y, raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
                     free(raw_pivot_align_y);
                     dc_node.container.pivot_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
                 } else {
@@ -1028,7 +1012,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_type = (char *)xmlGetProp(xml_node, (xmlChar *)("Operation"));
             if (raw_type) {
                 char cleaned_type[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_type, cleaned_type, sizeof(cleaned_type));
+                strncpy(cleaned_type, raw_type, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_type);
                 dc_node.conditional.type = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_type);
             } else {
@@ -1043,7 +1027,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
             if (raw_value1) {
                 char cleaned_value1[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_value1, cleaned_value1, sizeof(cleaned_value1));
+                strncpy(cleaned_value1, raw_value1, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_value1);
                 dc_node.conditional.value1 = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_STRING, cleaned_value1);
             } else {
@@ -1054,7 +1038,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_value2 = (char *)xmlGetProp(xml_node, (xmlChar *)("Value2"));
             if (raw_value2) {
                 char cleaned_value2[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_value2, cleaned_value2, sizeof(cleaned_value2));
+                strncpy(cleaned_value2, raw_value2, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_value2);
                 dc_node.conditional.value2 = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_STRING, cleaned_value2);
             }
@@ -1103,7 +1087,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
 
                 // clean filepath
                 char cleaned_filepath[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_filepath, cleaned_filepath, sizeof(cleaned_filepath));
+                strncpy(cleaned_filepath, raw_filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_filepath);
 
                 // convert to absolute path
@@ -1145,7 +1129,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_virtual_dimension = (char *)xmlGetProp(xml_node, (xmlChar *)("VirtualWidth"));
             if (raw_x_virtual_dimension) {
                 char cleaned_x_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_virtual_dimension, cleaned_x_virtual_dimension, sizeof(cleaned_x_virtual_dimension));
+                strncpy(cleaned_x_virtual_dimension, raw_x_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_virtual_dimension);
                 dc_node.panel.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
             } else {
@@ -1156,7 +1140,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_virtual_dimension = (char *)xmlGetProp(xml_node, (xmlChar *)("VirtualHeight"));
             if (raw_y_virtual_dimension) {
                 char cleaned_y_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_virtual_dimension, cleaned_y_virtual_dimension, sizeof(cleaned_y_virtual_dimension));
+                strncpy(cleaned_y_virtual_dimension, raw_y_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_virtual_dimension);
                 dc_node.panel.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
             } else {
@@ -1186,7 +1170,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_line_width = (char *)xmlGetProp(xml_node, (xmlChar *)("LineWidth"));
             if (raw_line_width) {
                 char cleaned_line_width[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_line_width, cleaned_line_width, sizeof(cleaned_line_width));
+                strncpy(cleaned_line_width, raw_line_width, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_line_width);
                 dc_node.polygon.line_width = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_line_width);
             } else {
@@ -1198,7 +1182,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_origin = (char *)xmlGetProp(xml_node, (xmlChar *)("OriginX"));
             if (raw_x_origin) {
                 char cleaned_x_origin[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_origin, cleaned_x_origin, sizeof(cleaned_x_origin));
+                strncpy(cleaned_x_origin, raw_x_origin, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_origin);
                 dc_node.polygon.origin.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_origin);
             } else {
@@ -1210,7 +1194,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_origin = (char *)xmlGetProp(xml_node, (xmlChar *)("OriginY"));
             if (raw_y_origin) {
                 char cleaned_y_origin[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_origin, cleaned_y_origin, sizeof(cleaned_y_origin));
+                strncpy(cleaned_y_origin, raw_y_origin, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_origin);
                 dc_node.polygon.origin.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_origin);
             } else {
@@ -1222,7 +1206,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_rotation = (char *)xmlGetProp(xml_node, (xmlChar *)("Rotation"));
             if (raw_rotation) {
                 char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_rotation, cleaned_rotation, sizeof(cleaned_rotation));
+                strncpy(cleaned_rotation, raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_rotation);
                 dc_node.polygon.rotation = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
             } else {
@@ -1236,12 +1220,12 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             if (raw_pivot_point_x && raw_pivot_point_y) {
 
                 char cleaned_pivot_point_x[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_pivot_point_x, cleaned_pivot_point_x, sizeof(cleaned_pivot_point_x));
+                strncpy(cleaned_pivot_point_x, raw_pivot_point_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_pivot_point_x);
                 dc_node.polygon.pivot_point.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_x);
 
                 char cleaned_pivot_point_y[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_pivot_point_y, cleaned_pivot_point_y, sizeof(cleaned_pivot_point_y));
+                strncpy(cleaned_pivot_point_y, raw_pivot_point_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_pivot_point_y);
                 dc_node.polygon.pivot_point.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_y);
 
@@ -1272,7 +1256,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_variable = (char *)xmlGetProp(xml_node, (xmlChar *)("Variable"));
             if (raw_variable) {
                 char cleaned_variable[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_variable, cleaned_variable, sizeof(cleaned_variable));
+                strncpy(cleaned_variable, raw_variable, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_variable);
                 dc_node.set.var_index = dc_app_lookup_get_var_index(data.lookup, cleaned_variable);
             } else {
@@ -1283,7 +1267,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_operand = (char *)xmlNodeGetContent(xml_node);
             if (raw_operand) {
                 char cleaned_operand[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_operand, cleaned_operand, sizeof(cleaned_operand));
+                strncpy(cleaned_operand, raw_operand, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_operand);
                 dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_operand);
             } else {
@@ -1294,7 +1278,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_operator = (char *)xmlGetProp(xml_node, (xmlChar *)("Operator"));
             if (raw_operator) {
                 char cleaned_operator[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_operator, cleaned_operator, sizeof(cleaned_operator));
+                strncpy(cleaned_operator, raw_operator, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_operator);
                 dc_node.set.operation = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_operator);
             } else {
@@ -1315,7 +1299,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_position = (char *)xmlGetProp(xml_node, (xmlChar *)("X"));
             if (raw_x_position) {
                 char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_position, cleaned_x_position, sizeof(cleaned_x_position));
+                strncpy(cleaned_x_position, raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_position);
                 dc_node.terrain.position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
             } else {
@@ -1327,7 +1311,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_position = (char *)xmlGetProp(xml_node, (xmlChar *)("Y"));
             if (raw_y_position) {
                 char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_position, cleaned_y_position, sizeof(cleaned_y_position));
+                strncpy(cleaned_y_position, raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_position);
                 dc_node.terrain.position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
             } else {
@@ -1339,7 +1323,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_origin = (char *)xmlGetProp(xml_node, (xmlChar *)("OriginX"));
             if (raw_x_origin) {
                 char cleaned_x_origin[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_origin, cleaned_x_origin, sizeof(cleaned_x_origin));
+                strncpy(cleaned_x_origin, raw_x_origin, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_origin);
                 dc_node.terrain.origin.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_origin);
             } else {
@@ -1351,7 +1335,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_origin = (char *)xmlGetProp(xml_node, (xmlChar *)("OriginY"));
             if (raw_y_origin) {
                 char cleaned_y_origin[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_origin, cleaned_y_origin, sizeof(cleaned_y_origin));
+                strncpy(cleaned_y_origin, raw_y_origin, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_origin);
                 dc_node.terrain.origin.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_origin);
             } else {
@@ -1363,7 +1347,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_dimension = (char *)xmlGetProp(xml_node, (xmlChar *)("Width"));
             if (raw_x_dimension) {
                 char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_dimension, cleaned_x_dimension, sizeof(cleaned_x_dimension));
+                strncpy(cleaned_x_dimension, raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_dimension);
                 dc_node.terrain.dimensions.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
             } else {
@@ -1374,7 +1358,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_dimension = (char *)xmlGetProp(xml_node, (xmlChar *)("Height"));
             if (raw_y_dimension) {
                 char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_dimension, cleaned_y_dimension, sizeof(cleaned_y_dimension));
+                strncpy(cleaned_y_dimension, raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_dimension);
                 dc_node.terrain.dimensions.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
             } else {
@@ -1385,7 +1369,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_align = (char *)xmlGetProp(xml_node, (xmlChar *)("HorizontalAlign"));
             if (raw_x_align) {
                 char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_align, cleaned_x_align, sizeof(cleaned_x_align));
+                strncpy(cleaned_x_align, raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_align);
                 dc_node.terrain.alignment.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
             } else {
@@ -1397,7 +1381,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_align = (char *)xmlGetProp(xml_node, (xmlChar *)("VerticalAlign"));
             if (raw_y_align) {
                 char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_align, cleaned_y_align, sizeof(cleaned_y_align));
+                strncpy(cleaned_y_align, raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_align);
                 dc_node.terrain.alignment.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
             } else {
@@ -1409,7 +1393,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_rotation = (char *)xmlGetProp(xml_node, (xmlChar *)("Rotation"));
             if (raw_rotation) {
                 char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_rotation, cleaned_rotation, sizeof(cleaned_rotation));
+                strncpy(cleaned_rotation, raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_rotation);
                 dc_node.terrain.rotation = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
             } else {
@@ -1423,12 +1407,12 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             if (raw_pivot_point_x && raw_pivot_point_y) {
 
                 char cleaned_pivot_point_x[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_pivot_point_x, cleaned_pivot_point_x, sizeof(cleaned_pivot_point_x));
+                strncpy(cleaned_pivot_point_x, raw_pivot_point_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_pivot_point_x);
                 dc_node.terrain.pivot_point.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_x);
 
                 char cleaned_pivot_point_y[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_pivot_point_y, cleaned_pivot_point_y, sizeof(cleaned_pivot_point_y));
+                strncpy(cleaned_pivot_point_y, raw_pivot_point_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_pivot_point_y);
                 dc_node.terrain.pivot_point.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_y);
 
@@ -1441,7 +1425,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 char *raw_pivot_align_x = (char *)xmlGetProp(xml_node, (xmlChar *)("PivotAlignX"));
                 if (raw_pivot_align_x) {
                     char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
-                    dc_app_lookup_dereference_constants(data.lookup, raw_pivot_align_x, cleaned_pivot_align_x, sizeof(cleaned_pivot_align_x));
+                    strncpy(cleaned_pivot_align_x, raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
                     free(raw_pivot_align_x);
                     dc_node.terrain.pivot_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
                 } else {
@@ -1452,7 +1436,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 char *raw_pivot_align_y = (char *)xmlGetProp(xml_node, (xmlChar *)("PivotAlignX"));
                 if (raw_pivot_align_y) {
                     char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
-                    dc_app_lookup_dereference_constants(data.lookup, raw_pivot_align_y, cleaned_pivot_align_y, sizeof(cleaned_pivot_align_y));
+                    strncpy(cleaned_pivot_align_y, raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
                     free(raw_pivot_align_y);
                     dc_node.terrain.pivot_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
                 } else {
@@ -1467,7 +1451,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_lat = (char *)xmlGetProp(xml_node, (xmlChar *)("Latitude"));
             if (raw_lat) {
                 char cleaned_lat[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_lat, cleaned_lat, sizeof(cleaned_lat));
+                strncpy(cleaned_lat, raw_lat, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_lat);
                 dc_node.terrain.lle.lat = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_lat);
             } else {
@@ -1478,7 +1462,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_lon = (char *)xmlGetProp(xml_node, (xmlChar *)("Longitude"));
             if (raw_lon) {
                 char cleaned_lon[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_lon, cleaned_lon, sizeof(cleaned_lon));
+                strncpy(cleaned_lon, raw_lon, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_lon);
                 dc_node.terrain.lle.lon = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_lon);
             } else {
@@ -1489,7 +1473,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_ele = (char *)xmlGetProp(xml_node, (xmlChar *)("Elevation"));
             if (raw_ele) {
                 char cleaned_ele[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_ele, cleaned_ele, sizeof(cleaned_ele));
+                strncpy(cleaned_ele, raw_ele, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_ele);
                 dc_node.terrain.lle.ele = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_ele);
             } else {
@@ -1500,7 +1484,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_roll = (char *)xmlGetProp(xml_node, (xmlChar *)("Roll"));
             if (raw_roll) {
                 char cleaned_roll[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_roll, cleaned_roll, sizeof(cleaned_roll));
+                strncpy(cleaned_roll, raw_roll, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_roll);
                 dc_node.terrain.rpy.roll = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_roll);
             } else {
@@ -1511,7 +1495,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_pitch = (char *)xmlGetProp(xml_node, (xmlChar *)("Pitch"));
             if (raw_pitch) {
                 char cleaned_pitch[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_pitch, cleaned_pitch, sizeof(cleaned_pitch));
+                strncpy(cleaned_pitch, raw_pitch, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_pitch);
                 dc_node.terrain.rpy.pitch = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pitch);
             } else {
@@ -1522,7 +1506,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_yaw = (char *)xmlGetProp(xml_node, (xmlChar *)("Yaw"));
             if (raw_yaw) {
                 char cleaned_yaw[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_yaw, cleaned_yaw, sizeof(cleaned_yaw));
+                strncpy(cleaned_yaw, raw_yaw, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_yaw);
                 dc_node.terrain.rpy.yaw = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_yaw);
             } else {
@@ -1549,7 +1533,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
 
                         // clean filepath
                         char cleaned_filepath[DC_VALUE_STRING_BUFFER_SIZE];
-                        dc_app_lookup_dereference_constants(data.lookup, raw_filepath, cleaned_filepath, sizeof(cleaned_filepath));
+                        strncpy(cleaned_filepath, raw_filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
                         free(raw_filepath);
 
                         // convert to absolute path
@@ -1583,7 +1567,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_text = (char *)xmlNodeGetContent(xml_node);
             if (raw_text) {
                 char cleaned_text[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_text, cleaned_text, sizeof(cleaned_text));
+                strncpy(cleaned_text, raw_text, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_text);
 
                 static char *sb_curr_filler = NULL;
@@ -1696,7 +1680,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_position = (char *)xmlGetProp(xml_node, (xmlChar *)("X"));
             if (raw_x_position) {
                 char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_position, cleaned_x_position, sizeof(cleaned_x_position));
+                strncpy(cleaned_x_position, raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_position);
                 dc_node.text.position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
             } else {
@@ -1708,7 +1692,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_position = (char *)xmlGetProp(xml_node, (xmlChar *)("Y"));
             if (raw_y_position) {
                 char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_position, cleaned_y_position, sizeof(cleaned_y_position));
+                strncpy(cleaned_y_position, raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_position);
                 dc_node.text.position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
             } else {
@@ -1720,7 +1704,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_origin = (char *)xmlGetProp(xml_node, (xmlChar *)("OriginX"));
             if (raw_x_origin) {
                 char cleaned_x_origin[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_origin, cleaned_x_origin, sizeof(cleaned_x_origin));
+                strncpy(cleaned_x_origin, raw_x_origin, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_origin);
                 dc_node.text.origin.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_origin);
             } else {
@@ -1732,7 +1716,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_origin = (char *)xmlGetProp(xml_node, (xmlChar *)("OriginY"));
             if (raw_y_origin) {
                 char cleaned_y_origin[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_origin, cleaned_y_origin, sizeof(cleaned_y_origin));
+                strncpy(cleaned_y_origin, raw_y_origin, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_origin);
                 dc_node.text.origin.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_origin);
             } else {
@@ -1744,7 +1728,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_align = (char *)xmlGetProp(xml_node, (xmlChar *)("HorizontalAlign"));
             if (raw_x_align) {
                 char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_align, cleaned_x_align, sizeof(cleaned_x_align));
+                strncpy(cleaned_x_align, raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_align);
                 dc_node.text.alignment.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
             } else {
@@ -1756,7 +1740,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_align = (char *)xmlGetProp(xml_node, (xmlChar *)("VerticalAlign"));
             if (raw_y_align) {
                 char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_align, cleaned_y_align, sizeof(cleaned_y_align));
+                strncpy(cleaned_y_align, raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_align);
                 dc_node.text.alignment.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
             } else {
@@ -1768,7 +1752,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_rotation = (char *)xmlGetProp(xml_node, (xmlChar *)("Rotation"));
             if (raw_rotation) {
                 char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_rotation, cleaned_rotation, sizeof(cleaned_rotation));
+                strncpy(cleaned_rotation, raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_rotation);
                 dc_node.text.rotation = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
             } else {
@@ -1782,12 +1766,12 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             if (raw_pivot_point_x && raw_pivot_point_y) {
 
                 char cleaned_pivot_point_x[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_pivot_point_x, cleaned_pivot_point_x, sizeof(cleaned_pivot_point_x));
+                strncpy(cleaned_pivot_point_x, raw_pivot_point_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_pivot_point_x);
                 dc_node.text.pivot_point.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_x);
 
                 char cleaned_pivot_point_y[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_pivot_point_y, cleaned_pivot_point_y, sizeof(cleaned_pivot_point_y));
+                strncpy(cleaned_pivot_point_y, raw_pivot_point_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_pivot_point_y);
                 dc_node.text.pivot_point.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_y);
 
@@ -1800,7 +1784,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 char *raw_pivot_align_x = (char *)xmlGetProp(xml_node, (xmlChar *)("PivotAlignX"));
                 if (raw_pivot_align_x) {
                     char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
-                    dc_app_lookup_dereference_constants(data.lookup, raw_pivot_align_x, cleaned_pivot_align_x, sizeof(cleaned_pivot_align_x));
+                    strncpy(cleaned_pivot_align_x, raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
                     free(raw_pivot_align_x);
                     dc_node.text.pivot_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
                 } else {
@@ -1811,7 +1795,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 char *raw_pivot_align_y = (char *)xmlGetProp(xml_node, (xmlChar *)("PivotAlignY"));
                 if (raw_pivot_align_y) {
                     char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
-                    dc_app_lookup_dereference_constants(data.lookup, raw_pivot_align_y, cleaned_pivot_align_y, sizeof(cleaned_pivot_align_y));
+                    strncpy(cleaned_pivot_align_y, raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
                     free(raw_pivot_align_y);
                     dc_node.text.pivot_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
                 } else {
@@ -1826,7 +1810,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_size = (char *)xmlGetProp(xml_node, (xmlChar *)("Size"));
             if (raw_size) {
                 char cleaned_size[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_size, cleaned_size, sizeof(cleaned_size));
+                strncpy(cleaned_size, raw_size, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_size);
                 dc_node.text.size = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_size);
             } else {
@@ -1862,7 +1846,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_host = (char *)xmlGetProp(xml_node, (xmlChar *)("Host"));
             char  host[DC_VALUE_STRING_BUFFER_SIZE];
             if (raw_host) {
-                dc_app_lookup_dereference_constants(data.lookup, raw_host, host, sizeof(host));
+                strncpy(host, raw_host, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_host);
             } else {
                 fprintf(stderr, "DCApp _process_node: Missing Port for TrickIO\n");
@@ -1873,7 +1857,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             int   port;
             if (raw_port) {
                 char cleaned_port[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_port, cleaned_port, sizeof(cleaned_port));
+                strncpy(cleaned_port, raw_port, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_port);
                 port = dc_utils_string_to_double(cleaned_port);
             } else {
@@ -1885,7 +1869,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             double data_rate     = 0.1;
             if (raw_data_rate) {
                 char cleaned_data_rate[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_data_rate, cleaned_data_rate, sizeof(cleaned_data_rate));
+                strncpy(cleaned_data_rate, raw_data_rate, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_data_rate);
                 data_rate = dc_utils_string_to_double(cleaned_data_rate);
             }
@@ -1930,7 +1914,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_trick_path = (char *)xmlGetProp(xml_node, (xmlChar *)("Name"));
             char  trick_path[DC_VALUE_STRING_BUFFER_SIZE];
             if (raw_trick_path) {
-                dc_app_lookup_dereference_constants(data.lookup, raw_trick_path, trick_path, sizeof(trick_path));
+                strncpy(trick_path, raw_trick_path, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_trick_path);
             } else {
                 fprintf(stderr, "DCApp _process_node: Missing trick Var path for TrickVariable\n");
@@ -1940,7 +1924,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_dcapp_var = (char *)xmlNodeGetContent(xml_node);
             char  dcapp_var[DC_VALUE_STRING_BUFFER_SIZE];
             if (raw_dcapp_var) {
-                dc_app_lookup_dereference_constants(data.lookup, raw_dcapp_var, dcapp_var, sizeof(dcapp_var));
+                strncpy(dcapp_var, raw_dcapp_var, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_dcapp_var);
             } else {
                 fprintf(stderr, "DCApp _process_node: Missing dcapp Var path for TrickVariable\n");
@@ -1951,7 +1935,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char  cleaned_units[DC_VALUE_STRING_BUFFER_SIZE];
             char *units = NULL;
             if (raw_units) {
-                dc_app_lookup_dereference_constants(data.lookup, raw_units, cleaned_units, sizeof(cleaned_units));
+                strncpy(cleaned_units, raw_units, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_units);
                 units = cleaned_units;
             }
@@ -2012,7 +1996,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_name = (char *)xmlNodeGetContent(xml_node);
             char  name[DC_VALUE_STRING_BUFFER_SIZE];
             if (raw_name) {
-                dc_app_lookup_dereference_constants(data.lookup, raw_name, name, sizeof(name));
+                strncpy(name, raw_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_name);
             } else {
                 fprintf(stderr, "DCApp _process_node: Non-existent node content in <Variable> definition\n");
@@ -2022,7 +2006,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             DcValueType type     = DC_VALUE_TYPE_STRING;
             if (raw_type) {
                 char cleaned_type[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_type, cleaned_type, sizeof(cleaned_type));
+                strncpy(cleaned_type, raw_type, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 type = dc_app_value_type_from_string(cleaned_type);
                 free(raw_type);
             }
@@ -2031,7 +2015,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             DcValue initial_value;
             if (raw_initial_value) {
                 char cleaned_initial_value[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_initial_value, cleaned_initial_value, sizeof(cleaned_initial_value));
+                strncpy(cleaned_initial_value, raw_initial_value, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_initial_value);
                 initial_value = dc_value_create_value_string(cleaned_initial_value);
             } else {
@@ -2068,7 +2052,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
 
                     if (raw_x_position) {
                         char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-                        dc_app_lookup_dereference_constants(data.lookup, raw_x_position, cleaned_x_position, sizeof(cleaned_x_position));
+                        strncpy(cleaned_x_position, raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
                         free(raw_x_position);
                         position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
                     } else {
@@ -2079,7 +2063,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     char *raw_y_position = (char *)xmlGetProp(xml_node, (xmlChar *)("Y"));
                     if (raw_y_position) {
                         char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-                        dc_app_lookup_dereference_constants(data.lookup, raw_y_position, cleaned_y_position, sizeof(cleaned_y_position));
+                        strncpy(cleaned_y_position, raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
                         free(raw_y_position);
                         position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
                     } else {
@@ -2104,7 +2088,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_title = (char *)xmlGetProp(xml_node, (xmlChar *)("Title"));
             if (raw_title) {
                 char cleaned_title[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_title, cleaned_title, sizeof(cleaned_title));
+                strncpy(cleaned_title, raw_title, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_title);
                 dc_node.window.title = strdup(cleaned_title);
             } else {
@@ -2115,7 +2099,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_position = (char *)xmlGetProp(xml_node, (xmlChar *)("X"));
             if (raw_x_position) {
                 char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_position, cleaned_x_position, sizeof(cleaned_x_position));
+                strncpy(cleaned_x_position, raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_position);
                 dc_node.window.position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
             } else {
@@ -2127,7 +2111,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_position = (char *)xmlGetProp(xml_node, (xmlChar *)("Y"));
             if (raw_y_position) {
                 char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_position, cleaned_y_position, sizeof(cleaned_y_position));
+                strncpy(cleaned_y_position, raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_position);
                 dc_node.window.position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
             } else {
@@ -2139,7 +2123,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_dimension = (char *)xmlGetProp(xml_node, (xmlChar *)("Width"));
             if (raw_x_dimension) {
                 char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_dimension, cleaned_x_dimension, sizeof(cleaned_x_dimension));
+                strncpy(cleaned_x_dimension, raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_dimension);
                 dc_node.window.dimensions.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_dimension);
             } else {
@@ -2150,7 +2134,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_dimension = (char *)xmlGetProp(xml_node, (xmlChar *)("Height"));
             if (raw_y_dimension) {
                 char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_dimension, cleaned_y_dimension, sizeof(cleaned_y_dimension));
+                strncpy(cleaned_y_dimension, raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_dimension);
                 dc_node.window.dimensions.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_dimension);
             } else {
@@ -2161,7 +2145,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_x_virtual_dimension = (char *)xmlGetProp(xml_node, (xmlChar *)("VirtualWidth"));
             if (raw_x_virtual_dimension) {
                 char cleaned_x_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_x_virtual_dimension, cleaned_x_virtual_dimension, sizeof(cleaned_x_virtual_dimension));
+                strncpy(cleaned_x_virtual_dimension, raw_x_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_virtual_dimension);
                 dc_node.window.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
             } else {
@@ -2172,7 +2156,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char *raw_y_virtual_dimension = (char *)xmlGetProp(xml_node, (xmlChar *)("VirtualHeight"));
             if (raw_y_virtual_dimension) {
                 char cleaned_y_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-                dc_app_lookup_dereference_constants(data.lookup, raw_y_virtual_dimension, cleaned_y_virtual_dimension, sizeof(cleaned_y_virtual_dimension));
+                strncpy(cleaned_y_virtual_dimension, raw_y_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_virtual_dimension);
                 dc_node.window.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
             } else {

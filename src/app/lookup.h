@@ -2,10 +2,14 @@
 #define _DC_APP_LOOKUP_
 
 #include "../value.h"
+#include "elem.h"
 
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+
+// forward declarations
+typedef struct _xmlNode *xmlNodePtr;
 
 // lookup types
 typedef int                   DcAppLookupIndex;
@@ -13,8 +17,10 @@ static const DcAppLookupIndex DC_APP_LOOKUP_INDEX_UNDEFINED = -1;
 
 typedef DcAppLookupIndex   DcAppVarIndex;
 typedef DcAppLookupIndex   DcAppValIndex;
-static const DcAppVarIndex DC_APP_VAR_INDEX_UNDEFINED = DC_APP_LOOKUP_INDEX_UNDEFINED;
-static const DcAppValIndex DC_APP_VAL_INDEX_UNDEFINED = DC_APP_LOOKUP_INDEX_UNDEFINED;
+typedef DcAppLookupIndex   DcAppStyleIndex;
+static const DcAppVarIndex DC_APP_VAR_INDEX_UNDEFINED   = DC_APP_LOOKUP_INDEX_UNDEFINED;
+static const DcAppValIndex DC_APP_VAL_INDEX_UNDEFINED   = DC_APP_LOOKUP_INDEX_UNDEFINED;
+static const DcAppValIndex DC_APP_STYLE_INDEX_UNDEFINED = DC_APP_LOOKUP_INDEX_UNDEFINED;
 
 typedef struct _DcAppLookupVar {
     void         *extern_data;
@@ -32,10 +38,6 @@ extern "C" {
 // lookup functions
 DcAppLookup *dc_app_lookup_create(void);
 void         dc_app_lookup_cleanup(DcAppLookup *lookup);
-
-void        dc_app_lookup_set_const_by_name(DcAppLookup *lookup, const char *name, const char *new_value);
-const char *dc_app_lookup_get_const_by_name(DcAppLookup *lookup, const char *name);
-void        dc_app_lookup_dereference_constants(DcAppLookup *lookup, const char *in, char *out, size_t out_size);
 
 DcValueType dc_app_value_type_from_string(const char *type_str);
 
