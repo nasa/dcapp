@@ -56,7 +56,8 @@ static xmlChar        *_get_style_content(_ConfigContext *context, int style_ind
 // xml utils
 static char *_get_xml_node_attr(_ConfigContext *context, xmlNodePtr xml_node, DcAppElemType elem_type, int style_index, const char *name);
 static char *_get_xml_node_content(_ConfigContext *context, xmlNodePtr xml_node, DcAppElemType elem_type, int style_index);
-static void  _clean_xml_node(_ConfigContext *context, xmlNodePtr node, const char *directory);
+static void  _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory);
+void         _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr node);
 
 DcAppConfig *dc_app_config_create(const char *config_path) {
     DcAppConfig *config = (DcAppConfig *)malloc(sizeof(DcAppConfig));
@@ -287,7 +288,7 @@ void dc_app_config_clean_xml(DcAppConfig *config, DcAppLookup *lookup) {
     config->xml_doc_is_cleaned = true;
 }
 
-void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, const char *directory) {
+void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) {
 
     // remove if not an element
     if (node->type != XML_ELEMENT_NODE && node->type != XML_TEXT_NODE) {
@@ -303,31 +304,8 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, const char *direc
     // get element type
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(node);
 
-    // expands constants on each attribute
-    xmlAttrPtr attr = node->properties;
-    while (attr) {
-        xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-        if (value) {
-            char cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
-            _dereference_constants(context, (char *)value, cleaned_value, sizeof(cleaned_value));
-            xmlSetProp(node, attr->name, BAD_CAST cleaned_value);
-            xmlFree(value);
-        }
-        attr = attr->next;
-    }
-
-    // expand constants in text content
-    xmlNodePtr child = node->children;
-    while (child) {
-        if (child->type == XML_TEXT_NODE) {
-            xmlChar *value = xmlNodeGetContent(child);
-            char     cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
-            _dereference_constants(context, (char *)value, cleaned_value, sizeof(cleaned_value));
-            xmlNodeSetContent(child, BAD_CAST "asdf");
-            xmlFree(value);
-        }
-        child = child->next;
-    }
+    // dereference attributes/content
+    _dereference_node_attrs_and_content(context, node);
 
     // load style attributes, if it exists
     xmlChar *style_name = xmlGetProp(node, BAD_CAST "Style");
@@ -345,24 +323,26 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, const char *direc
                 }
             }
         }
-
         xmlFree(style_name);
     }
 
     // load default attributes
-    xmlNodePtr      style_xml_node = context->sb_styles[_STYLE_INDEX_DEFAULT].xml_nodes[elem_type];
-    for (xmlAttrPtr attr = style_xml_node->properties; attr; attr = attr->next) {
-        xmlAttrPtr existing = xmlHasProp(node, attr->name);
-        if (!existing) {
-            xmlChar *value = xmlGetProp(style_xml_node, attr->name);
-            if (value) {
-                xmlSetProp(node, attr->name, value);
-                xmlFree(value);
+    xmlNodePtr style_xml_node = context->sb_styles[_STYLE_INDEX_DEFAULT].xml_nodes[elem_type];
+    if (style_xml_node) {
+        for (xmlAttrPtr attr = style_xml_node->properties; attr; attr = attr->next) {
+            xmlAttrPtr existing = xmlHasProp(node, attr->name);
+            if (!existing) {
+                xmlChar *value = xmlGetProp(style_xml_node, attr->name);
+                if (value) {
+                    xmlSetProp(node, attr->name, value);
+                    xmlFree(value);
+                }
             }
         }
     }
 
     // processing before targeting children
+    char new_directory[DC_UTILS_FILEPATH_BUFFER_SIZE];
     switch (elem_type) {
 
         case DC_APP_ELEM_TYPE_CONSTANT: {
@@ -382,8 +362,8 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, const char *direc
             strncpy(cleaned_value, value, DC_VALUE_STRING_BUFFER_SIZE - 1);
             free(value);
 
-            _set_const_by_name(context, name, value);
-            break;
+            _set_const_by_name(context, cleaned_name, cleaned_value);
+            return;
         }
 
         // remove "Dummy" level, keep children
@@ -442,7 +422,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, const char *direc
             strncpy(cleaned_filepath, filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
             free(filepath);
 
-            // get canonical path
+            // get canonical path, assign to File attribute
             char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
             if (dc_utils_is_relative_path(cleaned_filepath)) {
                 char abs_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
@@ -453,7 +433,11 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, const char *direc
             }
 
             // create new prop, assign to <Include> node
-            xmlAttrPtr directory_prop = xmlNewProp(node, (xmlChar *)("Directory"), (xmlChar *)(directory));
+            xmlAttrPtr directory_prop = xmlSetProp(node, (xmlChar *)("File"), (xmlChar *)(canon_filepath));
+
+            // get canonical directory
+            dc_utils_get_directory(canon_filepath, new_directory, sizeof(new_directory));
+            directory = new_directory;
 
             // read XML file
             xmlDocPtr sub_doc = xmlReadFile(canon_filepath, NULL, XML_PARSE_NOBLANKS);
@@ -477,12 +461,46 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, const char *direc
             xmlFreeDoc(sub_doc);
             break;
         }
+
+        case DC_APP_ELEM_TYPE_STYLE: {
+
+            // get style name
+            xmlChar *style_name = xmlGetProp(node, BAD_CAST "Name");
+            if (!style_name) {
+                fprintf(stderr, "DCAPP _clean_xml_node(): Style name missing in <Style> definition\n");
+            }
+
+            // clean children, add styles
+            xmlNodePtr child = node->children;
+            while (child) {
+
+                xmlNodePtr child_next = child->next;
+
+                // clone child node
+                xmlNodePtr orphan_child = xmlCopyNode(child, 0);  // shallow: no children
+                xmlCopyPropList(orphan_child, child->properties); // copy all attributes
+                xmlChar *txt = xmlNodeGetContent(child);          // text from entire subtree
+                xmlNodeSetContent(orphan_child, txt);             // one text node on dup
+                xmlFree(txt);
+
+                // dereference constants
+                _dereference_node_attrs_and_content(context, orphan_child);
+
+                // add to styles
+                _add_style(context, (char *)style_name, elem_type, orphan_child);
+
+                // increment
+                child = child_next;
+            }
+            return;
+        }
+
         default:
             break;
     }
 
     // clean children
-    child = node->children;
+    xmlNodePtr child = node->children;
     while (child) {
         xmlNodePtr child_next = child->next;
         _clean_xml_node(context, child, directory);
@@ -520,13 +538,11 @@ void _add_const(_ConfigContext *context, const char *name, const char *value) {
 
     // add const name to buffer
     sbpush(context->sb_const_name_offsets, sbcount(context->sb_const_names));
-    sbpushn(context->sb_const_names, name, strlen(name));
-    sbpush(context->sb_const_names, '\0');
+    sbpushn(context->sb_const_names, name, strlen(name) + 1);
 
     // set const to value
     char *buffer = NULL;
-    sbpushn(buffer, value, strlen(value));
-    sbpush(buffer, '\0');
+    sbpushn(buffer, value, strlen(value) + 1);
     sbpush(context->sb_const_vals, buffer);
 }
 
@@ -547,7 +563,7 @@ void _set_const_by_name(_ConfigContext *context, const char *name, const char *n
 }
 
 // set a consts value (public)
-static void set_const_by_name(DcAppConfig *config, const char *name, const char *new_value) {
+void dc_app_config_set_const_by_name(DcAppConfig *config, const char *name, const char *new_value) {
     _ConfigContext *context = &(_sb_contexts[config->_index]);
     _set_const_by_name(context, name, new_value);
 }
@@ -712,6 +728,7 @@ static xmlChar *_get_style_attr(_ConfigContext *context, int style_index, DcAppE
     if (value) {
         return value;
     }
+    return NULL;
 }
 
 static xmlChar *_get_style_content(_ConfigContext *context, int style_index, DcAppElemType elem_type) {
@@ -719,6 +736,36 @@ static xmlChar *_get_style_content(_ConfigContext *context, int style_index, DcA
     xmlChar   *value          = xmlNodeGetContent(style_xml_node);
     if (value) {
         return value;
+    }
+    return NULL;
+}
+
+void _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr node) {
+
+    // expands constants on each attribute
+    xmlAttrPtr attr = node->properties;
+    while (attr) {
+        xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+        if (value) {
+            char cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
+            _dereference_constants(context, (char *)value, cleaned_value, sizeof(cleaned_value));
+            xmlSetProp(node, attr->name, BAD_CAST cleaned_value);
+            xmlFree(value);
+        }
+        attr = attr->next;
+    }
+
+    // expand constants in text content
+    xmlNodePtr child = node->children;
+    while (child) {
+        if (child->type == XML_TEXT_NODE) {
+            xmlChar *value = xmlNodeGetContent(child);
+            char     cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
+            _dereference_constants(context, (char *)value, cleaned_value, sizeof(cleaned_value));
+            xmlNodeSetContent(child, BAD_CAST cleaned_value);
+            xmlFree(value);
+        }
+        child = child->next;
     }
 }
 

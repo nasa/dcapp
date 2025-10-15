@@ -7,7 +7,7 @@
     <Constant Name="Constant1">Constant2</Constant>
     <Constant Name="Constant2">30</Constant>
 
-    <Variable Type="Double" InitialValue="#Constant2">ROTATE</Variable>
+    <Variable Type="Double" InitialValue="##Constant1">ROTATE</Variable>
 
     <Variable Type="Float" InitialValue="0">COLOR_R</Variable>
     <Variable Type="Float" InitialValue=".25">COLOR_G</Variable>

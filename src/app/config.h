@@ -38,7 +38,7 @@ void         dc_app_config_clean_xml(DcAppConfig *config, DcAppLookup *lookup);
 void         dc_app_config_save_to_file(DcAppConfig *config, const char *filepath);
 
 // const
-static void set_const_by_name(DcAppConfig *config, const char *name, const char *new_value);
+void dc_app_config_set_const_by_name(DcAppConfig *config, const char *name, const char *new_value);
 
 
 #ifdef __cplusplus

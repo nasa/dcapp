@@ -763,29 +763,6 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             break;
         }
 
-        case DC_APP_ELEM_TYPE_CONSTANT: {
-
-            
-            char *raw_name = (char *)xmlGetProp(xml_node, (xmlChar *)("Name"));
-            if (!raw_name) {
-                fprintf(stderr, "DCAPP _process_node(): 'Name' attribute missing in <Constant> definition\n");
-            }
-            char cleaned_name[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_name, raw_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
-            free(raw_name);
-
-            char *raw_value = (char *)xmlNodeGetContent(xml_node);
-            if (!raw_value) {
-                fprintf(stderr, "DCAPP _process_node(): Node content missing in <Constant> definition\n");
-            }
-            char cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_value, raw_value, DC_VALUE_STRING_BUFFER_SIZE - 1);
-            free(raw_value);
-
-            dc_app_lookup_set_const_by_name(data.lookup, cleaned_name, cleaned_value);
-            break;
-        }
-
         case DC_APP_ELEM_TYPE_CONTAINER: {
             _Node dc_node;
             dc_node.type = NODE_TYPE_CONTAINER;
