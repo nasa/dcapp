@@ -505,12 +505,15 @@ PL_EXPORT void pl_app_resize(_PlAppData *pl_app_data) {
     _ext_starter->resize();
 }
 
-PL_EXPORT void pl_app_update(_PlAppData *pl_app_data) {
+static long long _frame_count;
+PL_EXPORT void   pl_app_update(_PlAppData *pl_app_data) {
     // this needs to be the first call when using the starter
     // extension. You must return if it returns false (usually a swapchain recreation).
     if (!_ext_starter->begin_frame()) {
         return;
     }
+
+    _frame_count++;
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -724,11 +727,6 @@ static _NodeIndex _process_node_children(xmlNodePtr xml_node, _NodeIndex node_in
 
             // if the current node and child exists
             if (node && child_node) {
-                // set child's parent
-                child_node->parent = node_index;
-
-                // set child's next (empty for now)
-                child_node->next = NODE_INDEX_UNDEFINED;
 
                 // set nodes's first child if this is the first child
                 if (previous_child_node_index == NODE_INDEX_UNDEFINED) {
@@ -738,14 +736,20 @@ static _NodeIndex _process_node_children(xmlNodePtr xml_node, _NodeIndex node_in
 
             // if there is a previous node
             if (previous_child_node) {
+
                 // set the next node of the previous node
                 previous_child_node->next = child_node_index;
             }
 
-            // set previous child node
-            if (child_node_index != NODE_INDEX_UNDEFINED) {
-                previous_child_node_index = child_node_index;
+            // set previous child node, accounting for cases where the
+            // child node is actually a node list
+            _NodeIndex last_child_node_index = child_node_index;
+            _Node     *last_child_node       = _index_to_node(last_child_node_index);
+            while (last_child_node->next != NODE_INDEX_UNDEFINED) {
+                last_child_node_index = last_child_node->next;
+                last_child_node       = _index_to_node(last_child_node_index);
             }
+            previous_child_node_index = last_child_node_index;
         }
 
         // increment pointer
@@ -757,25 +761,24 @@ static _NodeIndex _process_node_children(xmlNodePtr xml_node, _NodeIndex node_in
 
 static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, _ValIndex2 parent_dimensions, const char *directory) {
 
-    // by default, the element is not a node
-    _NodeIndex node_index = NODE_INDEX_UNDEFINED;
-
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
     switch (elem_type) {
 
-        // ignore non-element nodes
         case DC_APP_ELEM_TYPE_NONELEM: {
-            break;
+            // ignore non-element nodes
+            return NODE_INDEX_UNDEFINED;
         }
 
         case DC_APP_ELEM_TYPE_CONSTANT: {
             // ignore at this point
-            break;
+            return NODE_INDEX_UNDEFINED;
         }
 
         case DC_APP_ELEM_TYPE_CONTAINER: {
             _Node dc_node;
-            dc_node.type = NODE_TYPE_CONTAINER;
+            dc_node.type   = NODE_TYPE_CONTAINER;
+            dc_node.parent = parent_node_index;
+            dc_node.next   = NODE_INDEX_UNDEFINED;
 
             // x position
             xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
@@ -952,7 +955,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // register node
-            node_index = _register_node(&dc_node);
+            _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
             _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, dc_node.container.virtual_dimensions, directory);
@@ -960,21 +963,23 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             // update child index
             _Node *node           = _index_to_node(node_index);
             node->container.child = first_child_index;
-            break;
+
+            // return
+            return node_index;
         }
 
         // really just the root element, left in for legacy reasons
         case DC_APP_ELEM_TYPE_DCAPP: {
-            _process_node_children(xml_node, node_index, elem_type, parent_dimensions, directory);
-            break;
+            _process_node_children(xml_node, NODE_INDEX_UNDEFINED, elem_type, parent_dimensions, directory);
+            return NODE_INDEX_UNDEFINED;
         }
 
         case DC_APP_ELEM_TYPE_DEFAULT: {
             // ignore at this point
-            break;
+            return NODE_INDEX_UNDEFINED;
         }
 
-        case DC_APP_ELEM_TYPE_FALSE:
+        case DC_APP_ELEM_TYPE_FALSE: {
             switch (parent_elem_type) {
                 case DC_APP_ELEM_TYPE_IF: {
 
@@ -989,12 +994,15 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 default:
                     fprintf(stderr, "DCAPP _process_node(): Invalid elem parent of type %s for <False>\n", dc_app_elem_type_to_string(parent_elem_type));
             }
-            break;
+            return NODE_INDEX_UNDEFINED;
+        }
 
         case DC_APP_ELEM_TYPE_IF: {
 
             _Node dc_node                   = {};
             dc_node.type                    = NODE_TYPE_CONDITIONAL;
+            dc_node.parent                  = parent_node_index;
+            dc_node.next                    = NODE_INDEX_UNDEFINED;
             dc_node.conditional.value1      = DC_APP_VAL_INDEX_UNDEFINED;
             dc_node.conditional.value2      = DC_APP_VAL_INDEX_UNDEFINED;
             dc_node.conditional.child_true  = NODE_INDEX_UNDEFINED;
@@ -1036,7 +1044,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // register node
-            node_index = _register_node(&dc_node);
+            _NodeIndex node_index = _register_node(&dc_node);
 
             // process children (assigning to true/false handled in separate cases, e.g. DC_APP_ELEM_TYPE_TRUE)
             _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, parent_dimensions, directory);
@@ -1052,26 +1060,28 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     printf("DCApp _process_node: Conditional: <If> element has <True> explicit and implicit elements. Ignoring the implicit definitions\n");
                 }
             }
-            break;
+
+            // return
+            return node_index;
         }
 
         // at this point, just used to set the directory path
         case DC_APP_ELEM_TYPE_INCLUDE: {
 
-            xmlChar *directory = xmlGetProp(xml_node, BAD_CAST "Directory");
-            if (directory) {
-                node_index = _process_node_children(xml_node, parent_node_index, parent_elem_type, parent_dimensions, (const char *)directory);
-            } else {
-                // should never get here
-                fprintf(stderr, "DCApp _process_node(): invalid condition: include with no directory\n");
-            }
-            break;
+            xmlChar *file = xmlGetProp(xml_node, BAD_CAST "File");
+            char     directory[DC_UTILS_FILEPATH_BUFFER_SIZE];
+            dc_utils_get_directory((const char *)file, directory, sizeof(directory));
+            return _process_node_children(xml_node, parent_node_index, parent_elem_type, parent_dimensions, directory);
         }
 
         case DC_APP_ELEM_TYPE_LOGIC: {
 
             if (data.logic_lib) {
                 fprintf(stderr, "DCApp _process_node(): duplicate <Logic> definitions\n");
+            }
+
+            if (dc_app_lookup_get_var_count(data.lookup)) {
+                printf("DCApp _process_node(): Warning: Declaring <Logic> after <Variables> have been defined. Ensure this behavior is intended.\n");
             }
 
             xmlChar *raw_filepath = xmlGetProp(xml_node, BAD_CAST "File");
@@ -1107,12 +1117,16 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             } else {
                 fprintf(stderr, "DCAPP _process_node(): <Logic> has no File element\n");
             }
-            break;
+
+            // return
+            return NODE_INDEX_UNDEFINED;
         }
 
         case DC_APP_ELEM_TYPE_PANEL: {
-            _Node dc_node = {};
-            dc_node.type  = NODE_TYPE_PANEL;
+            _Node dc_node  = {};
+            dc_node.type   = NODE_TYPE_PANEL;
+            dc_node.parent = parent_node_index;
+            dc_node.next   = NODE_INDEX_UNDEFINED;
 
             // parent dimensions
             dc_node.panel.parent_dimensions = parent_dimensions;
@@ -1140,7 +1154,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // register node
-            node_index = _register_node(&dc_node);
+            _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
             _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, dc_node.panel.virtual_dimensions, directory);
@@ -1148,12 +1162,16 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             // update child index
             _Node *node       = _index_to_node(node_index);
             node->panel.child = first_child_index;
-            break;
+
+            // return
+            return node_index;
         }
 
         case DC_APP_ELEM_TYPE_POLYGON: {
-            _Node dc_node = {};
-            dc_node.type  = NODE_TYPE_POLYGON;
+            _Node dc_node  = {};
+            dc_node.type   = NODE_TYPE_POLYGON;
+            dc_node.parent = parent_node_index;
+            dc_node.next   = NODE_INDEX_UNDEFINED;
 
             dc_node.polygon.fill_enabled = _load_color_from_string(xml_node, "FillColor", &(dc_node.polygon.fill_color));
             dc_node.polygon.line_enabled = _load_color_from_string(xml_node, "LineColor", &(dc_node.polygon.line_color));
@@ -1232,17 +1250,21 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // register node
-            node_index = _register_node(&dc_node);
+            _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
             _process_node_children(xml_node, node_index, elem_type, parent_dimensions, directory);
-            break;
+
+            // return
+            return node_index;
         }
 
         case DC_APP_ELEM_TYPE_SET: {
 
-            _Node dc_node = {};
-            dc_node.type  = NODE_TYPE_SET;
+            _Node dc_node  = {};
+            dc_node.type   = NODE_TYPE_SET;
+            dc_node.parent = parent_node_index;
+            dc_node.next   = NODE_INDEX_UNDEFINED;
 
             // variable
             xmlChar *raw_variable = xmlGetProp(xml_node, BAD_CAST "Variable");
@@ -1279,18 +1301,19 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // register node
-            node_index = _register_node(&dc_node);
-            break;
+            return _register_node(&dc_node);
         }
 
         case DC_APP_ELEM_TYPE_STYLE: {
             // ignore at this point
-            break;
+            return NODE_INDEX_UNDEFINED;
         }
 
         case DC_APP_ELEM_TYPE_TERRAIN: {
-            _Node dc_node = {};
-            dc_node.type  = NODE_TYPE_TERRAIN;
+            _Node dc_node  = {};
+            dc_node.type   = NODE_TYPE_TERRAIN;
+            dc_node.parent = parent_node_index;
+            dc_node.next   = NODE_INDEX_UNDEFINED;
 
             // x position
             xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
@@ -1511,11 +1534,13 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // register node
-            node_index = _register_node(&dc_node);
+            _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
             _process_node_children(xml_node, node_index, elem_type, parent_dimensions, directory);
-            break;
+
+            // return
+            return node_index;
         }
 
         case DC_APP_ELEM_TYPE_TERRAIN_DEM: {
@@ -1553,12 +1578,16 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 default:
                     fprintf(stderr, "DCApp _process_node(): Invalid parent of type %s for TerrainDEM\n", _node_type_to_string(parent_node->type));
             }
-            break;
+
+            // return
+            return NODE_INDEX_UNDEFINED;
         }
 
         case DC_APP_ELEM_TYPE_TEXT: {
-            _Node dc_node = {};
-            dc_node.type  = NODE_TYPE_TEXT;
+            _Node dc_node  = {};
+            dc_node.type   = NODE_TYPE_TEXT;
+            dc_node.parent = parent_node_index;
+            dc_node.next   = NODE_INDEX_UNDEFINED;
 
             // text
             xmlChar *raw_text = xmlNodeGetContent(xml_node);
@@ -1819,8 +1848,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             dc_node.text.line_enabled = _load_color_from_string(xml_node, "LineColor", &(dc_node.text.line_color));
 
             // register node
-            node_index = _register_node(&dc_node);
-            break;
+            return _register_node(&dc_node);
         }
 
         case DC_APP_ELEM_TYPE_TRICK_FROM: {
@@ -1834,7 +1862,9 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     break;
                 }
             }
-            break;
+
+            // return
+            return NODE_INDEX_UNDEFINED;
         }
 
         case DC_APP_ELEM_TYPE_TRICK_IO: {
@@ -1879,7 +1909,8 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             // process children
             _process_node_children(xml_node, NODE_INDEX_UNDEFINED, elem_type, parent_dimensions, directory);
 
-            break;
+            // return
+            return NODE_INDEX_UNDEFINED;
         }
 
         case DC_APP_ELEM_TYPE_TRICK_TO: {
@@ -1893,7 +1924,9 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     break;
                 }
             }
-            break;
+
+            // return
+            return NODE_INDEX_UNDEFINED;
         }
 
         case DC_APP_ELEM_TYPE_TRICK_VARIABLE: {
@@ -1967,10 +2000,12 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     fprintf(stderr, "DCApp _process_node(): Invalid parent for TrickVariable\n");
                     break;
             }
-            break;
+
+            // return
+            return NODE_INDEX_UNDEFINED;
         }
 
-        case DC_APP_ELEM_TYPE_TRUE:
+        case DC_APP_ELEM_TYPE_TRUE: {
             switch (parent_elem_type) {
                 case DC_APP_ELEM_TYPE_IF: {
 
@@ -1985,7 +2020,10 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 default:
                     fprintf(stderr, "DCApp _process_node(): Invalid elem parent of type %s for <True>.\n", dc_app_elem_type_to_string(parent_elem_type));
             }
-            break;
+
+            // return
+            return NODE_INDEX_UNDEFINED;
+        }
 
         case DC_APP_ELEM_TYPE_VARIABLE: {
 
@@ -2033,7 +2071,8 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 dc_app_lookup_refresh_var_from_value(data.lookup, var_index);
             }
 
-            break;
+            // return
+            return NODE_INDEX_UNDEFINED;
         }
 
         case DC_APP_ELEM_TYPE_VERTEX: {
@@ -2074,12 +2113,16 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 default:
                     fprintf(stderr, "DCApp _process_node(): Invalid parent of type %s for vertex\n", _node_type_to_string(parent_node->type));
             }
-            break;
+
+            // return
+            return NODE_INDEX_UNDEFINED;
         }
 
         case DC_APP_ELEM_TYPE_WINDOW: {
             _Node dc_node;
-            dc_node.type = NODE_TYPE_WINDOW;
+            dc_node.type   = NODE_TYPE_WINDOW;
+            dc_node.parent = parent_node_index;
+            dc_node.next   = NODE_INDEX_UNDEFINED;
 
             // title
             xmlChar *raw_title = xmlGetProp(xml_node, BAD_CAST "Title");
@@ -2161,7 +2204,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // register node
-            node_index = _register_node(&dc_node);
+            _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
             _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, dc_node.window.virtual_dimensions, directory);
@@ -2172,14 +2215,18 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
 
             // set global window
             data.window = node_index;
-            break;
+
+            // return
+            return node_index;
         }
+
         default:
             fprintf(stderr, "DCApp _process_node(): Invalid node type found\n");
-            break;
+            return NODE_INDEX_UNDEFINED;
     }
 
-    return node_index;
+    fprintf(stderr, "DCApp _process_node(): Unhandled switch statement\n");
+    return NODE_INDEX_UNDEFINED;
 }
 
 static void _draw_node_list(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *node_transform) {

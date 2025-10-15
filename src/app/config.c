@@ -407,11 +407,21 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                 node->parent   = NULL;
                 node->next     = NULL;
                 node->prev     = NULL;
+
+                // process children
+                xmlNodePtr child = first_child;
+                while (child) {
+                    xmlNodePtr child_next = child->next;
+                    _clean_xml_node(context, child, directory);
+                    child = child_next;
+                }
             } else {
                 xmlUnlinkNode(node);
             }
+
+            // free old node
             xmlFreeNode(node);
-            break;
+            return;
         }
 
         case DC_APP_ELEM_TYPE_INCLUDE: {
@@ -419,7 +429,10 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             // get include file name
             xmlChar *filepath = xmlNodeGetContent(node);
             if (!filepath) {
-                fprintf(stderr, "DCAPP _clean_xml_node(): Node content missing in <Include> definition\n");
+                filepath = xmlGetProp(node, BAD_CAST "File");
+                if (!filepath) {
+                    fprintf(stderr, "DCAPP _clean_xml_node(): Node content missing in <Include> definition\n");
+                }
             }
             char cleaned_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
             strncpy(cleaned_filepath, (const char *)filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -455,13 +468,14 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             }
 
             // replace child (text) with subnode
-            xmlNodePtr new_node = xmlDocCopyNode(sub_node, sub_node->doc, 1);
+            xmlNodePtr new_node = xmlDocCopyNode(sub_node, node->doc, 1);
             xmlNodePtr old_node = xmlReplaceNode(node->children, new_node);
 
             // free old node/doc
             xmlUnlinkNode(old_node);
             xmlFreeNode(old_node);
             xmlFreeDoc(sub_doc);
+
             break;
         }
 
@@ -506,6 +520,9 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
         default:
             break;
     }
+
+    // save to file
+    // xmlSaveFormatFile("/data/nreagan/dcapp-pl/cache/xml.log", node->doc, 1);
 
     // clean children
     xmlNodePtr child = node->children;
@@ -646,7 +663,7 @@ void _dereference_constants(_ConfigContext *context, const char *in, char *out, 
                 subtext_length_with_symbols = subtext_length + 2;
             } else {
                 static const char *valid_chars       = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_#$";
-                int                subtext_end_index = dc_utils_str_find_first_not_of(&(in[in_index + 1]), valid_chars);
+                int                subtext_end_index = dc_utils_str_find_first_not_of(&(in[in_index]), valid_chars);
                 if (subtext_end_index == -1) {
                     subtext_end_index = in_length;
                 }

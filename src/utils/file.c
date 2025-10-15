@@ -169,7 +169,7 @@ int dc_utils_canonicalize_path(const char *path, char *out, size_t out_size) {
 #endif
 
     if (!fullpath) {
-        fprintf(stderr, "DCAPP dc_utils_canonicalize_path(): invalid path returned from syscall\n");
+        fprintf(stderr, "DCAPP dc_utils_canonicalize_path(): invalid path returned from syscall: %s\n", path);
         return -1;
     } else if (strlen(fullpath) >= out_size) {
         fprintf(stderr, "DCAPP dc_utils_canonicalize_path(): canonical path too long for buffer\n");

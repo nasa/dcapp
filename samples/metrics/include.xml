@@ -1,0 +1,13 @@
+<Dummy>
+    <Polygon FillColor="1 0 0 .5" LineColor="1 1 1" LineWidth="2">
+        <Vertex X="100" Y="0" />
+        <Vertex X="400" Y="0" />
+        <Vertex X="100" Y="300" />
+    </Polygon>
+
+    <Polygon FillColor="1 0 0 .5" LineColor="1 1 1" LineWidth="2">
+        <Vertex X="300" Y="0" />
+        <Vertex X="500" Y="0" />
+        <Vertex X="200" Y="300" />
+    </Polygon>
+</Dummy>

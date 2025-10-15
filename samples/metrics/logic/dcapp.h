@@ -2,9 +2,10 @@
 // THIS FILE IS AUTO-GENERATED -- DO NOT EDIT!!! //
 // ********************************************* //
 
-#pragma once
+#ifndef _DCAPP_LOGIC_HEADER_
+#define _DCAPP_LOGIC_HEADER_
 
-#include <string>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,8 +16,10 @@ void DisplayInit();
 void DisplayDraw();
 void DisplayClose();
 
-double      ROTATION;
+double ROTATION;
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

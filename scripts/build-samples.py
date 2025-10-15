@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     # paths
     genHeader = dcappHome + "/pilotlight/out/dcapp-genheader"
-    testDirs = [dcappHome + "/samples/test", dcappHome + "/samples/local"]
+    testDirs = [dcappHome + "/samples/test", dcappHome + "/samples/local", dcappHome + "/samples/metrics"]
 
     # platform specific execution
     if plat.system() == "Windows":
@@ -25,10 +25,10 @@ if __name__ == "__main__":
             if os.path.exists(testDir):
                 os.chdir(testDir)
                 subprocess.run([genHeader, "test.xml"], check=True)
-                subprocess.run(["clang -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so"], check=True)
+                subprocess.run("clang -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so", shell=True, check=True)
     elif plat.system() == "Linux":
         for testDir in testDirs:
             if os.path.exists(testDir):
                 os.chdir(testDir)
                 subprocess.run([genHeader, "test.xml"], check=True)
-                subprocess.run(["gcc -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so"], check=True)
+                subprocess.run("gcc -g -O2 -fPIC -shared logic/logic.cpp -o logic/logic.so", shell=True, check=True)

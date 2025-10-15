@@ -9,16 +9,13 @@
       "args": [
         "-a",
         "dcapp",
-        "${workspaceFolder}/samples/test/test.xml"
+        "${workspaceFolder}/samples/metrics/test.xml"
       ],
       "cwd": "${workspaceFolder}/pilotlight/out",
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb",
-      "preLaunchTask": "build dcapp-debug (linux)",
-      "exceptionBreakpoints": {
-        "all": false,
-        "uncaught": true
-      }    },
+      "preLaunchTask": "build dcapp-debug (linux)"
+    },
     {
       "name": "dcapp (macos)",
       "type": "lldb",
