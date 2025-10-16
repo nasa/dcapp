@@ -47,7 +47,7 @@
       </Polygon>
 
       <Container Width="500" Height="500" X="0" Y="0" OriginX="500" OriginY="500" VirtualWidth="1000" VirtualHeight="1000" Rotation="@ROTATE">
-        <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="1">
+        <Polygon FillColor="#_color_green_ .25" LineColor="1 1 1" LineWidth="1">
           <Vertex X="0" Y="0" />
           <Vertex X="0" Y="-1000" />
           <Vertex X="-1000" Y="-1000" />
@@ -57,33 +57,33 @@
 
       <Container Width="1000" Height="1000" OriginX="500" OriginY="500" X="0" Y="0" VirtualWidth="1000" VirtualHeight="1000" Rotation="@ROTATE">
 
-        <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="1">
+        <Polygon FillColor="#_color_green_ .25" LineColor="1 1 1" LineWidth="1">
           <Vertex X="100" Y="100" />
           <Vertex X="200" Y="380" />
           <Vertex X="440" Y="280" />
         </Polygon>
 
-        <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="2">
+        <Polygon FillColor="#_color_green_ .25" LineColor="1 1 1" LineWidth="2">
           <Vertex X="25" Y="100" />
           <Vertex X="125" Y="380" />
           <Vertex X="250" Y="280" />
         </Polygon>
 
-        <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="20">
+        <Polygon FillColor="#_color_green_ .25" LineColor="1 1 1" LineWidth="20">
           <Vertex X="100" Y="250" />
           <Vertex X="500" Y="400" />
           <Vertex X="600" Y="80" />
           <Vertex X="200" Y="80" />
         </Polygon>
 
-        <Polygon FillColor="1 0 0 .5" LineColor="1 1 1 .5" LineWidth="3">
+        <Polygon FillColor="#_color_red_ .5" LineColor="1 1 1 .5" LineWidth="3" Rotation="@ROTATE" PivotPointX="0" PivotPointY="150">
           <Vertex X="0" Y="250" />
           <Vertex X="-250" Y="-250" />
           <Vertex X="250" Y="-250" />
         </Polygon>
 
         <Container X="500" Y="500" Width="500" Height="500">
-          <Polygon FillColor="0 1 0 1" LineColor="1 1 1" LineWidth="2">
+          <Polygon FillColor="#_color_green_ .25" LineColor="1 1 1" LineWidth="2">
             <Vertex X="25" Y="100" />
             <Vertex X="125" Y="380" />
             <Vertex X="250" Y="280" />

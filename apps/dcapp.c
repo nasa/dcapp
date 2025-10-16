@@ -2245,53 +2245,143 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
     _Node *node = _index_to_node(node_index);
     switch (node->type) {
         case NODE_TYPE_CONTAINER: {
-            double x_position = 0;
-            switch (dc_app_lookup_get_value(data.lookup, node->container.alignment.x)->value_integer) {
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    x_position = dc_app_lookup_get_value(data.lookup, node->container.position.x)->value_double;
-                    break;
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    x_position = dc_app_lookup_get_value(data.lookup, node->container.position.x)->value_double - dc_app_lookup_get_value(data.lookup, node->container.dimensions.x)->value_double / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    x_position = dc_app_lookup_get_value(data.lookup, node->container.position.x)->value_double - dc_app_lookup_get_value(data.lookup, node->container.dimensions.x)->value_double;
-                    break;
-            }
 
-            double y_position = 0;
-            switch (dc_app_lookup_get_value(data.lookup, node->container.alignment.y)->value_integer) {
-                case DC_APP_ALIGN_TYPE_BOTTOM:
-                    y_position = dc_app_lookup_get_value(data.lookup, node->container.position.y)->value_double;
-                    break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:
-                    y_position = dc_app_lookup_get_value(data.lookup, node->container.position.y)->value_double - dc_app_lookup_get_value(data.lookup, node->container.dimensions.y)->value_double / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_TOP:
-                    y_position = dc_app_lookup_get_value(data.lookup, node->container.position.y)->value_double - dc_app_lookup_get_value(data.lookup, node->container.dimensions.y)->value_double;
-                    break;
-            }
+            // all transform parameters
+            float          position[2]     = {(float)dc_app_lookup_get_value(data.lookup, node->container.position.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->container.position.y)->value_double};
+            float          origin[2]       = {(float)dc_app_lookup_get_value(data.lookup, node->container.origin.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->container.origin.y)->value_double};
+            DcAppAlignType alignment[2]    = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->container.alignment.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->container.alignment.y)->value_integer};
+            DcAppAlignType pivot_align[2]  = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->container.pivot_align.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->container.pivot_align.y)->value_integer};
+            float          rotation        = dc_app_lookup_get_value(data.lookup, node->container.rotation)->value_double;
+            float          size[2]         = {(float)dc_app_lookup_get_value(data.lookup, node->container.dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->container.dimensions.y)->value_double};
+            float          virtual_size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->container.virtual_dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->container.virtual_dimensions.y)->value_double};
 
-            plMat4 trans_origin_matrix = pl_mat4_translate_xyz(
-                dc_app_lookup_get_value(data.lookup, node->container.origin.x)->value_double,
-                dc_app_lookup_get_value(data.lookup, node->container.origin.y)->value_double,
-                0.0f);
-            plMat4 rotate_matrix = pl_mat4_rotate_vec3(
-                pl_radiansf(dc_app_lookup_get_value(data.lookup, node->container.rotation)->value_double),
-                (plVec3){0.0f, 0.0f, 1.0f});
-            plMat4 trans_position_matrix = pl_mat4_translate_xyz(
-                x_position,
-                y_position,
-                0.0f);
-            plMat4 scale_matrix = pl_mat4_scale_xyz(
-                dc_app_lookup_get_value(data.lookup, node->container.dimensions.x)->value_double / dc_app_lookup_get_value(data.lookup, node->container.virtual_dimensions.x)->value_double,
-                dc_app_lookup_get_value(data.lookup, node->container.dimensions.y)->value_double / dc_app_lookup_get_value(data.lookup, node->container.virtual_dimensions.y)->value_double,
+            // scale from virtual to real
+            plMat4 scale_xform = pl_mat4_scale_xyz(
+                size[0] / virtual_size[0],
+                size[1] / virtual_size[1],
                 1.0f);
 
-            plMat4 transform = (plMat4){0};
-            transform        = pl_mul_mat4t(parent_transform, &trans_origin_matrix);
-            transform        = pl_mul_mat4t(&transform, &rotate_matrix);
-            transform        = pl_mul_mat4t(&transform, &trans_position_matrix);
-            transform        = pl_mul_mat4t(&transform, &scale_matrix);
+            // move position
+            plMat4 trans_position_xform = pl_mat4_translate_xyz(
+                position[0],
+                position[1],
+                0.0f);
+
+            // move origin
+            plMat4 trans_origin_xform = pl_mat4_translate_xyz(
+                origin[0],
+                origin[1],
+                0.0f);
+
+            // move alignment
+            float trans_align_vec[2];
+            switch (alignment[0]) {
+                break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    trans_align_vec[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    trans_align_vec[0] = -1 * size[0] / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    trans_align_vec[0] = -1 * size[0];
+                    break;
+                default:
+                    fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", alignment[0]);
+                    break;
+            }
+            switch (alignment[1]) {
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    trans_align_vec[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    trans_align_vec[1] = -1 * size[1] / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    trans_align_vec[1] = -1 * size[1];
+                    break;
+                default:
+                    fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", alignment[1]);
+                    break;
+            }
+            plMat4 trans_align_xform = pl_mat4_translate_xyz(
+                trans_align_vec[0],
+                trans_align_vec[1],
+                0.0f);
+
+            // move to pivot
+            // either both pivot points need to be set, or neither
+            bool  use_local_pivot = pivot_align[0] != DC_APP_ALIGN_TYPE_UNDEFINED;
+            float trans_pivot_vec[2];
+            if (use_local_pivot) {
+                switch (pivot_align[0]) {
+                    case DC_APP_ALIGN_TYPE_LEFT:
+                        trans_pivot_vec[0] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_CENTER:
+                        trans_pivot_vec[0] = -1 * size[0] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:
+                        trans_pivot_vec[0] = -1 * size[0];
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown pivot alignment in <container> draw call: %d\n", pivot_align[0]);
+                        break;
+                }
+                switch (pivot_align[1]) {
+                    case DC_APP_ALIGN_TYPE_BOTTOM:
+                        trans_pivot_vec[1] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_MIDDLE:
+                        trans_pivot_vec[1] = -1 * size[1] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_TOP:
+                        trans_pivot_vec[1] = -1 * size[1];
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown pivot alignment in <container> draw call: %d\n", pivot_align[1]);
+                        break;
+                }
+            } else {
+                float pivot_point_x = dc_app_lookup_get_value(data.lookup, node->container.pivot_point.x)->value_double;
+                trans_pivot_vec[0]  = -1 * pivot_point_x;
+                float pivot_point_y = dc_app_lookup_get_value(data.lookup, node->container.pivot_point.y)->value_double;
+                trans_pivot_vec[1]  = -1 * pivot_point_y;
+            }
+            plMat4 trans_to_pivot_xform = pl_mat4_translate_xyz(
+                trans_pivot_vec[0],
+                trans_pivot_vec[1],
+                0.0f);
+
+            // rotate
+            plMat4 rotate_xform = pl_mat4_rotate_vec3(
+                pl_radiansf(rotation),
+                (plVec3){0.0f, 0.0f, 1.0f});
+
+            // reverse pivot move
+            plMat4 trans_from_pivot_xform = pl_mat4_translate_xyz(
+                -1 * trans_pivot_vec[0],
+                -1 * trans_pivot_vec[1],
+                0.0f);
+
+            // compute transform
+            plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+            if (!use_local_pivot) {
+                transform = pl_mul_mat4t(&transform, &trans_from_pivot_xform);
+                transform = pl_mul_mat4t(&transform, &rotate_xform);
+                transform = pl_mul_mat4t(&transform, &trans_to_pivot_xform);
+            }
+            transform = pl_mul_mat4t(&transform, &trans_align_xform);
+            transform = pl_mul_mat4t(&transform, &trans_position_xform);
+            transform = pl_mul_mat4t(&transform, &trans_origin_xform);
+            if (use_local_pivot) {
+                transform = pl_mul_mat4t(&transform, &trans_from_pivot_xform);
+                transform = pl_mul_mat4t(&transform, &rotate_xform);
+                transform = pl_mul_mat4t(&transform, &trans_to_pivot_xform);
+            }
+            transform = pl_mul_mat4t(&transform, &scale_xform);
+            transform = pl_mul_mat4t(parent_transform, &transform);
+
             _draw_node_list(pl_app_data, node->container.child, &transform);
             break;
         }
@@ -2342,17 +2432,61 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
         }
 
         case NODE_TYPE_PANEL: {
+
+            // all transform parameters
+            float parent_size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->panel.parent_dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->panel.parent_dimensions.y)->value_double};
+            float virtual_size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->panel.virtual_dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->panel.virtual_dimensions.y)->value_double};
+
+            // compute transforms
+            // scale from virtual to real dimensions
             plMat4 scale_matrix = pl_mat4_scale_xyz(
-                dc_app_lookup_get_value(data.lookup, node->panel.parent_dimensions.x)->value_double / dc_app_lookup_get_value(data.lookup, node->panel.virtual_dimensions.x)->value_double,
-                dc_app_lookup_get_value(data.lookup, node->panel.parent_dimensions.y)->value_double / dc_app_lookup_get_value(data.lookup, node->panel.virtual_dimensions.y)->value_double,
+                parent_size[0] / virtual_size[0],
+                parent_size[1] / virtual_size[1],
                 1.0f);
-            plMat4 transform = (plMat4){0};
-            transform        = pl_mul_mat4t(parent_transform, &scale_matrix);
+
+            plMat4 transform;
+            transform = pl_mul_mat4t(parent_transform, &scale_matrix);
             _draw_node_list(pl_app_data, node->panel.child, &transform);
-            break;
         }
 
         case NODE_TYPE_POLYGON: {
+
+            // all transform parameters
+            float          origin[2]       = {(float)dc_app_lookup_get_value(data.lookup, node->polygon.origin.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->polygon.origin.y)->value_double};
+            DcAppAlignType pivot_point[2]  = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->polygon.pivot_point.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->polygon.pivot_point.y)->value_integer};
+            float          rotation        = dc_app_lookup_get_value(data.lookup, node->polygon.rotation)->value_double;
+
+            // move origin
+            plMat4 trans_origin_xform = pl_mat4_translate_xyz(
+                origin[0],
+                origin[1],
+                0.0f);
+
+            // move to pivot            
+            plMat4 trans_to_pivot_xform = pl_mat4_translate_xyz(
+                -1.0 * pivot_point[0],
+                -1.0 * pivot_point[1],
+                0.0f);
+
+            // rotate
+            plMat4 rotate_xform = pl_mat4_rotate_vec3(
+                pl_radiansf(rotation),
+                (plVec3){0.0f, 0.0f, 1.0f});
+
+            // reverse pivot move
+            plMat4 trans_from_pivot_xform = pl_mat4_translate_xyz(
+                pivot_point[0],
+                pivot_point[1],
+                0.0f);
+
+            // compute transform
+            plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+            transform = pl_mul_mat4t(&transform, &trans_from_pivot_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_pivot_xform);
+            transform = pl_mul_mat4t(&transform, &trans_origin_xform);
+            transform = pl_mul_mat4t(parent_transform, &transform);
+
             // get points
             int    num_points = sbcount(node->polygon.sb_points);
             plVec2 points[num_points];
@@ -2361,7 +2495,7 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
                     (float)dc_app_lookup_get_value(data.lookup, node->polygon.sb_points[ii].x)->value_double,
                     (float)dc_app_lookup_get_value(data.lookup, node->polygon.sb_points[ii].y)->value_double,
                     0, 1};
-                point4     = pl_mul_mat4_vec4(parent_transform, point4);
+                point4     = pl_mul_mat4_vec4(&transform, point4);
                 points[ii] = (plVec2){point4.x, point4.y};
             }
 
@@ -2509,22 +2643,10 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
             float          rotation       = dc_app_lookup_get_value(data.lookup, node->terrain.rotation)->value_double;
             float          size[2]        = {(float)dc_app_lookup_get_value(data.lookup, node->terrain.dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->terrain.dimensions.y)->value_double};
 
-            // local flip over x axis
-            plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(
-                1.0f,
-                -1.0f,
-                1.0f);
-
             // move position
             plMat4 trans_position_xform = pl_mat4_translate_xyz(
                 position[0],
                 position[1],
-                0.0f);
-
-            // move from top-left reference to bottom-left
-            plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(
-                0,
-                size[1],
                 0.0f);
 
             // move origin
@@ -2639,8 +2761,6 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
                 transform4 = pl_mul_mat4t(&transform4, &rotate_xform);
                 transform4 = pl_mul_mat4t(&transform4, &trans_to_pivot_xform);
             }
-            transform4 = pl_mul_mat4t(&transform4, &trans_pl_origin_xform);
-            transform4 = pl_mul_mat4t(&transform4, &scale_invert_y_xform);
             transform4 = pl_mul_mat4t(parent_transform, &transform4);
 
             // convert to 3D matrix
@@ -2879,10 +2999,9 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
 
         case NODE_TYPE_WINDOW: {
             // TODO move this code to only the resize() function
-            // update dimensions
-            uint32_t dimensionX, dimensionY;
 
-            // TODO fix this in pilotlight for macos
+            // current dimensions
+            uint32_t dimensionX, dimensionY;
             _ext_windows->get_size(pl_app_data->window, &dimensionX, &dimensionY);
             DcValue *dimension_value_x       = dc_app_lookup_get_value(data.lookup, node->window.dimensions.x);
             DcValue *dimension_value_y       = dc_app_lookup_get_value(data.lookup, node->window.dimensions.y);
@@ -2891,22 +3010,27 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
             dc_value_refresh(dimension_value_x);
             dc_value_refresh(dimension_value_y);
 
+            // all transform parameters
+            float size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->window.dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->window.dimensions.y)->value_double};
+            float virtual_size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->window.virtual_dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->window.virtual_dimensions.y)->value_double};
+
             // compute transforms
             // translate from negative to positive range
             plMat4 trans_matrix = pl_mat4_translate_xyz(
                 0.0f,
-                dc_app_lookup_get_value(data.lookup, node->window.dimensions.y)->value_double,
+                size[1],
                 0.0f);
 
             // scale from virtual to real dimensions, flip y axis
             plMat4 scale_matrix = pl_mat4_scale_xyz(
-                dc_app_lookup_get_value(data.lookup, node->window.dimensions.x)->value_double / dc_app_lookup_get_value(data.lookup, node->window.virtual_dimensions.x)->value_double,
-                dc_app_lookup_get_value(data.lookup, node->window.dimensions.y)->value_double / dc_app_lookup_get_value(data.lookup, node->window.virtual_dimensions.y)->value_double * -1.0f,
+                size[0] / virtual_size[0],
+                size[1] / virtual_size[1] * -1.0f,
                 1.0f);
 
             plMat4 transform;
             transform = pl_mul_mat4t(&trans_matrix, &scale_matrix);
             _draw_node_list(pl_app_data, node->window.child, &transform);
+
             break;
         }
 
