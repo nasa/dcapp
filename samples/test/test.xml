@@ -76,7 +76,7 @@
           <Vertex X="200" Y="80" />
         </Polygon>
 
-        <Polygon FillColor="#_color_red_ .5" LineColor="1 1 1 .5" LineWidth="3" Rotation="@ROTATE" PivotPointX="0" PivotPointY="150">
+        <Polygon FillColor="#_color_red_ .5" LineColor="1 1 1 .5" LineWidth="3" Rotation="@ROTATE" PivotPositionX="0" PivotPositionY="150">
           <Vertex X="0" Y="250" />
           <Vertex X="-250" Y="-250" />
           <Vertex X="250" Y="-250" />
