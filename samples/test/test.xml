@@ -46,7 +46,7 @@
         <Vertex X="100" Y="300" />
       </Polygon>
 
-      <Container Width="500" Height="500" X="0" Y="0" OriginX="500" OriginY="500" VirtualWidth="1000" VirtualHeight="1000" Rotation="@ROTATE">
+      <Container Width="500" Height="500" X="500" Y="500" VirtualWidth="1000" VirtualHeight="1000" Rotation="@ROTATE">
         <Polygon FillColor="#_color_green_ .25" LineColor="1 1 1" LineWidth="1">
           <Vertex X="0" Y="0" />
           <Vertex X="0" Y="-1000" />
@@ -55,7 +55,7 @@
         </Polygon>
       </Container>
 
-      <Container Width="1000" Height="1000" OriginX="500" OriginY="500" X="0" Y="0" VirtualWidth="1000" VirtualHeight="1000" Rotation="@ROTATE">
+      <Container Width="1000" Height="1000" X="500" Y="500" VirtualWidth="1000" VirtualHeight="1000" Rotation="@ROTATE">
 
         <Polygon FillColor="#_color_green_ .25" LineColor="1 1 1" LineWidth="1">
           <Vertex X="100" Y="100" />

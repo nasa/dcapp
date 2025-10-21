@@ -291,9 +291,10 @@ void dc_app_config_clean_xml(DcAppConfig *config, DcAppLookup *lookup) {
 void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) {
 
     // remove if not an element
-    if (node->type != XML_ELEMENT_NODE && node->type != XML_TEXT_NODE) {
+    if (node->type != XML_ELEMENT_NODE && node->type != XML_TEXT_NODE && node->type != XML_ATTRIBUTE_NODE) {
         xmlUnlinkNode(node);
         xmlFreeNode(node);
+        return;
     }
 
     // only process nodes
@@ -355,7 +356,8 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             }
             char cleaned_name[DC_VALUE_STRING_BUFFER_SIZE];
             strncpy(cleaned_name, (const char *)name, DC_VALUE_STRING_BUFFER_SIZE - 1);
-            free(name);
+            cleaned_name[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+            xmlFree(name);
 
             xmlChar *value = xmlNodeGetContent(node);
             if (!value) {
@@ -363,7 +365,8 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             }
             char cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
             strncpy(cleaned_value, (const char *)value, DC_VALUE_STRING_BUFFER_SIZE - 1);
-            free(value);
+            cleaned_value[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+            xmlFree(value);
 
             _set_const_by_name(context, cleaned_name, cleaned_value);
             return;
@@ -436,7 +439,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             }
             char cleaned_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
             strncpy(cleaned_filepath, (const char *)filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
-            free(filepath);
+            xmlFree(filepath);
 
             // get canonical path, assign to File attribute
             char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
@@ -472,8 +475,10 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             xmlNodePtr old_node = xmlReplaceNode(node->children, new_node);
 
             // free old node/doc
-            xmlUnlinkNode(old_node);
-            xmlFreeNode(old_node);
+            if (old_node) {
+                xmlUnlinkNode(old_node);
+                xmlFreeNode(old_node);
+            }
             xmlFreeDoc(sub_doc);
 
             break;
@@ -492,6 +497,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                     fprintf(stderr, "DCAPP _clean_xml_node(): Style name missing in <Style> definition\n");
                 }
                 strncpy(style_name, (const char *)raw_style_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                style_name[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
                 xmlFree(raw_style_name);
             }
 
@@ -516,6 +522,9 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             }
             return;
         }
+
+        case DC_APP_ELEM_TYPE_PANEL:
+            break;
 
         default:
             break;

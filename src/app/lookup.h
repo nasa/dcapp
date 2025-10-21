@@ -2,14 +2,10 @@
 #define _DC_APP_LOOKUP_
 
 #include "../value.h"
-#include "elem.h"
 
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
-
-// forward declarations
-typedef struct _xmlNode *xmlNodePtr;
 
 // lookup types
 typedef int                   DcAppLookupIndex;

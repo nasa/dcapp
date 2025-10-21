@@ -1,17 +1,10 @@
 #include "lookup.h"
 
-#include "elem.h"
 #include "../utils/string.h"
 #include "../utils/stb_sb.h"
 
-#include <libxml/parser.h>
-
 #include <string.h>
 #include <stdio.h>
-
-typedef struct __ElemStyle {
-    xmlNodePtr xml_nodes[DC_APP_ELEM_TYPE__COUNT];
-} _ElemStyle;
 
 typedef struct __LookupContext {
 

@@ -116,7 +116,7 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
 
 DcAppElemType dc_app_xml_node_to_elem_type(xmlNodePtr node) {
     if (node && node->type == XML_ELEMENT_NODE) {
-        char         *name = (char *)(node->name);
+        const char   *name = (const char *)(node->name);
         DcAppElemType type = dc_app_string_to_elem_type(name);
         if (type == DC_APP_ELEM_TYPE_UNDEFINED) {
             fprintf(stderr, "DCAPP dc_app_xml_node_to_elem_type: Undefined element name\n");
