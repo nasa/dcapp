@@ -132,11 +132,11 @@ typedef struct __NodeConditional {
 typedef struct __NodeContainer {
     _ValIndex2    position;
     _ValIndex2    origin;
-    _ValIndex2    dimensions;
-    _ValIndex2    virtual_dimensions;
+    _ValIndex2    dimension;
+    _ValIndex2    virtual_dimension;
     _ValIndex2    pivot_align;
-    _ValIndex2    pivot_point;
-    _ValIndex2    alignment;
+    _ValIndex2    pivot_position;
+    _ValIndex2    local_align;
     DcAppValIndex rotation;
     _NodeIndex    child;
 } _NodeContainer;
@@ -144,11 +144,11 @@ typedef struct __NodeContainer {
 typedef struct __NodeMap {
     _ValIndex2    position;
     _ValIndex2    origin;
-    _ValIndex2    dimensions;
-    _ValIndex2    virtual_dimensions;
+    _ValIndex2    dimension;
+    _ValIndex2    virtual_dimension;
     _ValIndex2    pivot_align;
-    _ValIndex2    pivot_point;
-    _ValIndex2    alignment;
+    _ValIndex2    pivot_position;
+    _ValIndex2    local_align;
     _ValIndex3    lle;
     DcAppValIndex yaw;
     DcAppValIndex rotation;
@@ -156,8 +156,8 @@ typedef struct __NodeMap {
 } _NodeMap;
 
 typedef struct __NodePanel {
-    _ValIndex2    parent_dimensions;
-    _ValIndex2    virtual_dimensions;
+    _ValIndex2    parent_dimension;
+    _ValIndex2    virtual_dimension;
     DcAppValIndex index;
     _NodeIndex    child;
 } _NodePanel;
@@ -172,7 +172,7 @@ typedef struct __NodePolygon {
     bool        line_enabled;
 
     _ValIndex2    origin;
-    _ValIndex2    pivot_point;
+    _ValIndex2    pivot_position;
     DcAppValIndex rotation;
 } _NodePolygon;
 
@@ -185,9 +185,9 @@ typedef struct __NodeSet {
 typedef struct __NodeText {
     _ValIndex2    position;
     _ValIndex2    origin;
-    _ValIndex2    alignment;
+    _ValIndex2    local_align;
     _ValIndex2    pivot_align;
-    _ValIndex2    pivot_point;
+    _ValIndex2    pivot_position;
     DcAppValIndex rotation;
     DcAppValIndex size;
     _ValIndex4    fill_color;
@@ -209,12 +209,12 @@ typedef struct __NodeText {
 typedef struct __NodeTerrain {
 
     // general positioning of display
-    _ValIndex2    dimensions;
+    _ValIndex2    dimension;
     _ValIndex2    position;
     _ValIndex2    origin;
-    _ValIndex2    alignment;
+    _ValIndex2    local_align;
     _ValIndex2    pivot_align;
-    _ValIndex2    pivot_point;
+    _ValIndex2    pivot_position;
     DcAppValIndex rotation;
 
     // terrain specific
@@ -226,8 +226,8 @@ typedef struct __NodeTerrain {
 
 typedef struct __NodeWindow {
     _ValIndex2 position;
-    _ValIndex2 dimensions;
-    _ValIndex2 virtual_dimensions;
+    _ValIndex2 dimension;
+    _ValIndex2 virtual_dimension;
     _NodeIndex child;
     char      *title;
 } _NodeWindow;
@@ -398,8 +398,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
     _Node       *window_node = _index_to_node(data.window);
     plWindowDesc window_desc = {};
     window_desc.pcTitle      = window_node->window.title;
-    window_desc.uWidth       = (uint32_t)(dc_app_lookup_get_value(data.lookup, window_node->window.dimensions.x)->value_integer);
-    window_desc.uHeight      = (uint32_t)(dc_app_lookup_get_value(data.lookup, window_node->window.dimensions.y)->value_integer);
+    window_desc.uWidth       = (uint32_t)(dc_app_lookup_get_value(data.lookup, window_node->window.dimension.x)->value_integer);
+    window_desc.uHeight      = (uint32_t)(dc_app_lookup_get_value(data.lookup, window_node->window.dimension.y)->value_integer);
     window_desc.iXPos        = dc_app_lookup_get_value(data.lookup, window_node->window.position.x)->value_integer;
     window_desc.iYPos        = dc_app_lookup_get_value(data.lookup, window_node->window.position.y)->value_integer;
     _ext_windows->create(window_desc, &(pl_app_data->window));
@@ -781,7 +781,10 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             dc_node.next   = NODE_INDEX_UNDEFINED;
 
             // x position
-            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+            if (!raw_x_position) {
+                raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            }
             if (raw_x_position) {
                 char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -793,7 +796,10 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // y position
-            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+            if (!raw_y_position) {
+                raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            }
             if (raw_y_position) {
                 char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -829,75 +835,96 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // x dimension
-            xmlChar *raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
+            xmlChar *raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionX");
+            if (!raw_x_dimension) {
+                raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
+            }
             if (raw_x_dimension) {
                 char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_dimension);
-                dc_node.container.dimensions.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
+                dc_node.container.dimension.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
             } else {
-                dc_node.container.dimensions.x = parent_dimensions.x;
+                dc_node.container.dimension.x = parent_dimensions.x;
             }
 
             // y dimension
-            xmlChar *raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
+            xmlChar *raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionY");
+            if (!raw_y_dimension) {
+                raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
+            }
             if (raw_y_dimension) {
                 char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_dimension);
-                dc_node.container.dimensions.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
+                dc_node.container.dimension.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
             } else {
-                dc_node.container.dimensions.y = parent_dimensions.y;
+                dc_node.container.dimension.y = parent_dimensions.y;
             }
 
             // virtual x dimension
-            xmlChar *raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualWidth");
+            xmlChar *raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualDimensionX");
+            if (!raw_x_virtual_dimension) {
+                raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualWidth");
+            }
             if (raw_x_virtual_dimension) {
                 char cleaned_x_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_virtual_dimension, (const char *)raw_x_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_virtual_dimension);
-                dc_node.container.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
+                dc_node.container.virtual_dimension.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
             } else {
-                dc_node.container.virtual_dimensions.x = dc_node.container.dimensions.x;
+                dc_node.container.virtual_dimension.x = dc_node.container.dimension.x;
             }
 
             // virtual y virtual_dimension
-            xmlChar *raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualHeight");
+            xmlChar *raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualDimensionY");
+            if (!raw_y_virtual_dimension) {
+                raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualHeight");
+            }
             if (raw_y_virtual_dimension) {
                 char cleaned_y_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_virtual_dimension, (const char *)raw_y_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_virtual_dimension);
-                dc_node.container.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
+                dc_node.container.virtual_dimension.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
             } else {
-                dc_node.container.virtual_dimensions.y = dc_node.container.dimensions.y;
+                dc_node.container.virtual_dimension.y = dc_node.container.dimension.y;
             }
 
             // x align
-            xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+            xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignX");
+            if (!raw_x_align) {
+                raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+            }
             if (raw_x_align) {
                 char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_align);
-                dc_node.container.alignment.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
+                dc_node.container.local_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
             } else {
-                DcValue value                 = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_LEFT);
-                dc_node.container.alignment.x = dc_app_lookup_register_value(data.lookup, &value);
+                DcValue value                   = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_LEFT);
+                dc_node.container.local_align.x = dc_app_lookup_register_value(data.lookup, &value);
             }
 
             // y align
-            xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+            xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignY");
+            if (!raw_y_align) {
+                raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+            }
             if (raw_y_align) {
                 char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_align);
-                dc_node.container.alignment.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
+                dc_node.container.local_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
             } else {
-                DcValue value                 = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM);
-                dc_node.container.alignment.y = dc_app_lookup_register_value(data.lookup, &value);
+                DcValue value                   = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM);
+                dc_node.container.local_align.y = dc_app_lookup_register_value(data.lookup, &value);
             }
 
             // rotation
             xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+            if (!raw_rotation) {
+                raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
+            }
             if (raw_rotation) {
                 char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -909,25 +936,31 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // pivots
-            xmlChar *raw_pivot_point_x = xmlGetProp(xml_node, BAD_CAST "PivotPointX");
-            xmlChar *raw_pivot_point_y = xmlGetProp(xml_node, BAD_CAST "PivotPointY");
-            if (raw_pivot_point_x && raw_pivot_point_y) {
+            xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
+            if (!raw_pivot_position_x) {
+                raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
+            }
+            xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
+            if (!raw_pivot_position_y) {
+                raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
+            }
+            if (raw_pivot_position_x && raw_pivot_position_y) {
 
-                char cleaned_pivot_point_x[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_pivot_point_x, (const char *)raw_pivot_point_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                free(raw_pivot_point_x);
-                dc_node.container.pivot_point.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_x);
+                char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                free(raw_pivot_position_x);
+                dc_node.container.pivot_position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-                char cleaned_pivot_point_y[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_pivot_point_y, (const char *)raw_pivot_point_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                free(raw_pivot_point_y);
-                dc_node.container.pivot_point.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_y);
+                char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                free(raw_pivot_position_y);
+                dc_node.container.pivot_position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
                 DcValue value                   = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED);
                 dc_node.container.pivot_align.x = dc_app_lookup_register_value(data.lookup, &value);
                 dc_node.container.pivot_align.y = dc_app_lookup_register_value(data.lookup, &value);
 
-            } else if (!raw_pivot_point_x && !raw_pivot_point_y) {
+            } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
 
                 xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotAlignX");
                 if (raw_pivot_align_x) {
@@ -951,14 +984,14 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     dc_node.container.pivot_align.y = dc_app_lookup_register_value(data.lookup, &value);
                 }
             } else {
-                fprintf(stderr, "DCAPP _process_node(): Container: invalid PivotParameters; must use both PivotPoint params, or none. Using one is not allowed.\n");
+                fprintf(stderr, "DCAPP _process_node(): Container: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
             }
 
             // register node
             _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
-            _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, dc_node.container.virtual_dimensions, directory);
+            _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, dc_node.container.virtual_dimension, directory);
 
             // update child index
             _Node *node           = _index_to_node(node_index);
@@ -1129,35 +1162,41 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             dc_node.next   = NODE_INDEX_UNDEFINED;
 
             // parent dimensions
-            dc_node.panel.parent_dimensions = parent_dimensions;
+            dc_node.panel.parent_dimension = parent_dimensions;
 
             // virtual x dimension
-            xmlChar *raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualWidth");
+            xmlChar *raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualDimensionX");
+            if (!raw_x_virtual_dimension) {
+                raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualWidth");
+            }
             if (raw_x_virtual_dimension) {
                 char cleaned_x_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_virtual_dimension, (const char *)raw_x_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_virtual_dimension);
-                dc_node.panel.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
+                dc_node.panel.virtual_dimension.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
             } else {
-                dc_node.panel.virtual_dimensions.x = parent_dimensions.x;
+                dc_node.panel.virtual_dimension.x = parent_dimensions.x;
             }
 
             // virtual y virtual_dimension
-            xmlChar *raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualHeight");
+            xmlChar *raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualDimensionY");
+            if (!raw_y_virtual_dimension) {
+                raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualHeight");
+            }
             if (raw_y_virtual_dimension) {
                 char cleaned_y_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_virtual_dimension, (const char *)raw_y_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_virtual_dimension);
-                dc_node.panel.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
+                dc_node.panel.virtual_dimension.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
             } else {
-                dc_node.panel.virtual_dimensions.y = parent_dimensions.y;
+                dc_node.panel.virtual_dimension.y = parent_dimensions.y;
             }
 
             // register node
             _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
-            _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, dc_node.panel.virtual_dimensions, directory);
+            _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, dc_node.panel.virtual_dimension, directory);
 
             // update child index
             _Node *node       = _index_to_node(node_index);
@@ -1214,6 +1253,9 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
 
             // rotation
             xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+            if (!raw_rotation) {
+                raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
+            }
             if (raw_rotation) {
                 char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -1225,28 +1267,34 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // pivots
-            xmlChar *raw_pivot_point_x = xmlGetProp(xml_node, BAD_CAST "PivotPointX");
-            xmlChar *raw_pivot_point_y = xmlGetProp(xml_node, BAD_CAST "PivotPointY");
-            if (raw_pivot_point_x && raw_pivot_point_y) {
+            xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
+            if (!raw_pivot_position_x) {
+                raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
+            }
+            xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
+            if (!raw_pivot_position_y) {
+                raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
+            }
+            if (raw_pivot_position_x && raw_pivot_position_y) {
 
-                char cleaned_pivot_point_x[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_pivot_point_x, (const char *)raw_pivot_point_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                free(raw_pivot_point_x);
-                dc_node.polygon.pivot_point.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_x);
+                char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                free(raw_pivot_position_x);
+                dc_node.polygon.pivot_position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-                char cleaned_pivot_point_y[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_pivot_point_y, (const char *)raw_pivot_point_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                free(raw_pivot_point_y);
-                dc_node.polygon.pivot_point.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_y);
+                char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                free(raw_pivot_position_y);
+                dc_node.polygon.pivot_position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
-            } else if (!raw_pivot_point_x && !raw_pivot_point_y) {
+            } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
 
-                DcValue value                 = dc_value_create_value_double(0.0);
-                dc_node.polygon.pivot_point.x = dc_app_lookup_register_value(data.lookup, &value);
-                dc_node.polygon.pivot_point.y = dc_app_lookup_register_value(data.lookup, &value);
+                DcValue value                    = dc_value_create_value_double(0.0);
+                dc_node.polygon.pivot_position.x = dc_app_lookup_register_value(data.lookup, &value);
+                dc_node.polygon.pivot_position.y = dc_app_lookup_register_value(data.lookup, &value);
 
             } else {
-                fprintf(stderr, "DCAPP _process_node(): Polygon: invalid PivotParameters; must use both PivotPoint params, or none. Using one is not allowed.\n");
+                fprintf(stderr, "DCAPP _process_node(): Polygon: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
             }
 
             // register node
@@ -1294,7 +1342,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 char cleaned_operator[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_operator, (const char *)raw_operator, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_operator);
-                dc_node.set.operation = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_operator);
+                dc_node.set.operation = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_operator);
             } else {
                 DcValue value         = dc_value_create_value_integer(DC_APP_SET_TYPE_EQUAL);
                 dc_node.set.operation = dc_app_lookup_register_value(data.lookup, &value);
@@ -1316,7 +1364,10 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             dc_node.next   = NODE_INDEX_UNDEFINED;
 
             // x position
-            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+            if (!raw_x_position) {
+                raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            }
             if (raw_x_position) {
                 char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -1328,7 +1379,10 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // y position
-            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+            if (!raw_y_position) {
+                raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            }
             if (raw_y_position) {
                 char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -1364,53 +1418,68 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // x dimension
-            xmlChar *raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
+            xmlChar *raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionX");
+            if (!raw_x_dimension) {
+                raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
+            }
             if (raw_x_dimension) {
                 char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_dimension);
-                dc_node.terrain.dimensions.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
+                dc_node.terrain.dimension.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
             } else {
-                dc_node.terrain.dimensions.x = parent_dimensions.x;
+                dc_node.terrain.dimension.x = parent_dimensions.x;
             }
 
             // y dimension
-            xmlChar *raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
+            xmlChar *raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionY");
+            if (!raw_y_dimension) {
+                raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
+            }
             if (raw_y_dimension) {
                 char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_dimension);
-                dc_node.terrain.dimensions.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
+                dc_node.terrain.dimension.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
             } else {
-                dc_node.terrain.dimensions.y = parent_dimensions.y;
+                dc_node.terrain.dimension.y = parent_dimensions.y;
             }
 
             // x align
-            xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+            xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignX");
+            if (!raw_x_align) {
+                raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+            }
             if (raw_x_align) {
                 char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_align);
-                dc_node.terrain.alignment.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
+                dc_node.terrain.local_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
             } else {
-                DcValue value               = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_LEFT);
-                dc_node.terrain.alignment.x = dc_app_lookup_register_value(data.lookup, &value);
+                DcValue value                 = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_LEFT);
+                dc_node.terrain.local_align.x = dc_app_lookup_register_value(data.lookup, &value);
             }
 
             // y align
-            xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+            xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignY");
+            if (!raw_y_align) {
+                raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+            }
             if (raw_y_align) {
                 char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_align);
-                dc_node.terrain.alignment.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
+                dc_node.terrain.local_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
             } else {
-                DcValue value               = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM);
-                dc_node.terrain.alignment.y = dc_app_lookup_register_value(data.lookup, &value);
+                DcValue value                 = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM);
+                dc_node.terrain.local_align.y = dc_app_lookup_register_value(data.lookup, &value);
             }
 
             // rotation
             xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+            if (!raw_rotation) {
+                raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
+            }
             if (raw_rotation) {
                 char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -1422,25 +1491,31 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // pivots
-            xmlChar *raw_pivot_point_x = xmlGetProp(xml_node, BAD_CAST "PivotPointX");
-            xmlChar *raw_pivot_point_y = xmlGetProp(xml_node, BAD_CAST "PivotPointY");
-            if (raw_pivot_point_x && raw_pivot_point_y) {
+            xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
+            if (!raw_pivot_position_x) {
+                raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
+            }
+            xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
+            if (!raw_pivot_position_y) {
+                raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
+            }
+            if (raw_pivot_position_x && raw_pivot_position_y) {
 
-                char cleaned_pivot_point_x[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_pivot_point_x, (const char *)raw_pivot_point_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                free(raw_pivot_point_x);
-                dc_node.terrain.pivot_point.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_x);
+                char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                free(raw_pivot_position_x);
+                dc_node.terrain.pivot_position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-                char cleaned_pivot_point_y[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_pivot_point_y, (const char *)raw_pivot_point_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                free(raw_pivot_point_y);
-                dc_node.terrain.pivot_point.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_y);
+                char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                free(raw_pivot_position_y);
+                dc_node.terrain.pivot_position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
                 DcValue value                 = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED);
                 dc_node.terrain.pivot_align.x = dc_app_lookup_register_value(data.lookup, &value);
                 dc_node.terrain.pivot_align.y = dc_app_lookup_register_value(data.lookup, &value);
 
-            } else if (!raw_pivot_point_x && !raw_pivot_point_y) {
+            } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
 
                 xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotAlignX");
                 if (raw_pivot_align_x) {
@@ -1464,7 +1539,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     dc_node.terrain.pivot_align.y = dc_app_lookup_register_value(data.lookup, &value);
                 }
             } else {
-                fprintf(stderr, "DCAPP _process_node(): Terrain: invalid PivotParameters; must use both PivotPoint params, or none. Using one is not allowed.\n");
+                fprintf(stderr, "DCAPP _process_node(): Terrain: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
             }
 
             // lat
@@ -1703,7 +1778,10 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // x position
-            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+            if (!raw_x_position) {
+                raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            }
             if (raw_x_position) {
                 char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -1715,7 +1793,10 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // y position
-            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+            if (!raw_y_position) {
+                raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            }
             if (raw_y_position) {
                 char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -1751,31 +1832,40 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // x align
-            xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+            xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignX");
+            if (!raw_x_align) {
+                raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+            }
             if (raw_x_align) {
                 char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_align);
-                dc_node.text.alignment.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
+                dc_node.text.local_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
             } else {
-                DcValue value            = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_LEFT);
-                dc_node.text.alignment.x = dc_app_lookup_register_value(data.lookup, &value);
+                DcValue value              = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_LEFT);
+                dc_node.text.local_align.x = dc_app_lookup_register_value(data.lookup, &value);
             }
 
             // y align
-            xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+            xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignY");
+            if (!raw_y_align) {
+                raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+            }
             if (raw_y_align) {
                 char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_align);
-                dc_node.text.alignment.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
+                dc_node.text.local_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
             } else {
-                DcValue value            = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM);
-                dc_node.text.alignment.y = dc_app_lookup_register_value(data.lookup, &value);
+                DcValue value              = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_BOTTOM);
+                dc_node.text.local_align.y = dc_app_lookup_register_value(data.lookup, &value);
             }
 
             // rotation
             xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+            if (!raw_rotation) {
+                raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
+            }
             if (raw_rotation) {
                 char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -1787,25 +1877,31 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // pivots
-            xmlChar *raw_pivot_point_x = xmlGetProp(xml_node, BAD_CAST "PivotPointX");
-            xmlChar *raw_pivot_point_y = xmlGetProp(xml_node, BAD_CAST "PivotPointY");
-            if (raw_pivot_point_x && raw_pivot_point_y) {
+            xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
+            if (!raw_pivot_position_x) {
+                raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
+            }
+            xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
+            if (!raw_pivot_position_y) {
+                raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
+            }
+            if (raw_pivot_position_x && raw_pivot_position_y) {
 
-                char cleaned_pivot_point_x[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_pivot_point_x, (const char *)raw_pivot_point_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                free(raw_pivot_point_x);
-                dc_node.text.pivot_point.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_x);
+                char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                free(raw_pivot_position_x);
+                dc_node.text.pivot_position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-                char cleaned_pivot_point_y[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_pivot_point_y, (const char *)raw_pivot_point_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                free(raw_pivot_point_y);
-                dc_node.text.pivot_point.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_point_y);
+                char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                free(raw_pivot_position_y);
+                dc_node.text.pivot_position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
                 DcValue value              = dc_value_create_value_integer(DC_APP_ALIGN_TYPE_UNDEFINED);
                 dc_node.text.pivot_align.x = dc_app_lookup_register_value(data.lookup, &value);
                 dc_node.text.pivot_align.y = dc_app_lookup_register_value(data.lookup, &value);
 
-            } else if (!raw_pivot_point_x && !raw_pivot_point_y) {
+            } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
 
                 xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotAlignX");
                 if (raw_pivot_align_x) {
@@ -1829,7 +1925,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     dc_node.text.pivot_align.y = dc_app_lookup_register_value(data.lookup, &value);
                 }
             } else {
-                fprintf(stderr, "DCAPP _process_node(): Text: invalid PivotParameters; must use both PivotPoint params, or none. Using one is not allowed.\n");
+                fprintf(stderr, "DCAPP _process_node(): Text: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
             }
 
             // size
@@ -2084,7 +2180,10 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     _ValIndex2 position;
 
                     // x position
-                    xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+                    xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+                    if (!raw_x_position) {
+                        raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+                    }
 
                     if (raw_x_position) {
                         char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
@@ -2096,7 +2195,10 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     }
 
                     // y position
-                    xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+                    xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+                    if (!raw_y_position) {
+                        raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+                    }
                     if (raw_y_position) {
                         char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
                         strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -2136,7 +2238,10 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // x position
-            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+            if (!raw_x_position) {
+                raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            }
             if (raw_x_position) {
                 char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -2148,7 +2253,10 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // y position
-            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+            if (!raw_y_position) {
+                raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            }
             if (raw_y_position) {
                 char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -2160,54 +2268,66 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             }
 
             // x dimension
-            xmlChar *raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
+            xmlChar *raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionX");
+            if (!raw_x_dimension) {
+                raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
+            }
             if (raw_x_dimension) {
                 char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_dimension);
-                dc_node.window.dimensions.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_dimension);
+                dc_node.window.dimension.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_dimension);
             } else {
                 fprintf(stderr, "DCApp _process_node: missing x dimension for Window\n");
             }
 
             // y dimension
-            xmlChar *raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
+            xmlChar *raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionY");
+            if (!raw_y_dimension) {
+                raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
+            }
             if (raw_y_dimension) {
                 char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_dimension);
-                dc_node.window.dimensions.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_dimension);
+                dc_node.window.dimension.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_dimension);
             } else {
                 fprintf(stderr, "DCApp _process_node: missing y dimension for Window\n");
             }
 
             // virtual x dimension
-            xmlChar *raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualWidth");
+            xmlChar *raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualDimensionX");
+            if (!raw_x_virtual_dimension) {
+                raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualWidth");
+            }
             if (raw_x_virtual_dimension) {
                 char cleaned_x_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_x_virtual_dimension, (const char *)raw_x_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_x_virtual_dimension);
-                dc_node.window.virtual_dimensions.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
+                dc_node.window.virtual_dimension.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
             } else {
-                dc_node.window.virtual_dimensions.x = dc_node.window.dimensions.x;
+                dc_node.window.virtual_dimension.x = dc_node.window.dimension.x;
             }
 
             // virtual y virtual_dimension
-            xmlChar *raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualHeight");
+            xmlChar *raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualDimensionY");
+            if (!raw_y_virtual_dimension) {
+                raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualHeight");
+            }
             if (raw_y_virtual_dimension) {
                 char cleaned_y_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
                 strncpy(cleaned_y_virtual_dimension, (const char *)raw_y_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 free(raw_y_virtual_dimension);
-                dc_node.window.virtual_dimensions.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
+                dc_node.window.virtual_dimension.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
             } else {
-                dc_node.window.virtual_dimensions.y = dc_node.window.dimensions.y;
+                dc_node.window.virtual_dimension.y = dc_node.window.dimension.y;
             }
 
             // register node
             _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
-            _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, dc_node.window.virtual_dimensions, directory);
+            _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, dc_node.window.virtual_dimension, directory);
 
             // update child index
             _Node *node        = _index_to_node(node_index);
@@ -2249,11 +2369,11 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
             // all transform parameters
             float          position[2]     = {(float)dc_app_lookup_get_value(data.lookup, node->container.position.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->container.position.y)->value_double};
             float          origin[2]       = {(float)dc_app_lookup_get_value(data.lookup, node->container.origin.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->container.origin.y)->value_double};
-            DcAppAlignType alignment[2]    = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->container.alignment.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->container.alignment.y)->value_integer};
+            DcAppAlignType alignment[2]    = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->container.local_align.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->container.local_align.y)->value_integer};
             DcAppAlignType pivot_align[2]  = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->container.pivot_align.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->container.pivot_align.y)->value_integer};
             float          rotation        = dc_app_lookup_get_value(data.lookup, node->container.rotation)->value_double;
-            float          size[2]         = {(float)dc_app_lookup_get_value(data.lookup, node->container.dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->container.dimensions.y)->value_double};
-            float          virtual_size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->container.virtual_dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->container.virtual_dimensions.y)->value_double};
+            float          size[2]         = {(float)dc_app_lookup_get_value(data.lookup, node->container.dimension.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->container.dimension.y)->value_double};
+            float          virtual_size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->container.virtual_dimension.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->container.virtual_dimension.y)->value_double};
 
             // scale from virtual to real
             plMat4 scale_xform = pl_mat4_scale_xyz(
@@ -2343,10 +2463,10 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
                         break;
                 }
             } else {
-                float pivot_point_x = dc_app_lookup_get_value(data.lookup, node->container.pivot_point.x)->value_double;
-                trans_pivot_vec[0]  = -1 * pivot_point_x;
-                float pivot_point_y = dc_app_lookup_get_value(data.lookup, node->container.pivot_point.y)->value_double;
-                trans_pivot_vec[1]  = -1 * pivot_point_y;
+                float pivot_position_x = dc_app_lookup_get_value(data.lookup, node->container.pivot_position.x)->value_double;
+                trans_pivot_vec[0]     = -1 * pivot_position_x;
+                float pivot_position_y = dc_app_lookup_get_value(data.lookup, node->container.pivot_position.y)->value_double;
+                trans_pivot_vec[1]     = -1 * pivot_position_y;
             }
             plMat4 trans_to_pivot_xform = pl_mat4_translate_xyz(
                 trans_pivot_vec[0],
@@ -2434,8 +2554,8 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
         case NODE_TYPE_PANEL: {
 
             // all transform parameters
-            float parent_size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->panel.parent_dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->panel.parent_dimensions.y)->value_double};
-            float virtual_size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->panel.virtual_dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->panel.virtual_dimensions.y)->value_double};
+            float parent_size[2]  = {(float)dc_app_lookup_get_value(data.lookup, node->panel.parent_dimension.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->panel.parent_dimension.y)->value_double};
+            float virtual_size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->panel.virtual_dimension.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->panel.virtual_dimension.y)->value_double};
 
             // compute transforms
             // scale from virtual to real dimensions
@@ -2452,9 +2572,9 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
         case NODE_TYPE_POLYGON: {
 
             // all transform parameters
-            float          origin[2]       = {(float)dc_app_lookup_get_value(data.lookup, node->polygon.origin.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->polygon.origin.y)->value_double};
-            DcAppAlignType pivot_point[2]  = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->polygon.pivot_point.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->polygon.pivot_point.y)->value_integer};
-            float          rotation        = dc_app_lookup_get_value(data.lookup, node->polygon.rotation)->value_double;
+            float          origin[2]         = {(float)dc_app_lookup_get_value(data.lookup, node->polygon.origin.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->polygon.origin.y)->value_double};
+            float          pivot_position[2] = {(float)dc_app_lookup_get_value(data.lookup, node->polygon.pivot_position.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->polygon.pivot_position.y)->value_double};
+            float          rotation          = dc_app_lookup_get_value(data.lookup, node->polygon.rotation)->value_double;
 
             // move origin
             plMat4 trans_origin_xform = pl_mat4_translate_xyz(
@@ -2462,10 +2582,10 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
                 origin[1],
                 0.0f);
 
-            // move to pivot            
+            // move to pivot
             plMat4 trans_to_pivot_xform = pl_mat4_translate_xyz(
-                -1.0 * pivot_point[0],
-                -1.0 * pivot_point[1],
+                -1.0 * pivot_position[0],
+                -1.0 * pivot_position[1],
                 0.0f);
 
             // rotate
@@ -2475,17 +2595,17 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
 
             // reverse pivot move
             plMat4 trans_from_pivot_xform = pl_mat4_translate_xyz(
-                pivot_point[0],
-                pivot_point[1],
+                pivot_position[0],
+                pivot_position[1],
                 0.0f);
 
             // compute transform
             plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
-            transform = pl_mul_mat4t(&transform, &trans_from_pivot_xform);
-            transform = pl_mul_mat4t(&transform, &rotate_xform);
-            transform = pl_mul_mat4t(&transform, &trans_to_pivot_xform);
-            transform = pl_mul_mat4t(&transform, &trans_origin_xform);
-            transform = pl_mul_mat4t(parent_transform, &transform);
+            transform        = pl_mul_mat4t(&transform, &trans_from_pivot_xform);
+            transform        = pl_mul_mat4t(&transform, &rotate_xform);
+            transform        = pl_mul_mat4t(&transform, &trans_to_pivot_xform);
+            transform        = pl_mul_mat4t(&transform, &trans_origin_xform);
+            transform        = pl_mul_mat4t(parent_transform, &transform);
 
             // get points
             int    num_points = sbcount(node->polygon.sb_points);
@@ -2638,10 +2758,10 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
             // all transform parameters
             float          position[2]    = {(float)dc_app_lookup_get_value(data.lookup, node->terrain.position.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->terrain.position.y)->value_double};
             float          origin[2]      = {(float)dc_app_lookup_get_value(data.lookup, node->terrain.origin.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->terrain.origin.y)->value_double};
-            DcAppAlignType alignment[2]   = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->terrain.alignment.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->terrain.alignment.y)->value_integer};
+            DcAppAlignType alignment[2]   = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->terrain.local_align.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->terrain.local_align.y)->value_integer};
             DcAppAlignType pivot_align[2] = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->terrain.pivot_align.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->terrain.pivot_align.y)->value_integer};
             float          rotation       = dc_app_lookup_get_value(data.lookup, node->terrain.rotation)->value_double;
-            float          size[2]        = {(float)dc_app_lookup_get_value(data.lookup, node->terrain.dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->terrain.dimensions.y)->value_double};
+            float          size[2]        = {(float)dc_app_lookup_get_value(data.lookup, node->terrain.dimension.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->terrain.dimension.y)->value_double};
 
             // move position
             plMat4 trans_position_xform = pl_mat4_translate_xyz(
@@ -2725,10 +2845,10 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
                         break;
                 }
             } else {
-                float pivot_point_x = dc_app_lookup_get_value(data.lookup, node->terrain.pivot_point.x)->value_double;
-                trans_pivot_vec[0]  = -1 * pivot_point_x;
-                float pivot_point_y = dc_app_lookup_get_value(data.lookup, node->terrain.pivot_point.y)->value_double;
-                trans_pivot_vec[1]  = -1 * pivot_point_y;
+                float pivot_position_x = dc_app_lookup_get_value(data.lookup, node->terrain.pivot_position.x)->value_double;
+                trans_pivot_vec[0]     = -1 * pivot_position_x;
+                float pivot_position_y = dc_app_lookup_get_value(data.lookup, node->terrain.pivot_position.y)->value_double;
+                trans_pivot_vec[1]     = -1 * pivot_position_y;
             }
             plMat4 trans_to_pivot_xform = pl_mat4_translate_xyz(
                 trans_pivot_vec[0],
@@ -2837,7 +2957,7 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
             // all transform parameters
             float          position[2]    = {(float)(dc_app_lookup_get_value(data.lookup, node->text.position.x)->value_double), (float)(dc_app_lookup_get_value(data.lookup, node->text.position.y)->value_double)};
             float          origin[2]      = {(float)dc_app_lookup_get_value(data.lookup, node->text.origin.x)->value_double, (float)(dc_app_lookup_get_value(data.lookup, node->text.origin.y)->value_double)};
-            DcAppAlignType alignment[2]   = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->text.alignment.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->text.alignment.y)->value_integer};
+            DcAppAlignType alignment[2]   = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->text.local_align.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->text.local_align.y)->value_integer};
             DcAppAlignType pivot_align[2] = {(DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->text.pivot_align.x)->value_integer, (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->text.pivot_align.y)->value_integer};
             float          rotation       = dc_app_lookup_get_value(data.lookup, node->text.rotation)->value_double;
             float          size[2]        = {pl_size.x, text_options.fSize};
@@ -2936,10 +3056,10 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
                         break;
                 }
             } else {
-                float pivot_point_x = (float)dc_app_lookup_get_value(data.lookup, node->text.pivot_point.x)->value_double;
-                trans_pivot_vec[0]  = -1 * pivot_point_x;
-                float pivot_point_y = (float)dc_app_lookup_get_value(data.lookup, node->text.pivot_point.y)->value_double;
-                trans_pivot_vec[1]  = -1 * pivot_point_y;
+                float pivot_position_x = (float)dc_app_lookup_get_value(data.lookup, node->text.pivot_position.x)->value_double;
+                trans_pivot_vec[0]     = -1 * pivot_position_x;
+                float pivot_position_y = (float)dc_app_lookup_get_value(data.lookup, node->text.pivot_position.y)->value_double;
+                trans_pivot_vec[1]     = -1 * pivot_position_y;
             }
             plMat4 trans_to_pivot_xform = pl_mat4_translate_xyz(
                 trans_pivot_vec[0],
@@ -3003,16 +3123,16 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plMat4 *p
             // current dimensions
             uint32_t dimensionX, dimensionY;
             _ext_windows->get_size(pl_app_data->window, &dimensionX, &dimensionY);
-            DcValue *dimension_value_x       = dc_app_lookup_get_value(data.lookup, node->window.dimensions.x);
-            DcValue *dimension_value_y       = dc_app_lookup_get_value(data.lookup, node->window.dimensions.y);
+            DcValue *dimension_value_x       = dc_app_lookup_get_value(data.lookup, node->window.dimension.x);
+            DcValue *dimension_value_y       = dc_app_lookup_get_value(data.lookup, node->window.dimension.y);
             dimension_value_x->value_integer = (int)dimensionX;
             dimension_value_y->value_integer = (int)dimensionY;
             dc_value_refresh(dimension_value_x);
             dc_value_refresh(dimension_value_y);
 
             // all transform parameters
-            float size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->window.dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->window.dimensions.y)->value_double};
-            float virtual_size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->window.virtual_dimensions.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->window.virtual_dimensions.y)->value_double};
+            float size[2]         = {(float)dc_app_lookup_get_value(data.lookup, node->window.dimension.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->window.dimension.y)->value_double};
+            float virtual_size[2] = {(float)dc_app_lookup_get_value(data.lookup, node->window.virtual_dimension.x)->value_double, (float)dc_app_lookup_get_value(data.lookup, node->window.virtual_dimension.y)->value_double};
 
             // compute transforms
             // translate from negative to positive range
