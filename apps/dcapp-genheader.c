@@ -34,7 +34,6 @@ int main(int argc, char **argv) {
     // dump to file
     char log_file[256];
     dc_utils_join_paths(config->cache_dir_path, "xml.log", log_file, sizeof(log_file));
-    printf("%s\n", log_file);
     dc_app_config_save_to_file(config, log_file);
 
     // process XML

@@ -114,7 +114,7 @@
         <Vertex X="505" Y="755" />
         <Vertex X="495" Y="755" />
       </Polygon>
-      <Text Size="75" X="500" Y="750" HorizontalAlign="#_align_right_" VerticalAlign="#_align_top_" PivotAlignX="#_align_right_" PivotAlignY="#_align_top_" Rotation="@ROTATE" FillColor="@COLOR_R @COLOR_G @COLOR_B 1">TOP RIGHT</Text>
+      <Text Size="75" X="500" Y="750" HorizontalAlign="#_align_right_" VerticalAlign="#_align_top_" PivotLocalAlignX="#_align_right_" PivotLocalAlignY="#_align_top_" Rotation="@ROTATE" FillColor="@COLOR_R @COLOR_G @COLOR_B 1">TOP RIGHT</Text>
     
       <Polygon FillColor="1 0 0 1" LineColor="1 1 1" LineWidth="2">
         <Vertex X="495" Y="495" />
@@ -122,7 +122,7 @@
         <Vertex X="505" Y="505" />
         <Vertex X="495" Y="505" />
       </Polygon>
-      <Text Size="75" X="500" Y="500" HorizontalAlign="#_align_center_" VerticalAlign="#_align_middle_" PivotAlignX="#_align_center_" PivotAlignY="#_align_middle_" Rotation="@ROTATE" FillColor="@COLOR_G @COLOR_B @COLOR_R 1">CENTER MIDDLE</Text>
+      <Text Size="75" X="500" Y="500" HorizontalAlign="#_align_center_" VerticalAlign="#_align_middle_" PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_middle_" Rotation="@ROTATE" FillColor="@COLOR_G @COLOR_B @COLOR_R 1">CENTER MIDDLE</Text>
 
       <Polygon FillColor="1 0 0 1" LineColor="1 1 1" LineWidth="2">
         <Vertex X="495" Y="245" />
@@ -135,7 +135,7 @@
         <Text FillColor="@COLOR_B @COLOR_R @COLOR_G 1"/>
       </Style>
 
-      <Text Style="Test Style" Size="75" X="500" Y="250" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" PivotAlignX="#_align_left_" PivotAlignY="#_align_bottom_" Rotation="@ROTATE">BOTTOM LEFT</Text>
+      <Text Style="Test Style" Size="75" X="500" Y="250" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" PivotLocalAlignX="#_align_left_" PivotLocalAlignY="#_align_bottom_" Rotation="@ROTATE">BOTTOM LEFT</Text>
 
       <Text Size="1000" X="0" Y="0" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" FillColor="0 0 1 .25">E</Text>
 
