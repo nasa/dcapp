@@ -17,6 +17,7 @@
 
 // general includes
 #include <ctype.h>
+#include <float.h>
 #include <string.h>
 
 // PL macros
@@ -148,6 +149,7 @@ typedef struct __NodePanel {
     _NodeIndex    child;
 } _NodePanel;
 
+static const int _NODE_POLYGON_MAX_POINTS = 1000;
 typedef struct __NodePolygon {
     _ValIndex2    position;
     _ValIndex2    parent_align;
@@ -156,6 +158,10 @@ typedef struct __NodePolygon {
     _ValIndex4    fill_color;
     _ValIndex4    line_color;
     DcAppValIndex line_width;
+
+    _NodeIndex on_press;
+    _NodeIndex on_release;
+    _NodeIndex on_hover;
 
     _ValIndex2 *sb_points;
     bool        fill_enabled;
@@ -292,6 +298,41 @@ static _NodeIndex _process_node_children(xmlNodePtr xml_node, _NodeIndex node_in
 static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static void       _draw_node_list(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_dimensions, plMat4 *node_transform);
 static void       _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_dimensions, plMat4 *parent_transform);
+
+// frame data
+// order of frame like this:
+// 1) mouse position, states are fetched
+// 2) draw each node
+// 2.5) if the node being drawn is the pressed_node, process it's clicked events
+// 2.6) if the node contains the mouse click, register it as the next_pressed_node
+// 3) set the pressed_node as next_pressed_node
+// 4) set next_pressed_node to NODE_INDEX_UNDEFINED
+typedef struct __FrameData {
+
+    // frame count
+    unsigned long long count;
+
+    // triggered once
+    bool is_mouse_pressed;
+    bool is_mouse_released;
+
+    // continuous
+    bool is_mouse_down;
+
+    // raw position in window
+    bool   is_mouse_position_valid;
+    plVec2 mouse_position;
+
+    // node clicks
+    _NodeIndex pressed_node;
+    _NodeIndex next_pressed_node;
+    _NodeIndex hovered_node;
+    _NodeIndex next_hovered_node;
+    _NodeIndex released_node;
+    _NodeIndex active_node;
+
+} _FrameData;
+static _FrameData _frame_data;
 
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_data) {
 
@@ -467,6 +508,14 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
     // return back to the pool
     _ext_starter->return_raw_command_buffer(raw_cmd_buffer);
 
+    // initialize frame data
+    _frame_data.pressed_node      = NODE_INDEX_UNDEFINED;
+    _frame_data.next_pressed_node = NODE_INDEX_UNDEFINED;
+    _frame_data.hovered_node      = NODE_INDEX_UNDEFINED;
+    _frame_data.next_hovered_node = NODE_INDEX_UNDEFINED;
+    _frame_data.released_node     = NODE_INDEX_UNDEFINED;
+    _frame_data.active_node       = NODE_INDEX_UNDEFINED;
+
     // return app memory
     return pl_app_data;
 }
@@ -489,15 +538,28 @@ PL_EXPORT void pl_app_resize(_PlAppData *pl_app_data) {
     _ext_starter->resize();
 }
 
-static long long _frame_count;
-PL_EXPORT void   pl_app_update(_PlAppData *pl_app_data) {
+PL_EXPORT void pl_app_update(_PlAppData *pl_app_data) {
     // this needs to be the first call when using the starter
     // extension. You must return if it returns false (usually a swapchain recreation).
     if (!_ext_starter->begin_frame()) {
         return;
     }
 
-    _frame_count++;
+    _frame_data.count++;
+
+    // get mouse button status
+    if (_ext_ioi->is_mouse_down(PL_MOUSE_BUTTON_LEFT)) {
+        _frame_data.is_mouse_pressed  = !_frame_data.is_mouse_down;
+        _frame_data.is_mouse_released = false;
+        _frame_data.is_mouse_down     = true;
+    } else {
+        _frame_data.is_mouse_pressed  = false;
+        _frame_data.is_mouse_released = _frame_data.is_mouse_down;
+        _frame_data.is_mouse_down     = false;
+    }
+
+    // get mouse position
+    _frame_data.mouse_position = _ext_ioi->get_mouse_pos();
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -601,6 +663,21 @@ PL_EXPORT void   pl_app_update(_PlAppData *pl_app_data) {
 
     // must be the last function called when using the starter extension
     _ext_starter->end_frame();
+
+    // update node states
+    _frame_data.pressed_node = _frame_data.next_pressed_node;
+    _frame_data.hovered_node = _frame_data.next_hovered_node;
+    if (_frame_data.is_mouse_pressed) {
+        _frame_data.active_node = _frame_data.next_pressed_node;
+    }
+    if (_frame_data.is_mouse_released) {
+        _frame_data.released_node = _frame_data.active_node;
+        _frame_data.active_node   = NODE_INDEX_UNDEFINED;
+    } else {
+        _frame_data.released_node = NODE_INDEX_UNDEFINED;
+    }
+    _frame_data.next_hovered_node = NODE_INDEX_UNDEFINED;
+    _frame_data.next_pressed_node = NODE_INDEX_UNDEFINED;
 }
 
 static const char *_node_type_to_string(_NodeType type) {
@@ -2181,6 +2258,11 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
 
                     // add to parent
                     sbpush(parent_node->polygon.sb_points, position);
+
+                    // check point count
+                    if (sbcount(parent_node->polygon.sb_points) > _NODE_POLYGON_MAX_POINTS) {
+                        fprintf(stderr, "_process_node() polygon: Maximum number of points exceeded\n");
+                    }
                     break;
                 }
                 default:
@@ -2736,13 +2818,29 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
             // parent transform
             transform = pl_mul_mat4t(parent_transform, &transform);
 
-            // get points
+            // get points, min/max
+            plVec2 min_pos    = (plVec2){FLT_MAX, FLT_MAX};
+            plVec2 max_pos    = (plVec2){FLT_MIN, FLT_MIN};
             int    num_points = sbcount(node->polygon.sb_points);
-            plVec2 points[num_points];
+            plVec2 raw_points[_NODE_POLYGON_MAX_POINTS];
+            plVec2 points[_NODE_POLYGON_MAX_POINTS];
             for (int ii = 0; ii < num_points; ii++) {
-                plVec4 point4 = (plVec4){
+
+                // get raw point
+                raw_points[ii] = (plVec2){
                     (float)dc_app_lookup_get_value(data.lookup, node->polygon.sb_points[ii].x)->value_double,
-                    (float)dc_app_lookup_get_value(data.lookup, node->polygon.sb_points[ii].y)->value_double,
+                    (float)dc_app_lookup_get_value(data.lookup, node->polygon.sb_points[ii].y)->value_double};
+
+                // update max/min
+                min_pos.x = fminf(min_pos.x, raw_points[ii].x);
+                min_pos.y = fminf(min_pos.y, raw_points[ii].y);
+                max_pos.x = fmaxf(max_pos.x, raw_points[ii].x);
+                max_pos.y = fmaxf(max_pos.y, raw_points[ii].y);
+
+                // transform point
+                plVec4 point4 = (plVec4){
+                    raw_points[ii].x,
+                    raw_points[ii].y,
                     0, 1};
                 point4     = pl_mul_mat4_vec4(&transform, point4);
                 points[ii] = (plVec2){point4.x, point4.y};
@@ -2772,6 +2870,53 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                 };
                 uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
                 _ext_draw->add_polygon(pl_app_data->layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+            }
+
+            // process mouse position
+            plVec4 mouse_position = (plVec4){
+                _frame_data.mouse_position.x,
+                _frame_data.mouse_position.y,
+                0, 1};
+            plMat4 transform_inverse = pl_mat4t_invert(&transform);
+            mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
+
+            // process states
+            if (_frame_data.pressed_node == node_index) {
+                printf("pressed\n");
+            } else if (_frame_data.active_node == node_index) {
+                printf("active\n");
+            } else if (_frame_data.released_node == node_index) {
+                printf("released\n");
+            } else if (_frame_data.hovered_node == node_index) {
+                printf("hovered\n");
+            } else {
+                printf("inactive\n");
+            }
+
+            // check whether mouse is over/in
+            // first do the simple check to make sure it's even within the bounds (for performance)
+            bool inside = false;
+            if (mouse_position.x > min_pos.x && mouse_position.x < max_pos.x && mouse_position.y > min_pos.y && mouse_position.y < max_pos.y) {
+
+                // now do the actual check
+                for (int ii = 0, jj = num_points - 1; ii < num_points; jj = ii++) {
+                    double xi = raw_points[ii].x, yi = raw_points[ii].y;
+                    double xj = raw_points[jj].x, yj = raw_points[jj].y;
+
+                    bool intersect = ((yi > mouse_position.y) != (yj > mouse_position.y)) && (mouse_position.x < (xj - xi) * (mouse_position.y - yi) / (yj - yi + 1e-12) + xi);
+                    if (intersect) {
+                        inside = !inside;
+                    }
+                }
+            }
+
+            // update global states
+            if (inside) {
+                _frame_data.next_hovered_node = node_index;
+
+                if (_frame_data.is_mouse_pressed) {
+                    _frame_data.next_pressed_node = node_index;
+                }
             }
             break;
         }
@@ -3412,7 +3557,7 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
             // PL xform translate Y from negative to positive range
             {
                 // compute matrix
-                plMat4 trans_pl_matrix = pl_mat4_translate_xyz( 0.0f,dimension[1],0.0f);
+                plMat4 trans_pl_matrix = pl_mat4_translate_xyz(0.0f, dimension[1], 0.0f);
 
                 // apply transform
                 transform = pl_mul_mat4t(&transform, &trans_pl_matrix);
@@ -3427,10 +3572,10 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                 transform = pl_mul_mat4t(&transform, &scale_pl_matrix);
             }
 
-            // xform scale from virtual to real dimensions, 
+            // xform scale from virtual to real dimensions,
             {
                 // compute matrix
-                plMat4 scale_matrix = pl_mat4_scale_xyz(dimension[0] / virtual_dimension[0],dimension[1] / virtual_dimension[1], 1.0f);
+                plMat4 scale_matrix = pl_mat4_scale_xyz(dimension[0] / virtual_dimension[0], dimension[1] / virtual_dimension[1], 1.0f);
 
                 // apply transform
                 transform = pl_mul_mat4t(&transform, &scale_matrix);
