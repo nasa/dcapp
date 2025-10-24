@@ -296,7 +296,7 @@ static _Node (*_sb_node_styles)[NODE_TYPE__COUNT];
 
 // node utils
 static const char *_node_type_to_string(_NodeType type);
-static _Node      *_index_to_node(_NodeIndex index);
+static _Node      *_get_node(_NodeIndex index);
 static _NodeIndex  _register_node(_Node *node);
 
 // draw utils
@@ -427,7 +427,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
     _ext_vfs->mount_directory("/tiles", "../../data", PL_VFS_MOUNT_FLAGS_NONE);
 
     // set initial window params
-    _Node       *window_node = _index_to_node(data.window);
+    _Node       *window_node = _get_node(data.window);
     plWindowDesc window_desc = {};
     window_desc.pcTitle      = window_node->window.title;
     window_desc.uWidth       = (uint32_t)(dc_app_lookup_get_value(data.lookup, window_node->window.init_dimension.x)->value_integer);
@@ -711,7 +711,7 @@ static const char *_node_type_to_string(_NodeType type) {
     }
 }
 
-static _Node *_index_to_node(_NodeIndex index) {
+static _Node *_get_node(_NodeIndex index) {
     if (index == NODE_INDEX_UNDEFINED) {
         return NULL;
     }
@@ -785,9 +785,9 @@ static _NodeIndex _process_node_children(xmlNodePtr xml_node, _NodeIndex node_in
         if (child_node_index != NODE_INDEX_UNDEFINED) {
 
             // get node addresses here since the address could change per node process
-            _Node *node                = _index_to_node(node_index);
-            _Node *child_node          = _index_to_node(child_node_index);
-            _Node *previous_child_node = _index_to_node(previous_child_node_index);
+            _Node *node                = _get_node(node_index);
+            _Node *child_node          = _get_node(child_node_index);
+            _Node *previous_child_node = _get_node(previous_child_node_index);
 
             // if the current node and child exists
             if (node && child_node) {
@@ -808,10 +808,10 @@ static _NodeIndex _process_node_children(xmlNodePtr xml_node, _NodeIndex node_in
             // set previous child node, accounting for cases where the
             // child node is actually a node list
             _NodeIndex last_child_node_index = child_node_index;
-            _Node     *last_child_node       = _index_to_node(last_child_node_index);
+            _Node     *last_child_node       = _get_node(last_child_node_index);
             while (last_child_node->next != NODE_INDEX_UNDEFINED) {
                 last_child_node_index = last_child_node->next;
-                last_child_node       = _index_to_node(last_child_node_index);
+                last_child_node       = _get_node(last_child_node_index);
             }
             previous_child_node_index = last_child_node_index;
         }
@@ -1051,7 +1051,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
 
             // update child index
-            _Node *node           = _index_to_node(node_index);
+            _Node *node           = _get_node(node_index);
             node->container.child = first_child_index;
 
             // return
@@ -1077,7 +1077,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     _NodeIndex first_child_index = _process_node_children(xml_node, parent_node_index, elem_type, directory);
 
                     // update child false node
-                    _Node *parent_node                   = _index_to_node(parent_node_index);
+                    _Node *parent_node                   = _get_node(parent_node_index);
                     parent_node->conditional.child_false = first_child_index;
                     break;
                 }
@@ -1142,7 +1142,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             if (first_child_index != NODE_INDEX_UNDEFINED) {
 
                 // ignore if True element already exists
-                _Node *node = _index_to_node(node_index);
+                _Node *node = _get_node(node_index);
                 if (node->conditional.child_true == NODE_INDEX_UNDEFINED) {
                     node->conditional.child_true = first_child_index;
                 } else {
@@ -1212,7 +1212,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
         }
 
         case DC_APP_ELEM_TYPE_MOUSE_ACTIVE: {
-            _Node *parent_node = _index_to_node(parent_node_index);
+            _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_POLYGON: {
                     parent_node->polygon.mouse_events.active = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
@@ -1226,7 +1226,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
         }
 
         case DC_APP_ELEM_TYPE_MOUSE_HOVERED: {
-            _Node *parent_node = _index_to_node(parent_node_index);
+            _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_POLYGON: {
                     parent_node->polygon.mouse_events.hovered = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
@@ -1240,7 +1240,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
         }
 
         case DC_APP_ELEM_TYPE_MOUSE_INACTIVE: {
-            _Node *parent_node = _index_to_node(parent_node_index);
+            _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_POLYGON: {
                     parent_node->polygon.mouse_events.inactive = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
@@ -1255,7 +1255,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
 
         case DC_APP_ELEM_TYPE_MOUSE_PRESSED: {
 
-            _Node *parent_node = _index_to_node(parent_node_index);
+            _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_POLYGON: {
                     parent_node->polygon.mouse_events.pressed = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
@@ -1269,7 +1269,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
         }
 
         case DC_APP_ELEM_TYPE_MOUSE_RELEASED: {
-            _Node *parent_node = _index_to_node(parent_node_index);
+            _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_POLYGON: {
                     parent_node->polygon.mouse_events.released = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
@@ -1323,7 +1323,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
 
             // update child index
-            _Node *node       = _index_to_node(node_index);
+            _Node *node       = _get_node(node_index);
             node->panel.child = first_child_index;
 
             // return
@@ -1453,7 +1453,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _process_node_children(xml_node, node_index, elem_type, directory);
 
             // enable/disable mouse events
-            _MouseEventChildren *mouse_events = &(_index_to_node(node_index)->polygon.mouse_events);
+            _MouseEventChildren *mouse_events = &(_get_node(node_index)->polygon.mouse_events);
             mouse_events->enabled =
                 (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
                 (mouse_events->released != NODE_INDEX_UNDEFINED) ||
@@ -1770,7 +1770,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
 
         case DC_APP_ELEM_TYPE_TERRAIN_DEM: {
 
-            _Node *parent_node = _index_to_node(parent_node_index);
+            _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_TERRAIN: {
 
@@ -2251,7 +2251,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     _NodeIndex first_child_index = _process_node_children(xml_node, parent_node_index, elem_type, directory);
 
                     // update child true node
-                    _Node *parent_node                  = _index_to_node(parent_node_index);
+                    _Node *parent_node                  = _get_node(parent_node_index);
                     parent_node->conditional.child_true = first_child_index;
                     break;
                 }
@@ -2314,7 +2314,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
         }
 
         case DC_APP_ELEM_TYPE_VERTEX: {
-            _Node *parent_node = _index_to_node(parent_node_index);
+            _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_POLYGON: {
 
@@ -2474,7 +2474,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
 
             // update child index
-            _Node *node        = _index_to_node(node_index);
+            _Node *node        = _get_node(node_index);
             node->window.child = first_child_index;
 
             // set global window
@@ -2497,7 +2497,7 @@ static void _draw_node_list(_PlAppData *pl_app_data, _NodeIndex node_index, plVe
     _NodeIndex current_node_index = node_index;
     while (current_node_index != NODE_INDEX_UNDEFINED) {
         _draw_node(pl_app_data, current_node_index, parent_position, parent_dimensions, node_transform);
-        current_node_index = _index_to_node(current_node_index)->next;
+        current_node_index = _get_node(current_node_index)->next;
     }
 }
 
@@ -2506,7 +2506,7 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
         fprintf(stderr, "DCAPP _draw_node(): attempting to draw undefined node index\n");
     }
 
-    _Node *node = _index_to_node(node_index);
+    _Node *node = _get_node(node_index);
     switch (node->type) {
         case NODE_TYPE_CONTAINER: {
 
