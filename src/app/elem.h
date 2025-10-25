@@ -6,6 +6,7 @@ typedef struct _xmlNode *xmlNodePtr;
 // element types
 typedef enum _DcAppElemType {
     DC_APP_ELEM_TYPE_UNDEFINED,
+    DC_APP_ELEM_TYPE_CIRCLE,
     DC_APP_ELEM_TYPE_CONSTANT,
     DC_APP_ELEM_TYPE_CONTAINER,
     DC_APP_ELEM_TYPE_DCAPP,
@@ -23,6 +24,7 @@ typedef enum _DcAppElemType {
     DC_APP_ELEM_TYPE_NONELEM,
     DC_APP_ELEM_TYPE_PANEL,
     DC_APP_ELEM_TYPE_POLYGON,
+    DC_APP_ELEM_TYPE_RECTANGLE,
     DC_APP_ELEM_TYPE_SET,
     DC_APP_ELEM_TYPE_STYLE,
     DC_APP_ELEM_TYPE_TERRAIN,

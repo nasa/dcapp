@@ -6,6 +6,8 @@
 
 const char *dc_app_elem_type_to_string(DcAppElemType type) {
     switch (type) {
+        case DC_APP_ELEM_TYPE_CIRCLE:
+            return "Circle";
         case DC_APP_ELEM_TYPE_CONSTANT:
             return "Constant";
         case DC_APP_ELEM_TYPE_CONTAINER:
@@ -40,6 +42,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "Panel";
         case DC_APP_ELEM_TYPE_POLYGON:
             return "Polygon";
+        case DC_APP_ELEM_TYPE_RECTANGLE:
+            return "Rectangle";
         case DC_APP_ELEM_TYPE_SET:
             return "Set";
         case DC_APP_ELEM_TYPE_STYLE:
@@ -73,6 +77,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
 }
 
 DcAppElemType dc_app_string_to_elem_type(const char *name) {
+    if (strcmp(name, "Circle") == 0)
+        return DC_APP_ELEM_TYPE_CIRCLE;
     if (strcmp(name, "Constant") == 0)
         return DC_APP_ELEM_TYPE_CONSTANT;
     if (strcmp(name, "Container") == 0)
@@ -107,6 +113,8 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_PANEL;
     if (strcmp(name, "Polygon") == 0)
         return DC_APP_ELEM_TYPE_POLYGON;
+    if (strcmp(name, "Rectangle") == 0)
+        return DC_APP_ELEM_TYPE_RECTANGLE;
     if (strcmp(name, "Set") == 0)
         return DC_APP_ELEM_TYPE_SET;
     if (strcmp(name, "Style") == 0)
