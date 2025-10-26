@@ -34,9 +34,9 @@
 
       <Rectangle X="400" Y="400" Width="200" Height="200" FillColor="#_color_champagne_ 1"></Rectangle>
 
-      <Circle X="750" Y="300" Radius="200" FillColor="#_color_yellow_">
+      <Circle HorizontalAlign="#_align_left_" X="0" Y="300" Radius="200" FillColor="#_color_yellow_">
         <MouseActive>
-          <Text Size="75" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" HorizontalAlign="#_align_center_" VerticalAlign="#_align_middle_" FillColor="#_color_white_">active!</Text>
+          <Text Size="75" ParentAlignX="#_align_left_" ParentAlignY="#_align_top_" HorizontalAlign="#_align_left_" VerticalAlign="#_align_top_" FillColor="#_color_white_">active!</Text>
         </MouseActive>
       </Circle>
 
@@ -61,6 +61,12 @@
           <Vertex X="-1000" Y="-1000" />
           <Vertex X="-1000" Y="0" />
         </Polygon>
+        <Line LineColor="#_color_topaz_ .5" LineWidth="5">
+          <Vertex X="0" Y="0" />
+          <Vertex X="0" Y="-1000" />
+          <Vertex X="-1000" Y="-1000" />
+          <Vertex X="-1000" Y="0" />
+        </Line>
       </Container>
 
       <Container Width="1000" Height="1000" X="500" Y="500" VirtualWidth="1000" VirtualHeight="1000" Rotation="@ROTATE">

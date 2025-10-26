@@ -24,6 +24,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "If";
         case DC_APP_ELEM_TYPE_INCLUDE:
             return "Include";
+        case DC_APP_ELEM_TYPE_LINE:
+            return "Line";
         case DC_APP_ELEM_TYPE_LOGIC:
             return "Logic";
         case DC_APP_ELEM_TYPE_MOUSE_ACTIVE:
@@ -97,6 +99,8 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_IF;
     if (strcmp(name, "Include") == 0)
         return DC_APP_ELEM_TYPE_INCLUDE;
+    if (strcmp(name, "Line") == 0)
+        return DC_APP_ELEM_TYPE_LINE;
     if (strcmp(name, "Logic") == 0)
         return DC_APP_ELEM_TYPE_LOGIC;
     if (strcmp(name, "MouseActive") == 0)
