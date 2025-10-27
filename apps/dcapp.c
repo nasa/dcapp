@@ -107,10 +107,13 @@ typedef struct __ValIndex4 {
 
 typedef enum __NodeType {
     NODE_TYPE_UNDEFINED,
+    NODE_TYPE_CIRCLE,
     NODE_TYPE_CONTAINER,
     NODE_TYPE_CONDITIONAL,
+    NODE_TYPE_LINE,
     NODE_TYPE_PANEL,
     NODE_TYPE_POLYGON,
+    NODE_TYPE_RECTANGLE,
     NODE_TYPE_SET,
     NODE_TYPE_TERRAIN,
     NODE_TYPE_TEXT,
@@ -119,8 +122,37 @@ typedef enum __NodeType {
     NODE_TYPE__MAX = NODE_TYPE__COUNT - 1,
 } _NodeType;
 
-typedef uint32_t _NodeIndex;
+typedef int      _NodeIndex;
 const _NodeIndex NODE_INDEX_UNDEFINED = -1;
+
+typedef struct __MouseEventChildren {
+    _NodeIndex active;
+    _NodeIndex hovered;
+    _NodeIndex inactive;
+    _NodeIndex pressed;
+    _NodeIndex released;
+    bool       enabled;
+} _MouseEventChildren;
+
+static const int _NODE_CIRCLE_MAX_SEGMENTS = 1000;
+typedef struct __NodeCircle {
+    _ValIndex2    position;
+    _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_position;
+    _ValIndex2    local_align;
+    _ValIndex2    parent_align;
+    DcAppValIndex rotation;
+    DcAppValIndex radius;
+    DcAppValIndex num_segments;
+    _ValIndex4    fill_color;
+    _ValIndex4    line_color;
+    DcAppValIndex line_width;
+
+    _MouseEventChildren mouse_events;
+
+    bool fill_enabled;
+    bool line_enabled;
+} _NodeCircle;
 
 typedef struct __NodeConditional {
     DcAppValIndex type;
@@ -142,6 +174,19 @@ typedef struct __NodeContainer {
     _NodeIndex    child;
 } _NodeContainer;
 
+static const int _NODE_LINE_MAX_POINTS = 1000;
+typedef struct __NodeLine {
+    _ValIndex2    position;
+    _ValIndex2    pivot_position;
+    DcAppValIndex rotation;
+    _ValIndex4    line_color;
+    DcAppValIndex line_width;
+
+    _ValIndex2 *sb_points;
+    bool        fill_enabled;
+    bool        line_enabled;
+} _NodeLine;
+
 typedef struct __NodePanel {
     _ValIndex2    parent_dimension;
     _ValIndex2    virtual_dimension;
@@ -152,21 +197,36 @@ typedef struct __NodePanel {
 static const int _NODE_POLYGON_MAX_POINTS = 1000;
 typedef struct __NodePolygon {
     _ValIndex2    position;
-    _ValIndex2    parent_align;
     _ValIndex2    pivot_position;
     DcAppValIndex rotation;
     _ValIndex4    fill_color;
     _ValIndex4    line_color;
     DcAppValIndex line_width;
 
-    _NodeIndex on_press;
-    _NodeIndex on_release;
-    _NodeIndex on_hover;
+    _MouseEventChildren mouse_events;
 
     _ValIndex2 *sb_points;
     bool        fill_enabled;
     bool        line_enabled;
 } _NodePolygon;
+
+typedef struct __NodeRectangle {
+    _ValIndex2    position;
+    _ValIndex2    dimension;
+    _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_position;
+    _ValIndex2    local_align;
+    _ValIndex2    parent_align;
+    DcAppValIndex rotation;
+    _ValIndex4    fill_color;
+    _ValIndex4    line_color;
+    DcAppValIndex line_width;
+
+    _MouseEventChildren mouse_events;
+
+    bool fill_enabled;
+    bool line_enabled;
+} _NodeRectangle;
 
 typedef struct __NodeSet {
     DcAppVarIndex var_index;
@@ -229,10 +289,13 @@ typedef struct __Node {
     _NodeIndex parent;
     _NodeIndex next;
     union {
+        _NodeCircle      circle;
         _NodeConditional conditional;
         _NodeContainer   container;
+        _NodeLine        line;
         _NodePanel       panel;
         _NodePolygon     polygon;
+        _NodeRectangle   rectangle;
         _NodeSet         set;
         _NodeTerrain     terrain;
         _NodeText        text;
@@ -289,15 +352,15 @@ static _Node (*_sb_node_styles)[NODE_TYPE__COUNT];
 
 // node utils
 static const char *_node_type_to_string(_NodeType type);
-static _Node      *_index_to_node(_NodeIndex index);
+static _Node      *_get_node(_NodeIndex index);
 static _NodeIndex  _register_node(_Node *node);
 
 // draw utils
 static bool       _load_color_from_string(xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out);
 static _NodeIndex _process_node_children(xmlNodePtr xml_node, _NodeIndex node_index, DcAppElemType elem_type, const char *directory);
 static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static void       _draw_node_list(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_dimensions, plMat4 *node_transform);
-static void       _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void       _draw_node_list(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform);
+static void       _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 
 // frame data
 // order of frame like this:
@@ -420,7 +483,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
     _ext_vfs->mount_directory("/tiles", "../../data", PL_VFS_MOUNT_FLAGS_NONE);
 
     // set initial window params
-    _Node       *window_node = _index_to_node(data.window);
+    _Node       *window_node = _get_node(data.window);
     plWindowDesc window_desc = {};
     window_desc.pcTitle      = window_node->window.title;
     window_desc.uWidth       = (uint32_t)(dc_app_lookup_get_value(data.lookup, window_node->window.init_dimension.x)->value_integer);
@@ -647,7 +710,7 @@ PL_EXPORT void pl_app_update(_PlAppData *pl_app_data) {
     // ext_draw->add_image(app_data->layer, ext_terrain->get_terrain_texture(app_data->terrain).uIndex, {0.0f, 0.0f}, {1000.0f, 1000.0f});
 
     // draw node
-    _draw_node(pl_app_data, data.window, NULL, NULL);
+    _draw_node(pl_app_data, data.window, NULL, NULL, NULL);
 
     // submit draw layer
     _ext_draw->submit_2d_layer(pl_app_data->layer);
@@ -682,14 +745,20 @@ PL_EXPORT void pl_app_update(_PlAppData *pl_app_data) {
 
 static const char *_node_type_to_string(_NodeType type) {
     switch (type) {
+        case NODE_TYPE_CIRCLE:
+            return "Circle";
         case NODE_TYPE_CONTAINER:
             return "Container";
         case NODE_TYPE_CONDITIONAL:
             return "Conditional";
+        case NODE_TYPE_LINE:
+            return "Line";
         case NODE_TYPE_PANEL:
             return "Panel";
         case NODE_TYPE_POLYGON:
             return "Polygon";
+        case NODE_TYPE_RECTANGLE:
+            return "Rectangle";
         case NODE_TYPE_SET:
             return "Set";
         case NODE_TYPE_TERRAIN:
@@ -704,7 +773,7 @@ static const char *_node_type_to_string(_NodeType type) {
     }
 }
 
-static _Node *_index_to_node(_NodeIndex index) {
+static _Node *_get_node(_NodeIndex index) {
     if (index == NODE_INDEX_UNDEFINED) {
         return NULL;
     }
@@ -778,9 +847,9 @@ static _NodeIndex _process_node_children(xmlNodePtr xml_node, _NodeIndex node_in
         if (child_node_index != NODE_INDEX_UNDEFINED) {
 
             // get node addresses here since the address could change per node process
-            _Node *node                = _index_to_node(node_index);
-            _Node *child_node          = _index_to_node(child_node_index);
-            _Node *previous_child_node = _index_to_node(previous_child_node_index);
+            _Node *node                = _get_node(node_index);
+            _Node *child_node          = _get_node(child_node_index);
+            _Node *previous_child_node = _get_node(previous_child_node_index);
 
             // if the current node and child exists
             if (node && child_node) {
@@ -801,10 +870,10 @@ static _NodeIndex _process_node_children(xmlNodePtr xml_node, _NodeIndex node_in
             // set previous child node, accounting for cases where the
             // child node is actually a node list
             _NodeIndex last_child_node_index = child_node_index;
-            _Node     *last_child_node       = _index_to_node(last_child_node_index);
+            _Node     *last_child_node       = _get_node(last_child_node_index);
             while (last_child_node->next != NODE_INDEX_UNDEFINED) {
                 last_child_node_index = last_child_node->next;
-                last_child_node       = _index_to_node(last_child_node_index);
+                last_child_node       = _get_node(last_child_node_index);
             }
             previous_child_node_index = last_child_node_index;
         }
@@ -824,6 +893,218 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
         case DC_APP_ELEM_TYPE_NONELEM: {
             // ignore non-element nodes
             return NODE_INDEX_UNDEFINED;
+        }
+
+        case DC_APP_ELEM_TYPE_CIRCLE: {
+            _Node dc_node  = {};
+            dc_node.type   = NODE_TYPE_CIRCLE;
+            dc_node.parent = parent_node_index;
+            dc_node.next   = NODE_INDEX_UNDEFINED;
+
+            dc_node.circle.mouse_events.active   = NODE_INDEX_UNDEFINED;
+            dc_node.circle.mouse_events.hovered  = NODE_INDEX_UNDEFINED;
+            dc_node.circle.mouse_events.inactive = NODE_INDEX_UNDEFINED;
+            dc_node.circle.mouse_events.pressed  = NODE_INDEX_UNDEFINED;
+            dc_node.circle.mouse_events.released = NODE_INDEX_UNDEFINED;
+
+            // x position
+            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+            if (!raw_x_position) {
+                raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            }
+            if (raw_x_position) {
+                char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_x_position);
+                dc_node.circle.position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
+            } else {
+                dc_node.circle.position.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // y position
+            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+            if (!raw_y_position) {
+                raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            }
+            if (raw_y_position) {
+                char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_y_position);
+                dc_node.circle.position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
+            } else {
+                dc_node.circle.position.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // parent x align
+            xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
+            if (raw_parent_x_align) {
+                char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_parent_x_align);
+                dc_node.circle.parent_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
+            } else {
+                dc_node.circle.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // parent y align
+            xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
+            if (raw_parent_y_align) {
+                char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_parent_y_align);
+                dc_node.circle.parent_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
+            } else {
+                dc_node.circle.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // local x align
+            xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignX");
+            if (!raw_x_align) {
+                raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+            }
+            if (raw_x_align) {
+                char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_x_align);
+                dc_node.circle.local_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
+            } else {
+                dc_node.circle.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // local y align
+            xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignY");
+            if (!raw_y_align) {
+                raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+            }
+            if (raw_y_align) {
+                char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_y_align);
+                dc_node.circle.local_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
+            } else {
+                dc_node.circle.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // rotation
+            xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+            if (!raw_rotation) {
+                raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
+            }
+            if (raw_rotation) {
+                char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_rotation);
+                dc_node.circle.rotation = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
+            } else {
+                dc_node.circle.rotation = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // pivots
+            xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
+            if (!raw_pivot_position_x) {
+                raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
+            }
+            xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
+            if (!raw_pivot_position_y) {
+                raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
+            }
+            if (raw_pivot_position_x && raw_pivot_position_y) {
+
+                char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_pivot_position_x);
+                dc_node.circle.pivot_position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
+
+                char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_pivot_position_y);
+                dc_node.circle.pivot_position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
+
+                dc_node.circle.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+                dc_node.circle.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+
+            } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+
+                xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+                if (raw_pivot_align_x) {
+                    char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
+                    strncpy(cleaned_pivot_align_x, (const char *)raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                    xmlFree(raw_pivot_align_x);
+                    dc_node.circle.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
+                } else {
+                    dc_node.circle.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+                }
+
+                xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+                if (raw_pivot_align_y) {
+                    char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
+                    strncpy(cleaned_pivot_align_y, (const char *)raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                    xmlFree(raw_pivot_align_y);
+                    dc_node.circle.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
+                } else {
+                    dc_node.circle.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+                }
+
+                dc_node.circle.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
+                dc_node.circle.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
+            } else {
+                fprintf(stderr, "DCAPP _process_node(): Circle: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+            }
+
+            // radius
+            xmlChar *raw_radius = xmlGetProp(xml_node, BAD_CAST "Radius");
+            if (raw_radius) {
+                char cleaned_radius[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_radius, (const char *)raw_radius, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_radius);
+                dc_node.circle.radius = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_radius);
+            } else {
+                dc_node.circle.radius = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // segments
+            xmlChar *raw_segments = xmlGetProp(xml_node, BAD_CAST "Segments");
+            if (raw_segments) {
+                char cleaned_segments[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_segments, (const char *)raw_segments, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_segments);
+                dc_node.circle.num_segments = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_segments);
+            } else {
+                dc_node.circle.num_segments = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // line width
+            xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
+            if (raw_line_width) {
+                char cleaned_line_width[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_line_width, (const char *)raw_line_width, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_line_width);
+                dc_node.circle.line_width = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_line_width);
+            } else {
+                dc_node.circle.line_width = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // colors
+            dc_node.circle.fill_enabled = _load_color_from_string(xml_node, "FillColor", &(dc_node.circle.fill_color));
+            dc_node.circle.line_enabled = _load_color_from_string(xml_node, "LineColor", &(dc_node.circle.line_color));
+
+            // register node
+            _NodeIndex node_index = _register_node(&dc_node);
+
+            // process children
+            _process_node_children(xml_node, node_index, elem_type, directory);
+
+            // enable/disable mouse events
+            _MouseEventChildren *mouse_events = &(_get_node(node_index)->circle.mouse_events);
+            mouse_events->enabled =
+                (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->released != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->active != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->inactive != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->hovered != NODE_INDEX_UNDEFINED);
+
+            // return
+            return node_index;
         }
 
         case DC_APP_ELEM_TYPE_CONSTANT: {
@@ -1044,7 +1325,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
 
             // update child index
-            _Node *node           = _index_to_node(node_index);
+            _Node *node           = _get_node(node_index);
             node->container.child = first_child_index;
 
             // return
@@ -1070,7 +1351,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     _NodeIndex first_child_index = _process_node_children(xml_node, parent_node_index, elem_type, directory);
 
                     // update child false node
-                    _Node *parent_node                   = _index_to_node(parent_node_index);
+                    _Node *parent_node                   = _get_node(parent_node_index);
                     parent_node->conditional.child_false = first_child_index;
                     break;
                 }
@@ -1135,7 +1416,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             if (first_child_index != NODE_INDEX_UNDEFINED) {
 
                 // ignore if True element already exists
-                _Node *node = _index_to_node(node_index);
+                _Node *node = _get_node(node_index);
                 if (node->conditional.child_true == NODE_INDEX_UNDEFINED) {
                     node->conditional.child_true = first_child_index;
                 } else {
@@ -1154,6 +1435,103 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             char     directory[DC_UTILS_FILEPATH_BUFFER_SIZE];
             dc_utils_get_directory((const char *)file, directory, sizeof(directory));
             return _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+        }
+
+        case DC_APP_ELEM_TYPE_LINE: {
+            _Node dc_node  = {};
+            dc_node.type   = NODE_TYPE_LINE;
+            dc_node.parent = parent_node_index;
+            dc_node.next   = NODE_INDEX_UNDEFINED;
+
+            // x position
+            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+            if (!raw_x_position) {
+                raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            }
+            if (raw_x_position) {
+                char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_x_position);
+                dc_node.line.position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
+            } else {
+                dc_node.line.position.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // y position
+            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+            if (!raw_y_position) {
+                raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            }
+            if (raw_y_position) {
+                char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_y_position);
+                dc_node.line.position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
+            } else {
+                dc_node.line.position.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // rotation
+            xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+            if (!raw_rotation) {
+                raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
+            }
+            if (raw_rotation) {
+                char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_rotation);
+                dc_node.line.rotation = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
+            } else {
+                dc_node.line.rotation = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // pivots
+            xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
+            if (!raw_pivot_position_x) {
+                raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
+            }
+            xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
+            if (!raw_pivot_position_y) {
+                raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
+            }
+            if (raw_pivot_position_x && raw_pivot_position_y) {
+
+                char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_pivot_position_x);
+                dc_node.line.pivot_position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
+
+                char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_pivot_position_y);
+                dc_node.line.pivot_position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
+
+            } else if (raw_pivot_position_x || raw_pivot_position_y) {
+                fprintf(stderr, "DCAPP _process_node(): line: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+            }
+
+            // line width
+            xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
+            if (raw_line_width) {
+                char cleaned_line_width[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_line_width, (const char *)raw_line_width, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_line_width);
+                dc_node.line.line_width = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_line_width);
+            } else {
+                dc_node.line.line_width = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // colors
+            dc_node.line.line_enabled = _load_color_from_string(xml_node, "LineColor", &(dc_node.line.line_color));
+
+            // register node
+            _NodeIndex node_index = _register_node(&dc_node);
+
+            // process children
+            _process_node_children(xml_node, node_index, elem_type, directory);
+
+            // return
+            return node_index;
         }
 
         case DC_APP_ELEM_TYPE_LOGIC: {
@@ -1204,6 +1582,121 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             return NODE_INDEX_UNDEFINED;
         }
 
+        case DC_APP_ELEM_TYPE_MOUSE_ACTIVE: {
+            _Node *parent_node = _get_node(parent_node_index);
+            switch (parent_node->type) {
+                case NODE_TYPE_CIRCLE: {
+                    parent_node->circle.mouse_events.active = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_POLYGON: {
+                    parent_node->polygon.mouse_events.active = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_RECTANGLE: {
+                    parent_node->rectangle.mouse_events.active = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                default:
+                    fprintf(stderr, "DCApp _process_node() mouse_active: unknown parent of type %s\n",
+                            _node_type_to_string(parent_node->type));
+                    break;
+            }
+            return NODE_INDEX_UNDEFINED;
+        }
+
+        case DC_APP_ELEM_TYPE_MOUSE_HOVERED: {
+            _Node *parent_node = _get_node(parent_node_index);
+            switch (parent_node->type) {
+                case NODE_TYPE_CIRCLE: {
+                    parent_node->circle.mouse_events.hovered = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_POLYGON: {
+                    parent_node->polygon.mouse_events.hovered = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_RECTANGLE: {
+                    parent_node->rectangle.mouse_events.hovered = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                default:
+                    fprintf(stderr, "DCApp _process_node() mouse_hovered: unknown parent of type %s\n",
+                            _node_type_to_string(parent_node->type));
+                    break;
+            }
+            return NODE_INDEX_UNDEFINED;
+        }
+
+        case DC_APP_ELEM_TYPE_MOUSE_INACTIVE: {
+            _Node *parent_node = _get_node(parent_node_index);
+            switch (parent_node->type) {
+                case NODE_TYPE_CIRCLE: {
+                    parent_node->circle.mouse_events.inactive = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_POLYGON: {
+                    parent_node->polygon.mouse_events.inactive = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_RECTANGLE: {
+                    parent_node->rectangle.mouse_events.inactive = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                default:
+                    fprintf(stderr, "DCApp _process_node() mouse_inactive: unknown parent of type %s\n",
+                            _node_type_to_string(parent_node->type));
+                    break;
+            }
+            return NODE_INDEX_UNDEFINED;
+        }
+
+        case DC_APP_ELEM_TYPE_MOUSE_PRESSED: {
+            _Node *parent_node = _get_node(parent_node_index);
+            switch (parent_node->type) {
+                case NODE_TYPE_CIRCLE: {
+                    parent_node->circle.mouse_events.pressed = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_POLYGON: {
+                    parent_node->polygon.mouse_events.pressed = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_RECTANGLE: {
+                    parent_node->rectangle.mouse_events.pressed = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                default:
+                    fprintf(stderr, "DCApp _process_node() mouse_pressed: unknown parent of type %s\n",
+                            _node_type_to_string(parent_node->type));
+                    break;
+            }
+            return NODE_INDEX_UNDEFINED;
+        }
+
+        case DC_APP_ELEM_TYPE_MOUSE_RELEASED: {
+            _Node *parent_node = _get_node(parent_node_index);
+            switch (parent_node->type) {
+                case NODE_TYPE_CIRCLE: {
+                    parent_node->circle.mouse_events.released = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_POLYGON: {
+                    parent_node->polygon.mouse_events.released = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_RECTANGLE: {
+                    parent_node->rectangle.mouse_events.released = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                default:
+                    fprintf(stderr, "DCApp _process_node() mouse_released: unknown parent of type %s\n",
+                            _node_type_to_string(parent_node->type));
+                    break;
+            }
+            return NODE_INDEX_UNDEFINED;
+        }
+
         case DC_APP_ELEM_TYPE_PANEL: {
             _Node dc_node  = {};
             dc_node.type   = NODE_TYPE_PANEL;
@@ -1245,7 +1738,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
 
             // update child index
-            _Node *node       = _index_to_node(node_index);
+            _Node *node       = _get_node(node_index);
             node->panel.child = first_child_index;
 
             // return
@@ -1257,6 +1750,12 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             dc_node.type   = NODE_TYPE_POLYGON;
             dc_node.parent = parent_node_index;
             dc_node.next   = NODE_INDEX_UNDEFINED;
+
+            dc_node.polygon.mouse_events.active   = NODE_INDEX_UNDEFINED;
+            dc_node.polygon.mouse_events.hovered  = NODE_INDEX_UNDEFINED;
+            dc_node.polygon.mouse_events.inactive = NODE_INDEX_UNDEFINED;
+            dc_node.polygon.mouse_events.pressed  = NODE_INDEX_UNDEFINED;
+            dc_node.polygon.mouse_events.released = NODE_INDEX_UNDEFINED;
 
             // x position
             xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
@@ -1284,28 +1783,6 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 dc_node.polygon.position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
             } else {
                 dc_node.polygon.position.y = DC_APP_VAL_INDEX_UNDEFINED;
-            }
-
-            // parent x align
-            xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
-            if (raw_parent_x_align) {
-                char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                xmlFree(raw_parent_x_align);
-                dc_node.polygon.parent_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
-            } else {
-                dc_node.polygon.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
-            }
-
-            // parent y align
-            xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
-            if (raw_parent_y_align) {
-                char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                xmlFree(raw_parent_y_align);
-                dc_node.polygon.parent_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
-            } else {
-                dc_node.polygon.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
             }
 
             // rotation
@@ -1367,6 +1844,233 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
 
             // process children
             _process_node_children(xml_node, node_index, elem_type, directory);
+
+            // enable/disable mouse events
+            _MouseEventChildren *mouse_events = &(_get_node(node_index)->polygon.mouse_events);
+            mouse_events->enabled =
+                (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->released != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->active != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->inactive != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->hovered != NODE_INDEX_UNDEFINED);
+
+            // return
+            return node_index;
+        }
+
+        case DC_APP_ELEM_TYPE_RECTANGLE: {
+            _Node dc_node  = {};
+            dc_node.type   = NODE_TYPE_RECTANGLE;
+            dc_node.parent = parent_node_index;
+            dc_node.next   = NODE_INDEX_UNDEFINED;
+
+            dc_node.rectangle.mouse_events.active   = NODE_INDEX_UNDEFINED;
+            dc_node.rectangle.mouse_events.hovered  = NODE_INDEX_UNDEFINED;
+            dc_node.rectangle.mouse_events.inactive = NODE_INDEX_UNDEFINED;
+            dc_node.rectangle.mouse_events.pressed  = NODE_INDEX_UNDEFINED;
+            dc_node.rectangle.mouse_events.released = NODE_INDEX_UNDEFINED;
+
+            // x position
+            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+            if (!raw_x_position) {
+                raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            }
+            if (raw_x_position) {
+                char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_x_position);
+                dc_node.rectangle.position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
+            } else {
+                dc_node.rectangle.position.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // y position
+            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+            if (!raw_y_position) {
+                raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            }
+            if (raw_y_position) {
+                char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_y_position);
+                dc_node.rectangle.position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
+            } else {
+                dc_node.rectangle.position.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // x dimension
+            xmlChar *raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionX");
+            if (!raw_x_dimension) {
+                raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
+            }
+            if (raw_x_dimension) {
+                char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_x_dimension);
+                dc_node.rectangle.dimension.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
+            } else {
+                dc_node.rectangle.dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // y dimension
+            xmlChar *raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionY");
+            if (!raw_y_dimension) {
+                raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
+            }
+            if (raw_y_dimension) {
+                char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_y_dimension);
+                dc_node.rectangle.dimension.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
+            } else {
+                dc_node.rectangle.dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // parent x align
+            xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
+            if (raw_parent_x_align) {
+                char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_parent_x_align);
+                dc_node.rectangle.parent_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
+            } else {
+                dc_node.rectangle.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // parent y align
+            xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
+            if (raw_parent_y_align) {
+                char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_parent_y_align);
+                dc_node.rectangle.parent_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
+            } else {
+                dc_node.rectangle.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // local x align
+            xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignX");
+            if (!raw_x_align) {
+                raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+            }
+            if (raw_x_align) {
+                char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_x_align);
+                dc_node.rectangle.local_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
+            } else {
+                dc_node.rectangle.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // local y align
+            xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignY");
+            if (!raw_y_align) {
+                raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+            }
+            if (raw_y_align) {
+                char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_y_align);
+                dc_node.rectangle.local_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
+            } else {
+                dc_node.rectangle.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // rotation
+            xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+            if (!raw_rotation) {
+                raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
+            }
+            if (raw_rotation) {
+                char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_rotation);
+                dc_node.rectangle.rotation = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
+            } else {
+                dc_node.rectangle.rotation = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // pivots
+            xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
+            if (!raw_pivot_position_x) {
+                raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
+            }
+            xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
+            if (!raw_pivot_position_y) {
+                raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
+            }
+            if (raw_pivot_position_x && raw_pivot_position_y) {
+
+                char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_pivot_position_x);
+                dc_node.rectangle.pivot_position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
+
+                char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_pivot_position_y);
+                dc_node.rectangle.pivot_position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
+
+                dc_node.rectangle.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+                dc_node.rectangle.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+
+            } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+
+                xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+                if (raw_pivot_align_x) {
+                    char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
+                    strncpy(cleaned_pivot_align_x, (const char *)raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                    xmlFree(raw_pivot_align_x);
+                    dc_node.rectangle.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
+                } else {
+                    dc_node.rectangle.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+                }
+
+                xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+                if (raw_pivot_align_y) {
+                    char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
+                    strncpy(cleaned_pivot_align_y, (const char *)raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                    xmlFree(raw_pivot_align_y);
+                    dc_node.rectangle.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
+                } else {
+                    dc_node.rectangle.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+                }
+
+                dc_node.rectangle.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
+                dc_node.rectangle.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
+            } else {
+                fprintf(stderr, "DCAPP _process_node(): Rectangle: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+            }
+
+            // line width
+            xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
+            if (raw_line_width) {
+                char cleaned_line_width[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_line_width, (const char *)raw_line_width, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_line_width);
+                dc_node.rectangle.line_width = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_line_width);
+            } else {
+                dc_node.rectangle.line_width = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // colors
+            dc_node.rectangle.fill_enabled = _load_color_from_string(xml_node, "FillColor", &(dc_node.rectangle.fill_color));
+            dc_node.rectangle.line_enabled = _load_color_from_string(xml_node, "LineColor", &(dc_node.rectangle.line_color));
+
+            // register node
+            _NodeIndex node_index = _register_node(&dc_node);
+
+            // process children
+            _process_node_children(xml_node, node_index, elem_type, directory);
+
+            // enable/disable mouse events
+            _MouseEventChildren *mouse_events = &(_get_node(node_index)->rectangle.mouse_events);
+            mouse_events->enabled =
+                (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->released != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->active != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->inactive != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->hovered != NODE_INDEX_UNDEFINED);
 
             // return
             return node_index;
@@ -1677,7 +2381,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
 
         case DC_APP_ELEM_TYPE_TERRAIN_DEM: {
 
-            _Node *parent_node = _index_to_node(parent_node_index);
+            _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_TERRAIN: {
 
@@ -2158,7 +2862,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                     _NodeIndex first_child_index = _process_node_children(xml_node, parent_node_index, elem_type, directory);
 
                     // update child true node
-                    _Node *parent_node                  = _index_to_node(parent_node_index);
+                    _Node *parent_node                  = _get_node(parent_node_index);
                     parent_node->conditional.child_true = first_child_index;
                     break;
                 }
@@ -2221,8 +2925,9 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
         }
 
         case DC_APP_ELEM_TYPE_VERTEX: {
-            _Node *parent_node = _index_to_node(parent_node_index);
+            _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
+                case NODE_TYPE_LINE:
                 case NODE_TYPE_POLYGON: {
 
                     // position
@@ -2256,12 +2961,27 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                         fprintf(stderr, "DCAPP _process_node: Invalid Vertex: No Y attribute\n");
                     }
 
-                    // add to parent
-                    sbpush(parent_node->polygon.sb_points, position);
+                    switch(parent_node->type) {
+                        case NODE_TYPE_LINE:
+                            // add to parent
+                            sbpush(parent_node->line.sb_points, position);
 
-                    // check point count
-                    if (sbcount(parent_node->polygon.sb_points) > _NODE_POLYGON_MAX_POINTS) {
-                        fprintf(stderr, "_process_node() polygon: Maximum number of points exceeded\n");
+                            // check point count
+                            if (sbcount(parent_node->line.sb_points) > _NODE_LINE_MAX_POINTS) {
+                                fprintf(stderr, "_process_node() line: Maximum number of points exceeded\n");
+                            }
+                            break;
+                        case NODE_TYPE_POLYGON:
+                            // add to parent
+                            sbpush(parent_node->polygon.sb_points, position);
+
+                            // check point count
+                            if (sbcount(parent_node->polygon.sb_points) > _NODE_POLYGON_MAX_POINTS) {
+                                fprintf(stderr, "_process_node() polygon: Maximum number of points exceeded\n");
+                            }
+                            break;
+                        default:
+                            break;
                     }
                     break;
                 }
@@ -2381,7 +3101,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
 
             // update child index
-            _Node *node        = _index_to_node(node_index);
+            _Node *node        = _get_node(node_index);
             node->window.child = first_child_index;
 
             // set global window
@@ -2400,21 +3120,321 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
     return NODE_INDEX_UNDEFINED;
 }
 
-static void _draw_node_list(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_dimensions, plMat4 *node_transform) {
+static void _draw_node_list(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform) {
     _NodeIndex current_node_index = node_index;
     while (current_node_index != NODE_INDEX_UNDEFINED) {
-        _draw_node(pl_app_data, current_node_index, parent_dimensions, node_transform);
-        current_node_index = _index_to_node(current_node_index)->next;
+        _draw_node(pl_app_data, current_node_index, parent_position, parent_dimensions, node_transform);
+        current_node_index = _get_node(current_node_index)->next;
     }
 }
 
-static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
     if (node_index == NODE_INDEX_UNDEFINED) {
         fprintf(stderr, "DCAPP _draw_node(): attempting to draw undefined node index\n");
     }
 
-    _Node *node = _index_to_node(node_index);
+    _Node *node = _get_node(node_index);
     switch (node->type) {
+
+        case NODE_TYPE_CIRCLE: {
+
+            // boolean checks
+            bool use_radius         = node->circle.radius != DC_APP_VAL_INDEX_UNDEFINED;
+            bool use_rotation       = node->circle.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+            bool use_pivot_position = (node->circle.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->circle.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+
+            // get dimensions
+            float radius, diameter;
+            if (use_radius) {
+                radius   = (float)dc_app_lookup_get_value(data.lookup, node->circle.radius)->value_double;
+                diameter = 2 * radius;
+            } else {
+                diameter = fminf(parent_dimensions->x, parent_dimensions->y);
+                radius   = diameter / 2;
+            }
+
+            // transform
+            plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+
+            // xform rotation (around a point)
+            {
+                if (use_rotation && use_pivot_position) {
+
+                    // get pivot XY, rotation
+                    float pivot_position[2] = {
+                        (float)dc_app_lookup_get_value(data.lookup, node->circle.pivot_position.x)->value_double,
+                        (float)dc_app_lookup_get_value(data.lookup, node->circle.pivot_position.y)->value_double};
+                    float rotation = pl_radiansf((float)dc_app_lookup_get_value(data.lookup, node->circle.rotation)->value_double);
+
+                    // compute matrices
+                    plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+                    plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+                    plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+                    // apply transform
+                    transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+                    transform = pl_mul_mat4t(&transform, &rotate_xform);
+                    transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+                }
+            }
+
+            // xform local alignment
+            {
+                // get alignment
+                DcAppAlignType local_aligns[2] = {
+                    node->circle.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->circle.local_align.x)->value_integer,
+                    node->circle.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->circle.local_align.y)->value_integer};
+
+                // compute offsets
+                float trans_align_offsets[2];
+                switch (local_aligns[0]) {
+                    case DC_APP_ALIGN_TYPE_LEFT:
+                        trans_align_offsets[0] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_CENTER:
+                        trans_align_offsets[0] = -1 * diameter / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:
+                        trans_align_offsets[0] = -1 * diameter;
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
+                        break;
+                }
+                switch (local_aligns[1]) {
+                    case DC_APP_ALIGN_TYPE_BOTTOM:
+                        trans_align_offsets[1] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_MIDDLE:
+                        trans_align_offsets[1] = -1 * diameter / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_TOP:
+                        trans_align_offsets[1] = -1 * diameter;
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
+                        break;
+                }
+
+                // compute matrix
+                plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
+
+                // apply transform
+                transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
+            }
+
+            // xform position
+            {
+                // boolean check
+                bool use_position[2] = {
+                    node->circle.position.x != DC_APP_VAL_INDEX_UNDEFINED,
+                    node->circle.position.y != DC_APP_VAL_INDEX_UNDEFINED};
+
+                // get position
+                float position[2];
+                if (use_position[0]) {
+                    position[0] = (float)dc_app_lookup_get_value(data.lookup, node->circle.position.x)->value_double;
+                } else {
+                    DcAppAlignType parent_align_x = node->circle.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(data.lookup, node->circle.parent_align.x)->value_integer;
+                    switch (parent_align_x) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_LEFT:
+                            position[0] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_CENTER:
+                            position[0] = parent_dimensions->x / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_RIGHT:
+                            position[0] = parent_dimensions->x;
+                            break;
+                        default:
+                            fprintf(stderr, "DCAPP _draw_node() circle: Invalid parent_align_x value %d\n", parent_align_x);
+                            break;
+                    }
+
+                    // add parent offset
+                    position[0] += parent_position->x;
+                }
+                if (use_position[1]) {
+                    position[1] = (float)dc_app_lookup_get_value(data.lookup, node->circle.position.y)->value_double;
+                } else {
+                    DcAppAlignType parent_align_y = node->circle.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(data.lookup, node->circle.parent_align.y)->value_integer;
+                    switch (parent_align_y) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_BOTTOM:
+                            position[1] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_MIDDLE:
+                            position[1] = parent_dimensions->y / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_TOP:
+                            position[1] = parent_dimensions->y;
+                            break;
+                        default:
+                            fprintf(stderr, "DCAPP _draw_node() circle: Invalid parent_align_y value %d\n", parent_align_y);
+                            break;
+                    }
+
+                    // add parent offset
+                    position[1] += parent_position->y;
+                }
+
+                // compute matrix
+                plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
+
+                // apply transform
+                transform = pl_mul_mat4t(&transform, &trans_position_xform);
+            }
+
+            // xform local rotation
+            {
+                if (use_rotation && !use_pivot_position) {
+
+                    // get alignment
+                    DcAppAlignType local_pivot_aligns[2] = {
+                        node->circle.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->circle.pivot_local_align.x)->value_integer,
+                        node->circle.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->circle.pivot_local_align.y)->value_integer};
+
+                    // get pivot XY, rotation
+                    float pivot_position[2];
+                    switch (local_pivot_aligns[0]) {
+                        case DC_APP_ALIGN_TYPE_LEFT:
+                            pivot_position[0] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_CENTER:
+                            pivot_position[0] = diameter / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_RIGHT:
+                            pivot_position[0] = diameter;
+                            break;
+                        default:
+                            fprintf(stderr, "Unknown pivot alignment in <circle> draw call: %d\n", local_pivot_aligns[0]);
+                            break;
+                    }
+                    switch (local_pivot_aligns[1]) {
+                        case DC_APP_ALIGN_TYPE_BOTTOM:
+                            pivot_position[1] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_MIDDLE:
+                            pivot_position[1] = diameter / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_TOP:
+                            pivot_position[1] = diameter;
+                            break;
+                        default:
+                            fprintf(stderr, "Unknown pivot alignment in <circle> draw call: %d\n", local_pivot_aligns[1]);
+                            break;
+                    }
+                    float rotation = pl_radiansf((float)dc_app_lookup_get_value(data.lookup, node->circle.rotation)->value_double);
+
+                    // compute matrices
+                    plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+                    plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+                    plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+                    // apply transform
+                    transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+                    transform = pl_mul_mat4t(&transform, &rotate_xform);
+                    transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+                }
+            }
+
+            // parent transform
+            transform = pl_mul_mat4t(parent_transform, &transform);
+
+            // get points
+            float  num_points = node->circle.num_segments == DC_APP_VAL_INDEX_UNDEFINED ? 40 : dc_app_lookup_get_value(data.lookup, node->circle.num_segments)->value_integer;
+            plVec2 points[_NODE_CIRCLE_MAX_SEGMENTS];
+            for (int ii = 0; ii < num_points; ii++) {
+                float  angle  = ii * (2 * M_PI / num_points);
+                plVec4 point4 = (plVec4){
+                    radius * (1.0f + cos(angle)),
+                    radius * (1.0f + sin(angle)),
+                    0, 1};
+                point4     = pl_mul_mat4_vec4(&transform, point4);
+                points[ii] = (plVec2){point4.x, point4.y};
+            }
+
+            // draw fill
+            if (node->circle.fill_enabled) {
+
+                float fill_color[4] = {
+                    node->circle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->circle.fill_color.r)->value_double,
+                    node->circle.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->circle.fill_color.g)->value_double,
+                    node->circle.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->circle.fill_color.b)->value_double,
+                    node->circle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(data.lookup, node->circle.fill_color.a)->value_double,
+                };
+                uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
+                _ext_draw->add_convex_polygon_filled(pl_app_data->layer, points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+            }
+
+            // draw outline
+            if (node->circle.line_enabled) {
+                float line_thickness = (float)dc_app_lookup_get_value(data.lookup, node->circle.line_width)->value_double;
+                float line_color[4]  = {
+                    node->circle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->circle.line_color.r)->value_double,
+                    node->circle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->circle.line_color.g)->value_double,
+                    node->circle.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->circle.line_color.b)->value_double,
+                    node->circle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(data.lookup, node->circle.line_color.a)->value_double,
+                };
+                uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
+                _ext_draw->add_polygon(pl_app_data->layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+            }
+
+            // mouse events
+            if (node->circle.mouse_events.enabled) {
+
+                // process mouse position
+                plVec4 mouse_position = (plVec4){
+                    _frame_data.mouse_position.x,
+                    _frame_data.mouse_position.y,
+                    0, 1};
+                plMat4 transform_inverse = pl_mat4t_invert(&transform);
+                mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
+
+                // check whether mouse is over/in
+                bool inside = false;
+                if (mouse_position.x > 0 && mouse_position.x < diameter && mouse_position.y > 0 && mouse_position.y < diameter) {
+
+                    // now do the actual check
+                    float dx      = mouse_position.x - radius;
+                    float dy      = mouse_position.y - radius;
+                    float dist_sq = dx * dx + dy * dy;
+                    float r_sq    = radius * radius;
+                    inside        = dist_sq <= r_sq;
+                }
+
+                // update global states
+                if (inside) {
+                    _frame_data.next_hovered_node = node_index;
+
+                    if (_frame_data.is_mouse_pressed) {
+                        _frame_data.next_pressed_node = node_index;
+                    }
+                }
+
+                // draw mouse events
+                plVec2 position   = (plVec2){0.0f, 0.0f};
+                plVec2 dimensions = (plVec2){diameter, diameter};
+                if (_frame_data.pressed_node == node_index) {
+                    _draw_node_list(pl_app_data, node->circle.mouse_events.pressed, &position, &dimensions, &transform);
+                } else if (_frame_data.active_node == node_index) {
+                    _draw_node_list(pl_app_data, node->circle.mouse_events.active, &position, &dimensions, &transform);
+                } else if (_frame_data.released_node == node_index) {
+                    _draw_node_list(pl_app_data, node->circle.mouse_events.released, &position, &dimensions, &transform);
+                } else if (_frame_data.hovered_node == node_index) {
+                    _draw_node_list(pl_app_data, node->circle.mouse_events.hovered, &position, &dimensions, &transform);
+                } else {
+                    _draw_node_list(pl_app_data, node->circle.mouse_events.inactive, &position, &dimensions, &transform);
+                }
+            }
+            break;
+        }
+
         case NODE_TYPE_CONTAINER: {
 
             // boolean checks
@@ -2537,6 +3557,9 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                             fprintf(stderr, "DCAPP _draw_node() container: Invalid parent_align_x value %d\n", parent_align_x);
                             break;
                     }
+
+                    // add parent offset
+                    position[0] += parent_position->x;
                 }
                 if (use_position[1]) {
                     position[1] = (float)dc_app_lookup_get_value(data.lookup, node->container.position.y)->value_double;
@@ -2557,6 +3580,9 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                             fprintf(stderr, "DCAPP _draw_node() container: Invalid parent_align_y value %d\n", parent_align_y);
                             break;
                     }
+
+                    // add parent offset
+                    position[1] += parent_position->y;
                 }
 
                 // compute matrix
@@ -2635,7 +3661,8 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
 
             // draw children
             plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
-            _draw_node_list(pl_app_data, node->container.child, &virtual_dimensions_vec2, &transform);
+            plVec2 position_vec2           = (plVec2){0.0f, 0.0f};
+            _draw_node_list(pl_app_data, node->container.child, &position_vec2, &virtual_dimensions_vec2, &transform);
             break;
         }
 
@@ -2687,10 +3714,108 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
 
             // process children
             if (result) {
-                _draw_node_list(pl_app_data, node->conditional.child_true, parent_dimensions, parent_transform);
+                _draw_node_list(pl_app_data, node->conditional.child_true, parent_position, parent_dimensions, parent_transform);
             } else {
-                _draw_node_list(pl_app_data, node->conditional.child_false, parent_dimensions, parent_transform);
+                _draw_node_list(pl_app_data, node->conditional.child_false, parent_position, parent_dimensions, parent_transform);
             }
+            break;
+        }
+
+        case NODE_TYPE_LINE: {
+
+            // boolean checks
+            bool use_rotation       = node->line.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+            bool use_pivot_position = (node->line.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->line.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+
+            // transform
+            plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+
+            // xform rotation (around a point)
+            {
+                if (use_rotation && use_pivot_position) {
+
+                    // get pivot XY, rotation
+                    float pivot_position[2] = {
+                        (float)dc_app_lookup_get_value(data.lookup, node->line.pivot_position.x)->value_double,
+                        (float)dc_app_lookup_get_value(data.lookup, node->line.pivot_position.y)->value_double};
+                    float rotation = pl_radiansf((float)dc_app_lookup_get_value(data.lookup, node->line.rotation)->value_double);
+
+                    // compute matrices
+                    plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+                    plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+                    plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+                    // apply transform
+                    transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+                    transform = pl_mul_mat4t(&transform, &rotate_xform);
+                    transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+                }
+            }
+
+            // xform position
+            {
+                // boolean check
+                bool use_position[2] = {
+                    node->line.position.x != DC_APP_VAL_INDEX_UNDEFINED,
+                    node->line.position.y != DC_APP_VAL_INDEX_UNDEFINED};
+
+                // get position
+                float position[2] = {
+                    use_position[0] ? (float)dc_app_lookup_get_value(data.lookup, node->line.position.x)->value_double : 0.0f,
+                    use_position[1] ? (float)dc_app_lookup_get_value(data.lookup, node->line.position.y)->value_double : 0.0f,
+                };
+
+                // compute matrix
+                plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
+
+                // apply transform
+                transform = pl_mul_mat4t(&transform, &trans_position_xform);
+            }
+
+            // parent transform
+            transform = pl_mul_mat4t(parent_transform, &transform);
+
+            // get points, min/max
+            plVec2 min_pos    = (plVec2){FLT_MAX, FLT_MAX};
+            plVec2 max_pos    = (plVec2){FLT_MIN, FLT_MIN};
+            int    num_points = sbcount(node->line.sb_points);
+            plVec2 raw_points[_NODE_LINE_MAX_POINTS];
+            plVec2 points[_NODE_LINE_MAX_POINTS];
+            for (int ii = 0; ii < num_points; ii++) {
+
+                // get raw point
+                raw_points[ii] = (plVec2){
+                    (float)dc_app_lookup_get_value(data.lookup, node->line.sb_points[ii].x)->value_double,
+                    (float)dc_app_lookup_get_value(data.lookup, node->line.sb_points[ii].y)->value_double};
+
+                // update max/min
+                min_pos.x = fminf(min_pos.x, raw_points[ii].x);
+                min_pos.y = fminf(min_pos.y, raw_points[ii].y);
+                max_pos.x = fmaxf(max_pos.x, raw_points[ii].x);
+                max_pos.y = fmaxf(max_pos.y, raw_points[ii].y);
+
+                // transform point
+                plVec4 point4 = (plVec4){
+                    raw_points[ii].x,
+                    raw_points[ii].y,
+                    0, 1};
+                point4     = pl_mul_mat4_vec4(&transform, point4);
+                points[ii] = (plVec2){point4.x, point4.y};
+            }
+
+            // draw outline
+            if (node->line.line_enabled) {
+                float line_thickness = (float)dc_app_lookup_get_value(data.lookup, node->line.line_width)->value_double;
+                float line_color[4]  = {
+                    node->line.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->line.line_color.r)->value_double,
+                    node->line.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->line.line_color.g)->value_double,
+                    node->line.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->line.line_color.b)->value_double,
+                    node->line.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(data.lookup, node->line.line_color.a)->value_double,
+                };
+                uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
+                _ext_draw->add_lines(pl_app_data->layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+            }
+
             break;
         }
 
@@ -2723,7 +3848,8 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
 
             // draw children
             plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
-            _draw_node_list(pl_app_data, node->panel.child, &virtual_dimensions_vec2, &transform);
+            plVec2 position_vec2           = (plVec2){0.0f, 0.0f};
+            _draw_node_list(pl_app_data, node->panel.child, &position_vec2, &virtual_dimensions_vec2, &transform);
             break;
         }
 
@@ -2769,43 +3895,9 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                 float position[2];
                 if (use_position[0]) {
                     position[0] = (float)dc_app_lookup_get_value(data.lookup, node->polygon.position.x)->value_double;
-                } else {
-                    DcAppAlignType parent_align_x = node->polygon.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(data.lookup, node->polygon.parent_align.x)->value_integer;
-                    switch (parent_align_x) {
-                        case DC_APP_ALIGN_TYPE_UNDEFINED:
-                        case DC_APP_ALIGN_TYPE_LEFT:
-                            position[0] = 0;
-                            break;
-                        case DC_APP_ALIGN_TYPE_CENTER:
-                            position[0] = parent_dimensions->x / 2;
-                            break;
-                        case DC_APP_ALIGN_TYPE_RIGHT:
-                            position[0] = parent_dimensions->x;
-                            break;
-                        default:
-                            fprintf(stderr, "DCAPP _draw_node() polygon: Invalid parent_align_x value %d\n", parent_align_x);
-                            break;
-                    }
                 }
                 if (use_position[1]) {
                     position[1] = (float)dc_app_lookup_get_value(data.lookup, node->polygon.position.y)->value_double;
-                } else {
-                    DcAppAlignType parent_align_y = node->polygon.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(data.lookup, node->polygon.parent_align.y)->value_integer;
-                    switch (parent_align_y) {
-                        case DC_APP_ALIGN_TYPE_UNDEFINED:
-                        case DC_APP_ALIGN_TYPE_BOTTOM:
-                            position[1] = 0;
-                            break;
-                        case DC_APP_ALIGN_TYPE_MIDDLE:
-                            position[1] = parent_dimensions->y / 2;
-                            break;
-                        case DC_APP_ALIGN_TYPE_TOP:
-                            position[1] = parent_dimensions->y;
-                            break;
-                        default:
-                            fprintf(stderr, "DCAPP _draw_node() polygon: Invalid parent_align_y value %d\n", parent_align_y);
-                            break;
-                    }
                 }
 
                 // compute matrix
@@ -2872,50 +3964,348 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                 _ext_draw->add_polygon(pl_app_data->layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
             }
 
-            // process mouse position
-            plVec4 mouse_position = (plVec4){
-                _frame_data.mouse_position.x,
-                _frame_data.mouse_position.y,
-                0, 1};
-            plMat4 transform_inverse = pl_mat4t_invert(&transform);
-            mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
+            // mouse events
+            if (node->polygon.mouse_events.enabled) {
 
-            // process states
-            if (_frame_data.pressed_node == node_index) {
-                printf("pressed\n");
-            } else if (_frame_data.active_node == node_index) {
-                printf("active\n");
-            } else if (_frame_data.released_node == node_index) {
-                printf("released\n");
-            } else if (_frame_data.hovered_node == node_index) {
-                printf("hovered\n");
-            } else {
-                printf("inactive\n");
-            }
+                // process mouse position
+                plVec4 mouse_position = (plVec4){
+                    _frame_data.mouse_position.x,
+                    _frame_data.mouse_position.y,
+                    0, 1};
+                plMat4 transform_inverse = pl_mat4t_invert(&transform);
+                mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
 
-            // check whether mouse is over/in
-            // first do the simple check to make sure it's even within the bounds (for performance)
-            bool inside = false;
-            if (mouse_position.x > min_pos.x && mouse_position.x < max_pos.x && mouse_position.y > min_pos.y && mouse_position.y < max_pos.y) {
+                // check whether mouse is over/in
+                // first do the simple check to make sure it's even within the bounds (for performance)
+                bool inside = false;
+                if (mouse_position.x > min_pos.x && mouse_position.x < max_pos.x && mouse_position.y > min_pos.y && mouse_position.y < max_pos.y) {
 
-                // now do the actual check
-                for (int ii = 0, jj = num_points - 1; ii < num_points; jj = ii++) {
-                    double xi = raw_points[ii].x, yi = raw_points[ii].y;
-                    double xj = raw_points[jj].x, yj = raw_points[jj].y;
+                    // now do the actual check
+                    for (int ii = 0, jj = num_points - 1; ii < num_points; jj = ii++) {
+                        double xi = raw_points[ii].x, yi = raw_points[ii].y;
+                        double xj = raw_points[jj].x, yj = raw_points[jj].y;
 
-                    bool intersect = ((yi > mouse_position.y) != (yj > mouse_position.y)) && (mouse_position.x < (xj - xi) * (mouse_position.y - yi) / (yj - yi + 1e-12) + xi);
-                    if (intersect) {
-                        inside = !inside;
+                        bool intersect = ((yi > mouse_position.y) != (yj > mouse_position.y)) && (mouse_position.x < (xj - xi) * (mouse_position.y - yi) / (yj - yi + 1e-12) + xi);
+                        if (intersect) {
+                            inside = !inside;
+                        }
                     }
+                }
+
+                // update global states
+                if (inside) {
+                    _frame_data.next_hovered_node = node_index;
+
+                    if (_frame_data.is_mouse_pressed) {
+                        _frame_data.next_pressed_node = node_index;
+                    }
+                }
+
+                // draw mouse events
+                plVec2 position   = (plVec2){min_pos.x, min_pos.y};
+                plVec2 dimensions = (plVec2){max_pos.x - min_pos.x, max_pos.y - min_pos.y};
+                if (_frame_data.pressed_node == node_index) {
+                    _draw_node_list(pl_app_data, node->polygon.mouse_events.pressed, &position, &dimensions, &transform);
+                } else if (_frame_data.active_node == node_index) {
+                    _draw_node_list(pl_app_data, node->polygon.mouse_events.active, &position, &dimensions, &transform);
+                } else if (_frame_data.released_node == node_index) {
+                    _draw_node_list(pl_app_data, node->polygon.mouse_events.released, &position, &dimensions, &transform);
+                } else if (_frame_data.hovered_node == node_index) {
+                    _draw_node_list(pl_app_data, node->polygon.mouse_events.hovered, &position, &dimensions, &transform);
+                } else {
+                    _draw_node_list(pl_app_data, node->polygon.mouse_events.inactive, &position, &dimensions, &transform);
+                }
+            }
+            break;
+        }
+
+        case NODE_TYPE_RECTANGLE: {
+
+            // boolean checks
+            bool use_dimension[2] = {
+                node->rectangle.dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
+                node->rectangle.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
+            bool use_rotation       = node->rectangle.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+            bool use_pivot_position = (node->rectangle.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->rectangle.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+
+            // get dimensions
+            float dimension[2] = {
+                use_dimension[0] ? (float)dc_app_lookup_get_value(data.lookup, node->rectangle.dimension.x)->value_double : parent_dimensions->x,
+                use_dimension[1] ? (float)dc_app_lookup_get_value(data.lookup, node->rectangle.dimension.y)->value_double : parent_dimensions->y};
+
+            // transform
+            plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+
+            // xform rotation (around a point)
+            {
+                if (use_rotation && use_pivot_position) {
+
+                    // get pivot XY, rotation
+                    float pivot_position[2] = {
+                        (float)dc_app_lookup_get_value(data.lookup, node->rectangle.pivot_position.x)->value_double,
+                        (float)dc_app_lookup_get_value(data.lookup, node->rectangle.pivot_position.y)->value_double};
+                    float rotation = pl_radiansf((float)dc_app_lookup_get_value(data.lookup, node->rectangle.rotation)->value_double);
+
+                    // compute matrices
+                    plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+                    plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+                    plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+                    // apply transform
+                    transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+                    transform = pl_mul_mat4t(&transform, &rotate_xform);
+                    transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
                 }
             }
 
-            // update global states
-            if (inside) {
-                _frame_data.next_hovered_node = node_index;
+            // xform local alignment
+            {
+                // get alignment
+                DcAppAlignType local_aligns[2] = {
+                    node->rectangle.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->rectangle.local_align.x)->value_integer,
+                    node->rectangle.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->rectangle.local_align.y)->value_integer};
 
-                if (_frame_data.is_mouse_pressed) {
-                    _frame_data.next_pressed_node = node_index;
+                // compute offsets
+                float trans_align_offsets[2];
+                switch (local_aligns[0]) {
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_LEFT:
+                        trans_align_offsets[0] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_CENTER:
+                        trans_align_offsets[0] = -1 * dimension[0] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:
+                        trans_align_offsets[0] = -1 * dimension[0];
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
+                        break;
+                }
+                switch (local_aligns[1]) {
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_BOTTOM:
+                        trans_align_offsets[1] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_MIDDLE:
+                        trans_align_offsets[1] = -1 * dimension[1] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_TOP:
+                        trans_align_offsets[1] = -1 * dimension[1];
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
+                        break;
+                }
+
+                // compute matrix
+                plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
+
+                // apply transform
+                transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
+            }
+
+            // xform position
+            {
+                // boolean check
+                bool use_position[2] = {
+                    node->rectangle.position.x != DC_APP_VAL_INDEX_UNDEFINED,
+                    node->rectangle.position.y != DC_APP_VAL_INDEX_UNDEFINED};
+
+                // get position
+                float position[2];
+                if (use_position[0]) {
+                    position[0] = (float)dc_app_lookup_get_value(data.lookup, node->rectangle.position.x)->value_double;
+                } else {
+                    DcAppAlignType parent_align_x = node->rectangle.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(data.lookup, node->rectangle.parent_align.x)->value_integer;
+                    switch (parent_align_x) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_LEFT:
+                            position[0] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_CENTER:
+                            position[0] = parent_dimensions->x / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_RIGHT:
+                            position[0] = parent_dimensions->x;
+                            break;
+                        default:
+                            fprintf(stderr, "DCAPP _draw_node() rectangle: Invalid parent_align_x value %d\n", parent_align_x);
+                            break;
+                    }
+
+                    // add parent offset
+                    position[0] += parent_position->x;
+                }
+                if (use_position[1]) {
+                    position[1] = (float)dc_app_lookup_get_value(data.lookup, node->rectangle.position.y)->value_double;
+                } else {
+                    DcAppAlignType parent_align_y = node->rectangle.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(data.lookup, node->rectangle.parent_align.y)->value_integer;
+                    switch (parent_align_y) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_BOTTOM:
+                            position[1] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_MIDDLE:
+                            position[1] = parent_dimensions->y / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_TOP:
+                            position[1] = parent_dimensions->y;
+                            break;
+                        default:
+                            fprintf(stderr, "DCAPP _draw_node() rectangle: Invalid parent_align_y value %d\n", parent_align_y);
+                            break;
+                    }
+
+                    // add parent offset
+                    position[1] += parent_position->y;
+                }
+
+                // compute matrix
+                plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
+
+                // apply transform
+                transform = pl_mul_mat4t(&transform, &trans_position_xform);
+            }
+
+            // xform local rotation
+            {
+                if (use_rotation && !use_pivot_position) {
+
+                    // get alignment
+                    DcAppAlignType local_pivot_aligns[2] = {
+                        node->rectangle.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->rectangle.pivot_local_align.x)->value_integer,
+                        node->rectangle.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->rectangle.pivot_local_align.y)->value_integer};
+
+                    // get pivot XY, rotation
+                    float pivot_position[2];
+                    switch (local_pivot_aligns[0]) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_LEFT:
+                            pivot_position[0] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_CENTER:
+                            pivot_position[0] = dimension[0] / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_RIGHT:
+                            pivot_position[0] = dimension[0];
+                            break;
+                        default:
+                            fprintf(stderr, "Unknown pivot alignment in <rectangle> draw call: %d\n", local_pivot_aligns[0]);
+                            break;
+                    }
+                    switch (local_pivot_aligns[1]) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_BOTTOM:
+                            pivot_position[1] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_MIDDLE:
+                            pivot_position[1] = dimension[1] / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_TOP:
+                            pivot_position[1] = dimension[1];
+                            break;
+                        default:
+                            fprintf(stderr, "Unknown pivot alignment in <rectangle> draw call: %d\n", local_pivot_aligns[1]);
+                            break;
+                    }
+                    float rotation = pl_radiansf((float)dc_app_lookup_get_value(data.lookup, node->rectangle.rotation)->value_double);
+
+                    // compute matrices
+                    plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+                    plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+                    plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+                    // apply transform
+                    transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+                    transform = pl_mul_mat4t(&transform, &rotate_xform);
+                    transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+                }
+            }
+
+            // parent transform
+            transform = pl_mul_mat4t(parent_transform, &transform);
+
+            // get points
+            plVec2 raw_points[4] = {
+                (plVec2){0.0f, 0.0f},
+                (plVec2){dimension[0], 0.0f},
+                (plVec2){dimension[0], dimension[1]},
+                (plVec2){0.0f, dimension[1]}};
+
+            // transform points
+            plVec2 points[4];
+            for (int ii = 0; ii < 4; ii++) {
+                plVec4 point4 = (plVec4){
+                    raw_points[ii].x,
+                    raw_points[ii].y,
+                    0, 1};
+                point4     = pl_mul_mat4_vec4(&transform, point4);
+                points[ii] = (plVec2){point4.x, point4.y};
+            }
+
+            // draw fill
+            if (node->rectangle.fill_enabled) {
+
+                float fill_color[4] = {
+                    node->rectangle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->rectangle.fill_color.r)->value_double,
+                    node->rectangle.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->rectangle.fill_color.g)->value_double,
+                    node->rectangle.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->rectangle.fill_color.b)->value_double,
+                    node->rectangle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(data.lookup, node->rectangle.fill_color.a)->value_double,
+                };
+                uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
+                _ext_draw->add_convex_polygon_filled(pl_app_data->layer, points, 4, (plDrawSolidOptions){.uColor = pl_fill_color});
+            }
+
+            // draw outline
+            if (node->rectangle.line_enabled) {
+                float line_thickness = (float)dc_app_lookup_get_value(data.lookup, node->rectangle.line_width)->value_double;
+                float line_color[4]  = {
+                    node->rectangle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->rectangle.line_color.r)->value_double,
+                    node->rectangle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->rectangle.line_color.g)->value_double,
+                    node->rectangle.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->rectangle.line_color.b)->value_double,
+                    node->rectangle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(data.lookup, node->rectangle.line_color.a)->value_double,
+                };
+                uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
+                _ext_draw->add_polygon(pl_app_data->layer, points, 4, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+            }
+
+            // mouse events
+            if (node->rectangle.mouse_events.enabled) {
+
+                // process mouse position
+                plVec4 mouse_position = (plVec4){
+                    _frame_data.mouse_position.x,
+                    _frame_data.mouse_position.y,
+                    0, 1};
+                plMat4 transform_inverse = pl_mat4t_invert(&transform);
+                mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
+
+                // check whether mouse is over/in
+                bool inside = mouse_position.x > 0 && mouse_position.x < dimension[0] && mouse_position.y > 0 && mouse_position.y < dimension[1];
+
+                // update global states
+                if (inside) {
+                    _frame_data.next_hovered_node = node_index;
+
+                    if (_frame_data.is_mouse_pressed) {
+                        _frame_data.next_pressed_node = node_index;
+                    }
+                }
+
+                // draw mouse events
+                plVec2 position   = (plVec2){0.0f, 0.0f};
+                plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
+                if (_frame_data.pressed_node == node_index) {
+                    _draw_node_list(pl_app_data, node->rectangle.mouse_events.pressed, &position, &dimensions, &transform);
+                } else if (_frame_data.active_node == node_index) {
+                    _draw_node_list(pl_app_data, node->rectangle.mouse_events.active, &position, &dimensions, &transform);
+                } else if (_frame_data.released_node == node_index) {
+                    _draw_node_list(pl_app_data, node->rectangle.mouse_events.released, &position, &dimensions, &transform);
+                } else if (_frame_data.hovered_node == node_index) {
+                    _draw_node_list(pl_app_data, node->rectangle.mouse_events.hovered, &position, &dimensions, &transform);
+                } else {
+                    _draw_node_list(pl_app_data, node->rectangle.mouse_events.inactive, &position, &dimensions, &transform);
                 }
             }
             break;
@@ -3147,6 +4537,9 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                             fprintf(stderr, "DCAPP _draw_node() terrain: Invalid parent_align_x value %d\n", parent_align_x);
                             break;
                     }
+
+                    // add parent offset
+                    position[0] += parent_position->x;
                 }
                 if (use_position[1]) {
                     position[1] = (float)dc_app_lookup_get_value(data.lookup, node->terrain.position.y)->value_double;
@@ -3167,6 +4560,9 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                             fprintf(stderr, "DCAPP _draw_node() terrain: Invalid parent_align_y value %d\n", parent_align_y);
                             break;
                     }
+
+                    // add parent offset
+                    position[1] += parent_position->y;
                 }
 
                 // compute matrix
@@ -3297,13 +4693,15 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
             // get text dimensions
             plDrawTextOptions text_options = {0};
             text_options.ptFont            = pl_app_data->cousine_sdf_font;
-            text_options.uColor            = PL_COLOR_32_RGBA(
-                dc_app_lookup_get_value(data.lookup, node->text.fill_color.r)->value_double,
-                dc_app_lookup_get_value(data.lookup, node->text.fill_color.g)->value_double,
-                dc_app_lookup_get_value(data.lookup, node->text.fill_color.b)->value_double,
-                dc_app_lookup_get_value(data.lookup, node->text.fill_color.a)->value_double);
-            text_options.fSize = node->text.size == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(data.lookup, node->text.size)->value_double;
-            plVec2 pl_size     = _ext_draw->calculate_text_size(sb_text, text_options);
+            float fill_color[4]            = {
+                node->text.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->text.fill_color.r)->value_double,
+                node->text.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->text.fill_color.g)->value_double,
+                node->text.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(data.lookup, node->text.fill_color.b)->value_double,
+                node->text.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(data.lookup, node->text.fill_color.a)->value_double,
+            };
+            text_options.uColor = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
+            text_options.fSize  = node->text.size == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(data.lookup, node->text.size)->value_double;
+            plVec2 pl_size      = _ext_draw->calculate_text_size(sb_text, text_options);
 
             // boolean checks
             bool use_rotation       = node->text.rotation != DC_APP_VAL_INDEX_UNDEFINED;
@@ -3412,6 +4810,9 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                             fprintf(stderr, "DCAPP _draw_node() text: Invalid parent_align_x value %d\n", parent_align_x);
                             break;
                     }
+
+                    // add parent offset
+                    position[0] += parent_position->x;
                 }
                 if (use_position[1]) {
                     position[1] = (float)dc_app_lookup_get_value(data.lookup, node->text.position.y)->value_double;
@@ -3432,6 +4833,9 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                             fprintf(stderr, "DCAPP _draw_node() text: Invalid parent_align_y value %d\n", parent_align_y);
                             break;
                     }
+
+                    // add parent offset
+                    position[1] += parent_position->y;
                 }
 
                 // compute matrix
@@ -3582,8 +4986,9 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
             }
 
             // draw children
+            plVec2 position_vec2           = (plVec2){0.0f, 0.0f};
             plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
-            _draw_node_list(pl_app_data, node->window.child, &virtual_dimensions_vec2, &transform);
+            _draw_node_list(pl_app_data, node->window.child, &position_vec2, &virtual_dimensions_vec2, &transform);
             break;
         }
 

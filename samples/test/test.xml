@@ -32,6 +32,14 @@
     <!-- panel -->
     <Panel VirtualWidth="1000" VirtualHeight="1000">
 
+      <Rectangle X="400" Y="400" Width="200" Height="200" FillColor="#_color_champagne_ 1"></Rectangle>
+
+      <Circle HorizontalAlign="#_align_left_" X="0" Y="300" Radius="200" FillColor="#_color_yellow_">
+        <MouseActive>
+          <Text Size="75" ParentAlignX="#_align_left_" ParentAlignY="#_align_top_" HorizontalAlign="#_align_left_" VerticalAlign="#_align_top_" FillColor="#_color_white_">active!</Text>
+        </MouseActive>
+      </Circle>
+
       <!-- modify some variables -->
       <Set Variable="G" Operator="#_set_add_">.001</Set>
       <Set Variable="ROTATE" Operator="#_set_add_">.5</Set>
@@ -53,6 +61,12 @@
           <Vertex X="-1000" Y="-1000" />
           <Vertex X="-1000" Y="0" />
         </Polygon>
+        <Line LineColor="#_color_topaz_ .5" LineWidth="5">
+          <Vertex X="0" Y="0" />
+          <Vertex X="0" Y="-1000" />
+          <Vertex X="-1000" Y="-1000" />
+          <Vertex X="-1000" Y="0" />
+        </Line>
       </Container>
 
       <Container Width="1000" Height="1000" X="500" Y="500" VirtualWidth="1000" VirtualHeight="1000" Rotation="@ROTATE">
@@ -61,6 +75,9 @@
           <Vertex X="100" Y="100" />
           <Vertex X="200" Y="380" />
           <Vertex X="440" Y="280" />
+          <MouseInactive>
+            <Text Size="75" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" HorizontalAlign="#_align_center_" VerticalAlign="#_align_middle_" FillColor="#_color_white_">TEST TEST</Text>
+          </MouseInactive>
         </Polygon>
 
         <Polygon FillColor="#_color_green_ .25" LineColor="1 1 1" LineWidth="2">
@@ -76,10 +93,29 @@
           <Vertex X="200" Y="80" />
         </Polygon>
 
+        <Style Name="MouseTesting">
+          <Text Size="75" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" HorizontalAlign="#_align_center_" VerticalAlign="#_align_middle_" FillColor="#_color_white_" />
+        </Style>
         <Polygon FillColor="#_color_red_ .5" LineColor="1 1 1 .5" LineWidth="3" Rotation="@ROTATE" PivotPositionX="0" PivotPositionY="150">
+
           <Vertex X="0" Y="250" />
           <Vertex X="-250" Y="-250" />
           <Vertex X="250" Y="-250" />
+          <MouseActive>
+            <Text Style="MouseTesting">active</Text>
+          </MouseActive>
+          <MouseHovered>
+            <Text Style="MouseTesting">hovered</Text>
+          </MouseHovered>
+          <MouseInactive>
+            <Text Style="MouseTesting">inactive</Text>
+          </MouseInactive>
+          <MousePressed>
+            <Text Style="MouseTesting">pressed</Text>
+          </MousePressed>
+          <MouseReleased>
+            <Text Style="MouseTesting">released</Text>
+          </MouseReleased>
         </Polygon>
 
         <Container X="500" Y="500" Width="500" Height="500">
@@ -115,7 +151,7 @@
         <Vertex X="495" Y="755" />
       </Polygon>
       <Text Size="75" X="500" Y="750" HorizontalAlign="#_align_right_" VerticalAlign="#_align_top_" PivotLocalAlignX="#_align_right_" PivotLocalAlignY="#_align_top_" Rotation="@ROTATE" FillColor="@COLOR_R @COLOR_G @COLOR_B 1">TOP RIGHT</Text>
-    
+
       <Polygon FillColor="1 0 0 1" LineColor="1 1 1" LineWidth="2">
         <Vertex X="495" Y="495" />
         <Vertex X="505" Y="495" />
@@ -132,7 +168,7 @@
       </Polygon>
 
       <Style Name="Test Style">
-        <Text FillColor="@COLOR_B @COLOR_R @COLOR_G 1"/>
+        <Text FillColor="@COLOR_B @COLOR_R @COLOR_G 1" />
       </Style>
 
       <Text Style="Test Style" Size="75" X="500" Y="250" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" PivotLocalAlignX="#_align_left_" PivotLocalAlignY="#_align_bottom_" Rotation="@ROTATE">BOTTOM LEFT</Text>
@@ -140,7 +176,7 @@
       <Text Size="1000" X="0" Y="0" HorizontalAlign="#_align_left_" VerticalAlign="#_align_bottom_" FillColor="0 0 1 .25">E</Text>
 
       <Terrain X="100" Y="100" Width="200" Height="200" Latitude="0" Longitude="0" Elevation="0" Roll="0" Pitch="0" Yaw="0">
-        <TerrainDEM File="asdf.txt"/>
+        <TerrainDEM File="asdf.txt" />
       </Terrain>
 
     </Panel>

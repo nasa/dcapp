@@ -6,6 +6,8 @@
 
 const char *dc_app_elem_type_to_string(DcAppElemType type) {
     switch (type) {
+        case DC_APP_ELEM_TYPE_CIRCLE:
+            return "Circle";
         case DC_APP_ELEM_TYPE_CONSTANT:
             return "Constant";
         case DC_APP_ELEM_TYPE_CONTAINER:
@@ -22,14 +24,28 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "If";
         case DC_APP_ELEM_TYPE_INCLUDE:
             return "Include";
+        case DC_APP_ELEM_TYPE_LINE:
+            return "Line";
         case DC_APP_ELEM_TYPE_LOGIC:
             return "Logic";
+        case DC_APP_ELEM_TYPE_MOUSE_ACTIVE:
+            return "MouseActive";
+        case DC_APP_ELEM_TYPE_MOUSE_HOVERED:
+            return "MouseHovered";
+        case DC_APP_ELEM_TYPE_MOUSE_INACTIVE:
+            return "MouseInactive";
+        case DC_APP_ELEM_TYPE_MOUSE_PRESSED:
+            return "MousePressed";
+        case DC_APP_ELEM_TYPE_MOUSE_RELEASED:
+            return "MouseReleased";
         case DC_APP_ELEM_TYPE_NONELEM:
             return "<Non-Element>";
         case DC_APP_ELEM_TYPE_PANEL:
             return "Panel";
         case DC_APP_ELEM_TYPE_POLYGON:
             return "Polygon";
+        case DC_APP_ELEM_TYPE_RECTANGLE:
+            return "Rectangle";
         case DC_APP_ELEM_TYPE_SET:
             return "Set";
         case DC_APP_ELEM_TYPE_STYLE:
@@ -63,6 +79,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
 }
 
 DcAppElemType dc_app_string_to_elem_type(const char *name) {
+    if (strcmp(name, "Circle") == 0)
+        return DC_APP_ELEM_TYPE_CIRCLE;
     if (strcmp(name, "Constant") == 0)
         return DC_APP_ELEM_TYPE_CONSTANT;
     if (strcmp(name, "Container") == 0)
@@ -81,12 +99,26 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_IF;
     if (strcmp(name, "Include") == 0)
         return DC_APP_ELEM_TYPE_INCLUDE;
+    if (strcmp(name, "Line") == 0)
+        return DC_APP_ELEM_TYPE_LINE;
     if (strcmp(name, "Logic") == 0)
         return DC_APP_ELEM_TYPE_LOGIC;
+    if (strcmp(name, "MouseActive") == 0)
+        return DC_APP_ELEM_TYPE_MOUSE_ACTIVE;
+    if (strcmp(name, "MouseHovered") == 0)
+        return DC_APP_ELEM_TYPE_MOUSE_HOVERED;
+    if (strcmp(name, "MouseInactive") == 0)
+        return DC_APP_ELEM_TYPE_MOUSE_INACTIVE;
+    if (strcmp(name, "MousePressed") == 0)
+        return DC_APP_ELEM_TYPE_MOUSE_PRESSED;
+    if (strcmp(name, "MouseReleased") == 0)
+        return DC_APP_ELEM_TYPE_MOUSE_RELEASED;
     if (strcmp(name, "Panel") == 0)
         return DC_APP_ELEM_TYPE_PANEL;
     if (strcmp(name, "Polygon") == 0)
         return DC_APP_ELEM_TYPE_POLYGON;
+    if (strcmp(name, "Rectangle") == 0)
+        return DC_APP_ELEM_TYPE_RECTANGLE;
     if (strcmp(name, "Set") == 0)
         return DC_APP_ELEM_TYPE_SET;
     if (strcmp(name, "Style") == 0)
