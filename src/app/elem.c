@@ -22,6 +22,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "False";
         case DC_APP_ELEM_TYPE_IF:
             return "If";
+        case DC_APP_ELEM_TYPE_IMAGE:
+            return "Image";
         case DC_APP_ELEM_TYPE_INCLUDE:
             return "Include";
         case DC_APP_ELEM_TYPE_LINE:
@@ -97,6 +99,8 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_TRICK_FROM;
     if (strcmp(name, "If") == 0)
         return DC_APP_ELEM_TYPE_IF;
+    if (strcmp(name, "Image") == 0)
+        return DC_APP_ELEM_TYPE_IMAGE;
     if (strcmp(name, "Include") == 0)
         return DC_APP_ELEM_TYPE_INCLUDE;
     if (strcmp(name, "Line") == 0)

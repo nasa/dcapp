@@ -13,6 +13,7 @@
 #include "../pilotlight/extensions/pl_vfs_ext.h"
 #include "../pilotlight/extensions/pl_shader_ext.h"
 #include "../pilotlight/extensions/pl_draw_backend_ext.h"
+#include "../pilotlight/extensions/pl_image_ext.h"
 #include "../extensions/pl_terrain_ext.h"
 
 // general includes
@@ -39,6 +40,7 @@ const plTerrainI     *_ext_terrain      = NULL;
 const plVfsI         *_ext_vfs          = NULL;
 const plShaderI      *_ext_shader       = NULL;
 const plCameraI      *_ext_camera       = NULL;
+const plImageI       *_ext_image        = NULL;
 
 // PL app data
 typedef struct __PlAppData {
@@ -47,6 +49,9 @@ typedef struct __PlAppData {
     plDrawLayer2D *layer;
     plDrawList2D  *draw_list;
     plFont        *cousine_sdf_font;
+
+    plBufferHandle staging_buffer_handle;
+    size_t         staging_buffer_size;
 
 } _PlAppData;
 
@@ -110,6 +115,7 @@ typedef enum __NodeType {
     NODE_TYPE_CIRCLE,
     NODE_TYPE_CONTAINER,
     NODE_TYPE_CONDITIONAL,
+    NODE_TYPE_IMAGE,
     NODE_TYPE_LINE,
     NODE_TYPE_PANEL,
     NODE_TYPE_POLYGON,
@@ -173,6 +179,26 @@ typedef struct __NodeContainer {
     DcAppValIndex rotation;
     _NodeIndex    child;
 } _NodeContainer;
+
+typedef int                _TextureIndex;
+static const _TextureIndex TEXTURE_INDEX_UNDEFINED = -1;
+typedef struct __Texture {
+    plTextureHandle   texture_handle;
+    plBindGroupHandle bind_group_handle;
+} _Texture;
+typedef struct __NodeImage {
+    _ValIndex2    position;
+    _ValIndex2    dimension;
+    _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_position;
+    _ValIndex2    local_align;
+    _ValIndex2    parent_align;
+    DcAppValIndex rotation;
+
+    _Texture texture;
+
+    _MouseEventChildren mouse_events;
+} _NodeImage;
 
 static const int _NODE_LINE_MAX_POINTS = 1000;
 typedef struct __NodeLine {
@@ -292,6 +318,7 @@ typedef struct __Node {
         _NodeCircle      circle;
         _NodeConditional conditional;
         _NodeContainer   container;
+        _NodeImage       image;
         _NodeLine        line;
         _NodePanel       panel;
         _NodePolygon     polygon;
@@ -321,55 +348,7 @@ typedef struct __TrickContext {
     _TrickRxVarContext *sb_rx_var_contexts;
 } _TrickContext;
 
-// dcapp app data
-typedef struct __DcAppData {
-
-    // config + lookup
-    DcAppLookup *lookup;
-    DcAppConfig *config;
-
-    // nodes
-    _Node     *sb_nodes;
-    _NodeIndex window;
-
-    // logic
-    plSharedLibrary *logic_lib;
-    void (*logic_pre_init)();
-    void (*logic_init)();
-    void (*logic_draw)();
-    void (*logic_close)();
-
-    // trick
-    _TrickContext *sb_tricks;
-
-} _DcAppData;
-static _DcAppData data;
-
-// styles (index 0 reserved for defaults)
-char *sb_node_style_names;
-int  *sb_node_style_name_offsets;
-static _Node (*_sb_node_styles)[NODE_TYPE__COUNT];
-
-// node utils
-static const char *_node_type_to_string(_NodeType type);
-static _Node      *_get_node(_NodeIndex index);
-static _NodeIndex  _register_node(_Node *node);
-
-// draw utils
-static bool       _load_color_from_string(xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out);
-static _NodeIndex _process_node_children(xmlNodePtr xml_node, _NodeIndex node_index, DcAppElemType elem_type, const char *directory);
-static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static void       _draw_node_list(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform);
-static void       _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-
 // frame data
-// order of frame like this:
-// 1) mouse position, states are fetched
-// 2) draw each node
-// 2.5) if the node being drawn is the pressed_node, process it's clicked events
-// 2.6) if the node contains the mouse click, register it as the next_pressed_node
-// 3) set the pressed_node as next_pressed_node
-// 4) set next_pressed_node to NODE_INDEX_UNDEFINED
 typedef struct __FrameData {
 
     // frame count
@@ -395,7 +374,51 @@ typedef struct __FrameData {
     _NodeIndex active_node;
 
 } _FrameData;
+
+// dcapp app data
+typedef struct __DcAppData {
+
+    // config + lookup
+    DcAppLookup *lookup;
+    DcAppConfig *config;
+
+    // nodes
+    _Node     *sb_nodes;
+    _NodeIndex window;
+
+    // logic
+    plSharedLibrary *logic_lib;
+    void (*logic_pre_init)();
+    void (*logic_init)();
+    void (*logic_draw)();
+    void (*logic_close)();
+
+    // trick
+    _TrickContext *sb_tricks;
+
+} _DcAppData;
+
+// node utils
+static const char *_node_type_to_string(_NodeType type);
+static _Node      *_get_node(_NodeIndex index);
+static _NodeIndex  _register_node(_Node *node);
+
+// pl utils
+static xmlNodePtr _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node);
+
+// draw utils
+static bool       _load_color_from_string(xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out);
+static _NodeIndex _process_node_children(_PlAppData *pl_app_data, xmlNodePtr xml_node, _NodeIndex node_index, DcAppElemType elem_type, const char *directory);
+static _NodeIndex _process_node(_PlAppData *pl_app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static void       _draw_node_list(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform);
+static void       _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+
+// globals
+static char      *_sb_texture_names;
+static char      *_sb_texture_name_offsets;
+static _Texture  *_sb_textures;
 static _FrameData _frame_data;
+static _DcAppData data;
 
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_data) {
 
@@ -413,6 +436,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
         _ext_shader       = pl_get_api_latest(api_registry, plShaderI);
         _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
         _ext_camera       = pl_get_api_latest(api_registry, plCameraI);
+        _ext_image        = pl_get_api_latest(api_registry, plImageI);
         return pl_app_data;
     }
 
@@ -438,6 +462,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
     _ext_shader       = pl_get_api_latest(api_registry, plShaderI);
     _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
     _ext_camera       = pl_get_api_latest(api_registry, plCameraI);
+    _ext_image        = pl_get_api_latest(api_registry, plImageI);
 
     // allocate app memory
     pl_app_data = (_PlAppData *)PL_ALLOC(sizeof(_PlAppData));
@@ -472,112 +497,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
 
     // build dcapp node tree
     xmlNodePtr root_node = xmlDocGetRootElement(data.config->xml_doc);
-    _process_node(root_node, NODE_INDEX_UNDEFINED, DC_APP_ELEM_TYPE_UNDEFINED, data.config->config_dir_path);
-
-    // mount VFS dirs
-    _ext_vfs->mount_directory("/shaders-terrain", "../../shaders", PL_VFS_MOUNT_FLAGS_NONE);
-    _ext_vfs->mount_directory("/assets", "../../data", PL_VFS_MOUNT_FLAGS_NONE);
-    _ext_vfs->mount_directory("/cache", "cache", PL_VFS_MOUNT_FLAGS_NONE);
-    _ext_vfs->mount_directory("/shaders", "../shaders", PL_VFS_MOUNT_FLAGS_NONE);
-    _ext_vfs->mount_directory("/shader-temp", "../shader-temp", PL_VFS_MOUNT_FLAGS_NONE);
-    _ext_vfs->mount_directory("/tiles", "../../data", PL_VFS_MOUNT_FLAGS_NONE);
-
-    // set initial window params
-    _Node       *window_node = _get_node(data.window);
-    plWindowDesc window_desc = {};
-    window_desc.pcTitle      = window_node->window.title;
-    window_desc.uWidth       = (uint32_t)(dc_app_lookup_get_value(data.lookup, window_node->window.init_dimension.x)->value_integer);
-    window_desc.uHeight      = (uint32_t)(dc_app_lookup_get_value(data.lookup, window_node->window.init_dimension.y)->value_integer);
-    window_desc.iXPos        = dc_app_lookup_get_value(data.lookup, window_node->window.init_position.x)->value_integer;
-    window_desc.iYPos        = dc_app_lookup_get_value(data.lookup, window_node->window.init_position.y)->value_integer;
-    _ext_windows->create(window_desc, &(pl_app_data->window));
-    _ext_windows->show(pl_app_data->window);
-
-    // initialize the starter API (handles alot of boilerplate)
-    plStarterInit tStarterInit = {
-        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS & (~PL_STARTER_FLAGS_DRAW_EXT) & (~PL_STARTER_FLAGS_SHADER_EXT) | PL_STARTER_FLAGS_MSAA,
-        .ptWindow = pl_app_data->window};
-    _ext_starter->initialize(tStarterInit);
-
-    // init draw extension
-    _ext_draw->initialize(NULL);
-
-    // init draw backend
-    plDevice *device = _ext_starter->get_device();
-    _ext_draw_backend->initialize(device);
-
-    // create font atlas
-    plFontAtlas *pt_atlas = _ext_draw->create_font_atlas();
-    _ext_draw->set_font_atlas(pt_atlas);
-
-    // typical font range (you can also add individual characters)
-    const plFontRange font_range = {
-        .iFirstCodePoint = 0x0020,
-        .uCharCount      = 0x00FF - 0x0020};
-
-    // adding previous font but as a signed distance field (SDF)
-    plFontConfig font_config   = {};
-    font_config.bSdf           = true; // only works with ttf
-    font_config.fSize          = 25.0f;
-    font_config.uHOverSampling = 1;
-    font_config.uVOverSampling = 1;
-    font_config.ucOnEdgeValue  = 180;
-    font_config.iSdfPadding    = 1;
-    font_config.uRangeCount    = 1;
-    font_config.ptRanges       = &font_range;
-
-    pl_app_data->cousine_sdf_font = _ext_draw->add_font_from_file_ttf(_ext_draw->get_current_font_atlas(), font_config, "../data/pilotlight-assets-master/fonts/Cousine-Regular.ttf");
-
-    // register our app drawlist
-    pl_app_data->draw_list = _ext_draw->request_2d_drawlist();
-
-    // request layers (allows drawing out of order)
-    pl_app_data->layer = _ext_draw->request_2d_layer(pl_app_data->draw_list);
-
-    // initialize shader compiler
-    plShaderOptions shader_options          = {};
-    shader_options.apcIncludeDirectories[0] = "/shaders/";
-    shader_options.apcIncludeDirectories[1] = "/shaders-terrain/";
-    shader_options.apcDirectories[0]        = "/shaders/";
-    shader_options.apcDirectories[1]        = "/shaders-terrain/";
-    shader_options.pcCacheOutputDirectory   = "/shader-temp/";
-    shader_options.tFlags                   = PL_SHADER_FLAGS_AUTO_OUTPUT | PL_SHADER_FLAGS_INCLUDE_DEBUG | PL_SHADER_FLAGS_ALWAYS_COMPILE;
-    _ext_shader->initialize(&shader_options);
-
-    // wraps up
-    _ext_starter->finalize();
-
-    // init terrain backend
-    // _ext_starter->get_device();
-    // _ext_terrain->initialize(_ext_starter->get_device());
-    // plCommandBuffer *temp_cmd_buffer = _ext_starter->get_temporary_command_buffer();
-    // _ext_terrain->load_mesh(temp_cmd_buffer, "/assets/terrain.bin", 7, 128);
-
-    // plTerrainInit tTerrainInit = {};
-    // pl_app_data->terrain          = _ext_terrain->create_terrain_from_file(temp_cmd_buffer, "/assets/moon_terrain.json");
-    // _ext_starter->submit_temporary_command_buffer(temp_cmd_buffer);
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~font atlas texture~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    // draw backend handles creating the font atlas texture and
-    // uploading to the GPU but it requires a command buffer (in an non recording state).
-    // Later examples will go into command buffers without using the starter ext
-
-    plCommandBuffer *raw_cmd_buffer = _ext_starter->get_raw_command_buffer(); // not recording
-
-    // actually record, submit, & wait
-    _ext_draw_backend->build_font_atlas(raw_cmd_buffer, _ext_draw->get_current_font_atlas());
-
-    // return back to the pool
-    _ext_starter->return_raw_command_buffer(raw_cmd_buffer);
-
-    // initialize frame data
-    _frame_data.pressed_node      = NODE_INDEX_UNDEFINED;
-    _frame_data.next_pressed_node = NODE_INDEX_UNDEFINED;
-    _frame_data.hovered_node      = NODE_INDEX_UNDEFINED;
-    _frame_data.next_hovered_node = NODE_INDEX_UNDEFINED;
-    _frame_data.released_node     = NODE_INDEX_UNDEFINED;
-    _frame_data.active_node       = NODE_INDEX_UNDEFINED;
+    _process_node(pl_app_data, root_node, NODE_INDEX_UNDEFINED, DC_APP_ELEM_TYPE_UNDEFINED, data.config->config_dir_path);
 
     // return app memory
     return pl_app_data;
@@ -785,6 +705,142 @@ static _NodeIndex _register_node(_Node *node) {
     return sbcount(data.sb_nodes) - 1;
 }
 
+static xmlNodePtr _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node) {
+
+    // mount VFS dirs
+    _ext_vfs->mount_directory("/shaders-terrain", "../../shaders", PL_VFS_MOUNT_FLAGS_NONE);
+    _ext_vfs->mount_directory("/assets", "../../data", PL_VFS_MOUNT_FLAGS_NONE);
+    _ext_vfs->mount_directory("/cache", "cache", PL_VFS_MOUNT_FLAGS_NONE);
+    _ext_vfs->mount_directory("/shaders", "../shaders", PL_VFS_MOUNT_FLAGS_NONE);
+    _ext_vfs->mount_directory("/shader-temp", "../shader-temp", PL_VFS_MOUNT_FLAGS_NONE);
+    _ext_vfs->mount_directory("/tiles", "../../data", PL_VFS_MOUNT_FLAGS_NONE);
+
+    // set initial window params
+    plWindowDesc window_desc = {};
+    window_desc.pcTitle      = window_node->window.title;
+    window_desc.uWidth       = (uint32_t)(dc_app_lookup_get_value(data.lookup, window_node->window.init_dimension.x)->value_integer);
+    window_desc.uHeight      = (uint32_t)(dc_app_lookup_get_value(data.lookup, window_node->window.init_dimension.y)->value_integer);
+    window_desc.iXPos        = dc_app_lookup_get_value(data.lookup, window_node->window.init_position.x)->value_integer;
+    window_desc.iYPos        = dc_app_lookup_get_value(data.lookup, window_node->window.init_position.y)->value_integer;
+    _ext_windows->create(window_desc, &(pl_app_data->window));
+    _ext_windows->show(pl_app_data->window);
+
+    // initialize the starter API (handles alot of boilerplate)
+    plStarterInit tStarterInit = {
+        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS & (~PL_STARTER_FLAGS_DRAW_EXT) & (~PL_STARTER_FLAGS_SHADER_EXT) | PL_STARTER_FLAGS_MSAA,
+        .ptWindow = pl_app_data->window};
+    _ext_starter->initialize(tStarterInit);
+
+    // init draw extension
+    _ext_draw->initialize(NULL);
+
+    // init draw backend
+    plDevice *device = _ext_starter->get_device();
+    _ext_draw_backend->initialize(device);
+
+    // init default staging buffer
+    {
+        // set size to 1MB
+        pl_app_data->staging_buffer_size = 1048576;
+
+        // description
+        const plBufferDesc staging_buffer_desc = {
+            .tUsage      = PL_BUFFER_USAGE_STAGING,
+            .szByteSize  = pl_app_data->staging_buffer_size,
+            .pcDebugName = "staging buffer"};
+        pl_app_data->staging_buffer_handle = _ext_gfx->create_buffer(device, &staging_buffer_desc, NULL);
+
+        // retrieve buffer to get memory allocation requirements
+        plBuffer *staging_buffer = _ext_gfx->get_buffer(device, pl_app_data->staging_buffer_handle);
+
+        // allocate memory for the vertex buffer
+        const plDeviceMemoryAllocation staging_buffer_allocation = _ext_gfx->allocate_memory(
+            device,
+            staging_buffer->tMemoryRequirements.ulSize,
+            PL_MEMORY_FLAGS_HOST_VISIBLE | PL_MEMORY_FLAGS_HOST_COHERENT,
+            staging_buffer->tMemoryRequirements.uMemoryTypeBits,
+            "staging buffer memory");
+
+        // bind the buffer to the new memory allocation
+        _ext_gfx->bind_buffer_to_memory(device, pl_app_data->staging_buffer_handle, &staging_buffer_allocation);
+    }
+
+    // create font atlas
+    {
+        plFontAtlas *pt_atlas = _ext_draw->create_font_atlas();
+        _ext_draw->set_font_atlas(pt_atlas);
+
+        // typical font range (you can also add individual characters)
+        const plFontRange font_range = {
+            .iFirstCodePoint = 0x0020,
+            .uCharCount      = 0x00FF - 0x0020};
+
+        // adding previous font but as a signed distance field (SDF)
+        plFontConfig font_config   = {};
+        font_config.bSdf           = true; // only works with ttf
+        font_config.fSize          = 25.0f;
+        font_config.uHOverSampling = 1;
+        font_config.uVOverSampling = 1;
+        font_config.ucOnEdgeValue  = 180;
+        font_config.iSdfPadding    = 1;
+        font_config.uRangeCount    = 1;
+        font_config.ptRanges       = &font_range;
+
+        pl_app_data->cousine_sdf_font = _ext_draw->add_font_from_file_ttf(_ext_draw->get_current_font_atlas(), font_config, "../data/pilotlight-assets-master/fonts/Cousine-Regular.ttf");
+    }
+
+    // register our app drawlist
+    pl_app_data->draw_list = _ext_draw->request_2d_drawlist();
+
+    // request layers (allows drawing out of order)
+    pl_app_data->layer = _ext_draw->request_2d_layer(pl_app_data->draw_list);
+
+    // initialize shader compiler
+    plShaderOptions shader_options          = {};
+    shader_options.apcIncludeDirectories[0] = "/shaders/";
+    shader_options.apcIncludeDirectories[1] = "/shaders-terrain/";
+    shader_options.apcDirectories[0]        = "/shaders/";
+    shader_options.apcDirectories[1]        = "/shaders-terrain/";
+    shader_options.pcCacheOutputDirectory   = "/shader-temp/";
+    shader_options.tFlags                   = PL_SHADER_FLAGS_AUTO_OUTPUT | PL_SHADER_FLAGS_INCLUDE_DEBUG | PL_SHADER_FLAGS_ALWAYS_COMPILE;
+    _ext_shader->initialize(&shader_options);
+
+    // wraps up
+    _ext_starter->finalize();
+
+    // init terrain backend
+    // _ext_starter->get_device();
+    // _ext_terrain->initialize(_ext_starter->get_device());
+    // plCommandBuffer *temp_cmd_buffer = _ext_starter->get_temporary_command_buffer();
+    // _ext_terrain->load_mesh(temp_cmd_buffer, "/assets/terrain.bin", 7, 128);
+
+    // plTerrainInit tTerrainInit = {};
+    // pl_app_data->terrain          = _ext_terrain->create_terrain_from_file(temp_cmd_buffer, "/assets/moon_terrain.json");
+    // _ext_starter->submit_temporary_command_buffer(temp_cmd_buffer);
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~font atlas texture~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // draw backend handles creating the font atlas texture and
+    // uploading to the GPU but it requires a command buffer (in an non recording state).
+    // Later examples will go into command buffers without using the starter ext
+
+    plCommandBuffer *raw_cmd_buffer = _ext_starter->get_raw_command_buffer(); // not recording
+
+    // actually record, submit, & wait
+    _ext_draw_backend->build_font_atlas(raw_cmd_buffer, _ext_draw->get_current_font_atlas());
+
+    // return back to the pool
+    _ext_starter->return_raw_command_buffer(raw_cmd_buffer);
+
+    // initialize frame data
+    _frame_data.pressed_node      = NODE_INDEX_UNDEFINED;
+    _frame_data.next_pressed_node = NODE_INDEX_UNDEFINED;
+    _frame_data.hovered_node      = NODE_INDEX_UNDEFINED;
+    _frame_data.next_hovered_node = NODE_INDEX_UNDEFINED;
+    _frame_data.released_node     = NODE_INDEX_UNDEFINED;
+    _frame_data.active_node       = NODE_INDEX_UNDEFINED;
+}
+
 static bool _load_color_from_string(xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out) {
 
     xmlChar *raw_color = xmlGetProp(xml_node, BAD_CAST attr_name);
@@ -835,14 +891,14 @@ static bool _load_color_from_string(xmlNodePtr xml_node, const char *attr_name, 
 }
 
 // returns the first child (if any)
-static _NodeIndex _process_node_children(xmlNodePtr xml_node, _NodeIndex node_index, DcAppElemType elem_type, const char *directory) {
+static _NodeIndex _process_node_children(_PlAppData *pl_app_data, xmlNodePtr xml_node, _NodeIndex node_index, DcAppElemType elem_type, const char *directory) {
     xmlNodePtr xml_child_node = xml_node->children;
 
     _NodeIndex first_child_index         = NODE_INDEX_UNDEFINED;
     _NodeIndex previous_child_node_index = NODE_INDEX_UNDEFINED;
     while (xml_child_node) {
 
-        _NodeIndex child_node_index = _process_node(xml_child_node, node_index, elem_type, directory);
+        _NodeIndex child_node_index = _process_node(pl_app_data, xml_child_node, node_index, elem_type, directory);
 
         if (child_node_index != NODE_INDEX_UNDEFINED) {
 
@@ -885,7 +941,7 @@ static _NodeIndex _process_node_children(xmlNodePtr xml_node, _NodeIndex node_in
     return first_child_index;
 }
 
-static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+static _NodeIndex _process_node(_PlAppData *pl_app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
 
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
     switch (elem_type) {
@@ -1092,7 +1148,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
-            _process_node_children(xml_node, node_index, elem_type, directory);
+            _process_node_children(pl_app_data, xml_node, node_index, elem_type, directory);
 
             // enable/disable mouse events
             _MouseEventChildren *mouse_events = &(_get_node(node_index)->circle.mouse_events);
@@ -1322,7 +1378,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
-            _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
+            _NodeIndex first_child_index = _process_node_children(pl_app_data, xml_node, node_index, elem_type, directory);
 
             // update child index
             _Node *node           = _get_node(node_index);
@@ -1334,7 +1390,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
 
         // really just the root element, left in for legacy reasons
         case DC_APP_ELEM_TYPE_DCAPP: {
-            _process_node_children(xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
+            _process_node_children(pl_app_data, xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
             return NODE_INDEX_UNDEFINED;
         }
 
@@ -1348,7 +1404,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 case DC_APP_ELEM_TYPE_IF: {
 
                     // process children
-                    _NodeIndex first_child_index = _process_node_children(xml_node, parent_node_index, elem_type, directory);
+                    _NodeIndex first_child_index = _process_node_children(pl_app_data, xml_node, parent_node_index, elem_type, directory);
 
                     // update child false node
                     _Node *parent_node                   = _get_node(parent_node_index);
@@ -1410,7 +1466,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex node_index = _register_node(&dc_node);
 
             // process children (assigning to true/false handled in separate cases, e.g. DC_APP_ELEM_TYPE_TRUE)
-            _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
+            _NodeIndex first_child_index = _process_node_children(pl_app_data, xml_node, node_index, elem_type, directory);
 
             // handle implicit <True> elements
             if (first_child_index != NODE_INDEX_UNDEFINED) {
@@ -1428,13 +1484,324 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             return node_index;
         }
 
+        case DC_APP_ELEM_TYPE_IMAGE: {
+
+            _Node dc_node;
+            memset(&dc_node, 0, sizeof(dc_node));
+            dc_node.type   = NODE_TYPE_IMAGE;
+            dc_node.parent = parent_node_index;
+            dc_node.next   = NODE_INDEX_UNDEFINED;
+
+            dc_node.image.mouse_events.active   = NODE_INDEX_UNDEFINED;
+            dc_node.image.mouse_events.hovered  = NODE_INDEX_UNDEFINED;
+            dc_node.image.mouse_events.inactive = NODE_INDEX_UNDEFINED;
+            dc_node.image.mouse_events.pressed  = NODE_INDEX_UNDEFINED;
+            dc_node.image.mouse_events.released = NODE_INDEX_UNDEFINED;
+
+            // get filepath
+            xmlChar *filepath = xmlGetProp(xml_node, BAD_CAST "File");
+            if (!filepath) {
+                fprintf(stderr, "DCAPP _process_node() image: 'File' field missing for Image node\n");
+            }
+            char cleaned_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+            strncpy(cleaned_filepath, (const char *)filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            xmlFree(filepath);
+
+            // get canonical path
+            char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+            if (dc_utils_is_relative_path(cleaned_filepath)) {
+                char abs_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+                dc_utils_join_paths(directory, cleaned_filepath, abs_filepath, sizeof(abs_filepath));
+                dc_utils_canonicalize_path(abs_filepath, canon_filepath, sizeof(canon_filepath));
+            } else {
+                dc_utils_canonicalize_path(cleaned_filepath, canon_filepath, sizeof(canon_filepath));
+            }
+
+            // check for existing texture
+            _TextureIndex texture_index = TEXTURE_INDEX_UNDEFINED;
+            for (int ii = 0; ii < sbcount(_sb_textures); ii++) {
+                const char *comp_name = &(_sb_texture_names[_sb_texture_name_offsets[ii]]);
+                if (strcmp(canon_filepath, comp_name) == 0) {
+                    texture_index = ii;
+                }
+            }
+
+            // load new texture if it doesn't exist
+            if (texture_index == TEXTURE_INDEX_UNDEFINED) {
+
+                // get device
+                plDevice *device = _ext_starter->get_device();
+
+                // load raw data
+                size_t         file_data_size;
+                unsigned char *file_data = dc_utils_load_binary_file(canon_filepath, &file_data_size);
+
+                // load as image data
+                int            image_width, image_height, channels;
+                unsigned char *image_data = _ext_image->load(file_data, (int)file_data_size, &image_width, &image_height, &channels, 4);
+                free(file_data);
+
+                // create new texture desc
+                plTextureDesc pl_texture_desc;
+                memset(&pl_texture_desc, 0, sizeof(plTextureDesc));
+                pl_texture_desc.tDimensions = (plVec3){(float)image_width, (float)image_height, 1.0f};
+                pl_texture_desc.tFormat     = PL_FORMAT_R8G8B8A8_UNORM;
+                pl_texture_desc.uLayers     = 1;
+                pl_texture_desc.uMips       = 1;
+                pl_texture_desc.tType       = PL_TEXTURE_TYPE_2D;
+                pl_texture_desc.tUsage      = PL_TEXTURE_USAGE_SAMPLED;
+                pl_texture_desc.pcDebugName = canon_filepath;
+
+                // create texture
+                plTexture      *pl_texture;
+                plTextureHandle pl_texture_handle = _ext_gfx->create_texture(device, &pl_texture_desc, &pl_texture);
+
+                // allocate memory
+                const plDeviceMemoryAllocation pl_texture_allocation = _ext_gfx->allocate_memory(device, pl_texture->tMemoryRequirements.ulSize, PL_MEMORY_FLAGS_DEVICE_LOCAL, pl_texture->tMemoryRequirements.uMemoryTypeBits, NULL);
+
+                // bind memory
+                _ext_gfx->bind_texture_to_memory(device, pl_texture_handle, &pl_texture_allocation);
+
+                // set the initial pl_texture usage (this is a no-op in metal but does layout transition for vulkan)
+                plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
+                _ext_gfx->set_texture_usage(encoder, pl_texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
+
+                // copy memory to mapped staging buffer
+                plBuffer *staging_buffer = _ext_gfx->get_buffer(device, pl_app_data->staging_buffer_handle);
+                memcpy(staging_buffer->tMemoryAllocation.pHostMapped, image_data, image_width * image_height * 4);
+
+                // copy staging buffer to image
+                plBufferImageCopy buffer_image_copy;
+                memset(&buffer_image_copy, 0, sizeof(plBufferImageCopy));
+                buffer_image_copy.uImageWidth    = (uint32_t)image_width;
+                buffer_image_copy.uImageHeight   = (uint32_t)image_height;
+                buffer_image_copy.uImageDepth    = 1;
+                buffer_image_copy.uLayerCount    = 1;
+                buffer_image_copy.szBufferOffset = 0;
+                _ext_gfx->copy_buffer_to_texture(encoder, pl_app_data->staging_buffer_handle, pl_texture_handle, 1, &buffer_image_copy);
+
+                // create bind group
+                plBindGroupHandle pl_bind_group_handle = _ext_draw_backend->create_bind_group_for_texture(pl_texture_handle);
+
+                // return encoder
+                _ext_starter->return_blit_encoder(encoder);
+
+                // free image data
+                _ext_image->free(image_data);
+
+                // create _Texture struct
+                _Texture texture = {
+                    pl_texture_handle,
+                    pl_bind_group_handle};
+
+                // add texture to internal arrays
+                sbpush(_sb_texture_name_offsets, sbcount(_sb_texture_names));
+                sbpushn(_sb_texture_names, canon_filepath, strlen(canon_filepath) + 1);
+                sbpush(_sb_textures, texture);
+                texture_index = sbcount(_sb_textures) - 1;
+            }
+
+            // update structure
+            dc_node.image.texture = _sb_textures[texture_index];
+
+            // x position
+            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+            if (!raw_x_position) {
+                raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            }
+            if (raw_x_position) {
+                char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_x_position);
+                dc_node.image.position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
+            } else {
+                dc_node.image.position.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // y position
+            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+            if (!raw_y_position) {
+                raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            }
+            if (raw_y_position) {
+                char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_y_position);
+                dc_node.image.position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
+            } else {
+                dc_node.image.position.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // x dimension
+            xmlChar *raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionX");
+            if (!raw_x_dimension) {
+                raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
+            }
+            if (raw_x_dimension) {
+                char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_x_dimension);
+                dc_node.image.dimension.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
+            } else {
+                dc_node.image.dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // y dimension
+            xmlChar *raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionY");
+            if (!raw_y_dimension) {
+                raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
+            }
+            if (raw_y_dimension) {
+                char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_y_dimension);
+                dc_node.image.dimension.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
+            } else {
+                dc_node.image.dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // parent x align
+            xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
+            if (raw_parent_x_align) {
+                char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_parent_x_align);
+                dc_node.image.parent_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
+            } else {
+                dc_node.image.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // parent y align
+            xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
+            if (raw_parent_y_align) {
+                char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_parent_y_align);
+                dc_node.image.parent_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
+            } else {
+                dc_node.image.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // local x align
+            xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignX");
+            if (!raw_x_align) {
+                raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+            }
+            if (raw_x_align) {
+                char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_x_align);
+                dc_node.image.local_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
+            } else {
+                dc_node.image.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // local y align
+            xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignY");
+            if (!raw_y_align) {
+                raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+            }
+            if (raw_y_align) {
+                char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_y_align);
+                dc_node.image.local_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
+            } else {
+                dc_node.image.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // rotation
+            xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+            if (!raw_rotation) {
+                raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
+            }
+            if (raw_rotation) {
+                char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_rotation);
+                dc_node.image.rotation = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
+            } else {
+                dc_node.image.rotation = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // pivots
+            xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
+            if (!raw_pivot_position_x) {
+                raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
+            }
+            xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
+            if (!raw_pivot_position_y) {
+                raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
+            }
+            if (raw_pivot_position_x && raw_pivot_position_y) {
+
+                char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_pivot_position_x);
+                dc_node.image.pivot_position.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
+
+                char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_pivot_position_y);
+                dc_node.image.pivot_position.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
+
+                dc_node.image.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+                dc_node.image.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+
+            } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+
+                xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+                if (raw_pivot_align_x) {
+                    char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
+                    strncpy(cleaned_pivot_align_x, (const char *)raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                    xmlFree(raw_pivot_align_x);
+                    dc_node.image.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
+                } else {
+                    dc_node.image.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+                }
+
+                xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+                if (raw_pivot_align_y) {
+                    char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
+                    strncpy(cleaned_pivot_align_y, (const char *)raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                    xmlFree(raw_pivot_align_y);
+                    dc_node.image.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
+                } else {
+                    dc_node.image.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+                }
+
+                dc_node.image.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
+                dc_node.image.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
+            } else {
+                fprintf(stderr, "DCAPP _process_node(): Image: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+            }
+
+            // register node
+            _NodeIndex node_index = _register_node(&dc_node);
+
+            // process children
+            _process_node_children(pl_app_data, xml_node, node_index, elem_type, directory);
+
+            // enable/disable mouse events
+            _MouseEventChildren *mouse_events = &(_get_node(node_index)->image.mouse_events);
+            mouse_events->enabled =
+                (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->released != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->active != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->inactive != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->hovered != NODE_INDEX_UNDEFINED);
+
+            // return
+            return node_index;
+        }
+
         // at this point, just used to set the directory path
         case DC_APP_ELEM_TYPE_INCLUDE: {
 
             xmlChar *file = xmlGetProp(xml_node, BAD_CAST "File");
             char     directory[DC_UTILS_FILEPATH_BUFFER_SIZE];
             dc_utils_get_directory((const char *)file, directory, sizeof(directory));
-            return _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+            return _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
         }
 
         case DC_APP_ELEM_TYPE_LINE: {
@@ -1528,7 +1895,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
-            _process_node_children(xml_node, node_index, elem_type, directory);
+            _process_node_children(pl_app_data, xml_node, node_index, elem_type, directory);
 
             // return
             return node_index;
@@ -1586,15 +1953,19 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_CIRCLE: {
-                    parent_node->circle.mouse_events.active = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->circle.mouse_events.active = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_IMAGE: {
+                    parent_node->image.mouse_events.active = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 case NODE_TYPE_POLYGON: {
-                    parent_node->polygon.mouse_events.active = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->polygon.mouse_events.active = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 case NODE_TYPE_RECTANGLE: {
-                    parent_node->rectangle.mouse_events.active = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->rectangle.mouse_events.active = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 default:
@@ -1609,15 +1980,19 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_CIRCLE: {
-                    parent_node->circle.mouse_events.hovered = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->circle.mouse_events.hovered = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_IMAGE: {
+                    parent_node->image.mouse_events.hovered = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 case NODE_TYPE_POLYGON: {
-                    parent_node->polygon.mouse_events.hovered = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->polygon.mouse_events.hovered = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 case NODE_TYPE_RECTANGLE: {
-                    parent_node->rectangle.mouse_events.hovered = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->rectangle.mouse_events.hovered = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 default:
@@ -1632,15 +2007,19 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_CIRCLE: {
-                    parent_node->circle.mouse_events.inactive = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->circle.mouse_events.inactive = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_IMAGE: {
+                    parent_node->image.mouse_events.inactive = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 case NODE_TYPE_POLYGON: {
-                    parent_node->polygon.mouse_events.inactive = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->polygon.mouse_events.inactive = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 case NODE_TYPE_RECTANGLE: {
-                    parent_node->rectangle.mouse_events.inactive = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->rectangle.mouse_events.inactive = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 default:
@@ -1655,15 +2034,19 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_CIRCLE: {
-                    parent_node->circle.mouse_events.pressed = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->circle.mouse_events.pressed = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_IMAGE: {
+                    parent_node->image.mouse_events.pressed = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 case NODE_TYPE_POLYGON: {
-                    parent_node->polygon.mouse_events.pressed = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->polygon.mouse_events.pressed = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 case NODE_TYPE_RECTANGLE: {
-                    parent_node->rectangle.mouse_events.pressed = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->rectangle.mouse_events.pressed = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 default:
@@ -1678,15 +2061,19 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _Node *parent_node = _get_node(parent_node_index);
             switch (parent_node->type) {
                 case NODE_TYPE_CIRCLE: {
-                    parent_node->circle.mouse_events.released = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->circle.mouse_events.released = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
+                    break;
+                }
+                case NODE_TYPE_IMAGE: {
+                    parent_node->image.mouse_events.released = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 case NODE_TYPE_POLYGON: {
-                    parent_node->polygon.mouse_events.released = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->polygon.mouse_events.released = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 case NODE_TYPE_RECTANGLE: {
-                    parent_node->rectangle.mouse_events.released = _process_node_children(xml_node, parent_node_index, parent_elem_type, directory);
+                    parent_node->rectangle.mouse_events.released = _process_node_children(pl_app_data, xml_node, parent_node_index, parent_elem_type, directory);
                     break;
                 }
                 default:
@@ -1735,7 +2122,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
-            _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
+            _NodeIndex first_child_index = _process_node_children(pl_app_data, xml_node, node_index, elem_type, directory);
 
             // update child index
             _Node *node       = _get_node(node_index);
@@ -1843,7 +2230,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
-            _process_node_children(xml_node, node_index, elem_type, directory);
+            _process_node_children(pl_app_data, xml_node, node_index, elem_type, directory);
 
             // enable/disable mouse events
             _MouseEventChildren *mouse_events = &(_get_node(node_index)->polygon.mouse_events);
@@ -2061,7 +2448,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
-            _process_node_children(xml_node, node_index, elem_type, directory);
+            _process_node_children(pl_app_data, xml_node, node_index, elem_type, directory);
 
             // enable/disable mouse events
             _MouseEventChildren *mouse_events = &(_get_node(node_index)->rectangle.mouse_events);
@@ -2373,7 +2760,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             _NodeIndex node_index = _register_node(&dc_node);
 
             // process children
-            _process_node_children(xml_node, node_index, elem_type, directory);
+            _process_node_children(pl_app_data, xml_node, node_index, elem_type, directory);
 
             // return
             return node_index;
@@ -2703,7 +3090,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
         case DC_APP_ELEM_TYPE_TRICK_FROM: {
             switch (parent_elem_type) {
                 case DC_APP_ELEM_TYPE_TRICK_IO: {
-                    _process_node_children(xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
+                    _process_node_children(pl_app_data, xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
                     break;
                 }
                 default: {
@@ -2756,7 +3143,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             sbpush(data.sb_tricks, trick_context);
 
             // process children
-            _process_node_children(xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
+            _process_node_children(pl_app_data, xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
 
             // return
             return NODE_INDEX_UNDEFINED;
@@ -2765,7 +3152,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
         case DC_APP_ELEM_TYPE_TRICK_TO: {
             switch (parent_elem_type) {
                 case DC_APP_ELEM_TYPE_TRICK_IO: {
-                    _process_node_children(xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
+                    _process_node_children(pl_app_data, xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
                     break;
                 }
                 default: {
@@ -2859,7 +3246,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                 case DC_APP_ELEM_TYPE_IF: {
 
                     // process children
-                    _NodeIndex first_child_index = _process_node_children(xml_node, parent_node_index, elem_type, directory);
+                    _NodeIndex first_child_index = _process_node_children(pl_app_data, xml_node, parent_node_index, elem_type, directory);
 
                     // update child true node
                     _Node *parent_node                  = _get_node(parent_node_index);
@@ -2961,7 +3348,7 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
                         fprintf(stderr, "DCAPP _process_node: Invalid Vertex: No Y attribute\n");
                     }
 
-                    switch(parent_node->type) {
+                    switch (parent_node->type) {
                         case NODE_TYPE_LINE:
                             // add to parent
                             sbpush(parent_node->line.sb_points, position);
@@ -3097,8 +3484,12 @@ static _NodeIndex _process_node(xmlNodePtr xml_node, _NodeIndex parent_node_inde
             // register node
             _NodeIndex node_index = _register_node(&dc_node);
 
+            // init PL graphics backend
+            // TODO really don't like this approach
+            _init_pl_app_data(pl_app_data, &dc_node);
+
             // process children
-            _NodeIndex first_child_index = _process_node_children(xml_node, node_index, elem_type, directory);
+            _NodeIndex first_child_index = _process_node_children(pl_app_data, xml_node, node_index, elem_type, directory);
 
             // update child index
             _Node *node        = _get_node(node_index);
@@ -3717,6 +4108,258 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                 _draw_node_list(pl_app_data, node->conditional.child_true, parent_position, parent_dimensions, parent_transform);
             } else {
                 _draw_node_list(pl_app_data, node->conditional.child_false, parent_position, parent_dimensions, parent_transform);
+            }
+            break;
+        }
+
+        case NODE_TYPE_IMAGE: {
+
+            // boolean checks
+            bool use_dimension[2] = {
+                node->image.dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
+                node->image.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
+            bool use_rotation       = node->image.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+            bool use_pivot_position = (node->image.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->image.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+
+            // get dimensions
+            float dimension[2] = {
+                use_dimension[0] ? (float)dc_app_lookup_get_value(data.lookup, node->image.dimension.x)->value_double : parent_dimensions->x,
+                use_dimension[1] ? (float)dc_app_lookup_get_value(data.lookup, node->image.dimension.y)->value_double : parent_dimensions->y};
+
+            // transform
+            plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+
+            // xform rotation (around a point)
+            {
+                if (use_rotation && use_pivot_position) {
+
+                    // get pivot XY, rotation
+                    float pivot_position[2] = {
+                        (float)dc_app_lookup_get_value(data.lookup, node->image.pivot_position.x)->value_double,
+                        (float)dc_app_lookup_get_value(data.lookup, node->image.pivot_position.y)->value_double};
+                    float rotation = pl_radiansf((float)dc_app_lookup_get_value(data.lookup, node->image.rotation)->value_double);
+
+                    // compute matrices
+                    plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+                    plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+                    plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+                    // apply transform
+                    transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+                    transform = pl_mul_mat4t(&transform, &rotate_xform);
+                    transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+                }
+            }
+
+            // xform local alignment
+            {
+                // get alignment
+                DcAppAlignType local_aligns[2] = {
+                    node->image.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->image.local_align.x)->value_integer,
+                    node->image.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->image.local_align.y)->value_integer};
+
+                // compute offsets
+                float trans_align_offsets[2];
+                switch (local_aligns[0]) {
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_LEFT:
+                        trans_align_offsets[0] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_CENTER:
+                        trans_align_offsets[0] = -1 * dimension[0] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:
+                        trans_align_offsets[0] = -1 * dimension[0];
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
+                        break;
+                }
+                switch (local_aligns[1]) {
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_BOTTOM:
+                        trans_align_offsets[1] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_MIDDLE:
+                        trans_align_offsets[1] = -1 * dimension[1] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_TOP:
+                        trans_align_offsets[1] = -1 * dimension[1];
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
+                        break;
+                }
+
+                // compute matrix
+                plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
+
+                // apply transform
+                transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
+            }
+
+            // xform position
+            {
+                // boolean check
+                bool use_position[2] = {
+                    node->image.position.x != DC_APP_VAL_INDEX_UNDEFINED,
+                    node->image.position.y != DC_APP_VAL_INDEX_UNDEFINED};
+
+                // get position
+                float position[2];
+                if (use_position[0]) {
+                    position[0] = (float)dc_app_lookup_get_value(data.lookup, node->image.position.x)->value_double;
+                } else {
+                    DcAppAlignType parent_align_x = node->image.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(data.lookup, node->image.parent_align.x)->value_integer;
+                    switch (parent_align_x) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_LEFT:
+                            position[0] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_CENTER:
+                            position[0] = parent_dimensions->x / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_RIGHT:
+                            position[0] = parent_dimensions->x;
+                            break;
+                        default:
+                            fprintf(stderr, "DCAPP _draw_node() image: Invalid parent_align_x value %d\n", parent_align_x);
+                            break;
+                    }
+
+                    // add parent offset
+                    position[0] += parent_position->x;
+                }
+                if (use_position[1]) {
+                    position[1] = (float)dc_app_lookup_get_value(data.lookup, node->image.position.y)->value_double;
+                } else {
+                    DcAppAlignType parent_align_y = node->image.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(data.lookup, node->image.parent_align.y)->value_integer;
+                    switch (parent_align_y) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_BOTTOM:
+                            position[1] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_MIDDLE:
+                            position[1] = parent_dimensions->y / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_TOP:
+                            position[1] = parent_dimensions->y;
+                            break;
+                        default:
+                            fprintf(stderr, "DCAPP _draw_node() image: Invalid parent_align_y value %d\n", parent_align_y);
+                            break;
+                    }
+
+                    // add parent offset
+                    position[1] += parent_position->y;
+                }
+
+                // compute matrix
+                plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
+
+                // apply transform
+                transform = pl_mul_mat4t(&transform, &trans_position_xform);
+            }
+
+            // xform local rotation
+            {
+                if (use_rotation && !use_pivot_position) {
+
+                    // get alignment
+                    DcAppAlignType local_pivot_aligns[2] = {
+                        node->image.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->image.pivot_local_align.x)->value_integer,
+                        node->image.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(data.lookup, node->image.pivot_local_align.y)->value_integer};
+
+                    // get pivot XY, rotation
+                    float pivot_position[2];
+                    switch (local_pivot_aligns[0]) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_LEFT:
+                            pivot_position[0] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_CENTER:
+                            pivot_position[0] = dimension[0] / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_RIGHT:
+                            pivot_position[0] = dimension[0];
+                            break;
+                        default:
+                            fprintf(stderr, "Unknown pivot alignment in <image> draw call: %d\n", local_pivot_aligns[0]);
+                            break;
+                    }
+                    switch (local_pivot_aligns[1]) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_BOTTOM:
+                            pivot_position[1] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_MIDDLE:
+                            pivot_position[1] = dimension[1] / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_TOP:
+                            pivot_position[1] = dimension[1];
+                            break;
+                        default:
+                            fprintf(stderr, "Unknown pivot alignment in <image> draw call: %d\n", local_pivot_aligns[1]);
+                            break;
+                    }
+                    float rotation = pl_radiansf((float)dc_app_lookup_get_value(data.lookup, node->image.rotation)->value_double);
+
+                    // compute matrices
+                    plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+                    plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+                    plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+                    // apply transform
+                    transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+                    transform = pl_mul_mat4t(&transform, &rotate_xform);
+                    transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+                }
+            }
+
+            // parent transform
+            transform = pl_mul_mat4t(parent_transform, &transform);
+
+            // draw
+            // use transform here::
+            _ext_draw->add_image(pl_app_data->layer, node->image.texture.bind_group_handle.uData, (plVec2){100.0f, 100.0f}, (plVec2){700.0f, 700.0f});
+
+            // mouse events
+            if (node->image.mouse_events.enabled) {
+
+                // process mouse position
+                plVec4 mouse_position = (plVec4){
+                    _frame_data.mouse_position.x,
+                    _frame_data.mouse_position.y,
+                    0, 1};
+                plMat4 transform_inverse = pl_mat4t_invert(&transform);
+                mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
+
+                // check whether mouse is over/in
+                bool inside = mouse_position.x > 0 && mouse_position.x < dimension[0] && mouse_position.y > 0 && mouse_position.y < dimension[1];
+
+                // update global states
+                if (inside) {
+                    _frame_data.next_hovered_node = node_index;
+
+                    if (_frame_data.is_mouse_pressed) {
+                        _frame_data.next_pressed_node = node_index;
+                    }
+                }
+
+                // draw mouse events
+                plVec2 position   = (plVec2){0.0f, 0.0f};
+                plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
+                if (_frame_data.pressed_node == node_index) {
+                    _draw_node_list(pl_app_data, node->image.mouse_events.pressed, &position, &dimensions, &transform);
+                } else if (_frame_data.active_node == node_index) {
+                    _draw_node_list(pl_app_data, node->image.mouse_events.active, &position, &dimensions, &transform);
+                } else if (_frame_data.released_node == node_index) {
+                    _draw_node_list(pl_app_data, node->image.mouse_events.released, &position, &dimensions, &transform);
+                } else if (_frame_data.hovered_node == node_index) {
+                    _draw_node_list(pl_app_data, node->image.mouse_events.hovered, &position, &dimensions, &transform);
+                } else {
+                    _draw_node_list(pl_app_data, node->image.mouse_events.inactive, &position, &dimensions, &transform);
+                }
             }
             break;
         }

@@ -61,12 +61,14 @@
           <Vertex X="-1000" Y="-1000" />
           <Vertex X="-1000" Y="0" />
         </Polygon>
-        <Line LineColor="#_color_topaz_ .5" LineWidth="5">
+        <Line LineColor="#_color_sapphire_ .5" LineWidth="5">
           <Vertex X="0" Y="0" />
           <Vertex X="0" Y="-1000" />
           <Vertex X="-1000" Y="-1000" />
           <Vertex X="-1000" Y="0" />
         </Line>
+
+        <Image File="/data/nreagan/dcapp/samples/screensaver/images/nasa.tga"/>
       </Container>
 
       <Container Width="1000" Height="1000" X="500" Y="500" VirtualWidth="1000" VirtualHeight="1000" Rotation="@ROTATE">

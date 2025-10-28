@@ -236,3 +236,28 @@ int dc_utils_create_directory(const char *path) {
     perror("DCAPP dc_utils_create_directory()");
     return -1;
 }
+
+unsigned char *dc_utils_load_binary_file(const char *path, size_t *out_size) {
+    FILE *file = fopen(path, "rb");
+    if (!file) {
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+    rewind(file);
+
+    unsigned char *buffer = (unsigned char *)malloc(size);
+    if (!buffer) {
+        fclose(file);
+        return NULL;
+    }
+
+    fread(buffer, 1, size, file);
+    fclose(file);
+
+    if (out_size) {
+        *out_size = size;
+    }
+    return buffer;
+}
