@@ -78,6 +78,9 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
     dc_utils_join_paths(_dc_data.config->cache_dir_path, "xml.log", log_file, sizeof(log_file));
     dc_app_config_save_to_file(_dc_data.config, log_file);
 
+    // initialize mjpeg context
+    dc_ps_mjpeg_init();
+
     // build dcapp node tree
     xmlNodePtr root_node = xmlDocGetRootElement(_dc_data.config->xml_doc);
     _process_xml_node(pl_app_data, root_node, NODE_INDEX_UNDEFINED, DC_APP_ELEM_TYPE_UNDEFINED, _dc_data.config->config_dir_path);
@@ -172,6 +175,9 @@ PL_EXPORT void pl_app_update(_PlAppData *pl_app_data) {
         }
     }
 
+    // process pixelstream mjpeg data
+    dc_ps_mjpeg_update();
+
     // process logic, update vars from extern_data
     if (_dc_data.logic_draw) {
         _dc_data.logic_draw();
@@ -248,4 +254,3 @@ PL_EXPORT void pl_app_update(_PlAppData *pl_app_data) {
 
 #include "_dcapp_draw.c"
 #include "_dcapp_process_xml.c"
-#include "_dcapp_utils.c"

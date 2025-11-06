@@ -17,6 +17,8 @@ static const char *_node_type_to_string(_NodeType type) {
             return "Line";
         case NODE_TYPE_PANEL:
             return "Panel";
+        case NODE_TYPE_PIXELSTREAM:
+            return "PixelStream";
         case NODE_TYPE_POLYGON:
             return "Polygon";
         case NODE_TYPE_RECTANGLE:
@@ -230,6 +232,42 @@ static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node) {
     _frame_data.next_hovered_node = NODE_INDEX_UNDEFINED;
     _frame_data.released_node     = NODE_INDEX_UNDEFINED;
     _frame_data.active_node       = NODE_INDEX_UNDEFINED;
+}
+
+static _Texture _create_texture(_PlAppData *pl_app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name) {
+
+    // get device
+    plDevice *device = _ext_starter->get_device();
+
+    // create new texture desc
+    plTextureDesc pl_texture_desc;
+    memset(&pl_texture_desc, 0, sizeof(plTextureDesc));
+    pl_texture_desc.tDimensions = (plVec3){(float)texture_width, (float)texture_height, 1.0f};
+    pl_texture_desc.tFormat     = PL_FORMAT_R8G8B8A8_UNORM;
+    pl_texture_desc.uLayers     = 1;
+    pl_texture_desc.uMips       = 1;
+    pl_texture_desc.tType       = PL_TEXTURE_TYPE_2D;
+    pl_texture_desc.tUsage      = PL_TEXTURE_USAGE_SAMPLED;
+    pl_texture_desc.pcDebugName = texture_name;
+
+    // create texture
+    plTexture      *pl_texture;
+    plTextureHandle pl_texture_handle = _ext_gfx->create_texture(device, &pl_texture_desc, &pl_texture);
+
+    // allocate memory
+    const plDeviceMemoryAllocation pl_texture_allocation = _ext_gfx->allocate_memory(device, pl_texture->tMemoryRequirements.ulSize, PL_MEMORY_FLAGS_DEVICE_LOCAL, pl_texture->tMemoryRequirements.uMemoryTypeBits, NULL);
+
+    // bind memory
+    _ext_gfx->bind_texture_to_memory(device, pl_texture_handle, &pl_texture_allocation);
+
+    // create bind group
+    plBindGroupHandle pl_bind_group_handle = _ext_draw_backend->create_bind_group_for_texture(pl_texture_handle);
+
+    // create _Texture struct
+    _Texture texture = {
+        pl_texture_handle,
+        pl_bind_group_handle};
+    return texture;
 }
 
 #endif

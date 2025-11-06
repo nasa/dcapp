@@ -812,7 +812,8 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
 
             // draw
             // use transform here::
-            _ext_draw->add_image(pl_app_data->layer, node->image.texture.bind_group_handle.uData, (plVec2){100.0f, 100.0f}, (plVec2){700.0f, 700.0f});
+            plBindGroupHandle bind_group_handle = _sb_textures[node->image.texture_index].bind_group_handle;
+            _ext_draw->add_image(pl_app_data->layer, bind_group_handle.uData, (plVec2){100.0f, 100.0f}, (plVec2){700.0f, 700.0f});
 
             // mouse events
             if (node->image.mouse_events.enabled) {
@@ -984,6 +985,348 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
             plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
             plVec2 position_vec2           = (plVec2){0.0f, 0.0f};
             _draw_node_list(pl_app_data, node->panel.child, &position_vec2, &virtual_dimensions_vec2, &transform);
+            break;
+        }
+
+        case NODE_TYPE_PIXELSTREAM: {
+
+            // get texture handler
+            _Texture   texture    = _sb_textures[node->pixelstream.texture_index];
+            plDevice  *pl_device  = _ext_starter->get_device();
+            plTexture *pl_texture = _ext_gfx->get_texture(pl_device, texture.texture_handle);
+
+            // switch over types to get the raw image data in the buffer
+            switch (node->pixelstream.type) {
+                case DC_APP_PIXELSTREAM_TYPE_MJPEG: {
+
+                    // don't show anything if disconnected
+                    if (!dc_ps_mjpeg_server_is_connected(node->pixelstream.mjpeg.handle)) {
+                        // TODO show disconnected picture here instead
+                        // (or maybe not....I think it's better to let the user display whatever they feel)
+                        break;
+                    }
+
+                    // get latest frame data here
+                    if (dc_ps_mjpeg_server_has_new_data(node->pixelstream.mjpeg.handle)) {
+
+                        // get raw data from server
+                        size_t jpeg_size;
+                        dc_ps_mjpeg_get_server_data(node->pixelstream.mjpeg.handle, node->pixelstream.mjpeg.raw_jpeg, node->pixelstream.mjpeg.raw_jpeg_size, &jpeg_size);
+
+                        // free prior image data
+                        free(node->pixelstream.frame);
+
+                        // convert to raw image format
+                        int channels;
+                        node->pixelstream.frame = _ext_image->load(node->pixelstream.mjpeg.raw_jpeg, (int)jpeg_size, &node->pixelstream.frame_width, &node->pixelstream.frame_height, &channels, 4);
+
+                        // check size
+                        if (node->pixelstream.frame_height * node->pixelstream.frame_width > _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT) {
+                            fprintf(stderr, "DCApp draw_node() pixelstream: max image dimensions exceeded\n");
+                        }
+
+                        break;
+                    }
+                }
+                case DC_APP_PIXELSTREAM_TYPE_DYNAMIC_FILE: {
+                    // TODO implement
+                    break;
+                }
+                default:
+                    fprintf(stderr, "DCApp _draw_node(): unknown pixelstram type of %d\n", node->pixelstream.type);
+                    break;
+            }
+
+            // don't draw anything if no data
+            if (node->pixelstream.frame == NULL) {
+                break;
+            }
+
+            // copy to GPU image
+            {
+                // get device
+                plDevice *device = _ext_starter->get_device();
+
+                // set the initial pl_texture usage (this is a no-op in metal but does layout transition for vulkan)
+                plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
+                _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
+
+                // copy memory to mapped staging buffer
+                plBuffer *staging_buffer = _ext_gfx->get_buffer(device, pl_app_data->staging_buffer_handle);
+                memcpy(staging_buffer->tMemoryAllocation.pHostMapped, node->pixelstream.frame, node->pixelstream.frame_width * node->pixelstream.frame_height * 4);
+
+                // copy staging buffer to image
+                plBufferImageCopy buffer_image_copy;
+                memset(&buffer_image_copy, 0, sizeof(plBufferImageCopy));
+                buffer_image_copy.uImageWidth    = (uint32_t)node->pixelstream.frame_width;
+                buffer_image_copy.uImageHeight   = (uint32_t)node->pixelstream.frame_height;
+                buffer_image_copy.uImageDepth    = 1;
+                buffer_image_copy.uLayerCount    = 1;
+                buffer_image_copy.szBufferOffset = 0;
+                _ext_gfx->copy_buffer_to_texture(encoder, pl_app_data->staging_buffer_handle, texture.texture_handle, 1, &buffer_image_copy);
+
+                // return encoder
+                _ext_starter->return_blit_encoder(encoder);
+            }
+
+            // boolean checks
+            bool use_dimension[2] = {
+                node->pixelstream.dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
+                node->pixelstream.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
+            bool use_rotation       = node->pixelstream.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+            bool use_pivot_position = (node->pixelstream.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->pixelstream.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+
+            // get dimensions
+            float dimension[2] = {
+                use_dimension[0] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.dimension.x)->value_double : parent_dimensions->x,
+                use_dimension[1] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.dimension.y)->value_double : parent_dimensions->y};
+
+            // transform
+            plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+
+            // xform rotation (around a point)
+            {
+                if (use_rotation && use_pivot_position) {
+
+                    // get pivot XY, rotation
+                    float pivot_position[2] = {
+                        (float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.pivot_position.x)->value_double,
+                        (float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.pivot_position.y)->value_double};
+                    float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.rotation)->value_double);
+
+                    // compute matrices
+                    plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+                    plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+                    plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+                    // apply transform
+                    transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+                    transform = pl_mul_mat4t(&transform, &rotate_xform);
+                    transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+                }
+            }
+
+            // xform local alignment
+            {
+                // get alignment
+                DcAppAlignType local_aligns[2] = {
+                    node->pixelstream.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.local_align.x)->value_integer,
+                    node->pixelstream.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.local_align.y)->value_integer};
+
+                // compute offsets
+                float trans_align_offsets[2];
+                switch (local_aligns[0]) {
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_LEFT:
+                        trans_align_offsets[0] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_CENTER:
+                        trans_align_offsets[0] = -1 * dimension[0] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:
+                        trans_align_offsets[0] = -1 * dimension[0];
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
+                        break;
+                }
+                switch (local_aligns[1]) {
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_BOTTOM:
+                        trans_align_offsets[1] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_MIDDLE:
+                        trans_align_offsets[1] = -1 * dimension[1] / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_TOP:
+                        trans_align_offsets[1] = -1 * dimension[1];
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
+                        break;
+                }
+
+                // compute matrix
+                plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
+
+                // apply transform
+                transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
+            }
+
+            // xform position
+            {
+                // boolean check
+                bool use_position[2] = {
+                    node->pixelstream.position.x != DC_APP_VAL_INDEX_UNDEFINED,
+                    node->pixelstream.position.y != DC_APP_VAL_INDEX_UNDEFINED};
+
+                // get position
+                float position[2];
+                if (use_position[0]) {
+                    position[0] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.position.x)->value_double;
+                } else {
+                    DcAppAlignType parent_align_x = node->pixelstream.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.parent_align.x)->value_integer;
+                    switch (parent_align_x) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_LEFT:
+                            position[0] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_CENTER:
+                            position[0] = parent_dimensions->x / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_RIGHT:
+                            position[0] = parent_dimensions->x;
+                            break;
+                        default:
+                            fprintf(stderr, "DCAPP _draw_node() pixelstream: Invalid parent_align_x value %d\n", parent_align_x);
+                            break;
+                    }
+
+                    // add parent offset
+                    position[0] += parent_position->x;
+                }
+                if (use_position[1]) {
+                    position[1] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.position.y)->value_double;
+                } else {
+                    DcAppAlignType parent_align_y = node->pixelstream.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.parent_align.y)->value_integer;
+                    switch (parent_align_y) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_BOTTOM:
+                            position[1] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_MIDDLE:
+                            position[1] = parent_dimensions->y / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_TOP:
+                            position[1] = parent_dimensions->y;
+                            break;
+                        default:
+                            fprintf(stderr, "DCAPP _draw_node() pixelstream: Invalid parent_align_y value %d\n", parent_align_y);
+                            break;
+                    }
+
+                    // add parent offset
+                    position[1] += parent_position->y;
+                }
+
+                // compute matrix
+                plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
+
+                // apply transform
+                transform = pl_mul_mat4t(&transform, &trans_position_xform);
+            }
+
+            // xform local rotation
+            {
+                if (use_rotation && !use_pivot_position) {
+
+                    // get alignment
+                    DcAppAlignType local_pivot_aligns[2] = {
+                        node->pixelstream.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.pivot_local_align.x)->value_integer,
+                        node->pixelstream.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.pivot_local_align.y)->value_integer};
+
+                    // get pivot XY, rotation
+                    float pivot_position[2];
+                    switch (local_pivot_aligns[0]) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_LEFT:
+                            pivot_position[0] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_CENTER:
+                            pivot_position[0] = dimension[0] / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_RIGHT:
+                            pivot_position[0] = dimension[0];
+                            break;
+                        default:
+                            fprintf(stderr, "Unknown pivot alignment in <pixelstream> draw call: %d\n", local_pivot_aligns[0]);
+                            break;
+                    }
+                    switch (local_pivot_aligns[1]) {
+                        case DC_APP_ALIGN_TYPE_UNDEFINED:
+                        case DC_APP_ALIGN_TYPE_BOTTOM:
+                            pivot_position[1] = 0;
+                            break;
+                        case DC_APP_ALIGN_TYPE_MIDDLE:
+                            pivot_position[1] = dimension[1] / 2;
+                            break;
+                        case DC_APP_ALIGN_TYPE_TOP:
+                            pivot_position[1] = dimension[1];
+                            break;
+                        default:
+                            fprintf(stderr, "Unknown pivot alignment in <pixelstream> draw call: %d\n", local_pivot_aligns[1]);
+                            break;
+                    }
+                    float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.rotation)->value_double);
+
+                    // compute matrices
+                    plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+                    plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+                    plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+                    // apply transform
+                    transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+                    transform = pl_mul_mat4t(&transform, &rotate_xform);
+                    transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+                }
+            }
+
+            // parent transform
+            transform = pl_mul_mat4t(parent_transform, &transform);
+
+            // compute UV coordinates
+            // 1) get texture dimensions
+            plVec3 pl_texture_dimensions = pl_texture->tDesc.tDimensions;
+            plVec2 min_uv                = {
+                0.0f,
+                0.0f};
+            plVec2 max_uv = {
+                ((float)node->pixelstream.frame_width) / pl_texture_dimensions.x,
+                ((float)node->pixelstream.frame_height) / pl_texture_dimensions.y};
+
+            // draw
+            // use transform here::
+            plBindGroupHandle bind_group_handle = _sb_textures[node->pixelstream.texture_index].bind_group_handle;
+            _ext_draw->add_image_ex(pl_app_data->layer, bind_group_handle.uData, (plVec2){100.0f, 100.0f}, (plVec2){700.0f, 700.0f}, min_uv, max_uv, 0xFFFFFFFF);
+
+            // mouse events
+            if (node->pixelstream.mouse_events.enabled) {
+
+                // process mouse position
+                plVec4 mouse_position = (plVec4){
+                    _frame_data.mouse_position.x,
+                    _frame_data.mouse_position.y,
+                    0, 1};
+                plMat4 transform_inverse = pl_mat4t_invert(&transform);
+                mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
+
+                // check whether mouse is over/in
+                bool inside = mouse_position.x > 0 && mouse_position.x < dimension[0] && mouse_position.y > 0 && mouse_position.y < dimension[1];
+
+                // update global states
+                if (inside) {
+                    _frame_data.next_hovered_node = node_index;
+
+                    if (_frame_data.is_mouse_pressed) {
+                        _frame_data.next_pressed_node = node_index;
+                    }
+                }
+
+                // draw mouse events
+                plVec2 position   = (plVec2){0.0f, 0.0f};
+                plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
+                if (_frame_data.pressed_node == node_index) {
+                    _draw_node_list(pl_app_data, node->pixelstream.mouse_events.pressed, &position, &dimensions, &transform);
+                } else if (_frame_data.active_node == node_index) {
+                    _draw_node_list(pl_app_data, node->pixelstream.mouse_events.active, &position, &dimensions, &transform);
+                } else if (_frame_data.released_node == node_index) {
+                    _draw_node_list(pl_app_data, node->pixelstream.mouse_events.released, &position, &dimensions, &transform);
+                } else if (_frame_data.hovered_node == node_index) {
+                    _draw_node_list(pl_app_data, node->pixelstream.mouse_events.hovered, &position, &dimensions, &transform);
+                } else {
+                    _draw_node_list(pl_app_data, node->pixelstream.mouse_events.inactive, &position, &dimensions, &transform);
+                }
+            }
             break;
         }
 

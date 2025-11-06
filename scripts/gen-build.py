@@ -146,13 +146,13 @@ with pl.project("dcapp"):
             with pl.platform("Linux"):
                 with pl.compiler("gcc"):
                     pl.add_include_directories("/usr/include/libxml2")
-                    pl.add_linker_flags("-lxml2")
+                    pl.add_linker_flags("-lxml2", "-lcurl")
 
             # mac os
             with pl.platform("Darwin"):
                 with pl.compiler("clang"):
                     pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
-                    pl.add_linker_flags("-lxml2")
+                    pl.add_linker_flags("-lxml2", "-lcurl")
                     
         # debug config
         with pl.configuration("debug"):
@@ -170,13 +170,13 @@ with pl.project("dcapp"):
                 with pl.compiler("gcc"):
                     pl.add_include_directories("/usr/include/libxml2")
                     pl.add_compiler_flags("--debug", "-g")
-                    pl.add_linker_flags("-lxml2")
+                    pl.add_linker_flags("-lxml2", "-lcurl")
 
             # mac os
             with pl.platform("Darwin"):
                 with pl.compiler("clang"):
                     pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
-                    pl.add_linker_flags("-lxml2")
+                    pl.add_linker_flags("-lxml2", "-lcurl")
 
     # dcapp-genheader
     with pl.target("dcapp-genheader", pl.TargetType.EXECUTABLE):
@@ -228,13 +228,13 @@ with pl.project("dcapp"):
                 with pl.compiler("gcc"):
                     pl.add_include_directories("/usr/include/libxml2")
                     pl.add_compiler_flags("--debug", "-g")
-                    pl.add_linker_flags("-lxml2")
+                    pl.add_linker_flags("-lxml2", "-lcurl")
 
             # mac os
             with pl.platform("Darwin"):
                 with pl.compiler("clang"):
                     pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
-                    pl.add_linker_flags("-lxml2")
+                    pl.add_linker_flags("-lxml2", "-lcurl")
 
 #-----------------------------------------------------------------------------
 # [SECTION] generate scripts

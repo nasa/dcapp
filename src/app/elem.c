@@ -44,6 +44,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "<Non-Element>";
         case DC_APP_ELEM_TYPE_PANEL:
             return "Panel";
+        case DC_APP_ELEM_TYPE_PIXELSTREAM:
+            return "PixelStream";
         case DC_APP_ELEM_TYPE_POLYGON:
             return "Polygon";
         case DC_APP_ELEM_TYPE_RECTANGLE:
@@ -119,6 +121,8 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_MOUSE_RELEASED;
     if (strcmp(name, "Panel") == 0)
         return DC_APP_ELEM_TYPE_PANEL;
+    if (strcmp(name, "PixelStream") == 0)
+        return DC_APP_ELEM_TYPE_PIXELSTREAM;
     if (strcmp(name, "Polygon") == 0)
         return DC_APP_ELEM_TYPE_POLYGON;
     if (strcmp(name, "Rectangle") == 0)

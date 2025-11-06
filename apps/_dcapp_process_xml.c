@@ -2,6 +2,8 @@
 
 #include "../src/utils/file.h"
 #include "../src/utils/string.h"
+#include "libxml/globals.h"
+#include "libxml/xmlstring.h"
 
 #include <ctype.h>
 
@@ -656,30 +658,12 @@ static _NodeIndex _process_xml_node(_PlAppData *pl_app_data, xmlNodePtr xml_node
                 unsigned char *image_data = _ext_image->load(file_data, (int)file_data_size, &image_width, &image_height, &channels, 4);
                 free(file_data);
 
-                // create new texture desc
-                plTextureDesc pl_texture_desc;
-                memset(&pl_texture_desc, 0, sizeof(plTextureDesc));
-                pl_texture_desc.tDimensions = (plVec3){(float)image_width, (float)image_height, 1.0f};
-                pl_texture_desc.tFormat     = PL_FORMAT_R8G8B8A8_UNORM;
-                pl_texture_desc.uLayers     = 1;
-                pl_texture_desc.uMips       = 1;
-                pl_texture_desc.tType       = PL_TEXTURE_TYPE_2D;
-                pl_texture_desc.tUsage      = PL_TEXTURE_USAGE_SAMPLED;
-                pl_texture_desc.pcDebugName = canon_filepath;
-
-                // create texture
-                plTexture      *pl_texture;
-                plTextureHandle pl_texture_handle = _ext_gfx->create_texture(device, &pl_texture_desc, &pl_texture);
-
-                // allocate memory
-                const plDeviceMemoryAllocation pl_texture_allocation = _ext_gfx->allocate_memory(device, pl_texture->tMemoryRequirements.ulSize, PL_MEMORY_FLAGS_DEVICE_LOCAL, pl_texture->tMemoryRequirements.uMemoryTypeBits, NULL);
-
-                // bind memory
-                _ext_gfx->bind_texture_to_memory(device, pl_texture_handle, &pl_texture_allocation);
+                // create texture (allocate image, buffer, bind)
+                _Texture texture = _create_texture(pl_app_data, image_width, image_height, canon_filepath);
 
                 // set the initial pl_texture usage (this is a no-op in metal but does layout transition for vulkan)
                 plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
-                _ext_gfx->set_texture_usage(encoder, pl_texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
+                _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
 
                 // copy memory to mapped staging buffer
                 plBuffer *staging_buffer = _ext_gfx->get_buffer(device, pl_app_data->staging_buffer_handle);
@@ -693,21 +677,13 @@ static _NodeIndex _process_xml_node(_PlAppData *pl_app_data, xmlNodePtr xml_node
                 buffer_image_copy.uImageDepth    = 1;
                 buffer_image_copy.uLayerCount    = 1;
                 buffer_image_copy.szBufferOffset = 0;
-                _ext_gfx->copy_buffer_to_texture(encoder, pl_app_data->staging_buffer_handle, pl_texture_handle, 1, &buffer_image_copy);
-
-                // create bind group
-                plBindGroupHandle pl_bind_group_handle = _ext_draw_backend->create_bind_group_for_texture(pl_texture_handle);
+                _ext_gfx->copy_buffer_to_texture(encoder, pl_app_data->staging_buffer_handle, texture.texture_handle, 1, &buffer_image_copy);
 
                 // return encoder
                 _ext_starter->return_blit_encoder(encoder);
 
                 // free image data
                 _ext_image->free(image_data);
-
-                // create _Texture struct
-                _Texture texture = {
-                    pl_texture_handle,
-                    pl_bind_group_handle};
 
                 // add texture to internal arrays
                 sbpush(_sb_texture_name_offsets, sbcount(_sb_texture_names));
@@ -717,7 +693,7 @@ static _NodeIndex _process_xml_node(_PlAppData *pl_app_data, xmlNodePtr xml_node
             }
 
             // update structure
-            dc_node.image.texture = _sb_textures[texture_index];
+            dc_node.image.texture_index = texture_index;
 
             // x position
             xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
@@ -1242,6 +1218,280 @@ static _NodeIndex _process_xml_node(_PlAppData *pl_app_data, xmlNodePtr xml_node
             // update child index
             _Node *node       = _get_node(node_index);
             node->panel.child = first_child_index;
+
+            // return
+            return node_index;
+        }
+
+        case DC_APP_ELEM_TYPE_PIXELSTREAM: {
+
+            _Node dc_node;
+            memset(&dc_node, 0, sizeof(dc_node));
+            dc_node.type   = NODE_TYPE_PIXELSTREAM;
+            dc_node.parent = parent_node_index;
+            dc_node.next   = NODE_INDEX_UNDEFINED;
+
+            dc_node.pixelstream.frame = NULL;
+
+            dc_node.pixelstream.mouse_events.active   = NODE_INDEX_UNDEFINED;
+            dc_node.pixelstream.mouse_events.hovered  = NODE_INDEX_UNDEFINED;
+            dc_node.pixelstream.mouse_events.inactive = NODE_INDEX_UNDEFINED;
+            dc_node.pixelstream.mouse_events.pressed  = NODE_INDEX_UNDEFINED;
+            dc_node.pixelstream.mouse_events.released = NODE_INDEX_UNDEFINED;
+
+            // create + bind texture
+            {
+                // create device image, memory, bind
+                _Texture texture = _create_texture(pl_app_data, _NODE_PIXELSTREAM_MAX_WIDTH, _NODE_PIXELSTREAM_MAX_HEIGHT, "pixelstream");
+
+                // add texture to internal arrays
+                sbpush(_sb_texture_name_offsets, sbcount(_sb_texture_names));
+                sbpushn(_sb_texture_names, "--dummy--", strlen("--dummy--") + 1);
+                sbpush(_sb_textures, texture);
+                _TextureIndex texture_index = sbcount(_sb_textures) - 1;
+
+                // update structure
+                dc_node.pixelstream.texture_index = texture_index;
+            }
+
+            // x position
+            xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+            if (!raw_x_position) {
+                raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+            }
+            if (raw_x_position) {
+                char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_x_position);
+                dc_node.pixelstream.position.x = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
+            } else {
+                dc_node.pixelstream.position.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // y position
+            xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+            if (!raw_y_position) {
+                raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+            }
+            if (raw_y_position) {
+                char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_y_position);
+                dc_node.pixelstream.position.y = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
+            } else {
+                dc_node.pixelstream.position.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // x dimension
+            xmlChar *raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionX");
+            if (!raw_x_dimension) {
+                raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
+            }
+            if (raw_x_dimension) {
+                char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_x_dimension);
+                dc_node.pixelstream.dimension.x = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
+            } else {
+                dc_node.pixelstream.dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // y dimension
+            xmlChar *raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionY");
+            if (!raw_y_dimension) {
+                raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
+            }
+            if (raw_y_dimension) {
+                char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_y_dimension);
+                dc_node.pixelstream.dimension.y = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
+            } else {
+                dc_node.pixelstream.dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // parent x align
+            xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
+            if (raw_parent_x_align) {
+                char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_parent_x_align);
+                dc_node.pixelstream.parent_align.x = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
+            } else {
+                dc_node.pixelstream.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // parent y align
+            xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
+            if (raw_parent_y_align) {
+                char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_parent_y_align);
+                dc_node.pixelstream.parent_align.y = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
+            } else {
+                dc_node.pixelstream.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // local x align
+            xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignX");
+            if (!raw_x_align) {
+                raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+            }
+            if (raw_x_align) {
+                char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_x_align);
+                dc_node.pixelstream.local_align.x = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
+            } else {
+                dc_node.pixelstream.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // local y align
+            xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignY");
+            if (!raw_y_align) {
+                raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+            }
+            if (raw_y_align) {
+                char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_y_align);
+                dc_node.pixelstream.local_align.y = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
+            } else {
+                dc_node.pixelstream.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // rotation
+            xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+            if (!raw_rotation) {
+                raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
+            }
+            if (raw_rotation) {
+                char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_rotation);
+                dc_node.pixelstream.rotation = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
+            } else {
+                dc_node.pixelstream.rotation = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // pivots
+            xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
+            if (!raw_pivot_position_x) {
+                raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
+            }
+            xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
+            if (!raw_pivot_position_y) {
+                raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
+            }
+            if (raw_pivot_position_x && raw_pivot_position_y) {
+
+                char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_pivot_position_x);
+                dc_node.pixelstream.pivot_position.x = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
+
+                char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_pivot_position_y);
+                dc_node.pixelstream.pivot_position.y = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
+
+                dc_node.pixelstream.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+                dc_node.pixelstream.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+
+            } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+
+                xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+                if (raw_pivot_align_x) {
+                    char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
+                    strncpy(cleaned_pivot_align_x, (const char *)raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                    xmlFree(raw_pivot_align_x);
+                    dc_node.pixelstream.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
+                } else {
+                    dc_node.pixelstream.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+                }
+
+                xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+                if (raw_pivot_align_y) {
+                    char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
+                    strncpy(cleaned_pivot_align_y, (const char *)raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                    xmlFree(raw_pivot_align_y);
+                    dc_node.pixelstream.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
+                } else {
+                    dc_node.pixelstream.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+                }
+
+                dc_node.pixelstream.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
+                dc_node.pixelstream.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
+            } else {
+                fprintf(stderr, "DCAPP _process_xml_node(): Pixelstream: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+            }
+
+            // set type
+            xmlChar *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");
+            if (!raw_type) {
+                raw_type = xmlGetProp(xml_node, BAD_CAST "Protocol");
+            }
+            if (raw_type) {
+                dc_node.pixelstream.type = dc_utils_string_to_integer((const char *)raw_type);
+                xmlFree(raw_type);
+            } else {
+                fprintf(stderr, "DCApp _process_xml_node() pixelstream: Missing 'Type' field\n");
+            }
+
+            // iterate over type
+            switch (dc_node.pixelstream.type) {
+
+                case DC_APP_PIXELSTREAM_TYPE_DYNAMIC_FILE: {
+                    // TODO
+                    break;
+                }
+
+                case DC_APP_PIXELSTREAM_TYPE_MJPEG: {
+
+                    // parse URL
+                    xmlChar *raw_url = xmlGetProp(xml_node, BAD_CAST "URL");
+                    char     cleaned_url[256];
+                    if (raw_url) {
+                        strncpy(cleaned_url, (const char *)raw_url, 256);
+                        xmlFree(raw_url);
+                    } else {
+                        fprintf(stderr, "DCApp _process_xml_node() pixelstream: Missing 'URL' field\n");
+                    }
+
+                    // parse timeout
+                    int      timeout     = 5;
+                    xmlChar *raw_timeout = xmlGetProp(xml_node, BAD_CAST "Timeout");
+                    if (raw_timeout) {
+                        timeout = dc_utils_string_to_integer((const char *)raw_timeout);
+                        xmlFree(raw_timeout);
+                    }
+
+                    // set mjpeg field
+                    dc_node.pixelstream.mjpeg.handle        = dc_ps_mjpeg_add_server(cleaned_url, timeout);
+                    dc_node.pixelstream.mjpeg.raw_jpeg_size = _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT * 4 * sizeof(float);
+                    dc_node.pixelstream.mjpeg.raw_jpeg      = (unsigned char *)malloc(dc_node.pixelstream.mjpeg.raw_jpeg_size);
+                    break;
+                }
+
+                default:
+                    fprintf(stderr, "DCApp _process_xml_node() pixelstream: Unknown pixelstream type\n");
+                    break;
+            }
+
+            // register node
+            _NodeIndex node_index = _register_node(&dc_node);
+
+            // process children
+            _process_xml_node_children(pl_app_data, xml_node, node_index, elem_type, directory);
+
+            // enable/disable mouse events
+            _MouseEventChildren *mouse_events = &(_get_node(node_index)->pixelstream.mouse_events);
+            mouse_events->enabled =
+                (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->released != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->active != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->inactive != NODE_INDEX_UNDEFINED) ||
+                (mouse_events->hovered != NODE_INDEX_UNDEFINED);
 
             // return
             return node_index;

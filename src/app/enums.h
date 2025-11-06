@@ -24,6 +24,12 @@ typedef enum _DcAppConditionalType {
     DC_APP_CONDITIONAL_TYPE_GTE,
 } DcAppConditionalType;
 
+typedef enum _DcAppPixelstreamType {
+    DC_APP_PIXELSTREAM_TYPE_UNDEFINED,
+    DC_APP_PIXELSTREAM_TYPE_DYNAMIC_FILE,
+    DC_APP_PIXELSTREAM_TYPE_MJPEG
+} DcAppPixelstreamType;
+
 typedef enum _DcAppSetType {
     DC_APP_SET_TYPE_UNDEFINED,
     DC_APP_SET_TYPE_EQUAL,

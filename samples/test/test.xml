@@ -181,6 +181,8 @@
         <TerrainDEM File="asdf.txt" />
       </Terrain>
 
+      <PixelStream URL="http://localhost:8080/video" Type="#_pixelstream_mjpeg_"/>
+
     </Panel>
 
     <!-- <Include>sub/subtest.xml</Include> -->

@@ -66,8 +66,10 @@ PL_EXPORT void  pl_app_update(_PlAppData *pl_app_data);
 // dcapp includes
 #include "../src/utils/stb_sb.h"
 #include "../src/app/elem.h"
+#include "../src/app/enums.h"
 #include "../src/app/lookup.h"
 #include "../src/app/config.h"
+#include "../src/pixelstream/mjpeg.h"
 #include "../src/trick.h"
 #include <libxml/parser.h>
 
@@ -116,6 +118,7 @@ typedef enum __NodeType {
     NODE_TYPE_IMAGE,
     NODE_TYPE_LINE,
     NODE_TYPE_PANEL,
+    NODE_TYPE_PIXELSTREAM,
     NODE_TYPE_POLYGON,
     NODE_TYPE_RECTANGLE,
     NODE_TYPE_SET,
@@ -193,7 +196,7 @@ typedef struct __NodeImage {
     _ValIndex2    parent_align;
     DcAppValIndex rotation;
 
-    _Texture texture;
+    _TextureIndex texture_index;
 
     _MouseEventChildren mouse_events;
 } _NodeImage;
@@ -217,6 +220,35 @@ typedef struct __NodePanel {
     DcAppValIndex index;
     _NodeIndex    child;
 } _NodePanel;
+
+static const size_t _NODE_PIXELSTREAM_MAX_WIDTH  = 3840;
+static const size_t _NODE_PIXELSTREAM_MAX_HEIGHT = 2160;
+typedef struct __PixelstreamMjpegData {
+    DcPsMjpegHandle handle;
+    unsigned char  *raw_jpeg;
+    size_t          raw_jpeg_size;
+} _PixelstreamMjpegData;
+
+typedef struct __NodePixelstream {
+    _ValIndex2    position;
+    _ValIndex2    dimension;
+    _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_position;
+    _ValIndex2    local_align;
+    _ValIndex2    parent_align;
+    DcAppValIndex rotation;
+
+    _TextureIndex       texture_index;
+    _MouseEventChildren mouse_events;
+
+    DcAppPixelstreamType type;
+    unsigned char       *frame;
+    int                  frame_width;
+    int                  frame_height;
+    union {
+        _PixelstreamMjpegData mjpeg;
+    };
+} _NodePixelstream;
 
 static const int _NODE_POLYGON_MAX_POINTS = 1000;
 typedef struct __NodePolygon {
@@ -319,6 +351,7 @@ typedef struct __Node {
         _NodeImage       image;
         _NodeLine        line;
         _NodePanel       panel;
+        _NodePixelstream pixelstream;
         _NodePolygon     polygon;
         _NodeRectangle   rectangle;
         _NodeSet         set;
@@ -403,6 +436,9 @@ static _NodeIndex  _register_node(_Node *node);
 
 // pl utils
 static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node);
+
+// misc. utils
+static _Texture _create_texture(_PlAppData *pl_app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name);
 
 // draw utils
 static bool       _load_color_from_string(xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out);
