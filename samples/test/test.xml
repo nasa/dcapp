@@ -68,7 +68,7 @@
           <Vertex X="-1000" Y="0" />
         </Line>
 
-        <Image File="/data/nreagan/dcapp/samples/screensaver/images/nasa.tga"/>
+        <!-- <Image File="/data/nreagan/dcapp/samples/screensaver/images/nasa.tga" X="250" Y="750"/> -->
       </Container>
 
       <Container Width="1000" Height="1000" X="500" Y="500" VirtualWidth="1000" VirtualHeight="1000" Rotation="@ROTATE">
@@ -181,7 +181,7 @@
         <TerrainDEM File="asdf.txt" />
       </Terrain>
 
-      <PixelStream URL="http://localhost:8080/video" Type="#_pixelstream_mjpeg_"/>
+      <!-- <PixelStream URL="http://localhost:8080/video" Type="#_pixelstream_mjpeg_" Width="200" Height="200"/> -->
 
     </Panel>
 

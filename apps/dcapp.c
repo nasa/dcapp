@@ -17,7 +17,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
         _ext_gfx          = pl_get_api_latest(api_registry, plGraphicsI);
         _ext_vfs          = pl_get_api_latest(api_registry, plVfsI);
         _ext_shader       = pl_get_api_latest(api_registry, plShaderI);
-        _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
+        // _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
         _ext_camera       = pl_get_api_latest(api_registry, plCameraI);
         _ext_image        = pl_get_api_latest(api_registry, plImageI);
         return pl_app_data;
@@ -29,7 +29,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
     // load required extensions
     extension_registry->load("pl_unity_ext", NULL, NULL, true);
     extension_registry->load("pl_platform_ext", NULL, NULL, false);
-    extension_registry->load("pl_terrain_ext", NULL, NULL, true);
+    // extension_registry->load("pl_terrain_ext", NULL, NULL, true);
 
     // load extensions
     _ext_windows      = pl_get_api_latest(api_registry, plWindowI);
@@ -43,7 +43,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
     _ext_gfx          = pl_get_api_latest(api_registry, plGraphicsI);
     _ext_vfs          = pl_get_api_latest(api_registry, plVfsI);
     _ext_shader       = pl_get_api_latest(api_registry, plShaderI);
-    _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
+    // _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
     _ext_camera       = pl_get_api_latest(api_registry, plCameraI);
     _ext_image        = pl_get_api_latest(api_registry, plImageI);
 
@@ -113,26 +113,7 @@ PL_EXPORT void pl_app_update(_PlAppData *pl_app_data) {
     if (!_ext_starter->begin_frame()) {
         return;
     }
-
     _frame_data.count++;
-
-    // get mouse button status
-    if (_ext_ioi->is_mouse_down(PL_MOUSE_BUTTON_LEFT)) {
-        _frame_data.is_mouse_pressed  = !_frame_data.is_mouse_down;
-        _frame_data.is_mouse_released = false;
-        _frame_data.is_mouse_down     = true;
-    } else {
-        _frame_data.is_mouse_pressed  = false;
-        _frame_data.is_mouse_released = _frame_data.is_mouse_down;
-        _frame_data.is_mouse_down     = false;
-    }
-
-    // get mouse position
-    _frame_data.mouse_position = _ext_ioi->get_mouse_pos();
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    _ext_draw_backend->new_frame();
 
     // send trick data
     for (int ii = 0; ii < sbcount(_dc_data.sb_tricks); ii++) {
@@ -176,7 +157,7 @@ PL_EXPORT void pl_app_update(_PlAppData *pl_app_data) {
     }
 
     // process pixelstream mjpeg data
-    dc_ps_mjpeg_update();
+    // dc_ps_mjpeg_update();
 
     // process logic, update vars from extern_data
     if (_dc_data.logic_draw) {
@@ -185,38 +166,24 @@ PL_EXPORT void pl_app_update(_PlAppData *pl_app_data) {
             dc_app_lookup_refresh_var_from_extern(_dc_data.lookup, var_index);
         }
     }
-    // double lat   = dc_utils_degrees_to_radians(dc_app_lookup_get_value(_dc_data.lookup, (&dc_app_data.vars[dc_app_data.var_indices["LATITUDE_deg"]])->value_index)->value_double);
-    // double lon   = dc_utils_degrees_to_radians(dc_app_lookup_get_value(_dc_data.lookup, (&dc_app_data.vars[dc_app_data.var_indices["LONGITUDE_deg"]])->value_index)->value_double);
-    // double alt   = dc_app_lookup_get_value(_dc_data.lookup, (&dc_app_data.vars[dc_app_data.var_indices["ALTITUDE_m"]])->value_index)->value_double;
-    // double roll  = dc_utils_degrees_to_radians(dc_app_lookup_get_value(_dc_data.lookup, (&dc_app_data.vars[dc_app_data.var_indices["ROLL_deg"]])->value_index)->value_double);
-    // double pitch = dc_utils_degrees_to_radians(dc_app_lookup_get_value(_dc_data.lookup, (&dc_app_data.vars[dc_app_data.var_indices["PITCH_deg"]])->value_index)->value_double);
-    // double yaw   = dc_utils_degrees_to_radians(dc_app_lookup_get_value(_dc_data.lookup, (&dc_app_data.vars[dc_app_data.var_indices["YAW_deg"]])->value_index)->value_double);
 
-    // // calculate x, y, z
-    // //  r = 2 * R * tan(pi/4 - lat/2)
-    // //  theta = lon
-    // //  x = r * sin(theta)
-    // //  y = altitude
-    // //  z = r * cos(theta)
-    // double r = 2 * 1737400 * tan(M_PI_4 - fabs(lat) / 2);
-    // double x = r * sin(lon);
-    // double y = alt;
-    // double z = r * cos(lon);
+    // get mouse button status
+    if (_ext_ioi->is_mouse_down(PL_MOUSE_BUTTON_LEFT)) {
+        _frame_data.is_mouse_pressed  = !_frame_data.is_mouse_down;
+        _frame_data.is_mouse_released = false;
+        _frame_data.is_mouse_down     = true;
+    } else {
+        _frame_data.is_mouse_pressed  = false;
+        _frame_data.is_mouse_released = _frame_data.is_mouse_down;
+        _frame_data.is_mouse_down     = false;
+    }
 
-    // // set rotation
-    // pitch = 270.0;
-    // roll = 0.0;
-    // yaw = 0.0;
+    // get mouse position
+    _frame_data.mouse_position = _ext_ioi->get_mouse_pos();
 
-    // // process camera
-    // // ext_terrain->set_camera_pos(app_data->terrain, x, y, z);
-    // ext_terrain->set_camera_orientation(app_data->terrain, pitch, yaw, roll);
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    // start terrain rendering
-    // plCommandBuffer *cmd_buffer = ext_starter->get_command_buffer();
-    // ext_terrain->render(app_data->terrain, cmd_buffer);
-    // ext_starter->submit_command_buffer(cmd_buffer);
-    // ext_draw->add_image(app_data->layer, ext_terrain->get_terrain_texture(app_data->terrain).uIndex, {0.0f, 0.0f}, {1000.0f, 1000.0f});
+    // _ext_draw_backend->new_frame();
 
     // draw node
     _draw_node(pl_app_data, _dc_data.window, NULL, NULL, NULL);

@@ -807,13 +807,35 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                 }
             }
 
+            // PL specific fixes
+            {
+                // move from top-left reference to bottom-left
+                plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0, dimension[1], 0.0f);
+
+                // flip over the y axis
+                plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
+
+                // apply transforms
+                transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
+                transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
+            }
+
             // parent transform
             transform = pl_mul_mat4t(parent_transform, &transform);
 
+            // compute points
+            plVec4 point0_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, 0.0f, 0.0f, 1.0f});
+            plVec4 point1_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, dimension[1], 0.0f, 1.0f});
+            plVec4 point2_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){dimension[0], dimension[1], 0.0f, 1.0f});
+            plVec4 point3_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){dimension[0], 0.0f, 0.0f, 1.0f});
+            plVec2 point0      = (plVec2){point0_vec4.x, point0_vec4.y};
+            plVec2 point1      = (plVec2){point1_vec4.x, point1_vec4.y};
+            plVec2 point2      = (plVec2){point2_vec4.x, point2_vec4.y};
+            plVec2 point3      = (plVec2){point3_vec4.x, point3_vec4.y};
+
             // draw
-            // use transform here::
             plBindGroupHandle bind_group_handle = _sb_textures[node->image.texture_index].bind_group_handle;
-            _ext_draw->add_image(pl_app_data->layer, bind_group_handle.uData, (plVec2){100.0f, 100.0f}, (plVec2){700.0f, 700.0f});
+            // _ext_draw->add_image_quad(pl_app_data->layer, bind_group_handle.uData, point0, point1, point2, point3);
 
             // mouse events
             if (node->image.mouse_events.enabled) {
@@ -1271,11 +1293,23 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                 }
             }
 
+            // PL specific fixes
+            {
+                // move from top-left reference to bottom-left
+                plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0, dimension[1], 0.0f);
+
+                // flip over the y axis
+                plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
+
+                // apply transforms
+                transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
+                transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
+            }
+
             // parent transform
             transform = pl_mul_mat4t(parent_transform, &transform);
 
             // compute UV coordinates
-            // 1) get texture dimensions
             plVec3 pl_texture_dimensions = pl_texture->tDesc.tDimensions;
             plVec2 min_uv                = {
                 0.0f,
@@ -1283,11 +1317,24 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
             plVec2 max_uv = {
                 ((float)node->pixelstream.frame_width) / pl_texture_dimensions.x,
                 ((float)node->pixelstream.frame_height) / pl_texture_dimensions.y};
+            plVec2 uv0 = (plVec2){min_uv.x, min_uv.y};
+            plVec2 uv1 = (plVec2){min_uv.x, max_uv.y};
+            plVec2 uv2 = (plVec2){max_uv.x, max_uv.y};
+            plVec2 uv3 = (plVec2){max_uv.x, min_uv.y};
+
+            // compute points
+            plVec4 point0_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, 0.0f, 0.0f, 1.0f});
+            plVec4 point1_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, dimension[1], 0.0f, 1.0f});
+            plVec4 point2_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){dimension[0], dimension[1], 0.0f, 1.0f});
+            plVec4 point3_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){dimension[0], 0.0f, 0.0f, 1.0f});
+            plVec2 point0      = (plVec2){point0_vec4.x, point0_vec4.y};
+            plVec2 point1      = (plVec2){point1_vec4.x, point1_vec4.y};
+            plVec2 point2      = (plVec2){point2_vec4.x, point2_vec4.y};
+            plVec2 point3      = (plVec2){point3_vec4.x, point3_vec4.y};
 
             // draw
-            // use transform here::
-            plBindGroupHandle bind_group_handle = _sb_textures[node->pixelstream.texture_index].bind_group_handle;
-            _ext_draw->add_image_ex(pl_app_data->layer, bind_group_handle.uData, (plVec2){100.0f, 100.0f}, (plVec2){700.0f, 700.0f}, min_uv, max_uv, 0xFFFFFFFF);
+            plBindGroupHandle bind_group_handle = _sb_textures[node->image.texture_index].bind_group_handle;
+            _ext_draw->add_image_quad_ex(pl_app_data->layer, bind_group_handle.uData, point0, point1, point2, point3, uv0, uv1, uv2, uv3, 0xFFFFFFFF);
 
             // mouse events
             if (node->pixelstream.mouse_events.enabled) {
@@ -1369,13 +1416,10 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
                     node->polygon.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
                 // get position
-                float position[2];
-                if (use_position[0]) {
-                    position[0] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->polygon.position.x)->value_double;
-                }
-                if (use_position[1]) {
-                    position[1] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->polygon.position.y)->value_double;
-                }
+                float position[2] = {
+                    use_position[0] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->line.position.x)->value_double : 0.0f,
+                    use_position[1] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->line.position.y)->value_double : 0.0f,
+                };
 
                 // compute matrix
                 plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);

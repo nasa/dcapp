@@ -449,7 +449,7 @@ static void       _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plV
 
 // globals
 static char      *_sb_texture_names;
-static char      *_sb_texture_name_offsets;
+static int       *_sb_texture_name_offsets;
 static _Texture  *_sb_textures;
 static _FrameData _frame_data;
 static _DcAppData _dc_data;

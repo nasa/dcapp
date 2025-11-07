@@ -184,7 +184,9 @@ with pl.project("dcapp"):
         pl.set_output_binary("dcapp-genheader")
 
         # list source files relative to the output directory
-        src_files_abs = list_files_recursive(dcapp_home_abs + "/src", ".c")
+        src_files_abs =  list_files_recursive(dcapp_home_abs + "/src/app", ".c")
+        src_files_abs += list_files_recursive(dcapp_home_abs + "/src/utils", ".c")
+        src_files_abs += [dcapp_home_abs + "/src/value.c"]
         sources_files_rel = [os.path.relpath(src_file, output_dir_abs) for src_file in src_files_abs]
         pl.add_source_files(
             *sources_files_rel,

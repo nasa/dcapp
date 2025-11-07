@@ -36,7 +36,7 @@ typedef struct __Context {
     // internal stretchy buffer
     unsigned char *sb_buffer;
 
-    // latest data (pointer inside stretchy buffer)
+    // latest data
     unsigned char *sb_latest_frame;
     size_t         latest_frame_size;
 

@@ -120,16 +120,12 @@ static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node) {
 
     // initialize the starter API (handles alot of boilerplate)
     plStarterInit tStarterInit = {
-        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS & (~PL_STARTER_FLAGS_DRAW_EXT) & (~PL_STARTER_FLAGS_SHADER_EXT) | PL_STARTER_FLAGS_MSAA,
+        .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS & (~PL_STARTER_FLAGS_SHADER_EXT) | PL_STARTER_FLAGS_MSAA,
         .ptWindow = pl_app_data->window};
     _ext_starter->initialize(tStarterInit);
 
-    // init draw extension
-    _ext_draw->initialize(NULL);
-
-    // init draw backend
+    // get device
     plDevice *device = _ext_starter->get_device();
-    _ext_draw_backend->initialize(device);
 
     // init default staging buffer
     {
@@ -160,8 +156,6 @@ static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node) {
 
     // create font atlas
     {
-        plFontAtlas *pt_atlas = _ext_draw->create_font_atlas();
-        _ext_draw->set_font_atlas(pt_atlas);
 
         // typical font range (you can also add individual characters)
         const plFontRange font_range = {
@@ -181,12 +175,7 @@ static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node) {
 
         pl_app_data->cousine_sdf_font = _ext_draw->add_font_from_file_ttf(_ext_draw->get_current_font_atlas(), font_config, "../data/pilotlight-assets-master/fonts/Cousine-Regular.ttf");
     }
-
-    // register our app drawlist
-    pl_app_data->draw_list = _ext_draw->request_2d_drawlist();
-
-    // request layers (allows drawing out of order)
-    pl_app_data->layer = _ext_draw->request_2d_layer(pl_app_data->draw_list);
+    _ext_starter->set_default_font(pl_app_data->cousine_sdf_font);
 
     // initialize shader compiler
     plShaderOptions shader_options          = {};
@@ -201,29 +190,11 @@ static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node) {
     // wraps up
     _ext_starter->finalize();
 
-    // init terrain backend
-    // _ext_starter->get_device();
-    // _ext_terrain->initialize(_ext_starter->get_device());
-    // plCommandBuffer *temp_cmd_buffer = _ext_starter->get_temporary_command_buffer();
-    // _ext_terrain->load_mesh(temp_cmd_buffer, "/assets/terrain.bin", 7, 128);
+    // register our app drawlist
+    pl_app_data->draw_list = _ext_draw->request_2d_drawlist();
 
-    // plTerrainInit tTerrainInit = {};
-    // pl_app_data->terrain          = _ext_terrain->create_terrain_from_file(temp_cmd_buffer, "/assets/moon_terrain.json");
-    // _ext_starter->submit_temporary_command_buffer(temp_cmd_buffer);
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~font atlas texture~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    // draw backend handles creating the font atlas texture and
-    // uploading to the GPU but it requires a command buffer (in an non recording state).
-    // Later examples will go into command buffers without using the starter ext
-
-    plCommandBuffer *raw_cmd_buffer = _ext_starter->get_raw_command_buffer(); // not recording
-
-    // actually record, submit, & wait
-    _ext_draw_backend->build_font_atlas(raw_cmd_buffer, _ext_draw->get_current_font_atlas());
-
-    // return back to the pool
-    _ext_starter->return_raw_command_buffer(raw_cmd_buffer);
+    // request layers (allows drawing out of order)
+    pl_app_data->layer = _ext_draw->request_2d_layer(pl_app_data->draw_list);
 
     // initialize frame data
     _frame_data.pressed_node      = NODE_INDEX_UNDEFINED;
