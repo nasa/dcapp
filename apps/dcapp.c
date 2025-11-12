@@ -91,12 +91,11 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_dat
 
 PL_EXPORT void pl_app_shutdown(_PlAppData *pl_app_data) {
 
-    // ensure device is done with resources
+    // get device
     plDevice *device = _ext_starter->get_device();
-    _ext_gfx->flush_device(device); // waits for the GPU to be done with all work
 
-    // cleans up texture and other resources
-    _ext_draw_backend->cleanup_font_atlas(_ext_draw->get_current_font_atlas());
+    // destroy staging buffer
+    _ext_gfx->destroy_buffer(device, pl_app_data->staging_buffer_handle);
 
     _ext_starter->cleanup();
     _ext_windows->destroy(pl_app_data->window);
