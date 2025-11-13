@@ -126,7 +126,6 @@ void dc_ps_mjpeg_update() {
                 }
 
                 case CURLE_PEER_FAILED_VERIFICATION:
-                case CURLE_SSL_CACERT:
                 case CURLE_USE_SSL_FAILED: {
                     fprintf(stderr, "DCApp dc_ps_mjpeg_update(): SSL verification or setup failed: %s\n", curl_easy_strerror(result));
                     context->state = _CONNECTION_STATE_DISCONNECTED;
