@@ -428,12 +428,6 @@ typedef struct __AppData {
 
 } _AppData;
 
-// PL functions
-PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data);
-PL_EXPORT void  pl_app_shutdown(_AppData *app_data);
-PL_EXPORT void  pl_app_resize(_AppData *app_data);
-PL_EXPORT void  pl_app_update(_AppData *app_data);
-
 // pl utils
 static void _init_app_data(_AppData *app_data, _Node *window_node);
 
@@ -453,3 +447,4 @@ static void       _draw_node_list(_AppData *app_data, _NodeIndex node_index, plV
 static void       _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 
 #endif
+ 

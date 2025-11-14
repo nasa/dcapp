@@ -3,6 +3,13 @@
 #include "../src/utils/file.h"
 #include "../src/utils/env.h"
 
+// declarations
+PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data);
+PL_EXPORT void  pl_app_shutdown(_AppData *app_data);
+PL_EXPORT void  pl_app_resize(_AppData *app_data);
+PL_EXPORT void  pl_app_update(_AppData *app_data);
+
+// definitions
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     if (app_data) {
