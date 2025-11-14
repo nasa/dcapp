@@ -3,85 +3,85 @@
 #include "../src/app/enums.h"
 
 // Forward declarations
-static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_container(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_conditional(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_image(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_line(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_panel(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_polygon(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_rectangle(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_set(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_terrain(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_text(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_window(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_panel(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 
-static void _draw_node_list(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform) {
+static void _draw_node_list(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform) {
     _NodeIndex current_node_index = node_index;
     while (current_node_index != NODE_INDEX_UNDEFINED) {
-        _draw_node(pl_app_data, current_node_index, parent_position, parent_dimensions, node_transform);
-        current_node_index = _get_node(current_node_index)->next;
+        _draw_node(app_data, current_node_index, parent_position, parent_dimensions, node_transform);
+        current_node_index = _get_node(app_data, current_node_index)->next;
     }
 }
 
-static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
     if (node_index == NODE_INDEX_UNDEFINED) {
         fprintf(stderr, "DCAPP _draw_node(): attempting to draw undefined node index\n");
     }
 
-    _Node *node = _get_node(node_index);
+    _Node *node = _get_node(app_data, node_index);
     switch (node->type) {
         case NODE_TYPE_CIRCLE:
-            _draw_node_circle(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_circle(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_CONTAINER:
-            _draw_node_container(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_container(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_CONDITIONAL:
-            _draw_node_conditional(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_conditional(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_IMAGE:
-            _draw_node_image(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_image(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_LINE:
-            _draw_node_line(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_line(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_PANEL:
-            _draw_node_panel(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_panel(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_PIXELSTREAM:
-            _draw_node_pixelstream(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_pixelstream(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_POLYGON:
-            _draw_node_polygon(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_polygon(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_RECTANGLE:
-            _draw_node_rectangle(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_rectangle(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_SET:
-            _draw_node_set(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_set(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_TERRAIN:
-            _draw_node_terrain(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_terrain(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_TEXT:
-            _draw_node_text(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_text(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_WINDOW:
-            _draw_node_window(pl_app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            _draw_node_window(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         default:
@@ -89,7 +89,7 @@ static void _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *p
     }
 }
 
-static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
     bool use_radius         = node->circle.radius != DC_APP_VAL_INDEX_UNDEFINED;
@@ -99,7 +99,7 @@ static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _N
     // get dimensions
     float radius, diameter;
     if (use_radius) {
-        radius   = (float)dc_app_lookup_get_value(_dc_data.lookup, node->circle.radius)->value_double;
+        radius   = (float)dc_app_lookup_get_value(app_data->lookup, node->circle.radius)->value_double;
         diameter = 2 * radius;
     } else {
         diameter = fminf(parent_dimensions->x, parent_dimensions->y);
@@ -115,9 +115,9 @@ static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _N
 
             // get pivot XY, rotation
             float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->circle.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->circle.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->circle.rotation)->value_double);
+                (float)dc_app_lookup_get_value(app_data->lookup, node->circle.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->circle.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->circle.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -135,8 +135,8 @@ static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _N
     {
         // get alignment
         DcAppAlignType local_aligns[2] = {
-            node->circle.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->circle.local_align.x)->value_integer,
-            node->circle.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->circle.local_align.y)->value_integer};
+            node->circle.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->circle.local_align.x)->value_integer,
+            node->circle.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->circle.local_align.y)->value_integer};
 
         // compute offsets
         float trans_align_offsets[2];
@@ -188,9 +188,9 @@ static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _N
         // get position
         float position[2];
         if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->circle.position.x)->value_double;
+            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->circle.position.x)->value_double;
         } else {
-            DcAppAlignType parent_align_x = node->circle.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->circle.parent_align.x)->value_integer;
+            DcAppAlignType parent_align_x = node->circle.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->circle.parent_align.x)->value_integer;
             switch (parent_align_x) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -211,9 +211,9 @@ static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _N
             position[0] += parent_position->x;
         }
         if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->circle.position.y)->value_double;
+            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->circle.position.y)->value_double;
         } else {
-            DcAppAlignType parent_align_y = node->circle.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->circle.parent_align.y)->value_integer;
+            DcAppAlignType parent_align_y = node->circle.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->circle.parent_align.y)->value_integer;
             switch (parent_align_y) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_BOTTOM:
@@ -247,8 +247,8 @@ static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _N
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
-                node->circle.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->circle.pivot_local_align.x)->value_integer,
-                node->circle.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->circle.pivot_local_align.y)->value_integer};
+                node->circle.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->circle.pivot_local_align.x)->value_integer,
+                node->circle.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->circle.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
             float pivot_position[2];
@@ -282,7 +282,7 @@ static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _N
                     fprintf(stderr, "Unknown pivot alignment in <circle> draw call: %d\n", local_pivot_aligns[1]);
                     break;
             }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->circle.rotation)->value_double);
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->circle.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -300,7 +300,7 @@ static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _N
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // get points
-    float  num_points = node->circle.num_segments == DC_APP_VAL_INDEX_UNDEFINED ? 40 : dc_app_lookup_get_value(_dc_data.lookup, node->circle.num_segments)->value_integer;
+    float  num_points = node->circle.num_segments == DC_APP_VAL_INDEX_UNDEFINED ? 40 : dc_app_lookup_get_value(app_data->lookup, node->circle.num_segments)->value_integer;
     plVec2 points[_NODE_CIRCLE_MAX_SEGMENTS];
     for (int ii = 0; ii < num_points; ii++) {
         float  angle  = ii * (2 * M_PI / num_points);
@@ -316,26 +316,26 @@ static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _N
     if (node->circle.fill_enabled) {
 
         float fill_color[4] = {
-            node->circle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->circle.fill_color.r)->value_double,
-            node->circle.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->circle.fill_color.g)->value_double,
-            node->circle.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->circle.fill_color.b)->value_double,
-            node->circle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(_dc_data.lookup, node->circle.fill_color.a)->value_double,
+            node->circle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.r)->value_double,
+            node->circle.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.g)->value_double,
+            node->circle.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.b)->value_double,
+            node->circle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(pl_app_data->layer, points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+        _ext_draw->add_convex_polygon_filled(app_data->pl_layer, points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
     }
 
     // draw outline
     if (node->circle.line_enabled) {
-        float line_thickness = (float)dc_app_lookup_get_value(_dc_data.lookup, node->circle.line_width)->value_double;
+        float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_width)->value_double;
         float line_color[4]  = {
-            node->circle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->circle.line_color.r)->value_double,
-            node->circle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->circle.line_color.g)->value_double,
-            node->circle.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->circle.line_color.b)->value_double,
-            node->circle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(_dc_data.lookup, node->circle.line_color.a)->value_double,
+            node->circle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.r)->value_double,
+            node->circle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.g)->value_double,
+            node->circle.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.b)->value_double,
+            node->circle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_polygon(pl_app_data->layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_draw->add_polygon(app_data->pl_layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
     // mouse events
@@ -343,8 +343,8 @@ static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _N
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
-            _frame_data.mouse_position.x,
-            _frame_data.mouse_position.y,
+            app_data->frame_data.mouse_position.x,
+            app_data->frame_data.mouse_position.y,
             0, 1};
         plMat4 transform_inverse = pl_mat4t_invert(&transform);
         mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
@@ -363,31 +363,31 @@ static void _draw_node_circle(_PlAppData *pl_app_data, _NodeIndex node_index, _N
 
         // update global states
         if (inside) {
-            _frame_data.next_hovered_node = node_index;
+            app_data->frame_data.next_hovered_node = node_index;
 
-            if (_frame_data.is_mouse_pressed) {
-                _frame_data.next_pressed_node = node_index;
+            if (app_data->frame_data.is_mouse_pressed) {
+                app_data->frame_data.next_pressed_node = node_index;
             }
         }
 
         // draw mouse events
         plVec2 position   = (plVec2){0.0f, 0.0f};
         plVec2 dimensions = (plVec2){diameter, diameter};
-        if (_frame_data.pressed_node == node_index) {
-            _draw_node_list(pl_app_data, node->circle.mouse_events.pressed, &position, &dimensions, &transform);
-        } else if (_frame_data.active_node == node_index) {
-            _draw_node_list(pl_app_data, node->circle.mouse_events.active, &position, &dimensions, &transform);
-        } else if (_frame_data.released_node == node_index) {
-            _draw_node_list(pl_app_data, node->circle.mouse_events.released, &position, &dimensions, &transform);
-        } else if (_frame_data.hovered_node == node_index) {
-            _draw_node_list(pl_app_data, node->circle.mouse_events.hovered, &position, &dimensions, &transform);
+        if (app_data->frame_data.pressed_node == node_index) {
+            _draw_node_list(app_data, node->circle.mouse_events.pressed, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.active_node == node_index) {
+            _draw_node_list(app_data, node->circle.mouse_events.active, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.released_node == node_index) {
+            _draw_node_list(app_data, node->circle.mouse_events.released, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.hovered_node == node_index) {
+            _draw_node_list(app_data, node->circle.mouse_events.hovered, &position, &dimensions, &transform);
         } else {
-            _draw_node_list(pl_app_data, node->circle.mouse_events.inactive, &position, &dimensions, &transform);
+            _draw_node_list(app_data, node->circle.mouse_events.inactive, &position, &dimensions, &transform);
         }
     }
 }
 
-static void _draw_node_container(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
     bool use_dimension[2] = {
@@ -401,13 +401,13 @@ static void _draw_node_container(_PlAppData *pl_app_data, _NodeIndex node_index,
 
     // get dimensions
     float dimension[2] = {
-        use_dimension[0] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->container.dimension.x)->value_double : parent_dimensions->x,
-        use_dimension[1] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->container.dimension.y)->value_double : parent_dimensions->y};
+        use_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->container.dimension.x)->value_double : parent_dimensions->x,
+        use_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->container.dimension.y)->value_double : parent_dimensions->y};
 
     // get virtual dimensions
     float virtual_dimension[2] = {
-        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->container.virtual_dimension.x)->value_double : dimension[0],
-        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->container.virtual_dimension.y)->value_double : dimension[1]};
+        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->container.virtual_dimension.x)->value_double : dimension[0],
+        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->container.virtual_dimension.y)->value_double : dimension[1]};
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -418,9 +418,9 @@ static void _draw_node_container(_PlAppData *pl_app_data, _NodeIndex node_index,
 
             // get pivot XY, rotation
             float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->container.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->container.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->container.rotation)->value_double);
+                (float)dc_app_lookup_get_value(app_data->lookup, node->container.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->container.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->container.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -438,8 +438,8 @@ static void _draw_node_container(_PlAppData *pl_app_data, _NodeIndex node_index,
     {
         // get alignment
         DcAppAlignType local_aligns[2] = {
-            node->container.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->container.local_align.x)->value_integer,
-            node->container.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->container.local_align.y)->value_integer};
+            node->container.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->container.local_align.x)->value_integer,
+            node->container.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->container.local_align.y)->value_integer};
 
         // compute offsets
         float trans_align_offsets[2];
@@ -491,9 +491,9 @@ static void _draw_node_container(_PlAppData *pl_app_data, _NodeIndex node_index,
         // get position
         float position[2];
         if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->container.position.x)->value_double;
+            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->container.position.x)->value_double;
         } else {
-            DcAppAlignType parent_align_x = node->container.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->container.parent_align.x)->value_integer;
+            DcAppAlignType parent_align_x = node->container.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->container.parent_align.x)->value_integer;
             switch (parent_align_x) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -514,9 +514,9 @@ static void _draw_node_container(_PlAppData *pl_app_data, _NodeIndex node_index,
             position[0] += parent_position->x;
         }
         if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->container.position.y)->value_double;
+            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->container.position.y)->value_double;
         } else {
-            DcAppAlignType parent_align_y = node->container.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->container.parent_align.y)->value_integer;
+            DcAppAlignType parent_align_y = node->container.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->container.parent_align.y)->value_integer;
             switch (parent_align_y) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_BOTTOM:
@@ -550,8 +550,8 @@ static void _draw_node_container(_PlAppData *pl_app_data, _NodeIndex node_index,
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
-                node->container.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->container.pivot_local_align.x)->value_integer,
-                node->container.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->container.pivot_local_align.y)->value_integer};
+                node->container.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->container.pivot_local_align.x)->value_integer,
+                node->container.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->container.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
             float pivot_position[2];
@@ -585,7 +585,7 @@ static void _draw_node_container(_PlAppData *pl_app_data, _NodeIndex node_index,
                     fprintf(stderr, "Unknown pivot alignment in <container> draw call: %d\n", local_pivot_aligns[1]);
                     break;
             }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->container.rotation)->value_double);
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->container.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -614,19 +614,19 @@ static void _draw_node_container(_PlAppData *pl_app_data, _NodeIndex node_index,
     // draw children
     plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
     plVec2 position_vec2           = (plVec2){0.0f, 0.0f};
-    _draw_node_list(pl_app_data, node->container.child, &position_vec2, &virtual_dimensions_vec2, &transform);
+    _draw_node_list(app_data, node->container.child, &position_vec2, &virtual_dimensions_vec2, &transform);
 }
 
-static void _draw_node_conditional(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
-    DcValue             *val1     = dc_app_lookup_get_value(_dc_data.lookup, node->conditional.value1);
-    DcAppConditionalType type     = (DcAppConditionalType)dc_app_lookup_get_value(_dc_data.lookup, node->conditional.type)->value_integer;
+    DcValue             *val1     = dc_app_lookup_get_value(app_data->lookup, node->conditional.value1);
+    DcAppConditionalType type     = (DcAppConditionalType)dc_app_lookup_get_value(app_data->lookup, node->conditional.type)->value_integer;
     bool                 use_val2 = node->conditional.value2 != DC_APP_VAL_INDEX_UNDEFINED;
 
     // evaluate
     bool result;
     if (use_val2) {
-        DcValue *val2 = dc_app_lookup_get_value(_dc_data.lookup, node->conditional.value2);
+        DcValue *val2 = dc_app_lookup_get_value(app_data->lookup, node->conditional.value2);
 
         switch (type) {
             case DC_APP_CONDITIONAL_TYPE_EQ:
@@ -666,13 +666,13 @@ static void _draw_node_conditional(_PlAppData *pl_app_data, _NodeIndex node_inde
 
     // process children
     if (result) {
-        _draw_node_list(pl_app_data, node->conditional.child_true, parent_position, parent_dimensions, parent_transform);
+        _draw_node_list(app_data, node->conditional.child_true, parent_position, parent_dimensions, parent_transform);
     } else {
-        _draw_node_list(pl_app_data, node->conditional.child_false, parent_position, parent_dimensions, parent_transform);
+        _draw_node_list(app_data, node->conditional.child_false, parent_position, parent_dimensions, parent_transform);
     }
 }
 
-static void _draw_node_image(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
     bool use_dimension[2] = {
@@ -683,8 +683,8 @@ static void _draw_node_image(_PlAppData *pl_app_data, _NodeIndex node_index, _No
 
     // get dimensions
     float dimension[2] = {
-        use_dimension[0] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->image.dimension.x)->value_double : parent_dimensions->x,
-        use_dimension[1] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->image.dimension.y)->value_double : parent_dimensions->y};
+        use_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->image.dimension.x)->value_double : parent_dimensions->x,
+        use_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->image.dimension.y)->value_double : parent_dimensions->y};
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -695,9 +695,9 @@ static void _draw_node_image(_PlAppData *pl_app_data, _NodeIndex node_index, _No
 
             // get pivot XY, rotation
             float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->image.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->image.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->image.rotation)->value_double);
+                (float)dc_app_lookup_get_value(app_data->lookup, node->image.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->image.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->image.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -715,8 +715,8 @@ static void _draw_node_image(_PlAppData *pl_app_data, _NodeIndex node_index, _No
     {
         // get alignment
         DcAppAlignType local_aligns[2] = {
-            node->image.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->image.local_align.x)->value_integer,
-            node->image.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->image.local_align.y)->value_integer};
+            node->image.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->image.local_align.x)->value_integer,
+            node->image.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->image.local_align.y)->value_integer};
 
         // compute offsets
         float trans_align_offsets[2];
@@ -768,9 +768,9 @@ static void _draw_node_image(_PlAppData *pl_app_data, _NodeIndex node_index, _No
         // get position
         float position[2];
         if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->image.position.x)->value_double;
+            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->image.position.x)->value_double;
         } else {
-            DcAppAlignType parent_align_x = node->image.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->image.parent_align.x)->value_integer;
+            DcAppAlignType parent_align_x = node->image.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->image.parent_align.x)->value_integer;
             switch (parent_align_x) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -791,9 +791,9 @@ static void _draw_node_image(_PlAppData *pl_app_data, _NodeIndex node_index, _No
             position[0] += parent_position->x;
         }
         if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->image.position.y)->value_double;
+            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->image.position.y)->value_double;
         } else {
-            DcAppAlignType parent_align_y = node->image.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->image.parent_align.y)->value_integer;
+            DcAppAlignType parent_align_y = node->image.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->image.parent_align.y)->value_integer;
             switch (parent_align_y) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_BOTTOM:
@@ -827,8 +827,8 @@ static void _draw_node_image(_PlAppData *pl_app_data, _NodeIndex node_index, _No
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
-                node->image.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->image.pivot_local_align.x)->value_integer,
-                node->image.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->image.pivot_local_align.y)->value_integer};
+                node->image.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->image.pivot_local_align.x)->value_integer,
+                node->image.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->image.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
             float pivot_position[2];
@@ -862,7 +862,7 @@ static void _draw_node_image(_PlAppData *pl_app_data, _NodeIndex node_index, _No
                     fprintf(stderr, "Unknown pivot alignment in <image> draw call: %d\n", local_pivot_aligns[1]);
                     break;
             }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->image.rotation)->value_double);
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->image.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -903,16 +903,16 @@ static void _draw_node_image(_PlAppData *pl_app_data, _NodeIndex node_index, _No
     plVec2 point3      = (plVec2){point3_vec4.x, point3_vec4.y};
 
     // draw
-    plBindGroupHandle bind_group_handle = _sb_textures[node->image.texture_index].bind_group_handle;
-    // _ext_draw->add_image_quad(pl_app_data->layer, bind_group_handle.uData, point0, point1, point2, point3);
+    plBindGroupHandle bind_group_handle = app_data->sb_textures[node->image.texture_index].bind_group_handle;
+    // _ext_draw->add_image_quad(app_data->pl_layer, bind_group_handle.uData, point0, point1, point2, point3);
 
     // mouse events
     if (node->image.mouse_events.enabled) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
-            _frame_data.mouse_position.x,
-            _frame_data.mouse_position.y,
+            app_data->frame_data.mouse_position.x,
+            app_data->frame_data.mouse_position.y,
             0, 1};
         plMat4 transform_inverse = pl_mat4t_invert(&transform);
         mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
@@ -922,31 +922,31 @@ static void _draw_node_image(_PlAppData *pl_app_data, _NodeIndex node_index, _No
 
         // update global states
         if (inside) {
-            _frame_data.next_hovered_node = node_index;
+            app_data->frame_data.next_hovered_node = node_index;
 
-            if (_frame_data.is_mouse_pressed) {
-                _frame_data.next_pressed_node = node_index;
+            if (app_data->frame_data.is_mouse_pressed) {
+                app_data->frame_data.next_pressed_node = node_index;
             }
         }
 
         // draw mouse events
         plVec2 position   = (plVec2){0.0f, 0.0f};
         plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
-        if (_frame_data.pressed_node == node_index) {
-            _draw_node_list(pl_app_data, node->image.mouse_events.pressed, &position, &dimensions, &transform);
-        } else if (_frame_data.active_node == node_index) {
-            _draw_node_list(pl_app_data, node->image.mouse_events.active, &position, &dimensions, &transform);
-        } else if (_frame_data.released_node == node_index) {
-            _draw_node_list(pl_app_data, node->image.mouse_events.released, &position, &dimensions, &transform);
-        } else if (_frame_data.hovered_node == node_index) {
-            _draw_node_list(pl_app_data, node->image.mouse_events.hovered, &position, &dimensions, &transform);
+        if (app_data->frame_data.pressed_node == node_index) {
+            _draw_node_list(app_data, node->image.mouse_events.pressed, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.active_node == node_index) {
+            _draw_node_list(app_data, node->image.mouse_events.active, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.released_node == node_index) {
+            _draw_node_list(app_data, node->image.mouse_events.released, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.hovered_node == node_index) {
+            _draw_node_list(app_data, node->image.mouse_events.hovered, &position, &dimensions, &transform);
         } else {
-            _draw_node_list(pl_app_data, node->image.mouse_events.inactive, &position, &dimensions, &transform);
+            _draw_node_list(app_data, node->image.mouse_events.inactive, &position, &dimensions, &transform);
         }
     }
 }
 
-static void _draw_node_line(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
     bool use_rotation       = node->line.rotation != DC_APP_VAL_INDEX_UNDEFINED;
@@ -961,9 +961,9 @@ static void _draw_node_line(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
 
             // get pivot XY, rotation
             float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->line.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->line.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->line.rotation)->value_double);
+                (float)dc_app_lookup_get_value(app_data->lookup, node->line.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->line.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->line.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -986,8 +986,8 @@ static void _draw_node_line(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
 
         // get position
         float position[2] = {
-            use_position[0] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->line.position.x)->value_double : 0.0f,
-            use_position[1] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->line.position.y)->value_double : 0.0f,
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->line.position.x)->value_double : 0.0f,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->line.position.y)->value_double : 0.0f,
         };
 
         // compute matrix
@@ -1010,8 +1010,8 @@ static void _draw_node_line(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
 
         // get raw point
         raw_points[ii] = (plVec2){
-            (float)dc_app_lookup_get_value(_dc_data.lookup, node->line.sb_points[ii].x)->value_double,
-            (float)dc_app_lookup_get_value(_dc_data.lookup, node->line.sb_points[ii].y)->value_double};
+            (float)dc_app_lookup_get_value(app_data->lookup, node->line.sb_points[ii].x)->value_double,
+            (float)dc_app_lookup_get_value(app_data->lookup, node->line.sb_points[ii].y)->value_double};
 
         // update max/min
         min_pos.x = fminf(min_pos.x, raw_points[ii].x);
@@ -1030,19 +1030,19 @@ static void _draw_node_line(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
 
     // draw outline
     if (node->line.line_enabled) {
-        float line_thickness = (float)dc_app_lookup_get_value(_dc_data.lookup, node->line.line_width)->value_double;
+        float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_width)->value_double;
         float line_color[4]  = {
-            node->line.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->line.line_color.r)->value_double,
-            node->line.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->line.line_color.g)->value_double,
-            node->line.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->line.line_color.b)->value_double,
-            node->line.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(_dc_data.lookup, node->line.line_color.a)->value_double,
+            node->line.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->line.line_color.r)->value_double,
+            node->line.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->line.line_color.g)->value_double,
+            node->line.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->line.line_color.b)->value_double,
+            node->line.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->line.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_lines(pl_app_data->layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_draw->add_lines(app_data->pl_layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 }
 
-static void _draw_node_panel(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_panel(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
     bool use_virtual_dimension[2] = {
@@ -1051,8 +1051,8 @@ static void _draw_node_panel(_PlAppData *pl_app_data, _NodeIndex node_index, _No
 
     // get virtual dimensions
     float virtual_dimension[2] = {
-        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->panel.virtual_dimension.x)->value_double : parent_dimensions->x,
-        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->panel.virtual_dimension.y)->value_double : parent_dimensions->y};
+        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->panel.virtual_dimension.x)->value_double : parent_dimensions->x,
+        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->panel.virtual_dimension.y)->value_double : parent_dimensions->y};
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -1072,13 +1072,13 @@ static void _draw_node_panel(_PlAppData *pl_app_data, _NodeIndex node_index, _No
     // draw children
     plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
     plVec2 position_vec2           = (plVec2){0.0f, 0.0f};
-    _draw_node_list(pl_app_data, node->panel.child, &position_vec2, &virtual_dimensions_vec2, &transform);
+    _draw_node_list(app_data, node->panel.child, &position_vec2, &virtual_dimensions_vec2, &transform);
 }
 
-static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // get texture handler
-    _Texture   texture    = _sb_textures[node->pixelstream.texture_index];
+    _Texture   texture    = app_data->sb_textures[node->pixelstream.texture_index];
     plDevice  *pl_device  = _ext_starter->get_device();
     plTexture *pl_texture = _ext_gfx->get_texture(pl_device, texture.texture_handle);
 
@@ -1139,7 +1139,7 @@ static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_inde
         _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
 
         // copy memory to mapped staging buffer
-        plBuffer *staging_buffer = _ext_gfx->get_buffer(device, pl_app_data->staging_buffer_handle);
+        plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
         memcpy(staging_buffer->tMemoryAllocation.pHostMapped, node->pixelstream.frame, node->pixelstream.frame_width * node->pixelstream.frame_height * 4);
 
         // copy staging buffer to image
@@ -1150,7 +1150,7 @@ static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_inde
         buffer_image_copy.uImageDepth    = 1;
         buffer_image_copy.uLayerCount    = 1;
         buffer_image_copy.szBufferOffset = 0;
-        _ext_gfx->copy_buffer_to_texture(encoder, pl_app_data->staging_buffer_handle, texture.texture_handle, 1, &buffer_image_copy);
+        _ext_gfx->copy_buffer_to_texture(encoder, app_data->pl_staging_buffer_handle, texture.texture_handle, 1, &buffer_image_copy);
 
         // return encoder
         _ext_starter->return_blit_encoder(encoder);
@@ -1165,8 +1165,8 @@ static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_inde
 
     // get dimensions
     float dimension[2] = {
-        use_dimension[0] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.dimension.x)->value_double : parent_dimensions->x,
-        use_dimension[1] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.dimension.y)->value_double : parent_dimensions->y};
+        use_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.dimension.x)->value_double : parent_dimensions->x,
+        use_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.dimension.y)->value_double : parent_dimensions->y};
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -1177,9 +1177,9 @@ static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_inde
 
             // get pivot XY, rotation
             float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.rotation)->value_double);
+                (float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -1197,8 +1197,8 @@ static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_inde
     {
         // get alignment
         DcAppAlignType local_aligns[2] = {
-            node->pixelstream.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.local_align.x)->value_integer,
-            node->pixelstream.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.local_align.y)->value_integer};
+            node->pixelstream.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.local_align.x)->value_integer,
+            node->pixelstream.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.local_align.y)->value_integer};
 
         // compute offsets
         float trans_align_offsets[2];
@@ -1250,9 +1250,9 @@ static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_inde
         // get position
         float position[2];
         if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.position.x)->value_double;
+            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.position.x)->value_double;
         } else {
-            DcAppAlignType parent_align_x = node->pixelstream.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.parent_align.x)->value_integer;
+            DcAppAlignType parent_align_x = node->pixelstream.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->pixelstream.parent_align.x)->value_integer;
             switch (parent_align_x) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -1273,9 +1273,9 @@ static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_inde
             position[0] += parent_position->x;
         }
         if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.position.y)->value_double;
+            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.position.y)->value_double;
         } else {
-            DcAppAlignType parent_align_y = node->pixelstream.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.parent_align.y)->value_integer;
+            DcAppAlignType parent_align_y = node->pixelstream.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->pixelstream.parent_align.y)->value_integer;
             switch (parent_align_y) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_BOTTOM:
@@ -1309,8 +1309,8 @@ static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_inde
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
-                node->pixelstream.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.pivot_local_align.x)->value_integer,
-                node->pixelstream.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.pivot_local_align.y)->value_integer};
+                node->pixelstream.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.pivot_local_align.x)->value_integer,
+                node->pixelstream.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
             float pivot_position[2];
@@ -1344,7 +1344,7 @@ static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_inde
                     fprintf(stderr, "Unknown pivot alignment in <pixelstream> draw call: %d\n", local_pivot_aligns[1]);
                     break;
             }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->pixelstream.rotation)->value_double);
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -1398,16 +1398,16 @@ static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_inde
     plVec2 point3      = (plVec2){point3_vec4.x, point3_vec4.y};
 
     // draw
-    plBindGroupHandle bind_group_handle = _sb_textures[node->image.texture_index].bind_group_handle;
-    _ext_draw->add_image_quad_ex(pl_app_data->layer, bind_group_handle.uData, point0, point1, point2, point3, uv0, uv1, uv2, uv3, 0xFFFFFFFF);
+    plBindGroupHandle bind_group_handle = app_data->sb_textures[node->image.texture_index].bind_group_handle;
+    _ext_draw->add_image_quad_ex(app_data->pl_layer, bind_group_handle.uData, point0, point1, point2, point3, uv0, uv1, uv2, uv3, 0xFFFFFFFF);
 
     // mouse events
     if (node->pixelstream.mouse_events.enabled) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
-            _frame_data.mouse_position.x,
-            _frame_data.mouse_position.y,
+            app_data->frame_data.mouse_position.x,
+            app_data->frame_data.mouse_position.y,
             0, 1};
         plMat4 transform_inverse = pl_mat4t_invert(&transform);
         mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
@@ -1417,31 +1417,31 @@ static void _draw_node_pixelstream(_PlAppData *pl_app_data, _NodeIndex node_inde
 
         // update global states
         if (inside) {
-            _frame_data.next_hovered_node = node_index;
+            app_data->frame_data.next_hovered_node = node_index;
 
-            if (_frame_data.is_mouse_pressed) {
-                _frame_data.next_pressed_node = node_index;
+            if (app_data->frame_data.is_mouse_pressed) {
+                app_data->frame_data.next_pressed_node = node_index;
             }
         }
 
         // draw mouse events
         plVec2 position   = (plVec2){0.0f, 0.0f};
         plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
-        if (_frame_data.pressed_node == node_index) {
-            _draw_node_list(pl_app_data, node->pixelstream.mouse_events.pressed, &position, &dimensions, &transform);
-        } else if (_frame_data.active_node == node_index) {
-            _draw_node_list(pl_app_data, node->pixelstream.mouse_events.active, &position, &dimensions, &transform);
-        } else if (_frame_data.released_node == node_index) {
-            _draw_node_list(pl_app_data, node->pixelstream.mouse_events.released, &position, &dimensions, &transform);
-        } else if (_frame_data.hovered_node == node_index) {
-            _draw_node_list(pl_app_data, node->pixelstream.mouse_events.hovered, &position, &dimensions, &transform);
+        if (app_data->frame_data.pressed_node == node_index) {
+            _draw_node_list(app_data, node->pixelstream.mouse_events.pressed, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.active_node == node_index) {
+            _draw_node_list(app_data, node->pixelstream.mouse_events.active, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.released_node == node_index) {
+            _draw_node_list(app_data, node->pixelstream.mouse_events.released, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.hovered_node == node_index) {
+            _draw_node_list(app_data, node->pixelstream.mouse_events.hovered, &position, &dimensions, &transform);
         } else {
-            _draw_node_list(pl_app_data, node->pixelstream.mouse_events.inactive, &position, &dimensions, &transform);
+            _draw_node_list(app_data, node->pixelstream.mouse_events.inactive, &position, &dimensions, &transform);
         }
     }
 }
 
-static void _draw_node_polygon(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
     bool use_rotation       = node->polygon.rotation != DC_APP_VAL_INDEX_UNDEFINED;
@@ -1456,9 +1456,9 @@ static void _draw_node_polygon(_PlAppData *pl_app_data, _NodeIndex node_index, _
 
             // get pivot XY, rotation
             float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->polygon.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->polygon.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->polygon.rotation)->value_double);
+                (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->polygon.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -1481,8 +1481,8 @@ static void _draw_node_polygon(_PlAppData *pl_app_data, _NodeIndex node_index, _
 
         // get position
         float position[2] = {
-            use_position[0] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->line.position.x)->value_double : 0.0f,
-            use_position[1] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->line.position.y)->value_double : 0.0f,
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->line.position.x)->value_double : 0.0f,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->line.position.y)->value_double : 0.0f,
         };
 
         // compute matrix
@@ -1505,8 +1505,8 @@ static void _draw_node_polygon(_PlAppData *pl_app_data, _NodeIndex node_index, _
 
         // get raw point
         raw_points[ii] = (plVec2){
-            (float)dc_app_lookup_get_value(_dc_data.lookup, node->polygon.sb_points[ii].x)->value_double,
-            (float)dc_app_lookup_get_value(_dc_data.lookup, node->polygon.sb_points[ii].y)->value_double};
+            (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.sb_points[ii].x)->value_double,
+            (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.sb_points[ii].y)->value_double};
 
         // update max/min
         min_pos.x = fminf(min_pos.x, raw_points[ii].x);
@@ -1527,26 +1527,26 @@ static void _draw_node_polygon(_PlAppData *pl_app_data, _NodeIndex node_index, _
     if (node->polygon.fill_enabled) {
 
         float fill_color[4] = {
-            node->polygon.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->polygon.fill_color.r)->value_double,
-            node->polygon.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->polygon.fill_color.g)->value_double,
-            node->polygon.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->polygon.fill_color.b)->value_double,
-            node->polygon.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(_dc_data.lookup, node->polygon.fill_color.a)->value_double,
+            node->polygon.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.r)->value_double,
+            node->polygon.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.g)->value_double,
+            node->polygon.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.b)->value_double,
+            node->polygon.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(pl_app_data->layer, points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+        _ext_draw->add_convex_polygon_filled(app_data->pl_layer, points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
     }
 
     // draw outline
     if (node->polygon.line_enabled) {
-        float line_thickness = (float)dc_app_lookup_get_value(_dc_data.lookup, node->polygon.line_width)->value_double;
+        float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_width)->value_double;
         float line_color[4]  = {
-            node->polygon.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->polygon.line_color.r)->value_double,
-            node->polygon.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->polygon.line_color.g)->value_double,
-            node->polygon.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->polygon.line_color.b)->value_double,
-            node->polygon.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(_dc_data.lookup, node->polygon.line_color.a)->value_double,
+            node->polygon.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.r)->value_double,
+            node->polygon.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.g)->value_double,
+            node->polygon.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.b)->value_double,
+            node->polygon.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_polygon(pl_app_data->layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_draw->add_polygon(app_data->pl_layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
     // mouse events
@@ -1554,8 +1554,8 @@ static void _draw_node_polygon(_PlAppData *pl_app_data, _NodeIndex node_index, _
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
-            _frame_data.mouse_position.x,
-            _frame_data.mouse_position.y,
+            app_data->frame_data.mouse_position.x,
+            app_data->frame_data.mouse_position.y,
             0, 1};
         plMat4 transform_inverse = pl_mat4t_invert(&transform);
         mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
@@ -1579,31 +1579,31 @@ static void _draw_node_polygon(_PlAppData *pl_app_data, _NodeIndex node_index, _
 
         // update global states
         if (inside) {
-            _frame_data.next_hovered_node = node_index;
+            app_data->frame_data.next_hovered_node = node_index;
 
-            if (_frame_data.is_mouse_pressed) {
-                _frame_data.next_pressed_node = node_index;
+            if (app_data->frame_data.is_mouse_pressed) {
+                app_data->frame_data.next_pressed_node = node_index;
             }
         }
 
         // draw mouse events
         plVec2 position   = (plVec2){min_pos.x, min_pos.y};
         plVec2 dimensions = (plVec2){max_pos.x - min_pos.x, max_pos.y - min_pos.y};
-        if (_frame_data.pressed_node == node_index) {
-            _draw_node_list(pl_app_data, node->polygon.mouse_events.pressed, &position, &dimensions, &transform);
-        } else if (_frame_data.active_node == node_index) {
-            _draw_node_list(pl_app_data, node->polygon.mouse_events.active, &position, &dimensions, &transform);
-        } else if (_frame_data.released_node == node_index) {
-            _draw_node_list(pl_app_data, node->polygon.mouse_events.released, &position, &dimensions, &transform);
-        } else if (_frame_data.hovered_node == node_index) {
-            _draw_node_list(pl_app_data, node->polygon.mouse_events.hovered, &position, &dimensions, &transform);
+        if (app_data->frame_data.pressed_node == node_index) {
+            _draw_node_list(app_data, node->polygon.mouse_events.pressed, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.active_node == node_index) {
+            _draw_node_list(app_data, node->polygon.mouse_events.active, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.released_node == node_index) {
+            _draw_node_list(app_data, node->polygon.mouse_events.released, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.hovered_node == node_index) {
+            _draw_node_list(app_data, node->polygon.mouse_events.hovered, &position, &dimensions, &transform);
         } else {
-            _draw_node_list(pl_app_data, node->polygon.mouse_events.inactive, &position, &dimensions, &transform);
+            _draw_node_list(app_data, node->polygon.mouse_events.inactive, &position, &dimensions, &transform);
         }
     }
 }
 
-static void _draw_node_rectangle(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
     bool use_dimension[2] = {
@@ -1614,8 +1614,8 @@ static void _draw_node_rectangle(_PlAppData *pl_app_data, _NodeIndex node_index,
 
     // get dimensions
     float dimension[2] = {
-        use_dimension[0] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.dimension.x)->value_double : parent_dimensions->x,
-        use_dimension[1] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.dimension.y)->value_double : parent_dimensions->y};
+        use_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.dimension.x)->value_double : parent_dimensions->x,
+        use_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.dimension.y)->value_double : parent_dimensions->y};
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -1626,9 +1626,9 @@ static void _draw_node_rectangle(_PlAppData *pl_app_data, _NodeIndex node_index,
 
             // get pivot XY, rotation
             float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.rotation)->value_double);
+                (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -1646,8 +1646,8 @@ static void _draw_node_rectangle(_PlAppData *pl_app_data, _NodeIndex node_index,
     {
         // get alignment
         DcAppAlignType local_aligns[2] = {
-            node->rectangle.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.local_align.x)->value_integer,
-            node->rectangle.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.local_align.y)->value_integer};
+            node->rectangle.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->rectangle.local_align.x)->value_integer,
+            node->rectangle.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->rectangle.local_align.y)->value_integer};
 
         // compute offsets
         float trans_align_offsets[2];
@@ -1699,9 +1699,9 @@ static void _draw_node_rectangle(_PlAppData *pl_app_data, _NodeIndex node_index,
         // get position
         float position[2];
         if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.position.x)->value_double;
+            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.position.x)->value_double;
         } else {
-            DcAppAlignType parent_align_x = node->rectangle.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.parent_align.x)->value_integer;
+            DcAppAlignType parent_align_x = node->rectangle.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->rectangle.parent_align.x)->value_integer;
             switch (parent_align_x) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -1722,9 +1722,9 @@ static void _draw_node_rectangle(_PlAppData *pl_app_data, _NodeIndex node_index,
             position[0] += parent_position->x;
         }
         if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.position.y)->value_double;
+            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.position.y)->value_double;
         } else {
-            DcAppAlignType parent_align_y = node->rectangle.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.parent_align.y)->value_integer;
+            DcAppAlignType parent_align_y = node->rectangle.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->rectangle.parent_align.y)->value_integer;
             switch (parent_align_y) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_BOTTOM:
@@ -1758,8 +1758,8 @@ static void _draw_node_rectangle(_PlAppData *pl_app_data, _NodeIndex node_index,
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
-                node->rectangle.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.pivot_local_align.x)->value_integer,
-                node->rectangle.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.pivot_local_align.y)->value_integer};
+                node->rectangle.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->rectangle.pivot_local_align.x)->value_integer,
+                node->rectangle.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->rectangle.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
             float pivot_position[2];
@@ -1793,7 +1793,7 @@ static void _draw_node_rectangle(_PlAppData *pl_app_data, _NodeIndex node_index,
                     fprintf(stderr, "Unknown pivot alignment in <rectangle> draw call: %d\n", local_pivot_aligns[1]);
                     break;
             }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.rotation)->value_double);
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -1832,26 +1832,26 @@ static void _draw_node_rectangle(_PlAppData *pl_app_data, _NodeIndex node_index,
     if (node->rectangle.fill_enabled) {
 
         float fill_color[4] = {
-            node->rectangle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.fill_color.r)->value_double,
-            node->rectangle.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.fill_color.g)->value_double,
-            node->rectangle.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.fill_color.b)->value_double,
-            node->rectangle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.fill_color.a)->value_double,
+            node->rectangle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.r)->value_double,
+            node->rectangle.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.g)->value_double,
+            node->rectangle.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.b)->value_double,
+            node->rectangle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(pl_app_data->layer, points, 4, (plDrawSolidOptions){.uColor = pl_fill_color});
+        _ext_draw->add_convex_polygon_filled(app_data->pl_layer, points, 4, (plDrawSolidOptions){.uColor = pl_fill_color});
     }
 
     // draw outline
     if (node->rectangle.line_enabled) {
-        float line_thickness = (float)dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.line_width)->value_double;
+        float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_width)->value_double;
         float line_color[4]  = {
-            node->rectangle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.line_color.r)->value_double,
-            node->rectangle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.line_color.g)->value_double,
-            node->rectangle.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.line_color.b)->value_double,
-            node->rectangle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(_dc_data.lookup, node->rectangle.line_color.a)->value_double,
+            node->rectangle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.r)->value_double,
+            node->rectangle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.g)->value_double,
+            node->rectangle.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.b)->value_double,
+            node->rectangle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_polygon(pl_app_data->layer, points, 4, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_draw->add_polygon(app_data->pl_layer, points, 4, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
     // mouse events
@@ -1859,8 +1859,8 @@ static void _draw_node_rectangle(_PlAppData *pl_app_data, _NodeIndex node_index,
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
-            _frame_data.mouse_position.x,
-            _frame_data.mouse_position.y,
+            app_data->frame_data.mouse_position.x,
+            app_data->frame_data.mouse_position.y,
             0, 1};
         plMat4 transform_inverse = pl_mat4t_invert(&transform);
         mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
@@ -1870,37 +1870,37 @@ static void _draw_node_rectangle(_PlAppData *pl_app_data, _NodeIndex node_index,
 
         // update global states
         if (inside) {
-            _frame_data.next_hovered_node = node_index;
+            app_data->frame_data.next_hovered_node = node_index;
 
-            if (_frame_data.is_mouse_pressed) {
-                _frame_data.next_pressed_node = node_index;
+            if (app_data->frame_data.is_mouse_pressed) {
+                app_data->frame_data.next_pressed_node = node_index;
             }
         }
 
         // draw mouse events
         plVec2 position   = (plVec2){0.0f, 0.0f};
         plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
-        if (_frame_data.pressed_node == node_index) {
-            _draw_node_list(pl_app_data, node->rectangle.mouse_events.pressed, &position, &dimensions, &transform);
-        } else if (_frame_data.active_node == node_index) {
-            _draw_node_list(pl_app_data, node->rectangle.mouse_events.active, &position, &dimensions, &transform);
-        } else if (_frame_data.released_node == node_index) {
-            _draw_node_list(pl_app_data, node->rectangle.mouse_events.released, &position, &dimensions, &transform);
-        } else if (_frame_data.hovered_node == node_index) {
-            _draw_node_list(pl_app_data, node->rectangle.mouse_events.hovered, &position, &dimensions, &transform);
+        if (app_data->frame_data.pressed_node == node_index) {
+            _draw_node_list(app_data, node->rectangle.mouse_events.pressed, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.active_node == node_index) {
+            _draw_node_list(app_data, node->rectangle.mouse_events.active, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.released_node == node_index) {
+            _draw_node_list(app_data, node->rectangle.mouse_events.released, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.hovered_node == node_index) {
+            _draw_node_list(app_data, node->rectangle.mouse_events.hovered, &position, &dimensions, &transform);
         } else {
-            _draw_node_list(pl_app_data, node->rectangle.mouse_events.inactive, &position, &dimensions, &transform);
+            _draw_node_list(app_data, node->rectangle.mouse_events.inactive, &position, &dimensions, &transform);
         }
     }
 }
 
-static void _draw_node_set(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
-    DcValue *var_value = dc_app_lookup_get_value(_dc_data.lookup, dc_app_lookup_get_var(_dc_data.lookup, node->set.var_index)->value_index);
-    DcValue *op_value  = dc_app_lookup_get_value(_dc_data.lookup, node->set.operand);
+    DcValue *var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->set.var_index)->value_index);
+    DcValue *op_value  = dc_app_lookup_get_value(app_data->lookup, node->set.operand);
 
     // get operation
-    DcAppSetType operation = node->set.operation == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_SET_TYPE_UNDEFINED : (DcAppSetType)(dc_app_lookup_get_value(_dc_data.lookup, node->set.operation)->value_integer);
+    DcAppSetType operation = node->set.operation == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_SET_TYPE_UNDEFINED : (DcAppSetType)(dc_app_lookup_get_value(app_data->lookup, node->set.operation)->value_integer);
 
     // apply operation
     switch (operation) {
@@ -2002,10 +2002,10 @@ static void _draw_node_set(_PlAppData *pl_app_data, _NodeIndex node_index, _Node
 
     // refresh variable
     dc_value_refresh(var_value);
-    dc_app_lookup_refresh_var_from_value(_dc_data.lookup, node->set.var_index);
+    dc_app_lookup_refresh_var_from_value(app_data->lookup, node->set.var_index);
 }
 
-static void _draw_node_terrain(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
     bool use_dimension[2] = {
@@ -2016,8 +2016,8 @@ static void _draw_node_terrain(_PlAppData *pl_app_data, _NodeIndex node_index, _
 
     // get dimensions
     float dimension[2] = {
-        use_dimension[0] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->terrain.dimension.x)->value_double : parent_dimensions->x,
-        use_dimension[1] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->terrain.dimension.y)->value_double : parent_dimensions->y};
+        use_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.dimension.x)->value_double : parent_dimensions->x,
+        use_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.dimension.y)->value_double : parent_dimensions->y};
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -2028,9 +2028,9 @@ static void _draw_node_terrain(_PlAppData *pl_app_data, _NodeIndex node_index, _
 
             // get pivot XY, rotation
             float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->terrain.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->terrain.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->terrain.rotation)->value_double);
+                (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->terrain.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -2048,8 +2048,8 @@ static void _draw_node_terrain(_PlAppData *pl_app_data, _NodeIndex node_index, _
     {
         // get alignment
         DcAppAlignType local_aligns[2] = {
-            node->terrain.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->terrain.local_align.x)->value_integer,
-            node->terrain.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->terrain.local_align.y)->value_integer};
+            node->terrain.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->terrain.local_align.x)->value_integer,
+            node->terrain.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->terrain.local_align.y)->value_integer};
 
         // compute offsets
         float trans_align_offsets[2];
@@ -2101,9 +2101,9 @@ static void _draw_node_terrain(_PlAppData *pl_app_data, _NodeIndex node_index, _
         // get position
         float position[2];
         if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->terrain.position.x)->value_double;
+            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.position.x)->value_double;
         } else {
-            DcAppAlignType parent_align_x = node->terrain.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->terrain.parent_align.x)->value_integer;
+            DcAppAlignType parent_align_x = node->terrain.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->terrain.parent_align.x)->value_integer;
             switch (parent_align_x) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -2124,9 +2124,9 @@ static void _draw_node_terrain(_PlAppData *pl_app_data, _NodeIndex node_index, _
             position[0] += parent_position->x;
         }
         if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->terrain.position.y)->value_double;
+            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.position.y)->value_double;
         } else {
-            DcAppAlignType parent_align_y = node->terrain.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->terrain.parent_align.y)->value_integer;
+            DcAppAlignType parent_align_y = node->terrain.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->terrain.parent_align.y)->value_integer;
             switch (parent_align_y) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_BOTTOM:
@@ -2160,8 +2160,8 @@ static void _draw_node_terrain(_PlAppData *pl_app_data, _NodeIndex node_index, _
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
-                node->terrain.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->terrain.pivot_local_align.x)->value_integer,
-                node->terrain.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->terrain.pivot_local_align.y)->value_integer};
+                node->terrain.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->terrain.pivot_local_align.x)->value_integer,
+                node->terrain.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->terrain.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
             float pivot_position[2];
@@ -2195,7 +2195,7 @@ static void _draw_node_terrain(_PlAppData *pl_app_data, _NodeIndex node_index, _
                     fprintf(stderr, "Unknown pivot alignment in <terrain> draw call: %d\n", local_pivot_aligns[1]);
                     break;
             }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->terrain.rotation)->value_double);
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->terrain.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -2228,10 +2228,10 @@ static void _draw_node_terrain(_PlAppData *pl_app_data, _NodeIndex node_index, _
     // text_options.tTransform = transform3;
 
     // draw
-    // ext_draw->add_text(app_data->layer, (plVec2){0, 0}, sb_text, text_options);
+    // ext_draw->add_text(app_data->pl_layer, (plVec2){0, 0}, sb_text, text_options);
 }
 
-static void _draw_node_text(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // expand text
     static char *sb_text = NULL;
@@ -2245,7 +2245,7 @@ static void _draw_node_text(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
         // value
         DcValueType format_type = node->text.sb_format_types[ii];
         char       *format      = &(node->text.sb_formats[node->text.sb_format_indices[ii]]);
-        DcValue    *val         = dc_app_lookup_get_value(_dc_data.lookup, node->text.sb_vals[ii]);
+        DcValue    *val         = dc_app_lookup_get_value(app_data->lookup, node->text.sb_vals[ii]);
         static char val_str[256]; // assume text won't be that long..
         switch (format_type) {
             case DC_VALUE_TYPE_STRING:
@@ -2273,15 +2273,15 @@ static void _draw_node_text(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
 
     // get text dimensions
     plDrawTextOptions text_options = {0};
-    text_options.ptFont            = pl_app_data->cousine_sdf_font;
+    text_options.ptFont            = app_data->pl_cousine_sdf_font;
     float fill_color[4]            = {
-        node->text.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->text.fill_color.r)->value_double,
-        node->text.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->text.fill_color.g)->value_double,
-        node->text.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(_dc_data.lookup, node->text.fill_color.b)->value_double,
-        node->text.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(_dc_data.lookup, node->text.fill_color.a)->value_double,
+        node->text.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.r)->value_double,
+        node->text.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.g)->value_double,
+        node->text.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.b)->value_double,
+        node->text.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.a)->value_double,
     };
     text_options.uColor = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-    text_options.fSize  = node->text.size == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(_dc_data.lookup, node->text.size)->value_double;
+    text_options.fSize  = node->text.size == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.size)->value_double;
     plVec2 pl_size      = _ext_draw->calculate_text_size(sb_text, text_options);
 
     // boolean checks
@@ -2300,9 +2300,9 @@ static void _draw_node_text(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
 
             // get pivot XY, rotation
             float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->text.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(_dc_data.lookup, node->text.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->text.rotation)->value_double);
+                (float)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->text.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -2320,8 +2320,8 @@ static void _draw_node_text(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
     {
         // get alignment
         DcAppAlignType local_aligns[2] = {
-            node->text.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->text.local_align.x)->value_integer,
-            node->text.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->text.local_align.y)->value_integer};
+            node->text.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.local_align.x)->value_integer,
+            node->text.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.local_align.y)->value_integer};
 
         // compute offsets
         float trans_align_offsets[2];
@@ -2373,9 +2373,9 @@ static void _draw_node_text(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
         // get position
         float position[2];
         if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->text.position.x)->value_double;
+            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->text.position.x)->value_double;
         } else {
-            DcAppAlignType parent_align_x = node->text.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->text.parent_align.x)->value_integer;
+            DcAppAlignType parent_align_x = node->text.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->text.parent_align.x)->value_integer;
             switch (parent_align_x) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -2396,9 +2396,9 @@ static void _draw_node_text(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
             position[0] += parent_position->x;
         }
         if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(_dc_data.lookup, node->text.position.y)->value_double;
+            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->text.position.y)->value_double;
         } else {
-            DcAppAlignType parent_align_y = node->text.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(_dc_data.lookup, node->text.parent_align.y)->value_integer;
+            DcAppAlignType parent_align_y = node->text.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->text.parent_align.y)->value_integer;
             switch (parent_align_y) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_BOTTOM:
@@ -2432,8 +2432,8 @@ static void _draw_node_text(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
-                node->text.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->text.pivot_local_align.x)->value_integer,
-                node->text.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(_dc_data.lookup, node->text.pivot_local_align.y)->value_integer};
+                node->text.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_local_align.x)->value_integer,
+                node->text.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
             float pivot_position[2];
@@ -2467,7 +2467,7 @@ static void _draw_node_text(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
                     fprintf(stderr, "Unknown pivot alignment in <text> draw call: %d\n", local_pivot_aligns[1]);
                     break;
             }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(_dc_data.lookup, node->text.rotation)->value_double);
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->text.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -2513,16 +2513,16 @@ static void _draw_node_text(_PlAppData *pl_app_data, _NodeIndex node_index, _Nod
     text_options.tTransform = transform3;
 
     // draw
-    _ext_draw->add_text(pl_app_data->layer, (plVec2){0, 0}, sb_text, text_options);
+    _ext_draw->add_text(app_data->pl_layer, (plVec2){0, 0}, sb_text, text_options);
 }
 
-static void _draw_node_window(_PlAppData *pl_app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // TODO move this code to only the resize() function
 
     // current dimensions
     uint32_t dimensionX, dimensionY;
-    _ext_windows->get_size(pl_app_data->window, &dimensionX, &dimensionY);
+    _ext_windows->get_size(app_data->pl_window, &dimensionX, &dimensionY);
 
     // boolean checks
     bool use_virtual_dimension[2] = {
@@ -2532,8 +2532,8 @@ static void _draw_node_window(_PlAppData *pl_app_data, _NodeIndex node_index, _N
     // all transform parameters
     float dimension[2]         = {(float)dimensionX, (float)dimensionY};
     float virtual_dimension[2] = {
-        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->window.virtual_dimension.x)->value_double : dimension[0],
-        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(_dc_data.lookup, node->window.virtual_dimension.y)->value_double : dimension[1]};
+        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->window.virtual_dimension.x)->value_double : dimension[0],
+        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->window.virtual_dimension.y)->value_double : dimension[1]};
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -2568,7 +2568,7 @@ static void _draw_node_window(_PlAppData *pl_app_data, _NodeIndex node_index, _N
     // draw children
     plVec2 position_vec2           = (plVec2){0.0f, 0.0f};
     plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
-    _draw_node_list(pl_app_data, node->window.child, &position_vec2, &virtual_dimensions_vec2, &transform);
+    _draw_node_list(app_data, node->window.child, &position_vec2, &virtual_dimensions_vec2, &transform);
 }
 
 #include "_dcapp_utils.c"
