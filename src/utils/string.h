@@ -8,10 +8,11 @@
 extern "C" {
 #endif
 
-int dc_utils_str_find(const char *s, const char *pattern);
-int dc_utils_str_find_first(const char *s, char ch);
-int dc_utils_str_find_first_of(const char *s, const char *chars);
-int dc_utils_str_find_first_not_of(const char *s, const char *chars);
+int  dc_utils_str_find(const char *s, const char *pattern);
+int  dc_utils_str_find_first(const char *s, char ch);
+int  dc_utils_str_find_first_of(const char *s, const char *chars);
+int  dc_utils_str_find_first_not_of(const char *s, const char *chars);
+bool dc_utils_char_in(const char c, const char *set);
 
 void dc_utils_trim_whitespace_inplace(char *text);
 void dc_utils_trim_whitespace_copy(const char *input, char *out, size_t out_size);
@@ -30,7 +31,7 @@ bool dc_utils_is_format_specifier_int(const char *value);
 bool dc_utils_is_format_specifier_double(const char *value);
 bool dc_utils_is_format_specifier_string(const char *value);
 
-static const char* dc_utils_whitespace = " \t\n\v\f\r";
+static const char *dc_utils_whitespace = " \t\n\v\f\r";
 
 #ifdef __cplusplus
 }

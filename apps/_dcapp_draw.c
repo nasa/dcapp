@@ -1,6 +1,7 @@
 #include "dcapp.h"
 
 #include "../src/app/enums.h"
+#include "../src/utils/string.h"
 
 // Forward declarations
 static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -2271,7 +2272,13 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
     sbpushn(sb_text, filler, strlen(filler));
     sbpush(sb_text, '\0');
 
-    // get text dimensions
+    // get text substrings per newline
+    static const int max_lines = 256;
+    size_t           subtext_indices[max_lines];
+    size_t           num_lines;
+    dc_utils_split_string_inplace(sb_text, "\n", subtext_indices, max_lines, &num_lines);
+
+    // setup text options
     plDrawTextOptions text_options = {0};
     text_options.ptFont            = app_data->pl_cousine_sdf_font;
     float fill_color[4]            = {
@@ -2282,238 +2289,258 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
     };
     text_options.uColor = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
     text_options.fSize  = node->text.size == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.size)->value_double;
-    plVec2 pl_size      = _ext_draw->calculate_text_size(sb_text, text_options);
+
+    // get each strings size
+    plVec2 dimensions[max_lines];
+    plVec2 total_dimensions = {0.0f, 0.0f};
+    for (int ii = 0; ii < num_lines; ii++) {
+        dimensions[ii] = _ext_draw->calculate_text_size(&sb_text[subtext_indices[ii]], text_options);
+
+        // overwrite the y dimension with the size
+        dimensions[ii].y = text_options.fSize;
+
+        // compute totals
+        total_dimensions.x = fmaxf(total_dimensions.x, dimensions[ii].x);
+        total_dimensions.y += dimensions[ii].y;
+    }
 
     // boolean checks
     bool use_rotation       = node->text.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->text.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->text.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
 
-    // get dimensions
-    float dimension[2] = {pl_size.x, text_options.fSize};
+    // iterate over each string
+    // TODO this has some redundant transforms.....clean this up!
+    for (int ii = 0; ii < num_lines; ii++) {
 
-    // transform
-    plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+        // transform
+        plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
 
-    // xform rotation (around a point)
-    {
-        if (use_rotation && use_pivot_position) {
+        // xform rotation (around a point)
+        {
+            if (use_rotation && use_pivot_position) {
 
-            // get pivot XY, rotation
-            float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->text.rotation)->value_double);
+                // get pivot XY, rotation
+                float pivot_position[2] = {
+                    (float)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_position.x)->value_double,
+                    (float)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_position.y)->value_double};
+                float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->text.rotation)->value_double);
 
-            // compute matrices
-            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
-            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
-            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+                // compute matrices
+                plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+                plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+                plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
-            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
-            transform = pl_mul_mat4t(&transform, &rotate_xform);
-            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
-        }
-    }
-
-    // xform local alignment
-    {
-        // get alignment
-        DcAppAlignType local_aligns[2] = {
-            node->text.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.local_align.x)->value_integer,
-            node->text.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.local_align.y)->value_integer};
-
-        // compute offsets
-        float trans_align_offsets[2];
-        switch (local_aligns[0]) {
-            case DC_APP_ALIGN_TYPE_UNDEFINED:
-            case DC_APP_ALIGN_TYPE_LEFT:
-                trans_align_offsets[0] = 0;
-                break;
-            case DC_APP_ALIGN_TYPE_CENTER:
-                trans_align_offsets[0] = -1 * dimension[0] / 2;
-                break;
-            case DC_APP_ALIGN_TYPE_RIGHT:
-                trans_align_offsets[0] = -1 * dimension[0];
-                break;
-            default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
-                break;
-        }
-        switch (local_aligns[1]) {
-            case DC_APP_ALIGN_TYPE_UNDEFINED:
-            case DC_APP_ALIGN_TYPE_BOTTOM:
-                trans_align_offsets[1] = 0;
-                break;
-            case DC_APP_ALIGN_TYPE_MIDDLE:
-                trans_align_offsets[1] = -1 * dimension[1] / 2;
-                break;
-            case DC_APP_ALIGN_TYPE_TOP:
-                trans_align_offsets[1] = -1 * dimension[1];
-                break;
-            default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
-                break;
-        }
-
-        // compute matrix
-        plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
-
-        // apply transform
-        transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
-    }
-
-    // xform position
-    {
-        // boolean check
-        bool use_position[2] = {
-            node->text.position.x != DC_APP_VAL_INDEX_UNDEFINED,
-            node->text.position.y != DC_APP_VAL_INDEX_UNDEFINED};
-
-        // get position
-        float position[2];
-        if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->text.position.x)->value_double;
-        } else {
-            DcAppAlignType parent_align_x = node->text.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->text.parent_align.x)->value_integer;
-            switch (parent_align_x) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    position[0] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    position[0] = parent_dimensions->x / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    position[0] = parent_dimensions->x;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() text: Invalid parent_align_x value %d\n", parent_align_x);
-                    break;
+                // apply transform
+                transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+                transform = pl_mul_mat4t(&transform, &rotate_xform);
+                transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
             }
-
-            // add parent offset
-            position[0] += parent_position->x;
-        }
-        if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->text.position.y)->value_double;
-        } else {
-            DcAppAlignType parent_align_y = node->text.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->text.parent_align.y)->value_integer;
-            switch (parent_align_y) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:
-                    position[1] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:
-                    position[1] = parent_dimensions->y / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_TOP:
-                    position[1] = parent_dimensions->y;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() text: Invalid parent_align_y value %d\n", parent_align_y);
-                    break;
-            }
-
-            // add parent offset
-            position[1] += parent_position->y;
         }
 
-        // compute matrix
-        plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-
-        // apply transform
-        transform = pl_mul_mat4t(&transform, &trans_position_xform);
-    }
-
-    // xform local rotation
-    {
-        if (use_rotation && !use_pivot_position) {
-
+        // xform local alignment
+        {
             // get alignment
-            DcAppAlignType local_pivot_aligns[2] = {
-                node->text.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_local_align.x)->value_integer,
-                node->text.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_local_align.y)->value_integer};
+            DcAppAlignType local_aligns[2] = {
+                node->text.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.local_align.x)->value_integer,
+                node->text.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.local_align.y)->value_integer};
 
-            // get pivot XY, rotation
-            float pivot_position[2];
-            switch (local_pivot_aligns[0]) {
+            // compute offsets
+            float trans_align_offsets[2];
+            switch (local_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
-                    pivot_position[0] = 0;
+                    trans_align_offsets[0] = 0;
                     break;
                 case DC_APP_ALIGN_TYPE_CENTER:
-                    pivot_position[0] = dimension[0] / 2;
+                    trans_align_offsets[0] = -1 * dimensions[ii].x / 2;
                     break;
                 case DC_APP_ALIGN_TYPE_RIGHT:
-                    pivot_position[0] = dimension[0];
+                    trans_align_offsets[0] = -1 * dimensions[ii].x;
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <text> draw call: %d\n", local_pivot_aligns[0]);
+                    fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
                     break;
             }
-            switch (local_pivot_aligns[1]) {
+            switch (local_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_BOTTOM:
-                    pivot_position[1] = 0;
+                    trans_align_offsets[1] = 0;
+                    trans_align_offsets[1] += 0.0f * dimensions[ii].y * (num_lines - 1);
                     break;
                 case DC_APP_ALIGN_TYPE_MIDDLE:
-                    pivot_position[1] = dimension[1] / 2;
+                    trans_align_offsets[1] = -1 * dimensions[ii].y / 2;
+                    trans_align_offsets[1] -= 0.5f * dimensions[ii].y * (num_lines - 1);
                     break;
                 case DC_APP_ALIGN_TYPE_TOP:
-                    pivot_position[1] = dimension[1];
+                    trans_align_offsets[1] = -1 * dimensions[ii].y;
+                    trans_align_offsets[1] -= 1.0f * dimensions[ii].y * (num_lines - 1);
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <text> draw call: %d\n", local_pivot_aligns[1]);
+                    fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
                     break;
             }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->text.rotation)->value_double);
 
-            // compute matrices
-            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
-            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
-            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+            trans_align_offsets[1] -= dimensions[ii].y * ii;
+
+            // compute matrix
+            plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
 
             // apply transform
-            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
-            transform = pl_mul_mat4t(&transform, &rotate_xform);
-            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+            transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
         }
+
+        // xform position
+        {
+            // boolean check
+            bool use_position[2] = {
+                node->text.position.x != DC_APP_VAL_INDEX_UNDEFINED,
+                node->text.position.y != DC_APP_VAL_INDEX_UNDEFINED};
+
+            // get position
+            float position[2];
+            if (use_position[0]) {
+                position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->text.position.x)->value_double;
+            } else {
+                DcAppAlignType parent_align_x = node->text.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->text.parent_align.x)->value_integer;
+                switch (parent_align_x) {
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_LEFT:
+                        position[0] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_CENTER:
+                        position[0] = parent_dimensions->x / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:
+                        position[0] = parent_dimensions->x;
+                        break;
+                    default:
+                        fprintf(stderr, "DCAPP _draw_node() text: Invalid parent_align_x value %d\n", parent_align_x);
+                        break;
+                }
+
+                // add parent offset
+                position[0] += parent_position->x;
+            }
+            if (use_position[1]) {
+                position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->text.position.y)->value_double;
+            } else {
+                DcAppAlignType parent_align_y = node->text.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->text.parent_align.y)->value_integer;
+                switch (parent_align_y) {
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_BOTTOM:
+                        position[1] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_MIDDLE:
+                        position[1] = parent_dimensions->y / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_TOP:
+                        position[1] = parent_dimensions->y;
+                        break;
+                    default:
+                        fprintf(stderr, "DCAPP _draw_node() text: Invalid parent_align_y value %d\n", parent_align_y);
+                        break;
+                }
+
+                // add parent offset
+                position[1] += parent_position->y;
+            }
+
+            // compute matrix
+            plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
+
+            // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_position_xform);
+        }
+
+        // xform local rotation
+        {
+            if (use_rotation && !use_pivot_position) {
+
+                // get alignment
+                DcAppAlignType local_pivot_aligns[2] = {
+                    node->text.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_local_align.x)->value_integer,
+                    node->text.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_local_align.y)->value_integer};
+
+                // get pivot XY, rotation
+                float pivot_position[2];
+                switch (local_pivot_aligns[0]) {
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_LEFT:
+                        pivot_position[0] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_CENTER:
+                        pivot_position[0] = total_dimensions.x / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:
+                        pivot_position[0] = total_dimensions.x;
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown pivot alignment in <text> draw call: %d\n", local_pivot_aligns[0]);
+                        break;
+                }
+                switch (local_pivot_aligns[1]) {
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_BOTTOM:
+                        pivot_position[1] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_MIDDLE:
+                        pivot_position[1] = total_dimensions.y / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_TOP:
+                        pivot_position[1] = total_dimensions.y;
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown pivot alignment in <text> draw call: %d\n", local_pivot_aligns[1]);
+                        break;
+                }
+                float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->text.rotation)->value_double);
+
+                // compute matrices
+                plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+                plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+                plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+                // apply transform
+                transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+                transform = pl_mul_mat4t(&transform, &rotate_xform);
+                transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+            }
+        }
+
+        // PL specific fixes
+        {
+            // move from top-left reference to bottom-left
+            plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0, total_dimensions.y, 0.0f);
+
+            // flip over the y axis
+            plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
+
+            // apply transforms
+            transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
+            transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
+        }
+
+        // parent transform
+        transform = pl_mul_mat4t(parent_transform, &transform);
+
+        // convert to 3D matrix
+        plMat3 transform3 = (plMat3){0};
+        transform3.x11    = transform.x11;
+        transform3.x12    = transform.x12;
+        transform3.x13    = transform.x14;
+        transform3.x21    = transform.x21;
+        transform3.x22    = transform.x22;
+        transform3.x23    = transform.x24;
+        transform3.x31    = transform.x31;
+        transform3.x32    = transform.x32;
+        transform3.x33    = transform.x33;
+
+        // update text options
+        text_options.tTransform = transform3;
+
+        // draw
+        _ext_draw->add_text(app_data->pl_layer, (plVec2){0, 0}, &sb_text[subtext_indices[ii]], text_options);
     }
-
-    // PL specific fixes
-    {
-        // move from top-left reference to bottom-left
-        plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0, dimension[1], 0.0f);
-
-        // flip over the y axis
-        plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
-
-        // apply transforms
-        transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
-        transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
-    }
-
-    // parent transform
-    transform = pl_mul_mat4t(parent_transform, &transform);
-
-    // convert to 3D matrix
-    plMat3 transform3 = (plMat3){0};
-    transform3.x11    = transform.x11;
-    transform3.x12    = transform.x12;
-    transform3.x13    = transform.x14;
-    transform3.x21    = transform.x21;
-    transform3.x22    = transform.x22;
-    transform3.x23    = transform.x24;
-    transform3.x31    = transform.x31;
-    transform3.x32    = transform.x32;
-    transform3.x33    = transform.x33;
-
-    // update text options
-    text_options.tTransform = transform3;
-
-    // draw
-    _ext_draw->add_text(app_data->pl_layer, (plVec2){0, 0}, sb_text, text_options);
 }
 
 static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {

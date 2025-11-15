@@ -2370,9 +2370,34 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         static char *sb_curr_filler = NULL;
         for (size_t ii = 0; ii < strlen(cleaned_text);) {
             if (cleaned_text[ii] == '\\') {
-                // Escape character: skip and add next character to result
+                // handle escape characters
                 if (ii + 1 < strlen(cleaned_text)) {
-                    sbpush(sb_curr_filler, cleaned_text[ii + 1]);
+
+                    // if a C style escape sequence, add the combined character
+                    // (e.g. '\\' + 'n' => '\n')
+                    char next_char = cleaned_text[ii + 1];
+                    if (next_char == 'n') {
+                        sbpush(sb_curr_filler, '\n');
+                    } else if (next_char == 'r') {
+                        sbpush(sb_curr_filler, '\r');
+                    } else if (next_char == 't') {
+                        sbpush(sb_curr_filler, '\t');
+                    } else if (next_char == '\\') {
+                        sbpush(sb_curr_filler, '\\');
+                    } else if (next_char == '"') {
+                        sbpush(sb_curr_filler, '"');
+                    } else if (next_char == '\'') {
+                        sbpush(sb_curr_filler, '\'');
+                    } else if (dc_utils_char_in(next_char, "@#$")) {
+                        // push only the latter character
+                        sbpush(sb_curr_filler, next_char);
+                    } else {
+                        // unknown escape; keep the backslash and next char
+                        sbpush(sb_curr_filler, '\\');
+                        sbpush(sb_curr_filler, next_char);
+                    }
+
+                    // increment to character after
                     ii += 2;
                 } else {
                     sbpush(sb_curr_filler, cleaned_text[ii++]);

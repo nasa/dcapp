@@ -32,7 +32,9 @@
     <!-- panel -->
     <Panel VirtualWidth="1000" VirtualHeight="1000">
 
-      <Rectangle X="400" Y="400" Width="200" Height="200" FillColor="#_color_champagne_ 1"></Rectangle>
+      <Text Size="100" X="500" Y="500" FillColor="#_color_terracotta_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">line1\nlinasdfe2\nline3</Text>
+
+      <Rectangle X="400" Y="400" Width="200" Height="200" FillColor="#_color_champagne_ .3"></Rectangle>
 
       <Circle HorizontalAlign="#_align_left_" X="0" Y="300" Radius="200" FillColor="#_color_yellow_">
         <MouseActive>
@@ -110,7 +112,7 @@
             <Text Style="MouseTesting">hovered</Text>
           </MouseHovered>
           <MouseInactive>
-            <Text Style="MouseTesting">inactive</Text>
+            <Text Style="MouseTesting">inactive\ntest\ntest2</Text>
           </MouseInactive>
           <MousePressed>
             <Text Style="MouseTesting">pressed</Text>
