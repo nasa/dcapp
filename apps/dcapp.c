@@ -25,8 +25,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         _ext_vfs          = pl_get_api_latest(api_registry, plVfsI);
         _ext_shader       = pl_get_api_latest(api_registry, plShaderI);
         // _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
-        _ext_camera       = pl_get_api_latest(api_registry, plCameraI);
-        _ext_image        = pl_get_api_latest(api_registry, plImageI);
+        _ext_camera = pl_get_api_latest(api_registry, plCameraI);
+        _ext_image  = pl_get_api_latest(api_registry, plImageI);
         return app_data;
     }
 
@@ -51,8 +51,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     _ext_vfs          = pl_get_api_latest(api_registry, plVfsI);
     _ext_shader       = pl_get_api_latest(api_registry, plShaderI);
     // _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
-    _ext_camera       = pl_get_api_latest(api_registry, plCameraI);
-    _ext_image        = pl_get_api_latest(api_registry, plImageI);
+    _ext_camera = pl_get_api_latest(api_registry, plCameraI);
+    _ext_image  = pl_get_api_latest(api_registry, plImageI);
 
     // allocate app memory
     app_data = (_AppData *)PL_ALLOC(sizeof(_AppData));
@@ -69,13 +69,13 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     // create config
     const char *config_filepath = _ext_io->apArgv[3];
-   app_data->config                 = dc_app_config_create(config_filepath);
+    app_data->config            = dc_app_config_create(config_filepath);
 
     // create lookup
-   app_data->lookup = dc_app_lookup_create();
+    app_data->lookup = dc_app_lookup_create();
 
     // set environment (used for dcapp XMLs)
-    dc_utils_set_env("dcappDisplayHome",app_data->config->config_dir_path, 1);
+    dc_utils_set_env("dcappDisplayHome", app_data->config->config_dir_path, 1);
 
     // clean XML file
     dc_app_config_clean_xml(app_data->config, app_data->lookup);
