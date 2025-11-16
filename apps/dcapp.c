@@ -64,12 +64,13 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         fprintf(stderr, "DCApp pl_app_load(): missing dcapp config file\n");
     }
 
-    // TODO process input arguments (constant setting)
-    // std::vector<std::string> args(_ext_io->apArgv + 3, _ext_io->apArgv + _ext_io->iArgc);
-
     // create config
     const char *config_filepath = _ext_io->apArgv[3];
-    app_data->config            = dc_app_config_create(config_filepath);
+    if (_ext_io->iArgc < 5) {
+        app_data->config = dc_app_config_create(config_filepath, NULL, 0);
+    } else {
+        app_data->config = dc_app_config_create(config_filepath, &(_ext_io->apArgv[4]), _ext_io->iArgc - 4);
+    }
 
     // create lookup
     app_data->lookup = dc_app_lookup_create();

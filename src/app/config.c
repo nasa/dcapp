@@ -64,7 +64,10 @@ static char *_get_xml_node_content(_ConfigContext *context, xmlNodePtr xml_node,
 static void  _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory);
 void         _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr node);
 
-DcAppConfig *dc_app_config_create(const char *config_path) {
+// arg utils
+static char *_unquote(const char *str);
+
+DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_count) {
     DcAppConfig *config = (DcAppConfig *)malloc(sizeof(DcAppConfig));
 
     // get current working directory
@@ -123,6 +126,37 @@ DcAppConfig *dc_app_config_create(const char *config_path) {
     sbpushn(context.sb_style_names, "default", strlen("default") + 1);
     _ElemStyle default_style = {};
     sbpush(context.sb_styles, default_style);
+
+    // process input arguments
+    // TODO get rid of all the heap allocation..
+    for (int ii = 0; ii < arg_count; ii++) {
+
+        // get eq sign
+        const char *eq_addr = strchr(args[ii], '=');
+        if (!eq_addr) {
+            fprintf(stderr, "DCApp dc_app_config_create(): input argument '%s' has no value set; ignoring", args[ii]);
+            continue;
+        }
+
+        // extract the argument name (before '=')
+        size_t name_len  = eq_addr - args[ii];
+        char  *name_part = strndup(args[ii], name_len);
+
+        // extract the value (after '=')
+        const char *value_part = eq_addr + 1;
+
+        // unquote both parts
+        char *arg_name  = _unquote(name_part);
+        char *arg_value = _unquote(value_part);
+
+        // register
+        _register_const_by_name(&context, arg_name, arg_value, true);
+
+        // free memory
+        free(name_part);
+        free(arg_name);
+        free(arg_value);
+    }
 
     // add default constants
     // set initial values
@@ -375,7 +409,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             cleaned_value[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
             xmlFree(value);
 
-            bool is_immutable = false;
+            bool     is_immutable     = false;
             xmlChar *raw_is_immutable = xmlGetProp(node, BAD_CAST "Immutable");
             if (raw_is_immutable) {
                 is_immutable = dc_utils_string_to_boolean((const char *)raw_is_immutable);
@@ -592,7 +626,7 @@ void _add_const(_ConfigContext *context, const char *name, const char *value, bo
     constant.val = NULL;
     sbpushn(constant.val, value, strlen(value) + 1);
     constant.is_immutable = is_immutable;
-    
+
     // register
     sbpush(context->sb_consts, constant);
 }
@@ -824,4 +858,18 @@ void _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr nod
         }
         child = child->next;
     }
+}
+
+// must be freed!
+static char *_unquote(const char *str) {
+    if (!str) {
+        return NULL;
+    }
+
+    size_t len = strlen(str);
+    if (len >= 2 && ((str[0] == '"' && str[len - 1] == '"') || (str[0] == '\'' && str[len - 1] == '\''))) {
+        char *result = strndup(str + 1, len - 2);
+        return result;
+    }
+    return strdup(str);
 }

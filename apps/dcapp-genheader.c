@@ -19,8 +19,14 @@ int main(int argc, char **argv) {
     }
 
     // create config
+    DcAppConfig *config;
     const char  *config_filepath = argv[1];
-    DcAppConfig *config          = dc_app_config_create(config_filepath);
+    printf("%d\n", argc);
+    if (argc < 3) {
+        config = dc_app_config_create(config_filepath, NULL, 0);
+    } else {
+        config = dc_app_config_create(config_filepath, &(argv[2]), argc - 2);
+    }
 
     // create lookup
     DcAppLookup *lookup = dc_app_lookup_create();
