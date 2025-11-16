@@ -23,12 +23,17 @@ typedef struct __ElemStyle {
     xmlNodePtr xml_nodes[DC_APP_ELEM_TYPE__COUNT];
 } _ElemStyle;
 
+typedef struct __Constant {
+    char *val;
+    bool  is_immutable;
+} _Constant;
+
 typedef struct __ConfigContext {
 
     // constants
-    char  *sb_const_names;
-    int   *sb_const_name_offsets;
-    char **sb_const_vals;
+    char      *sb_const_names;
+    int       *sb_const_name_offsets;
+    _Constant *sb_consts;
 
     // styles
     char       *sb_style_names;
@@ -39,13 +44,13 @@ typedef struct __ConfigContext {
 _ConfigContext *_sb_contexts;
 
 // constant functions
-static void             _set_const_by_name(_ConfigContext *context, const char *name, const char *new_value);
+static void             _register_const_by_name(_ConfigContext *context, const char *name, const char *new_value, bool is_immutable);
 static const char      *_get_const_by_name(_ConfigContext *context, const char *name);
 static void             _dereference_constants(_ConfigContext *context, const char *in, char *out, size_t out_size);
 static DcAppLookupIndex _get_const_index(_ConfigContext *context, const char *name);
 static void             _set_const(_ConfigContext *context, DcAppLookupIndex index, const char *new_value);
-static void             _add_const(_ConfigContext *context, const char *name, const char *value);
-static void             _add_const_int(_ConfigContext *context, const char *name, int value_int);
+static void             _add_const(_ConfigContext *context, const char *name, const char *value, bool is_immutable);
+static void             _add_const_int(_ConfigContext *context, const char *name, int value_int, bool is_immutable);
 
 // style functions
 static DcAppStyleIndex _get_style_index(_ConfigContext *context, const char *name);
@@ -121,128 +126,128 @@ DcAppConfig *dc_app_config_create(const char *config_path) {
 
     // add default constants
     // set initial values
-    _add_const_int(&context, "_align_left_", DC_APP_ALIGN_TYPE_LEFT);
-    _add_const_int(&context, "_align_center_", DC_APP_ALIGN_TYPE_CENTER);
-    _add_const_int(&context, "_align_right_", DC_APP_ALIGN_TYPE_RIGHT);
-    _add_const_int(&context, "_align_bottom_", DC_APP_ALIGN_TYPE_BOTTOM);
-    _add_const_int(&context, "_align_middle_", DC_APP_ALIGN_TYPE_MIDDLE);
-    _add_const_int(&context, "_align_top_", DC_APP_ALIGN_TYPE_TOP);
-    _add_const_int(&context, "_conditional_true_", DC_APP_CONDITIONAL_TYPE_TRUE);
-    _add_const_int(&context, "_conditional_false_", DC_APP_CONDITIONAL_TYPE_FALSE);
-    _add_const_int(&context, "_conditional_eq_", DC_APP_CONDITIONAL_TYPE_EQ);
-    _add_const_int(&context, "_conditional_ne_", DC_APP_CONDITIONAL_TYPE_NE);
-    _add_const_int(&context, "_conditional_lt_", DC_APP_CONDITIONAL_TYPE_LT);
-    _add_const_int(&context, "_conditional_gt_", DC_APP_CONDITIONAL_TYPE_GT);
-    _add_const_int(&context, "_conditional_lte_", DC_APP_CONDITIONAL_TYPE_LTE);
-    _add_const_int(&context, "_conditional_gte_", DC_APP_CONDITIONAL_TYPE_GTE);
-    _add_const_int(&context, "_pixelstream_dynamic_file_", DC_APP_PIXELSTREAM_TYPE_DYNAMIC_FILE);
-    _add_const_int(&context, "_pixelstream_mjpeg_", DC_APP_PIXELSTREAM_TYPE_MJPEG);
-    _add_const_int(&context, "_set_equal_", DC_APP_SET_TYPE_EQUAL);
-    _add_const_int(&context, "_set_add_", DC_APP_SET_TYPE_ADD);
-    _add_const_int(&context, "_set_subtract_", DC_APP_SET_TYPE_SUBTRACT);
-    _add_const_int(&context, "_set_multiply_", DC_APP_SET_TYPE_MULTIPLY);
-    _add_const_int(&context, "_set_divide_", DC_APP_SET_TYPE_DIVIDE);
+    _add_const_int(&context, "_align_left_", DC_APP_ALIGN_TYPE_LEFT, true);
+    _add_const_int(&context, "_align_center_", DC_APP_ALIGN_TYPE_CENTER, true);
+    _add_const_int(&context, "_align_right_", DC_APP_ALIGN_TYPE_RIGHT, true);
+    _add_const_int(&context, "_align_bottom_", DC_APP_ALIGN_TYPE_BOTTOM, true);
+    _add_const_int(&context, "_align_middle_", DC_APP_ALIGN_TYPE_MIDDLE, true);
+    _add_const_int(&context, "_align_top_", DC_APP_ALIGN_TYPE_TOP, true);
+    _add_const_int(&context, "_conditional_true_", DC_APP_CONDITIONAL_TYPE_TRUE, true);
+    _add_const_int(&context, "_conditional_false_", DC_APP_CONDITIONAL_TYPE_FALSE, true);
+    _add_const_int(&context, "_conditional_eq_", DC_APP_CONDITIONAL_TYPE_EQ, true);
+    _add_const_int(&context, "_conditional_ne_", DC_APP_CONDITIONAL_TYPE_NE, true);
+    _add_const_int(&context, "_conditional_lt_", DC_APP_CONDITIONAL_TYPE_LT, true);
+    _add_const_int(&context, "_conditional_gt_", DC_APP_CONDITIONAL_TYPE_GT, true);
+    _add_const_int(&context, "_conditional_lte_", DC_APP_CONDITIONAL_TYPE_LTE, true);
+    _add_const_int(&context, "_conditional_gte_", DC_APP_CONDITIONAL_TYPE_GTE, true);
+    _add_const_int(&context, "_pixelstream_dynamic_file_", DC_APP_PIXELSTREAM_TYPE_DYNAMIC_FILE, true);
+    _add_const_int(&context, "_pixelstream_mjpeg_", DC_APP_PIXELSTREAM_TYPE_MJPEG, true);
+    _add_const_int(&context, "_set_equal_", DC_APP_SET_TYPE_EQUAL, true);
+    _add_const_int(&context, "_set_add_", DC_APP_SET_TYPE_ADD, true);
+    _add_const_int(&context, "_set_subtract_", DC_APP_SET_TYPE_SUBTRACT, true);
+    _add_const_int(&context, "_set_multiply_", DC_APP_SET_TYPE_MULTIPLY, true);
+    _add_const_int(&context, "_set_divide_", DC_APP_SET_TYPE_DIVIDE, true);
     // Reds & Pinks
-    _add_const(&context, "_color_red_", "1.0 0.0 0.0");
-    _add_const(&context, "_color_crimson_", "0.86 0.08 0.24");
-    _add_const(&context, "_color_maroon_", "0.5 0.0 0.0");
-    _add_const(&context, "_color_burgundy_", "0.6 0.0 0.13");
-    _add_const(&context, "_color_ruby_", "0.88 0.07 0.37");
-    _add_const(&context, "_color_cherry_", "0.87 0.19 0.39");
-    _add_const(&context, "_color_rose_", "1.0 0.0 0.5");
-    _add_const(&context, "_color_pink_", "1.0 0.75 0.8");
-    _add_const(&context, "_color_salmon_", "0.98 0.5 0.45");
-    _add_const(&context, "_color_coral_", "1.0 0.5 0.31");
-    _add_const(&context, "_color_peach_", "1.0 0.85 0.73");
-    _add_const(&context, "_color_fuchsia_", "1.0 0.0 1.0");
-    _add_const(&context, "_color_hot_pink_", "1.0 0.41 0.71");
-    _add_const(&context, "_color_light_pink_", "1.0 0.71 0.76");
-    _add_const(&context, "_color_mulberry_", "0.77 0.29 0.55");
+    _add_const(&context, "_color_red_", "1.0 0.0 0.0", false);
+    _add_const(&context, "_color_crimson_", "0.86 0.08 0.24", false);
+    _add_const(&context, "_color_maroon_", "0.5 0.0 0.0", false);
+    _add_const(&context, "_color_burgundy_", "0.6 0.0 0.13", false);
+    _add_const(&context, "_color_ruby_", "0.88 0.07 0.37", false);
+    _add_const(&context, "_color_cherry_", "0.87 0.19 0.39", false);
+    _add_const(&context, "_color_rose_", "1.0 0.0 0.5", false);
+    _add_const(&context, "_color_pink_", "1.0 0.75 0.8", false);
+    _add_const(&context, "_color_salmon_", "0.98 0.5 0.45", false);
+    _add_const(&context, "_color_coral_", "1.0 0.5 0.31", false);
+    _add_const(&context, "_color_peach_", "1.0 0.85 0.73", false);
+    _add_const(&context, "_color_fuchsia_", "1.0 0.0 1.0", false);
+    _add_const(&context, "_color_hot_pink_", "1.0 0.41 0.71", false);
+    _add_const(&context, "_color_light_pink_", "1.0 0.71 0.76", false);
+    _add_const(&context, "_color_mulberry_", "0.77 0.29 0.55", false);
     // Oranges
-    _add_const(&context, "_color_orange_", "1.0 0.5 0.0");
-    _add_const(&context, "_color_tangerine_", "1.0 0.6 0.0");
-    _add_const(&context, "_color_pumpkin_", "1.0 0.46 0.1");
-    _add_const(&context, "_color_apricot_", "0.98 0.81 0.69");
-    _add_const(&context, "_color_cantaloupe_", "1.0 0.71 0.55");
-    _add_const(&context, "_color_amber_", "1.0 0.75 0.0");
-    _add_const(&context, "_color_burnt_orange_", "0.8 0.33 0.0");
-    _add_const(&context, "_color_rust_", "0.72 0.25 0.05");
-    _add_const(&context, "_color_terracotta_", "0.89 0.45 0.36");
+    _add_const(&context, "_color_orange_", "1.0 0.5 0.0", false);
+    _add_const(&context, "_color_tangerine_", "1.0 0.6 0.0", false);
+    _add_const(&context, "_color_pumpkin_", "1.0 0.46 0.1", false);
+    _add_const(&context, "_color_apricot_", "0.98 0.81 0.69", false);
+    _add_const(&context, "_color_cantaloupe_", "1.0 0.71 0.55", false);
+    _add_const(&context, "_color_amber_", "1.0 0.75 0.0", false);
+    _add_const(&context, "_color_burnt_orange_", "0.8 0.33 0.0", false);
+    _add_const(&context, "_color_rust_", "0.72 0.25 0.05", false);
+    _add_const(&context, "_color_terracotta_", "0.89 0.45 0.36", false);
     // Yellows
-    _add_const(&context, "_color_yellow_", "1.0 1.0 0.0");
-    _add_const(&context, "_color_lemon_", "1.0 1.0 0.31");
-    _add_const(&context, "_color_mustard_", "1.0 0.86 0.35");
-    _add_const(&context, "_color_gold_", "1.0 0.84 0.0");
-    _add_const(&context, "_color_butter_", "1.0 0.94 0.75");
-    _add_const(&context, "_color_champagne_", "0.97 0.91 0.81");
-    _add_const(&context, "_color_sunflower_", "1.0 0.8 0.0");
-    _add_const(&context, "_color_flax_", "0.93 0.87 0.51");
+    _add_const(&context, "_color_yellow_", "1.0 1.0 0.0", false);
+    _add_const(&context, "_color_lemon_", "1.0 1.0 0.31", false);
+    _add_const(&context, "_color_mustard_", "1.0 0.86 0.35", false);
+    _add_const(&context, "_color_gold_", "1.0 0.84 0.0", false);
+    _add_const(&context, "_color_butter_", "1.0 0.94 0.75", false);
+    _add_const(&context, "_color_champagne_", "0.97 0.91 0.81", false);
+    _add_const(&context, "_color_sunflower_", "1.0 0.8 0.0", false);
+    _add_const(&context, "_color_flax_", "0.93 0.87 0.51", false);
     // Greens
-    _add_const(&context, "_color_green_", "0.0 1.0 0.0");
-    _add_const(&context, "_color_lime_", "0.75 1.0 0.0");
-    _add_const(&context, "_color_olive_", "0.5 0.5 0.0");
-    _add_const(&context, "_color_moss_", "0.53 0.6 0.42");
-    _add_const(&context, "_color_forest_green_", "0.13 0.55 0.13");
-    _add_const(&context, "_color_emerald_", "0.31 0.78 0.47");
-    _add_const(&context, "_color_jade_", "0.0 0.66 0.42");
-    _add_const(&context, "_color_mint_", "0.74 0.99 0.79");
-    _add_const(&context, "_color_pistachio_", "0.58 0.77 0.45");
-    _add_const(&context, "_color_seafoam_", "0.62 0.89 0.76");
-    _add_const(&context, "_color_chartreuse_", "0.5 1.0 0.0");
+    _add_const(&context, "_color_green_", "0.0 1.0 0.0", false);
+    _add_const(&context, "_color_lime_", "0.75 1.0 0.0", false);
+    _add_const(&context, "_color_olive_", "0.5 0.5 0.0", false);
+    _add_const(&context, "_color_moss_", "0.53 0.6 0.42", false);
+    _add_const(&context, "_color_forest_green_", "0.13 0.55 0.13", false);
+    _add_const(&context, "_color_emerald_", "0.31 0.78 0.47", false);
+    _add_const(&context, "_color_jade_", "0.0 0.66 0.42", false);
+    _add_const(&context, "_color_mint_", "0.74 0.99 0.79", false);
+    _add_const(&context, "_color_pistachio_", "0.58 0.77 0.45", false);
+    _add_const(&context, "_color_seafoam_", "0.62 0.89 0.76", false);
+    _add_const(&context, "_color_chartreuse_", "0.5 1.0 0.0", false);
     // Blues
-    _add_const(&context, "_color_blue_", "0.0 0.0 1.0");
-    _add_const(&context, "_color_navy_", "0.0 0.0 0.5");
-    _add_const(&context, "_color_sky_blue_", "0.53 0.81 0.92");
-    _add_const(&context, "_color_baby_blue_", "0.87 0.92 1.0");
-    _add_const(&context, "_color_azure_", "0.0 0.5 1.0");
-    _add_const(&context, "_color_denim_", "0.08 0.38 0.65");
-    _add_const(&context, "_color_sapphire_", "0.08 0.15 0.39");
-    _add_const(&context, "_color_steel_blue_", "0.27 0.51 0.71");
-    _add_const(&context, "_color_powder_blue_", "0.69 0.88 0.9");
-    _add_const(&context, "_color_cerulean_", "0.0 0.48 0.65");
-    _add_const(&context, "_color_teal_", "0.0 0.5 0.5");
+    _add_const(&context, "_color_blue_", "0.0 0.0 1.0", false);
+    _add_const(&context, "_color_navy_", "0.0 0.0 0.5", false);
+    _add_const(&context, "_color_sky_blue_", "0.53 0.81 0.92", false);
+    _add_const(&context, "_color_baby_blue_", "0.87 0.92 1.0", false);
+    _add_const(&context, "_color_azure_", "0.0 0.5 1.0", false);
+    _add_const(&context, "_color_denim_", "0.08 0.38 0.65", false);
+    _add_const(&context, "_color_sapphire_", "0.08 0.15 0.39", false);
+    _add_const(&context, "_color_steel_blue_", "0.27 0.51 0.71", false);
+    _add_const(&context, "_color_powder_blue_", "0.69 0.88 0.9", false);
+    _add_const(&context, "_color_cerulean_", "0.0 0.48 0.65", false);
+    _add_const(&context, "_color_teal_", "0.0 0.5 0.5", false);
     // Purples & Violets
-    _add_const(&context, "_color_purple_", "0.5 0.0 0.5");
-    _add_const(&context, "_color_indigo_", "0.29 0.0 0.51");
-    _add_const(&context, "_color_lavender_", "0.9 0.9 0.98");
-    _add_const(&context, "_color_plum_", "0.56 0.27 0.52");
-    _add_const(&context, "_color_violet_", "0.93 0.51 0.93");
-    _add_const(&context, "_color_amethyst_", "0.6 0.4 0.8");
-    _add_const(&context, "_color_orchid_", "0.85 0.44 0.84");
-    _add_const(&context, "_color_thistle_", "0.85 0.75 0.85");
-    _add_const(&context, "_color_eggplant_", "0.38 0.25 0.32");
+    _add_const(&context, "_color_purple_", "0.5 0.0 0.5", false);
+    _add_const(&context, "_color_indigo_", "0.29 0.0 0.51", false);
+    _add_const(&context, "_color_lavender_", "0.9 0.9 0.98", false);
+    _add_const(&context, "_color_plum_", "0.56 0.27 0.52", false);
+    _add_const(&context, "_color_violet_", "0.93 0.51 0.93", false);
+    _add_const(&context, "_color_amethyst_", "0.6 0.4 0.8", false);
+    _add_const(&context, "_color_orchid_", "0.85 0.44 0.84", false);
+    _add_const(&context, "_color_thistle_", "0.85 0.75 0.85", false);
+    _add_const(&context, "_color_eggplant_", "0.38 0.25 0.32", false);
     // Browns
-    _add_const(&context, "_color_brown_", "0.6 0.4 0.2");
-    _add_const(&context, "_color_chocolate_", "0.82 0.41 0.12");
-    _add_const(&context, "_color_saddle_brown_", "0.55 0.27 0.07");
-    _add_const(&context, "_color_umber_", "0.39 0.32 0.28");
-    _add_const(&context, "_color_mahogany_", "0.65 0.19 0.19");
-    _add_const(&context, "_color_copper_", "0.72 0.45 0.2");
-    _add_const(&context, "_color_tan_", "0.82 0.71 0.55");
-    _add_const(&context, "_color_walnut_", "0.39 0.26 0.13");
-    _add_const(&context, "_color_espresso_", "0.36 0.25 0.2");
-    _add_const(&context, "_color_caramel_", "0.87 0.58 0.36");
-    _add_const(&context, "_color_mocha_", "0.44 0.31 0.22");
-    _add_const(&context, "_color_pecan_", "0.78 0.52 0.25");
-    _add_const(&context, "_color_wood_", "0.76 0.6 0.42");
-    _add_const(&context, "_color_bronze_", "0.8 0.5 0.2");
-    _add_const(&context, "_color_russet_", "0.5 0.27 0.23");
+    _add_const(&context, "_color_brown_", "0.6 0.4 0.2", false);
+    _add_const(&context, "_color_chocolate_", "0.82 0.41 0.12", false);
+    _add_const(&context, "_color_saddle_brown_", "0.55 0.27 0.07", false);
+    _add_const(&context, "_color_umber_", "0.39 0.32 0.28", false);
+    _add_const(&context, "_color_mahogany_", "0.65 0.19 0.19", false);
+    _add_const(&context, "_color_copper_", "0.72 0.45 0.2", false);
+    _add_const(&context, "_color_tan_", "0.82 0.71 0.55", false);
+    _add_const(&context, "_color_walnut_", "0.39 0.26 0.13", false);
+    _add_const(&context, "_color_espresso_", "0.36 0.25 0.2", false);
+    _add_const(&context, "_color_caramel_", "0.87 0.58 0.36", false);
+    _add_const(&context, "_color_mocha_", "0.44 0.31 0.22", false);
+    _add_const(&context, "_color_pecan_", "0.78 0.52 0.25", false);
+    _add_const(&context, "_color_wood_", "0.76 0.6 0.42", false);
+    _add_const(&context, "_color_bronze_", "0.8 0.5 0.2", false);
+    _add_const(&context, "_color_russet_", "0.5 0.27 0.23", false);
     // Neutrals & Grays
-    _add_const(&context, "_color_white_", "1.0 1.0 1.0");
-    _add_const(&context, "_color_black_", "0.0 0.0 0.0");
-    _add_const(&context, "_color_gray_", "0.5 0.5 0.5");
-    _add_const(&context, "_color_light_gray_", "0.83 0.83 0.83");
-    _add_const(&context, "_color_dark_gray_", "0.33 0.33 0.33");
-    _add_const(&context, "_color_charcoal_", "0.21 0.27 0.31");
-    _add_const(&context, "_color_silver_", "0.75 0.75 0.75");
-    _add_const(&context, "_color_ash_", "0.7 0.75 0.71");
-    _add_const(&context, "_color_slate_", "0.44 0.5 0.56");
-    _add_const(&context, "_color_eggshell_", "0.94 0.92 0.84");
-    _add_const(&context, "_color_alabaster_", "0.98 0.98 0.95");
-    _add_const(&context, "_color_beige_", "0.96 0.96 0.86");
-    _add_const(&context, "_color_khaki_", "0.76 0.69 0.57");
-    _add_const(&context, "_color_sand_", "0.94 0.87 0.73");
-    _add_const(&context, "_color_taupe_", "0.56 0.52 0.51");
+    _add_const(&context, "_color_white_", "1.0 1.0 1.0", false);
+    _add_const(&context, "_color_black_", "0.0 0.0 0.0", false);
+    _add_const(&context, "_color_gray_", "0.5 0.5 0.5", false);
+    _add_const(&context, "_color_light_gray_", "0.83 0.83 0.83", false);
+    _add_const(&context, "_color_dark_gray_", "0.33 0.33 0.33", false);
+    _add_const(&context, "_color_charcoal_", "0.21 0.27 0.31", false);
+    _add_const(&context, "_color_silver_", "0.75 0.75 0.75", false);
+    _add_const(&context, "_color_ash_", "0.7 0.75 0.71", false);
+    _add_const(&context, "_color_slate_", "0.44 0.5 0.56", false);
+    _add_const(&context, "_color_eggshell_", "0.94 0.92 0.84", false);
+    _add_const(&context, "_color_alabaster_", "0.98 0.98 0.95", false);
+    _add_const(&context, "_color_beige_", "0.96 0.96 0.86", false);
+    _add_const(&context, "_color_khaki_", "0.76 0.69 0.57", false);
+    _add_const(&context, "_color_sand_", "0.94 0.87 0.73", false);
+    _add_const(&context, "_color_taupe_", "0.56 0.52 0.51", false);
 
     // add to contexts
     sbpush(_sb_contexts, context);
@@ -264,10 +269,10 @@ void dc_app_config_cleanup(DcAppConfig *config) {
     sbfree(context->sb_styles);
     sbfree(context->sb_const_names);
     sbfree(context->sb_const_name_offsets);
-    for (int ii = 0; ii < sbcount(context->sb_const_vals); ii++) {
-        free(context->sb_const_vals[ii]);
+    for (int ii = 0; ii < sbcount(context->sb_consts); ii++) {
+        free(context->sb_consts[ii].val);
     }
-    sbfree(context->sb_const_vals);
+    sbfree(context->sb_consts);
 }
 
 void dc_app_config_clean_xml(DcAppConfig *config, DcAppLookup *lookup) {
@@ -370,7 +375,14 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             cleaned_value[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
             xmlFree(value);
 
-            _set_const_by_name(context, cleaned_name, cleaned_value);
+            bool is_immutable = false;
+            xmlChar *raw_is_immutable = xmlGetProp(node, BAD_CAST "Immutable");
+            if (raw_is_immutable) {
+                is_immutable = dc_utils_string_to_boolean((const char *)raw_is_immutable);
+                xmlFree(raw_is_immutable);
+            }
+
+            _register_const_by_name(context, cleaned_name, cleaned_value, is_immutable);
             return;
         }
 
@@ -563,45 +575,52 @@ DcAppLookupIndex _get_const_index(_ConfigContext *context, const char *name) {
 void _set_const(_ConfigContext *context, DcAppLookupIndex index, const char *new_value) {
 
     // set const value at index
-    char **addr = &(context->sb_const_vals[index]);
+    char **addr = &(context->sb_consts[index].val);
     sbclear(*addr);
-    sbpushn(*addr, new_value, strlen(new_value));
-    sbpush(*addr, '\0');
+    sbpushn(*addr, new_value, strlen(new_value) + 1);
 }
 
 // adds a new constant
-void _add_const(_ConfigContext *context, const char *name, const char *value) {
+void _add_const(_ConfigContext *context, const char *name, const char *value, bool is_immutable) {
 
     // add const name to buffer
     sbpush(context->sb_const_name_offsets, sbcount(context->sb_const_names));
     sbpushn(context->sb_const_names, name, strlen(name) + 1);
 
     // set const to value
-    char *buffer = NULL;
-    sbpushn(buffer, value, strlen(value) + 1);
-    sbpush(context->sb_const_vals, buffer);
+    _Constant constant;
+    constant.val = NULL;
+    sbpushn(constant.val, value, strlen(value) + 1);
+    constant.is_immutable = is_immutable;
+    
+    // register
+    sbpush(context->sb_consts, constant);
 }
 
-static void _add_const_int(_ConfigContext *context, const char *name, int value_int) {
+static void _add_const_int(_ConfigContext *context, const char *name, int value_int, bool is_immutable) {
     char value_str[20];
     snprintf(value_str, 20, "%d", value_int);
-    _add_const(context, name, value_str);
+    _add_const(context, name, value_str, is_immutable);
 }
 
 // set a consts value
-void _set_const_by_name(_ConfigContext *context, const char *name, const char *new_value) {
+void _register_const_by_name(_ConfigContext *context, const char *name, const char *new_value, bool is_immutable) {
     DcAppLookupIndex const_index = _get_const_index(context, name);
     if (const_index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
-        _add_const(context, name, new_value);
+        _add_const(context, name, new_value, is_immutable);
     } else {
-        _set_const(context, const_index, new_value);
+        if (context->sb_consts[const_index].is_immutable) {
+            fprintf(stderr, "DCApp _register_const_by_name(): ignoring constant registration for '%s': immutable\n", name);
+        } else {
+            _set_const(context, const_index, new_value);
+        }
     }
 }
 
 // set a consts value (public)
-void dc_app_config_set_const_by_name(DcAppConfig *config, const char *name, const char *new_value) {
+void dc_app_config_register_const_by_name(DcAppConfig *config, const char *name, const char *new_value, bool is_immutable) {
     _ConfigContext *context = &(_sb_contexts[config->_index]);
-    _set_const_by_name(context, name, new_value);
+    _register_const_by_name(context, name, new_value, is_immutable);
 }
 
 // get a consts value
@@ -611,7 +630,7 @@ const char *_get_const_by_name(_ConfigContext *context, const char *name) {
         fprintf(stderr, "DCAPP _get_const_by_name(): constant '%s' does not exist\n", name);
         return NULL;
     } else {
-        return context->sb_const_vals[const_index];
+        return context->sb_consts[const_index].val;
     }
 }
 
