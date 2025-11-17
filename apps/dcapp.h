@@ -44,25 +44,6 @@ const plShaderI      *_ext_shader       = NULL;
 const plCameraI      *_ext_camera       = NULL;
 const plImageI       *_ext_image        = NULL;
 
-// PL app data
-typedef struct __PlAppData {
-
-    plWindow      *window;
-    plDrawLayer2D *layer;
-    plDrawList2D  *draw_list;
-    plFont        *cousine_sdf_font;
-
-    plBufferHandle staging_buffer_handle;
-    size_t         staging_buffer_size;
-
-} _PlAppData;
-
-// PL functions
-PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _PlAppData *pl_app_data);
-PL_EXPORT void  pl_app_shutdown(_PlAppData *pl_app_data);
-PL_EXPORT void  pl_app_resize(_PlAppData *pl_app_data);
-PL_EXPORT void  pl_app_update(_PlAppData *pl_app_data);
-
 // dcapp includes
 #include "../src/utils/stb_sb.h"
 #include "../src/app/elem.h"
@@ -74,6 +55,8 @@ PL_EXPORT void  pl_app_update(_PlAppData *pl_app_data);
 #include <libxml/parser.h>
 
 // dcapp node structs
+typedef DcAppValIndex _ValIndex1;
+
 typedef struct __ValIndex2 {
     union {
         DcAppValIndex x, r, lat, roll;
@@ -140,6 +123,45 @@ typedef struct __MouseEventChildren {
     _NodeIndex released;
     bool       enabled;
 } _MouseEventChildren;
+
+typedef struct __NodeButton {
+
+    // standard transforms
+    _ValIndex2    position;
+    _ValIndex2    dimension;
+    _ValIndex2    virtual_dimension;
+    _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_position;
+    _ValIndex2    local_align;
+    _ValIndex2    parent_align;
+    DcAppValIndex rotation;
+
+    // node indices drawn for a given state
+    _NodeIndex child_on;
+    _NodeIndex child_off;
+    _NodeIndex child_enabled;
+    _NodeIndex child_disabled;
+    _NodeIndex child_transition;
+    _NodeIndex child_press;
+    _NodeIndex child_release;
+
+    // comparison values for each state
+    DcAppValIndex val_var_on;
+    DcAppValIndex val_var_off;
+    DcAppValIndex val_switch_on;
+    DcAppValIndex val_switch_off;
+    DcAppValIndex val_indicator_on;
+    DcAppValIndex val_active_on;
+
+    // variable indices to be set for each state
+    DcAppVarIndex var_var_index;
+    DcAppVarIndex switch_var_index;
+    DcAppVarIndex indicator_var_index;
+    DcAppVarIndex transition_var_index;
+
+    // type for button
+    DcAppButtonType type;
+} _NodeButton;
 
 static const int _NODE_CIRCLE_MAX_SEGMENTS = 1000;
 typedef struct __NodeCircle {
@@ -406,12 +428,27 @@ typedef struct __FrameData {
 
 } _FrameData;
 
-// dcapp app data
-typedef struct __DcAppData {
+// app data
+typedef struct __AppData {
+
+    // pl things
+    plWindow      *pl_window;
+    plDrawLayer2D *pl_layer;
+    plDrawList2D  *pl_draw_list;
+    plFont        *pl_cousine_sdf_font;
+
+    // staging buffer
+    plBufferHandle pl_staging_buffer_handle;
+    size_t         pl_staging_buffer_size;
 
     // config + lookup
     DcAppLookup *lookup;
     DcAppConfig *config;
+
+    // textures
+    char     *sb_texture_names;
+    int      *sb_texture_name_offsets;
+    _Texture *sb_textures;
 
     // nodes
     _Node     *sb_nodes;
@@ -427,31 +464,27 @@ typedef struct __DcAppData {
     // trick
     _TrickContext *sb_tricks;
 
-} _DcAppData;
+    // frame data
+    _FrameData frame_data;
+
+} _AppData;
+
+// pl utils
+static void _init_app_data(_AppData *app_data, _Node *window_node);
 
 // node utils
 static const char *_node_type_to_string(_NodeType type);
-static _Node      *_get_node(_NodeIndex index);
-static _NodeIndex  _register_node(_Node *node);
-
-// pl utils
-static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node);
+static _Node      *_get_node(_AppData *app_data, _NodeIndex index);
+static _NodeIndex  _register_node(_AppData *app_data, _Node *node);
 
 // misc. utils
-static _Texture _create_texture(_PlAppData *pl_app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name);
+static _Texture _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name);
 
 // draw utils
-static bool       _load_color_from_string(xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out);
-static _NodeIndex _process_xml_node_children(_PlAppData *pl_app_data, xmlNodePtr xml_node, _NodeIndex node_index, DcAppElemType elem_type, const char *directory);
-static _NodeIndex _process_xml_node(_PlAppData *pl_app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static void       _draw_node_list(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform);
-static void       _draw_node(_PlAppData *pl_app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-
-// globals
-static char      *_sb_texture_names;
-static int       *_sb_texture_name_offsets;
-static _Texture  *_sb_textures;
-static _FrameData _frame_data;
-static _DcAppData _dc_data;
+static bool       _load_color_from_string(_AppData *app_data, xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out);
+static _NodeIndex _process_xml_node_children(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex node_index, DcAppElemType elem_type, const char *directory);
+static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static void       _draw_node_list(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform);
+static void       _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 
 #endif

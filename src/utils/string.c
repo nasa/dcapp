@@ -40,6 +40,15 @@ int dc_utils_str_find_first_not_of(const char *s, const char *chars) {
     return -1;
 }
 
+bool dc_utils_char_in(const char c, const char *set) {
+    for (int i = 0; set[i] != '\0'; i++) {
+        if (set[i] == c) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static bool _string_is_double(const char *text) {
     char *end = NULL;
     errno     = 0;

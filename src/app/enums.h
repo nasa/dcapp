@@ -12,6 +12,13 @@ typedef enum _DcAppAlignType {
     DC_APP_ALIGN_TYPE_TOP,
 } DcAppAlignType;
 
+typedef enum _DcAppButtonType {
+    DC_APP_BUTTON_TYPE_UNDEFINED,
+    DC_APP_BUTTON_TYPE_MOMENTARY,
+    DC_APP_BUTTON_TYPE_STANDARD,
+    DC_APP_BUTTON_TYPE_TOGGLE,
+} DcAppButtonType;
+
 typedef enum _DcAppConditionalType {
     DC_APP_CONDITIONAL_TYPE_UNDEFINED,
     DC_APP_CONDITIONAL_TYPE_TRUE,

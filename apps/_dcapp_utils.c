@@ -37,19 +37,19 @@ static const char *_node_type_to_string(_NodeType type) {
     }
 }
 
-static _Node *_get_node(_NodeIndex index) {
+static _Node *_get_node(_AppData *app_data, _NodeIndex index) {
     if (index == NODE_INDEX_UNDEFINED) {
         return NULL;
     }
-    return &(_dc_data.sb_nodes[index]);
+    return &(app_data->sb_nodes[index]);
 }
 
-static _NodeIndex _register_node(_Node *node) {
-    sbpush(_dc_data.sb_nodes, *node);
-    return sbcount(_dc_data.sb_nodes) - 1;
+static _NodeIndex _register_node(_AppData *app_data, _Node *node) {
+    sbpush(app_data->sb_nodes, *node);
+    return sbcount(app_data->sb_nodes) - 1;
 }
 
-static bool _load_color_from_string(xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out) {
+static bool _load_color_from_string(_AppData *app_data, xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out) {
 
     xmlChar *raw_color = xmlGetProp(xml_node, BAD_CAST attr_name);
     if (raw_color) {
@@ -72,22 +72,22 @@ static bool _load_color_from_string(xmlNodePtr xml_node, const char *attr_name, 
 
         // process each color
         if (index_count > 0) {
-            color_out->r = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_DOUBLE, &(cleaned_color[index_buffer[0]]));
+            color_out->r = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, &(cleaned_color[index_buffer[0]]));
         } else {
             color_out->r = DC_APP_VAL_INDEX_UNDEFINED;
         }
         if (index_count > 1) {
-            color_out->g = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_DOUBLE, &(cleaned_color[index_buffer[1]]));
+            color_out->g = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, &(cleaned_color[index_buffer[1]]));
         } else {
             color_out->g = DC_APP_VAL_INDEX_UNDEFINED;
         }
         if (index_count > 2) {
-            color_out->b = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_DOUBLE, &(cleaned_color[index_buffer[2]]));
+            color_out->b = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, &(cleaned_color[index_buffer[2]]));
         } else {
             color_out->b = DC_APP_VAL_INDEX_UNDEFINED;
         }
         if (index_count > 3) {
-            color_out->a = dc_app_create_and_register_typed_value_from_string(_dc_data.lookup, DC_VALUE_TYPE_DOUBLE, &(cleaned_color[index_buffer[3]]));
+            color_out->a = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, &(cleaned_color[index_buffer[3]]));
         } else {
             color_out->a = DC_APP_VAL_INDEX_UNDEFINED;
         }
@@ -98,7 +98,7 @@ static bool _load_color_from_string(xmlNodePtr xml_node, const char *attr_name, 
     }
 }
 
-static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node) {
+static void _init_app_data(_AppData *app_data, _Node *window_node) {
 
     // mount VFS dirs
     _ext_vfs->mount_directory("/shaders-terrain", "../../shaders", PL_VFS_MOUNT_FLAGS_NONE);
@@ -111,17 +111,17 @@ static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node) {
     // set initial window params
     plWindowDesc window_desc = {};
     window_desc.pcTitle      = window_node->window.title;
-    window_desc.uWidth       = (uint32_t)(dc_app_lookup_get_value(_dc_data.lookup, window_node->window.init_dimension.x)->value_integer);
-    window_desc.uHeight      = (uint32_t)(dc_app_lookup_get_value(_dc_data.lookup, window_node->window.init_dimension.y)->value_integer);
-    window_desc.iXPos        = dc_app_lookup_get_value(_dc_data.lookup, window_node->window.init_position.x)->value_integer;
-    window_desc.iYPos        = dc_app_lookup_get_value(_dc_data.lookup, window_node->window.init_position.y)->value_integer;
-    _ext_windows->create(window_desc, &(pl_app_data->window));
-    _ext_windows->show(pl_app_data->window);
+    window_desc.uWidth       = (uint32_t)(dc_app_lookup_get_value(app_data->lookup, window_node->window.init_dimension.x)->value_integer);
+    window_desc.uHeight      = (uint32_t)(dc_app_lookup_get_value(app_data->lookup, window_node->window.init_dimension.y)->value_integer);
+    window_desc.iXPos        = dc_app_lookup_get_value(app_data->lookup, window_node->window.init_position.x)->value_integer;
+    window_desc.iYPos        = dc_app_lookup_get_value(app_data->lookup, window_node->window.init_position.y)->value_integer;
+    _ext_windows->create(window_desc, &(app_data->pl_window));
+    _ext_windows->show(app_data->pl_window);
 
     // initialize the starter API (handles alot of boilerplate)
     plStarterInit tStarterInit = {
         .tFlags   = PL_STARTER_FLAGS_ALL_EXTENSIONS & (~PL_STARTER_FLAGS_SHADER_EXT) | PL_STARTER_FLAGS_MSAA,
-        .ptWindow = pl_app_data->window};
+        .ptWindow = app_data->pl_window};
     _ext_starter->initialize(tStarterInit);
 
     // get device
@@ -130,17 +130,17 @@ static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node) {
     // init default staging buffer
     {
         // set size to 1MB
-        pl_app_data->staging_buffer_size = 1048576;
+        app_data->pl_staging_buffer_size = 1048576;
 
         // description
         const plBufferDesc staging_buffer_desc = {
             .tUsage      = PL_BUFFER_USAGE_STAGING,
-            .szByteSize  = pl_app_data->staging_buffer_size,
+            .szByteSize  = app_data->pl_staging_buffer_size,
             .pcDebugName = "staging buffer"};
-        pl_app_data->staging_buffer_handle = _ext_gfx->create_buffer(device, &staging_buffer_desc, NULL);
+        app_data->pl_staging_buffer_handle = _ext_gfx->create_buffer(device, &staging_buffer_desc, NULL);
 
         // retrieve buffer to get memory allocation requirements
-        plBuffer *staging_buffer = _ext_gfx->get_buffer(device, pl_app_data->staging_buffer_handle);
+        plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
 
         // allocate memory for the vertex buffer
         const plDeviceMemoryAllocation staging_buffer_allocation = _ext_gfx->allocate_memory(
@@ -151,7 +151,7 @@ static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node) {
             "staging buffer memory");
 
         // bind the buffer to the new memory allocation
-        _ext_gfx->bind_buffer_to_memory(device, pl_app_data->staging_buffer_handle, &staging_buffer_allocation);
+        _ext_gfx->bind_buffer_to_memory(device, app_data->pl_staging_buffer_handle, &staging_buffer_allocation);
     }
 
     // create font atlas
@@ -173,9 +173,9 @@ static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node) {
         font_config.uRangeCount    = 1;
         font_config.ptRanges       = &font_range;
 
-        pl_app_data->cousine_sdf_font = _ext_draw->add_font_from_file_ttf(_ext_draw->get_current_font_atlas(), font_config, "../data/pilotlight-assets-master/fonts/Cousine-Regular.ttf");
+        app_data->pl_cousine_sdf_font = _ext_draw->add_font_from_file_ttf(_ext_draw->get_current_font_atlas(), font_config, "../data/pilotlight-assets-master/fonts/Cousine-Regular.ttf");
     }
-    _ext_starter->set_default_font(pl_app_data->cousine_sdf_font);
+    _ext_starter->set_default_font(app_data->pl_cousine_sdf_font);
 
     // initialize shader compiler
     plShaderOptions shader_options          = {};
@@ -191,21 +191,21 @@ static void _init_pl_app_data(_PlAppData *pl_app_data, _Node *window_node) {
     _ext_starter->finalize();
 
     // register our app drawlist
-    pl_app_data->draw_list = _ext_draw->request_2d_drawlist();
+    app_data->pl_draw_list = _ext_draw->request_2d_drawlist();
 
     // request layers (allows drawing out of order)
-    pl_app_data->layer = _ext_draw->request_2d_layer(pl_app_data->draw_list);
+    app_data->pl_layer = _ext_draw->request_2d_layer(app_data->pl_draw_list);
 
     // initialize frame data
-    _frame_data.pressed_node      = NODE_INDEX_UNDEFINED;
-    _frame_data.next_pressed_node = NODE_INDEX_UNDEFINED;
-    _frame_data.hovered_node      = NODE_INDEX_UNDEFINED;
-    _frame_data.next_hovered_node = NODE_INDEX_UNDEFINED;
-    _frame_data.released_node     = NODE_INDEX_UNDEFINED;
-    _frame_data.active_node       = NODE_INDEX_UNDEFINED;
+    app_data->frame_data.pressed_node      = NODE_INDEX_UNDEFINED;
+    app_data->frame_data.next_pressed_node = NODE_INDEX_UNDEFINED;
+    app_data->frame_data.hovered_node      = NODE_INDEX_UNDEFINED;
+    app_data->frame_data.next_hovered_node = NODE_INDEX_UNDEFINED;
+    app_data->frame_data.released_node     = NODE_INDEX_UNDEFINED;
+    app_data->frame_data.active_node       = NODE_INDEX_UNDEFINED;
 }
 
-static _Texture _create_texture(_PlAppData *pl_app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name) {
+static _Texture _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name) {
 
     // get device
     plDevice *device = _ext_starter->get_device();

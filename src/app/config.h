@@ -32,14 +32,13 @@ extern "C" {
 #endif
 
 // config functions
-DcAppConfig *dc_app_config_create(const char *config_path);
+DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_count);
 void         dc_app_config_cleanup(DcAppConfig *config);
 void         dc_app_config_clean_xml(DcAppConfig *config, DcAppLookup *lookup);
 void         dc_app_config_save_to_file(DcAppConfig *config, const char *filepath);
 
 // const
-void dc_app_config_set_const_by_name(DcAppConfig *config, const char *name, const char *new_value);
-
+void dc_app_config_register_const_by_name(DcAppConfig *config, const char *name, const char *new_value, bool is_immutable);
 
 #ifdef __cplusplus
 }
