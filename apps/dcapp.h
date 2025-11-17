@@ -55,6 +55,8 @@ const plImageI       *_ext_image        = NULL;
 #include <libxml/parser.h>
 
 // dcapp node structs
+typedef DcAppValIndex _ValIndex1;
+
 typedef struct __ValIndex2 {
     union {
         DcAppValIndex x, r, lat, roll;
@@ -121,6 +123,45 @@ typedef struct __MouseEventChildren {
     _NodeIndex released;
     bool       enabled;
 } _MouseEventChildren;
+
+typedef struct __NodeButton {
+
+    // standard transforms
+    _ValIndex2    position;
+    _ValIndex2    dimension;
+    _ValIndex2    virtual_dimension;
+    _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_position;
+    _ValIndex2    local_align;
+    _ValIndex2    parent_align;
+    DcAppValIndex rotation;
+
+    // node indices drawn for a given state
+    _NodeIndex child_on;
+    _NodeIndex child_off;
+    _NodeIndex child_enabled;
+    _NodeIndex child_disabled;
+    _NodeIndex child_transition;
+    _NodeIndex child_press;
+    _NodeIndex child_release;
+
+    // comparison values for each state
+    DcAppValIndex val_var_on;
+    DcAppValIndex val_var_off;
+    DcAppValIndex val_switch_on;
+    DcAppValIndex val_switch_off;
+    DcAppValIndex val_indicator_on;
+    DcAppValIndex val_active_on;
+
+    // variable indices to be set for each state
+    DcAppVarIndex var_var_index;
+    DcAppVarIndex switch_var_index;
+    DcAppVarIndex indicator_var_index;
+    DcAppVarIndex transition_var_index;
+
+    // type for button
+    DcAppButtonType type;
+} _NodeButton;
 
 static const int _NODE_CIRCLE_MAX_SEGMENTS = 1000;
 typedef struct __NodeCircle {
@@ -447,4 +488,3 @@ static void       _draw_node_list(_AppData *app_data, _NodeIndex node_index, plV
 static void       _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 
 #endif
- 
