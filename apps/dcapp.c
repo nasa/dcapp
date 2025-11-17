@@ -164,7 +164,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     }
 
     // process pixelstream mjpeg data
-    // dc_ps_mjpeg_update();
+    dc_ps_mjpeg_update();
 
     // process logic, update vars from extern_data
     if (app_data->logic_draw) {

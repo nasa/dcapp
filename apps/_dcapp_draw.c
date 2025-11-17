@@ -905,7 +905,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
 
     // draw
     plBindGroupHandle bind_group_handle = app_data->sb_textures[node->image.texture_index].bind_group_handle;
-    // _ext_draw->add_image_quad(app_data->pl_layer, bind_group_handle.uData, point0, point1, point2, point3);
+    _ext_draw->add_image_quad(app_data->pl_layer, bind_group_handle.uData, point0, point1, point2, point3);
 
     // mouse events
     if (node->image.mouse_events.enabled) {
