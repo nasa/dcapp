@@ -140,7 +140,11 @@ int dc_utils_string_to_boolean(const char *text) {
         return 0;
     }
 
-    char result[strlen(text) + 1];
+    if (strlen(text) > DC_UTILS_STRING_MAX_BUFFER_SIZE) {
+        fprintf(stderr, "DCApp dc_utils_string_to_boolean(): input text exceeds max string buffer size\n");
+    }
+
+    char result[DC_UTILS_STRING_MAX_BUFFER_SIZE];
     dc_utils_trim_whitespace_copy(text, result, sizeof(result));
 
     if (result[0] == '\0') {
@@ -301,3 +305,15 @@ bool dc_utils_is_format_specifier_string(const char *value) {
     static const char *chars = "s";
     return _is_format_specifier(value, chars);
 }
+
+#ifdef _WIN32
+char *strndup(const char *s, size_t n) {
+    size_t len = strnlen(s, n);
+    char  *new = malloc(len + 1);
+    if (new) {
+        memcpy(new, s, len);
+        new[len] = '\0';
+    }
+    return new;
+}
+#endif

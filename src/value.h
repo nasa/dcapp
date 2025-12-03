@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-static const int DC_VALUE_STRING_BUFFER_SIZE = 256;
+#define DC_VALUE_STRING_BUFFER_SIZE 256
 
 typedef enum _DcValueType {
     DC_VALUE_TYPE_UNDEFINED,

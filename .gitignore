@@ -11,4 +11,9 @@ scripts/build-dcapp*
 **.spv
 samples/**/dcapp.h
 **.so
+**.pdb
 **.dSYM/
+**.dll
+
+# windows
+vcpkg_installed/

@@ -8,8 +8,8 @@
 #include <stdbool.h>
 
 // lookup types
-typedef int                   DcAppLookupIndex;
-static const DcAppLookupIndex DC_APP_LOOKUP_INDEX_UNDEFINED = -1;
+typedef int DcAppLookupIndex;
+#define DC_APP_LOOKUP_INDEX_UNDEFINED (-1)
 
 typedef DcAppLookupIndex   DcAppVarIndex;
 typedef DcAppLookupIndex   DcAppValIndex;

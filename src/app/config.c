@@ -123,7 +123,7 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
 
     // reserve index 0 for default style
     sbpush(context.sb_style_name_offsets, 0);
-    sbpushn(context.sb_style_names, "default", strlen("default") + 1);
+    sbpushn(context.sb_style_names, "default", (int)(strlen("default") + 1));
     _ElemStyle default_style = {};
     sbpush(context.sb_styles, default_style);
 
@@ -350,25 +350,27 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
     _dereference_node_attrs_and_content(context, node);
 
     // load style attributes, if it exists
-    xmlChar *style_name = xmlGetProp(node, BAD_CAST "Style");
-    if (style_name) {
-        DcAppStyleIndex style_index    = _get_style_index(context, (char *)style_name);
-        xmlNodePtr      style_xml_node = context->sb_styles[style_index].xml_nodes[elem_type];
+    {
+        xmlChar *style_name = xmlGetProp(node, BAD_CAST "Style");
+        if (style_name) {
+            DcAppStyleIndex style_index    = _get_style_index(context, (char *)style_name);
+            xmlNodePtr      style_xml_node = context->sb_styles[style_index].xml_nodes[elem_type];
 
-        if (style_xml_node) {
-            for (xmlAttrPtr attr = style_xml_node->properties; attr; attr = attr->next) {
-                xmlAttrPtr existing = xmlHasProp(node, attr->name);
-                if (!existing) {
-                    xmlChar *value = xmlGetProp(style_xml_node, attr->name);
-                    if (value) {
-                        xmlSetProp(node, attr->name, value);
-                        xmlFree(value);
+            if (style_xml_node) {
+                for (xmlAttrPtr attr = style_xml_node->properties; attr; attr = attr->next) {
+                    xmlAttrPtr existing = xmlHasProp(node, attr->name);
+                    if (!existing) {
+                        xmlChar *value = xmlGetProp(style_xml_node, attr->name);
+                        if (value) {
+                            xmlSetProp(node, attr->name, value);
+                            xmlFree(value);
+                        }
                     }
                 }
             }
-        }
 
-        xmlFree(style_name);
+            xmlFree(style_name);
+        }
     }
 
     // load default attributes
@@ -611,7 +613,7 @@ void _set_const(_ConfigContext *context, DcAppLookupIndex index, const char *new
     // set const value at index
     char **addr = &(context->sb_consts[index].val);
     sbclear(*addr);
-    sbpushn(*addr, new_value, strlen(new_value) + 1);
+    sbpushn(*addr, new_value, (int)(strlen(new_value) + 1));
 }
 
 // adds a new constant
@@ -619,12 +621,12 @@ void _add_const(_ConfigContext *context, const char *name, const char *value, bo
 
     // add const name to buffer
     sbpush(context->sb_const_name_offsets, sbcount(context->sb_const_names));
-    sbpushn(context->sb_const_names, name, strlen(name) + 1);
+    sbpushn(context->sb_const_names, name, (int)(strlen(name) + 1));
 
     // set const to value
     _Constant constant;
     constant.val = NULL;
-    sbpushn(constant.val, value, strlen(value) + 1);
+    sbpushn(constant.val, value, (int)(strlen(value) + 1));
     constant.is_immutable = is_immutable;
 
     // register
@@ -729,7 +731,7 @@ void _dereference_constants(_ConfigContext *context, const char *in, char *out, 
                 static const char *valid_chars       = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_#$";
                 int                subtext_end_index = dc_utils_str_find_first_not_of(&(in[in_index]), valid_chars);
                 if (subtext_end_index == -1) {
-                    subtext_end_index = in_length;
+                    subtext_end_index = (int)in_length;
                 }
 
                 subtext_start_index         = in_index + 1;
@@ -768,7 +770,7 @@ void _dereference_constants(_ConfigContext *context, const char *in, char *out, 
             }
 
             // increment in_index by the cleaned amount
-            in_index += subtext_length_with_symbols;
+            in_index += (int)subtext_length_with_symbols;
         } else {
             out[out_index++] = in[in_index];
         }
@@ -799,7 +801,7 @@ static void _add_style(_ConfigContext *context, const char *name, DcAppElemType 
         // create new style if it doesn't exist
         if (style_index == _STYLE_INDEX_UNDEFINED) {
             sbpush(context->sb_style_name_offsets, sbcount(context->sb_style_names));
-            sbpushn(context->sb_style_names, name, strlen(name) + 1);
+            sbpushn(context->sb_style_names, name, (int)(strlen(name) + 1));
             _ElemStyle style = {};
             sbpush(context->sb_styles, style);
             style_index = sbcount(context->sb_styles) - 1;

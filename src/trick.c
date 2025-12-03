@@ -6,7 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#ifdef _WIN32
+#else
 #include <unistd.h>
+#endif
 
 typedef struct __DcTrickContext {
     char  ip[20];
@@ -84,7 +88,7 @@ DcTrick *dc_trick_create(const char *host, int port, float data_rate, int timeou
     sbpush(_contexts, context);
 
     DcTrick *trick      = (DcTrick *)malloc(sizeof(DcTrick));
-    trick->_index       = sbcount(_contexts) - 1;
+    trick->_index       = (DcTrickIndex)(sbcount(_contexts) - 1);
     trick->has_new_data = false;
     trick->is_connected = false;
     return trick;
@@ -220,7 +224,7 @@ DcTrickVarIndex dc_trick_add_tx_var(DcTrick *trick, const char *path, const char
     // copy
     int start = sbcount(context->tx_cmds);
     sbpush(context->tx_cmd_offsets, start);
-    sbpushn(context->tx_cmds, context->temp_buffer, strlen(context->temp_buffer));
+    sbpushn(context->tx_cmds, context->temp_buffer, (int)strlen(context->temp_buffer));
     sbpush(context->tx_cmds, '\0');
 
     // return index
@@ -243,7 +247,7 @@ DcTrickVarIndex dc_trick_add_rx_var(DcTrick *trick, const char *path, const char
     // copy
     int start = sbcount(context->rx_cmds);
     sbpush(context->rx_cmd_offsets, start);
-    sbpushn(context->rx_cmds, context->temp_buffer, strlen(context->temp_buffer));
+    sbpushn(context->rx_cmds, context->temp_buffer, (int)strlen(context->temp_buffer));
     sbpush(context->rx_cmds, '\0');
 
     // return index
@@ -256,7 +260,7 @@ DcTrickVarIndex dc_trick_add_rx_oad_var(DcTrick *trick, const char *path, const 
     // copy
     int start = sbcount(context->rx_oad_vars);
     sbpush(context->rx_oad_var_offsets, start);
-    sbpushn(context->rx_oad_vars, path, strlen(path));
+    sbpushn(context->rx_oad_vars, path, (int)strlen(path));
     sbpush(context->rx_oad_vars, '\0');
 
     // return index
@@ -283,7 +287,7 @@ void dc_trick_get_rx_oad_value(DcTrick *trick, DcTrickVarIndex oad_index, char *
 
 void _dc_trick_append_to_tx_buffer(DcTrick *trick, const char *in, size_t in_size) {
     _DcTrickContext *context = &(_contexts[trick->_index]);
-    sbpushn(context->tx_buffer, in, in_size);
+    sbpushn(context->tx_buffer, in, (int)in_size);
 }
 
 // send chunk of tx buffer, update internal tx buffer offset
@@ -353,7 +357,7 @@ DcTrickResult _dc_trick_receive(DcTrick *trick) {
                 }
             }
 
-            int start_index;
+            int start_index = 0;
             if (end_index > 0) {
                 for (start_index = end_index - 1; start_index >= 0; start_index--) {
                     if (context->rx_buffer[start_index] == '\n') {

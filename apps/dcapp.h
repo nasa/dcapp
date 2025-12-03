@@ -163,7 +163,7 @@ typedef struct __NodeButton {
     DcAppButtonType type;
 } _NodeButton;
 
-static const int _NODE_CIRCLE_MAX_SEGMENTS = 1000;
+#define _NODE_CIRCLE_MAX_SEGMENTS 1000
 typedef struct __NodeCircle {
     _ValIndex2    position;
     _ValIndex2    pivot_local_align;
@@ -203,8 +203,8 @@ typedef struct __NodeContainer {
     _NodeIndex    child;
 } _NodeContainer;
 
-typedef int                _TextureIndex;
-static const _TextureIndex TEXTURE_INDEX_UNDEFINED = -1;
+typedef int _TextureIndex;
+#define TEXTURE_INDEX_UNDEFINED -1
 typedef struct __Texture {
     plTextureHandle   texture_handle;
     plBindGroupHandle bind_group_handle;
@@ -223,7 +223,7 @@ typedef struct __NodeImage {
     _MouseEventChildren mouse_events;
 } _NodeImage;
 
-static const int _NODE_LINE_MAX_POINTS = 1000;
+#define _NODE_LINE_MAX_POINTS 1000
 typedef struct __NodeLine {
     _ValIndex2    position;
     _ValIndex2    pivot_position;
@@ -243,8 +243,8 @@ typedef struct __NodePanel {
     _NodeIndex    child;
 } _NodePanel;
 
-static const size_t _NODE_PIXELSTREAM_MAX_WIDTH  = 3840;
-static const size_t _NODE_PIXELSTREAM_MAX_HEIGHT = 2160;
+#define _NODE_PIXELSTREAM_MAX_WIDTH 3840
+#define _NODE_PIXELSTREAM_MAX_HEIGHT 2160
 typedef struct __PixelstreamMjpegData {
     DcPsMjpegHandle handle;
     unsigned char  *raw_jpeg;
@@ -272,7 +272,7 @@ typedef struct __NodePixelstream {
     };
 } _NodePixelstream;
 
-static const int _NODE_POLYGON_MAX_POINTS = 1000;
+#define _NODE_POLYGON_MAX_POINTS 1000
 typedef struct __NodePolygon {
     _ValIndex2    position;
     _ValIndex2    pivot_position;
@@ -312,6 +312,7 @@ typedef struct __NodeSet {
     DcAppValIndex operand;
 } _NodeSet;
 
+#define _NODE_TEXT_MAX_LINES 256
 typedef struct __NodeText {
     _ValIndex2    position;
     _ValIndex2    local_align;

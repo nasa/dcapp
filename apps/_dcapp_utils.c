@@ -60,10 +60,10 @@ static bool _load_color_from_string(_AppData *app_data, xmlNodePtr xml_node, con
         xmlFree(raw_color);
 
         // split by whitespace
-        const size_t index_buffer_max = 20;
-        size_t       index_buffer[index_buffer_max];
+        // assume no more than 20 splits
+        size_t       index_buffer[20];
         size_t       index_count;
-        dc_utils_split_string_inplace(cleaned_color, dc_utils_whitespace, index_buffer, index_buffer_max, &index_count);
+        dc_utils_split_string_inplace(cleaned_color, dc_utils_whitespace, index_buffer, 20, &index_count);
 
         // if empty, assume no color
         if (index_count == 0) {
@@ -111,10 +111,10 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     // set initial window params
     plWindowDesc window_desc = {};
     window_desc.pcTitle      = window_node->window.title;
-    window_desc.uWidth       = (uint32_t)(dc_app_lookup_get_value(app_data->lookup, window_node->window.init_dimension.x)->value_integer);
-    window_desc.uHeight      = (uint32_t)(dc_app_lookup_get_value(app_data->lookup, window_node->window.init_dimension.y)->value_integer);
-    window_desc.iXPos        = dc_app_lookup_get_value(app_data->lookup, window_node->window.init_position.x)->value_integer;
-    window_desc.iYPos        = dc_app_lookup_get_value(app_data->lookup, window_node->window.init_position.y)->value_integer;
+    window_desc.uWidth       = (uint32_t)window_node->window.init_dimension.x;
+    window_desc.uHeight      = (uint32_t)window_node->window.init_dimension.y;
+    window_desc.iXPos        = (int)window_node->window.init_position.x;
+    window_desc.iYPos        = (int)window_node->window.init_position.y;
     _ext_windows->create(window_desc, &(app_data->pl_window));
     _ext_windows->show(app_data->pl_window);
 

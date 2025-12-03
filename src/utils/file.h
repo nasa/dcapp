@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-static const int DC_UTILS_FILEPATH_BUFFER_SIZE = 4096;
+#define DC_UTILS_FILEPATH_BUFFER_SIZE 4096
 
 #ifdef __cplusplus
 extern "C" {

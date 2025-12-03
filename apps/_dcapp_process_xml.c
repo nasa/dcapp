@@ -842,7 +842,7 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
 
         // add texture to internal arrays
         sbpush(app_data->sb_texture_name_offsets, sbcount(app_data->sb_texture_names));
-        sbpushn(app_data->sb_texture_names, canon_filepath, strlen(canon_filepath) + 1);
+        sbpushn(app_data->sb_texture_names, canon_filepath, (int)strlen(canon_filepath) + 1);
         sbpush(app_data->sb_textures, texture);
         texture_index = sbcount(app_data->sb_textures) - 1;
     }
@@ -1417,7 +1417,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
 
         // add texture to internal arrays
         sbpush(app_data->sb_texture_name_offsets, sbcount(app_data->sb_texture_names));
-        sbpushn(app_data->sb_texture_names, "--dummy--", strlen("--dummy--") + 1);
+        sbpushn(app_data->sb_texture_names, "--dummy--", (int)strlen("--dummy--") + 1);
         sbpush(app_data->sb_textures, texture);
         _TextureIndex texture_index = sbcount(app_data->sb_textures) - 1;
 
@@ -2418,7 +2418,7 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                     size_t end = dc_utils_str_find_first(&(cleaned_text[ii]), '}');
                     if (end == -1) {
                         // No closing brace, treat as normal text
-                        sbpushn(sb_curr_filler, &(cleaned_text[start]), ii - start);
+                        sbpushn(sb_curr_filler, &(cleaned_text[start]), (int)(ii - start));
                         continue;
                     }
                     strncpy(var, &(cleaned_text[ii]), end - ii);
@@ -2446,36 +2446,36 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                         // get format + type
                         if (dc_utils_is_format_specifier_int(format_spec)) {
                             sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_INTEGER);
-                            sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
-                            sbpushn(dc_node.text.sb_formats, format_spec, strlen(format_spec) + 1);
+                            sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
+                            sbpushn(dc_node.text.sb_formats, format_spec, (int)strlen(format_spec) + 1);
                         } else if (dc_utils_is_format_specifier_double(format_spec)) {
                             sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_DOUBLE);
-                            sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
-                            sbpushn(dc_node.text.sb_formats, format_spec, strlen(format_spec) + 1);
+                            sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
+                            sbpushn(dc_node.text.sb_formats, format_spec, (int)strlen(format_spec) + 1);
                         } else if (dc_utils_is_format_specifier_string(format_spec)) {
                             sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
-                            sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
-                            sbpushn(dc_node.text.sb_formats, format_spec, strlen(format_spec) + 1);
+                            sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
+                            sbpushn(dc_node.text.sb_formats, format_spec, (int)strlen(format_spec) + 1);
                         } else if (dc_utils_is_format_specifier_bool(format_spec)) {
                             sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_BOOLEAN);
-                            sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
-                            sbpushn(dc_node.text.sb_formats, format_spec, strlen(format_spec) + 1);
+                            sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
+                            sbpushn(dc_node.text.sb_formats, format_spec, (int)strlen(format_spec) + 1);
                         } else {
                             fprintf(stderr, "DCApp _process_xml_node(): Unknown format specifier in Text element\n");
                         }
                     } else {
                         sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
-                        sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                        sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
                         sbpushn(dc_node.text.sb_formats, "%s", 3);
                     }
                 } else {
                     sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
-                    sbpush(dc_node.text.sb_format_indices, sbcount(dc_node.text.sb_formats));
+                    sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
                     sbpushn(dc_node.text.sb_formats, "%s", 3);
                 }
 
                 // add the current filler to list of fillers
-                sbpush(dc_node.text.sb_filler_indices, sbcount(dc_node.text.sb_fillers));
+                sbpush(dc_node.text.sb_filler_indices, (uint8_t)sbcount(dc_node.text.sb_fillers));
                 sbpushn(dc_node.text.sb_fillers, sb_curr_filler, sbcount(sb_curr_filler));
                 sbpush(dc_node.text.sb_fillers, '\0');
                 sbclear(sb_curr_filler);
@@ -2488,7 +2488,7 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         }
 
         // append the remaining filler
-        sbpush(dc_node.text.sb_filler_indices, sbcount(dc_node.text.sb_fillers));
+        sbpush(dc_node.text.sb_filler_indices, (uint8_t)sbcount(dc_node.text.sb_fillers));
         sbpushn(dc_node.text.sb_fillers, sb_curr_filler, sbcount(sb_curr_filler));
         sbpush(dc_node.text.sb_fillers, '\0');
 
@@ -2693,12 +2693,12 @@ static _NodeIndex _process_xml_node_trick_io(_AppData *app_data, xmlNodePtr xml_
 
     // port
     xmlChar *raw_port = xmlGetProp(xml_node, BAD_CAST "Port");
-    int      port;
+    int      port     = 0;
     if (raw_port) {
         char cleaned_port[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(cleaned_port, (const char *)raw_port, DC_VALUE_STRING_BUFFER_SIZE - 1);
         xmlFree(raw_port);
-        port = dc_utils_string_to_double(cleaned_port);
+        port = (int)dc_utils_string_to_double(cleaned_port);
     } else {
         fprintf(stderr, "DCApp _process_xml_node: Missing Port for TrickIO\n");
     }
@@ -2715,7 +2715,7 @@ static _NodeIndex _process_xml_node_trick_io(_AppData *app_data, xmlNodePtr xml_
 
     // create trick instance
     _TrickContext trick_context = {};
-    trick_context.trick         = dc_trick_create(host, port, data_rate, 1);
+    trick_context.trick         = dc_trick_create(host, port, (float)data_rate, 1);
     sbpush(app_data->sb_tricks, trick_context);
 
     // process children
@@ -2902,7 +2902,7 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
         case NODE_TYPE_POLYGON: {
 
             // position
-            _ValIndex2 position;
+            _ValIndex2 position = {DC_APP_VAL_INDEX_UNDEFINED, DC_APP_VAL_INDEX_UNDEFINED};
 
             // x position
             xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
@@ -2992,7 +2992,7 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
         xmlFree(raw_x_position);
-        dc_node.window.init_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
+        dc_node.window.init_position.x = (float)dc_utils_string_to_double(cleaned_x_position);
     } else {
         dc_node.window.init_position.x = 0.0f;
     }
@@ -3006,7 +3006,7 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
         xmlFree(raw_y_position);
-        dc_node.window.init_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
+        dc_node.window.init_position.y = (float)dc_utils_string_to_double(cleaned_y_position);
     } else {
         dc_node.window.init_position.y = 0.0f;
     }
@@ -3020,7 +3020,7 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
         xmlFree(raw_x_dimension);
-        dc_node.window.init_dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_dimension);
+        dc_node.window.init_dimension.x = (float)dc_utils_string_to_double(cleaned_x_dimension);
     } else {
         fprintf(stderr, "DCApp _process_xml_node: missing x dimension for Window\n");
     }
@@ -3034,7 +3034,7 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
         xmlFree(raw_y_dimension);
-        dc_node.window.init_dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_dimension);
+        dc_node.window.init_dimension.y = (float)dc_utils_string_to_double(cleaned_y_dimension);
     } else {
         fprintf(stderr, "DCApp _process_xml_node: missing y dimension for Window\n");
     }

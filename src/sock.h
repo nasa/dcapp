@@ -4,10 +4,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 #ifdef _WIN32
-    #include <stdint.h>
-    typedef uintptr_t DcSockFd;
+#include <stdint.h>
+typedef uintptr_t DcSockFd;
 #else
-    typedef int DcSockFd;
+typedef int DcSockFd;
 #endif
 
 typedef enum {

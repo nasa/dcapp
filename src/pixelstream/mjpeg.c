@@ -167,7 +167,7 @@ DcPsMjpegHandle dc_ps_mjpeg_add_server(const char *url, int timeout_s) {
 
     // create handle
     DcPsMjpegHandle handle = {};
-    handle._index          = sbcount(_sb_contexts) - 1;
+    handle._index          = (uint8_t)(sbcount(_sb_contexts) - 1);
     return handle;
 }
 
@@ -219,7 +219,7 @@ static size_t _mjpeg_write_callback(char *ptr, size_t size, size_t nmemb, void *
     if (total_size > 0) {
 
         // copy data
-        sbpushn(context->sb_buffer, ptr, total_size);
+        sbpushn(context->sb_buffer, ptr, (int)total_size);
 
         // set states
         context->state = _CONNECTION_STATE_CONNECTED;
@@ -240,10 +240,10 @@ static size_t _mjpeg_write_callback(char *ptr, size_t size, size_t nmemb, void *
 
                 // save to output
                 sbclear(context->sb_latest_frame);
-                sbpushn(context->sb_latest_frame, start_addr, jpeg_size);
+                sbpushn(context->sb_latest_frame, start_addr, (int)jpeg_size);
 
                 // clear internal buffer up to end_addr + 2
-                sbshiftn(context->sb_buffer, upto_size + 2);
+                sbshiftn(context->sb_buffer, (int)(upto_size + 2));
 
                 // raise flag
                 context->has_new_data      = true;

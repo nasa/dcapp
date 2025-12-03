@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#define DC_UTILS_STRING_MAX_BUFFER_SIZE 4096
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,6 +32,10 @@ bool dc_utils_is_format_specifier_bool(const char *value);
 bool dc_utils_is_format_specifier_int(const char *value);
 bool dc_utils_is_format_specifier_double(const char *value);
 bool dc_utils_is_format_specifier_string(const char *value);
+
+#ifdef _WIN32
+char *strndup(const char *s, size_t n);
+#endif
 
 static const char *dc_utils_whitespace = " \t\n\v\f\r";
 

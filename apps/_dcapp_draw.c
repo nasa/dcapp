@@ -1,3 +1,6 @@
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include "dcapp.h"
 
 #include "../src/app/enums.h"
@@ -301,13 +304,13 @@ static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // get points
-    float  num_points = node->circle.num_segments == DC_APP_VAL_INDEX_UNDEFINED ? 40 : dc_app_lookup_get_value(app_data->lookup, node->circle.num_segments)->value_integer;
+    int    num_points = node->circle.num_segments == DC_APP_VAL_INDEX_UNDEFINED ? 40 : dc_app_lookup_get_value(app_data->lookup, node->circle.num_segments)->value_integer;
     plVec2 points[_NODE_CIRCLE_MAX_SEGMENTS];
     for (int ii = 0; ii < num_points; ii++) {
-        float  angle  = ii * (2 * M_PI / num_points);
+        float  angle  = ii * (2.0f * (float)M_PI / num_points);
         plVec4 point4 = (plVec4){
-            radius * (1.0f + cos(angle)),
-            radius * (1.0f + sin(angle)),
+            radius * (1.0f + cosf(angle)),
+            radius * (1.0f + sinf(angle)),
             0, 1};
         point4     = pl_mul_mat4_vec4(&transform, point4);
         points[ii] = (plVec2){point4.x, point4.y};
@@ -317,10 +320,10 @@ static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *
     if (node->circle.fill_enabled) {
 
         float fill_color[4] = {
-            node->circle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.r)->value_double,
-            node->circle.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.g)->value_double,
-            node->circle.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.b)->value_double,
-            node->circle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.a)->value_double,
+            node->circle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.r)->value_double,
+            node->circle.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.g)->value_double,
+            node->circle.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.b)->value_double,
+            node->circle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
         _ext_draw->add_convex_polygon_filled(app_data->pl_layer, points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
@@ -330,10 +333,10 @@ static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *
     if (node->circle.line_enabled) {
         float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_width)->value_double;
         float line_color[4]  = {
-            node->circle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.r)->value_double,
-            node->circle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.g)->value_double,
-            node->circle.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.b)->value_double,
-            node->circle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.a)->value_double,
+            node->circle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.r)->value_double,
+            node->circle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.g)->value_double,
+            node->circle.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.b)->value_double,
+            node->circle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
         _ext_draw->add_polygon(app_data->pl_layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
@@ -625,7 +628,7 @@ static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _N
     bool                 use_val2 = node->conditional.value2 != DC_APP_VAL_INDEX_UNDEFINED;
 
     // evaluate
-    bool result;
+    bool result = false;
     if (use_val2) {
         DcValue *val2 = dc_app_lookup_get_value(app_data->lookup, node->conditional.value2);
 
@@ -1033,10 +1036,10 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
     if (node->line.line_enabled) {
         float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_width)->value_double;
         float line_color[4]  = {
-            node->line.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->line.line_color.r)->value_double,
-            node->line.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->line.line_color.g)->value_double,
-            node->line.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->line.line_color.b)->value_double,
-            node->line.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->line.line_color.a)->value_double,
+            node->line.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.r)->value_double,
+            node->line.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.g)->value_double,
+            node->line.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.b)->value_double,
+            node->line.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
         _ext_draw->add_lines(app_data->pl_layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
@@ -1528,10 +1531,10 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
     if (node->polygon.fill_enabled) {
 
         float fill_color[4] = {
-            node->polygon.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.r)->value_double,
-            node->polygon.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.g)->value_double,
-            node->polygon.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.b)->value_double,
-            node->polygon.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.a)->value_double,
+            node->polygon.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.r)->value_double,
+            node->polygon.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.g)->value_double,
+            node->polygon.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.b)->value_double,
+            node->polygon.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
         _ext_draw->add_convex_polygon_filled(app_data->pl_layer, points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
@@ -1541,10 +1544,10 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
     if (node->polygon.line_enabled) {
         float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_width)->value_double;
         float line_color[4]  = {
-            node->polygon.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.r)->value_double,
-            node->polygon.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.g)->value_double,
-            node->polygon.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.b)->value_double,
-            node->polygon.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.a)->value_double,
+            node->polygon.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.r)->value_double,
+            node->polygon.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.g)->value_double,
+            node->polygon.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.b)->value_double,
+            node->polygon.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
         _ext_draw->add_polygon(app_data->pl_layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
@@ -1833,10 +1836,10 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
     if (node->rectangle.fill_enabled) {
 
         float fill_color[4] = {
-            node->rectangle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.r)->value_double,
-            node->rectangle.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.g)->value_double,
-            node->rectangle.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.b)->value_double,
-            node->rectangle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.a)->value_double,
+            node->rectangle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.r)->value_double,
+            node->rectangle.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.g)->value_double,
+            node->rectangle.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.b)->value_double,
+            node->rectangle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
         _ext_draw->add_convex_polygon_filled(app_data->pl_layer, points, 4, (plDrawSolidOptions){.uColor = pl_fill_color});
@@ -1846,10 +1849,10 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
     if (node->rectangle.line_enabled) {
         float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_width)->value_double;
         float line_color[4]  = {
-            node->rectangle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.r)->value_double,
-            node->rectangle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.g)->value_double,
-            node->rectangle.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.b)->value_double,
-            node->rectangle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.a)->value_double,
+            node->rectangle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.r)->value_double,
+            node->rectangle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.g)->value_double,
+            node->rectangle.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.b)->value_double,
+            node->rectangle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
         _ext_draw->add_polygon(app_data->pl_layer, points, 4, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
@@ -1928,7 +1931,7 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
         case DC_APP_SET_TYPE_ADD:
             switch (var_value->type) {
                 case DC_VALUE_TYPE_STRING: {
-                    int num_chars = DC_VALUE_STRING_BUFFER_SIZE - strlen(var_value->value_string) - 1;
+                    int num_chars = DC_VALUE_STRING_BUFFER_SIZE - (int)strlen(var_value->value_string) - 1;
                     strncat(var_value->value_string, op_value->value_string, num_chars);
                     break;
                 }
@@ -2241,7 +2244,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
 
         // filler
         char *filler = &(node->text.sb_fillers[node->text.sb_filler_indices[ii]]);
-        sbpushn(sb_text, filler, strlen(filler));
+        sbpushn(sb_text, filler, (int)strlen(filler));
 
         // value
         DcValueType format_type = node->text.sb_format_types[ii];
@@ -2264,34 +2267,33 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
             default:
                 fprintf(stderr, "Unknown value type for text: %d\n", format_type);
         }
-        sbpushn(sb_text, val_str, strlen(val_str));
+        sbpushn(sb_text, val_str, (int)strlen(val_str));
     }
 
     // ending filler
     char *filler = &(node->text.sb_fillers[node->text.sb_filler_indices[sbcount(node->text.sb_vals)]]);
-    sbpushn(sb_text, filler, strlen(filler));
+    sbpushn(sb_text, filler, (int)strlen(filler));
     sbpush(sb_text, '\0');
 
     // get text substrings per newline
-    static const int max_lines = 256;
-    size_t           subtext_indices[max_lines];
-    size_t           num_lines;
-    dc_utils_split_string_inplace(sb_text, "\n", subtext_indices, max_lines, &num_lines);
+    size_t subtext_indices[_NODE_TEXT_MAX_LINES];
+    size_t num_lines;
+    dc_utils_split_string_inplace(sb_text, "\n", subtext_indices, _NODE_TEXT_MAX_LINES, &num_lines);
 
     // setup text options
     plDrawTextOptions text_options = {0};
     text_options.ptFont            = app_data->pl_cousine_sdf_font;
     float fill_color[4]            = {
-        node->text.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.r)->value_double,
-        node->text.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.g)->value_double,
-        node->text.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0 : dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.b)->value_double,
-        node->text.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1 : dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.a)->value_double,
+        node->text.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.r)->value_double,
+        node->text.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.g)->value_double,
+        node->text.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.b)->value_double,
+        node->text.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.a)->value_double,
     };
     text_options.uColor = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
     text_options.fSize  = node->text.size == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.size)->value_double;
 
     // get each strings size
-    plVec2 dimensions[max_lines];
+    plVec2 dimensions[_NODE_TEXT_MAX_LINES];
     plVec2 total_dimensions = {0.0f, 0.0f};
     for (int ii = 0; ii < num_lines; ii++) {
         dimensions[ii] = _ext_draw->calculate_text_size(&sb_text[subtext_indices[ii]], text_options);

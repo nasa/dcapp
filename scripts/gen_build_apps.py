@@ -61,7 +61,16 @@ bin_dir_abs = os.path.abspath(pl_dir_abs + "/out")
 pl_dir_rel = os.path.relpath(pl_dir_abs, output_dir_abs)
 bin_dir_rel = os.path.relpath(bin_dir_abs, output_dir_abs)
 
-with pl.project("dcapp"):
+# set vcpkg (windows only)
+vcpkg_abs = ""
+vcpkg_rel = ""
+vcpkg_copy_cmd = ""
+if plat.system() == "Windows":
+    vcpkg_abs = os.path.abspath(dcapp_home_abs + "/vcpkg_installed/x64-windows")
+    vcpkg_rel = os.path.relpath(vcpkg_abs, output_dir_abs)
+    vcpkg_copy_cmd = f'xcopy /Y /I "{vcpkg_rel}\\bin\\*.dll" "{bin_dir_rel}\\"'
+
+with pl.project("apps"):
 
     # project wide settings
     pl.set_output_directory(bin_dir_rel)
@@ -85,14 +94,15 @@ with pl.project("dcapp"):
     
     pl.add_profile(compiler_filter=["msvc"],
                     linker_flags=["-incremental:no"],
-                    compiler_flags=["-Zc:preprocessor", "-nologo", "-W4", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-permissive-"])
+                    compiler_flags=["-Zc:preprocessor", "-nologo", "-W4", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115"],
+                    link_directories=[vcpkg_rel + "/lib"],
+                    include_directories=[vcpkg_rel + "/include"])
     pl.add_profile(compiler_filter=["msvc"],
                     configuration_filter=["debug"],
                     compiler_flags=["-Od", "-MDd", "-Zi"])
     pl.add_profile(compiler_filter=["msvc"],
                     configuration_filter=["release"],
                     compiler_flags=["-O2", "-MD"])
-
 
     # linux or gcc only
     pl.add_profile(platform_filter=["Linux"],
@@ -131,17 +141,17 @@ with pl.project("dcapp"):
             os.path.relpath(dcapp_home_abs + "/apps/dcapp.c", output_dir_abs)
         )
 
-        pl.add_static_link_libraries("dearimguid")
-
         # release config
         with pl.configuration("release"):
 
             # win32
             with pl.platform("Windows"):
                 with pl.compiler("msvc"):
-                    pl.add_linker_flags("-incremental:no", "-nologo", "-noimplib", "-noexp")
-                    pl.add_compiler_flags("-nologo", "-std:c++17", "-W3", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-Od", "-MDd", "-Zi", "-permissive")
-            
+                    pl.add_linker_flags("-nologo", "-noimplib", "-noexp")
+                    pl.add_static_link_libraries("libxml2", "libcurl")
+                    pl.add_include_directories(vcpkg_rel + "/include/libxml2")
+                    pl.set_pre_target_build_step(vcpkg_copy_cmd)
+
             # linux
             with pl.platform("Linux"):
                 with pl.compiler("gcc"):
@@ -162,8 +172,10 @@ with pl.project("dcapp"):
             # win32
             with pl.platform("Windows"):
                 with pl.compiler("msvc"):
-                    pl.add_linker_flags("-incremental:no", "-nologo", "-noimplib", "-noexp")
-                    pl.add_compiler_flags("-nologo", "-std:c++17", "-W3", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-Od", "-MDd", "-Zi", "-permissive")
+                    pl.add_linker_flags("-nologo", "-noimplib", "-noexp")
+                    pl.add_static_link_libraries("libxml2", "libcurl")
+                    pl.add_include_directories(vcpkg_rel + "/include/libxml2")
+                    pl.set_pre_target_build_step(vcpkg_copy_cmd)
             
             # linux
             with pl.platform("Linux"):
@@ -199,8 +211,10 @@ with pl.project("dcapp"):
             # win32
             with pl.platform("Windows"):
                 with pl.compiler("msvc"):
-                    pl.add_linker_flags("-incremental:no", "-nologo", "-noimplib", "-noexp")
-                    pl.add_compiler_flags("-nologo", "-std:c++17", "-W3", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-Od", "-MDd", "-Zi", "-permissive")
+                    pl.add_linker_flags("-nologo", "-noimplib", "-noexp")
+                    pl.add_static_link_libraries("libxml2")
+                    pl.add_include_directories(vcpkg_rel + "/include/libxml2")
+                    pl.set_pre_target_build_step(vcpkg_copy_cmd)
             
             # linux
             with pl.platform("Linux"):
@@ -217,13 +231,13 @@ with pl.project("dcapp"):
         # debug config
         with pl.configuration("debug"):
 
-            pl.add_static_link_libraries("dearimguid")
-
             # win32
             with pl.platform("Windows"):
                 with pl.compiler("msvc"):
-                    pl.add_linker_flags("-incremental:no", "-nologo", "-noimplib", "-noexp")
-                    pl.add_compiler_flags("-nologo", "-std:c++17", "-W3", "-WX", "-wd4201", "-wd4100", "-wd4996", "-wd4505", "-wd4189", "-wd5105", "-wd4115", "-Od", "-MDd", "-Zi", "-permissive")
+                    pl.add_linker_flags("-nologo", "-noimplib", "-noexp")
+                    pl.add_static_link_libraries("libxml2")
+                    pl.add_include_directories(vcpkg_rel + "/include/libxml2")
+                    pl.set_pre_target_build_step(vcpkg_copy_cmd)
             
             # linux
             with pl.platform("Linux"):
@@ -242,13 +256,14 @@ with pl.project("dcapp"):
 # [SECTION] generate scripts
 #-----------------------------------------------------------------------------
 
-if plat.system() == "Windows":
-    win32.generate_build(output_dir_abs + '/' + "build-dcapp-windows.bat")
-elif plat.system() == "Darwin":
-    outScript = output_dir_abs + '/' + "build-dcapp-macos.sh"
-    apple.generate_build(outScript)
-    os.chmod(outScript, 0o755)
-elif plat.system() == "Linux":
-    outScript = output_dir_abs + '/' + "build-dcapp-linux.sh"
-    linux.generate_build(outScript)
-    os.chmod(outScript, 0o755)
+out_script_win32 = output_dir_abs + "/" + "build_apps_win32.bat"
+out_script_macos = output_dir_abs + "/" + "build_apps_macos.sh"
+out_script_linux = output_dir_abs + "/" + "build_apps_linux.sh"
+
+win32.generate_build(out_script_win32)
+apple.generate_build(out_script_macos)
+linux.generate_build(out_script_linux)
+
+if plat.system() in ("Darwin", "Linux"):
+    os.chmod(out_script_macos, 0o755)
+    os.chmod(out_script_linux, 0o755)

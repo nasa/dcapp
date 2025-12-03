@@ -138,7 +138,7 @@ DcAppVarIndex dc_app_lookup_register_var(DcAppLookup *lookup, const char *name, 
     }
 
     sbpush(context->sb_var_name_offsets, sbcount(context->sb_var_names));
-    sbpushn(context->sb_var_names, name, strlen(name));
+    sbpushn(context->sb_var_names, name, (int)strlen(name));
     sbpush(context->sb_var_names, '\0');
     sbpush(context->sb_vars, *var);
     var->extern_data = NULL;
