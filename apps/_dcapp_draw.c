@@ -2006,7 +2006,6 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
 
     // refresh variable
     dc_value_refresh(var_value);
-    dc_app_lookup_refresh_var_from_value(app_data->lookup, node->set.var_index);
 }
 
 static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {

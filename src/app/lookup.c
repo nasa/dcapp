@@ -141,7 +141,6 @@ DcAppVarIndex dc_app_lookup_register_var(DcAppLookup *lookup, const char *name, 
     sbpushn(context->sb_var_names, name, (int)strlen(name));
     sbpush(context->sb_var_names, '\0');
     sbpush(context->sb_vars, *var);
-    var->extern_data = NULL;
     return sbcount(context->sb_vars) - 1;
 }
 
@@ -155,68 +154,4 @@ void dc_app_lookup_set_var_to_string(DcAppLookup *lookup, DcAppVarIndex var_inde
     DcAppLookupVar *var     = dc_app_lookup_get_var(lookup, var_index);
     DcValue        *val     = dc_app_lookup_get_value(lookup, var->value_index);
     dc_value_set_from_string(val, new_string);
-    dc_app_lookup_refresh_var_from_value(lookup, var_index);
-}
-
-void dc_app_lookup_refresh_var_from_extern(DcAppLookup *lookup, DcAppVarIndex var_index) {
-    _LookupContext *context = &(_sb_contexts[lookup->index]);
-    DcAppLookupVar *var     = dc_app_lookup_get_var(lookup, var_index);
-    DcValue        *value   = dc_app_lookup_get_value(lookup, var->value_index);
-
-    void *extern_data = var->extern_data;
-    if (extern_data) {
-        switch (value->type) {
-            case DC_VALUE_TYPE_DOUBLE: {
-                value->value_double = *((double *)(extern_data));
-                break;
-            }
-            case DC_VALUE_TYPE_INTEGER: {
-                value->value_integer = *((int *)(extern_data));
-                break;
-            }
-            case DC_VALUE_TYPE_STRING: {
-                value->value_string = (char *)extern_data;
-                break;
-            }
-            case DC_VALUE_TYPE_BOOLEAN: {
-                value->value_boolean = *((bool *)(extern_data));
-                break;
-            }
-            default:
-                fprintf(stderr, "dc_app_lookup_refresh_var_from_extern(): variable of invalid type '%d'\n", value->type);
-                break;
-        }
-        dc_value_refresh(value);
-    }   
-}
-
-void dc_app_lookup_refresh_var_from_value(DcAppLookup *lookup, DcAppVarIndex var_index) {
-    _LookupContext *context = &(_sb_contexts[lookup->index]);
-    DcAppLookupVar *var     = dc_app_lookup_get_var(lookup, var_index);
-    DcValue        *value   = dc_app_lookup_get_value(lookup, var->value_index);
-
-    void *extern_data = var->extern_data;
-    if (extern_data) {
-        switch (value->type) {
-            case DC_VALUE_TYPE_DOUBLE: {
-                *((double *)(extern_data)) = value->value_double;
-                break;
-            }
-            case DC_VALUE_TYPE_INTEGER: {
-                *((int *)(extern_data)) = value->value_integer;
-                break;
-            }
-            case DC_VALUE_TYPE_STRING: {
-                extern_data = (void *)(value->value_string);
-                break;
-            }
-            case DC_VALUE_TYPE_BOOLEAN: {
-                *((bool *)(extern_data)) = value->value_boolean;
-                break;
-            }
-            default:
-                fprintf(stderr, "dc_app_lookup_refresh_var_from_value(): variable of invalid type '%d'\n", value->type);
-                break;
-        }
-    }
 }

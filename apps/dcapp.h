@@ -402,6 +402,9 @@ typedef struct __TrickContext {
     _TrickRxVarContext *sb_rx_var_contexts;
 } _TrickContext;
 
+// callback used for logic file DLL loading
+typedef void *(*_GetVariableValueAddr)(const char *name);
+
 // frame data
 typedef struct __FrameData {
 
@@ -457,7 +460,7 @@ typedef struct __AppData {
 
     // logic
     plSharedLibrary *logic_lib;
-    void (*logic_pre_init)();
+    void (*logic_pre_init)(_GetVariableValueAddr);
     void (*logic_init)();
     void (*logic_draw)();
     void (*logic_close)();

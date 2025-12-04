@@ -13,7 +13,7 @@ void dc_value_copy(DcValue *dst, DcValue *src) {
         dst->value_string = (char *)calloc(sizeof(char), DC_VALUE_STRING_BUFFER_SIZE);
     }
     strncpy(dst->value_string, src->value_string, DC_VALUE_STRING_BUFFER_SIZE - 1);
-    dst->value_string[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0'; 
+    dst->value_string[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
 }
 
 DcValue dc_value_create_typed_value_from_string(DcValueType type, const char *value_str) {
@@ -114,6 +114,23 @@ void dc_value_set_from_string(DcValue *value, const char *value_str) {
             break;
     }
     dc_value_refresh(value);
+}
+
+void *dc_value_get_addr(DcValue *value) {
+    switch (value->type) {
+        case DC_VALUE_TYPE_BOOLEAN:
+            return &(value->value_boolean);
+        case DC_VALUE_TYPE_DOUBLE:
+            return &(value->value_double);
+        case DC_VALUE_TYPE_INTEGER:
+            return &(value->value_integer);
+        case DC_VALUE_TYPE_STRING:
+            return &(value->value_string);
+        default:
+            fprintf(stderr, "DCAPP dc_value_set_from_string(): invalid value type %d\n", value->type);
+            break;
+    }
+    return NULL;
 }
 
 bool dc_value_is_equal(DcValue *value1, DcValue *value2) {

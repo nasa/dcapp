@@ -3,16 +3,37 @@
 #include "../src/utils/file.h"
 #include "../src/utils/env.h"
 
+// static members
+// TODO hate this solution, but needed for DLL lookup
+// of variables. Clean this up later
+// * this is really just a copy of app_data in all the functions
+static _AppData *_global_app_data;
+
 // declarations
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data);
 PL_EXPORT void  pl_app_shutdown(_AppData *app_data);
 PL_EXPORT void  pl_app_resize(_AppData *app_data);
 PL_EXPORT void  pl_app_update(_AppData *app_data);
 
+// -- handlers for logic files --
+// * only works once all variables are registered, as pointer
+// * values could change otherwise
+void *get_variable_value_addr(const char *name) {
+
+    // get variable
+    DcAppLookupVar *var = dc_app_lookup_get_var_by_name(_global_app_data->lookup, name);
+
+    // return value address
+    DcValue *val = dc_app_lookup_get_value(_global_app_data->lookup, var->value_index);
+    return dc_value_get_addr(val);
+}
+
 // definitions
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     if (app_data) {
+
+        // load extensions
         _ext_windows      = pl_get_api_latest(api_registry, plWindowI);
         _ext_draw         = pl_get_api_latest(api_registry, plDrawI);
         _ext_draw_backend = pl_get_api_latest(api_registry, plDrawBackendI);
@@ -27,6 +48,11 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         // _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
         _ext_camera = pl_get_api_latest(api_registry, plCameraI);
         _ext_image  = pl_get_api_latest(api_registry, plImageI);
+
+        // set global app data variable
+        _global_app_data = app_data;
+
+        // return (hot reload)
         return app_data;
     }
 
@@ -57,6 +83,9 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     // allocate app memory
     app_data = (_AppData *)PL_ALLOC(sizeof(_AppData));
     memset(app_data, 0, sizeof(_AppData));
+
+    // set global app data variable
+    _global_app_data = app_data;
 
     // parse input arguments
     plIO *_ext_io = _ext_ioi->get_io();
@@ -92,6 +121,11 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     // build dcapp node tree
     xmlNodePtr root_node = xmlDocGetRootElement(app_data->config->xml_doc);
     _process_xml_node(app_data, root_node, NODE_INDEX_UNDEFINED, DC_APP_ELEM_TYPE_UNDEFINED, app_data->config->config_dir_path);
+
+    // initialize logic (link values)
+    if (app_data->logic_pre_init) {
+        app_data->logic_pre_init(get_variable_value_addr);
+    }
 
     // return app memory
     return app_data;
@@ -166,12 +200,9 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     // process pixelstream mjpeg data
     dc_ps_mjpeg_update();
 
-    // process logic, update vars from extern_data
+    // process logic
     if (app_data->logic_draw) {
         app_data->logic_draw();
-        for (int var_index = 0; var_index < dc_app_lookup_get_var_count(app_data->lookup); var_index++) {
-            dc_app_lookup_refresh_var_from_extern(app_data->lookup, var_index);
-        }
     }
 
     // get mouse button status

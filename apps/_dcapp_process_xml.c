@@ -1186,10 +1186,10 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
         }
 
         // load functions
-        app_data->logic_pre_init = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "DisplayPreInit");
-        app_data->logic_init     = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "DisplayInit");
-        app_data->logic_draw     = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "DisplayDraw");
-        app_data->logic_close    = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "DisplayClose");
+        app_data->logic_pre_init = (void (*)(_GetVariableValueAddr))_ext_library->load_function(app_data->logic_lib, "display_pre_init");
+        app_data->logic_init     = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_init");
+        app_data->logic_draw     = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_draw");
+        app_data->logic_close    = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_close");
     } else {
         fprintf(stderr, "DCAPP _process_xml_node(): <Logic> has no File element\n");
     }
@@ -2876,18 +2876,10 @@ static _NodeIndex _process_xml_node_variable(_AppData *app_data, xmlNodePtr xml_
     }
     initial_value.type = type;
 
-    // register var, link to extern
-    DcAppLookupVar var = {};
-    var.value_index    = dc_app_lookup_register_value(app_data->lookup, &initial_value);
-    if (app_data->logic_lib) {
-        var.extern_data = _ext_library->load_function(app_data->logic_lib, name);
-    }
+    // register var
+    DcAppLookupVar var      = {};
+    var.value_index         = dc_app_lookup_register_value(app_data->lookup, &initial_value);
     DcAppVarIndex var_index = dc_app_lookup_register_var(app_data->lookup, name, &var);
-
-    // set the extern data to the initial value
-    if (app_data->logic_lib) {
-        dc_app_lookup_refresh_var_from_value(app_data->lookup, var_index);
-    }
 
     // return
     return NODE_INDEX_UNDEFINED;

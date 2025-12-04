@@ -1,18 +1,14 @@
 #include "dcapp.h"
+#include <cstdio>
 
-void DisplayPreInit() {
+void display_init() {
     return;
 }
 
-void DisplayInit() {
+void display_draw() {
     return;
 }
 
-void DisplayDraw() {
-    // printf("%f %f\n", ROTATE, G);
-    return;
-}
-
-void DisplayClose() {
+void display_close() {
     return;
 }

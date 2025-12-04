@@ -19,7 +19,6 @@ static const DcAppValIndex DC_APP_VAL_INDEX_UNDEFINED   = DC_APP_LOOKUP_INDEX_UN
 static const DcAppValIndex DC_APP_STYLE_INDEX_UNDEFINED = DC_APP_LOOKUP_INDEX_UNDEFINED;
 
 typedef struct _DcAppLookupVar {
-    void         *extern_data;
     DcAppValIndex value_index;
 } DcAppLookupVar;
 
@@ -49,8 +48,6 @@ DcAppVarIndex   dc_app_lookup_register_var(DcAppLookup *lookup, const char *name
 const char     *dc_app_lookup_get_var_name(DcAppLookup *lookup, DcAppVarIndex index);
 
 void dc_app_lookup_set_var_to_string(DcAppLookup *lookup, DcAppVarIndex var_index, const char *value);
-void dc_app_lookup_refresh_var_from_extern(DcAppLookup *lookup, DcAppVarIndex var_index);
-void dc_app_lookup_refresh_var_from_value(DcAppLookup *lookup, DcAppVarIndex var_index);
 
 #ifdef __cplusplus
 }
