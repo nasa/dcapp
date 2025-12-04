@@ -4,7 +4,7 @@
     {
       "label": "build dcapp-debug (linux)",
       "type": "shell",
-      "command": "./build-dcapp-linux.sh",
+      "command": "./build_apps_linux.sh",
       "args": [
         "-c",
         "debug"
@@ -17,7 +17,7 @@
     {
       "label": "build dcapp-debug (macos)",
       "type": "shell",
-      "command": "./build-dcapp-macos.sh",
+      "command": "./build_apps_macos.sh",
       "args": [
         "-c",
         "debug"
@@ -30,7 +30,7 @@
     {
       "label": "build dcapp-debug (windows)",
       "type": "shell",
-      "command": "./build-dcapp-windows.bat",
+      "command": "./build_apps_windows.bat",
       "args": [
         "-c",
         "debug"

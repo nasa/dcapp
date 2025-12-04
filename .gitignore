@@ -6,7 +6,6 @@ logs/
 samples/local/
 
 .DS_Store
-scripts/build-dcapp*
 
 **.spv
 samples/**/dcapp.h
