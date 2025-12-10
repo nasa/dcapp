@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<DCAPP>
+
+  <Logic File="logic/logic.so" />
+  <Window Title="dcapp-vk-title" X="2000" Y="500" Width="1000" Height="1000" VirtualWidth="300" VirtualHeight="100">
+
+    <!-- panel -->
+    <Panel VirtualWidth="1000" VirtualHeight="500">
+
+      <!-- Variables -->
+      <Variable Type="Integer" InitialValue="0">toggle_var</Variable>
+      <Variable Type="Integer" InitialValue="0">momentary_var</Variable>
+      <Variable Type="Integer" InitialValue="0">standard_var</Variable>
+      <Variable Type="Integer" InitialValue="0">controlled_var</Variable>
+      <Variable Type="Integer" InitialValue="0">cmd_var</Variable>
+      <Variable Type="Integer" InitialValue="0">status_var</Variable>
+
+      <Style Name="text">
+        <Text Size="35" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" />
+      </Style>
+
+      <!-- Standard button (single action) -->
+      <Button Type="#_button_standard_" X="100" Y="300" Width="120" Height="60" Variable="standard_var" On="1" Off="0">
+        <ButtonIndicatorOn>
+          <Rectangle Width="120" Height="60" FillColor="0 0.5 1" />
+          <Text Style="text">CLICKED</Text>
+        </ButtonIndicatorOn>
+        <ButtonIndicatorOff>
+          <Rectangle Width="120" Height="60" FillColor="0 0.2 0.5" />
+          <Text Style="text">CLICK ME</Text>
+        </ButtonIndicatorOff>
+      </Button>
+
+      <!-- Momentary button (push-to-talk style) -->
+      <Button Type="#_button_momentary_" X="100" Y="200" Width="120" Height="60" Variable="momentary_var" On="1" Off="0">
+        <ButtonIndicatorOn>
+          <Rectangle Width="120" Height="60" FillColor="1 0 0" />
+          <Text Style="text">HOLDING</Text>
+        </ButtonIndicatorOn>
+        <ButtonIndicatorOff>
+          <Rectangle Width="120" Height="60" FillColor="0.3 0 0" />
+          <Text Style="text">PUSH ME</Text>
+        </ButtonIndicatorOff>
+      </Button>
+
+      <!-- Simple toggle button -->
+      <Button Type="#_button_toggle_" X="100" Y="100" Width="120" Height="60" Variable="toggle_var" On="1" Off="0">
+        <ButtonIndicatorOn>
+          <Rectangle Width="120" Height="60" FillColor="0 0.8 0" />
+          <Text Style="text">ON</Text>
+        </ButtonIndicatorOn>
+        <ButtonIndicatorOff>
+          <Rectangle Width="120" Height="60" FillColor="0.5 0.5 0.5" />
+          <Text Style="text">OFF</Text>
+        </ButtonIndicatorOff>
+        <MousePressed>
+          <Rectangle Width="120" Height="60" FillColor="1 1 0 0.3" />
+        </MousePressed>
+      </Button>
+
+      <!-- Button with enable/disable control -->
+      <Button Type="#_button_toggle_" X="300" Y="100" Width="120" Height="60" Variable="controlled_var" On="1" Off="0" EnabledVariable="toggle_var" EnabledOn="1">
+        <ButtonIndicatorOn>
+          <Rectangle Width="120" Height="60" FillColor="0 0.8 0 1" />
+          <Text Style="text">ON</Text>
+        </ButtonIndicatorOn>
+        <ButtonIndicatorOff>
+          <Rectangle Width="120" Height="60" FillColor="0.5 0.5 0.5 1" />
+          <Text Style="text">OFF</Text>
+        </ButtonIndicatorOff>
+        <ButtonEnabled>
+          <Rectangle Width="120" Height="60" FillColor="0 1 1 .2" />
+          <Text Style="text">ENABLED</Text>
+        </ButtonEnabled>
+        <ButtonDisabled>
+          <Rectangle Width="120" Height="60" FillColor="0.2 0.2 0.2 .2" />
+          <Text Style="text">DISABLED</Text>
+        </ButtonDisabled>
+      </Button>
+
+      <!-- Button with separate switch/indicator (simulated lag) -->
+      <Button Type="#_button_toggle_" X="300" Y="200" Width="120" Height="60" TargetVariable="cmd_var" TargetOn="1" TargetOff="0" IndicatorVariable="status_var" IndicatorOn="1">
+        <ButtonIndicatorOn>
+          <Rectangle Width="120" Height="60" FillColor="0 0.8 0" />
+          <Text Style="text">CONFIRMED</Text>
+        </ButtonIndicatorOn>
+        <ButtonIndicatorOff>
+          <Rectangle Width="120" Height="60" FillColor="0.5 0.5 0.5" />
+          <Text Style="text">READY</Text>
+        </ButtonIndicatorOff>
+        <ButtonTransition>
+          <Rectangle Width="120" Height="60" FillColor="1 0.5 0" />
+          <Text Style="text">PENDING...</Text>
+        </ButtonTransition>
+      </Button>
+
+    </Panel>
+
+    <!-- <Include>sub/subtest.xml</Include> -->
+  </Window>
+</DCAPP>

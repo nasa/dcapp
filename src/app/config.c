@@ -166,6 +166,9 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const_int(&context, "_align_bottom_", DC_APP_ALIGN_TYPE_BOTTOM, true);
     _add_const_int(&context, "_align_middle_", DC_APP_ALIGN_TYPE_MIDDLE, true);
     _add_const_int(&context, "_align_top_", DC_APP_ALIGN_TYPE_TOP, true);
+    _add_const_int(&context, "_button_standard_", DC_APP_BUTTON_TYPE_STANDARD, true);
+    _add_const_int(&context, "_button_momentary_", DC_APP_BUTTON_TYPE_MOMENTARY, true);
+    _add_const_int(&context, "_button_toggle_", DC_APP_BUTTON_TYPE_TOGGLE, true);
     _add_const_int(&context, "_conditional_true_", DC_APP_CONDITIONAL_TYPE_TRUE, true);
     _add_const_int(&context, "_conditional_false_", DC_APP_CONDITIONAL_TYPE_FALSE, true);
     _add_const_int(&context, "_conditional_eq_", DC_APP_CONDITIONAL_TYPE_EQ, true);

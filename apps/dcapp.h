@@ -95,6 +95,7 @@ typedef struct __ValIndex4 {
 
 typedef enum __NodeType {
     NODE_TYPE_UNDEFINED,
+    NODE_TYPE_BUTTON,
     NODE_TYPE_CIRCLE,
     NODE_TYPE_CONTAINER,
     NODE_TYPE_CONDITIONAL,
@@ -137,27 +138,31 @@ typedef struct __NodeButton {
     DcAppValIndex rotation;
 
     // node indices drawn for a given state
-    _NodeIndex child_on;
-    _NodeIndex child_off;
     _NodeIndex child_enabled;
     _NodeIndex child_disabled;
-    _NodeIndex child_transition;
-    _NodeIndex child_press;
-    _NodeIndex child_release;
+    _NodeIndex child_indicator_on;
+    _NodeIndex child_indicator_off;
+    _NodeIndex child_pressed;
+    _NodeIndex child_released;
+    _NodeIndex child_transition; 
 
     // comparison values for each state
-    DcAppValIndex val_var_on;
-    DcAppValIndex val_var_off;
-    DcAppValIndex val_switch_on;
-    DcAppValIndex val_switch_off;
+    DcAppValIndex val_enabled_on;
+    DcAppValIndex val_target_on;
+    DcAppValIndex val_target_off;
     DcAppValIndex val_indicator_on;
-    DcAppValIndex val_active_on;
 
     // variable indices to be set for each state
-    DcAppVarIndex var_var_index;
-    DcAppVarIndex switch_var_index;
-    DcAppVarIndex indicator_var_index;
-    DcAppVarIndex transition_var_index;
+    DcAppVarIndex var_enabled;
+    DcAppVarIndex var_target;
+    DcAppVarIndex var_indicator;
+
+    // manage transitions (off -> on, on -> off, stable)
+    // (don't think I need this)
+    // * can easily check if var_target.val != var_indicator.val,
+    // * and if var_target.val == val_target_on, then it's transitioning to ON
+    // * opposite for transitioning to OFF
+    // int transition_state;
 
     // type for button
     DcAppButtonType type;
@@ -368,6 +373,7 @@ typedef struct __Node {
     _NodeIndex parent;
     _NodeIndex next;
     union {
+        _NodeButton      button;
         _NodeCircle      circle;
         _NodeConditional conditional;
         _NodeContainer   container;

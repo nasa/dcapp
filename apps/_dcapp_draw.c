@@ -7,6 +7,7 @@
 #include "../src/utils/string.h"
 
 // Forward declarations
+static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -36,6 +37,10 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
 
     _Node *node = _get_node(app_data, node_index);
     switch (node->type) {
+        case NODE_TYPE_BUTTON:
+            _draw_node_button(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+
         case NODE_TYPE_CIRCLE:
             _draw_node_circle(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
@@ -90,6 +95,346 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
 
         default:
             break;
+    }
+}
+
+static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+
+    // boolean checks
+    bool use_dimension[2] = {
+        node->button.dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
+        node->button.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
+    bool use_virtual_dimension[2] = {
+        node->button.virtual_dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
+        node->button.virtual_dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
+    bool use_rotation       = node->button.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position = (node->button.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->button.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+
+    // get dimensions
+    float dimension[2] = {
+        use_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->button.dimension.x)->value_double : parent_dimensions->x,
+        use_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->button.dimension.y)->value_double : parent_dimensions->y};
+
+    // get virtual dimensions
+    float virtual_dimension[2] = {
+        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->button.virtual_dimension.x)->value_double : dimension[0],
+        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->button.virtual_dimension.y)->value_double : dimension[1]};
+
+    // transform
+    plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+
+    // xform rotation (around a point)
+    {
+        if (use_rotation && use_pivot_position) {
+
+            // get pivot XY, rotation
+            float pivot_position[2] = {
+                (float)dc_app_lookup_get_value(app_data->lookup, node->button.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->button.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->button.rotation)->value_double);
+
+            // compute matrices
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+            // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        }
+    }
+
+    // xform local alignment
+    {
+        // get alignment
+        DcAppAlignType local_aligns[2] = {
+            node->button.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->button.local_align.x)->value_integer,
+            node->button.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->button.local_align.y)->value_integer};
+
+        // compute offsets
+        float trans_align_offsets[2];
+        switch (local_aligns[0]) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:
+                trans_align_offsets[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                trans_align_offsets[0] = -1 * dimension[0] / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                trans_align_offsets[0] = -1 * dimension[0];
+                break;
+            default:
+                fprintf(stderr, "Unknown alignment in <Button> draw call: %d\n", local_aligns[0]);
+                break;
+        }
+        switch (local_aligns[1]) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                trans_align_offsets[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                trans_align_offsets[1] = -1 * dimension[1] / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                trans_align_offsets[1] = -1 * dimension[1];
+                break;
+            default:
+                fprintf(stderr, "Unknown alignment in <Button> draw call: %d\n", local_aligns[1]);
+                break;
+        }
+
+        // compute matrix
+        plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
+
+        // apply transform
+        transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
+    }
+
+    // xform position
+    {
+        // boolean check
+        bool use_position[2] = {
+            node->button.position.x != DC_APP_VAL_INDEX_UNDEFINED,
+            node->button.position.y != DC_APP_VAL_INDEX_UNDEFINED};
+
+        // get position
+        float position[2];
+        if (use_position[0]) {
+            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->button.position.x)->value_double;
+        } else {
+            DcAppAlignType parent_align_x = node->button.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->button.parent_align.x)->value_integer;
+            switch (parent_align_x) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    position[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    position[0] = parent_dimensions->x;
+                    break;
+                default:
+                    fprintf(stderr, "DCAPP _draw_node() button: Invalid parent_align_x value %d\n", parent_align_x);
+                    break;
+            }
+
+            // add parent offset
+            position[0] += parent_position->x;
+        }
+        if (use_position[1]) {
+            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->button.position.y)->value_double;
+        } else {
+            DcAppAlignType parent_align_y = node->button.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->button.parent_align.y)->value_integer;
+            switch (parent_align_y) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    position[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    position[1] = parent_dimensions->y;
+                    break;
+                default:
+                    fprintf(stderr, "DCAPP _draw_node() button: Invalid parent_align_y value %d\n", parent_align_y);
+                    break;
+            }
+
+            // add parent offset
+            position[1] += parent_position->y;
+        }
+
+        // compute matrix
+        plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
+
+        // apply transform
+        transform = pl_mul_mat4t(&transform, &trans_position_xform);
+    }
+
+    // xform local rotation
+    {
+        if (use_rotation && !use_pivot_position) {
+
+            // get alignment
+            DcAppAlignType local_pivot_aligns[2] = {
+                node->button.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->button.pivot_local_align.x)->value_integer,
+                node->button.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->button.pivot_local_align.y)->value_integer};
+
+            // get pivot XY, rotation
+            float pivot_position[2];
+            switch (local_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = dimension[0] / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = dimension[0];
+                    break;
+                default:
+                    fprintf(stderr, "Unknown pivot alignment in <Button> draw call: %d\n", local_pivot_aligns[0]);
+                    break;
+            }
+            switch (local_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = dimension[1] / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = dimension[1];
+                    break;
+                default:
+                    fprintf(stderr, "Unknown pivot alignment in <Button> draw call: %d\n", local_pivot_aligns[1]);
+                    break;
+            }
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->button.rotation)->value_double);
+
+            // compute matrices
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+            // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        }
+    }
+
+    // xform scale
+    {
+        // compute matrix
+        plMat4 scale_xform = pl_mat4_scale_xyz(dimension[0] / virtual_dimension[0], dimension[1] / virtual_dimension[1], 1.0f);
+
+        // apply transform
+        transform = pl_mul_mat4t(&transform, &scale_xform);
+    }
+
+    // parent transform
+    transform = pl_mul_mat4t(parent_transform, &transform);
+
+    // determine enabled state
+    DcValue *enabled_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->button.var_enabled)->value_index);
+    DcValue *enabled_on_value  = dc_app_lookup_get_value(app_data->lookup, node->button.val_enabled_on);
+    bool     is_enabled        = dc_value_is_equal(enabled_var_value, enabled_on_value);
+
+    // determine indicator
+    DcValue *indicator_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->button.var_indicator)->value_index);
+    DcValue *indicator_on_value  = dc_app_lookup_get_value(app_data->lookup, node->button.val_indicator_on);
+    bool     is_indicator_on     = dc_value_is_equal(indicator_var_value, indicator_on_value);
+
+    // determine transition
+    DcValue *target_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->button.var_target)->value_index);
+    bool     is_transitioning = dc_value_is_not_equal(target_var_value, indicator_var_value);
+
+    // process mouse event states
+    bool is_pressed  = (app_data->frame_data.pressed_node == node_index);
+    bool is_released = (app_data->frame_data.released_node == node_index);
+
+    // process mouse events per button type
+    DcValue *target_on_value  = dc_app_lookup_get_value(app_data->lookup, node->button.val_target_on);
+    DcValue *target_off_value = dc_app_lookup_get_value(app_data->lookup, node->button.val_target_off);
+    switch (node->button.type) {
+
+        // toggle: flip based on current indicator state (on release)
+        case DC_APP_BUTTON_TYPE_TOGGLE:
+            if (is_released) {
+                if (is_indicator_on) {
+                    dc_value_copy(target_var_value, target_off_value);
+                } else {
+                    dc_value_copy(target_var_value, target_on_value);
+                }
+            }
+            break;
+
+        // momentary: flip on press/release
+        case DC_APP_BUTTON_TYPE_MOMENTARY:
+            if (is_pressed) {
+                dc_value_copy(target_var_value, target_on_value);
+            } else if (is_released) {
+                dc_value_copy(target_var_value, target_off_value);
+            }
+            break;
+
+        // standard: set to on value on release
+        case DC_APP_BUTTON_TYPE_STANDARD:
+            if (is_released) {
+                dc_value_copy(target_var_value, target_on_value);
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    // mouse interaction
+    bool enable_mouse_events = false;
+    switch (node->button.type) {
+        case DC_APP_BUTTON_TYPE_MOMENTARY:
+            enable_mouse_events = is_enabled;
+            break;
+        case DC_APP_BUTTON_TYPE_STANDARD:
+        case DC_APP_BUTTON_TYPE_TOGGLE:
+            enable_mouse_events = is_enabled && !is_transitioning;
+            break;
+        default:
+            break;
+    }
+    if (enable_mouse_events) {
+        plVec4 mouse_position = (plVec4){
+            app_data->frame_data.mouse_position.x,
+            app_data->frame_data.mouse_position.y,
+            0, 1};
+        plMat4 transform_inverse = pl_mat4t_invert(&transform);
+        mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
+
+        // check whether mouse is over/in
+        bool inside = mouse_position.x > 0 && mouse_position.x < virtual_dimension[0] && mouse_position.y > 0 && mouse_position.y < virtual_dimension[1];
+
+        // update global states (only if enabled)
+        if (inside) {
+            app_data->frame_data.next_hovered_node = node_index;
+
+            if (app_data->frame_data.is_mouse_pressed) {
+                app_data->frame_data.next_pressed_node = node_index;
+            }
+        }
+    }
+
+    // draw children based on state
+    plVec2 child_position   = (plVec2){0.0f, 0.0f};
+    plVec2 child_dimensions = (plVec2){virtual_dimension[0], virtual_dimension[1]};
+
+    // layer 1: indicator state (base appearance)
+    if (is_transitioning) {
+        _draw_node_list(app_data, node->button.child_transition, &child_position, &child_dimensions, &transform);
+    } else if (is_indicator_on) {
+        _draw_node_list(app_data, node->button.child_indicator_on, &child_position, &child_dimensions, &transform);
+    } else {
+        _draw_node_list(app_data, node->button.child_indicator_off, &child_position, &child_dimensions, &transform);
+    }
+
+    // layer 2: enabled/disabled overlay
+    if (is_enabled) {
+        _draw_node_list(app_data, node->button.child_enabled, &child_position, &child_dimensions, &transform);
+    } else {
+        _draw_node_list(app_data, node->button.child_disabled, &child_position, &child_dimensions, &transform);
+    }
+
+    // layer 3: press/release feedback
+    if (is_pressed) {
+        _draw_node_list(app_data, node->button.child_pressed, &child_position, &child_dimensions, &transform);
+    } else if (is_released) {
+        _draw_node_list(app_data, node->button.child_released, &child_position, &child_dimensions, &transform);
     }
 }
 

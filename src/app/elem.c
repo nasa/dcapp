@@ -6,6 +6,22 @@
 
 const char *dc_app_elem_type_to_string(DcAppElemType type) {
     switch (type) {
+        case DC_APP_ELEM_TYPE_BUTTON:
+            return "Button";
+        case DC_APP_ELEM_TYPE_BUTTON_DISABLED:
+            return "ButtonDisabled";
+        case DC_APP_ELEM_TYPE_BUTTON_ENABLED:
+            return "ButtonEnabled";
+        case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF:
+            return "ButtonIndicatorOff";
+        case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_ON:
+            return "ButtonIndicatorOn";
+        case DC_APP_ELEM_TYPE_BUTTON_PRESSED:
+            return "ButtonPressed";
+        case DC_APP_ELEM_TYPE_BUTTON_RELEASED:
+            return "ButtonReleased";
+        case DC_APP_ELEM_TYPE_BUTTON_TRANSITION:
+            return "ButtonTransition";
         case DC_APP_ELEM_TYPE_CIRCLE:
             return "Circle";
         case DC_APP_ELEM_TYPE_CONSTANT:
@@ -83,6 +99,22 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
 }
 
 DcAppElemType dc_app_string_to_elem_type(const char *name) {
+    if (strcmp(name, "Button") == 0)
+        return DC_APP_ELEM_TYPE_BUTTON;
+    if (strcmp(name, "ButtonDisabled") == 0)
+        return DC_APP_ELEM_TYPE_BUTTON_DISABLED;
+    if (strcmp(name, "ButtonEnabled") == 0)
+        return DC_APP_ELEM_TYPE_BUTTON_ENABLED;
+    if (strcmp(name, "ButtonIndicatorOff") == 0)
+        return DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF;
+    if (strcmp(name, "ButtonIndicatorOn") == 0)
+        return DC_APP_ELEM_TYPE_BUTTON_INDICATOR_ON;
+    if (strcmp(name, "ButtonPressed") == 0)
+        return DC_APP_ELEM_TYPE_BUTTON_PRESSED;
+    if (strcmp(name, "ButtonReleased") == 0)
+        return DC_APP_ELEM_TYPE_BUTTON_RELEASED;
+    if (strcmp(name, "ButtonTransition") == 0)
+        return DC_APP_ELEM_TYPE_BUTTON_TRANSITION;
     if (strcmp(name, "Circle") == 0)
         return DC_APP_ELEM_TYPE_CIRCLE;
     if (strcmp(name, "Constant") == 0)
@@ -159,7 +191,7 @@ DcAppElemType dc_app_xml_node_to_elem_type(xmlNodePtr node) {
         const char   *name = (const char *)(node->name);
         DcAppElemType type = dc_app_string_to_elem_type(name);
         if (type == DC_APP_ELEM_TYPE_UNDEFINED) {
-            fprintf(stderr, "DCAPP dc_app_xml_node_to_elem_type: Undefined element name\n");
+            fprintf(stderr, "DCAPP dc_app_xml_node_to_elem_type: Undefined element name: %s\n", name);
         }
         return type;
     }

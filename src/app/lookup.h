@@ -46,6 +46,7 @@ DcAppLookupVar *dc_app_lookup_get_var(DcAppLookup *lookup, DcAppVarIndex index);
 DcAppLookupVar *dc_app_lookup_get_var_by_name(DcAppLookup *lookup, const char *name); // don't store
 DcAppVarIndex   dc_app_lookup_register_var(DcAppLookup *lookup, const char *name, DcAppLookupVar *var);
 const char     *dc_app_lookup_get_var_name(DcAppLookup *lookup, DcAppVarIndex index);
+DcAppVarIndex   dc_app_lookup_register_anon_var(DcAppLookup *lookup, DcValueType type, const char *initial_value_str);
 
 void dc_app_lookup_set_var_to_string(DcAppLookup *lookup, DcAppVarIndex var_index, const char *value);
 

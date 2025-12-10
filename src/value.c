@@ -142,7 +142,7 @@ bool dc_value_is_equal(DcValue *value1, DcValue *value2) {
         case DC_VALUE_TYPE_DOUBLE:
             return value1->value_double == value2->value_double;
         case DC_VALUE_TYPE_STRING:
-            return value1->value_string == value2->value_string;
+            return strcmp(value1->value_string, value2->value_string) == 0;
         default:
             fprintf(stderr, "DCAPP dc_value_set_from_string(): invalid value type %d\n", value1->type);
             break;
@@ -159,7 +159,7 @@ bool dc_value_is_not_equal(DcValue *value1, DcValue *value2) {
         case DC_VALUE_TYPE_DOUBLE:
             return value1->value_double != value2->value_double;
         case DC_VALUE_TYPE_STRING:
-            return value1->value_string != value2->value_string;
+            return strcmp(value1->value_string, value2->value_string) != 0;
         default:
             fprintf(stderr, "DCAPP dc_value_is_not_equal(): invalid value type %d\n", value1->type);
             break;
