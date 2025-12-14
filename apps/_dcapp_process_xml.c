@@ -269,10 +269,8 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
         raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
     }
     if (raw_x_position) {
-        char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.circle.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
         xmlFree(raw_x_position);
-        dc_node.circle.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
     } else {
         dc_node.circle.position.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -283,10 +281,8 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
         raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
     }
     if (raw_y_position) {
-        char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.circle.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
         xmlFree(raw_y_position);
-        dc_node.circle.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
     } else {
         dc_node.circle.position.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -294,10 +290,8 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
     // parent x align
     xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
     if (raw_parent_x_align) {
-        char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.circle.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
         xmlFree(raw_parent_x_align);
-        dc_node.circle.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
     } else {
         dc_node.circle.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -305,10 +299,8 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
     // parent y align
     xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
     if (raw_parent_y_align) {
-        char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.circle.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
         xmlFree(raw_parent_y_align);
-        dc_node.circle.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
     } else {
         dc_node.circle.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -319,10 +311,8 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
         raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
     }
     if (raw_x_align) {
-        char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.circle.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
         xmlFree(raw_x_align);
-        dc_node.circle.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
     } else {
         dc_node.circle.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -333,10 +323,8 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
         raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
     }
     if (raw_y_align) {
-        char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.circle.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
         xmlFree(raw_y_align);
-        dc_node.circle.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
     } else {
         dc_node.circle.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -347,10 +335,8 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
         raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
     }
     if (raw_rotation) {
-        char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.circle.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
         xmlFree(raw_rotation);
-        dc_node.circle.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
     } else {
         dc_node.circle.rotation = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -366,15 +352,11 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
     }
     if (raw_pivot_position_x && raw_pivot_position_y) {
 
-        char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.circle.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
         xmlFree(raw_pivot_position_x);
-        dc_node.circle.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-        char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.circle.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
-        dc_node.circle.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
         dc_node.circle.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.circle.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
@@ -383,20 +365,16 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
 
         xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
         if (raw_pivot_align_x) {
-            char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_x, (const char *)raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.circle.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
             xmlFree(raw_pivot_align_x);
-            dc_node.circle.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
         } else {
             dc_node.circle.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         }
 
         xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
         if (raw_pivot_align_y) {
-            char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_y, (const char *)raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.circle.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
             xmlFree(raw_pivot_align_y);
-            dc_node.circle.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
         } else {
             dc_node.circle.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
         }
@@ -410,10 +388,8 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
     // radius
     xmlChar *raw_radius = xmlGetProp(xml_node, BAD_CAST "Radius");
     if (raw_radius) {
-        char cleaned_radius[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_radius, (const char *)raw_radius, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.circle.radius = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius);
         xmlFree(raw_radius);
-        dc_node.circle.radius = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_radius);
     } else {
         dc_node.circle.radius = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -421,10 +397,8 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
     // segments
     xmlChar *raw_segments = xmlGetProp(xml_node, BAD_CAST "Segments");
     if (raw_segments) {
-        char cleaned_segments[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_segments, (const char *)raw_segments, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.circle.num_segments = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_segments);
         xmlFree(raw_segments);
-        dc_node.circle.num_segments = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_segments);
     } else {
         dc_node.circle.num_segments = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -432,10 +406,8 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
     // line width
     xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
     if (raw_line_width) {
-        char cleaned_line_width[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_line_width, (const char *)raw_line_width, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.circle.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
         xmlFree(raw_line_width);
-        dc_node.circle.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_line_width);
     } else {
         dc_node.circle.line_width = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -502,10 +474,8 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
     }
     if (raw_x_position) {
-        char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
         xmlFree(raw_x_position);
-        dc_node.button.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
     } else {
         dc_node.button.position.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -516,10 +486,8 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
     }
     if (raw_y_position) {
-        char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
         xmlFree(raw_y_position);
-        dc_node.button.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
     } else {
         dc_node.button.position.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -530,10 +498,8 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
     }
     if (raw_x_dimension) {
-        char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_dimension);
         xmlFree(raw_x_dimension);
-        dc_node.button.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
     } else {
         dc_node.button.dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -544,10 +510,8 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
     }
     if (raw_y_dimension) {
-        char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_dimension);
         xmlFree(raw_y_dimension);
-        dc_node.button.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
     } else {
         dc_node.button.dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -558,10 +522,8 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualWidth");
     }
     if (raw_x_virtual_dimension) {
-        char cleaned_x_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_virtual_dimension, (const char *)raw_x_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.virtual_dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_virtual_dimension);
         xmlFree(raw_x_virtual_dimension);
-        dc_node.button.virtual_dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
     } else {
         dc_node.button.virtual_dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -572,10 +534,8 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualHeight");
     }
     if (raw_y_virtual_dimension) {
-        char cleaned_y_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_virtual_dimension, (const char *)raw_y_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.virtual_dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_virtual_dimension);
         xmlFree(raw_y_virtual_dimension);
-        dc_node.button.virtual_dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
     } else {
         dc_node.button.virtual_dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -586,10 +546,8 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
     }
     if (raw_x_align) {
-        char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
         xmlFree(raw_x_align);
-        dc_node.button.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
     } else {
         dc_node.button.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -600,10 +558,8 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
     }
     if (raw_y_align) {
-        char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
         xmlFree(raw_y_align);
-        dc_node.button.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
     } else {
         dc_node.button.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -611,10 +567,8 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
     // parent x align
     xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
     if (raw_parent_x_align) {
-        char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
         xmlFree(raw_parent_x_align);
-        dc_node.button.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
     } else {
         dc_node.button.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -622,10 +576,8 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
     // parent y align
     xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
     if (raw_parent_y_align) {
-        char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
         xmlFree(raw_parent_y_align);
-        dc_node.button.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
     } else {
         dc_node.button.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -636,10 +588,8 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
     }
     if (raw_rotation) {
-        char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
         xmlFree(raw_rotation);
-        dc_node.button.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
     } else {
         dc_node.button.rotation = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -655,15 +605,11 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
     }
     if (raw_pivot_position_x && raw_pivot_position_y) {
 
-        char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
         xmlFree(raw_pivot_position_x);
-        dc_node.button.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-        char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.button.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
-        dc_node.button.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
         dc_node.button.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.button.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
@@ -672,20 +618,16 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
 
         xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
         if (raw_pivot_align_x) {
-            char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_x, (const char *)raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.button.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
             xmlFree(raw_pivot_align_x);
-            dc_node.button.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
         } else {
             dc_node.button.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         }
 
         xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
         if (raw_pivot_align_y) {
-            char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_y, (const char *)raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.button.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
             xmlFree(raw_pivot_align_y);
-            dc_node.button.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
         } else {
             dc_node.button.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
         }
@@ -805,7 +747,7 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         if (raw_enabled_variable) {
             dc_node.button.var_enabled = dc_app_lookup_get_var_index(app_data->lookup, (const char *)raw_enabled_variable);
         } else {
-            dc_node.button.var_enabled = DC_APP_VAR_INDEX_UNDEFINED;
+            dc_node.button.var_enabled    = DC_APP_VAR_INDEX_UNDEFINED;
             const char *initial_value_str = dc_app_lookup_get_value(app_data->lookup, dc_node.button.val_enabled_on)->value_string;
             dc_node.button.var_enabled    = _register_anonymous_variable(app_data, DC_VALUE_TYPE_STRING, initial_value_str);
         }
@@ -928,10 +870,8 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
         raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
     }
     if (raw_x_position) {
-        char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
         xmlFree(raw_x_position);
-        dc_node.container.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
     } else {
         dc_node.container.position.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -942,10 +882,8 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
         raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
     }
     if (raw_y_position) {
-        char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
         xmlFree(raw_y_position);
-        dc_node.container.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
     } else {
         dc_node.container.position.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -956,10 +894,8 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
         raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
     }
     if (raw_x_dimension) {
-        char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_dimension);
         xmlFree(raw_x_dimension);
-        dc_node.container.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
     } else {
         dc_node.container.dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -970,10 +906,8 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
         raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
     }
     if (raw_y_dimension) {
-        char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_dimension);
         xmlFree(raw_y_dimension);
-        dc_node.container.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
     } else {
         dc_node.container.dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -984,10 +918,8 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
         raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualWidth");
     }
     if (raw_x_virtual_dimension) {
-        char cleaned_x_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_virtual_dimension, (const char *)raw_x_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.virtual_dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_virtual_dimension);
         xmlFree(raw_x_virtual_dimension);
-        dc_node.container.virtual_dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
     } else {
         dc_node.container.virtual_dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -998,10 +930,8 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
         raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualHeight");
     }
     if (raw_y_virtual_dimension) {
-        char cleaned_y_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_virtual_dimension, (const char *)raw_y_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.virtual_dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_virtual_dimension);
         xmlFree(raw_y_virtual_dimension);
-        dc_node.container.virtual_dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
     } else {
         dc_node.container.virtual_dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1012,10 +942,8 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
         raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
     }
     if (raw_x_align) {
-        char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
         xmlFree(raw_x_align);
-        dc_node.container.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
     } else {
         dc_node.container.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1026,10 +954,8 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
         raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
     }
     if (raw_y_align) {
-        char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
         xmlFree(raw_y_align);
-        dc_node.container.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
     } else {
         dc_node.container.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1037,10 +963,8 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
     // parent x align
     xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
     if (raw_parent_x_align) {
-        char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
         xmlFree(raw_parent_x_align);
-        dc_node.container.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
     } else {
         dc_node.container.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1048,10 +972,8 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
     // parent y align
     xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
     if (raw_parent_y_align) {
-        char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
         xmlFree(raw_parent_y_align);
-        dc_node.container.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
     } else {
         dc_node.container.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1062,10 +984,8 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
         raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
     }
     if (raw_rotation) {
-        char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
         xmlFree(raw_rotation);
-        dc_node.container.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
     } else {
         dc_node.container.rotation = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1081,15 +1001,11 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
     }
     if (raw_pivot_position_x && raw_pivot_position_y) {
 
-        char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
         xmlFree(raw_pivot_position_x);
-        dc_node.container.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-        char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.container.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
-        dc_node.container.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
         dc_node.container.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.container.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
@@ -1098,20 +1014,16 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
 
         xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
         if (raw_pivot_align_x) {
-            char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_x, (const char *)raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.container.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
             xmlFree(raw_pivot_align_x);
-            dc_node.container.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
         } else {
             dc_node.container.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         }
 
         xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
         if (raw_pivot_align_y) {
-            char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_y, (const char *)raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.container.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
             xmlFree(raw_pivot_align_y);
-            dc_node.container.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
         } else {
             dc_node.container.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
         }
@@ -1183,10 +1095,8 @@ static _NodeIndex _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, 
     // conditional type
     xmlChar *raw_type = xmlGetProp(xml_node, BAD_CAST "Operation");
     if (raw_type) {
-        char cleaned_type[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_type, (const char *)raw_type, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.conditional.type = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_type);
         xmlFree(raw_type);
-        dc_node.conditional.type = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_type);
     } else {
         dc_node.conditional.type = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1197,10 +1107,8 @@ static _NodeIndex _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, 
         raw_value1 = xmlGetProp(xml_node, BAD_CAST "Value1");
     }
     if (raw_value1) {
-        char cleaned_value1[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_value1, (const char *)raw_value1, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.conditional.value1 = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_STRING, (const char *)raw_value1);
         xmlFree(raw_value1);
-        dc_node.conditional.value1 = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_STRING, cleaned_value1);
     } else {
         fprintf(stderr, "DCAPP _process_xml_node: Conditional: no value specified\n");
     }
@@ -1208,10 +1116,8 @@ static _NodeIndex _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, 
     // value2
     xmlChar *raw_value2 = xmlGetProp(xml_node, BAD_CAST "Value2");
     if (raw_value2) {
-        char cleaned_value2[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_value2, (const char *)raw_value2, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.conditional.value2 = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_STRING, (const char *)raw_value2);
         xmlFree(raw_value2);
-        dc_node.conditional.value2 = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_STRING, cleaned_value2);
     } else {
         dc_node.conditional.value2 = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1339,10 +1245,8 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
         raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
     }
     if (raw_x_position) {
-        char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.image.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
         xmlFree(raw_x_position);
-        dc_node.image.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
     } else {
         dc_node.image.position.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1353,10 +1257,8 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
         raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
     }
     if (raw_y_position) {
-        char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.image.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
         xmlFree(raw_y_position);
-        dc_node.image.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
     } else {
         dc_node.image.position.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1367,10 +1269,8 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
         raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
     }
     if (raw_x_dimension) {
-        char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.image.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_dimension);
         xmlFree(raw_x_dimension);
-        dc_node.image.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
     } else {
         dc_node.image.dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1381,10 +1281,8 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
         raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
     }
     if (raw_y_dimension) {
-        char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.image.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_dimension);
         xmlFree(raw_y_dimension);
-        dc_node.image.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
     } else {
         dc_node.image.dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1392,10 +1290,8 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
     // parent x align
     xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
     if (raw_parent_x_align) {
-        char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.image.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
         xmlFree(raw_parent_x_align);
-        dc_node.image.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
     } else {
         dc_node.image.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1403,10 +1299,8 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
     // parent y align
     xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
     if (raw_parent_y_align) {
-        char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.image.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
         xmlFree(raw_parent_y_align);
-        dc_node.image.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
     } else {
         dc_node.image.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1417,10 +1311,8 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
         raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
     }
     if (raw_x_align) {
-        char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.image.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
         xmlFree(raw_x_align);
-        dc_node.image.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
     } else {
         dc_node.image.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1431,10 +1323,8 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
         raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
     }
     if (raw_y_align) {
-        char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.image.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
         xmlFree(raw_y_align);
-        dc_node.image.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
     } else {
         dc_node.image.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1445,10 +1335,8 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
         raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
     }
     if (raw_rotation) {
-        char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.image.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
         xmlFree(raw_rotation);
-        dc_node.image.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
     } else {
         dc_node.image.rotation = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1464,15 +1352,11 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
     }
     if (raw_pivot_position_x && raw_pivot_position_y) {
 
-        char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.image.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
         xmlFree(raw_pivot_position_x);
-        dc_node.image.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-        char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.image.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
-        dc_node.image.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
         dc_node.image.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.image.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
@@ -1481,20 +1365,16 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
 
         xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
         if (raw_pivot_align_x) {
-            char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_x, (const char *)raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.image.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
             xmlFree(raw_pivot_align_x);
-            dc_node.image.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
         } else {
             dc_node.image.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         }
 
         xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
         if (raw_pivot_align_y) {
-            char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_y, (const char *)raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.image.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
             xmlFree(raw_pivot_align_y);
-            dc_node.image.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
         } else {
             dc_node.image.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
         }
@@ -1547,10 +1427,8 @@ static _NodeIndex _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node
         raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
     }
     if (raw_x_position) {
-        char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.line.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
         xmlFree(raw_x_position);
-        dc_node.line.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
     } else {
         dc_node.line.position.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1561,10 +1439,8 @@ static _NodeIndex _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node
         raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
     }
     if (raw_y_position) {
-        char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.line.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
         xmlFree(raw_y_position);
-        dc_node.line.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
     } else {
         dc_node.line.position.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1575,10 +1451,8 @@ static _NodeIndex _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node
         raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
     }
     if (raw_rotation) {
-        char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.line.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
         xmlFree(raw_rotation);
-        dc_node.line.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
     } else {
         dc_node.line.rotation = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1594,15 +1468,11 @@ static _NodeIndex _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node
     }
     if (raw_pivot_position_x && raw_pivot_position_y) {
 
-        char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.line.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
         xmlFree(raw_pivot_position_x);
-        dc_node.line.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-        char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.line.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
-        dc_node.line.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
     } else if (raw_pivot_position_x || raw_pivot_position_y) {
         fprintf(stderr, "DCAPP _process_xml_node(): line: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
@@ -1611,10 +1481,8 @@ static _NodeIndex _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node
     // line width
     xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
     if (raw_line_width) {
-        char cleaned_line_width[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_line_width, (const char *)raw_line_width, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.line.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
         xmlFree(raw_line_width);
-        dc_node.line.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_line_width);
     } else {
         dc_node.line.line_width = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1848,10 +1716,8 @@ static _NodeIndex _process_xml_node_panel(_AppData *app_data, xmlNodePtr xml_nod
         raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualWidth");
     }
     if (raw_x_virtual_dimension) {
-        char cleaned_x_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_virtual_dimension, (const char *)raw_x_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.panel.virtual_dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_virtual_dimension);
         xmlFree(raw_x_virtual_dimension);
-        dc_node.panel.virtual_dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
     } else {
         dc_node.panel.virtual_dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1862,10 +1728,8 @@ static _NodeIndex _process_xml_node_panel(_AppData *app_data, xmlNodePtr xml_nod
         raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualHeight");
     }
     if (raw_y_virtual_dimension) {
-        char cleaned_y_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_virtual_dimension, (const char *)raw_y_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.panel.virtual_dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_virtual_dimension);
         xmlFree(raw_y_virtual_dimension);
-        dc_node.panel.virtual_dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
     } else {
         dc_node.panel.virtual_dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1922,10 +1786,8 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
     }
     if (raw_x_position) {
-        char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.pixelstream.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
         xmlFree(raw_x_position);
-        dc_node.pixelstream.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
     } else {
         dc_node.pixelstream.position.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1936,10 +1798,8 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
     }
     if (raw_y_position) {
-        char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.pixelstream.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
         xmlFree(raw_y_position);
-        dc_node.pixelstream.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
     } else {
         dc_node.pixelstream.position.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1950,10 +1810,8 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
     }
     if (raw_x_dimension) {
-        char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.pixelstream.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_dimension);
         xmlFree(raw_x_dimension);
-        dc_node.pixelstream.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
     } else {
         dc_node.pixelstream.dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1964,10 +1822,8 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
     }
     if (raw_y_dimension) {
-        char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.pixelstream.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_dimension);
         xmlFree(raw_y_dimension);
-        dc_node.pixelstream.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
     } else {
         dc_node.pixelstream.dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1975,10 +1831,8 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
     // parent x align
     xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
     if (raw_parent_x_align) {
-        char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.pixelstream.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
         xmlFree(raw_parent_x_align);
-        dc_node.pixelstream.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
     } else {
         dc_node.pixelstream.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -1986,10 +1840,8 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
     // parent y align
     xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
     if (raw_parent_y_align) {
-        char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.pixelstream.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
         xmlFree(raw_parent_y_align);
-        dc_node.pixelstream.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
     } else {
         dc_node.pixelstream.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2000,10 +1852,8 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
     }
     if (raw_x_align) {
-        char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.pixelstream.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
         xmlFree(raw_x_align);
-        dc_node.pixelstream.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
     } else {
         dc_node.pixelstream.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2014,10 +1864,8 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
     }
     if (raw_y_align) {
-        char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.pixelstream.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
         xmlFree(raw_y_align);
-        dc_node.pixelstream.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
     } else {
         dc_node.pixelstream.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2028,10 +1876,8 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
     }
     if (raw_rotation) {
-        char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.pixelstream.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
         xmlFree(raw_rotation);
-        dc_node.pixelstream.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
     } else {
         dc_node.pixelstream.rotation = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2047,15 +1893,11 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
     }
     if (raw_pivot_position_x && raw_pivot_position_y) {
 
-        char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.pixelstream.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
         xmlFree(raw_pivot_position_x);
-        dc_node.pixelstream.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-        char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.pixelstream.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
-        dc_node.pixelstream.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
         dc_node.pixelstream.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.pixelstream.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
@@ -2064,20 +1906,16 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
 
         xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
         if (raw_pivot_align_x) {
-            char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_x, (const char *)raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.pixelstream.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
             xmlFree(raw_pivot_align_x);
-            dc_node.pixelstream.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
         } else {
             dc_node.pixelstream.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         }
 
         xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
         if (raw_pivot_align_y) {
-            char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_y, (const char *)raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.pixelstream.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
             xmlFree(raw_pivot_align_y);
-            dc_node.pixelstream.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
         } else {
             dc_node.pixelstream.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
         }
@@ -2179,10 +2017,8 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
         raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
     }
     if (raw_x_position) {
-        char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.polygon.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
         xmlFree(raw_x_position);
-        dc_node.polygon.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
     } else {
         dc_node.polygon.position.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2193,10 +2029,8 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
         raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
     }
     if (raw_y_position) {
-        char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.polygon.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
         xmlFree(raw_y_position);
-        dc_node.polygon.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
     } else {
         dc_node.polygon.position.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2207,10 +2041,8 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
         raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
     }
     if (raw_rotation) {
-        char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.polygon.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
         xmlFree(raw_rotation);
-        dc_node.polygon.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
     } else {
         dc_node.polygon.rotation = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2226,15 +2058,11 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
     }
     if (raw_pivot_position_x && raw_pivot_position_y) {
 
-        char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.polygon.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
         xmlFree(raw_pivot_position_x);
-        dc_node.polygon.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-        char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.polygon.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
-        dc_node.polygon.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
     } else if (raw_pivot_position_x || raw_pivot_position_y) {
         fprintf(stderr, "DCAPP _process_xml_node(): polygon: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
@@ -2243,10 +2071,8 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
     // line width
     xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
     if (raw_line_width) {
-        char cleaned_line_width[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_line_width, (const char *)raw_line_width, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.polygon.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
         xmlFree(raw_line_width);
-        dc_node.polygon.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_line_width);
     } else {
         dc_node.polygon.line_width = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2294,10 +2120,8 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
         raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
     }
     if (raw_x_position) {
-        char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.rectangle.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
         xmlFree(raw_x_position);
-        dc_node.rectangle.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
     } else {
         dc_node.rectangle.position.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2308,10 +2132,8 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
         raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
     }
     if (raw_y_position) {
-        char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.rectangle.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
         xmlFree(raw_y_position);
-        dc_node.rectangle.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
     } else {
         dc_node.rectangle.position.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2322,10 +2144,8 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
         raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
     }
     if (raw_x_dimension) {
-        char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.rectangle.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_dimension);
         xmlFree(raw_x_dimension);
-        dc_node.rectangle.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
     } else {
         dc_node.rectangle.dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2336,10 +2156,8 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
         raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
     }
     if (raw_y_dimension) {
-        char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.rectangle.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_dimension);
         xmlFree(raw_y_dimension);
-        dc_node.rectangle.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
     } else {
         dc_node.rectangle.dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2347,10 +2165,8 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
     // parent x align
     xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
     if (raw_parent_x_align) {
-        char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.rectangle.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
         xmlFree(raw_parent_x_align);
-        dc_node.rectangle.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
     } else {
         dc_node.rectangle.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2358,10 +2174,8 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
     // parent y align
     xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
     if (raw_parent_y_align) {
-        char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.rectangle.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
         xmlFree(raw_parent_y_align);
-        dc_node.rectangle.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
     } else {
         dc_node.rectangle.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2372,10 +2186,8 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
         raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
     }
     if (raw_x_align) {
-        char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.rectangle.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
         xmlFree(raw_x_align);
-        dc_node.rectangle.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
     } else {
         dc_node.rectangle.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2386,10 +2198,8 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
         raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
     }
     if (raw_y_align) {
-        char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.rectangle.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
         xmlFree(raw_y_align);
-        dc_node.rectangle.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
     } else {
         dc_node.rectangle.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2400,10 +2210,8 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
         raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
     }
     if (raw_rotation) {
-        char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.rectangle.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
         xmlFree(raw_rotation);
-        dc_node.rectangle.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
     } else {
         dc_node.rectangle.rotation = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2419,15 +2227,11 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
     }
     if (raw_pivot_position_x && raw_pivot_position_y) {
 
-        char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.rectangle.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
         xmlFree(raw_pivot_position_x);
-        dc_node.rectangle.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-        char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.rectangle.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
-        dc_node.rectangle.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
         dc_node.rectangle.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.rectangle.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
@@ -2436,20 +2240,16 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
 
         xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
         if (raw_pivot_align_x) {
-            char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_x, (const char *)raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.rectangle.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
             xmlFree(raw_pivot_align_x);
-            dc_node.rectangle.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
         } else {
             dc_node.rectangle.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         }
 
         xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
         if (raw_pivot_align_y) {
-            char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_y, (const char *)raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.rectangle.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
             xmlFree(raw_pivot_align_y);
-            dc_node.rectangle.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
         } else {
             dc_node.rectangle.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
         }
@@ -2463,10 +2263,8 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
     // line width
     xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
     if (raw_line_width) {
-        char cleaned_line_width[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_line_width, (const char *)raw_line_width, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.rectangle.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
         xmlFree(raw_line_width);
-        dc_node.rectangle.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_line_width);
     } else {
         dc_node.rectangle.line_width = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2505,10 +2303,8 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
     // variable
     xmlChar *raw_variable = xmlGetProp(xml_node, BAD_CAST "Variable");
     if (raw_variable) {
-        char cleaned_variable[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_variable, (const char *)raw_variable, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.set.var_index = dc_app_lookup_get_var_index(app_data->lookup, (const char *)raw_variable);
         xmlFree(raw_variable);
-        dc_node.set.var_index = dc_app_lookup_get_var_index(app_data->lookup, cleaned_variable);
     } else {
         fprintf(stderr, "DCAPP _process_xml_node: Missing attribute 'Variable' in <Set> element\n");
     }
@@ -2516,10 +2312,8 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
     // operand
     xmlChar *raw_operand = xmlNodeGetContent(xml_node);
     if (raw_operand) {
-        char cleaned_operand[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_operand, (const char *)raw_operand, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_operand);
         xmlFree(raw_operand);
-        dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_operand);
     } else {
         fprintf(stderr, "DCAPP _process_xml_node: Missing Node content in <Set> element\n");
     }
@@ -2527,10 +2321,8 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
     // operator
     xmlChar *raw_operator = xmlGetProp(xml_node, BAD_CAST "Operator");
     if (raw_operator) {
-        char cleaned_operator[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_operator, (const char *)raw_operator, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.set.operation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_operator);
         xmlFree(raw_operator);
-        dc_node.set.operation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_operator);
     } else {
         dc_node.set.operation = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2560,10 +2352,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
     }
     if (raw_x_position) {
-        char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
         xmlFree(raw_x_position);
-        dc_node.terrain.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
     } else {
         dc_node.terrain.position.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2574,10 +2364,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
     }
     if (raw_y_position) {
-        char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
         xmlFree(raw_y_position);
-        dc_node.terrain.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
     } else {
         dc_node.terrain.position.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2588,10 +2376,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
     }
     if (raw_x_dimension) {
-        char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_dimension);
         xmlFree(raw_x_dimension);
-        dc_node.terrain.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_dimension);
     } else {
         dc_node.terrain.dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2602,10 +2388,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
     }
     if (raw_y_dimension) {
-        char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_dimension);
         xmlFree(raw_y_dimension);
-        dc_node.terrain.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_dimension);
     } else {
         dc_node.terrain.dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2616,10 +2400,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
     }
     if (raw_x_align) {
-        char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
         xmlFree(raw_x_align);
-        dc_node.terrain.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
     } else {
         dc_node.terrain.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2630,10 +2412,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
     }
     if (raw_y_align) {
-        char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
         xmlFree(raw_y_align);
-        dc_node.terrain.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
     } else {
         dc_node.terrain.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2641,10 +2421,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     // parent x align
     xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
     if (raw_parent_x_align) {
-        char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
         xmlFree(raw_parent_x_align);
-        dc_node.terrain.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
     } else {
         dc_node.terrain.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2652,10 +2430,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     // parent y align
     xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
     if (raw_parent_y_align) {
-        char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
         xmlFree(raw_parent_y_align);
-        dc_node.terrain.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
     } else {
         dc_node.terrain.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2666,10 +2442,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
     }
     if (raw_rotation) {
-        char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
         xmlFree(raw_rotation);
-        dc_node.terrain.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
     } else {
         dc_node.terrain.rotation = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -2685,15 +2459,11 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     }
     if (raw_pivot_position_x && raw_pivot_position_y) {
 
-        char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
         xmlFree(raw_pivot_position_x);
-        dc_node.terrain.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-        char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
-        dc_node.terrain.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
         dc_node.terrain.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.terrain.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
@@ -2702,20 +2472,16 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
 
         xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
         if (raw_pivot_align_x) {
-            char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_x, (const char *)raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.terrain.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
             xmlFree(raw_pivot_align_x);
-            dc_node.terrain.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
         } else {
             dc_node.terrain.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         }
 
         xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
         if (raw_pivot_align_y) {
-            char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_y, (const char *)raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.terrain.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
             xmlFree(raw_pivot_align_y);
-            dc_node.terrain.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
         } else {
             dc_node.terrain.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
         }
@@ -2729,10 +2495,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     // lat
     xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
     if (raw_lat) {
-        char cleaned_lat[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_lat, (const char *)raw_lat, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.lle.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
         xmlFree(raw_lat);
-        dc_node.terrain.lle.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_lat);
     } else {
         fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Latitude with Terrain primitive");
     }
@@ -2740,10 +2504,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     // lon
     xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
     if (raw_lon) {
-        char cleaned_lon[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_lon, (const char *)raw_lon, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.lle.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
         xmlFree(raw_lon);
-        dc_node.terrain.lle.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_lon);
     } else {
         fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Longitude with Terrain primitive");
     }
@@ -2751,10 +2513,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     // ele
     xmlChar *raw_ele = xmlGetProp(xml_node, BAD_CAST "Elevation");
     if (raw_ele) {
-        char cleaned_ele[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_ele, (const char *)raw_ele, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.lle.ele = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_ele);
         xmlFree(raw_ele);
-        dc_node.terrain.lle.ele = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_ele);
     } else {
         fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Elevation with Terrain primitive");
     }
@@ -2762,10 +2522,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     // roll
     xmlChar *raw_roll = xmlGetProp(xml_node, BAD_CAST "Roll");
     if (raw_roll) {
-        char cleaned_roll[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_roll, (const char *)raw_roll, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.rpy.roll = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_roll);
         xmlFree(raw_roll);
-        dc_node.terrain.rpy.roll = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_roll);
     } else {
         fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Roll with Terrain primitive");
     }
@@ -2773,10 +2531,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     // pitch
     xmlChar *raw_pitch = xmlGetProp(xml_node, BAD_CAST "Pitch");
     if (raw_pitch) {
-        char cleaned_pitch[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pitch, (const char *)raw_pitch, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.rpy.pitch = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pitch);
         xmlFree(raw_pitch);
-        dc_node.terrain.rpy.pitch = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pitch);
     } else {
         fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Pitch with Terrain primitive");
     }
@@ -2784,10 +2540,8 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     // yaw
     xmlChar *raw_yaw = xmlGetProp(xml_node, BAD_CAST "Yaw");
     if (raw_yaw) {
-        char cleaned_yaw[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_yaw, (const char *)raw_yaw, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.terrain.rpy.yaw = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_yaw);
         xmlFree(raw_yaw);
-        dc_node.terrain.rpy.yaw = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_yaw);
     } else {
         fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Yaw with Terrain primitive");
     }
@@ -2995,10 +2749,8 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
     }
     if (raw_x_position) {
-        char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.text.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
         xmlFree(raw_x_position);
-        dc_node.text.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
     } else {
         dc_node.text.position.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -3009,10 +2761,8 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
     }
     if (raw_y_position) {
-        char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.text.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
         xmlFree(raw_y_position);
-        dc_node.text.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
     } else {
         dc_node.text.position.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -3023,10 +2773,8 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
     }
     if (raw_x_align) {
-        char cleaned_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_align, (const char *)raw_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.text.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
         xmlFree(raw_x_align);
-        dc_node.text.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_x_align);
     } else {
         dc_node.text.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -3037,10 +2785,8 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
     }
     if (raw_y_align) {
-        char cleaned_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_align, (const char *)raw_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.text.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
         xmlFree(raw_y_align);
-        dc_node.text.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_y_align);
     } else {
         dc_node.text.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -3048,10 +2794,8 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     // parent x align
     xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
     if (raw_parent_x_align) {
-        char cleaned_parent_x_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_x_align, (const char *)raw_parent_x_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.text.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
         xmlFree(raw_parent_x_align);
-        dc_node.text.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_x_align);
     } else {
         dc_node.text.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -3059,10 +2803,8 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     // parent y align
     xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
     if (raw_parent_y_align) {
-        char cleaned_parent_y_align[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_parent_y_align, (const char *)raw_parent_y_align, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.text.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
         xmlFree(raw_parent_y_align);
-        dc_node.text.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_parent_y_align);
     } else {
         dc_node.text.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -3073,10 +2815,8 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
     }
     if (raw_rotation) {
-        char cleaned_rotation[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_rotation, (const char *)raw_rotation, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.text.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
         xmlFree(raw_rotation);
-        dc_node.text.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_rotation);
     } else {
         dc_node.text.rotation = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -3092,15 +2832,11 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     }
     if (raw_pivot_position_x && raw_pivot_position_y) {
 
-        char cleaned_pivot_position_x[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_x, (const char *)raw_pivot_position_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.text.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
         xmlFree(raw_pivot_position_x);
-        dc_node.text.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_x);
 
-        char cleaned_pivot_position_y[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_pivot_position_y, (const char *)raw_pivot_position_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.text.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
-        dc_node.text.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_pivot_position_y);
 
         dc_node.text.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.text.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
@@ -3109,20 +2845,16 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
 
         xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
         if (raw_pivot_align_x) {
-            char cleaned_pivot_align_x[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_x, (const char *)raw_pivot_align_x, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.text.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
             xmlFree(raw_pivot_align_x);
-            dc_node.text.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_x);
         } else {
             dc_node.text.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
         }
 
         xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
         if (raw_pivot_align_y) {
-            char cleaned_pivot_align_y[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_pivot_align_y, (const char *)raw_pivot_align_y, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            dc_node.text.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
             xmlFree(raw_pivot_align_y);
-            dc_node.text.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, cleaned_pivot_align_y);
         } else {
             dc_node.text.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
         }
@@ -3136,10 +2868,8 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     // size
     xmlChar *raw_size = xmlGetProp(xml_node, BAD_CAST "Size");
     if (raw_size) {
-        char cleaned_size[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_size, (const char *)raw_size, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.text.size = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_size);
         xmlFree(raw_size);
-        dc_node.text.size = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_size);
     } else {
         dc_node.text.size = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -3186,10 +2916,8 @@ static _NodeIndex _process_xml_node_trick_io(_AppData *app_data, xmlNodePtr xml_
     xmlChar *raw_port = xmlGetProp(xml_node, BAD_CAST "Port");
     int      port     = 0;
     if (raw_port) {
-        char cleaned_port[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_port, (const char *)raw_port, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        port = (int)dc_utils_string_to_double((const char *)raw_port);
         xmlFree(raw_port);
-        port = (int)dc_utils_string_to_double(cleaned_port);
     } else {
         fprintf(stderr, "DCApp _process_xml_node: Missing Port for TrickIO\n");
     }
@@ -3198,10 +2926,8 @@ static _NodeIndex _process_xml_node_trick_io(_AppData *app_data, xmlNodePtr xml_
     xmlChar *raw_data_rate = xmlGetProp(xml_node, BAD_CAST "Rotation");
     double   data_rate     = 0.1;
     if (raw_data_rate) {
-        char cleaned_data_rate[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_data_rate, (const char *)raw_data_rate, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        data_rate = dc_utils_string_to_double((const char *)raw_data_rate);
         xmlFree(raw_data_rate);
-        data_rate = dc_utils_string_to_double(cleaned_data_rate);
     }
 
     // create trick instance
@@ -3349,19 +3075,15 @@ static _NodeIndex _process_xml_node_variable(_AppData *app_data, xmlNodePtr xml_
     xmlChar    *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");
     DcValueType type     = DC_VALUE_TYPE_STRING;
     if (raw_type) {
-        char cleaned_type[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_type, (const char *)raw_type, DC_VALUE_STRING_BUFFER_SIZE - 1);
-        type = dc_app_value_type_from_string(cleaned_type);
+        type = dc_app_value_type_from_string((const char *)raw_type);
         xmlFree(raw_type);
     }
 
     xmlChar *raw_initial_value = xmlGetProp(xml_node, BAD_CAST "InitialValue");
     DcValue  initial_value;
     if (raw_initial_value) {
-        char cleaned_initial_value[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_initial_value, (const char *)raw_initial_value, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        initial_value = dc_value_create_value_string((const char *)raw_initial_value);
         xmlFree(raw_initial_value);
-        initial_value = dc_value_create_value_string(cleaned_initial_value);
     } else {
         initial_value = dc_value_create_value_string("");
     }
@@ -3393,10 +3115,8 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
                 raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
             }
             if (raw_x_position) {
-                char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
                 xmlFree(raw_x_position);
-                position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_position);
             } else {
                 fprintf(stderr, "DCAPP _process_xml_node: Invalid Vertex: No X attribute\n");
             }
@@ -3407,10 +3127,8 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
                 raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
             }
             if (raw_y_position) {
-                char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
                 xmlFree(raw_y_position);
-                position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_position);
             } else {
                 fprintf(stderr, "DCAPP _process_xml_node: Invalid Vertex: No Y attribute\n");
             }
@@ -3458,10 +3176,8 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
     // title
     xmlChar *raw_title = xmlGetProp(xml_node, BAD_CAST "Title");
     if (raw_title) {
-        char cleaned_title[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_title, (const char *)raw_title, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.window.title = strdup((const char *)raw_title);
         xmlFree(raw_title);
-        dc_node.window.title = strdup(cleaned_title);
     } else {
         dc_node.window.title = strdup("dcapp");
     }
@@ -3472,10 +3188,8 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
     }
     if (raw_x_position) {
-        char cleaned_x_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_position, (const char *)raw_x_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.window.init_position.x = (float)dc_utils_string_to_double((const char *)raw_x_position);
         xmlFree(raw_x_position);
-        dc_node.window.init_position.x = (float)dc_utils_string_to_double(cleaned_x_position);
     } else {
         dc_node.window.init_position.x = 0.0f;
     }
@@ -3486,10 +3200,8 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
     }
     if (raw_y_position) {
-        char cleaned_y_position[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_position, (const char *)raw_y_position, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.window.init_position.y = (float)dc_utils_string_to_double((const char *)raw_y_position);
         xmlFree(raw_y_position);
-        dc_node.window.init_position.y = (float)dc_utils_string_to_double(cleaned_y_position);
     } else {
         dc_node.window.init_position.y = 0.0f;
     }
@@ -3500,10 +3212,8 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
     }
     if (raw_x_dimension) {
-        char cleaned_x_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_dimension, (const char *)raw_x_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.window.init_dimension.x = (float)dc_utils_string_to_double((const char *)raw_x_dimension);
         xmlFree(raw_x_dimension);
-        dc_node.window.init_dimension.x = (float)dc_utils_string_to_double(cleaned_x_dimension);
     } else {
         fprintf(stderr, "DCApp _process_xml_node: missing x dimension for Window\n");
     }
@@ -3514,10 +3224,8 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
     }
     if (raw_y_dimension) {
-        char cleaned_y_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_dimension, (const char *)raw_y_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.window.init_dimension.y = (float)dc_utils_string_to_double((const char *)raw_y_dimension);
         xmlFree(raw_y_dimension);
-        dc_node.window.init_dimension.y = (float)dc_utils_string_to_double(cleaned_y_dimension);
     } else {
         fprintf(stderr, "DCApp _process_xml_node: missing y dimension for Window\n");
     }
@@ -3528,10 +3236,8 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         raw_x_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualWidth");
     }
     if (raw_x_virtual_dimension) {
-        char cleaned_x_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_x_virtual_dimension, (const char *)raw_x_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.window.virtual_dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_virtual_dimension);
         xmlFree(raw_x_virtual_dimension);
-        dc_node.window.virtual_dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_x_virtual_dimension);
     } else {
         dc_node.window.virtual_dimension.x = DC_APP_VAL_INDEX_UNDEFINED;
     }
@@ -3542,10 +3248,8 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         raw_y_virtual_dimension = xmlGetProp(xml_node, BAD_CAST "VirtualHeight");
     }
     if (raw_y_virtual_dimension) {
-        char cleaned_y_virtual_dimension[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned_y_virtual_dimension, (const char *)raw_y_virtual_dimension, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dc_node.window.virtual_dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_virtual_dimension);
         xmlFree(raw_y_virtual_dimension);
-        dc_node.window.virtual_dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, cleaned_y_virtual_dimension);
     } else {
         dc_node.window.virtual_dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
