@@ -1,189 +1,411 @@
-# Button Element
+# dcapp Button Reference
 
-The `<Button>` element creates an interactive button with configurable behavior, visual states, and variable bindings.
+A comprehensive guide to creating interactive buttons in dcapp.
 
-## Button Types
+---
 
-Set via the `Type` attribute:
+## Overview
 
-| Type | Behavior |
-|------|----------|
-| `Standard` | Press sets switch variable to on-value. No release behavior. No state checking. |
-| `Momentary` | Press sets switch to on-value, release sets it to off-value. Like a push-to-talk button. |
-| `Toggle` | Each press flips between on and off states. Checks indicator state before acting. |
-
-Default is `Standard` if not specified.
-
-## Variable System
-
-Buttons use up to four variable concepts, each with associated comparison values:
-
-### 1. Switch Variable (command)
-The variable that gets *written* when you interact with the button.
-
-| Attribute | Description |
-|-----------|-------------|
-| `SwitchVariable` | Variable name to write to |
-| `SwitchOn` | Value written when turning on (default: `1`) |
-| `SwitchOff` | Value written when turning off (default: `0`) |
-
-### 2. Indicator Variable (feedback)
-The variable that determines the button's *visual state* (on/off appearance).
-
-| Attribute | Description |
-|-----------|-------------|
-| `IndicatorVariable` | Variable name to read from |
-| `IndicatorOn` | Value that means "on" state (default: `1`) |
-
-### 3. Active Variable (enabled/disabled)
-Controls whether the button accepts input.
-
-| Attribute | Description |
-|-----------|-------------|
-| `ActiveVariable` | Variable name to check |
-| `ActiveOn` | Value that means "enabled" (default: `1`) |
-
-If `ActiveVariable` is not specified, the button is always enabled.
-
-### 4. Base Variable (shorthand)
-Convenience attributes that feed into Switch and Indicator:
-
-| Attribute | Description |
-|-----------|-------------|
-| `Variable` | Base variable name |
-| `On` | Base on-value |
-| `Off` | Base off-value |
-
-## Variable Inheritance
-
-The system uses a cascading inheritance pattern to reduce repetition:
-
-```
-Variable    →  SwitchVariable    →  IndicatorVariable
-On          →  SwitchOn          →  IndicatorOn
-Off         →  SwitchOff
-```
-
-**Inheritance rules:**
-
-1. If `SwitchVariable` is not set, it inherits from `Variable`
-2. If `SwitchOn` is not set, it inherits from `On`
-3. If `SwitchOff` is not set, it inherits from `Off`
-4. If `IndicatorVariable` is not set, it inherits from `SwitchVariable`
-5. If `IndicatorOn` is not set, it inherits from `SwitchOn`
-
-**Final defaults** (if still unset after inheritance):
-- `SwitchOn` → `1`
-- `SwitchOff` → `0`
-- `IndicatorOn` → `1`
-- `ActiveOn` → `1` (only if `ActiveVariable` is specified)
-
-**Anonymous variable creation:**
-- If no `SwitchVariable` is specified (even after inheritance), an anonymous internal variable is created automatically
-
-### Examples
-
-**Minimal usage** - all variables are the same:
-```xml
-<Button Type="Toggle" Variable="my_switch" On="1" Off="0">
-```
-Equivalent to setting `SwitchVariable="my_switch"`, `IndicatorVariable="my_switch"`, etc.
-
-**Separate command and feedback:**
-```xml
-<Button Type="Toggle" 
-        SwitchVariable="cmd_light" SwitchOn="1" SwitchOff="0"
-        IndicatorVariable="status_light" IndicatorOn="1">
-```
-Writes to `cmd_light`, but visual state is determined by `status_light`.
-
-**With enable/disable control:**
-```xml
-<Button Type="Toggle" Variable="pump" ActiveVariable="system_ready">
-```
-Button only works when `system_ready == 1`.
-
-## Transition State
-
-When `SwitchVariable` and `IndicatorVariable` are *different*, an internal transition variable is automatically created. This tracks the "pending" state:
-
-| Transition Value | Meaning |
-|------------------|---------|
-| `1` | Commanded ON, waiting for indicator to confirm |
-| `-1` | Commanded OFF, waiting for indicator to confirm |
-| `0` | Stable - indicator matches last command |
-
-This is useful for hardware control where there's latency between sending a command and receiving confirmation.
-
-## Child Elements
-
-Visual content for different button states:
-
-| Element | When Displayed |
-|---------|----------------|
-| `<On>` | Indicator shows on state |
-| `<Off>` | Indicator shows off state |
-| `<Enabled>` | Button is enabled (accepts input) |
-| `<Disabled>` | Button is disabled (ignores input) |
-| `<Transition>` | Waiting for indicator to catch up to switch |
-| `<MousePressed>` | Mouse button is held down |
-| `<MouseReleased>` | Mouse button released (momentary display) |
-
-Child elements can contain any visual elements (images, shapes, text, etc.).
-
-## Transform Attributes
-
-Standard positioning and transformation:
-
-| Attribute | Aliases | Description |
-|-----------|---------|-------------|
-| `PositionX` | `X` | X position |
-| `PositionY` | `Y` | Y position |
-| `DimensionX` | `Width` | Width |
-| `DimensionY` | `Height` | Height |
-| `VirtualDimensionX` | `VirtualWidth` | Virtual width for scaling |
-| `VirtualDimensionY` | `VirtualHeight` | Virtual height for scaling |
-| `LocalAlignX` | `HorizontalAlign` | Horizontal alignment |
-| `LocalAlignY` | `VerticalAlign` | Vertical alignment |
-| `ParentAlignX` | | Parent horizontal alignment |
-| `ParentAlignY` | | Parent vertical alignment |
-| `Rotation` | `Rotate` | Rotation angle |
-| `PivotPositionX` | `PivotX` | Pivot X position |
-| `PivotPositionY` | `PivotY` | Pivot Y position |
-| `PivotLocalAlignX` | | Pivot horizontal alignment |
-| `PivotLocalAlignY` | | Pivot vertical alignment |
-
-## Complete Example
+The `<Button>` element creates interactive UI controls with multiple visual states. Buttons can toggle variables, respond to clicks, and display different content based on their current state.
 
 ```xml
-<Button Type="Toggle" 
-        X="100" Y="200" Width="80" Height="40"
-        SwitchVariable="cmd_pump" 
-        IndicatorVariable="status_pump"
-        ActiveVariable="system_armed" ActiveOn="1">
-    
+<Button X="100" Y="100" Width="80" Height="40" Variable="myVar" On="1" Off="0">
     <Enabled>
-        <On>
-            <Image File="pump_on.png"/>
-        </On>
-        <Off>
-            <Image File="pump_off.png"/>
-        </Off>
-        <Transition>
-            <Image File="pump_pending.png"/>
-        </Transition>
+        <On><!-- Content when indicator matches "on" value --></On>
+        <Off><!-- Content when indicator matches "off" value --></Off>
     </Enabled>
-    
-    <Disabled>
-        <Image File="pump_disabled.png"/>
-    </Disabled>
-    
 </Button>
 ```
 
-This creates a toggle button that:
-- Writes to `cmd_pump` when clicked
-- Shows on/off state based on `status_pump`
-- Only works when `system_armed == 1`
-- Shows a "pending" image while waiting for confirmation
-- Shows a grayed-out image when disabled
+---
+
+## Positioning & Transformation Attributes
+
+These attributes control where and how the button is rendered.
+
+### Position
+
+| Attribute | Alias | Type | Description |
+|-----------|-------|------|-------------|
+| `PositionX` | `X` | number/var | X position relative to parent |
+| `PositionY` | `Y` | number/var | Y position relative to parent |
+
+### Dimensions
+
+| Attribute | Alias | Type | Description |
+|-----------|-------|------|-------------|
+| `DimensionX` | `Width` | number/var | Button width (default: parent width) |
+| `DimensionY` | `Height` | number/var | Button height (default: parent height) |
+| `VirtualDimensionX` | `VirtualWidth` | number/var | Virtual coordinate width for children |
+| `VirtualDimensionY` | `VirtualHeight` | number/var | Virtual coordinate height for children |
+
+### Alignment
+
+| Attribute | Alias | Type | Description |
+|-----------|-------|------|-------------|
+| `LocalAlignX` | `HorizontalAlign` | align | Which point on the button is placed at its position (horizontal) |
+| `LocalAlignY` | `VerticalAlign` | align | Which point on the button is placed at its position (vertical) |
+| `ParentAlignX` | — | align | Which point on the parent to align to (horizontal) |
+| `ParentAlignY` | — | align | Which point on the parent to align to (vertical) |
+
+**Alignment Constants:**
+
+| Horizontal | Vertical | Value |
+|------------|----------|-------|
+| `#_align_left_` | `#_align_bottom_` | 0 (default) |
+| `#_align_center_` | `#_align_middle_` | 1 |
+| `#_align_right_` | `#_align_top_` | 2 |
+
+### Rotation & Pivot
+
+| Attribute | Alias | Type | Description |
+|-----------|-------|------|-------------|
+| `Rotation` | `Rotate` | number/var | Rotation angle in degrees |
+| `PivotPositionX` | `PivotX` | number/var | Absolute X coordinate of rotation pivot |
+| `PivotPositionY` | `PivotY` | number/var | Absolute Y coordinate of rotation pivot |
+| `PivotLocalAlignX` | — | align | Pivot point as alignment (horizontal) |
+| `PivotLocalAlignY` | — | align | Pivot point as alignment (vertical) |
+
+**Note:** Use either `PivotPositionX`/`PivotPositionY` (both required together) OR `PivotLocalAlignX`/`PivotLocalAlignY`, not both.
+
+---
+
+## Button Type
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `Type` | integer | Button behavior type |
+
+**Type Constants:**
+
+| Constant | Description |
+|----------|-------------|
+| `#_button_standard_` | Standard button - sets target to "on" value when clicked (default) |
+| `#_button_momentary_` | Momentary button - "on" while pressed, "off" when released |
+| `#_button_toggle_` | Toggle button - alternates between "on" and "off" each click |
+
+---
+
+## Value Attributes
+
+These attributes define what values represent the "on" and "off" states.
+
+| Attribute | Description | Default |
+|-----------|-------------|---------|
+| `On` | Default "on" value (used by TargetOn and IndicatorOn if not specified) | `1` |
+| `Off` | Default "off" value (used by TargetOff if not specified) | `0` |
+| `TargetOn` | Value written to target variable when button activates | Inherits from `On` |
+| `TargetOff` | Value written to target variable when button deactivates | Inherits from `Off` |
+| `IndicatorOn` | Value that causes indicator to show "on" state | Inherits from `TargetOn` |
+| `EnabledOn` | Value that means button is enabled/interactive | `1` |
+
+### Value Inheritance Diagram
+
+```
+On ─────────┬──────────► TargetOn ──────► IndicatorOn
+            │
+Off ────────┴──────────► TargetOff
+
+EnabledOn (independent, defaults to 1)
+```
+
+---
+
+## Variable Attributes
+
+These attributes define which variables the button reads from and writes to.
+
+| Attribute | Description | Default |
+|-----------|-------------|---------|
+| `Variable` | Default variable (used by all others if not specified) | Creates anonymous variable |
+| `TargetVariable` | Variable modified when button is clicked | Inherits from `Variable` |
+| `IndicatorVariable` | Variable checked for visual indicator state | Inherits from `TargetVariable` |
+| `EnabledVariable` | Variable checked to determine if button is enabled | Creates anonymous variable (always enabled) |
+
+### Variable Inheritance Diagram
+
+```
+Variable ──────┬──────────► TargetVariable ──────► IndicatorVariable
+               │
+               └──────────► (EnabledVariable is independent)
+```
+
+---
+
+## Child Elements (Visual States)
+
+Buttons use child elements to define their appearance in different states.
+
+### State Hierarchy
+
+```
+<Button>
+    <Enabled>           <!-- Shown when button is interactive -->
+        <On>            <!-- Shown when indicator matches "on" value -->
+        <Off>           <!-- Shown when indicator matches "off" value -->
+        <Transition>    <!-- Shown during state change (optional) -->
+    </Enabled>
+    <Disabled>          <!-- Shown when button is not interactive -->
+    <Pressed>           <!-- Actions/content when mouse down -->
+    <Released>          <!-- Actions/content when mouse up -->
+</Button>
+```
+
+### Child Element Reference
+
+| Element | Also Known As | Description |
+|---------|---------------|-------------|
+| `<Enabled>` | — | Container for enabled state visuals |
+| `<Disabled>` | — | Content shown when button is disabled |
+| `<IndicatorOn>` | `<On>` | Content shown when indicator variable equals IndicatorOn value |
+| `<IndicatorOff>` | `<Off>` | Content shown when indicator variable does not equal IndicatorOn value |
+| `<Transition>` | — | Content shown during state transition |
+| `<Pressed>` | — | Content/actions executed on mouse button down |
+| `<Released>` | — | Content/actions executed on mouse button up |
+
+---
+
+## Examples
+
+### Simple Toggle Button
+
+A basic on/off toggle that controls a single variable:
+
+```xml
+<Variable Type="string" InitialValue="OFF">power</Variable>
+
+<Button X="100" Y="100" Width="100" Height="50" 
+        Variable="power" On="ON" Off="OFF" Type="#_button_toggle_">
+    <Enabled>
+        <On>
+            <Rectangle FillColor="0,0.7,0,1" Width="100" Height="50"/>
+            <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1" Size="18">POWER ON</Text>
+        </On>
+        <Off>
+            <Rectangle FillColor="0.5,0,0,1" Width="100" Height="50"/>
+            <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1" Size="18">POWER OFF</Text>
+        </Off>
+    </Enabled>
+</Button>
+```
+
+### Momentary Button
+
+A button that's only "on" while being held:
+
+```xml
+<Variable Type="integer" InitialValue="0">firing</Variable>
+
+<Button X="200" Y="300" Width="80" Height="80"
+        Variable="firing" On="1" Off="0" Type="#_button_momentary_">
+    <Enabled>
+        <On>
+            <Circle X="40" Y="40" Radius="38" FillColor="1,0,0,1"/>
+            <Text X="40" Y="40" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1" Size="14">FIRING</Text>
+        </On>
+        <Off>
+            <Circle X="40" Y="40" Radius="38" FillColor="0.3,0,0,1"/>
+            <Text X="40" Y="40" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="0.7,0.7,0.7,1" Size="14">FIRE</Text>
+        </Off>
+    </Enabled>
+</Button>
+```
+
+### Button with Separate Indicator
+
+Control one variable while displaying another's state:
+
+```xml
+<Variable Type="string" InitialValue="OFF">engine_command</Variable>
+<Variable Type="string" InitialValue="OFF">engine_status</Variable>
+
+<Button X="100" Y="100" Width="120" Height="60"
+        TargetVariable="engine_command"
+        IndicatorVariable="engine_status"
+        On="ON" Off="OFF"
+        Type="#_button_standard_">
+    <Enabled>
+        <On>
+            <Rectangle FillColor="0,0.6,0,1" Width="120" Height="60"/>
+            <Text X="60" Y="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1">ENGINE RUNNING</Text>
+        </On>
+        <Off>
+            <Rectangle FillColor="0.4,0.4,0.4,1" Width="120" Height="60"/>
+            <Text X="60" Y="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1">START ENGINE</Text>
+        </Off>
+    </Enabled>
+</Button>
+```
+
+### Button with Disabled State
+
+A button that can be disabled based on a condition:
+
+```xml
+<Variable Type="integer" InitialValue="1">systemReady</Variable>
+<Variable Type="string" InitialValue="SAFE">armState</Variable>
+
+<Button X="100" Y="100" Width="100" Height="50"
+        TargetVariable="armState"
+        EnabledVariable="systemReady"
+        EnabledOn="1"
+        On="ARMED" Off="SAFE"
+        Type="#_button_toggle_">
+    <Enabled>
+        <On>
+            <Rectangle FillColor="1,0,0,1" Width="100" Height="50"/>
+            <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1" Size="16">ARMED</Text>
+        </On>
+        <Off>
+            <Rectangle FillColor="0,0.5,0,1" Width="100" Height="50"/>
+            <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1" Size="16">SAFE</Text>
+        </Off>
+    </Enabled>
+    <Disabled>
+        <Rectangle FillColor="0.2,0.2,0.2,1" Width="100" Height="50"/>
+        <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+              FillColor="0.5,0.5,0.5,1" Size="16">OFFLINE</Text>
+    </Disabled>
+</Button>
+```
+
+### Button with Press/Release Actions
+
+A button that executes actions on press and release:
+
+```xml
+<Variable Type="double" InitialValue="0">throttle</Variable>
+
+<Button X="100" Y="100" Width="60" Height="40" Type="#_button_momentary_">
+    <Pressed>
+        <Set Variable="throttle" Operator="#_set_add_">10</Set>
+    </Pressed>
+    <Enabled>
+        <Off>
+            <Rectangle FillColor="0.3,0.3,0.6,1" Width="60" Height="40"/>
+            <Text X="30" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1">+10</Text>
+        </Off>
+        <On>
+            <Rectangle FillColor="0.5,0.5,0.9,1" Width="60" Height="40"/>
+            <Text X="30" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1">+10</Text>
+        </On>
+    </Enabled>
+</Button>
+```
+
+### Rotated Button
+
+A button with rotation around its center:
+
+```xml
+<Button X="200" Y="200" Width="100" Height="40"
+        Rotation="45"
+        PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_middle_"
+        Variable="diagonal" On="1" Off="0" Type="#_button_toggle_">
+    <Enabled>
+        <Off>
+            <Rectangle FillColor="0.4,0.4,0.4,1" Width="100" Height="40"/>
+            <Text X="50" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1">DIAGONAL</Text>
+        </Off>
+        <On>
+            <Rectangle FillColor="0.2,0.6,0.8,1" Width="100" Height="40"/>
+            <Text X="50" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1">ACTIVE</Text>
+        </On>
+    </Enabled>
+</Button>
+```
+
+---
+
+## Common Patterns
+
+### Radio Button Group
+
+Use separate buttons with a shared variable:
+
+```xml
+<Variable Type="string" InitialValue="A">selection</Variable>
+
+<Button X="10" Y="100" Width="60" Height="30" Variable="selection" On="A" Type="#_button_standard_">
+    <Enabled>
+        <On><Rectangle FillColor="0,0.6,0,1" Width="60" Height="30"/></On>
+        <Off><Rectangle FillColor="0.3,0.3,0.3,1" Width="60" Height="30"/></Off>
+    </Enabled>
+</Button>
+
+<Button X="80" Y="100" Width="60" Height="30" Variable="selection" On="B" Type="#_button_standard_">
+    <Enabled>
+        <On><Rectangle FillColor="0,0.6,0,1" Width="60" Height="30"/></On>
+        <Off><Rectangle FillColor="0.3,0.3,0.3,1" Width="60" Height="30"/></Off>
+    </Enabled>
+</Button>
+
+<Button X="150" Y="100" Width="60" Height="30" Variable="selection" On="C" Type="#_button_standard_">
+    <Enabled>
+        <On><Rectangle FillColor="0,0.6,0,1" Width="60" Height="30"/></On>
+        <Off><Rectangle FillColor="0.3,0.3,0.3,1" Width="60" Height="30"/></Off>
+    </Enabled>
+</Button>
+```
+
+### Increment/Decrement Pair
+
+```xml
+<Variable Type="double" InitialValue="50">value</Variable>
+
+<Button X="100" Y="100" Width="40" Height="40">
+    <Pressed><Set Variable="value" Operator="#_set_subtract_">1</Set></Pressed>
+    <Enabled>
+        <Off><Rectangle FillColor="0.4,0.2,0.2,1" Width="40" Height="40"/>
+             <Text X="20" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" 
+                   FillColor="1,1,1,1" Size="24">−</Text></Off>
+        <On><Rectangle FillColor="0.6,0.3,0.3,1" Width="40" Height="40"/>
+            <Text X="20" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" 
+                  FillColor="1,1,1,1" Size="24">−</Text></On>
+    </Enabled>
+</Button>
+
+<Text X="160" Y="120" LocalAlignX="#_align_center_" Size="20">@value(%.0f)</Text>
+
+<Button X="200" Y="100" Width="40" Height="40">
+    <Pressed><Set Variable="value" Operator="#_set_add_">1</Set></Pressed>
+    <Enabled>
+        <Off><Rectangle FillColor="0.2,0.4,0.2,1" Width="40" Height="40"/>
+             <Text X="20" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" 
+                   FillColor="1,1,1,1" Size="24">+</Text></Off>
+        <On><Rectangle FillColor="0.3,0.6,0.3,1" Width="40" Height="40"/>
+            <Text X="20" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" 
+                  FillColor="1,1,1,1" Size="24">+</Text></On>
+    </Enabled>
+</Button>
+```
+
+---
+
+## Tips & Best Practices
+
+1. **Always define both `<On>` and `<Off>` states** - Even if they look similar, having both ensures predictable behavior.
+
+2. **Use `Type="#_button_toggle_"` for on/off switches** - It automatically handles state toggling.
+
+3. **Use `Type="#_button_momentary_"` for continuous actions** - Like thrust controls or horn buttons.
+
+4. **Separate TargetVariable and IndicatorVariable** when the command and status are different - Common in hardware interfaces where commanded state differs from actual state.
+
+5. **Use meaningful On/Off values** - Strings like `"ARMED"`/`"SAFE"` are more readable in XML than `1`/`0`.
+
+6. **Center text with alignment constants** - `LocalAlignX="#_align_center_"` and `LocalAlignY="#_align_middle_"` for centered button labels.
+
+7. **Include a `<Disabled>` state** - Provides visual feedback when the button can't be used.
