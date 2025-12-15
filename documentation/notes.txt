@@ -1,0 +1,525 @@
+================================================================================
+DCAPP LEGACY TO NEW SYNTAX CONVERSION GUIDE
+================================================================================
+
+This document describes all changes required to convert legacy dcapp XML files
+and C++ logic files to the new dcapp syntax.
+
+
+================================================================================
+SECTION 1: XML ELEMENT NAME CHANGES
+================================================================================
+
+The following XML element names have been renamed:
+
+    <String>        -->  <Text>
+    <Defaults>      -->  <Default>
+    <DisplayLogic>  -->  <Logic File="..."/>
+
+Button child elements for visual states:
+
+    <On>            -->  <ButtonIndicatorOn>
+    <Off>           -->  <ButtonIndicatorOff>
+
+Button press handler:
+
+    <OnPress>       -->  <MousePressed>
+
+Conditional branches (see Section 6 for details):
+
+    <True>          -->  Use <If> with Operation="#_conditional_true_"
+    <False>         -->  Use <If> with Operation="#_conditional_false_"
+
+
+================================================================================
+SECTION 2: XML ATTRIBUTE NAME CHANGES
+================================================================================
+
+Text color attribute:
+
+    Color           -->  FillColor
+
+Conditional operator attribute (inside <If> elements):
+
+    Operator        -->  Operation
+
+Single-value conditional attribute:
+
+    Value           -->  Value1
+
+The following attributes have been REMOVED or handled differently:
+
+    DisplayIndex    -->  Removed (Panel no longer needs this)
+    ActiveDisplay   -->  Removed (Window no longer needs this)
+
+
+================================================================================
+SECTION 3: VARIABLE TYPE CONSTANTS
+================================================================================
+
+Variable types now use constants instead of plain strings.
+
+Legacy syntax:
+    <Variable Type="Decimal">myVar</Variable>
+    <Variable Type="Integer">myVar</Variable>
+    <Variable Type="String">myVar</Variable>
+    <Variable Type="Boolean">myVar</Variable>
+
+New syntax:
+    <Variable Type="#_variable_double_">myVar</Variable>
+    <Variable Type="#_variable_integer_">myVar</Variable>
+    <Variable Type="#_variable_string_">myVar</Variable>
+    <Variable Type="#_variable_boolean_">myVar</Variable>
+
+Note: "Decimal" and "Float" were aliases for double in legacy. Both become
+#_variable_double_ in the new syntax.
+
+
+================================================================================
+SECTION 4: ALIGNMENT SYSTEM (IMPORTANT CHANGE)
+================================================================================
+
+The legacy alignment system had confusing behavior where HorizontalAlign and
+VerticalAlign did DIFFERENT things depending on whether X/Y was set:
+
+    - WITH X/Y set: Alignment controlled the anchor point on the element
+    - WITHOUT X/Y: Alignment controlled position within parent container
+
+The new system splits this into TWO SEPARATE attribute pairs:
+
+    LocalAlignX / LocalAlignY     - Anchor point on the element itself
+    ParentAlignX / ParentAlignY   - Position within parent container
+
+--------------------------------------------------------------------------------
+CONVERSION RULES:
+--------------------------------------------------------------------------------
+
+CASE 1: Element HAS X and Y attributes set
+    
+    Legacy:
+        <Text X="100" Y="200" HorizontalAlign="Center" VerticalAlign="Middle">
+    
+    New (LocalAlign only, since position is explicit):
+        <Text X="100" Y="200" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+
+CASE 2: Element has NO X and NO Y attributes
+
+    Legacy:
+        <Text HorizontalAlign="Center" VerticalAlign="Middle">
+    
+    New (BOTH ParentAlign AND LocalAlign needed):
+        <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" 
+              LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+    
+    WHY BOTH? The legacy behavior was:
+        1. Position the element at the center of the parent (ParentAlign)
+        2. Use the element's center as the anchor point (LocalAlign)
+    
+    If you only set ParentAlign, the element positions at parent center but
+    anchors from its default corner, resulting in off-center placement.
+
+CASE 3: Element has only X OR only Y (mixed)
+
+    Legacy:
+        <Button Y="100" HorizontalAlign="Center" VerticalAlign="Middle">
+    
+    New:
+        <Button Y="100" 
+                ParentAlignX="#_align_center_" LocalAlignX="#_align_center_"
+                LocalAlignY="#_align_middle_">
+    
+    For the axis WITH a position (Y), use LocalAlign.
+    For the axis WITHOUT a position (X), use BOTH ParentAlign and LocalAlign.
+
+--------------------------------------------------------------------------------
+ALIGNMENT VALUE CONSTANTS:
+--------------------------------------------------------------------------------
+
+Horizontal alignment values:
+
+    HorizontalAlign="Left"    -->  LocalAlignX="#_align_left_"
+                                   ParentAlignX="#_align_left_"
+    
+    HorizontalAlign="Center"  -->  LocalAlignX="#_align_center_"
+                                   ParentAlignX="#_align_center_"
+    
+    HorizontalAlign="Right"   -->  LocalAlignX="#_align_right_"
+                                   ParentAlignX="#_align_right_"
+
+Vertical alignment values:
+
+    VerticalAlign="Bottom"    -->  LocalAlignY="#_align_bottom_"
+                                   ParentAlignY="#_align_bottom_"
+    
+    VerticalAlign="Middle"    -->  LocalAlignY="#_align_middle_"
+                                   ParentAlignY="#_align_middle_"
+    
+    VerticalAlign="Top"       -->  LocalAlignY="#_align_top_"
+                                   ParentAlignY="#_align_top_"
+
+
+================================================================================
+SECTION 5: BUTTON TYPE CONSTANTS
+================================================================================
+
+Button types now use constants instead of plain strings.
+
+Legacy syntax:
+    <Button Type="Standard">
+    <Button Type="Momentary">
+    <Button Type="Toggle">
+
+New syntax:
+    <Button Type="#_button_standard_">
+    <Button Type="#_button_momentary_">
+    <Button Type="#_button_toggle_">
+
+
+================================================================================
+SECTION 6: CONDITIONAL OPERATOR CONSTANTS
+================================================================================
+
+Conditional operators in <If> elements now use constants.
+
+Legacy syntax:
+    <If Value1="@x" Operator="gt" Value2="100">
+    <If Value1="@x" Operator="lt" Value2="0">
+    <If Value1="@x" Operator="eq" Value2="50">
+    <If Value1="@x" Operator="ne" Value2="50">
+    <If Value1="@x" Operator="gte" Value2="100">
+    <If Value1="@x" Operator="lte" Value2="0">
+
+New syntax:
+    <If Value1="@x" Operation="#_conditional_gt_" Value2="100">
+    <If Value1="@x" Operation="#_conditional_lt_" Value2="0">
+    <If Value1="@x" Operation="#_conditional_eq_" Value2="50">
+    <If Value1="@x" Operation="#_conditional_ne_" Value2="50">
+    <If Value1="@x" Operation="#_conditional_gte_" Value2="100">
+    <If Value1="@x" Operation="#_conditional_lte_" Value2="0">
+
+Note: The attribute name changed from "Operator" to "Operation".
+
+--------------------------------------------------------------------------------
+BOOLEAN CONDITIONALS (True/False branches):
+--------------------------------------------------------------------------------
+
+Legacy syntax used <True> and <False> child elements:
+
+    <If Value="@myBool">
+        <True>
+            <!-- content when true -->
+        </True>
+        <False>
+            <!-- content when false -->
+        </False>
+    </If>
+
+New syntax uses separate <If> elements with boolean operation constants:
+
+    <If Value1="@myBool" Operation="#_conditional_true_">
+        <!-- content when true -->
+    </If>
+    <If Value1="@myBool" Operation="#_conditional_false_">
+        <!-- content when false -->
+    </If>
+
+Note: The attribute name changed from "Value" to "Value1".
+
+
+================================================================================
+SECTION 7: SET OPERATOR CONSTANTS
+================================================================================
+
+The <Set> element's Operator attribute now uses constants.
+
+Legacy syntax:
+    <Set Variable="@x">100</Set>           (or no Operator attribute)
+    <Set Variable="@x" Operator="+=">10</Set>
+    <Set Variable="@x" Operator="-=">10</Set>
+    <Set Variable="@x" Operator="*=">2</Set>
+    <Set Variable="@x" Operator="/=">2</Set>
+
+New syntax:
+    <Set Variable="x" Operator="#_set_equal_">100</Set>
+    <Set Variable="x" Operator="#_set_add_">10</Set>
+    <Set Variable="x" Operator="#_set_subtract_">10</Set>
+    <Set Variable="x" Operator="#_set_multiply_">2</Set>
+    <Set Variable="x" Operator="#_set_divide_">2</Set>
+
+IMPORTANT: Note that the Variable attribute NO LONGER uses the @ prefix when
+referring to the variable itself. See Section 8.
+
+
+================================================================================
+SECTION 8: VARIABLE REFERENCE SYNTAX
+================================================================================
+
+There are two contexts for referencing variables:
+
+1. READING a variable's value (to display or use in expressions):
+   - Use the @ prefix: @varname or @varname(%.2f)
+   - This has NOT changed from legacy
+
+2. REFERENCING which variable to modify (in Variable="" attributes):
+   - Legacy: Variable="@varname"
+   - New: Variable="varname" (NO @ prefix)
+
+Examples:
+
+    Legacy:
+        <Set Variable="@counter" Operator="+=">1</Set>
+        <Text>Count: @counter</Text>
+        <Button Variable="@isEnabled">
+
+    New:
+        <Set Variable="counter" Operator="#_set_add_">1</Set>
+        <Text>Count: @counter</Text>
+        <Button Variable="isEnabled">
+
+
+================================================================================
+SECTION 9: IMAGE ELEMENT SYNTAX
+================================================================================
+
+The <Image> element now uses a File attribute instead of element content.
+
+Legacy syntax:
+    <Image Width="100" Height="100">path/to/image.tga</Image>
+
+New syntax:
+    <Image Width="100" Height="100" File="path/to/image.png"/>
+
+Also recommended: Convert TGA files to PNG for smaller file sizes.
+
+
+================================================================================
+SECTION 10: LOGIC FILE CHANGES (C/C++)
+================================================================================
+
+Logic files have been simplified and now use plain C instead of C++.
+
+--------------------------------------------------------------------------------
+FILE EXTENSION:
+--------------------------------------------------------------------------------
+
+    .cc or .cpp  -->  .c
+
+--------------------------------------------------------------------------------
+FUNCTION NAMES:
+--------------------------------------------------------------------------------
+
+    extern "C" void DisplayInit(void)   -->  void display_init(void)
+    extern "C" void DisplayLogic(void)  -->  void display_draw(void)
+    extern "C" void DisplayClose(void)  -->  void display_close(void)
+
+The extern "C" wrapper is no longer needed since files are now plain C.
+
+--------------------------------------------------------------------------------
+HEADER MACRO FOR MULTI-FILE PROJECTS:
+--------------------------------------------------------------------------------
+
+    #define _DCAPP_EXTERNALS_  -->  #define _DCAPP_LOGIC_EXTERN_
+
+Usage remains the same:
+    - Main logic file: Do NOT define the macro (gets actual variable definitions)
+    - Additional files: Define the macro before #include (gets extern declarations)
+
+--------------------------------------------------------------------------------
+EXAMPLE CONVERSION:
+--------------------------------------------------------------------------------
+
+Legacy (mylogic.cc):
+
+    #include "dcapp.h"
+    
+    extern "C" void DisplayInit(void) {
+        // initialization
+    }
+    
+    extern "C" void DisplayLogic(void) {
+        *MY_VARIABLE += 1.0;
+    }
+    
+    extern "C" void DisplayClose(void) {
+        // cleanup
+    }
+
+New (logic.c):
+
+    #include "dcapp.h"
+    
+    void display_init(void) {
+        // initialization
+    }
+    
+    void display_draw(void) {
+        *MY_VARIABLE += 1.0;
+    }
+    
+    void display_close(void) {
+        // cleanup
+    }
+
+--------------------------------------------------------------------------------
+STRING VARIABLE HANDLING:
+--------------------------------------------------------------------------------
+
+String variables are now char arrays instead of C++ std::string.
+
+Legacy (C++):
+    *CURRENT_TIME = someString;
+    if (!CURRENT_TIME->empty()) CURRENT_TIME->pop_back();
+
+New (C):
+    strncpy(*CURRENT_TIME, someString, 255);
+    size_t len = strlen(*CURRENT_TIME);
+    if (len > 0 && (*CURRENT_TIME)[len-1] == '\n') {
+        (*CURRENT_TIME)[len-1] = '\0';
+    }
+
+
+================================================================================
+SECTION 11: ELEMENTS NOT YET IMPLEMENTED
+================================================================================
+
+The following legacy elements are not yet available in the new dcapp and should
+be commented out with a TODO note:
+
+    <ADI>               - Attitude Direction Indicator
+    <Animation>         - Animated value transitions
+    <Mask>              - Stencil masking with <Stencil> and <Projection>
+    <Blink>             - Blinking/flashing elements
+    <Map>               - Map display with <UPSMapTexture>
+    <Hagstrom>          - Bezel keyboard hardware support
+    <MouseMotion>       - Mouse drag tracking
+    <KeyboardEvent>     - Keyboard input handling
+    <Function>          - Calling C functions from XML
+    
+    BezelKey attribute  - Hardware bezel button binding
+    <PixelStream> with VSM protocol
+
+
+================================================================================
+SECTION 12: QUICK REFERENCE - ALL CONSTANTS
+================================================================================
+
+Variable Types:
+    #_variable_double_
+    #_variable_integer_
+    #_variable_string_
+    #_variable_boolean_
+
+Button Types:
+    #_button_standard_
+    #_button_momentary_
+    #_button_toggle_
+
+Alignment (Horizontal/X):
+    #_align_left_
+    #_align_center_
+    #_align_right_
+
+Alignment (Vertical/Y):
+    #_align_bottom_
+    #_align_middle_
+    #_align_top_
+
+Conditional Operations:
+    #_conditional_eq_
+    #_conditional_ne_
+    #_conditional_lt_
+    #_conditional_gt_
+    #_conditional_lte_
+    #_conditional_gte_
+    #_conditional_true_
+    #_conditional_false_
+
+Set Operations:
+    #_set_equal_
+    #_set_add_
+    #_set_subtract_
+    #_set_multiply_
+    #_set_divide_
+
+
+================================================================================
+SECTION 13: COMPLETE CONVERSION EXAMPLE
+================================================================================
+
+Legacy XML:
+
+    <?xml version="1.0"?>
+    <DCAPP>
+        <Variable Type="Decimal" InitialValue="0.5">value</Variable>
+        <Variable Type="Integer">buttonState</Variable>
+        
+        <DisplayLogic File="logic/mylogic.so"/>
+        
+        <Defaults>
+            <String Size="20" Color="1 1 1" HorizontalAlign="Center" VerticalAlign="Middle"/>
+            <Button Type="Momentary" Width="100" Height="50" HorizontalAlign="Center"/>
+        </Defaults>
+        
+        <Window X="0" Y="0" Width="800" Height="600" ActiveDisplay="1">
+            <Panel DisplayIndex="1" BackgroundColor="0 0 0" VirtualWidth="800" VirtualHeight="600">
+                
+                <String X="400" Y="500">Value: @value(%.2f)</String>
+                
+                <Button X="400" Y="300" Variable="@buttonState">
+                    <OnPress>
+                        <Set Variable="@value" Operator="+=">0.1</Set>
+                        <If Value1="@value" Operator="gt" Value2="1">
+                            <Set Variable="@value">0</Set>
+                        </If>
+                    </OnPress>
+                    <On><Rectangle FillColor="0 1 0"/></On>
+                    <Off><Rectangle FillColor="0.5 0.5 0.5"/></Off>
+                    <String>Click Me</String>
+                </Button>
+                
+            </Panel>
+        </Window>
+    </DCAPP>
+
+New XML:
+
+    <?xml version="1.0"?>
+    <DCAPP>
+        <Variable Type="#_variable_double_" InitialValue="0.5">value</Variable>
+        <Variable Type="#_variable_integer_">buttonState</Variable>
+        
+        <Logic File="logic/logic.so"/>
+        
+        <Default>
+            <Text Size="20" FillColor="1 1 1" 
+                  ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                  LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
+            <Button Type="#_button_momentary_" Width="100" Height="50" 
+                    ParentAlignX="#_align_center_" LocalAlignX="#_align_center_"/>
+        </Default>
+        
+        <Window X="0" Y="0" Width="800" Height="600">
+            <Panel BackgroundColor="0 0 0" VirtualWidth="800" VirtualHeight="600">
+                
+                <Text X="400" Y="500" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">Value: @value(%.2f)</Text>
+                
+                <Button X="400" Y="300" LocalAlignX="#_align_center_" Variable="buttonState">
+                    <MousePressed>
+                        <Set Variable="value" Operator="#_set_add_">0.1</Set>
+                        <If Value1="@value" Operation="#_conditional_gt_" Value2="1">
+                            <Set Variable="value" Operator="#_set_equal_">0</Set>
+                        </If>
+                    </MousePressed>
+                    <ButtonIndicatorOn><Rectangle FillColor="0 1 0"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="0.5 0.5 0.5"/></ButtonIndicatorOff>
+                    <Text>Click Me</Text>
+                </Button>
+                
+            </Panel>
+        </Window>
+    </DCAPP>
+
+
+================================================================================
+END OF DOCUMENT
+================================================================================
