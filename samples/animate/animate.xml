@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Constant Name="AnimationDuration">1</Constant>
+    <Constant Name="ButtonOutline">1 1 1</Constant>
+    <Constant Name="ButtonFill">0.8 0.8 0.8</Constant>
+    <Constant Name="ButtonText">0 0 0</Constant>
+    <Constant Name="FontSize">34</Constant>
+    <Constant Name="PanelWidth">1600</Constant>
+    <Constant Name="PanelHeight">1200</Constant>
+    <Constant Name="ButtonWidth">200</Constant>
+    <Constant Name="ButtonHeight">150</Constant>
+
+    <Variable Type="#_variable_double_">RED_LEVEL</Variable>
+    <Variable Type="#_variable_double_">GREEN_LEVEL</Variable>
+    <Variable Type="#_variable_double_">BLUE_LEVEL</Variable>
+
+    <Default>
+        <Button ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Width="#ButtonWidth" Height="#ButtonHeight" Type="#_button_standard_"/>
+        <Rectangle FillColor="#ButtonFill" LineColor="#ButtonOutline" LineWidth="2"/>
+        <Text Size="#FontSize" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" FillColor="#ButtonText" ForceMono="Numeric"/>
+    </Default>
+
+    <Window X="0" Y="20" Width="640" Height="480">
+        <Panel VirtualWidth="#PanelWidth" VirtualHeight="#PanelHeight" BackgroundColor="@RED_LEVEL @GREEN_LEVEL @BLUE_LEVEL">
+            <Button X="260" Y="800">
+                <MousePressed>
+                    <!-- TODO: Animation element not yet implemented -->
+                    <!-- <Animation Duration="#AnimationDuration"> -->
+                        <Set Variable="RED_LEVEL">0</Set>
+                    <!-- </Animation> -->
+                </MousePressed>
+                <ButtonIndicatorOn><Rectangle/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle/></ButtonIndicatorOff>
+                <Text>Decrease\nRed</Text>
+            </Button>
+
+            <Button X="476" Y="800">
+                <MousePressed>
+                    <!-- TODO: Animation element not yet implemented -->
+                    <!-- <Animation Duration="#AnimationDuration"> -->
+                        <Set Variable="RED_LEVEL">1</Set>
+                    <!-- </Animation> -->
+                </MousePressed>
+                <ButtonIndicatorOn><Rectangle/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle/></ButtonIndicatorOff>
+                <Text>Increase\nRed</Text>
+            </Button>
+
+            <Button X="692" Y="800">
+                <MousePressed>
+                    <!-- TODO: Animation element not yet implemented -->
+                    <!-- <Animation Duration="#AnimationDuration"> -->
+                        <Set Variable="GREEN_LEVEL">0</Set>
+                    <!-- </Animation> -->
+                </MousePressed>
+                <ButtonIndicatorOn><Rectangle/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle/></ButtonIndicatorOff>
+                <Text>Decrease\nGreen</Text>
+            </Button>
+
+            <Button X="908" Y="800">
+                <MousePressed>
+                    <!-- TODO: Animation element not yet implemented -->
+                    <!-- <Animation Duration="#AnimationDuration"> -->
+                        <Set Variable="GREEN_LEVEL">1</Set>
+                    <!-- </Animation> -->
+                </MousePressed>
+                <ButtonIndicatorOn><Rectangle/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle/></ButtonIndicatorOff>
+                <Text>Increase\nGreen</Text>
+            </Button>
+
+            <Button X="1124" Y="800">
+                <MousePressed>
+                    <!-- TODO: Animation element not yet implemented -->
+                    <!-- <Animation Duration="#AnimationDuration"> -->
+                        <Set Variable="BLUE_LEVEL">0</Set>
+                    <!-- </Animation> -->
+                </MousePressed>
+                <ButtonIndicatorOn><Rectangle/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle/></ButtonIndicatorOff>
+                <Text>Decrease\nBlue</Text>
+            </Button>
+
+            <Button X="1340" Y="800">
+                <MousePressed>
+                    <!-- TODO: Animation element not yet implemented -->
+                    <!-- <Animation Duration="#AnimationDuration"> -->
+                        <Set Variable="BLUE_LEVEL">1</Set>
+                    <!-- </Animation> -->
+                </MousePressed>
+                <ButtonIndicatorOn><Rectangle/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle/></ButtonIndicatorOff>
+                <Text>Increase\nBlue</Text>
+            </Button>
+        </Panel>
+    </Window>
+</DCAPP>

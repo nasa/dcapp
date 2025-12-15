@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="#_variable_string_">CURRENT_TIME</Variable>
+    <Variable Type="#_variable_double_">POS_X</Variable>
+    <Variable Type="#_variable_double_">POS_Y</Variable>
+
+    <Logic File="logic/mylogic.so"/>
+
+    <Window X="30" Y="30" Width="640" Height="480">
+        <Constant Name="BgColor">0 0 0</Constant>
+        <Constant Name="FgColor">1 1 1</Constant>
+        <Default>
+            <Text Size="42" FillColor="#FgColor"/>
+        </Default>
+
+        <Panel VirtualWidth="1600" VirtualHeight="1200" BackgroundColor="#BgColor">
+            <Image X="@POS_X" Y="@POS_Y" Width="300" Height="250" File="../../assets/nasa.png"/>
+            <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">@CURRENT_TIME</Text>
+        </Panel>
+    </Window>
+</DCAPP>
