@@ -467,6 +467,7 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
     dc_node.button.child_transition    = NODE_INDEX_UNDEFINED;
     dc_node.button.child_pressed       = NODE_INDEX_UNDEFINED;
     dc_node.button.child_released      = NODE_INDEX_UNDEFINED;
+    dc_node.button.child               = NODE_INDEX_UNDEFINED;
 
     // x position
     xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
@@ -2675,21 +2676,16 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                         sbpushn(sb_curr_filler, &(cleaned_text[start]), (int)(ii - start));
                         continue;
                     }
-                    size_t len = (size_t)end;
-                    if (len >= DC_VALUE_STRING_BUFFER_SIZE)
-                        len = DC_VALUE_STRING_BUFFER_SIZE - 1;
-                    strncpy(var, &(cleaned_text[ii]), len);
-                    var[len] = '\0';
+                    strncpy(var, &(cleaned_text[ii]), end);
+                    var[end] = '\0';
                     ii += end + 1; // skip past varname and '}'
                 } else {
-                    // unbraced variable: @varname
+                    // non-braced variable: @varname
                     size_t start_var = ii;
                     while (ii < strlen(cleaned_text) && !isspace(cleaned_text[ii]) && cleaned_text[ii] != '(') {
                         ii++;
                     }
                     size_t len = ii - start_var;
-                    if (len >= DC_VALUE_STRING_BUFFER_SIZE)
-                        len = DC_VALUE_STRING_BUFFER_SIZE - 1;
                     strncpy(var, &(cleaned_text[start_var]), len);
                     var[len] = '\0';
                 }
@@ -2702,14 +2698,12 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                 char format_spec[DC_VALUE_STRING_BUFFER_SIZE] = {0};
                 if (ii < strlen(cleaned_text) && cleaned_text[ii] == '(') {
                     int close = dc_utils_str_find_first(&(cleaned_text[ii]), ')');
-                    if (close != -1 && close > 1) {
-                        // copy contents between ( and )
-                        size_t len = (size_t)(close - 1);
-                        if (len >= DC_VALUE_STRING_BUFFER_SIZE)
-                            len = DC_VALUE_STRING_BUFFER_SIZE - 1;
+                    if (close > 1) {
+                        // copy content between ( and )
+                        size_t len = close - 1;
                         strncpy(format_spec, &(cleaned_text[ii + 1]), len);
                         format_spec[len] = '\0';
-                        ii += close + 1; // skip past '(' contents and ')'
+                        ii += close + 1; // skip past '(' content and ')'
 
                         // get format + type
                         if (dc_utils_is_format_specifier_int(format_spec)) {
@@ -2729,20 +2723,17 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                             sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
                             sbpushn(dc_node.text.sb_formats, format_spec, (int)strlen(format_spec) + 1);
                         } else {
-                            fprintf(stderr, "DCApp _process_xml_node(): Unknown format specifier in Text element: %s\n", format_spec);
-                            // default to string
+                            fprintf(stderr, "DCApp _process_xml_node(): Unknown format specifier: %s\n", format_spec);
                             sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
                             sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
                             sbpushn(dc_node.text.sb_formats, "%s", 3);
                         }
                     } else {
-                        // no valid close paren or empty parens, default to string
                         sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
                         sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
                         sbpushn(dc_node.text.sb_formats, "%s", 3);
                     }
                 } else {
-                    // no format specifier, default to string
                     sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
                     sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
                     sbpushn(dc_node.text.sb_formats, "%s", 3);
