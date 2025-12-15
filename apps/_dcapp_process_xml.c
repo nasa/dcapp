@@ -763,7 +763,16 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
     // process children
-    _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+
+    // handle non event elements
+    if (first_child_index != NODE_INDEX_UNDEFINED) {
+        _Node *node        = _get_node(app_data, node_index);
+        node->button.child = first_child_index;
+    }
+
+    // return
+    return node_index;
 
     // return
     return node_index;
@@ -2610,6 +2619,7 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     if (raw_text) {
         char cleaned_text[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(cleaned_text, (const char *)raw_text, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        cleaned_text[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
         xmlFree(raw_text);
 
         static char *sb_curr_filler = NULL;
@@ -2654,26 +2664,34 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                 size_t start = ii;
                 ii++;
 
-                char var[DC_VALUE_STRING_BUFFER_SIZE];
-                bool is_braced = false;
+                char var[DC_VALUE_STRING_BUFFER_SIZE] = {0};
 
                 if (ii < strlen(cleaned_text) && cleaned_text[ii] == '{') {
-                    is_braced = true;
-                    ii++;
-                    size_t end = dc_utils_str_find_first(&(cleaned_text[ii]), '}');
+                    // braced variable: @{varname}
+                    ii++; // skip '{'
+                    int end = dc_utils_str_find_first(&(cleaned_text[ii]), '}');
                     if (end == -1) {
                         // No closing brace, treat as normal text
                         sbpushn(sb_curr_filler, &(cleaned_text[start]), (int)(ii - start));
                         continue;
                     }
-                    strncpy(var, &(cleaned_text[ii]), end - ii);
-                    ii = end + 1;
+                    size_t len = (size_t)end;
+                    if (len >= DC_VALUE_STRING_BUFFER_SIZE)
+                        len = DC_VALUE_STRING_BUFFER_SIZE - 1;
+                    strncpy(var, &(cleaned_text[ii]), len);
+                    var[len] = '\0';
+                    ii += end + 1; // skip past varname and '}'
                 } else {
+                    // unbraced variable: @varname
                     size_t start_var = ii;
                     while (ii < strlen(cleaned_text) && !isspace(cleaned_text[ii]) && cleaned_text[ii] != '(') {
                         ii++;
                     }
-                    strncpy(var, &(cleaned_text[start_var]), ii - start_var);
+                    size_t len = ii - start_var;
+                    if (len >= DC_VALUE_STRING_BUFFER_SIZE)
+                        len = DC_VALUE_STRING_BUFFER_SIZE - 1;
+                    strncpy(var, &(cleaned_text[start_var]), len);
+                    var[len] = '\0';
                 }
 
                 DcAppValIndex   var_index = dc_app_lookup_get_var_index(app_data->lookup, var);
@@ -2681,12 +2699,17 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                 sbpush(dc_node.text.sb_vals, var_var->value_index);
 
                 // Check for format specifier
-                char format_spec[DC_VALUE_STRING_BUFFER_SIZE];
+                char format_spec[DC_VALUE_STRING_BUFFER_SIZE] = {0};
                 if (ii < strlen(cleaned_text) && cleaned_text[ii] == '(') {
-                    size_t close = dc_utils_str_find_first(&(cleaned_text[ii]), ')');
-                    if (close != -1 && (ii == 0 || cleaned_text[ii - 1] != '\\')) {
-                        strncpy(format_spec, &(cleaned_text[ii + 1]), close - ii - 1);
-                        ii = close + 1;
+                    int close = dc_utils_str_find_first(&(cleaned_text[ii]), ')');
+                    if (close != -1 && close > 1) {
+                        // copy contents between ( and )
+                        size_t len = (size_t)(close - 1);
+                        if (len >= DC_VALUE_STRING_BUFFER_SIZE)
+                            len = DC_VALUE_STRING_BUFFER_SIZE - 1;
+                        strncpy(format_spec, &(cleaned_text[ii + 1]), len);
+                        format_spec[len] = '\0';
+                        ii += close + 1; // skip past '(' contents and ')'
 
                         // get format + type
                         if (dc_utils_is_format_specifier_int(format_spec)) {
@@ -2706,14 +2729,20 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                             sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
                             sbpushn(dc_node.text.sb_formats, format_spec, (int)strlen(format_spec) + 1);
                         } else {
-                            fprintf(stderr, "DCApp _process_xml_node(): Unknown format specifier in Text element\n");
+                            fprintf(stderr, "DCApp _process_xml_node(): Unknown format specifier in Text element: %s\n", format_spec);
+                            // default to string
+                            sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
+                            sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
+                            sbpushn(dc_node.text.sb_formats, "%s", 3);
                         }
                     } else {
+                        // no valid close paren or empty parens, default to string
                         sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
                         sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
                         sbpushn(dc_node.text.sb_formats, "%s", 3);
                     }
                 } else {
+                    // no format specifier, default to string
                     sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
                     sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
                     sbpushn(dc_node.text.sb_formats, "%s", 3);

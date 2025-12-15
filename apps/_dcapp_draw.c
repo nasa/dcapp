@@ -436,6 +436,9 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
     } else if (is_released) {
         _draw_node_list(app_data, node->button.child_released, &child_position, &child_dimensions, &transform);
     }
+
+    // layer 4: default children
+    _draw_node_list(app_data, node->button.child, &child_position, &child_dimensions, &transform);
 }
 
 static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -676,7 +679,7 @@ static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *
 
     // draw outline
     if (node->circle.line_enabled) {
-        float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_width)->value_double;
+        float line_thickness = node->circle.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_width)->value_double;
         float line_color[4]  = {
             node->circle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.r)->value_double,
             node->circle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.g)->value_double,
@@ -1379,7 +1382,7 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
 
     // draw outline
     if (node->line.line_enabled) {
-        float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_width)->value_double;
+        float line_thickness = node->line.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_width)->value_double;
         float line_color[4]  = {
             node->line.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.r)->value_double,
             node->line.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.g)->value_double,
@@ -1887,7 +1890,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
 
     // draw outline
     if (node->polygon.line_enabled) {
-        float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_width)->value_double;
+        float line_thickness = node->polygon.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_width)->value_double;
         float line_color[4]  = {
             node->polygon.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.r)->value_double,
             node->polygon.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.g)->value_double,
@@ -2192,7 +2195,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
 
     // draw outline
     if (node->rectangle.line_enabled) {
-        float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_width)->value_double;
+        float line_thickness = node->rectangle.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_width)->value_double;
         float line_color[4]  = {
             node->rectangle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.r)->value_double,
             node->rectangle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.g)->value_double,
@@ -2899,8 +2902,8 @@ static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *
 
     // boolean checks
     bool use_virtual_dimension[2] = {
-        node->panel.virtual_dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
-        node->panel.virtual_dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
+        node->window.virtual_dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
+        node->window.virtual_dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
 
     // all transform parameters
     float dimension[2]         = {(float)dimensionX, (float)dimensionY};

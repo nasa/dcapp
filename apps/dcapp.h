@@ -144,7 +144,8 @@ typedef struct __NodeButton {
     _NodeIndex child_indicator_off;
     _NodeIndex child_pressed;
     _NodeIndex child_released;
-    _NodeIndex child_transition; 
+    _NodeIndex child_transition;
+    _NodeIndex child; // default children, not attached to any events
 
     // comparison values for each state
     DcAppValIndex val_enabled_on;
