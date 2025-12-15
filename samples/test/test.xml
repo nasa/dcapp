@@ -7,17 +7,17 @@
     <Constant Name="Constant1">Constant2</Constant>
     <Constant Name="Constant2">30</Constant>
 
-    <Variable Type="Double" InitialValue="#Constant1">ROTATE</Variable>
+    <Variable Type="#_variable_double_" InitialValue="#Constant1">ROTATE</Variable>
 
-    <Variable Type="Float" InitialValue="0">COLOR_R</Variable>
-    <Variable Type="Float" InitialValue=".25">COLOR_G</Variable>
-    <Variable Type="Float" InitialValue=".5">COLOR_B</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">COLOR_R</Variable>
+    <Variable Type="#_variable_double_" InitialValue=".25">COLOR_G</Variable>
+    <Variable Type="#_variable_double_" InitialValue=".5">COLOR_B</Variable>
 
     <!-- Trick (connected to cannonball sim)-->
-    <Variable Type="Float">POS_X</Variable>
-    <Variable Type="Float">POS_Y</Variable>
-    <Variable Type="Float">VEL_Y</Variable>
-    <Variable Type="Float" InitialValue="404">G</Variable>
+    <Variable Type="#_variable_double_">POS_X</Variable>
+    <Variable Type="#_variable_double_">POS_Y</Variable>
+    <Variable Type="#_variable_double_">VEL_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="404">G</Variable>
     <TrickIO Host="localhost" Port="9123">
       <FromTrick>
         <TrickVariable Name="dyn.cannon.pos[0]">POS_X</TrickVariable>

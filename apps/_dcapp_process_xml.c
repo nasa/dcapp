@@ -3075,7 +3075,7 @@ static _NodeIndex _process_xml_node_variable(_AppData *app_data, xmlNodePtr xml_
     xmlChar    *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");
     DcValueType type     = DC_VALUE_TYPE_STRING;
     if (raw_type) {
-        type = dc_app_value_type_from_string((const char *)raw_type);
+        type = dc_utils_string_to_integer((const char *)raw_type);
         xmlFree(raw_type);
     }
 
