@@ -6,7 +6,7 @@
   <Variable Type="#_variable_double_" InitialValue="50">RADIUS4</Variable>
   <Variable Type="#_variable_double_" InitialValue="50">ROTATION</Variable>
 
-  <Logic File="logic/mylogic.so"/>
+  <Logic File="logic/logic.so"/>
 
   <Window X="30" Y="30" Width="640" Height="480">
 

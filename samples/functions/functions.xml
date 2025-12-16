@@ -3,7 +3,7 @@
 
     <Include>smiley/smiley_params.xml</Include>
 
-    <Logic File="logic/mylogic.so"/>
+    <Logic File="logic/logic.so"/>
 
     <Window X="30" Y="300" Width="640" Height="480">
 

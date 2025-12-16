@@ -8,7 +8,7 @@
     <Variable Type="#_variable_double_">IMAGE_WIDTH</Variable>
     <Variable Type="#_variable_double_">IMAGE_HEIGHT</Variable>
 
-    <Logic File="logic/mylogic.so"/>
+    <Logic File="logic/logic.so"/>
 
     <Window X="30" Y="30" Width="800" Height="600">
         <Constant Name="BgColor">0 0 0</Constant>

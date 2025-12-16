@@ -1,10 +1,12 @@
 <?xml version="1.0"?>
 <DCAPP>
+
     <Variable Type="#_variable_string_">CURRENT_TIME</Variable>
     <Variable Type="#_variable_double_">POS_X</Variable>
     <Variable Type="#_variable_double_">POS_Y</Variable>
 
-    <Logic File="logic/mylogic.so"/>
+    <Logic File="logic/logic.so"/>
+
 
     <Window X="30" Y="30" Width="640" Height="480">
         <Constant Name="BgColor">0 0 0</Constant>
