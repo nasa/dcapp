@@ -1514,11 +1514,7 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
     if (app_data->logic_lib) {
-        fprintf(stderr, "DCApp _process_xml_node(): duplicate <Logic> definitions\n");
-    }
-
-    if (dc_app_lookup_get_var_count(app_data->lookup)) {
-        printf("DCApp _process_xml_node(): Warning: Declaring <Logic> after <Variables> have been defined. Ensure this behavior is intended.\n");
+        fprintf(stderr, "DCApp _process_xml_node_logic(): duplicate <Logic> definitions\n");
     }
 
     xmlChar *raw_filepath = xmlGetProp(xml_node, BAD_CAST "File");
@@ -1543,7 +1539,7 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
             .pcName = abs_filepath,
         };
         if (_ext_library->load(logic_so_desc, &app_data->logic_lib) != PL_LIBRARY_RESULT_SUCCESS) {
-            fprintf(stderr, "DCApp _process_xml_node(): Failed to load logic .so file (%s)\n", abs_filepath);
+            fprintf(stderr, "DCApp _process_xml_node_logic(): Failed to load logic .so file (%s)\n", abs_filepath);
         }
 
         // load functions
@@ -1552,7 +1548,7 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
         app_data->logic_draw     = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_draw");
         app_data->logic_close    = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_close");
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node(): <Logic> has no File element\n");
+        fprintf(stderr, "DCAPP _process_xml_node_logic(): <Logic> has no File element\n");
     }
 
     // return
@@ -2693,7 +2689,6 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                 DcAppValIndex   var_index = dc_app_lookup_get_var_index(app_data->lookup, var);
                 DcAppLookupVar *var_var   = dc_app_lookup_get_var(app_data->lookup, var_index);
                 sbpush(dc_node.text.sb_vals, var_var->value_index);
-
                 // Check for format specifier
                 char format_spec[DC_VALUE_STRING_BUFFER_SIZE] = {0};
                 if (ii < strlen(cleaned_text) && cleaned_text[ii] == '(') {

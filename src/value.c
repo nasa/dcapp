@@ -125,7 +125,7 @@ void *dc_value_get_addr(DcValue *value) {
         case DC_VALUE_TYPE_INTEGER:
             return &(value->value_integer);
         case DC_VALUE_TYPE_STRING:
-            return &(value->value_string);
+            return value->value_string;
         default:
             fprintf(stderr, "DCAPP dc_value_set_from_string(): invalid value type %d\n", value->type);
             break;
