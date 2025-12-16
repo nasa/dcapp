@@ -205,6 +205,13 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
         app_data->logic_draw();
     }
 
+    // refresh variables
+    for (int ii = 0; ii < dc_app_lookup_get_var_count(app_data->lookup); ii++) {
+        DcAppLookupVar *var   = dc_app_lookup_get_var(app_data->lookup, ii);
+        DcValue        *value = dc_app_lookup_get_value(app_data->lookup, var->value_index);
+        dc_value_refresh(value);
+    }
+
     // get mouse button status
     if (_ext_ioi->is_mouse_down(PL_MOUSE_BUTTON_LEFT)) {
         app_data->frame_data.is_mouse_pressed  = !app_data->frame_data.is_mouse_down;

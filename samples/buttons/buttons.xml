@@ -1,19 +1,18 @@
 <?xml version="1.0"?>
 <DCAPP>
 
-  <Logic File="logic/logic.so" />
   <Window Title="dcapp-vk-title" X="2000" Y="500" Width="1000" Height="1000" VirtualWidth="300" VirtualHeight="100">
 
     <!-- panel -->
-    <Panel VirtualWidth="1000" VirtualHeight="500">
+    <Panel VirtualWidth="500" VirtualHeight="400">
 
       <!-- Variables -->
-      <Variable Type="Integer" InitialValue="0">toggle_var</Variable>
-      <Variable Type="Integer" InitialValue="0">momentary_var</Variable>
-      <Variable Type="Integer" InitialValue="0">standard_var</Variable>
-      <Variable Type="Integer" InitialValue="0">controlled_var</Variable>
-      <Variable Type="Integer" InitialValue="0">cmd_var</Variable>
-      <Variable Type="Integer" InitialValue="0">status_var</Variable>
+      <Variable Type="#_variable_integer_" InitialValue="0">toggle_var</Variable>
+      <Variable Type="#_variable_integer_" InitialValue="0">momentary_var</Variable>
+      <Variable Type="#_variable_integer_" InitialValue="0">standard_var</Variable>
+      <Variable Type="#_variable_integer_" InitialValue="0">controlled_var</Variable>
+      <Variable Type="#_variable_integer_" InitialValue="0">cmd_var</Variable>
+      <Variable Type="#_variable_integer_" InitialValue="0">status_var</Variable>
 
       <Style Name="text">
         <Text Size="35" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" />

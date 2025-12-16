@@ -62,7 +62,11 @@ DcValue dc_value_create_value_boolean(bool value) {
 }
 
 void dc_value_refresh(DcValue *value) {
-    switch (value->type) {
+    dc_value_refresh_from_type(value, value->type);
+}
+
+void dc_value_refresh_from_type(DcValue *value, DcValueType type) {
+    switch (type) {
         case DC_VALUE_TYPE_BOOLEAN:
             value->value_integer = (int)value->value_boolean;
             value->value_boolean = (double)value->value_boolean;
@@ -125,7 +129,7 @@ void *dc_value_get_addr(DcValue *value) {
         case DC_VALUE_TYPE_INTEGER:
             return &(value->value_integer);
         case DC_VALUE_TYPE_STRING:
-            return &(value->value_string);
+            return value->value_string;
         default:
             fprintf(stderr, "DCAPP dc_value_set_from_string(): invalid value type %d\n", value->type);
             break;

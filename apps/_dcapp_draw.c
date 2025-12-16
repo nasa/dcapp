@@ -5,8 +5,10 @@
 
 #include "../src/app/enums.h"
 #include "../src/utils/string.h"
+#include "../src/utils/time.h"
 
 // Forward declarations
+static void _draw_node_blink(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -37,6 +39,10 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
 
     _Node *node = _get_node(app_data, node_index);
     switch (node->type) {
+        case NODE_TYPE_BLINK:
+            _draw_node_blink(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+
         case NODE_TYPE_BUTTON:
             _draw_node_button(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
@@ -96,6 +102,55 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
         default:
             break;
     }
+}
+
+static void _draw_node_blink(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+
+    double current_time = dc_utils_time_get();
+    double frequency    = dc_app_lookup_get_value(app_data->lookup, node->blink.frequency)->value_double;
+    double duty_cycle   = dc_app_lookup_get_value(app_data->lookup, node->blink.duty_cycle)->value_double;
+    double duration     = dc_app_lookup_get_value(app_data->lookup, node->blink.duration)->value_double;
+
+    // check trigger variable for any change
+    if (node->blink.var != DC_APP_VAR_INDEX_UNDEFINED) {
+        DcAppLookupVar *var = dc_app_lookup_get_var(app_data->lookup, node->blink.var);
+        DcValue        *val = dc_app_lookup_get_value(app_data->lookup, var->value_index);
+        
+        int trigger_value = val->value_integer;
+        
+        if (trigger_value != node->blink.last_trigger_value) {
+            if (duration <= 0.0) {
+                // indefinite: toggle (0 <-> 1)
+                node->blink.remaining_duration = 1.0 - node->blink.remaining_duration;
+            } else {
+                // timed: restart
+                node->blink.remaining_duration = duration;
+            }
+            node->blink.last_trigger_value = trigger_value;
+        }
+    }
+
+    // calculate blink state
+    bool blink_state = true;
+    if (node->blink.remaining_duration > 0.0) {
+        double period  = (frequency > 0.0) ? (1.0 / frequency) : 1.0;
+        double on_time = period * duty_cycle;
+        blink_state = (fmod(current_time, period) <= on_time);
+
+        // countdown for timed blinks
+        if (duration > 0.0) {
+            node->blink.remaining_duration -= (current_time - node->blink.last_frame_time);
+            if (node->blink.remaining_duration <= 0.0) {
+                blink_state = true;
+            }
+        }
+    }
+
+    if (blink_state) {
+        _draw_node_list(app_data, node->blink.child, parent_position, parent_dimensions, parent_transform);
+    }
+
+    node->blink.last_frame_time = current_time;
 }
 
 static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -436,6 +491,9 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
     } else if (is_released) {
         _draw_node_list(app_data, node->button.child_released, &child_position, &child_dimensions, &transform);
     }
+
+    // layer 4: default children
+    _draw_node_list(app_data, node->button.child, &child_position, &child_dimensions, &transform);
 }
 
 static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -676,7 +734,7 @@ static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *
 
     // draw outline
     if (node->circle.line_enabled) {
-        float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_width)->value_double;
+        float line_thickness = node->circle.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_width)->value_double;
         float line_color[4]  = {
             node->circle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.r)->value_double,
             node->circle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.g)->value_double,
@@ -1379,7 +1437,7 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
 
     // draw outline
     if (node->line.line_enabled) {
-        float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_width)->value_double;
+        float line_thickness = node->line.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_width)->value_double;
         float line_color[4]  = {
             node->line.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.r)->value_double,
             node->line.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.g)->value_double,
@@ -1887,7 +1945,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
 
     // draw outline
     if (node->polygon.line_enabled) {
-        float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_width)->value_double;
+        float line_thickness = node->polygon.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_width)->value_double;
         float line_color[4]  = {
             node->polygon.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.r)->value_double,
             node->polygon.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.g)->value_double,
@@ -2192,7 +2250,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
 
     // draw outline
     if (node->rectangle.line_enabled) {
-        float line_thickness = (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_width)->value_double;
+        float line_thickness = node->rectangle.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_width)->value_double;
         float line_color[4]  = {
             node->rectangle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.r)->value_double,
             node->rectangle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.g)->value_double,
@@ -2899,8 +2957,8 @@ static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *
 
     // boolean checks
     bool use_virtual_dimension[2] = {
-        node->panel.virtual_dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
-        node->panel.virtual_dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
+        node->window.virtual_dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
+        node->window.virtual_dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
 
     // all transform parameters
     float dimension[2]         = {(float)dimensionX, (float)dimensionY};

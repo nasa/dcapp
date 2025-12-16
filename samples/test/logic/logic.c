@@ -1,5 +1,5 @@
 #include "dcapp.h"
-#include <cstdio>
+#include <stdio.h>
 
 void display_init() {
     return;

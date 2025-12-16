@@ -42,24 +42,6 @@ void dc_app_lookup_cleanup(DcAppLookup *lookup) {
     sbfree(context->sb_vals);
 }
 
-// for XML parsing
-DcValueType dc_app_value_type_from_string(const char *type_str) {
-
-    if (type_str == NULL) {
-        return DC_VALUE_TYPE_UNDEFINED;
-    } else if (strcmp(type_str, "Decimal") == 0 || strcmp(type_str, "Float") == 0 || strcmp(type_str, "Double") == 0) {
-        return DC_VALUE_TYPE_DOUBLE;
-    } else if (strcmp(type_str, "Integer") == 0) {
-        return DC_VALUE_TYPE_INTEGER;
-    } else if (strcmp(type_str, "String") == 0) {
-        return DC_VALUE_TYPE_STRING;
-    } else if (strcmp(type_str, "Boolean") == 0) {
-        return DC_VALUE_TYPE_BOOLEAN;
-    }
-    fprintf(stderr, "DCAPP dc_app_value_type_from_string(): Unknown value type of type '%s'\n", type_str);
-    return DC_VALUE_TYPE_UNDEFINED;
-}
-
 DcValue *dc_app_lookup_get_value(DcAppLookup *lookup, DcAppValIndex index) {
     _LookupContext *context = &(_sb_contexts[lookup->index]);
     if (index == DC_APP_LOOKUP_INDEX_UNDEFINED) {

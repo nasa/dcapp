@@ -95,6 +95,7 @@ typedef struct __ValIndex4 {
 
 typedef enum __NodeType {
     NODE_TYPE_UNDEFINED,
+    NODE_TYPE_BLINK,
     NODE_TYPE_BUTTON,
     NODE_TYPE_CIRCLE,
     NODE_TYPE_CONTAINER,
@@ -125,6 +126,19 @@ typedef struct __MouseEventChildren {
     bool       enabled;
 } _MouseEventChildren;
 
+typedef struct __NodeBlink {
+    DcAppValIndex frequency;
+    DcAppValIndex duty_cycle;
+    DcAppValIndex duration;
+    DcAppVarIndex var;
+    _NodeIndex    child;
+
+    // runtime state
+    double remaining_duration;
+    double last_frame_time;
+    int    last_trigger_value;
+} _NodeBlink;
+
 typedef struct __NodeButton {
 
     // standard transforms
@@ -144,7 +158,8 @@ typedef struct __NodeButton {
     _NodeIndex child_indicator_off;
     _NodeIndex child_pressed;
     _NodeIndex child_released;
-    _NodeIndex child_transition; 
+    _NodeIndex child_transition;
+    _NodeIndex child; // default children, not attached to any events
 
     // comparison values for each state
     DcAppValIndex val_enabled_on;
@@ -373,6 +388,7 @@ typedef struct __Node {
     _NodeIndex parent;
     _NodeIndex next;
     union {
+        _NodeBlink       blink;
         _NodeButton      button;
         _NodeCircle      circle;
         _NodeConditional conditional;

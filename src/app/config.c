@@ -3,6 +3,7 @@
 #include "enums.h"
 #include "libxml/tree.h"
 #include "lookup.h"
+#include "../value.h"
 #include "../utils/env.h"
 #include "../utils/file.h"
 #include "../utils/stb_sb.h"
@@ -184,6 +185,10 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const_int(&context, "_set_subtract_", DC_APP_SET_TYPE_SUBTRACT, true);
     _add_const_int(&context, "_set_multiply_", DC_APP_SET_TYPE_MULTIPLY, true);
     _add_const_int(&context, "_set_divide_", DC_APP_SET_TYPE_DIVIDE, true);
+    _add_const_int(&context, "_variable_string_", DC_VALUE_TYPE_STRING, true);
+    _add_const_int(&context, "_variable_integer_", DC_VALUE_TYPE_INTEGER, true);
+    _add_const_int(&context, "_variable_double_", DC_VALUE_TYPE_DOUBLE, true);
+    _add_const_int(&context, "_variable_boolean_", DC_VALUE_TYPE_BOOLEAN, true);
     // Reds & Pinks
     _add_const(&context, "_color_red_", "1.0 0.0 0.0", false);
     _add_const(&context, "_color_crimson_", "0.86 0.08 0.24", false);

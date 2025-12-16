@@ -6,6 +6,7 @@ typedef struct _xmlNode *xmlNodePtr;
 // element types
 typedef enum _DcAppElemType {
     DC_APP_ELEM_TYPE_UNDEFINED,
+    DC_APP_ELEM_TYPE_BLINK,
     DC_APP_ELEM_TYPE_BUTTON,
     DC_APP_ELEM_TYPE_BUTTON_DISABLED,
     DC_APP_ELEM_TYPE_BUTTON_ENABLED,

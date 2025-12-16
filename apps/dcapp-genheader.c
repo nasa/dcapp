@@ -3,6 +3,7 @@
 #include "../src/app/lookup.h"
 #include "../src/utils/env.h"
 #include "../src/utils/file.h"
+#include "../src/utils/string.h"
 
 #include <libxml/parser.h>
 
@@ -233,7 +234,7 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup) {
 
             // register variable
             DcValue value      = {};
-            value.type         = dc_app_value_type_from_string(clean_type);
+            value.type         = dc_utils_string_to_integer((const char *)clean_type);
             DcAppLookupVar var = {};
             var.value_index    = dc_app_lookup_register_value(lookup, &value);
             dc_app_lookup_register_var(lookup, clean_name, &var);

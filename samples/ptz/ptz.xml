@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="#_variable_double_" InitialValue="0">PAN</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">TILT</Variable>
+    <Variable Type="#_variable_double_" InitialValue="1">ZOOM</Variable>
+    <Variable Type="#_variable_double_">IMAGE_X</Variable>
+    <Variable Type="#_variable_double_">IMAGE_Y</Variable>
+    <Variable Type="#_variable_double_">IMAGE_WIDTH</Variable>
+    <Variable Type="#_variable_double_">IMAGE_HEIGHT</Variable>
+
+    <Logic File="logic/logic.so"/>
+
+    <Window X="30" Y="30" Width="800" Height="600">
+        <Constant Name="BgColor">0 0 0</Constant>
+        <Constant Name="FgColor">1 1 1</Constant>
+
+        <Default>
+            <Button Y="7.5" Width="10" Height="10" ParentAlignX="#_align_center_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
+            <Text Size="3" FillColor="0 0 0" ParentAlignY="#_align_middle_" LocalAlignY="#_align_middle_"/>
+        </Default>
+
+        <Style Name="Button">
+            <Text Size="2.5" FillColor="1 1 1" ShadowOffset=".2" ParentAlignX="#_align_center_" LocalAlignX="#_align_center_"/>
+        </Style>
+
+        <Panel VirtualWidth="100" VirtualHeight="100" BackgroundColor="#BgColor">
+            <Image X="@IMAGE_X" Y="@IMAGE_Y" Width="@IMAGE_WIDTH" Height="@IMAGE_HEIGHT" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" File="../../assets/nasa.png"/>
+
+            <Rectangle X="0" Width="15" FillColor="0 0 0"/>
+            <Rectangle X="85" Width="15" FillColor="0 0 0"/>
+            <Rectangle Y="0" Height="15" FillColor="0 0 0"/>
+            <Rectangle Y="85" Height="15" FillColor="0 0 0"/>
+
+            <Rectangle Width="70" Height="70" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" LineColor="1 1 1"/>
+
+            <Line LineColor="0 1 0">
+                <Vertex X="48" Y="50"/>
+                <Vertex X="52" Y="50"/>
+            </Line>
+            <Line LineColor="0 1 0">
+                <Vertex X="50" Y="48"/>
+                <Vertex X="50" Y="52"/>
+            </Line>
+
+            <Text X="20" Y="92.5" FillColor="1 1 1" LocalAlignX="#_align_left_">Pan: @PAN(%.1f)</Text>
+            <Text X="50" Y="92.5" FillColor="1 1 1" LocalAlignX="#_align_center_">Tilt: @TILT(%.1f)</Text>
+            <Text X="80" Y="92.5" FillColor="1 1 1" LocalAlignX="#_align_right_">Zoom: @ZOOM(%.2f)</Text>
+
+            <Button Type="#_button_momentary_" X="17">
+                <MousePressed><Set Variable="PAN" Operator="#_set_add_">.5</Set></MousePressed>
+                <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
+                <Text Style="Button">Pan\nLeft</Text>
+            </Button>
+            <Button Type="#_button_momentary_" X="29">
+                <MousePressed><Set Variable="PAN" Operator="#_set_subtract_">.5</Set></MousePressed>
+                <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
+                <Text Style="Button">Pan\nRight</Text>
+            </Button>
+            <Button Type="#_button_momentary_" X="44">
+                <MousePressed><Set Variable="TILT" Operator="#_set_subtract_">.5</Set></MousePressed>
+                <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
+                <Text Style="Button">Tilt\nUp</Text>
+            </Button>
+            <Button Type="#_button_momentary_" X="56">
+                <MousePressed><Set Variable="TILT" Operator="#_set_add_">.5</Set></MousePressed>
+                <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
+                <Text Style="Button">Tilt\nDown</Text>
+            </Button>
+            <Button Type="#_button_momentary_" X="71">
+                <MousePressed><Set Variable="ZOOM" Operator="#_set_add_">.05</Set></MousePressed>
+                <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
+                <Text Style="Button">Zoom\nIn</Text>
+            </Button>
+            <Button Type="#_button_momentary_" X="83">
+                <MousePressed><Set Variable="ZOOM" Operator="#_set_subtract_" MinimumValue="0.05">.05</Set></MousePressed>
+                <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
+                <Text Style="Button">Zoom\nOut</Text>
+            </Button>
+        </Panel>
+    </Window>
+</DCAPP>

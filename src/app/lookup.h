@@ -34,8 +34,6 @@ extern "C" {
 DcAppLookup *dc_app_lookup_create(void);
 void         dc_app_lookup_cleanup(DcAppLookup *lookup);
 
-DcValueType dc_app_value_type_from_string(const char *type_str);
-
 DcValue      *dc_app_lookup_get_value(DcAppLookup *lookup, DcAppValIndex index); // don't store
 DcAppValIndex dc_app_lookup_register_value(DcAppLookup *lookup, DcValue *value);
 DcAppValIndex dc_app_create_and_register_typed_value_from_string(DcAppLookup *lookup, DcValueType type, const char *text);

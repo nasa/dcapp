@@ -1,0 +1,160 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Constant Name="AngleDelta">2</Constant>
+
+    <Variable Type="#_variable_double_">RollAngle</Variable>
+    <Variable Type="#_variable_double_">PitchAngle</Variable>
+    <Variable Type="#_variable_double_">YawAngle</Variable>
+    <Variable Type="#_variable_integer_">RollSelected</Variable>
+    <Variable Type="#_variable_integer_">PitchSelected</Variable>
+    <Variable Type="#_variable_integer_">YawSelected</Variable>
+    <Variable Type="#_variable_double_" InitialValue="180">RollSlider</Variable>
+    <Variable Type="#_variable_double_" InitialValue="180">PitchSlider</Variable>
+    <Variable Type="#_variable_double_" InitialValue="180">YawSlider</Variable>
+
+    <Default>
+        <Text ForceMono="Numeric" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="14" FillColor="1 1 1"/>
+        <Button Type="#_button_momentary_" Width="50" Height="25" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
+        <Rectangle LineColor="1 1 1" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
+        <Container X="250" Width="280" Height="5" VirtualWidth="360" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
+    </Default>
+
+    <Window X="50" Y="50" Width="500" Height="600">
+        <Panel VirtualWidth="500" VirtualHeight="600" BackgroundColor="0 0 0">
+            <!-- ROLL -->
+            <Text X="10" Y="110" LocalAlignX="#_align_left_">Roll:</Text>
+            <Text X="100" Y="110" LocalAlignX="#_align_right_">@RollAngle(%.1f)</Text>
+
+            <Container Y="110">
+                <Rectangle FillColor="0.25 0.25 0.25" LineColor="0.5 0.5 0.5"/>
+                <Button Type="#_button_momentary_" X="@RollSlider" Width="10" Height="20" Variable="RollSelected"/>
+                <If Value1="@RollSelected" Operation="#_conditional_true_">
+                    <!-- TODO: MouseMotion element not yet implemented -->
+                    <!-- <MouseMotion XVariable="RollSlider"/> -->
+                    <If Value1="@RollSlider" Operation="#_conditional_gt_" Value2="360">
+                        <Set Variable="RollSlider">360</Set>
+                    </If>
+                    <If Value1="@RollSlider" Operation="#_conditional_lt_" Value2="0">
+                        <Set Variable="RollSlider">0</Set>
+                    </If>
+                    <Rectangle X="@RollSlider" Width="10" Height="20" FillColor="0.5 1 0.5"/>
+                    <Set Variable="RollAngle">@RollSlider</Set>
+                    <Set Variable="RollAngle" Operator="#_set_subtract_">180</Set>
+                </If>
+                <If Value1="@RollSelected" Operation="#_conditional_false_">
+                    <If Value1="@RollSlider" Operation="#_conditional_gt_" Value2="360">
+                        <Set Variable="RollSlider">360</Set>
+                    </If>
+                    <If Value1="@RollSlider" Operation="#_conditional_lt_" Value2="0">
+                        <Set Variable="RollSlider">0</Set>
+                    </If>
+                    <Rectangle X="@RollSlider" Width="10" Height="20" FillColor="0.5 0.5 0.5"/>
+                </If>
+            </Container>
+
+            <Button X="445" Y="110">
+                <MousePressed><Set Variable="RollAngle">0</Set><Set Variable="RollSlider">180</Set></MousePressed>
+                <ButtonIndicatorOn><Rectangle FillColor="0.5 1 0.5"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle FillColor="0.5 0.5 0.5"/></ButtonIndicatorOff>
+                <Text ShadowOffset="1">Reset</Text>
+            </Button>
+
+            <!-- PITCH -->
+            <Text X="10" Y="70" LocalAlignX="#_align_left_">Pitch:</Text>
+            <Text X="100" Y="70" LocalAlignX="#_align_right_">@PitchAngle(%.1f)</Text>
+
+            <Container Y="70">
+                <Rectangle FillColor="0.25 0.25 0.25" LineColor="0.5 0.5 0.5"/>
+                <Button Type="#_button_momentary_" X="@PitchSlider" Width="10" Height="20" Variable="PitchSelected"/>
+                <If Value1="@PitchSelected" Operation="#_conditional_true_">
+                    <!-- TODO: MouseMotion element not yet implemented -->
+                    <!-- <MouseMotion XVariable="PitchSlider"/> -->
+                    <If Value1="@PitchSlider" Operation="#_conditional_gt_" Value2="360">
+                        <Set Variable="PitchSlider">360</Set>
+                    </If>
+                    <If Value1="@PitchSlider" Operation="#_conditional_lt_" Value2="0">
+                        <Set Variable="PitchSlider">0</Set>
+                    </If>
+                    <Rectangle X="@PitchSlider" Width="10" Height="20" FillColor="0.5 1 0.5"/>
+                    <Set Variable="PitchAngle">@PitchSlider</Set>
+                    <Set Variable="PitchAngle" Operator="#_set_subtract_">180</Set>
+                </If>
+                <If Value1="@PitchSelected" Operation="#_conditional_false_">
+                    <If Value1="@PitchSlider" Operation="#_conditional_gt_" Value2="360">
+                        <Set Variable="PitchSlider">360</Set>
+                    </If>
+                    <If Value1="@PitchSlider" Operation="#_conditional_lt_" Value2="0">
+                        <Set Variable="PitchSlider">0</Set>
+                    </If>
+                    <Rectangle X="@PitchSlider" Width="10" Height="20" FillColor="0.5 0.5 0.5"/>
+                </If>
+            </Container>
+
+            <Button X="445" Y="70">
+                <MousePressed><Set Variable="PitchAngle">0</Set><Set Variable="PitchSlider">180</Set></MousePressed>
+                <ButtonIndicatorOn><Rectangle FillColor="0.5 1 0.5"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle FillColor="0.5 0.5 0.5"/></ButtonIndicatorOff>
+                <Text ShadowOffset="1">Reset</Text>
+            </Button>
+
+            <!-- YAW -->
+            <Text X="10" Y="30" LocalAlignX="#_align_left_">Yaw:</Text>
+            <Text X="100" Y="30" LocalAlignX="#_align_right_">@YawAngle(%.1f)</Text>
+
+            <Container Y="30">
+                <Rectangle FillColor="0.25 0.25 0.25" LineColor="0.5 0.5 0.5"/>
+                <Button Type="#_button_momentary_" X="@YawSlider" Width="10" Height="20" Variable="YawSelected"/>
+                <If Value1="@YawSelected" Operation="#_conditional_true_">
+                    <!-- TODO: MouseMotion element not yet implemented -->
+                    <!-- <MouseMotion XVariable="YawSlider"/> -->
+                    <If Value1="@YawSlider" Operation="#_conditional_gt_" Value2="360">
+                        <Set Variable="YawSlider">360</Set>
+                    </If>
+                    <If Value1="@YawSlider" Operation="#_conditional_lt_" Value2="0">
+                        <Set Variable="YawSlider">0</Set>
+                    </If>
+                    <Rectangle X="@YawSlider" Width="10" Height="20" FillColor="0.5 1 0.5"/>
+                    <Set Variable="YawAngle">@YawSlider</Set>
+                    <Set Variable="YawAngle" Operator="#_set_subtract_">180</Set>
+                </If>
+                <If Value1="@YawSelected" Operation="#_conditional_false_">
+                    <If Value1="@YawSlider" Operation="#_conditional_gt_" Value2="360">
+                        <Set Variable="YawSlider">360</Set>
+                    </If>
+                    <If Value1="@YawSlider" Operation="#_conditional_lt_" Value2="0">
+                        <Set Variable="YawSlider">0</Set>
+                    </If>
+                    <Rectangle X="@YawSlider" Width="10" Height="20" FillColor="0.5 0.5 0.5"/>
+                </If>
+            </Container>
+
+            <Button X="445" Y="30">
+                <MousePressed><Set Variable="YawAngle">0</Set><Set Variable="YawSlider">180</Set></MousePressed>
+                <ButtonIndicatorOn><Rectangle FillColor="0.5 1 0.5"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle FillColor="0.5 0.5 0.5"/></ButtonIndicatorOff>
+                <Text ShadowOffset="1">Reset</Text>
+            </Button>
+
+            <Button X="445" Y="155" Height="35">
+                <MousePressed>
+                    <Set Variable="RollAngle">0</Set><Set Variable="RollSlider">180</Set>
+                    <Set Variable="PitchAngle">0</Set><Set Variable="PitchSlider">180</Set>
+                    <Set Variable="YawAngle">0</Set><Set Variable="YawSlider">180</Set>
+                </MousePressed>
+                <ButtonIndicatorOn><Rectangle FillColor="0.5 1 0.5"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle FillColor="0.5 0.5 0.5"/></ButtonIndicatorOff>
+                <Text ShadowOffset="1">Reset\nAll</Text>
+            </Button>
+
+            <!-- TODO: ADI element not yet implemented -->
+            <!--
+            <ADI X="250" Y="150" Width="420" Height="420" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                 BallRadius="200" ChevronWidth="32" ChevronHeight="32"
+                 CoverFile="adi_simple_bkgd.tga" BallFile="adi_simple_ball.tga"
+                 Pitch="@PitchAngle" Yaw="@YawAngle" Roll="@RollAngle" HideRateIndicators="True"/>
+            -->
+            <Text X="250" Y="400" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="40" FillColor="1 0 0">TODO: ADI Element</Text>
+            <Text X="250" Y="350" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="20" FillColor="1 1 1">Roll: @RollAngle(%.1f)  Pitch: @PitchAngle(%.1f)  Yaw: @YawAngle(%.1f)</Text>
+        </Panel>
+    </Window>
+</DCAPP>
