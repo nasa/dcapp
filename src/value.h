@@ -69,6 +69,7 @@ DcValue dc_value_create_value_integer(int value);
 DcValue dc_value_create_value_double(double value);
 DcValue dc_value_create_value_boolean(bool value);
 void    dc_value_refresh(DcValue *value);
+void    dc_value_refresh_from_type(DcValue *value, DcValueType type);
 void    dc_value_set_from_string(DcValue *value, const char *string_value);
 void   *dc_value_get_addr(DcValue *value);
 

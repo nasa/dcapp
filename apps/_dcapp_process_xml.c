@@ -10,6 +10,7 @@
 static DcAppVarIndex _register_anonymous_variable(_AppData *app_data, DcValueType type, const char *initial_value_str);
 static _NodeIndex    _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_nonelem(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_blink(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_button_disabled(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_button_enabled(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -119,6 +120,9 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
     switch (elem_type) {
         case DC_APP_ELEM_TYPE_NONELEM:
             return _process_xml_node_nonelem(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_BLINK:
+            return _process_xml_node_blink(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_BUTTON:
             return _process_xml_node_button(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -451,6 +455,74 @@ static DcAppVarIndex _create_anonymous_variable(_AppData *app_data, DcValueType 
     return dc_app_lookup_register_var(app_data->lookup, name, &var);
 }
 
+static _NodeIndex _process_xml_node_blink(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    _Node dc_node;
+    dc_node.type   = NODE_TYPE_BLINK;
+    dc_node.parent = parent_node_index;
+    dc_node.next   = NODE_INDEX_UNDEFINED;
+
+    // frequency (blinks per second)
+    xmlChar *raw_frequency = xmlGetProp(xml_node, BAD_CAST "Frequency");
+    if (raw_frequency) {
+        dc_node.blink.frequency = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_frequency);
+        xmlFree(raw_frequency);
+    } else {
+        DcValue temp_value      = dc_value_create_value_double(1.0);
+        dc_node.blink.frequency = dc_app_lookup_register_value(app_data->lookup, &temp_value);
+    }
+
+    // duty cycle (fraction on, 0.0 to 1.0)
+    xmlChar *raw_duty_cycle = xmlGetProp(xml_node, BAD_CAST "DutyCycle");
+    if (raw_duty_cycle) {
+        dc_node.blink.duty_cycle = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_duty_cycle);
+        xmlFree(raw_duty_cycle);
+    } else {
+        DcValue temp_value       = dc_value_create_value_double(0.5);
+        dc_node.blink.duty_cycle = dc_app_lookup_register_value(app_data->lookup, &temp_value);
+    }
+
+    // duration (seconds, <= 0 = indefinite toggle)
+    xmlChar *raw_duration = xmlGetProp(xml_node, BAD_CAST "Duration");
+    if (raw_duration) {
+        dc_node.blink.duration = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_duration);
+        xmlFree(raw_duration);
+    } else {
+        DcValue temp_value     = dc_value_create_value_double(-1.0);
+        dc_node.blink.duration = dc_app_lookup_register_value(app_data->lookup, &temp_value);
+    }
+
+    // variable that triggers blink
+    xmlChar *raw_var = xmlGetProp(xml_node, BAD_CAST "Variable");
+    if (raw_var) {
+        dc_node.blink.var = dc_app_lookup_get_var_index(app_data->lookup, (const char *)raw_var);
+        xmlFree(raw_var);
+    } else {
+        dc_node.blink.var = DC_APP_VAR_INDEX_UNDEFINED;
+    }
+
+    // initialize child
+    dc_node.blink.child = NODE_INDEX_UNDEFINED;
+
+    // initialize runtime state
+    dc_node.blink.remaining_duration  = 0.0;
+    dc_node.blink.last_frame_time     = 0.0;
+    dc_node.blink.last_trigger_value  = 0;
+
+    // register node
+    _NodeIndex node_index = _register_node(app_data, &dc_node);
+
+    // process children
+    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+
+    // update child index
+    _Node *node       = _get_node(app_data, node_index);
+    node->blink.child = first_child_index;
+
+    // return
+    return node_index;
+}
 static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 

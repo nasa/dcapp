@@ -5,8 +5,10 @@
 
 #include "../src/app/enums.h"
 #include "../src/utils/string.h"
+#include "../src/utils/time.h"
 
 // Forward declarations
+static void _draw_node_blink(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -37,6 +39,10 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
 
     _Node *node = _get_node(app_data, node_index);
     switch (node->type) {
+        case NODE_TYPE_BLINK:
+            _draw_node_blink(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+
         case NODE_TYPE_BUTTON:
             _draw_node_button(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
@@ -96,6 +102,55 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
         default:
             break;
     }
+}
+
+static void _draw_node_blink(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+
+    double current_time = dc_utils_time_get();
+    double frequency    = dc_app_lookup_get_value(app_data->lookup, node->blink.frequency)->value_double;
+    double duty_cycle   = dc_app_lookup_get_value(app_data->lookup, node->blink.duty_cycle)->value_double;
+    double duration     = dc_app_lookup_get_value(app_data->lookup, node->blink.duration)->value_double;
+
+    // check trigger variable for any change
+    if (node->blink.var != DC_APP_VAR_INDEX_UNDEFINED) {
+        DcAppLookupVar *var = dc_app_lookup_get_var(app_data->lookup, node->blink.var);
+        DcValue        *val = dc_app_lookup_get_value(app_data->lookup, var->value_index);
+        
+        int trigger_value = val->value_integer;
+        
+        if (trigger_value != node->blink.last_trigger_value) {
+            if (duration <= 0.0) {
+                // indefinite: toggle (0 <-> 1)
+                node->blink.remaining_duration = 1.0 - node->blink.remaining_duration;
+            } else {
+                // timed: restart
+                node->blink.remaining_duration = duration;
+            }
+            node->blink.last_trigger_value = trigger_value;
+        }
+    }
+
+    // calculate blink state
+    bool blink_state = true;
+    if (node->blink.remaining_duration > 0.0) {
+        double period  = (frequency > 0.0) ? (1.0 / frequency) : 1.0;
+        double on_time = period * duty_cycle;
+        blink_state = (fmod(current_time, period) <= on_time);
+
+        // countdown for timed blinks
+        if (duration > 0.0) {
+            node->blink.remaining_duration -= (current_time - node->blink.last_frame_time);
+            if (node->blink.remaining_duration <= 0.0) {
+                blink_state = true;
+            }
+        }
+    }
+
+    if (blink_state) {
+        _draw_node_list(app_data, node->blink.child, parent_position, parent_dimensions, parent_transform);
+    }
+
+    node->blink.last_frame_time = current_time;
 }
 
 static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
