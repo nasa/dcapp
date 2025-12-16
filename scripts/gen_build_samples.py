@@ -45,6 +45,19 @@ app_bin_dir_abs = os.path.abspath(pl_dir_abs + "/out")
 pl_dir_rel = os.path.relpath(pl_dir_abs, build_script_out_dir_abs)
 app_bin_dir_rel = os.path.relpath(app_bin_dir_abs, build_script_out_dir_abs)
 
+# get list of all samples with logic, relative to output dir
+samples_dir = dcapp_home_abs + "/samples"
+sample_dirs_abs = []
+for entry in os.listdir(samples_dir):
+    full_path = samples_dir + "/" + entry
+    if os.path.isdir(full_path):
+        logic_path = os.path.join(full_path, "logic")
+        if os.path.isdir(logic_path):
+            abs_path = os.path.abspath(full_path)
+            sample_dirs_abs.append(abs_path)
+sample_dirs_rel = [os.path.relpath(dir_abs, build_script_out_dir_abs) for dir_abs in sample_dirs_abs]
+sample_names    = [os.path.basename(dir_rel) for dir_rel in sample_dirs_rel]
+
 with pl.project("samples"):
 
     # -----------------------------------------------------------------------------
@@ -126,68 +139,68 @@ with pl.project("samples"):
     # [SECTION] app
     # -----------------------------------------------------------------------------
 
-    # test sample
-    with pl.target("test", pl.TargetType.DYNAMIC_LIBRARY):
+    genheader_abs = app_bin_dir_abs + "/dcapp-genheader"
+    genheader_rel = os.path.relpath(genheader_abs, build_script_out_dir_abs)
 
-        sample_dir_abs = dcapp_home_abs + "/samples/test"
+    for ii in range(len(sample_names)):
 
-        sample_xml_abs = sample_dir_abs + "/test.xml"
-        sample_xml_rel = os.path.relpath(sample_xml_abs, build_script_out_dir_abs)
+        sample_name = sample_names[ii]
 
-        logic_dir_abs = os.path.abspath(sample_dir_abs + "/logic")
-        logic_dir_rel = os.path.relpath(logic_dir_abs, build_script_out_dir_abs)
+        # test sample
+        with pl.target(sample_name, pl.TargetType.DYNAMIC_LIBRARY):
 
-        genheader_abs = app_bin_dir_abs + "/dcapp-genheader"
-        genheader_rel = os.path.relpath(genheader_abs, build_script_out_dir_abs)
+            sample_dir_rel = sample_dirs_rel[ii]
+            logic_dir_rel  = sample_dir_rel + "/logic"
+            sample_xml_rel = sample_dir_rel + "/" + sample_name + ".xml"
 
-        pl.set_output_directory(logic_dir_rel)
-        pl.set_output_binary("logic")
+            pl.set_output_directory(logic_dir_rel)
+            pl.set_output_binary("logic")
 
-        # add source files
-        logic_src_file = os.path.relpath(
-            logic_dir_rel + "/logic.cpp", build_script_out_dir_abs
-        )
-        pl.add_source_files(logic_src_file)
+            # add source files
+            logic_src_file = os.path.relpath(
+                logic_dir_rel + "/logic.c", build_script_out_dir_abs
+            )
+            pl.add_source_files(logic_src_file)
 
-        # release config
-        with pl.configuration("release"):
+            # release config
+            with pl.configuration("release"):
 
-            # win32
-            with pl.platform("Windows"):
-                with pl.compiler("msvc"):
-                    pl.set_pre_target_build_step(
-                        f"{genheader_rel}.exe {sample_xml_rel}"
-                    )
+                # win32
+                with pl.platform("Windows"):
+                    with pl.compiler("msvc"):
+                        pl.set_pre_target_build_step(
+                            f"{genheader_rel}.exe {sample_xml_rel}"
+                        )
 
-            # linux
-            with pl.platform("Linux"):
-                with pl.compiler("gcc"):
-                    pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel}")
+                # linux
+                with pl.platform("Linux"):
+                    with pl.compiler("gcc"):
+                        pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel}")
 
-            # mac os
-            with pl.platform("Darwin"):
-                with pl.compiler("clang"):
-                    pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel}")
+                # mac os
+                with pl.platform("Darwin"):
+                    with pl.compiler("clang"):
+                        pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel}")
 
-        # debug config
-        with pl.configuration("debug"):
+            # debug config
+            with pl.configuration("debug"):
 
-            # win32
-            with pl.platform("Windows"):
-                with pl.compiler("msvc"):
-                    pl.set_pre_target_build_step(
-                        f"{genheader_rel}.exe {sample_xml_rel}"
-                    )
+                # win32
+                with pl.platform("Windows"):
+                    with pl.compiler("msvc"):
+                        pl.set_pre_target_build_step(
+                            f"{genheader_rel}.exe {sample_xml_rel}"
+                        )
 
-            # linux
-            with pl.platform("Linux"):
-                with pl.compiler("gcc"):
-                    pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel}")
+                # linux
+                with pl.platform("Linux"):
+                    with pl.compiler("gcc"):
+                        pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel}")
 
-            # mac os
-            with pl.platform("Darwin"):
-                with pl.compiler("clang"):
-                    pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel}")
+                # mac os
+                with pl.platform("Darwin"):
+                    with pl.compiler("clang"):
+                        pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel}")
 
 # -----------------------------------------------------------------------------
 # [SECTION] generate scripts
