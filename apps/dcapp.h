@@ -446,7 +446,7 @@ typedef struct __AppData {
     plWindow      *pl_window;
     plDrawLayer2D *pl_layer;
     plDrawList2D  *pl_draw_list;
-    plFont        *pl_cousine_sdf_font;
+    plFont        *pl_vera_sdf_font;
 
     // staging buffer
     plBufferHandle pl_staging_buffer_handle;
