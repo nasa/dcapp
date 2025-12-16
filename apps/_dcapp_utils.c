@@ -173,9 +173,9 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
         font_config.uRangeCount    = 1;
         font_config.ptRanges       = &font_range;
 
-        app_data->pl_cousine_sdf_font = _ext_draw->add_font_from_file_ttf(_ext_draw->get_current_font_atlas(), font_config, "../data/pilotlight-assets-master/fonts/Cousine-Regular.ttf");
+        app_data->pl_vera_sdf_font = _ext_draw->add_font_from_file_ttf(_ext_draw->get_current_font_atlas(), font_config, "../../assets/fonts/bitstream-vera-sans/Vera.ttf");
     }
-    _ext_starter->set_default_font(app_data->pl_cousine_sdf_font);
+    _ext_starter->set_default_font(app_data->pl_vera_sdf_font);
 
     // initialize shader compiler
     plShaderOptions shader_options          = {};
