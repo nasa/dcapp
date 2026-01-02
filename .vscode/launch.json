@@ -9,7 +9,7 @@
       "args": [
         "-a",
         "dcapp",
-        "${workspaceFolder}/samples/test/test.xml"
+        "${workspaceFolder}/samples/blink/blink.xml"
       ],
       "cwd": "${workspaceFolder}/pilotlight/out",
       "MIMode": "gdb",

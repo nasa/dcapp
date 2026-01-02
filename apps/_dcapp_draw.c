@@ -20,6 +20,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
 static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -85,6 +86,10 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
 
         case NODE_TYPE_SET:
             _draw_node_set(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+
+        case NODE_TYPE_STENCIL:
+            _draw_node_stencil(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_TERRAIN:
@@ -2409,6 +2414,40 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
 
     // refresh variable
     dc_value_refresh(var_value);
+}
+
+static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    int num_children = sbcount(node->stencil.sb_children);
+
+    for (int i = 0; i < num_children; i++) {
+        _StencilChild *stencil_child = &node->stencil.sb_children[i];
+
+        // select shader based on child type
+        plShaderHandle* ptShader = NULL;
+        switch (stencil_child->type) {
+            case STENCIL_CHILD_TYPE_ADD:
+                ptShader = &app_data->stencil_create_shader;
+                break;
+            case STENCIL_CHILD_TYPE_REMOVE:
+                ptShader = &app_data->stencil_remove_shader;
+                break;
+            case STENCIL_CHILD_TYPE_DRAW:
+                ptShader = &app_data->stencil_draw_shader;
+                break;
+            default:
+                continue;
+        }
+
+        // set the stencil shader (suppresses bSdf switching)
+        _ext_draw->set_2d_shader(app_data->pl_layer, ptShader);
+
+        // draw child nodes
+        _draw_node_list(app_data, stencil_child->child, parent_position, parent_dimensions, parent_transform);
+    }
+
+    // reset to normal rendering (pass NULL to clear user shader)
+    _ext_draw->set_2d_shader(app_data->pl_layer, NULL);
+    _ext_draw->add_2d_callback(app_data->pl_layer, plDrawCallbackResetRenderState, NULL, 0);
 }
 
 static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {

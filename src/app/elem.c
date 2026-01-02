@@ -70,6 +70,14 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "Rectangle";
         case DC_APP_ELEM_TYPE_SET:
             return "Set";
+        case DC_APP_ELEM_TYPE_STENCIL:
+            return "Stencil";
+        case DC_APP_ELEM_TYPE_STENCIL_ADD:
+            return "StencilAdd";
+        case DC_APP_ELEM_TYPE_STENCIL_DRAW:
+            return "StencilDraw";
+        case DC_APP_ELEM_TYPE_STENCIL_REMOVE:
+            return "StencilRemove";
         case DC_APP_ELEM_TYPE_STYLE:
             return "Style";
         case DC_APP_ELEM_TYPE_TERRAIN:
@@ -165,6 +173,14 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_RECTANGLE;
     if (strcmp(name, "Set") == 0)
         return DC_APP_ELEM_TYPE_SET;
+    if (strcmp(name, "Stencil") == 0)
+        return DC_APP_ELEM_TYPE_STENCIL;
+    if (strcmp(name, "StencilAdd") == 0)
+        return DC_APP_ELEM_TYPE_STENCIL_ADD;
+    if (strcmp(name, "StencilDraw") == 0)
+        return DC_APP_ELEM_TYPE_STENCIL_DRAW;
+    if (strcmp(name, "StencilRemove") == 0)
+        return DC_APP_ELEM_TYPE_STENCIL_REMOVE;
     if (strcmp(name, "Style") == 0)
         return DC_APP_ELEM_TYPE_STYLE;
     if (strcmp(name, "Terrain") == 0)

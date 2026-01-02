@@ -40,6 +40,10 @@ static _NodeIndex    _process_xml_node_pixelstream(_AppData *app_data, xmlNodePt
 static _NodeIndex    _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_stencil(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_stencil_add(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_stencil_draw(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_stencil_remove(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_style(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_terrain_dem(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -204,6 +208,18 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_SET:
             return _process_xml_node_set(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_STENCIL:
+            return _process_xml_node_stencil(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_STENCIL_ADD:
+            return _process_xml_node_stencil_add(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_STENCIL_DRAW:
+            return _process_xml_node_stencil_draw(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_STENCIL_REMOVE:
+            return _process_xml_node_stencil_remove(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_STYLE:
             return _process_xml_node_style(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -2407,6 +2423,93 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
 
     // register node
     return _register_node(app_data, &dc_node);
+}
+
+static _NodeIndex _process_xml_node_stencil(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    _Node dc_node               = {};
+    dc_node.type                = NODE_TYPE_STENCIL;
+    dc_node.parent              = parent_node_index;
+    dc_node.next                = NODE_INDEX_UNDEFINED;
+    dc_node.stencil.sb_children = NULL;
+
+    // register node
+    _NodeIndex node_index = _register_node(app_data, &dc_node);
+
+    // process children (StencilAdd, StencilRemove, StencilDraw)
+    _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+
+    return node_index;
+}
+
+static _NodeIndex _process_xml_node_stencil_add(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    switch (parent_elem_type) {
+        case DC_APP_ELEM_TYPE_STENCIL: {
+            // process children
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
+
+            // add entry to stencil's children buffer
+            _StencilChild stencil_child = {
+                .child = first_child_index,
+                .type  = STENCIL_CHILD_TYPE_ADD,
+            };
+            _Node *parent_node = _get_node(app_data, parent_node_index);
+            sbpush(parent_node->stencil.sb_children, stencil_child);
+            break;
+        }
+        default:
+            fprintf(stderr, "DCAPP _process_xml_node(): Invalid elem parent of type %s for <StencilAdd>\n", dc_app_elem_type_to_string(parent_elem_type));
+    }
+    return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_stencil_draw(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    switch (parent_elem_type) {
+        case DC_APP_ELEM_TYPE_STENCIL: {
+            // process children
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
+
+            // add entry to stencil's children buffer
+            _StencilChild stencil_child = {
+                .child = first_child_index,
+                .type  = STENCIL_CHILD_TYPE_DRAW,
+            };
+            _Node *parent_node = _get_node(app_data, parent_node_index);
+            sbpush(parent_node->stencil.sb_children, stencil_child);
+            break;
+        }
+        default:
+            fprintf(stderr, "DCAPP _process_xml_node(): Invalid elem parent of type %s for <StencilDraw>\n", dc_app_elem_type_to_string(parent_elem_type));
+    }
+    return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_stencil_remove(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    switch (parent_elem_type) {
+        case DC_APP_ELEM_TYPE_STENCIL: {
+            // process children
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
+
+            // add entry to stencil's children buffer
+            _StencilChild stencil_child = {
+                .child = first_child_index,
+                .type  = STENCIL_CHILD_TYPE_REMOVE,
+            };
+            _Node *parent_node = _get_node(app_data, parent_node_index);
+            sbpush(parent_node->stencil.sb_children, stencil_child);
+            break;
+        }
+        default:
+            fprintf(stderr, "DCAPP _process_xml_node(): Invalid elem parent of type %s for <StencilRemove>\n", dc_app_elem_type_to_string(parent_elem_type));
+    }
+    return NODE_INDEX_UNDEFINED;
 }
 
 static _NodeIndex _process_xml_node_style(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
