@@ -8,7 +8,7 @@
 
   <Logic File="logic/logic.so"/>
 
-  <Window X="30" Y="30" Width="640" Height="480">
+  <Window X="30" Y="30" Width="1500" Height="1200">
 
     <Panel VirtualWidth="1500" VirtualHeight="1200" BackgroundColor="1 1 1">
 

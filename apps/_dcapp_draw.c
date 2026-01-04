@@ -2422,32 +2422,35 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
     for (int i = 0; i < num_children; i++) {
         _StencilChild *stencil_child = &node->stencil.sb_children[i];
 
-        // select shader based on child type
-        plShaderHandle* ptShader = NULL;
+        // select shaders based on child type (separate for 2D and SDF)
+        plShaderHandle* pt2dShader = NULL;
+        plShaderHandle* ptSdfShader = NULL;
         switch (stencil_child->type) {
             case STENCIL_CHILD_TYPE_ADD:
-                ptShader = &app_data->stencil_create_shader;
+                pt2dShader = &app_data->stencil_create_2d_shader;
+                ptSdfShader = &app_data->stencil_create_sdf_shader;
                 break;
             case STENCIL_CHILD_TYPE_REMOVE:
-                ptShader = &app_data->stencil_remove_shader;
+                pt2dShader = &app_data->stencil_remove_2d_shader;
+                ptSdfShader = &app_data->stencil_remove_sdf_shader;
                 break;
             case STENCIL_CHILD_TYPE_DRAW:
-                ptShader = &app_data->stencil_draw_shader;
+                pt2dShader = &app_data->stencil_draw_2d_shader;
+                ptSdfShader = &app_data->stencil_draw_sdf_shader;
                 break;
             default:
                 continue;
         }
 
-        // set the stencil shader (suppresses bSdf switching)
-        _ext_draw->set_2d_shader(app_data->pl_layer, ptShader);
+        // set the stencil shader overrides
+        _ext_draw_backend->set_shader(app_data->pl_layer, pt2dShader, ptSdfShader);
 
         // draw child nodes
         _draw_node_list(app_data, stencil_child->child, parent_position, parent_dimensions, parent_transform);
     }
 
-    // reset to normal rendering (pass NULL to clear user shader)
-    _ext_draw->set_2d_shader(app_data->pl_layer, NULL);
-    _ext_draw->add_2d_callback(app_data->pl_layer, plDrawCallbackResetRenderState, NULL, 0);
+    // reset to normal rendering (pass NULL to clear shader overrides)
+    _ext_draw_backend->set_shader(app_data->pl_layer, NULL, NULL);
 }
 
 static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {

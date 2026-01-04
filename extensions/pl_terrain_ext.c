@@ -45,8 +45,8 @@ Index of this file:
 #include "pl_tools_ext.h"
 #include "pl_job_ext.h"
 #include "pl_camera_ext.h"
-#include "pl_draw_ext.h"
-#include "pl_draw_backend_ext.h"
+#include "dc_draw_ext.h"
+#include "dc_draw_backend_ext.h"
 #include "pl_ui_ext.h"
 
 // shader interop
@@ -2007,7 +2007,7 @@ pl__terrain_create_shaders(plTerrain* ptTerrain)
             }
         },
         .atBlendStates = {
-            {.bBlendEnabled = false}
+            {.bBlendEnabled = false, .uColorWriteMask = PL_COLOR_WRITE_MASK_ALL}
         },
         .atBindGroupLayouts = {
             {

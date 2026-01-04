@@ -9,14 +9,16 @@
 
 // PL extension includes
 #include "../pilotlight/extensions/pl_camera_ext.h"
-#include "../pilotlight/extensions/pl_draw_ext.h"
 #include "../pilotlight/extensions/pl_profile_ext.h"
 #include "../pilotlight/extensions/pl_starter_ext.h"
 #include "../pilotlight/extensions/pl_graphics_ext.h"
 #include "../pilotlight/extensions/pl_vfs_ext.h"
 #include "../pilotlight/extensions/pl_shader_ext.h"
-#include "../pilotlight/extensions/pl_draw_backend_ext.h"
 #include "../pilotlight/extensions/pl_image_ext.h"
+
+// dcapp extension includes
+#include "../extensions/dc_draw_ext.h"
+#include "../extensions/dc_draw_backend_ext.h"
 #include "../extensions/pl_terrain_ext.h"
 
 // general includes
@@ -485,10 +487,15 @@ typedef struct __AppData {
     plBufferHandle pl_staging_buffer_handle;
     size_t         pl_staging_buffer_size;
 
-    // stencil shaders
-    plShaderHandle stencil_create_shader;
-    plShaderHandle stencil_remove_shader;
-    plShaderHandle stencil_draw_shader;
+    // stencil shaders (2D)
+    plShaderHandle stencil_create_2d_shader;
+    plShaderHandle stencil_remove_2d_shader;
+    plShaderHandle stencil_draw_2d_shader;
+
+    // stencil shaders (SDF)
+    plShaderHandle stencil_create_sdf_shader;
+    plShaderHandle stencil_remove_sdf_shader;
+    plShaderHandle stencil_draw_sdf_shader;
 
     // config + lookup
     DcAppLookup *lookup;

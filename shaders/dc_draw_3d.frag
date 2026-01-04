@@ -1,0 +1,19 @@
+// forked from pilotlight (https://github.com/PilotLightTech/pilotlight)
+#version 450 core
+
+//-----------------------------------------------------------------------------
+// [SECTION] input
+//-----------------------------------------------------------------------------
+
+layout(location = 0) in struct { vec4 Color; } In;
+
+//-----------------------------------------------------------------------------
+// [SECTION] output
+//-----------------------------------------------------------------------------
+
+layout(location = 0) out vec4 fColor;
+
+void main()
+{
+    fColor = In.Color;
+}

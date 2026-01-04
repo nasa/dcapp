@@ -1,0 +1,267 @@
+<?xml version="1.0"?>
+<DCAPP>
+  <!-- Comprehensive stencil test: tests 2D shapes, SDF text, donuts, multiple stencils, interleaved content -->
+  <!-- Note: Y=0 is at BOTTOM, Y increases upward -->
+
+  <Window X="30" Y="30" Width="1500" Height="1000">
+    <Panel VirtualWidth="1500" VirtualHeight="1000" BackgroundColor="0.15 0.15 0.2">
+
+      <!-- ================================================================== -->
+      <!-- SECTION 1: Regular content BEFORE stencils (at top of screen) -->
+      <!-- ================================================================== -->
+      <Text X="20" Y="960" Size="24" FillColor="1 1 1">STENCIL TEST - Regular content before stencils</Text>
+      <Rectangle X="20" Y="900" Width="200" Height="40" FillColor="0.3 0.5 0.8"/>
+      <Text X="30" Y="910" Size="16" FillColor="1 1 1">Normal Rectangle</Text>
+
+      <!-- ================================================================== -->
+      <!-- SECTION 2: Simple stencil with TEXT as the mask (SDF stencil test) -->
+      <!-- ================================================================== -->
+      <Text X="20" Y="850" Size="18" FillColor="0.8 0.8 0.2">Test 1: Text as stencil mask (SDF)</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <!-- Large text forms the mask - tests SDF stencil shader -->
+          <Text X="20" Y="750" Size="80" FillColor="1 1 1">MASKED</Text>
+        </StencilAdd>
+        <StencilDraw>
+          <!-- Draw colorful stripes through the text mask -->
+          <Rectangle X="0" Y="820" Width="500" Height="30" FillColor="1 0 0"/>
+          <Rectangle X="0" Y="790" Width="500" Height="30" FillColor="1 0.5 0"/>
+          <Rectangle X="0" Y="760" Width="500" Height="30" FillColor="1 1 0"/>
+          <Rectangle X="0" Y="730" Width="500" Height="30" FillColor="0 1 0"/>
+          <Rectangle X="0" Y="700" Width="500" Height="30" FillColor="0 0 1"/>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- SECTION 3: Donut stencil (add circle, remove inner circle) -->
+      <!-- ================================================================== -->
+      <Text X="450" Y="850" Size="18" FillColor="0.8 0.8 0.2">Test 2: Donut (Add + Remove)</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <!-- Outer circle -->
+          <Circle X="600" Y="750" Radius="100" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilRemove>
+          <!-- Inner circle creates the hole -->
+          <Circle X="600" Y="750" Radius="50" FillColor="1 1 1"/>
+        </StencilRemove>
+        <StencilDraw>
+          <!-- Draw gradient inside the donut -->
+          <Rectangle X="450" Y="850" Width="300" Height="50" FillColor="1 0.2 0.2"/>
+          <Rectangle X="450" Y="800" Width="300" Height="50" FillColor="0.2 1 0.2"/>
+          <Rectangle X="450" Y="750" Width="300" Height="50" FillColor="0.2 0.2 1"/>
+          <Rectangle X="450" Y="700" Width="300" Height="50" FillColor="1 1 0.2"/>
+          <Rectangle X="450" Y="650" Width="300" Height="50" FillColor="1 0.2 1"/>
+          <!-- Text inside the donut - tests SDF within stencil draw -->
+          <Text X="520" Y="740" Size="20" FillColor="1 1 1">RING</Text>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- SECTION 4: Complex stencil with multiple adds and removes -->
+      <!-- ================================================================== -->
+      <Text X="780" Y="850" Size="18" FillColor="0.8 0.8 0.2">Test 3: Multiple Add/Remove</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <!-- Add three overlapping circles -->
+          <Circle X="880" Y="760" Radius="60" FillColor="1 1 1"/>
+          <Circle X="960" Y="760" Radius="60" FillColor="1 1 1"/>
+          <Circle X="920" Y="700" Radius="60" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilRemove>
+          <!-- Remove center intersection -->
+          <Circle X="920" Y="740" Radius="25" FillColor="1 1 1"/>
+        </StencilRemove>
+        <StencilAdd>
+          <!-- Add a small circle back in the center -->
+          <Circle X="920" Y="740" Radius="10" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilDraw>
+          <!-- Checkerboard pattern -->
+          <Rectangle X="780" Y="800" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="820" Y="800" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="860" Y="800" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="900" Y="800" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="940" Y="800" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="980" Y="800" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="1020" Y="800" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="780" Y="760" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="820" Y="760" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="860" Y="760" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="900" Y="760" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="940" Y="760" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="980" Y="760" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="1020" Y="760" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="780" Y="720" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="820" Y="720" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="860" Y="720" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="900" Y="720" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="940" Y="720" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="980" Y="720" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="1020" Y="720" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="780" Y="680" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="820" Y="680" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="860" Y="680" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="900" Y="680" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="940" Y="680" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="980" Y="680" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="1020" Y="680" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="780" Y="640" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="820" Y="640" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="860" Y="640" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="900" Y="640" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="940" Y="640" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="980" Y="640" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="1020" Y="640" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="780" Y="600" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="820" Y="600" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="860" Y="600" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="900" Y="600" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="940" Y="600" Width="40" Height="40" FillColor="0 1 0"/>
+          <Rectangle X="980" Y="600" Width="40" Height="40" FillColor="1 0 0"/>
+          <Rectangle X="1020" Y="600" Width="40" Height="40" FillColor="0 1 0"/>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- SECTION 4b: Image with transparency as stencil mask (NASA logo) -->
+      <!-- ================================================================== -->
+      <Text X="1100" Y="850" Size="18" FillColor="0.8 0.8 0.2">Test 4: Image mask</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <!-- NASA logo has transparent background - only logo shape should mask -->
+          <Image X="1100" Y="650" Width="500" Height="166" File="../../assets/nasa_worm.png"/>
+        </StencilAdd>
+        <StencilDraw>
+          <!-- Rainbow stripes drawn through the logo shape -->
+          <Rectangle X="1050" Y="820" Width="600" Height="25" FillColor="1 0 0"/>
+          <Rectangle X="1050" Y="795" Width="600" Height="25" FillColor="1 0.5 0"/>
+          <Rectangle X="1050" Y="770" Width="600" Height="25" FillColor="1 1 0"/>
+          <Rectangle X="1050" Y="745" Width="600" Height="25" FillColor="0 1 0"/>
+          <Rectangle X="1050" Y="720" Width="600" Height="25" FillColor="0 0.5 1"/>
+          <Rectangle X="1050" Y="695" Width="600" Height="25" FillColor="0.3 0 0.5"/>
+          <Rectangle X="1050" Y="670" Width="600" Height="25" FillColor="0.5 0 1"/>
+          <Rectangle X="1050" Y="645" Width="600" Height="25" FillColor="1 0 0.5"/>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- SECTION 5: Regular content BETWEEN stencils -->
+      <!-- ================================================================== -->
+      <Text X="20" Y="600" Size="18" FillColor="0.2 0.8 0.2">Regular content between stencils</Text>
+      <Rectangle X="20" Y="560" Width="300" Height="30" FillColor="0.2 0.6 0.2"/>
+      <Circle X="400" Y="575" Radius="30" FillColor="0.2 0.8 0.2"/>
+
+      <!-- ================================================================== -->
+      <!-- SECTION 6: Drawing text INTO a shape stencil -->
+      <!-- ================================================================== -->
+      <Text X="20" Y="500" Size="18" FillColor="0.8 0.8 0.2">Test 5: Text drawn into shape mask</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <!-- Cross shape using rectangles -->
+          <Rectangle X="100" Y="380" Width="200" Height="80" FillColor="1 1 1"/>
+          <Rectangle X="150" Y="340" Width="100" Height="160" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilDraw>
+          <!-- Text drawn inside the cross shape - tests SDF in stencil draw -->
+          <Rectangle X="50" Y="320" Width="300" Height="200" FillColor="0.1 0.1 0.3"/>
+          <Text X="105" Y="460" Size="24" FillColor="1 1 0">HELLO</Text>
+          <Text X="105" Y="420" Size="24" FillColor="0 1 1">WORLD</Text>
+          <Text X="105" Y="380" Size="24" FillColor="1 0 1">STENCIL</Text>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- SECTION 7: Nested donut with text inside -->
+      <!-- ================================================================== -->
+      <Text X="450" Y="500" Size="18" FillColor="0.8 0.8 0.2">Test 6: Donut with text (SDF in draw)</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <Circle X="600" Y="380" Radius="90" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilRemove>
+          <Circle X="600" Y="380" Radius="40" FillColor="1 1 1"/>
+        </StencilRemove>
+        <StencilDraw>
+          <!-- Gradient background -->
+          <Rectangle X="450" Y="270" Width="300" Height="260" FillColor="0.8 0.2 0.2"/>
+          <!-- Text that will be clipped to the donut -->
+          <Text X="520" Y="430" Size="16" FillColor="1 1 1">OUTER</Text>
+          <Text X="520" Y="390" Size="16" FillColor="1 1 0">RING</Text>
+          <Text X="520" Y="350" Size="16" FillColor="0 1 1">TEXT</Text>
+          <Text X="520" Y="310" Size="16" FillColor="1 0 1">HERE</Text>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- SECTION 8: Shape stencil with stripes -->
+      <!-- ================================================================== -->
+      <Text X="800" Y="500" Size="18" FillColor="0.8 0.8 0.2">Test 7: Shape stencil</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <Circle X="950" Y="380" Radius="80" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilDraw>
+          <!-- Stripes -->
+          <Rectangle X="820" Y="460" Width="260" Height="20" FillColor="1 0 0"/>
+          <Rectangle X="820" Y="440" Width="260" Height="20" FillColor="1 1 1"/>
+          <Rectangle X="820" Y="420" Width="260" Height="20" FillColor="1 0 0"/>
+          <Rectangle X="820" Y="400" Width="260" Height="20" FillColor="1 1 1"/>
+          <Rectangle X="820" Y="380" Width="260" Height="20" FillColor="1 0 0"/>
+          <Rectangle X="820" Y="360" Width="260" Height="20" FillColor="1 1 1"/>
+          <Rectangle X="820" Y="340" Width="260" Height="20" FillColor="1 0 0"/>
+          <Rectangle X="820" Y="320" Width="260" Height="20" FillColor="1 1 1"/>
+          <Rectangle X="820" Y="300" Width="260" Height="20" FillColor="1 0 0"/>
+          <Rectangle X="820" Y="280" Width="260" Height="20" FillColor="1 1 1"/>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- SECTION 9: Side-by-side stencils (test isolation) -->
+      <!-- ================================================================== -->
+      <Text X="1150" Y="500" Size="18" FillColor="0.8 0.8 0.2">Test 8: Side-by-side</Text>
+
+      <!-- First stencil -->
+      <Stencil>
+        <StencilAdd>
+          <Rectangle X="1150" Y="380" Width="80" Height="80" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilDraw>
+          <Circle X="1190" Y="420" Radius="60" FillColor="0 0 1"/>
+          <Text X="1160" Y="410" Size="14" FillColor="1 1 1">BOX1</Text>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- Second stencil (should be independent) -->
+      <Stencil>
+        <StencilAdd>
+          <Circle X="1350" Y="420" Radius="50" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilDraw>
+          <Rectangle X="1280" Y="360" Width="140" Height="120" FillColor="0 1 0"/>
+          <Text X="1310" Y="410" Size="14" FillColor="0 0 0">CIRCLE</Text>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- SECTION 10: Regular content AFTER all stencils (at bottom) -->
+      <!-- ================================================================== -->
+      <Text X="20" Y="100" Size="18" FillColor="0.2 0.8 0.8">Regular content after all stencils</Text>
+      <Rectangle X="20" Y="180" Width="1560" Height="40" FillColor="0.2 0.4 0.6"/>
+      <Text X="700" Y="190" Size="20" FillColor="1 1 1">This text should render normally outside any stencil</Text>
+
+      <!-- Bottom status bar -->
+      <Rectangle X="0" Y="0" Width="1600" Height="100" FillColor="0.1 0.1 0.15"/>
+      <Text X="20" Y="60" Size="16" FillColor="0.6 0.6 0.6">Stencil Test Complete - All sections should render correctly</Text>
+      <Text X="20" Y="30" Size="14" FillColor="0.5 0.5 0.5">Tests: SDF mask, donut, multi-add/remove, image-mask, text-in-shape, donut+text, shape-stripes, side-by-side</Text>
+
+    </Panel>
+  </Window>
+</DCAPP>
