@@ -2334,9 +2334,11 @@ pl_new_draw_3d_frame(void)
         plDrawList3D* ptDrawlist = gptDrawCtx->aptDrawlists3D[i];
 
         pl_sb_reset(ptDrawlist->sbtSolidVertexBuffer);
+        pl_sb_reset(ptDrawlist->sbtSolidIndexBuffer);
         pl_sb_reset(ptDrawlist->sbtLineVertexBuffer);
-        pl_sb_reset(ptDrawlist->sbtSolidIndexBuffer);    
-        pl_sb_reset(ptDrawlist->sbtLineIndexBuffer);    
+        pl_sb_reset(ptDrawlist->sbtLineIndexBuffer);
+        pl_sb_reset(ptDrawlist->sbtTexturedVertexBuffer);
+        pl_sb_reset(ptDrawlist->sbtTexturedIndexBuffer);
         pl_sb_reset(ptDrawlist->sbtTextEntries);    
     }
 
@@ -2458,6 +2460,85 @@ pl__add_3d_sphere_filled(plDrawList3D* ptDrawlist, plSphere tDesc, uint32_t uLat
             ptDrawlist->sbtSolidIndexBuffer[uIndexStart + uCurrentPoint + 3] = uVertexStart + uSecond;
             ptDrawlist->sbtSolidIndexBuffer[uIndexStart + uCurrentPoint + 4] = uVertexStart + uSecond + 1;
             ptDrawlist->sbtSolidIndexBuffer[uIndexStart + uCurrentPoint + 5] = uVertexStart + uFirst + 1;
+
+            uCurrentPoint += 6;
+        }
+    }
+}
+
+static void
+pl__add_3d_sphere_textured(plDrawList3D* ptDrawlist, plTextureID tTexture, plSphere tDesc, const plMat4* ptTransform, uint32_t uLatBands, uint32_t uLongBands, uint32_t uColor)
+{
+    const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer);
+    const uint32_t uIndexStart = pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer);
+
+    if(uLatBands == 0)
+        uLatBands = 16;
+    if(uLongBands == 0)
+        uLongBands = 16;
+
+    pl_sb_resize(ptDrawlist->sbtTexturedVertexBuffer, pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer) + (uLatBands + 1) * (uLongBands + 1));
+    pl_sb_resize(ptDrawlist->sbtTexturedIndexBuffer, pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer) + uLatBands * uLongBands * 6);
+
+    // store texture for backend
+    ptDrawlist->tTexturedTexture = tTexture;
+
+    uint32_t uCurrentPoint = 0;
+
+    for(uint32_t uLatNumber = 0; uLatNumber <= uLatBands; uLatNumber++)
+    {
+        const float fTheta = (float)uLatNumber * PL_PI / (float)uLatBands;
+        const float fSinTheta = sinf(fTheta);
+        const float fCosTheta = cosf(fTheta);
+
+        // V coordinate: 0 at top (north pole), 1 at bottom (south pole)
+        const float fV = (float)uLatNumber / (float)uLatBands;
+
+        for(uint32_t uLongNumber = 0; uLongNumber <= uLongBands; uLongNumber++)
+        {
+            const float fPhi = (float)uLongNumber * 2 * PL_PI / (float)uLongBands;
+            const float fSinPhi = sinf(fPhi);
+            const float fCosPhi = cosf(fPhi);
+
+            // U coordinate: wraps around longitude
+            const float fU = (float)uLongNumber / (float)uLongBands;
+
+            // local position on unit sphere, scaled by radius, centered at origin
+            plVec3 tLocalPos = {
+                fCosPhi * fSinTheta * tDesc.fRadius,
+                fCosTheta * tDesc.fRadius,
+                fSinPhi * fSinTheta * tDesc.fRadius
+            };
+
+            // apply full transform (includes rotation, scale, and translation)
+            plVec3 tFinalPos = tLocalPos;
+            if(ptTransform)
+                tFinalPos = pl_mul_mat4_vec3(ptTransform, tLocalPos);
+
+            ptDrawlist->sbtTexturedVertexBuffer[uVertexStart + uCurrentPoint] = (plDrawVertex3DTextured){
+                { tFinalPos.x, tFinalPos.y, tFinalPos.z },
+                { fU, fV },
+                uColor
+            };
+            uCurrentPoint++;
+        }
+    }
+
+    uCurrentPoint = 0;
+    for(uint32_t uLatNumber = 0; uLatNumber < uLatBands; uLatNumber++)
+    {
+        for(uint32_t uLongNumber = 0; uLongNumber < uLongBands; uLongNumber++)
+        {
+            const uint32_t uFirst = (uLatNumber * (uLongBands + 1)) + uLongNumber;
+            const uint32_t uSecond = uFirst + uLongBands + 1;
+
+            ptDrawlist->sbtTexturedIndexBuffer[uIndexStart + uCurrentPoint + 0] = uVertexStart + uFirst;
+            ptDrawlist->sbtTexturedIndexBuffer[uIndexStart + uCurrentPoint + 1] = uVertexStart + uSecond;
+            ptDrawlist->sbtTexturedIndexBuffer[uIndexStart + uCurrentPoint + 2] = uVertexStart + uFirst + 1;
+
+            ptDrawlist->sbtTexturedIndexBuffer[uIndexStart + uCurrentPoint + 3] = uVertexStart + uSecond;
+            ptDrawlist->sbtTexturedIndexBuffer[uIndexStart + uCurrentPoint + 4] = uVertexStart + uSecond + 1;
+            ptDrawlist->sbtTexturedIndexBuffer[uIndexStart + uCurrentPoint + 5] = uVertexStart + uFirst + 1;
 
             uCurrentPoint += 6;
         }
@@ -3834,6 +3915,7 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .add_3d_sphere_filled       = pl__add_3d_sphere_filled,
         .add_3d_cylinder_filled     = pl__add_3d_cylinder_filled,
         .add_3d_cone_filled         = pl__add_3d_cone_filled,
+        .add_3d_sphere_textured     = pl__add_3d_sphere_textured,
         .add_3d_centered_box_filled = pl__add_3d_centered_box_filled,
         .add_3d_plane_xz_filled     = pl__add_3d_plane_xz_filled,
         .add_3d_plane_xy_filled     = pl__add_3d_plane_xy_filled,

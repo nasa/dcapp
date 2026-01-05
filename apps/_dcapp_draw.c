@@ -20,10 +20,16 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
 static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+
+// draw batch utils
+static void           _draw_batch_reset(_AppData *app_data);
+static plDrawLayer2D *_draw_batch_get_2d(_AppData *app_data);
+static plDrawList3D  *_draw_batch_get_3d(_AppData *app_data);
 
 static void _draw_node_list(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform) {
     _NodeIndex current_node_index = node_index;
@@ -86,6 +92,10 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
 
         case NODE_TYPE_SET:
             _draw_node_set(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+
+        case NODE_TYPE_SPHERE:
+            _draw_node_sphere(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_STENCIL:
@@ -734,7 +744,7 @@ static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *
             node->circle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(app_data->pl_layer, points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+        _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
     }
 
     // draw outline
@@ -747,7 +757,7 @@ static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *
             node->circle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_polygon(app_data->pl_layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
     // mouse events
@@ -1316,7 +1326,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
 
     // draw
     plBindGroupHandle bind_group_handle = app_data->sb_textures[node->image.texture_index].bind_group_handle;
-    _ext_draw->add_image_quad(app_data->pl_layer, bind_group_handle.uData, point0, point1, point2, point3);
+    _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3);
 
     // mouse events
     if (node->image.mouse_events.enabled) {
@@ -1450,7 +1460,7 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
             node->line.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_lines(app_data->pl_layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_draw->add_lines(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 }
 
@@ -1811,7 +1821,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
 
     // draw
     plBindGroupHandle bind_group_handle = app_data->sb_textures[node->image.texture_index].bind_group_handle;
-    _ext_draw->add_image_quad_ex(app_data->pl_layer, bind_group_handle.uData, point0, point1, point2, point3, uv0, uv1, uv2, uv3, 0xFFFFFFFF);
+    _ext_draw->add_image_quad_ex(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3, uv0, uv1, uv2, uv3, 0xFFFFFFFF);
 
     // mouse events
     if (node->pixelstream.mouse_events.enabled) {
@@ -1945,7 +1955,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
             node->polygon.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(app_data->pl_layer, points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+        _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
     }
 
     // draw outline
@@ -1958,7 +1968,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
             node->polygon.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_polygon(app_data->pl_layer, points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
     // mouse events
@@ -2250,7 +2260,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             node->rectangle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(app_data->pl_layer, points, 4, (plDrawSolidOptions){.uColor = pl_fill_color});
+        _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, 4, (plDrawSolidOptions){.uColor = pl_fill_color});
     }
 
     // draw outline
@@ -2263,7 +2273,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             node->rectangle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_polygon(app_data->pl_layer, points, 4, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, 4, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
     // mouse events
@@ -2416,6 +2426,250 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
     dc_value_refresh(var_value);
 }
 
+static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+
+    // boolean checks
+    bool use_radius         = node->sphere.radius != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_rotation       = node->sphere.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position = (node->sphere.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->sphere.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+
+    // get radius
+    float radius, diameter;
+    if (use_radius) {
+        radius   = (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.radius)->value_double;
+        diameter = 2 * radius;
+    } else {
+        diameter = fminf(parent_dimensions->x, parent_dimensions->y);
+        radius   = diameter / 2;
+    }
+
+    // 2D transform (for positioning in orthographic view)
+    plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+
+    // xform rotation (around a point)
+    {
+        if (use_rotation && use_pivot_position) {
+            float pivot_position[2] = {
+                (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rotation)->value_double);
+
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        }
+    }
+
+    // xform local alignment
+    // note: sphere is built centered at origin, so alignment works differently than rect-based elements
+    {
+        DcAppAlignType local_aligns[2] = {
+            node->sphere.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.local_align.x)->value_integer,
+            node->sphere.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.local_align.y)->value_integer};
+
+        float trans_align_offsets[2];
+        switch (local_aligns[0]) {
+            case DC_APP_ALIGN_TYPE_LEFT:
+                trans_align_offsets[0] = radius;  // move right so left edge aligns
+                break;
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_CENTER:
+                trans_align_offsets[0] = 0;  // sphere is already centered
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                trans_align_offsets[0] = -radius;  // move left so right edge aligns
+                break;
+            default:
+                fprintf(stderr, "Unknown alignment in <Sphere> draw call: %d\n", local_aligns[0]);
+                break;
+        }
+        switch (local_aligns[1]) {
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                trans_align_offsets[1] = radius;  // move down so bottom edge aligns
+                break;
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                trans_align_offsets[1] = 0;  // sphere is already centered
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                trans_align_offsets[1] = -radius;  // move up so top edge aligns
+                break;
+            default:
+                fprintf(stderr, "Unknown alignment in <Sphere> draw call: %d\n", local_aligns[1]);
+                break;
+        }
+
+        plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
+        transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
+    }
+
+    // xform position
+    {
+        bool use_position[2] = {
+            node->sphere.position.x != DC_APP_VAL_INDEX_UNDEFINED,
+            node->sphere.position.y != DC_APP_VAL_INDEX_UNDEFINED};
+
+        float position[2];
+        if (use_position[0]) {
+            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.position.x)->value_double;
+        } else {
+            DcAppAlignType parent_align_x = node->sphere.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->sphere.parent_align.x)->value_integer;
+            switch (parent_align_x) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    position[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    position[0] = parent_dimensions->x;
+                    break;
+                default:
+                    fprintf(stderr, "DCAPP _draw_node() sphere: Invalid parent_align_x value %d\n", parent_align_x);
+                    break;
+            }
+            position[0] += parent_position->x;
+        }
+        if (use_position[1]) {
+            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.position.y)->value_double;
+        } else {
+            DcAppAlignType parent_align_y = node->sphere.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->sphere.parent_align.y)->value_integer;
+            switch (parent_align_y) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    position[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    position[1] = parent_dimensions->y;
+                    break;
+                default:
+                    fprintf(stderr, "DCAPP _draw_node() sphere: Invalid parent_align_y value %d\n", parent_align_y);
+                    break;
+            }
+            position[1] += parent_position->y;
+        }
+
+        plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
+        transform = pl_mul_mat4t(&transform, &trans_position_xform);
+    }
+
+    // xform local rotation (around local pivot)
+    {
+        if (use_rotation && !use_pivot_position) {
+            DcAppAlignType local_pivot_aligns[2] = {
+                node->sphere.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_local_align.x)->value_integer,
+                node->sphere.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_local_align.y)->value_integer};
+
+            float pivot_position[2];
+            switch (local_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = diameter / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = diameter;
+                    break;
+                default:
+                    fprintf(stderr, "Unknown pivot alignment in <Sphere> draw call: %d\n", local_pivot_aligns[0]);
+                    break;
+            }
+            switch (local_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = diameter / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = diameter;
+                    break;
+                default:
+                    fprintf(stderr, "Unknown pivot alignment in <Sphere> draw call: %d\n", local_pivot_aligns[1]);
+                    break;
+            }
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rotation)->value_double);
+
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        }
+    }
+
+    // parent transform
+    transform = pl_mul_mat4t(parent_transform, &transform);
+
+    // build sphere transform: first internal rotation, then 2D positioning/scaling
+    // start with internal rotation (roll, pitch, yaw) - applied first (rightmost in multiplication)
+    plMat4 sphere_transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+    {
+        float roll  = node->sphere.rpy.roll  == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rpy.roll)->value_double);
+        float pitch = node->sphere.rpy.pitch == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rpy.pitch)->value_double);
+        float yaw   = node->sphere.rpy.yaw   == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rpy.yaw)->value_double);
+
+        // apply rotations in order: yaw (Y), pitch (X), roll (Z) for globe-like rotation
+        if (yaw != 0.0f) {
+            plMat4 yaw_xform = pl_mat4_rotate_vec3(yaw, (plVec3){0.0f, 1.0f, 0.0f});
+            sphere_transform = pl_mul_mat4t(&sphere_transform, &yaw_xform);
+        }
+        if (pitch != 0.0f) {
+            plMat4 pitch_xform = pl_mat4_rotate_vec3(pitch, (plVec3){1.0f, 0.0f, 0.0f});
+            sphere_transform = pl_mul_mat4t(&sphere_transform, &pitch_xform);
+        }
+        if (roll != 0.0f) {
+            plMat4 roll_xform = pl_mat4_rotate_vec3(roll, (plVec3){0.0f, 0.0f, 1.0f});
+            sphere_transform = pl_mul_mat4t(&sphere_transform, &roll_xform);
+        }
+    }
+
+    // then apply the 2D transform (scale + position) - applied after rotation
+    sphere_transform = pl_mul_mat4t(&transform, &sphere_transform);
+
+    // get fill color
+    float fill_color[4] = {
+        node->sphere.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.fill_color.r)->value_double,
+        node->sphere.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.fill_color.g)->value_double,
+        node->sphere.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.fill_color.b)->value_double,
+        node->sphere.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.fill_color.a)->value_double,
+    };
+    uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
+
+    // create sphere geometry definition - sphere is built at origin, transform handles positioning
+    plSphere sphere_def = {
+        .tCenter = (plVec3){0.0f, 0.0f, 0.0f},
+        .fRadius = radius
+    };
+
+    // get a 3D draw list from the batch system
+    plDrawList3D *draw_list_3d = _draw_batch_get_3d(app_data);
+
+    // draw textured or solid sphere
+    if (node->sphere.texture_index != TEXTURE_INDEX_UNDEFINED) {
+        // textured sphere
+        _Texture *texture = &app_data->sb_textures[node->sphere.texture_index];
+        plTextureID texture_id = texture->bind_group_handle.uData;
+        _ext_draw->add_3d_sphere_textured(draw_list_3d, texture_id, sphere_def, &sphere_transform, 32, 32, pl_fill_color);
+    } else {
+        // solid sphere
+        _ext_draw->add_3d_sphere_filled(draw_list_3d, sphere_def, 32, 32, (plDrawSolidOptions){.uColor = pl_fill_color});
+    }
+}
+
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
     int num_children = sbcount(node->stencil.sb_children);
 
@@ -2443,14 +2697,14 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
         }
 
         // set the stencil shader overrides
-        _ext_draw_backend->set_shader(app_data->pl_layer, pt2dShader, ptSdfShader);
+        _ext_draw_backend->set_shader(_draw_batch_get_2d(app_data), pt2dShader, ptSdfShader);
 
         // draw child nodes
         _draw_node_list(app_data, stencil_child->child, parent_position, parent_dimensions, parent_transform);
     }
 
     // reset to normal rendering (pass NULL to clear shader overrides)
-    _ext_draw_backend->set_shader(app_data->pl_layer, NULL, NULL);
+    _ext_draw_backend->set_shader(_draw_batch_get_2d(app_data), NULL, NULL);
 }
 
 static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -2676,7 +2930,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
     // text_options.tTransform = transform3;
 
     // draw
-    // ext_draw->add_text(app_data->pl_layer, (plVec2){0, 0}, sb_text, text_options);
+    // ext_draw->add_text(_draw_batch_get_2d(app_data), (plVec2){0, 0}, sb_text, text_options);
 }
 
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -2985,7 +3239,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
         text_options.tTransform = transform3;
 
         // draw
-        _ext_draw->add_text(app_data->pl_layer, (plVec2){0, 0}, &sb_text[subtext_indices[ii]], text_options);
+        _ext_draw->add_text(_draw_batch_get_2d(app_data), (plVec2){0, 0}, &sb_text[subtext_indices[ii]], text_options);
     }
 }
 
@@ -3042,6 +3296,77 @@ static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *
     plVec2 position_vec2           = (plVec2){0.0f, 0.0f};
     plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
     _draw_node_list(app_data, node->window.child, &position_vec2, &virtual_dimensions_vec2, &transform);
+}
+
+//-----------------------------------------------------------------------------
+// [SECTION] draw batch utils
+//-----------------------------------------------------------------------------
+
+static void _draw_batch_reset(_AppData *app_data) {
+    // clear the batches array (doesn't free memory, just resets count)
+    sbclear(app_data->sb_draw_batches);
+
+    // reset pool indices
+    app_data->draw_list_2d_index = 0;
+    app_data->draw_list_3d_index = 0;
+}
+
+static plDrawLayer2D *_draw_batch_get_2d(_AppData *app_data) {
+    // if last batch is already 2D, return the same layer
+    int count = sbcount(app_data->sb_draw_batches);
+    if (count > 0 && app_data->sb_draw_batches[count - 1].type == DRAW_BATCH_TYPE_2D) {
+        return app_data->sb_draw_batches[count - 1].draw_list_2d.layer;
+    }
+
+    // grow pool if needed - request from extension
+    int pool_size = sbcount(app_data->sb_draw_list_2d_pool);
+    if (app_data->draw_list_2d_index >= pool_size) {
+        plDrawList2D  *new_draw_list = _ext_draw->request_2d_drawlist();
+        plDrawLayer2D *new_layer     = _ext_draw->request_2d_layer(new_draw_list);
+        _DrawList2D    new_entry     = {.draw_list = new_draw_list, .layer = new_layer};
+        sbpush(app_data->sb_draw_list_2d_pool, new_entry);
+    }
+
+    // get draw list + layer from pool
+    _DrawList2D *draw_list_2d = &app_data->sb_draw_list_2d_pool[app_data->draw_list_2d_index];
+    app_data->draw_list_2d_index++;
+
+    // add batch entry
+    _DrawBatch batch = {
+        .type = DRAW_BATCH_TYPE_2D,
+        .draw_list_2d = *draw_list_2d
+    };
+    sbpush(app_data->sb_draw_batches, batch);
+
+    return draw_list_2d->layer;
+}
+
+static plDrawList3D *_draw_batch_get_3d(_AppData *app_data) {
+    // if last batch is already 3D, return the same draw list
+    int count = sbcount(app_data->sb_draw_batches);
+    if (count > 0 && app_data->sb_draw_batches[count - 1].type == DRAW_BATCH_TYPE_3D) {
+        return app_data->sb_draw_batches[count - 1].draw_list_3d;
+    }
+
+    // grow pool if needed - request from extension
+    int pool_size = sbcount(app_data->sb_draw_list_3d_pool);
+    if (app_data->draw_list_3d_index >= pool_size) {
+        plDrawList3D *new_list = _ext_draw->request_3d_drawlist();
+        sbpush(app_data->sb_draw_list_3d_pool, new_list);
+    }
+
+    // get draw list from pool
+    plDrawList3D *draw_list = app_data->sb_draw_list_3d_pool[app_data->draw_list_3d_index];
+    app_data->draw_list_3d_index++;
+
+    // add batch entry
+    _DrawBatch batch = {
+        .type = DRAW_BATCH_TYPE_3D,
+        .draw_list_3d = draw_list
+    };
+    sbpush(app_data->sb_draw_batches, batch);
+
+    return draw_list;
 }
 
 #include "_dcapp_utils.c"

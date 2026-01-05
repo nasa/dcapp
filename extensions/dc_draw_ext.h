@@ -71,10 +71,11 @@ typedef struct _plDrawLayer2D plDrawLayer2D; // opaque type for 2D draw layers
 typedef struct _plDrawCommand plDrawCommand; // opaque type for 2D draw layers
 
 // vertex buffer types
-typedef struct _plDrawVertex        plDrawVertex;        // vertex type (LAYOUT & PADDING MATTERS)
-typedef struct _plDrawVertex3DSolid plDrawVertex3DSolid; // vertex type (LAYOUT & PADDING MATTERS)
-typedef struct _plDrawVertex3DLine  plDrawVertex3DLine;  // vertex type (LAYOUT & PADDING MATTERS)
-typedef struct _plDraw3DText        plDraw3DText;
+typedef struct _plDrawVertex          plDrawVertex;          // vertex type (LAYOUT & PADDING MATTERS)
+typedef struct _plDrawVertex3DSolid   plDrawVertex3DSolid;   // vertex type (LAYOUT & PADDING MATTERS)
+typedef struct _plDrawVertex3DLine    plDrawVertex3DLine;    // vertex type (LAYOUT & PADDING MATTERS)
+typedef struct _plDrawVertex3DTextured plDrawVertex3DTextured; // vertex type (LAYOUT & PADDING MATTERS)
+typedef struct _plDraw3DText          plDraw3DText;
 
 // primitive options
 typedef struct _plDrawLineOptions  plDrawLineOptions;  // options for lines
@@ -209,6 +210,9 @@ typedef struct _plDrawI
     void (*add_3d_sphere_filled)      (plDrawList3D*, plSphere, uint32_t latBands, uint32_t longBands, plDrawSolidOptions);
     void (*add_3d_cylinder_filled)    (plDrawList3D*, plCylinder, uint32_t segments, plDrawSolidOptions);
     void (*add_3d_cone_filled)        (plDrawList3D*, plCone, uint32_t segments, plDrawSolidOptions);
+
+    // textured
+    void (*add_3d_sphere_textured)    (plDrawList3D*, plTextureID, plSphere, const plMat4* transform, uint32_t latBands, uint32_t longBands, uint32_t color);
 
     // wireframe
     void (*add_3d_line)        (plDrawList3D*, plVec3 p0, plVec3 p1, plDrawLineOptions);
@@ -386,6 +390,13 @@ typedef struct _plDrawVertex3DLine
     uint32_t uColor;
 } plDrawVertex3DLine;
 
+typedef struct _plDrawVertex3DTextured
+{
+    float    afPos[3];
+    float    afUv[2];
+    uint32_t uColor;
+} plDrawVertex3DTextured;
+
 typedef struct _plDraw3DText
 {
     plFont*  ptFont;
@@ -405,6 +416,11 @@ typedef struct _plDrawList3D
     // lines
     plDrawVertex3DLine*  sbtLineVertexBuffer;
     uint32_t*            sbtLineIndexBuffer;
+
+    // textured
+    plDrawVertex3DTextured* sbtTexturedVertexBuffer;
+    uint32_t*               sbtTexturedIndexBuffer;
+    plTextureID             tTexturedTexture;
 
     // text
     plDraw3DText*  sbtTextEntries;
