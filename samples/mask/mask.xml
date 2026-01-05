@@ -8,10 +8,11 @@
 
   <Logic File="logic/logic.so"/>
 
-  <Window X="30" Y="30" Width="640" Height="480">
+  <Window X="30" Y="30" Width="1500" Height="1200">
 
     <Panel VirtualWidth="1500" VirtualHeight="1200" BackgroundColor="1 1 1">
 
+      <!-- Background pattern -->
       <Rectangle Y="1000" Height="200" FillColor="0 0 0 .5"/>
       <Rectangle Y="800" Height="200" FillColor=".2 .2 .2 .5"/>
       <Rectangle Y="600" Height="200" FillColor=".4 .4 .4 .5"/>
@@ -25,16 +26,18 @@
       <Rectangle X="1000" Width="250" FillColor=".8 .8 .8 .5"/>
       <Rectangle X="1250" Width="250" FillColor="1 1 1 .5"/>
 
-      <!-- TODO: Mask element not yet implemented -->
-      <!--
-      <Mask>
-        <Stencil>
+      <!-- Stencil masking demo -->
+      <Stencil>
+        <!-- Define the mask shape using circles -->
+        <StencilAdd>
           <Circle X="750" Y="600" Radius="@RADIUS1" FillColor="1 1 1"/>
           <Circle X="275" Y="200" Radius="@RADIUS2" FillColor="1 1 1"/>
           <Circle X="1050" Y="400" Radius="@RADIUS3" FillColor="1 1 1"/>
           <Circle X="1020" Y="835" Radius="@RADIUS4" FillColor="1 1 1"/>
-        </Stencil>
-        <Projection>
+        </StencilAdd>
+
+        <!-- Draw content only within the mask -->
+        <StencilDraw>
           <Rectangle FillColor="1 1 1"/>
           <Rectangle Y="1000" Height="200" FillColor="1 0 0 .5"/>
           <Rectangle Y="800" Height="200" FillColor="1 .5 0 .5"/>
@@ -48,17 +51,8 @@
           <Rectangle X="750" Width="250" FillColor="0 1 0 .5"/>
           <Rectangle X="1000" Width="250" FillColor="0 0 1 .5"/>
           <Rectangle X="1250" Width="250" FillColor="1 0 1 .5"/>
-          <Text LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" X="750" Y="600" Size="150" FillColor="0 0 0">MASKING!</Text>
-        </Projection>
-      </Mask>
-      -->
-
-      <!-- Placeholder showing what would be masked -->
-      <Circle X="750" Y="600" Radius="@RADIUS1" LineColor="1 0 0" LineWidth="2"/>
-      <Circle X="275" Y="200" Radius="@RADIUS2" LineColor="1 0 0" LineWidth="2"/>
-      <Circle X="1050" Y="400" Radius="@RADIUS3" LineColor="1 0 0" LineWidth="2"/>
-      <Circle X="1020" Y="835" Radius="@RADIUS4" LineColor="1 0 0" LineWidth="2"/>
-      <Text LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" X="750" Y="600" Size="100" FillColor="1 0 0">TODO: Mask</Text>
+        </StencilDraw>
+      </Stencil>
 
     </Panel>
   </Window>

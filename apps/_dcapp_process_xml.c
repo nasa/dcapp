@@ -40,6 +40,11 @@ static _NodeIndex    _process_xml_node_pixelstream(_AppData *app_data, xmlNodePt
 static _NodeIndex    _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_sphere(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_stencil(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_stencil_add(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_stencil_draw(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_stencil_remove(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_style(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_terrain_dem(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -204,6 +209,21 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_SET:
             return _process_xml_node_set(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_SPHERE:
+            return _process_xml_node_sphere(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_STENCIL:
+            return _process_xml_node_stencil(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_STENCIL_ADD:
+            return _process_xml_node_stencil_add(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_STENCIL_DRAW:
+            return _process_xml_node_stencil_draw(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_STENCIL_REMOVE:
+            return _process_xml_node_stencil_remove(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_STYLE:
             return _process_xml_node_style(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -2407,6 +2427,331 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
 
     // register node
     return _register_node(app_data, &dc_node);
+}
+
+static _NodeIndex _process_xml_node_sphere(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_SPHERE;
+    dc_node.parent = parent_node_index;
+    dc_node.next   = NODE_INDEX_UNDEFINED;
+
+    // default texture to undefined
+    dc_node.sphere.texture_index = TEXTURE_INDEX_UNDEFINED;
+
+    // x position
+    xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+    if (!raw_x_position) {
+        raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+    }
+    if (raw_x_position) {
+        dc_node.sphere.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
+        xmlFree(raw_x_position);
+    } else {
+        dc_node.sphere.position.x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // y position
+    xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+    if (!raw_y_position) {
+        raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+    }
+    if (raw_y_position) {
+        dc_node.sphere.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
+        xmlFree(raw_y_position);
+    } else {
+        dc_node.sphere.position.y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // parent x align
+    xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
+    if (raw_parent_x_align) {
+        dc_node.sphere.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
+        xmlFree(raw_parent_x_align);
+    } else {
+        dc_node.sphere.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // parent y align
+    xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
+    if (raw_parent_y_align) {
+        dc_node.sphere.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
+        xmlFree(raw_parent_y_align);
+    } else {
+        dc_node.sphere.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // local x align
+    xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignX");
+    if (!raw_x_align) {
+        raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+    }
+    if (raw_x_align) {
+        dc_node.sphere.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
+        xmlFree(raw_x_align);
+    } else {
+        dc_node.sphere.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // local y align
+    xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignY");
+    if (!raw_y_align) {
+        raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+    }
+    if (raw_y_align) {
+        dc_node.sphere.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
+        xmlFree(raw_y_align);
+    } else {
+        dc_node.sphere.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // pivot local x align
+    xmlChar *raw_pivot_local_x_align = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+    if (raw_pivot_local_x_align) {
+        dc_node.sphere.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_local_x_align);
+        xmlFree(raw_pivot_local_x_align);
+    } else {
+        dc_node.sphere.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // pivot local y align
+    xmlChar *raw_pivot_local_y_align = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+    if (raw_pivot_local_y_align) {
+        dc_node.sphere.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_local_y_align);
+        xmlFree(raw_pivot_local_y_align);
+    } else {
+        dc_node.sphere.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // pivot x position
+    xmlChar *raw_pivot_x_position = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
+    if (raw_pivot_x_position) {
+        dc_node.sphere.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_x_position);
+        xmlFree(raw_pivot_x_position);
+    } else {
+        dc_node.sphere.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // pivot y position
+    xmlChar *raw_pivot_y_position = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
+    if (raw_pivot_y_position) {
+        dc_node.sphere.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_y_position);
+        xmlFree(raw_pivot_y_position);
+    } else {
+        dc_node.sphere.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // rotation (external 2D rotation)
+    xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+    if (raw_rotation) {
+        dc_node.sphere.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
+        xmlFree(raw_rotation);
+    } else {
+        dc_node.sphere.rotation = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // radius
+    xmlChar *raw_radius = xmlGetProp(xml_node, BAD_CAST "Radius");
+    if (raw_radius) {
+        dc_node.sphere.radius = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius);
+        xmlFree(raw_radius);
+    } else {
+        dc_node.sphere.radius = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // fill color
+    dc_node.sphere.fill_color.r = DC_APP_VAL_INDEX_UNDEFINED;
+    dc_node.sphere.fill_color.g = DC_APP_VAL_INDEX_UNDEFINED;
+    dc_node.sphere.fill_color.b = DC_APP_VAL_INDEX_UNDEFINED;
+    dc_node.sphere.fill_color.a = DC_APP_VAL_INDEX_UNDEFINED;
+    _load_color_from_string(app_data, xml_node, "FillColor", &dc_node.sphere.fill_color);
+
+    // internal rotation (roll, pitch, yaw)
+    xmlChar *raw_roll = xmlGetProp(xml_node, BAD_CAST "Roll");
+    if (raw_roll) {
+        dc_node.sphere.rpy.roll = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_roll);
+        xmlFree(raw_roll);
+    } else {
+        dc_node.sphere.rpy.roll = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    xmlChar *raw_pitch = xmlGetProp(xml_node, BAD_CAST "Pitch");
+    if (raw_pitch) {
+        dc_node.sphere.rpy.pitch = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pitch);
+        xmlFree(raw_pitch);
+    } else {
+        dc_node.sphere.rpy.pitch = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    xmlChar *raw_yaw = xmlGetProp(xml_node, BAD_CAST "Yaw");
+    if (raw_yaw) {
+        dc_node.sphere.rpy.yaw = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_yaw);
+        xmlFree(raw_yaw);
+    } else {
+        dc_node.sphere.rpy.yaw = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // optional texture (Image attribute)
+    xmlChar *filepath = xmlGetProp(xml_node, BAD_CAST "Image");
+    if (filepath) {
+        char cleaned_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+        strncpy(cleaned_filepath, (const char *)filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        xmlFree(filepath);
+
+        // get canonical path
+        char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+        if (dc_utils_is_relative_path(cleaned_filepath)) {
+            char abs_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+            dc_utils_join_paths(directory, cleaned_filepath, abs_filepath, sizeof(abs_filepath));
+            dc_utils_canonicalize_path(abs_filepath, canon_filepath, sizeof(canon_filepath));
+        } else {
+            dc_utils_canonicalize_path(cleaned_filepath, canon_filepath, sizeof(canon_filepath));
+        }
+
+        // check for existing texture
+        _TextureIndex texture_index = TEXTURE_INDEX_UNDEFINED;
+        for (int ii = 0; ii < sbcount(app_data->sb_textures); ii++) {
+            const char *comp_name = &(app_data->sb_texture_names[app_data->sb_texture_name_offsets[ii]]);
+            if (strcmp(canon_filepath, comp_name) == 0) {
+                texture_index = ii;
+            }
+        }
+
+        // load new texture if it doesn't exist
+        if (texture_index == TEXTURE_INDEX_UNDEFINED) {
+            plDevice *device = _ext_starter->get_device();
+
+            size_t         file_data_size;
+            unsigned char *file_data = dc_utils_load_binary_file(canon_filepath, &file_data_size);
+
+            int            image_width, image_height, channels;
+            unsigned char *image_data = _ext_image->load(file_data, (int)file_data_size, &image_width, &image_height, &channels, 4);
+            free(file_data);
+
+            if (!image_data) {
+                fprintf(stderr, "DCAPP _process_xml_node_sphere: Failed to load image: %s\n", canon_filepath);
+                return _register_node(app_data, &dc_node);
+            }
+
+            _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath);
+
+            plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
+            _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
+
+            plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
+            memcpy(staging_buffer->tMemoryAllocation.pHostMapped, image_data, image_width * image_height * 4);
+
+            plBufferImageCopy buffer_image_copy;
+            memset(&buffer_image_copy, 0, sizeof(plBufferImageCopy));
+            buffer_image_copy.uImageWidth    = (uint32_t)image_width;
+            buffer_image_copy.uImageHeight   = (uint32_t)image_height;
+            buffer_image_copy.uImageDepth    = 1;
+            buffer_image_copy.uLayerCount    = 1;
+            buffer_image_copy.szBufferOffset = 0;
+            _ext_gfx->copy_buffer_to_texture(encoder, app_data->pl_staging_buffer_handle, texture.texture_handle, 1, &buffer_image_copy);
+
+            _ext_starter->return_blit_encoder(encoder);
+            _ext_image->free(image_data);
+
+            sbpush(app_data->sb_texture_name_offsets, sbcount(app_data->sb_texture_names));
+            sbpushn(app_data->sb_texture_names, canon_filepath, (int)strlen(canon_filepath) + 1);
+            sbpush(app_data->sb_textures, texture);
+            texture_index = sbcount(app_data->sb_textures) - 1;
+        }
+
+        dc_node.sphere.texture_index = texture_index;
+    }
+
+    // register node
+    return _register_node(app_data, &dc_node);
+}
+
+static _NodeIndex _process_xml_node_stencil(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    _Node dc_node               = {};
+    dc_node.type                = NODE_TYPE_STENCIL;
+    dc_node.parent              = parent_node_index;
+    dc_node.next                = NODE_INDEX_UNDEFINED;
+    dc_node.stencil.sb_children = NULL;
+
+    // register node
+    _NodeIndex node_index = _register_node(app_data, &dc_node);
+
+    // process children (StencilAdd, StencilRemove, StencilDraw)
+    _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+
+    return node_index;
+}
+
+static _NodeIndex _process_xml_node_stencil_add(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    switch (parent_elem_type) {
+        case DC_APP_ELEM_TYPE_STENCIL: {
+            // process children
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
+
+            // add entry to stencil's children buffer
+            _StencilChild stencil_child = {
+                .child = first_child_index,
+                .type  = STENCIL_CHILD_TYPE_ADD,
+            };
+            _Node *parent_node = _get_node(app_data, parent_node_index);
+            sbpush(parent_node->stencil.sb_children, stencil_child);
+            break;
+        }
+        default:
+            fprintf(stderr, "DCAPP _process_xml_node(): Invalid elem parent of type %s for <StencilAdd>\n", dc_app_elem_type_to_string(parent_elem_type));
+    }
+    return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_stencil_draw(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    switch (parent_elem_type) {
+        case DC_APP_ELEM_TYPE_STENCIL: {
+            // process children
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
+
+            // add entry to stencil's children buffer
+            _StencilChild stencil_child = {
+                .child = first_child_index,
+                .type  = STENCIL_CHILD_TYPE_DRAW,
+            };
+            _Node *parent_node = _get_node(app_data, parent_node_index);
+            sbpush(parent_node->stencil.sb_children, stencil_child);
+            break;
+        }
+        default:
+            fprintf(stderr, "DCAPP _process_xml_node(): Invalid elem parent of type %s for <StencilDraw>\n", dc_app_elem_type_to_string(parent_elem_type));
+    }
+    return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_stencil_remove(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    switch (parent_elem_type) {
+        case DC_APP_ELEM_TYPE_STENCIL: {
+            // process children
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
+
+            // add entry to stencil's children buffer
+            _StencilChild stencil_child = {
+                .child = first_child_index,
+                .type  = STENCIL_CHILD_TYPE_REMOVE,
+            };
+            _Node *parent_node = _get_node(app_data, parent_node_index);
+            sbpush(parent_node->stencil.sb_children, stencil_child);
+            break;
+        }
+        default:
+            fprintf(stderr, "DCAPP _process_xml_node(): Invalid elem parent of type %s for <StencilRemove>\n", dc_app_elem_type_to_string(parent_elem_type));
+    }
+    return NODE_INDEX_UNDEFINED;
 }
 
 static _NodeIndex _process_xml_node_style(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {

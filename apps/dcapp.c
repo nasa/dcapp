@@ -62,7 +62,11 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     // load required extensions
     extension_registry->load("pl_unity_ext", NULL, NULL, true);
     extension_registry->load("pl_platform_ext", NULL, NULL, false);
-    // extension_registry->load("pl_terrain_ext", NULL, NULL, true);
+
+    // load dcapp extensions (these override pilotlight's draw extensions)
+    extension_registry->load("dc_draw_ext", NULL, NULL, true);
+    extension_registry->load("dc_draw_backend_ext", NULL, NULL, true);
+    extension_registry->load("pl_terrain_ext", NULL, NULL, true);
 
     // load extensions
     _ext_windows      = pl_get_api_latest(api_registry, plWindowI);
@@ -230,18 +234,61 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
     // _ext_draw_backend->new_frame();
 
+    // reset 3D draw lists for new frame
+    // alias for pl_new_draw_3d_frame()- only needed for 3d frame resets
+    _ext_draw->new_frame();
+
+    // reset draw batch system for new frame
+    _draw_batch_reset(app_data);
+
     // draw node
     _draw_node(app_data, app_data->window, NULL, NULL, NULL);
-
-    // submit draw layer
-    _ext_draw->submit_2d_layer(app_data->pl_layer);
 
     // start main pass & return the encoder being used
     plRenderEncoder *encoder = _ext_starter->begin_main_pass();
 
-    // submit our 2d drawlist
+    // submit draw lists from batch system in order
     plIO *ptIO = _ext_ioi->get_io();
-    _ext_draw_backend->submit_2d_drawlist(app_data->pl_draw_list, encoder, ptIO->tMainViewportSize.x, ptIO->tMainViewportSize.y, _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount);
+    {
+        // orthographic MVP for 3D objects in 2D space
+        float w = ptIO->tMainViewportSize.x;
+        float h = ptIO->tMainViewportSize.y;
+        float n = -1000.0f;
+        float f = 1000.0f;
+        plMat4 ortho_proj = {
+            .col = {
+                { 2.0f / w,   0.0f,         0.0f,           0.0f },
+                { 0.0f,      -2.0f / h,     0.0f,           0.0f },
+                { 0.0f,       0.0f,         1.0f / (f - n), 0.0f },
+                {-1.0f,       1.0f,        -n / (f - n),    1.0f }
+            }
+        };
+
+        int batch_count = sbcount(app_data->sb_draw_batches);
+        for (int i = 0; i < batch_count; i++) {
+            _DrawBatch *batch = &app_data->sb_draw_batches[i];
+            if (batch->type == DRAW_BATCH_TYPE_2D) {
+                _ext_draw->submit_2d_layer(batch->draw_list_2d.layer);
+                _ext_draw_backend->submit_2d_drawlist(
+                    batch->draw_list_2d.draw_list,
+                    encoder,
+                    ptIO->tMainViewportSize.x,
+                    ptIO->tMainViewportSize.y,
+                    _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount
+                );
+            } else if (batch->type == DRAW_BATCH_TYPE_3D && batch->draw_list_3d) {
+                _ext_draw_backend->submit_3d_drawlist(
+                    batch->draw_list_3d,
+                    encoder,
+                    ptIO->tMainViewportSize.x,
+                    ptIO->tMainViewportSize.y,
+                    &ortho_proj,
+                    PL_DRAW_FLAG_DEPTH_TEST | PL_DRAW_FLAG_DEPTH_WRITE,
+                    _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount
+                );
+            }
+        }
+    }
 
     _ext_starter->end_main_pass();
 

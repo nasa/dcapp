@@ -125,6 +125,58 @@ with pl.project("apps"):
                     compiler_flags=["--debug", "-g"])
 
     #-----------------------------------------------------------------------------
+    # [SECTION] dcapp extensions
+    #-----------------------------------------------------------------------------
+
+    dcapp_extensions = [
+        "dc_draw_ext",
+        "dc_draw_backend_ext",
+    ]
+
+    for ext_name in dcapp_extensions:
+        with pl.target(ext_name, pl.TargetType.DYNAMIC_LIBRARY):
+            pl.set_output_binary(ext_name)
+            pl.add_source_files(
+                os.path.relpath(dcapp_home_abs + "/extensions/" + ext_name + ".c", output_dir_abs)
+            )
+
+            # release config
+            with pl.configuration("release"):
+
+                # win32
+                with pl.platform("Windows"):
+                    with pl.compiler("msvc"):
+                        pl.add_linker_flags("-nologo", "-noimplib", "-noexp")
+
+                # linux
+                with pl.platform("Linux"):
+                    with pl.compiler("gcc"):
+                        pass
+
+                # mac os
+                with pl.platform("Darwin"):
+                    with pl.compiler("clang"):
+                        pass
+
+            # debug config
+            with pl.configuration("debug"):
+
+                # win32
+                with pl.platform("Windows"):
+                    with pl.compiler("msvc"):
+                        pl.add_linker_flags("-nologo", "-noimplib", "-noexp")
+
+                # linux
+                with pl.platform("Linux"):
+                    with pl.compiler("gcc"):
+                        pl.add_compiler_flags("--debug", "-g")
+
+                # mac os
+                with pl.platform("Darwin"):
+                    with pl.compiler("clang"):
+                        pass
+
+    #-----------------------------------------------------------------------------
     # [SECTION] app
     #-----------------------------------------------------------------------------
 

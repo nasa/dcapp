@@ -9,14 +9,16 @@
 
 // PL extension includes
 #include "../pilotlight/extensions/pl_camera_ext.h"
-#include "../pilotlight/extensions/pl_draw_ext.h"
 #include "../pilotlight/extensions/pl_profile_ext.h"
 #include "../pilotlight/extensions/pl_starter_ext.h"
 #include "../pilotlight/extensions/pl_graphics_ext.h"
 #include "../pilotlight/extensions/pl_vfs_ext.h"
 #include "../pilotlight/extensions/pl_shader_ext.h"
-#include "../pilotlight/extensions/pl_draw_backend_ext.h"
 #include "../pilotlight/extensions/pl_image_ext.h"
+
+// dcapp extension includes
+#include "../extensions/dc_draw_ext.h"
+#include "../extensions/dc_draw_backend_ext.h"
 #include "../extensions/pl_terrain_ext.h"
 
 // general includes
@@ -107,6 +109,8 @@ typedef enum __NodeType {
     NODE_TYPE_POLYGON,
     NODE_TYPE_RECTANGLE,
     NODE_TYPE_SET,
+    NODE_TYPE_SPHERE,
+    NODE_TYPE_STENCIL,
     NODE_TYPE_TERRAIN,
     NODE_TYPE_TEXT,
     NODE_TYPE_WINDOW,
@@ -332,6 +336,42 @@ typedef struct __NodeSet {
     DcAppValIndex operand;
 } _NodeSet;
 
+typedef struct __NodeSphere {
+    // 2D positioning (where to draw in the orthographic view)
+    _ValIndex2    position;
+    _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_position;
+    _ValIndex2    local_align;
+    _ValIndex2    parent_align;
+    DcAppValIndex rotation; // external 2D rotation in orthographic view
+
+    // sphere properties
+    DcAppValIndex radius;
+    _ValIndex4    fill_color;
+
+    // internal rotation (roll, pitch, yaw of the sphere itself)
+    _ValIndex3 rpy;
+
+    // optional texture
+    _TextureIndex texture_index;
+} _NodeSphere;
+
+typedef enum __StencilChildType {
+    STENCIL_CHILD_TYPE_UNDEFINED,
+    STENCIL_CHILD_TYPE_ADD,
+    STENCIL_CHILD_TYPE_REMOVE,
+    STENCIL_CHILD_TYPE_DRAW,
+} _StencilChildType;
+
+typedef struct __StencilChild {
+    _NodeIndex        child;
+    _StencilChildType type;
+} _StencilChild;
+
+typedef struct __NodeStencil {
+    _StencilChild *sb_children;
+} _NodeStencil;
+
 #define _NODE_TEXT_MAX_LINES 256
 typedef struct __NodeText {
     _ValIndex2    position;
@@ -400,6 +440,8 @@ typedef struct __Node {
         _NodePolygon     polygon;
         _NodeRectangle   rectangle;
         _NodeSet         set;
+        _NodeSphere      sphere;
+        _NodeStencil     stencil;
         _NodeTerrain     terrain;
         _NodeText        text;
         _NodeWindow      window;
@@ -426,6 +468,26 @@ typedef struct __TrickContext {
 
 // callback used for logic file DLL loading
 typedef void *(*_GetVariableValueAddr)(const char *name);
+
+// draw batch types
+typedef enum __DrawBatchType {
+    DRAW_BATCH_TYPE_UNDEFINED,
+    DRAW_BATCH_TYPE_2D,
+    DRAW_BATCH_TYPE_3D,
+} _DrawBatchType;
+
+typedef struct __DrawList2D {
+    plDrawList2D  *draw_list;
+    plDrawLayer2D *layer;
+} _DrawList2D;
+
+typedef struct __DrawBatch {
+    _DrawBatchType type;
+    union {
+        _DrawList2D   draw_list_2d;
+        plDrawList3D *draw_list_3d;
+    };
+} _DrawBatch;
 
 // frame data
 typedef struct __FrameData {
@@ -467,6 +529,16 @@ typedef struct __AppData {
     plBufferHandle pl_staging_buffer_handle;
     size_t         pl_staging_buffer_size;
 
+    // stencil shaders (2D)
+    plShaderHandle stencil_create_2d_shader;
+    plShaderHandle stencil_remove_2d_shader;
+    plShaderHandle stencil_draw_2d_shader;
+
+    // stencil shaders (SDF)
+    plShaderHandle stencil_create_sdf_shader;
+    plShaderHandle stencil_remove_sdf_shader;
+    plShaderHandle stencil_draw_sdf_shader;
+
     // config + lookup
     DcAppLookup *lookup;
     DcAppConfig *config;
@@ -493,6 +565,13 @@ typedef struct __AppData {
     // frame data
     _FrameData frame_data;
 
+    // draw batch system
+    _DrawBatch    *sb_draw_batches;      // batches for current frame (cleared each frame)
+    _DrawList2D   *sb_draw_list_2d_pool; // pool of 2D draw list + layer pairs (from extension)
+    plDrawList3D **sb_draw_list_3d_pool; // pool of 3D draw list pointers (from extension)
+    int            draw_list_2d_index;   // current index into 2D pool
+    int            draw_list_3d_index;   // current index into 3D pool
+
 } _AppData;
 
 // pl utils
@@ -506,11 +585,16 @@ static _NodeIndex  _register_node(_AppData *app_data, _Node *node);
 // misc. utils
 static _Texture _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name);
 
-// draw utils
+// xml processing utils
 static bool       _load_color_from_string(_AppData *app_data, xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out);
 static _NodeIndex _process_xml_node_children(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex node_index, DcAppElemType elem_type, const char *directory);
 static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static void       _draw_node_list(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform);
-static void       _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+
+// drawing utils
+static void _draw_init(void);
+static void _draw_batch_reset(_AppData *app_data);
+static void _draw_node_list(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform);
+static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRenderPassHandle render_pass);
 
 #endif
