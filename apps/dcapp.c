@@ -131,11 +131,21 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         app_data->logic_pre_init(get_variable_value_addr);
     }
 
+    // call logic init
+    if (app_data->logic_init) {
+        app_data->logic_init();
+    }
+
     // return app memory
     return app_data;
 }
 
 PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
+
+    // call logic close
+    if (app_data->logic_close) {
+        app_data->logic_close();
+    }
 
     // get device
     plDevice *device = _ext_starter->get_device();

@@ -56,12 +56,13 @@ done
 if [[ "$PL_CONFIG" == "release" ]]; then
 
 # create output directory(s)
-mkdir -p "../samples/ptz/logic"
 mkdir -p "../samples/mask/logic"
 mkdir -p "../samples/screensaver/logic"
+mkdir -p "../samples/ptz/logic"
+mkdir -p "../samples/lissajous/logic"
 
 # create lock file(s)
-echo LOCKING > "../samples/screensaver/logic/lock.tmp"
+echo LOCKING > "../samples/lissajous/logic/lock.tmp"
 
 rm -f ../samples/mask/logic/logic.dylib
 rm -f ../samples/mask/logic/logic_*.dylib
@@ -69,6 +70,8 @@ rm -f ../samples/ptz/logic/logic.dylib
 rm -f ../samples/ptz/logic/logic_*.dylib
 rm -f ../samples/screensaver/logic/logic.dylib
 rm -f ../samples/screensaver/logic/logic_*.dylib
+rm -f ../samples/lissajous/logic/logic.dylib
+rm -f ../samples/lissajous/logic/logic_*.dylib
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ mask | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ../pilotlight/out/dcapp-genheader ../samples/mask/mask.xml
@@ -186,8 +189,47 @@ fi
 echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ lissajous | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+../pilotlight/out/dcapp-genheader ../samples/lissajous/lissajous.xml
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES=""
+PL_LINK_DIRECTORIES=""
+PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
+PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../samples/lissajous/logic/logic.c "
+PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
+
+# add flags for specific hardware
+if [[ "$ARCH" == "arm64" ]]; then
+    PL_COMPILER_FLAGS+="-arch arm64 "
+else
+    PL_COMPILER_FLAGS+="-arch x86_64 "
+fi
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: lissajous${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+clang -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINK_FRAMEWORKS $PL_LINKER_FLAGS -o "./../samples/lissajous/logic/logic.dylib"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
 # delete lock file(s)
-rm -f ../samples/screensaver/logic/lock.tmp
+rm -f ../samples/lissajous/logic/lock.tmp
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # end of release
@@ -200,12 +242,13 @@ fi
 if [[ "$PL_CONFIG" == "debug" ]]; then
 
 # create output directory(s)
-mkdir -p "../samples/ptz/logic"
 mkdir -p "../samples/mask/logic"
 mkdir -p "../samples/screensaver/logic"
+mkdir -p "../samples/ptz/logic"
+mkdir -p "../samples/lissajous/logic"
 
 # create lock file(s)
-echo LOCKING > "../samples/screensaver/logic/lock.tmp"
+echo LOCKING > "../samples/lissajous/logic/lock.tmp"
 
 rm -f ../samples/mask/logic/logic.dylib
 rm -f ../samples/mask/logic/logic_*.dylib
@@ -213,6 +256,8 @@ rm -f ../samples/ptz/logic/logic.dylib
 rm -f ../samples/ptz/logic/logic_*.dylib
 rm -f ../samples/screensaver/logic/logic.dylib
 rm -f ../samples/screensaver/logic/logic_*.dylib
+rm -f ../samples/lissajous/logic/logic.dylib
+rm -f ../samples/lissajous/logic/logic_*.dylib
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ mask | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ../pilotlight/out/dcapp-genheader ../samples/mask/mask.xml
@@ -330,8 +375,47 @@ fi
 echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ lissajous | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+../pilotlight/out/dcapp-genheader ../samples/lissajous/lissajous.xml
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES=""
+PL_LINK_DIRECTORIES=""
+PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
+PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../samples/lissajous/logic/logic.c "
+PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
+
+# add flags for specific hardware
+if [[ "$ARCH" == "arm64" ]]; then
+    PL_COMPILER_FLAGS+="-arch arm64 "
+else
+    PL_COMPILER_FLAGS+="-arch x86_64 "
+fi
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: lissajous${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+clang -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINK_FRAMEWORKS $PL_LINKER_FLAGS -o "./../samples/lissajous/logic/logic.dylib"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
 # delete lock file(s)
-rm -f ../samples/screensaver/logic/lock.tmp
+rm -f ../samples/lissajous/logic/lock.tmp
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # end of debug
