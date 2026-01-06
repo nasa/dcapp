@@ -316,8 +316,8 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
 
     // init default staging buffer
     {
-        // set size to 1MB
-        app_data->pl_staging_buffer_size = 1048576;
+        // set size to 10 MB
+        app_data->pl_staging_buffer_size = 10 * 1048576;
 
         // description
         const plBufferDesc staging_buffer_desc = {
