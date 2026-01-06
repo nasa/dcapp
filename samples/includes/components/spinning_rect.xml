@@ -1,0 +1,7 @@
+<!-- Spinning rectangle using ROTATION variable -->
+<Dummy>
+    <Rectangle X="55" Y="50" Width="50" Height="30"
+        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+        PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_middle_"
+        Rotation="@ROTATION" FillColor="0.6 0.3 0.8" LineColor="0.8 0.5 1" LineWidth="2"/>
+</Dummy>

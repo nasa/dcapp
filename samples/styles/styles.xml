@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Window Title="Styles and Defaults Demo" X="30" Y="30" Width="900" Height="700">
+
+        <!-- Defaults -->
+        <Default>
+            <Text Size="12" FillColor="1 1 1"/>
+            <Rectangle FillColor="0.3 0.3 0.35"/>
+        </Default>
+
+        <!-- Styles -->
+        <Style Name="Heading">
+            <Text Size="18" FillColor="0.9 0.9 1"/>
+        </Style>
+
+        <Style Name="Label">
+            <Text Size="10" FillColor="0.6 0.6 0.6"/>
+        </Style>
+
+        <Style Name="Card">
+            <Rectangle FillColor="0.15 0.15 0.2" LineColor="0.3 0.3 0.4" LineWidth="1"/>
+        </Style>
+
+        <Style Name="PrimaryButton">
+            <Rectangle FillColor="0.2 0.5 0.8" LineColor="0.3 0.6 0.9" LineWidth="2"/>
+        </Style>
+
+        <Style Name="StatusGreen">
+            <Circle FillColor="0.2 0.8 0.3"/>
+        </Style>
+
+        <!-- Constants -->
+        <Constant Name="PrimaryColor">0.2 0.5 0.8</Constant>
+        <Constant Name="DangerColor">0.8 0.2 0.2</Constant>
+
+        <Panel VirtualWidth="900" VirtualHeight="700">
+            <!-- Background -->
+            <Rectangle Width="900" Height="700" FillColor="0.08 0.08 0.1"/>
+
+            <!-- Title -->
+            <Text X="450" Y="650" LocalAlignX="#_align_center_" Size="24">Styles and Defaults</Text>
+
+            <!-- Section 1: Defaults -->
+            <Text X="150" Y="580" LocalAlignX="#_align_center_" Style="Heading">Default Values</Text>
+
+            <Container X="25" Y="400" Width="250" Height="150">
+                <Rectangle Style="Card" Width="250" Height="150"/>
+                <Text X="125" Y="130" LocalAlignX="#_align_center_" Style="Label">Elements use defaults</Text>
+                <Rectangle X="30" Y="50" Width="50" Height="50"/>
+                <Text X="55" Y="25" LocalAlignX="#_align_center_" Style="Label">Default Rect</Text>
+            </Container>
+
+            <!-- Section 2: Named Styles -->
+            <Text X="450" Y="580" LocalAlignX="#_align_center_" Style="Heading">Named Styles</Text>
+
+            <Container X="325" Y="400" Width="250" Height="150">
+                <Rectangle Style="Card" Width="250" Height="150"/>
+                <Text X="125" Y="130" LocalAlignX="#_align_center_" Style="Label">Apply with Style attr</Text>
+                <Text X="20" Y="90" Style="Heading">Heading</Text>
+                <Text X="20" Y="60" Style="Label">Label Style</Text>
+                <Circle X="200" Y="75" Radius="15" Style="StatusGreen"/>
+            </Container>
+
+            <!-- Section 3: Constants -->
+            <Text X="750" Y="580" LocalAlignX="#_align_center_" Style="Heading">Constants</Text>
+
+            <Container X="625" Y="400" Width="250" Height="150">
+                <Rectangle Style="Card" Width="250" Height="150"/>
+                <Text X="125" Y="130" LocalAlignX="#_align_center_" Style="Label">Reusable values</Text>
+                <Rectangle X="30" Y="50" Width="80" Height="50" FillColor="#PrimaryColor"/>
+                <Rectangle X="140" Y="50" Width="80" Height="50" FillColor="#DangerColor"/>
+            </Container>
+
+            <!-- Section 4: Buttons -->
+            <Text X="150" Y="350" LocalAlignX="#_align_center_" Style="Heading">Button Styles</Text>
+
+            <Container X="25" Y="180" Width="250" Height="140">
+                <Rectangle Style="Card" Width="250" Height="140"/>
+                <Container X="65" Y="50" Width="120" Height="40">
+                    <Rectangle Style="PrimaryButton" Width="120" Height="40"/>
+                    <Text X="60" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">Primary</Text>
+                </Container>
+            </Container>
+
+            <!-- Section 5: Scoped Defaults -->
+            <Text X="450" Y="350" LocalAlignX="#_align_center_" Style="Heading">Scoped Defaults</Text>
+
+            <Container X="325" Y="180" Width="250" Height="140">
+                <Rectangle Style="Card" Width="250" Height="140"/>
+
+                <Container X="20" Y="20" Width="100" Height="90">
+                    <Default>
+                        <Text Size="10" FillColor="0.5 1 0.5"/>
+                        <Rectangle FillColor="0.15 0.3 0.15"/>
+                    </Default>
+                    <Rectangle Width="100" Height="90"/>
+                    <Text X="50" Y="60" LocalAlignX="#_align_center_">Green</Text>
+                </Container>
+
+                <Container X="130" Y="20" Width="100" Height="90">
+                    <Default>
+                        <Text Size="10" FillColor="1 0.5 0.5"/>
+                        <Rectangle FillColor="0.3 0.15 0.15"/>
+                    </Default>
+                    <Rectangle Width="100" Height="90"/>
+                    <Text X="50" Y="60" LocalAlignX="#_align_center_">Red</Text>
+                </Container>
+            </Container>
+
+            <!-- Section 6: Override -->
+            <Text X="750" Y="350" LocalAlignX="#_align_center_" Style="Heading">Overriding</Text>
+
+            <Container X="625" Y="180" Width="250" Height="140">
+                <Rectangle Style="Card" Width="250" Height="140"/>
+                <Text X="125" Y="100" LocalAlignX="#_align_center_" Style="Heading">Normal</Text>
+                <Text X="125" Y="60" LocalAlignX="#_align_center_" Style="Heading" FillColor="1 0.5 0.5">Red Override</Text>
+            </Container>
+
+            <!-- Info -->
+            <Container X="25" Y="20" Width="850" Height="130">
+                <Rectangle Width="850" Height="130" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.4" LineWidth="1"/>
+                <Text X="425" Y="110" LocalAlignX="#_align_center_" Style="Heading">Reference</Text>
+                <Text X="150" Y="70" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Default: applies to all elements</Text>
+                <Text X="450" Y="70" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Style: apply selectively</Text>
+                <Text X="750" Y="70" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Constant: reusable values</Text>
+                <Text X="425" Y="30" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.5 0.5">Priority: Explicit Attribute > Style > Default</Text>
+            </Container>
+
+        </Panel>
+    </Window>
+</DCAPP>

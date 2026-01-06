@@ -12,7 +12,7 @@
         </Default>
 
         <Style Name="Button">
-            <Text Size="2.5" FillColor="1 1 1" ShadowOffset=".2"/>
+            <Text Size="2.5" FillColor="1 1 1"/>
         </Style>
 
         <Panel VirtualWidth="100" VirtualHeight="100" BackgroundColor="0.08 0.08 0.12">

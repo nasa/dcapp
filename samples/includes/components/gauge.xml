@@ -1,0 +1,27 @@
+<!-- Reusable Gauge Component -->
+<!-- Parameters: #GaugeX, #GaugeY, #GaugeLabel, @GAUGE_VALUE -->
+<Dummy>
+    <Container X="#GaugeX" Y="#GaugeY" Width="150" Height="80">
+        <Rectangle Width="150" Height="80" FillColor="0.15 0.15 0.2" LineColor="0.3 0.3 0.4" LineWidth="1"/>
+
+        <!-- Label -->
+        <Text X="75" Y="70" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.6 0.6">#GaugeLabel</Text>
+
+        <!-- Value display -->
+        <Text X="75" Y="45" LocalAlignX="#_align_center_" Size="16" FillColor="0.3 0.8 1">@GAUGE_VALUE(%.1f)</Text>
+
+        <!-- Progress bar background -->
+        <Rectangle X="15" Y="10" Width="120" Height="15" FillColor="0.1 0.1 0.12" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+
+        <!-- Progress bar fill (clamped to 0-100) -->
+        <If Value1="@GAUGE_VALUE" Operation="#_conditional_gt_" Value2="0">
+            <If Value1="@GAUGE_VALUE" Operation="#_conditional_lte_" Value2="100">
+                <!-- Scale: 120px width for 100 value = 1.2px per unit -->
+                <Rectangle X="15" Y="10" Width="@GAUGE_VALUE" Height="15" FillColor="0.3 0.6 0.8" ScaleX="1.2"/>
+            </If>
+            <If Value1="@GAUGE_VALUE" Operation="#_conditional_gt_" Value2="100">
+                <Rectangle X="15" Y="10" Width="120" Height="15" FillColor="0.8 0.3 0.3"/>
+            </If>
+        </If>
+    </Container>
+</Dummy>

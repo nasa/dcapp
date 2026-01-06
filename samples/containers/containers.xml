@@ -1,0 +1,239 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="#_variable_double_" InitialValue="0">OFFSET</Variable>
+
+    <Window Title="Containers and Layout" X="30" Y="30" Width="1000" Height="800">
+        <Default>
+            <Text Size="12" FillColor="1 1 1"/>
+        </Default>
+
+        <Panel VirtualWidth="1000" VirtualHeight="800">
+            <!-- Background -->
+            <Rectangle Width="1000" Height="800" FillColor="0.08 0.08 0.1"/>
+
+            <!-- Animate offset for scrolling demo -->
+            <Set Variable="OFFSET" Operator="#_set_add_">0.5</Set>
+            <If Value1="@OFFSET" Operation="#_conditional_gt_" Value2="100">
+                <Set Variable="OFFSET" Operator="#_set_equal_">0</Set>
+            </If>
+
+            <!-- Title -->
+            <Text X="500" Y="770" LocalAlignX="#_align_center_" Size="24" FillColor="1 1 1">Containers and Layout</Text>
+
+            <!-- ========== SECTION 1: Basic Container ========== -->
+            <Text X="175" Y="720" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Basic Container</Text>
+            <Rectangle X="25" Y="710" Width="300" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="25" Y="530" Width="300" Height="170">
+                <Rectangle Width="300" Height="170" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="150" Y="150" LocalAlignX="#_align_center_" Size="11" FillColor="0.7 0.7 0.7">Parent Container (300x170)</Text>
+
+                <!-- Child elements use parent's coordinate system -->
+                <Rectangle X="20" Y="20" Width="80" Height="50" FillColor="0.8 0.3 0.3"/>
+                <Text X="60" Y="80" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">X=20, Y=20</Text>
+
+                <Rectangle X="200" Y="80" Width="80" Height="50" FillColor="0.3 0.8 0.3"/>
+                <Text X="240" Y="140" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">X=200, Y=80</Text>
+            </Container>
+
+            <!-- ========== SECTION 2: Nested Containers ========== -->
+            <Text X="525" Y="720" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Nested Containers</Text>
+            <Rectangle X="350" Y="710" Width="350" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="350" Y="530" Width="350" Height="170">
+                <Rectangle Width="350" Height="170" FillColor="0.15 0.15 0.2" LineColor="0.5 0.5 0.6" LineWidth="2"/>
+                <Text X="10" Y="150" Size="9" FillColor="0.6 0.6 0.6">Level 1</Text>
+
+                <!-- Nested container -->
+                <Container X="30" Y="20" Width="290" Height="120">
+                    <Rectangle Width="290" Height="120" FillColor="0.2 0.2 0.25" LineColor="0.6 0.6 0.7" LineWidth="2"/>
+                    <Text X="10" Y="100" Size="9" FillColor="0.6 0.6 0.6">Level 2</Text>
+
+                    <!-- Deeper nesting -->
+                    <Container X="20" Y="15" Width="250" Height="75">
+                        <Rectangle Width="250" Height="75" FillColor="0.25 0.25 0.3" LineColor="0.7 0.7 0.8" LineWidth="2"/>
+                        <Text X="10" Y="55" Size="9" FillColor="0.6 0.6 0.6">Level 3</Text>
+
+                        <Rectangle X="20" Y="15" Width="60" Height="35" FillColor="0.8 0.4 0.2"/>
+                        <Rectangle X="100" Y="15" Width="60" Height="35" FillColor="0.2 0.8 0.4"/>
+                        <Rectangle X="180" Y="15" Width="60" Height="35" FillColor="0.4 0.2 0.8"/>
+                    </Container>
+                </Container>
+            </Container>
+
+            <!-- ========== SECTION 3: Container Transforms ========== -->
+            <Text X="850" Y="720" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Container Transforms</Text>
+            <Rectangle X="725" Y="710" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="725" Y="530" Width="250" Height="170">
+                <Rectangle Width="250" Height="170" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <!-- Rotated container -->
+                <Container X="70" Y="85" Width="60" Height="40" Rotation="15"
+                    LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                    PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_middle_">
+                    <Rectangle Width="60" Height="40" FillColor="0.8 0.3 0.5"/>
+                    <Text X="30" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="8" FillColor="1 1 1">Rot 15</Text>
+                </Container>
+
+                <!-- Scaled container -->
+                <Container X="180" Y="85" Width="60" Height="40" ScaleX="1.3" ScaleY="0.8"
+                    LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <Rectangle Width="60" Height="40" FillColor="0.3 0.5 0.8"/>
+                    <Text X="30" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="8" FillColor="1 1 1">Scale</Text>
+                </Container>
+
+                <Text X="70" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Rotation</Text>
+                <Text X="180" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Scale</Text>
+            </Container>
+
+            <!-- ========== SECTION 4: Coordinate Systems ========== -->
+            <Text X="175" Y="500" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Coordinate System</Text>
+            <Rectangle X="25" Y="490" Width="300" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="25" Y="300" Width="300" Height="180">
+                <Rectangle Width="300" Height="180" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <!-- Origin marker -->
+                <Circle X="0" Y="0" Radius="5" FillColor="1 0 0"/>
+                <Text X="10" Y="10" Size="9" FillColor="1 0.5 0.5">Origin (0,0)</Text>
+
+                <!-- Axis lines -->
+                <Line LineColor="0.5 0.5 0.5" LineWidth="1">
+                    <Vertex X="0" Y="0"/><Vertex X="280" Y="0"/>
+                </Line>
+                <Line LineColor="0.5 0.5 0.5" LineWidth="1">
+                    <Vertex X="0" Y="0"/><Vertex X="0" Y="160"/>
+                </Line>
+
+                <!-- X axis label -->
+                <Text X="270" Y="5" Size="10" FillColor="0.8 0.4 0.4">X+</Text>
+
+                <!-- Y axis label -->
+                <Text X="5" Y="150" Size="10" FillColor="0.4 0.8 0.4">Y+</Text>
+
+                <!-- Sample points -->
+                <Circle X="100" Y="50" Radius="4" FillColor="0.3 0.6 1"/>
+                <Text X="105" Y="55" Size="8" FillColor="0.6 0.6 0.6">(100, 50)</Text>
+
+                <Circle X="200" Y="100" Radius="4" FillColor="0.3 0.6 1"/>
+                <Text X="205" Y="105" Size="8" FillColor="0.6 0.6 0.6">(200, 100)</Text>
+
+                <Text X="150" Y="165" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.7">Bottom-left origin, Y increases upward</Text>
+            </Container>
+
+            <!-- ========== SECTION 5: Virtual Dimensions ========== -->
+            <Text X="525" Y="500" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Virtual Dimensions</Text>
+            <Rectangle X="350" Y="490" Width="350" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="350" Y="300" Width="350" Height="180">
+                <Rectangle Width="350" Height="180" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <!-- Panel with different virtual size (scaled down to fit) -->
+                <Text X="175" Y="165" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Container: 300x140, VirtualWidth/Height: 600x280</Text>
+
+                <Container X="25" Y="10" Width="300" Height="140">
+                    <Panel VirtualWidth="600" VirtualHeight="280">
+                        <!-- Background -->
+                        <Rectangle Width="600" Height="280" FillColor="0.1 0.15 0.2"/>
+                        <!-- These coordinates are in virtual space (600x280) -->
+                        <Rectangle X="50" Y="50" Width="200" Height="100" FillColor="0.8 0.3 0.3"/>
+                        <Text X="150" Y="100" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="20" FillColor="1 1 1">200x100</Text>
+
+                        <Rectangle X="350" Y="130" Width="200" Height="100" FillColor="0.3 0.8 0.3"/>
+                        <Text X="450" Y="180" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="20" FillColor="1 1 1">200x100</Text>
+
+                        <Text X="300" Y="260" LocalAlignX="#_align_center_" Size="16" FillColor="0.6 0.8 1">Virtual: 600x280</Text>
+                    </Panel>
+                </Container>
+            </Container>
+
+            <!-- ========== SECTION 6: Clipping ========== -->
+            <Text X="850" Y="500" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Overflow Behavior</Text>
+            <Rectangle X="725" Y="490" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="725" Y="300" Width="250" Height="180">
+                <Rectangle Width="250" Height="180" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <!-- Container showing overflow -->
+                <Rectangle X="30" Y="40" Width="100" Height="80" FillColor="0.2 0.2 0.25" LineColor="0.5 0.5 0.6" LineWidth="1"/>
+
+                <!-- Elements that extend beyond container -->
+                <Rectangle X="30" Y="40" Width="150" Height="30" FillColor="0.8 0.4 0.2 0.7"/>
+                <Text X="105" Y="55" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="8" FillColor="1 1 1">Extends right</Text>
+
+                <Rectangle X="50" Y="90" Width="60" Height="50" FillColor="0.2 0.8 0.4 0.7"/>
+                <Text X="80" Y="115" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="8" FillColor="1 1 1">Extends\ndown</Text>
+
+                <Text X="30" Y="25" Size="8" FillColor="0.6 0.6 0.6">Container bounds</Text>
+                <Text X="125" Y="160" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.7">Elements can overflow</Text>
+            </Container>
+
+            <!-- ========== SECTION 7: Alignment ========== -->
+            <Text X="250" Y="270" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Parent/Local Alignment</Text>
+            <Rectangle X="25" Y="260" Width="450" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="25" Y="30" Width="450" Height="220">
+                <Rectangle Width="450" Height="220" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <!-- ParentAlign demo -->
+                <Rectangle X="20" Y="30" Width="200" Height="150" FillColor="0.2 0.2 0.25" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+                <Text X="120" Y="185" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">ParentAlign positions in parent</Text>
+
+                <Container X="20" Y="30" Width="200" Height="150">
+                    <Rectangle ParentAlignX="#_align_left_" ParentAlignY="#_align_bottom_" Width="30" Height="20" FillColor="0.8 0.3 0.3"/>
+                    <Rectangle ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Width="40" Height="25" FillColor="0.3 0.8 0.3"/>
+                    <Rectangle ParentAlignX="#_align_right_" ParentAlignY="#_align_top_" LocalAlignX="#_align_right_" LocalAlignY="#_align_top_" Width="30" Height="20" FillColor="0.3 0.3 0.8"/>
+                </Container>
+
+                <!-- LocalAlign demo -->
+                <Rectangle X="240" Y="30" Width="190" Height="150" FillColor="0.2 0.2 0.25" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+                <Text X="335" Y="185" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">LocalAlign sets anchor point</Text>
+
+                <Circle X="335" Y="105" Radius="3" FillColor="1 1 0"/>
+                <Rectangle X="335" Y="105" Width="60" Height="30" FillColor="0.8 0.5 0.2"/>
+                <Text X="280" Y="75" Size="8" FillColor="0.6 0.6 0.6">Default (bottom-left)</Text>
+
+                <Circle X="335" Y="55" Radius="3" FillColor="1 1 0"/>
+                <Rectangle X="335" Y="55" Width="60" Height="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" FillColor="0.5 0.2 0.8"/>
+                <Text X="280" Y="38" Size="8" FillColor="0.6 0.6 0.6">Center/Middle</Text>
+            </Container>
+
+            <!-- ========== SECTION 8: Z-Order ========== -->
+            <Text X="625" Y="270" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Z-Order (Draw Order)</Text>
+            <Rectangle X="500" Y="260" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="500" Y="30" Width="250" Height="220">
+                <Rectangle Width="250" Height="220" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <!-- Elements drawn in order - later = on top -->
+                <Rectangle X="40" Y="80" Width="80" Height="80" FillColor="0.8 0.2 0.2"/>
+                <Text X="80" Y="120" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">First</Text>
+
+                <Rectangle X="80" Y="60" Width="80" Height="80" FillColor="0.2 0.8 0.2"/>
+                <Text X="120" Y="100" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Second</Text>
+
+                <Rectangle X="120" Y="40" Width="80" Height="80" FillColor="0.2 0.2 0.8"/>
+                <Text X="160" Y="80" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Third</Text>
+
+                <Text X="125" Y="195" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.7">Later elements draw on top</Text>
+            </Container>
+
+            <!-- Info panel -->
+            <Container X="775" Y="30" Width="200" Height="220">
+                <Rectangle Width="200" Height="220" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="100" Y="200" LocalAlignX="#_align_center_" Size="12" FillColor="0.6 0.8 1">Key Concepts</Text>
+
+                <Text X="10" Y="170" Size="9" FillColor="0.7 0.7 0.7">- Container groups elements</Text>
+                <Text X="10" Y="150" Size="9" FillColor="0.7 0.7 0.7">- Children use parent coords</Text>
+                <Text X="10" Y="130" Size="9" FillColor="0.7 0.7 0.7">- Origin is bottom-left</Text>
+                <Text X="10" Y="110" Size="9" FillColor="0.7 0.7 0.7">- Y increases upward</Text>
+                <Text X="10" Y="90" Size="9" FillColor="0.7 0.7 0.7">- Panel has VirtualWidth/Height</Text>
+                <Text X="10" Y="70" Size="9" FillColor="0.7 0.7 0.7">- Transforms apply to children</Text>
+                <Text X="10" Y="50" Size="9" FillColor="0.7 0.7 0.7">- Draw order = z-order</Text>
+            </Container>
+
+        </Panel>
+    </Window>
+</DCAPP>

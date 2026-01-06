@@ -1,0 +1,4 @@
+<!-- Colored box using constants -->
+<Dummy>
+    <Rectangle X="#BoxX" Y="40" Width="70" Height="70" FillColor="#BoxColor" LineColor="1 1 1" LineWidth="1"/>
+</Dummy>

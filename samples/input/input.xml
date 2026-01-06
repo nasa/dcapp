@@ -1,0 +1,255 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <!-- State variables -->
+    <Variable Type="#_variable_double_" InitialValue="0">CLICK_COUNT</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">TOGGLE_STATE</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">RADIO_STATE</Variable>
+    <Variable Type="#_variable_double_" InitialValue="50">SLIDER_VALUE</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">MOMENTARY_ACTIVE</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">HOVER_ACTIVE</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">DRAG_X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">DRAG_Y</Variable>
+
+    <Window Title="Input Handling Demo" X="30" Y="30" Width="900" Height="700">
+        <Default>
+            <Text Size="12" FillColor="1 1 1"/>
+        </Default>
+
+        <Panel VirtualWidth="900" VirtualHeight="700" BackgroundColor="0.08 0.08 0.1">
+
+            <!-- Title -->
+            <Text X="450" Y="670" LocalAlignX="#_align_center_" Size="24" FillColor="1 1 1">Input Handling Demo</Text>
+
+            <!-- ========== SECTION 1: Momentary Button ========== -->
+            <Text X="150" Y="620" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Momentary Button</Text>
+            <Rectangle X="25" Y="610" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="25" Y="450" Width="250" Height="150">
+                <Rectangle Width="250" Height="150" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="125" Y="130" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Active only while pressed</Text>
+
+                <!-- Momentary button -->
+                <Button Type="#_button_momentary_" X="75" Y="60" Width="100" Height="50">
+                    <MousePressed>
+                        <Set Variable="CLICK_COUNT" Operator="#_set_add_">1</Set>
+                        <Set Variable="MOMENTARY_ACTIVE" Operator="#_set_equal_">1</Set>
+                    </MousePressed>
+                    <MouseReleased>
+                        <Set Variable="MOMENTARY_ACTIVE" Operator="#_set_equal_">0</Set>
+                    </MouseReleased>
+                    <ButtonIndicatorOn><Rectangle Width="100" Height="50" FillColor="0.3 0.6 0.8"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="100" Height="50" FillColor="0.2 0.25 0.3"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">Click Me</Text>
+                </Button>
+
+                <Text X="125" Y="35" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.6 0.6">Clicks: @CLICK_COUNT(%.0f)</Text>
+
+                <!-- Active indicator -->
+                <If Value1="@MOMENTARY_ACTIVE" Operation="#_conditional_eq_" Value2="1">
+                    <Circle X="200" Y="85" Radius="10" FillColor="0.3 0.8 0.3"/>
+                </If>
+                <If Value1="@MOMENTARY_ACTIVE" Operation="#_conditional_eq_" Value2="0">
+                    <Circle X="200" Y="85" Radius="10" FillColor="0.3 0.3 0.3"/>
+                </If>
+                <Text X="200" Y="62" LocalAlignX="#_align_center_" Size="8" FillColor="0.5 0.5 0.5">Active</Text>
+            </Container>
+
+            <!-- ========== SECTION 2: Toggle Button ========== -->
+            <Text X="425" Y="620" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Toggle Button</Text>
+            <Rectangle X="300" Y="610" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="300" Y="450" Width="250" Height="150">
+                <Rectangle Width="250" Height="150" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="125" Y="130" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Stays on/off when clicked</Text>
+
+                <!-- Toggle button -->
+                <Button Type="#_button_toggle_" X="75" Y="60" Width="100" Height="50" Variable="TOGGLE_STATE">
+                    <ButtonIndicatorOn>
+                        <Rectangle Width="100" Height="50" FillColor="0.3 0.7 0.3"/>
+                        <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">ON</Text>
+                    </ButtonIndicatorOn>
+                    <ButtonIndicatorOff>
+                        <Rectangle Width="100" Height="50" FillColor="0.5 0.25 0.25"/>
+                        <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">OFF</Text>
+                    </ButtonIndicatorOff>
+                </Button>
+
+                <Text X="125" Y="35" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.6 0.6">State: @TOGGLE_STATE(%.0f)</Text>
+            </Container>
+
+            <!-- ========== SECTION 3: Radio Buttons ========== -->
+            <Text X="700" Y="620" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Radio Buttons</Text>
+            <Rectangle X="575" Y="610" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="575" Y="450" Width="300" Height="150">
+                <Rectangle Width="300" Height="150" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="150" Y="130" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Only one active at a time</Text>
+
+                <!-- Radio button group using toggle buttons -->
+                <Button Type="#_button_momentary_" X="20" Y="60" Width="80" Height="40">
+                    <MousePressed><Set Variable="RADIO_STATE" Operator="#_set_equal_">1</Set></MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="80" Height="40" FillColor="0.4 0.4 0.5"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="80" Height="40" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Option 1</Text>
+                </Button>
+                <If Value1="@RADIO_STATE" Operation="#_conditional_eq_" Value2="1">
+                    <Circle X="60" Y="110" Radius="6" FillColor="0.3 0.8 0.3"/>
+                </If>
+
+                <Button Type="#_button_momentary_" X="110" Y="60" Width="80" Height="40">
+                    <MousePressed><Set Variable="RADIO_STATE" Operator="#_set_equal_">2</Set></MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="80" Height="40" FillColor="0.4 0.4 0.5"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="80" Height="40" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Option 2</Text>
+                </Button>
+                <If Value1="@RADIO_STATE" Operation="#_conditional_eq_" Value2="2">
+                    <Circle X="150" Y="110" Radius="6" FillColor="0.3 0.8 0.3"/>
+                </If>
+
+                <Button Type="#_button_momentary_" X="200" Y="60" Width="80" Height="40">
+                    <MousePressed><Set Variable="RADIO_STATE" Operator="#_set_equal_">3</Set></MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="80" Height="40" FillColor="0.4 0.4 0.5"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="80" Height="40" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Option 3</Text>
+                </Button>
+                <If Value1="@RADIO_STATE" Operation="#_conditional_eq_" Value2="3">
+                    <Circle X="240" Y="110" Radius="6" FillColor="0.3 0.8 0.3"/>
+                </If>
+
+                <Text X="150" Y="35" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.6 0.6">Selected: @RADIO_STATE(%.0f)</Text>
+            </Container>
+
+            <!-- ========== SECTION 4: Button States ========== -->
+            <Text X="150" Y="420" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Button Visual States</Text>
+            <Rectangle X="25" Y="410" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="25" Y="240" Width="250" Height="160">
+                <Rectangle Width="250" Height="160" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="125" Y="140" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">ButtonIndicatorOn/Off states</Text>
+
+                <!-- Button with elaborate states -->
+                <Button Type="#_button_toggle_" X="50" Y="50" Width="150" Height="70" Variable="HOVER_ACTIVE">
+                    <ButtonIndicatorOn>
+                        <Rectangle Width="150" Height="70" FillColor="0.2 0.5 0.3" LineColor="0.3 0.7 0.4" LineWidth="3"/>
+                        <Circle X="30" Y="35" Radius="15" FillColor="0.3 0.8 0.3"/>
+                        <Text X="90" Y="35" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="14" FillColor="1 1 1">ACTIVE</Text>
+                    </ButtonIndicatorOn>
+                    <ButtonIndicatorOff>
+                        <Rectangle Width="150" Height="70" FillColor="0.3 0.2 0.2" LineColor="0.5 0.3 0.3" LineWidth="3"/>
+                        <Circle X="30" Y="35" Radius="15" FillColor="0.6 0.2 0.2"/>
+                        <Text X="90" Y="35" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="14" FillColor="0.7 0.7 0.7">INACTIVE</Text>
+                    </ButtonIndicatorOff>
+                </Button>
+
+                <Text X="125" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.5 0.5 0.5">Different visuals for each state</Text>
+            </Container>
+
+            <!-- ========== SECTION 5: Increment/Decrement ========== -->
+            <Text X="425" Y="420" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Increment / Decrement</Text>
+            <Rectangle X="300" Y="410" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="300" Y="240" Width="250" Height="160">
+                <Rectangle Width="250" Height="160" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="125" Y="140" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Use buttons to modify values</Text>
+
+                <!-- Value display -->
+                <Rectangle X="75" Y="80" Width="100" Height="40" FillColor="0.1 0.1 0.12" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="125" Y="100" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="18" FillColor="0.3 0.8 1">@SLIDER_VALUE(%.0f)</Text>
+
+                <!-- Decrement button -->
+                <Button Type="#_button_momentary_" X="25" Y="80" Width="40" Height="40">
+                    <MousePressed>
+                        <Set Variable="SLIDER_VALUE" Operator="#_set_subtract_">5</Set>
+                        <If Value1="@SLIDER_VALUE" Operation="#_conditional_lt_" Value2="0">
+                            <Set Variable="SLIDER_VALUE" Operator="#_set_equal_">0</Set>
+                        </If>
+                    </MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="40" Height="40" FillColor="0.5 0.3 0.3"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="40" Height="40" FillColor="0.35 0.25 0.25"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="20" FillColor="1 1 1">-</Text>
+                </Button>
+
+                <!-- Increment button -->
+                <Button Type="#_button_momentary_" X="185" Y="80" Width="40" Height="40">
+                    <MousePressed>
+                        <Set Variable="SLIDER_VALUE" Operator="#_set_add_">5</Set>
+                        <If Value1="@SLIDER_VALUE" Operation="#_conditional_gt_" Value2="100">
+                            <Set Variable="SLIDER_VALUE" Operator="#_set_equal_">100</Set>
+                        </If>
+                    </MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="40" Height="40" FillColor="0.3 0.5 0.3"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="40" Height="40" FillColor="0.25 0.35 0.25"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="20" FillColor="1 1 1">+</Text>
+                </Button>
+
+                <!-- Progress bar -->
+                <Rectangle X="25" Y="45" Width="200" Height="15" FillColor="0.15 0.15 0.18" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <If Value1="@SLIDER_VALUE" Operation="#_conditional_gt_" Value2="0">
+                    <Rectangle X="25" Y="45" Width="@SLIDER_VALUE" Height="15" FillColor="0.3 0.6 0.8" ScaleX="2"/>
+                </If>
+
+                <Text X="125" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.5 0.5 0.5">Range: 0 - 100</Text>
+            </Container>
+
+            <!-- ========== SECTION 6: Multiple Actions ========== -->
+            <Text X="700" Y="420" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Multiple Actions</Text>
+            <Rectangle X="575" Y="410" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="575" Y="240" Width="300" Height="160">
+                <Rectangle Width="300" Height="160" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="150" Y="140" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">One click can trigger multiple actions</Text>
+
+                <!-- Reset all button -->
+                <Button Type="#_button_momentary_" X="75" Y="60" Width="150" Height="50">
+                    <MousePressed>
+                        <Set Variable="CLICK_COUNT" Operator="#_set_equal_">0</Set>
+                        <Set Variable="TOGGLE_STATE" Operator="#_set_equal_">0</Set>
+                        <Set Variable="RADIO_STATE" Operator="#_set_equal_">0</Set>
+                        <Set Variable="SLIDER_VALUE" Operator="#_set_equal_">50</Set>
+                        <Set Variable="HOVER_ACTIVE" Operator="#_set_equal_">0</Set>
+                    </MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="150" Height="50" FillColor="0.6 0.3 0.3"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="150" Height="50" FillColor="0.4 0.2 0.2"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">RESET ALL</Text>
+                </Button>
+
+                <Text X="150" Y="35" LocalAlignX="#_align_center_" Size="9" FillColor="0.5 0.5 0.5">Resets all values on this page</Text>
+            </Container>
+
+            <!-- ========== Reference Section ========== -->
+            <Container X="25" Y="30" Width="850" Height="190">
+                <Rectangle Width="850" Height="190" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="425" Y="170" LocalAlignX="#_align_center_" Size="14" FillColor="0.6 0.8 1">Input Handling Reference</Text>
+
+                <!-- Column 1: Button Types -->
+                <Text X="30" Y="140" Size="11" FillColor="0.8 0.8 0.3">Button Types</Text>
+                <Text X="30" Y="120" Size="9" FillColor="0.6 0.6 0.6">#_button_momentary_ - Active while held</Text>
+                <Text X="30" Y="105" Size="9" FillColor="0.6 0.6 0.6">#_button_toggle_ - Click to toggle on/off</Text>
+
+                <!-- Column 2: Button Events -->
+                <Text X="280" Y="140" Size="11" FillColor="0.8 0.8 0.3">Button Events</Text>
+                <Text X="280" Y="120" Size="9" FillColor="0.6 0.6 0.6">&lt;MousePressed&gt; - On mouse down</Text>
+                <Text X="280" Y="105" Size="9" FillColor="0.6 0.6 0.6">&lt;MouseReleased&gt; - On mouse up</Text>
+
+                <!-- Column 3: Button Visual States -->
+                <Text X="530" Y="140" Size="11" FillColor="0.8 0.8 0.3">Visual States</Text>
+                <Text X="530" Y="120" Size="9" FillColor="0.6 0.6 0.6">&lt;ButtonIndicatorOn&gt; - Active appearance</Text>
+                <Text X="530" Y="105" Size="9" FillColor="0.6 0.6 0.6">&lt;ButtonIndicatorOff&gt; - Inactive appearance</Text>
+
+                <!-- Button syntax -->
+                <Text X="30" Y="70" Size="10" FillColor="0.8 0.8 0.3">Button Syntax:</Text>
+                <Text X="30" Y="50" Size="9" FillColor="0.6 0.6 0.6">&lt;Button Type="..." X="..." Y="..." Width="..." Height="..." Variable="..."&gt;</Text>
+                <Text X="30" Y="35" Size="9" FillColor="0.6 0.6 0.6">  &lt;MousePressed&gt;&lt;Set Variable="..." Operator="..."&gt;value&lt;/Set&gt;&lt;/MousePressed&gt;</Text>
+                <Text X="30" Y="20" Size="9" FillColor="0.6 0.6 0.6">  &lt;ButtonIndicatorOn&gt;...&lt;/ButtonIndicatorOn&gt;</Text>
+                <Text X="30" Y="5" Size="9" FillColor="0.6 0.6 0.6">&lt;/Button&gt;</Text>
+            </Container>
+
+        </Panel>
+    </Window>
+</DCAPP>

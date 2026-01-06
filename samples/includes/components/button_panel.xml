@@ -1,0 +1,25 @@
+<!-- Reusable Button Panel Component -->
+<!-- Parameters: #PanelX, #PanelY, #PanelTitle -->
+<!-- Requires: @BTN1_STATE, @BTN2_STATE, @BTN3_STATE variables -->
+<Dummy>
+    <Container X="#PanelX" Y="#PanelY" Width="180" Height="130">
+        <Rectangle Width="180" Height="130" FillColor="0.15 0.15 0.2" LineColor="0.3 0.3 0.4" LineWidth="1"/>
+
+        <!-- Title -->
+        <Text X="90" Y="115" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.8 1">#PanelTitle</Text>
+
+        <!-- Button 1 -->
+        <Button Type="#_button_toggle_" X="15" Y="65" Width="150" Height="30" Variable="BTN1_STATE">
+            <ButtonIndicatorOn><Rectangle Width="150" Height="30" FillColor="0.3 0.6 0.3"/></ButtonIndicatorOn>
+            <ButtonIndicatorOff><Rectangle Width="150" Height="30" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
+            <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Option 1</Text>
+        </Button>
+
+        <!-- Button 2 -->
+        <Button Type="#_button_toggle_" X="15" Y="30" Width="150" Height="30" Variable="BTN2_STATE">
+            <ButtonIndicatorOn><Rectangle Width="150" Height="30" FillColor="0.3 0.6 0.3"/></ButtonIndicatorOn>
+            <ButtonIndicatorOff><Rectangle Width="150" Height="30" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
+            <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Option 2</Text>
+        </Button>
+    </Container>
+</Dummy>

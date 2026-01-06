@@ -1,0 +1,270 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="#_variable_double_" InitialValue="0">ANGLE</Variable>
+
+    <Window Title="Primitives Showcase" X="30" Y="30" Width="1000" Height="800">
+        <Default>
+            <Text Size="12" FillColor="1 1 1"/>
+        </Default>
+
+        <Panel VirtualWidth="1000" VirtualHeight="800" BackgroundColor="0.08 0.08 0.1">
+
+            <!-- Animate angle for arc demo -->
+            <Set Variable="ANGLE" Operator="#_set_add_">1</Set>
+            <If Value1="@ANGLE" Operation="#_conditional_gt_" Value2="360">
+                <Set Variable="ANGLE" Operator="#_set_equal_">0</Set>
+            </If>
+
+            <!-- Title -->
+            <Text X="500" Y="770" LocalAlignX="#_align_center_" Size="24" FillColor="1 1 1">Primitives Showcase</Text>
+
+            <!-- ========== ROW 1: Rectangle, Circle, Ellipse ========== -->
+
+            <!-- Rectangle -->
+            <Container X="30" Y="580" Width="300" Height="170">
+                <Rectangle Width="300" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="150" Y="155" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Rectangle</Text>
+
+                <!-- Filled rectangle -->
+                <Rectangle X="30" Y="70" Width="80" Height="50" FillColor="0.8 0.3 0.3"/>
+                <Text X="70" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Filled</Text>
+
+                <!-- Outlined rectangle -->
+                <Rectangle X="130" Y="70" Width="80" Height="50" LineColor="0.3 0.8 0.3" LineWidth="2"/>
+                <Text X="170" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Outlined</Text>
+
+                <!-- Both fill and outline -->
+                <Rectangle X="230" Y="70" Width="50" Height="50" FillColor="0.3 0.3 0.8" LineColor="0.6 0.6 1" LineWidth="2"/>
+                <Text X="255" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Both</Text>
+            </Container>
+
+            <!-- Circle -->
+            <Container X="350" Y="580" Width="300" Height="170">
+                <Rectangle Width="300" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="150" Y="155" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Circle</Text>
+
+                <!-- Filled circle -->
+                <Circle X="60" Y="80" Radius="35" FillColor="0.8 0.5 0.2"/>
+                <Text X="60" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Filled</Text>
+
+                <!-- Outlined circle -->
+                <Circle X="150" Y="80" Radius="35" LineColor="0.2 0.8 0.5" LineWidth="2"/>
+                <Text X="150" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Outlined</Text>
+
+                <!-- Both -->
+                <Circle X="240" Y="80" Radius="35" FillColor="0.5 0.2 0.8" LineColor="0.8 0.5 1" LineWidth="2"/>
+                <Text X="240" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Both</Text>
+            </Container>
+
+            <!-- Rotation -->
+            <Container X="670" Y="580" Width="300" Height="170">
+                <Rectangle Width="300" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="150" Y="155" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Rotation</Text>
+
+                <!-- No rotation -->
+                <Rectangle X="75" Y="80" Width="60" Height="40" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" FillColor="0.8 0.8 0.2"/>
+                <Text X="75" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">0 deg</Text>
+
+                <!-- 45 degree rotation -->
+                <Rectangle X="225" Y="80" Width="60" Height="40" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Rotation="45" FillColor="0.2 0.8 0.8" LineColor="0.5 1 1" LineWidth="2"/>
+                <Text X="225" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">45 deg</Text>
+            </Container>
+
+            <!-- ========== ROW 2: Arc, Line, Polygon ========== -->
+
+            <!-- Arc -->
+            <Container X="30" Y="390" Width="300" Height="170">
+                <Rectangle Width="300" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="150" Y="155" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Arc</Text>
+
+                <!-- Static arc (270 degree span, rotated 45 degrees) -->
+                <Arc X="75" Y="80" Radius="40" Angle="270" Rotation="45" FillColor="0.8 0.4 0.6" Pie="true"/>
+                <Text X="75" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Static</Text>
+
+                <!-- Animated arc (dynamic angle sweep) -->
+                <Arc X="225" Y="80" Radius="40" Angle="@ANGLE" Rotation="0" FillColor="0.4 0.8 0.6" LineColor="0.6 1 0.8" LineWidth="2" Pie="true"/>
+                <Text X="225" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Animated</Text>
+            </Container>
+
+            <!-- Line -->
+            <Container X="350" Y="390" Width="300" Height="170">
+                <Rectangle Width="300" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="150" Y="155" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Line</Text>
+
+                <!-- Simple line -->
+                <Line LineColor="0.8 0.3 0.3" LineWidth="2">
+                    <Vertex X="20" Y="120"/>
+                    <Vertex X="80" Y="50"/>
+                </Line>
+                <Text X="50" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Simple</Text>
+
+                <!-- Multi-point line -->
+                <Line LineColor="0.3 0.8 0.3" LineWidth="2">
+                    <Vertex X="100" Y="50"/>
+                    <Vertex X="130" Y="120"/>
+                    <Vertex X="160" Y="60"/>
+                    <Vertex X="190" Y="110"/>
+                </Line>
+                <Text X="145" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Multi-point</Text>
+
+                <!-- Thick line -->
+                <Line LineColor="0.3 0.3 0.8" LineWidth="6">
+                    <Vertex X="220" Y="120"/>
+                    <Vertex X="280" Y="50"/>
+                </Line>
+                <Text X="250" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Thick</Text>
+            </Container>
+
+            <!-- Polygon -->
+            <Container X="670" Y="390" Width="300" Height="170">
+                <Rectangle Width="300" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="150" Y="155" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Polygon</Text>
+
+                <!-- Triangle -->
+                <Polygon FillColor="0.8 0.6 0.2">
+                    <Vertex X="50" Y="50"/>
+                    <Vertex X="90" Y="50"/>
+                    <Vertex X="70" Y="120"/>
+                </Polygon>
+                <Text X="70" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Triangle</Text>
+
+                <!-- Pentagon -->
+                <Polygon FillColor="0.6 0.2 0.8" LineColor="0.8 0.5 1" LineWidth="2">
+                    <Vertex X="150" Y="50"/>
+                    <Vertex X="185" Y="70"/>
+                    <Vertex X="175" Y="115"/>
+                    <Vertex X="125" Y="115"/>
+                    <Vertex X="115" Y="70"/>
+                </Polygon>
+                <Text X="150" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Pentagon</Text>
+
+                <!-- Hexagon (6-sided, center at 240,85) -->
+                <Polygon FillColor="0.2 0.6 0.8">
+                    <Vertex X="240" Y="120"/>
+                    <Vertex X="270" Y="102"/>
+                    <Vertex X="270" Y="68"/>
+                    <Vertex X="240" Y="50"/>
+                    <Vertex X="210" Y="68"/>
+                    <Vertex X="210" Y="102"/>
+                </Polygon>
+                <Text X="240" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Hexagon</Text>
+            </Container>
+
+            <!-- ========== ROW 3: Text, Image ========== -->
+
+            <!-- Text -->
+            <Container X="30" Y="200" Width="460" Height="170">
+                <Rectangle Width="460" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="230" Y="155" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Text</Text>
+
+                <!-- Sizes -->
+                <Text X="30" Y="120" Size="8" FillColor="0.7 0.7 0.7">Size 8</Text>
+                <Text X="80" Y="120" Size="12" FillColor="0.7 0.7 0.7">Size 12</Text>
+                <Text X="150" Y="120" Size="16" FillColor="0.7 0.7 0.7">Size 16</Text>
+                <Text X="230" Y="120" Size="20" FillColor="0.7 0.7 0.7">Size 20</Text>
+
+                <!-- Colors -->
+                <Text X="30" Y="80" Size="12" FillColor="1 0.3 0.3">Red</Text>
+                <Text X="70" Y="80" Size="12" FillColor="0.3 1 0.3">Green</Text>
+                <Text X="130" Y="80" Size="12" FillColor="0.3 0.5 1">Blue</Text>
+                <Text X="180" Y="80" Size="12" FillColor="1 1 0.3">Yellow</Text>
+                <Text X="240" Y="80" Size="12" FillColor="1 0.5 0">Orange</Text>
+
+                <!-- Variable -->
+                <Text X="30" Y="40" Size="12" FillColor="0.5 0.8 1">Angle: @ANGLE(%.0f)</Text>
+
+                <!-- Multiline -->
+                <Text X="350" Y="120" Size="10" FillColor="0.7 0.7 0.7">First Line\nSecond Line\nThird Line</Text>
+            </Container>
+
+            <!-- Image -->
+            <Container X="510" Y="200" Width="460" Height="170">
+                <Rectangle Width="460" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="230" Y="155" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Image</Text>
+
+                <!-- Normal image -->
+                <Image X="60" Y="75" Width="80" Height="80" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" File="../../assets/nasa.png"/>
+                <Text X="60" Y="20" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Normal</Text>
+
+                <!-- Scaled image -->
+                <Image X="170" Y="75" Width="50" Height="50" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" File="../../assets/nasa.png"/>
+                <Text X="170" Y="20" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Scaled</Text>
+
+                <!-- Stretched image -->
+                <Image X="280" Y="75" Width="120" Height="50" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" File="../../assets/nasa.png"/>
+                <Text X="280" Y="20" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Stretched</Text>
+
+                <!-- Rotated image -->
+                <Image X="400" Y="75" Width="60" Height="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Rotation="45" File="../../assets/nasa.png"/>
+                <Text X="400" Y="20" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Rotated</Text>
+            </Container>
+
+            <!-- ========== ROW 4: Line Styles and Transparency ========== -->
+
+            <!-- Line widths -->
+            <Container X="30" Y="30" Width="300" Height="150">
+                <Rectangle Width="300" Height="150" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="150" Y="135" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Line Widths</Text>
+
+                <Line LineColor="0.8 0.8 0.8" LineWidth="1">
+                    <Vertex X="20" Y="100"/><Vertex X="130" Y="100"/>
+                </Line>
+                <Text X="140" Y="100" Size="9" FillColor="0.6 0.6 0.6">Width 1</Text>
+
+                <Line LineColor="0.8 0.8 0.8" LineWidth="2">
+                    <Vertex X="20" Y="75"/><Vertex X="130" Y="75"/>
+                </Line>
+                <Text X="140" Y="75" Size="9" FillColor="0.6 0.6 0.6">Width 2</Text>
+
+                <Line LineColor="0.8 0.8 0.8" LineWidth="4">
+                    <Vertex X="20" Y="50"/><Vertex X="130" Y="50"/>
+                </Line>
+                <Text X="140" Y="50" Size="9" FillColor="0.6 0.6 0.6">Width 4</Text>
+
+                <Line LineColor="0.8 0.8 0.8" LineWidth="8">
+                    <Vertex X="20" Y="25"/><Vertex X="130" Y="25"/>
+                </Line>
+                <Text X="140" Y="25" Size="9" FillColor="0.6 0.6 0.6">Width 8</Text>
+            </Container>
+
+            <!-- Transparency -->
+            <Container X="350" Y="30" Width="300" Height="150">
+                <Rectangle Width="300" Height="150" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="150" Y="135" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Transparency (Alpha)</Text>
+
+                <!-- Checkerboard background to show transparency -->
+                <Rectangle X="30" Y="40" Width="240" Height="70" FillColor="0.5 0.5 0.5"/>
+                <Rectangle X="30" Y="75" Width="120" Height="35" FillColor="0.3 0.3 0.3"/>
+                <Rectangle X="150" Y="40" Width="120" Height="35" FillColor="0.3 0.3 0.3"/>
+
+                <!-- Overlapping circles with different alpha values -->
+                <Circle X="100" Y="75" Radius="35" FillColor="1 0 0 0.8"/>
+                <Circle X="150" Y="75" Radius="35" FillColor="0 1 0 0.6"/>
+                <Circle X="200" Y="75" Radius="35" FillColor="0 0 1 0.4"/>
+
+                <Text X="100" Y="25" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">0.8</Text>
+                <Text X="150" Y="25" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">0.6</Text>
+                <Text X="200" Y="25" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">0.4</Text>
+            </Container>
+
+            <!-- Color formats -->
+            <Container X="670" Y="30" Width="300" Height="150">
+                <Rectangle Width="300" Height="150" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="150" Y="135" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Color Formats</Text>
+
+                <!-- RGB (0-1 range) -->
+                <Rectangle X="30" Y="60" Width="60" Height="50" FillColor="0.8 0.4 0.2"/>
+                <Text X="60" Y="25" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">0.8 0.4 0.2</Text>
+
+                <!-- RGBA -->
+                <Rectangle X="120" Y="60" Width="60" Height="50" FillColor="0.2 0.8 0.4 0.8"/>
+                <Text X="150" Y="25" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">+ Alpha 0.8</Text>
+
+                <!-- With outline -->
+                <Rectangle X="210" Y="60" Width="60" Height="50" FillColor="0.4 0.2 0.8" LineColor="1 1 1" LineWidth="2"/>
+                <Text X="240" Y="25" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">Fill+Line</Text>
+            </Container>
+
+        </Panel>
+    </Window>
+</DCAPP>
