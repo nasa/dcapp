@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Window Title="Environment Variables" X="30" Y="30" Width="800" Height="400">
+        <Default>
+            <Text Size="14" FillColor="1 1 1"/>
+        </Default>
+
+        <Panel VirtualWidth="800" VirtualHeight="400" BackgroundColor="0.1 0.1 0.12">
+
+            <!-- Title -->
+            <Text X="400" Y="370" LocalAlignX="#_align_center_" Size="24" FillColor="1 1 1">Environment Variables</Text>
+
+            <!-- Mac/Linux column -->
+            <Text X="200" Y="330" LocalAlignX="#_align_center_" Size="16" FillColor="0.4 0.7 1">Mac / Linux</Text>
+            <Rectangle X="20" Y="320" Width="360" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Text X="30" Y="290" Size="12" FillColor="0.6 0.6 0.6">USER</Text>
+            <Text X="130" Y="290" Size="12">$USER</Text>
+
+            <Text X="30" Y="265" Size="12" FillColor="0.6 0.6 0.6">SHELL</Text>
+            <Text X="130" Y="265" Size="12">$SHELL</Text>
+
+            <Text X="30" Y="240" Size="12" FillColor="0.6 0.6 0.6">TERM</Text>
+            <Text X="130" Y="240" Size="12">$TERM</Text>
+
+            <Text X="30" Y="215" Size="12" FillColor="0.6 0.6 0.6">LANG</Text>
+            <Text X="130" Y="215" Size="12">$LANG</Text>
+
+            <Text X="30" Y="190" Size="12" FillColor="0.6 0.6 0.6">DISPLAY</Text>
+            <Text X="130" Y="190" Size="12">$DISPLAY</Text>
+
+            <Text X="30" Y="165" Size="12" FillColor="0.6 0.6 0.6">HOSTNAME</Text>
+            <Text X="130" Y="165" Size="12">$HOSTNAME</Text>
+
+            <Text X="30" Y="140" Size="12" FillColor="0.6 0.6 0.6">LOGNAME</Text>
+            <Text X="130" Y="140" Size="12">$LOGNAME</Text>
+
+            <!-- Windows column -->
+            <Text X="600" Y="330" LocalAlignX="#_align_center_" Size="16" FillColor="0.4 0.9 0.5">Windows</Text>
+            <Rectangle X="420" Y="320" Width="360" Height="2" FillColor="0.3 0.7 0.4"/>
+
+            <Text X="430" Y="290" Size="12" FillColor="0.6 0.6 0.6">USERNAME</Text>
+            <Text X="560" Y="290" Size="12">$USERNAME</Text>
+
+            <Text X="430" Y="265" Size="12" FillColor="0.6 0.6 0.6">USERPROFILE</Text>
+            <Text X="560" Y="265" Size="12">$USERPROFILE</Text>
+
+            <Text X="430" Y="240" Size="12" FillColor="0.6 0.6 0.6">COMPUTERNAME</Text>
+            <Text X="560" Y="240" Size="12">$COMPUTERNAME</Text>
+
+            <Text X="430" Y="215" Size="12" FillColor="0.6 0.6 0.6">OS</Text>
+            <Text X="560" Y="215" Size="12">$OS</Text>
+
+            <Text X="430" Y="190" Size="12" FillColor="0.6 0.6 0.6">SYSTEMROOT</Text>
+            <Text X="560" Y="190" Size="12">$SYSTEMROOT</Text>
+
+            <Text X="430" Y="165" Size="12" FillColor="0.6 0.6 0.6">WINDIR</Text>
+            <Text X="560" Y="165" Size="12">$WINDIR</Text>
+
+            <Text X="430" Y="140" Size="12" FillColor="0.6 0.6 0.6">APPDATA</Text>
+            <Text X="560" Y="140" Size="12">$APPDATA</Text>
+
+            <!-- dcapp section -->
+            <Rectangle X="20" Y="90" Width="760" Height="2" FillColor="0.5 0.4 0.3"/>
+            <Text X="400" Y="70" LocalAlignX="#_align_center_" Size="14" FillColor="0.9 0.7 0.4">dcapp Internal</Text>
+
+            <Text X="300" Y="30" Size="12" FillColor="0.6 0.6 0.6">dcappDisplayHome</Text>
+            <Text X="460" Y="30" Size="12" FillColor="0.9 0.8 0.6">$dcappDisplayHome</Text>
+
+        </Panel>
+    </Window>
+</DCAPP>
