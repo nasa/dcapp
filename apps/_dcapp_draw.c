@@ -1255,6 +1255,7 @@ static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _N
                 break;
             case DC_APP_CONDITIONAL_TYPE_GTE:
                 result = dc_value_is_greater_or_equal(val1, val2);
+                break;
             default:
                 fprintf(stderr, "DCApp _draw_node(): unknown conditional_type on evaluation %d for valid Val2\n", type);
                 break;

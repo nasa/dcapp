@@ -63,6 +63,14 @@
     <Variable Type="#_variable_double_" InitialValue="-90">PitchRatePos</Variable>
     <Variable Type="#_variable_double_" InitialValue="180">YawRatePos</Variable>
 
+    <!-- Auto-animate toggles and direction (1 = increasing, -1 = decreasing) -->
+    <Variable Type="#_variable_integer_" InitialValue="0">RollAutoAnimate</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">PitchAutoAnimate</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">YawAutoAnimate</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="1">RollAnimateDir</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="1">PitchAnimateDir</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="1">YawAnimateDir</Variable>
+
     <!-- Defaults -->
     <Default>
         <Text ForceMono="Numeric" Size="16" FillColor="#_color_white_"/>
@@ -72,6 +80,55 @@
         <Panel VirtualWidth="#PanelWidth" VirtualHeight="#PanelHeight" BackgroundColor="#_color_charcoal_">
 
             <!-- ========== COMPUTE VALUES FROM SLIDERS ========== -->
+
+            <!-- ========== AUTO-ANIMATE LOGIC ========== -->
+            <!-- Roll auto-animate: bounce between 0 and 360 -->
+            <If Value1="@RollAutoAnimate" Operation="#_conditional_eq_" Value2="1">
+                <If Value1="@RollAnimateDir" Operation="#_conditional_eq_" Value2="1">
+                    <Set Variable="RollSlider" Operator="#_set_add_">0.5</Set>
+                </If>
+                <If Value1="@RollAnimateDir" Operation="#_conditional_eq_" Value2="-1">
+                    <Set Variable="RollSlider" Operator="#_set_subtract_">0.5</Set>
+                </If>
+                <If Value1="@RollSlider" Operation="#_conditional_gte_" Value2="360">
+                    <Set Variable="RollAnimateDir">-1</Set>
+                </If>
+                <If Value1="@RollSlider" Operation="#_conditional_lte_" Value2="0">
+                    <Set Variable="RollAnimateDir">1</Set>
+                </If>
+            </If>
+
+            <!-- Pitch auto-animate: bounce between 0 and 180 -->
+            <If Value1="@PitchAutoAnimate" Operation="#_conditional_eq_" Value2="1">
+                <If Value1="@PitchAnimateDir" Operation="#_conditional_eq_" Value2="1">
+                    <Set Variable="PitchSlider" Operator="#_set_add_">0.3</Set>
+                </If>
+                <If Value1="@PitchAnimateDir" Operation="#_conditional_eq_" Value2="-1">
+                    <Set Variable="PitchSlider" Operator="#_set_subtract_">0.3</Set>
+                </If>
+                <If Value1="@PitchSlider" Operation="#_conditional_gte_" Value2="180">
+                    <Set Variable="PitchAnimateDir">-1</Set>
+                </If>
+                <If Value1="@PitchSlider" Operation="#_conditional_lte_" Value2="0">
+                    <Set Variable="PitchAnimateDir">1</Set>
+                </If>
+            </If>
+
+            <!-- Yaw auto-animate: bounce between 0 and 360 -->
+            <If Value1="@YawAutoAnimate" Operation="#_conditional_eq_" Value2="1">
+                <If Value1="@YawAnimateDir" Operation="#_conditional_eq_" Value2="1">
+                    <Set Variable="YawSlider" Operator="#_set_add_">0.5</Set>
+                </If>
+                <If Value1="@YawAnimateDir" Operation="#_conditional_eq_" Value2="-1">
+                    <Set Variable="YawSlider" Operator="#_set_subtract_">0.5</Set>
+                </If>
+                <If Value1="@YawSlider" Operation="#_conditional_gte_" Value2="360">
+                    <Set Variable="YawAnimateDir">-1</Set>
+                </If>
+                <If Value1="@YawSlider" Operation="#_conditional_lte_" Value2="0">
+                    <Set Variable="YawAnimateDir">1</Set>
+                </If>
+            </If>
 
             <!-- Convert attitude sliders to actual values -->
             <Set Variable="Roll">@RollSlider</Set>
@@ -445,6 +502,10 @@
             <!-- Roll slider (0-360 virtual, displays -180..180) -->
             <Text X="750" Y="800" LocalAlignX="#_align_left_">Roll:</Text>
             <Text X="830" Y="800" LocalAlignX="#_align_right_">@Roll(%.0f)</Text>
+            <Button Type="#_button_toggle_" X="710" Y="800" Width="30" Height="20" Variable="RollAutoAnimate" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn><Rectangle FillColor="#_color_cyan_" LineColor="#_color_white_" LineWidth="2"/><Text Size="10" FillColor="#_color_black_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_">A</Text></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/><Text Size="10" FillColor="#_color_gray_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_">A</Text></ButtonIndicatorOff>
+            </Button>
             <Container X="850" Y="800" Width="300" Height="20" VirtualWidth="360" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
                 <If Value1="@RollSliderSel" Operation="#_conditional_eq_" Value2="1">
@@ -461,6 +522,10 @@
             <!-- Pitch slider (0-180 virtual, displays -90..90) -->
             <Text X="750" Y="760" LocalAlignX="#_align_left_">Pitch:</Text>
             <Text X="830" Y="760" LocalAlignX="#_align_right_">@Pitch(%.0f)</Text>
+            <Button Type="#_button_toggle_" X="710" Y="760" Width="30" Height="20" Variable="PitchAutoAnimate" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn><Rectangle FillColor="#_color_cyan_" LineColor="#_color_white_" LineWidth="2"/><Text Size="10" FillColor="#_color_black_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_">A</Text></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/><Text Size="10" FillColor="#_color_gray_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_">A</Text></ButtonIndicatorOff>
+            </Button>
             <Container X="850" Y="760" Width="300" Height="20" VirtualWidth="180" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
                 <If Value1="@PitchSliderSel" Operation="#_conditional_eq_" Value2="1">
@@ -477,6 +542,10 @@
             <!-- Yaw slider (0-360 virtual, displays -180..180) -->
             <Text X="750" Y="720" LocalAlignX="#_align_left_">Yaw:</Text>
             <Text X="830" Y="720" LocalAlignX="#_align_right_">@Yaw(%.0f)</Text>
+            <Button Type="#_button_toggle_" X="710" Y="720" Width="30" Height="20" Variable="YawAutoAnimate" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn><Rectangle FillColor="#_color_cyan_" LineColor="#_color_white_" LineWidth="2"/><Text Size="10" FillColor="#_color_black_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_">A</Text></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/><Text Size="10" FillColor="#_color_gray_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_">A</Text></ButtonIndicatorOff>
+            </Button>
             <Container X="850" Y="720" Width="300" Height="20" VirtualWidth="360" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
                 <If Value1="@YawSliderSel" Operation="#_conditional_eq_" Value2="1">
