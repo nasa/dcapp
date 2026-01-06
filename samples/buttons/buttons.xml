@@ -1,100 +1,340 @@
 <?xml version="1.0"?>
 <DCAPP>
+    <!-- Button Demo - Demonstrates all button types and features -->
 
-  <Window Title="dcapp-vk-title" X="2000" Y="500" Width="1000" Height="1000" VirtualWidth="300" VirtualHeight="100">
+    <!-- Variables for button states -->
+    <Variable Type="#_variable_integer_" InitialValue="0">ToggleState</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">MomentaryState</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">StandardState</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">ControlledState</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">MasterEnable</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">CommandVar</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">StatusVar</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="1">RadioSelect</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="50">PowerLevel</Variable>
 
-    <!-- panel -->
-    <Panel VirtualWidth="500" VirtualHeight="400">
+    <Window Title="Button Types Demo" X="30" Y="30" Width="900" Height="700">
 
-      <!-- Variables -->
-      <Variable Type="#_variable_integer_" InitialValue="0">toggle_var</Variable>
-      <Variable Type="#_variable_integer_" InitialValue="0">momentary_var</Variable>
-      <Variable Type="#_variable_integer_" InitialValue="0">standard_var</Variable>
-      <Variable Type="#_variable_integer_" InitialValue="0">controlled_var</Variable>
-      <Variable Type="#_variable_integer_" InitialValue="0">cmd_var</Variable>
-      <Variable Type="#_variable_integer_" InitialValue="0">status_var</Variable>
+        <Default>
+            <Text Size="14" FillColor="1 1 1"/>
+        </Default>
 
-      <Style Name="text">
-        <Text Size="35" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" />
-      </Style>
+        <Panel VirtualWidth="900" VirtualHeight="700" BackgroundColor="0.12 0.12 0.15">
 
-      <!-- Standard button (single action) -->
-      <Button Type="#_button_standard_" X="100" Y="300" Width="120" Height="60" Variable="standard_var" On="1" Off="0">
-        <ButtonIndicatorOn>
-          <Rectangle Width="120" Height="60" FillColor="0 0.5 1" />
-          <Text Style="text">CLICKED</Text>
-        </ButtonIndicatorOn>
-        <ButtonIndicatorOff>
-          <Rectangle Width="120" Height="60" FillColor="0 0.2 0.5" />
-          <Text Style="text">CLICK ME</Text>
-        </ButtonIndicatorOff>
-      </Button>
+            <!-- Title -->
+            <Text X="450" Y="670" LocalAlignX="#_align_center_" Size="32" FillColor="1 1 1">Button Types Demo</Text>
+            <Text X="450" Y="640" LocalAlignX="#_align_center_" Size="14" FillColor="0.6 0.6 0.6">Demonstrating all button types and features in dcapp</Text>
 
-      <!-- Momentary button (push-to-talk style) -->
-      <Button Type="#_button_momentary_" X="100" Y="200" Width="120" Height="60" Variable="momentary_var" On="1" Off="0">
-        <ButtonIndicatorOn>
-          <Rectangle Width="120" Height="60" FillColor="1 0 0" />
-          <Text Style="text">HOLDING</Text>
-        </ButtonIndicatorOn>
-        <ButtonIndicatorOff>
-          <Rectangle Width="120" Height="60" FillColor="0.3 0 0" />
-          <Text Style="text">PUSH ME</Text>
-        </ButtonIndicatorOff>
-      </Button>
+            <!-- ==================== ROW 1: BASIC BUTTON TYPES ==================== -->
 
-      <!-- Simple toggle button -->
-      <Button Type="#_button_toggle_" X="100" Y="100" Width="120" Height="60" Variable="toggle_var" On="1" Off="0">
-        <ButtonIndicatorOn>
-          <Rectangle Width="120" Height="60" FillColor="0 0.8 0" />
-          <Text Style="text">ON</Text>
-        </ButtonIndicatorOn>
-        <ButtonIndicatorOff>
-          <Rectangle Width="120" Height="60" FillColor="0.5 0.5 0.5" />
-          <Text Style="text">OFF</Text>
-        </ButtonIndicatorOff>
-        <MousePressed>
-          <Rectangle Width="120" Height="60" FillColor="1 1 0 0.3" />
-        </MousePressed>
-      </Button>
+            <Text X="450" Y="590" LocalAlignX="#_align_center_" Size="18" FillColor="0.8 0.9 1">Basic Button Types</Text>
+            <Rectangle X="450" Y="585" Width="800" Height="2" LocalAlignX="#_align_center_" FillColor="0.3 0.4 0.5"/>
 
-      <!-- Button with enable/disable control -->
-      <Button Type="#_button_toggle_" X="300" Y="100" Width="120" Height="60" Variable="controlled_var" On="1" Off="0" EnabledVariable="toggle_var" EnabledOn="1">
-        <ButtonIndicatorOn>
-          <Rectangle Width="120" Height="60" FillColor="0 0.8 0 1" />
-          <Text Style="text">ON</Text>
-        </ButtonIndicatorOn>
-        <ButtonIndicatorOff>
-          <Rectangle Width="120" Height="60" FillColor="0.5 0.5 0.5 1" />
-          <Text Style="text">OFF</Text>
-        </ButtonIndicatorOff>
-        <ButtonEnabled>
-          <Rectangle Width="120" Height="60" FillColor="0 1 1 .2" />
-          <Text Style="text">ENABLED</Text>
-        </ButtonEnabled>
-        <ButtonDisabled>
-          <Rectangle Width="120" Height="60" FillColor="0.2 0.2 0.2 .2" />
-          <Text Style="text">DISABLED</Text>
-        </ButtonDisabled>
-      </Button>
+            <!-- TOGGLE BUTTON -->
+            <Rectangle X="150" Y="500" Width="200" Height="130" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="0.08 0.08 0.1" LineColor="0.25 0.25 0.3" LineWidth="1"/>
+            <Text X="150" Y="555" LocalAlignX="#_align_center_" Size="14" FillColor="0.7 0.8 0.9">TOGGLE</Text>
+            <Text X="150" Y="535" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.5 0.5">Click to change state</Text>
+            <Text X="150" Y="520" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.5 0.5">Stays on or off</Text>
 
-      <!-- Button with separate switch/indicator (simulated lag) -->
-      <Button Type="#_button_toggle_" X="300" Y="200" Width="120" Height="60" TargetVariable="cmd_var" TargetOn="1" TargetOff="0" IndicatorVariable="status_var" IndicatorOn="1">
-        <ButtonIndicatorOn>
-          <Rectangle Width="120" Height="60" FillColor="0 0.8 0" />
-          <Text Style="text">CONFIRMED</Text>
-        </ButtonIndicatorOn>
-        <ButtonIndicatorOff>
-          <Rectangle Width="120" Height="60" FillColor="0.5 0.5 0.5" />
-          <Text Style="text">READY</Text>
-        </ButtonIndicatorOff>
-        <ButtonTransition>
-          <Rectangle Width="120" Height="60" FillColor="1 0.5 0" />
-          <Text Style="text">PENDING...</Text>
-        </ButtonTransition>
-      </Button>
+            <Button Type="#_button_toggle_" X="150" Y="475" Width="140" Height="50" Variable="ToggleState" On="1" Off="0"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.1 0.6 0.3" LineColor="0.2 0.8 0.4" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="18" FillColor="1 1 1">ACTIVE</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.25 0.25 0.28" LineColor="0.4 0.4 0.45" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="18" FillColor="0.7 0.7 0.7">INACTIVE</Text>
+                </ButtonIndicatorOff>
+            </Button>
 
-    </Panel>
+            <Text X="150" Y="435" LocalAlignX="#_align_center_" Size="11" FillColor="0.4 0.6 0.4">State: @ToggleState</Text>
 
-    <!-- <Include>sub/subtest.xml</Include> -->
-  </Window>
+            <!-- MOMENTARY BUTTON -->
+            <Rectangle X="400" Y="500" Width="200" Height="130" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="0.08 0.08 0.1" LineColor="0.25 0.25 0.3" LineWidth="1"/>
+            <Text X="400" Y="555" LocalAlignX="#_align_center_" Size="14" FillColor="0.9 0.8 0.7">MOMENTARY</Text>
+            <Text X="400" Y="535" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.5 0.5">Hold to activate</Text>
+            <Text X="400" Y="520" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.5 0.5">Push-to-talk style</Text>
+
+            <Button Type="#_button_momentary_" X="400" Y="475" Width="140" Height="50" Variable="MomentaryState" On="1" Off="0"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.8 0.2 0.1" LineColor="1 0.4 0.3" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="18" FillColor="1 1 1">PRESSED</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.4 0.15 0.1" LineColor="0.6 0.25 0.2" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="18" FillColor="0.9 0.7 0.6">HOLD ME</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <Text X="400" Y="435" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.5 0.4">State: @MomentaryState</Text>
+
+            <!-- STANDARD BUTTON -->
+            <Rectangle X="650" Y="500" Width="200" Height="130" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="0.08 0.08 0.1" LineColor="0.25 0.25 0.3" LineWidth="1"/>
+            <Text X="650" Y="555" LocalAlignX="#_align_center_" Size="14" FillColor="0.7 0.8 0.9">STANDARD</Text>
+            <Text X="650" Y="535" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.5 0.5">Single action trigger</Text>
+            <Text X="650" Y="520" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.5 0.5">Increments on click</Text>
+
+            <Button Type="#_button_standard_" X="650" Y="475" Width="140" Height="50" Variable="StandardState"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.2 0.4 0.7" LineColor="0.3 0.5 0.9" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="18" FillColor="1 1 1">CLICKED!</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.15 0.25 0.4" LineColor="0.25 0.35 0.55" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="18" FillColor="0.7 0.8 0.9">CLICK ME</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <Text X="650" Y="435" LocalAlignX="#_align_center_" Size="11" FillColor="0.4 0.5 0.6">Clicks: @StandardState</Text>
+
+            <!-- ==================== ROW 2: ADVANCED FEATURES ==================== -->
+
+            <Text X="450" Y="390" LocalAlignX="#_align_center_" Size="18" FillColor="0.8 0.9 1">Advanced Features</Text>
+            <Rectangle X="450" Y="385" Width="800" Height="2" LocalAlignX="#_align_center_" FillColor="0.3 0.4 0.5"/>
+
+            <!-- ENABLE/DISABLE CONTROL -->
+            <Rectangle X="225" Y="290" Width="350" Height="150" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="0.08 0.08 0.1" LineColor="0.25 0.25 0.3" LineWidth="1"/>
+            <Text X="225" Y="355" LocalAlignX="#_align_center_" Size="14" FillColor="0.9 0.85 0.7">ENABLE/DISABLE CONTROL</Text>
+            <Text X="225" Y="335" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.5 0.5">Right button only works when master is ON</Text>
+
+            <!-- Master enable toggle -->
+            <Text X="120" Y="295" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.6 0.6">Master Enable</Text>
+            <Button Type="#_button_toggle_" X="120" Y="260" Width="100" Height="40" Variable="MasterEnable" On="1" Off="0"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.1 0.5 0.2" LineColor="0.2 0.7 0.3" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="14" FillColor="1 1 1">MASTER ON</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.3 0.15 0.1" LineColor="0.5 0.25 0.15" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="14" FillColor="0.8 0.6 0.5">MASTER OFF</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- Controlled button -->
+            <Text X="300" Y="295" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.6 0.6">Controlled Button</Text>
+            <Button Type="#_button_toggle_" X="300" Y="260" Width="100" Height="40" Variable="ControlledState" On="1" Off="0"
+                EnabledVariable="MasterEnable" EnabledOn="1"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.6 0.5 0.1" LineColor="0.8 0.7 0.2" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="14" FillColor="1 1 1">ON</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.3 0.25 0.1" LineColor="0.45 0.4 0.2" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="14" FillColor="0.7 0.65 0.5">OFF</Text>
+                </ButtonIndicatorOff>
+                <ButtonDisabled>
+                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.25 0.25 0.25" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="12" FillColor="0.4 0.4 0.4">DISABLED</Text>
+                </ButtonDisabled>
+            </Button>
+
+            <!-- COMMAND/STATUS SEPARATION -->
+            <Rectangle X="625" Y="290" Width="350" Height="150" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="0.08 0.08 0.1" LineColor="0.25 0.25 0.3" LineWidth="1"/>
+            <Text X="625" Y="355" LocalAlignX="#_align_center_" Size="14" FillColor="0.7 0.9 0.8">COMMAND/STATUS SEPARATION</Text>
+            <Text X="625" Y="335" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.5 0.5">Shows transition state while waiting for confirmation</Text>
+
+            <Button Type="#_button_toggle_" X="625" Y="270" Width="160" Height="50"
+                TargetVariable="CommandVar" TargetOn="1" TargetOff="0"
+                IndicatorVariable="StatusVar" IndicatorOn="1"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.1 0.5 0.4" LineColor="0.2 0.7 0.6" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="16" FillColor="1 1 1">CONFIRMED</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.25 0.25 0.28" LineColor="0.4 0.4 0.45" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="16" FillColor="0.7 0.7 0.7">STANDBY</Text>
+                </ButtonIndicatorOff>
+                <ButtonTransition>
+                    <Rectangle FillColor="0.7 0.5 0.1" LineColor="0.9 0.7 0.2" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="14" FillColor="1 1 1">PENDING...</Text>
+                </ButtonTransition>
+            </Button>
+
+            <Text X="550" Y="230" LocalAlignX="#_align_left_" Size="10" FillColor="0.5 0.5 0.5">Cmd: @CommandVar</Text>
+            <Text X="650" Y="230" LocalAlignX="#_align_left_" Size="10" FillColor="0.5 0.5 0.5">Status: @StatusVar</Text>
+
+            <!-- Simulate confirmation button -->
+            <Button Type="#_button_momentary_" X="750" Y="230" Width="80" Height="25"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <MousePressed>
+                    <Set Variable="StatusVar">@CommandVar</Set>
+                </MousePressed>
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.3 0.5 0.3" LineColor="0.4 0.6 0.4" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="10" FillColor="1 1 1">CONFIRMING</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.2 0.3 0.2" LineColor="0.3 0.4 0.3" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="10" FillColor="0.7 0.8 0.7">CONFIRM</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- ==================== ROW 3: RADIO BUTTONS & STYLED ==================== -->
+
+            <Text X="450" Y="180" LocalAlignX="#_align_center_" Size="18" FillColor="0.8 0.9 1">Radio Buttons and Styling</Text>
+            <Rectangle X="450" Y="175" Width="800" Height="2" LocalAlignX="#_align_center_" FillColor="0.3 0.4 0.5"/>
+
+            <!-- RADIO BUTTON GROUP -->
+            <Rectangle X="225" Y="90" Width="350" Height="130" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="0.08 0.08 0.1" LineColor="0.25 0.25 0.3" LineWidth="1"/>
+            <Text X="225" Y="145" LocalAlignX="#_align_center_" Size="14" FillColor="0.85 0.8 0.95">RADIO BUTTON GROUP</Text>
+            <Text X="225" Y="125" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.5 0.5">Only one can be selected at a time</Text>
+
+            <!-- Radio option 1 -->
+            <Button Type="#_button_toggle_" X="80" Y="80" Width="90" Height="35" Variable="RadioSelect" On="1" Off="1"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.5 0.3 0.6" LineColor="0.7 0.5 0.8" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="12" FillColor="1 1 1">OPTION A</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.2 0.15 0.25" LineColor="0.35 0.3 0.4" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="12" FillColor="0.6 0.55 0.65">OPTION A</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- Radio option 2 -->
+            <Button Type="#_button_toggle_" X="180" Y="80" Width="90" Height="35" Variable="RadioSelect" On="2" Off="2"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.5 0.3 0.6" LineColor="0.7 0.5 0.8" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="12" FillColor="1 1 1">OPTION B</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.2 0.15 0.25" LineColor="0.35 0.3 0.4" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="12" FillColor="0.6 0.55 0.65">OPTION B</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- Radio option 3 -->
+            <Button Type="#_button_toggle_" X="280" Y="80" Width="90" Height="35" Variable="RadioSelect" On="3" Off="3"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.5 0.3 0.6" LineColor="0.7 0.5 0.8" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="12" FillColor="1 1 1">OPTION C</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.2 0.15 0.25" LineColor="0.35 0.3 0.4" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="12" FillColor="0.6 0.55 0.65">OPTION C</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- Radio option 4 -->
+            <Button Type="#_button_toggle_" X="380" Y="80" Width="90" Height="35" Variable="RadioSelect" On="4" Off="4"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.5 0.3 0.6" LineColor="0.7 0.5 0.8" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="12" FillColor="1 1 1">OPTION D</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.2 0.15 0.25" LineColor="0.35 0.3 0.4" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="12" FillColor="0.6 0.55 0.65">OPTION D</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <Text X="225" Y="40" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.5 0.7">Selected: @RadioSelect</Text>
+
+            <!-- STYLED BUTTONS -->
+            <Rectangle X="675" Y="90" Width="350" Height="130" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="0.08 0.08 0.1" LineColor="0.25 0.25 0.3" LineWidth="1"/>
+            <Text X="675" Y="145" LocalAlignX="#_align_center_" Size="14" FillColor="0.9 0.85 0.8">CUSTOM STYLED BUTTONS</Text>
+            <Text X="675" Y="125" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.5 0.5">Buttons can contain any graphics</Text>
+
+            <!-- Circular power button -->
+            <Button Type="#_button_toggle_" X="550" Y="75" Width="50" Height="50" Variable="PowerLevel" On="100" Off="0"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Circle Radius="25" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        FillColor="0.1 0.6 0.2" LineColor="0.2 0.8 0.3" LineWidth="3"/>
+                    <Circle Radius="18" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        FillColor="0.15 0.7 0.25"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="20" FillColor="1 1 1">I</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Circle Radius="25" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        FillColor="0.5 0.15 0.1" LineColor="0.7 0.25 0.15" LineWidth="3"/>
+                    <Circle Radius="18" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        FillColor="0.6 0.2 0.15"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="20" FillColor="1 1 1">O</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- Gradient-style button -->
+            <Button Type="#_button_toggle_" X="675" Y="75" Width="120" Height="45" Variable="PowerLevel" On="100" Off="50"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.2 0.5 0.7" LineColor="0.3 0.6 0.85" LineWidth="2"/>
+                    <Rectangle Width="116" Height="20" ParentAlignX="#_align_center_" LocalAlignX="#_align_center_" FillColor="0.3 0.6 0.8 0.5"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="14" FillColor="1 1 1">FULL POWER</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.35 0.35 0.4" LineColor="0.5 0.5 0.55" LineWidth="2"/>
+                    <Rectangle Width="116" Height="20" ParentAlignX="#_align_center_" LocalAlignX="#_align_center_" FillColor="0.45 0.45 0.5 0.5"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="14" FillColor="0.85 0.85 0.85">HALF POWER</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- Icon-style button using shapes (no Variable - just uses MousePressed) -->
+            <Button Type="#_button_momentary_" X="800" Y="75" Width="50" Height="50"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.8 0.3 0.2" LineColor="1 0.5 0.4" LineWidth="2"/>
+                    <!-- Stop icon (square) -->
+                    <Rectangle Width="20" Height="20" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" FillColor="1 1 1"/>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.2 0.45 0.25" LineColor="0.3 0.6 0.35" LineWidth="2"/>
+                    <!-- Play icon (triangle) -->
+                    <Polygon X="25" Y="25" FillColor="1 1 1">
+                        <Vertex X="-8" Y="-10"/>
+                        <Vertex X="-8" Y="10"/>
+                        <Vertex X="8" Y="0"/>
+                    </Polygon>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <Text X="675" Y="35" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.55 0.5">Power: @{PowerLevel}%</Text>
+
+        </Panel>
+    </Window>
 </DCAPP>
