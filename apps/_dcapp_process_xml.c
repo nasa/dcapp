@@ -33,6 +33,7 @@ static _NodeIndex    _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_
 static _NodeIndex    _process_xml_node_mouse_active(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_mouse_hovered(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_mouse_inactive(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_mouse_motion(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_mouse_pressed(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_mouse_released(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_panel(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -188,6 +189,9 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_MOUSE_INACTIVE:
             return _process_xml_node_mouse_inactive(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_MOUSE_MOTION:
+            return _process_xml_node_mouse_motion(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_MOUSE_PRESSED:
             return _process_xml_node_mouse_pressed(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -1732,6 +1736,35 @@ static _NodeIndex _process_xml_node_mouse_inactive(_AppData *app_data, xmlNodePt
             break;
     }
     return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_mouse_motion(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_MOUSE_MOTION;
+    dc_node.parent = parent_node_index;
+    dc_node.next   = NODE_INDEX_UNDEFINED;
+
+    // VariableX
+    xmlChar *raw_var_x = xmlGetProp(xml_node, BAD_CAST "VariableX");
+    if (raw_var_x) {
+        dc_node.mouse_motion.var_x = dc_app_lookup_get_var_index(app_data->lookup, (const char *)raw_var_x);
+        xmlFree(raw_var_x);
+    } else {
+        dc_node.mouse_motion.var_x = DC_APP_VAR_INDEX_UNDEFINED;
+    }
+
+    // VariableY
+    xmlChar *raw_var_y = xmlGetProp(xml_node, BAD_CAST "VariableY");
+    if (raw_var_y) {
+        dc_node.mouse_motion.var_y = dc_app_lookup_get_var_index(app_data->lookup, (const char *)raw_var_y);
+        xmlFree(raw_var_y);
+    } else {
+        dc_node.mouse_motion.var_y = DC_APP_VAR_INDEX_UNDEFINED;
+    }
+
+    return _register_node(app_data, &dc_node);
 }
 
 static _NodeIndex _process_xml_node_mouse_pressed(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {

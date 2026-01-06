@@ -54,6 +54,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "MouseHovered";
         case DC_APP_ELEM_TYPE_MOUSE_INACTIVE:
             return "MouseInactive";
+        case DC_APP_ELEM_TYPE_MOUSE_MOTION:
+            return "MouseMotion";
         case DC_APP_ELEM_TYPE_MOUSE_PRESSED:
             return "MousePressed";
         case DC_APP_ELEM_TYPE_MOUSE_RELEASED:
@@ -161,6 +163,8 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_MOUSE_HOVERED;
     if (strcmp(name, "MouseInactive") == 0)
         return DC_APP_ELEM_TYPE_MOUSE_INACTIVE;
+    if (strcmp(name, "MouseMotion") == 0)
+        return DC_APP_ELEM_TYPE_MOUSE_MOTION;
     if (strcmp(name, "MousePressed") == 0)
         return DC_APP_ELEM_TYPE_MOUSE_PRESSED;
     if (strcmp(name, "MouseReleased") == 0)

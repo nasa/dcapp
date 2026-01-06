@@ -104,6 +104,7 @@ typedef enum __NodeType {
     NODE_TYPE_CONDITIONAL,
     NODE_TYPE_IMAGE,
     NODE_TYPE_LINE,
+    NODE_TYPE_MOUSE_MOTION,
     NODE_TYPE_PANEL,
     NODE_TYPE_PIXELSTREAM,
     NODE_TYPE_POLYGON,
@@ -259,6 +260,11 @@ typedef struct __NodeLine {
     bool        fill_enabled;
     bool        line_enabled;
 } _NodeLine;
+
+typedef struct __NodeMouseMotion {
+    DcAppVarIndex var_x;
+    DcAppVarIndex var_y;
+} _NodeMouseMotion;
 
 typedef struct __NodePanel {
     _ValIndex2    parent_dimension;
@@ -435,6 +441,7 @@ typedef struct __Node {
         _NodeContainer   container;
         _NodeImage       image;
         _NodeLine        line;
+        _NodeMouseMotion mouse_motion;
         _NodePanel       panel;
         _NodePixelstream pixelstream;
         _NodePolygon     polygon;

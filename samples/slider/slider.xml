@@ -1,0 +1,166 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <!-- MouseMotion Slider Demo -->
+    <!-- Demonstrates draggable sliders using the MouseMotion element -->
+
+    <!-- Slider variables -->
+    <Variable Type="#_variable_double_" InitialValue="50">SliderX</Variable>
+    <Variable Type="#_variable_double_" InitialValue="50">SliderY</Variable>
+    <Variable Type="#_variable_double_" InitialValue="128">SliderRed</Variable>
+    <Variable Type="#_variable_double_" InitialValue="128">SliderGreen</Variable>
+    <Variable Type="#_variable_double_" InitialValue="128">SliderBlue</Variable>
+
+    <!-- Computed color values (0-1 range for rendering) -->
+    <Variable Type="#_variable_double_">ColorRed</Variable>
+    <Variable Type="#_variable_double_">ColorGreen</Variable>
+    <Variable Type="#_variable_double_">ColorBlue</Variable>
+
+    <!-- Button state variables -->
+    <Variable Type="#_variable_integer_">SliderXSelected</Variable>
+    <Variable Type="#_variable_integer_">SliderYSelected</Variable>
+    <Variable Type="#_variable_integer_">SliderRedSelected</Variable>
+    <Variable Type="#_variable_integer_">SliderGreenSelected</Variable>
+    <Variable Type="#_variable_integer_">SliderBlueSelected</Variable>
+
+    <Default>
+        <Text ForceMono="Numeric" Size="18" FillColor="#_color_white_"/>
+    </Default>
+
+    <Window X="0" Y="20" Width="800" Height="600">
+        <Panel VirtualWidth="800" VirtualHeight="600" BackgroundColor="#_color_charcoal_">
+
+            <Text X="400" Y="570" LocalAlignX="#_align_center_" Size="28" FillColor="#_color_white_">MouseMotion Slider Demo</Text>
+
+            <!-- ========== HORIZONTAL SLIDER (0-100) ========== -->
+            <Text X="100" Y="500" LocalAlignX="#_align_left_">X Position:</Text>
+            <Text X="280" Y="500" LocalAlignX="#_align_right_">@SliderX(%.1f)</Text>
+
+            <Container X="300" Y="500" Width="400" Height="30" VirtualWidth="100">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+
+                <If Value1="@SliderXSelected" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="SliderX"/>
+                </If>
+
+                <!-- Clamp BEFORE Button draws -->
+                <Set Variable="SliderX" Operator="#_set_max_">0</Set>
+                <Set Variable="SliderX" Operator="#_set_min_">100</Set>
+
+                <Button Type="#_button_momentary_" X="@SliderX" Y="15" Width="6" Height="40" Variable="SliderXSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn>
+                        <Rectangle FillColor="#_color_lime_"/>
+                    </ButtonIndicatorOn>
+                    <ButtonIndicatorOff>
+                        <Rectangle FillColor="#_color_gray_"/>
+                    </ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- ========== VERTICAL SLIDER (0-100) ========== -->
+            <Text X="740" Y="420" LocalAlignX="#_align_center_">Y</Text>
+            <Text X="740" Y="395" LocalAlignX="#_align_center_">@SliderY(%.0f)</Text>
+
+            <Container X="740" Y="100" Width="30" Height="280" VirtualHeight="100">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+
+                <If Value1="@SliderYSelected" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableY="SliderY"/>
+                </If>
+
+                <!-- Clamp BEFORE Button draws -->
+                <Set Variable="SliderY" Operator="#_set_max_">0</Set>
+                <Set Variable="SliderY" Operator="#_set_min_">100</Set>
+
+                <Button Type="#_button_momentary_" X="15" Y="@SliderY" Width="40" Height="6" Variable="SliderYSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn>
+                        <Rectangle FillColor="#_color_lime_"/>
+                    </ButtonIndicatorOn>
+                    <ButtonIndicatorOff>
+                        <Rectangle FillColor="#_color_gray_"/>
+                    </ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- ========== COLOR MIXER (0-255) ========== -->
+            <Text X="100" Y="380" LocalAlignX="#_align_left_" FillColor="#_color_red_">Red:</Text>
+            <Text X="200" Y="380" LocalAlignX="#_align_right_">@SliderRed(%.0f)</Text>
+            <Container X="220" Y="380" Width="300" Height="20" VirtualWidth="255" LocalAlignY="#_align_middle_">
+                <Rectangle FillColor="0.3 0 0" LineColor="#_color_red_" LineWidth="1"/>
+                <If Value1="@SliderRedSelected" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="SliderRed"/>
+                </If>
+                <Set Variable="SliderRed" Operator="#_set_max_">0</Set>
+                <Set Variable="SliderRed" Operator="#_set_min_">255</Set>
+                <Button Type="#_button_momentary_" X="@SliderRed" Y="10" Width="12" Height="26" Variable="SliderRedSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn>
+                        <Rectangle FillColor="#_color_red_"/>
+                    </ButtonIndicatorOn>
+                    <ButtonIndicatorOff>
+                        <Rectangle FillColor="0.5 0 0"/>
+                    </ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <Text X="100" Y="340" LocalAlignX="#_align_left_" FillColor="#_color_green_">Green:</Text>
+            <Text X="200" Y="340" LocalAlignX="#_align_right_">@SliderGreen(%.0f)</Text>
+            <Container X="220" Y="340" Width="300" Height="20" VirtualWidth="255" LocalAlignY="#_align_middle_">
+                <Rectangle FillColor="0 0.3 0" LineColor="#_color_green_" LineWidth="1"/>
+                <If Value1="@SliderGreenSelected" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="SliderGreen"/>
+                </If>
+                <Set Variable="SliderGreen" Operator="#_set_max_">0</Set>
+                <Set Variable="SliderGreen" Operator="#_set_min_">255</Set>
+                <Button Type="#_button_momentary_" X="@SliderGreen" Y="10" Width="12" Height="26" Variable="SliderGreenSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn>
+                        <Rectangle FillColor="#_color_green_"/>
+                    </ButtonIndicatorOn>
+                    <ButtonIndicatorOff>
+                        <Rectangle FillColor="0 0.5 0"/>
+                    </ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <Text X="100" Y="300" LocalAlignX="#_align_left_" FillColor="#_color_blue_">Blue:</Text>
+            <Text X="200" Y="300" LocalAlignX="#_align_right_">@SliderBlue(%.0f)</Text>
+            <Container X="220" Y="300" Width="300" Height="20" VirtualWidth="255" LocalAlignY="#_align_middle_">
+                <Rectangle FillColor="0 0 0.3" LineColor="#_color_blue_" LineWidth="1"/>
+                <If Value1="@SliderBlueSelected" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="SliderBlue"/>
+                </If>
+                <Set Variable="SliderBlue" Operator="#_set_max_">0</Set>
+                <Set Variable="SliderBlue" Operator="#_set_min_">255</Set>
+                <Button Type="#_button_momentary_" X="@SliderBlue" Y="10" Width="12" Height="26" Variable="SliderBlueSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn>
+                        <Rectangle FillColor="#_color_blue_"/>
+                    </ButtonIndicatorOn>
+                    <ButtonIndicatorOff>
+                        <Rectangle FillColor="0 0 0.5"/>
+                    </ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- Compute color values (0-1 range for rendering) -->
+            <Set Variable="ColorRed">@SliderRed</Set>
+            <Set Variable="ColorRed" Operator="#_set_multiply_">0.00392156862</Set>
+            <Set Variable="ColorGreen">@SliderGreen</Set>
+            <Set Variable="ColorGreen" Operator="#_set_multiply_">0.00392156862</Set>
+            <Set Variable="ColorBlue">@SliderBlue</Set>
+            <Set Variable="ColorBlue" Operator="#_set_multiply_">0.00392156862</Set>
+
+            <!-- Color preview -->
+            <Text X="100" Y="230" LocalAlignX="#_align_left_">Color Preview:</Text>
+            <Rectangle X="220" Y="180" Width="300" Height="80"
+                FillColor="@ColorRed @ColorGreen @ColorBlue" LineColor="#_color_white_" LineWidth="2"/>
+
+            <!-- ========== 2D XY PAD ========== -->
+            <Text X="100" Y="100" LocalAlignX="#_align_left_">XY Pad (drag sliders to move):</Text>
+            <Container X="220" Y="20" Width="300" Height="60" VirtualWidth="100" VirtualHeight="100">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <Rectangle X="@SliderX" Y="@SliderY" Width="8" Height="8"
+                    LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                    FillColor="@ColorRed @ColorGreen @ColorBlue" LineColor="#_color_white_" LineWidth="1"/>
+            </Container>
+
+        </Panel>
+    </Window>
+</DCAPP>

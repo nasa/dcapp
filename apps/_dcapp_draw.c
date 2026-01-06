@@ -19,6 +19,7 @@ static void _draw_node_panel(_AppData *app_data, _NodeIndex node_index, _Node *n
 static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_mouse_motion(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -88,6 +89,10 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
 
         case NODE_TYPE_RECTANGLE:
             _draw_node_rectangle(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+
+        case NODE_TYPE_MOUSE_MOTION:
+            _draw_node_mouse_motion(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_SET:
@@ -2316,6 +2321,41 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
     }
 }
 
+static void _draw_node_mouse_motion(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    // Only update if mouse is down (being dragged)
+    if (!app_data->frame_data.is_mouse_down) {
+        return;
+    }
+
+    // Get mouse position in window coordinates
+    plVec2 mouse_pos = app_data->frame_data.mouse_position;
+
+    // Transform mouse position from screen space to parent's virtual coordinate space
+    plMat4 inv_transform = pl_mat4t_invert(parent_transform);
+    plVec4 mouse_screen  = {mouse_pos.x, mouse_pos.y, 0.0f, 1.0f};
+    plVec4 mouse_local   = pl_mul_mat4_vec4(&inv_transform, mouse_screen);
+
+    // Set VariableX if defined
+    if (node->mouse_motion.var_x != DC_APP_VAR_INDEX_UNDEFINED) {
+        DcValue *var_x = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->mouse_motion.var_x)->value_index);
+        if (var_x->type == DC_VALUE_TYPE_DOUBLE) {
+            var_x->value_double = mouse_local.x;
+        } else if (var_x->type == DC_VALUE_TYPE_INTEGER) {
+            var_x->value_integer = (int)mouse_local.x;
+        }
+    }
+
+    // Set VariableY if defined
+    if (node->mouse_motion.var_y != DC_APP_VAR_INDEX_UNDEFINED) {
+        DcValue *var_y = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->mouse_motion.var_y)->value_index);
+        if (var_y->type == DC_VALUE_TYPE_DOUBLE) {
+            var_y->value_double = mouse_local.y;
+        } else if (var_y->type == DC_VALUE_TYPE_INTEGER) {
+            var_y->value_integer = (int)mouse_local.y;
+        }
+    }
+}
+
 static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     DcValue *var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->set.var_index)->value_index);
@@ -2412,6 +2452,44 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
                     break;
                 case DC_VALUE_TYPE_BOOLEAN:
                     var_value->value_boolean /= op_value->value_boolean;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case DC_APP_SET_TYPE_MIN:
+            // min(var, operand) - caps value at operand (upper bound)
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_STRING:
+                    break;
+                case DC_VALUE_TYPE_INTEGER:
+                    if (var_value->value_integer > op_value->value_integer)
+                        var_value->value_integer = op_value->value_integer;
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    if (var_value->value_double > op_value->value_double)
+                        var_value->value_double = op_value->value_double;
+                    break;
+                case DC_VALUE_TYPE_BOOLEAN:
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case DC_APP_SET_TYPE_MAX:
+            // max(var, operand) - floors value at operand (lower bound)
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_STRING:
+                    break;
+                case DC_VALUE_TYPE_INTEGER:
+                    if (var_value->value_integer < op_value->value_integer)
+                        var_value->value_integer = op_value->value_integer;
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    if (var_value->value_double < op_value->value_double)
+                        var_value->value_double = op_value->value_double;
+                    break;
+                case DC_VALUE_TYPE_BOOLEAN:
                     break;
                 default:
                     break;

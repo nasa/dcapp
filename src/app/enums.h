@@ -44,6 +44,8 @@ typedef enum _DcAppSetType {
     DC_APP_SET_TYPE_SUBTRACT,
     DC_APP_SET_TYPE_MULTIPLY,
     DC_APP_SET_TYPE_DIVIDE,
+    DC_APP_SET_TYPE_MIN,
+    DC_APP_SET_TYPE_MAX,
 } DcAppSetType;
 
 #endif
