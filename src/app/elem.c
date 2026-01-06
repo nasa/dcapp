@@ -6,6 +6,8 @@
 
 const char *dc_app_elem_type_to_string(DcAppElemType type) {
     switch (type) {
+        case DC_APP_ELEM_TYPE_ARC:
+            return "Arc";
         case DC_APP_ELEM_TYPE_BLINK:
             return "Blink";
         case DC_APP_ELEM_TYPE_BUTTON:
@@ -113,6 +115,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
 }
 
 DcAppElemType dc_app_string_to_elem_type(const char *name) {
+    if (strcmp(name, "Arc") == 0)
+        return DC_APP_ELEM_TYPE_ARC;
     if (strcmp(name, "Blink") == 0)
         return DC_APP_ELEM_TYPE_BLINK;
     if (strcmp(name, "Button") == 0)
