@@ -489,6 +489,13 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
 
         case DC_APP_ELEM_TYPE_INCLUDE: {
 
+            // check if include is optional
+            xmlChar *optional_str = xmlGetProp(node, BAD_CAST "Optional");
+            int optional = optional_str ? dc_utils_string_to_boolean((const char *)optional_str) : 0;
+            if (optional_str) {
+                xmlFree(optional_str);
+            }
+
             // get include file name
             xmlChar *filepath = xmlNodeGetContent(node);
             if (!filepath) {
@@ -509,6 +516,17 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                 dc_utils_canonicalize_path(abs_filepath, canon_filepath, sizeof(canon_filepath));
             } else {
                 dc_utils_canonicalize_path(cleaned_filepath, canon_filepath, sizeof(canon_filepath));
+            }
+
+            // check if file exists when optional
+            if (!dc_utils_file_exists(canon_filepath)) {
+                if (optional) {
+                    // file doesn't exist and include is optional, skip it
+                    fprintf(stderr, "DCAPP _clean_xml_node(): Optional include file '%s' not found, skipping\n", canon_filepath);
+                    xmlUnlinkNode(node);
+                    xmlFreeNode(node);
+                    return;
+                }
             }
 
             // create new prop, assign to <Include> node

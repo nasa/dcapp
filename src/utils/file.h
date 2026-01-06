@@ -20,6 +20,7 @@ int            dc_utils_canonicalize_path(const char *path, char *out, size_t ou
 int            dc_utils_get_directory(const char *path, char *out, size_t out_size);
 int            dc_utils_create_directory(const char *path);
 unsigned char *dc_utils_load_binary_file(const char *path, size_t *out_size);
+bool           dc_utils_file_exists(const char *path);
 
 #ifdef __cplusplus
 }
