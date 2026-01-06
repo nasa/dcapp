@@ -17,6 +17,32 @@
 
         <Panel VirtualWidth="100" VirtualHeight="100" BackgroundColor="0.08 0.08 0.12">
 
+            <!-- Clamp all values to 0..1 range -->
+            <If Value1="@RED" Operation="#_conditional_lt_" Value2="0">
+                <Set Variable="RED" Operator="#_set_equal_">0</Set>
+            </If>
+            <If Value1="@RED" Operation="#_conditional_gt_" Value2="1">
+                <Set Variable="RED" Operator="#_set_equal_">1</Set>
+            </If>
+            <If Value1="@GREEN" Operation="#_conditional_lt_" Value2="0">
+                <Set Variable="GREEN" Operator="#_set_equal_">0</Set>
+            </If>
+            <If Value1="@GREEN" Operation="#_conditional_gt_" Value2="1">
+                <Set Variable="GREEN" Operator="#_set_equal_">1</Set>
+            </If>
+            <If Value1="@BLUE" Operation="#_conditional_lt_" Value2="0">
+                <Set Variable="BLUE" Operator="#_set_equal_">0</Set>
+            </If>
+            <If Value1="@BLUE" Operation="#_conditional_gt_" Value2="1">
+                <Set Variable="BLUE" Operator="#_set_equal_">1</Set>
+            </If>
+            <If Value1="@ALPHA" Operation="#_conditional_lt_" Value2="0">
+                <Set Variable="ALPHA" Operator="#_set_equal_">0</Set>
+            </If>
+            <If Value1="@ALPHA" Operation="#_conditional_gt_" Value2="1">
+                <Set Variable="ALPHA" Operator="#_set_equal_">1</Set>
+            </If>
+
             <!-- Title -->
             <Text X="50" Y="95" LocalAlignX="#_align_center_" Size="5" FillColor="1 1 1">Color Mixer</Text>
 
@@ -44,19 +70,13 @@
             <!-- Control buttons -->
             <!-- Red controls -->
             <Button Type="#_button_momentary_" X="10">
-                <MousePressed>
-                    <Set Variable="RED" Operator="#_set_subtract_">.05</Set>
-                    <Set Variable="RED" Operator="#_set_max_">0</Set>
-                </MousePressed>
+                <MousePressed><Set Variable="RED" Operator="#_set_subtract_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Red\n-</Text>
             </Button>
             <Button Type="#_button_momentary_" X="21">
-                <MousePressed>
-                    <Set Variable="RED" Operator="#_set_add_">.05</Set>
-                    <Set Variable="RED" Operator="#_set_min_">1</Set>
-                </MousePressed>
+                <MousePressed><Set Variable="RED" Operator="#_set_add_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Red\n+</Text>
@@ -64,19 +84,13 @@
 
             <!-- Green controls -->
             <Button Type="#_button_momentary_" X="35">
-                <MousePressed>
-                    <Set Variable="GREEN" Operator="#_set_subtract_">.05</Set>
-                    <Set Variable="GREEN" Operator="#_set_max_">0</Set>
-                </MousePressed>
+                <MousePressed><Set Variable="GREEN" Operator="#_set_subtract_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Green\n-</Text>
             </Button>
             <Button Type="#_button_momentary_" X="46">
-                <MousePressed>
-                    <Set Variable="GREEN" Operator="#_set_add_">.05</Set>
-                    <Set Variable="GREEN" Operator="#_set_min_">1</Set>
-                </MousePressed>
+                <MousePressed><Set Variable="GREEN" Operator="#_set_add_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Green\n+</Text>
@@ -84,19 +98,13 @@
 
             <!-- Blue controls -->
             <Button Type="#_button_momentary_" X="60">
-                <MousePressed>
-                    <Set Variable="BLUE" Operator="#_set_subtract_">.05</Set>
-                    <Set Variable="BLUE" Operator="#_set_max_">0</Set>
-                </MousePressed>
+                <MousePressed><Set Variable="BLUE" Operator="#_set_subtract_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Blue\n-</Text>
             </Button>
             <Button Type="#_button_momentary_" X="71">
-                <MousePressed>
-                    <Set Variable="BLUE" Operator="#_set_add_">.05</Set>
-                    <Set Variable="BLUE" Operator="#_set_min_">1</Set>
-                </MousePressed>
+                <MousePressed><Set Variable="BLUE" Operator="#_set_add_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Blue\n+</Text>
@@ -104,19 +112,13 @@
 
             <!-- Alpha controls -->
             <Button Type="#_button_momentary_" X="85">
-                <MousePressed>
-                    <Set Variable="ALPHA" Operator="#_set_subtract_">.05</Set>
-                    <Set Variable="ALPHA" Operator="#_set_max_">0</Set>
-                </MousePressed>
+                <MousePressed><Set Variable="ALPHA" Operator="#_set_subtract_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Alpha\n-</Text>
             </Button>
             <Button Type="#_button_momentary_" X="96">
-                <MousePressed>
-                    <Set Variable="ALPHA" Operator="#_set_add_">.05</Set>
-                    <Set Variable="ALPHA" Operator="#_set_min_">1</Set>
-                </MousePressed>
+                <MousePressed><Set Variable="ALPHA" Operator="#_set_add_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Alpha\n+</Text>
