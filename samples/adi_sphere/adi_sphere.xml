@@ -1,0 +1,597 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <!-- ADI (Attitude Direction Indicator) using textured sphere -->
+
+    <!-- Constants -->
+    <Constant Name="PanelWidth">1200</Constant>
+    <Constant Name="PanelHeight">900</Constant>
+    <Constant Name="ADI_CenterX">400</Constant>
+    <Constant Name="ADI_CenterY">450</Constant>
+    <Constant Name="BallRadius">150</Constant>
+    <Constant Name="OuterRadius">160</Constant>
+
+    <!-- RPY Variables (degrees) - slider works in shifted space, then we convert -->
+    <Variable Type="#_variable_double_" InitialValue="180">RollSlider</Variable>
+    <Variable Type="#_variable_double_" InitialValue="90">PitchSlider</Variable>
+    <Variable Type="#_variable_double_" InitialValue="180">YawSlider</Variable>
+
+    <!-- Actual RPY values (-180..180, -90..90, -180..180) -->
+    <Variable Type="#_variable_double_">Roll</Variable>
+    <Variable Type="#_variable_double_">Pitch</Variable>
+    <Variable Type="#_variable_double_">Yaw</Variable>
+
+    <!-- Rate slider variables (0-200 range, centered at 100) -->
+    <Variable Type="#_variable_double_" InitialValue="100">RollRateSlider</Variable>
+    <Variable Type="#_variable_double_" InitialValue="100">PitchRateSlider</Variable>
+    <Variable Type="#_variable_double_" InitialValue="100">YawRateSlider</Variable>
+
+    <!-- Actual rate values (-10 to 10 deg/s) -->
+    <Variable Type="#_variable_double_">RollRate</Variable>
+    <Variable Type="#_variable_double_">PitchRate</Variable>
+    <Variable Type="#_variable_double_">YawRate</Variable>
+
+    <!-- Error slider variables (0-200 range, centered at 100) -->
+    <Variable Type="#_variable_double_" InitialValue="100">RollErrorSlider</Variable>
+    <Variable Type="#_variable_double_" InitialValue="100">PitchErrorSlider</Variable>
+    <Variable Type="#_variable_double_" InitialValue="100">YawErrorSlider</Variable>
+
+    <!-- Actual error values (-1 to 1) -->
+    <Variable Type="#_variable_double_">RollError</Variable>
+    <Variable Type="#_variable_double_">PitchError</Variable>
+    <Variable Type="#_variable_double_">YawError</Variable>
+
+    <!-- Slider select states -->
+    <Variable Type="#_variable_integer_">RollSliderSel</Variable>
+    <Variable Type="#_variable_integer_">PitchSliderSel</Variable>
+    <Variable Type="#_variable_integer_">YawSliderSel</Variable>
+    <Variable Type="#_variable_integer_">RollRateSliderSel</Variable>
+    <Variable Type="#_variable_integer_">PitchRateSliderSel</Variable>
+    <Variable Type="#_variable_integer_">YawRateSliderSel</Variable>
+    <Variable Type="#_variable_integer_">RollErrorSliderSel</Variable>
+    <Variable Type="#_variable_integer_">PitchErrorSliderSel</Variable>
+    <Variable Type="#_variable_integer_">YawErrorSliderSel</Variable>
+
+    <!-- Computed needle positions (scaled from error/rate values) -->
+    <Variable Type="#_variable_double_" InitialValue="0">RollErrorPos</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">PitchErrorPos</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">YawErrorPos</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">RollErrorAngle</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">PitchErrorAngle</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">YawErrorAngle</Variable>
+    <Variable Type="#_variable_double_" InitialValue="180">RollErrorNeedleAngle</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">RollRatePos</Variable>
+    <Variable Type="#_variable_double_" InitialValue="-90">PitchRatePos</Variable>
+    <Variable Type="#_variable_double_" InitialValue="180">YawRatePos</Variable>
+
+    <!-- Defaults -->
+    <Default>
+        <Text ForceMono="Numeric" Size="16" FillColor="#_color_white_"/>
+    </Default>
+
+    <Window X="0" Y="20" Width="1200" Height="900">
+        <Panel VirtualWidth="#PanelWidth" VirtualHeight="#PanelHeight" BackgroundColor="#_color_charcoal_">
+
+            <!-- ========== COMPUTE VALUES FROM SLIDERS ========== -->
+
+            <!-- Convert attitude sliders to actual values -->
+            <Set Variable="Roll">@RollSlider</Set>
+            <Set Variable="Roll" Operator="#_set_subtract_">180</Set>
+
+            <Set Variable="Pitch">@PitchSlider</Set>
+            <Set Variable="Pitch" Operator="#_set_subtract_">90</Set>
+
+            <Set Variable="Yaw">@YawSlider</Set>
+            <Set Variable="Yaw" Operator="#_set_subtract_">180</Set>
+
+            <!-- Convert rate sliders to -10..10 deg/s -->
+            <Set Variable="RollRate">@RollRateSlider</Set>
+            <Set Variable="RollRate" Operator="#_set_subtract_">100</Set>
+            <Set Variable="RollRate" Operator="#_set_multiply_">0.1</Set>
+
+            <Set Variable="PitchRate">@PitchRateSlider</Set>
+            <Set Variable="PitchRate" Operator="#_set_subtract_">100</Set>
+            <Set Variable="PitchRate" Operator="#_set_multiply_">0.1</Set>
+
+            <Set Variable="YawRate">@YawRateSlider</Set>
+            <Set Variable="YawRate" Operator="#_set_subtract_">100</Set>
+            <Set Variable="YawRate" Operator="#_set_multiply_">0.1</Set>
+
+            <!-- Convert error sliders to -1..1 -->
+            <Set Variable="RollError">@RollErrorSlider</Set>
+            <Set Variable="RollError" Operator="#_set_subtract_">100</Set>
+            <Set Variable="RollError" Operator="#_set_multiply_">0.01</Set>
+
+            <Set Variable="PitchError">@PitchErrorSlider</Set>
+            <Set Variable="PitchError" Operator="#_set_subtract_">100</Set>
+            <Set Variable="PitchError" Operator="#_set_multiply_">0.01</Set>
+
+            <Set Variable="YawError">@YawErrorSlider</Set>
+            <Set Variable="YawError" Operator="#_set_subtract_">100</Set>
+            <Set Variable="YawError" Operator="#_set_multiply_">0.01</Set>
+
+            <!-- Scale error values -->
+            <!-- Roll error angle: -1..1 -> -30..30 degrees for rotating needle -->
+            <Set Variable="RollErrorAngle">@RollError</Set>
+            <Set Variable="RollErrorAngle" Operator="#_set_multiply_">30</Set>
+
+            <!-- Pitch error angle: -1..1 -> -30..30 degrees for rotating needle -->
+            <Set Variable="PitchErrorAngle">@PitchError</Set>
+            <Set Variable="PitchErrorAngle" Operator="#_set_multiply_">30</Set>
+
+            <!-- Yaw error angle: -1..1 -> -30..30 degrees for rotating needle -->
+            <Set Variable="YawErrorAngle">@YawError</Set>
+            <Set Variable="YawErrorAngle" Operator="#_set_multiply_">30</Set>
+
+            <!-- Needle angle: RollErrorAngle + 180 (since arc is at bottom, 180 = center) -->
+            <Set Variable="RollErrorNeedleAngle">@RollErrorAngle</Set>
+            <Set Variable="RollErrorNeedleAngle" Operator="#_set_add_">180</Set>
+
+            <!-- Keep pixel positions for possible future use -->
+            <Set Variable="RollErrorPos">@RollError</Set>
+            <Set Variable="RollErrorPos" Operator="#_set_multiply_">60</Set>
+            <Set Variable="RollErrorPos" Operator="#_set_add_">400</Set>
+
+            <Set Variable="PitchErrorPos">@PitchError</Set>
+            <Set Variable="PitchErrorPos" Operator="#_set_multiply_">-60</Set>
+            <Set Variable="PitchErrorPos" Operator="#_set_add_">450</Set>
+
+            <Set Variable="YawErrorPos">@YawError</Set>
+            <Set Variable="YawErrorPos" Operator="#_set_multiply_">60</Set>
+            <Set Variable="YawErrorPos" Operator="#_set_add_">400</Set>
+
+            <!-- Scale rate values to pixel positions for horizontal scale -->
+            <!-- Roll: -10..10 deg/s -> -100..+100 pixels, then add 400 for X position -->
+            <Set Variable="RollRatePos">@RollRate</Set>
+            <Set Variable="RollRatePos" Operator="#_set_multiply_">10</Set>
+            <Set Variable="RollRatePos" Operator="#_set_add_">400</Set>
+
+            <!-- Pitch: -10..10 deg/s -> -100..+100 pixels, then add 450 for Y position -->
+            <Set Variable="PitchRatePos">@PitchRate</Set>
+            <Set Variable="PitchRatePos" Operator="#_set_multiply_">-10</Set>
+            <Set Variable="PitchRatePos" Operator="#_set_add_">450</Set>
+
+            <!-- Yaw: -10..10 deg/s -> -100..+100 pixels, then add 400 for X position -->
+            <Set Variable="YawRatePos">@YawRate</Set>
+            <Set Variable="YawRatePos" Operator="#_set_multiply_">10</Set>
+            <Set Variable="YawRatePos" Operator="#_set_add_">400</Set>
+
+            <!-- Title -->
+            <Text X="#ADI_CenterX" Y="850" LocalAlignX="#_align_center_" Size="28" FillColor="#_color_white_">Attitude Direction Indicator</Text>
+
+            <!-- ========== ADI DISPLAY ========== -->
+
+            <!-- Outer ring -->
+            <Circle X="#ADI_CenterX" Y="#ADI_CenterY" Radius="#OuterRadius" LineColor="#_color_gray_" LineWidth="3"/>
+
+            <!-- Stencil mask for the ball (circular clip) -->
+            <Stencil>
+                <StencilAdd>
+                    <Circle X="#ADI_CenterX" Y="#ADI_CenterY" Radius="#BallRadius" FillColor="#_color_white_"/>
+                </StencilAdd>
+                <StencilDraw>
+                    <!-- Textured Sphere (the ADI ball) -->
+                    <Sphere
+                        X="#ADI_CenterX"
+                        Y="#ADI_CenterY"
+                        LocalAlignX="#_align_center_"
+                        LocalAlignY="#_align_middle_"
+                        Radius="#BallRadius"
+                        Image="../../assets/adi.png"
+                        Roll="@Roll"
+                        Pitch="@Pitch"
+                        Yaw="@Yaw"
+                    />
+                </StencilDraw>
+            </Stencil>
+
+            <!-- Cross-hairs (fixed aircraft reference) -->
+            <Rectangle X="#ADI_CenterX" Y="#ADI_CenterY" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                Width="60" Height="4" FillColor="#_color_orange_" LineColor="#_color_black_" LineWidth="1"/>
+            <Rectangle X="#ADI_CenterX" Y="#ADI_CenterY" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                Width="4" Height="60" FillColor="#_color_orange_" LineColor="#_color_black_" LineWidth="1"/>
+
+            <!-- ========== ROLL ERROR INDICATOR ========== -->
+            <!-- Purple arc centered at ADI center, radius 150, spanning 60 degrees, pointing up -->
+            <Arc X="#ADI_CenterX" Y="#ADI_CenterY" Radius="150" Angle="60" Rotation="0"
+                LineColor="0.8 0.2 0.8" LineWidth="6"/>
+
+            <!-- Tick marks - using Rectangle with Pivot to rotate around ADI center -->
+            <!-- Top of tick at Y=600 (ADI center 450 + radius 150), ticks extend downward -->
+            <!-- Big tick at center (0 deg = top) -->
+            <Rectangle X="#ADI_CenterX" Y="600" Width="3" Height="15" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="0" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="1 0 1"/>
+            <!-- Small ticks on left side (negative rotation) -->
+            <Rectangle X="#ADI_CenterX" Y="600" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="-5" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="600" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="-10" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="600" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="-15" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="600" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="-20" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="600" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="-25" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <!-- Big tick at -30 deg end -->
+            <Rectangle X="#ADI_CenterX" Y="600" Width="3" Height="15" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="-30" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="1 0 1"/>
+            <!-- Small ticks on right side (positive rotation) -->
+            <Rectangle X="#ADI_CenterX" Y="600" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="5" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="600" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="10" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="600" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="15" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="600" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="20" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="600" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="25" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <!-- Big tick at +30 deg end -->
+            <Rectangle X="#ADI_CenterX" Y="600" Width="3" Height="15" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="30" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="1 0 1"/>
+
+            <!-- Moving roll error needle - rotates around ADI center based on RollErrorAngle -->
+            <!-- RollErrorAngle is -30 to +30, needle rotation is same (0 = top) -->
+            <!-- Top of needle at Y=600 (same as arc), extends downward 40px toward center -->
+            <Rectangle X="#ADI_CenterX" Y="600" Width="4" Height="40" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                Rotation="@RollErrorAngle" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="1 0 1"/>
+
+            <!-- Roll pointer (top, rotates with roll) - orange triangle -->
+            <Polygon FillColor="#_color_orange_" LineColor="#_color_black_" LineWidth="1"
+                Rotation="@Roll" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY">
+                <Vertex X="400" Y="590"/>
+                <Vertex X="390" Y="610"/>
+                <Vertex X="410" Y="610"/>
+            </Polygon>
+
+            <!-- Fixed roll reference (top) -->
+            <Polygon FillColor="#_color_white_" LineColor="#_color_black_" LineWidth="1">
+                <Vertex X="#ADI_CenterX" Y="620"/>
+                <Vertex X="390" Y="640"/>
+                <Vertex X="410" Y="640"/>
+            </Polygon>
+
+            <!-- ========== PITCH ERROR INDICATOR (right side) ========== -->
+            <!-- Purple arc centered at ADI center, radius 150, spanning 60 degrees, pointing right (Rotation=-90) -->
+            <Arc X="#ADI_CenterX" Y="#ADI_CenterY" Radius="150" Angle="60" Rotation="-90"
+                LineColor="0.8 0.2 0.8" LineWidth="6"/>
+
+            <!-- Tick marks - positioned at X=550 (ADI center 400 + radius 150), ticks extend left toward center -->
+            <!-- Big tick at center (90 deg = right) -->
+            <Rectangle X="550" Y="#ADI_CenterY" Width="15" Height="3" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="0" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="1 0 1"/>
+            <!-- Small ticks (negative rotation = up from center) -->
+            <Rectangle X="550" Y="#ADI_CenterY" Width="8" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="-5" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="550" Y="#ADI_CenterY" Width="8" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="-10" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="550" Y="#ADI_CenterY" Width="8" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="-15" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="550" Y="#ADI_CenterY" Width="8" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="-20" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="550" Y="#ADI_CenterY" Width="8" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="-25" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <!-- Big tick at -30 deg end -->
+            <Rectangle X="550" Y="#ADI_CenterY" Width="15" Height="3" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="-30" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="1 0 1"/>
+            <!-- Small ticks (positive rotation = down from center) -->
+            <Rectangle X="550" Y="#ADI_CenterY" Width="8" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="5" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="550" Y="#ADI_CenterY" Width="8" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="10" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="550" Y="#ADI_CenterY" Width="8" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="15" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="550" Y="#ADI_CenterY" Width="8" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="20" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="550" Y="#ADI_CenterY" Width="8" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="25" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <!-- Big tick at +30 deg end -->
+            <Rectangle X="550" Y="#ADI_CenterY" Width="15" Height="3" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="30" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="1 0 1"/>
+
+            <!-- Moving pitch error needle -->
+            <Rectangle X="550" Y="#ADI_CenterY" Width="40" Height="4" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Rotation="@PitchErrorAngle" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="1 0 1"/>
+
+            <!-- ========== YAW ERROR INDICATOR (bottom) ========== -->
+            <!-- Purple arc centered at ADI center, radius 150, spanning 60 degrees, pointing down (Rotation=180) -->
+            <Arc X="#ADI_CenterX" Y="#ADI_CenterY" Radius="150" Angle="60" Rotation="180"
+                LineColor="0.8 0.2 0.8" LineWidth="6"/>
+
+            <!-- Tick marks - positioned at Y=300 (ADI center 450 - radius 150), ticks extend up toward center -->
+            <!-- Big tick at center (180 deg = bottom) -->
+            <Rectangle X="#ADI_CenterX" Y="300" Width="3" Height="15" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="0" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="1 0 1"/>
+            <!-- Small ticks (negative rotation = left from center when at bottom) -->
+            <Rectangle X="#ADI_CenterX" Y="300" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="-5" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="300" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="-10" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="300" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="-15" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="300" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="-20" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="300" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="-25" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <!-- Big tick at -30 deg end -->
+            <Rectangle X="#ADI_CenterX" Y="300" Width="3" Height="15" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="-30" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="1 0 1"/>
+            <!-- Small ticks (positive rotation = right from center when at bottom) -->
+            <Rectangle X="#ADI_CenterX" Y="300" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="5" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="300" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="10" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="300" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="15" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="300" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="20" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <Rectangle X="#ADI_CenterX" Y="300" Width="2" Height="8" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="25" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="0.8 0.2 0.8"/>
+            <!-- Big tick at +30 deg end -->
+            <Rectangle X="#ADI_CenterX" Y="300" Width="3" Height="15" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="30" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="1 0 1"/>
+
+            <!-- Moving yaw error needle -->
+            <Rectangle X="#ADI_CenterX" Y="300" Width="4" Height="40" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                Rotation="@YawErrorAngle" PivotX="#ADI_CenterX" PivotY="#ADI_CenterY" FillColor="1 0 1"/>
+
+            <!-- ========== ROLL RATE INDICATOR (horizontal scale at top) ========== -->
+
+            <!-- Horizontal line connecting tick marks -->
+            <Rectangle X="#ADI_CenterX" Y="640" Width="200" Height="2" LocalAlignX="#_align_center_" FillColor="#_color_white_"/>
+
+            <!-- Tick marks (vertical, pointing down from line) -->
+            <!-- -10 deg/s tick (left) -->
+            <Rectangle X="300" Y="625" Width="2" Height="15" LocalAlignX="#_align_center_" FillColor="#_color_white_"/>
+            <Text X="280" Y="632" LocalAlignX="#_align_right_" Size="12" FillColor="#_color_white_">-10</Text>
+            <!-- -5 deg/s tick -->
+            <Rectangle X="350" Y="630" Width="2" Height="10" LocalAlignX="#_align_center_" FillColor="#_color_gray_"/>
+            <!-- 0 deg/s tick (center) -->
+            <Rectangle X="#ADI_CenterX" Y="625" Width="2" Height="15" LocalAlignX="#_align_center_" FillColor="#_color_white_"/>
+            <!-- +5 deg/s tick -->
+            <Rectangle X="450" Y="630" Width="2" Height="10" LocalAlignX="#_align_center_" FillColor="#_color_gray_"/>
+            <!-- +10 deg/s tick (right) -->
+            <Rectangle X="500" Y="625" Width="2" Height="15" LocalAlignX="#_align_center_" FillColor="#_color_white_"/>
+            <Text X="520" Y="632" LocalAlignX="#_align_left_" Size="12" FillColor="#_color_white_">+10</Text>
+
+            <!-- Roll rate triangle indicator (slides horizontally) -->
+            <!-- RollRatePos is now 340-460 (pixel X position) -->
+            <Polygon X="@RollRatePos" Y="615" FillColor="#_color_green_">
+                <Vertex X="0" Y="8"/>
+                <Vertex X="-6" Y="-4"/>
+                <Vertex X="6" Y="-4"/>
+            </Polygon>
+
+            <Text X="#ADI_CenterX" Y="660" LocalAlignX="#_align_center_" Size="12" FillColor="#_color_white_">R</Text>
+
+            <!-- ========== PITCH RATE INDICATOR (vertical scale on right) ========== -->
+            <!-- Line at X=600, ticks point LEFT, green triangle on LEFT (toward ADI) -->
+
+            <!-- Vertical line connecting tick marks -->
+            <Rectangle X="600" Y="#ADI_CenterY" Width="2" Height="200" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" FillColor="#_color_white_"/>
+
+            <!-- Tick marks (horizontal, pointing left) -->
+            <!-- -10 deg/s tick (top) -->
+            <Rectangle X="600" Y="350" Width="15" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_" FillColor="#_color_white_"/>
+            <Text X="578" Y="350" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_" Size="12" FillColor="#_color_white_">-10</Text>
+            <!-- -5 deg/s tick -->
+            <Rectangle X="600" Y="400" Width="10" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_" FillColor="#_color_gray_"/>
+            <!-- 0 deg/s tick (center) -->
+            <Rectangle X="600" Y="#ADI_CenterY" Width="15" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_" FillColor="#_color_white_"/>
+            <!-- +5 deg/s tick -->
+            <Rectangle X="600" Y="500" Width="10" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_" FillColor="#_color_gray_"/>
+            <!-- +10 deg/s tick (bottom) -->
+            <Rectangle X="600" Y="550" Width="15" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_" FillColor="#_color_white_"/>
+            <Text X="578" Y="550" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_" Size="12" FillColor="#_color_white_">+10</Text>
+
+            <!-- Pitch rate triangle indicator (slides vertically, LEFT of ticks toward ADI, pointing right) -->
+            <Polygon X="575" Y="@PitchRatePos" FillColor="#_color_green_">
+                <Vertex X="8" Y="0"/>
+                <Vertex X="-4" Y="-6"/>
+                <Vertex X="-4" Y="6"/>
+            </Polygon>
+
+            <!-- Fixed white reference triangle (left of line, pointing right, base aligned with line at X=600) -->
+            <Polygon FillColor="#_color_white_" LineColor="#_color_black_" LineWidth="1">
+                <Vertex X="580" Y="#ADI_CenterY"/>
+                <Vertex X="600" Y="440"/>
+                <Vertex X="600" Y="460"/>
+            </Polygon>
+
+            <Text X="640" Y="#ADI_CenterY" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="#_color_white_">P</Text>
+
+            <!-- ========== YAW RATE INDICATOR (horizontal scale at bottom) ========== -->
+            <!-- Exact mirror of Roll: Roll has line@640, ticks@625/630, green@615, label@660 -->
+            <!-- Yaw mirror: line@260, ticks@275/270, green@285, label@240 -->
+
+            <!-- Horizontal line connecting tick marks -->
+            <Rectangle X="#ADI_CenterX" Y="260" Width="200" Height="2" LocalAlignX="#_align_center_" FillColor="#_color_white_"/>
+
+            <!-- Tick marks (vertical, pointing down/away from ADI) -->
+            <!-- -10 deg/s tick (left) -->
+            <Rectangle X="300" Y="260" Width="2" Height="15" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_" FillColor="#_color_white_"/>
+            <Text X="280" Y="268" LocalAlignX="#_align_right_" Size="12" FillColor="#_color_white_">-10</Text>
+            <!-- -5 deg/s tick -->
+            <Rectangle X="350" Y="260" Width="2" Height="10" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_" FillColor="#_color_gray_"/>
+            <!-- 0 deg/s tick (center) -->
+            <Rectangle X="#ADI_CenterX" Y="260" Width="2" Height="15" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_" FillColor="#_color_white_"/>
+            <!-- +5 deg/s tick -->
+            <Rectangle X="450" Y="260" Width="2" Height="10" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_" FillColor="#_color_gray_"/>
+            <!-- +10 deg/s tick (right) -->
+            <Rectangle X="500" Y="260" Width="2" Height="15" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_" FillColor="#_color_white_"/>
+            <Text X="520" Y="268" LocalAlignX="#_align_left_" Size="12" FillColor="#_color_white_">+10</Text>
+
+            <!-- Yaw rate triangle indicator (slides horizontally, below ticks pointing up) -->
+            <Polygon X="@YawRatePos" Y="285" FillColor="#_color_green_">
+                <Vertex X="0" Y="-8"/>
+                <Vertex X="-6" Y="4"/>
+                <Vertex X="6" Y="4"/>
+            </Polygon>
+
+            <!-- Fixed white reference triangle (above line, pointing down toward scale) -->
+            <Polygon FillColor="#_color_white_" LineColor="#_color_black_" LineWidth="1">
+                <Vertex X="#ADI_CenterX" Y="280"/>
+                <Vertex X="390" Y="260"/>
+                <Vertex X="410" Y="260"/>
+            </Polygon>
+
+            <Text X="#ADI_CenterX" Y="240" LocalAlignX="#_align_center_" Size="12" FillColor="#_color_white_">Y</Text>
+
+            <!-- ========== CONTROLS - ATTITUDE SLIDERS ========== -->
+
+            <Text X="850" Y="850" LocalAlignX="#_align_left_" Size="20" FillColor="#_color_yellow_">Attitude (deg)</Text>
+
+            <!-- Roll slider (0-360 virtual, displays -180..180) -->
+            <Text X="750" Y="800" LocalAlignX="#_align_left_">Roll:</Text>
+            <Text X="830" Y="800" LocalAlignX="#_align_right_">@Roll(%.0f)</Text>
+            <Container X="850" Y="800" Width="300" Height="20" VirtualWidth="360" LocalAlignY="#_align_middle_">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <If Value1="@RollSliderSel" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="RollSlider"/>
+                </If>
+                <Set Variable="RollSlider" Operator="#_set_max_">0</Set>
+                <Set Variable="RollSlider" Operator="#_set_min_">360</Set>
+                <Button Type="#_button_momentary_" X="@RollSlider" Y="10" Width="8" Height="26" Variable="RollSliderSel" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn><Rectangle FillColor="#_color_yellow_"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- Pitch slider (0-180 virtual, displays -90..90) -->
+            <Text X="750" Y="760" LocalAlignX="#_align_left_">Pitch:</Text>
+            <Text X="830" Y="760" LocalAlignX="#_align_right_">@Pitch(%.0f)</Text>
+            <Container X="850" Y="760" Width="300" Height="20" VirtualWidth="180" LocalAlignY="#_align_middle_">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <If Value1="@PitchSliderSel" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="PitchSlider"/>
+                </If>
+                <Set Variable="PitchSlider" Operator="#_set_max_">0</Set>
+                <Set Variable="PitchSlider" Operator="#_set_min_">180</Set>
+                <Button Type="#_button_momentary_" X="@PitchSlider" Y="10" Width="8" Height="26" Variable="PitchSliderSel" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn><Rectangle FillColor="#_color_yellow_"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- Yaw slider (0-360 virtual, displays -180..180) -->
+            <Text X="750" Y="720" LocalAlignX="#_align_left_">Yaw:</Text>
+            <Text X="830" Y="720" LocalAlignX="#_align_right_">@Yaw(%.0f)</Text>
+            <Container X="850" Y="720" Width="300" Height="20" VirtualWidth="360" LocalAlignY="#_align_middle_">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <If Value1="@YawSliderSel" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="YawSlider"/>
+                </If>
+                <Set Variable="YawSlider" Operator="#_set_max_">0</Set>
+                <Set Variable="YawSlider" Operator="#_set_min_">360</Set>
+                <Button Type="#_button_momentary_" X="@YawSlider" Y="10" Width="8" Height="26" Variable="YawSliderSel" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn><Rectangle FillColor="#_color_yellow_"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- ========== CONTROLS - RATE SLIDERS ========== -->
+
+            <Text X="850" Y="660" LocalAlignX="#_align_left_" Size="20" FillColor="#_color_green_">Rates (deg/s)</Text>
+
+            <!-- Roll Rate slider (0-200 virtual, displays -10..10) -->
+            <Text X="750" Y="620" LocalAlignX="#_align_left_">Roll:</Text>
+            <Text X="830" Y="620" LocalAlignX="#_align_right_">@RollRate(%.1f)</Text>
+            <Container X="850" Y="620" Width="300" Height="20" VirtualWidth="200" LocalAlignY="#_align_middle_">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <If Value1="@RollRateSliderSel" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="RollRateSlider"/>
+                </If>
+                <Set Variable="RollRateSlider" Operator="#_set_max_">0</Set>
+                <Set Variable="RollRateSlider" Operator="#_set_min_">200</Set>
+                <Button Type="#_button_momentary_" X="@RollRateSlider" Y="10" Width="8" Height="26" Variable="RollRateSliderSel" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn><Rectangle FillColor="#_color_green_"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- Pitch Rate slider (0-200 virtual, displays -10..10) -->
+            <Text X="750" Y="580" LocalAlignX="#_align_left_">Pitch:</Text>
+            <Text X="830" Y="580" LocalAlignX="#_align_right_">@PitchRate(%.1f)</Text>
+            <Container X="850" Y="580" Width="300" Height="20" VirtualWidth="200" LocalAlignY="#_align_middle_">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <If Value1="@PitchRateSliderSel" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="PitchRateSlider"/>
+                </If>
+                <Set Variable="PitchRateSlider" Operator="#_set_max_">0</Set>
+                <Set Variable="PitchRateSlider" Operator="#_set_min_">200</Set>
+                <Button Type="#_button_momentary_" X="@PitchRateSlider" Y="10" Width="8" Height="26" Variable="PitchRateSliderSel" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn><Rectangle FillColor="#_color_green_"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- Yaw Rate slider (0-200 virtual, displays -10..10) -->
+            <Text X="750" Y="540" LocalAlignX="#_align_left_">Yaw:</Text>
+            <Text X="830" Y="540" LocalAlignX="#_align_right_">@YawRate(%.1f)</Text>
+            <Container X="850" Y="540" Width="300" Height="20" VirtualWidth="200" LocalAlignY="#_align_middle_">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <If Value1="@YawRateSliderSel" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="YawRateSlider"/>
+                </If>
+                <Set Variable="YawRateSlider" Operator="#_set_max_">0</Set>
+                <Set Variable="YawRateSlider" Operator="#_set_min_">200</Set>
+                <Button Type="#_button_momentary_" X="@YawRateSlider" Y="10" Width="8" Height="26" Variable="YawRateSliderSel" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn><Rectangle FillColor="#_color_green_"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- ========== CONTROLS - ERROR SLIDERS ========== -->
+
+            <Text X="850" Y="480" LocalAlignX="#_align_left_" Size="20" FillColor="#_color_orange_">Errors (-1 to 1)</Text>
+
+            <!-- Roll Error slider -->
+            <Text X="750" Y="440" LocalAlignX="#_align_left_">Roll:</Text>
+            <Text X="830" Y="440" LocalAlignX="#_align_right_">@RollError(%.2f)</Text>
+            <Container X="850" Y="440" Width="300" Height="20" VirtualWidth="200" LocalAlignY="#_align_middle_">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <If Value1="@RollErrorSliderSel" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="RollErrorSlider"/>
+                </If>
+                <Set Variable="RollErrorSlider" Operator="#_set_max_">0</Set>
+                <Set Variable="RollErrorSlider" Operator="#_set_min_">200</Set>
+                <Button Type="#_button_momentary_" X="@RollErrorSlider" Y="10" Width="8" Height="26" Variable="RollErrorSliderSel" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn><Rectangle FillColor="#_color_orange_"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- Pitch Error slider -->
+            <Text X="750" Y="400" LocalAlignX="#_align_left_">Pitch:</Text>
+            <Text X="830" Y="400" LocalAlignX="#_align_right_">@PitchError(%.2f)</Text>
+            <Container X="850" Y="400" Width="300" Height="20" VirtualWidth="200" LocalAlignY="#_align_middle_">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <If Value1="@PitchErrorSliderSel" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="PitchErrorSlider"/>
+                </If>
+                <Set Variable="PitchErrorSlider" Operator="#_set_max_">0</Set>
+                <Set Variable="PitchErrorSlider" Operator="#_set_min_">200</Set>
+                <Button Type="#_button_momentary_" X="@PitchErrorSlider" Y="10" Width="8" Height="26" Variable="PitchErrorSliderSel" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn><Rectangle FillColor="#_color_orange_"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- Yaw Error slider -->
+            <Text X="750" Y="360" LocalAlignX="#_align_left_">Yaw:</Text>
+            <Text X="830" Y="360" LocalAlignX="#_align_right_">@YawError(%.2f)</Text>
+            <Container X="850" Y="360" Width="300" Height="20" VirtualWidth="200" LocalAlignY="#_align_middle_">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <If Value1="@YawErrorSliderSel" Operation="#_conditional_eq_" Value2="1">
+                    <MouseMotion VariableX="YawErrorSlider"/>
+                </If>
+                <Set Variable="YawErrorSlider" Operator="#_set_max_">0</Set>
+                <Set Variable="YawErrorSlider" Operator="#_set_min_">200</Set>
+                <Button Type="#_button_momentary_" X="@YawErrorSlider" Y="10" Width="8" Height="26" Variable="YawErrorSliderSel" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn><Rectangle FillColor="#_color_orange_"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+        </Panel>
+    </Window>
+</DCAPP>

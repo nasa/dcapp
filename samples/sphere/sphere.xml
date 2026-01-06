@@ -17,7 +17,7 @@
                 LocalAlignX="#_align_center_"
                 LocalAlignY="#_align_middle_"
                 Radius="#SphereRadius"
-                Image="../../assets/moon.jpg"
+                Image="../../assets/adi_fun.png"
                 Yaw="@YAW_ANGLE"
             />
 
