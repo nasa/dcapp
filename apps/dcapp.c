@@ -131,11 +131,21 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         app_data->logic_pre_init(get_variable_value_addr);
     }
 
+    // call logic init
+    if (app_data->logic_init) {
+        app_data->logic_init();
+    }
+
     // return app memory
     return app_data;
 }
 
 PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
+
+    // call logic close
+    if (app_data->logic_close) {
+        app_data->logic_close();
+    }
 
     // get device
     plDevice *device = _ext_starter->get_device();
@@ -251,6 +261,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     plIO *ptIO = _ext_ioi->get_io();
     {
         // orthographic MVP for 3D objects in 2D space
+        // Note: dcapp uses bottom-left origin, so Y is NOT flipped here (parent_transform handles it)
         float w = ptIO->tMainViewportSize.x;
         float h = ptIO->tMainViewportSize.y;
         float n = -1000.0f;
@@ -258,9 +269,9 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
         plMat4 ortho_proj = {
             .col = {
                 { 2.0f / w,   0.0f,         0.0f,           0.0f },
-                { 0.0f,      -2.0f / h,     0.0f,           0.0f },
+                { 0.0f,       2.0f / h,     0.0f,           0.0f },
                 { 0.0f,       0.0f,         1.0f / (f - n), 0.0f },
-                {-1.0f,       1.0f,        -n / (f - n),    1.0f }
+                {-1.0f,      -1.0f,        -n / (f - n),    1.0f }
             }
         };
 

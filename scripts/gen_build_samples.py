@@ -49,6 +49,8 @@ app_bin_dir_rel = os.path.relpath(app_bin_dir_abs, build_script_out_dir_abs)
 samples_dir = dcapp_home_abs + "/samples"
 sample_dirs_abs = []
 for entry in os.listdir(samples_dir):
+    if entry.startswith('.'):
+        continue
     full_path = samples_dir + "/" + entry
     if os.path.isdir(full_path):
         logic_path = os.path.join(full_path, "logic")

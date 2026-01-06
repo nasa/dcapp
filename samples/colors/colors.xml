@@ -5,74 +5,125 @@
     <Variable Type="#_variable_double_" InitialValue="0.5">BLUE</Variable>
     <Variable Type="#_variable_double_" InitialValue="0.5">ALPHA</Variable>
 
-    <Window X="30" Y="30" Width="800" Height="600">
-        <Constant Name="BgColor">0 0 0</Constant>
-        <Constant Name="FgColor">1 1 1</Constant>
-
+    <Window Title="Color Mixer" X="30" Y="30" Width="800" Height="600">
         <Default>
-            <Button Y="7.5" Width="10" Height="10" ParentAlignX="#_align_center_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
+            <Button Y="8" Width="10" Height="10" ParentAlignX="#_align_center_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
             <Text Size="3" FillColor="0 0 0" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
         </Default>
 
         <Style Name="Button">
-            <Text Size="2.5" FillColor="1 1 1" ShadowOffset=".2"/>
+            <Text Size="2.5" FillColor="1 1 1"/>
         </Style>
 
-        <Panel VirtualWidth="100" VirtualHeight="100" BackgroundColor="#BgColor">
-            <Text X="20" Y="92.5" FillColor="1 1 1">R: @RED(%.2f)</Text>
-            <Text X="40" Y="92.5" FillColor="1 1 1">G: @GREEN(%.2f)</Text>
-            <Text X="60" Y="92.5" FillColor="1 1 1">B: @BLUE(%.2f)</Text>
-            <Text X="80" Y="92.5" FillColor="1 1 1">A: @ALPHA(%.2f)</Text>
-            <Image Width="46" Height="50" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" File="../../assets/nasa.png"/>
-            <Rectangle Width="70" Height="70" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" FillColor="@RED @GREEN @BLUE @ALPHA" LineColor="1 1 1"/>
-            <Button Type="#_button_momentary_" X="7">
-                <MousePressed><Set Variable="RED" Operator="#_set_subtract_" MinimumValue="0">.05</Set></MousePressed>
+        <Panel VirtualWidth="100" VirtualHeight="100" BackgroundColor="0.08 0.08 0.12">
+
+            <!-- Clamp all values to 0..1 range -->
+            <If Value1="@RED" Operation="#_conditional_lt_" Value2="0">
+                <Set Variable="RED" Operator="#_set_equal_">0</Set>
+            </If>
+            <If Value1="@RED" Operation="#_conditional_gt_" Value2="1">
+                <Set Variable="RED" Operator="#_set_equal_">1</Set>
+            </If>
+            <If Value1="@GREEN" Operation="#_conditional_lt_" Value2="0">
+                <Set Variable="GREEN" Operator="#_set_equal_">0</Set>
+            </If>
+            <If Value1="@GREEN" Operation="#_conditional_gt_" Value2="1">
+                <Set Variable="GREEN" Operator="#_set_equal_">1</Set>
+            </If>
+            <If Value1="@BLUE" Operation="#_conditional_lt_" Value2="0">
+                <Set Variable="BLUE" Operator="#_set_equal_">0</Set>
+            </If>
+            <If Value1="@BLUE" Operation="#_conditional_gt_" Value2="1">
+                <Set Variable="BLUE" Operator="#_set_equal_">1</Set>
+            </If>
+            <If Value1="@ALPHA" Operation="#_conditional_lt_" Value2="0">
+                <Set Variable="ALPHA" Operator="#_set_equal_">0</Set>
+            </If>
+            <If Value1="@ALPHA" Operation="#_conditional_gt_" Value2="1">
+                <Set Variable="ALPHA" Operator="#_set_equal_">1</Set>
+            </If>
+
+            <!-- Title -->
+            <Text X="50" Y="95" LocalAlignX="#_align_center_" Size="5" FillColor="1 1 1">Color Mixer</Text>
+
+            <!-- Color values display -->
+            <Rectangle X="50" Y="87" Width="80" Height="6" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="0.15 0.15 0.2" LineColor="0.3 0.3 0.35" LineWidth="0.3"/>
+            <Text X="17" Y="87" LocalAlignX="#_align_center_" Size="2.8" FillColor="1 0.4 0.4">R: @RED(%.2f)</Text>
+            <Text X="39" Y="87" LocalAlignX="#_align_center_" Size="2.8" FillColor="0.4 1 0.4">G: @GREEN(%.2f)</Text>
+            <Text X="61" Y="87" LocalAlignX="#_align_center_" Size="2.8" FillColor="0.4 0.6 1">B: @BLUE(%.2f)</Text>
+            <Text X="83" Y="87" LocalAlignX="#_align_center_" Size="2.8" FillColor="0.9 0.9 0.9">A: @ALPHA(%.2f)</Text>
+
+            <!-- Checkerboard background for transparency visualization -->
+            <Rectangle X="50" Y="50" Width="62" Height="62" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="0.3 0.3 0.3"/>
+            <Rectangle X="50" Y="50" Width="60" Height="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="0.6 0.6 0.6"/>
+
+            <!-- Background image -->
+            <Image X="50" Y="50" Width="46" Height="50" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" File="../../assets/nasa.png"/>
+
+            <!-- Color overlay rectangle -->
+            <Rectangle X="50" Y="50" Width="60" Height="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="@RED @GREEN @BLUE @ALPHA" LineColor="0.8 0.8 0.8" LineWidth="0.4"/>
+
+            <!-- Control buttons -->
+            <!-- Red controls -->
+            <Button Type="#_button_momentary_" X="10">
+                <MousePressed><Set Variable="RED" Operator="#_set_subtract_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Red\n-</Text>
             </Button>
-            <Button Type="#_button_momentary_" X="18">
-                <MousePressed><Set Variable="RED" Operator="#_set_add_" MaximumValue="1">.05</Set></MousePressed>
+            <Button Type="#_button_momentary_" X="21">
+                <MousePressed><Set Variable="RED" Operator="#_set_add_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Red\n+</Text>
             </Button>
-            <Button Type="#_button_momentary_" X="32">
-                <MousePressed><Set Variable="GREEN" Operator="#_set_subtract_" MinimumValue="0">.05</Set></MousePressed>
+
+            <!-- Green controls -->
+            <Button Type="#_button_momentary_" X="35">
+                <MousePressed><Set Variable="GREEN" Operator="#_set_subtract_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Green\n-</Text>
             </Button>
-            <Button Type="#_button_momentary_" X="43">
-                <MousePressed><Set Variable="GREEN" Operator="#_set_add_" MaximumValue="1">.05</Set></MousePressed>
+            <Button Type="#_button_momentary_" X="46">
+                <MousePressed><Set Variable="GREEN" Operator="#_set_add_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Green\n+</Text>
             </Button>
-            <Button Type="#_button_momentary_" X="57">
-                <MousePressed><Set Variable="BLUE" Operator="#_set_subtract_" MinimumValue="0">.05</Set></MousePressed>
+
+            <!-- Blue controls -->
+            <Button Type="#_button_momentary_" X="60">
+                <MousePressed><Set Variable="BLUE" Operator="#_set_subtract_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Blue\n-</Text>
             </Button>
-            <Button Type="#_button_momentary_" X="68">
-                <MousePressed><Set Variable="BLUE" Operator="#_set_add_" MaximumValue="1">.05</Set></MousePressed>
+            <Button Type="#_button_momentary_" X="71">
+                <MousePressed><Set Variable="BLUE" Operator="#_set_add_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Blue\n+</Text>
             </Button>
-            <Button Type="#_button_momentary_" X="82">
-                <MousePressed><Set Variable="ALPHA" Operator="#_set_subtract_" MinimumValue="0">.05</Set></MousePressed>
+
+            <!-- Alpha controls -->
+            <Button Type="#_button_momentary_" X="85">
+                <MousePressed><Set Variable="ALPHA" Operator="#_set_subtract_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Alpha\n-</Text>
             </Button>
-            <Button Type="#_button_momentary_" X="93">
-                <MousePressed><Set Variable="ALPHA" Operator="#_set_add_" MaximumValue="1">.05</Set></MousePressed>
+            <Button Type="#_button_momentary_" X="96">
+                <MousePressed><Set Variable="ALPHA" Operator="#_set_add_">.05</Set></MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Alpha\n+</Text>
             </Button>
+
         </Panel>
     </Window>
 </DCAPP>

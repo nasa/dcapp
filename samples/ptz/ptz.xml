@@ -20,7 +20,7 @@
         </Default>
 
         <Style Name="Button">
-            <Text Size="2.5" FillColor="1 1 1" ShadowOffset=".2" ParentAlignX="#_align_center_" LocalAlignX="#_align_center_"/>
+            <Text Size="2.5" FillColor="1 1 1" ParentAlignX="#_align_center_" LocalAlignX="#_align_center_"/>
         </Style>
 
         <Panel VirtualWidth="100" VirtualHeight="100" BackgroundColor="#BgColor">

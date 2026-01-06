@@ -1,0 +1,313 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="#_variable_double_" InitialValue="0">COUNTER</Variable>
+    <Variable Type="#_variable_double_" InitialValue="50">VALUE</Variable>
+    <Variable Type="#_variable_double_" InitialValue="1">MODE</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">TOGGLE</Variable>
+
+    <Window Title="Conditionals Demo" X="30" Y="30" Width="900" Height="700">
+        <Default>
+            <Text Size="12" FillColor="1 1 1"/>
+        </Default>
+
+        <Panel VirtualWidth="900" VirtualHeight="700" BackgroundColor="0.08 0.08 0.1">
+
+            <!-- Animate counter -->
+            <Set Variable="COUNTER" Operator="#_set_add_">1</Set>
+            <If Value1="@COUNTER" Operation="#_conditional_gt_" Value2="100">
+                <Set Variable="COUNTER" Operator="#_set_equal_">0</Set>
+            </If>
+
+            <!-- Title -->
+            <Text X="450" Y="670" LocalAlignX="#_align_center_" Size="24" FillColor="1 1 1">Conditionals Demo</Text>
+
+            <!-- ========== SECTION 1: Basic If ========== -->
+            <Text X="150" Y="620" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Basic If</Text>
+            <Rectangle X="25" Y="610" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="25" Y="450" Width="250" Height="150">
+                <Rectangle Width="250" Height="150" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="125" Y="130" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Counter: @COUNTER(%.0f)</Text>
+
+                <!-- Show different content based on counter value -->
+                <If Value1="@COUNTER" Operation="#_conditional_lt_" Value2="50">
+                    <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.3 0.8 0.3"/>
+                    <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">LOW</Text>
+                    <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Counter &lt; 50</Text>
+                </If>
+
+                <If Value1="@COUNTER" Operation="#_conditional_gte_" Value2="50">
+                    <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.8 0.3 0.3"/>
+                    <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">HIGH</Text>
+                    <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Counter &gt;= 50</Text>
+                </If>
+            </Container>
+
+            <!-- ========== SECTION 2: If/ElseIf/Else ========== -->
+            <Text X="425" Y="620" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">If / ElseIf / Else</Text>
+            <Rectangle X="300" Y="610" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="300" Y="450" Width="250" Height="150">
+                <Rectangle Width="250" Height="150" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="125" Y="130" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Counter: @COUNTER(%.0f)</Text>
+
+                <!-- Multiple conditions with else -->
+                <If Value1="@COUNTER" Operation="#_conditional_lt_" Value2="25">
+                    <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.2 0.5 0.8"/>
+                    <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 1</Text>
+                    <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">0-24</Text>
+                </If>
+                <ElseIf Value1="@COUNTER" Operation="#_conditional_lt_" Value2="50">
+                    <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.5 0.8 0.2"/>
+                    <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 2</Text>
+                    <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">25-49</Text>
+                </ElseIf>
+                <ElseIf Value1="@COUNTER" Operation="#_conditional_lt_" Value2="75">
+                    <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.8 0.5 0.2"/>
+                    <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 3</Text>
+                    <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">50-74</Text>
+                </ElseIf>
+                <Else>
+                    <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.8 0.2 0.5"/>
+                    <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 4</Text>
+                    <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">75-100</Text>
+                </Else>
+            </Container>
+
+            <!-- ========== SECTION 3: Comparison Operators ========== -->
+            <Text X="700" Y="620" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Comparison Operators</Text>
+            <Rectangle X="575" Y="610" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="575" Y="450" Width="300" Height="150">
+                <Rectangle Width="300" Height="150" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="150" Y="130" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">VALUE = @VALUE(%.0f)</Text>
+
+                <!-- Show which comparisons are true -->
+                <Text X="20" Y="100" Size="9" FillColor="0.6 0.6 0.6">#_conditional_lt_ (&lt;)</Text>
+                <If Value1="@VALUE" Operation="#_conditional_lt_" Value2="50">
+                    <Circle X="270" Y="103" Radius="6" FillColor="0.3 0.8 0.3"/>
+                </If>
+                <If Value1="@VALUE" Operation="#_conditional_gte_" Value2="50">
+                    <Circle X="270" Y="103" Radius="6" FillColor="0.8 0.3 0.3"/>
+                </If>
+
+                <Text X="20" Y="80" Size="9" FillColor="0.6 0.6 0.6">#_conditional_lte_ (&lt;=)</Text>
+                <If Value1="@VALUE" Operation="#_conditional_lte_" Value2="50">
+                    <Circle X="270" Y="83" Radius="6" FillColor="0.3 0.8 0.3"/>
+                </If>
+                <If Value1="@VALUE" Operation="#_conditional_gt_" Value2="50">
+                    <Circle X="270" Y="83" Radius="6" FillColor="0.8 0.3 0.3"/>
+                </If>
+
+                <Text X="20" Y="60" Size="9" FillColor="0.6 0.6 0.6">#_conditional_eq_ (==)</Text>
+                <If Value1="@VALUE" Operation="#_conditional_eq_" Value2="50">
+                    <Circle X="270" Y="63" Radius="6" FillColor="0.3 0.8 0.3"/>
+                </If>
+                <If Value1="@VALUE" Operation="#_conditional_neq_" Value2="50">
+                    <Circle X="270" Y="63" Radius="6" FillColor="0.8 0.3 0.3"/>
+                </If>
+
+                <Text X="20" Y="40" Size="9" FillColor="0.6 0.6 0.6">#_conditional_gt_ (&gt;)</Text>
+                <If Value1="@VALUE" Operation="#_conditional_gt_" Value2="50">
+                    <Circle X="270" Y="43" Radius="6" FillColor="0.3 0.8 0.3"/>
+                </If>
+                <If Value1="@VALUE" Operation="#_conditional_lte_" Value2="50">
+                    <Circle X="270" Y="43" Radius="6" FillColor="0.8 0.3 0.3"/>
+                </If>
+
+                <Text X="20" Y="20" Size="9" FillColor="0.6 0.6 0.6">#_conditional_gte_ (&gt;=)</Text>
+                <If Value1="@VALUE" Operation="#_conditional_gte_" Value2="50">
+                    <Circle X="270" Y="23" Radius="6" FillColor="0.3 0.8 0.3"/>
+                </If>
+                <If Value1="@VALUE" Operation="#_conditional_lt_" Value2="50">
+                    <Circle X="270" Y="23" Radius="6" FillColor="0.8 0.3 0.3"/>
+                </If>
+
+                <Text X="250" Y="130" Size="8" FillColor="0.5 0.5 0.5">vs 50</Text>
+            </Container>
+
+            <!-- ========== SECTION 4: Switch/Case ========== -->
+            <Text X="150" Y="420" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Switch / Case</Text>
+            <Rectangle X="25" Y="410" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="25" Y="220" Width="250" Height="180">
+                <Rectangle Width="250" Height="180" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="125" Y="160" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">MODE = @MODE(%.0f)</Text>
+
+                <!-- Mode control buttons -->
+                <Button Type="#_button_momentary_" X="30" Y="120" Width="40" Height="25">
+                    <MousePressed><Set Variable="MODE" Operator="#_set_equal_">1</Set></MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="40" Height="25" FillColor="0.4 0.4 0.5"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="40" Height="25" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">1</Text>
+                </Button>
+                <Button Type="#_button_momentary_" X="80" Y="120" Width="40" Height="25">
+                    <MousePressed><Set Variable="MODE" Operator="#_set_equal_">2</Set></MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="40" Height="25" FillColor="0.4 0.4 0.5"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="40" Height="25" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">2</Text>
+                </Button>
+                <Button Type="#_button_momentary_" X="130" Y="120" Width="40" Height="25">
+                    <MousePressed><Set Variable="MODE" Operator="#_set_equal_">3</Set></MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="40" Height="25" FillColor="0.4 0.4 0.5"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="40" Height="25" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">3</Text>
+                </Button>
+                <Button Type="#_button_momentary_" X="180" Y="120" Width="40" Height="25">
+                    <MousePressed><Set Variable="MODE" Operator="#_set_equal_">4</Set></MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="40" Height="25" FillColor="0.4 0.4 0.5"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="40" Height="25" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">4</Text>
+                </Button>
+
+                <!-- Switch statement -->
+                <Switch Value="@MODE">
+                    <Case Equals="1">
+                        <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.8 0.3 0.3"/>
+                        <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">Mode 1</Text>
+                    </Case>
+                    <Case Equals="2">
+                        <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.3 0.8 0.3"/>
+                        <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">Mode 2</Text>
+                    </Case>
+                    <Case Equals="3">
+                        <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.3 0.3 0.8"/>
+                        <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">Mode 3</Text>
+                    </Case>
+                    <Default>
+                        <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.8 0.8 0.3"/>
+                        <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="0 0 0">Default</Text>
+                    </Default>
+                </Switch>
+            </Container>
+
+            <!-- ========== SECTION 5: Set Operators ========== -->
+            <Text X="425" Y="420" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Set Operators</Text>
+            <Rectangle X="300" Y="410" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="300" Y="220" Width="250" Height="180">
+                <Rectangle Width="250" Height="180" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="125" Y="160" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">VALUE = @VALUE(%.0f)</Text>
+
+                <!-- Set operator buttons -->
+                <Button Type="#_button_momentary_" X="20" Y="100" Width="65" Height="30">
+                    <MousePressed><Set Variable="VALUE" Operator="#_set_add_">10</Set></MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="65" Height="30" FillColor="0.3 0.5 0.3"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="65" Height="30" FillColor="0.2 0.3 0.2"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="9" FillColor="1 1 1">add 10</Text>
+                </Button>
+
+                <Button Type="#_button_momentary_" X="95" Y="100" Width="65" Height="30">
+                    <MousePressed><Set Variable="VALUE" Operator="#_set_subtract_">10</Set></MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="65" Height="30" FillColor="0.5 0.3 0.3"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="65" Height="30" FillColor="0.3 0.2 0.2"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="9" FillColor="1 1 1">sub 10</Text>
+                </Button>
+
+                <Button Type="#_button_momentary_" X="170" Y="100" Width="65" Height="30">
+                    <MousePressed><Set Variable="VALUE" Operator="#_set_equal_">50</Set></MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="65" Height="30" FillColor="0.3 0.3 0.5"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="65" Height="30" FillColor="0.2 0.2 0.3"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="9" FillColor="1 1 1">reset</Text>
+                </Button>
+
+                <Button Type="#_button_momentary_" X="20" Y="55" Width="65" Height="30">
+                    <MousePressed><Set Variable="VALUE" Operator="#_set_multiply_">2</Set></MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="65" Height="30" FillColor="0.5 0.4 0.2"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="65" Height="30" FillColor="0.3 0.25 0.15"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="9" FillColor="1 1 1">mul 2</Text>
+                </Button>
+
+                <Button Type="#_button_momentary_" X="95" Y="55" Width="65" Height="30">
+                    <MousePressed><Set Variable="VALUE" Operator="#_set_divide_">2</Set></MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="65" Height="30" FillColor="0.4 0.2 0.5"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="65" Height="30" FillColor="0.25 0.15 0.3"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="9" FillColor="1 1 1">div 2</Text>
+                </Button>
+
+                <!-- Value bar -->
+                <Rectangle X="20" Y="15" Width="210" Height="20" FillColor="0.2 0.2 0.2" LineColor="0.4 0.4 0.4" LineWidth="1"/>
+                <If Value1="@VALUE" Operation="#_conditional_gt_" Value2="0">
+                    <If Value1="@VALUE" Operation="#_conditional_lte_" Value2="210">
+                        <Rectangle X="20" Y="15" Width="@VALUE" Height="20" FillColor="0.3 0.6 0.8"/>
+                    </If>
+                    <If Value1="@VALUE" Operation="#_conditional_gt_" Value2="210">
+                        <Rectangle X="20" Y="15" Width="210" Height="20" FillColor="0.8 0.3 0.3"/>
+                    </If>
+                </If>
+            </Container>
+
+            <!-- ========== SECTION 6: Visibility Control ========== -->
+            <Text X="700" Y="420" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Visibility Control</Text>
+            <Rectangle X="575" Y="410" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="575" Y="220" Width="300" Height="180">
+                <Rectangle Width="300" Height="180" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <Text X="150" Y="160" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">TOGGLE = @TOGGLE(%.0f)</Text>
+
+                <!-- Toggle button -->
+                <Button Type="#_button_momentary_" X="100" Y="115" Width="100" Height="30">
+                    <MousePressed>
+                        <If Value1="@TOGGLE" Operation="#_conditional_eq_" Value2="0">
+                            <Set Variable="TOGGLE" Operator="#_set_equal_">1</Set>
+                        </If>
+                        <ElseIf Value1="@TOGGLE" Operation="#_conditional_eq_" Value2="1">
+                            <Set Variable="TOGGLE" Operator="#_set_equal_">0</Set>
+                        </ElseIf>
+                    </MousePressed>
+                    <ButtonIndicatorOn><Rectangle Width="100" Height="30" FillColor="0.4 0.4 0.5"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle Width="100" Height="30" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Toggle</Text>
+                </Button>
+
+                <!-- Conditionally shown elements -->
+                <If Value1="@TOGGLE" Operation="#_conditional_eq_" Value2="1">
+                    <Rectangle X="50" Y="30" Width="80" Height="60" FillColor="0.3 0.8 0.3"/>
+                    <Text X="90" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Visible</Text>
+                </If>
+
+                <If Value1="@TOGGLE" Operation="#_conditional_eq_" Value2="0">
+                    <Rectangle X="170" Y="30" Width="80" Height="60" FillColor="0.8 0.3 0.3"/>
+                    <Text X="210" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Hidden</Text>
+                </If>
+
+                <Text X="150" Y="10" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Click toggle to switch visibility</Text>
+            </Container>
+
+            <!-- ========== Legend ========== -->
+            <Container X="25" Y="30" Width="850" Height="170">
+                <Rectangle Width="850" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="425" Y="150" LocalAlignX="#_align_center_" Size="14" FillColor="0.6 0.8 1">Conditional Elements Reference</Text>
+
+                <!-- Column 1: If/ElseIf/Else -->
+                <Text X="30" Y="120" Size="11" FillColor="0.8 0.8 0.3">If / ElseIf / Else</Text>
+                <Text X="30" Y="100" Size="9" FillColor="0.6 0.6 0.6">&lt;If Value1="@VAR" Operation="..." Value2="..."&gt;</Text>
+                <Text X="30" Y="80" Size="9" FillColor="0.6 0.6 0.6">&lt;ElseIf Value1="@VAR" Operation="..." Value2="..."&gt;</Text>
+                <Text X="30" Y="60" Size="9" FillColor="0.6 0.6 0.6">&lt;Else&gt;</Text>
+
+                <!-- Column 2: Switch/Case -->
+                <Text X="320" Y="120" Size="11" FillColor="0.8 0.8 0.3">Switch / Case</Text>
+                <Text X="320" Y="100" Size="9" FillColor="0.6 0.6 0.6">&lt;Switch Value="@VAR"&gt;</Text>
+                <Text X="320" Y="80" Size="9" FillColor="0.6 0.6 0.6">  &lt;Case Equals="value"&gt;</Text>
+                <Text X="320" Y="60" Size="9" FillColor="0.6 0.6 0.6">  &lt;Default&gt;</Text>
+
+                <!-- Column 3: Operations -->
+                <Text X="580" Y="120" Size="11" FillColor="0.8 0.8 0.3">Operations</Text>
+                <Text X="580" Y="100" Size="9" FillColor="0.6 0.6 0.6">#_conditional_lt_  #_conditional_lte_</Text>
+                <Text X="580" Y="80" Size="9" FillColor="0.6 0.6 0.6">#_conditional_gt_  #_conditional_gte_</Text>
+                <Text X="580" Y="60" Size="9" FillColor="0.6 0.6 0.6">#_conditional_eq_  #_conditional_neq_</Text>
+
+                <!-- Set operators -->
+                <Text X="30" Y="35" Size="11" FillColor="0.8 0.8 0.3">Set Operators</Text>
+                <Text X="30" Y="15" Size="9" FillColor="0.6 0.6 0.6">#_set_equal_  #_set_add_  #_set_subtract_  #_set_multiply_  #_set_divide_</Text>
+            </Container>
+
+        </Panel>
+    </Window>
+</DCAPP>

@@ -97,6 +97,7 @@ typedef struct __ValIndex4 {
 
 typedef enum __NodeType {
     NODE_TYPE_UNDEFINED,
+    NODE_TYPE_ARC,
     NODE_TYPE_BLINK,
     NODE_TYPE_BUTTON,
     NODE_TYPE_CIRCLE,
@@ -104,6 +105,7 @@ typedef enum __NodeType {
     NODE_TYPE_CONDITIONAL,
     NODE_TYPE_IMAGE,
     NODE_TYPE_LINE,
+    NODE_TYPE_MOUSE_MOTION,
     NODE_TYPE_PANEL,
     NODE_TYPE_PIXELSTREAM,
     NODE_TYPE_POLYGON,
@@ -129,6 +131,24 @@ typedef struct __MouseEventChildren {
     _NodeIndex released;
     bool       enabled;
 } _MouseEventChildren;
+
+typedef struct __NodeArc {
+    _ValIndex2    position;
+    _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_position;
+    _ValIndex2    local_align;
+    _ValIndex2    parent_align;
+    DcAppValIndex rotation;      // where the center of the arc points (0 = top)
+    DcAppValIndex radius;
+    DcAppValIndex angle;         // span of the arc in degrees
+    DcAppValIndex num_segments;
+    _ValIndex4    line_color;
+    _ValIndex4    fill_color;
+    DcAppValIndex line_width;
+    bool          pie;           // if true, draw lines from endpoints to center (pie/wedge shape)
+    bool          line_enabled;
+    bool          fill_enabled;
+} _NodeArc;
 
 typedef struct __NodeBlink {
     DcAppValIndex frequency;
@@ -259,6 +279,11 @@ typedef struct __NodeLine {
     bool        fill_enabled;
     bool        line_enabled;
 } _NodeLine;
+
+typedef struct __NodeMouseMotion {
+    DcAppVarIndex var_x;
+    DcAppVarIndex var_y;
+} _NodeMouseMotion;
 
 typedef struct __NodePanel {
     _ValIndex2    parent_dimension;
@@ -428,6 +453,7 @@ typedef struct __Node {
     _NodeIndex parent;
     _NodeIndex next;
     union {
+        _NodeArc         arc;
         _NodeBlink       blink;
         _NodeButton      button;
         _NodeCircle      circle;
@@ -435,6 +461,7 @@ typedef struct __Node {
         _NodeContainer   container;
         _NodeImage       image;
         _NodeLine        line;
+        _NodeMouseMotion mouse_motion;
         _NodePanel       panel;
         _NodePixelstream pixelstream;
         _NodePolygon     polygon;

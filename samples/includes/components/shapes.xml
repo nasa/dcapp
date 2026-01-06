@@ -1,0 +1,13 @@
+<!-- Simple shapes component -->
+<Dummy>
+    <Rectangle X="30" Y="40" Width="80" Height="60" FillColor="0.8 0.3 0.3"/>
+    <Circle X="200" Y="70" Radius="35" FillColor="0.3 0.8 0.3"/>
+    <Polygon FillColor="0.3 0.3 0.8">
+        <Vertex X="300" Y="40"/>
+        <Vertex X="360" Y="40"/>
+        <Vertex X="330" Y="110"/>
+    </Polygon>
+    <Text X="65" Y="20" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Rectangle</Text>
+    <Text X="200" Y="20" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Circle</Text>
+    <Text X="330" Y="20" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Triangle</Text>
+</Dummy>

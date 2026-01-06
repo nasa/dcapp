@@ -1,0 +1,11 @@
+<!-- Reusable Header Component -->
+<!-- Parameters: #HeaderTitle, #HeaderSubtitle -->
+<Dummy>
+    <!-- Header bar -->
+    <Rectangle X="0" Y="650" Width="900" Height="50" FillColor="0.12 0.15 0.2"/>
+    <Rectangle X="0" Y="650" Width="900" Height="2" FillColor="0.3 0.5 0.7"/>
+
+    <!-- Title -->
+    <Text X="450" Y="680" LocalAlignX="#_align_center_" Size="22" FillColor="1 1 1">#HeaderTitle</Text>
+    <Text X="450" Y="658" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.6 0.7">#HeaderSubtitle</Text>
+</Dummy>

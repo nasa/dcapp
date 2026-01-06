@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="#_variable_double_" InitialValue="0">ROTATION</Variable>
+
+    <Window Title="Include Files Demo" X="30" Y="30" Width="900" Height="700">
+        <Panel VirtualWidth="900" VirtualHeight="700">
+            <!-- Background -->
+            <Rectangle Width="900" Height="700" FillColor="0.08 0.08 0.1"/>
+
+            <!-- Animate rotation -->
+            <Set Variable="ROTATION" Operator="#_set_add_">1</Set>
+            <If Value1="@ROTATION" Operation="#_conditional_gt_" Value2="360">
+                <Set Variable="ROTATION" Operator="#_set_equal_">0</Set>
+            </If>
+
+            <!-- Title -->
+            <Text X="450" Y="670" LocalAlignX="#_align_center_" Size="24" FillColor="1 1 1">Include Files Demo</Text>
+            <Text X="450" Y="640" LocalAlignX="#_align_center_" Size="12" FillColor="0.5 0.6 0.7">Demonstrating reusable XML components</Text>
+
+            <!-- ========== SECTION 1: Basic Include ========== -->
+            <Text X="225" Y="590" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Basic Include</Text>
+            <Rectangle X="25" Y="580" Width="400" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="25" Y="400" Width="400" Height="170">
+                <Rectangle Width="400" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.25 0.25 0.3" LineWidth="1"/>
+                <Text X="200" Y="150" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.6 0.6">Content from components/shapes.xml</Text>
+
+                <!-- Include the shapes component -->
+                <Include>components/shapes.xml</Include>
+            </Container>
+
+            <!-- ========== SECTION 2: Constants with Includes ========== -->
+            <Text X="675" Y="590" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Constants with Includes</Text>
+            <Rectangle X="475" Y="580" Width="400" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="475" Y="400" Width="400" Height="170">
+                <Rectangle Width="400" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.25 0.25 0.3" LineWidth="1"/>
+                <Text X="200" Y="150" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.6 0.6">Uses #ConstantName syntax</Text>
+
+                <Constant Name="BoxColor">0.8 0.3 0.3</Constant>
+                <Constant Name="BoxX">50</Constant>
+                <Include>components/colored_box.xml</Include>
+
+                <Constant Name="BoxColor">0.3 0.8 0.3</Constant>
+                <Constant Name="BoxX">175</Constant>
+                <Include>components/colored_box.xml</Include>
+
+                <Constant Name="BoxColor">0.3 0.3 0.8</Constant>
+                <Constant Name="BoxX">300</Constant>
+                <Include>components/colored_box.xml</Include>
+            </Container>
+
+            <!-- ========== SECTION 3: Multiple Includes ========== -->
+            <Text X="225" Y="360" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Multiple Includes</Text>
+            <Rectangle X="25" Y="350" Width="400" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="25" Y="180" Width="400" Height="160">
+                <Rectangle Width="400" Height="160" FillColor="0.12 0.12 0.15" LineColor="0.25 0.25 0.3" LineWidth="1"/>
+                <Text X="200" Y="140" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.6 0.6">Same file included multiple times</Text>
+
+                <Container X="20" Y="20" Width="110" Height="100">
+                    <Include>components/spinning_rect.xml</Include>
+                </Container>
+
+                <Container X="145" Y="20" Width="110" Height="100">
+                    <Include>components/spinning_rect.xml</Include>
+                </Container>
+
+                <Container X="270" Y="20" Width="110" Height="100">
+                    <Include>components/spinning_rect.xml</Include>
+                </Container>
+            </Container>
+
+            <!-- ========== Reference Section ========== -->
+            <Container X="475" Y="180" Width="400" Height="160">
+                <Rectangle Width="400" Height="160" FillColor="0.12 0.15 0.18" LineColor="0.3 0.4 0.5" LineWidth="1"/>
+                <Text X="200" Y="140" LocalAlignX="#_align_center_" Size="12" FillColor="0.6 0.8 1">Include Syntax Reference</Text>
+
+                <Text X="20" Y="110" Size="10" FillColor="0.8 0.8 0.3">Basic Include:</Text>
+                <Text X="20" Y="90" Size="9" FillColor="0.6 0.6 0.6">&lt;Include&gt;path/to/file.xml&lt;/Include&gt;</Text>
+
+                <Text X="20" Y="65" Size="10" FillColor="0.8 0.8 0.3">With Constants:</Text>
+                <Text X="20" Y="45" Size="9" FillColor="0.6 0.6 0.6">&lt;Constant Name="Param"&gt;value&lt;/Constant&gt;</Text>
+                <Text X="20" Y="30" Size="9" FillColor="0.6 0.6 0.6">&lt;Include&gt;component.xml&lt;/Include&gt;</Text>
+
+                <Text X="20" Y="10" Size="9" FillColor="0.5 0.5 0.5">Use #ConstantName to reference constants in included files</Text>
+            </Container>
+
+            <!-- ========== Bottom Info ========== -->
+            <Container X="25" Y="20" Width="850" Height="140">
+                <Rectangle Width="850" Height="140" FillColor="0.1 0.12 0.15" LineColor="0.25 0.3 0.35" LineWidth="1"/>
+                <Text X="425" Y="120" LocalAlignX="#_align_center_" Size="12" FillColor="0.6 0.8 1">Benefits of Include Files</Text>
+
+                <Text X="50" Y="95" Size="10" FillColor="0.7 0.7 0.7">1. Reusability - Define once, use many times</Text>
+                <Text X="50" Y="75" Size="10" FillColor="0.7 0.7 0.7">2. Maintainability - Change component in one place</Text>
+                <Text X="50" Y="55" Size="10" FillColor="0.7 0.7 0.7">3. Organization - Separate complex UIs into files</Text>
+                <Text X="50" Y="35" Size="10" FillColor="0.7 0.7 0.7">4. Parameterization - Use Constants to customize each instance</Text>
+
+                <Text X="500" Y="95" Size="10" FillColor="0.7 0.7 0.7">Files used in this demo:</Text>
+                <Text X="500" Y="75" Size="9" FillColor="0.5 0.5 0.5">components/shapes.xml</Text>
+                <Text X="500" Y="60" Size="9" FillColor="0.5 0.5 0.5">components/colored_box.xml</Text>
+                <Text X="500" Y="45" Size="9" FillColor="0.5 0.5 0.5">components/spinning_rect.xml</Text>
+            </Container>
+
+        </Panel>
+    </Window>
+</DCAPP>
