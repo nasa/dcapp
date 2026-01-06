@@ -353,12 +353,12 @@
             <Rectangle X="500" Y="625" Width="2" Height="15" LocalAlignX="#_align_center_" FillColor="#_color_white_"/>
             <Text X="520" Y="632" LocalAlignX="#_align_left_" Size="12" FillColor="#_color_white_">+10</Text>
 
-            <!-- Roll rate triangle indicator (slides horizontally) -->
-            <!-- RollRatePos is now 340-460 (pixel X position) -->
-            <Polygon X="@RollRatePos" Y="615" FillColor="#_color_green_">
-                <Vertex X="0" Y="8"/>
-                <Vertex X="-6" Y="-4"/>
-                <Vertex X="6" Y="-4"/>
+            <!-- Roll rate triangle indicator (slides horizontally, above white triangle) -->
+            <!-- Same size as white triangle: 20px base, 20px height, pointing down toward line -->
+            <Polygon X="@RollRatePos" FillColor="#_color_green_" LineColor="#_color_black_" LineWidth="1">
+                <Vertex X="0" Y="640"/>
+                <Vertex X="-10" Y="620"/>
+                <Vertex X="10" Y="620"/>
             </Polygon>
 
             <Text X="#ADI_CenterX" Y="660" LocalAlignX="#_align_center_" Size="12" FillColor="#_color_white_">R</Text>
@@ -383,18 +383,19 @@
             <Rectangle X="600" Y="550" Width="15" Height="2" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_" FillColor="#_color_white_"/>
             <Text X="578" Y="550" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_" Size="12" FillColor="#_color_white_">+10</Text>
 
-            <!-- Pitch rate triangle indicator (slides vertically, LEFT of ticks toward ADI, pointing right) -->
-            <Polygon X="575" Y="@PitchRatePos" FillColor="#_color_green_">
-                <Vertex X="8" Y="0"/>
-                <Vertex X="-4" Y="-6"/>
-                <Vertex X="-4" Y="6"/>
-            </Polygon>
-
             <!-- Fixed white reference triangle (left of line, pointing right, base aligned with line at X=600) -->
             <Polygon FillColor="#_color_white_" LineColor="#_color_black_" LineWidth="1">
                 <Vertex X="580" Y="#ADI_CenterY"/>
                 <Vertex X="600" Y="440"/>
                 <Vertex X="600" Y="460"/>
+            </Polygon>
+
+            <!-- Pitch rate triangle indicator (slides vertically, further left than white, pointing right) -->
+            <!-- Same size as white triangle: 20px base, 20px height -->
+            <Polygon Y="@PitchRatePos" FillColor="#_color_green_" LineColor="#_color_black_" LineWidth="1">
+                <Vertex X="600" Y="0"/>
+                <Vertex X="580" Y="-10"/>
+                <Vertex X="580" Y="10"/>
             </Polygon>
 
             <Text X="640" Y="#ADI_CenterY" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="#_color_white_">P</Text>
@@ -420,18 +421,19 @@
             <Rectangle X="500" Y="260" Width="2" Height="15" LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_" FillColor="#_color_white_"/>
             <Text X="520" Y="268" LocalAlignX="#_align_left_" Size="12" FillColor="#_color_white_">+10</Text>
 
-            <!-- Yaw rate triangle indicator (slides horizontally, below ticks pointing up) -->
-            <Polygon X="@YawRatePos" Y="285" FillColor="#_color_green_">
-                <Vertex X="0" Y="-8"/>
-                <Vertex X="-6" Y="4"/>
-                <Vertex X="6" Y="4"/>
-            </Polygon>
-
             <!-- Fixed white reference triangle (above line, pointing down toward scale) -->
             <Polygon FillColor="#_color_white_" LineColor="#_color_black_" LineWidth="1">
                 <Vertex X="#ADI_CenterX" Y="280"/>
                 <Vertex X="390" Y="260"/>
                 <Vertex X="410" Y="260"/>
+            </Polygon>
+
+            <!-- Yaw rate triangle indicator (slides horizontally, below white triangle, pointing up) -->
+            <!-- Same size as white triangle: 20px base, 20px height -->
+            <Polygon X="@YawRatePos" FillColor="#_color_green_" LineColor="#_color_black_" LineWidth="1">
+                <Vertex X="0" Y="260"/>
+                <Vertex X="-10" Y="280"/>
+                <Vertex X="10" Y="280"/>
             </Polygon>
 
             <Text X="#ADI_CenterX" Y="240" LocalAlignX="#_align_center_" Size="12" FillColor="#_color_white_">Y</Text>
