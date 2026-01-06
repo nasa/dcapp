@@ -3271,7 +3271,7 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                         sbpush(sb_curr_filler, '"');
                     } else if (next_char == '\'') {
                         sbpush(sb_curr_filler, '\'');
-                    } else if (dc_utils_char_in(next_char, "@#$")) {
+                    } else if (dc_utils_char_in(next_char, "@#$%")) {
                         // push only the latter character
                         sbpush(sb_curr_filler, next_char);
                     } else {
