@@ -1,0 +1,302 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="#_variable_double_" InitialValue="0">SWAY</Variable>
+    <Variable Type="#_variable_double_" InitialValue="1">SWAY_DIR</Variable>
+
+    <!-- Falling petal positions -->
+    <Variable Type="#_variable_double_" InitialValue="650">PETAL1_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="580">PETAL2_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="520">PETAL3_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="450">PETAL4_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="380">PETAL5_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="310">PETAL6_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="240">PETAL7_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="170">PETAL8_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="100">PETAL9_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="30">PETAL10_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="620">PETAL11_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="550">PETAL12_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="480">PETAL13_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="410">PETAL14_Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="340">PETAL15_Y</Variable>
+
+    <Window Title="Cherry Blossom Scene" X="30" Y="30" Width="900" Height="700">
+        <Panel VirtualWidth="900" VirtualHeight="700">
+
+            <!-- Animate gentle sway -->
+            <Set Variable="SWAY" Operator="#_set_add_">@SWAY_DIR</Set>
+            <If Value1="@SWAY" Operation="#_conditional_gt_" Value2="15">
+                <Set Variable="SWAY_DIR" Operator="#_set_equal_">-1</Set>
+            </If>
+            <If Value1="@SWAY" Operation="#_conditional_lt_" Value2="-15">
+                <Set Variable="SWAY_DIR" Operator="#_set_equal_">1</Set>
+            </If>
+
+            <!-- Animate falling petals (different speeds for variety) -->
+            <Set Variable="PETAL1_Y" Operator="#_set_subtract_">1.2</Set>
+            <If Value1="@PETAL1_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL1_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL2_Y" Operator="#_set_subtract_">0.8</Set>
+            <If Value1="@PETAL2_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL2_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL3_Y" Operator="#_set_subtract_">1.5</Set>
+            <If Value1="@PETAL3_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL3_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL4_Y" Operator="#_set_subtract_">1.0</Set>
+            <If Value1="@PETAL4_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL4_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL5_Y" Operator="#_set_subtract_">1.3</Set>
+            <If Value1="@PETAL5_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL5_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL6_Y" Operator="#_set_subtract_">0.9</Set>
+            <If Value1="@PETAL6_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL6_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL7_Y" Operator="#_set_subtract_">1.4</Set>
+            <If Value1="@PETAL7_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL7_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL8_Y" Operator="#_set_subtract_">1.1</Set>
+            <If Value1="@PETAL8_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL8_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL9_Y" Operator="#_set_subtract_">0.7</Set>
+            <If Value1="@PETAL9_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL9_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL10_Y" Operator="#_set_subtract_">1.6</Set>
+            <If Value1="@PETAL10_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL10_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL11_Y" Operator="#_set_subtract_">1.0</Set>
+            <If Value1="@PETAL11_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL11_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL12_Y" Operator="#_set_subtract_">1.3</Set>
+            <If Value1="@PETAL12_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL12_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL13_Y" Operator="#_set_subtract_">0.85</Set>
+            <If Value1="@PETAL13_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL13_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL14_Y" Operator="#_set_subtract_">1.25</Set>
+            <If Value1="@PETAL14_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL14_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <Set Variable="PETAL15_Y" Operator="#_set_subtract_">0.95</Set>
+            <If Value1="@PETAL15_Y" Operation="#_conditional_lt_" Value2="-10">
+                <Set Variable="PETAL15_Y" Operator="#_set_equal_">710</Set>
+            </If>
+
+            <!-- ========== SKY GRADIENT (stacked rectangles) ========== -->
+            <Rectangle Y="600" Width="900" Height="100" FillColor="0.95 0.75 0.8"/>
+            <Rectangle Y="500" Width="900" Height="100" FillColor="0.85 0.7 0.85"/>
+            <Rectangle Y="400" Width="900" Height="100" FillColor="0.7 0.65 0.9"/>
+            <Rectangle Y="300" Width="900" Height="100" FillColor="0.55 0.6 0.85"/>
+            <Rectangle Y="200" Width="900" Height="100" FillColor="0.45 0.55 0.8"/>
+            <Rectangle Y="100" Width="900" Height="100" FillColor="0.4 0.5 0.75"/>
+            <Rectangle Y="0" Width="900" Height="100" FillColor="0.35 0.45 0.7"/>
+
+            <!-- ========== DISTANT MOUNTAINS ========== -->
+            <!-- Far mountain (lighter, more blue) -->
+            <Polygon FillColor="0.6 0.55 0.7">
+                <Vertex X="0" Y="250"/>
+                <Vertex X="200" Y="450"/>
+                <Vertex X="400" Y="250"/>
+            </Polygon>
+
+            <!-- Main mountain (Mt. Fuji style) -->
+            <Polygon FillColor="0.45 0.4 0.55">
+                <Vertex X="250" Y="250"/>
+                <Vertex X="450" Y="520"/>
+                <Vertex X="650" Y="250"/>
+            </Polygon>
+
+            <!-- Snow cap -->
+            <Polygon FillColor="1 1 1">
+                <Vertex X="380" Y="420"/>
+                <Vertex X="450" Y="520"/>
+                <Vertex X="520" Y="420"/>
+            </Polygon>
+            <Polygon FillColor="0.95 0.95 1">
+                <Vertex X="400" Y="450"/>
+                <Vertex X="450" Y="520"/>
+                <Vertex X="500" Y="450"/>
+            </Polygon>
+
+            <!-- Right distant mountain -->
+            <Polygon FillColor="0.55 0.5 0.65">
+                <Vertex X="550" Y="250"/>
+                <Vertex X="750" Y="400"/>
+                <Vertex X="900" Y="280"/>
+            </Polygon>
+
+            <!-- ========== GROUND / GRASS ========== -->
+            <Rectangle Width="900" Height="250" FillColor="0.35 0.5 0.35"/>
+            <Rectangle Width="900" Height="180" FillColor="0.4 0.55 0.38"/>
+            <Rectangle Width="900" Height="100" FillColor="0.45 0.6 0.4"/>
+
+            <!-- ========== POND ========== -->
+            <Circle X="650" Y="80" Radius="100" FillColor="0.4 0.55 0.7"/>
+            <Circle X="650" Y="80" Radius="85" FillColor="0.45 0.6 0.75"/>
+            <Circle X="650" Y="80" Radius="70" FillColor="0.5 0.65 0.8"/>
+
+            <!-- Pond reflection shimmer -->
+            <Rectangle X="600" Y="90" Width="40" Height="4" FillColor="0.7 0.8 0.9"/>
+            <Rectangle X="660" Y="70" Width="30" Height="3" FillColor="0.7 0.8 0.9"/>
+            <Rectangle X="620" Y="55" Width="25" Height="3" FillColor="0.65 0.75 0.85"/>
+
+            <!-- ========== CHERRY TREE TRUNK ========== -->
+            <!-- Main trunk -->
+            <Rectangle X="130" Y="0" Width="40" Height="280" FillColor="0.35 0.25 0.2"/>
+            <Rectangle X="135" Y="0" Width="30" Height="280" FillColor="0.4 0.3 0.25"/>
+
+            <!-- Trunk texture -->
+            <Rectangle X="140" Y="50" Width="15" Height="3" FillColor="0.3 0.2 0.15"/>
+            <Rectangle X="145" Y="120" Width="12" Height="2" FillColor="0.3 0.2 0.15"/>
+            <Rectangle X="138" Y="180" Width="18" Height="3" FillColor="0.3 0.2 0.15"/>
+
+            <!-- Main branches -->
+            <Container X="150" Y="280" Rotation="@SWAY">
+                <!-- Branch going right -->
+                <Polygon FillColor="0.38 0.28 0.22">
+                    <Vertex X="0" Y="0"/>
+                    <Vertex X="150" Y="80"/>
+                    <Vertex X="145" Y="70"/>
+                    <Vertex X="0" Y="-10"/>
+                </Polygon>
+
+                <!-- Branch going left -->
+                <Polygon FillColor="0.38 0.28 0.22">
+                    <Vertex X="0" Y="0"/>
+                    <Vertex X="-120" Y="100"/>
+                    <Vertex X="-115" Y="90"/>
+                    <Vertex X="0" Y="-10"/>
+                </Polygon>
+
+                <!-- Branch going up-right -->
+                <Polygon FillColor="0.36 0.26 0.2">
+                    <Vertex X="0" Y="0"/>
+                    <Vertex X="80" Y="150"/>
+                    <Vertex X="70" Y="145"/>
+                    <Vertex X="-5" Y="0"/>
+                </Polygon>
+
+                <!-- Sub-branches -->
+                <Polygon FillColor="0.35 0.25 0.2">
+                    <Vertex X="100" Y="55"/>
+                    <Vertex X="180" Y="120"/>
+                    <Vertex X="175" Y="115"/>
+                    <Vertex X="95" Y="50"/>
+                </Polygon>
+
+                <Polygon FillColor="0.35 0.25 0.2">
+                    <Vertex X="-80" Y="70"/>
+                    <Vertex X="-150" Y="130"/>
+                    <Vertex X="-145" Y="125"/>
+                    <Vertex X="-75" Y="65"/>
+                </Polygon>
+
+                <!-- ========== CHERRY BLOSSOMS ========== -->
+                <!-- Cluster 1 - right branch -->
+                <Circle X="160" Y="90" Radius="35" FillColor="1 0.85 0.88"/>
+                <Circle X="140" Y="110" Radius="30" FillColor="1 0.82 0.86"/>
+                <Circle X="180" Y="100" Radius="28" FillColor="0.98 0.8 0.85"/>
+                <Circle X="150" Y="75" Radius="25" FillColor="1 0.88 0.9"/>
+                <Circle X="175" Y="120" Radius="22" FillColor="0.95 0.78 0.83"/>
+
+                <!-- Cluster 2 - left branch -->
+                <Circle X="-130" Y="110" Radius="32" FillColor="1 0.84 0.87"/>
+                <Circle X="-110" Y="130" Radius="28" FillColor="0.98 0.82 0.86"/>
+                <Circle X="-150" Y="120" Radius="26" FillColor="1 0.86 0.88"/>
+                <Circle X="-125" Y="95" Radius="24" FillColor="0.96 0.8 0.84"/>
+                <Circle X="-145" Y="140" Radius="20" FillColor="1 0.88 0.9"/>
+
+                <!-- Cluster 3 - top branch -->
+                <Circle X="75" Y="160" Radius="30" FillColor="1 0.85 0.88"/>
+                <Circle X="90" Y="145" Radius="26" FillColor="0.98 0.83 0.86"/>
+                <Circle X="60" Y="175" Radius="24" FillColor="1 0.87 0.89"/>
+                <Circle X="95" Y="170" Radius="22" FillColor="0.97 0.81 0.85"/>
+
+                <!-- Cluster 4 - far right sub-branch -->
+                <Circle X="185" Y="125" Radius="25" FillColor="1 0.86 0.88"/>
+                <Circle X="200" Y="115" Radius="22" FillColor="0.98 0.84 0.87"/>
+                <Circle X="175" Y="140" Radius="20" FillColor="1 0.88 0.9"/>
+
+                <!-- Cluster 5 - far left sub-branch -->
+                <Circle X="-160" Y="135" Radius="24" FillColor="1 0.85 0.87"/>
+                <Circle X="-175" Y="125" Radius="20" FillColor="0.97 0.83 0.86"/>
+                <Circle X="-150" Y="150" Radius="18" FillColor="1 0.87 0.89"/>
+
+                <!-- Small accent blossoms -->
+                <Circle X="120" Y="65" Radius="15" FillColor="1 0.9 0.92"/>
+                <Circle X="-90" Y="85" Radius="14" FillColor="1 0.89 0.91"/>
+                <Circle X="50" Y="130" Radius="16" FillColor="0.98 0.87 0.9"/>
+                <Circle X="-100" Y="150" Radius="13" FillColor="1 0.9 0.91"/>
+            </Container>
+
+            <!-- ========== FALLING PETALS (animated) ========== -->
+            <Circle X="350" Y="@PETAL1_Y" Radius="4" FillColor="1 0.88 0.9"/>
+            <Circle X="420" Y="@PETAL2_Y" Radius="3" FillColor="1 0.85 0.88"/>
+            <Circle X="280" Y="@PETAL3_Y" Radius="4" FillColor="0.98 0.86 0.89"/>
+            <Circle X="500" Y="@PETAL4_Y" Radius="3" FillColor="1 0.87 0.9"/>
+            <Circle X="380" Y="@PETAL5_Y" Radius="3" FillColor="0.97 0.84 0.87"/>
+            <Circle X="620" Y="@PETAL6_Y" Radius="4" FillColor="1 0.89 0.91"/>
+            <Circle X="450" Y="@PETAL7_Y" Radius="3" FillColor="1 0.86 0.89"/>
+            <Circle X="250" Y="@PETAL8_Y" Radius="3" FillColor="0.98 0.85 0.88"/>
+            <Circle X="700" Y="@PETAL9_Y" Radius="4" FillColor="1 0.88 0.9"/>
+            <Circle X="180" Y="@PETAL10_Y" Radius="3" FillColor="1 0.87 0.89"/>
+            <Circle X="520" Y="@PETAL11_Y" Radius="4" FillColor="0.98 0.86 0.89"/>
+            <Circle X="320" Y="@PETAL12_Y" Radius="3" FillColor="1 0.85 0.88"/>
+            <Circle X="750" Y="@PETAL13_Y" Radius="3" FillColor="1 0.88 0.9"/>
+            <Circle X="580" Y="@PETAL14_Y" Radius="4" FillColor="0.97 0.84 0.87"/>
+            <Circle X="400" Y="@PETAL15_Y" Radius="3" FillColor="1 0.89 0.91"/>
+
+            <!-- ========== SMALL FLOWERS IN GRASS ========== -->
+            <!-- Pink flowers -->
+            <Circle X="50" Y="30" Radius="6" FillColor="1 0.7 0.75"/>
+            <Circle X="120" Y="45" Radius="5" FillColor="0.95 0.65 0.7"/>
+            <Circle X="300" Y="25" Radius="6" FillColor="1 0.72 0.77"/>
+            <Circle X="380" Y="50" Radius="5" FillColor="0.98 0.68 0.73"/>
+            <Circle X="480" Y="35" Radius="6" FillColor="1 0.7 0.75"/>
+
+            <!-- White flowers -->
+            <Circle X="80" Y="55" Radius="4" FillColor="1 1 0.95"/>
+            <Circle X="220" Y="40" Radius="5" FillColor="1 1 0.97"/>
+            <Circle X="420" Y="30" Radius="4" FillColor="0.98 0.98 0.95"/>
+            <Circle X="550" Y="55" Radius="5" FillColor="1 1 0.96"/>
+
+            <!-- ========== STONES BY POND ========== -->
+            <Circle X="550" Y="45" Radius="15" FillColor="0.5 0.48 0.45"/>
+            <Circle X="570" Y="35" Radius="12" FillColor="0.55 0.52 0.48"/>
+            <Circle X="540" Y="30" Radius="10" FillColor="0.52 0.5 0.46"/>
+            <Circle X="750" Y="50" Radius="14" FillColor="0.48 0.46 0.43"/>
+            <Circle X="770" Y="40" Radius="11" FillColor="0.53 0.5 0.47"/>
+
+            <!-- ========== SUN/MOON ========== -->
+            <Circle X="780" Y="600" Radius="50" FillColor="1 0.95 0.85"/>
+            <Circle X="780" Y="600" Radius="45" FillColor="1 0.98 0.9"/>
+
+        </Panel>
+    </Window>
+</DCAPP>
