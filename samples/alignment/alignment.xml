@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="#_variable_double_" InitialValue="0">ROTATION</Variable>
+
+    <Window Title="Alignment Demo" X="30" Y="30" Width="900" Height="700">
+        <Default>
+            <Text Size="12" FillColor="1 1 1"/>
+        </Default>
+
+        <Panel VirtualWidth="900" VirtualHeight="700" BackgroundColor="0.1 0.1 0.12">
+
+            <!-- Animate rotation -->
+            <Set Variable="ROTATION" Operator="#_set_add_">1</Set>
+            <If Value1="@ROTATION" Operation="#_conditional_gt_" Value2="360">
+                <Set Variable="ROTATION" Operator="#_set_equal_">0</Set>
+            </If>
+
+            <!-- Title -->
+            <Text X="450" Y="680" LocalAlignX="#_align_center_" Size="24" FillColor="1 1 1">Alignment Demo</Text>
+
+            <!-- ========== SECTION 1: ParentAlign Demo ========== -->
+            <Text X="260" Y="640" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">ParentAlign</Text>
+            <Rectangle X="60" Y="630" Width="400" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <!-- Parent container -->
+            <Container X="60" Y="470" Width="400" Height="150">
+                <Rectangle Width="400" Height="150" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <!-- 3x3 grid showing all ParentAlign combinations -->
+                <!-- Top row -->
+                <Rectangle Width="50" Height="25" ParentAlignX="#_align_left_" ParentAlignY="#_align_top_"
+                    LocalAlignX="#_align_left_" LocalAlignY="#_align_top_"
+                    FillColor="0.8 0.3 0.3" LineColor="1 0.5 0.5" LineWidth="1"/>
+
+                <Rectangle Width="50" Height="25" ParentAlignX="#_align_center_" ParentAlignY="#_align_top_"
+                    LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
+                    FillColor="0.3 0.8 0.3" LineColor="0.5 1 0.5" LineWidth="1"/>
+
+                <Rectangle Width="50" Height="25" ParentAlignX="#_align_right_" ParentAlignY="#_align_top_"
+                    LocalAlignX="#_align_right_" LocalAlignY="#_align_top_"
+                    FillColor="0.3 0.3 0.8" LineColor="0.5 0.5 1" LineWidth="1"/>
+
+                <!-- Middle row -->
+                <Rectangle Width="50" Height="25" ParentAlignX="#_align_left_" ParentAlignY="#_align_middle_"
+                    LocalAlignX="#_align_left_" LocalAlignY="#_align_middle_"
+                    FillColor="0.8 0.8 0.3" LineColor="1 1 0.5" LineWidth="1"/>
+
+                <Rectangle Width="50" Height="25" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                    LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                    FillColor="0.8 0.3 0.8" LineColor="1 0.5 1" LineWidth="1"/>
+
+                <Rectangle Width="50" Height="25" ParentAlignX="#_align_right_" ParentAlignY="#_align_middle_"
+                    LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                    FillColor="0.3 0.8 0.8" LineColor="0.5 1 1" LineWidth="1"/>
+
+                <!-- Bottom row -->
+                <Rectangle Width="50" Height="25" ParentAlignX="#_align_left_" ParentAlignY="#_align_bottom_"
+                    LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_"
+                    FillColor="0.6 0.4 0.2" LineColor="0.8 0.6 0.4" LineWidth="1"/>
+
+                <Rectangle Width="50" Height="25" ParentAlignX="#_align_center_" ParentAlignY="#_align_bottom_"
+                    LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
+                    FillColor="0.4 0.6 0.2" LineColor="0.6 0.8 0.4" LineWidth="1"/>
+
+                <Rectangle Width="50" Height="25" ParentAlignX="#_align_right_" ParentAlignY="#_align_bottom_"
+                    LocalAlignX="#_align_right_" LocalAlignY="#_align_bottom_"
+                    FillColor="0.2 0.4 0.6" LineColor="0.4 0.6 0.8" LineWidth="1"/>
+            </Container>
+
+            <!-- Labels for ParentAlign - horizontal -->
+            <Text X="85" Y="455" Size="9" FillColor="0.6 0.6 0.6">left</Text>
+            <Text X="260" Y="455" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">center</Text>
+            <Text X="435" Y="455" LocalAlignX="#_align_right_" Size="9" FillColor="0.6 0.6 0.6">right</Text>
+
+            <!-- Labels for ParentAlign - vertical -->
+            <Text X="50" Y="608" LocalAlignX="#_align_right_" Size="9" FillColor="0.6 0.6 0.6">top</Text>
+            <Text X="50" Y="545" LocalAlignX="#_align_right_" Size="9" FillColor="0.6 0.6 0.6">middle</Text>
+            <Text X="50" Y="482" LocalAlignX="#_align_right_" Size="9" FillColor="0.6 0.6 0.6">bottom</Text>
+
+            <!-- ========== SECTION 2: LocalAlign Demo ========== -->
+            <Text X="675" Y="640" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">LocalAlign (Anchor Point)</Text>
+            <Rectangle X="475" Y="630" Width="400" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="475" Y="470" Width="400" Height="150">
+                <Rectangle Width="400" Height="150" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <!-- Reference point -->
+                <Circle X="200" Y="75" Radius="5" FillColor="1 1 0"/>
+
+                <!-- All rectangles at same X=200, Y=75 with different LocalAlign -->
+                <Rectangle X="200" Y="75" Width="60" Height="35"
+                    LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_"
+                    FillColor="0.8 0.3 0.3 0.7"/>
+                <Text X="230" Y="92" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="7" FillColor="1 1 1">left\nbottom</Text>
+
+                <Rectangle X="200" Y="75" Width="60" Height="35"
+                    LocalAlignX="#_align_right_" LocalAlignY="#_align_bottom_"
+                    FillColor="0.3 0.8 0.3 0.7"/>
+                <Text X="170" Y="92" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="7" FillColor="1 1 1">right\nbottom</Text>
+
+                <Rectangle X="200" Y="75" Width="60" Height="35"
+                    LocalAlignX="#_align_left_" LocalAlignY="#_align_top_"
+                    FillColor="0.3 0.3 0.8 0.7"/>
+                <Text X="230" Y="58" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="7" FillColor="1 1 1">left\ntop</Text>
+
+                <Rectangle X="200" Y="75" Width="60" Height="35"
+                    LocalAlignX="#_align_right_" LocalAlignY="#_align_top_"
+                    FillColor="0.8 0.8 0.3 0.7"/>
+                <Text X="170" Y="58" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="7" FillColor="0 0 0">right\ntop</Text>
+
+                <Text X="200" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.7">All 4 rectangles positioned at yellow dot</Text>
+            </Container>
+
+            <!-- ========== SECTION 3: Text Alignment ========== -->
+            <Text X="260" Y="420" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Text LocalAlign</Text>
+            <Rectangle X="60" Y="410" Width="400" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="60" Y="280" Width="400" Height="120">
+                <Rectangle Width="400" Height="120" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <!-- Vertical reference line -->
+                <Rectangle X="200" Y="60" Width="2" Height="120" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" FillColor="0.4 0.4 0.4"/>
+
+                <!-- Text alignment examples -->
+                <Circle X="200" Y="90" Radius="4" FillColor="1 0.3 0.3"/>
+                <Text X="200" Y="90" LocalAlignX="#_align_left_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">Left aligned</Text>
+
+                <Circle X="200" Y="60" Radius="4" FillColor="0.3 1 0.3"/>
+                <Text X="200" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">Center aligned</Text>
+
+                <Circle X="200" Y="30" Radius="4" FillColor="0.3 0.3 1"/>
+                <Text X="200" Y="30" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">Right aligned</Text>
+            </Container>
+
+            <!-- ========== SECTION 4: Pivot Alignment (Rotation) ========== -->
+            <Text X="675" Y="420" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">PivotLocalAlign (Rotation)</Text>
+            <Rectangle X="475" Y="410" Width="400" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="475" Y="280" Width="400" Height="120">
+                <Rectangle Width="400" Height="120" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <!-- Bottom-left pivot -->
+                <Circle X="70" Y="60" Radius="4" FillColor="1 1 0"/>
+                <Container X="70" Y="60" Width="50" Height="15" Rotation="@ROTATION"
+                    LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_"
+                    PivotLocalAlignX="#_align_left_" PivotLocalAlignY="#_align_bottom_">
+                    <Rectangle Width="50" Height="15" FillColor="0.8 0.3 0.3" LineColor="1 0.5 0.5" LineWidth="1"/>
+                </Container>
+                <Text X="70" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.7">left, bottom</Text>
+
+                <!-- Center-middle pivot -->
+                <Circle X="200" Y="60" Radius="4" FillColor="1 1 0"/>
+                <Container X="200" Y="60" Width="50" Height="15" Rotation="@ROTATION"
+                    LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                    PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_middle_">
+                    <Rectangle Width="50" Height="15" FillColor="0.3 0.8 0.3" LineColor="0.5 1 0.5" LineWidth="1"/>
+                </Container>
+                <Text X="200" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.7">center, middle</Text>
+
+                <!-- Top-right pivot -->
+                <Circle X="330" Y="60" Radius="4" FillColor="1 1 0"/>
+                <Container X="330" Y="60" Width="50" Height="15" Rotation="@ROTATION"
+                    LocalAlignX="#_align_right_" LocalAlignY="#_align_top_"
+                    PivotLocalAlignX="#_align_right_" PivotLocalAlignY="#_align_top_">
+                    <Rectangle Width="50" Height="15" FillColor="0.3 0.3 0.8" LineColor="0.5 0.5 1" LineWidth="1"/>
+                </Container>
+                <Text X="330" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.7">right, top</Text>
+
+                <Text X="200" Y="105" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.7">Spinning around yellow dots</Text>
+            </Container>
+
+            <!-- ========== SECTION 5: Combined Example ========== -->
+            <Text X="450" Y="230" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Combined: Perfect Centering</Text>
+            <Rectangle X="175" Y="220" Width="550" Height="2" FillColor="0.3 0.5 0.7"/>
+
+            <Container X="175" Y="30" Width="550" Height="180">
+                <Rectangle Width="550" Height="180" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
+
+                <!-- Perfectly centered element -->
+                <Rectangle Width="200" Height="80"
+                    ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                    LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                    FillColor="0.2 0.3 0.5" LineColor="0.4 0.6 0.9" LineWidth="2"/>
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                    LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                    Size="11" FillColor="1 1 1">Perfectly Centered</Text>
+
+                <Text X="10" Y="10" Size="8" FillColor="0.5 0.5 0.5">ParentAlign + LocalAlign = center/middle</Text>
+            </Container>
+
+        </Panel>
+    </Window>
+</DCAPP>
