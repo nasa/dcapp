@@ -303,6 +303,7 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
 void dc_app_config_cleanup(DcAppConfig *config) {
     free(config->config_file_path);
     free(config->config_dir_path);
+    free(config->dcapp_dir_path);
     free(config->cache_dir_path);
     free(config->log_dir_path);
     xmlFreeDoc(config->xml_doc);
@@ -310,13 +311,24 @@ void dc_app_config_cleanup(DcAppConfig *config) {
     _ConfigContext *context = &(_sb_contexts[config->_index]);
     sbfree(context->sb_style_name_offsets);
     sbfree(context->sb_style_names);
+
+    // free style xml nodes
+    for (int ii = 0; ii < sbcount(context->sb_styles); ii++) {
+        for (int jj = 0; jj < DC_APP_ELEM_TYPE__COUNT; jj++) {
+            if (context->sb_styles[ii].xml_nodes[jj]) {
+                xmlFreeNode(context->sb_styles[ii].xml_nodes[jj]);
+            }
+        }
+    }
     sbfree(context->sb_styles);
+
     sbfree(context->sb_const_names);
     sbfree(context->sb_const_name_offsets);
     for (int ii = 0; ii < sbcount(context->sb_consts); ii++) {
-        free(context->sb_consts[ii].val);
+        sbfree(context->sb_consts[ii].val);
     }
     sbfree(context->sb_consts);
+    free(config);
 }
 
 void dc_app_config_clean_xml(DcAppConfig *config, DcAppLookup *lookup) {

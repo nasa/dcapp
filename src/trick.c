@@ -103,6 +103,8 @@ void dc_trick_cleanup(DcTrick *trick) {
     sbfree(context->rx_cmd_offsets);
     sbfree(context->rx_oad_vars);
     sbfree(context->rx_oad_var_offsets);
+    sbfree(context->rx_oad_var_values);
+    sbfree(context->rx_oad_var_value_offsets);
     sbfree(context->tx_cmds);
     sbfree(context->tx_cmd_offsets);
     sbfree(context->tx_buffer);

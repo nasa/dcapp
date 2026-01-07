@@ -459,8 +459,10 @@ static void
 pl_return_2d_drawlist(plDrawList2D* ptDrawlist)
 {
     pl_sb_free(ptDrawlist->sbtVertexBuffer);
+    pl_sb_free(ptDrawlist->sbuIndexBuffer);
+    pl_sb_free(ptDrawlist->sbtDrawCommands);
     pl_sb_free(ptDrawlist->_sbtLayerCache);
-    pl_sb_free(ptDrawlist->_sbtSubmittedLayers)
+    pl_sb_free(ptDrawlist->_sbtSubmittedLayers);
 
     for(uint32_t j = 0; j < pl_sb_size(ptDrawlist->_sbtLayersCreated); j++)
     {
@@ -505,6 +507,8 @@ pl_return_3d_drawlist(plDrawList3D* ptDrawlist)
     pl_sb_free(ptDrawlist->sbtLineVertexBuffer);
     pl_sb_free(ptDrawlist->sbtSolidIndexBuffer);
     pl_sb_free(ptDrawlist->sbtSolidVertexBuffer);
+    pl_sb_free(ptDrawlist->sbtTexturedVertexBuffer);
+    pl_sb_free(ptDrawlist->sbtTexturedIndexBuffer);
 
     uint32_t uCurrentIndex = 0;
     for(uint32_t i = 0; i < gptDrawCtx->uDrawlistCount3D; i++)
