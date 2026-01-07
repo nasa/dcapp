@@ -215,7 +215,3 @@ out_script_linux = build_script_out_dir_abs + "/" + "build_samples_linux.sh"
 win32.generate_build(out_script_win32)
 apple.generate_build(out_script_macos)
 linux.generate_build(out_script_linux)
-
-if plat.system() in ("Darwin", "Linux"):
-    os.chmod(out_script_macos, 0o755)
-    os.chmod(out_script_linux, 0o755)

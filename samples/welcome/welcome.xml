@@ -1,0 +1,552 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <!-- DCAPP Welcome Screen - Showcases Framework Features -->
+
+    <!-- ==================== CONSTANTS ==================== -->
+    <Constant Name="PanelWidth">1200</Constant>
+    <Constant Name="PanelHeight">800</Constant>
+    <Constant Name="CenterX">600</Constant>
+    <Constant Name="CenterY">400</Constant>
+
+    <!-- Color palette -->
+    <Constant Name="BgDark">0.04 0.04 0.06</Constant>
+    <Constant Name="BgMedium">0.08 0.08 0.12</Constant>
+    <Constant Name="AccentBlue">0.2 0.6 1</Constant>
+    <Constant Name="AccentCyan">0.2 0.9 0.9</Constant>
+    <Constant Name="AccentPurple">0.6 0.3 0.9</Constant>
+    <Constant Name="AccentPink">0.9 0.3 0.6</Constant>
+    <Constant Name="AccentOrange">1 0.5 0.2</Constant>
+    <Constant Name="TextWhite">0.95 0.95 0.97</Constant>
+    <Constant Name="TextDim">0.5 0.5 0.55</Constant>
+
+    <!-- ==================== ANIMATION VARIABLES ==================== -->
+    <Variable Type="#_variable_double_" InitialValue="0">Time</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">PulseAngle</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">OrbitAngle</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">WavePhase</Variable>
+
+    <!-- Computed animation values -->
+    <Variable Type="#_variable_double_">PulseScale</Variable>
+    <Variable Type="#_variable_double_">GlowAlpha</Variable>
+    <Variable Type="#_variable_double_">Orbit1X</Variable>
+    <Variable Type="#_variable_double_">Orbit1Y</Variable>
+    <Variable Type="#_variable_double_">Orbit2X</Variable>
+    <Variable Type="#_variable_double_">Orbit2Y</Variable>
+    <Variable Type="#_variable_double_">Orbit3X</Variable>
+    <Variable Type="#_variable_double_">Orbit3Y</Variable>
+
+    <!-- Ring animation -->
+    <Variable Type="#_variable_double_" InitialValue="0">Ring1Angle</Variable>
+    <Variable Type="#_variable_double_" InitialValue="120">Ring2Angle</Variable>
+    <Variable Type="#_variable_double_" InitialValue="240">Ring3Angle</Variable>
+
+    <!-- Sphere rotation -->
+    <Variable Type="#_variable_double_" InitialValue="0">SphereYaw</Variable>
+    <Variable Type="#_variable_double_" InitialValue="15">SpherePitch</Variable>
+
+    <!-- Particle positions (floating elements) -->
+    <Variable Type="#_variable_double_" InitialValue="100">Particle1X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="600">Particle1Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="1000">Particle2X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="200">Particle2Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="200">Particle3X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="150">Particle3Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="950">Particle4X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="650">Particle4Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="450">Particle5X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="400">Particle5Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="750">Particle6X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="100">Particle6Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="550">Particle7X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="700">Particle7Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="350">Particle8X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="300">Particle8Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="850">Particle9X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="500">Particle9Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="150">Particle10X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="250">Particle10Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="1100">Particle11X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="450">Particle11Y</Variable>
+    <Variable Type="#_variable_double_" InitialValue="650">Particle12X</Variable>
+    <Variable Type="#_variable_double_" InitialValue="550">Particle12Y</Variable>
+
+    <!-- Demo section states -->
+    <Variable Type="#_variable_integer_" InitialValue="1">ShowPrimitives</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="1">ShowAnimation</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="1">ShowInteractive</Variable>
+
+    <!-- Interactive demo variables -->
+    <Variable Type="#_variable_double_" InitialValue="50">SliderValue</Variable>
+    <Variable Type="#_variable_integer_">SliderSelected</Variable>
+    <Variable Type="#_variable_double_">SliderColor</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">ButtonState</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">ToggleState</Variable>
+
+    <!-- ==================== STYLES ==================== -->
+    <Style Name="CardBg">
+        <Rectangle FillColor="0.06 0.06 0.09" LineColor="0.15 0.15 0.2" LineWidth="1"/>
+    </Style>
+
+    <Style Name="Heading">
+        <Text Size="16" FillColor="#TextWhite"/>
+    </Style>
+
+    <Style Name="Label">
+        <Text Size="11" FillColor="#TextDim"/>
+    </Style>
+
+    <!-- ==================== DEFAULTS ==================== -->
+    <Default>
+        <Text Size="14" FillColor="#TextWhite"/>
+    </Default>
+
+    <!-- ==================== WINDOW ==================== -->
+    <Window Title="Welcome to DCAPP" X="30" Y="30" Width="1200" Height="800">
+        <Panel VirtualWidth="#PanelWidth" VirtualHeight="#PanelHeight" BackgroundColor="#BgDark">
+
+            <!-- ==================== ANIMATION LOGIC ==================== -->
+
+            <!-- Increment time -->
+            <Set Variable="Time" Operator="#_set_add_">0.016</Set>
+
+            <!-- Pulse animation (0-360 degrees) -->
+            <Set Variable="PulseAngle" Operator="#_set_add_">2</Set>
+            <If Value1="@PulseAngle" Operation="#_conditional_gt_" Value2="360">
+                <Set Variable="PulseAngle" Operator="#_set_subtract_">360</Set>
+            </If>
+
+            <!-- Orbit animation -->
+            <Set Variable="OrbitAngle" Operator="#_set_add_">0.8</Set>
+            <If Value1="@OrbitAngle" Operation="#_conditional_gt_" Value2="360">
+                <Set Variable="OrbitAngle" Operator="#_set_subtract_">360</Set>
+            </If>
+
+            <!-- Wave phase -->
+            <Set Variable="WavePhase" Operator="#_set_add_">3</Set>
+            <If Value1="@WavePhase" Operation="#_conditional_gt_" Value2="360">
+                <Set Variable="WavePhase" Operator="#_set_subtract_">360</Set>
+            </If>
+
+            <!-- Ring rotations at different speeds -->
+            <Set Variable="Ring1Angle" Operator="#_set_add_">0.5</Set>
+            <Set Variable="Ring2Angle" Operator="#_set_add_">-0.7</Set>
+            <Set Variable="Ring3Angle" Operator="#_set_add_">0.3</Set>
+
+            <!-- Sphere rotation -->
+            <Set Variable="SphereYaw" Operator="#_set_add_">0.4</Set>
+            <If Value1="@SphereYaw" Operation="#_conditional_gt_" Value2="360">
+                <Set Variable="SphereYaw" Operator="#_set_subtract_">360</Set>
+            </If>
+
+            <!-- Floating particle animations -->
+            <Set Variable="Particle1Y" Operator="#_set_add_">0.3</Set>
+            <If Value1="@Particle1Y" Operation="#_conditional_gt_" Value2="800">
+                <Set Variable="Particle1Y">0</Set>
+            </If>
+            <Set Variable="Particle2Y" Operator="#_set_add_">0.5</Set>
+            <If Value1="@Particle2Y" Operation="#_conditional_gt_" Value2="800">
+                <Set Variable="Particle2Y">0</Set>
+            </If>
+            <Set Variable="Particle3Y" Operator="#_set_add_">0.4</Set>
+            <If Value1="@Particle3Y" Operation="#_conditional_gt_" Value2="800">
+                <Set Variable="Particle3Y">0</Set>
+            </If>
+            <Set Variable="Particle4Y" Operator="#_set_add_">0.6</Set>
+            <If Value1="@Particle4Y" Operation="#_conditional_gt_" Value2="800">
+                <Set Variable="Particle4Y">0</Set>
+            </If>
+            <Set Variable="Particle5Y" Operator="#_set_add_">0.35</Set>
+            <If Value1="@Particle5Y" Operation="#_conditional_gt_" Value2="800">
+                <Set Variable="Particle5Y">0</Set>
+            </If>
+            <Set Variable="Particle6Y" Operator="#_set_add_">0.55</Set>
+            <If Value1="@Particle6Y" Operation="#_conditional_gt_" Value2="800">
+                <Set Variable="Particle6Y">0</Set>
+            </If>
+            <Set Variable="Particle7Y" Operator="#_set_add_">0.25</Set>
+            <If Value1="@Particle7Y" Operation="#_conditional_gt_" Value2="800">
+                <Set Variable="Particle7Y">0</Set>
+            </If>
+            <Set Variable="Particle8Y" Operator="#_set_add_">0.45</Set>
+            <If Value1="@Particle8Y" Operation="#_conditional_gt_" Value2="800">
+                <Set Variable="Particle8Y">0</Set>
+            </If>
+            <Set Variable="Particle9Y" Operator="#_set_add_">0.38</Set>
+            <If Value1="@Particle9Y" Operation="#_conditional_gt_" Value2="800">
+                <Set Variable="Particle9Y">0</Set>
+            </If>
+            <Set Variable="Particle10Y" Operator="#_set_add_">0.52</Set>
+            <If Value1="@Particle10Y" Operation="#_conditional_gt_" Value2="800">
+                <Set Variable="Particle10Y">0</Set>
+            </If>
+            <Set Variable="Particle11Y" Operator="#_set_add_">0.32</Set>
+            <If Value1="@Particle11Y" Operation="#_conditional_gt_" Value2="800">
+                <Set Variable="Particle11Y">0</Set>
+            </If>
+            <Set Variable="Particle12Y" Operator="#_set_add_">0.48</Set>
+            <If Value1="@Particle12Y" Operation="#_conditional_gt_" Value2="800">
+                <Set Variable="Particle12Y">0</Set>
+            </If>
+
+            <!-- Slider color computation -->
+            <Set Variable="SliderColor">@SliderValue</Set>
+            <Set Variable="SliderColor" Operator="#_set_multiply_">0.01</Set>
+
+            <!-- ==================== BACKGROUND EFFECTS ==================== -->
+
+            <!-- Subtle grid pattern -->
+            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+                <Vertex X="0" Y="100"/><Vertex X="1200" Y="100"/>
+            </Line>
+            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+                <Vertex X="0" Y="200"/><Vertex X="1200" Y="200"/>
+            </Line>
+            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+                <Vertex X="0" Y="300"/><Vertex X="1200" Y="300"/>
+            </Line>
+            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+                <Vertex X="0" Y="400"/><Vertex X="1200" Y="400"/>
+            </Line>
+            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+                <Vertex X="0" Y="500"/><Vertex X="1200" Y="500"/>
+            </Line>
+            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+                <Vertex X="0" Y="600"/><Vertex X="1200" Y="600"/>
+            </Line>
+            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+                <Vertex X="0" Y="700"/><Vertex X="1200" Y="700"/>
+            </Line>
+            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+                <Vertex X="200" Y="0"/><Vertex X="200" Y="800"/>
+            </Line>
+            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+                <Vertex X="400" Y="0"/><Vertex X="400" Y="800"/>
+            </Line>
+            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+                <Vertex X="600" Y="0"/><Vertex X="600" Y="800"/>
+            </Line>
+            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+                <Vertex X="800" Y="0"/><Vertex X="800" Y="800"/>
+            </Line>
+            <Line LineColor="0.08 0.08 0.1" LineWidth="1">
+                <Vertex X="1000" Y="0"/><Vertex X="1000" Y="800"/>
+            </Line>
+
+            <!-- Floating particles (ambient decoration) -->
+            <Circle X="@Particle1X" Y="@Particle1Y" Radius="3" FillColor="0.2 0.6 1 0.3"/>
+            <Circle X="@Particle2X" Y="@Particle2Y" Radius="2" FillColor="0.6 0.3 0.9 0.4"/>
+            <Circle X="@Particle3X" Y="@Particle3Y" Radius="4" FillColor="0.2 0.9 0.9 0.25"/>
+            <Circle X="@Particle4X" Y="@Particle4Y" Radius="2" FillColor="0.9 0.3 0.6 0.35"/>
+            <Circle X="@Particle5X" Y="@Particle5Y" Radius="3" FillColor="0.3 0.8 0.5 0.3"/>
+            <Circle X="@Particle6X" Y="@Particle6Y" Radius="2" FillColor="1 0.5 0.2 0.35"/>
+            <Circle X="@Particle7X" Y="@Particle7Y" Radius="4" FillColor="0.2 0.6 1 0.25"/>
+            <Circle X="@Particle8X" Y="@Particle8Y" Radius="2" FillColor="0.6 0.3 0.9 0.3"/>
+            <Circle X="@Particle9X" Y="@Particle9Y" Radius="3" FillColor="0.9 0.3 0.6 0.28"/>
+            <Circle X="@Particle10X" Y="@Particle10Y" Radius="2" FillColor="0.2 0.9 0.9 0.35"/>
+            <Circle X="@Particle11X" Y="@Particle11Y" Radius="3" FillColor="0.8 0.6 0.2 0.3"/>
+            <Circle X="@Particle12X" Y="@Particle12Y" Radius="2" FillColor="0.5 0.3 0.9 0.32"/>
+
+            <!-- Corner accents -->
+            <Line LineColor="#AccentBlue" LineWidth="2">
+                <Vertex X="20" Y="780"/><Vertex X="20" Y="750"/>
+            </Line>
+            <Line LineColor="#AccentBlue" LineWidth="2">
+                <Vertex X="20" Y="780"/><Vertex X="50" Y="780"/>
+            </Line>
+            <Line LineColor="#AccentPurple" LineWidth="2">
+                <Vertex X="1180" Y="780"/><Vertex X="1180" Y="750"/>
+            </Line>
+            <Line LineColor="#AccentPurple" LineWidth="2">
+                <Vertex X="1180" Y="780"/><Vertex X="1150" Y="780"/>
+            </Line>
+            <Line LineColor="#AccentCyan" LineWidth="2">
+                <Vertex X="20" Y="20"/><Vertex X="20" Y="50"/>
+            </Line>
+            <Line LineColor="#AccentCyan" LineWidth="2">
+                <Vertex X="20" Y="20"/><Vertex X="50" Y="20"/>
+            </Line>
+            <Line LineColor="#AccentPink" LineWidth="2">
+                <Vertex X="1180" Y="20"/><Vertex X="1180" Y="50"/>
+            </Line>
+            <Line LineColor="#AccentPink" LineWidth="2">
+                <Vertex X="1180" Y="20"/><Vertex X="1150" Y="20"/>
+            </Line>
+
+            <!-- ==================== HEADER ==================== -->
+
+            <!-- Title with stencil effect -->
+            <Stencil>
+                <StencilAdd>
+                    <Text X="600" Y="730" LocalAlignX="#_align_center_" Size="56" FillColor="1 1 1">DCAPP</Text>
+                </StencilAdd>
+                <StencilDraw>
+                    <!-- Gradient stripes through the title -->
+                    <Rectangle X="200" Y="780" Width="800" Height="15" FillColor="#AccentBlue"/>
+                    <Rectangle X="200" Y="765" Width="800" Height="15" FillColor="#AccentCyan"/>
+                    <Rectangle X="200" Y="750" Width="800" Height="15" FillColor="0.3 0.8 0.7"/>
+                    <Rectangle X="200" Y="735" Width="800" Height="15" FillColor="0.4 0.7 0.8"/>
+                    <Rectangle X="200" Y="720" Width="800" Height="15" FillColor="#AccentPurple"/>
+                    <Rectangle X="200" Y="705" Width="800" Height="15" FillColor="#AccentPink"/>
+                </StencilDraw>
+            </Stencil>
+
+            <!-- Subtitle -->
+            <Text X="600" Y="680" LocalAlignX="#_align_center_" Size="14" FillColor="#TextDim">Display &amp; Control Application Framework</Text>
+
+            <!-- Animated underline -->
+            <Rectangle X="600" Y="665" Width="300" Height="2" LocalAlignX="#_align_center_" FillColor="0.15 0.15 0.2"/>
+            <Rectangle X="600" Y="665" Width="100" Height="2" LocalAlignX="#_align_center_" Rotation="@WavePhase" PivotX="600" PivotY="665" FillColor="#AccentBlue"/>
+
+            <!-- ==================== CENTRAL ANIMATION SHOWCASE ==================== -->
+
+            <Container X="350" Y="320" Width="500" Height="300">
+                <!-- Outer rotating ring -->
+                <Arc X="250" Y="150" Radius="130" Angle="90" Rotation="@Ring1Angle" LineColor="#AccentBlue" LineWidth="3"/>
+
+                <!-- Middle rotating ring (opposite direction) -->
+                <Arc X="250" Y="150" Radius="100" Angle="120" Rotation="@Ring2Angle" LineColor="#AccentPurple" LineWidth="2"/>
+
+                <!-- Inner rotating ring -->
+                <Arc X="250" Y="150" Radius="70" Angle="180" Rotation="@Ring3Angle" LineColor="0.3 0.8 0.7" LineWidth="2"/>
+
+                <!-- Central hexagon logo -->
+                <Polygon X="250" Y="150" Rotation="@Ring1Angle" FillColor="0.1 0.1 0.15" LineColor="#AccentBlue" LineWidth="2">
+                    <Vertex X="0" Y="40"/>
+                    <Vertex X="35" Y="20"/>
+                    <Vertex X="35" Y="-20"/>
+                    <Vertex X="0" Y="-40"/>
+                    <Vertex X="-35" Y="-20"/>
+                    <Vertex X="-35" Y="20"/>
+                </Polygon>
+
+                <!-- Inner hexagon -->
+                <Polygon X="250" Y="150" Rotation="@Ring2Angle" FillColor="0.08 0.08 0.12" LineColor="#AccentCyan" LineWidth="1">
+                    <Vertex X="0" Y="25"/>
+                    <Vertex X="22" Y="12"/>
+                    <Vertex X="22" Y="-12"/>
+                    <Vertex X="0" Y="-25"/>
+                    <Vertex X="-22" Y="-12"/>
+                    <Vertex X="-22" Y="12"/>
+                </Polygon>
+
+                <!-- Central dot -->
+                <Circle X="250" Y="150" Radius="8" FillColor="#AccentBlue"/>
+                <Circle X="250" Y="150" Radius="4" FillColor="#TextWhite"/>
+
+                <!-- Orbiting dots -->
+                <Circle X="250" Y="50" Radius="6" FillColor="#AccentPink" LineColor="0 0 0" LineWidth="1"
+                    Rotation="@OrbitAngle" PivotX="250" PivotY="150"/>
+                <Circle X="150" Y="150" Radius="5" FillColor="#AccentCyan" LineColor="0 0 0" LineWidth="1"
+                    Rotation="@OrbitAngle" PivotX="250" PivotY="150"/>
+                <Circle X="320" Y="200" Radius="4" FillColor="#AccentOrange" LineColor="0 0 0" LineWidth="1"
+                    Rotation="@OrbitAngle" PivotX="250" PivotY="150"/>
+            </Container>
+
+            <!-- ==================== FEATURE CARDS ==================== -->
+
+            <!-- Card 1: Primitives -->
+            <Container X="30" Y="80" Width="220" Height="200">
+                <Rectangle Style="CardBg" Width="220" Height="200"/>
+                <Text X="110" Y="180" LocalAlignX="#_align_center_" Style="Heading">Primitives</Text>
+                <Rectangle X="15" Y="175" Width="4" Height="20" FillColor="#AccentBlue"/>
+
+                <!-- Mini showcase -->
+                <Rectangle X="30" Y="100" Width="40" Height="30" FillColor="#AccentBlue" LineColor="#AccentCyan" LineWidth="1"/>
+                <Circle X="110" Y="115" Radius="20" FillColor="#AccentPurple"/>
+                <Polygon FillColor="#AccentPink">
+                    <Vertex X="160" Y="135"/>
+                    <Vertex X="180" Y="95"/>
+                    <Vertex X="200" Y="135"/>
+                </Polygon>
+
+                <Line LineColor="#AccentOrange" LineWidth="2">
+                    <Vertex X="30" Y="60"/>
+                    <Vertex X="70" Y="40"/>
+                    <Vertex X="110" Y="55"/>
+                    <Vertex X="150" Y="35"/>
+                    <Vertex X="190" Y="50"/>
+                </Line>
+
+                <Text X="110" Y="15" LocalAlignX="#_align_center_" Style="Label">Shapes, Lines, Arcs</Text>
+            </Container>
+
+            <!-- Card 2: Animation -->
+            <Container X="270" Y="80" Width="220" Height="200">
+                <Rectangle Style="CardBg" Width="220" Height="200"/>
+                <Text X="110" Y="180" LocalAlignX="#_align_center_" Style="Heading">Animation</Text>
+                <Rectangle X="15" Y="175" Width="4" Height="20" FillColor="#AccentCyan"/>
+
+                <!-- Animated elements -->
+                <Arc X="70" Y="100" Radius="35" Angle="@PulseAngle" Rotation="0" FillColor="#AccentCyan" Pie="true"/>
+                <Circle X="70" Y="100" Radius="20" FillColor="#BgMedium"/>
+
+                <Rectangle X="130" Y="60" Width="60" Height="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                    Rotation="@Ring1Angle" FillColor="#AccentPurple" LineColor="#AccentPink" LineWidth="2"/>
+
+                <Text X="110" Y="15" LocalAlignX="#_align_center_" Style="Label">Variables, Rotation</Text>
+            </Container>
+
+            <!-- Card 3: Interactive -->
+            <Container X="30" Y="320" Width="280" Height="180">
+                <Rectangle Style="CardBg" Width="280" Height="180"/>
+                <Text X="140" Y="160" LocalAlignX="#_align_center_" Style="Heading">Interactive</Text>
+                <Rectangle X="15" Y="155" Width="4" Height="20" FillColor="#AccentPurple"/>
+
+                <!-- Slider demo -->
+                <Text X="20" Y="120" Style="Label">Slider:</Text>
+                <Container X="70" Y="120" Width="150" Height="16" VirtualWidth="100" LocalAlignY="#_align_middle_">
+                    <Rectangle FillColor="0.1 0.1 0.15" LineColor="0.2 0.2 0.25" LineWidth="1"/>
+                    <Rectangle X="0" Y="0" Width="@SliderValue" Height="16" FillColor="@SliderColor 0.5 1"/>
+                    <If Value1="@SliderSelected" Operation="#_conditional_eq_" Value2="1">
+                        <MouseMotion VariableX="SliderValue"/>
+                    </If>
+                    <Set Variable="SliderValue" Operator="#_set_max_">0</Set>
+                    <Set Variable="SliderValue" Operator="#_set_min_">100</Set>
+                    <Button Type="#_button_momentary_" X="@SliderValue" Y="8" Width="8" Height="20" Variable="SliderSelected"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                        <ButtonIndicatorOn><Rectangle FillColor="#TextWhite"/></ButtonIndicatorOn>
+                        <ButtonIndicatorOff><Rectangle FillColor="#AccentBlue"/></ButtonIndicatorOff>
+                    </Button>
+                </Container>
+                <Text X="230" Y="120" Style="Label">@SliderValue(%.0f)%</Text>
+
+                <!-- Toggle button -->
+                <Text X="20" Y="80" Style="Label">Toggle:</Text>
+                <Button Type="#_button_toggle_" X="70" Y="80" Width="80" Height="28" Variable="ToggleState" On="1" Off="0"
+                    LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn>
+                        <Rectangle FillColor="0.15 0.5 0.3" LineColor="0.2 0.7 0.4" LineWidth="2"/>
+                        <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                            Size="11" FillColor="#TextWhite">ON</Text>
+                    </ButtonIndicatorOn>
+                    <ButtonIndicatorOff>
+                        <Rectangle FillColor="0.15 0.15 0.2" LineColor="0.25 0.25 0.3" LineWidth="2"/>
+                        <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                            Size="11" FillColor="#TextDim">OFF</Text>
+                    </ButtonIndicatorOff>
+                </Button>
+
+                <!-- Momentary button -->
+                <Text X="160" Y="80" Style="Label">Click:</Text>
+                <Button Type="#_button_standard_" X="200" Y="80" Width="60" Height="28" Variable="ButtonState"
+                    LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn>
+                        <Rectangle FillColor="#AccentBlue" LineColor="#AccentCyan" LineWidth="2"/>
+                        <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                            Size="10" FillColor="#TextWhite">@ButtonState</Text>
+                    </ButtonIndicatorOn>
+                    <ButtonIndicatorOff>
+                        <Rectangle FillColor="0.12 0.12 0.18" LineColor="0.2 0.3 0.5" LineWidth="2"/>
+                        <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                            Size="10" FillColor="#AccentBlue">@ButtonState</Text>
+                    </ButtonIndicatorOff>
+                </Button>
+
+                <Text X="140" Y="15" LocalAlignX="#_align_center_" Style="Label">Buttons, Sliders, Input</Text>
+            </Container>
+
+            <!-- Card 4: 3D Sphere -->
+            <Container X="600" Y="80" Width="220" Height="200">
+                <Rectangle Style="CardBg" Width="220" Height="200"/>
+                <Text X="110" Y="180" LocalAlignX="#_align_center_" Style="Heading">3D Sphere</Text>
+                <Rectangle X="15" Y="175" Width="4" Height="20" FillColor="#AccentOrange"/>
+
+                <!-- Spinning Earth-like sphere -->
+                <Sphere
+                    X="110"
+                    Y="95"
+                    LocalAlignX="#_align_center_"
+                    LocalAlignY="#_align_middle_"
+                    Radius="65"
+                    Image="../../assets/moon.jpg"
+                    Roll="0"
+                    Pitch="@SpherePitch"
+                    Yaw="@SphereYaw"
+                />
+
+                <Text X="110" Y="15" LocalAlignX="#_align_center_" Style="Label">Textured 3D Objects</Text>
+            </Container>
+
+            <!-- Card 5: Stencils & Masks -->
+            <Container X="950" Y="80" Width="220" Height="200">
+                <Rectangle Style="CardBg" Width="220" Height="200"/>
+                <Text X="110" Y="180" LocalAlignX="#_align_center_" Style="Heading">Stencils</Text>
+                <Rectangle X="15" Y="175" Width="4" Height="20" FillColor="#AccentPink"/>
+
+                <!-- Donut stencil demo -->
+                <Stencil>
+                    <StencilAdd>
+                        <Circle X="70" Y="100" Radius="40" FillColor="1 1 1"/>
+                    </StencilAdd>
+                    <StencilRemove>
+                        <Circle X="70" Y="100" Radius="20" FillColor="1 1 1"/>
+                    </StencilRemove>
+                    <StencilDraw>
+                        <Rectangle X="20" Y="140" Width="100" Height="20" FillColor="#AccentPink"/>
+                        <Rectangle X="20" Y="120" Width="100" Height="20" FillColor="#AccentPurple"/>
+                        <Rectangle X="20" Y="100" Width="100" Height="20" FillColor="#AccentBlue"/>
+                        <Rectangle X="20" Y="80" Width="100" Height="20" FillColor="#AccentCyan"/>
+                        <Rectangle X="20" Y="60" Width="100" Height="20" FillColor="0.3 0.8 0.5"/>
+                    </StencilDraw>
+                </Stencil>
+
+                <!-- Text stencil demo -->
+                <Stencil>
+                    <StencilAdd>
+                        <Text X="130" Y="85" Size="36" FillColor="1 1 1">DC</Text>
+                    </StencilAdd>
+                    <StencilDraw>
+                        <Rectangle X="120" Y="60" Width="90" Height="80" FillColor="#AccentOrange"/>
+                        <Rectangle X="120" Y="100" Width="90" Height="40" FillColor="#AccentPink"/>
+                    </StencilDraw>
+                </Stencil>
+
+                <Text X="110" Y="15" LocalAlignX="#_align_center_" Style="Label">Clipping, Masks</Text>
+            </Container>
+
+            <!-- Card 6: Text & Styles -->
+            <Container X="950" Y="320" Width="220" Height="180">
+                <Rectangle Style="CardBg" Width="220" Height="180"/>
+                <Text X="110" Y="160" LocalAlignX="#_align_center_" Style="Heading">Typography</Text>
+                <Rectangle X="15" Y="155" Width="4" Height="20" FillColor="#AccentOrange"/>
+
+                <Text X="20" Y="120" Size="18" FillColor="#AccentBlue">Large Text</Text>
+                <Text X="20" Y="95" Size="12" FillColor="#AccentCyan">Medium Text</Text>
+                <Text X="20" Y="75" Size="9" FillColor="#AccentPurple">Small Text</Text>
+
+                <Text X="130" Y="120" Size="14" FillColor="1 0.3 0.3">Red</Text>
+                <Text X="165" Y="120" Size="14" FillColor="0.3 1 0.3">Green</Text>
+                <Text X="130" Y="95" Size="14" FillColor="0.3 0.5 1">Blue</Text>
+                <Text X="170" Y="95" Size="14" FillColor="1 1 0.3">Yellow</Text>
+
+                <Text X="20" Y="45" Style="Label">Styles: </Text>
+                <Text X="60" Y="45" Style="Heading">Heading</Text>
+                <Text X="140" Y="45" Style="Label">Label</Text>
+
+                <Text X="110" Y="15" LocalAlignX="#_align_center_" Style="Label">Fonts, Styles, Colors</Text>
+            </Container>
+
+            <!-- ==================== FOOTER ==================== -->
+
+            <Rectangle X="0" Y="0" Width="1200" Height="50" FillColor="0.05 0.05 0.07"/>
+            <Line LineColor="0.12 0.12 0.15" LineWidth="1">
+                <Vertex X="0" Y="50"/><Vertex X="1200" Y="50"/>
+            </Line>
+
+            <Text X="30" Y="25" LocalAlignY="#_align_middle_" Size="11" FillColor="#TextDim">
+                XML-based declarative UI framework for real-time displays
+            </Text>
+
+            <!-- Version badge -->
+            <Rectangle X="1100" Y="25" Width="80" Height="24" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="0.08 0.08 0.12" LineColor="0.15 0.15 0.2" LineWidth="1"/>
+            <Text X="1100" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="#AccentBlue">v1.0</Text>
+
+            <!-- Animated status indicator -->
+            <Circle X="600" Y="25" Radius="4" FillColor="0.2 0.8 0.4"/>
+            <Arc X="600" Y="25" Radius="8" Angle="@PulseAngle" Rotation="0" LineColor="0.2 0.8 0.4 0.5" LineWidth="1"/>
+            <Text X="615" Y="25" LocalAlignY="#_align_middle_" Size="10" FillColor="#TextDim">Running</Text>
+
+        </Panel>
+    </Window>
+</DCAPP>

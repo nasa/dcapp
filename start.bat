@@ -6,7 +6,7 @@ set "DCAPP_HOME=%DCAPP_HOME:~0,-1%"
 set "RUN_DIR=%DCAPP_HOME%\pilotlight\out"
 
 if "%~1"=="" (
-    set "CONFIG=%DCAPP_HOME%\samples\test\test.xml"
+    set "CONFIG=%DCAPP_HOME%\samples\welcome\welcome.xml"
 ) else (
     set "CONFIG=%~f1"
     shift
