@@ -303,6 +303,7 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
 void dc_app_config_cleanup(DcAppConfig *config) {
     free(config->config_file_path);
     free(config->config_dir_path);
+    free(config->dcapp_dir_path);
     free(config->cache_dir_path);
     free(config->log_dir_path);
     xmlFreeDoc(config->xml_doc);
@@ -310,13 +311,24 @@ void dc_app_config_cleanup(DcAppConfig *config) {
     _ConfigContext *context = &(_sb_contexts[config->_index]);
     sbfree(context->sb_style_name_offsets);
     sbfree(context->sb_style_names);
+
+    // free style xml nodes
+    for (int ii = 0; ii < sbcount(context->sb_styles); ii++) {
+        for (int jj = 0; jj < DC_APP_ELEM_TYPE__COUNT; jj++) {
+            if (context->sb_styles[ii].xml_nodes[jj]) {
+                xmlFreeNode(context->sb_styles[ii].xml_nodes[jj]);
+            }
+        }
+    }
     sbfree(context->sb_styles);
+
     sbfree(context->sb_const_names);
     sbfree(context->sb_const_name_offsets);
     for (int ii = 0; ii < sbcount(context->sb_consts); ii++) {
-        free(context->sb_consts[ii].val);
+        sbfree(context->sb_consts[ii].val);
     }
     sbfree(context->sb_consts);
+    free(config);
 }
 
 void dc_app_config_clean_xml(DcAppConfig *config, DcAppLookup *lookup) {
@@ -489,6 +501,13 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
 
         case DC_APP_ELEM_TYPE_INCLUDE: {
 
+            // check if include is optional
+            xmlChar *optional_str = xmlGetProp(node, BAD_CAST "Optional");
+            int optional = optional_str ? dc_utils_string_to_boolean((const char *)optional_str) : 0;
+            if (optional_str) {
+                xmlFree(optional_str);
+            }
+
             // get include file name
             xmlChar *filepath = xmlNodeGetContent(node);
             if (!filepath) {
@@ -509,6 +528,17 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                 dc_utils_canonicalize_path(abs_filepath, canon_filepath, sizeof(canon_filepath));
             } else {
                 dc_utils_canonicalize_path(cleaned_filepath, canon_filepath, sizeof(canon_filepath));
+            }
+
+            // check if file exists when optional
+            if (!dc_utils_file_exists(canon_filepath)) {
+                if (optional) {
+                    // file doesn't exist and include is optional, skip it
+                    fprintf(stderr, "DCAPP _clean_xml_node(): Optional include file '%s' not found, skipping\n", canon_filepath);
+                    xmlUnlinkNode(node);
+                    xmlFreeNode(node);
+                    return;
+                }
             }
 
             // create new prop, assign to <Include> node

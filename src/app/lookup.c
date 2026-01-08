@@ -40,6 +40,7 @@ void dc_app_lookup_cleanup(DcAppLookup *lookup) {
         free(context->sb_vals[ii].value_string);
     }
     sbfree(context->sb_vals);
+    free(lookup);
 }
 
 DcValue *dc_app_lookup_get_value(DcAppLookup *lookup, DcAppValIndex index) {

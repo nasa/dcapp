@@ -142,7 +142,20 @@ void dc_ps_mjpeg_update() {
 
 // global cleanup
 void dc_ps_mjpeg_cleanup() {
+    // cleanup each context
+    for (int ii = 0; ii < sbcount(_sb_contexts); ii++) {
+        _Context *context = &(_sb_contexts[ii]);
+        if (context->easy_handle) {
+            curl_multi_remove_handle(_multi_handle, context->easy_handle);
+            curl_easy_cleanup(context->easy_handle);
+        }
+        sbfree(context->sb_buffer);
+        sbfree(context->sb_latest_frame);
+    }
+    sbfree(_sb_contexts);
+
     curl_multi_cleanup(_multi_handle);
+    curl_global_cleanup();
 }
 
 DcPsMjpegHandle dc_ps_mjpeg_add_server(const char *url, int timeout_s) {

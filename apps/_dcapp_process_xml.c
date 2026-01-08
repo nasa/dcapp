@@ -26,6 +26,7 @@ static _NodeIndex    _process_xml_node_container(_AppData *app_data, xmlNodePtr 
 static _NodeIndex    _process_xml_node_dcapp(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_default(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_false(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_include(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -169,6 +170,9 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_FALSE:
             return _process_xml_node_false(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_FUNCTION:
+            return _process_xml_node_function(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_IF:
             return _process_xml_node_if(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -1369,6 +1373,34 @@ static _NodeIndex _process_xml_node_false(_AppData *app_data, xmlNodePtr xml_nod
     return NODE_INDEX_UNDEFINED;
 }
 
+static _NodeIndex _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_FUNCTION;
+    dc_node.parent = parent_node_index;
+    dc_node.next   = NODE_INDEX_UNDEFINED;
+
+    // get function name
+    xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
+    if (raw_name) {
+        if (app_data->logic_lib) {
+            dc_node.function.callback = (void (*)(void))_ext_library->load_function(app_data->logic_lib, (const char *)raw_name);
+            if (!dc_node.function.callback) {
+                fprintf(stderr, "DCAPP _process_xml_node_function(): Failed to load function '%s' from logic library\n", (const char *)raw_name);
+            }
+        } else {
+            fprintf(stderr, "DCAPP _process_xml_node_function(): No logic library loaded, cannot load function '%s'\n", (const char *)raw_name);
+        }
+        xmlFree(raw_name);
+    } else {
+        fprintf(stderr, "DCAPP _process_xml_node_function(): Missing 'Name' attribute\n");
+    }
+
+    // register node
+    return _register_node(app_data, &dc_node);
+}
+
 static _NodeIndex _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
@@ -1810,13 +1842,35 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
             strcpy(abs_filepath, cleaned_filepath);
         }
 
-        // open .so file
-        const plLibraryDesc logic_so_desc = {
-            .tFlags = PL_LIBRARY_FLAGS_NONE,
-            .pcName = abs_filepath,
-        };
-        if (_ext_library->load(logic_so_desc, &app_data->logic_lib) != PL_LIBRARY_RESULT_SUCCESS) {
-            fprintf(stderr, "DCApp _process_xml_node_logic(): Failed to load logic .so file (%s)\n", abs_filepath);
+        // try loading with different platform extensions
+        // strip existing extension if present (.so, .dylib, .dll)
+        char base_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+        strncpy(base_filepath, abs_filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        base_filepath[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+
+        char *ext = strrchr(base_filepath, '.');
+        if (ext && (strcmp(ext, ".so") == 0 || strcmp(ext, ".dylib") == 0 || strcmp(ext, ".dll") == 0)) {
+            *ext = '\0';  // strip the extension
+        }
+
+        // try each platform extension
+        const char *extensions[] = { ".so", ".dylib", ".dll" };
+        char try_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+        bool loaded = false;
+
+        for (int i = 0; i < 3 && !loaded; i++) {
+            snprintf(try_filepath, sizeof(try_filepath), "%s%s", base_filepath, extensions[i]);
+            const plLibraryDesc logic_so_desc = {
+                .tFlags = PL_LIBRARY_FLAGS_NONE,
+                .pcName = try_filepath,
+            };
+            if (_ext_library->load(logic_so_desc, &app_data->logic_lib) == PL_LIBRARY_RESULT_SUCCESS) {
+                loaded = true;
+            }
+        }
+
+        if (!loaded) {
+            fprintf(stderr, "DCApp _process_xml_node_logic(): Failed to load logic library (%s.so/.dylib/.dll)\n", base_filepath);
         }
 
         // load functions

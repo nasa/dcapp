@@ -150,8 +150,103 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     // get device
     plDevice *device = _ext_starter->get_device();
 
+    // wait for GPU to finish all work before destroying resources
+    _ext_gfx->flush_device(device);
+
+    // cleanup per-node resources (stretchy buffers and malloc'd memory)
+    for (int i = 0; i < sbcount(app_data->sb_nodes); i++) {
+        _Node *node = &app_data->sb_nodes[i];
+        switch (node->type) {
+            case NODE_TYPE_LINE:
+                sbfree(node->line.sb_points);
+                break;
+            case NODE_TYPE_PIXELSTREAM:
+                if (node->pixelstream.frame) {
+                    _ext_image->free(node->pixelstream.frame);
+                }
+                if (node->pixelstream.type == DC_APP_PIXELSTREAM_TYPE_MJPEG) {
+                    if (node->pixelstream.mjpeg.raw_jpeg) {
+                        free(node->pixelstream.mjpeg.raw_jpeg);
+                    }
+                }
+                break;
+            case NODE_TYPE_POLYGON:
+                sbfree(node->polygon.sb_points);
+                break;
+            case NODE_TYPE_STENCIL:
+                sbfree(node->stencil.sb_children);
+                break;
+            case NODE_TYPE_TEXT:
+                sbfree(node->text.sb_vals);
+                sbfree(node->text.sb_fillers);
+                sbfree(node->text.sb_filler_indices);
+                sbfree(node->text.sb_formats);
+                sbfree(node->text.sb_format_indices);
+                sbfree(node->text.sb_format_types);
+                break;
+            case NODE_TYPE_WINDOW:
+                if (node->window.title) {
+                    free(node->window.title);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    sbfree(app_data->sb_nodes);
+
+    // cleanup trick contexts
+    for (int i = 0; i < sbcount(app_data->sb_tricks); i++) {
+        _TrickContext *ctx = &app_data->sb_tricks[i];
+        for (int j = 0; j < sbcount(ctx->sb_tx_var_contexts); j++) {
+            if (ctx->sb_tx_var_contexts[j].prev_value.value_string) {
+                free(ctx->sb_tx_var_contexts[j].prev_value.value_string);
+            }
+        }
+        sbfree(ctx->sb_tx_var_contexts);
+        sbfree(ctx->sb_rx_var_contexts);
+        dc_trick_cleanup(ctx->trick);
+        free(ctx->trick);
+    }
+    sbfree(app_data->sb_tricks);
+
+    // cleanup MJPEG global context
+    dc_ps_mjpeg_cleanup();
+
+    // cleanup textures
+    for (int i = 0; i < sbcount(app_data->sb_textures); i++) {
+        _ext_gfx->destroy_bind_group(device, app_data->sb_textures[i].bind_group_handle);
+        _ext_gfx->destroy_texture(device, app_data->sb_textures[i].texture_handle);
+    }
+    sbfree(app_data->sb_textures);
+    sbfree(app_data->sb_texture_names);
+    sbfree(app_data->sb_texture_name_offsets);
+
+    // cleanup shaders
+    _ext_gfx->destroy_shader(device, app_data->stencil_create_2d_shader);
+    _ext_gfx->destroy_shader(device, app_data->stencil_remove_2d_shader);
+    _ext_gfx->destroy_shader(device, app_data->stencil_draw_2d_shader);
+    _ext_gfx->destroy_shader(device, app_data->stencil_create_sdf_shader);
+    _ext_gfx->destroy_shader(device, app_data->stencil_remove_sdf_shader);
+    _ext_gfx->destroy_shader(device, app_data->stencil_draw_sdf_shader);
+
+    // cleanup draw batch system
+    sbfree(app_data->sb_draw_batches);
+    for (int i = 0; i < sbcount(app_data->sb_draw_list_2d_pool); i++) {
+        _ext_draw->return_2d_drawlist(app_data->sb_draw_list_2d_pool[i].draw_list);
+    }
+    sbfree(app_data->sb_draw_list_2d_pool);
+    for (int i = 0; i < sbcount(app_data->sb_draw_list_3d_pool); i++) {
+        _ext_draw->return_3d_drawlist(app_data->sb_draw_list_3d_pool[i]);
+    }
+    sbfree(app_data->sb_draw_list_3d_pool);
+
     // destroy staging buffer
     _ext_gfx->destroy_buffer(device, app_data->pl_staging_buffer_handle);
+
+    // cleanup lookup and config
+    dc_app_lookup_cleanup(app_data->lookup);
+    dc_app_config_cleanup(app_data->config);
 
     _ext_starter->cleanup();
     _ext_windows->destroy(app_data->pl_window);

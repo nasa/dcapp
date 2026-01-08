@@ -9,12 +9,11 @@
       "args": [
         "-a",
         "dcapp",
-        "${workspaceFolder}/samples/blink/blink.xml"
+        "${workspaceFolder}/samples/${input:sampleName}/${input:sampleName}.xml"
       ],
       "cwd": "${workspaceFolder}/pilotlight/out",
       "MIMode": "gdb",
-      "miDebuggerPath": "/usr/bin/gdb",
-      "preLaunchTask": "build dcapp-debug (linux)"
+      "miDebuggerPath": "/usr/bin/gdb"
     },
     {
       "name": "dcapp (macos)",
@@ -24,10 +23,9 @@
       "args": [
         "-a",
         "dcapp",
-        "${workspaceFolder}/samples/test/test.xml"
+        "${workspaceFolder}/samples/${input:sampleName}/${input:sampleName}.xml"
       ],
-      "cwd": "${workspaceFolder}/pilotlight/out",
-      "preLaunchTask": "build dcapp-debug (macos)",
+      "cwd": "${workspaceFolder}/pilotlight/out"
     },
     {
       "name": "dcapp (windows)",
@@ -37,30 +35,46 @@
       "args": [
         "-a",
         "dcapp",
-        "${workspaceFolder}/samples/test/test.xml"
+        "${workspaceFolder}/samples/${input:sampleName}/${input:sampleName}.xml"
       ],
       "cwd": "${workspaceFolder}\\pilotlight\\out",
       "MIMode": "gdb",
-      "miDebuggerPath": "C:\\MinGW\\bin\\gdb.exe",
-      "preLaunchTask": "build dcapp-debug (windows)"
-    },
+      "miDebuggerPath": "C:\\MinGW\\bin\\gdb.exe"
+    }
+  ],
+  "inputs": [
     {
-      "name": "test trick (macos)",
-      "type": "lldb",
-      "request": "launch",
-      "program": "${workspaceFolder}/bin/test-trick",
-      "cwd": "${workspaceFolder}/bin",
-      "preLaunchTask": "build tests"
-    },
-    {
-      "name": "dcapp-genheader",
-      "type": "lldb",
-      "request": "launch",
-      "program": "${workspaceFolder}/pilotlight/out/dcapp-genheader",
-      "args": [
-        "samples/test/test.xml"
+      "id": "sampleName",
+      "type": "pickString",
+      "description": "Select a sample to run",
+      "options": [
+        "adi",
+        "alignment",
+        "arc",
+        "blink",
+        "buttons",
+        "colors",
+        "conditionals",
+        "containers",
+        "environment",
+        "functions",
+        "includes",
+        "input",
+        "lissajous",
+        "mask",
+        "metrics",
+        "mona-lisa",
+        "primitives",
+        "ptz",
+        "rotation",
+        "scene",
+        "screensaver",
+        "slider",
+        "stencil",
+        "styles",
+        "welcome"
       ],
-      "cwd": "${workspaceFolder}"
+      "default": "functions"
     }
   ]
 }

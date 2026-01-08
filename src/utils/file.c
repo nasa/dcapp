@@ -261,3 +261,17 @@ unsigned char *dc_utils_load_binary_file(const char *path, size_t *out_size) {
     }
     return buffer;
 }
+
+bool dc_utils_file_exists(const char *path) {
+    if (!path) {
+        return false;
+    }
+
+#if defined(_WIN32)
+    DWORD attrs = GetFileAttributesA(path);
+    return (attrs != INVALID_FILE_ATTRIBUTES && !(attrs & FILE_ATTRIBUTE_DIRECTORY));
+#else
+    struct stat st;
+    return (stat(path, &st) == 0 && S_ISREG(st.st_mode));
+#endif
+}

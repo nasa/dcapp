@@ -379,28 +379,156 @@ New (C):
 
 
 ================================================================================
-SECTION 11: ELEMENTS NOT YET IMPLEMENTED
+SECTION 11: SET ELEMENT MIN/MAX CHANGES
+================================================================================
+
+Legacy <Set> had MinimumValue and MaximumValue attributes for clamping:
+
+    <Set Variable="@value" Operator="+=" MinimumValue="0" MaximumValue="100">10</Set>
+
+New syntax uses separate Set operations for clamping:
+
+    <Set Variable="value" Operator="#_set_add_">10</Set>
+    <Set Variable="value" Operator="#_set_max_">0</Set>
+    <Set Variable="value" Operator="#_set_min_">100</Set>
+
+Note: #_set_max_ clamps to a minimum value (ensures value >= operand)
+      #_set_min_ clamps to a maximum value (ensures value <= operand)
+
+
+================================================================================
+SECTION 12: BLINK ELEMENT CHANGES
+================================================================================
+
+The <Blink> element's trigger attribute changed:
+
+Legacy syntax:
+    <Blink Frequency=".8" DutyCycle=".70" Duration="-1" FnStartBlink="@TRIGGER_VAR">
+
+New syntax:
+    <Blink Frequency="0.8" DutyCycle="0.7" Duration="0" Variable="TriggerVar">
+
+Changes:
+    FnStartBlink="@varname"  -->  Variable="varname" (no @ prefix)
+    Duration="-1"            -->  Duration="0" (0 means indefinite, same behavior)
+
+
+================================================================================
+SECTION 13: REMOVED/UNSUPPORTED ATTRIBUTES
+================================================================================
+
+The following legacy attributes are NOT supported in new dcapp:
+
+Text/String attributes:
+    ShadowOffset        -->  Removed (no text shadows)
+    ForceMono           -->  Removed (no monospace forcing)
+
+Window attributes:
+    ForceUpdate         -->  Removed (refresh rate handled differently)
+    ActiveDisplay       -->  Removed
+
+Panel attributes:
+    DisplayIndex        -->  Removed
+
+Set attributes:
+    MinimumValue        -->  Use separate <Set> with Operator="#_set_max_">
+    MaximumValue        -->  Use separate <Set> with Operator="#_set_min_">
+
+
+================================================================================
+SECTION 14: LINE ELEMENT CHANGES
+================================================================================
+
+The <Line> element's color attribute changed:
+
+Legacy syntax:
+    <Line Color="0 1 0">
+        <Vertex X="0" Y="0"/>
+        <Vertex X="100" Y="100"/>
+    </Line>
+
+New syntax:
+    <Line LineColor="0 1 0">
+        <Vertex X="0" Y="0"/>
+        <Vertex X="100" Y="100"/>
+    </Line>
+
+Change: Color --> LineColor
+
+
+================================================================================
+SECTION 15: DISPLAYLOGIC ELEMENT VARIATIONS
+================================================================================
+
+Legacy <DisplayLogic> had two syntax forms:
+
+Form 1 (attribute):
+    <DisplayLogic File="logic/mylogic.so"/>
+
+Form 2 (content):
+    <DisplayLogic>logic/mylogic.so</DisplayLogic>
+
+New syntax (only one form):
+    <Logic File="logic/logic.so"/>
+
+Both legacy forms convert to the new <Logic File="..."/> syntax.
+
+
+================================================================================
+SECTION 16: MASK/STENCIL ELEMENT CHANGES
+================================================================================
+
+Legacy syntax:
+    <Mask>
+        <Stencil>
+            <!-- shapes that define the mask -->
+        </Stencil>
+        <Projection>
+            <!-- content shown through the mask -->
+        </Projection>
+    </Mask>
+
+New syntax:
+    <Stencil>
+        <StencilAdd>
+            <!-- shapes that define the mask -->
+        </StencilAdd>
+        <StencilDraw>
+            <!-- content shown through the mask -->
+        </StencilDraw>
+    </Stencil>
+
+Changes:
+    <Mask>           -->  Removed (use <Stencil> directly)
+    <Stencil>        -->  <StencilAdd>
+    <Projection>     -->  <StencilDraw>
+
+
+================================================================================
+SECTION 17: ELEMENTS NOT YET IMPLEMENTED
 ================================================================================
 
 The following legacy elements are not yet available in the new dcapp and should
 be commented out with a TODO note:
 
-    <ADI>               - Attitude Direction Indicator
+    <ADI>               - Attitude Direction Indicator (use samples/adi as reference - partially implemented)
     <Animation>         - Animated value transitions
-    <Mask>              - Stencil masking with <Stencil> and <Projection>
-    <Blink>             - Blinking/flashing elements
     <Map>               - Map display with <UPSMapTexture>
     <Hagstrom>          - Bezel keyboard hardware support
-    <MouseMotion>       - Mouse drag tracking
     <KeyboardEvent>     - Keyboard input handling
-    <Function>          - Calling C functions from XML
-    
+
     BezelKey attribute  - Hardware bezel button binding
     <PixelStream> with VSM protocol
 
+The following elements ARE now implemented (removed from this list):
+    <Function>          - Calling C functions from XML
+    <Mask>/<Stencil>    - Stencil masking (see samples/stencil, samples/mask)
+    <Blink>             - Blinking/flashing elements (see samples/blink)
+    <MouseMotion>       - Mouse drag tracking
+
 
 ================================================================================
-SECTION 12: QUICK REFERENCE - ALL CONSTANTS
+SECTION 18: QUICK REFERENCE - ALL CONSTANTS
 ================================================================================
 
 Variable Types:
@@ -440,10 +568,12 @@ Set Operations:
     #_set_subtract_
     #_set_multiply_
     #_set_divide_
+    #_set_max_          (clamp to minimum: ensures value >= operand)
+    #_set_min_          (clamp to maximum: ensures value <= operand)
 
 
 ================================================================================
-SECTION 13: COMPLETE CONVERSION EXAMPLE
+SECTION 19: COMPLETE CONVERSION EXAMPLE
 ================================================================================
 
 Legacy XML:
