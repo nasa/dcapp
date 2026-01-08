@@ -103,6 +103,7 @@ typedef enum __NodeType {
     NODE_TYPE_CIRCLE,
     NODE_TYPE_CONTAINER,
     NODE_TYPE_CONDITIONAL,
+    NODE_TYPE_FUNCTION,
     NODE_TYPE_IMAGE,
     NODE_TYPE_LINE,
     NODE_TYPE_MOUSE_MOTION,
@@ -361,6 +362,10 @@ typedef struct __NodeSet {
     DcAppValIndex operand;
 } _NodeSet;
 
+typedef struct __NodeFunction {
+    void (*callback)(void);
+} _NodeFunction;
+
 typedef struct __NodeSphere {
     // 2D positioning (where to draw in the orthographic view)
     _ValIndex2    position;
@@ -459,6 +464,7 @@ typedef struct __Node {
         _NodeCircle      circle;
         _NodeConditional conditional;
         _NodeContainer   container;
+        _NodeFunction    function;
         _NodeImage       image;
         _NodeLine        line;
         _NodeMouseMotion mouse_motion;

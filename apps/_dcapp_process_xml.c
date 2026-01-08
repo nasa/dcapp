@@ -26,6 +26,7 @@ static _NodeIndex    _process_xml_node_container(_AppData *app_data, xmlNodePtr 
 static _NodeIndex    _process_xml_node_dcapp(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_default(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_false(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_include(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -169,6 +170,9 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_FALSE:
             return _process_xml_node_false(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_FUNCTION:
+            return _process_xml_node_function(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_IF:
             return _process_xml_node_if(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -1367,6 +1371,34 @@ static _NodeIndex _process_xml_node_false(_AppData *app_data, xmlNodePtr xml_nod
             fprintf(stderr, "DCAPP _process_xml_node(): Invalid elem parent of type %s for <False>\n", dc_app_elem_type_to_string(parent_elem_type));
     }
     return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_FUNCTION;
+    dc_node.parent = parent_node_index;
+    dc_node.next   = NODE_INDEX_UNDEFINED;
+
+    // get function name
+    xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
+    if (raw_name) {
+        if (app_data->logic_lib) {
+            dc_node.function.callback = (void (*)(void))_ext_library->load_function(app_data->logic_lib, (const char *)raw_name);
+            if (!dc_node.function.callback) {
+                fprintf(stderr, "DCAPP _process_xml_node_function(): Failed to load function '%s' from logic library\n", (const char *)raw_name);
+            }
+        } else {
+            fprintf(stderr, "DCAPP _process_xml_node_function(): No logic library loaded, cannot load function '%s'\n", (const char *)raw_name);
+        }
+        xmlFree(raw_name);
+    } else {
+        fprintf(stderr, "DCAPP _process_xml_node_function(): Missing 'Name' attribute\n");
+    }
+
+    // register node
+    return _register_node(app_data, &dc_node);
 }
 
 static _NodeIndex _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {

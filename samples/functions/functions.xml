@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <!-- Function Element Demo - Demonstrates calling C functions from XML -->
+
+    <Variable Type="#_variable_integer_" InitialValue="0">ButtonAState</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">ButtonBState</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">ResetState</Variable>
+
+    <Logic File="logic/logic.so"/>
+
+    <Window Title="Function Element Demo" X="30" Y="30" Width="1500" Height="1200" VirtualWidth="500" VirtualHeight="400">
+        <Default>
+            <Text Size="14" FillColor="1 1 1"/>
+        </Default>
+
+        <Panel VirtualWidth="500" VirtualHeight="400" BackgroundColor="0.12 0.12 0.15">
+
+            <!-- Title -->
+            <Text X="250" Y="370" LocalAlignX="#_align_center_" Size="24" FillColor="1 1 1">Function Element Demo</Text>
+            <Text X="250" Y="340" LocalAlignX="#_align_center_" Size="12" FillColor="0.5 0.5 0.5">Click buttons to call C functions - check terminal for output</Text>
+
+            <!-- Button Row Background -->
+            <Rectangle X="250" Y="200" Width="450" Height="180" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                FillColor="0.08 0.08 0.1" LineColor="0.25 0.25 0.3" LineWidth="1"/>
+
+            <!-- Button A -->
+            <Text X="100" Y="280" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.6 0.6">Button A</Text>
+            <Button Type="#_button_momentary_" X="100" Y="200" Width="100" Height="60" Variable="ButtonAState" On="1" Off="0"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.1 0.3 0.1" LineColor="0.2 0.4 0.2" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="16" FillColor="0.8 0.8 0.8">Clicked!</Text>
+                    <Function Name="on_button_a_click"/>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.2 0.4 0.2" LineColor="0.3 0.5 0.3" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="16" FillColor="1 1 1">Click A</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- Button B -->
+            <Text X="250" Y="280" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.6 0.6">Button B</Text>
+            <Button Type="#_button_momentary_" X="250" Y="200" Width="100" Height="60" Variable="ButtonBState" On="1" Off="0"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.1 0.1 0.3" LineColor="0.2 0.2 0.4" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="16" FillColor="0.8 0.8 0.8">Clicked!</Text>
+                    <Function Name="on_button_b_click"/>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.2 0.2 0.4" LineColor="0.3 0.3 0.5" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="16" FillColor="1 1 1">Click B</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- Reset Button -->
+            <Text X="400" Y="280" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.6 0.6">Reset</Text>
+            <Button Type="#_button_momentary_" X="400" Y="200" Width="100" Height="60" Variable="ResetState" On="1" Off="0"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.3 0.1 0.1" LineColor="0.4 0.2 0.2" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="16" FillColor="0.8 0.8 0.8">Reset!</Text>
+                    <Function Name="on_reset_click"/>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.4 0.2 0.2" LineColor="0.5 0.3 0.3" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="16" FillColor="1 1 1">Reset</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- Info text -->
+            <Text X="250" Y="80" LocalAlignX="#_align_center_" Size="11" FillColor="0.4 0.6 0.4">
+                The Function element calls void functions from the logic library
+            </Text>
+            <Text X="250" Y="60" LocalAlignX="#_align_center_" Size="11" FillColor="0.4 0.6 0.4">
+                when the node is traversed during rendering.
+            </Text>
+
+        </Panel>
+    </Window>
+</DCAPP>
