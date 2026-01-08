@@ -1842,13 +1842,35 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
             strcpy(abs_filepath, cleaned_filepath);
         }
 
-        // open .so file
-        const plLibraryDesc logic_so_desc = {
-            .tFlags = PL_LIBRARY_FLAGS_NONE,
-            .pcName = abs_filepath,
-        };
-        if (_ext_library->load(logic_so_desc, &app_data->logic_lib) != PL_LIBRARY_RESULT_SUCCESS) {
-            fprintf(stderr, "DCApp _process_xml_node_logic(): Failed to load logic .so file (%s)\n", abs_filepath);
+        // try loading with different platform extensions
+        // strip existing extension if present (.so, .dylib, .dll)
+        char base_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+        strncpy(base_filepath, abs_filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        base_filepath[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+
+        char *ext = strrchr(base_filepath, '.');
+        if (ext && (strcmp(ext, ".so") == 0 || strcmp(ext, ".dylib") == 0 || strcmp(ext, ".dll") == 0)) {
+            *ext = '\0';  // strip the extension
+        }
+
+        // try each platform extension
+        const char *extensions[] = { ".so", ".dylib", ".dll" };
+        char try_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+        bool loaded = false;
+
+        for (int i = 0; i < 3 && !loaded; i++) {
+            snprintf(try_filepath, sizeof(try_filepath), "%s%s", base_filepath, extensions[i]);
+            const plLibraryDesc logic_so_desc = {
+                .tFlags = PL_LIBRARY_FLAGS_NONE,
+                .pcName = try_filepath,
+            };
+            if (_ext_library->load(logic_so_desc, &app_data->logic_lib) == PL_LIBRARY_RESULT_SUCCESS) {
+                loaded = true;
+            }
+        }
+
+        if (!loaded) {
+            fprintf(stderr, "DCApp _process_xml_node_logic(): Failed to load logic library (%s.so/.dylib/.dll)\n", base_filepath);
         }
 
         // load functions
