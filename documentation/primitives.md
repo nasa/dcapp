@@ -527,13 +527,34 @@ Loads custom C logic from a shared library.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `File` | string | **Yes** | Path to .so/.dll file |
+| `File` | string | **Yes** | Path to shared library (.so/.dylib/.dll) |
 
 **Expected Functions in Library:**
 - `display_pre_init(GetVariableValueAddr)` - Called before init
 - `display_init()` - Called at startup
 - `display_draw()` - Called each frame
 - `display_close()` - Called at shutdown
+
+**Cross-Platform:** dcapp automatically tries `.so`, `.dylib`, and `.dll` extensions, so the same XML works on Linux, macOS, and Windows.
+
+---
+
+### `<Function>`
+
+Calls a function from the loaded logic library.
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Name` | string | **Yes** | Name of the function to call |
+
+The function must have the signature `void function_name(void)`.
+
+**Example:**
+```xml
+<Function Name="on_button_click"/>
+```
+
+See the [Logic Files documentation](logic.md) for details on using `<Function>` with buttons and conditionals.
 
 ---
 

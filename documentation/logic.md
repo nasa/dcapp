@@ -6,7 +6,7 @@ A guide to extending dcapp displays with custom C/C++ code.
 
 ## Overview
 
-Logic files allow you to implement complex behavior that goes beyond what's possible in XML alone. A logic file is a shared library (`.so` on Linux, `.dll` on Windows) that dcapp loads at runtime, giving your code direct access to all declared variables.
+Logic files allow you to implement complex behavior that goes beyond what's possible in XML alone. A logic file is a shared library (`.so` on Linux, `.dylib` on macOS, `.dll` on Windows) that dcapp loads at runtime, giving your code direct access to all declared variables.
 
 Use cases for logic files:
 - Complex mathematical calculations
@@ -634,3 +634,98 @@ dcapp-genheader myDisplay.xml
 gcc -shared -fPIC -o logic/libphysics.so logic/physics.c
 dcapp myDisplay.xml
 ```
+
+---
+
+## The `<Function>` Element
+
+The `<Function>` element allows you to call functions from your logic file directly from XML. This is useful for triggering actions in response to button clicks, conditionals, or other events without having to poll variables in `display_draw()`.
+
+### Basic Usage
+
+```xml
+<Function Name="my_function"/>
+```
+
+When this element is rendered, it calls the function `my_function()` from your loaded logic library.
+
+### Function Signature
+
+Functions called via `<Function>` must have this signature:
+
+```c
+void my_function(void);
+```
+
+No parameters, no return value.
+
+### Example: Button Click Handlers
+
+```xml
+<Variable Type="Integer" InitialValue="0">buttonState</Variable>
+
+<Logic File="logic/logic.so"/>
+
+<Window Title="Function Demo" Width="400" Height="300">
+    <Button X="100" Y="100" Width="100" Height="50"
+            Variable="buttonState" On="1" Off="0" Type="#_button_momentary_">
+        <ButtonIndicatorOn>
+            <Rectangle FillColor="0.2,0.6,0.2,1" Width="100" Height="50"/>
+            <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">Clicked!</Text>
+            <Function Name="on_button_click"/>
+        </ButtonIndicatorOn>
+        <ButtonIndicatorOff>
+            <Rectangle FillColor="0.3,0.3,0.3,1" Width="100" Height="50"/>
+            <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">Click Me</Text>
+        </ButtonIndicatorOff>
+    </Button>
+</Window>
+```
+
+**logic/logic.c:**
+```c
+#include "dcapp.h"
+#include <stdio.h>
+
+void display_init() {}
+void display_draw() {}
+void display_close() {}
+
+void on_button_click() {
+    printf("Button was clicked!\n");
+    // Do something interesting here
+}
+```
+
+### Use Cases
+
+- **Button handlers:** Execute code when buttons are pressed/released
+- **Conditional actions:** Run functions when conditions become true
+- **Event-driven logic:** Trigger actions without polling in `display_draw()`
+
+### Notes
+
+- The function must exist in the loaded logic library
+- If the function doesn't exist, dcapp will print a warning but continue running
+- Functions are called during the render phase, so keep them fast to avoid frame drops
+
+---
+
+## Cross-Platform Library Loading
+
+dcapp automatically handles different shared library extensions across platforms. You can specify any extension in your XML and dcapp will try all platform-appropriate extensions:
+
+```xml
+<!-- Any of these work on any platform -->
+<Logic File="logic/mylib.so"/>
+<Logic File="logic/mylib.dylib"/>
+<Logic File="logic/mylib.dll"/>
+<Logic File="logic/mylib"/>  <!-- Extension optional -->
+```
+
+dcapp tries extensions in this order: `.so`, `.dylib`, `.dll`
+
+This means you can:
+- Use the same XML file across Linux, macOS, and Windows
+- Just compile your logic library with the appropriate extension for each platform
+- Not worry about changing XML when switching platforms
