@@ -48,7 +48,7 @@ app_bin_dir_rel = os.path.relpath(app_bin_dir_abs, build_script_out_dir_abs)
 # get list of all samples with logic, relative to output dir
 samples_dir = dcapp_home_abs + "/samples"
 sample_dirs_abs = []
-for entry in os.listdir(samples_dir):
+for entry in sorted(os.listdir(samples_dir)):
     if entry.startswith('.'):
         continue
     full_path = samples_dir + "/" + entry
