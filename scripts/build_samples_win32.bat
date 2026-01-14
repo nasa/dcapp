@@ -54,27 +54,60 @@
 :: create output directories
 @if not exist "../samples/lissajous/logic" @mkdir "../samples/lissajous/logic"
 
-@if not exist "../samples/ptz/logic" @mkdir "../samples/ptz/logic"
-
-@if not exist "../samples/functions/logic" @mkdir "../samples/functions/logic"
-
 @if not exist "../samples/screensaver/logic" @mkdir "../samples/screensaver/logic"
 
 @if not exist "../samples/mask/logic" @mkdir "../samples/mask/logic"
 
-:: create lock file(s)
-@echo LOCKING > "../samples/functions/logic/lock.tmp"
+@if not exist "../samples/ptz/logic" @mkdir "../samples/ptz/logic"
 
+@if not exist "../samples/functions/logic" @mkdir "../samples/functions/logic"
+
+:: create lock file(s)
+@echo LOCKING > "../samples/lissajous/logic/lock.tmp"
+
+@if exist "../samples/screensaver/logic/logic.dll" del "..\samples\screensaver\logic\logic.dll"
+@if exist "../samples/screensaver/logic/logic_*.pdb" del "..\samples\screensaver\logic\logic_*.pdb"
 @if exist "../samples/mask/logic/logic.dll" del "..\samples\mask\logic\logic.dll"
 @if exist "../samples/mask/logic/logic_*.pdb" del "..\samples\mask\logic\logic_*.pdb"
 @if exist "../samples/ptz/logic/logic.dll" del "..\samples\ptz\logic\logic.dll"
 @if exist "../samples/ptz/logic/logic_*.pdb" del "..\samples\ptz\logic\logic_*.pdb"
-@if exist "../samples/screensaver/logic/logic.dll" del "..\samples\screensaver\logic\logic.dll"
-@if exist "../samples/screensaver/logic/logic_*.pdb" del "..\samples\screensaver\logic\logic_*.pdb"
-@if exist "../samples/lissajous/logic/logic.dll" del "..\samples\lissajous\logic\logic.dll"
-@if exist "../samples/lissajous/logic/logic_*.pdb" del "..\samples\lissajous\logic\logic_*.pdb"
 @if exist "../samples/functions/logic/logic.dll" del "..\samples\functions\logic\logic.dll"
 @if exist "../samples/functions/logic/logic_*.pdb" del "..\samples\functions\logic\logic_*.pdb"
+@if exist "../samples/lissajous/logic/logic.dll" del "..\samples\lissajous\logic\logic.dll"
+@if exist "../samples/lissajous/logic/logic_*.pdb" del "..\samples\lissajous\logic\logic_*.pdb"
+
+::~~~~~~~~~~~~~~~~~~~~~~~~~~~~ screensaver | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+../pilotlight/out/dcapp-genheader.exe ../samples/screensaver/screensaver.xml
+
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
+@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
+@set PL_SOURCES="../samples/screensaver/logic/logic.c" 
+
+:: run compiler (and linker)
+@echo.
+@echo [1m[93mStep: screensaver[0m
+@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
+@echo [1m[36mCompiling and Linking...[0m
+cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/screensaver/logic/logic.dll" -Fo"../samples/screensaver/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../samples/screensaver/logic/logic_%random%.pdb"
+
+:: check build status
+@set PL_BUILD_STATUS=%ERRORLEVEL%
+
+:: failed
+@if %PL_BUILD_STATUS% NEQ 0 (
+    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
+    @set PL_RESULT=[1m[91mFailed.[0m
+    goto Cleanuprelease
+)
+
+:: print results
+@echo [36mResult: [0m %PL_RESULT%
+@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+:Exit_screensaver
+
+@del "..\samples\screensaver\logic\*.obj"  > nul 2> nul
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ mask | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -142,20 +175,20 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/ptz/logic/logic.dll" -Fo"../s
 
 @del "..\samples\ptz\logic\*.obj"  > nul 2> nul
 
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~~ screensaver | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ functions | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader.exe ../samples/screensaver/screensaver.xml
+../pilotlight/out/dcapp-genheader.exe ../samples/functions/functions.xml
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../samples/screensaver/logic/logic.c" 
+@set PL_SOURCES="../samples/functions/logic/logic.c" 
 
 :: run compiler (and linker)
 @echo.
-@echo [1m[93mStep: screensaver[0m
+@echo [1m[93mStep: functions[0m
 @echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
 @echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/screensaver/logic/logic.dll" -Fo"../samples/screensaver/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../samples/screensaver/logic/logic_%random%.pdb"
+cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/functions/logic/logic.dll" -Fo"../samples/functions/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../samples/functions/logic/logic_%random%.pdb"
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -171,9 +204,9 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/screensaver/logic/logic.dll" 
 @echo [36mResult: [0m %PL_RESULT%
 @echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
 
-:Exit_screensaver
+:Exit_functions
 
-@del "..\samples\screensaver\logic\*.obj"  > nul 2> nul
+@del "..\samples\functions\logic\*.obj"  > nul 2> nul
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ lissajous | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -208,52 +241,19 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/lissajous/logic/logic.dll" -F
 
 @del "..\samples\lissajous\logic\*.obj"  > nul 2> nul
 
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ functions | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-../pilotlight/out/dcapp-genheader.exe ../samples/functions/functions.xml
-
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
-@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../samples/functions/logic/logic.c" 
-
-:: run compiler (and linker)
-@echo.
-@echo [1m[93mStep: functions[0m
-@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
-@echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/functions/logic/logic.dll" -Fo"../samples/functions/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../samples/functions/logic/logic_%random%.pdb"
-
-:: check build status
-@set PL_BUILD_STATUS=%ERRORLEVEL%
-
-:: failed
-@if %PL_BUILD_STATUS% NEQ 0 (
-    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
-    @set PL_RESULT=[1m[91mFailed.[0m
-    goto Cleanuprelease
-)
-
-:: print results
-@echo [36mResult: [0m %PL_RESULT%
-@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
-
-:Exit_functions
-
-@del "..\samples\functions\logic\*.obj"  > nul 2> nul
-
 :Cleanuprelease
 
 @echo [1m[36mCleaning...[0m
 
 :: delete obj files(s)
 @del "..\samples\lissajous\logic\*.obj"  > nul 2> nul
-@del "..\samples\ptz\logic\*.obj"  > nul 2> nul
-@del "..\samples\functions\logic\*.obj"  > nul 2> nul
 @del "..\samples\screensaver\logic\*.obj"  > nul 2> nul
 @del "..\samples\mask\logic\*.obj"  > nul 2> nul
+@del "..\samples\ptz\logic\*.obj"  > nul 2> nul
+@del "..\samples\functions\logic\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
-@if exist "../samples/functions/logic/lock.tmp" del "..\samples\functions\logic\lock.tmp"
+@if exist "../samples/lissajous/logic/lock.tmp" del "..\samples\lissajous\logic\lock.tmp"
 
 :: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :: end of release configuration
@@ -268,27 +268,60 @@ goto ExitLabel
 :: create output directories
 @if not exist "../samples/lissajous/logic" @mkdir "../samples/lissajous/logic"
 
-@if not exist "../samples/ptz/logic" @mkdir "../samples/ptz/logic"
-
-@if not exist "../samples/functions/logic" @mkdir "../samples/functions/logic"
-
 @if not exist "../samples/screensaver/logic" @mkdir "../samples/screensaver/logic"
 
 @if not exist "../samples/mask/logic" @mkdir "../samples/mask/logic"
 
-:: create lock file(s)
-@echo LOCKING > "../samples/functions/logic/lock.tmp"
+@if not exist "../samples/ptz/logic" @mkdir "../samples/ptz/logic"
 
+@if not exist "../samples/functions/logic" @mkdir "../samples/functions/logic"
+
+:: create lock file(s)
+@echo LOCKING > "../samples/lissajous/logic/lock.tmp"
+
+@if exist "../samples/screensaver/logic/logic.dll" del "..\samples\screensaver\logic\logic.dll"
+@if exist "../samples/screensaver/logic/logic_*.pdb" del "..\samples\screensaver\logic\logic_*.pdb"
 @if exist "../samples/mask/logic/logic.dll" del "..\samples\mask\logic\logic.dll"
 @if exist "../samples/mask/logic/logic_*.pdb" del "..\samples\mask\logic\logic_*.pdb"
 @if exist "../samples/ptz/logic/logic.dll" del "..\samples\ptz\logic\logic.dll"
 @if exist "../samples/ptz/logic/logic_*.pdb" del "..\samples\ptz\logic\logic_*.pdb"
-@if exist "../samples/screensaver/logic/logic.dll" del "..\samples\screensaver\logic\logic.dll"
-@if exist "../samples/screensaver/logic/logic_*.pdb" del "..\samples\screensaver\logic\logic_*.pdb"
-@if exist "../samples/lissajous/logic/logic.dll" del "..\samples\lissajous\logic\logic.dll"
-@if exist "../samples/lissajous/logic/logic_*.pdb" del "..\samples\lissajous\logic\logic_*.pdb"
 @if exist "../samples/functions/logic/logic.dll" del "..\samples\functions\logic\logic.dll"
 @if exist "../samples/functions/logic/logic_*.pdb" del "..\samples\functions\logic\logic_*.pdb"
+@if exist "../samples/lissajous/logic/logic.dll" del "..\samples\lissajous\logic\logic.dll"
+@if exist "../samples/lissajous/logic/logic_*.pdb" del "..\samples\lissajous\logic\logic_*.pdb"
+
+::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ screensaver | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+../pilotlight/out/dcapp-genheader.exe ../samples/screensaver/screensaver.xml
+
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
+@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
+@set PL_SOURCES="../samples/screensaver/logic/logic.c" 
+
+:: run compiler (and linker)
+@echo.
+@echo [1m[93mStep: screensaver[0m
+@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
+@echo [1m[36mCompiling and Linking...[0m
+cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/screensaver/logic/logic.dll" -Fo"../samples/screensaver/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../samples/screensaver/logic/logic_%random%.pdb"
+
+:: check build status
+@set PL_BUILD_STATUS=%ERRORLEVEL%
+
+:: failed
+@if %PL_BUILD_STATUS% NEQ 0 (
+    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
+    @set PL_RESULT=[1m[91mFailed.[0m
+    goto Cleanupdebug
+)
+
+:: print results
+@echo [36mResult: [0m %PL_RESULT%
+@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+:Exit_screensaver
+
+@del "..\samples\screensaver\logic\*.obj"  > nul 2> nul
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ mask | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -356,20 +389,20 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/ptz/logic/logic.dll" -Fo"../s
 
 @del "..\samples\ptz\logic\*.obj"  > nul 2> nul
 
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ screensaver | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ functions | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader.exe ../samples/screensaver/screensaver.xml
+../pilotlight/out/dcapp-genheader.exe ../samples/functions/functions.xml
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../samples/screensaver/logic/logic.c" 
+@set PL_SOURCES="../samples/functions/logic/logic.c" 
 
 :: run compiler (and linker)
 @echo.
-@echo [1m[93mStep: screensaver[0m
+@echo [1m[93mStep: functions[0m
 @echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
 @echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/screensaver/logic/logic.dll" -Fo"../samples/screensaver/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../samples/screensaver/logic/logic_%random%.pdb"
+cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/functions/logic/logic.dll" -Fo"../samples/functions/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../samples/functions/logic/logic_%random%.pdb"
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -385,9 +418,9 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/screensaver/logic/logic.dll" 
 @echo [36mResult: [0m %PL_RESULT%
 @echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
 
-:Exit_screensaver
+:Exit_functions
 
-@del "..\samples\screensaver\logic\*.obj"  > nul 2> nul
+@del "..\samples\functions\logic\*.obj"  > nul 2> nul
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ lissajous | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -422,52 +455,19 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/lissajous/logic/logic.dll" -F
 
 @del "..\samples\lissajous\logic\*.obj"  > nul 2> nul
 
-::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ functions | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-../pilotlight/out/dcapp-genheader.exe ../samples/functions/functions.xml
-
-@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
-@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../samples/functions/logic/logic.c" 
-
-:: run compiler (and linker)
-@echo.
-@echo [1m[93mStep: functions[0m
-@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
-@echo [1m[36mCompiling and Linking...[0m
-cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/functions/logic/logic.dll" -Fo"../samples/functions/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../samples/functions/logic/logic_%random%.pdb"
-
-:: check build status
-@set PL_BUILD_STATUS=%ERRORLEVEL%
-
-:: failed
-@if %PL_BUILD_STATUS% NEQ 0 (
-    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
-    @set PL_RESULT=[1m[91mFailed.[0m
-    goto Cleanupdebug
-)
-
-:: print results
-@echo [36mResult: [0m %PL_RESULT%
-@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
-
-:Exit_functions
-
-@del "..\samples\functions\logic\*.obj"  > nul 2> nul
-
 :Cleanupdebug
 
 @echo [1m[36mCleaning...[0m
 
 :: delete obj files(s)
 @del "..\samples\lissajous\logic\*.obj"  > nul 2> nul
-@del "..\samples\ptz\logic\*.obj"  > nul 2> nul
-@del "..\samples\functions\logic\*.obj"  > nul 2> nul
 @del "..\samples\screensaver\logic\*.obj"  > nul 2> nul
 @del "..\samples\mask\logic\*.obj"  > nul 2> nul
+@del "..\samples\ptz\logic\*.obj"  > nul 2> nul
+@del "..\samples\functions\logic\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
-@if exist "../samples/functions/logic/lock.tmp" del "..\samples\functions\logic\lock.tmp"
+@if exist "../samples/lissajous/logic/lock.tmp" del "..\samples\lissajous\logic\lock.tmp"
 
 :: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :: end of debug configuration

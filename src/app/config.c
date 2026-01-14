@@ -6,6 +6,7 @@
 #include "../value.h"
 #include "../utils/env.h"
 #include "../utils/file.h"
+#include "../utils/math.h"
 #include "../utils/stb_sb.h"
 #include "../utils/string.h"
 
@@ -517,6 +518,388 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             return;
         }
 
+        case DC_APP_ELEM_TYPE_STATIC_IF: {
+            // Parse Operation (already dereferenced by _dereference_node_attrs_and_content)
+            xmlChar *raw_operation = xmlGetProp(node, BAD_CAST "Operation");
+            int cond_type = DC_APP_CONDITIONAL_TYPE_TRUE;
+            if (raw_operation) {
+                cond_type = dc_utils_string_to_integer((const char *)raw_operation);
+                xmlFree(raw_operation);
+            }
+
+            // Parse Value1 (already dereferenced)
+            xmlChar *raw_value1 = xmlGetProp(node, BAD_CAST "Value");
+            if (!raw_value1) {
+                raw_value1 = xmlGetProp(node, BAD_CAST "Value1");
+            }
+            if (!raw_value1) {
+                fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: no value specified\n");
+                xmlUnlinkNode(node);
+                xmlFreeNode(node);
+                return;
+            }
+
+            // Parse Value2 (optional, already dereferenced)
+            xmlChar *raw_value2 = xmlGetProp(node, BAD_CAST "Value2");
+
+            // Copy to stack buffers and free xmlChar* immediately
+            char value1_buf[256];
+            char value2_buf[256];
+            strncpy(value1_buf, (const char *)raw_value1, sizeof(value1_buf) - 1);
+            value1_buf[sizeof(value1_buf) - 1] = '\0';
+            xmlFree(raw_value1);
+
+            const char *value1 = value1_buf;
+            const char *value2 = NULL;
+            if (raw_value2) {
+                strncpy(value2_buf, (const char *)raw_value2, sizeof(value2_buf) - 1);
+                value2_buf[sizeof(value2_buf) - 1] = '\0';
+                value2 = value2_buf;
+                xmlFree(raw_value2);
+            }
+
+            // Check for runtime variables (not allowed in StaticIf)
+            if (value1[0] == '@') {
+                fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: Value1 '%s' uses runtime variable (@), only constants (#) are allowed in StaticIf\n", value1);
+                xmlUnlinkNode(node);
+                xmlFreeNode(node);
+                return;
+            }
+            if (value2 && value2[0] == '@') {
+                fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: Value2 '%s' uses runtime variable (@), only constants (#) are allowed in StaticIf\n", value2);
+                xmlUnlinkNode(node);
+                xmlFreeNode(node);
+                return;
+            }
+
+            // Evaluate the condition
+            bool result = false;
+            if (value2) {
+                // Two-value comparison - determine type from value1
+                // Note: Integer check is skipped because dc_utils_string_is_double() accepts integers.
+                // Both "1" and "1.5" will be treated as doubles, which is fine for constant comparisons.
+                bool is_double = dc_utils_string_is_double(value1);
+                bool is_bool = !is_double && dc_utils_string_is_boolean(value1);
+
+                if (is_double) {
+                    // Numeric comparison (handles both integers and doubles)
+                    if (!dc_utils_string_is_double(value2)) {
+                        fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: Value1 is numeric but Value2 '%s' is not, ignoring StaticIf\n", value2);
+                        xmlUnlinkNode(node);
+                        xmlFreeNode(node);
+                        return;
+                    }
+
+                    double num1 = dc_utils_string_to_double(value1);
+                    double num2 = dc_utils_string_to_double(value2);
+
+                    switch (cond_type) {
+                        case DC_APP_CONDITIONAL_TYPE_EQ:
+                            result = dc_utils_double_equals(num1, num2, 1e-9);
+                            break;
+                        case DC_APP_CONDITIONAL_TYPE_NE:
+                            result = !dc_utils_double_equals(num1, num2, 1e-9);
+                            break;
+                        case DC_APP_CONDITIONAL_TYPE_LT:
+                            result = (num1 < num2);
+                            break;
+                        case DC_APP_CONDITIONAL_TYPE_GT:
+                            result = (num1 > num2);
+                            break;
+                        case DC_APP_CONDITIONAL_TYPE_LTE:
+                            result = (num1 <= num2);
+                            break;
+                        case DC_APP_CONDITIONAL_TYPE_GTE:
+                            result = (num1 >= num2);
+                            break;
+                        default:
+                            fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: invalid Operation %d, expected EQ/NE/LT/GT/LTE/GTE (3-8)\n", cond_type);
+                            break;
+                    }
+                } else if (is_bool) {
+                    // Boolean comparison
+                    int bool1 = dc_utils_string_to_boolean(value1);
+                    int bool2 = dc_utils_string_to_boolean(value2);
+
+                    switch (cond_type) {
+                        case DC_APP_CONDITIONAL_TYPE_EQ:
+                            result = (bool1 == bool2);
+                            break;
+                        case DC_APP_CONDITIONAL_TYPE_NE:
+                            result = (bool1 != bool2);
+                            break;
+                        case DC_APP_CONDITIONAL_TYPE_LT:
+                        case DC_APP_CONDITIONAL_TYPE_GT:
+                        case DC_APP_CONDITIONAL_TYPE_LTE:
+                        case DC_APP_CONDITIONAL_TYPE_GTE:
+                            fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: operator %d not supported for boolean values, ignoring StaticIf\n", cond_type);
+                            xmlUnlinkNode(node);
+                            xmlFreeNode(node);
+                            return;
+                        default:
+                            fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: invalid Operation %d for boolean comparison, expected EQ/NE (3-4)\n", cond_type);
+                            break;
+                    }
+                } else {
+                    // String comparison
+                    switch (cond_type) {
+                        case DC_APP_CONDITIONAL_TYPE_EQ:
+                            result = (strcmp(value1, value2) == 0);
+                            break;
+                        case DC_APP_CONDITIONAL_TYPE_NE:
+                            result = (strcmp(value1, value2) != 0);
+                            break;
+                        case DC_APP_CONDITIONAL_TYPE_LT:
+                        case DC_APP_CONDITIONAL_TYPE_GT:
+                        case DC_APP_CONDITIONAL_TYPE_LTE:
+                        case DC_APP_CONDITIONAL_TYPE_GTE:
+                            fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: operator %d not supported for string values, ignoring StaticIf\n", cond_type);
+                            xmlUnlinkNode(node);
+                            xmlFreeNode(node);
+                            return;
+                        default:
+                            fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: invalid Operation %d for string comparison, expected EQ/NE (3-4)\n", cond_type);
+                            break;
+                    }
+                }
+            } else {
+                // Single value boolean evaluation
+                bool bool_val = dc_utils_string_to_boolean(value1);
+                switch (cond_type) {
+                    case DC_APP_CONDITIONAL_TYPE_TRUE:
+                        result = bool_val;
+                        break;
+                    case DC_APP_CONDITIONAL_TYPE_FALSE:
+                        result = !bool_val;
+                        break;
+                    default:
+                        fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: Operation %d (EQ/NE/LT/GT/LTE/GTE) requires Value2 attribute\n", cond_type);
+                        break;
+                }
+            }
+
+            // Step 1b: Process ALL children first (critical for Include expansion)
+            xmlNodePtr child = node->children;
+            while (child) {
+                xmlNodePtr child_next = child->next;
+                _clean_xml_node(context, child, directory);
+                child = child_next;
+            }
+
+            // Step 2: Check if ANY <True> element exists (don't store address)
+            bool has_true_node = false;
+            for (xmlNodePtr scan = node->children; scan != NULL; scan = scan->next) {
+                if (scan->type == XML_ELEMENT_NODE) {
+                    DcAppElemType scan_type = dc_app_xml_node_to_elem_type(scan);
+                    if (scan_type == DC_APP_ELEM_TYPE_TRUE) {
+                        has_true_node = true;
+                        break;
+                    }
+                }
+            }
+
+            // Step 3: Handle the 4 cases
+            if (has_true_node && result) {
+                // Case 1: Explicit mode, true branch
+                // Remove all children NOT of element type <True>
+                child = node->children;
+                while (child) {
+                    xmlNodePtr next = child->next;
+                    bool should_remove = true;
+                    if (child->type == XML_ELEMENT_NODE) {
+                        DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
+                        if (child_type == DC_APP_ELEM_TYPE_TRUE) {
+                            should_remove = false;
+                        }
+                    }
+                    if (should_remove) {
+                        xmlUnlinkNode(child);
+                        xmlFreeNode(child);
+                    }
+                    child = next;
+                }
+
+                // Collect all children from ALL <True> elements
+                xmlNodePtr collected_first = NULL;
+                xmlNodePtr collected_last = NULL;
+
+                child = node->children;
+                while (child) {
+                    xmlNodePtr next = child->next;
+                    // child is guaranteed to be a <True> element
+
+                    // Steal all children from this True wrapper
+                    if (child->children) {
+                        if (!collected_first) {
+                            // First True wrapper - take its children as-is
+                            collected_first = child->children;
+                            collected_last = child->last;
+                        } else {
+                            // Subsequent True wrappers - append their children
+                            collected_last->next = child->children;
+                            child->children->prev = collected_last;
+                            collected_last = child->last;
+                        }
+
+                        // Update parent pointers for stolen children
+                        for (xmlNodePtr stolen = child->children; stolen; stolen = stolen->next) {
+                            stolen->parent = node;
+                        }
+
+                        // Unlink children from True wrapper before freeing it
+                        child->children = NULL;
+                        child->last = NULL;
+                    }
+
+                    // Free the now-empty True wrapper
+                    xmlUnlinkNode(child);
+                    xmlFreeNode(child);
+                    child = next;
+                }
+
+                // Make collected children the direct children of StaticIf
+                node->children = collected_first;
+                node->last = collected_last;
+
+            } else if (has_true_node && !result) {
+                // Case 2: Explicit mode, false branch
+                // Remove all children NOT of element type <False>
+                child = node->children;
+                while (child) {
+                    xmlNodePtr next = child->next;
+                    bool should_remove = true;
+                    if (child->type == XML_ELEMENT_NODE) {
+                        DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
+                        if (child_type == DC_APP_ELEM_TYPE_FALSE) {
+                            should_remove = false;
+                        }
+                    }
+                    if (should_remove) {
+                        xmlUnlinkNode(child);
+                        xmlFreeNode(child);
+                    }
+                    child = next;
+                }
+
+                // Collect all children from ALL <False> elements
+                xmlNodePtr collected_first = NULL;
+                xmlNodePtr collected_last = NULL;
+
+                child = node->children;
+                while (child) {
+                    xmlNodePtr next = child->next;
+                    // child is guaranteed to be a <False> element
+
+                    // Steal all children from this False wrapper
+                    if (child->children) {
+                        if (!collected_first) {
+                            // First False wrapper - take its children as-is
+                            collected_first = child->children;
+                            collected_last = child->last;
+                        } else {
+                            // Subsequent False wrappers - append their children
+                            collected_last->next = child->children;
+                            child->children->prev = collected_last;
+                            collected_last = child->last;
+                        }
+
+                        // Update parent pointers for stolen children
+                        for (xmlNodePtr stolen = child->children; stolen; stolen = stolen->next) {
+                            stolen->parent = node;
+                        }
+
+                        // Unlink children from False wrapper before freeing it
+                        child->children = NULL;
+                        child->last = NULL;
+                    }
+
+                    // Free the now-empty False wrapper
+                    xmlUnlinkNode(child);
+                    xmlFreeNode(child);
+                    child = next;
+                }
+
+                // Make collected children the direct children of StaticIf
+                node->children = collected_first;
+                node->last = collected_last;
+
+            } else if (!has_true_node && result) {
+                // Case 3: Implicit mode, true branch
+                // Remove all children of element type <True> or <False>
+                child = node->children;
+                while (child) {
+                    xmlNodePtr next = child->next;
+                    if (child->type == XML_ELEMENT_NODE) {
+                        DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
+                        if (child_type == DC_APP_ELEM_TYPE_TRUE || child_type == DC_APP_ELEM_TYPE_FALSE) {
+                            xmlUnlinkNode(child);
+                            xmlFreeNode(child);
+                        }
+                    }
+                    child = next;
+                }
+
+            } else {
+                // Case 4: Implicit mode, false branch
+                // Remove all children
+                child = node->children;
+                while (child) {
+                    xmlNodePtr next = child->next;
+                    xmlUnlinkNode(child);
+                    xmlFreeNode(child);
+                    child = next;
+                }
+                node->children = NULL;
+                node->last = NULL;
+            }
+
+            // Step 4: Splice StaticIf's remaining children into parent (Dummy pattern)
+            if (node->children) {
+                xmlNodePtr first_child = node->children;
+                xmlNodePtr last_child = node->last;
+
+                // Update parent
+                if (node->parent) {
+                    if (node->parent->children == node) {
+                        node->parent->children = first_child;
+                    }
+                    if (node->parent->last == node) {
+                        node->parent->last = last_child;
+                    }
+                }
+
+                // Update siblings
+                if (node->prev) {
+                    node->prev->next = first_child;
+                }
+                if (node->next) {
+                    node->next->prev = last_child;
+                }
+
+                // Update children
+                for (xmlNodePtr curr_child = first_child; curr_child; curr_child = curr_child->next) {
+                    curr_child->parent = node->parent;
+                }
+                first_child->prev = node->prev;
+                last_child->next = node->next;
+
+                // Unlink StaticIf node
+                node->children = NULL;
+                node->last = NULL;
+                node->parent = NULL;
+                node->next = NULL;
+                node->prev = NULL;
+
+                // Free StaticIf node
+                xmlFreeNode(node);
+            } else {
+                // No children to splice, just remove StaticIf node
+                xmlUnlinkNode(node);
+                xmlFreeNode(node);
+            }
+            return;
+        }
+
         case DC_APP_ELEM_TYPE_INCLUDE: {
 
             // check if include is optional
@@ -821,6 +1204,8 @@ void _dereference_constants(_ConfigContext *context, const char *in, char *out, 
                 int                subtext_end_index = dc_utils_str_find_first_not_of(&(in[in_index]), valid_chars);
                 if (subtext_end_index == -1) {
                     subtext_end_index = (int)in_length;
+                } else {
+                    subtext_end_index += in_index;  // Convert from relative to absolute position
                 }
 
                 subtext_start_index         = in_index + 1;

@@ -490,6 +490,62 @@ Conditional rendering based on variable comparison.
 
 ---
 
+### `<StaticIf>`
+
+Parse-time conditional that evaluates once during XML parsing and includes only the matching branch's children.
+
+| Attribute | Aliases | Type | Required | Description |
+|-----------|---------|------|----------|-------------|
+| `Operation` | — | integer | No | Comparison operation |
+| `Value` | `Value1` | string/var | **Yes** | First value to compare |
+| `Value2` | — | string/var | No | Second value to compare |
+
+**Operation Constants:**
+
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `#_conditional_true_` | 0 | Boolean truthy check (default when `Value2` not provided) |
+| `#_conditional_false_` | 1 | Boolean falsy check |
+| `#_conditional_eq_` | 2 | Equal |
+| `#_conditional_ne_` | 3 | Not equal |
+| `#_conditional_lt_` | 4 | Less than |
+| `#_conditional_gt_` | 5 | Greater than |
+| `#_conditional_lte_` | 6 | Less than or equal |
+| `#_conditional_gte_` | 7 | Greater than or equal |
+
+**Children:**
+- `<True>` - Content included when condition is true
+- `<False>` - Content included when condition is false
+- Direct children (without `<True>` wrapper) are treated as `<True>` content
+
+**How it works:**
+- Unlike `<If>`, which evaluates every frame during rendering, `<StaticIf>` evaluates once during XML parsing
+- The matching branch's children are "spliced" directly into the parent, as if the `<StaticIf>` never existed
+- No conditional node is created in the scene graph
+- Useful for conditional variable registration, TrickIO setup, or build-time configuration
+
+**Example:**
+```xml
+<!-- Conditionally register debug variables -->
+<StaticIf Value="@debugMode" Value2="1" Operation="#_conditional_eq_">
+    <Variable Type="double" InitialValue="0">debugCounter</Variable>
+    <Variable Type="string" InitialValue="">debugMessage</Variable>
+</StaticIf>
+
+<!-- Conditionally include TrickVariables -->
+<TrickIO Host="localhost" Port="7000">
+    <FromTrick>
+        <TrickVariable Name="rocket.altitude">altitude</TrickVariable>
+        <StaticIf Value="@useAdvancedTelemetry" Value2="1" Operation="#_conditional_eq_">
+            <TrickVariable Name="rocket.fuel_temp">fuelTemp</TrickVariable>
+            <TrickVariable Name="rocket.chamber_pressure">chamberPressure</TrickVariable>
+        </StaticIf>
+    </FromTrick>
+</TrickIO>
+```
+
+---
+
 ### `<Set>`
 
 Sets a variable to a value.

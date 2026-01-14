@@ -78,6 +78,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "Set";
         case DC_APP_ELEM_TYPE_SPHERE:
             return "Sphere";
+        case DC_APP_ELEM_TYPE_STATIC_IF:
+            return "StaticIf";
         case DC_APP_ELEM_TYPE_STENCIL:
             return "Stencil";
         case DC_APP_ELEM_TYPE_STENCIL_ADD:
@@ -189,6 +191,8 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_SET;
     if (strcmp(name, "Sphere") == 0)
         return DC_APP_ELEM_TYPE_SPHERE;
+    if (strcmp(name, "StaticIf") == 0)
+        return DC_APP_ELEM_TYPE_STATIC_IF;
     if (strcmp(name, "Stencil") == 0)
         return DC_APP_ELEM_TYPE_STENCIL;
     if (strcmp(name, "StencilAdd") == 0)

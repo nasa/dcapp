@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <!-- Parse-time configuration constants -->
+    <Constant Name="DEBUG_MODE">1</Constant>
+    <Constant Name="PRODUCTION_MODE">0</Constant>
+
+    <!-- Runtime variables -->
+    <Variable Type="#_variable_double_" InitialValue="0">COUNTER</Variable>
+
+    <!-- StaticIf: Conditionally create debug variables at parse time -->
+    <StaticIf Value="#DEBUG_MODE" Value2="1" Operation="#_conditional_eq_">
+        <Variable Type="#_variable_string_" InitialValue="Debug build">BUILD_TYPE</Variable>
+        <Variable Type="#_variable_double_" InitialValue="0">DEBUG_COUNTER</Variable>
+    </StaticIf>
+
+    <!-- StaticIf: Conditionally create production variables at parse time -->
+    <StaticIf Value="#PRODUCTION_MODE" Value2="1" Operation="#_conditional_eq_">
+        <Variable Type="#_variable_string_" InitialValue="Production build">BUILD_TYPE</Variable>
+        <Variable Type="#_variable_double_" InitialValue="1">OPTIMIZE_ENABLED</Variable>
+    </StaticIf>
+
+    <Window Title="StaticIf vs If Demo" X="30" Y="30" Width="1000" Height="700">
+        <Default>
+            <Text Size="12" FillColor="1 1 1"/>
+        </Default>
+
+        <Panel VirtualWidth="1000" VirtualHeight="700" BackgroundColor="0.08 0.08 0.1">
+
+            <!-- Animate counter -->
+            <Set Variable="COUNTER" Operator="#_set_add_">1</Set>
+            <If Value1="@COUNTER" Operation="#_conditional_gt_" Value2="100">
+                <Set Variable="COUNTER" Operator="#_set_equal_">0</Set>
+            </If>
+
+            <!-- Title -->
+            <Text X="500" Y="660" LocalAlignX="#_align_center_" Size="20" FillColor="1 1 1">StaticIf vs If Demonstration</Text>
+
+            <!-- ========== LEFT SIDE: StaticIf (Parse-Time) ========== -->
+            <Container X="30" Y="145" Width="460" Height="470">
+                <Rectangle Width="460" Height="470" FillColor="0.12 0.12 0.15" LineColor="0.3 0.5 0.7" LineWidth="2"/>
+
+                <Text X="230" Y="445" LocalAlignX="#_align_center_" Size="18" FillColor="0.4 0.8 1">&lt;StaticIf&gt; (Parse-Time)</Text>
+                <Text X="230" Y="420" LocalAlignX="#_align_center_" Size="11" FillColor="0.7 0.7 0.7">Evaluated ONCE during XML parsing</Text>
+
+                <!-- Configuration section -->
+                <Text X="230" Y="380" LocalAlignX="#_align_center_" Size="14" FillColor="0.9 0.9 0.3">Configuration</Text>
+                <Text X="30" Y="350" Size="11" FillColor="0.8 0.8 0.8">DEBUG_MODE = #DEBUG_MODE</Text>
+                <Text X="30" Y="325" Size="11" FillColor="0.8 0.8 0.8">PRODUCTION_MODE = #PRODUCTION_MODE</Text>
+
+                <Rectangle X="30" Y="300" Width="400" Height="2" FillColor="0.3 0.5 0.7"/>
+
+                <Text X="230" Y="270" LocalAlignX="#_align_center_" Size="14" FillColor="0.9 0.9 0.3">Variables Created at Parse Time</Text>
+
+                <!-- Debug mode content -->
+                <StaticIf Value="#DEBUG_MODE" Value2="1" Operation="#_conditional_eq_">
+                    <Rectangle X="30" Y="180" Width="400" Height="70" FillColor="0.2 0.5 0.3"/>
+                    <Text X="230" Y="235" LocalAlignX="#_align_center_" Size="12" FillColor="1 1 1">DEBUG MODE ACTIVE</Text>
+                    <Text X="40" Y="210" Size="10" FillColor="0.9 0.9 0.9">- BUILD_TYPE = @BUILD_TYPE</Text>
+                    <Text X="40" Y="190" Size="10" FillColor="0.9 0.9 0.9">- DEBUG_COUNTER = @DEBUG_COUNTER(%.0f)</Text>
+                </StaticIf>
+
+                <!-- Production mode content -->
+                <StaticIf Value="#PRODUCTION_MODE" Value2="1" Operation="#_conditional_eq_">
+                    <Rectangle X="30" Y="180" Width="400" Height="70" FillColor="0.5 0.2 0.2"/>
+                    <Text X="230" Y="235" LocalAlignX="#_align_center_" Size="12" FillColor="1 1 1">PRODUCTION MODE ACTIVE</Text>
+                    <Text X="40" Y="210" Size="10" FillColor="0.9 0.9 0.9">- BUILD_TYPE = @BUILD_TYPE</Text>
+                    <Text X="40" Y="190" Size="10" FillColor="0.9 0.9 0.9">- OPTIMIZE_ENABLED = @OPTIMIZE_ENABLED(%.0f)</Text>
+                </StaticIf>
+
+                <!-- How it works -->
+                <Rectangle X="30" Y="150" Width="400" Height="2" FillColor="0.3 0.5 0.7"/>
+                <Text X="230" Y="125" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.8 1">How it works:</Text>
+                <Text X="40" Y="95" Size="9" FillColor="0.7 0.7 0.7">1. Checks condition during XML parsing</Text>
+                <Text X="40" Y="75" Size="9" FillColor="0.7 0.7 0.7">2. Only matching branch is included</Text>
+                <Text X="40" Y="55" Size="9" FillColor="0.7 0.7 0.7">3. &lt;StaticIf&gt; disappears from scene</Text>
+                <Text X="40" Y="35" Size="9" FillColor="0.7 0.7 0.7">4. No runtime overhead</Text>
+
+                <Text X="230" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.9 0.6 0.3">* Reload to see different results</Text>
+            </Container>
+
+            <!-- ========== RIGHT SIDE: If (Runtime) ========== -->
+            <Container X="510" Y="145" Width="460" Height="470">
+                <Rectangle Width="460" Height="470" FillColor="0.15 0.12 0.12" LineColor="0.7 0.3 0.5" LineWidth="2"/>
+
+                <Text X="230" Y="445" LocalAlignX="#_align_center_" Size="18" FillColor="1 0.4 0.8">&lt;If&gt; (Runtime)</Text>
+                <Text X="230" Y="420" LocalAlignX="#_align_center_" Size="11" FillColor="0.7 0.7 0.7">Evaluated EVERY FRAME during rendering</Text>
+
+                <!-- Runtime variable section -->
+                <Text X="230" Y="380" LocalAlignX="#_align_center_" Size="14" FillColor="0.9 0.9 0.3">Runtime Variable</Text>
+                <Text X="30" Y="350" Size="11" FillColor="0.8 0.8 0.8">COUNTER = @COUNTER(%.0f)</Text>
+
+                <Rectangle X="30" Y="320" Width="400" Height="2" FillColor="0.7 0.3 0.5"/>
+
+                <Text X="230" Y="290" LocalAlignX="#_align_center_" Size="14" FillColor="0.9 0.9 0.3">Dynamic Content (Changes Every Frame)</Text>
+
+                <!-- Counter low -->
+                <If Value1="@COUNTER" Operation="#_conditional_lt_" Value2="50">
+                    <Rectangle X="30" Y="200" Width="400" Height="70" FillColor="0.3 0.6 0.8"/>
+                    <Text X="230" Y="255" LocalAlignX="#_align_center_" Size="14" FillColor="1 1 1">COUNTER IS LOW (&lt; 50)</Text>
+                    <Text X="230" Y="230" LocalAlignX="#_align_center_" Size="10" FillColor="0.8 0.8 0.8">This appears when COUNTER &lt; 50</Text>
+                </If>
+
+                <!-- Counter high -->
+                <If Value1="@COUNTER" Operation="#_conditional_gte_" Value2="50">
+                    <Rectangle X="30" Y="200" Width="400" Height="70" FillColor="0.8 0.3 0.3"/>
+                    <Text X="230" Y="255" LocalAlignX="#_align_center_" Size="14" FillColor="1 1 1">COUNTER IS HIGH (&gt;= 50)</Text>
+                    <Text X="230" Y="230" LocalAlignX="#_align_center_" Size="10" FillColor="0.8 0.8 0.8">This appears when COUNTER &gt;= 50</Text>
+                </If>
+
+                <!-- Progress bar -->
+                <Rectangle X="30" Y="175" Width="400" Height="15" FillColor="0.2 0.2 0.2" LineColor="0.4 0.4 0.4" LineWidth="1"/>
+                <If Value1="@COUNTER" Operation="#_conditional_lte_" Value2="400">
+                    <Rectangle X="30" Y="175" Width="@COUNTER" Height="15" FillColor="0.3 0.8 0.5"/>
+                </If>
+
+                <!-- How it works -->
+                <Rectangle X="30" Y="150" Width="400" Height="2" FillColor="0.7 0.3 0.5"/>
+                <Text X="230" Y="125" LocalAlignX="#_align_center_" Size="11" FillColor="1 0.6 0.8">How it works:</Text>
+                <Text X="40" Y="95" Size="9" FillColor="0.7 0.7 0.7">1. Creates conditional node in scene graph</Text>
+                <Text X="40" Y="75" Size="9" FillColor="0.7 0.7 0.7">2. Evaluates condition every frame</Text>
+                <Text X="40" Y="55" Size="9" FillColor="0.7 0.7 0.7">3. Dynamically shows/hides content</Text>
+                <Text X="40" Y="35" Size="9" FillColor="0.7 0.7 0.7">4. Responds to runtime variable changes</Text>
+
+                <Text X="230" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="1 0.8 0.4">Watch the box and bar change in real-time!</Text>
+            </Container>
+
+            <!-- Bottom explanation -->
+            <Container X="30" Y="10" Width="940" Height="120">
+                <Rectangle Width="940" Height="120" FillColor="0.15 0.15 0.2" LineColor="0.5 0.5 0.6" LineWidth="1"/>
+                <Text X="470" Y="105" LocalAlignX="#_align_center_" Size="11" FillColor="0.9 0.9 1">Key Difference: &lt;StaticIf&gt; = Parse-time (evaluated once) | &lt;If&gt; = Runtime (evaluated every frame)</Text>
+                <Text X="470" Y="90" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.8">Use &lt;StaticIf&gt; for: Config setup, conditional variable registration, TrickIO selection</Text>
+                <Text X="470" Y="75" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.8">Use &lt;If&gt; for: Dynamic UI, sensor displays, user interaction responses</Text>
+
+                <Rectangle X="10" Y="55" Width="920" Height="1" FillColor="0.4 0.4 0.5"/>
+                <Text X="470" Y="40" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.9 0.6">Try different modes via command line:</Text>
+                <Text X="470" Y="22" LocalAlignX="#_align_center_" Size="9" FillColor="0.8 0.8 0.8">./start.sh samples/static-if/static-if.xml DEBUG_MODE=0 PRODUCTION_MODE=1</Text>
+                <Text X="470" Y="7" LocalAlignX="#_align_center_" Size="9" FillColor="0.8 0.8 0.8">./start.sh samples/static-if/static-if.xml DEBUG_MODE=0 PRODUCTION_MODE=0</Text>
+            </Container>
+
+        </Panel>
+    </Window>
+</DCAPP>
