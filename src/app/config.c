@@ -64,6 +64,7 @@ static char *_get_xml_node_attr(_ConfigContext *context, xmlNodePtr xml_node, Dc
 static char *_get_xml_node_content(_ConfigContext *context, xmlNodePtr xml_node, DcAppElemType elem_type, int style_index);
 static void  _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory);
 void         _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr node);
+static void  _splice_children_into_parent_and_free_wrapper(xmlNodePtr node);
 
 // arg utils
 static char *_unquote(const char *str);
@@ -351,6 +352,53 @@ void dc_app_config_clean_xml(DcAppConfig *config, DcAppLookup *lookup) {
     config->xml_doc_is_cleaned = true;
 }
 
+// Helper function to splice a node's children into its parent and free the wrapper node.
+// This is the common "Dummy pattern" used by Dummy, Include, and StaticIf.
+// The caller is responsible for processing children (preferrably before calling this).
+static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node) {
+    if (node->children) {
+        xmlNodePtr first_child = node->children;
+        xmlNodePtr last_child  = node->last;
+
+        // update parent
+        if (node->parent) {
+            if (node->parent->children == node) {
+                node->parent->children = first_child;
+            }
+            if (node->parent->last == node) {
+                node->parent->last = last_child;
+            }
+        }
+
+        // update siblings
+        if (node->prev) {
+            node->prev->next = first_child;
+        }
+        if (node->next) {
+            node->next->prev = last_child;
+        }
+
+        // update children
+        for (xmlNodePtr curr_child = first_child; curr_child; curr_child = curr_child->next) {
+            curr_child->parent = node->parent;
+        }
+        first_child->prev = node->prev;
+        last_child->next  = node->next;
+
+        // unlink node
+        node->children = NULL;
+        node->last     = NULL;
+        node->parent   = NULL;
+        node->next     = NULL;
+        node->prev     = NULL;
+    } else {
+        xmlUnlinkNode(node);
+    }
+
+    // free wrapper node
+    xmlFreeNode(node);
+}
+
 void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) {
 
     // remove if not an element
@@ -363,6 +411,16 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
     // only process nodes
     if (node->type != XML_ELEMENT_NODE) {
         return;
+    }
+
+    // check for _Directory attribute and use it if present
+    char directory_buffer[DC_UTILS_FILEPATH_BUFFER_SIZE];
+    xmlChar *dir_attr = xmlGetProp(node, BAD_CAST "_Directory");
+    if (dir_attr) {
+        strncpy(directory_buffer, (const char *)dir_attr, sizeof(directory_buffer) - 1);
+        directory_buffer[sizeof(directory_buffer) - 1] = '\0';
+        directory = directory_buffer;
+        xmlFree(dir_attr);
     }
 
     // get element type
@@ -446,56 +504,16 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
 
         // remove "Dummy" level, keep children
         case DC_APP_ELEM_TYPE_DUMMY: {
-            // requires some finagling if it contains children. Otherwise, unlink it normally
-            if (node->children) {
-                xmlNodePtr first_child = node->children;
-                xmlNodePtr last_child  = node->last;
-
-                // update parent
-                if (node->parent) {
-                    if (node->parent->children == node) {
-                        node->parent->children = first_child;
-                    }
-                    if (node->parent->last == node) {
-                        node->parent->last = last_child;
-                    }
-                }
-
-                // update siblings
-                if (node->prev) {
-                    node->prev->next = first_child;
-                }
-                if (node->next) {
-                    node->next->prev = last_child;
-                }
-
-                // update children
-                for (xmlNodePtr curr_child = first_child; curr_child; curr_child = curr_child->next) {
-                    curr_child->parent = node->parent;
-                }
-                first_child->prev = node->prev;
-                last_child->next  = node->next;
-
-                // unlink node
-                node->children = NULL;
-                node->last     = NULL;
-                node->parent   = NULL;
-                node->next     = NULL;
-                node->prev     = NULL;
-
-                // process children
-                xmlNodePtr child = first_child;
-                while (child) {
-                    xmlNodePtr child_next = child->next;
-                    _clean_xml_node(context, child, directory);
-                    child = child_next;
-                }
-            } else {
-                xmlUnlinkNode(node);
+            // process children first
+            xmlNodePtr child = node->children;
+            while (child) {
+                xmlNodePtr child_next = child->next;
+                _clean_xml_node(context, child, directory);
+                child = child_next;
             }
 
-            // free old node
-            xmlFreeNode(node);
+            // splice children into parent and free wrapper
+            _splice_children_into_parent_and_free_wrapper(node);
             return;
         }
 
@@ -517,10 +535,11 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                 }
             }
             char cleaned_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
-            strncpy(cleaned_filepath, (const char *)filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
+            strncpy(cleaned_filepath, (const char *)filepath, sizeof(cleaned_filepath) - 1);
+            cleaned_filepath[sizeof(cleaned_filepath) - 1] = '\0';
             xmlFree(filepath);
 
-            // get canonical path, assign to File attribute
+            // get canonical path
             char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
             if (dc_utils_is_relative_path(cleaned_filepath)) {
                 char abs_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
@@ -541,12 +560,9 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                 }
             }
 
-            // create new prop, assign to <Include> node
-            xmlAttrPtr directory_prop = xmlSetProp(node, BAD_CAST "File", BAD_CAST canon_filepath);
-
-            // get canonical directory
-            dc_utils_get_directory(canon_filepath, new_directory, sizeof(new_directory));
-            directory = new_directory;
+            // get canonical directory from filepath
+            char include_directory[DC_UTILS_FILEPATH_BUFFER_SIZE];
+            dc_utils_get_directory(canon_filepath, include_directory, sizeof(include_directory));
 
             // read XML file
             xmlDocPtr sub_doc = xmlReadFile(canon_filepath, NULL, XML_PARSE_NOBLANKS);
@@ -560,18 +576,51 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                 fprintf(stderr, "DCAPP _clean_xml_node(): Unable to get root element of config file %s\n", canon_filepath);
             }
 
-            // replace child (text) with subnode
+            // copy loaded content
             xmlNodePtr new_node = xmlDocCopyNode(sub_node, node->doc, 1);
-            xmlNodePtr old_node = xmlReplaceNode(node->children, new_node);
 
-            // free old node/doc
-            if (old_node) {
-                xmlUnlinkNode(old_node);
-                xmlFreeNode(old_node);
+            // add _Directory attribute to all direct children
+            for (xmlNodePtr child = new_node->children; child; child = child->next) {
+                if (child->type == XML_ELEMENT_NODE) {
+                    xmlSetProp(child, BAD_CAST "_Directory", BAD_CAST include_directory);
+                }
             }
+
+            // replace Include's children with loaded content
+            xmlNodePtr old_child = node->children;
+            node->children = new_node->children;
+            node->last = new_node->last;
+
+            // update parent pointers for all children
+            for (xmlNodePtr child = node->children; child; child = child->next) {
+                child->parent = node;
+            }
+
+            // unlink loaded content (now owned by Include node)
+            new_node->children = NULL;
+            new_node->last = NULL;
+            xmlFreeNode(new_node);
+
+            // free old child (text node)
+            if (old_child) {
+                xmlUnlinkNode(old_child);
+                xmlFreeNode(old_child);
+            }
+
+            // free loaded document
             xmlFreeDoc(sub_doc);
 
-            break;
+            // process children first with include directory
+            xmlNodePtr child = node->children;
+            while (child) {
+                xmlNodePtr child_next = child->next;
+                _clean_xml_node(context, child, include_directory);
+                child = child_next;
+            }
+
+            // splice children into parent and free wrapper
+            _splice_children_into_parent_and_free_wrapper(node);
+            return;
         }
 
         case DC_APP_ELEM_TYPE_DEFAULT:

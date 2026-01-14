@@ -124,6 +124,15 @@ static _NodeIndex _process_xml_node_children(_AppData *app_data, xmlNodePtr xml_
     return first_child_index;
 }
 static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    char directory_buffer[DC_UTILS_FILEPATH_BUFFER_SIZE];
+    xmlChar *dir_attr = xmlGetProp(xml_node, BAD_CAST "_Directory");
+    if (dir_attr) {
+        strncpy(directory_buffer, (const char *)dir_attr, sizeof(directory_buffer) - 1);
+        directory_buffer[sizeof(directory_buffer) - 1] = '\0';
+        directory = directory_buffer;
+        xmlFree(dir_attr);
+    }
+
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
     switch (elem_type) {
         case DC_APP_ELEM_TYPE_NONELEM:
