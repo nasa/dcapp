@@ -44,8 +44,8 @@
                 </If>
             </Container>
 
-            <!-- ========== SECTION 2: If/ElseIf/Else ========== -->
-            <Text X="425" Y="620" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">If / ElseIf / Else</Text>
+            <!-- ========== SECTION 2: Multiple If Conditions ========== -->
+            <Text X="425" Y="620" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Multiple If Conditions</Text>
             <Rectangle X="300" Y="610" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
 
             <Container X="300" Y="450" Width="250" Height="150">
@@ -53,27 +53,31 @@
 
                 <Text X="125" Y="130" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Counter: @COUNTER(%.0f)</Text>
 
-                <!-- Multiple conditions with else -->
+                <!-- Multiple conditions using separate If statements -->
                 <If Value1="@COUNTER" Operation="#_conditional_lt_" Value2="25">
                     <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.2 0.5 0.8"/>
                     <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 1</Text>
                     <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">0-24</Text>
                 </If>
-                <ElseIf Value1="@COUNTER" Operation="#_conditional_lt_" Value2="50">
-                    <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.5 0.8 0.2"/>
-                    <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 2</Text>
-                    <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">25-49</Text>
-                </ElseIf>
-                <ElseIf Value1="@COUNTER" Operation="#_conditional_lt_" Value2="75">
-                    <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.8 0.5 0.2"/>
-                    <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 3</Text>
-                    <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">50-74</Text>
-                </ElseIf>
-                <Else>
+                <If Value1="@COUNTER" Operation="#_conditional_gte_" Value2="25">
+                    <If Value1="@COUNTER" Operation="#_conditional_lt_" Value2="50">
+                        <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.5 0.8 0.2"/>
+                        <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 2</Text>
+                        <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">25-49</Text>
+                    </If>
+                </If>
+                <If Value1="@COUNTER" Operation="#_conditional_gte_" Value2="50">
+                    <If Value1="@COUNTER" Operation="#_conditional_lt_" Value2="75">
+                        <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.8 0.5 0.2"/>
+                        <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 3</Text>
+                        <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">50-74</Text>
+                    </If>
+                </If>
+                <If Value1="@COUNTER" Operation="#_conditional_gte_" Value2="75">
                     <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.8 0.2 0.5"/>
                     <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 4</Text>
                     <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">75-100</Text>
-                </Else>
+                </If>
             </Container>
 
             <!-- ========== SECTION 3: Comparison Operators ========== -->
@@ -106,7 +110,7 @@
                 <If Value1="@VALUE" Operation="#_conditional_eq_" Value2="50">
                     <Circle X="270" Y="63" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
-                <If Value1="@VALUE" Operation="#_conditional_neq_" Value2="50">
+                <If Value1="@VALUE" Operation="#_conditional_ne_" Value2="50">
                     <Circle X="270" Y="63" Radius="6" FillColor="0.8 0.3 0.3"/>
                 </If>
 
@@ -129,8 +133,8 @@
                 <Text X="250" Y="130" Size="8" FillColor="0.5 0.5 0.5">vs 50</Text>
             </Container>
 
-            <!-- ========== SECTION 4: Switch/Case ========== -->
-            <Text X="150" Y="420" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Switch / Case</Text>
+            <!-- ========== SECTION 4: Mode Selection ========== -->
+            <Text X="150" Y="420" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Mode Selection</Text>
             <Rectangle X="25" Y="410" Width="250" Height="2" FillColor="0.3 0.5 0.7"/>
 
             <Container X="25" Y="220" Width="250" Height="180">
@@ -164,25 +168,23 @@
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">4</Text>
                 </Button>
 
-                <!-- Switch statement -->
-                <Switch Value="@MODE">
-                    <Case Equals="1">
-                        <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.8 0.3 0.3"/>
-                        <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">Mode 1</Text>
-                    </Case>
-                    <Case Equals="2">
-                        <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.3 0.8 0.3"/>
-                        <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">Mode 2</Text>
-                    </Case>
-                    <Case Equals="3">
-                        <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.3 0.3 0.8"/>
-                        <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">Mode 3</Text>
-                    </Case>
-                    <Default>
-                        <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.8 0.8 0.3"/>
-                        <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="0 0 0">Default</Text>
-                    </Default>
-                </Switch>
+                <!-- Mode display using If statements -->
+                <If Value1="@MODE" Operation="#_conditional_eq_" Value2="1">
+                    <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.8 0.3 0.3"/>
+                    <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">Mode 1</Text>
+                </If>
+                <If Value1="@MODE" Operation="#_conditional_eq_" Value2="2">
+                    <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.3 0.8 0.3"/>
+                    <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">Mode 2</Text>
+                </If>
+                <If Value1="@MODE" Operation="#_conditional_eq_" Value2="3">
+                    <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.3 0.3 0.8"/>
+                    <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">Mode 3</Text>
+                </If>
+                <If Value1="@MODE" Operation="#_conditional_gt_" Value2="3">
+                    <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.8 0.8 0.3"/>
+                    <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="0 0 0">Mode 4+</Text>
+                </If>
             </Container>
 
             <!-- ========== SECTION 5: Set Operators ========== -->
@@ -251,15 +253,11 @@
 
                 <Text X="150" Y="160" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">TOGGLE = @TOGGLE(%.0f)</Text>
 
-                <!-- Toggle button -->
+                <!-- Toggle button: use subtract from 1 to flip (1-0=1, 1-1=0) -->
                 <Button Type="#_button_momentary_" X="100" Y="115" Width="100" Height="30">
                     <MousePressed>
-                        <If Value1="@TOGGLE" Operation="#_conditional_eq_" Value2="0">
-                            <Set Variable="TOGGLE" Operator="#_set_equal_">1</Set>
-                        </If>
-                        <ElseIf Value1="@TOGGLE" Operation="#_conditional_eq_" Value2="1">
-                            <Set Variable="TOGGLE" Operator="#_set_equal_">0</Set>
-                        </ElseIf>
+                        <Set Variable="TOGGLE" Operator="#_set_multiply_">-1</Set>
+                        <Set Variable="TOGGLE" Operator="#_set_add_">1</Set>
                     </MousePressed>
                     <ButtonIndicatorOn><Rectangle Width="100" Height="30" FillColor="0.4 0.4 0.5"/></ButtonIndicatorOn>
                     <ButtonIndicatorOff><Rectangle Width="100" Height="30" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
@@ -285,23 +283,23 @@
                 <Rectangle Width="850" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
                 <Text X="425" Y="150" LocalAlignX="#_align_center_" Size="14" FillColor="0.6 0.8 1">Conditional Elements Reference</Text>
 
-                <!-- Column 1: If/ElseIf/Else -->
-                <Text X="30" Y="120" Size="11" FillColor="0.8 0.8 0.3">If / ElseIf / Else</Text>
-                <Text X="30" Y="100" Size="9" FillColor="0.6 0.6 0.6">&lt;If Value1="@VAR" Operation="..." Value2="..."&gt;</Text>
-                <Text X="30" Y="80" Size="9" FillColor="0.6 0.6 0.6">&lt;ElseIf Value1="@VAR" Operation="..." Value2="..."&gt;</Text>
-                <Text X="30" Y="60" Size="9" FillColor="0.6 0.6 0.6">&lt;Else&gt;</Text>
+                <!-- Column 1: If -->
+                <Text X="30" Y="120" Size="11" FillColor="0.8 0.8 0.3">If Statement</Text>
+                <Text X="30" Y="100" Size="9" FillColor="0.6 0.6 0.6">&lt;If Value1="[var]" Operation="..." Value2="..."&gt;</Text>
+                <Text X="30" Y="80" Size="9" FillColor="0.6 0.6 0.6">  ... content shown when true ...</Text>
+                <Text X="30" Y="60" Size="9" FillColor="0.6 0.6 0.6">&lt;/If&gt;</Text>
 
-                <!-- Column 2: Switch/Case -->
-                <Text X="320" Y="120" Size="11" FillColor="0.8 0.8 0.3">Switch / Case</Text>
-                <Text X="320" Y="100" Size="9" FillColor="0.6 0.6 0.6">&lt;Switch Value="@VAR"&gt;</Text>
-                <Text X="320" Y="80" Size="9" FillColor="0.6 0.6 0.6">  &lt;Case Equals="value"&gt;</Text>
-                <Text X="320" Y="60" Size="9" FillColor="0.6 0.6 0.6">  &lt;Default&gt;</Text>
+                <!-- Column 2: Nested If -->
+                <Text X="320" Y="120" Size="11" FillColor="0.8 0.8 0.3">Nested If (for else-if)</Text>
+                <Text X="320" Y="100" Size="9" FillColor="0.6 0.6 0.6">&lt;If Value1="[var]" Operation="..." Value2="..."&gt;</Text>
+                <Text X="320" Y="80" Size="9" FillColor="0.6 0.6 0.6">  &lt;If Value1="[var]" Operation="..." Value2="..."&gt;</Text>
+                <Text X="320" Y="60" Size="9" FillColor="0.6 0.6 0.6">    ... nested condition ...</Text>
 
                 <!-- Column 3: Operations -->
-                <Text X="580" Y="120" Size="11" FillColor="0.8 0.8 0.3">Operations</Text>
-                <Text X="580" Y="100" Size="9" FillColor="0.6 0.6 0.6">#_conditional_lt_  #_conditional_lte_</Text>
-                <Text X="580" Y="80" Size="9" FillColor="0.6 0.6 0.6">#_conditional_gt_  #_conditional_gte_</Text>
-                <Text X="580" Y="60" Size="9" FillColor="0.6 0.6 0.6">#_conditional_eq_  #_conditional_neq_</Text>
+                <Text X="610" Y="120" Size="11" FillColor="0.8 0.8 0.3">Operations</Text>
+                <Text X="610" Y="100" Size="9" FillColor="0.6 0.6 0.6">#_conditional_lt_  #_conditional_lte_</Text>
+                <Text X="610" Y="80" Size="9" FillColor="0.6 0.6 0.6">#_conditional_gt_  #_conditional_gte_</Text>
+                <Text X="610" Y="60" Size="9" FillColor="0.6 0.6 0.6">#_conditional_eq_  #_conditional_ne_</Text>
 
                 <!-- Set operators -->
                 <Text X="30" Y="35" Size="11" FillColor="0.8 0.8 0.3">Set Operators</Text>
