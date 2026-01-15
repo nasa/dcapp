@@ -279,59 +279,51 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
 
     // xform position
     {
-        // boolean check
         bool use_position[2] = {
             node->button.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->button.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        // get position
-        float position[2];
-        if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->button.position.x)->value_double;
-        } else {
-            DcAppAlignType parent_align_x = node->button.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->button.parent_align.x)->value_integer;
-            switch (parent_align_x) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    position[0] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    position[0] = parent_dimensions->x / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    position[0] = parent_dimensions->x;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() button: Invalid parent_align_x value %d\n", parent_align_x);
-                    break;
-            }
-
-            // add parent offset
-            position[0] += parent_position->x;
+        float anchor[2] = {0, 0};
+        DcAppAlignType parent_align_x = node->button.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->button.parent_align.x)->value_integer;
+        switch (parent_align_x) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:
+                anchor[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                anchor[0] = parent_dimensions->x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                anchor[0] = parent_dimensions->x;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() button: Invalid parent_align_x value %d\n", parent_align_x);
+                break;
         }
-        if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->button.position.y)->value_double;
-        } else {
-            DcAppAlignType parent_align_y = node->button.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->button.parent_align.y)->value_integer;
-            switch (parent_align_y) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:
-                    position[1] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:
-                    position[1] = parent_dimensions->y / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_TOP:
-                    position[1] = parent_dimensions->y;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() button: Invalid parent_align_y value %d\n", parent_align_y);
-                    break;
-            }
-
-            // add parent offset
-            position[1] += parent_position->y;
+        DcAppAlignType parent_align_y = node->button.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->button.parent_align.y)->value_integer;
+        switch (parent_align_y) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                anchor[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                anchor[1] = parent_dimensions->y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                anchor[1] = parent_dimensions->y;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() button: Invalid parent_align_y value %d\n", parent_align_y);
+                break;
         }
+
+        float offset[2] = {
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->button.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->button.position.y)->value_double : 0};
+
+        float position[2] = {
+            parent_position->x + anchor[0] + offset[0],
+            parent_position->y + anchor[1] + offset[1]};
 
         // compute matrix
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
@@ -571,49 +563,47 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
             node->arc.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->arc.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        float position[2];
-        if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->arc.position.x)->value_double;
-        } else {
-            DcAppAlignType parent_align_x = node->arc.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->arc.parent_align.x)->value_integer;
-            switch (parent_align_x) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    position[0] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    position[0] = parent_dimensions->x / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    position[0] = parent_dimensions->x;
-                    break;
-                default:
-                    position[0] = 0;
-                    break;
-            }
-            position[0] += parent_position->x;
+        float anchor[2] = {0, 0};
+        DcAppAlignType parent_align_x = node->arc.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->arc.parent_align.x)->value_integer;
+        switch (parent_align_x) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:
+                anchor[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                anchor[0] = parent_dimensions->x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                anchor[0] = parent_dimensions->x;
+                break;
+            default:
+                anchor[0] = 0;
+                break;
         }
-        if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->arc.position.y)->value_double;
-        } else {
-            DcAppAlignType parent_align_y = node->arc.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->arc.parent_align.y)->value_integer;
-            switch (parent_align_y) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:
-                    position[1] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:
-                    position[1] = parent_dimensions->y / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_TOP:
-                    position[1] = parent_dimensions->y;
-                    break;
-                default:
-                    position[1] = 0;
-                    break;
-            }
-            position[1] += parent_position->y;
+        DcAppAlignType parent_align_y = node->arc.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->arc.parent_align.y)->value_integer;
+        switch (parent_align_y) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                anchor[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                anchor[1] = parent_dimensions->y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                anchor[1] = parent_dimensions->y;
+                break;
+            default:
+                anchor[1] = 0;
+                break;
         }
+
+        float offset[2] = {
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->arc.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->arc.position.y)->value_double : 0};
+
+        float position[2] = {
+            parent_position->x + anchor[0] + offset[0],
+            parent_position->y + anchor[1] + offset[1]};
 
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
@@ -794,64 +784,53 @@ static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *
 
     // xform position
     {
-        // boolean check
         bool use_position[2] = {
             node->circle.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->circle.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        // get position
-        float position[2];
-        if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->circle.position.x)->value_double;
-        } else {
-            DcAppAlignType parent_align_x = node->circle.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->circle.parent_align.x)->value_integer;
-            switch (parent_align_x) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    position[0] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    position[0] = parent_dimensions->x / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    position[0] = parent_dimensions->x;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() circle: Invalid parent_align_x value %d\n", parent_align_x);
-                    break;
-            }
-
-            // add parent offset
-            position[0] += parent_position->x;
+        float anchor[2] = {0, 0};
+        DcAppAlignType parent_align_x = node->circle.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->circle.parent_align.x)->value_integer;
+        switch (parent_align_x) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:
+                anchor[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                anchor[0] = parent_dimensions->x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                anchor[0] = parent_dimensions->x;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() circle: Invalid parent_align_x value %d\n", parent_align_x);
+                break;
         }
-        if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->circle.position.y)->value_double;
-        } else {
-            DcAppAlignType parent_align_y = node->circle.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->circle.parent_align.y)->value_integer;
-            switch (parent_align_y) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:
-                    position[1] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:
-                    position[1] = parent_dimensions->y / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_TOP:
-                    position[1] = parent_dimensions->y;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() circle: Invalid parent_align_y value %d\n", parent_align_y);
-                    break;
-            }
-
-            // add parent offset
-            position[1] += parent_position->y;
+        DcAppAlignType parent_align_y = node->circle.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->circle.parent_align.y)->value_integer;
+        switch (parent_align_y) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                anchor[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                anchor[1] = parent_dimensions->y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                anchor[1] = parent_dimensions->y;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() circle: Invalid parent_align_y value %d\n", parent_align_y);
+                break;
         }
 
-        // compute matrix
+        float offset[2] = {
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->circle.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->circle.position.y)->value_double : 0};
+
+        float position[2] = {
+            parent_position->x + anchor[0] + offset[0],
+            parent_position->y + anchor[1] + offset[1]};
+
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
@@ -1097,64 +1076,53 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
 
     // xform position
     {
-        // boolean check
         bool use_position[2] = {
             node->container.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->container.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        // get position
-        float position[2];
-        if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->container.position.x)->value_double;
-        } else {
-            DcAppAlignType parent_align_x = node->container.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->container.parent_align.x)->value_integer;
-            switch (parent_align_x) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    position[0] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    position[0] = parent_dimensions->x / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    position[0] = parent_dimensions->x;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() container: Invalid parent_align_x value %d\n", parent_align_x);
-                    break;
-            }
-
-            // add parent offset
-            position[0] += parent_position->x;
+        float anchor[2] = {0, 0};
+        DcAppAlignType parent_align_x = node->container.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->container.parent_align.x)->value_integer;
+        switch (parent_align_x) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:
+                anchor[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                anchor[0] = parent_dimensions->x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                anchor[0] = parent_dimensions->x;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() container: Invalid parent_align_x value %d\n", parent_align_x);
+                break;
         }
-        if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->container.position.y)->value_double;
-        } else {
-            DcAppAlignType parent_align_y = node->container.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->container.parent_align.y)->value_integer;
-            switch (parent_align_y) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:
-                    position[1] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:
-                    position[1] = parent_dimensions->y / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_TOP:
-                    position[1] = parent_dimensions->y;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() container: Invalid parent_align_y value %d\n", parent_align_y);
-                    break;
-            }
-
-            // add parent offset
-            position[1] += parent_position->y;
+        DcAppAlignType parent_align_y = node->container.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->container.parent_align.y)->value_integer;
+        switch (parent_align_y) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                anchor[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                anchor[1] = parent_dimensions->y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                anchor[1] = parent_dimensions->y;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() container: Invalid parent_align_y value %d\n", parent_align_y);
+                break;
         }
 
-        // compute matrix
+        float offset[2] = {
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->container.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->container.position.y)->value_double : 0};
+
+        float position[2] = {
+            parent_position->x + anchor[0] + offset[0],
+            parent_position->y + anchor[1] + offset[1]};
+
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
@@ -1381,64 +1349,53 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
 
     // xform position
     {
-        // boolean check
         bool use_position[2] = {
             node->image.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->image.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        // get position
-        float position[2];
-        if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->image.position.x)->value_double;
-        } else {
-            DcAppAlignType parent_align_x = node->image.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->image.parent_align.x)->value_integer;
-            switch (parent_align_x) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    position[0] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    position[0] = parent_dimensions->x / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    position[0] = parent_dimensions->x;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() image: Invalid parent_align_x value %d\n", parent_align_x);
-                    break;
-            }
-
-            // add parent offset
-            position[0] += parent_position->x;
+        float anchor[2] = {0, 0};
+        DcAppAlignType parent_align_x = node->image.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->image.parent_align.x)->value_integer;
+        switch (parent_align_x) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:
+                anchor[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                anchor[0] = parent_dimensions->x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                anchor[0] = parent_dimensions->x;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() image: Invalid parent_align_x value %d\n", parent_align_x);
+                break;
         }
-        if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->image.position.y)->value_double;
-        } else {
-            DcAppAlignType parent_align_y = node->image.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->image.parent_align.y)->value_integer;
-            switch (parent_align_y) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:
-                    position[1] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:
-                    position[1] = parent_dimensions->y / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_TOP:
-                    position[1] = parent_dimensions->y;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() image: Invalid parent_align_y value %d\n", parent_align_y);
-                    break;
-            }
-
-            // add parent offset
-            position[1] += parent_position->y;
+        DcAppAlignType parent_align_y = node->image.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->image.parent_align.y)->value_integer;
+        switch (parent_align_y) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                anchor[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                anchor[1] = parent_dimensions->y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                anchor[1] = parent_dimensions->y;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() image: Invalid parent_align_y value %d\n", parent_align_y);
+                break;
         }
 
-        // compute matrix
+        float offset[2] = {
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->image.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->image.position.y)->value_double : 0};
+
+        float position[2] = {
+            parent_position->x + anchor[0] + offset[0],
+            parent_position->y + anchor[1] + offset[1]};
+
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
@@ -1863,64 +1820,53 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
 
     // xform position
     {
-        // boolean check
         bool use_position[2] = {
             node->pixelstream.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->pixelstream.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        // get position
-        float position[2];
-        if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.position.x)->value_double;
-        } else {
-            DcAppAlignType parent_align_x = node->pixelstream.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->pixelstream.parent_align.x)->value_integer;
-            switch (parent_align_x) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    position[0] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    position[0] = parent_dimensions->x / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    position[0] = parent_dimensions->x;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() pixelstream: Invalid parent_align_x value %d\n", parent_align_x);
-                    break;
-            }
-
-            // add parent offset
-            position[0] += parent_position->x;
+        float anchor[2] = {0, 0};
+        DcAppAlignType parent_align_x = node->pixelstream.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->pixelstream.parent_align.x)->value_integer;
+        switch (parent_align_x) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:
+                anchor[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                anchor[0] = parent_dimensions->x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                anchor[0] = parent_dimensions->x;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() pixelstream: Invalid parent_align_x value %d\n", parent_align_x);
+                break;
         }
-        if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.position.y)->value_double;
-        } else {
-            DcAppAlignType parent_align_y = node->pixelstream.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->pixelstream.parent_align.y)->value_integer;
-            switch (parent_align_y) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:
-                    position[1] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:
-                    position[1] = parent_dimensions->y / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_TOP:
-                    position[1] = parent_dimensions->y;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() pixelstream: Invalid parent_align_y value %d\n", parent_align_y);
-                    break;
-            }
-
-            // add parent offset
-            position[1] += parent_position->y;
+        DcAppAlignType parent_align_y = node->pixelstream.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->pixelstream.parent_align.y)->value_integer;
+        switch (parent_align_y) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                anchor[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                anchor[1] = parent_dimensions->y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                anchor[1] = parent_dimensions->y;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() pixelstream: Invalid parent_align_y value %d\n", parent_align_y);
+                break;
         }
 
-        // compute matrix
+        float offset[2] = {
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.position.y)->value_double : 0};
+
+        float position[2] = {
+            parent_position->x + anchor[0] + offset[0],
+            parent_position->y + anchor[1] + offset[1]};
+
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
@@ -2312,64 +2258,53 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
 
     // xform position
     {
-        // boolean check
         bool use_position[2] = {
             node->rectangle.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->rectangle.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        // get position
-        float position[2];
-        if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.position.x)->value_double;
-        } else {
-            DcAppAlignType parent_align_x = node->rectangle.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->rectangle.parent_align.x)->value_integer;
-            switch (parent_align_x) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    position[0] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    position[0] = parent_dimensions->x / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    position[0] = parent_dimensions->x;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() rectangle: Invalid parent_align_x value %d\n", parent_align_x);
-                    break;
-            }
-
-            // add parent offset
-            position[0] += parent_position->x;
+        float anchor[2] = {0, 0};
+        DcAppAlignType parent_align_x = node->rectangle.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->rectangle.parent_align.x)->value_integer;
+        switch (parent_align_x) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:
+                anchor[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                anchor[0] = parent_dimensions->x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                anchor[0] = parent_dimensions->x;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() rectangle: Invalid parent_align_x value %d\n", parent_align_x);
+                break;
         }
-        if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.position.y)->value_double;
-        } else {
-            DcAppAlignType parent_align_y = node->rectangle.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->rectangle.parent_align.y)->value_integer;
-            switch (parent_align_y) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:
-                    position[1] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:
-                    position[1] = parent_dimensions->y / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_TOP:
-                    position[1] = parent_dimensions->y;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() rectangle: Invalid parent_align_y value %d\n", parent_align_y);
-                    break;
-            }
-
-            // add parent offset
-            position[1] += parent_position->y;
+        DcAppAlignType parent_align_y = node->rectangle.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->rectangle.parent_align.y)->value_integer;
+        switch (parent_align_y) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                anchor[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                anchor[1] = parent_dimensions->y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                anchor[1] = parent_dimensions->y;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() rectangle: Invalid parent_align_y value %d\n", parent_align_y);
+                break;
         }
 
-        // compute matrix
+        float offset[2] = {
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.position.y)->value_double : 0};
+
+        float position[2] = {
+            parent_position->x + anchor[0] + offset[0],
+            parent_position->y + anchor[1] + offset[1]};
+
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
@@ -2785,49 +2720,47 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
             node->sphere.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->sphere.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        float position[2];
-        if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.position.x)->value_double;
-        } else {
-            DcAppAlignType parent_align_x = node->sphere.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->sphere.parent_align.x)->value_integer;
-            switch (parent_align_x) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    position[0] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    position[0] = parent_dimensions->x / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    position[0] = parent_dimensions->x;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() sphere: Invalid parent_align_x value %d\n", parent_align_x);
-                    break;
-            }
-            position[0] += parent_position->x;
+        float anchor[2] = {0, 0};
+        DcAppAlignType parent_align_x = node->sphere.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->sphere.parent_align.x)->value_integer;
+        switch (parent_align_x) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:
+                anchor[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                anchor[0] = parent_dimensions->x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                anchor[0] = parent_dimensions->x;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() sphere: Invalid parent_align_x value %d\n", parent_align_x);
+                break;
         }
-        if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.position.y)->value_double;
-        } else {
-            DcAppAlignType parent_align_y = node->sphere.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->sphere.parent_align.y)->value_integer;
-            switch (parent_align_y) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:
-                    position[1] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:
-                    position[1] = parent_dimensions->y / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_TOP:
-                    position[1] = parent_dimensions->y;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() sphere: Invalid parent_align_y value %d\n", parent_align_y);
-                    break;
-            }
-            position[1] += parent_position->y;
+        DcAppAlignType parent_align_y = node->sphere.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->sphere.parent_align.y)->value_integer;
+        switch (parent_align_y) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                anchor[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                anchor[1] = parent_dimensions->y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                anchor[1] = parent_dimensions->y;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() sphere: Invalid parent_align_y value %d\n", parent_align_y);
+                break;
         }
+
+        float offset[2] = {
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.position.y)->value_double : 0};
+
+        float position[2] = {
+            parent_position->x + anchor[0] + offset[0],
+            parent_position->y + anchor[1] + offset[1]};
 
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
@@ -3067,64 +3000,53 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
 
     // xform position
     {
-        // boolean check
         bool use_position[2] = {
             node->terrain.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->terrain.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        // get position
-        float position[2];
-        if (use_position[0]) {
-            position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.position.x)->value_double;
-        } else {
-            DcAppAlignType parent_align_x = node->terrain.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->terrain.parent_align.x)->value_integer;
-            switch (parent_align_x) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    position[0] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    position[0] = parent_dimensions->x / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    position[0] = parent_dimensions->x;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() terrain: Invalid parent_align_x value %d\n", parent_align_x);
-                    break;
-            }
-
-            // add parent offset
-            position[0] += parent_position->x;
+        float anchor[2] = {0, 0};
+        DcAppAlignType parent_align_x = node->terrain.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->terrain.parent_align.x)->value_integer;
+        switch (parent_align_x) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:
+                anchor[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                anchor[0] = parent_dimensions->x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                anchor[0] = parent_dimensions->x;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() terrain: Invalid parent_align_x value %d\n", parent_align_x);
+                break;
         }
-        if (use_position[1]) {
-            position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.position.y)->value_double;
-        } else {
-            DcAppAlignType parent_align_y = node->terrain.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->terrain.parent_align.y)->value_integer;
-            switch (parent_align_y) {
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:
-                    position[1] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:
-                    position[1] = parent_dimensions->y / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_TOP:
-                    position[1] = parent_dimensions->y;
-                    break;
-                default:
-                    fprintf(stderr, "DCAPP _draw_node() terrain: Invalid parent_align_y value %d\n", parent_align_y);
-                    break;
-            }
-
-            // add parent offset
-            position[1] += parent_position->y;
+        DcAppAlignType parent_align_y = node->terrain.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->terrain.parent_align.y)->value_integer;
+        switch (parent_align_y) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                anchor[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                anchor[1] = parent_dimensions->y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                anchor[1] = parent_dimensions->y;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() terrain: Invalid parent_align_y value %d\n", parent_align_y);
+                break;
         }
 
-        // compute matrix
+        float offset[2] = {
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.position.y)->value_double : 0};
+
+        float position[2] = {
+            parent_position->x + anchor[0] + offset[0],
+            parent_position->y + anchor[1] + offset[1]};
+
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
@@ -3363,64 +3285,53 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
 
         // xform position
         {
-            // boolean check
             bool use_position[2] = {
                 node->text.position.x != DC_APP_VAL_INDEX_UNDEFINED,
                 node->text.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-            // get position
-            float position[2];
-            if (use_position[0]) {
-                position[0] = (float)dc_app_lookup_get_value(app_data->lookup, node->text.position.x)->value_double;
-            } else {
-                DcAppAlignType parent_align_x = node->text.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->text.parent_align.x)->value_integer;
-                switch (parent_align_x) {
-                    case DC_APP_ALIGN_TYPE_UNDEFINED:
-                    case DC_APP_ALIGN_TYPE_LEFT:
-                        position[0] = 0;
-                        break;
-                    case DC_APP_ALIGN_TYPE_CENTER:
-                        position[0] = parent_dimensions->x / 2;
-                        break;
-                    case DC_APP_ALIGN_TYPE_RIGHT:
-                        position[0] = parent_dimensions->x;
-                        break;
-                    default:
-                        fprintf(stderr, "DCAPP _draw_node() text: Invalid parent_align_x value %d\n", parent_align_x);
-                        break;
-                }
-
-                // add parent offset
-                position[0] += parent_position->x;
+            float anchor[2] = {0, 0};
+            DcAppAlignType parent_align_x = node->text.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->text.parent_align.x)->value_integer;
+            switch (parent_align_x) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    anchor[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    anchor[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    anchor[0] = parent_dimensions->x;
+                    break;
+                default:
+                    fprintf(stderr, "DCAPP _draw_node() text: Invalid parent_align_x value %d\n", parent_align_x);
+                    break;
             }
-            if (use_position[1]) {
-                position[1] = (float)dc_app_lookup_get_value(app_data->lookup, node->text.position.y)->value_double;
-            } else {
-                DcAppAlignType parent_align_y = node->text.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->text.parent_align.y)->value_integer;
-                switch (parent_align_y) {
-                    case DC_APP_ALIGN_TYPE_UNDEFINED:
-                    case DC_APP_ALIGN_TYPE_BOTTOM:
-                        position[1] = 0;
-                        break;
-                    case DC_APP_ALIGN_TYPE_MIDDLE:
-                        position[1] = parent_dimensions->y / 2;
-                        break;
-                    case DC_APP_ALIGN_TYPE_TOP:
-                        position[1] = parent_dimensions->y;
-                        break;
-                    default:
-                        fprintf(stderr, "DCAPP _draw_node() text: Invalid parent_align_y value %d\n", parent_align_y);
-                        break;
-                }
-
-                // add parent offset
-                position[1] += parent_position->y;
+            DcAppAlignType parent_align_y = node->text.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->text.parent_align.y)->value_integer;
+            switch (parent_align_y) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    anchor[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    anchor[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    anchor[1] = parent_dimensions->y;
+                    break;
+                default:
+                    fprintf(stderr, "DCAPP _draw_node() text: Invalid parent_align_y value %d\n", parent_align_y);
+                    break;
             }
 
-            // compute matrix
+            float offset[2] = {
+                use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->text.position.x)->value_double : 0,
+                use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->text.position.y)->value_double : 0};
+
+            float position[2] = {
+                parent_position->x + anchor[0] + offset[0],
+                parent_position->y + anchor[1] + offset[1]};
+
             plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_position_xform);
         }
 

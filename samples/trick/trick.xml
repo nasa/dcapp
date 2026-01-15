@@ -37,94 +37,74 @@
 
     <Window Title="Cannonball Trajectory - Trick Demo" Width="900" Height="700" VirtualWidth="900" VirtualHeight="700">
 
-        <!-- Background gradient -->
+        <!-- Background -->
         <Rectangle Width="900" Height="700" FillColor="0.05 0.05 0.15"/>
 
-        <!-- Title -->
-        <Text X="450" Y="670" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_" Size="28" FillColor="0.9 0.9 1">
-Cannonball Trajectory
-        </Text>
-        <Text X="450" Y="640" LocalAlignX="#_align_center_" LocalAlignY="#_align_top_" Size="14" FillColor="0.5 0.5 0.6">
-Trick Variable Server Demo
-        </Text>
+        <!-- Title - centered horizontally -->
+        <Text ParentAlignX="#_align_center_" Y="670" LocalAlignX="#_align_center_" Size="28" FillColor="0.9 0.9 1">Cannonball Trajectory</Text>
+        <Text ParentAlignX="#_align_center_" Y="640" LocalAlignX="#_align_center_" Size="14" FillColor="0.5 0.5 0.6">Trick Variable Server Demo</Text>
 
         <!-- Trajectory visualization area - virtual coords in meters -->
         <!-- Ball travels 221m X, 32m max Y. Container 800x450 = 1.78:1 ratio -->
         <!-- Using 240x135 virtual keeps circles circular (same 1.78:1 ratio) -->
-        <!-- Ground at Y=0, max height ~32m fits well in 135m virtual height -->
         <Container X="50" Y="100" Width="800" Height="450" VirtualWidth="240" VirtualHeight="135">
             <!-- Sky fills entire area -->
-            <Rectangle X="0" Y="0" Width="240" Height="135" FillColor="0.1 0.15 0.3"/>
+            <Rectangle Width="240" Height="135" FillColor="0.1 0.15 0.3"/>
 
             <!-- Ground strip at Y=0 -->
-            <Rectangle X="0" Y="0" Width="240" Height="2" FillColor="0.3 0.5 0.3"/>
+            <Rectangle Width="240" Height="2" FillColor="0.3 0.5 0.3"/>
 
-            <!-- Cannon at origin -->
-            <Polygon X="0" Y="0" FillColor="0.4 0.3 0.2" LineColor="0.2 0.15 0.1" LineWidth="1">
+            <!-- Cannon at origin (bottom-left) -->
+            <Polygon FillColor="0.4 0.3 0.2" LineColor="0.2 0.15 0.1" LineWidth="1">
                 <Vertex X="0" Y="0"/>
                 <Vertex X="12" Y="6"/>
                 <Vertex X="12" Y="10"/>
                 <Vertex X="0" Y="5"/>
             </Polygon>
 
-            <!-- Cannonball -->
-            <Circle X="@posX" Y="@posY" Radius="4" FillColor="0.3 0.3 0.3" LineColor="0.6 0.6 0.6" LineWidth="1"/>
+            <!-- Cannonball - position driven by simulation -->
+            <Circle X="@posX" Y="@posY" Radius="4" LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_" FillColor="0.3 0.3 0.3" LineColor="0.6 0.6 0.6" LineWidth="1"/>
         </Container>
 
         <!-- Data Panel - Metric (10Hz update) -->
         <Container X="50" Y="10" Width="270" Height="80">
             <Rectangle Width="270" Height="80" FillColor="0.1 0.1 0.2 0.9" LineColor="0.3 0.3 0.4" LineWidth="1"/>
-
             <Text X="10" Y="60" Size="12" FillColor="0.6 0.6 0.7">Metric (10Hz)</Text>
-            <Text X="10" Y="40" Size="14" FillColor="0.4 0.9 0.4" LocalAlignY="#_align_middle_">
-                X: @posX(%.1f) m   Y: @posY(%.1f) m
-            </Text>
-            <Text X="10" Y="20" Size="14" FillColor="0.4 0.7 0.9" LocalAlignY="#_align_middle_">
-                Vx: @velX(%.1f) m/s   Vy: @velY(%.1f) m/s
-            </Text>
+            <Text X="10" Y="40" Size="14" FillColor="0.4 0.9 0.4">X: @posX(%.1f) m   Y: @posY(%.1f) m</Text>
+            <Text X="10" Y="20" Size="14" FillColor="0.4 0.7 0.9">Vx: @velX(%.1f) m/s   Vy: @velY(%.1f) m/s</Text>
         </Container>
 
         <!-- Data Panel - Imperial (1Hz update to test DataRate) -->
         <Container X="330" Y="10" Width="270" Height="80">
             <Rectangle Width="270" Height="80" FillColor="0.15 0.1 0.1 0.9" LineColor="0.4 0.3 0.3" LineWidth="1"/>
-
             <Text X="10" Y="60" Size="12" FillColor="0.7 0.6 0.6">Imperial (1Hz - slower)</Text>
-            <Text X="10" Y="40" Size="14" FillColor="0.9 0.7 0.4" LocalAlignY="#_align_middle_">
-                X: @posX_ft(%.1f) ft   Y: @posY_ft(%.1f) ft
-            </Text>
-            <Text X="10" Y="20" Size="14" FillColor="0.9 0.5 0.4" LocalAlignY="#_align_middle_">
-                Vx: @velX_fps(%.1f) ft/s   Vy: @velY_fps(%.1f) ft/s
-            </Text>
+            <Text X="10" Y="40" Size="14" FillColor="0.9 0.7 0.4">X: @posX_ft(%.1f) ft   Y: @posY_ft(%.1f) ft</Text>
+            <Text X="10" Y="20" Size="14" FillColor="0.9 0.5 0.4">Vx: @velX_fps(%.1f) ft/s   Vy: @velY_fps(%.1f) ft/s</Text>
         </Container>
 
         <!-- Time Panel -->
         <Container X="610" Y="10" Width="130" Height="80">
             <Rectangle Width="130" Height="80" FillColor="0.1 0.1 0.2 0.9" LineColor="0.3 0.3 0.4" LineWidth="1"/>
-
             <Text X="10" Y="60" Size="12" FillColor="0.6 0.6 0.7">Sim Time</Text>
-            <Text X="10" Y="30" Size="20" FillColor="1 1 1" LocalAlignY="#_align_middle_">@simTime(%.2f) s</Text>
+            <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="20" FillColor="1 1 1">@simTime(%.2f) s</Text>
         </Container>
 
         <!-- Status Panel -->
         <Container X="750" Y="10" Width="100" Height="80">
             <Rectangle Width="100" Height="80" FillColor="0.1 0.1 0.2 0.9" LineColor="0.3 0.3 0.4" LineWidth="1"/>
-
             <Text X="10" Y="60" Size="12" FillColor="0.6 0.6 0.7">Status</Text>
-
             <If Value="@impact" Value2="1" Operation="#_conditional_eq_">
                 <True>
-                    <Text X="10" Y="30" Size="16" FillColor="1 0.3 0.3" LocalAlignY="#_align_middle_">IMPACT!</Text>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="16" FillColor="1 0.3 0.3">IMPACT!</Text>
                 </True>
                 <False>
-                    <Text X="10" Y="30" Size="16" FillColor="0.3 1 0.3" LocalAlignY="#_align_middle_">In Flight</Text>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="16" FillColor="0.3 1 0.3">In Flight</Text>
                 </False>
             </If>
         </Container>
 
-        <!-- Instructions -->
-        <Text X="450" Y="5" LocalAlignX="#_align_center_" Size="10" FillColor="0.4 0.4 0.5">
-            Start Trick sim first: cd sim &amp;&amp; ./S_main_*.exe RUN_test/input.py
-        </Text>
+        <!-- Instructions - centered at bottom -->
+        <Text ParentAlignX="#_align_center_" Y="5" LocalAlignX="#_align_center_" Size="10" FillColor="0.4 0.4 0.5">Start Trick sim first: cd sim &amp;&amp; ./S_main_*.exe RUN_test/input.py</Text>
 
     </Window>
 </DCAPP>
