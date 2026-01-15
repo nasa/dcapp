@@ -1,0 +1,18 @@
+/************************TRICK HEADER*************************
+PURPOSE: (Cannonball simulation for dcapp demo)
+*************************************************************/
+
+#include "sim_objects/default_trick_sys.sm"
+##include "cannon.h"
+
+class CannonSimObject : public Trick::SimObject {
+    public:
+        CANNON cannon;
+
+        CannonSimObject() {
+            ("initialization") cannon_init(&cannon);
+            (0.01, "scheduled") cannon_update(&cannon);
+        }
+};
+
+CannonSimObject dyn;

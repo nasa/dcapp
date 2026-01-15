@@ -15,7 +15,7 @@
         <Constant Name="FgColor">1 1 1</Constant>
 
         <Default>
-            <Button Y="7.5" Width="10" Height="10" ParentAlignX="#_align_center_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
+            <Button Y="7.5" Width="10" Height="10" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
             <Text Size="3" FillColor="0 0 0" ParentAlignY="#_align_middle_" LocalAlignY="#_align_middle_"/>
         </Default>
 

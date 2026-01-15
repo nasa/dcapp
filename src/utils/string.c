@@ -49,18 +49,35 @@ bool dc_utils_char_in(const char c, const char *set) {
     return false;
 }
 
-static bool _string_is_double(const char *text) {
+bool dc_utils_string_is_double(const char *text) {
     char *end = NULL;
     errno     = 0;
     strtof(text, &end);
     return (end != text && *end == '\0' && errno == 0);
 }
 
-static bool _string_is_int(const char *text) {
+bool dc_utils_string_is_int(const char *text) {
     char *end = NULL;
     errno     = 0;
     strtol(text, &end, 10);
     return (end != text && *end == '\0' && errno == 0);
+}
+
+bool dc_utils_string_is_boolean(const char *text) {
+    if (!text) return false;
+
+    // Check for common boolean strings (case sensitive to match string_to_boolean behavior)
+    if (strcmp(text, "true") == 0 || strcmp(text, "True") == 0 || strcmp(text, "TRUE") == 0 ||
+        strcmp(text, "false") == 0 || strcmp(text, "False") == 0 || strcmp(text, "FALSE") == 0 ||
+        strcmp(text, "yes") == 0 || strcmp(text, "Yes") == 0 || strcmp(text, "YES") == 0 ||
+        strcmp(text, "no") == 0 || strcmp(text, "No") == 0 || strcmp(text, "NO") == 0 ||
+        strcmp(text, "on") == 0 || strcmp(text, "On") == 0 || strcmp(text, "ON") == 0 ||
+        strcmp(text, "off") == 0 || strcmp(text, "Off") == 0 || strcmp(text, "OFF") == 0 ||
+        strcmp(text, "1") == 0 || strcmp(text, "0") == 0) {
+        return true;
+    }
+
+    return false;
 }
 
 void dc_utils_trim_whitespace_inplace(char *text) {
@@ -117,7 +134,7 @@ void dc_utils_trim_whitespace_copy(const char *input, char *out, size_t out_size
 }
 
 double dc_utils_string_to_double(const char *text) {
-    if (_string_is_double(text)) {
+    if (dc_utils_string_is_double(text)) {
         return strtod(text, NULL);
     } else {
         return (double)(dc_utils_string_to_boolean(text));
@@ -125,9 +142,9 @@ double dc_utils_string_to_double(const char *text) {
 }
 
 int dc_utils_string_to_integer(const char *text) {
-    if (_string_is_int(text)) {
+    if (dc_utils_string_is_int(text)) {
         return (int)strtol(text, NULL, 10);
-    } else if (_string_is_double(text)) {
+    } else if (dc_utils_string_is_double(text)) {
         return (int)strtod(text, NULL);
     } else {
         return (int)dc_utils_string_to_boolean(text);

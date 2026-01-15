@@ -23,6 +23,10 @@ double dc_utils_string_to_double(const char *text);
 int    dc_utils_string_to_integer(const char *text);
 int    dc_utils_string_to_boolean(const char *text);
 
+bool dc_utils_string_is_double(const char *text);
+bool dc_utils_string_is_int(const char *text);
+bool dc_utils_string_is_boolean(const char *text);
+
 void dc_utils_string_to_hash(const char *text, char *out, size_t out_size);
 
 void dc_utils_split_string_inplace(char *text, const char *delimiters, size_t *out_indices, size_t out_indices_size, size_t *out_indices_count);

@@ -11,8 +11,11 @@ samples/local/
 samples/**/dcapp.h
 **.so
 **.pdb
+**.dylib
 **.dSYM/
+**.dylib
 **.dll
+**.exe
 
 # windows
 vcpkg_installed/

@@ -7,7 +7,7 @@
 
     <Window Title="Color Mixer" X="30" Y="30" Width="800" Height="600">
         <Default>
-            <Button Y="8" Width="10" Height="10" ParentAlignX="#_align_center_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
+            <Button Y="8" Width="10" Height="10" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
             <Text Size="3" FillColor="0 0 0" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"/>
         </Default>
 
