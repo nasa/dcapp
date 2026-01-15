@@ -1,17 +1,17 @@
 <DCAPP>
     <!-- Variables to receive from Trick (metric, fast update) -->
-    <Variable Type="double" InitialValue="0.0">posX</Variable>
-    <Variable Type="double" InitialValue="0.0">posY</Variable>
-    <Variable Type="double" InitialValue="0.0">velX</Variable>
-    <Variable Type="double" InitialValue="0.0">velY</Variable>
-    <Variable Type="double" InitialValue="0.0">simTime</Variable>
-    <Variable Type="integer" InitialValue="0">impact</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0.0">posX</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0.0">posY</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0.0">velX</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0.0">velY</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0.0">simTime</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">impact</Variable>
 
     <!-- Variables in feet (slower update to test DataRate) -->
-    <Variable Type="double" InitialValue="0.0">posX_ft</Variable>
-    <Variable Type="double" InitialValue="0.0">posY_ft</Variable>
-    <Variable Type="double" InitialValue="0.0">velX_fps</Variable>
-    <Variable Type="double" InitialValue="0.0">velY_fps</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0.0">posX_ft</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0.0">posY_ft</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0.0">velX_fps</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0.0">velY_fps</Variable>
 
     <!-- Fast connection (DataRate=0.1 = 10Hz) - metric units -->
     <TrickIO Host="localhost" Port="7000" DataRate="0.1">

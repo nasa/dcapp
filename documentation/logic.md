@@ -25,9 +25,9 @@ Use cases for logic files:
 ```xml
 <dcapp>
     <!-- Declare your variables -->
-    <Variable Type="Double" InitialValue="0">altitude</Variable>
-    <Variable Type="Double" InitialValue="0">velocity</Variable>
-    <Variable Type="Double" InitialValue="0">acceleration</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">velocity</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">acceleration</Variable>
     
     <!-- Reference the logic file -->
     <Logic File="logic/libdisplay_logic.so"/>
@@ -416,8 +416,8 @@ Place `<Logic>` after your `<Variable>` declarations but before `<Window>`:
 
 ```xml
 <dcapp>
-    <Variable Type="Double" InitialValue="0">altitude</Variable>
-    <Variable Type="Double" InitialValue="0">velocity</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">velocity</Variable>
     
     <Logic File="logic/libdisplay_logic.so"/>
     
@@ -546,11 +546,11 @@ void display_draw() {
 **myDisplay.xml:**
 ```xml
 <dcapp>
-    <Variable Type="Double" InitialValue="10000">altitude</Variable>
-    <Variable Type="Double" InitialValue="0">velocity</Variable>
-    <Variable Type="Double" InitialValue="-9.81">gravity</Variable>
-    <Variable Type="String" InitialValue="FALLING">status</Variable>
-    <Variable Type="Boolean" InitialValue="true">simRunning</Variable>
+    <Variable Type="#_variable_double_" InitialValue="10000">altitude</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">velocity</Variable>
+    <Variable Type="#_variable_double_" InitialValue="-9.81">gravity</Variable>
+    <Variable Type="#_variable_string_" InitialValue="FALLING">status</Variable>
+    <Variable Type="#_variable_boolean_" InitialValue="true">simRunning</Variable>
     
     <Logic File="logic/libphysics.so"/>
     
@@ -662,7 +662,7 @@ No parameters, no return value.
 ### Example: Button Click Handlers
 
 ```xml
-<Variable Type="Integer" InitialValue="0">buttonState</Variable>
+<Variable Type="#_variable_integer_" InitialValue="0">buttonState</Variable>
 
 <Logic File="logic/logic.so"/>
 
