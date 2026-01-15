@@ -3632,7 +3632,7 @@ static _NodeIndex _process_xml_node_trick_io(_AppData *app_data, xmlNodePtr xml_
     }
 
     // data rate
-    xmlChar *raw_data_rate = xmlGetProp(xml_node, BAD_CAST "Rotation");
+    xmlChar *raw_data_rate = xmlGetProp(xml_node, BAD_CAST "DataRate");
     double   data_rate     = 0.1;
     if (raw_data_rate) {
         data_rate = dc_utils_string_to_double((const char *)raw_data_rate);
@@ -3702,7 +3702,7 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
     }
 
     // units
-    xmlChar *raw_units = xmlGetProp(xml_node, BAD_CAST "Name");
+    xmlChar *raw_units = xmlGetProp(xml_node, BAD_CAST "Units");
     char     cleaned_units[DC_VALUE_STRING_BUFFER_SIZE];
     char    *units = NULL;
     if (raw_units) {
