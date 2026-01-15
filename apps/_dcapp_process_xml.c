@@ -29,7 +29,6 @@ static _NodeIndex    _process_xml_node_false(_AppData *app_data, xmlNodePtr xml_
 static _NodeIndex    _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static _NodeIndex    _process_xml_node_include(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_mouse_active(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -188,9 +187,6 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_IMAGE:
             return _process_xml_node_image(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-
-        case DC_APP_ELEM_TYPE_INCLUDE:
-            return _process_xml_node_include(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_LINE:
             return _process_xml_node_line(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -1730,15 +1726,6 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
 
     // return
     return node_index;
-}
-
-static _NodeIndex _process_xml_node_include(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
-    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
-
-    xmlChar *file = xmlGetProp(xml_node, BAD_CAST "File");
-    char     include_directory[DC_UTILS_FILEPATH_BUFFER_SIZE];
-    dc_utils_get_directory((const char *)file, include_directory, sizeof(include_directory));
-    return _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, include_directory);
 }
 
 static _NodeIndex _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
