@@ -2687,8 +2687,12 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
     // operand
     xmlChar *raw_operand = xmlNodeGetContent(xml_node);
     if (raw_operand) {
-        dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_operand);
+        char operand[DC_VALUE_STRING_BUFFER_SIZE];
+        strncpy(operand, (const char *)raw_operand, DC_VALUE_STRING_BUFFER_SIZE - 1);
         xmlFree(raw_operand);
+        dc_utils_trim_whitespace_inplace(operand);
+        operand[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, operand);
     } else {
         fprintf(stderr, "DCAPP _process_xml_node: Missing Node content in <Set> element\n");
     }
@@ -3310,8 +3314,9 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     if (raw_text) {
         char cleaned_text[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(cleaned_text, (const char *)raw_text, DC_VALUE_STRING_BUFFER_SIZE - 1);
-        cleaned_text[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
         xmlFree(raw_text);
+        cleaned_text[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        dc_utils_trim_whitespace_inplace(cleaned_text);
 
         static char *sb_curr_filler = NULL;
         for (size_t ii = 0; ii < strlen(cleaned_text);) {
@@ -3697,6 +3702,8 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
     if (raw_dcapp_var) {
         strncpy(dcapp_var, (const char *)raw_dcapp_var, DC_VALUE_STRING_BUFFER_SIZE - 1);
         xmlFree(raw_dcapp_var);
+        dc_utils_trim_whitespace_inplace(dcapp_var);
+        dcapp_var[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
     } else {
         fprintf(stderr, "DCApp _process_xml_node: Missing dcapp Var path for TrickVariable\n");
     }
@@ -3777,6 +3784,8 @@ static _NodeIndex _process_xml_node_variable(_AppData *app_data, xmlNodePtr xml_
     if (raw_name) {
         strncpy(name, (const char *)raw_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
         xmlFree(raw_name);
+        dc_utils_trim_whitespace_inplace(name);
+        name[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
     } else {
         fprintf(stderr, "DCApp _process_xml_node: Non-existent node content in <Variable> definition\n");
     }
