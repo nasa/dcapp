@@ -15,6 +15,7 @@ samples/**/dcapp.h
 **.dSYM/
 **.dylib
 **.dll
+**.exe
 
 # windows
 vcpkg_installed/

@@ -1,0 +1,29 @@
+# Trick build artifacts
+build/
+.trick/
+S_main_*
+S_source.hh
+S_library_list
+S_define.deps
+S_sie.resource
+Makefile_*
+makefile
+trick.zip
+DP_Product/
+*.o
+*.a
+
+# Trick runtime
+RUN_*/log_*
+RUN_*/chkpnt_*
+RUN_*/monte_*
+RUN_*/MONTE_*
+RUN_*/send_hs
+RUN_*/S_job_execution
+RUN_*/S_run_summary
+RUN_*/varserver_log
+*.csv
+*.trk
+
+# Logs
+*.log
