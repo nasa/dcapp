@@ -79,42 +79,82 @@ Note: "Decimal" and "Float" were aliases for double in legacy. Both become
 SECTION 4: ALIGNMENT SYSTEM (IMPORTANT CHANGE)
 ================================================================================
 
-The legacy alignment system had confusing behavior where HorizontalAlign and
-VerticalAlign did DIFFERENT things depending on whether X/Y was set:
+The legacy system had a single pair of alignment attributes:
+
+    HorizontalAlign / VerticalAlign
+
+These did DIFFERENT things depending on whether X/Y was set:
 
     - WITH X/Y set: Alignment controlled the anchor point on the element
-    - WITHOUT X/Y: Alignment controlled position within parent container
+    - WITHOUT X/Y: Alignment controlled BOTH position within parent AND anchor
 
 The new system splits this into TWO SEPARATE attribute pairs:
 
     LocalAlignX / LocalAlignY     - Anchor point on the element itself
-    ParentAlignX / ParentAlignY   - Position within parent container
+    ParentAlignX / ParentAlignY   - Anchor point in the parent container
+
+--------------------------------------------------------------------------------
+LEGACY BEHAVIOR (single HorizontalAlign/VerticalAlign):
+--------------------------------------------------------------------------------
+
+Legacy only had HorizontalAlign and VerticalAlign. Their behavior depended on
+whether X/Y coordinates were specified:
+
+    WITH X/Y set:
+        - X/Y gave absolute position
+        - Alignment only affected the element's own anchor point
+
+    WITHOUT X/Y:
+        - Alignment controlled position within parent (centered, etc.)
+        - Alignment ALSO affected the element's own anchor point
+
+--------------------------------------------------------------------------------
+NEW BEHAVIOR (separate ParentAlign and LocalAlign):
+--------------------------------------------------------------------------------
+
+The new system separates these two concepts:
+
+    ParentAlignX/Y  - Where in the parent to anchor (LEFT=0, CENTER=width/2, etc.)
+    LocalAlignX/Y   - Where on the element to anchor (left edge, center, etc.)
+
+IMPORTANT: ParentAlign and X/Y now work TOGETHER as anchor + offset:
+
+    position = parent_anchor + offset
+
+Example with ParentAlignX="#_align_center_" and X="10" in an 800px wide parent:
+    final_x = 400 (center) + 10 = 410
+
+This allows powerful positioning like "10 pixels right of center" or
+"20 pixels above the bottom edge".
 
 --------------------------------------------------------------------------------
 CONVERSION RULES:
 --------------------------------------------------------------------------------
 
-CASE 1: Element HAS X and Y attributes set
-    
+CASE 1: Element HAS X and Y attributes set (absolute positioning)
+
     Legacy:
         <Text X="100" Y="200" HorizontalAlign="Center" VerticalAlign="Middle">
-    
-    New (LocalAlign only, since position is explicit):
+
+    New (LocalAlign only, X/Y are absolute positions):
         <Text X="100" Y="200" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
 
-CASE 2: Element has NO X and NO Y attributes
+    DO NOT add ParentAlign if you want to preserve legacy absolute positioning!
+    Adding ParentAlignX="#_align_center_" would make X an offset from center.
+
+CASE 2: Element has NO X and NO Y attributes (pure alignment)
 
     Legacy:
         <Text HorizontalAlign="Center" VerticalAlign="Middle">
-    
+
     New (BOTH ParentAlign AND LocalAlign needed):
-        <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" 
+        <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
               LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
-    
+
     WHY BOTH? The legacy behavior was:
         1. Position the element at the center of the parent (ParentAlign)
         2. Use the element's center as the anchor point (LocalAlign)
-    
+
     If you only set ParentAlign, the element positions at parent center but
     anchors from its default corner, resulting in off-center placement.
 
@@ -122,14 +162,51 @@ CASE 3: Element has only X OR only Y (mixed)
 
     Legacy:
         <Button Y="100" HorizontalAlign="Center" VerticalAlign="Middle">
-    
+
     New:
-        <Button Y="100" 
+        <Button Y="100"
                 ParentAlignX="#_align_center_" LocalAlignX="#_align_center_"
                 LocalAlignY="#_align_middle_">
-    
-    For the axis WITH a position (Y), use LocalAlign.
+
+    For the axis WITH a position (Y), use LocalAlign only.
     For the axis WITHOUT a position (X), use BOTH ParentAlign and LocalAlign.
+
+--------------------------------------------------------------------------------
+COMMON PITFALL - Defaults with ParentAlign + absolute X positions:
+--------------------------------------------------------------------------------
+
+If you have a Default that sets ParentAlignX, but individual elements use
+absolute X positions, those X values will become OFFSETS from the parent anchor
+instead of absolute positions.
+
+WRONG (buttons end up offset from center instead of at absolute positions):
+
+    <Default>
+        <Button ParentAlignX="#_align_center_" LocalAlignX="#_align_center_"/>
+    </Default>
+
+    <Button X="10">...</Button>   <!-- Ends up at center+10, not at X=10! -->
+    <Button X="50">...</Button>   <!-- Ends up at center+50, not at X=50! -->
+
+CORRECT (remove ParentAlignX from Default if using absolute X positions):
+
+    <Default>
+        <Button LocalAlignX="#_align_center_"/>
+    </Default>
+
+    <Button X="10">...</Button>   <!-- Correctly at X=10 -->
+    <Button X="50">...</Button>   <!-- Correctly at X=50 -->
+
+--------------------------------------------------------------------------------
+SPECIAL CASE - Circles and Spheres:
+--------------------------------------------------------------------------------
+
+Circle and Sphere elements default to LocalAlignX="#_align_center_" and
+LocalAlignY="#_align_middle_" because their natural anchor point is their
+center. If you need corner-based positioning, explicitly set LocalAlign:
+
+    <Circle X="100" Y="100" Radius="50"
+            LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_"/>
 
 --------------------------------------------------------------------------------
 ALIGNMENT VALUE CONSTANTS:

@@ -734,6 +734,64 @@ Integer attributes can use built-in constants with the `#` prefix (e.g., `Parent
 | `#_align_middle_` | 1 | Middle alignment |
 | `#_align_top_` | 2 | Top alignment |
 
+---
+
+### How Alignment and Position Work Together
+
+The alignment system has two separate concepts:
+
+- **LocalAlign** - The anchor point on the element itself (where on the element is "the position")
+- **ParentAlign** - The anchor point in the parent container (where in the parent to position)
+
+**Position Calculation:**
+```
+final_position = parent_anchor + offset
+```
+
+Where:
+- `parent_anchor` is determined by `ParentAlignX`/`ParentAlignY` (LEFT=0, CENTER=width/2, RIGHT=width, etc.)
+- `offset` is the `X`/`Y` value
+
+**Examples in an 800x600 parent:**
+
+```xml
+<!-- Absolute positioning: X=100 means 100 pixels from left edge -->
+<Text X="100" Y="50" LocalAlignX="#_align_center_">Hello</Text>
+
+<!-- Offset from center: X=10 means 10 pixels right of center (400+10=410) -->
+<Text ParentAlignX="#_align_center_" X="10" LocalAlignX="#_align_center_">Hello</Text>
+
+<!-- Offset from right edge: X=-20 means 20 pixels left of right edge (800-20=780) -->
+<Text ParentAlignX="#_align_right_" X="-20" LocalAlignX="#_align_right_">Hello</Text>
+
+<!-- Centered (no offset): element centered in parent -->
+<Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+      LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">Hello</Text>
+```
+
+**Common Pitfall - Defaults with ParentAlign:**
+
+If a `<Default>` sets `ParentAlignX`, any X values on child elements become offsets from that anchor, not absolute positions:
+
+```xml
+<!-- WRONG: Buttons end up offset from center instead of at absolute X positions -->
+<Default>
+    <Button ParentAlignX="#_align_center_" LocalAlignX="#_align_center_"/>
+</Default>
+<Button X="10">...</Button>   <!-- Ends up at center+10, not X=10! -->
+
+<!-- CORRECT: Remove ParentAlignX from Default when using absolute positions -->
+<Default>
+    <Button LocalAlignX="#_align_center_"/>
+</Default>
+<Button X="10">...</Button>   <!-- Correctly at X=10 -->
+```
+
+**Special Cases:**
+
+- **Circle and Sphere** elements default to center-aligned (`LocalAlignX="#_align_center_"`, `LocalAlignY="#_align_middle_"`) since their natural anchor is their center
+- **Container, Panel, Window, and Button** reset the parent_position to {0,0} for their children, so children position relative to the container's top-left corner
+
 **Example:**
 ```xml
 <Text X="100" Y="50" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
