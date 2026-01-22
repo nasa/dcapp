@@ -911,10 +911,10 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
 
             // get include file name
             xmlChar *filepath = xmlNodeGetContent(node);
-            if (!filepath) {
+            if (!filepath || xmlStrlen(filepath) == 0) {
                 filepath = xmlGetProp(node, BAD_CAST "File");
                 if (!filepath) {
-                    fprintf(stderr, "DCAPP _clean_xml_node(): Node content missing in <Include> definition\n");
+                    fprintf(stderr, "DCAPP _clean_xml_node(): File path missing in <Include> definition\n");
                 }
             }
             char cleaned_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
@@ -922,26 +922,31 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             cleaned_filepath[sizeof(cleaned_filepath) - 1] = '\0';
             xmlFree(filepath);
 
-            // get canonical path
-            char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+            // get absolute path
+            char absolute_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
             if (dc_utils_is_relative_path(cleaned_filepath)) {
-                char abs_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
-                dc_utils_join_paths(directory, cleaned_filepath, abs_filepath, sizeof(abs_filepath));
-                dc_utils_canonicalize_path(abs_filepath, canon_filepath, sizeof(canon_filepath));
+                dc_utils_join_paths(directory, cleaned_filepath, absolute_path, sizeof(absolute_path));
             } else {
-                dc_utils_canonicalize_path(cleaned_filepath, canon_filepath, sizeof(canon_filepath));
+                strncpy(absolute_path, cleaned_filepath, DC_UTILS_FILEPATH_BUFFER_SIZE);
+                absolute_path[DC_UTILS_FILEPATH_BUFFER_SIZE - 1] = '\0';
             }
 
             // check if file exists when optional
-            if (!dc_utils_file_exists(canon_filepath)) {
+            if (!dc_utils_file_exists(absolute_path)) {
                 if (optional) {
                     // file doesn't exist and include is optional, skip it
-                    fprintf(stderr, "DCAPP _clean_xml_node(): Optional include file '%s' not found, skipping\n", canon_filepath);
-                    xmlUnlinkNode(node);
-                    xmlFreeNode(node);
-                    return;
+                    fprintf(stderr, "DCAPP _clean_xml_node(): Optional include file '%s' not found, skipping\n", absolute_path);
+                } else {
+                    fprintf(stderr, "DCAPP _clean_xml_node(): mandatory include file '%s' not found\n", absolute_path);
                 }
+                xmlUnlinkNode(node);
+                xmlFreeNode(node);
+                return;
             }
+
+            // get canonical path
+            char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+            dc_utils_canonicalize_path(absolute_path, canon_filepath, sizeof(canon_filepath));
 
             // get canonical directory from filepath
             char include_directory[DC_UTILS_FILEPATH_BUFFER_SIZE];
