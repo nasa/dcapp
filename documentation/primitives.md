@@ -160,13 +160,39 @@ Draws a rectangle.
 
 ### `<Circle>`
 
-Draws a circle or ellipse.
+Draws a circle.
 
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
 | `PositionX` | `X` | number/var | No | Center X position |
 | `PositionY` | `Y` | number/var | No | Center Y position |
 | `Radius` | — | number/var | No | Circle radius |
+| `Segments` | — | number/var | No | Number of segments for rendering |
+| `ParentAlignX` | — | align | No | Parent anchor (horizontal) |
+| `ParentAlignY` | — | align | No | Parent anchor (vertical) |
+| `Rotation` | `Rotate` | number/var | No | Rotation in degrees |
+| `PivotPositionX` | `PivotX` | number/var | No | Pivot point X |
+| `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
+| `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
+| `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
+| `FillColor` | — | color | No | Fill color (RGBA) |
+| `LineColor` | — | color | No | Border color (RGBA) |
+| `LineWidth` | — | number/var | No | Border width |
+
+**Children:** `<Pressed>`, `<Released>`, `<Active>`, `<Inactive>`, `<Hovered>` (mouse events)
+
+---
+
+### `<Ellipse>`
+
+Draws an ellipse.
+
+| Attribute | Aliases | Type | Required | Description |
+|-----------|---------|------|----------|-------------|
+| `PositionX` | `X` | number/var | No | Center X position |
+| `PositionY` | `Y` | number/var | No | Center Y position |
+| `RadiusX` | — | number/var | No | Ellipse radius X |
+| `RadiusY` | — | number/var | No | Ellipse radius Y |
 | `Segments` | — | number/var | No | Number of segments for rendering |
 | `ParentAlignX` | — | align | No | Parent anchor (horizontal) |
 | `ParentAlignY` | — | align | No | Parent anchor (vertical) |
