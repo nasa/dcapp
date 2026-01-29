@@ -34,7 +34,7 @@ extern "C" {
 // config functions
 DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_count);
 void         dc_app_config_cleanup(DcAppConfig *config);
-void         dc_app_config_clean_xml(DcAppConfig *config, DcAppLookup *lookup);
+void         dc_app_config_preprocess_xml(DcAppConfig *config, DcAppLookup *lookup);
 void         dc_app_config_save_to_file(DcAppConfig *config, const char *filepath);
 
 // const

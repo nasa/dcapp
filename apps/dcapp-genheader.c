@@ -34,13 +34,8 @@ int main(int argc, char **argv) {
     // set environment (used for dcapp XMLs)
     dc_utils_set_env("dcappDisplayHome", config->config_dir_path, 1);
 
-    // clean XML file
-    dc_app_config_clean_xml(config, lookup);
-
-    // dump to file
-    char log_file[256];
-    dc_utils_join_paths(config->cache_dir_path, "xml.log", log_file, sizeof(log_file));
-    dc_app_config_save_to_file(config, log_file);
+    // preprocess XML file
+    dc_app_config_preprocess_xml(config, lookup);
 
     // process XML
     xmlNodePtr root_node = xmlDocGetRootElement(config->xml_doc);

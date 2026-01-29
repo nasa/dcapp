@@ -62,8 +62,8 @@ Declares a runtime variable that can be referenced and modified.
 
 **Example:**
 ```xml
-<Variable Type="double" InitialValue="0.0">altitude</Variable>
-<Variable Type="string" InitialValue="OFF">systemStatus</Variable>
+<Variable Type="#_variable_double_" InitialValue="0.0">altitude</Variable>
+<Variable Type="#_variable_string_" InitialValue="OFF">systemStatus</Variable>
 ```
 
 ---
@@ -528,8 +528,8 @@ Parse-time conditional that evaluates once during XML parsing and includes only 
 ```xml
 <!-- Conditionally register debug variables -->
 <StaticIf Value="@debugMode" Value2="1" Operation="#_conditional_eq_">
-    <Variable Type="double" InitialValue="0">debugCounter</Variable>
-    <Variable Type="string" InitialValue="">debugMessage</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">debugCounter</Variable>
+    <Variable Type="#_variable_string_" InitialValue="">debugMessage</Variable>
 </StaticIf>
 
 <!-- Conditionally include TrickVariables -->
@@ -836,9 +836,9 @@ Attributes marked as `number/var` can contain:
 
 ```xml
 <dcapp>
-    <Variable Type="double" InitialValue="0">altitude</Variable>
-    <Variable Type="double" InitialValue="0">speed</Variable>
-    <Variable Type="string" InitialValue="OFF">engineStatus</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">speed</Variable>
+    <Variable Type="#_variable_string_" InitialValue="OFF">engineStatus</Variable>
 
     <Window Title="Flight Display" Width="800" Height="600" VirtualWidth="800" VirtualHeight="600">
         

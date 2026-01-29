@@ -172,7 +172,7 @@ Buttons use child elements to define their appearance in different states.
 A basic on/off toggle that controls a single variable:
 
 ```xml
-<Variable Type="string" InitialValue="OFF">power</Variable>
+<Variable Type="#_variable_string_" InitialValue="OFF">power</Variable>
 
 <Button X="100" Y="100" Width="100" Height="50" 
         Variable="power" On="ON" Off="OFF" Type="#_button_toggle_">
@@ -196,7 +196,7 @@ A basic on/off toggle that controls a single variable:
 A button that's only "on" while being held:
 
 ```xml
-<Variable Type="integer" InitialValue="0">firing</Variable>
+<Variable Type="#_variable_integer_" InitialValue="0">firing</Variable>
 
 <Button X="200" Y="300" Width="80" Height="80"
         Variable="firing" On="1" Off="0" Type="#_button_momentary_">
@@ -220,8 +220,8 @@ A button that's only "on" while being held:
 Control one variable while displaying another's state:
 
 ```xml
-<Variable Type="string" InitialValue="OFF">engine_command</Variable>
-<Variable Type="string" InitialValue="OFF">engine_status</Variable>
+<Variable Type="#_variable_string_" InitialValue="OFF">engine_command</Variable>
+<Variable Type="#_variable_string_" InitialValue="OFF">engine_status</Variable>
 
 <Button X="100" Y="100" Width="120" Height="60"
         TargetVariable="engine_command"
@@ -248,8 +248,8 @@ Control one variable while displaying another's state:
 A button that can be disabled based on a condition:
 
 ```xml
-<Variable Type="integer" InitialValue="1">systemReady</Variable>
-<Variable Type="string" InitialValue="SAFE">armState</Variable>
+<Variable Type="#_variable_integer_" InitialValue="1">systemReady</Variable>
+<Variable Type="#_variable_string_" InitialValue="SAFE">armState</Variable>
 
 <Button X="100" Y="100" Width="100" Height="50"
         TargetVariable="armState"
@@ -282,7 +282,7 @@ A button that can be disabled based on a condition:
 A button that executes actions on press and release:
 
 ```xml
-<Variable Type="double" InitialValue="0">throttle</Variable>
+<Variable Type="#_variable_double_" InitialValue="0">throttle</Variable>
 
 <Button X="100" Y="100" Width="60" Height="40" Type="#_button_momentary_">
     <Pressed>
@@ -336,7 +336,7 @@ A button with rotation around its center:
 Use separate buttons with a shared variable:
 
 ```xml
-<Variable Type="string" InitialValue="A">selection</Variable>
+<Variable Type="#_variable_string_" InitialValue="A">selection</Variable>
 
 <Button X="10" Y="100" Width="60" Height="30" Variable="selection" On="A" Type="#_button_standard_">
     <Enabled>
@@ -363,7 +363,7 @@ Use separate buttons with a shared variable:
 ### Increment/Decrement Pair
 
 ```xml
-<Variable Type="double" InitialValue="50">value</Variable>
+<Variable Type="#_variable_double_" InitialValue="50">value</Variable>
 
 <Button X="100" Y="100" Width="40" Height="40">
     <Pressed><Set Variable="value" Operator="#_set_subtract_">1</Set></Pressed>

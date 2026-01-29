@@ -102,6 +102,7 @@ typedef enum __NodeType {
     NODE_TYPE_BUTTON,
     NODE_TYPE_CIRCLE,
     NODE_TYPE_CONTAINER,
+    NODE_TYPE_ELLIPSE,
     NODE_TYPE_CONDITIONAL,
     NODE_TYPE_FUNCTION,
     NODE_TYPE_IMAGE,
@@ -227,6 +228,27 @@ typedef struct __NodeCircle {
     bool fill_enabled;
     bool line_enabled;
 } _NodeCircle;
+
+#define _NODE_ELLIPSE_MAX_SEGMENTS 1000
+typedef struct __NodeEllipse {
+    _ValIndex2    position;
+    _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_position;
+    _ValIndex2    local_align;
+    _ValIndex2    parent_align;
+    DcAppValIndex rotation;
+    DcAppValIndex radius_x;
+    DcAppValIndex radius_y;
+    DcAppValIndex num_segments;
+    _ValIndex4    fill_color;
+    _ValIndex4    line_color;
+    DcAppValIndex line_width;
+
+    _MouseEventChildren mouse_events;
+
+    bool fill_enabled;
+    bool line_enabled;
+} _NodeEllipse;
 
 typedef struct __NodeConditional {
     DcAppValIndex type;
@@ -463,6 +485,7 @@ typedef struct __Node {
         _NodeButton      button;
         _NodeCircle      circle;
         _NodeConditional conditional;
+        _NodeEllipse     ellipse;
         _NodeContainer   container;
         _NodeFunction    function;
         _NodeImage       image;

@@ -9,7 +9,7 @@ A guide to declaring and using variables in dcapp displays.
 Variables store runtime values that can change during display execution. They enable dynamic content, user interaction, and data binding with external systems.
 
 ```xml
-<Variable Type="Double" InitialValue="0">altitude</Variable>
+<Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
 ```
 
 Variables are referenced using the `@` prefix:
@@ -26,9 +26,9 @@ Variables are declared at the top of your dcapp file, before the `<Window>` elem
 
 ```xml
 <dcapp>
-    <Variable Type="Double" InitialValue="0">altitude</Variable>
-    <Variable Type="Double" InitialValue="0">speed</Variable>
-    <Variable Type="String" InitialValue="OFF">engineStatus</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">speed</Variable>
+    <Variable Type="#_variable_string_" InitialValue="OFF">engineStatus</Variable>
     
     <Window Title="My Display" Width="800" Height="600">
         <!-- Display content here -->
@@ -49,18 +49,18 @@ Variables are declared at the top of your dcapp file, before the `<Window>` elem
 
 ## Variable Types
 
-| Type | Aliases | Description | Example Values |
-|------|---------|-------------|----------------|
-| `String` | — | Text data | `"ON"`, `"Hello"`, `"123"` |
-| `Integer` | — | Whole numbers | `0`, `42`, `-17` |
-| `Double` | `Decimal`, `Float` | Decimal numbers | `0.0`, `3.14159`, `-273.15` |
-| `Boolean` | — | True/false values | `true`, `false`, `1`, `0` |
+| Type Constant | Description | Example Values |
+|---------------|-------------|----------------|
+| `#_variable_string_` | Text data | `"ON"`, `"Hello"`, `"123"` |
+| `#_variable_integer_` | Whole numbers | `0`, `42`, `-17` |
+| `#_variable_double_` | Decimal numbers | `0.0`, `3.14159`, `-273.15` |
+| `#_variable_boolean_` | True/false values | `true`, `false`, `1`, `0` |
 
 ```xml
-<Variable Type="String" InitialValue="STANDBY">status</Variable>
-<Variable Type="Integer" InitialValue="100">health</Variable>
-<Variable Type="Double" InitialValue="0.0">temperature</Variable>
-<Variable Type="Boolean" InitialValue="false">isActive</Variable>
+<Variable Type="#_variable_string_" InitialValue="STANDBY">status</Variable>
+<Variable Type="#_variable_integer_" InitialValue="100">health</Variable>
+<Variable Type="#_variable_double_" InitialValue="0.0">temperature</Variable>
+<Variable Type="#_variable_boolean_" InitialValue="false">isActive</Variable>
 ```
 
 ---
@@ -72,9 +72,9 @@ Variables are declared at the top of your dcapp file, before the `<Window>` elem
 Use the `@` prefix to reference a variable's value in any numeric attribute:
 
 ```xml
-<Variable Type="Double" InitialValue="100">xPos</Variable>
-<Variable Type="Double" InitialValue="50">yPos</Variable>
-<Variable Type="Double" InitialValue="45">angle</Variable>
+<Variable Type="#_variable_double_" InitialValue="100">xPos</Variable>
+<Variable Type="#_variable_double_" InitialValue="50">yPos</Variable>
+<Variable Type="#_variable_double_" InitialValue="45">angle</Variable>
 
 <Rectangle X="@xPos" Y="@yPos" Width="50" Height="50" Rotation="@angle"/>
 ```
@@ -84,7 +84,7 @@ Use the `@` prefix to reference a variable's value in any numeric attribute:
 Variables can be interpolated directly into text:
 
 ```xml
-<Variable Type="String" InitialValue="World">name</Variable>
+<Variable Type="#_variable_string_" InitialValue="World">name</Variable>
 <Text>Hello, @name!</Text>
 <!-- Output: Hello, World! -->
 ```
@@ -94,7 +94,7 @@ Variables can be interpolated directly into text:
 Use braces when the variable name is adjacent to other text:
 
 ```xml
-<Variable Type="Double" InitialValue="75">temp</Variable>
+<Variable Type="#_variable_double_" InitialValue="75">temp</Variable>
 <Text>Temperature: @{temp}°F</Text>
 <!-- Output: Temperature: 75°F -->
 ```
@@ -108,7 +108,7 @@ Without braces, `@temp°F` would look for a variable named `temp°F`.
 Use printf-style format specifiers for number formatting in text:
 
 ```xml
-<Variable Type="Double" InitialValue="1234.5678">value</Variable>
+<Variable Type="#_variable_double_" InitialValue="1234.5678">value</Variable>
 
 <Text>Default: @value</Text>           <!-- 1234.5678 -->
 <Text>Integer: @value(%.0f)</Text>     <!-- 1235 -->
@@ -184,7 +184,7 @@ Use `<Set>` to modify variable values at runtime:
 `<Set>` is commonly used inside button press/release handlers:
 
 ```xml
-<Variable Type="Double" InitialValue="50">volume</Variable>
+<Variable Type="#_variable_double_" InitialValue="50">volume</Variable>
 
 <Button X="100" Y="100" Width="40" Height="40">
     <Pressed>
@@ -233,7 +233,7 @@ Line 2
 Use `<If>` to show/hide content based on variable values:
 
 ```xml
-<Variable Type="Double" InitialValue="100">fuel</Variable>
+<Variable Type="#_variable_double_" InitialValue="100">fuel</Variable>
 
 <If Value="@fuel" Value2="20" Operation="#_conditional_lt_">
     <True>
@@ -295,10 +295,10 @@ For complex variable manipulation beyond what XML can express, you can use exter
 
 ```xml
 <dcapp>
-    <Variable Type="Double" InitialValue="0">altitude</Variable>
-    <Variable Type="Double" InitialValue="0">speed</Variable>
-    <Variable Type="Double" InitialValue="0">heading</Variable>
-    <Variable Type="String" InitialValue="NORMAL">flightMode</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">speed</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">heading</Variable>
+    <Variable Type="#_variable_string_" InitialValue="NORMAL">flightMode</Variable>
 
     <Window Title="Flight Display" Width="400" Height="300">
         <Rectangle FillColor="0.1,0.1,0.15,1" Width="400" Height="300"/>
@@ -321,7 +321,7 @@ For complex variable manipulation beyond what XML can express, you can use exter
 
 ```xml
 <dcapp>
-    <Variable Type="Integer" InitialValue="0">counter</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="0">counter</Variable>
 
     <Window Title="Counter" Width="300" Height="100">
         <Rectangle FillColor="0.2,0.2,0.2,1" Width="300" Height="100"/>

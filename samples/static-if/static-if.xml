@@ -9,14 +9,18 @@
 
     <!-- StaticIf: Conditionally create debug variables at parse time -->
     <StaticIf Value="#DEBUG_MODE" Value2="1" Operation="#_conditional_eq_">
-        <Variable Type="#_variable_string_" InitialValue="Debug build">BUILD_TYPE</Variable>
-        <Variable Type="#_variable_double_" InitialValue="0">DEBUG_COUNTER</Variable>
+        <True>
+            <Variable Type="#_variable_string_" InitialValue="Debug build">BUILD_TYPE</Variable>
+            <Variable Type="#_variable_double_" InitialValue="0">DEBUG_COUNTER</Variable>
+        </True>
     </StaticIf>
 
     <!-- StaticIf: Conditionally create production variables at parse time -->
     <StaticIf Value="#PRODUCTION_MODE" Value2="1" Operation="#_conditional_eq_">
-        <Variable Type="#_variable_string_" InitialValue="Production build">BUILD_TYPE</Variable>
-        <Variable Type="#_variable_double_" InitialValue="1">OPTIMIZE_ENABLED</Variable>
+        <True>
+            <Variable Type="#_variable_string_" InitialValue="Production build">BUILD_TYPE</Variable>
+            <Variable Type="#_variable_double_" InitialValue="1">OPTIMIZE_ENABLED</Variable>
+        </True>
     </StaticIf>
 
     <Window Title="StaticIf vs If Demo" X="30" Y="30" Width="1000" Height="700">
@@ -53,18 +57,22 @@
 
                 <!-- Debug mode content -->
                 <StaticIf Value="#DEBUG_MODE" Value2="1" Operation="#_conditional_eq_">
-                    <Rectangle X="30" Y="180" Width="400" Height="70" FillColor="0.2 0.5 0.3"/>
-                    <Text X="230" Y="235" LocalAlignX="#_align_center_" Size="12" FillColor="1 1 1">DEBUG MODE ACTIVE</Text>
-                    <Text X="40" Y="210" Size="10" FillColor="0.9 0.9 0.9">- BUILD_TYPE = @BUILD_TYPE</Text>
-                    <Text X="40" Y="190" Size="10" FillColor="0.9 0.9 0.9">- DEBUG_COUNTER = @DEBUG_COUNTER(%.0f)</Text>
+                    <True>
+                        <Rectangle X="30" Y="180" Width="400" Height="70" FillColor="0.2 0.5 0.3"/>
+                        <Text X="230" Y="235" LocalAlignX="#_align_center_" Size="12" FillColor="1 1 1">DEBUG MODE ACTIVE</Text>
+                        <Text X="40" Y="210" Size="10" FillColor="0.9 0.9 0.9">- BUILD_TYPE = @BUILD_TYPE</Text>
+                        <Text X="40" Y="190" Size="10" FillColor="0.9 0.9 0.9">- DEBUG_COUNTER = @DEBUG_COUNTER(%.0f)</Text>
+                    </True>
                 </StaticIf>
 
                 <!-- Production mode content -->
                 <StaticIf Value="#PRODUCTION_MODE" Value2="1" Operation="#_conditional_eq_">
-                    <Rectangle X="30" Y="180" Width="400" Height="70" FillColor="0.5 0.2 0.2"/>
-                    <Text X="230" Y="235" LocalAlignX="#_align_center_" Size="12" FillColor="1 1 1">PRODUCTION MODE ACTIVE</Text>
-                    <Text X="40" Y="210" Size="10" FillColor="0.9 0.9 0.9">- BUILD_TYPE = @BUILD_TYPE</Text>
-                    <Text X="40" Y="190" Size="10" FillColor="0.9 0.9 0.9">- OPTIMIZE_ENABLED = @OPTIMIZE_ENABLED(%.0f)</Text>
+                    <True>
+                        <Rectangle X="30" Y="180" Width="400" Height="70" FillColor="0.5 0.2 0.2"/>
+                        <Text X="230" Y="235" LocalAlignX="#_align_center_" Size="12" FillColor="1 1 1">PRODUCTION MODE ACTIVE</Text>
+                        <Text X="40" Y="210" Size="10" FillColor="0.9 0.9 0.9">- BUILD_TYPE = @BUILD_TYPE</Text>
+                        <Text X="40" Y="190" Size="10" FillColor="0.9 0.9 0.9">- OPTIMIZE_ENABLED = @OPTIMIZE_ENABLED(%.0f)</Text>
+                    </True>
                 </StaticIf>
 
                 <!-- How it works -->

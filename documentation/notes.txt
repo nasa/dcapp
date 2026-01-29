@@ -60,10 +60,10 @@ SECTION 3: VARIABLE TYPE CONSTANTS
 Variable types now use constants instead of plain strings.
 
 Legacy syntax:
-    <Variable Type="Decimal">myVar</Variable>
-    <Variable Type="Integer">myVar</Variable>
-    <Variable Type="String">myVar</Variable>
-    <Variable Type="Boolean">myVar</Variable>
+    <Variable Type="#_variable_double_">myVar</Variable>
+    <Variable Type="#_variable_integer_">myVar</Variable>
+    <Variable Type="#_variable_string_">myVar</Variable>
+    <Variable Type="#_variable_boolean_">myVar</Variable>
 
 New syntax:
     <Variable Type="#_variable_double_">myVar</Variable>
@@ -657,8 +657,8 @@ Legacy XML:
 
     <?xml version="1.0"?>
     <DCAPP>
-        <Variable Type="Decimal" InitialValue="0.5">value</Variable>
-        <Variable Type="Integer">buttonState</Variable>
+        <Variable Type="#_variable_double_" InitialValue="0.5">value</Variable>
+        <Variable Type="#_variable_integer_">buttonState</Variable>
         
         <DisplayLogic File="logic/mylogic.so"/>
         

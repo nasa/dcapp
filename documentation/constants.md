@@ -440,7 +440,7 @@ Color constants use space-separated RGB values. Add alpha when using:
     <!-- This cannot be overridden -->
     <Constant Name="version" Immutable="true">2.1.0</Constant>
     
-    <Variable Type="Double" InitialValue="0">altitude</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
     
     <TrickIO Host="#serverHost" Port="#serverPort" DataRate="#updateRate">
         <FromTrick>
