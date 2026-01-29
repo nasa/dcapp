@@ -2,6 +2,7 @@
 #include "elem.h"
 #include "enums.h"
 #include "libxml/tree.h"
+#include "libxml/xmlstring.h"
 #include "lookup.h"
 #include "../value.h"
 #include "../utils/env.h"
@@ -434,20 +435,26 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
     {
         xmlChar *style_name = xmlGetProp(node, BAD_CAST "Style");
         if (style_name) {
-            DcAppStyleIndex style_index    = _get_style_index(context, (char *)style_name);
-            xmlNodePtr      style_xml_node = context->sb_styles[style_index].xml_nodes[elem_type];
 
-            if (style_xml_node) {
-                for (xmlAttrPtr attr = style_xml_node->properties; attr; attr = attr->next) {
-                    xmlAttrPtr existing = xmlHasProp(node, attr->name);
-                    if (!existing) {
-                        xmlChar *value = xmlGetProp(style_xml_node, attr->name);
-                        if (value) {
-                            xmlSetProp(node, attr->name, value);
-                            xmlFree(value);
+            DcAppStyleIndex style_index = _get_style_index(context, (char *)style_name);
+
+            if (style_index != DC_APP_STYLE_INDEX_UNDEFINED) {
+                xmlNodePtr      style_xml_node = context->sb_styles[style_index].xml_nodes[elem_type];
+
+                if (style_xml_node) {
+                    for (xmlAttrPtr attr = style_xml_node->properties; attr; attr = attr->next) {
+                        xmlAttrPtr existing = xmlHasProp(node, attr->name);
+                        if (!existing) {
+                            xmlChar *value = xmlGetProp(style_xml_node, attr->name);
+                            if (value) {
+                                xmlSetProp(node, attr->name, value);
+                                xmlFree(value);
+                            }
                         }
                     }
                 }
+            } else {
+                fprintf(stderr, "DCAPP _preprocess_xml_node(): style %s is undefined\n", (char *)style_name);
             }
 
             xmlFree(style_name);
@@ -1102,7 +1109,7 @@ static DcAppStyleIndex _get_style_index(_ConfigContext *context, const char *nam
             }
         }
     }
-    return -1;
+    return DC_APP_STYLE_INDEX_UNDEFINED;
 }
 
 static void _add_style(_ConfigContext *context, const char *name, DcAppElemType elem_type, xmlNodePtr xml_node) {
