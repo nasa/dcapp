@@ -66,6 +66,7 @@ rm -f ../pilotlight/out/dc_draw_backend_ext_*.so
 rm -f ../pilotlight/out/dcapp.so
 rm -f ../pilotlight/out/dcapp_*.so
 rm -f ../pilotlight/out/dcapp-genheader
+rm -f ../pilotlight/out/dcapp-validate
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dc_draw_ext | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -135,7 +136,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/sock.c ../src/trick.c ../src/value.c ../src/app/lookup.c ../src/app/config.c ../src/app/elem.c ../src/pixelstream/mjpeg.c ../src/utils/env.c ../src/utils/file.c ../src/utils/math.c ../src/utils/string.c ../src/utils/time.c ../apps/dcapp.c "
+PL_SOURCES="../src/sock.c ../src/value.c ../src/trick.c ../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/pixelstream/mjpeg.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../apps/dcapp.c "
 
 # run compiler (and linker)
 echo
@@ -164,7 +165,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/lookup.c ../src/app/config.c ../src/app/elem.c ../src/utils/env.c ../src/utils/file.c ../src/utils/math.c ../src/utils/string.c ../src/utils/time.c ../src/value.c ../apps/dcapp-genheader.c "
+PL_SOURCES="../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/value.c ../apps/dcapp-genheader.c "
 
 # run compiler (and linker)
 echo
@@ -172,6 +173,35 @@ echo ${YELLOW}Step: dcapp-genheader${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
 gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dcapp-genheader"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-validate | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_COMPILER_FLAGS="-fPIC "
+PL_LINKER_FLAGS="-ldl -lm -lxml2 "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/value.c ../apps/dcapp-validate.c "
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: dcapp-validate${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dcapp-validate"
 
 # check build status
 if [ $? -ne 0 ]
@@ -209,6 +239,7 @@ rm -f ../pilotlight/out/dc_draw_backend_ext_*.so
 rm -f ../pilotlight/out/dcapp.so
 rm -f ../pilotlight/out/dcapp_*.so
 rm -f ../pilotlight/out/dcapp-genheader
+rm -f ../pilotlight/out/dcapp-validate
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dc_draw_ext | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -278,7 +309,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES="-l:dearimguid.a "
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/sock.c ../src/trick.c ../src/value.c ../src/app/lookup.c ../src/app/config.c ../src/app/elem.c ../src/pixelstream/mjpeg.c ../src/utils/env.c ../src/utils/file.c ../src/utils/math.c ../src/utils/string.c ../src/utils/time.c ../apps/dcapp.c "
+PL_SOURCES="../src/sock.c ../src/value.c ../src/trick.c ../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/pixelstream/mjpeg.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../apps/dcapp.c "
 
 # run compiler (and linker)
 echo
@@ -307,7 +338,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/lookup.c ../src/app/config.c ../src/app/elem.c ../src/utils/env.c ../src/utils/file.c ../src/utils/math.c ../src/utils/string.c ../src/utils/time.c ../src/value.c ../apps/dcapp-genheader.c "
+PL_SOURCES="../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/value.c ../apps/dcapp-genheader.c "
 
 # run compiler (and linker)
 echo
@@ -315,6 +346,35 @@ echo ${YELLOW}Step: dcapp-genheader${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
 gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dcapp-genheader"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-validate | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
+PL_LINKER_FLAGS="-ldl -lm -lxml2 "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/value.c ../apps/dcapp-validate.c "
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: dcapp-validate${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dcapp-validate"
 
 # check build status
 if [ $? -ne 0 ]

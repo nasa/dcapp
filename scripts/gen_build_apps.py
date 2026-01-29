@@ -304,6 +304,68 @@ with pl.project("apps"):
                     pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
                     pl.add_linker_flags("-lxml2", "-lcurl")
 
+    # dcapp-validate
+    with pl.target("dcapp-validate", pl.TargetType.EXECUTABLE):
+
+        pl.set_output_binary("dcapp-validate")
+
+        # list source files relative to the output directory
+        src_files_abs =  list_files_recursive(dcapp_home_abs + "/src/app", ".c")
+        src_files_abs += list_files_recursive(dcapp_home_abs + "/src/utils", ".c")
+        src_files_abs += [dcapp_home_abs + "/src/value.c"]
+        sources_files_rel = [os.path.relpath(src_file, output_dir_abs) for src_file in src_files_abs]
+        pl.add_source_files(
+            *sources_files_rel,
+            os.path.relpath(dcapp_home_abs + "/apps/dcapp-validate.c", output_dir_abs)
+        )
+
+        # release config
+        with pl.configuration("release"):
+
+            # win32
+            with pl.platform("Windows"):
+                with pl.compiler("msvc"):
+                    pl.add_linker_flags("-nologo", "-noimplib", "-noexp")
+                    pl.add_static_link_libraries("libxml2")
+                    pl.add_include_directories(vcpkg_rel + "/include/libxml2")
+                    pl.set_pre_target_build_step(vcpkg_copy_cmd)
+
+            # linux
+            with pl.platform("Linux"):
+                with pl.compiler("gcc"):
+                    pl.add_include_directories("/usr/include/libxml2")
+                    pl.add_linker_flags("-lxml2")
+
+            # mac os
+            with pl.platform("Darwin"):
+                with pl.compiler("clang"):
+                    pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
+                    pl.add_linker_flags("-lxml2")
+
+        # debug config
+        with pl.configuration("debug"):
+
+            # win32
+            with pl.platform("Windows"):
+                with pl.compiler("msvc"):
+                    pl.add_linker_flags("-nologo", "-noimplib", "-noexp")
+                    pl.add_static_link_libraries("libxml2")
+                    pl.add_include_directories(vcpkg_rel + "/include/libxml2")
+                    pl.set_pre_target_build_step(vcpkg_copy_cmd)
+
+            # linux
+            with pl.platform("Linux"):
+                with pl.compiler("gcc"):
+                    pl.add_include_directories("/usr/include/libxml2")
+                    pl.add_compiler_flags("--debug", "-g")
+                    pl.add_linker_flags("-lxml2")
+
+            # mac os
+            with pl.platform("Darwin"):
+                with pl.compiler("clang"):
+                    pl.add_include_directories("/opt/homebrew/opt/libxml2/include/libxml2")
+                    pl.add_linker_flags("-lxml2")
+
 #-----------------------------------------------------------------------------
 # [SECTION] generate scripts
 #-----------------------------------------------------------------------------

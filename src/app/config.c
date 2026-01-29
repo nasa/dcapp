@@ -63,7 +63,7 @@ static xmlChar        *_get_style_content(_ConfigContext *context, int style_ind
 // xml utils
 static char *_get_xml_node_attr(_ConfigContext *context, xmlNodePtr xml_node, DcAppElemType elem_type, int style_index, const char *name);
 static char *_get_xml_node_content(_ConfigContext *context, xmlNodePtr xml_node, DcAppElemType elem_type, int style_index);
-static void  _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory);
+static void  _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory);
 void         _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr node);
 static void  _splice_children_into_parent_and_free_wrapper(xmlNodePtr node);
 
@@ -333,23 +333,23 @@ void dc_app_config_cleanup(DcAppConfig *config) {
     free(config);
 }
 
-void dc_app_config_clean_xml(DcAppConfig *config, DcAppLookup *lookup) {
+void dc_app_config_preprocess_xml(DcAppConfig *config, DcAppLookup *lookup) {
 
     _ConfigContext *context = &(_sb_contexts[config->_index]);
 
     // get root element
     xmlNodePtr node = xmlDocGetRootElement(config->xml_doc);
     if (node == NULL) {
-        fprintf(stderr, "DCAPP dc_app_config_clean_xml(): unable to get root element of config file\n");
+        fprintf(stderr, "DCAPP dc_app_config_preprocess_xml(): unable to get root element of config file\n");
     }
 
     // verify root node is valid
     if (dc_app_xml_node_to_elem_type(node) != DC_APP_ELEM_TYPE_DCAPP) {
-        fprintf(stderr, "DCAPP dc_app_config_clean_xml(): configuration root element is not DCAPP\n");
+        fprintf(stderr, "DCAPP dc_app_config_preprocess_xml(): configuration root element is not DCAPP\n");
     }
 
     // clean XML file
-    _clean_xml_node(context, node, config->config_dir_path);
+    _preprocess_xml_node(context, node, config->config_dir_path);
     config->xml_doc_is_cleaned = true;
 }
 
@@ -400,7 +400,7 @@ static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node) {
     xmlFreeNode(node);
 }
 
-void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) {
+void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) {
 
     // remove if not an element
     if (node->type != XML_ELEMENT_NODE && node->type != XML_TEXT_NODE && node->type != XML_ATTRIBUTE_NODE) {
@@ -476,7 +476,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
         case DC_APP_ELEM_TYPE_CONSTANT: {
             xmlChar *name = xmlGetProp(node, BAD_CAST "Name");
             if (!name) {
-                fprintf(stderr, "DCAPP _clean_xml_node(): 'Name' attribute missing in <Constant> definition\n");
+                fprintf(stderr, "DCAPP _preprocess_xml_node(): 'Name' attribute missing in <Constant> definition\n");
             }
             char cleaned_name[DC_VALUE_STRING_BUFFER_SIZE];
             strncpy(cleaned_name, (const char *)name, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -485,7 +485,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
 
             xmlChar *value = xmlNodeGetContent(node);
             if (!value) {
-                fprintf(stderr, "DCAPP _clean_xml_node(): Node content missing in <Constant> definition\n");
+                fprintf(stderr, "DCAPP _preprocess_xml_node(): Node content missing in <Constant> definition\n");
             }
             char cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
             strncpy(cleaned_value, (const char *)value, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -500,6 +500,10 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             }
 
             _register_const_by_name(context, cleaned_name, cleaned_value, is_immutable);
+
+            // remove the Constant node from the tree
+            xmlUnlinkNode(node);
+            xmlFreeNode(node);
             return;
         }
 
@@ -509,7 +513,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             xmlNodePtr child = node->children;
             while (child) {
                 xmlNodePtr child_next = child->next;
-                _clean_xml_node(context, child, directory);
+                _preprocess_xml_node(context, child, directory);
                 child = child_next;
             }
 
@@ -533,7 +537,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                 raw_value1 = xmlGetProp(node, BAD_CAST "Value1");
             }
             if (!raw_value1) {
-                fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: no value specified\n");
+                fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: no value specified\n");
                 xmlUnlinkNode(node);
                 xmlFreeNode(node);
                 return;
@@ -560,13 +564,13 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
 
             // Check for runtime variables (not allowed in StaticIf)
             if (value1[0] == '@') {
-                fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: Value1 '%s' uses runtime variable (@), only constants (#) are allowed in StaticIf\n", value1);
+                fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: Value1 '%s' uses runtime variable (@), only constants (#) are allowed in StaticIf\n", value1);
                 xmlUnlinkNode(node);
                 xmlFreeNode(node);
                 return;
             }
             if (value2 && value2[0] == '@') {
-                fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: Value2 '%s' uses runtime variable (@), only constants (#) are allowed in StaticIf\n", value2);
+                fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: Value2 '%s' uses runtime variable (@), only constants (#) are allowed in StaticIf\n", value2);
                 xmlUnlinkNode(node);
                 xmlFreeNode(node);
                 return;
@@ -584,7 +588,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                 if (is_double) {
                     // Numeric comparison (handles both integers and doubles)
                     if (!dc_utils_string_is_double(value2)) {
-                        fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: Value1 is numeric but Value2 '%s' is not, ignoring StaticIf\n", value2);
+                        fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: Value1 is numeric but Value2 '%s' is not, ignoring StaticIf\n", value2);
                         xmlUnlinkNode(node);
                         xmlFreeNode(node);
                         return;
@@ -613,7 +617,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                             result = (num1 >= num2);
                             break;
                         default:
-                            fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: invalid Operation %d, expected EQ/NE/LT/GT/LTE/GTE (3-8)\n", cond_type);
+                            fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: invalid Operation %d, expected EQ/NE/LT/GT/LTE/GTE (3-8)\n", cond_type);
                             break;
                     }
                 } else if (is_bool) {
@@ -632,12 +636,12 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                         case DC_APP_CONDITIONAL_TYPE_GT:
                         case DC_APP_CONDITIONAL_TYPE_LTE:
                         case DC_APP_CONDITIONAL_TYPE_GTE:
-                            fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: operator %d not supported for boolean values, ignoring StaticIf\n", cond_type);
+                            fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: operator %d not supported for boolean values, ignoring StaticIf\n", cond_type);
                             xmlUnlinkNode(node);
                             xmlFreeNode(node);
                             return;
                         default:
-                            fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: invalid Operation %d for boolean comparison, expected EQ/NE (3-4)\n", cond_type);
+                            fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: invalid Operation %d for boolean comparison, expected EQ/NE (3-4)\n", cond_type);
                             break;
                     }
                 } else {
@@ -653,12 +657,12 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                         case DC_APP_CONDITIONAL_TYPE_GT:
                         case DC_APP_CONDITIONAL_TYPE_LTE:
                         case DC_APP_CONDITIONAL_TYPE_GTE:
-                            fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: operator %d not supported for string values, ignoring StaticIf\n", cond_type);
+                            fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: operator %d not supported for string values, ignoring StaticIf\n", cond_type);
                             xmlUnlinkNode(node);
                             xmlFreeNode(node);
                             return;
                         default:
-                            fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: invalid Operation %d for string comparison, expected EQ/NE (3-4)\n", cond_type);
+                            fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: invalid Operation %d for string comparison, expected EQ/NE (3-4)\n", cond_type);
                             break;
                     }
                 }
@@ -673,7 +677,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                         result = !bool_val;
                         break;
                     default:
-                        fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: Operation %d (EQ/NE/LT/GT/LTE/GTE) requires Value2 attribute\n", cond_type);
+                        fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: Operation %d (EQ/NE/LT/GT/LTE/GTE) requires Value2 attribute\n", cond_type);
                         break;
                 }
             }
@@ -692,7 +696,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                             xmlFreeNode(child);
                         }
                     } else {
-                        fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: invalid child <%s>, only <True> and <False> allowed\n", (const char *)child->name);
+                        fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: invalid child <%s>, only <True> and <False> allowed\n", (const char *)child->name);
                     }
                 }
                 child = next;
@@ -702,7 +706,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             child = node->children;
             while (child) {
                 xmlNodePtr child_next = child->next;
-                _clean_xml_node(context, child, directory);
+                _preprocess_xml_node(context, child, directory);
                 child = child_next;
             }
 
@@ -738,7 +742,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             if (!filepath || xmlStrlen(filepath) == 0) {
                 filepath = xmlGetProp(node, BAD_CAST "File");
                 if (!filepath) {
-                    fprintf(stderr, "DCAPP _clean_xml_node(): File path missing in <Include> definition\n");
+                    fprintf(stderr, "DCAPP _preprocess_xml_node(): File path missing in <Include> definition\n");
                 }
             }
             char cleaned_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
@@ -759,9 +763,9 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             if (!dc_utils_file_exists(absolute_path)) {
                 if (optional) {
                     // file doesn't exist and include is optional, skip it
-                    fprintf(stderr, "DCAPP _clean_xml_node(): Optional include file '%s' not found, skipping\n", absolute_path);
+                    fprintf(stderr, "DCAPP _preprocess_xml_node(): Optional include file '%s' not found, skipping\n", absolute_path);
                 } else {
-                    fprintf(stderr, "DCAPP _clean_xml_node(): mandatory include file '%s' not found\n", absolute_path);
+                    fprintf(stderr, "DCAPP _preprocess_xml_node(): mandatory include file '%s' not found\n", absolute_path);
                 }
                 xmlUnlinkNode(node);
                 xmlFreeNode(node);
@@ -779,13 +783,13 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             // read XML file
             xmlDocPtr sub_doc = xmlReadFile(canon_filepath, NULL, XML_PARSE_NOBLANKS);
             if (!sub_doc) {
-                fprintf(stderr, "DCAPP _clean_xml_node(): Unable to read config file %s\n", canon_filepath);
+                fprintf(stderr, "DCAPP _preprocess_xml_node(): Unable to read config file %s\n", canon_filepath);
             }
 
             // get root element
             xmlNodePtr sub_node = xmlDocGetRootElement(sub_doc);
             if (!sub_node) {
-                fprintf(stderr, "DCAPP _clean_xml_node(): Unable to get root element of config file %s\n", canon_filepath);
+                fprintf(stderr, "DCAPP _preprocess_xml_node(): Unable to get root element of config file %s\n", canon_filepath);
             }
 
             // copy loaded content
@@ -826,7 +830,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             xmlNodePtr child = node->children;
             while (child) {
                 xmlNodePtr child_next = child->next;
-                _clean_xml_node(context, child, include_directory);
+                _preprocess_xml_node(context, child, include_directory);
                 child = child_next;
             }
 
@@ -845,7 +849,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
             } else {
                 xmlChar *raw_style_name = xmlGetProp(node, BAD_CAST "Name");
                 if (!raw_style_name) {
-                    fprintf(stderr, "DCAPP _clean_xml_node(): Style name missing in <Style> definition\n");
+                    fprintf(stderr, "DCAPP _preprocess_xml_node(): Style name missing in <Style> definition\n");
                 }
                 strncpy(style_name, (const char *)raw_style_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 style_name[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
@@ -888,7 +892,7 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
     xmlNodePtr child = node->children;
     while (child) {
         xmlNodePtr child_next = child->next;
-        _clean_xml_node(context, child, directory);
+        _preprocess_xml_node(context, child, directory);
         child = child_next;
     }
 }
