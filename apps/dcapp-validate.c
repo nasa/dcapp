@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
 
     // dump preprocessed XML for debugging
     char log_file[256];
-    dc_utils_join_paths(config->cache_dir_path, "xml.log", log_file, sizeof(log_file));
+    dc_utils_join_paths(config->cache_dir_path, "preprocessed.xml", log_file, sizeof(log_file));
     dc_app_config_save_to_file(config, log_file);
 
     // validate
