@@ -875,6 +875,11 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                 // increment
                 child = child_next;
             }
+
+            // remove style node
+            xmlUnlinkNode(node);
+            xmlFreeNode(node);
+
             return;
         }
 
