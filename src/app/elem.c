@@ -38,6 +38,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "Default";
         case DC_APP_ELEM_TYPE_DUMMY:
             return "Dummy";
+        case DC_APP_ELEM_TYPE_ELLIPSE:
+            return "Ellipse";
         case DC_APP_ELEM_TYPE_FALSE:
             return "False";
         case DC_APP_ELEM_TYPE_FUNCTION:
@@ -151,6 +153,8 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_DEFAULT;
     if (strcmp(name, "Dummy") == 0)
         return DC_APP_ELEM_TYPE_DUMMY;
+    if (strcmp(name, "Ellipse") == 0)
+        return DC_APP_ELEM_TYPE_ELLIPSE;
     if (strcmp(name, "False") == 0)
         return DC_APP_ELEM_TYPE_FALSE;
     if (strcmp(name, "FromTrick") == 0)

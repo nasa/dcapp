@@ -25,6 +25,7 @@ static _NodeIndex    _process_xml_node_constant(_AppData *app_data, xmlNodePtr x
 static _NodeIndex    _process_xml_node_container(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_dcapp(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_default(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_false(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -175,6 +176,9 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_DEFAULT:
             return _process_xml_node_default(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_ELLIPSE:
+            return _process_xml_node_ellipse(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_FALSE:
             return _process_xml_node_false(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -642,6 +646,201 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
 
     // enable/disable mouse events
     _MouseEventChildren *mouse_events = &(_get_node(app_data, node_index)->circle.mouse_events);
+    mouse_events->enabled =
+        (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
+        (mouse_events->released != NODE_INDEX_UNDEFINED) ||
+        (mouse_events->active != NODE_INDEX_UNDEFINED) ||
+        (mouse_events->inactive != NODE_INDEX_UNDEFINED) ||
+        (mouse_events->hovered != NODE_INDEX_UNDEFINED);
+
+    // return
+    return node_index;
+}
+
+static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_ELLIPSE;
+    dc_node.parent = parent_node_index;
+    dc_node.next   = NODE_INDEX_UNDEFINED;
+
+    dc_node.ellipse.mouse_events.active   = NODE_INDEX_UNDEFINED;
+    dc_node.ellipse.mouse_events.hovered  = NODE_INDEX_UNDEFINED;
+    dc_node.ellipse.mouse_events.inactive = NODE_INDEX_UNDEFINED;
+    dc_node.ellipse.mouse_events.pressed  = NODE_INDEX_UNDEFINED;
+    dc_node.ellipse.mouse_events.released = NODE_INDEX_UNDEFINED;
+
+    // x position
+    xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+    if (!raw_x_position) {
+        raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+    }
+    if (raw_x_position) {
+        dc_node.ellipse.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
+        xmlFree(raw_x_position);
+    } else {
+        dc_node.ellipse.position.x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // y position
+    xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+    if (!raw_y_position) {
+        raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+    }
+    if (raw_y_position) {
+        dc_node.ellipse.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
+        xmlFree(raw_y_position);
+    } else {
+        dc_node.ellipse.position.y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // parent x align
+    xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
+    if (raw_parent_x_align) {
+        dc_node.ellipse.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
+        xmlFree(raw_parent_x_align);
+    } else {
+        dc_node.ellipse.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // parent y align
+    xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
+    if (raw_parent_y_align) {
+        dc_node.ellipse.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
+        xmlFree(raw_parent_y_align);
+    } else {
+        dc_node.ellipse.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // local x align
+    xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignX");
+    if (!raw_x_align) {
+        raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+    }
+    if (raw_x_align) {
+        dc_node.ellipse.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
+        xmlFree(raw_x_align);
+    } else {
+        dc_node.ellipse.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // local y align
+    xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignY");
+    if (!raw_y_align) {
+        raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+    }
+    if (raw_y_align) {
+        dc_node.ellipse.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
+        xmlFree(raw_y_align);
+    } else {
+        dc_node.ellipse.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // rotation
+    xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+    if (!raw_rotation) {
+        raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
+    }
+    if (raw_rotation) {
+        dc_node.ellipse.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
+        xmlFree(raw_rotation);
+    } else {
+        dc_node.ellipse.rotation = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // pivots
+    xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
+    if (!raw_pivot_position_x) {
+        raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
+    }
+    xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
+    if (!raw_pivot_position_y) {
+        raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
+    }
+    if (raw_pivot_position_x && raw_pivot_position_y) {
+
+        dc_node.ellipse.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
+        xmlFree(raw_pivot_position_x);
+
+        dc_node.ellipse.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
+        xmlFree(raw_pivot_position_y);
+
+        dc_node.ellipse.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+        dc_node.ellipse.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+
+    } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+
+        xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+        if (raw_pivot_align_x) {
+            dc_node.ellipse.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
+            xmlFree(raw_pivot_align_x);
+        } else {
+            dc_node.ellipse.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+        }
+
+        xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+        if (raw_pivot_align_y) {
+            dc_node.ellipse.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
+            xmlFree(raw_pivot_align_y);
+        } else {
+            dc_node.ellipse.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
+        }
+
+        dc_node.ellipse.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
+        dc_node.ellipse.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
+    } else {
+        fprintf(stderr, "DCAPP _process_xml_node(): Ellipse: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+    }
+
+    // radius x
+    xmlChar *raw_radius_x = xmlGetProp(xml_node, BAD_CAST "RadiusX");
+    if (raw_radius_x) {
+        dc_node.ellipse.radius_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius_x);
+        xmlFree(raw_radius_x);
+    } else {
+        dc_node.ellipse.radius_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // radius y
+    xmlChar *raw_radius_y = xmlGetProp(xml_node, BAD_CAST "RadiusY");
+    if (raw_radius_y) {
+        dc_node.ellipse.radius_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius_y);
+        xmlFree(raw_radius_y);
+    } else {
+        dc_node.ellipse.radius_y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // segments
+    xmlChar *raw_segments = xmlGetProp(xml_node, BAD_CAST "Segments");
+    if (raw_segments) {
+        dc_node.ellipse.num_segments = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_segments);
+        xmlFree(raw_segments);
+    } else {
+        dc_node.ellipse.num_segments = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // line width
+    xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
+    if (raw_line_width) {
+        dc_node.ellipse.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
+        xmlFree(raw_line_width);
+    } else {
+        dc_node.ellipse.line_width = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // colors
+    dc_node.ellipse.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.ellipse.fill_color));
+    dc_node.ellipse.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.ellipse.line_color));
+
+    // register node
+    _NodeIndex node_index = _register_node(app_data, &dc_node);
+
+    // process children
+    _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+
+    // enable/disable mouse events
+    _MouseEventChildren *mouse_events = &(_get_node(app_data, node_index)->ellipse.mouse_events);
     mouse_events->enabled =
         (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
         (mouse_events->released != NODE_INDEX_UNDEFINED) ||

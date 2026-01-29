@@ -12,8 +12,9 @@ static void _draw_node_blink(_AppData *app_data, _NodeIndex node_index, _Node *n
 static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_function(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -65,12 +66,16 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
             _draw_node_circle(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
+        case NODE_TYPE_CONDITIONAL:
+            _draw_node_conditional(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+
         case NODE_TYPE_CONTAINER:
             _draw_node_container(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
-        case NODE_TYPE_CONDITIONAL:
-            _draw_node_conditional(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+        case NODE_TYPE_ELLIPSE:
+            _draw_node_ellipse(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_FUNCTION:
@@ -976,6 +981,300 @@ static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *
             _draw_node_list(app_data, node->circle.mouse_events.hovered, &position, &dimensions, &transform);
         } else {
             _draw_node_list(app_data, node->circle.mouse_events.inactive, &position, &dimensions, &transform);
+        }
+    }
+}
+
+static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+
+    // boolean checks
+    bool use_radius_x       = node->ellipse.radius_x != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_radius_y       = node->ellipse.radius_y != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_rotation       = node->ellipse.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position = (node->ellipse.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->ellipse.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+
+    // get dimensions
+    float radius_x, radius_y, diameter_x, diameter_y;
+    if (use_radius_x) {
+        radius_x   = (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.radius_x)->value_double;
+        diameter_x = 2 * radius_x;
+    } else {
+        diameter_x = parent_dimensions->x;
+        radius_x   = diameter_x / 2;
+    }
+    if (use_radius_y) {
+        radius_y   = (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.radius_y)->value_double;
+        diameter_y = 2 * radius_y;
+    } else {
+        diameter_y = parent_dimensions->y;
+        radius_y   = diameter_y / 2;
+    }
+
+    // transform
+    plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+
+    // xform rotation (around a point)
+    {
+        if (use_rotation && use_pivot_position) {
+
+            // get pivot XY, rotation
+            float pivot_position[2] = {
+                (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.rotation)->value_double);
+
+            // compute matrices
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+            // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        }
+    }
+
+    // xform local alignment
+    {
+        // get alignment
+        DcAppAlignType local_aligns[2] = {
+            node->ellipse.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->ellipse.local_align.x)->value_integer,
+            node->ellipse.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->ellipse.local_align.y)->value_integer};
+
+        // compute offsets
+        float trans_align_offsets[2];
+        switch (local_aligns[0]) {
+            case DC_APP_ALIGN_TYPE_LEFT:
+                trans_align_offsets[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_CENTER:
+                trans_align_offsets[0] = -1 * diameter_x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                trans_align_offsets[0] = -1 * diameter_x;
+                break;
+            default:
+                fprintf(stderr, "Unknown alignment in <Ellipse> draw call: %d\n", local_aligns[0]);
+                break;
+        }
+        switch (local_aligns[1]) {
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                trans_align_offsets[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                trans_align_offsets[1] = -1 * diameter_y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                trans_align_offsets[1] = -1 * diameter_y;
+                break;
+            default:
+                fprintf(stderr, "Unknown alignment in <Ellipse> draw call: %d\n", local_aligns[1]);
+                break;
+        }
+
+        // compute matrix
+        plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
+
+        // apply transform
+        transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
+    }
+
+    // xform position
+    {
+        bool use_position[2] = {
+            node->ellipse.position.x != DC_APP_VAL_INDEX_UNDEFINED,
+            node->ellipse.position.y != DC_APP_VAL_INDEX_UNDEFINED};
+
+        float anchor[2] = {0, 0};
+        DcAppAlignType parent_align_x = node->ellipse.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->ellipse.parent_align.x)->value_integer;
+        switch (parent_align_x) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:
+                anchor[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                anchor[0] = parent_dimensions->x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                anchor[0] = parent_dimensions->x;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() ellipse: Invalid parent_align_x value %d\n", parent_align_x);
+                break;
+        }
+        DcAppAlignType parent_align_y = node->ellipse.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->ellipse.parent_align.y)->value_integer;
+        switch (parent_align_y) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                anchor[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                anchor[1] = parent_dimensions->y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                anchor[1] = parent_dimensions->y;
+                break;
+            default:
+                fprintf(stderr, "DCAPP _draw_node() ellipse: Invalid parent_align_y value %d\n", parent_align_y);
+                break;
+        }
+
+        float offset[2] = {
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.position.y)->value_double : 0};
+
+        float position[2] = {
+            parent_position->x + anchor[0] + offset[0],
+            parent_position->y + anchor[1] + offset[1]};
+
+        plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
+        transform = pl_mul_mat4t(&transform, &trans_position_xform);
+    }
+
+    // xform local rotation
+    {
+        if (use_rotation && !use_pivot_position) {
+
+            // get alignment
+            DcAppAlignType local_pivot_aligns[2] = {
+                node->ellipse.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->ellipse.pivot_local_align.x)->value_integer,
+                node->ellipse.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->ellipse.pivot_local_align.y)->value_integer};
+
+            // get pivot XY, rotation
+            float pivot_position[2];
+            switch (local_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = diameter_x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = diameter_x;
+                    break;
+                default:
+                    fprintf(stderr, "Unknown pivot alignment in <Ellipse> draw call: %d\n", local_pivot_aligns[0]);
+                    break;
+            }
+            switch (local_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = diameter_y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = diameter_y;
+                    break;
+                default:
+                    fprintf(stderr, "Unknown pivot alignment in <Ellipse> draw call: %d\n", local_pivot_aligns[1]);
+                    break;
+            }
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.rotation)->value_double);
+
+            // compute matrices
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+            // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        }
+    }
+
+    // parent transform
+    transform = pl_mul_mat4t(parent_transform, &transform);
+
+    // get points
+    int    num_points = node->ellipse.num_segments == DC_APP_VAL_INDEX_UNDEFINED ? 40 : dc_app_lookup_get_value(app_data->lookup, node->ellipse.num_segments)->value_integer;
+    plVec2 points[_NODE_ELLIPSE_MAX_SEGMENTS];
+    for (int ii = 0; ii < num_points; ii++) {
+        float  angle  = ii * (2.0f * (float)M_PI / num_points);
+        plVec4 point4 = (plVec4){
+            radius_x * (1.0f + cosf(angle)),
+            radius_y * (1.0f + sinf(angle)),
+            0, 1};
+        point4     = pl_mul_mat4_vec4(&transform, point4);
+        points[ii] = (plVec2){point4.x, point4.y};
+    }
+
+    // draw fill
+    if (node->ellipse.fill_enabled) {
+
+        float fill_color[4] = {
+            node->ellipse.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.fill_color.r)->value_double,
+            node->ellipse.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.fill_color.g)->value_double,
+            node->ellipse.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.fill_color.b)->value_double,
+            node->ellipse.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.fill_color.a)->value_double,
+        };
+        uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
+        _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+    }
+
+    // draw outline
+    if (node->ellipse.line_enabled) {
+        float line_thickness = node->ellipse.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_width)->value_double;
+        float line_color[4]  = {
+            node->ellipse.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_color.r)->value_double,
+            node->ellipse.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_color.g)->value_double,
+            node->ellipse.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_color.b)->value_double,
+            node->ellipse.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_color.a)->value_double,
+        };
+        uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
+        _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+    }
+
+    // mouse events
+    if (node->ellipse.mouse_events.enabled) {
+
+        // process mouse position
+        plVec4 mouse_position = (plVec4){
+            app_data->frame_data.mouse_position.x,
+            app_data->frame_data.mouse_position.y,
+            0, 1};
+        plMat4 transform_inverse = pl_mat4t_invert(&transform);
+        mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
+
+        // check whether mouse is over/in (ellipse equation: (x/a)^2 + (y/b)^2 <= 1)
+        bool inside = false;
+        if (mouse_position.x > 0 && mouse_position.x < diameter_x && mouse_position.y > 0 && mouse_position.y < diameter_y) {
+
+            // now do the actual check using ellipse equation
+            float dx = mouse_position.x - radius_x;
+            float dy = mouse_position.y - radius_y;
+            float normalized_dist = (dx * dx) / (radius_x * radius_x) + (dy * dy) / (radius_y * radius_y);
+            inside = normalized_dist <= 1.0f;
+        }
+
+        // update global states
+        if (inside) {
+            app_data->frame_data.next_hovered_node = node_index;
+
+            if (app_data->frame_data.is_mouse_pressed) {
+                app_data->frame_data.next_pressed_node = node_index;
+            }
+        }
+
+        // draw mouse events
+        plVec2 position   = (plVec2){0.0f, 0.0f};
+        plVec2 dimensions = (plVec2){diameter_x, diameter_y};
+        if (app_data->frame_data.pressed_node == node_index) {
+            _draw_node_list(app_data, node->ellipse.mouse_events.pressed, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.active_node == node_index) {
+            _draw_node_list(app_data, node->ellipse.mouse_events.active, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.released_node == node_index) {
+            _draw_node_list(app_data, node->ellipse.mouse_events.released, &position, &dimensions, &transform);
+        } else if (app_data->frame_data.hovered_node == node_index) {
+            _draw_node_list(app_data, node->ellipse.mouse_events.hovered, &position, &dimensions, &transform);
+        } else {
+            _draw_node_list(app_data, node->ellipse.mouse_events.inactive, &position, &dimensions, &transform);
         }
     }
 }
