@@ -14,8 +14,8 @@ If output.xml is not specified, outputs to stdout.
 import re
 import sys
 import argparse
-from xml.etree import ElementTree as ET
 from typing import Optional, Tuple
+from lxml import etree
 
 
 # ============================================================================
@@ -157,7 +157,7 @@ def strip_at_prefix(value: str) -> str:
     return value
 
 
-def convert_alignment(elem: ET.Element, has_x: bool, has_y: bool) -> None:
+def convert_alignment(elem: etree._Element, has_x: bool, has_y: bool) -> None:
     """
     Convert HorizontalAlign/VerticalAlign to LocalAlign/ParentAlign.
 
@@ -183,21 +183,21 @@ def convert_alignment(elem: ET.Element, has_x: bool, has_y: bool) -> None:
         del elem.attrib['VerticalAlign']
 
 
-def convert_variable_type(elem: ET.Element) -> None:
+def convert_variable_type(elem: etree._Element) -> None:
     """Convert Variable element Type attribute to new constant."""
     var_type = elem.get('Type')
     if var_type and var_type in VARIABLE_TYPE_MAP:
         elem.set('Type', VARIABLE_TYPE_MAP[var_type])
 
 
-def convert_button_type(elem: ET.Element) -> None:
+def convert_button_type(elem: etree._Element) -> None:
     """Convert Button element Type attribute to new constant."""
     btn_type = elem.get('Type')
     if btn_type and btn_type in BUTTON_TYPE_MAP:
         elem.set('Type', BUTTON_TYPE_MAP[btn_type])
 
 
-def convert_conditional_operator(elem: ET.Element) -> None:
+def convert_conditional_operator(elem: etree._Element) -> None:
     """Convert If element Operator to Operation with constant."""
     operator = elem.get('Operator')
     if operator:
@@ -206,7 +206,7 @@ def convert_conditional_operator(elem: ET.Element) -> None:
         del elem.attrib['Operator']
 
 
-def convert_set_operator(elem: ET.Element) -> Tuple[Optional[str], Optional[str]]:
+def convert_set_operator(elem: etree._Element) -> Tuple[Optional[str], Optional[str]]:
     """
     Convert Set element Operator and handle MinimumValue/MaximumValue.
 
@@ -233,14 +233,14 @@ def convert_set_operator(elem: ET.Element) -> Tuple[Optional[str], Optional[str]
     return (min_val, max_val)
 
 
-def convert_variable_reference(elem: ET.Element, attr_name: str) -> None:
+def convert_variable_reference(elem: etree._Element, attr_name: str) -> None:
     """Convert Variable="@name" to Variable="name" (strip @ prefix)."""
     var_ref = elem.get(attr_name)
     if var_ref:
         elem.set(attr_name, strip_at_prefix(var_ref))
 
 
-def convert_blink_attributes(elem: ET.Element) -> None:
+def convert_blink_attributes(elem: etree._Element) -> None:
     """Convert Blink element attributes."""
     # FnStartBlink -> Variable
     fn_start = elem.get('FnStartBlink')
@@ -254,7 +254,7 @@ def convert_blink_attributes(elem: ET.Element) -> None:
         elem.set('Duration', '0')
 
 
-def convert_image_content_to_attribute(elem: ET.Element) -> None:
+def convert_image_content_to_attribute(elem: etree._Element) -> None:
     """Convert <Image>path.tga</Image> to <Image File="path.png"/>."""
     if elem.text and elem.text.strip():
         file_path = elem.text.strip()
@@ -265,7 +265,7 @@ def convert_image_content_to_attribute(elem: ET.Element) -> None:
         elem.text = None
 
 
-def convert_displaylogic_to_logic(elem: ET.Element) -> None:
+def convert_displaylogic_to_logic(elem: etree._Element) -> None:
     """Convert DisplayLogic element to Logic with File attribute."""
     # Handle content form: <DisplayLogic>file.so</DisplayLogic>
     if elem.text and elem.text.strip():
@@ -273,19 +273,19 @@ def convert_displaylogic_to_logic(elem: ET.Element) -> None:
         elem.text = None
 
 
-def remove_unsupported_attributes(elem: ET.Element) -> None:
+def remove_unsupported_attributes(elem: etree._Element) -> None:
     """Remove attributes that are not supported in new dcapp."""
     for attr in list(elem.attrib.keys()):
         if attr in REMOVE_ATTRIBUTES:
             del elem.attrib[attr]
 
 
-def get_element_context(elem: ET.Element, parent_tag: Optional[str]) -> str:
+def get_element_context(elem: etree._Element, parent_tag: Optional[str]) -> str:
     """Determine the context of an element for context-dependent conversions."""
     return parent_tag or ''
 
 
-def process_element(elem: ET.Element, parent_tag: Optional[str] = None) -> list:
+def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> list:
     """
     Process a single element and its attributes.
 
@@ -293,6 +293,10 @@ def process_element(elem: ET.Element, parent_tag: Optional[str] = None) -> list:
     """
     additional_elements = []
     tag = elem.tag
+
+    # Skip non-element nodes (comments, processing instructions, etc.)
+    if not isinstance(tag, str):
+        return additional_elements
 
     # ---- Element-specific attribute conversions ----
 
@@ -323,14 +327,14 @@ def process_element(elem: ET.Element, parent_tag: Optional[str] = None) -> list:
         if var_name:
             if min_val:
                 # min_val means "minimum allowed value" -> use #_set_max_
-                clamp_elem = ET.Element('Set')
+                clamp_elem = etree.Element('Set')
                 clamp_elem.set('Variable', var_name)
                 clamp_elem.set('Operator', '#_set_max_')
                 clamp_elem.text = min_val
                 additional_elements.append(clamp_elem)
             if max_val:
                 # max_val means "maximum allowed value" -> use #_set_min_
-                clamp_elem = ET.Element('Set')
+                clamp_elem = etree.Element('Set')
                 clamp_elem.set('Variable', var_name)
                 clamp_elem.set('Operator', '#_set_min_')
                 clamp_elem.text = max_val
@@ -385,7 +389,7 @@ def process_element(elem: ET.Element, parent_tag: Optional[str] = None) -> list:
     return additional_elements
 
 
-def process_mask_element(elem: ET.Element) -> None:
+def process_mask_element(elem: etree._Element) -> None:
     """
     Convert legacy <Mask><Stencil>...<Projection>... structure to new format.
 
@@ -415,79 +419,17 @@ def process_mask_element(elem: ET.Element) -> None:
         projection_child.tag = 'StencilDraw'
 
 
-def process_true_false_elements(parent: ET.Element, elem: ET.Element) -> list:
-    """
-    Convert legacy <If><True>...<False>... structure to new format.
-
-    Legacy:
-        <If Value="@bool">
-            <True>content</True>
-            <False>content</False>
-        </If>
-
-    New:
-        <If Value1="@bool" Operation="#_conditional_true_">content</If>
-        <If Value1="@bool" Operation="#_conditional_false_">content</If>
-    """
-    additional_elements = []
-
-    true_elem = elem.find('True')
-    false_elem = elem.find('False')
-
-    if true_elem is None and false_elem is None:
-        return additional_elements
-
-    # Get the value being tested
-    test_value = elem.get('Value1') or elem.get('Value')
-
-    if true_elem is not None:
-        # Convert the current If to handle the True case
-        elem.set('Value1', test_value)
-        elem.set('Operation', '#_conditional_true_')
-        if 'Value' in elem.attrib:
-            del elem.attrib['Value']
-
-        # Move True's children to If
-        for child in list(true_elem):
-            elem.append(child)
-        elem.remove(true_elem)
-
-    if false_elem is not None:
-        # Create a new If for the False case
-        false_if = ET.Element('If')
-        false_if.set('Value1', test_value)
-        false_if.set('Operation', '#_conditional_false_')
-
-        # Move False's children to new If
-        for child in list(false_elem):
-            false_if.append(child)
-
-        if true_elem is not None:
-            elem.remove(false_elem)
-        else:
-            # If there was no True element, convert current If to False case
-            elem.set('Value1', test_value)
-            elem.set('Operation', '#_conditional_false_')
-            if 'Value' in elem.attrib:
-                del elem.attrib['Value']
-            for child in list(false_elem):
-                elem.append(child)
-            elem.remove(false_elem)
-            false_if = None  # Don't add duplicate
-
-        if false_if is not None:
-            additional_elements.append(false_if)
-
-    return additional_elements
-
-
-def process_tree(elem: ET.Element, parent: Optional[ET.Element] = None, parent_tag: Optional[str] = None) -> list:
+def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, parent_tag: Optional[str] = None) -> list:
     """
     Recursively process an element tree.
 
     Returns a list of additional elements to insert after elem.
     """
     all_additional = []
+
+    # Skip comments and other non-element nodes
+    if not isinstance(elem.tag, str):
+        return all_additional
 
     # Special handling for Mask elements
     if elem.tag == 'Mask':
@@ -497,14 +439,12 @@ def process_tree(elem: ET.Element, parent: Optional[ET.Element] = None, parent_t
     additional = process_element(elem, parent_tag)
     all_additional.extend(additional)
 
-    # Special handling for If with True/False children
-    if elem.tag == 'If':
-        additional_ifs = process_true_false_elements(parent, elem)
-        all_additional.extend(additional_ifs)
-
-    # Process children
+    # Process children (skip comments)
     children_to_process = list(elem)
     for i, child in enumerate(children_to_process):
+        # Skip comments (their tag is a callable, not a string)
+        if not isinstance(child.tag, str):
+            continue
         child_additional = process_tree(child, elem, elem.tag)
 
         # Insert additional elements after the child
@@ -526,8 +466,9 @@ def convert_xml(input_text: str) -> str:
     Returns:
         Converted XML as a string
     """
-    # Parse XML
-    root = ET.fromstring(input_text)
+    # Parse XML with lxml (preserves comments)
+    parser = etree.XMLParser(remove_comments=False, remove_blank_text=False)
+    root = etree.fromstring(input_text.encode('utf-8'), parser)
 
     # Process tree
     additional = process_tree(root)
@@ -537,8 +478,8 @@ def convert_xml(input_text: str) -> str:
     for add_elem in additional:
         root.append(add_elem)
 
-    # Convert back to string
-    output = ET.tostring(root, encoding='unicode')
+    # Convert back to string (lxml preserves comments)
+    output = etree.tostring(root, encoding='unicode', pretty_print=False)
 
     # Add XML declaration
     output = '<?xml version="1.0"?>\n' + output
@@ -557,22 +498,69 @@ def format_xml(xml_string: str, indent: str = '    ') -> str:
     Returns:
         Formatted XML string
     """
-    from xml.dom import minidom
+    # Parse with lxml (preserves comments)
+    parser = etree.XMLParser(remove_comments=False, remove_blank_text=True)
+    root = etree.fromstring(xml_string.encode('utf-8'), parser)
 
-    # Parse and format
-    dom = minidom.parseString(xml_string)
-    formatted = dom.toprettyxml(indent=indent)
-
-    # Remove extra blank lines and the minidom XML declaration
-    lines = formatted.split('\n')
-    # Skip minidom's declaration, we add our own
-    if lines[0].startswith('<?xml'):
-        lines = lines[1:]
-    # Remove empty lines
-    lines = [line for line in lines if line.strip()]
+    # Format with lxml's pretty_print (preserves comments)
+    formatted = etree.tostring(root, encoding='unicode', pretty_print=True)
 
     # Re-add our declaration
-    return '<?xml version="1.0"?>\n' + '\n'.join(lines)
+    return '<?xml version="1.0"?>\n' + formatted
+
+
+def process_file(input_path: str, output_path: str = None, format_output: bool = False, in_place: bool = False) -> bool:
+    """
+    Process a single XML file.
+
+    Returns True if successful, False if an error occurred.
+    """
+    try:
+        with open(input_path, 'r') as f:
+            input_text = f.read()
+
+        output_text = convert_xml(input_text)
+
+        if format_output:
+            output_text = format_xml(output_text)
+
+        if in_place:
+            with open(input_path, 'w') as f:
+                f.write(output_text)
+        elif output_path:
+            with open(output_path, 'w') as f:
+                f.write(output_text)
+        else:
+            print(output_text)
+
+        return True
+    except Exception as e:
+        print(f"Error processing {input_path}: {e}", file=sys.stderr)
+        return False
+
+
+def process_directory(input_dir: str, format_output: bool = False) -> tuple[int, int]:
+    """
+    Recursively process all XML files in a directory (in-place).
+
+    Returns tuple of (success_count, error_count).
+    """
+    import os
+
+    success_count = 0
+    error_count = 0
+
+    for root, dirs, files in os.walk(input_dir):
+        for filename in files:
+            if filename.lower().endswith('.xml'):
+                filepath = os.path.join(root, filename)
+                print(f"Processing: {filepath}", file=sys.stderr)
+                if process_file(filepath, in_place=True, format_output=format_output):
+                    success_count += 1
+                else:
+                    error_count += 1
+
+    return success_count, error_count
 
 
 def main():
@@ -581,8 +569,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__
     )
-    parser.add_argument('input', help='Input XML file')
+    parser.add_argument('input', nargs='?', help='Input XML file')
     parser.add_argument('output', nargs='?', help='Output XML file (default: stdout)')
+    parser.add_argument('-d', '--directory', help='Process all XML files in directory recursively (in-place)')
     parser.add_argument('-f', '--format', action='store_true',
                         help='Format output with indentation')
     parser.add_argument('-i', '--in-place', action='store_true',
@@ -590,26 +579,18 @@ def main():
 
     args = parser.parse_args()
 
-    # Read input
-    with open(args.input, 'r') as f:
-        input_text = f.read()
+    # Directory mode
+    if args.directory:
+        success, errors = process_directory(args.directory, format_output=args.format)
+        print(f"\nProcessed {success + errors} file(s): {success} succeeded, {errors} failed", file=sys.stderr)
+        sys.exit(0 if errors == 0 else 1)
 
-    # Convert
-    output_text = convert_xml(input_text)
+    # Single file mode
+    if not args.input:
+        parser.error("Either 'input' or '--directory' is required")
 
-    # Format if requested
-    if args.format:
-        output_text = format_xml(output_text)
-
-    # Write output
-    if args.in_place:
-        with open(args.input, 'w') as f:
-            f.write(output_text)
-    elif args.output:
-        with open(args.output, 'w') as f:
-            f.write(output_text)
-    else:
-        print(output_text)
+    success = process_file(args.input, args.output, format_output=args.format, in_place=args.in_place)
+    sys.exit(0 if success else 1)
 
 
 if __name__ == '__main__':
