@@ -678,225 +678,49 @@ void _clean_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) 
                 }
             }
 
-            // Step 1b: Process ALL children first (critical for Include expansion)
+            // Step 1b: Remove non-matching branch (True or False) WITHOUT processing
+            // This ensures constants in the pruned branch are never registered
+            DcAppElemType keep_type = result ? DC_APP_ELEM_TYPE_TRUE : DC_APP_ELEM_TYPE_FALSE;
             xmlNodePtr child = node->children;
+            while (child) {
+                xmlNodePtr next = child->next;
+                if (child->type == XML_ELEMENT_NODE) {
+                    DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
+                    if (child_type == DC_APP_ELEM_TYPE_TRUE || child_type == DC_APP_ELEM_TYPE_FALSE) {
+                        if (child_type != keep_type) {
+                            xmlUnlinkNode(child);
+                            xmlFreeNode(child);
+                        }
+                    } else {
+                        fprintf(stderr, "DCAPP _clean_xml_node(): StaticIf: invalid child <%s>, only <True> and <False> allowed\n", (const char *)child->name);
+                    }
+                }
+                child = next;
+            }
+
+            // Step 2: NOW process surviving children (constants get registered here)
+            child = node->children;
             while (child) {
                 xmlNodePtr child_next = child->next;
                 _clean_xml_node(context, child, directory);
                 child = child_next;
             }
 
-            // Step 2: Check if ANY <True> element exists (don't store address)
-            bool has_true_node = false;
-            for (xmlNodePtr scan = node->children; scan != NULL; scan = scan->next) {
-                if (scan->type == XML_ELEMENT_NODE) {
-                    DcAppElemType scan_type = dc_app_xml_node_to_elem_type(scan);
-                    if (scan_type == DC_APP_ELEM_TYPE_TRUE) {
-                        has_true_node = true;
-                        break;
+            // Step 3: Unwrap True/False wrappers
+            child = node->children;
+            while (child) {
+                xmlNodePtr next = child->next;
+                if (child->type == XML_ELEMENT_NODE) {
+                    DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
+                    if (child_type == DC_APP_ELEM_TYPE_TRUE || child_type == DC_APP_ELEM_TYPE_FALSE) {
+                        _splice_children_into_parent_and_free_wrapper(child);
                     }
                 }
+                child = next;
             }
 
-            // Step 3: Handle the 4 cases
-            if (has_true_node && result) {
-                // Case 1: Explicit mode, true branch
-                // Remove all children NOT of element type <True>
-                child = node->children;
-                while (child) {
-                    xmlNodePtr next = child->next;
-                    bool should_remove = true;
-                    if (child->type == XML_ELEMENT_NODE) {
-                        DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
-                        if (child_type == DC_APP_ELEM_TYPE_TRUE) {
-                            should_remove = false;
-                        }
-                    }
-                    if (should_remove) {
-                        xmlUnlinkNode(child);
-                        xmlFreeNode(child);
-                    }
-                    child = next;
-                }
-
-                // Collect all children from ALL <True> elements
-                xmlNodePtr collected_first = NULL;
-                xmlNodePtr collected_last = NULL;
-
-                child = node->children;
-                while (child) {
-                    xmlNodePtr next = child->next;
-                    // child is guaranteed to be a <True> element
-
-                    // Steal all children from this True wrapper
-                    if (child->children) {
-                        if (!collected_first) {
-                            // First True wrapper - take its children as-is
-                            collected_first = child->children;
-                            collected_last = child->last;
-                        } else {
-                            // Subsequent True wrappers - append their children
-                            collected_last->next = child->children;
-                            child->children->prev = collected_last;
-                            collected_last = child->last;
-                        }
-
-                        // Update parent pointers for stolen children
-                        for (xmlNodePtr stolen = child->children; stolen; stolen = stolen->next) {
-                            stolen->parent = node;
-                        }
-
-                        // Unlink children from True wrapper before freeing it
-                        child->children = NULL;
-                        child->last = NULL;
-                    }
-
-                    // Free the now-empty True wrapper
-                    xmlUnlinkNode(child);
-                    xmlFreeNode(child);
-                    child = next;
-                }
-
-                // Make collected children the direct children of StaticIf
-                node->children = collected_first;
-                node->last = collected_last;
-
-            } else if (has_true_node && !result) {
-                // Case 2: Explicit mode, false branch
-                // Remove all children NOT of element type <False>
-                child = node->children;
-                while (child) {
-                    xmlNodePtr next = child->next;
-                    bool should_remove = true;
-                    if (child->type == XML_ELEMENT_NODE) {
-                        DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
-                        if (child_type == DC_APP_ELEM_TYPE_FALSE) {
-                            should_remove = false;
-                        }
-                    }
-                    if (should_remove) {
-                        xmlUnlinkNode(child);
-                        xmlFreeNode(child);
-                    }
-                    child = next;
-                }
-
-                // Collect all children from ALL <False> elements
-                xmlNodePtr collected_first = NULL;
-                xmlNodePtr collected_last = NULL;
-
-                child = node->children;
-                while (child) {
-                    xmlNodePtr next = child->next;
-                    // child is guaranteed to be a <False> element
-
-                    // Steal all children from this False wrapper
-                    if (child->children) {
-                        if (!collected_first) {
-                            // First False wrapper - take its children as-is
-                            collected_first = child->children;
-                            collected_last = child->last;
-                        } else {
-                            // Subsequent False wrappers - append their children
-                            collected_last->next = child->children;
-                            child->children->prev = collected_last;
-                            collected_last = child->last;
-                        }
-
-                        // Update parent pointers for stolen children
-                        for (xmlNodePtr stolen = child->children; stolen; stolen = stolen->next) {
-                            stolen->parent = node;
-                        }
-
-                        // Unlink children from False wrapper before freeing it
-                        child->children = NULL;
-                        child->last = NULL;
-                    }
-
-                    // Free the now-empty False wrapper
-                    xmlUnlinkNode(child);
-                    xmlFreeNode(child);
-                    child = next;
-                }
-
-                // Make collected children the direct children of StaticIf
-                node->children = collected_first;
-                node->last = collected_last;
-
-            } else if (!has_true_node && result) {
-                // Case 3: Implicit mode, true branch
-                // Remove all children of element type <True> or <False>
-                child = node->children;
-                while (child) {
-                    xmlNodePtr next = child->next;
-                    if (child->type == XML_ELEMENT_NODE) {
-                        DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
-                        if (child_type == DC_APP_ELEM_TYPE_TRUE || child_type == DC_APP_ELEM_TYPE_FALSE) {
-                            xmlUnlinkNode(child);
-                            xmlFreeNode(child);
-                        }
-                    }
-                    child = next;
-                }
-
-            } else {
-                // Case 4: Implicit mode, false branch
-                // Remove all children
-                child = node->children;
-                while (child) {
-                    xmlNodePtr next = child->next;
-                    xmlUnlinkNode(child);
-                    xmlFreeNode(child);
-                    child = next;
-                }
-                node->children = NULL;
-                node->last = NULL;
-            }
-
-            // Step 4: Splice StaticIf's remaining children into parent (Dummy pattern)
-            if (node->children) {
-                xmlNodePtr first_child = node->children;
-                xmlNodePtr last_child = node->last;
-
-                // Update parent
-                if (node->parent) {
-                    if (node->parent->children == node) {
-                        node->parent->children = first_child;
-                    }
-                    if (node->parent->last == node) {
-                        node->parent->last = last_child;
-                    }
-                }
-
-                // Update siblings
-                if (node->prev) {
-                    node->prev->next = first_child;
-                }
-                if (node->next) {
-                    node->next->prev = last_child;
-                }
-
-                // Update children
-                for (xmlNodePtr curr_child = first_child; curr_child; curr_child = curr_child->next) {
-                    curr_child->parent = node->parent;
-                }
-                first_child->prev = node->prev;
-                last_child->next = node->next;
-
-                // Unlink StaticIf node
-                node->children = NULL;
-                node->last = NULL;
-                node->parent = NULL;
-                node->next = NULL;
-                node->prev = NULL;
-
-                // Free StaticIf node
-                xmlFreeNode(node);
-            } else {
-                // No children to splice, just remove StaticIf node
-                xmlUnlinkNode(node);
-                xmlFreeNode(node);
-            }
+            // Step 4: Splice StaticIf's remaining children into parent
+            _splice_children_into_parent_and_free_wrapper(node);
             return;
         }
 
