@@ -1115,7 +1115,11 @@ static void _add_style(_ConfigContext *context, const char *name, DcAppElemType 
         }
 
         // update style
-        _ElemStyle *style           = &(context->sb_styles[style_index]);
+        _ElemStyle *style = &(context->sb_styles[style_index]);
+        if (style->xml_nodes[elem_type] != NULL) {
+            fprintf(stderr, "DCApp _add_style(): style '%s' already contains an entry for element '%s'; overwriting\n", name, dc_app_elem_type_to_string(elem_type));
+            xmlFree(style->xml_nodes[elem_type]);
+        }
         style->xml_nodes[elem_type] = xml_node;
     } else {
         fprintf(stderr, "DCAPP _set_style(): name %s is undefined\n", name);
