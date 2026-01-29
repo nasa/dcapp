@@ -119,8 +119,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_DEFAULT:
             case DC_APP_ELEM_TYPE_STYLE:
             case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
             case DC_APP_ELEM_TYPE_INCLUDE:
             case DC_APP_ELEM_TYPE_DUMMY:
             case DC_APP_ELEM_TYPE_LOGIC:
@@ -134,7 +132,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
     // Window can contain panels and config elements
     if (parent_type == DC_APP_ELEM_TYPE_WINDOW) {
         switch (child_type) {
-            case DC_APP_ELEM_TYPE_PANEL:
+            // config elements
             case DC_APP_ELEM_TYPE_CONSTANT:
             case DC_APP_ELEM_TYPE_VARIABLE:
             case DC_APP_ELEM_TYPE_DEFAULT:
@@ -144,6 +142,25 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_FALSE:
             case DC_APP_ELEM_TYPE_INCLUDE:
             case DC_APP_ELEM_TYPE_DUMMY:
+            // drawing elements
+            case DC_APP_ELEM_TYPE_CONTAINER:
+            case DC_APP_ELEM_TYPE_RECTANGLE:
+            case DC_APP_ELEM_TYPE_CIRCLE:
+            case DC_APP_ELEM_TYPE_ELLIPSE:
+            case DC_APP_ELEM_TYPE_LINE:
+            case DC_APP_ELEM_TYPE_ARC:
+            case DC_APP_ELEM_TYPE_POLYGON:
+            case DC_APP_ELEM_TYPE_TEXT:
+            case DC_APP_ELEM_TYPE_IMAGE:
+            case DC_APP_ELEM_TYPE_SPHERE:
+            case DC_APP_ELEM_TYPE_STENCIL:
+            case DC_APP_ELEM_TYPE_PIXELSTREAM:
+            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_PANEL:
+            // logic elements
+            case DC_APP_ELEM_TYPE_IF:
+            case DC_APP_ELEM_TYPE_SET:
                 return true;
             default:
                 return false;
