@@ -294,6 +294,8 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_INCLUDE:
             case DC_APP_ELEM_TYPE_DUMMY:
             // button state elements
+            case DC_APP_ELEM_TYPE_MOUSE_PRESSED:
+            case DC_APP_ELEM_TYPE_MOUSE_RELEASED:
             case DC_APP_ELEM_TYPE_BUTTON_PRESSED:
             case DC_APP_ELEM_TYPE_BUTTON_RELEASED:
             case DC_APP_ELEM_TYPE_BUTTON_ENABLED:

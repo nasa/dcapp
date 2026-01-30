@@ -210,9 +210,11 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
         case DC_APP_ELEM_TYPE_MOUSE_MOTION:
             return _process_xml_node_mouse_motion(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
+        case DC_APP_ELEM_TYPE_BUTTON_PRESSED:
         case DC_APP_ELEM_TYPE_MOUSE_PRESSED:
             return _process_xml_node_mouse_pressed(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
+        case DC_APP_ELEM_TYPE_BUTTON_RELEASED:
         case DC_APP_ELEM_TYPE_MOUSE_RELEASED:
             return _process_xml_node_mouse_released(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
