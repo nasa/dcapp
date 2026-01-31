@@ -140,6 +140,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PANEL:
             case DC_APP_ELEM_TYPE_VARIABLE:
             case DC_APP_ELEM_TYPE_IF:
+            case DC_APP_ELEM_TYPE_SET:
                 return true;
             default:
                 return false;
