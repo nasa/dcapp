@@ -479,11 +479,7 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
     dc_node.parent = parent_node_index;
     dc_node.next   = NODE_INDEX_UNDEFINED;
 
-    dc_node.circle.mouse_events.active   = NODE_INDEX_UNDEFINED;
-    dc_node.circle.mouse_events.hovered  = NODE_INDEX_UNDEFINED;
-    dc_node.circle.mouse_events.inactive = NODE_INDEX_UNDEFINED;
-    dc_node.circle.mouse_events.pressed  = NODE_INDEX_UNDEFINED;
-    dc_node.circle.mouse_events.released = NODE_INDEX_UNDEFINED;
+    dc_node.circle.child = NODE_INDEX_UNDEFINED;
 
     // x position
     xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
@@ -641,17 +637,9 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
-    // process children
-    _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
-
-    // enable/disable mouse events
-    _MouseEventChildren *mouse_events = &(_get_node(app_data, node_index)->circle.mouse_events);
-    mouse_events->enabled =
-        (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->released != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->active != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->inactive != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->hovered != NODE_INDEX_UNDEFINED);
+    // process children (must store result first to avoid stale pointer after sb reallocation)
+    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _get_node(app_data, node_index)->circle.child = first_child_index;
 
     // return
     return node_index;
@@ -665,11 +653,7 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
     dc_node.parent = parent_node_index;
     dc_node.next   = NODE_INDEX_UNDEFINED;
 
-    dc_node.ellipse.mouse_events.active   = NODE_INDEX_UNDEFINED;
-    dc_node.ellipse.mouse_events.hovered  = NODE_INDEX_UNDEFINED;
-    dc_node.ellipse.mouse_events.inactive = NODE_INDEX_UNDEFINED;
-    dc_node.ellipse.mouse_events.pressed  = NODE_INDEX_UNDEFINED;
-    dc_node.ellipse.mouse_events.released = NODE_INDEX_UNDEFINED;
+    dc_node.ellipse.child = NODE_INDEX_UNDEFINED;
 
     // x position
     xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
@@ -836,17 +820,9 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
-    // process children
-    _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
-
-    // enable/disable mouse events
-    _MouseEventChildren *mouse_events = &(_get_node(app_data, node_index)->ellipse.mouse_events);
-    mouse_events->enabled =
-        (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->released != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->active != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->inactive != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->hovered != NODE_INDEX_UNDEFINED);
+    // process children (must store result first to avoid stale pointer after sb reallocation)
+    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _get_node(app_data, node_index)->ellipse.child = first_child_index;
 
     // return
     return node_index;
@@ -1662,11 +1638,7 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
     dc_node.parent = parent_node_index;
     dc_node.next   = NODE_INDEX_UNDEFINED;
 
-    dc_node.image.mouse_events.active   = NODE_INDEX_UNDEFINED;
-    dc_node.image.mouse_events.hovered  = NODE_INDEX_UNDEFINED;
-    dc_node.image.mouse_events.inactive = NODE_INDEX_UNDEFINED;
-    dc_node.image.mouse_events.pressed  = NODE_INDEX_UNDEFINED;
-    dc_node.image.mouse_events.released = NODE_INDEX_UNDEFINED;
+    dc_node.image.child = NODE_INDEX_UNDEFINED;
 
     // get filepath
     xmlChar *filepath = xmlGetProp(xml_node, BAD_CAST "File");
@@ -1897,17 +1869,9 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
-    // process children
-    _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
-
-    // enable/disable mouse events
-    _MouseEventChildren *mouse_events = &(_get_node(app_data, node_index)->image.mouse_events);
-    mouse_events->enabled =
-        (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->released != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->active != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->inactive != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->hovered != NODE_INDEX_UNDEFINED);
+    // process children (must store result first to avoid stale pointer after sb reallocation)
+    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _get_node(app_data, node_index)->image.child = first_child_index;
 
     // return
     return node_index;
@@ -2068,29 +2032,18 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
 }
 
 static _NodeIndex _process_xml_node_mouse_active(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
-    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
-
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
-        case NODE_TYPE_BUTTON: {
+        case NODE_TYPE_BUTTON:
+        case NODE_TYPE_CIRCLE:
+        case NODE_TYPE_CONTAINER:
+        case NODE_TYPE_ELLIPSE:
+        case NODE_TYPE_IMAGE:
+        case NODE_TYPE_PIXELSTREAM:
+        case NODE_TYPE_POLYGON:
+        case NODE_TYPE_RECTANGLE: {
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_ACTIVE, parent_node_index, first_child_index);
-        }
-        case NODE_TYPE_CIRCLE: {
-            parent_node->circle.mouse_events.active = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_IMAGE: {
-            parent_node->image.mouse_events.active = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_POLYGON: {
-            parent_node->polygon.mouse_events.active = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_RECTANGLE: {
-            parent_node->rectangle.mouse_events.active = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
         }
         default:
             fprintf(stderr, "DCApp _process_xml_node() mouse_active: unknown parent of type %s\n",
@@ -2101,29 +2054,18 @@ static _NodeIndex _process_xml_node_mouse_active(_AppData *app_data, xmlNodePtr 
 }
 
 static _NodeIndex _process_xml_node_mouse_hovered(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
-    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
-
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
-        case NODE_TYPE_BUTTON: {
+        case NODE_TYPE_BUTTON:
+        case NODE_TYPE_CIRCLE:
+        case NODE_TYPE_CONTAINER:
+        case NODE_TYPE_ELLIPSE:
+        case NODE_TYPE_IMAGE:
+        case NODE_TYPE_PIXELSTREAM:
+        case NODE_TYPE_POLYGON:
+        case NODE_TYPE_RECTANGLE: {
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_HOVERED, parent_node_index, first_child_index);
-        }
-        case NODE_TYPE_CIRCLE: {
-            parent_node->circle.mouse_events.hovered = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_IMAGE: {
-            parent_node->image.mouse_events.hovered = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_POLYGON: {
-            parent_node->polygon.mouse_events.hovered = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_RECTANGLE: {
-            parent_node->rectangle.mouse_events.hovered = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
         }
         default:
             fprintf(stderr, "DCApp _process_xml_node() mouse_hovered: unknown parent of type %s\n",
@@ -2134,29 +2076,18 @@ static _NodeIndex _process_xml_node_mouse_hovered(_AppData *app_data, xmlNodePtr
 }
 
 static _NodeIndex _process_xml_node_mouse_inactive(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
-    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
-
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
-        case NODE_TYPE_BUTTON: {
+        case NODE_TYPE_BUTTON:
+        case NODE_TYPE_CIRCLE:
+        case NODE_TYPE_CONTAINER:
+        case NODE_TYPE_ELLIPSE:
+        case NODE_TYPE_IMAGE:
+        case NODE_TYPE_PIXELSTREAM:
+        case NODE_TYPE_POLYGON:
+        case NODE_TYPE_RECTANGLE: {
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_INACTIVE, parent_node_index, first_child_index);
-        }
-        case NODE_TYPE_CIRCLE: {
-            parent_node->circle.mouse_events.inactive = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_IMAGE: {
-            parent_node->image.mouse_events.inactive = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_POLYGON: {
-            parent_node->polygon.mouse_events.inactive = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_RECTANGLE: {
-            parent_node->rectangle.mouse_events.inactive = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
         }
         default:
             fprintf(stderr, "DCApp _process_xml_node() mouse_inactive: unknown parent of type %s\n",
@@ -2196,29 +2127,18 @@ static _NodeIndex _process_xml_node_mouse_motion(_AppData *app_data, xmlNodePtr 
 }
 
 static _NodeIndex _process_xml_node_mouse_pressed(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
-    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
-
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
-        case NODE_TYPE_BUTTON: {
+        case NODE_TYPE_BUTTON:
+        case NODE_TYPE_CIRCLE:
+        case NODE_TYPE_CONTAINER:
+        case NODE_TYPE_ELLIPSE:
+        case NODE_TYPE_IMAGE:
+        case NODE_TYPE_PIXELSTREAM:
+        case NODE_TYPE_POLYGON:
+        case NODE_TYPE_RECTANGLE: {
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_PRESSED, parent_node_index, first_child_index);
-        }
-        case NODE_TYPE_CIRCLE: {
-            parent_node->circle.mouse_events.pressed = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_IMAGE: {
-            parent_node->image.mouse_events.pressed = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_POLYGON: {
-            parent_node->polygon.mouse_events.pressed = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_RECTANGLE: {
-            parent_node->rectangle.mouse_events.pressed = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
         }
         default:
             fprintf(stderr, "DCApp _process_xml_node() mouse_pressed: unknown parent of type %s\n",
@@ -2229,29 +2149,18 @@ static _NodeIndex _process_xml_node_mouse_pressed(_AppData *app_data, xmlNodePtr
 }
 
 static _NodeIndex _process_xml_node_mouse_released(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
-    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
-
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
-        case NODE_TYPE_BUTTON: {
+        case NODE_TYPE_BUTTON:
+        case NODE_TYPE_CIRCLE:
+        case NODE_TYPE_CONTAINER:
+        case NODE_TYPE_ELLIPSE:
+        case NODE_TYPE_IMAGE:
+        case NODE_TYPE_PIXELSTREAM:
+        case NODE_TYPE_POLYGON:
+        case NODE_TYPE_RECTANGLE: {
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_RELEASED, parent_node_index, first_child_index);
-        }
-        case NODE_TYPE_CIRCLE: {
-            parent_node->circle.mouse_events.released = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_IMAGE: {
-            parent_node->image.mouse_events.released = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_POLYGON: {
-            parent_node->polygon.mouse_events.released = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
-        }
-        case NODE_TYPE_RECTANGLE: {
-            parent_node->rectangle.mouse_events.released = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-            break;
         }
         default:
             fprintf(stderr, "DCApp _process_xml_node() mouse_released: unknown parent of type %s\n",
@@ -2318,11 +2227,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
 
     dc_node.pixelstream.frame = NULL;
 
-    dc_node.pixelstream.mouse_events.active   = NODE_INDEX_UNDEFINED;
-    dc_node.pixelstream.mouse_events.hovered  = NODE_INDEX_UNDEFINED;
-    dc_node.pixelstream.mouse_events.inactive = NODE_INDEX_UNDEFINED;
-    dc_node.pixelstream.mouse_events.pressed  = NODE_INDEX_UNDEFINED;
-    dc_node.pixelstream.mouse_events.released = NODE_INDEX_UNDEFINED;
+    dc_node.pixelstream.child = NODE_INDEX_UNDEFINED;
 
     // create + bind texture
     {
@@ -2540,17 +2445,9 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
-    // process children
-    _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
-
-    // enable/disable mouse events
-    _MouseEventChildren *mouse_events = &(_get_node(app_data, node_index)->pixelstream.mouse_events);
-    mouse_events->enabled =
-        (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->released != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->active != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->inactive != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->hovered != NODE_INDEX_UNDEFINED);
+    // process children (must store result first to avoid stale pointer after sb reallocation)
+    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _get_node(app_data, node_index)->pixelstream.child = first_child_index;
 
     // return
     return node_index;
@@ -2564,11 +2461,7 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
     dc_node.parent = parent_node_index;
     dc_node.next   = NODE_INDEX_UNDEFINED;
 
-    dc_node.polygon.mouse_events.active   = NODE_INDEX_UNDEFINED;
-    dc_node.polygon.mouse_events.hovered  = NODE_INDEX_UNDEFINED;
-    dc_node.polygon.mouse_events.inactive = NODE_INDEX_UNDEFINED;
-    dc_node.polygon.mouse_events.pressed  = NODE_INDEX_UNDEFINED;
-    dc_node.polygon.mouse_events.released = NODE_INDEX_UNDEFINED;
+    dc_node.polygon.child = NODE_INDEX_UNDEFINED;
 
     // x position
     xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
@@ -2643,17 +2536,9 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
-    // process children
-    _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
-
-    // enable/disable mouse events
-    _MouseEventChildren *mouse_events = &(_get_node(app_data, node_index)->polygon.mouse_events);
-    mouse_events->enabled =
-        (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->released != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->active != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->inactive != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->hovered != NODE_INDEX_UNDEFINED);
+    // process children (must store result first to avoid stale pointer after sb reallocation)
+    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _get_node(app_data, node_index)->polygon.child = first_child_index;
 
     // return
     return node_index;
@@ -2667,11 +2552,7 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
     dc_node.parent = parent_node_index;
     dc_node.next   = NODE_INDEX_UNDEFINED;
 
-    dc_node.rectangle.mouse_events.active   = NODE_INDEX_UNDEFINED;
-    dc_node.rectangle.mouse_events.hovered  = NODE_INDEX_UNDEFINED;
-    dc_node.rectangle.mouse_events.inactive = NODE_INDEX_UNDEFINED;
-    dc_node.rectangle.mouse_events.pressed  = NODE_INDEX_UNDEFINED;
-    dc_node.rectangle.mouse_events.released = NODE_INDEX_UNDEFINED;
+    dc_node.rectangle.child = NODE_INDEX_UNDEFINED;
 
     // x position
     xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
@@ -2835,17 +2716,9 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
-    // process children
-    _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
-
-    // enable/disable mouse events
-    _MouseEventChildren *mouse_events = &(_get_node(app_data, node_index)->rectangle.mouse_events);
-    mouse_events->enabled =
-        (mouse_events->pressed != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->released != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->active != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->inactive != NODE_INDEX_UNDEFINED) ||
-        (mouse_events->hovered != NODE_INDEX_UNDEFINED);
+    // process children (must store result first to avoid stale pointer after sb reallocation)
+    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _get_node(app_data, node_index)->rectangle.child = first_child_index;
 
     // return
     return node_index;

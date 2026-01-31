@@ -564,13 +564,31 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
     _draw_node_list(app_data, node->button.child, &child_position, &child_dimensions, &transform);
 }
 
-// Helper to get parent's state_flags (returns 0 if parent is not a Button)
+// Helper to get parent's state_flags (returns NODE_STATE_FLAG_NONE if parent doesn't have state_flags)
 static uint32_t _get_parent_state_flags(_AppData *app_data, _Node *node) {
     _Node *parent_node = _get_node(app_data, node->parent);
-    if (parent_node && parent_node->type == NODE_TYPE_BUTTON) {
-        return parent_node->button.state_flags;
+    if (!parent_node) return NODE_STATE_FLAG_NONE;
+
+    switch (parent_node->type) {
+        case NODE_TYPE_BUTTON:
+            return parent_node->button.state_flags;
+        case NODE_TYPE_CIRCLE:
+            return parent_node->circle.state_flags;
+        case NODE_TYPE_CONTAINER:
+            return parent_node->container.state_flags;
+        case NODE_TYPE_ELLIPSE:
+            return parent_node->ellipse.state_flags;
+        case NODE_TYPE_IMAGE:
+            return parent_node->image.state_flags;
+        case NODE_TYPE_PIXELSTREAM:
+            return parent_node->pixelstream.state_flags;
+        case NODE_TYPE_POLYGON:
+            return parent_node->polygon.state_flags;
+        case NODE_TYPE_RECTANGLE:
+            return parent_node->rectangle.state_flags;
+        default:
+            return NODE_STATE_FLAG_NONE;
     }
-    return 0;
 }
 
 static void _draw_node_state_button_enabled(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -1057,8 +1075,8 @@ static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *
         _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
-    // mouse events
-    if (node->circle.mouse_events.enabled) {
+    // mouse events and children
+    if (node->circle.child != NODE_INDEX_UNDEFINED) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -1089,20 +1107,25 @@ static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *
             }
         }
 
-        // draw mouse events
+        // set state flags for children to check
+        node->circle.state_flags = NODE_STATE_FLAG_NONE;
+        if (app_data->frame_data.pressed_node == node_index) {
+            node->circle.state_flags |= NODE_STATE_FLAG_PRESSED;
+        }
+        if (app_data->frame_data.active_node == node_index) {
+            node->circle.state_flags |= NODE_STATE_FLAG_ACTIVE;
+        }
+        if (app_data->frame_data.released_node == node_index) {
+            node->circle.state_flags |= NODE_STATE_FLAG_RELEASED;
+        }
+        if (app_data->frame_data.hovered_node == node_index) {
+            node->circle.state_flags |= NODE_STATE_FLAG_HOVERED;
+        }
+
+        // draw children (including state event nodes)
         plVec2 position   = (plVec2){0.0f, 0.0f};
         plVec2 dimensions = (plVec2){diameter, diameter};
-        if (app_data->frame_data.pressed_node == node_index) {
-            _draw_node_list(app_data, node->circle.mouse_events.pressed, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.active_node == node_index) {
-            _draw_node_list(app_data, node->circle.mouse_events.active, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.released_node == node_index) {
-            _draw_node_list(app_data, node->circle.mouse_events.released, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.hovered_node == node_index) {
-            _draw_node_list(app_data, node->circle.mouse_events.hovered, &position, &dimensions, &transform);
-        } else {
-            _draw_node_list(app_data, node->circle.mouse_events.inactive, &position, &dimensions, &transform);
-        }
+        _draw_node_list(app_data, node->circle.child, &position, &dimensions, &transform);
     }
 }
 
@@ -1352,8 +1375,8 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
         _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
-    // mouse events
-    if (node->ellipse.mouse_events.enabled) {
+    // mouse events and children
+    if (node->ellipse.child != NODE_INDEX_UNDEFINED) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -1383,20 +1406,25 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
             }
         }
 
-        // draw mouse events
+        // set state flags for children to check
+        node->ellipse.state_flags = NODE_STATE_FLAG_NONE;
+        if (app_data->frame_data.pressed_node == node_index) {
+            node->ellipse.state_flags |= NODE_STATE_FLAG_PRESSED;
+        }
+        if (app_data->frame_data.active_node == node_index) {
+            node->ellipse.state_flags |= NODE_STATE_FLAG_ACTIVE;
+        }
+        if (app_data->frame_data.released_node == node_index) {
+            node->ellipse.state_flags |= NODE_STATE_FLAG_RELEASED;
+        }
+        if (app_data->frame_data.hovered_node == node_index) {
+            node->ellipse.state_flags |= NODE_STATE_FLAG_HOVERED;
+        }
+
+        // draw children (including state event nodes)
         plVec2 position   = (plVec2){0.0f, 0.0f};
         plVec2 dimensions = (plVec2){diameter_x, diameter_y};
-        if (app_data->frame_data.pressed_node == node_index) {
-            _draw_node_list(app_data, node->ellipse.mouse_events.pressed, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.active_node == node_index) {
-            _draw_node_list(app_data, node->ellipse.mouse_events.active, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.released_node == node_index) {
-            _draw_node_list(app_data, node->ellipse.mouse_events.released, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.hovered_node == node_index) {
-            _draw_node_list(app_data, node->ellipse.mouse_events.hovered, &position, &dimensions, &transform);
-        } else {
-            _draw_node_list(app_data, node->ellipse.mouse_events.inactive, &position, &dimensions, &transform);
-        }
+        _draw_node_list(app_data, node->ellipse.child, &position, &dimensions, &transform);
     }
 }
 
@@ -1612,6 +1640,44 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
 
     // parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
+
+    // mouse events
+    {
+        // process mouse position
+        plVec4 mouse_position = (plVec4){
+            app_data->frame_data.mouse_position.x,
+            app_data->frame_data.mouse_position.y,
+            0, 1};
+        plMat4 transform_inverse = pl_mat4t_invert(&transform);
+        mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
+
+        // check whether mouse is over/in
+        bool inside = mouse_position.x > 0 && mouse_position.x < virtual_dimension[0] && mouse_position.y > 0 && mouse_position.y < virtual_dimension[1];
+
+        // update global states
+        if (inside) {
+            app_data->frame_data.next_hovered_node = node_index;
+
+            if (app_data->frame_data.is_mouse_pressed) {
+                app_data->frame_data.next_pressed_node = node_index;
+            }
+        }
+
+        // set state flags for children to check
+        node->container.state_flags = NODE_STATE_FLAG_NONE;
+        if (app_data->frame_data.pressed_node == node_index) {
+            node->container.state_flags |= NODE_STATE_FLAG_PRESSED;
+        }
+        if (app_data->frame_data.active_node == node_index) {
+            node->container.state_flags |= NODE_STATE_FLAG_ACTIVE;
+        }
+        if (app_data->frame_data.released_node == node_index) {
+            node->container.state_flags |= NODE_STATE_FLAG_RELEASED;
+        }
+        if (app_data->frame_data.hovered_node == node_index) {
+            node->container.state_flags |= NODE_STATE_FLAG_HOVERED;
+        }
+    }
 
     // draw children
     plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
@@ -1904,8 +1970,8 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
     plBindGroupHandle bind_group_handle = app_data->sb_textures[node->image.texture_index].bind_group_handle;
     _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3);
 
-    // mouse events
-    if (node->image.mouse_events.enabled) {
+    // mouse events and children
+    if (node->image.child != NODE_INDEX_UNDEFINED) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -1927,20 +1993,25 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
             }
         }
 
-        // draw mouse events
+        // set state flags for children to check
+        node->image.state_flags = NODE_STATE_FLAG_NONE;
+        if (app_data->frame_data.pressed_node == node_index) {
+            node->image.state_flags |= NODE_STATE_FLAG_PRESSED;
+        }
+        if (app_data->frame_data.active_node == node_index) {
+            node->image.state_flags |= NODE_STATE_FLAG_ACTIVE;
+        }
+        if (app_data->frame_data.released_node == node_index) {
+            node->image.state_flags |= NODE_STATE_FLAG_RELEASED;
+        }
+        if (app_data->frame_data.hovered_node == node_index) {
+            node->image.state_flags |= NODE_STATE_FLAG_HOVERED;
+        }
+
+        // draw children (including state event nodes)
         plVec2 position   = (plVec2){0.0f, 0.0f};
         plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
-        if (app_data->frame_data.pressed_node == node_index) {
-            _draw_node_list(app_data, node->image.mouse_events.pressed, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.active_node == node_index) {
-            _draw_node_list(app_data, node->image.mouse_events.active, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.released_node == node_index) {
-            _draw_node_list(app_data, node->image.mouse_events.released, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.hovered_node == node_index) {
-            _draw_node_list(app_data, node->image.mouse_events.hovered, &position, &dimensions, &transform);
-        } else {
-            _draw_node_list(app_data, node->image.mouse_events.inactive, &position, &dimensions, &transform);
-        }
+        _draw_node_list(app_data, node->image.child, &position, &dimensions, &transform);
     }
 }
 
@@ -2388,8 +2459,8 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
     plBindGroupHandle bind_group_handle = app_data->sb_textures[node->image.texture_index].bind_group_handle;
     _ext_draw->add_image_quad_ex(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3, uv0, uv1, uv2, uv3, 0xFFFFFFFF);
 
-    // mouse events
-    if (node->pixelstream.mouse_events.enabled) {
+    // mouse events and children
+    if (node->pixelstream.child != NODE_INDEX_UNDEFINED) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -2411,20 +2482,25 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
             }
         }
 
-        // draw mouse events
+        // set state flags for children to check
+        node->pixelstream.state_flags = NODE_STATE_FLAG_NONE;
+        if (app_data->frame_data.pressed_node == node_index) {
+            node->pixelstream.state_flags |= NODE_STATE_FLAG_PRESSED;
+        }
+        if (app_data->frame_data.active_node == node_index) {
+            node->pixelstream.state_flags |= NODE_STATE_FLAG_ACTIVE;
+        }
+        if (app_data->frame_data.released_node == node_index) {
+            node->pixelstream.state_flags |= NODE_STATE_FLAG_RELEASED;
+        }
+        if (app_data->frame_data.hovered_node == node_index) {
+            node->pixelstream.state_flags |= NODE_STATE_FLAG_HOVERED;
+        }
+
+        // draw children (including state event nodes)
         plVec2 position   = (plVec2){0.0f, 0.0f};
         plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
-        if (app_data->frame_data.pressed_node == node_index) {
-            _draw_node_list(app_data, node->pixelstream.mouse_events.pressed, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.active_node == node_index) {
-            _draw_node_list(app_data, node->pixelstream.mouse_events.active, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.released_node == node_index) {
-            _draw_node_list(app_data, node->pixelstream.mouse_events.released, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.hovered_node == node_index) {
-            _draw_node_list(app_data, node->pixelstream.mouse_events.hovered, &position, &dimensions, &transform);
-        } else {
-            _draw_node_list(app_data, node->pixelstream.mouse_events.inactive, &position, &dimensions, &transform);
-        }
+        _draw_node_list(app_data, node->pixelstream.child, &position, &dimensions, &transform);
     }
 }
 
@@ -2536,8 +2612,8 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
         _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
-    // mouse events
-    if (node->polygon.mouse_events.enabled) {
+    // mouse events and children
+    if (node->polygon.child != NODE_INDEX_UNDEFINED) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -2573,20 +2649,25 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
             }
         }
 
-        // draw mouse events
+        // set state flags for children to check
+        node->polygon.state_flags = NODE_STATE_FLAG_NONE;
+        if (app_data->frame_data.pressed_node == node_index) {
+            node->polygon.state_flags |= NODE_STATE_FLAG_PRESSED;
+        }
+        if (app_data->frame_data.active_node == node_index) {
+            node->polygon.state_flags |= NODE_STATE_FLAG_ACTIVE;
+        }
+        if (app_data->frame_data.released_node == node_index) {
+            node->polygon.state_flags |= NODE_STATE_FLAG_RELEASED;
+        }
+        if (app_data->frame_data.hovered_node == node_index) {
+            node->polygon.state_flags |= NODE_STATE_FLAG_HOVERED;
+        }
+
+        // draw children (including state event nodes)
         plVec2 position   = (plVec2){min_pos.x, min_pos.y};
         plVec2 dimensions = (plVec2){max_pos.x - min_pos.x, max_pos.y - min_pos.y};
-        if (app_data->frame_data.pressed_node == node_index) {
-            _draw_node_list(app_data, node->polygon.mouse_events.pressed, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.active_node == node_index) {
-            _draw_node_list(app_data, node->polygon.mouse_events.active, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.released_node == node_index) {
-            _draw_node_list(app_data, node->polygon.mouse_events.released, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.hovered_node == node_index) {
-            _draw_node_list(app_data, node->polygon.mouse_events.hovered, &position, &dimensions, &transform);
-        } else {
-            _draw_node_list(app_data, node->polygon.mouse_events.inactive, &position, &dimensions, &transform);
-        }
+        _draw_node_list(app_data, node->polygon.child, &position, &dimensions, &transform);
     }
 }
 
@@ -2830,8 +2911,8 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
         _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, 4, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
-    // mouse events
-    if (node->rectangle.mouse_events.enabled) {
+    // mouse events and children
+    if (node->rectangle.child != NODE_INDEX_UNDEFINED) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -2853,20 +2934,25 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             }
         }
 
-        // draw mouse events
+        // set state flags for children to check
+        node->rectangle.state_flags = NODE_STATE_FLAG_NONE;
+        if (app_data->frame_data.pressed_node == node_index) {
+            node->rectangle.state_flags |= NODE_STATE_FLAG_PRESSED;
+        }
+        if (app_data->frame_data.active_node == node_index) {
+            node->rectangle.state_flags |= NODE_STATE_FLAG_ACTIVE;
+        }
+        if (app_data->frame_data.released_node == node_index) {
+            node->rectangle.state_flags |= NODE_STATE_FLAG_RELEASED;
+        }
+        if (app_data->frame_data.hovered_node == node_index) {
+            node->rectangle.state_flags |= NODE_STATE_FLAG_HOVERED;
+        }
+
+        // draw children (including state event nodes)
         plVec2 position   = (plVec2){0.0f, 0.0f};
         plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
-        if (app_data->frame_data.pressed_node == node_index) {
-            _draw_node_list(app_data, node->rectangle.mouse_events.pressed, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.active_node == node_index) {
-            _draw_node_list(app_data, node->rectangle.mouse_events.active, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.released_node == node_index) {
-            _draw_node_list(app_data, node->rectangle.mouse_events.released, &position, &dimensions, &transform);
-        } else if (app_data->frame_data.hovered_node == node_index) {
-            _draw_node_list(app_data, node->rectangle.mouse_events.hovered, &position, &dimensions, &transform);
-        } else {
-            _draw_node_list(app_data, node->rectangle.mouse_events.inactive, &position, &dimensions, &transform);
-        }
+        _draw_node_list(app_data, node->rectangle.child, &position, &dimensions, &transform);
     }
 }
 

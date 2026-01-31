@@ -1,0 +1,200 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Window Title="Mouse Events Demo" X="30" Y="30" Width="800" Height="600">
+        <Default>
+            <Text Size="12" FillColor="1 1 1"/>
+        </Default>
+
+        <Panel VirtualWidth="800" VirtualHeight="600" BackgroundColor="0.1 0.1 0.12">
+
+            <!-- Title -->
+            <Text X="400" Y="570" LocalAlignX="#_align_center_" Size="20" FillColor="1 1 1">Mouse Events Demo</Text>
+
+            <!-- ========== ROW 1: MouseHovered ========== -->
+            <Text X="30" Y="520" Size="14" FillColor="0.4 0.8 1">MouseHovered</Text>
+
+            <!-- Rectangle with hover -->
+            <Rectangle X="30" Y="420" Width="160" Height="80" FillColor="0.2 0.25 0.35" LineColor="0.4 0.45 0.55" LineWidth="2">
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.6 0.6 0.6">Hover me</Text>
+                <MouseHovered>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="0.3 1 0.3">HOVERED!</Text>
+                </MouseHovered>
+            </Rectangle>
+
+            <!-- Circle with hover -->
+            <Circle X="290" Y="460" Radius="40" FillColor="0.25 0.35 0.25" LineColor="0.45 0.55 0.45" LineWidth="2">
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 0.6 0.6">Hover</Text>
+                <MouseHovered>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.3 1 0.3">HOVERED!</Text>
+                </MouseHovered>
+            </Circle>
+
+            <!-- Ellipse with hover -->
+            <Ellipse X="420" Y="460" RadiusX="70" RadiusY="35" FillColor="0.35 0.25 0.25" LineColor="0.55 0.45 0.45" LineWidth="2">
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 0.6 0.6">Hover me</Text>
+                <MouseHovered>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"  LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 0.4 0.4">HOVERED!</Text>
+                </MouseHovered>
+            </Ellipse>
+
+            <!-- Polygon with hover -->
+            <Polygon FillColor="0.25 0.25 0.4" LineColor="0.45 0.45 0.6" LineWidth="2">
+                <Vertex X="580" Y="500"/>
+                <Vertex X="620" Y="480"/>
+                <Vertex X="610" Y="430"/>
+                <Vertex X="550" Y="430"/>
+                <Vertex X="540" Y="480"/>
+                <MouseHovered>
+                    <Text X="580" Y="460" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.5 0.5 1">HOVERED!</Text>
+                </MouseHovered>
+            </Polygon>
+
+            <!-- Container with hover -->
+            <Container X="680" Y="420" Width="100" Height="80">
+                <Rectangle FillColor="0.25 0.3 0.35" LineColor="0.45 0.5 0.55" LineWidth="2"/>
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 0.6 0.6">Container</Text>
+                <MouseHovered>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.3 0.8 1">HOVERED!</Text>
+                </MouseHovered>
+            </Container>
+
+            <!-- ========== ROW 2: MouseActive ========== -->
+            <Text X="30" Y="380" Size="14" FillColor="0.4 0.8 1">MouseActive</Text>
+
+            <!-- Rectangle with active -->
+            <Rectangle X="30" Y="280" Width="160" Height="80" FillColor="0.25 0.2 0.3" LineColor="0.45 0.4 0.5" LineWidth="2">
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.6 0.6 0.6">Hold click</Text>
+                <MouseActive>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 0.3 0.3">ACTIVE!</Text>
+                </MouseActive>
+            </Rectangle>
+
+            <!-- Circle with active -->
+            <Circle X="290" Y="320" Radius="40" FillColor="0.3 0.25 0.2" LineColor="0.5 0.45 0.4" LineWidth="2">
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 0.6 0.6">Hold</Text>
+                <MouseActive>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 0.5 0.2">ACTIVE!</Text>
+                </MouseActive>
+            </Circle>
+
+            <!-- Ellipse with active -->
+            <Ellipse X="420" Y="320" RadiusX="70" RadiusY="35" FillColor="0.3 0.2 0.3" LineColor="0.5 0.4 0.5" LineWidth="2">
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 0.6 0.6">Hold click</Text>
+                <MouseActive>
+                    <Text  ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 0.3 1">ACTIVE!</Text>
+                </MouseActive>
+            </Ellipse>
+
+            <!-- Image with active -->
+            <Image X="580" Y="320" Width="60" Height="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" File="../../assets/nasa.png">
+                <MouseActive>
+                    <Text ParentAlignX="#_align_center_" Y="-40" LocalAlignX="#_align_center_" Size="10" FillColor="0.5 0.8 1">ACTIVE!</Text>
+                </MouseActive>
+            </Image>
+
+            <!-- ========== ROW 3: MousePressed / MouseReleased ========== -->
+            <Text X="30" Y="240" Size="14" FillColor="0.4 0.8 1">MousePressed / MouseReleased</Text>
+
+            <!-- Rectangle with pressed -->
+            <Rectangle X="30" Y="140" Width="160" Height="80" FillColor="0.2 0.2 0.25" LineColor="0.4 0.4 0.45" LineWidth="2">
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.6 0.6 0.6">Click me</Text>
+                <MousePressed>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 0.8 0.2">PRESSED!</Text>
+                </MousePressed>
+            </Rectangle>
+
+            <!-- Circle with pressed -->
+            <Circle X="290" Y="180" Radius="40" FillColor="0.2 0.25 0.2" LineColor="0.4 0.45 0.4" LineWidth="2">
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 0.6 0.6">Click</Text>
+                <MousePressed>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.2 1 0.5">PRESSED!</Text>
+                </MousePressed>
+            </Circle>
+
+            <!-- Rectangle with released -->
+            <Rectangle X="380" Y="140" Width="160" Height="80" FillColor="0.2 0.2 0.25" LineColor="0.4 0.4 0.45" LineWidth="2">
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.6 0.6 0.6">Click me</Text>
+                <MouseReleased>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="0.6 0.2 1">RELEASED!</Text>
+                </MouseReleased>
+            </Rectangle>
+
+            <!-- Circle with released -->
+            <Circle X="640" Y="180" Radius="40" FillColor="0.25 0.2 0.25" LineColor="0.45 0.4 0.45" LineWidth="2">
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 0.6 0.6">Click</Text>
+                <MouseReleased>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 0.4 0.6">RELEASED!</Text>
+                </MouseReleased>
+            </Circle>
+
+            <!-- ========== ROW 4: Combined ========== -->
+            <Text X="30" Y="100" Size="14" FillColor="0.4 0.8 1">Combined Events</Text>
+
+            <!-- Rectangle with all events -->
+            <Rectangle X="30" Y="10" Width="250" Height="70" FillColor="0.2 0.22 0.28" LineColor="0.4 0.42 0.48" LineWidth="2">
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.5 0.5 0.5">Interact with me</Text>
+                <MouseHovered>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.6 0.8 1">Hovered</Text>
+                </MouseHovered>
+                <MouseActive>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 0.5 0.2">Active!</Text>
+                </MouseActive>
+                <MousePressed>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="0.2 1 0.4">Pressed!</Text>
+                </MousePressed>
+                <MouseReleased>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 0.4 0.2">Released!</Text>
+                </MouseReleased>
+            </Rectangle>
+
+            <!-- Circle with all events -->
+            <Circle X="380" Y="45" Radius="35" FillColor="0.22 0.28 0.22" LineColor="0.42 0.48 0.42" LineWidth="2">
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="9" FillColor="0.5 0.5 0.5">All events</Text>
+                <MouseHovered>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 1 0.6">Hovered</Text>
+                </MouseHovered>
+                <MouseActive>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.5 0.8 0.5">Active!</Text>
+                </MouseActive>
+                <MousePressed>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.3 1 0.3">Pressed!</Text>
+                </MousePressed>
+                <MouseReleased>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 0.5 0.3">Released!</Text>
+                </MouseReleased>
+            </Circle>
+
+            <!-- Container with all events -->
+            <Container X="480" Y="10" Width="140" Height="70">
+                <Rectangle FillColor="0.28 0.22 0.28" LineColor="0.48 0.42 0.48" LineWidth="2"/>
+                <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="9" FillColor="0.5 0.5 0.5">Container</Text>
+                <MouseHovered>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 0.6 1">Hovered</Text>
+                </MouseHovered>
+                <MouseActive>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.8 0.4 0.8">Active!</Text>
+                </MouseActive>
+                <MousePressed>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 0.3 1">Pressed!</Text>
+                </MousePressed>
+                <MouseReleased>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.3 1 0.6">Released!</Text>
+                </MouseReleased>
+            </Container>
+
+            <!-- Image with events -->
+            <Image X="700" Y="45" Width="60" Height="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" File="../../assets/nasa.png">
+                <MouseHovered>
+                    <Text ParentAlignX="#_align_center_" Y="-40" LocalAlignX="#_align_center_" Size="9" FillColor="1 0.8 0.2">Hovered</Text>
+                </MouseHovered>
+                <MousePressed>
+                    <Text ParentAlignX="#_align_center_" Y="-40" LocalAlignX="#_align_center_" Size="10" FillColor="0.2 1 0.4">Pressed!</Text>
+                </MousePressed>
+                <MouseReleased>
+                    <Text ParentAlignX="#_align_center_" Y="-40" LocalAlignX="#_align_center_" Size="10" FillColor="1 0.3 0.3">Released!</Text>
+                </MouseReleased>
+            </Image>
+
+        </Panel>
+    </Window>
+</DCAPP>

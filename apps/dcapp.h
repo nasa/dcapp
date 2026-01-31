@@ -150,15 +150,6 @@ typedef enum __NodeStateFlags {
 typedef int      _NodeIndex;
 const _NodeIndex NODE_INDEX_UNDEFINED = -1;
 
-typedef struct __MouseEventChildren {
-    _NodeIndex active;
-    _NodeIndex hovered;
-    _NodeIndex inactive;
-    _NodeIndex pressed;
-    _NodeIndex released;
-    bool       enabled;
-} _MouseEventChildren;
-
 typedef struct __NodeArc {
     _ValIndex2    position;
     _ValIndex2    pivot_local_align;
@@ -242,7 +233,8 @@ typedef struct __NodeCircle {
     _ValIndex4    line_color;
     DcAppValIndex line_width;
 
-    _MouseEventChildren mouse_events;
+    _NodeIndex child;
+    uint32_t   state_flags;
 
     bool fill_enabled;
     bool line_enabled;
@@ -263,7 +255,8 @@ typedef struct __NodeEllipse {
     _ValIndex4    line_color;
     DcAppValIndex line_width;
 
-    _MouseEventChildren mouse_events;
+    _NodeIndex child;
+    uint32_t   state_flags;
 
     bool fill_enabled;
     bool line_enabled;
@@ -287,6 +280,7 @@ typedef struct __NodeContainer {
     _ValIndex2    parent_align;
     DcAppValIndex rotation;
     _NodeIndex    child;
+    uint32_t      state_flags;
 } _NodeContainer;
 
 typedef int _TextureIndex;
@@ -306,7 +300,8 @@ typedef struct __NodeImage {
 
     _TextureIndex texture_index;
 
-    _MouseEventChildren mouse_events;
+    _NodeIndex child;
+    uint32_t   state_flags;
 } _NodeImage;
 
 #define _NODE_LINE_MAX_POINTS 1000
@@ -351,8 +346,10 @@ typedef struct __NodePixelstream {
     _ValIndex2    parent_align;
     DcAppValIndex rotation;
 
-    _TextureIndex       texture_index;
-    _MouseEventChildren mouse_events;
+    _TextureIndex texture_index;
+
+    _NodeIndex child;
+    uint32_t   state_flags;
 
     DcAppPixelstreamType type;
     unsigned char       *frame;
@@ -372,7 +369,8 @@ typedef struct __NodePolygon {
     _ValIndex4    line_color;
     DcAppValIndex line_width;
 
-    _MouseEventChildren mouse_events;
+    _NodeIndex child;
+    uint32_t   state_flags;
 
     _ValIndex2 *sb_points;
     bool        fill_enabled;
@@ -391,7 +389,8 @@ typedef struct __NodeRectangle {
     _ValIndex4    line_color;
     DcAppValIndex line_width;
 
-    _MouseEventChildren mouse_events;
+    _NodeIndex child;
+    uint32_t   state_flags;
 
     bool fill_enabled;
     bool line_enabled;

@@ -106,23 +106,28 @@ void _validate_node(ValidationContext *ctx, xmlNodePtr node, DcAppElemType paren
 
 bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
 
-    // Common elements allowed in most containers
-    // (StaticIf, True, False, Include, Dummy are typically post-processed away)
+    // These elements should have been removed during preprocessing
+    // If they still exist, the preprocessor failed or they're in an invalid location
+    switch (child_type) {
+        case DC_APP_ELEM_TYPE_CONSTANT:
+        case DC_APP_ELEM_TYPE_STYLE:
+        case DC_APP_ELEM_TYPE_STATIC_IF:
+        case DC_APP_ELEM_TYPE_TRUE:
+        case DC_APP_ELEM_TYPE_FALSE:
+        case DC_APP_ELEM_TYPE_INCLUDE:
+        case DC_APP_ELEM_TYPE_DUMMY:
+            return false; // These should never exist after preprocessing
+        default:
+            break;
+    }
 
     // DCAPP root can contain top-level elements
     if (parent_type == DC_APP_ELEM_TYPE_DCAPP) {
         switch (child_type) {
             case DC_APP_ELEM_TYPE_WINDOW:
-            case DC_APP_ELEM_TYPE_CONSTANT:
             case DC_APP_ELEM_TYPE_VARIABLE:
             case DC_APP_ELEM_TYPE_TRICK_IO:
             case DC_APP_ELEM_TYPE_DEFAULT:
-            case DC_APP_ELEM_TYPE_STYLE:
-            case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-            case DC_APP_ELEM_TYPE_INCLUDE:
-            case DC_APP_ELEM_TYPE_DUMMY:
             case DC_APP_ELEM_TYPE_LOGIC:
             case DC_APP_ELEM_TYPE_FUNCTION:
                 return true;
@@ -135,15 +140,8 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
     if (parent_type == DC_APP_ELEM_TYPE_WINDOW) {
         switch (child_type) {
             case DC_APP_ELEM_TYPE_PANEL:
-            case DC_APP_ELEM_TYPE_CONSTANT:
             case DC_APP_ELEM_TYPE_VARIABLE:
             case DC_APP_ELEM_TYPE_DEFAULT:
-            case DC_APP_ELEM_TYPE_STYLE:
-            case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-            case DC_APP_ELEM_TYPE_INCLUDE:
-            case DC_APP_ELEM_TYPE_DUMMY:
                 return true;
             default:
                 return false;
@@ -154,15 +152,8 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
     if (parent_type == DC_APP_ELEM_TYPE_PANEL) {
         switch (child_type) {
             // config elements
-            case DC_APP_ELEM_TYPE_CONSTANT:
             case DC_APP_ELEM_TYPE_VARIABLE:
             case DC_APP_ELEM_TYPE_DEFAULT:
-            case DC_APP_ELEM_TYPE_STYLE:
-            case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-            case DC_APP_ELEM_TYPE_INCLUDE:
-            case DC_APP_ELEM_TYPE_DUMMY:
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
@@ -190,19 +181,12 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         }
     }
 
-    // Container can contain same as Panel
+    // Container can contain same as Panel, plus mouse events
     if (parent_type == DC_APP_ELEM_TYPE_CONTAINER) {
         switch (child_type) {
             // config elements
-            case DC_APP_ELEM_TYPE_CONSTANT:
             case DC_APP_ELEM_TYPE_VARIABLE:
             case DC_APP_ELEM_TYPE_DEFAULT:
-            case DC_APP_ELEM_TYPE_STYLE:
-            case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-            case DC_APP_ELEM_TYPE_INCLUDE:
-            case DC_APP_ELEM_TYPE_DUMMY:
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
@@ -224,6 +208,12 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // input elements
             case DC_APP_ELEM_TYPE_BUTTON:
             case DC_APP_ELEM_TYPE_MOUSE_MOTION:
+            // mouse events
+            case DC_APP_ELEM_TYPE_MOUSE_ACTIVE:
+            case DC_APP_ELEM_TYPE_MOUSE_INACTIVE:
+            case DC_APP_ELEM_TYPE_MOUSE_HOVERED:
+            case DC_APP_ELEM_TYPE_MOUSE_PRESSED:
+            case DC_APP_ELEM_TYPE_MOUSE_RELEASED:
                 return true;
             default:
                 return false;
@@ -233,6 +223,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
     // Blink can contain drawable content
     if (parent_type == DC_APP_ELEM_TYPE_BLINK) {
         switch (child_type) {
+            // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
             case DC_APP_ELEM_TYPE_CIRCLE:
@@ -244,12 +235,13 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_IMAGE:
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
+            case DC_APP_ELEM_TYPE_PIXELSTREAM:
+            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_BUTTON:
+            // logic elements
             case DC_APP_ELEM_TYPE_IF:
-            case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-            case DC_APP_ELEM_TYPE_INCLUDE:
-            case DC_APP_ELEM_TYPE_DUMMY:
+            case DC_APP_ELEM_TYPE_SET:
                 return true;
             default:
                 return false;
@@ -259,6 +251,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
     // Button can contain drawing elements and button state elements
     if (parent_type == DC_APP_ELEM_TYPE_BUTTON) {
         switch (child_type) {
+            // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
             case DC_APP_ELEM_TYPE_CIRCLE:
@@ -269,13 +262,13 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_TEXT:
             case DC_APP_ELEM_TYPE_IMAGE:
             case DC_APP_ELEM_TYPE_SPHERE:
+            case DC_APP_ELEM_TYPE_STENCIL:
+            case DC_APP_ELEM_TYPE_PIXELSTREAM:
+            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_BLINK:
+            // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
-            case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-            case DC_APP_ELEM_TYPE_INCLUDE:
-            case DC_APP_ELEM_TYPE_DUMMY:
             // button state elements
             case DC_APP_ELEM_TYPE_BUTTON_PRESSED:
             case DC_APP_ELEM_TYPE_BUTTON_RELEASED:
@@ -284,7 +277,12 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_BUTTON_TRANSITION:
             case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_ON:
             case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF:
-            case DC_APP_ELEM_TYPE_CHILDREN:
+            // mouse events
+            case DC_APP_ELEM_TYPE_MOUSE_ACTIVE:
+            case DC_APP_ELEM_TYPE_MOUSE_INACTIVE:
+            case DC_APP_ELEM_TYPE_MOUSE_HOVERED:
+            case DC_APP_ELEM_TYPE_MOUSE_PRESSED:
+            case DC_APP_ELEM_TYPE_MOUSE_RELEASED:
                 return true;
             default:
                 return false;
@@ -298,38 +296,9 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         parent_type == DC_APP_ELEM_TYPE_BUTTON_DISABLED ||
         parent_type == DC_APP_ELEM_TYPE_BUTTON_TRANSITION ||
         parent_type == DC_APP_ELEM_TYPE_BUTTON_INDICATOR_ON ||
-        parent_type == DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF ||
-        parent_type == DC_APP_ELEM_TYPE_CHILDREN) {
+        parent_type == DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF) {
         switch (child_type) {
-            case DC_APP_ELEM_TYPE_CONTAINER:
-            case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
-            case DC_APP_ELEM_TYPE_ELLIPSE:
-            case DC_APP_ELEM_TYPE_LINE:
-            case DC_APP_ELEM_TYPE_ARC:
-            case DC_APP_ELEM_TYPE_POLYGON:
-            case DC_APP_ELEM_TYPE_TEXT:
-            case DC_APP_ELEM_TYPE_IMAGE:
-            case DC_APP_ELEM_TYPE_SPHERE:
-            case DC_APP_ELEM_TYPE_IF:
-            case DC_APP_ELEM_TYPE_SET:
-            case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-            case DC_APP_ELEM_TYPE_INCLUDE:
-            case DC_APP_ELEM_TYPE_DUMMY:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    // If can contain True, False, and drawable content
-    if (parent_type == DC_APP_ELEM_TYPE_IF) {
-        switch (child_type) {
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-            // also allow implicit content (same as container)
+            // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
             case DC_APP_ELEM_TYPE_CIRCLE:
@@ -344,42 +313,23 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
             case DC_APP_ELEM_TYPE_TERRAIN:
             case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_BUTTON:
+            // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
-            case DC_APP_ELEM_TYPE_BUTTON:
-            case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_INCLUDE:
-            case DC_APP_ELEM_TYPE_DUMMY:
                 return true;
             default:
                 return false;
         }
     }
 
-    // StaticIf can only contain True and False
-    if (parent_type == DC_APP_ELEM_TYPE_STATIC_IF) {
+    // If can contain drawable content
+    if (parent_type == DC_APP_ELEM_TYPE_IF) {
         switch (child_type) {
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    // True/False can contain anything their grandparent can
-    if (parent_type == DC_APP_ELEM_TYPE_TRUE || parent_type == DC_APP_ELEM_TYPE_FALSE) {
-        // Allow everything - the real validation depends on grandparent
-        // which is too complex to track here. Just allow it.
-        return true;
-    }
-
-    // Stencil can contain stencil operations and drawing elements
-    if (parent_type == DC_APP_ELEM_TYPE_STENCIL) {
-        switch (child_type) {
-            case DC_APP_ELEM_TYPE_STENCIL_ADD:
-            case DC_APP_ELEM_TYPE_STENCIL_REMOVE:
-            case DC_APP_ELEM_TYPE_STENCIL_DRAW:
+            // config elements
+            case DC_APP_ELEM_TYPE_VARIABLE:
+            case DC_APP_ELEM_TYPE_DEFAULT:
+            // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
             case DC_APP_ELEM_TYPE_CIRCLE:
@@ -390,12 +340,48 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_TEXT:
             case DC_APP_ELEM_TYPE_IMAGE:
             case DC_APP_ELEM_TYPE_SPHERE:
+            case DC_APP_ELEM_TYPE_STENCIL:
+            case DC_APP_ELEM_TYPE_PIXELSTREAM:
+            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_BUTTON:
+            // logic elements
             case DC_APP_ELEM_TYPE_IF:
-            case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-            case DC_APP_ELEM_TYPE_INCLUDE:
-            case DC_APP_ELEM_TYPE_DUMMY:
+            case DC_APP_ELEM_TYPE_SET:
+            // input elements
+            case DC_APP_ELEM_TYPE_MOUSE_MOTION:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    // Stencil can contain stencil operations and drawing elements
+    if (parent_type == DC_APP_ELEM_TYPE_STENCIL) {
+        switch (child_type) {
+            // stencil operations
+            case DC_APP_ELEM_TYPE_STENCIL_ADD:
+            case DC_APP_ELEM_TYPE_STENCIL_REMOVE:
+            case DC_APP_ELEM_TYPE_STENCIL_DRAW:
+            // drawing elements
+            case DC_APP_ELEM_TYPE_CONTAINER:
+            case DC_APP_ELEM_TYPE_RECTANGLE:
+            case DC_APP_ELEM_TYPE_CIRCLE:
+            case DC_APP_ELEM_TYPE_ELLIPSE:
+            case DC_APP_ELEM_TYPE_LINE:
+            case DC_APP_ELEM_TYPE_ARC:
+            case DC_APP_ELEM_TYPE_POLYGON:
+            case DC_APP_ELEM_TYPE_TEXT:
+            case DC_APP_ELEM_TYPE_IMAGE:
+            case DC_APP_ELEM_TYPE_SPHERE:
+            case DC_APP_ELEM_TYPE_STENCIL:
+            case DC_APP_ELEM_TYPE_PIXELSTREAM:
+            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_BUTTON:
+            // logic elements
+            case DC_APP_ELEM_TYPE_IF:
+            case DC_APP_ELEM_TYPE_SET:
                 return true;
             default:
                 return false;
@@ -407,6 +393,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         parent_type == DC_APP_ELEM_TYPE_STENCIL_REMOVE ||
         parent_type == DC_APP_ELEM_TYPE_STENCIL_DRAW) {
         switch (child_type) {
+            // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
             case DC_APP_ELEM_TYPE_CIRCLE:
@@ -417,12 +404,14 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_TEXT:
             case DC_APP_ELEM_TYPE_IMAGE:
             case DC_APP_ELEM_TYPE_SPHERE:
+            case DC_APP_ELEM_TYPE_STENCIL:
+            case DC_APP_ELEM_TYPE_PIXELSTREAM:
+            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_BUTTON:
+            // logic elements
             case DC_APP_ELEM_TYPE_IF:
-            case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-            case DC_APP_ELEM_TYPE_INCLUDE:
-            case DC_APP_ELEM_TYPE_DUMMY:
+            case DC_APP_ELEM_TYPE_SET:
                 return true;
             default:
                 return false;
@@ -462,21 +451,41 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
     if (parent_type == DC_APP_ELEM_TYPE_TERRAIN) {
         switch (child_type) {
             case DC_APP_ELEM_TYPE_TERRAIN_DEM:
-            case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-            case DC_APP_ELEM_TYPE_INCLUDE:
-            case DC_APP_ELEM_TYPE_DUMMY:
                 return true;
             default:
                 return false;
         }
     }
 
-    // Polygon can contain Vertex
+    // Polygon can contain Vertex, drawable content, and mouse events
     if (parent_type == DC_APP_ELEM_TYPE_POLYGON) {
         switch (child_type) {
             case DC_APP_ELEM_TYPE_VERTEX:
+            // drawing elements
+            case DC_APP_ELEM_TYPE_CONTAINER:
+            case DC_APP_ELEM_TYPE_RECTANGLE:
+            case DC_APP_ELEM_TYPE_CIRCLE:
+            case DC_APP_ELEM_TYPE_ELLIPSE:
+            case DC_APP_ELEM_TYPE_LINE:
+            case DC_APP_ELEM_TYPE_ARC:
+            case DC_APP_ELEM_TYPE_POLYGON:
+            case DC_APP_ELEM_TYPE_TEXT:
+            case DC_APP_ELEM_TYPE_IMAGE:
+            case DC_APP_ELEM_TYPE_SPHERE:
+            case DC_APP_ELEM_TYPE_STENCIL:
+            case DC_APP_ELEM_TYPE_PIXELSTREAM:
+            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_BUTTON:
+            // logic elements
+            case DC_APP_ELEM_TYPE_IF:
+            case DC_APP_ELEM_TYPE_SET:
+            // mouse events
+            case DC_APP_ELEM_TYPE_MOUSE_ACTIVE:
+            case DC_APP_ELEM_TYPE_MOUSE_INACTIVE:
+            case DC_APP_ELEM_TYPE_MOUSE_HOVERED:
+            case DC_APP_ELEM_TYPE_MOUSE_PRESSED:
+            case DC_APP_ELEM_TYPE_MOUSE_RELEASED:
                 return true;
             default:
                 return false;
@@ -493,12 +502,33 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         }
     }
 
-    // Mouse event children of shapes (Rectangle, Circle, Ellipse, Image)
-    if (parent_type == DC_APP_ELEM_TYPE_RECTANGLE ||
-        parent_type == DC_APP_ELEM_TYPE_CIRCLE ||
+    // Shapes that can contain drawable content and mouse events
+    if (parent_type == DC_APP_ELEM_TYPE_CIRCLE ||
         parent_type == DC_APP_ELEM_TYPE_ELLIPSE ||
-        parent_type == DC_APP_ELEM_TYPE_IMAGE) {
+        parent_type == DC_APP_ELEM_TYPE_IMAGE ||
+        parent_type == DC_APP_ELEM_TYPE_PIXELSTREAM ||
+        parent_type == DC_APP_ELEM_TYPE_RECTANGLE) {
         switch (child_type) {
+            // drawing elements
+            case DC_APP_ELEM_TYPE_CONTAINER:
+            case DC_APP_ELEM_TYPE_RECTANGLE:
+            case DC_APP_ELEM_TYPE_CIRCLE:
+            case DC_APP_ELEM_TYPE_ELLIPSE:
+            case DC_APP_ELEM_TYPE_LINE:
+            case DC_APP_ELEM_TYPE_ARC:
+            case DC_APP_ELEM_TYPE_POLYGON:
+            case DC_APP_ELEM_TYPE_TEXT:
+            case DC_APP_ELEM_TYPE_IMAGE:
+            case DC_APP_ELEM_TYPE_SPHERE:
+            case DC_APP_ELEM_TYPE_STENCIL:
+            case DC_APP_ELEM_TYPE_PIXELSTREAM:
+            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_BUTTON:
+            // logic elements
+            case DC_APP_ELEM_TYPE_IF:
+            case DC_APP_ELEM_TYPE_SET:
+            // mouse events
             case DC_APP_ELEM_TYPE_MOUSE_ACTIVE:
             case DC_APP_ELEM_TYPE_MOUSE_INACTIVE:
             case DC_APP_ELEM_TYPE_MOUSE_HOVERED:
@@ -517,6 +547,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         parent_type == DC_APP_ELEM_TYPE_MOUSE_PRESSED ||
         parent_type == DC_APP_ELEM_TYPE_MOUSE_RELEASED) {
         switch (child_type) {
+            // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
             case DC_APP_ELEM_TYPE_CIRCLE:
@@ -527,13 +558,14 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_TEXT:
             case DC_APP_ELEM_TYPE_IMAGE:
             case DC_APP_ELEM_TYPE_SPHERE:
+            case DC_APP_ELEM_TYPE_STENCIL:
+            case DC_APP_ELEM_TYPE_PIXELSTREAM:
+            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_BUTTON:
+            // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
-            case DC_APP_ELEM_TYPE_STATIC_IF:
-            case DC_APP_ELEM_TYPE_TRUE:
-            case DC_APP_ELEM_TYPE_FALSE:
-            case DC_APP_ELEM_TYPE_INCLUDE:
-            case DC_APP_ELEM_TYPE_DUMMY:
                 return true;
             default:
                 return false;
@@ -551,7 +583,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         case DC_APP_ELEM_TYPE_TRICK_FROM:
         case DC_APP_ELEM_TYPE_TRICK_TO:
         case DC_APP_ELEM_TYPE_VERTEX:
-        case DC_APP_ELEM_TYPE_PIXELSTREAM:
         case DC_APP_ELEM_TYPE_TERRAIN_DEM:
         case DC_APP_ELEM_TYPE_LOGIC:
         case DC_APP_ELEM_TYPE_FUNCTION:
@@ -870,7 +901,6 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
         case DC_APP_ELEM_TYPE_BUTTON_TRANSITION:
         case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_ON:
         case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF:
-        case DC_APP_ELEM_TYPE_CHILDREN:
             return true; // No specific attributes, allow common
 
         case DC_APP_ELEM_TYPE_CIRCLE:
