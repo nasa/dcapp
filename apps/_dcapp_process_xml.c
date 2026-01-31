@@ -1524,14 +1524,8 @@ static _NodeIndex _process_xml_node_false(_AppData *app_data, xmlNodePtr xml_nod
 
     switch (parent_elem_type) {
         case DC_APP_ELEM_TYPE_IF: {
-
-            // process children
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
-
-            // update child false node
-            _Node *parent_node                   = _get_node(app_data, parent_node_index);
-            parent_node->conditional.child_false = first_child_index;
-            break;
+            return _create_state_event_node(app_data, NODE_TYPE_STATE_IF_FALSE, parent_node_index, first_child_index);
         }
         default:
             fprintf(stderr, "DCAPP _process_xml_node(): Invalid elem parent of type %s for <False>\n", dc_app_elem_type_to_string(parent_elem_type));
@@ -1570,12 +1564,12 @@ static _NodeIndex _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_
 static _NodeIndex _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
-    _Node dc_node                   = {};
-    dc_node.type                    = NODE_TYPE_CONDITIONAL;
-    dc_node.parent                  = parent_node_index;
-    dc_node.next                    = NODE_INDEX_UNDEFINED;
-    dc_node.conditional.child_true  = NODE_INDEX_UNDEFINED;
-    dc_node.conditional.child_false = NODE_INDEX_UNDEFINED;
+    _Node dc_node                     = {};
+    dc_node.type                      = NODE_TYPE_CONDITIONAL;
+    dc_node.parent                    = parent_node_index;
+    dc_node.next                      = NODE_INDEX_UNDEFINED;
+    dc_node.conditional.child         = NODE_INDEX_UNDEFINED;
+    dc_node.conditional.state_flags   = NODE_STATE_FLAG_NONE;
 
     // conditional type
     xmlChar *raw_type = xmlGetProp(xml_node, BAD_CAST "Operation");
@@ -1610,22 +1604,13 @@ static _NodeIndex _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, 
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
-    // process children (assigning to true/false handled in separate cases, e.g. DC_APP_ELEM_TYPE_TRUE)
+    // process children (True/False become state event nodes)
     _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
 
-    // handle implicit <True> elements
-    if (first_child_index != NODE_INDEX_UNDEFINED) {
+    // update child index
+    _Node *node           = _get_node(app_data, node_index);
+    node->conditional.child = first_child_index;
 
-        // ignore if True element already exists
-        _Node *node = _get_node(app_data, node_index);
-        if (node->conditional.child_true == NODE_INDEX_UNDEFINED) {
-            node->conditional.child_true = first_child_index;
-        } else {
-            printf("DCApp _process_xml_node: Conditional: <If> element has <True> explicit and implicit elements. Ignoring the implicit definitions\n");
-        }
-    }
-
-    // return
     return node_index;
 }
 
@@ -3815,20 +3800,13 @@ static _NodeIndex _process_xml_node_true(_AppData *app_data, xmlNodePtr xml_node
 
     switch (parent_elem_type) {
         case DC_APP_ELEM_TYPE_IF: {
-
-            // process children
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
-
-            // update child true node
-            _Node *parent_node                  = _get_node(app_data, parent_node_index);
-            parent_node->conditional.child_true = first_child_index;
-            break;
+            return _create_state_event_node(app_data, NODE_TYPE_STATE_IF_TRUE, parent_node_index, first_child_index);
         }
         default:
             fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for <True>.\n", dc_app_elem_type_to_string(parent_elem_type));
     }
 
-    // return
     return NODE_INDEX_UNDEFINED;
 }
 

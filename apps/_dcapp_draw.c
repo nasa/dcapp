@@ -35,6 +35,8 @@ static void _draw_node_state_mouse_released(_AppData *app_data, _NodeIndex node_
 static void _draw_node_state_mouse_active(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_state_mouse_inactive(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_state_mouse_hovered(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_state_if_true(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_state_if_false(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -174,6 +176,12 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
             break;
         case NODE_TYPE_STATE_MOUSE_HOVERED:
             _draw_node_state_mouse_hovered(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+        case NODE_TYPE_STATE_IF_TRUE:
+            _draw_node_state_if_true(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+        case NODE_TYPE_STATE_IF_FALSE:
+            _draw_node_state_if_false(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         default:
@@ -586,6 +594,8 @@ static uint32_t _get_parent_state_flags(_AppData *app_data, _Node *node) {
             return parent_node->polygon.state_flags;
         case NODE_TYPE_RECTANGLE:
             return parent_node->rectangle.state_flags;
+        case NODE_TYPE_CONDITIONAL:
+            return parent_node->conditional.state_flags;
         default:
             return NODE_STATE_FLAG_NONE;
     }
@@ -658,6 +668,20 @@ static void _draw_node_state_mouse_inactive(_AppData *app_data, _NodeIndex node_
 static void _draw_node_state_mouse_hovered(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
     uint32_t flags = _get_parent_state_flags(app_data, node);
     if (flags & NODE_STATE_FLAG_HOVERED) {
+        _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
+    }
+}
+
+static void _draw_node_state_if_true(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    uint32_t flags = _get_parent_state_flags(app_data, node);
+    if (flags & NODE_STATE_FLAG_TRUE) {
+        _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
+    }
+}
+
+static void _draw_node_state_if_false(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    uint32_t flags = _get_parent_state_flags(app_data, node);
+    if (flags & NODE_STATE_FLAG_FALSE) {
         _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
     }
 }
@@ -1688,7 +1712,9 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
 static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     DcValue             *val1     = dc_app_lookup_get_value(app_data->lookup, node->conditional.value1);
-    DcAppConditionalType type     = (DcAppConditionalType)dc_app_lookup_get_value(app_data->lookup, node->conditional.type)->value_integer;
+    DcAppConditionalType type     = (node->conditional.type == DC_APP_VAL_INDEX_UNDEFINED)
+                                        ? DC_APP_CONDITIONAL_TYPE_TRUE
+                                        : (DcAppConditionalType)dc_app_lookup_get_value(app_data->lookup, node->conditional.type)->value_integer;
     bool                 use_val2 = node->conditional.value2 != DC_APP_VAL_INDEX_UNDEFINED;
 
     // evaluate
@@ -1733,12 +1759,11 @@ static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _N
         }
     }
 
-    // process children
-    if (result) {
-        _draw_node_list(app_data, node->conditional.child_true, parent_position, parent_dimensions, parent_transform);
-    } else {
-        _draw_node_list(app_data, node->conditional.child_false, parent_position, parent_dimensions, parent_transform);
-    }
+    // set state flags for child state event nodes to check
+    node->conditional.state_flags = result ? NODE_STATE_FLAG_TRUE : NODE_STATE_FLAG_FALSE;
+
+    // draw children (state event nodes will check our state_flags)
+    _draw_node_list(app_data, node->conditional.child, parent_position, parent_dimensions, parent_transform);
 }
 
 static void _draw_node_function(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {

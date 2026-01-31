@@ -130,6 +130,8 @@ typedef enum __NodeType {
     NODE_TYPE_STATE_MOUSE_ACTIVE,
     NODE_TYPE_STATE_MOUSE_INACTIVE,
     NODE_TYPE_STATE_MOUSE_HOVERED,
+    NODE_TYPE_STATE_IF_TRUE,
+    NODE_TYPE_STATE_IF_FALSE,
 
     NODE_TYPE__COUNT,
     NODE_TYPE__MAX = NODE_TYPE__COUNT - 1,
@@ -145,6 +147,8 @@ typedef enum __NodeStateFlags {
     NODE_STATE_FLAG_ACTIVE        = 1 << 4,
     NODE_STATE_FLAG_HOVERED       = 1 << 5,
     NODE_STATE_FLAG_RELEASED      = 1 << 6,
+    NODE_STATE_FLAG_TRUE          = 1 << 7,
+    NODE_STATE_FLAG_FALSE         = 1 << 8,
 } _NodeStateFlags;
 
 typedef int      _NodeIndex;
@@ -266,8 +270,8 @@ typedef struct __NodeConditional {
     DcAppValIndex type;
     DcAppValIndex value1;
     DcAppValIndex value2;
-    _NodeIndex    child_true;
-    _NodeIndex    child_false;
+    _NodeIndex    child;
+    uint32_t      state_flags;
 } _NodeConditional;
 
 typedef struct __NodeContainer {

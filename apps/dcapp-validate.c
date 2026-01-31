@@ -108,12 +108,11 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
 
     // These elements should have been removed during preprocessing
     // If they still exist, the preprocessor failed or they're in an invalid location
+    // Note: True/False are valid inside <If> elements (runtime conditionals)
     switch (child_type) {
         case DC_APP_ELEM_TYPE_CONSTANT:
         case DC_APP_ELEM_TYPE_STYLE:
         case DC_APP_ELEM_TYPE_STATIC_IF:
-        case DC_APP_ELEM_TYPE_TRUE:
-        case DC_APP_ELEM_TYPE_FALSE:
         case DC_APP_ELEM_TYPE_INCLUDE:
         case DC_APP_ELEM_TYPE_DUMMY:
             return false; // These should never exist after preprocessing
@@ -323,9 +322,12 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         }
     }
 
-    // If can contain drawable content
+    // If can contain True/False branches and drawable content
     if (parent_type == DC_APP_ELEM_TYPE_IF) {
         switch (child_type) {
+            // conditional branches
+            case DC_APP_ELEM_TYPE_TRUE:
+            case DC_APP_ELEM_TYPE_FALSE:
             // config elements
             case DC_APP_ELEM_TYPE_VARIABLE:
             case DC_APP_ELEM_TYPE_DEFAULT:
@@ -350,6 +352,37 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SET:
             // input elements
             case DC_APP_ELEM_TYPE_MOUSE_MOTION:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    // True/False (inside If) can contain drawable content
+    if (parent_type == DC_APP_ELEM_TYPE_TRUE || parent_type == DC_APP_ELEM_TYPE_FALSE) {
+        switch (child_type) {
+            // config elements
+            case DC_APP_ELEM_TYPE_VARIABLE:
+            case DC_APP_ELEM_TYPE_DEFAULT:
+            // drawing elements
+            case DC_APP_ELEM_TYPE_CONTAINER:
+            case DC_APP_ELEM_TYPE_RECTANGLE:
+            case DC_APP_ELEM_TYPE_CIRCLE:
+            case DC_APP_ELEM_TYPE_ELLIPSE:
+            case DC_APP_ELEM_TYPE_LINE:
+            case DC_APP_ELEM_TYPE_ARC:
+            case DC_APP_ELEM_TYPE_POLYGON:
+            case DC_APP_ELEM_TYPE_TEXT:
+            case DC_APP_ELEM_TYPE_IMAGE:
+            case DC_APP_ELEM_TYPE_SPHERE:
+            case DC_APP_ELEM_TYPE_STENCIL:
+            case DC_APP_ELEM_TYPE_PIXELSTREAM:
+            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_BUTTON:
+            // logic elements
+            case DC_APP_ELEM_TYPE_IF:
+            case DC_APP_ELEM_TYPE_SET:
                 return true;
             default:
                 return false;

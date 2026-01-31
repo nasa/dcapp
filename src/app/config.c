@@ -878,6 +878,30 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
             return;
         }
 
+        case DC_APP_ELEM_TYPE_IF: {
+            // Wrap implicit true children in <True> blocks
+            xmlNodePtr wrapper = NULL;
+            xmlNodePtr child = node->children;
+            while (child) {
+                xmlNodePtr next = child->next;
+                if (child->type == XML_ELEMENT_NODE) {
+                    DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
+                    if (child_type == DC_APP_ELEM_TYPE_TRUE || child_type == DC_APP_ELEM_TYPE_FALSE) {
+                        wrapper = NULL;
+                    } else {
+                        if (!wrapper) {
+                            wrapper = xmlNewNode(NULL, BAD_CAST "True");
+                            xmlAddPrevSibling(child, wrapper);
+                        }
+                        xmlUnlinkNode(child);
+                        xmlAddChild(wrapper, child);
+                    }
+                }
+                child = next;
+            }
+            break;
+        }
+
         default:
             break;
     }
