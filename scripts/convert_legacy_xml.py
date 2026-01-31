@@ -198,19 +198,22 @@ def convert_alignment(elem: etree._Element, has_x: bool, has_y: bool) -> None:
     Rules:
     - If axis has explicit position (X/Y), use only LocalAlign
     - If axis has no position, use BOTH ParentAlign and LocalAlign
+    - Invalid values fall back to legacy defaults (Left for horizontal, Bottom for vertical)
     """
     h_align = elem.get('HorizontalAlign')
     v_align = elem.get('VerticalAlign')
 
     if h_align:
-        new_value = HORIZONTAL_ALIGN_MAP.get(h_align, h_align)
+        # Legacy default for invalid horizontal values was Left
+        new_value = HORIZONTAL_ALIGN_MAP.get(h_align, '#_align_left_')
         elem.set('LocalAlignX', new_value)
         if not has_x:
             elem.set('ParentAlignX', new_value)
         del elem.attrib['HorizontalAlign']
 
     if v_align:
-        new_value = VERTICAL_ALIGN_MAP.get(v_align, v_align)
+        # Legacy default for invalid vertical values was Bottom
+        new_value = VERTICAL_ALIGN_MAP.get(v_align, '#_align_bottom_')
         elem.set('LocalAlignY', new_value)
         if not has_y:
             elem.set('ParentAlignY', new_value)
@@ -403,6 +406,80 @@ def comment_out_attributes(elem: etree._Element) -> None:
             elem.set('_' + attr, value)
 
 
+def convert_origin_attributes(elem: etree._Element) -> Optional[str]:
+    """
+    Convert OriginX/OriginY attributes to ParentAlign with negated position.
+
+    Legacy OriginX="Right" means X is measured from the right edge.
+    New system uses ParentAlignX="#_align_right_" with negated X value.
+
+    Returns a TODO comment string if manual conversion is needed (variable values),
+    or None if conversion was successful or not needed.
+    """
+    comment = None
+    origin_x = elem.get('OriginX')
+    origin_y = elem.get('OriginY')
+
+    if origin_x:
+        if origin_x == 'Right':
+            x_val = elem.get('X')
+            if x_val and has_variable_reference(x_val):
+                # Can't auto-convert variable - flag for manual review
+                del elem.attrib['OriginX']
+                elem.set('_OriginX', origin_x)
+                comment = ' TODO(migration): OriginX with variable needs manual conversion '
+            elif x_val:
+                # Negate the literal X value
+                try:
+                    x_num = float(x_val)
+                    negated = -x_num if x_num != 0 else 0
+                    # Format as int if it's a whole number
+                    elem.set('X', str(int(negated)) if negated == int(negated) else str(negated))
+                except ValueError:
+                    pass  # Not a number, leave as-is
+                elem.set('ParentAlignX', '#_align_right_')
+                del elem.attrib['OriginX']
+            else:
+                # No X value, just set the alignment
+                elem.set('ParentAlignX', '#_align_right_')
+                del elem.attrib['OriginX']
+        elif origin_x == 'Left':
+            # Left is the default, just remove it
+            del elem.attrib['OriginX']
+
+    if origin_y:
+        if origin_y == 'Top':
+            y_val = elem.get('Y')
+            if y_val and has_variable_reference(y_val):
+                # Can't auto-convert variable - flag for manual review
+                del elem.attrib['OriginY']
+                elem.set('_OriginY', origin_y)
+                if comment:
+                    comment = ' TODO(migration): OriginX/OriginY with variable needs manual conversion '
+                else:
+                    comment = ' TODO(migration): OriginY with variable needs manual conversion '
+            elif y_val:
+                # Negate the literal Y value
+                try:
+                    y_num = float(y_val)
+                    negated = -y_num if y_num != 0 else 0
+                    # Format as int if it's a whole number
+                    elem.set('Y', str(int(negated)) if negated == int(negated) else str(negated))
+                except ValueError:
+                    pass  # Not a number, leave as-is
+                elem.set('ParentAlignY', '#_align_top_')
+                del elem.attrib['OriginY']
+            else:
+                # No Y value, just set the alignment
+                elem.set('ParentAlignY', '#_align_top_')
+                del elem.attrib['OriginY']
+        elif origin_y == 'Bottom':
+            # Bottom is the default, just remove it
+            del elem.attrib['OriginY']
+
+    return comment
+
+
 def convert_display_index_pattern(elem: etree._Element) -> None:
     """
     Convert DisplayIndex/ActiveDisplay pattern to If conditionals.
@@ -473,18 +550,21 @@ def get_element_context(elem: etree._Element, parent_tag: Optional[str]) -> str:
     return parent_tag or ''
 
 
-def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> list:
+def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> Tuple[list, Optional[str]]:
     """
     Process a single element and its attributes.
 
-    Returns a list of additional elements to insert after this one (e.g., for min/max clamping).
+    Returns a tuple of:
+    - List of additional elements to insert after this one (e.g., for min/max clamping)
+    - Optional comment string to insert before this element (e.g., for manual conversion TODOs)
     """
     additional_elements = []
+    comment = None
     tag = elem.tag
 
     # Skip non-element nodes (comments, processing instructions, etc.)
     if not isinstance(tag, str):
-        return additional_elements
+        return (additional_elements, comment)
 
     # ---- Element-specific attribute conversions ----
 
@@ -563,10 +643,17 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
 
     # Alignment conversion for positionable elements
     if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
-               'Container', 'Line', 'Polygon'):
+               'Container', 'Line', 'Polygon', 'Ellipse', 'Arc'):
         has_x = 'X' in elem.attrib or 'PositionX' in elem.attrib
         has_y = 'Y' in elem.attrib or 'PositionY' in elem.attrib
         convert_alignment(elem, has_x, has_y)
+
+    # Origin conversion for positionable elements (must be done before alignment sets ParentAlign)
+    if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
+               'Container', 'Line', 'Polygon', 'Ellipse', 'Arc'):
+        origin_comment = convert_origin_attributes(elem)
+        if origin_comment:
+            comment = origin_comment
 
     # Element-specific attribute renames
     if tag in ELEMENT_ATTRIBUTE_RENAMES:
@@ -590,7 +677,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     elif tag in ELEMENT_RENAMES:
         elem.tag = ELEMENT_RENAMES[tag]
 
-    return additional_elements
+    return (additional_elements, comment)
 
 
 def process_mask_element(elem: etree._Element) -> None:
@@ -658,8 +745,14 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
         return all_additional  # Don't process children
 
     # Process this element
-    additional = process_element(elem, parent_tag)
+    additional, todo_comment = process_element(elem, parent_tag)
     all_additional.extend(additional)
+
+    # Insert TODO comment before element if origin conversion needs manual review
+    if todo_comment and parent is not None:
+        comment = etree.Comment(todo_comment)
+        idx = list(parent).index(elem)
+        parent.insert(idx, comment)
 
     # Process children (skip comments)
     children_to_process = list(elem)
