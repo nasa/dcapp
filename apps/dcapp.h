@@ -543,6 +543,7 @@ typedef struct __TrickContext {
     DcTrick            *trick;
     _TrickTxVarContext *sb_tx_var_contexts;
     _TrickRxVarContext *sb_rx_var_contexts;
+    DcAppVarIndex       connected_var_index;  // variable updated with connection status
 } _TrickContext;
 
 // callback used for logic file DLL loading

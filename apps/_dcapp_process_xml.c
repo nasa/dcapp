@@ -3686,9 +3686,18 @@ static _NodeIndex _process_xml_node_trick_io(_AppData *app_data, xmlNodePtr xml_
         xmlFree(raw_data_rate);
     }
 
+    // connected variable (optional)
+    xmlChar      *raw_connected_var     = xmlGetProp(xml_node, BAD_CAST "ConnectedVariable");
+    DcAppVarIndex connected_var_index   = DC_APP_VAR_INDEX_UNDEFINED;
+    if (raw_connected_var) {
+        connected_var_index = dc_app_lookup_get_var_index(app_data->lookup, (const char *)raw_connected_var);
+        xmlFree(raw_connected_var);
+    }
+
     // create trick instance
     _TrickContext trick_context = {};
-    trick_context.trick         = dc_trick_create(host, port, (float)data_rate, 1);
+    trick_context.trick               = dc_trick_create(host, port, (float)data_rate, 1);
+    trick_context.connected_var_index = connected_var_index;
     sbpush(app_data->sb_tricks, trick_context);
 
     // process children

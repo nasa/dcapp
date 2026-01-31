@@ -285,6 +285,28 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
         // send the updated buffer, receive the new data, update the connection status
         dc_trick_update(trick);
 
+        // update connected variable if defined
+        if (trick_context->connected_var_index != DC_APP_VAR_INDEX_UNDEFINED) {
+            DcAppLookupVar *connected_var = dc_app_lookup_get_var(app_data->lookup, trick_context->connected_var_index);
+            if (connected_var) {
+                DcValue *value = dc_app_lookup_get_value(app_data->lookup, connected_var->value_index);
+                switch (value->type) {
+                    case DC_VALUE_TYPE_BOOLEAN:
+                        value->value_boolean = trick->is_connected;
+                        break;
+                    case DC_VALUE_TYPE_INTEGER:
+                        value->value_integer = trick->is_connected ? 1 : 0;
+                        break;
+                    case DC_VALUE_TYPE_STRING:
+                        strncpy(value->value_string, trick->is_connected ? "true" : "false", DC_VALUE_STRING_BUFFER_SIZE - 1);
+                        break;
+                    default:
+                        break;
+                }
+                dc_value_refresh(value);
+            }
+        }
+
         // receive the new data
         if (trick->has_new_data && trick->is_connected) {
             char rx_buffer[256];
