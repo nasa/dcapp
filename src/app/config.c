@@ -965,12 +965,96 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
     }
 }
 
-void dc_app_config_save_to_file(DcAppConfig *config, const char *filepath) {
-    xmlSaveCtxtPtr ctx = xmlSaveToFilename(filepath, "UTF-8", XML_SAVE_FORMAT);
-    if (ctx) {
-        xmlSaveDoc(ctx, config->xml_doc);
-        xmlSaveClose(ctx);
+// Custom XML formatter without libxml2's depth limit (127 levels max)
+static void _write_indent(FILE *f, int depth) {
+    for (int i = 0; i < depth; i++) {
+        fprintf(f, "  ");
     }
+}
+
+static void _write_xml_node(FILE *f, xmlNodePtr node, int depth) {
+    if (!node) return;
+
+    switch (node->type) {
+        case XML_ELEMENT_NODE: {
+            _write_indent(f, depth);
+            fprintf(f, "<%s", node->name);
+
+            // Write attributes
+            xmlAttrPtr attr = node->properties;
+            while (attr) {
+                xmlChar *value = xmlGetProp(node, attr->name);
+                if (value) {
+                    fprintf(f, " %s=\"%s\"", attr->name, value);
+                    xmlFree(value);
+                }
+                attr = attr->next;
+            }
+
+            // Check if element has children
+            if (node->children) {
+                // Check if only child is text (no sub-elements)
+                bool has_element_children = false;
+                xmlNodePtr child = node->children;
+                while (child) {
+                    if (child->type == XML_ELEMENT_NODE) {
+                        has_element_children = true;
+                        break;
+                    }
+                    child = child->next;
+                }
+
+                if (has_element_children) {
+                    fprintf(f, ">\n");
+                    child = node->children;
+                    while (child) {
+                        _write_xml_node(f, child, depth + 1);
+                        child = child->next;
+                    }
+                    _write_indent(f, depth);
+                    fprintf(f, "</%s>\n", node->name);
+                } else {
+                    // Text-only content - write inline
+                    fprintf(f, ">");
+                    child = node->children;
+                    while (child) {
+                        if (child->type == XML_TEXT_NODE && child->content) {
+                            fprintf(f, "%s", child->content);
+                        }
+                        child = child->next;
+                    }
+                    fprintf(f, "</%s>\n", node->name);
+                }
+            } else {
+                // Self-closing tag
+                fprintf(f, "/>\n");
+            }
+            break;
+        }
+        case XML_TEXT_NODE:
+            // Text nodes handled inline with parent element
+            break;
+        case XML_COMMENT_NODE:
+            _write_indent(f, depth);
+            fprintf(f, "<!--%s-->\n", node->content ? (char *)node->content : "");
+            break;
+        default:
+            break;
+    }
+}
+
+void dc_app_config_save_to_file(DcAppConfig *config, const char *filepath) {
+    FILE *f = fopen(filepath, "w");
+    if (!f) return;
+
+    // Write XML declaration
+    fprintf(f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+
+    // Write document tree
+    xmlNodePtr root = xmlDocGetRootElement(config->xml_doc);
+    _write_xml_node(f, root, 0);
+
+    fclose(f);
 }
 
 DcAppLookupIndex _get_const_index(_ConfigContext *context, const char *name) {

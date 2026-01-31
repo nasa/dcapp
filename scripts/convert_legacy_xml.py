@@ -30,6 +30,10 @@ ELEMENT_RENAMES = {
     'OnPress': 'MousePressed',
     'Stencil': 'StencilAdd',      # Inside <Mask>
     'Projection': 'StencilDraw',  # Inside <Mask>
+    # TrickIO renames
+    'TrickIo': 'TrickIO',
+    'FromTrick': 'TrickFrom',
+    'ToTrick': 'TrickTo',
 }
 
 # Button-specific child element renames
