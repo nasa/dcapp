@@ -85,6 +85,15 @@ REMOVE_ATTRIBUTES = {
     'MaximumValue',     # Set (converted to separate operation)
 }
 
+# Elements to comment out with TODO markers
+# Maps element name -> (marker, message)
+COMMENT_OUT_ELEMENTS = {
+    'EdgeIo': ('TODO(migration)', 'EdgeIo not yet supported'),
+    'ADI': ('TODO(deprecated)', 'Use TexturedSphere instead of ADI'),
+    'Animation': ('TODO(migration)', 'Animation not yet supported'),
+    'Map': ('TODO(deprecated)', 'Use Terrain instead of Map'),
+}
+
 
 # ============================================================================
 # SECTION 3: VARIABLE TYPE CONSTANT MAPPINGS
@@ -546,6 +555,20 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
     # Special handling for Mask elements
     if elem.tag == 'Mask':
         process_mask_element(elem)
+
+    # Comment out deprecated/unsupported elements (e.g., EdgeIo, ADI)
+    if elem.tag in COMMENT_OUT_ELEMENTS and parent is not None:
+        marker, message = COMMENT_OUT_ELEMENTS[elem.tag]
+        # Serialize the element and its children to XML string
+        elem_xml = etree.tostring(elem, encoding='unicode', pretty_print=True).strip()
+        # Create comment with marker
+        comment_text = f' {marker}: {message}\n{elem_xml}\n'
+        comment = etree.Comment(comment_text)
+        # Replace element with comment in parent
+        idx = list(parent).index(elem)
+        parent.remove(elem)
+        parent.insert(idx, comment)
+        return all_additional  # Don't process children
 
     # Process this element
     additional = process_element(elem, parent_tag)

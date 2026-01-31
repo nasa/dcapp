@@ -455,57 +455,72 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // determine enabled state
-    DcValue *enabled_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->button.var_enabled)->value_index);
-    DcValue *enabled_on_value  = dc_app_lookup_get_value(app_data->lookup, node->button.val_enabled_on);
-    bool     is_enabled        = dc_value_is_equal(enabled_var_value, enabled_on_value);
+    bool is_enabled = true; // default to enabled
+    if (node->button.var_enabled != DC_APP_VAR_INDEX_UNDEFINED) {
+        DcValue *enabled_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->button.var_enabled)->value_index);
+        DcValue *enabled_on_value  = dc_app_lookup_get_value(app_data->lookup, node->button.val_enabled_on);
+        is_enabled = dc_value_is_equal(enabled_var_value, enabled_on_value);
+    }
 
     // determine indicator
-    DcValue *indicator_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->button.var_indicator)->value_index);
-    DcValue *indicator_on_value  = dc_app_lookup_get_value(app_data->lookup, node->button.val_indicator_on);
-    bool     is_indicator_on     = dc_value_is_equal(indicator_var_value, indicator_on_value);
+    DcValue *indicator_var_value = NULL;
+    bool     is_indicator_on     = false; // default to off
+    if (node->button.var_indicator != DC_APP_VAR_INDEX_UNDEFINED) {
+        indicator_var_value      = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->button.var_indicator)->value_index);
+        DcValue *indicator_on_value = dc_app_lookup_get_value(app_data->lookup, node->button.val_indicator_on);
+        is_indicator_on = dc_value_is_equal(indicator_var_value, indicator_on_value);
+    }
 
     // determine transition
-    DcValue *target_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->button.var_target)->value_index);
-    bool     is_transitioning = dc_value_is_not_equal(target_var_value, indicator_var_value);
+    DcValue *target_var_value = NULL;
+    bool     is_transitioning = false; // default to not transitioning
+    if (node->button.var_target != DC_APP_VAR_INDEX_UNDEFINED) {
+        target_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->button.var_target)->value_index);
+        if (indicator_var_value) {
+            is_transitioning = dc_value_is_not_equal(target_var_value, indicator_var_value);
+        }
+    }
 
     // process mouse event states
     bool is_pressed  = (app_data->frame_data.pressed_node == node_index);
     bool is_released = (app_data->frame_data.released_node == node_index);
 
-    // process mouse events per button type
-    DcValue *target_on_value  = dc_app_lookup_get_value(app_data->lookup, node->button.val_target_on);
-    DcValue *target_off_value = dc_app_lookup_get_value(app_data->lookup, node->button.val_target_off);
-    switch (node->button.type) {
+    // process mouse events per button type (only if target variable is defined)
+    if (target_var_value) {
+        DcValue *target_on_value  = dc_app_lookup_get_value(app_data->lookup, node->button.val_target_on);
+        DcValue *target_off_value = dc_app_lookup_get_value(app_data->lookup, node->button.val_target_off);
+        switch (node->button.type) {
 
-        // toggle: flip based on current indicator state (on release)
-        case DC_APP_BUTTON_TYPE_TOGGLE:
-            if (is_released) {
-                if (is_indicator_on) {
+            // toggle: flip based on current indicator state (on release)
+            case DC_APP_BUTTON_TYPE_TOGGLE:
+                if (is_released) {
+                    if (is_indicator_on) {
+                        dc_value_copy(target_var_value, target_off_value);
+                    } else {
+                        dc_value_copy(target_var_value, target_on_value);
+                    }
+                }
+                break;
+
+            // momentary: flip on press/release
+            case DC_APP_BUTTON_TYPE_MOMENTARY:
+                if (is_pressed) {
+                    dc_value_copy(target_var_value, target_on_value);
+                } else if (is_released) {
                     dc_value_copy(target_var_value, target_off_value);
-                } else {
+                }
+                break;
+
+            // standard: set to on value on release
+            case DC_APP_BUTTON_TYPE_STANDARD:
+                if (is_released) {
                     dc_value_copy(target_var_value, target_on_value);
                 }
-            }
-            break;
+                break;
 
-        // momentary: flip on press/release
-        case DC_APP_BUTTON_TYPE_MOMENTARY:
-            if (is_pressed) {
-                dc_value_copy(target_var_value, target_on_value);
-            } else if (is_released) {
-                dc_value_copy(target_var_value, target_off_value);
-            }
-            break;
-
-        // standard: set to on value on release
-        case DC_APP_BUTTON_TYPE_STANDARD:
-            if (is_released) {
-                dc_value_copy(target_var_value, target_on_value);
-            }
-            break;
-
-        default:
-            break;
+            default:
+                break;
+        }
     }
 
     // mouse interaction
@@ -3017,6 +3032,11 @@ static void _draw_node_mouse_motion(_AppData *app_data, _NodeIndex node_index, _
 }
 
 static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+
+    // skip if variable is undefined
+    if (node->set.var_index == DC_APP_VAR_INDEX_UNDEFINED) {
+        return;
+    }
 
     DcValue *var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->set.var_index)->value_index);
     DcValue *op_value  = dc_app_lookup_get_value(app_data->lookup, node->set.operand);
