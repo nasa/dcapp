@@ -193,11 +193,11 @@ def strip_at_prefix(value: str) -> str:
 
 def convert_alignment(elem: etree._Element, has_x: bool, has_y: bool) -> None:
     """
-    Convert HorizontalAlign/VerticalAlign to LocalAlign/ParentAlign.
+    Convert HorizontalAlign/VerticalAlign to LocalAlign/ParentAlign (or AlignX/AlignY shorthand).
 
     Rules:
     - If axis has explicit position (X/Y), use only LocalAlign
-    - If axis has no position, use BOTH ParentAlign and LocalAlign
+    - If axis has no position, use AlignX/AlignY shorthand (expands to both Local and Parent)
     - Invalid values fall back to legacy defaults (Left for horizontal, Bottom for vertical)
     """
     h_align = elem.get('HorizontalAlign')
@@ -206,17 +206,23 @@ def convert_alignment(elem: etree._Element, has_x: bool, has_y: bool) -> None:
     if h_align:
         # Legacy default for invalid horizontal values was Left
         new_value = HORIZONTAL_ALIGN_MAP.get(h_align, '#_align_left_')
-        elem.set('LocalAlignX', new_value)
-        if not has_x:
-            elem.set('ParentAlignX', new_value)
+        if has_x:
+            # Only local align when position is explicit
+            elem.set('LocalAlignX', new_value)
+        else:
+            # Use shorthand when both would be the same
+            elem.set('AlignX', new_value)
         del elem.attrib['HorizontalAlign']
 
     if v_align:
         # Legacy default for invalid vertical values was Bottom
         new_value = VERTICAL_ALIGN_MAP.get(v_align, '#_align_bottom_')
-        elem.set('LocalAlignY', new_value)
-        if not has_y:
-            elem.set('ParentAlignY', new_value)
+        if has_y:
+            # Only local align when position is explicit
+            elem.set('LocalAlignY', new_value)
+        else:
+            # Use shorthand when both would be the same
+            elem.set('AlignY', new_value)
         del elem.attrib['VerticalAlign']
 
 
