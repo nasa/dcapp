@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Variable Type="#_variable_integer_" InitialValue="0">ButtonState</Variable>
+
+    <Window Title="Button Children Test" X="100" Y="100" Width="500" Height="400">
+        <Panel VirtualWidth="500" VirtualHeight="400" BackgroundColor="0.1 0.1 0.1">
+
+            <Text X="250" Y="380" LocalAlignX="#_align_center_" Size="18" FillColor="1 1 1">Button Layer Test</Text>
+
+            <!-- Simple button to test layers -->
+            <Button Type="#_button_toggle_" X="50" Y="50" Width="400" Height="300"
+                    Variable="ButtonState" On="1" Off="0">
+
+                <!-- always visible background -->
+                <Rectangle FillColor="0.2 0.3 0.5"/>
+                <Rectangle LineColor="0.5 0.6 0.8" LineWidth="2"/>
+
+                <!-- MouseHovered: yellow border when hovering -->
+                <MouseHovered>
+                    <Rectangle LineColor="1 0.8 0.2" LineWidth="4"/>
+                </MouseHovered>
+
+                <!-- MouseActive: red overlay when held -->
+                <MouseActive>
+                    <Rectangle FillColor="0.8 0.2 0.2"/>
+                    <Text X="200" Y="100" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="24" FillColor="1 1 1">ACTIVE!</Text>
+                </MouseActive>
+
+                <!-- always visible label -->
+                <Text X="200" Y="150" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="20" FillColor="1 1 1">Click Me</Text>
+
+                <!-- ButtonIndicatorOn: green circle when ON -->
+                <ButtonIndicatorOn>
+                    <Circle X="370" Y="270" Radius="20" FillColor="0.2 0.8 0.2"/>
+                    <Text X="370" Y="270" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">ON</Text>
+                </ButtonIndicatorOn>
+
+                <!-- ButtonIndicatorOff: red circle when OFF -->
+                <ButtonIndicatorOff>
+                    <Circle X="370" Y="270" Radius="20" FillColor="0.5 0.2 0.2"/>
+                    <Text X="370" Y="270" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="0.7 0.7 0.7">OFF</Text>
+                </ButtonIndicatorOff>
+
+                <!-- status text at bottom -->
+                <Text X="200" Y="20" LocalAlignX="#_align_center_" Size="14" FillColor="0.7 0.7 0.8">State: @ButtonState</Text>
+
+            </Button>
+
+        </Panel>
+    </Window>
+</DCAPP>

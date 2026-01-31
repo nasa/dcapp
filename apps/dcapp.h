@@ -118,9 +118,34 @@ typedef enum __NodeType {
     NODE_TYPE_TERRAIN,
     NODE_TYPE_TEXT,
     NODE_TYPE_WINDOW,
+
+    // state-conditional container nodes (check parent's state_flags)
+    NODE_TYPE_STATE_BUTTON_ENABLED,
+    NODE_TYPE_STATE_BUTTON_DISABLED,
+    NODE_TYPE_STATE_BUTTON_INDICATOR_ON,
+    NODE_TYPE_STATE_BUTTON_INDICATOR_OFF,
+    NODE_TYPE_STATE_BUTTON_TRANSITION,
+    NODE_TYPE_STATE_MOUSE_PRESSED,
+    NODE_TYPE_STATE_MOUSE_RELEASED,
+    NODE_TYPE_STATE_MOUSE_ACTIVE,
+    NODE_TYPE_STATE_MOUSE_INACTIVE,
+    NODE_TYPE_STATE_MOUSE_HOVERED,
+
     NODE_TYPE__COUNT,
     NODE_TYPE__MAX = NODE_TYPE__COUNT - 1,
 } _NodeType;
+
+// State flags that parents set for conditional child nodes to check
+typedef enum __NodeStateFlags {
+    NODE_STATE_FLAG_NONE          = 0,
+    NODE_STATE_FLAG_ENABLED       = 1 << 0,
+    NODE_STATE_FLAG_INDICATOR_ON  = 1 << 1,
+    NODE_STATE_FLAG_TRANSITIONING = 1 << 2,
+    NODE_STATE_FLAG_PRESSED       = 1 << 3,
+    NODE_STATE_FLAG_ACTIVE        = 1 << 4,
+    NODE_STATE_FLAG_HOVERED       = 1 << 5,
+    NODE_STATE_FLAG_RELEASED      = 1 << 6,
+} _NodeStateFlags;
 
 typedef int      _NodeIndex;
 const _NodeIndex NODE_INDEX_UNDEFINED = -1;
@@ -165,21 +190,10 @@ typedef struct __NodeBlink {
     int    last_trigger_value;
 } _NodeBlink;
 
-typedef enum __ButtonLayerType {
-    BUTTON_LAYER_TYPE_CHILDREN,
-    BUTTON_LAYER_TYPE_ENABLED,
-    BUTTON_LAYER_TYPE_DISABLED,
-    BUTTON_LAYER_TYPE_INDICATOR_ON,
-    BUTTON_LAYER_TYPE_INDICATOR_OFF,
-    BUTTON_LAYER_TYPE_TRANSITION,
-    BUTTON_LAYER_TYPE_PRESSED,
-    BUTTON_LAYER_TYPE_RELEASED,
-} _ButtonLayerType;
-
-typedef struct __ButtonLayer {
-    _NodeIndex       child;
-    _ButtonLayerType type;
-} _ButtonLayer;
+// State event node (children drawn when parent state matches)
+typedef struct __NodeStateEvent {
+    _NodeIndex child;
+} _NodeStateEvent;
 
 typedef struct __NodeButton {
 
@@ -193,8 +207,11 @@ typedef struct __NodeButton {
     _ValIndex2    parent_align;
     DcAppValIndex rotation;
 
-    // layers (stretchy buffer preserving XML order)
-    _ButtonLayer *sb_layers;
+    // children (regular child nodes, including state-conditional nodes)
+    _NodeIndex child;
+
+    // state flags for conditional children to check
+    uint32_t state_flags;
 
     // comparison values for each state
     DcAppValIndex val_enabled_on;
@@ -206,13 +223,6 @@ typedef struct __NodeButton {
     DcAppVarIndex var_enabled;
     DcAppVarIndex var_target;
     DcAppVarIndex var_indicator;
-
-    // manage transitions (off -> on, on -> off, stable)
-    // (don't think I need this)
-    // * can easily check if var_target.val != var_indicator.val,
-    // * and if var_target.val == val_target_on, then it's transitioning to ON
-    // * opposite for transitioning to OFF
-    // int transition_state;
 
     // type for button
     DcAppButtonType type;
@@ -489,27 +499,28 @@ typedef struct __Node {
     _NodeIndex parent;
     _NodeIndex next;
     union {
-        _NodeArc         arc;
-        _NodeBlink       blink;
-        _NodeButton      button;
-        _NodeCircle      circle;
-        _NodeConditional conditional;
-        _NodeEllipse     ellipse;
-        _NodeContainer   container;
-        _NodeFunction    function;
-        _NodeImage       image;
-        _NodeLine        line;
-        _NodeMouseMotion mouse_motion;
-        _NodePanel       panel;
-        _NodePixelstream pixelstream;
-        _NodePolygon     polygon;
-        _NodeRectangle   rectangle;
-        _NodeSet         set;
-        _NodeSphere      sphere;
-        _NodeStencil     stencil;
-        _NodeTerrain     terrain;
-        _NodeText        text;
-        _NodeWindow      window;
+        _NodeArc              arc;
+        _NodeBlink            blink;
+        _NodeButton           button;
+        _NodeCircle           circle;
+        _NodeConditional      conditional;
+        _NodeEllipse          ellipse;
+        _NodeContainer        container;
+        _NodeFunction         function;
+        _NodeImage            image;
+        _NodeLine             line;
+        _NodeMouseMotion      mouse_motion;
+        _NodePanel            panel;
+        _NodePixelstream      pixelstream;
+        _NodePolygon          polygon;
+        _NodeRectangle        rectangle;
+        _NodeSet              set;
+        _NodeSphere           sphere;
+        _NodeStateEvent       state_event;
+        _NodeStencil          stencil;
+        _NodeTerrain          terrain;
+        _NodeText             text;
+        _NodeWindow           window;
     };
 } _Node;
 

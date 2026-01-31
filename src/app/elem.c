@@ -26,8 +26,6 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "ButtonReleased";
         case DC_APP_ELEM_TYPE_BUTTON_TRANSITION:
             return "ButtonTransition";
-        case DC_APP_ELEM_TYPE_CHILDREN:
-            return "Children";
         case DC_APP_ELEM_TYPE_CIRCLE:
             return "Circle";
         case DC_APP_ELEM_TYPE_CONSTANT:
@@ -143,8 +141,6 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_BUTTON_RELEASED;
     if (strcmp(name, "ButtonTransition") == 0)
         return DC_APP_ELEM_TYPE_BUTTON_TRANSITION;
-    if (strcmp(name, "Children") == 0)
-        return DC_APP_ELEM_TYPE_CHILDREN;
     if (strcmp(name, "Circle") == 0)
         return DC_APP_ELEM_TYPE_CIRCLE;
     if (strcmp(name, "Constant") == 0)

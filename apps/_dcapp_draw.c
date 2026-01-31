@@ -25,6 +25,16 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
 static void _draw_node_mouse_motion(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_state_button_enabled(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_state_button_disabled(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_state_button_indicator_on(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_state_button_indicator_off(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_state_button_transition(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_state_mouse_pressed(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_state_mouse_released(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_state_mouse_active(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_state_mouse_inactive(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_state_mouse_hovered(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -132,6 +142,38 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
 
         case NODE_TYPE_WINDOW:
             _draw_node_window(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+
+        // state conditional nodes (check parent's state_flags)
+        case NODE_TYPE_STATE_BUTTON_ENABLED:
+            _draw_node_state_button_enabled(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+        case NODE_TYPE_STATE_BUTTON_DISABLED:
+            _draw_node_state_button_disabled(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+        case NODE_TYPE_STATE_BUTTON_INDICATOR_ON:
+            _draw_node_state_button_indicator_on(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+        case NODE_TYPE_STATE_BUTTON_INDICATOR_OFF:
+            _draw_node_state_button_indicator_off(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+        case NODE_TYPE_STATE_BUTTON_TRANSITION:
+            _draw_node_state_button_transition(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+        case NODE_TYPE_STATE_MOUSE_PRESSED:
+            _draw_node_state_mouse_pressed(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+        case NODE_TYPE_STATE_MOUSE_RELEASED:
+            _draw_node_state_mouse_released(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+        case NODE_TYPE_STATE_MOUSE_ACTIVE:
+            _draw_node_state_mouse_active(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+        case NODE_TYPE_STATE_MOUSE_INACTIVE:
+            _draw_node_state_mouse_inactive(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+            break;
+        case NODE_TYPE_STATE_MOUSE_HOVERED:
+            _draw_node_state_mouse_hovered(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         default:
@@ -421,7 +463,6 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
     // process mouse event states
     bool is_pressed  = (app_data->frame_data.pressed_node == node_index);
     bool is_released = (app_data->frame_data.released_node == node_index);
-    bool is_held     = (app_data->frame_data.active_node == node_index);
 
     // process mouse events per button type
     DcValue *target_on_value  = dc_app_lookup_get_value(app_data->lookup, node->button.val_target_on);
@@ -493,48 +534,113 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
         }
     }
 
-    // draw children based on state
+    // set state flags for conditional children to check
+    node->button.state_flags = NODE_STATE_FLAG_NONE;
+    if (is_enabled) {
+        node->button.state_flags |= NODE_STATE_FLAG_ENABLED;
+    }
+    if (is_indicator_on) {
+        node->button.state_flags |= NODE_STATE_FLAG_INDICATOR_ON;
+    }
+    if (is_transitioning) {
+        node->button.state_flags |= NODE_STATE_FLAG_TRANSITIONING;
+    }
+    if (is_pressed) {
+        node->button.state_flags |= NODE_STATE_FLAG_PRESSED;
+    }
+    if (app_data->frame_data.active_node == node_index) {
+        node->button.state_flags |= NODE_STATE_FLAG_ACTIVE;
+    }
+    if (app_data->frame_data.hovered_node == node_index) {
+        node->button.state_flags |= NODE_STATE_FLAG_HOVERED;
+    }
+    if (is_released) {
+        node->button.state_flags |= NODE_STATE_FLAG_RELEASED;
+    }
+
+    // draw children (includes state conditional nodes that check state_flags)
     plVec2 child_position   = (plVec2){0.0f, 0.0f};
     plVec2 child_dimensions = (plVec2){virtual_dimension[0], virtual_dimension[1]};
+    _draw_node_list(app_data, node->button.child, &child_position, &child_dimensions, &transform);
+}
 
-    // iterate layers in order (preserves XML order)
-    int num_layers = sbcount(node->button.sb_layers);
-    for (int i = 0; i < num_layers; i++) {
-        _ButtonLayer *layer = &node->button.sb_layers[i];
-        bool should_draw = false;
+// Helper to get parent's state_flags (returns 0 if parent is not a Button)
+static uint32_t _get_parent_state_flags(_AppData *app_data, _Node *node) {
+    _Node *parent_node = _get_node(app_data, node->parent);
+    if (parent_node && parent_node->type == NODE_TYPE_BUTTON) {
+        return parent_node->button.state_flags;
+    }
+    return 0;
+}
 
-        switch (layer->type) {
-            case BUTTON_LAYER_TYPE_CHILDREN:
-                should_draw = true;
-                break;
-            case BUTTON_LAYER_TYPE_ENABLED:
-                should_draw = is_enabled;
-                break;
-            case BUTTON_LAYER_TYPE_DISABLED:
-                should_draw = !is_enabled;
-                break;
-            case BUTTON_LAYER_TYPE_INDICATOR_ON:
-                should_draw = !is_transitioning && is_indicator_on;
-                break;
-            case BUTTON_LAYER_TYPE_INDICATOR_OFF:
-                should_draw = !is_transitioning && !is_indicator_on;
-                break;
-            case BUTTON_LAYER_TYPE_TRANSITION:
-                should_draw = is_transitioning;
-                break;
-            case BUTTON_LAYER_TYPE_PRESSED:
-                should_draw = is_pressed;
-                break;
-            case BUTTON_LAYER_TYPE_RELEASED:
-                should_draw = is_released;
-                break;
-            default:
-                break;
-        }
+static void _draw_node_state_button_enabled(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    uint32_t flags = _get_parent_state_flags(app_data, node);
+    if (flags & NODE_STATE_FLAG_ENABLED) {
+        _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
+    }
+}
 
-        if (should_draw) {
-            _draw_node_list(app_data, layer->child, &child_position, &child_dimensions, &transform);
-        }
+static void _draw_node_state_button_disabled(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    uint32_t flags = _get_parent_state_flags(app_data, node);
+    if (!(flags & NODE_STATE_FLAG_ENABLED)) {
+        _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
+    }
+}
+
+static void _draw_node_state_button_indicator_on(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    uint32_t flags = _get_parent_state_flags(app_data, node);
+    if (!(flags & NODE_STATE_FLAG_TRANSITIONING) && (flags & NODE_STATE_FLAG_INDICATOR_ON)) {
+        _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
+    }
+}
+
+static void _draw_node_state_button_indicator_off(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    uint32_t flags = _get_parent_state_flags(app_data, node);
+    if (!(flags & NODE_STATE_FLAG_TRANSITIONING) && !(flags & NODE_STATE_FLAG_INDICATOR_ON)) {
+        _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
+    }
+}
+
+static void _draw_node_state_button_transition(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    uint32_t flags = _get_parent_state_flags(app_data, node);
+    if (flags & NODE_STATE_FLAG_TRANSITIONING) {
+        _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
+    }
+}
+
+static void _draw_node_state_mouse_pressed(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    uint32_t flags = _get_parent_state_flags(app_data, node);
+    if (flags & NODE_STATE_FLAG_PRESSED) {
+        _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
+    }
+}
+
+static void _draw_node_state_mouse_released(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    uint32_t flags = _get_parent_state_flags(app_data, node);
+    if (flags & NODE_STATE_FLAG_RELEASED) {
+        _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
+    }
+}
+
+static void _draw_node_state_mouse_active(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    uint32_t flags = _get_parent_state_flags(app_data, node);
+    if (flags & NODE_STATE_FLAG_ACTIVE) {
+        _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
+    }
+}
+
+static void _draw_node_state_mouse_inactive(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    uint32_t flags = _get_parent_state_flags(app_data, node);
+    // Inactive when not active, not hovered, not pressed
+    if (!(flags & NODE_STATE_FLAG_ACTIVE) && !(flags & NODE_STATE_FLAG_HOVERED) && !(flags & NODE_STATE_FLAG_PRESSED)) {
+        _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
+    }
+}
+
+static void _draw_node_state_mouse_hovered(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    uint32_t flags = _get_parent_state_flags(app_data, node);
+    if (flags & NODE_STATE_FLAG_HOVERED) {
+        _draw_node_list(app_data, node->state_event.child, parent_position, parent_dimensions, parent_transform);
     }
 }
 

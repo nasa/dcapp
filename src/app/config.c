@@ -878,43 +878,6 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
             return;
         }
 
-        case DC_APP_ELEM_TYPE_BUTTON: {
-            // Wrap implicit children into <Children>, preserving order
-            xmlNodePtr wrapper = NULL;
-            xmlNodePtr child = node->children;
-
-            while (child) {
-                xmlNodePtr next = child->next;
-                if (child->type == XML_ELEMENT_NODE) {
-                    DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
-                    if (child_type != DC_APP_ELEM_TYPE_BUTTON_DISABLED &&
-                        child_type != DC_APP_ELEM_TYPE_BUTTON_ENABLED &&
-                        child_type != DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF &&
-                        child_type != DC_APP_ELEM_TYPE_BUTTON_INDICATOR_ON &&
-                        child_type != DC_APP_ELEM_TYPE_BUTTON_PRESSED &&
-                        child_type != DC_APP_ELEM_TYPE_BUTTON_RELEASED &&
-                        child_type != DC_APP_ELEM_TYPE_BUTTON_TRANSITION &&
-                        child_type != DC_APP_ELEM_TYPE_CHILDREN) {
-                        // Create wrapper if needed
-                        if (!wrapper) {
-                            wrapper = xmlNewNode(NULL, BAD_CAST "Children");
-                            xmlAddPrevSibling(child, wrapper);
-                        }
-                        xmlUnlinkNode(child);
-                        xmlAddChild(wrapper, child);
-                    } else {
-                        // Hit a specialized element, close current wrapper
-                        wrapper = NULL;
-                    }
-                }
-                child = next;
-            }
-            break;
-        }
-
-        case DC_APP_ELEM_TYPE_PANEL:
-            break;
-
         default:
             break;
     }
