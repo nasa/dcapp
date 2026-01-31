@@ -11,6 +11,7 @@
 #include "../utils/string.h"
 
 #include <libxml/parser.h>
+#include <libxml/xmlsave.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -965,7 +966,11 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
 }
 
 void dc_app_config_save_to_file(DcAppConfig *config, const char *filepath) {
-    xmlSaveFormatFile(filepath, config->xml_doc, 1);
+    xmlSaveCtxtPtr ctx = xmlSaveToFilename(filepath, "UTF-8", XML_SAVE_FORMAT);
+    if (ctx) {
+        xmlSaveDoc(ctx, config->xml_doc);
+        xmlSaveClose(ctx);
+    }
 }
 
 DcAppLookupIndex _get_const_index(_ConfigContext *context, const char *name) {
