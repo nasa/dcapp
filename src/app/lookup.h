@@ -26,6 +26,15 @@ typedef struct _DcAppLookup {
     DcAppLookupIndex index;
 } DcAppLookup;
 
+// Warning suppression flags (used by SuppressWarnings attribute on DCAPP element)
+typedef enum _DcAppSuppressWarning {
+    DC_APP_SUPPRESS_NONE             = 0,
+    DC_APP_SUPPRESS_MISSING_CONSTANT = 1 << 0,
+    DC_APP_SUPPRESS_MISSING_VARIABLE = 1 << 1,
+    DC_APP_SUPPRESS_MISSING_STYLE    = 1 << 2,
+    DC_APP_SUPPRESS_STYLE_OVERRIDE   = 1 << 3,
+} DcAppSuppressWarning;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -47,6 +56,8 @@ const char     *dc_app_lookup_get_var_name(DcAppLookup *lookup, DcAppVarIndex in
 DcAppVarIndex   dc_app_lookup_register_anon_var(DcAppLookup *lookup, DcValueType type, const char *initial_value_str);
 
 void dc_app_lookup_set_var_to_string(DcAppLookup *lookup, DcAppVarIndex var_index, const char *value);
+
+void dc_app_lookup_set_suppress_warnings(DcAppLookup *lookup, unsigned int flags);
 
 #ifdef __cplusplus
 }

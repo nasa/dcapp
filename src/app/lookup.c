@@ -8,6 +8,9 @@
 
 typedef struct __LookupContext {
 
+    // warning suppression
+    unsigned int suppress_warnings;
+
     // vars
     char           *sb_var_names;
     int            *sb_var_name_offsets;
@@ -105,7 +108,9 @@ DcAppLookupVar *dc_app_lookup_get_var_by_name(DcAppLookup *lookup, const char *n
     _LookupContext *context = &(_sb_contexts[lookup->index]);
     DcAppVarIndex   index   = dc_app_lookup_get_var_index(lookup, name);
     if (index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
-        fprintf(stderr, "dc_app_lookup_get_var_by_name(): attempting to fetch non-existant variable '%s'\n", name);
+        if (!(context->suppress_warnings & DC_APP_SUPPRESS_MISSING_VARIABLE)) {
+            fprintf(stderr, "dc_app_lookup_get_var_by_name(): attempting to fetch non-existant variable '%s'\n", name);
+        }
         return NULL;
     }
     return dc_app_lookup_get_var(lookup, index);
@@ -137,4 +142,9 @@ void dc_app_lookup_set_var_to_string(DcAppLookup *lookup, DcAppVarIndex var_inde
     DcAppLookupVar *var     = dc_app_lookup_get_var(lookup, var_index);
     DcValue        *val     = dc_app_lookup_get_value(lookup, var->value_index);
     dc_value_set_from_string(val, new_string);
+}
+
+void dc_app_lookup_set_suppress_warnings(DcAppLookup *lookup, unsigned int flags) {
+    _LookupContext *context    = &(_sb_contexts[lookup->index]);
+    context->suppress_warnings = flags;
 }

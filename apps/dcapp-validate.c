@@ -35,10 +35,10 @@ int main(int argc, char **argv) {
     // create config
     DcAppConfig *config;
     const char  *config_filepath = argv[1];
-    if (argc < 3) {
-        config = dc_app_config_create(config_filepath, NULL, 0);
-    } else {
+    if (argc > 2) {
         config = dc_app_config_create(config_filepath, &(argv[2]), argc - 2);
+    } else {
+        config = dc_app_config_create(config_filepath, NULL, 0);
     }
 
     // set environment
@@ -56,8 +56,8 @@ int main(int argc, char **argv) {
     dc_app_config_save_to_file(config, log_file);
 
     // validate
-    ValidationContext ctx       = {0};
-    xmlNodePtr        root_node = xmlDocGetRootElement(config->xml_doc);
+    ValidationContext ctx = {0};
+    xmlNodePtr root_node  = xmlDocGetRootElement(config->xml_doc);
     _validate_node(&ctx, root_node, DC_APP_ELEM_TYPE_NONELEM);
 
     // report summary
@@ -126,7 +126,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_WINDOW:
             case DC_APP_ELEM_TYPE_VARIABLE:
             case DC_APP_ELEM_TYPE_TRICK_IO:
-            case DC_APP_ELEM_TYPE_DEFAULT:
             case DC_APP_ELEM_TYPE_LOGIC:
             case DC_APP_ELEM_TYPE_FUNCTION:
                 return true;
@@ -140,7 +139,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         switch (child_type) {
             case DC_APP_ELEM_TYPE_PANEL:
             case DC_APP_ELEM_TYPE_VARIABLE:
-            case DC_APP_ELEM_TYPE_DEFAULT:
+            case DC_APP_ELEM_TYPE_IF:
                 return true;
             default:
                 return false;
@@ -152,7 +151,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         switch (child_type) {
             // config elements
             case DC_APP_ELEM_TYPE_VARIABLE:
-            case DC_APP_ELEM_TYPE_DEFAULT:
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
@@ -185,7 +183,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         switch (child_type) {
             // config elements
             case DC_APP_ELEM_TYPE_VARIABLE:
-            case DC_APP_ELEM_TYPE_DEFAULT:
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
@@ -330,7 +327,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_FALSE:
             // config elements
             case DC_APP_ELEM_TYPE_VARIABLE:
-            case DC_APP_ELEM_TYPE_DEFAULT:
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
@@ -363,7 +359,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         switch (child_type) {
             // config elements
             case DC_APP_ELEM_TYPE_VARIABLE:
-            case DC_APP_ELEM_TYPE_DEFAULT:
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
@@ -1119,9 +1114,9 @@ void _validate_attribute_names(ValidationContext *ctx, xmlNodePtr node, DcAppEle
 
         // Check if attribute is valid for this element type
         if (!_is_valid_attr_for_elem(attr_name, elem_type)) {
-            fprintf(stderr, "ERROR: <%s> has invalid attribute '%s' (line %ld)\n",
+            fprintf(stderr, "WARNING: <%s> has unrecognized attribute '%s' (line %ld)\n",
                     node->name, attr_name, xmlGetLineNo(node));
-            ctx->error_count++;
+            ctx->warning_count++;
         }
 
         attr = attr->next;

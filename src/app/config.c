@@ -32,6 +32,9 @@ typedef struct __Constant {
 
 typedef struct __ConfigContext {
 
+    // warning suppression
+    unsigned int suppress_warnings;
+
     // constants
     char      *sb_const_names;
     int       *sb_const_name_offsets;
@@ -348,6 +351,36 @@ void dc_app_config_preprocess_xml(DcAppConfig *config, DcAppLookup *lookup) {
         fprintf(stderr, "DCAPP dc_app_config_preprocess_xml(): configuration root element is not DCAPP\n");
     }
 
+    // parse SuppressWarnings attribute from DCAPP element
+    xmlChar *suppress_warnings_attr = xmlGetProp(node, BAD_CAST "SuppressWarnings");
+    if (suppress_warnings_attr) {
+        unsigned int suppress_flags = 0;
+        char *token = strtok((char *)suppress_warnings_attr, ",");
+        while (token) {
+            // trim whitespace
+            while (*token == ' ') token++;
+            char *end = token + strlen(token) - 1;
+            while (end > token && *end == ' ') *end-- = '\0';
+
+            if (strcmp(token, "all") == 0) {
+                suppress_flags = ~0u;  // all bits set
+            } else if (strcmp(token, "missing-constants") == 0) {
+                suppress_flags |= DC_APP_SUPPRESS_MISSING_CONSTANT;
+            } else if (strcmp(token, "missing-variables") == 0) {
+                suppress_flags |= DC_APP_SUPPRESS_MISSING_VARIABLE;
+            } else if (strcmp(token, "missing-styles") == 0) {
+                suppress_flags |= DC_APP_SUPPRESS_MISSING_STYLE;
+            } else if (strcmp(token, "style-overrides") == 0) {
+                suppress_flags |= DC_APP_SUPPRESS_STYLE_OVERRIDE;
+            }
+            token = strtok(NULL, ",");
+        }
+        xmlFree(suppress_warnings_attr);
+
+        context->suppress_warnings = suppress_flags;
+        dc_app_lookup_set_suppress_warnings(lookup, suppress_flags);
+    }
+
     // clean XML file
     _preprocess_xml_node(context, node, config->config_dir_path);
     config->xml_doc_is_cleaned = true;
@@ -453,7 +486,9 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                     }
                 }
             } else {
-                fprintf(stderr, "DCAPP _preprocess_xml_node(): style %s is undefined\n", (char *)style_name);
+                if (!(context->suppress_warnings & DC_APP_SUPPRESS_MISSING_STYLE)) {
+                    fprintf(stderr, "DCAPP _preprocess_xml_node(): style %s is undefined\n", (char *)style_name);
+                }
             }
 
             xmlFree(style_name);
@@ -1000,6 +1035,9 @@ void dc_app_config_register_const_by_name(DcAppConfig *config, const char *name,
 const char *_get_const_by_name(_ConfigContext *context, const char *name) {
     DcAppLookupIndex const_index = _get_const_index(context, name);
     if (const_index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
+        if (context->suppress_warnings & DC_APP_SUPPRESS_MISSING_CONSTANT) {
+            return "";  // silently expand to nothing
+        }
         fprintf(stderr, "DCAPP _get_const_by_name(): constant '%s' does not exist\n", name);
         return NULL;
     } else {
@@ -1149,12 +1187,16 @@ static void _add_style(_ConfigContext *context, const char *name, DcAppElemType 
         // update style
         _ElemStyle *style = &(context->sb_styles[style_index]);
         if (style->xml_nodes[elem_type] != NULL) {
-            fprintf(stderr, "DCApp _add_style(): style '%s' already contains an entry for element '%s'; overwriting\n", name, dc_app_elem_type_to_string(elem_type));
+            if (!(context->suppress_warnings & DC_APP_SUPPRESS_STYLE_OVERRIDE)) {
+                fprintf(stderr, "DCApp _add_style(): style '%s' already contains an entry for element '%s'; overwriting\n", name, dc_app_elem_type_to_string(elem_type));
+            }
             xmlFree(style->xml_nodes[elem_type]);
         }
         style->xml_nodes[elem_type] = xml_node;
     } else {
-        fprintf(stderr, "DCAPP _set_style(): name %s is undefined\n", name);
+        if (!(context->suppress_warnings & DC_APP_SUPPRESS_MISSING_STYLE)) {
+            fprintf(stderr, "DCAPP _set_style(): name %s is undefined\n", name);
+        }
     }
 }
 

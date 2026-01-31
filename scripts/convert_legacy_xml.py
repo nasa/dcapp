@@ -137,6 +137,8 @@ CONDITIONAL_OP_MAP = {
     'ne': '#_conditional_ne_',
     'gte': '#_conditional_gte_',
     'lte': '#_conditional_lte_',
+    'ge': '#_conditional_gte_',
+    'le': '#_conditional_lte_',
     '>': '#_conditional_gt_',
     '<': '#_conditional_lt_',
     '==': '#_conditional_eq_',
@@ -220,8 +222,10 @@ def convert_conditional_operator(elem: etree._Element) -> None:
 
 
 def has_variable_reference(value: Optional[str]) -> bool:
-    """Check if a value contains a runtime variable reference (@prefix)."""
-    return value is not None and '@' in value
+    """Check if a value contains a runtime variable reference (@prefix or #{} macro)."""
+    if value is None:
+        return False
+    return '@' in value or '#{' in value
 
 
 def convert_if_to_staticif(elem: etree._Element) -> bool:
