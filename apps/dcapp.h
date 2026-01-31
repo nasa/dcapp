@@ -165,6 +165,22 @@ typedef struct __NodeBlink {
     int    last_trigger_value;
 } _NodeBlink;
 
+typedef enum __ButtonLayerType {
+    BUTTON_LAYER_TYPE_CHILDREN,
+    BUTTON_LAYER_TYPE_ENABLED,
+    BUTTON_LAYER_TYPE_DISABLED,
+    BUTTON_LAYER_TYPE_INDICATOR_ON,
+    BUTTON_LAYER_TYPE_INDICATOR_OFF,
+    BUTTON_LAYER_TYPE_TRANSITION,
+    BUTTON_LAYER_TYPE_PRESSED,
+    BUTTON_LAYER_TYPE_RELEASED,
+} _ButtonLayerType;
+
+typedef struct __ButtonLayer {
+    _NodeIndex       child;
+    _ButtonLayerType type;
+} _ButtonLayer;
+
 typedef struct __NodeButton {
 
     // standard transforms
@@ -177,15 +193,8 @@ typedef struct __NodeButton {
     _ValIndex2    parent_align;
     DcAppValIndex rotation;
 
-    // node indices drawn for a given state
-    _NodeIndex child_enabled;
-    _NodeIndex child_disabled;
-    _NodeIndex child_indicator_on;
-    _NodeIndex child_indicator_off;
-    _NodeIndex child_pressed;
-    _NodeIndex child_released;
-    _NodeIndex child_transition;
-    _NodeIndex child; // default children, not attached to any events
+    // layers (stretchy buffer preserving XML order)
+    _ButtonLayer *sb_layers;
 
     // comparison values for each state
     DcAppValIndex val_enabled_on;

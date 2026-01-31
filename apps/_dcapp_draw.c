@@ -421,6 +421,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
     // process mouse event states
     bool is_pressed  = (app_data->frame_data.pressed_node == node_index);
     bool is_released = (app_data->frame_data.released_node == node_index);
+    bool is_held     = (app_data->frame_data.active_node == node_index);
 
     // process mouse events per button type
     DcValue *target_on_value  = dc_app_lookup_get_value(app_data->lookup, node->button.val_target_on);
@@ -496,31 +497,45 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
     plVec2 child_position   = (plVec2){0.0f, 0.0f};
     plVec2 child_dimensions = (plVec2){virtual_dimension[0], virtual_dimension[1]};
 
-    // layer 1: indicator state (base appearance)
-    if (is_transitioning) {
-        _draw_node_list(app_data, node->button.child_transition, &child_position, &child_dimensions, &transform);
-    } else if (is_indicator_on) {
-        _draw_node_list(app_data, node->button.child_indicator_on, &child_position, &child_dimensions, &transform);
-    } else {
-        _draw_node_list(app_data, node->button.child_indicator_off, &child_position, &child_dimensions, &transform);
-    }
+    // iterate layers in order (preserves XML order)
+    int num_layers = sbcount(node->button.sb_layers);
+    for (int i = 0; i < num_layers; i++) {
+        _ButtonLayer *layer = &node->button.sb_layers[i];
+        bool should_draw = false;
 
-    // layer 2: enabled/disabled overlay
-    if (is_enabled) {
-        _draw_node_list(app_data, node->button.child_enabled, &child_position, &child_dimensions, &transform);
-    } else {
-        _draw_node_list(app_data, node->button.child_disabled, &child_position, &child_dimensions, &transform);
-    }
+        switch (layer->type) {
+            case BUTTON_LAYER_TYPE_CHILDREN:
+                should_draw = true;
+                break;
+            case BUTTON_LAYER_TYPE_ENABLED:
+                should_draw = is_enabled;
+                break;
+            case BUTTON_LAYER_TYPE_DISABLED:
+                should_draw = !is_enabled;
+                break;
+            case BUTTON_LAYER_TYPE_INDICATOR_ON:
+                should_draw = !is_transitioning && is_indicator_on;
+                break;
+            case BUTTON_LAYER_TYPE_INDICATOR_OFF:
+                should_draw = !is_transitioning && !is_indicator_on;
+                break;
+            case BUTTON_LAYER_TYPE_TRANSITION:
+                should_draw = is_transitioning;
+                break;
+            case BUTTON_LAYER_TYPE_PRESSED:
+                should_draw = is_pressed;
+                break;
+            case BUTTON_LAYER_TYPE_RELEASED:
+                should_draw = is_released;
+                break;
+            default:
+                break;
+        }
 
-    // layer 3: press/release feedback
-    if (is_pressed) {
-        _draw_node_list(app_data, node->button.child_pressed, &child_position, &child_dimensions, &transform);
-    } else if (is_released) {
-        _draw_node_list(app_data, node->button.child_released, &child_position, &child_dimensions, &transform);
+        if (should_draw) {
+            _draw_node_list(app_data, layer->child, &child_position, &child_dimensions, &transform);
+        }
     }
-
-    // layer 4: default children
-    _draw_node_list(app_data, node->button.child, &child_position, &child_dimensions, &transform);
 }
 
 #define _NODE_ARC_MAX_SEGMENTS 200

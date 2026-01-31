@@ -284,6 +284,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_BUTTON_TRANSITION:
             case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_ON:
             case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF:
+            case DC_APP_ELEM_TYPE_CHILDREN:
                 return true;
             default:
                 return false;
@@ -297,7 +298,8 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         parent_type == DC_APP_ELEM_TYPE_BUTTON_DISABLED ||
         parent_type == DC_APP_ELEM_TYPE_BUTTON_TRANSITION ||
         parent_type == DC_APP_ELEM_TYPE_BUTTON_INDICATOR_ON ||
-        parent_type == DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF) {
+        parent_type == DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF ||
+        parent_type == DC_APP_ELEM_TYPE_CHILDREN) {
         switch (child_type) {
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
@@ -868,6 +870,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
         case DC_APP_ELEM_TYPE_BUTTON_TRANSITION:
         case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_ON:
         case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF:
+        case DC_APP_ELEM_TYPE_CHILDREN:
             return true; // No specific attributes, allow common
 
         case DC_APP_ELEM_TYPE_CIRCLE:

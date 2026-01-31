@@ -20,6 +20,7 @@ static _NodeIndex    _process_xml_node_button_indicator_on(_AppData *app_data, x
 static _NodeIndex    _process_xml_node_button_pressed(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_button_released(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_button_transition(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_button_children(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_constant(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_container(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -161,6 +162,9 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_BUTTON_TRANSITION:
             return _process_xml_node_button_transition(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_CHILDREN:
+            return _process_xml_node_button_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_CIRCLE:
             return _process_xml_node_circle(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -944,15 +948,8 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
     dc_node.parent = parent_node_index;
     dc_node.next   = NODE_INDEX_UNDEFINED;
 
-    // initialize child indices
-    dc_node.button.child_enabled       = NODE_INDEX_UNDEFINED;
-    dc_node.button.child_disabled      = NODE_INDEX_UNDEFINED;
-    dc_node.button.child_indicator_on  = NODE_INDEX_UNDEFINED;
-    dc_node.button.child_indicator_off = NODE_INDEX_UNDEFINED;
-    dc_node.button.child_transition    = NODE_INDEX_UNDEFINED;
-    dc_node.button.child_pressed       = NODE_INDEX_UNDEFINED;
-    dc_node.button.child_released      = NODE_INDEX_UNDEFINED;
-    dc_node.button.child               = NODE_INDEX_UNDEFINED;
+    // initialize layers
+    dc_node.button.sb_layers = NULL;
 
     // x position
     xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
@@ -1248,19 +1245,9 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
-    // process children
-    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    // process children (Children elements will push to sb_layers)
+    _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
 
-    // handle non event elements
-    if (first_child_index != NODE_INDEX_UNDEFINED) {
-        _Node *node        = _get_node(app_data, node_index);
-        node->button.child = first_child_index;
-    }
-
-    // return
-    return node_index;
-
-    // return
     return node_index;
 }
 
@@ -1269,9 +1256,10 @@ static _NodeIndex _process_xml_node_button_disabled(_AppData *app_data, xmlNodeP
 
     switch (parent_elem_type) {
         case DC_APP_ELEM_TYPE_BUTTON: {
-            _NodeIndex first_child_index       = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
-            _Node     *parent_node             = _get_node(app_data, parent_node_index);
-            parent_node->button.child_disabled = first_child_index;
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
+            _Node *parent_node = _get_node(app_data, parent_node_index);
+            _ButtonLayer layer = {.child = first_child_index, .type = BUTTON_LAYER_TYPE_DISABLED};
+            sbpush(parent_node->button.sb_layers, layer);
             break;
         }
         default:
@@ -1285,9 +1273,10 @@ static _NodeIndex _process_xml_node_button_enabled(_AppData *app_data, xmlNodePt
 
     switch (parent_elem_type) {
         case DC_APP_ELEM_TYPE_BUTTON: {
-            _NodeIndex first_child_index      = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
-            _Node     *parent_node            = _get_node(app_data, parent_node_index);
-            parent_node->button.child_enabled = first_child_index;
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
+            _Node *parent_node = _get_node(app_data, parent_node_index);
+            _ButtonLayer layer = {.child = first_child_index, .type = BUTTON_LAYER_TYPE_ENABLED};
+            sbpush(parent_node->button.sb_layers, layer);
             break;
         }
         default:
@@ -1301,9 +1290,10 @@ static _NodeIndex _process_xml_node_button_indicator_off(_AppData *app_data, xml
 
     switch (parent_elem_type) {
         case DC_APP_ELEM_TYPE_BUTTON: {
-            _NodeIndex first_child_index            = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
-            _Node     *parent_node                  = _get_node(app_data, parent_node_index);
-            parent_node->button.child_indicator_off = first_child_index;
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
+            _Node *parent_node = _get_node(app_data, parent_node_index);
+            _ButtonLayer layer = {.child = first_child_index, .type = BUTTON_LAYER_TYPE_INDICATOR_OFF};
+            sbpush(parent_node->button.sb_layers, layer);
             break;
         }
         default:
@@ -1317,9 +1307,10 @@ static _NodeIndex _process_xml_node_button_indicator_on(_AppData *app_data, xmlN
 
     switch (parent_elem_type) {
         case DC_APP_ELEM_TYPE_BUTTON: {
-            _NodeIndex first_child_index           = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
-            _Node     *parent_node                 = _get_node(app_data, parent_node_index);
-            parent_node->button.child_indicator_on = first_child_index;
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
+            _Node *parent_node = _get_node(app_data, parent_node_index);
+            _ButtonLayer layer = {.child = first_child_index, .type = BUTTON_LAYER_TYPE_INDICATOR_ON};
+            sbpush(parent_node->button.sb_layers, layer);
             break;
         }
         default:
@@ -1333,13 +1324,31 @@ static _NodeIndex _process_xml_node_button_transition(_AppData *app_data, xmlNod
 
     switch (parent_elem_type) {
         case DC_APP_ELEM_TYPE_BUTTON: {
-            _NodeIndex first_child_index         = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
-            _Node     *parent_node               = _get_node(app_data, parent_node_index);
-            parent_node->button.child_transition = first_child_index;
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
+            _Node *parent_node = _get_node(app_data, parent_node_index);
+            _ButtonLayer layer = {.child = first_child_index, .type = BUTTON_LAYER_TYPE_TRANSITION};
+            sbpush(parent_node->button.sb_layers, layer);
             break;
         }
         default:
             fprintf(stderr, "DCApp _process_xml_node_button_transition(): Invalid parent of type %s for <Transition>\n", dc_app_elem_type_to_string(parent_elem_type));
+    }
+    return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_button_children(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    switch (parent_elem_type) {
+        case DC_APP_ELEM_TYPE_BUTTON: {
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, elem_type, directory);
+            _Node *parent_node = _get_node(app_data, parent_node_index);
+            _ButtonLayer layer = {.child = first_child_index, .type = BUTTON_LAYER_TYPE_CHILDREN};
+            sbpush(parent_node->button.sb_layers, layer);
+            break;
+        }
+        default:
+            fprintf(stderr, "DCApp _process_xml_node_button_children(): Invalid parent of type %s for <Children>\n", dc_app_elem_type_to_string(parent_elem_type));
     }
     return NODE_INDEX_UNDEFINED;
 }
@@ -2203,7 +2212,9 @@ static _NodeIndex _process_xml_node_mouse_pressed(_AppData *app_data, xmlNodePtr
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
         case NODE_TYPE_BUTTON: {
-            parent_node->button.child_pressed = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+            _ButtonLayer layer = {.child = first_child_index, .type = BUTTON_LAYER_TYPE_PRESSED};
+            sbpush(parent_node->button.sb_layers, layer);
             break;
         }
         case NODE_TYPE_CIRCLE: {
@@ -2236,7 +2247,9 @@ static _NodeIndex _process_xml_node_mouse_released(_AppData *app_data, xmlNodePt
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
         case NODE_TYPE_BUTTON: {
-            parent_node->button.child_released = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+            _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+            _ButtonLayer layer = {.child = first_child_index, .type = BUTTON_LAYER_TYPE_RELEASED};
+            sbpush(parent_node->button.sb_layers, layer);
             break;
         }
         case NODE_TYPE_CIRCLE: {
