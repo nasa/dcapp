@@ -18,17 +18,24 @@ The following XML element names have been renamed:
 
 Button child elements for visual states:
 
+    <Active>        -->  <ButtonEnabled>
+    <Inactive>      -->  <ButtonDisabled>
     <On>            -->  <ButtonIndicatorOn>
     <Off>           -->  <ButtonIndicatorOff>
+    <Transition>    -->  <ButtonTransition>
 
-Button press handler:
+Button event handlers:
 
     <OnPress>       -->  <MousePressed>
+    <OnRelease>     -->  <MouseReleased>
 
-Conditional branches (see Section 6 for details):
+Conditional branches:
 
-    <True>          -->  Use <If> with Operation="#_conditional_true_"
-    <False>         -->  Use <If> with Operation="#_conditional_false_"
+    <True>          -->  Still supported (no change needed)
+    <False>         -->  Still supported (no change needed)
+
+Note: <True> and <False> remain valid children of <If>. The preprocessor also
+wraps any implicit children (elements directly inside <If>) in <True> blocks.
 
 
 ================================================================================
@@ -46,6 +53,17 @@ Conditional operator attribute (inside <If> elements):
 Single-value conditional attribute:
 
     Value           -->  Value1
+
+Button attributes (enable/disable state):
+
+    ActiveVariable  -->  EnabledVariable
+    ActiveOn        -->  EnabledOn
+
+Button attributes (target variable):
+
+    SwitchVariable  -->  TargetVariable
+    SwitchOn        -->  TargetOn
+    SwitchOff       -->  TargetOff
 
 The following attributes have been REMOVED or handled differently:
 
@@ -251,6 +269,38 @@ New syntax:
     <Button Type="#_button_momentary_">
     <Button Type="#_button_toggle_">
 
+--------------------------------------------------------------------------------
+BUTTON CHILD ELEMENT RENAMES:
+--------------------------------------------------------------------------------
+
+Button visual state children:
+
+    <Active>        -->  <ButtonEnabled>
+    <Inactive>      -->  <ButtonDisabled>
+    <On>            -->  <ButtonIndicatorOn>
+    <Off>           -->  <ButtonIndicatorOff>
+    <Transition>    -->  <ButtonTransition>
+
+Button event handlers:
+
+    <OnPress>       -->  <MousePressed>
+    <OnRelease>     -->  <MouseReleased>
+
+--------------------------------------------------------------------------------
+BUTTON ATTRIBUTE RENAMES:
+--------------------------------------------------------------------------------
+
+Enable/disable state:
+
+    ActiveVariable  -->  EnabledVariable
+    ActiveOn        -->  EnabledOn
+
+Target variable (what gets set when button is pressed):
+
+    SwitchVariable  -->  TargetVariable
+    SwitchOn        -->  TargetOn
+    SwitchOff       -->  TargetOff
+
 
 ================================================================================
 SECTION 6: CONDITIONAL OPERATOR CONSTANTS
@@ -277,12 +327,12 @@ New syntax:
 Note: The attribute name changed from "Operator" to "Operation".
 
 --------------------------------------------------------------------------------
-BOOLEAN CONDITIONALS (True/False branches):
+BOOLEAN CONDITIONALS:
 --------------------------------------------------------------------------------
 
-Legacy syntax used <True> and <False> child elements:
+<True> and <False> are STILL valid child elements of <If>. No conversion needed:
 
-    <If Value="@myBool">
+    <If Value1="@myBool">
         <True>
             <!-- content when true -->
         </True>
@@ -291,16 +341,69 @@ Legacy syntax used <True> and <False> child elements:
         </False>
     </If>
 
-New syntax uses separate <If> elements with boolean operation constants:
+The preprocessor also wraps implicit children (elements directly inside <If>)
+in <True> blocks automatically:
 
-    <If Value1="@myBool" Operation="#_conditional_true_">
-        <!-- content when true -->
+    <If Value1="@x" Operation="#_conditional_gt_" Value2="10">
+        <Rectangle .../>   <!-- implicitly wrapped in <True> -->
     </If>
-    <If Value1="@myBool" Operation="#_conditional_false_">
-        <!-- content when false -->
+
+--------------------------------------------------------------------------------
+SINGLE-VALUE BOOLEAN TESTS:
+--------------------------------------------------------------------------------
+
+For testing a single boolean value (not comparing two values), use the
+#_conditional_true_ or #_conditional_false_ operations:
+
+    <If Value1="@isEnabled" Operation="#_conditional_true_">
+        <!-- shown when isEnabled is truthy (non-zero) -->
+    </If>
+
+    <If Value1="@isEnabled" Operation="#_conditional_false_">
+        <!-- shown when isEnabled is falsy (zero) -->
     </If>
 
 Note: The attribute name changed from "Value" to "Value1".
+
+--------------------------------------------------------------------------------
+STATIC CONDITIONALS:
+--------------------------------------------------------------------------------
+
+If an <If> element has no runtime variable references (no @ prefix in Value1 or
+Value2), it should be converted to <StaticIf>. Static conditionals are evaluated
+at load time and their branch is baked into the display tree.
+
+Legacy (no variables - static):
+    <If Value1="1" Operator="eq" Value2="1">
+        <Rectangle .../>
+    </If>
+
+New:
+    <StaticIf Value1="1" Operation="#_conditional_eq_" Value2="1">
+        <True>
+            <Rectangle .../>
+        </True>
+    </StaticIf>
+
+Legacy (has @ variable - runtime):
+    <If Value1="@mode" Operator="eq" Value2="1">
+        <Rectangle .../>
+    </If>
+
+New:
+    <If Value1="@mode" Operation="#_conditional_eq_" Value2="1">
+        <True>
+            <Rectangle .../>
+        </True>
+    </If>
+
+The conversion script automatically:
+1. Detects If elements without @ in Value1 or Value2
+2. Renames the element to StaticIf
+3. Wraps implicit children in explicit <True> blocks (StaticIf only)
+
+Note: Runtime <If> elements don't need explicit <True> wrappers - the preprocessor
+handles implicit children automatically. Only <StaticIf> requires explicit wrappers.
 
 
 ================================================================================
@@ -491,7 +594,29 @@ Changes:
 
 
 ================================================================================
-SECTION 13: REMOVED/UNSUPPORTED ATTRIBUTES
+SECTION 13: PANEL BACKGROUNDCOLOR CHANGES
+================================================================================
+
+Legacy Panel elements had a BackgroundColor attribute. In the new syntax, this
+is converted to a Rectangle child element that inherits the Panel's dimensions.
+
+Legacy syntax:
+    <Panel BackgroundColor="0 0 0" VirtualWidth="800" VirtualHeight="600">
+        <!-- panel content -->
+    </Panel>
+
+New syntax:
+    <Panel VirtualWidth="800" VirtualHeight="600">
+        <Rectangle FillColor="0 0 0"/>
+        <!-- panel content -->
+    </Panel>
+
+The Rectangle is inserted as the first child so it draws behind other content.
+It inherits the Panel's dimensions automatically (no Width/Height needed).
+
+
+================================================================================
+SECTION 14: REMOVED/UNSUPPORTED ATTRIBUTES
 ================================================================================
 
 The following legacy attributes are NOT supported in new dcapp:
@@ -513,7 +638,7 @@ Set attributes:
 
 
 ================================================================================
-SECTION 14: LINE ELEMENT CHANGES
+SECTION 15: LINE ELEMENT CHANGES
 ================================================================================
 
 The <Line> element's color attribute changed:
@@ -534,7 +659,7 @@ Change: Color --> LineColor
 
 
 ================================================================================
-SECTION 15: DISPLAYLOGIC ELEMENT VARIATIONS
+SECTION 16: DISPLAYLOGIC ELEMENT VARIATIONS
 ================================================================================
 
 Legacy <DisplayLogic> had two syntax forms:
@@ -552,7 +677,7 @@ Both legacy forms convert to the new <Logic File="..."/> syntax.
 
 
 ================================================================================
-SECTION 16: MASK/STENCIL ELEMENT CHANGES
+SECTION 17: MASK/STENCIL ELEMENT CHANGES
 ================================================================================
 
 Legacy syntax:
@@ -582,7 +707,7 @@ Changes:
 
 
 ================================================================================
-SECTION 17: ELEMENTS NOT YET IMPLEMENTED
+SECTION 18: ELEMENTS NOT YET IMPLEMENTED
 ================================================================================
 
 The following legacy elements are not yet available in the new dcapp and should
@@ -605,7 +730,7 @@ The following elements ARE now implemented (removed from this list):
 
 
 ================================================================================
-SECTION 18: QUICK REFERENCE - ALL CONSTANTS
+SECTION 19: QUICK REFERENCE - ALL CONSTANTS
 ================================================================================
 
 Variable Types:
@@ -650,7 +775,7 @@ Set Operations:
 
 
 ================================================================================
-SECTION 19: COMPLETE CONVERSION EXAMPLE
+SECTION 20: COMPLETE CONVERSION EXAMPLE
 ================================================================================
 
 Legacy XML:

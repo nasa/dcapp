@@ -36,6 +36,19 @@ ELEMENT_RENAMES = {
 BUTTON_CHILD_RENAMES = {
     'On': 'ButtonIndicatorOn',
     'Off': 'ButtonIndicatorOff',
+    'Active': 'ButtonEnabled',
+    'Inactive': 'ButtonDisabled',
+    'Transition': 'ButtonTransition',
+    'OnRelease': 'MouseReleased',
+}
+
+# Button-specific attribute renames
+BUTTON_ATTRIBUTE_RENAMES = {
+    'ActiveVariable': 'EnabledVariable',
+    'ActiveOn': 'EnabledOn',
+    'SwitchVariable': 'TargetVariable',
+    'SwitchOn': 'TargetOn',
+    'SwitchOff': 'TargetOff',
 }
 
 
@@ -206,6 +219,64 @@ def convert_conditional_operator(elem: etree._Element) -> None:
         del elem.attrib['Operator']
 
 
+def has_variable_reference(value: Optional[str]) -> bool:
+    """Check if a value contains a runtime variable reference (@prefix)."""
+    return value is not None and '@' in value
+
+
+def convert_if_to_staticif(elem: etree._Element) -> bool:
+    """
+    Convert <If> to <StaticIf> if it has no runtime variable references.
+
+    Returns True if conversion was made, False otherwise.
+    """
+    value1 = elem.get('Value1') or elem.get('Value')
+    value2 = elem.get('Value2')
+
+    # If neither value has a @ variable reference, this is a static conditional
+    if not has_variable_reference(value1) and not has_variable_reference(value2):
+        elem.tag = 'StaticIf'
+        return True
+    return False
+
+
+def wrap_implicit_children_in_true(elem: etree._Element) -> None:
+    """
+    Wrap implicit children of StaticIf in explicit <True> blocks.
+
+    Only needed for StaticIf - the preprocessor handles implicit children
+    for runtime If elements automatically.
+
+    Children that are not <True> or <False> are implicit true-branch children.
+    These get collected and wrapped in a <True> element inserted at the beginning.
+    """
+    implicit_children = []
+    children_to_remove = []
+
+    for child in elem:
+        # Skip comments and non-element nodes
+        if not isinstance(child.tag, str):
+            continue
+        # Collect non-True/False children (these are implicit true-branch)
+        if child.tag not in ('True', 'False'):
+            implicit_children.append(child)
+            children_to_remove.append(child)
+
+    # If we have implicit children, wrap them in <True>
+    if implicit_children:
+        # Remove from parent first
+        for child in children_to_remove:
+            elem.remove(child)
+
+        # Create True wrapper and add implicit children to it
+        true_elem = etree.Element('True')
+        for child in implicit_children:
+            true_elem.append(child)
+
+        # Insert True at the beginning (before any existing True/False)
+        elem.insert(0, true_elem)
+
+
 def convert_set_operator(elem: etree._Element) -> Tuple[Optional[str], Optional[str]]:
     """
     Convert Set element Operator and handle MinimumValue/MaximumValue.
@@ -273,6 +344,26 @@ def convert_displaylogic_to_logic(elem: etree._Element) -> None:
         elem.text = None
 
 
+def convert_panel_background_color(elem: etree._Element) -> None:
+    """
+    Convert Panel BackgroundColor attribute to a Rectangle child.
+
+    Legacy: <Panel BackgroundColor="0 0 0">...</Panel>
+    New:    <Panel><Rectangle FillColor="0 0 0"/>...</Panel>
+
+    The Rectangle inherits dimensions from the Panel automatically.
+    """
+    bg_color = elem.get('BackgroundColor')
+    if bg_color:
+        # Create rectangle with the background color
+        rect = etree.Element('Rectangle')
+        rect.set('FillColor', bg_color)
+        # Insert as first child
+        elem.insert(0, rect)
+        # Remove the attribute
+        del elem.attrib['BackgroundColor']
+
+
 def remove_unsupported_attributes(elem: etree._Element) -> None:
     """Remove attributes that are not supported in new dcapp."""
     for attr in list(elem.attrib.keys()):
@@ -308,6 +399,11 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     elif tag == 'Button':
         convert_button_type(elem)
         convert_variable_reference(elem, 'Variable')
+        # Rename Button-specific attributes
+        for old_attr, new_attr in BUTTON_ATTRIBUTE_RENAMES.items():
+            if old_attr in elem.attrib:
+                elem.set(new_attr, elem.get(old_attr))
+                del elem.attrib[old_attr]
 
     # If element
     elif tag == 'If':
@@ -316,6 +412,14 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
         if 'Value' in elem.attrib and 'Value1' not in elem.attrib:
             elem.set('Value1', elem.get('Value'))
             del elem.attrib['Value']
+        # Convert to StaticIf if no runtime variables
+        # Only StaticIf needs explicit <True> wrapper (preprocessor handles If)
+        if convert_if_to_staticif(elem):
+            wrap_implicit_children_in_true(elem)
+
+    # Panel element
+    elif tag == 'Panel':
+        convert_panel_background_color(elem)
 
     # Set element
     elif tag == 'Set':
