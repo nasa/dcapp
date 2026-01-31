@@ -134,13 +134,34 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         }
     }
 
-    // Window can contain panels and config elements
+    // Window can contain panels, drawing elements, and config elements
     if (parent_type == DC_APP_ELEM_TYPE_WINDOW) {
         switch (child_type) {
+            // legacy support
             case DC_APP_ELEM_TYPE_PANEL:
+            // config elements
             case DC_APP_ELEM_TYPE_VARIABLE:
+            // drawing elements
+            case DC_APP_ELEM_TYPE_CONTAINER:
+            case DC_APP_ELEM_TYPE_RECTANGLE:
+            case DC_APP_ELEM_TYPE_CIRCLE:
+            case DC_APP_ELEM_TYPE_ELLIPSE:
+            case DC_APP_ELEM_TYPE_LINE:
+            case DC_APP_ELEM_TYPE_ARC:
+            case DC_APP_ELEM_TYPE_POLYGON:
+            case DC_APP_ELEM_TYPE_TEXT:
+            case DC_APP_ELEM_TYPE_IMAGE:
+            case DC_APP_ELEM_TYPE_SPHERE:
+            case DC_APP_ELEM_TYPE_STENCIL:
+            case DC_APP_ELEM_TYPE_PIXELSTREAM:
+            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_BLINK:
+            // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
+            // input elements
+            case DC_APP_ELEM_TYPE_BUTTON:
+            case DC_APP_ELEM_TYPE_MOUSE_MOTION:
                 return true;
             default:
                 return false;
@@ -1112,6 +1133,12 @@ void _validate_attribute_names(ValidationContext *ctx, xmlNodePtr node, DcAppEle
     xmlAttr *attr = node->properties;
     while (attr) {
         const char *attr_name = (const char *)attr->name;
+
+        // Skip attributes starting with '_' (commented out / not yet implemented)
+        if (attr_name[0] == '_') {
+            attr = attr->next;
+            continue;
+        }
 
         // Check if attribute is valid for this element type
         if (!_is_valid_attr_for_elem(attr_name, elem_type)) {

@@ -76,13 +76,19 @@ ELEMENT_ATTRIBUTE_RENAMES = {
 
 # Attributes to remove entirely
 REMOVE_ATTRIBUTES = {
-    'DisplayIndex',     # Panel
-    'ActiveDisplay',    # Window
-    'ForceUpdate',      # Window
-    'ShadowOffset',     # Text/String
-    'ForceMono',        # Text/String
-    'MinimumValue',     # Set (converted to separate operation)
-    'MaximumValue',     # Set (converted to separate operation)
+    'ForceUpdate',      # Window - frame rate limiter (use vsync instead)
+    # Note: MinimumValue/MaximumValue are handled specially by convert_set_operator()
+    # Note: DisplayIndex/ActiveDisplay are handled specially by convert_display_index_pattern()
+}
+
+# Attributes to prefix with '_' (not yet implemented, preserved for future)
+COMMENT_OUT_ATTRIBUTES = {
+    'UpdateRate',       # Text - throttle string refresh rate
+    'Pattern',          # Shapes/Lines - line pattern (dashed, dotted, etc.)
+    'Key',              # Button - keyboard shortcut
+    'BezelKey',         # Button - bezel key binding
+    'ShadowOffset',     # Text - shadow/drop shadow effect
+    'ForceMono',        # Text - force monospace rendering
 }
 
 # Elements to comment out with TODO markers
@@ -388,6 +394,80 @@ def remove_unsupported_attributes(elem: etree._Element) -> None:
             del elem.attrib[attr]
 
 
+def comment_out_attributes(elem: etree._Element) -> None:
+    """Prefix attributes with '_' that are not yet implemented but should be preserved."""
+    for attr in list(elem.attrib.keys()):
+        if attr in COMMENT_OUT_ATTRIBUTES:
+            value = elem.get(attr)
+            del elem.attrib[attr]
+            elem.set('_' + attr, value)
+
+
+def convert_display_index_pattern(elem: etree._Element) -> None:
+    """
+    Convert DisplayIndex/ActiveDisplay pattern to If conditionals.
+
+    This handles the legacy page-switching pattern where Window has ActiveDisplay
+    and Panel children have DisplayIndex. Converts to explicit If conditionals.
+
+    Before:
+        <Window ActiveDisplay="@currentPage">
+            <Panel DisplayIndex="1">...</Panel>
+            <Panel DisplayIndex="2">...</Panel>
+        </Window>
+
+    After:
+        <Window>
+            <If Value1="@currentPage" Value2="1" Operation="#_conditional_eq_">
+                <Panel>...</Panel>
+            </If>
+            <If Value1="@currentPage" Value2="2" Operation="#_conditional_eq_">
+                <Panel>...</Panel>
+            </If>
+        </Window>
+    """
+    # Only process Window elements with ActiveDisplay
+    if elem.tag != 'Window':
+        return
+
+    active_display = elem.get('ActiveDisplay')
+    if not active_display:
+        return
+
+    # Remove ActiveDisplay from Window
+    del elem.attrib['ActiveDisplay']
+
+    # Find Panel children with DisplayIndex and wrap them in If
+    panels_to_wrap = []
+    for child in elem:
+        if not isinstance(child.tag, str):
+            continue
+        if child.tag == 'Panel' and child.get('DisplayIndex'):
+            panels_to_wrap.append(child)
+
+    for panel in panels_to_wrap:
+        display_index = panel.get('DisplayIndex')
+        del panel.attrib['DisplayIndex']
+
+        # Get panel's position in parent
+        panel_index = list(elem).index(panel)
+
+        # Remove panel from parent
+        elem.remove(panel)
+
+        # Create If wrapper
+        if_elem = etree.Element('If')
+        if_elem.set('Value1', active_display)
+        if_elem.set('Value2', display_index)
+        if_elem.set('Operation', '#_conditional_eq_')
+
+        # Add panel as child of If
+        if_elem.append(panel)
+
+        # Insert If at panel's original position
+        elem.insert(panel_index, if_elem)
+
+
 def get_element_context(elem: etree._Element, parent_tag: Optional[str]) -> str:
     """Determine the context of an element for context-dependent conversions."""
     return parent_tag or ''
@@ -498,6 +578,9 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     # Remove unsupported attributes
     remove_unsupported_attributes(elem)
 
+    # Comment out not-yet-implemented attributes (prefix with '_')
+    comment_out_attributes(elem)
+
     # ---- Element name conversion ----
 
     # Context-dependent element renames (Button children)
@@ -555,6 +638,10 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
     # Special handling for Mask elements
     if elem.tag == 'Mask':
         process_mask_element(elem)
+
+    # Convert DisplayIndex/ActiveDisplay pattern to If conditionals
+    if elem.tag == 'Window':
+        convert_display_index_pattern(elem)
 
     # Comment out deprecated/unsupported elements (e.g., EdgeIo, ADI)
     if elem.tag in COMMENT_OUT_ELEMENTS and parent is not None:
