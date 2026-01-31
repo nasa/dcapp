@@ -511,6 +511,34 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
         }
     }
 
+    // expand AlignX/AlignY shorthand to LocalAlign + ParentAlign
+    // (individual attributes take precedence if already set)
+    {
+        xmlChar *align_x = xmlGetProp(node, BAD_CAST "AlignX");
+        if (align_x) {
+            if (!xmlHasProp(node, BAD_CAST "LocalAlignX")) {
+                xmlSetProp(node, BAD_CAST "LocalAlignX", align_x);
+            }
+            if (!xmlHasProp(node, BAD_CAST "ParentAlignX")) {
+                xmlSetProp(node, BAD_CAST "ParentAlignX", align_x);
+            }
+            xmlUnsetProp(node, BAD_CAST "AlignX");
+            xmlFree(align_x);
+        }
+
+        xmlChar *align_y = xmlGetProp(node, BAD_CAST "AlignY");
+        if (align_y) {
+            if (!xmlHasProp(node, BAD_CAST "LocalAlignY")) {
+                xmlSetProp(node, BAD_CAST "LocalAlignY", align_y);
+            }
+            if (!xmlHasProp(node, BAD_CAST "ParentAlignY")) {
+                xmlSetProp(node, BAD_CAST "ParentAlignY", align_y);
+            }
+            xmlUnsetProp(node, BAD_CAST "AlignY");
+            xmlFree(align_y);
+        }
+    }
+
     // processing before targeting children
     char new_directory[DC_UTILS_FILEPATH_BUFFER_SIZE];
     switch (elem_type) {
