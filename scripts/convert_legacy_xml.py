@@ -28,8 +28,7 @@ ELEMENT_RENAMES = {
     'DisplayLogic': 'Logic',
     # Button child elements - context-dependent, handled separately
     'OnPress': 'MousePressed',
-    'Stencil': 'StencilAdd',      # Inside <Mask>
-    'Projection': 'StencilDraw',  # Inside <Mask>
+    # Mask child elements - handled by process_mask_element, NOT here
     # TrickIO renames
     'TrickIo': 'TrickIO',
     'FromTrick': 'TrickFrom',
@@ -90,6 +89,13 @@ COMMENT_OUT_ATTRIBUTES = {
     'BezelKey',         # Button - bezel key binding
     'ShadowOffset',     # Text - shadow/drop shadow effect
     'ForceMono',        # Text - force monospace rendering
+    'DisconnectAction', # TrickIO - action on disconnect
+    'FullScreen',       # Window - fullscreen mode
+    'Font',             # Text - font selection
+    'TestPattern',      # PixelStream - test pattern mode
+    'KeyASCII',         # Button - ASCII key binding
+    'Face',             # Text - font face
+    'Camera',           # PixelStream/Terrain - camera binding
 }
 
 # Elements to comment out with TODO markers
@@ -413,6 +419,54 @@ def comment_out_attributes(elem: etree._Element) -> None:
             elem.set('_' + attr, value)
 
 
+def convert_pixelstream_attributes(elem: etree._Element) -> None:
+    """
+    Convert PixelStream attributes from legacy to new format.
+
+    - Host/Port/Path -> URL (e.g., "localhost:8080/video")
+    - Type="mjpeg" -> Type="#_pixelstream_mjpeg_"
+    - Other Type values -> _Type (commented out, WIP)
+    """
+    # Convert Host/Port/Path to URL
+    host = elem.get('Host')
+    port = elem.get('Port')
+    path = elem.get('Path')
+
+    if host or port or path:
+        # Build URL from components
+        url_parts = []
+        if host:
+            url_parts.append(host)
+            del elem.attrib['Host']
+        if port:
+            if url_parts:
+                url_parts.append(':')
+            url_parts.append(port)
+            del elem.attrib['Port']
+        if path:
+            # Ensure path starts with / if we have host/port
+            if url_parts and not path.startswith('/'):
+                url_parts.append('/')
+            url_parts.append(path)
+            del elem.attrib['Path']
+
+        url = ''.join(url_parts)
+        if url and not url.startswith(('http://', 'https://')):
+            url = 'http://' + url
+        if url:
+            elem.set('URL', url)
+
+    # Convert Type attribute
+    pxs_type = elem.get('Type')
+    if pxs_type:
+        if pxs_type.lower() == 'mjpeg':
+            elem.set('Type', '#_pixelstream_mjpeg_')
+        else:
+            # Comment out non-mjpeg types (WIP)
+            del elem.attrib['Type']
+            elem.set('_Type', pxs_type + ' (WIP)')
+
+
 def convert_origin_attributes(elem: etree._Element) -> None:
     """
     Convert OriginX/OriginY attributes to ParentAlign with NegateX/NegateY.
@@ -422,18 +476,19 @@ def convert_origin_attributes(elem: etree._Element) -> None:
 
     For literal values, the X/Y value is negated directly.
     For variable values, NegateX/NegateY="true" is used to negate at runtime.
+    For constant references, we can't convert properly but still remove the attribute.
     """
-    origin_x = elem.get('OriginX')
-    origin_y = elem.get('OriginY')
+    origin_x_raw = elem.get('OriginX')
+    origin_y_raw = elem.get('OriginY')
 
-    if origin_x:
-        if origin_x == 'Right':
+    if origin_x_raw:
+        origin_x = origin_x_raw.strip().lower()
+        if origin_x == 'right' or origin_x == '3':  # 3 = right enum value
             x_val = elem.get('X')
             if x_val and has_variable_reference(x_val):
                 # Use NegateX for variable references
                 elem.set('NegateX', 'true')
                 elem.set('ParentAlignX', '#_align_right_')
-                del elem.attrib['OriginX']
             elif x_val:
                 # Negate the literal X value
                 try:
@@ -444,23 +499,23 @@ def convert_origin_attributes(elem: etree._Element) -> None:
                 except ValueError:
                     pass  # Not a number, leave as-is
                 elem.set('ParentAlignX', '#_align_right_')
-                del elem.attrib['OriginX']
             else:
                 # No X value, just set the alignment
                 elem.set('ParentAlignX', '#_align_right_')
-                del elem.attrib['OriginX']
-        elif origin_x == 'Left':
-            # Left is the default, just remove it
-            del elem.attrib['OriginX']
+        elif origin_x == 'center' or origin_x == '2':  # 2 = center enum value
+            # Center origin - set alignment, no negation needed
+            elem.set('ParentAlignX', '#_align_center_')
+        # Always remove OriginX (Left/1 is default, constants can't be converted)
+        del elem.attrib['OriginX']
 
-    if origin_y:
-        if origin_y == 'Top':
+    if origin_y_raw:
+        origin_y = origin_y_raw.strip().lower()
+        if origin_y == 'top' or origin_y == '6':  # 6 = top enum value
             y_val = elem.get('Y')
             if y_val and has_variable_reference(y_val):
                 # Use NegateY for variable references
                 elem.set('NegateY', 'true')
                 elem.set('ParentAlignY', '#_align_top_')
-                del elem.attrib['OriginY']
             elif y_val:
                 # Negate the literal Y value
                 try:
@@ -471,14 +526,14 @@ def convert_origin_attributes(elem: etree._Element) -> None:
                 except ValueError:
                     pass  # Not a number, leave as-is
                 elem.set('ParentAlignY', '#_align_top_')
-                del elem.attrib['OriginY']
             else:
                 # No Y value, just set the alignment
                 elem.set('ParentAlignY', '#_align_top_')
-                del elem.attrib['OriginY']
-        elif origin_y == 'Bottom':
-            # Bottom is the default, just remove it
-            del elem.attrib['OriginY']
+        elif origin_y == 'middle' or origin_y == '5':  # 5 = middle enum value
+            # Middle origin - set alignment, no negation needed
+            elem.set('ParentAlignY', '#_align_middle_')
+        # Always remove OriginY (Bottom/4 is default, constants can't be converted)
+        del elem.attrib['OriginY']
 
 
 def convert_display_index_pattern(elem: etree._Element) -> None:
@@ -637,18 +692,29 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     elif tag == 'DisplayLogic':
         convert_displaylogic_to_logic(elem)
 
+    # Circle with Angle -> Arc conversion
+    elif tag == 'Circle':
+        if 'Angle' in elem.attrib:
+            elem.tag = 'Arc'
+
+    # PixelStream element
+    elif tag == 'PixelStream' or tag == 'Pixelstream':
+        convert_pixelstream_attributes(elem)
+
     # ---- Common conversions ----
 
     # Alignment conversion for positionable elements
     if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
-               'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex'):
+               'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex',
+               'Sphere', 'Terrain', 'PixelStream'):
         has_x = 'X' in elem.attrib or 'PositionX' in elem.attrib
         has_y = 'Y' in elem.attrib or 'PositionY' in elem.attrib
         convert_alignment(elem, has_x, has_y)
 
     # Origin conversion for positionable elements
     if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
-               'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex'):
+               'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex',
+               'Sphere', 'Terrain', 'PixelStream'):
         convert_origin_attributes(elem)
 
     # Element-specific attribute renames
@@ -692,18 +758,17 @@ def process_mask_element(elem: etree._Element) -> None:
             <StencilDraw>...</StencilDraw>
         </Stencil>
     """
-    # Find Stencil and Projection children
-    stencil_child = elem.find('Stencil')
-    projection_child = elem.find('Projection')
-
     # Rename Mask to Stencil
     elem.tag = 'Stencil'
 
-    # Rename children
-    if stencil_child is not None:
-        stencil_child.tag = 'StencilAdd'
-    if projection_child is not None:
-        projection_child.tag = 'StencilDraw'
+    # Rename all Stencil and Projection children
+    for child in elem:
+        if not isinstance(child.tag, str):
+            continue
+        if child.tag == 'Stencil':
+            child.tag = 'StencilAdd'
+        elif child.tag == 'Projection':
+            child.tag = 'StencilDraw'
 
 
 def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, parent_tag: Optional[str] = None) -> list:

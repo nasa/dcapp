@@ -686,16 +686,9 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             break;
         }
 
-        case DC_APP_ELEM_TYPE_WINDOW: {
-            xmlChar *title = xmlGetProp(node, BAD_CAST "Title");
-            if (!title) {
-                fprintf(stderr, "WARNING: <Window> missing 'Title' attribute (line %ld)\n", xmlGetLineNo(node));
-                ctx->warning_count++;
-            } else {
-                xmlFree(title);
-            }
+        case DC_APP_ELEM_TYPE_WINDOW:
+            // Title is optional
             break;
-        }
 
         case DC_APP_ELEM_TYPE_PANEL: {
             xmlChar *vw = xmlGetProp(node, BAD_CAST "VirtualWidth");
