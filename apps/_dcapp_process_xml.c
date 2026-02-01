@@ -3868,8 +3868,12 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
         case NODE_TYPE_LINE:
         case NODE_TYPE_POLYGON: {
 
-            // position
-            _ValIndex2 position = {DC_APP_VAL_INDEX_UNDEFINED, DC_APP_VAL_INDEX_UNDEFINED};
+            // vertex data
+            _VertexData vertex = {};
+            vertex.position.x = DC_APP_VAL_INDEX_UNDEFINED;
+            vertex.position.y = DC_APP_VAL_INDEX_UNDEFINED;
+            vertex.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
+            vertex.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
 
             // x position
             xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
@@ -3877,7 +3881,7 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
                 raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
             }
             if (raw_x_position) {
-                position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
+                vertex.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
                 xmlFree(raw_x_position);
             } else {
                 fprintf(stderr, "DCAPP _process_xml_node: Invalid Vertex: No X attribute\n");
@@ -3889,28 +3893,42 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
                 raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
             }
             if (raw_y_position) {
-                position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
+                vertex.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
                 xmlFree(raw_y_position);
             } else {
                 fprintf(stderr, "DCAPP _process_xml_node: Invalid Vertex: No Y attribute\n");
             }
 
+            // parent x align
+            xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
+            if (raw_parent_x_align) {
+                vertex.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
+                xmlFree(raw_parent_x_align);
+            }
+
+            // parent y align
+            xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
+            if (raw_parent_y_align) {
+                vertex.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
+                xmlFree(raw_parent_y_align);
+            }
+
             switch (parent_node->type) {
                 case NODE_TYPE_LINE:
                     // add to parent
-                    sbpush(parent_node->line.sb_points, position);
+                    sbpush(parent_node->line.sb_vertices, vertex);
 
                     // check point count
-                    if (sbcount(parent_node->line.sb_points) > _NODE_LINE_MAX_POINTS) {
+                    if (sbcount(parent_node->line.sb_vertices) > _NODE_LINE_MAX_POINTS) {
                         fprintf(stderr, "_process_xml_node() line: Maximum number of points exceeded\n");
                     }
                     break;
                 case NODE_TYPE_POLYGON:
                     // add to parent
-                    sbpush(parent_node->polygon.sb_points, position);
+                    sbpush(parent_node->polygon.sb_vertices, vertex);
 
                     // check point count
-                    if (sbcount(parent_node->polygon.sb_points) > _NODE_POLYGON_MAX_POINTS) {
+                    if (sbcount(parent_node->polygon.sb_vertices) > _NODE_POLYGON_MAX_POINTS) {
                         fprintf(stderr, "_process_xml_node() polygon: Maximum number of points exceeded\n");
                     }
                     break;

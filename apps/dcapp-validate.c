@@ -1109,7 +1109,8 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
             return _attr_in_list(attr_name, _valid_attrs_variable);
 
         case DC_APP_ELEM_TYPE_VERTEX:
-            return _attr_in_list(attr_name, _valid_attrs_position);
+            return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_align);
 
         case DC_APP_ELEM_TYPE_WINDOW:
             return _attr_in_list(attr_name, _valid_attrs_position) ||

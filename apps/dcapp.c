@@ -152,7 +152,7 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
         _Node *node = &app_data->sb_nodes[i];
         switch (node->type) {
             case NODE_TYPE_LINE:
-                sbfree(node->line.sb_points);
+                sbfree(node->line.sb_vertices);
                 break;
             case NODE_TYPE_PIXELSTREAM:
                 if (node->pixelstream.frame) {
@@ -165,7 +165,7 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 }
                 break;
             case NODE_TYPE_POLYGON:
-                sbfree(node->polygon.sb_points);
+                sbfree(node->polygon.sb_vertices);
                 break;
             case NODE_TYPE_STENCIL:
                 sbfree(node->stencil.sb_children);

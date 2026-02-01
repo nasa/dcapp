@@ -2112,15 +2112,48 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
     // get points, min/max
     plVec2 min_pos    = (plVec2){FLT_MAX, FLT_MAX};
     plVec2 max_pos    = (plVec2){FLT_MIN, FLT_MIN};
-    int    num_points = sbcount(node->line.sb_points);
+    int    num_points = sbcount(node->line.sb_vertices);
     plVec2 raw_points[_NODE_LINE_MAX_POINTS];
     plVec2 points[_NODE_LINE_MAX_POINTS];
     for (int ii = 0; ii < num_points; ii++) {
 
-        // get raw point
-        raw_points[ii] = (plVec2){
-            (float)dc_app_lookup_get_value(app_data->lookup, node->line.sb_points[ii].x)->value_double,
-            (float)dc_app_lookup_get_value(app_data->lookup, node->line.sb_points[ii].y)->value_double};
+        // get raw point position
+        float point_x = (float)dc_app_lookup_get_value(app_data->lookup, node->line.sb_vertices[ii].position.x)->value_double;
+        float point_y = (float)dc_app_lookup_get_value(app_data->lookup, node->line.sb_vertices[ii].position.y)->value_double;
+
+        // apply vertex parent_align offset
+        if (node->line.sb_vertices[ii].parent_align.x != DC_APP_VAL_INDEX_UNDEFINED) {
+            int parent_align_x = dc_app_lookup_get_value(app_data->lookup, node->line.sb_vertices[ii].parent_align.x)->value_integer;
+            switch (parent_align_x) {
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    point_x += parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    point_x += parent_dimensions->x;
+                    break;
+                default:
+                    break;
+            }
+        }
+        if (node->line.sb_vertices[ii].parent_align.y != DC_APP_VAL_INDEX_UNDEFINED) {
+            int parent_align_y = dc_app_lookup_get_value(app_data->lookup, node->line.sb_vertices[ii].parent_align.y)->value_integer;
+            switch (parent_align_y) {
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    point_y += parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    point_y += parent_dimensions->y;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        raw_points[ii] = (plVec2){point_x, point_y};
 
         // update max/min
         min_pos.x = fminf(min_pos.x, raw_points[ii].x);
@@ -2601,15 +2634,48 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
     // get points, min/max
     plVec2 min_pos    = (plVec2){FLT_MAX, FLT_MAX};
     plVec2 max_pos    = (plVec2){FLT_MIN, FLT_MIN};
-    int    num_points = sbcount(node->polygon.sb_points);
+    int    num_points = sbcount(node->polygon.sb_vertices);
     plVec2 raw_points[_NODE_POLYGON_MAX_POINTS];
     plVec2 points[_NODE_POLYGON_MAX_POINTS];
     for (int ii = 0; ii < num_points; ii++) {
 
-        // get raw point
-        raw_points[ii] = (plVec2){
-            (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.sb_points[ii].x)->value_double,
-            (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.sb_points[ii].y)->value_double};
+        // get raw point position
+        float point_x = (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.sb_vertices[ii].position.x)->value_double;
+        float point_y = (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.sb_vertices[ii].position.y)->value_double;
+
+        // apply vertex parent_align offset
+        if (node->polygon.sb_vertices[ii].parent_align.x != DC_APP_VAL_INDEX_UNDEFINED) {
+            int parent_align_x = dc_app_lookup_get_value(app_data->lookup, node->polygon.sb_vertices[ii].parent_align.x)->value_integer;
+            switch (parent_align_x) {
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    point_x += parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    point_x += parent_dimensions->x;
+                    break;
+                default:
+                    break;
+            }
+        }
+        if (node->polygon.sb_vertices[ii].parent_align.y != DC_APP_VAL_INDEX_UNDEFINED) {
+            int parent_align_y = dc_app_lookup_get_value(app_data->lookup, node->polygon.sb_vertices[ii].parent_align.y)->value_integer;
+            switch (parent_align_y) {
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    point_y += parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    point_y += parent_dimensions->y;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        raw_points[ii] = (plVec2){point_x, point_y};
 
         // update max/min
         min_pos.x = fminf(min_pos.x, raw_points[ii].x);

@@ -95,6 +95,12 @@ typedef struct __ValIndex4 {
     };
 } _ValIndex4;
 
+// Vertex data for Line and Polygon elements
+typedef struct __VertexData {
+    _ValIndex2 position;
+    _ValIndex2 parent_align;
+} _VertexData;
+
 typedef enum __NodeType {
     NODE_TYPE_UNDEFINED,
     NODE_TYPE_ARC,
@@ -316,9 +322,9 @@ typedef struct __NodeLine {
     _ValIndex4    line_color;
     DcAppValIndex line_width;
 
-    _ValIndex2 *sb_points;
-    bool        fill_enabled;
-    bool        line_enabled;
+    _VertexData *sb_vertices;
+    bool         fill_enabled;
+    bool         line_enabled;
 } _NodeLine;
 
 typedef struct __NodeMouseMotion {
@@ -376,9 +382,9 @@ typedef struct __NodePolygon {
     _NodeIndex child;
     uint32_t   state_flags;
 
-    _ValIndex2 *sb_points;
-    bool        fill_enabled;
-    bool        line_enabled;
+    _VertexData *sb_vertices;
+    bool         fill_enabled;
+    bool         line_enabled;
 } _NodePolygon;
 
 typedef struct __NodeRectangle {

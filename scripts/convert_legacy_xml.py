@@ -85,6 +85,7 @@ REMOVE_ATTRIBUTES = {
 COMMENT_OUT_ATTRIBUTES = {
     'UpdateRate',       # Text - throttle string refresh rate
     'Pattern',          # Shapes/Lines - line pattern (dashed, dotted, etc.)
+    'LinePattern',      # Lines - line pattern (dashed, dotted, etc.)
     'Key',              # Button - keyboard shortcut
     'BezelKey',         # Button - bezel key binding
     'ShadowOffset',     # Text - shadow/drop shadow effect
@@ -444,6 +445,7 @@ def convert_origin_attributes(elem: etree._Element) -> Tuple[list, list, Optiona
     before_elements = []
     after_elements = []
     comment = None
+    tag = elem.tag
     origin_x = elem.get('OriginX')
     origin_y = elem.get('OriginY')
 
@@ -453,23 +455,30 @@ def convert_origin_attributes(elem: etree._Element) -> Tuple[list, list, Optiona
             if x_val and has_variable_reference(x_val):
                 var_name = extract_variable_name(x_val)
                 if var_name:
-                    # Use push/negate/pop pattern for variable
-                    push_elem = etree.Element('Set')
-                    push_elem.set('Variable', var_name)
-                    push_elem.set('Operator', '#_set_push_')
-                    push_elem.text = '0'
-                    negate_elem = etree.Element('Set')
-                    negate_elem.set('Variable', var_name)
-                    negate_elem.set('Operator', '#_set_negate_')
-                    negate_elem.text = '0'
-                    pop_elem = etree.Element('Set')
-                    pop_elem.set('Variable', var_name)
-                    pop_elem.set('Operator', '#_set_pop_')
-                    pop_elem.text = '0'
-                    before_elements.extend([push_elem, negate_elem])
-                    after_elements.append(pop_elem)
-                    elem.set('ParentAlignX', '#_align_right_')
-                    del elem.attrib['OriginX']
+                    # For Vertex, we can't add Set elements inside Line/Polygon
+                    # Add a comment for manual intervention instead
+                    if tag == 'Vertex':
+                        comment = f'TODO(manual): Add push/negate for {var_name} before parent Line/Polygon, pop after'
+                        elem.set('ParentAlignX', '#_align_right_')
+                        del elem.attrib['OriginX']
+                    else:
+                        # Use push/negate/pop pattern for variable
+                        push_elem = etree.Element('Set')
+                        push_elem.set('Variable', var_name)
+                        push_elem.set('Operator', '#_set_push_')
+                        push_elem.text = '0'
+                        negate_elem = etree.Element('Set')
+                        negate_elem.set('Variable', var_name)
+                        negate_elem.set('Operator', '#_set_negate_')
+                        negate_elem.text = '0'
+                        pop_elem = etree.Element('Set')
+                        pop_elem.set('Variable', var_name)
+                        pop_elem.set('Operator', '#_set_pop_')
+                        pop_elem.text = '0'
+                        before_elements.extend([push_elem, negate_elem])
+                        after_elements.append(pop_elem)
+                        elem.set('ParentAlignX', '#_align_right_')
+                        del elem.attrib['OriginX']
             elif x_val:
                 # Negate the literal X value
                 try:
@@ -495,23 +504,33 @@ def convert_origin_attributes(elem: etree._Element) -> Tuple[list, list, Optiona
             if y_val and has_variable_reference(y_val):
                 var_name = extract_variable_name(y_val)
                 if var_name:
-                    # Use push/negate/pop pattern for variable
-                    push_elem = etree.Element('Set')
-                    push_elem.set('Variable', var_name)
-                    push_elem.set('Operator', '#_set_push_')
-                    push_elem.text = '0'
-                    negate_elem = etree.Element('Set')
-                    negate_elem.set('Variable', var_name)
-                    negate_elem.set('Operator', '#_set_negate_')
-                    negate_elem.text = '0'
-                    pop_elem = etree.Element('Set')
-                    pop_elem.set('Variable', var_name)
-                    pop_elem.set('Operator', '#_set_pop_')
-                    pop_elem.text = '0'
-                    before_elements.extend([push_elem, negate_elem])
-                    after_elements.append(pop_elem)
-                    elem.set('ParentAlignY', '#_align_top_')
-                    del elem.attrib['OriginY']
+                    # For Vertex, we can't add Set elements inside Line/Polygon
+                    # Add a comment for manual intervention instead
+                    if tag == 'Vertex':
+                        if comment:
+                            comment += f'; also Y var {var_name}'
+                        else:
+                            comment = f'TODO(manual): Add push/negate for {var_name} before parent Line/Polygon, pop after'
+                        elem.set('ParentAlignY', '#_align_top_')
+                        del elem.attrib['OriginY']
+                    else:
+                        # Use push/negate/pop pattern for variable
+                        push_elem = etree.Element('Set')
+                        push_elem.set('Variable', var_name)
+                        push_elem.set('Operator', '#_set_push_')
+                        push_elem.text = '0'
+                        negate_elem = etree.Element('Set')
+                        negate_elem.set('Variable', var_name)
+                        negate_elem.set('Operator', '#_set_negate_')
+                        negate_elem.text = '0'
+                        pop_elem = etree.Element('Set')
+                        pop_elem.set('Variable', var_name)
+                        pop_elem.set('Operator', '#_set_pop_')
+                        pop_elem.text = '0'
+                        before_elements.extend([push_elem, negate_elem])
+                        after_elements.append(pop_elem)
+                        elem.set('ParentAlignY', '#_align_top_')
+                        del elem.attrib['OriginY']
             elif y_val:
                 # Negate the literal Y value
                 try:
@@ -699,14 +718,14 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> T
 
     # Alignment conversion for positionable elements
     if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
-               'Container', 'Line', 'Polygon', 'Ellipse', 'Arc'):
+               'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex'):
         has_x = 'X' in elem.attrib or 'PositionX' in elem.attrib
         has_y = 'Y' in elem.attrib or 'PositionY' in elem.attrib
         convert_alignment(elem, has_x, has_y)
 
-    # Origin conversion for positionable elements (must be done before alignment sets ParentAlign)
+    # Origin conversion for positionable elements
     if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
-               'Container', 'Line', 'Polygon', 'Ellipse', 'Arc'):
+               'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex'):
         origin_before, origin_after, origin_comment = convert_origin_attributes(elem)
         before_elements.extend(origin_before)
         after_elements.extend(origin_after)
