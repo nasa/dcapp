@@ -97,8 +97,10 @@ typedef struct __ValIndex4 {
 
 // Vertex data for Line and Polygon elements
 typedef struct __VertexData {
-    _ValIndex2 position;
-    _ValIndex2 parent_align;
+    _ValIndex2    position;
+    _ValIndex2    parent_align;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
 } _VertexData;
 
 typedef enum __NodeType {
@@ -176,6 +178,8 @@ typedef struct __NodeArc {
     bool          pie;           // if true, draw lines from endpoints to center (pie/wedge shape)
     bool          line_enabled;
     bool          fill_enabled;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
 } _NodeArc;
 
 typedef struct __NodeBlink {
@@ -207,6 +211,8 @@ typedef struct __NodeButton {
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
     DcAppValIndex rotation;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
 
     // children (regular child nodes, including state-conditional nodes)
     _NodeIndex child;
@@ -248,6 +254,8 @@ typedef struct __NodeCircle {
 
     bool fill_enabled;
     bool line_enabled;
+    bool negate_x;
+    bool negate_y;
 } _NodeCircle;
 
 #define _NODE_ELLIPSE_MAX_SEGMENTS 1000
@@ -270,6 +278,8 @@ typedef struct __NodeEllipse {
 
     bool fill_enabled;
     bool line_enabled;
+    bool negate_x;
+    bool negate_y;
 } _NodeEllipse;
 
 typedef struct __NodeConditional {
@@ -289,6 +299,8 @@ typedef struct __NodeContainer {
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
     DcAppValIndex rotation;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
     _NodeIndex    child;
     uint32_t      state_flags;
 } _NodeContainer;
@@ -307,6 +319,8 @@ typedef struct __NodeImage {
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
     DcAppValIndex rotation;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
 
     _TextureIndex texture_index;
 
@@ -319,6 +333,8 @@ typedef struct __NodeLine {
     _ValIndex2    position;
     _ValIndex2    pivot_position;
     DcAppValIndex rotation;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
     _ValIndex4    line_color;
     DcAppValIndex line_width;
 
@@ -355,6 +371,8 @@ typedef struct __NodePixelstream {
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
     DcAppValIndex rotation;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
 
     _TextureIndex texture_index;
 
@@ -375,6 +393,8 @@ typedef struct __NodePolygon {
     _ValIndex2    position;
     _ValIndex2    pivot_position;
     DcAppValIndex rotation;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
     _ValIndex4    fill_color;
     _ValIndex4    line_color;
     DcAppValIndex line_width;
@@ -395,6 +415,8 @@ typedef struct __NodeRectangle {
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
     DcAppValIndex rotation;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
     _ValIndex4    fill_color;
     _ValIndex4    line_color;
     DcAppValIndex line_width;
@@ -424,6 +446,8 @@ typedef struct __NodeSphere {
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
     DcAppValIndex rotation; // external 2D rotation in orthographic view
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
 
     // sphere properties
     DcAppValIndex radius;
@@ -460,6 +484,8 @@ typedef struct __NodeText {
     _ValIndex2    pivot_local_align;
     _ValIndex2    pivot_position;
     DcAppValIndex rotation;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
     DcAppValIndex size;
     _ValIndex4    fill_color;
     _ValIndex4    line_color;
@@ -487,6 +513,8 @@ typedef struct __NodeTerrain {
     _ValIndex2    pivot_position;
     _ValIndex2    pivot_local_align;
     DcAppValIndex rotation;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
 
     // terrain specific
     _ValIndex3 lle;

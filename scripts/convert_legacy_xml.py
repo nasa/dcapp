@@ -413,39 +413,16 @@ def comment_out_attributes(elem: etree._Element) -> None:
             elem.set('_' + attr, value)
 
 
-def extract_variable_name(value: str) -> Optional[str]:
-    """Extract the variable name from a variable reference like @varname or #{varname}."""
-    if not value:
-        return None
-    # Match @varname pattern
-    match = re.match(r'^@(\w+)$', value)
-    if match:
-        return match.group(1)
-    # Match #{varname} pattern (just the variable, no expression)
-    match = re.match(r'^#\{(\w+)\}$', value)
-    if match:
-        return match.group(1)
-    return None
-
-
-def convert_origin_attributes(elem: etree._Element) -> Tuple[list, list, Optional[str]]:
+def convert_origin_attributes(elem: etree._Element) -> None:
     """
-    Convert OriginX/OriginY attributes to ParentAlign with negated position.
+    Convert OriginX/OriginY attributes to ParentAlign with NegateX/NegateY.
 
     Legacy OriginX="Right" means X is measured from the right edge.
-    New system uses ParentAlignX="#_align_right_" with negated X value.
+    New system uses ParentAlignX="#_align_right_" with NegateX="true".
 
-    For variable values, uses push/negate/pop to temporarily negate the variable.
-
-    Returns a tuple of:
-    - before_elements: Set elements to insert before this element (push/negate)
-    - after_elements: Set elements to insert after this element (pop)
-    - comment: TODO comment if conversion couldn't be automated (complex expressions)
+    For literal values, the X/Y value is negated directly.
+    For variable values, NegateX/NegateY="true" is used to negate at runtime.
     """
-    before_elements = []
-    after_elements = []
-    comment = None
-    tag = elem.tag
     origin_x = elem.get('OriginX')
     origin_y = elem.get('OriginY')
 
@@ -453,32 +430,10 @@ def convert_origin_attributes(elem: etree._Element) -> Tuple[list, list, Optiona
         if origin_x == 'Right':
             x_val = elem.get('X')
             if x_val and has_variable_reference(x_val):
-                var_name = extract_variable_name(x_val)
-                if var_name:
-                    # For Vertex, we can't add Set elements inside Line/Polygon
-                    # Add a comment for manual intervention instead
-                    if tag == 'Vertex':
-                        comment = f'TODO(manual): Add push/negate for {var_name} before parent Line/Polygon, pop after'
-                        elem.set('ParentAlignX', '#_align_right_')
-                        del elem.attrib['OriginX']
-                    else:
-                        # Use push/negate/pop pattern for variable
-                        push_elem = etree.Element('Set')
-                        push_elem.set('Variable', var_name)
-                        push_elem.set('Operator', '#_set_push_')
-                        push_elem.text = '0'
-                        negate_elem = etree.Element('Set')
-                        negate_elem.set('Variable', var_name)
-                        negate_elem.set('Operator', '#_set_negate_')
-                        negate_elem.text = '0'
-                        pop_elem = etree.Element('Set')
-                        pop_elem.set('Variable', var_name)
-                        pop_elem.set('Operator', '#_set_pop_')
-                        pop_elem.text = '0'
-                        before_elements.extend([push_elem, negate_elem])
-                        after_elements.append(pop_elem)
-                        elem.set('ParentAlignX', '#_align_right_')
-                        del elem.attrib['OriginX']
+                # Use NegateX for variable references
+                elem.set('NegateX', 'true')
+                elem.set('ParentAlignX', '#_align_right_')
+                del elem.attrib['OriginX']
             elif x_val:
                 # Negate the literal X value
                 try:
@@ -502,35 +457,10 @@ def convert_origin_attributes(elem: etree._Element) -> Tuple[list, list, Optiona
         if origin_y == 'Top':
             y_val = elem.get('Y')
             if y_val and has_variable_reference(y_val):
-                var_name = extract_variable_name(y_val)
-                if var_name:
-                    # For Vertex, we can't add Set elements inside Line/Polygon
-                    # Add a comment for manual intervention instead
-                    if tag == 'Vertex':
-                        if comment:
-                            comment += f'; also Y var {var_name}'
-                        else:
-                            comment = f'TODO(manual): Add push/negate for {var_name} before parent Line/Polygon, pop after'
-                        elem.set('ParentAlignY', '#_align_top_')
-                        del elem.attrib['OriginY']
-                    else:
-                        # Use push/negate/pop pattern for variable
-                        push_elem = etree.Element('Set')
-                        push_elem.set('Variable', var_name)
-                        push_elem.set('Operator', '#_set_push_')
-                        push_elem.text = '0'
-                        negate_elem = etree.Element('Set')
-                        negate_elem.set('Variable', var_name)
-                        negate_elem.set('Operator', '#_set_negate_')
-                        negate_elem.text = '0'
-                        pop_elem = etree.Element('Set')
-                        pop_elem.set('Variable', var_name)
-                        pop_elem.set('Operator', '#_set_pop_')
-                        pop_elem.text = '0'
-                        before_elements.extend([push_elem, negate_elem])
-                        after_elements.append(pop_elem)
-                        elem.set('ParentAlignY', '#_align_top_')
-                        del elem.attrib['OriginY']
+                # Use NegateY for variable references
+                elem.set('NegateY', 'true')
+                elem.set('ParentAlignY', '#_align_top_')
+                del elem.attrib['OriginY']
             elif y_val:
                 # Negate the literal Y value
                 try:
@@ -549,8 +479,6 @@ def convert_origin_attributes(elem: etree._Element) -> Tuple[list, list, Optiona
         elif origin_y == 'Bottom':
             # Bottom is the default, just remove it
             del elem.attrib['OriginY']
-
-    return (before_elements, after_elements, comment)
 
 
 def convert_display_index_pattern(elem: etree._Element) -> None:
@@ -623,23 +551,18 @@ def get_element_context(elem: etree._Element, parent_tag: Optional[str]) -> str:
     return parent_tag or ''
 
 
-def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> Tuple[list, list, Optional[str]]:
+def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> list:
     """
     Process a single element and its attributes.
 
-    Returns a tuple of:
-    - List of elements to insert before this one (e.g., for push/negate)
-    - List of elements to insert after this one (e.g., for min/max clamping, pop)
-    - Optional comment string to insert before this element (e.g., for manual conversion TODOs)
+    Returns a list of elements to insert after this one (e.g., for min/max clamping).
     """
-    before_elements = []
     after_elements = []
-    comment = None
     tag = elem.tag
 
     # Skip non-element nodes (comments, processing instructions, etc.)
     if not isinstance(tag, str):
-        return (before_elements, after_elements, comment)
+        return after_elements
 
     # ---- Element-specific attribute conversions ----
 
@@ -726,11 +649,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> T
     # Origin conversion for positionable elements
     if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
                'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex'):
-        origin_before, origin_after, origin_comment = convert_origin_attributes(elem)
-        before_elements.extend(origin_before)
-        after_elements.extend(origin_after)
-        if origin_comment:
-            comment = origin_comment
+        convert_origin_attributes(elem)
 
     # Element-specific attribute renames
     if tag in ELEMENT_ATTRIBUTE_RENAMES:
@@ -754,7 +673,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> T
     elif tag in ELEMENT_RENAMES:
         elem.tag = ELEMENT_RENAMES[tag]
 
-    return (before_elements, after_elements, comment)
+    return after_elements
 
 
 def process_mask_element(elem: etree._Element) -> None:
@@ -822,20 +741,8 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
         return all_after  # Don't process children
 
     # Process this element
-    before_elements, after_elements, todo_comment = process_element(elem, parent_tag)
+    after_elements = process_element(elem, parent_tag)
     all_after.extend(after_elements)
-
-    # Insert before elements (e.g., push/negate for origin conversion)
-    if before_elements and parent is not None:
-        idx = list(parent).index(elem)
-        for i, before_elem in enumerate(before_elements):
-            parent.insert(idx + i, before_elem)
-
-    # Insert TODO comment before element if origin conversion needs manual review
-    if todo_comment and parent is not None:
-        comment = etree.Comment(todo_comment)
-        idx = list(parent).index(elem)
-        parent.insert(idx, comment)
 
     # Process children (skip comments)
     children_to_process = list(elem)

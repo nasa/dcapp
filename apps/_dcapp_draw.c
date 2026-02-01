@@ -376,6 +376,14 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
             use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->button.position.x)->value_double : 0,
             use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->button.position.y)->value_double : 0};
 
+        // apply negate
+        if (node->button.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->button.negate_x)->value_boolean) {
+            offset[0] = -offset[0];
+        }
+        if (node->button.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->button.negate_y)->value_boolean) {
+            offset[1] = -offset[1];
+        }
+
         float position[2] = {
             parent_position->x + anchor[0] + offset[0],
             parent_position->y + anchor[1] + offset[1]};
@@ -784,6 +792,14 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
             use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->arc.position.x)->value_double : 0,
             use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->arc.position.y)->value_double : 0};
 
+        // apply negate
+        if (node->arc.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->arc.negate_x)->value_boolean) {
+            offset[0] = -offset[0];
+        }
+        if (node->arc.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->arc.negate_y)->value_boolean) {
+            offset[1] = -offset[1];
+        }
+
         float position[2] = {
             parent_position->x + anchor[0] + offset[0],
             parent_position->y + anchor[1] + offset[1]};
@@ -1008,6 +1024,14 @@ static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *
         float offset[2] = {
             use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->circle.position.x)->value_double : 0,
             use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->circle.position.y)->value_double : 0};
+
+        // apply negate
+        if (node->circle.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->circle.negate_x)->value_boolean) {
+            offset[0] = -offset[0];
+        }
+        if (node->circle.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->circle.negate_y)->value_boolean) {
+            offset[1] = -offset[1];
+        }
 
         float position[2] = {
             parent_position->x + anchor[0] + offset[0],
@@ -1309,6 +1333,14 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
             use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.position.x)->value_double : 0,
             use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.position.y)->value_double : 0};
 
+        // apply negate
+        if (node->ellipse.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->ellipse.negate_x)->value_boolean) {
+            offset[0] = -offset[0];
+        }
+        if (node->ellipse.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->ellipse.negate_y)->value_boolean) {
+            offset[1] = -offset[1];
+        }
+
         float position[2] = {
             parent_position->x + anchor[0] + offset[0],
             parent_position->y + anchor[1] + offset[1]};
@@ -1604,6 +1636,14 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
         float offset[2] = {
             use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->container.position.x)->value_double : 0,
             use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->container.position.y)->value_double : 0};
+
+        // apply negate
+        if (node->container.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->container.negate_x)->value_boolean) {
+            offset[0] = -offset[0];
+        }
+        if (node->container.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->container.negate_y)->value_boolean) {
+            offset[1] = -offset[1];
+        }
 
         float position[2] = {
             parent_position->x + anchor[0] + offset[0],
@@ -1917,6 +1957,14 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
             use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->image.position.x)->value_double : 0,
             use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->image.position.y)->value_double : 0};
 
+        // apply negate
+        if (node->image.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->image.negate_x)->value_boolean) {
+            offset[0] = -offset[0];
+        }
+        if (node->image.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->image.negate_y)->value_boolean) {
+            offset[1] = -offset[1];
+        }
+
         float position[2] = {
             parent_position->x + anchor[0] + offset[0],
             parent_position->y + anchor[1] + offset[1]};
@@ -2099,6 +2147,14 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
             use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->line.position.y)->value_double : 0.0f,
         };
 
+        // apply negate
+        if (node->line.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->line.negate_x)->value_boolean) {
+            position[0] = -position[0];
+        }
+        if (node->line.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->line.negate_y)->value_boolean) {
+            position[1] = -position[1];
+        }
+
         // compute matrix
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
 
@@ -2120,6 +2176,14 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
         // get raw point position
         float point_x = (float)dc_app_lookup_get_value(app_data->lookup, node->line.sb_vertices[ii].position.x)->value_double;
         float point_y = (float)dc_app_lookup_get_value(app_data->lookup, node->line.sb_vertices[ii].position.y)->value_double;
+
+        // apply vertex negate
+        if (node->line.sb_vertices[ii].negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->line.sb_vertices[ii].negate_x)->value_boolean) {
+            point_x = -point_x;
+        }
+        if (node->line.sb_vertices[ii].negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->line.sb_vertices[ii].negate_y)->value_boolean) {
+            point_y = -point_y;
+        }
 
         // apply vertex parent_align offset
         if (node->line.sb_vertices[ii].parent_align.x != DC_APP_VAL_INDEX_UNDEFINED) {
@@ -2426,6 +2490,14 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
             use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.position.x)->value_double : 0,
             use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.position.y)->value_double : 0};
 
+        // apply negate
+        if (node->pixelstream.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->pixelstream.negate_x)->value_boolean) {
+            offset[0] = -offset[0];
+        }
+        if (node->pixelstream.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->pixelstream.negate_y)->value_boolean) {
+            offset[1] = -offset[1];
+        }
+
         float position[2] = {
             parent_position->x + anchor[0] + offset[0],
             parent_position->y + anchor[1] + offset[1]};
@@ -2617,9 +2689,17 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
 
         // get position
         float position[2] = {
-            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->line.position.x)->value_double : 0.0f,
-            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->line.position.y)->value_double : 0.0f,
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.position.x)->value_double : 0.0f,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.position.y)->value_double : 0.0f,
         };
+
+        // apply negate
+        if (node->polygon.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->polygon.negate_x)->value_boolean) {
+            position[0] = -position[0];
+        }
+        if (node->polygon.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->polygon.negate_y)->value_boolean) {
+            position[1] = -position[1];
+        }
 
         // compute matrix
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
@@ -2642,6 +2722,14 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
         // get raw point position
         float point_x = (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.sb_vertices[ii].position.x)->value_double;
         float point_y = (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.sb_vertices[ii].position.y)->value_double;
+
+        // apply vertex negate
+        if (node->polygon.sb_vertices[ii].negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->polygon.sb_vertices[ii].negate_x)->value_boolean) {
+            point_x = -point_x;
+        }
+        if (node->polygon.sb_vertices[ii].negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->polygon.sb_vertices[ii].negate_y)->value_boolean) {
+            point_y = -point_y;
+        }
 
         // apply vertex parent_align offset
         if (node->polygon.sb_vertices[ii].parent_align.x != DC_APP_VAL_INDEX_UNDEFINED) {
@@ -2906,6 +2994,14 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
         float offset[2] = {
             use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.position.x)->value_double : 0,
             use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.position.y)->value_double : 0};
+
+        // apply negate
+        if (node->rectangle.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->rectangle.negate_x)->value_boolean) {
+            offset[0] = -offset[0];
+        }
+        if (node->rectangle.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->rectangle.negate_y)->value_boolean) {
+            offset[1] = -offset[1];
+        }
 
         float position[2] = {
             parent_position->x + anchor[0] + offset[0],
@@ -3395,6 +3491,14 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
             use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.position.x)->value_double : 0,
             use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.position.y)->value_double : 0};
 
+        // apply negate
+        if (node->sphere.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->sphere.negate_x)->value_boolean) {
+            offset[0] = -offset[0];
+        }
+        if (node->sphere.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->sphere.negate_y)->value_boolean) {
+            offset[1] = -offset[1];
+        }
+
         float position[2] = {
             parent_position->x + anchor[0] + offset[0],
             parent_position->y + anchor[1] + offset[1]};
@@ -3678,6 +3782,14 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
         float offset[2] = {
             use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.position.x)->value_double : 0,
             use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.position.y)->value_double : 0};
+
+        // apply negate
+        if (node->terrain.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->terrain.negate_x)->value_boolean) {
+            offset[0] = -offset[0];
+        }
+        if (node->terrain.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->terrain.negate_y)->value_boolean) {
+            offset[1] = -offset[1];
+        }
 
         float position[2] = {
             parent_position->x + anchor[0] + offset[0],
@@ -3963,6 +4075,14 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
             float offset[2] = {
                 use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->text.position.x)->value_double : 0,
                 use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->text.position.y)->value_double : 0};
+
+            // apply negate
+            if (node->text.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->text.negate_x)->value_boolean) {
+                offset[0] = -offset[0];
+            }
+            if (node->text.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->text.negate_y)->value_boolean) {
+                offset[1] = -offset[1];
+            }
 
             float position[2] = {
                 parent_position->x + anchor[0] + offset[0],

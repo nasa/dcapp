@@ -870,6 +870,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
 // Valid attributes for each element type
 static const char *_valid_attrs_common[]            = {"Style", "_Directory", NULL};
 static const char *_valid_attrs_position[]          = {"X", "Y", "PositionX", "PositionY", NULL};
+static const char *_valid_attrs_negate[]            = {"NegateX", "NegateY", NULL};
 static const char *_valid_attrs_dimension[]         = {"Width", "Height", "DimensionX", "DimensionY", NULL};
 static const char *_valid_attrs_virtual_dimension[] = {"VirtualWidth", "VirtualHeight", "VirtualDimensionX", "VirtualDimensionY", NULL};
 static const char *_valid_attrs_align[]             = {"LocalAlignX", "LocalAlignY", "HorizontalAlign", "VerticalAlign", "ParentAlignX", "ParentAlignY", NULL};
@@ -925,6 +926,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
     switch (elem_type) {
         case DC_APP_ELEM_TYPE_ARC:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
@@ -937,6 +939,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_BUTTON:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_dimension) ||
                    _attr_in_list(attr_name, _valid_attrs_virtual_dimension) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
@@ -955,6 +958,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_CIRCLE:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
@@ -967,6 +971,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_CONTAINER:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_dimension) ||
                    _attr_in_list(attr_name, _valid_attrs_virtual_dimension) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
@@ -978,6 +983,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_ELLIPSE:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
@@ -1002,6 +1008,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_IMAGE:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_dimension) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
@@ -1013,6 +1020,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_LINE:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
                    _attr_in_list(attr_name, _valid_attrs_color) ||
@@ -1037,6 +1045,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_PIXELSTREAM:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_dimension) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
@@ -1045,6 +1054,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_POLYGON:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
                    _attr_in_list(attr_name, _valid_attrs_color) ||
@@ -1052,6 +1062,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_RECTANGLE:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_dimension) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
@@ -1064,6 +1075,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_SPHERE:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
@@ -1078,6 +1090,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_TERRAIN:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_dimension) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
@@ -1089,6 +1102,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_TEXT:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
@@ -1110,6 +1124,7 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_VERTEX:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
+                   _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_align);
 
         case DC_APP_ELEM_TYPE_WINDOW:

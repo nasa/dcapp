@@ -465,6 +465,24 @@ static _NodeIndex _process_xml_node_arc(_AppData *app_data, xmlNodePtr xml_node,
         dc_node.arc.pie = false;
     }
 
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.arc.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.arc.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.arc.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.arc.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
@@ -633,6 +651,24 @@ static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_no
     // colors
     dc_node.circle.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.circle.fill_color));
     dc_node.circle.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.circle.line_color));
+
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.circle.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.circle.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.circle.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.circle.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
 
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
@@ -816,6 +852,24 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
     // colors
     dc_node.ellipse.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.ellipse.fill_color));
     dc_node.ellipse.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.ellipse.line_color));
+
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.ellipse.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.ellipse.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.ellipse.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.ellipse.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
 
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
@@ -1215,6 +1269,24 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         xmlFree(raw_indicator_variable);
     }
 
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.button.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.button.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.button.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.button.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
@@ -1489,6 +1561,24 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
         dc_node.container.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
     } else {
         fprintf(stderr, "DCAPP _process_xml_node(): Container: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+    }
+
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.container.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.container.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.container.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.container.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
     }
 
     // register node
@@ -1851,6 +1941,24 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
         fprintf(stderr, "DCAPP _process_xml_node(): Image: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
     }
 
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.image.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.image.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.image.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.image.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
@@ -1938,6 +2046,24 @@ static _NodeIndex _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node
 
     // colors
     dc_node.line.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.line.line_color));
+
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.line.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.line.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.line.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.line.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
 
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
@@ -2427,6 +2553,24 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
             break;
     }
 
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.pixelstream.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.pixelstream.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.pixelstream.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.pixelstream.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
@@ -2517,6 +2661,24 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
     // colors
     dc_node.polygon.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.polygon.fill_color));
     dc_node.polygon.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.polygon.line_color));
+
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.polygon.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.polygon.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.polygon.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.polygon.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
 
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
@@ -2697,6 +2859,24 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
     // colors
     dc_node.rectangle.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.rectangle.fill_color));
     dc_node.rectangle.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.rectangle.line_color));
+
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.rectangle.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.rectangle.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.rectangle.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.rectangle.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
 
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
@@ -2984,6 +3164,24 @@ static _NodeIndex _process_xml_node_sphere(_AppData *app_data, xmlNodePtr xml_no
         }
 
         dc_node.sphere.texture_index = texture_index;
+    }
+
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.sphere.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.sphere.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.sphere.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.sphere.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
     }
 
     // register node
@@ -3290,6 +3488,24 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         xmlFree(raw_yaw);
     } else {
         fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Yaw with Terrain primitive");
+    }
+
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.terrain.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.terrain.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.terrain.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.terrain.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
     }
 
     // register node
@@ -3633,6 +3849,24 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     dc_node.text.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.text.fill_color));
     dc_node.text.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.text.line_color));
 
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.text.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    } else {
+        dc_node.text.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.text.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    } else {
+        dc_node.text.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
     // register node
     return _register_node(app_data, &dc_node);
 }
@@ -3911,6 +4145,24 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
             if (raw_parent_y_align) {
                 vertex.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
                 xmlFree(raw_parent_y_align);
+            }
+
+            // negate x
+            xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+            if (raw_negate_x) {
+                vertex.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+                xmlFree(raw_negate_x);
+            } else {
+                vertex.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
+            }
+
+            // negate y
+            xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+            if (raw_negate_y) {
+                vertex.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+                xmlFree(raw_negate_y);
+            } else {
+                vertex.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
             }
 
             switch (parent_node->type) {
