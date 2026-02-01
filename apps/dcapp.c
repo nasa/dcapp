@@ -192,11 +192,6 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     // cleanup trick contexts
     for (int i = 0; i < sbcount(app_data->sb_tricks); i++) {
         _TrickContext *ctx = &app_data->sb_tricks[i];
-        for (int j = 0; j < sbcount(ctx->sb_tx_var_contexts); j++) {
-            if (ctx->sb_tx_var_contexts[j].prev_value.value_string) {
-                free(ctx->sb_tx_var_contexts[j].prev_value.value_string);
-            }
-        }
         sbfree(ctx->sb_tx_var_contexts);
         sbfree(ctx->sb_rx_var_contexts);
         dc_trick_cleanup(ctx->trick);
@@ -277,7 +272,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
                 // send if new value is different
                 if (!dc_value_is_equal(curr_value, prev_value)) {
                     dc_trick_set_tx_var(trick, tx_var_context->trick_var_index, curr_value->value_string);
-                    dc_value_copy(prev_value, curr_value);
+                    *prev_value = *curr_value;
                 }
             }
         }
@@ -364,6 +359,9 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
     // draw node
     _draw_node(app_data, app_data->window, NULL, NULL, NULL);
+
+    // reset any unpoped variable stacks
+    dc_app_lookup_reset_var_stacks(app_data->lookup);
 
     // start main pass & return the encoder being used
     plRenderEncoder *encoder = _ext_starter->begin_main_pass();

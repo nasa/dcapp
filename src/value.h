@@ -16,7 +16,7 @@ typedef enum _DcValueType {
 typedef struct _DcValue {
     DcValueType type;
 
-    char  *value_string;
+    char   value_string[DC_VALUE_STRING_BUFFER_SIZE];
     int    value_integer;
     double value_double;
     bool   value_boolean;
@@ -62,7 +62,6 @@ typedef struct _DcValue4 {
 extern "C" {
 #endif
 
-void    dc_value_copy(DcValue *dst, DcValue *src);
 DcValue dc_value_create_typed_value_from_string(DcValueType type, const char *value_str);
 DcValue dc_value_create_value_string(const char *value);
 DcValue dc_value_create_value_integer(int value);

@@ -46,6 +46,9 @@ typedef enum _DcAppSetType {
     DC_APP_SET_TYPE_DIVIDE,
     DC_APP_SET_TYPE_MIN,
     DC_APP_SET_TYPE_MAX,
+    DC_APP_SET_TYPE_PUSH,
+    DC_APP_SET_TYPE_POP,
+    DC_APP_SET_TYPE_NEGATE,
 } DcAppSetType;
 
 #endif

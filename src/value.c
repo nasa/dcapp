@@ -2,32 +2,18 @@
 #include "utils/string.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-void dc_value_copy(DcValue *dst, DcValue *src) {
-    dst->value_boolean = src->value_boolean;
-    dst->value_double  = src->value_double;
-    dst->value_integer = src->value_integer;
-    if (!dst->value_string) {
-        dst->value_string = (char *)calloc(sizeof(char), DC_VALUE_STRING_BUFFER_SIZE);
-    }
-    strncpy(dst->value_string, src->value_string, DC_VALUE_STRING_BUFFER_SIZE - 1);
-    dst->value_string[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
-}
-
 DcValue dc_value_create_typed_value_from_string(DcValueType type, const char *value_str) {
-    DcValue new_value;
-    new_value.type         = type;
-    new_value.value_string = (char *)calloc(sizeof(char), DC_VALUE_STRING_BUFFER_SIZE);
+    DcValue new_value = {0};
+    new_value.type = type;
     dc_value_set_from_string(&new_value, value_str);
     return new_value;
 }
 
 DcValue dc_value_create_value_string(const char *value) {
-    DcValue new_value;
-    new_value.type         = DC_VALUE_TYPE_STRING;
-    new_value.value_string = (char *)calloc(sizeof(char), DC_VALUE_STRING_BUFFER_SIZE);
+    DcValue new_value = {0};
+    new_value.type = DC_VALUE_TYPE_STRING;
     strncpy(new_value.value_string, value, DC_VALUE_STRING_BUFFER_SIZE - 1);
     new_value.value_string[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
     dc_value_refresh(&new_value);
@@ -35,28 +21,25 @@ DcValue dc_value_create_value_string(const char *value) {
 }
 
 DcValue dc_value_create_value_integer(int value) {
-    DcValue new_value;
+    DcValue new_value = {0};
     new_value.type          = DC_VALUE_TYPE_INTEGER;
     new_value.value_integer = value;
-    new_value.value_string  = (char *)calloc(sizeof(char), DC_VALUE_STRING_BUFFER_SIZE);
     dc_value_refresh(&new_value);
     return new_value;
 }
 
 DcValue dc_value_create_value_double(double value) {
-    DcValue new_value      = {0};
+    DcValue new_value = {0};
     new_value.type         = DC_VALUE_TYPE_DOUBLE;
     new_value.value_double = value;
-    new_value.value_string = (char *)calloc(sizeof(char), DC_VALUE_STRING_BUFFER_SIZE);
     dc_value_refresh(&new_value);
     return new_value;
 }
 
 DcValue dc_value_create_value_boolean(bool value) {
-    DcValue new_value;
+    DcValue new_value = {0};
     new_value.type          = DC_VALUE_TYPE_BOOLEAN;
     new_value.value_boolean = value;
-    new_value.value_string  = (char *)calloc(sizeof(char), DC_VALUE_STRING_BUFFER_SIZE);
     dc_value_refresh(&new_value);
     return new_value;
 }

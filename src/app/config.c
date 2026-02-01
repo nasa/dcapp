@@ -193,6 +193,9 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const_int(&context, "_set_divide_", DC_APP_SET_TYPE_DIVIDE, true);
     _add_const_int(&context, "_set_min_", DC_APP_SET_TYPE_MIN, true);
     _add_const_int(&context, "_set_max_", DC_APP_SET_TYPE_MAX, true);
+    _add_const_int(&context, "_set_push_", DC_APP_SET_TYPE_PUSH, true);
+    _add_const_int(&context, "_set_pop_", DC_APP_SET_TYPE_POP, true);
+    _add_const_int(&context, "_set_negate_", DC_APP_SET_TYPE_NEGATE, true);
     _add_const_int(&context, "_variable_string_", DC_VALUE_TYPE_STRING, true);
     _add_const_int(&context, "_variable_integer_", DC_VALUE_TYPE_INTEGER, true);
     _add_const_int(&context, "_variable_double_", DC_VALUE_TYPE_DOUBLE, true);

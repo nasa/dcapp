@@ -37,11 +37,13 @@ void dc_app_lookup_cleanup(DcAppLookup *lookup) {
     _LookupContext *context = &(_sb_contexts[lookup->index]);
     sbfree(context->sb_var_names);
     sbfree(context->sb_var_name_offsets);
+
+    // free per-variable stacks
+    for (int ii = 0; ii < sbcount(context->sb_vars); ii++) {
+        sbfree(context->sb_vars[ii].sb_value_stack);
+    }
     sbfree(context->sb_vars);
 
-    for (int ii = 0; ii < sbcount(context->sb_vals); ii++) {
-        free(context->sb_vals[ii].value_string);
-    }
     sbfree(context->sb_vals);
     free(lookup);
 }
@@ -58,7 +60,6 @@ DcValue *dc_app_lookup_get_value(DcAppLookup *lookup, DcAppValIndex index) {
 DcAppValIndex dc_app_lookup_register_value(DcAppLookup *lookup, DcValue *value) {
     _LookupContext *context = &(_sb_contexts[lookup->index]);
     sbpush(context->sb_vals, *value);
-    value->value_string = NULL; // steal it!
     return sbcount(context->sb_vals) - 1;
 }
 
@@ -142,6 +143,37 @@ void dc_app_lookup_set_var_to_string(DcAppLookup *lookup, DcAppVarIndex var_inde
     DcAppLookupVar *var     = dc_app_lookup_get_var(lookup, var_index);
     DcValue        *val     = dc_app_lookup_get_value(lookup, var->value_index);
     dc_value_set_from_string(val, new_string);
+}
+
+void dc_app_lookup_var_push(DcAppLookup *lookup, DcAppVarIndex var_index) {
+    DcAppLookupVar *var = dc_app_lookup_get_var(lookup, var_index);
+    if (!var) return;
+    DcValue *value = dc_app_lookup_get_value(lookup, var->value_index);
+    sbpush(var->sb_value_stack, *value);
+}
+
+void dc_app_lookup_var_pop(DcAppLookup *lookup, DcAppVarIndex var_index) {
+    DcAppLookupVar *var = dc_app_lookup_get_var(lookup, var_index);
+    if (!var) return;
+    if (sbcount(var->sb_value_stack) > 0) {
+        DcValue *value = dc_app_lookup_get_value(lookup, var->value_index);
+        *value = sbpop(var->sb_value_stack);
+    } else {
+        fprintf(stderr, "dc_app_lookup_var_pop(): stack underflow for variable index %d\n", var_index);
+    }
+}
+
+void dc_app_lookup_reset_var_stacks(DcAppLookup *lookup) {
+    _LookupContext *context = &(_sb_contexts[lookup->index]);
+    for (int ii = 0; ii < sbcount(context->sb_vars); ii++) {
+        DcAppLookupVar *var = &context->sb_vars[ii];
+        if (sbcount(var->sb_value_stack) > 0) {
+            // restore original value (bottom of stack) and clear
+            DcValue *value = &context->sb_vals[var->value_index];
+            *value = var->sb_value_stack[0];
+            sbclear(var->sb_value_stack);
+        }
+    }
 }
 
 void dc_app_lookup_set_suppress_warnings(DcAppLookup *lookup, unsigned int flags) {

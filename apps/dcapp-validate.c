@@ -1218,8 +1218,8 @@ void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppEl
             break;
 
         case DC_APP_ELEM_TYPE_SET:
-            _validate_enum_attr(ctx, node, "Operator", 1, 7,
-                                "equal(1), add(2), subtract(3), multiply(4), divide(5), min(6), max(7)");
+            _validate_enum_attr(ctx, node, "Operator", 1, 10,
+                                "equal(1), add(2), subtract(3), multiply(4), divide(5), min(6), max(7), push(8), pop(9), negate(10)");
             break;
 
         case DC_APP_ELEM_TYPE_BUTTON:

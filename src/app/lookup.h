@@ -19,7 +19,8 @@ static const DcAppValIndex DC_APP_VAL_INDEX_UNDEFINED   = DC_APP_LOOKUP_INDEX_UN
 static const DcAppValIndex DC_APP_STYLE_INDEX_UNDEFINED = DC_APP_LOOKUP_INDEX_UNDEFINED;
 
 typedef struct _DcAppLookupVar {
-    DcAppValIndex value_index;
+    DcAppValIndex  value_index;
+    DcValue       *sb_value_stack; // per-variable stack for push/pop
 } DcAppLookupVar;
 
 typedef struct _DcAppLookup {
@@ -56,6 +57,11 @@ const char     *dc_app_lookup_get_var_name(DcAppLookup *lookup, DcAppVarIndex in
 DcAppVarIndex   dc_app_lookup_register_anon_var(DcAppLookup *lookup, DcValueType type, const char *initial_value_str);
 
 void dc_app_lookup_set_var_to_string(DcAppLookup *lookup, DcAppVarIndex var_index, const char *value);
+
+// push/pop operations for per-variable stacks
+void dc_app_lookup_var_push(DcAppLookup *lookup, DcAppVarIndex var_index);
+void dc_app_lookup_var_pop(DcAppLookup *lookup, DcAppVarIndex var_index);
+void dc_app_lookup_reset_var_stacks(DcAppLookup *lookup);
 
 void dc_app_lookup_set_suppress_warnings(DcAppLookup *lookup, unsigned int flags);
 

@@ -3790,7 +3790,7 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
             var.dcapp_var_index    = dc_app_lookup_get_var_index(app_data->lookup, dcapp_var);
             DcValue *dc_var_value  = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, var.dcapp_var_index)->value_index);
             var.trick_var_index    = dc_trick_add_tx_var(trick_context->trick, trick_path, units, dc_var_value->type == DC_VALUE_TYPE_STRING);
-            dc_value_copy(&var.prev_value, dc_var_value);
+            var.prev_value         = *dc_var_value;
             sbpush(trick_context->sb_tx_var_contexts, var);
             break;
         }

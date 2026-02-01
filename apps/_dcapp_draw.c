@@ -495,9 +495,9 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
             case DC_APP_BUTTON_TYPE_TOGGLE:
                 if (is_released) {
                     if (is_indicator_on) {
-                        dc_value_copy(target_var_value, target_off_value);
+                        *target_var_value = *target_off_value;
                     } else {
-                        dc_value_copy(target_var_value, target_on_value);
+                        *target_var_value = *target_on_value;
                     }
                 }
                 break;
@@ -505,16 +505,16 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
             // momentary: flip on press/release
             case DC_APP_BUTTON_TYPE_MOMENTARY:
                 if (is_pressed) {
-                    dc_value_copy(target_var_value, target_on_value);
+                    *target_var_value = *target_on_value;
                 } else if (is_released) {
-                    dc_value_copy(target_var_value, target_off_value);
+                    *target_var_value = *target_off_value;
                 }
                 break;
 
             // standard: set to on value on release
             case DC_APP_BUTTON_TYPE_STANDARD:
                 if (is_released) {
-                    dc_value_copy(target_var_value, target_on_value);
+                    *target_var_value = *target_on_value;
                 }
                 break;
 
@@ -3050,7 +3050,8 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
         case DC_APP_SET_TYPE_EQUAL:
             switch (var_value->type) {
                 case DC_VALUE_TYPE_STRING:
-                    var_value->value_string = op_value->value_string;
+                    strncpy(var_value->value_string, op_value->value_string, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                    var_value->value_string[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
                     break;
                 case DC_VALUE_TYPE_INTEGER:
                     var_value->value_integer = op_value->value_integer;
@@ -3170,6 +3171,25 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
                         var_value->value_double = op_value->value_double;
                     break;
                 case DC_VALUE_TYPE_BOOLEAN:
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case DC_APP_SET_TYPE_PUSH:
+            dc_app_lookup_var_push(app_data->lookup, node->set.var_index);
+            return; // don't refresh - we're just saving state
+        case DC_APP_SET_TYPE_POP:
+            dc_app_lookup_var_pop(app_data->lookup, node->set.var_index);
+            var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->set.var_index)->value_index);
+            break;
+        case DC_APP_SET_TYPE_NEGATE:
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_INTEGER:
+                    var_value->value_integer = -var_value->value_integer;
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    var_value->value_double = -var_value->value_double;
                     break;
                 default:
                     break;

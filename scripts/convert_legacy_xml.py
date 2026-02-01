@@ -412,16 +412,37 @@ def comment_out_attributes(elem: etree._Element) -> None:
             elem.set('_' + attr, value)
 
 
-def convert_origin_attributes(elem: etree._Element) -> Optional[str]:
+def extract_variable_name(value: str) -> Optional[str]:
+    """Extract the variable name from a variable reference like @varname or #{varname}."""
+    if not value:
+        return None
+    # Match @varname pattern
+    match = re.match(r'^@(\w+)$', value)
+    if match:
+        return match.group(1)
+    # Match #{varname} pattern (just the variable, no expression)
+    match = re.match(r'^#\{(\w+)\}$', value)
+    if match:
+        return match.group(1)
+    return None
+
+
+def convert_origin_attributes(elem: etree._Element) -> Tuple[list, list, Optional[str]]:
     """
     Convert OriginX/OriginY attributes to ParentAlign with negated position.
 
     Legacy OriginX="Right" means X is measured from the right edge.
     New system uses ParentAlignX="#_align_right_" with negated X value.
 
-    Returns a TODO comment string if manual conversion is needed (variable values),
-    or None if conversion was successful or not needed.
+    For variable values, uses push/negate/pop to temporarily negate the variable.
+
+    Returns a tuple of:
+    - before_elements: Set elements to insert before this element (push/negate)
+    - after_elements: Set elements to insert after this element (pop)
+    - comment: TODO comment if conversion couldn't be automated (complex expressions)
     """
+    before_elements = []
+    after_elements = []
     comment = None
     origin_x = elem.get('OriginX')
     origin_y = elem.get('OriginY')
@@ -430,10 +451,25 @@ def convert_origin_attributes(elem: etree._Element) -> Optional[str]:
         if origin_x == 'Right':
             x_val = elem.get('X')
             if x_val and has_variable_reference(x_val):
-                # Can't auto-convert variable - flag for manual review
-                del elem.attrib['OriginX']
-                elem.set('_OriginX', origin_x)
-                comment = ' TODO(migration): OriginX with variable needs manual conversion '
+                var_name = extract_variable_name(x_val)
+                if var_name:
+                    # Use push/negate/pop pattern for variable
+                    push_elem = etree.Element('Set')
+                    push_elem.set('Variable', var_name)
+                    push_elem.set('Operator', '#_set_push_')
+                    push_elem.text = '0'
+                    negate_elem = etree.Element('Set')
+                    negate_elem.set('Variable', var_name)
+                    negate_elem.set('Operator', '#_set_negate_')
+                    negate_elem.text = '0'
+                    pop_elem = etree.Element('Set')
+                    pop_elem.set('Variable', var_name)
+                    pop_elem.set('Operator', '#_set_pop_')
+                    pop_elem.text = '0'
+                    before_elements.extend([push_elem, negate_elem])
+                    after_elements.append(pop_elem)
+                    elem.set('ParentAlignX', '#_align_right_')
+                    del elem.attrib['OriginX']
             elif x_val:
                 # Negate the literal X value
                 try:
@@ -457,13 +493,25 @@ def convert_origin_attributes(elem: etree._Element) -> Optional[str]:
         if origin_y == 'Top':
             y_val = elem.get('Y')
             if y_val and has_variable_reference(y_val):
-                # Can't auto-convert variable - flag for manual review
-                del elem.attrib['OriginY']
-                elem.set('_OriginY', origin_y)
-                if comment:
-                    comment = ' TODO(migration): OriginX/OriginY with variable needs manual conversion '
-                else:
-                    comment = ' TODO(migration): OriginY with variable needs manual conversion '
+                var_name = extract_variable_name(y_val)
+                if var_name:
+                    # Use push/negate/pop pattern for variable
+                    push_elem = etree.Element('Set')
+                    push_elem.set('Variable', var_name)
+                    push_elem.set('Operator', '#_set_push_')
+                    push_elem.text = '0'
+                    negate_elem = etree.Element('Set')
+                    negate_elem.set('Variable', var_name)
+                    negate_elem.set('Operator', '#_set_negate_')
+                    negate_elem.text = '0'
+                    pop_elem = etree.Element('Set')
+                    pop_elem.set('Variable', var_name)
+                    pop_elem.set('Operator', '#_set_pop_')
+                    pop_elem.text = '0'
+                    before_elements.extend([push_elem, negate_elem])
+                    after_elements.append(pop_elem)
+                    elem.set('ParentAlignY', '#_align_top_')
+                    del elem.attrib['OriginY']
             elif y_val:
                 # Negate the literal Y value
                 try:
@@ -483,7 +531,7 @@ def convert_origin_attributes(elem: etree._Element) -> Optional[str]:
             # Bottom is the default, just remove it
             del elem.attrib['OriginY']
 
-    return comment
+    return (before_elements, after_elements, comment)
 
 
 def convert_display_index_pattern(elem: etree._Element) -> None:
@@ -556,21 +604,23 @@ def get_element_context(elem: etree._Element, parent_tag: Optional[str]) -> str:
     return parent_tag or ''
 
 
-def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> Tuple[list, Optional[str]]:
+def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> Tuple[list, list, Optional[str]]:
     """
     Process a single element and its attributes.
 
     Returns a tuple of:
-    - List of additional elements to insert after this one (e.g., for min/max clamping)
+    - List of elements to insert before this one (e.g., for push/negate)
+    - List of elements to insert after this one (e.g., for min/max clamping, pop)
     - Optional comment string to insert before this element (e.g., for manual conversion TODOs)
     """
-    additional_elements = []
+    before_elements = []
+    after_elements = []
     comment = None
     tag = elem.tag
 
     # Skip non-element nodes (comments, processing instructions, etc.)
     if not isinstance(tag, str):
-        return (additional_elements, comment)
+        return (before_elements, after_elements, comment)
 
     # ---- Element-specific attribute conversions ----
 
@@ -618,14 +668,14 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> T
                 clamp_elem.set('Variable', var_name)
                 clamp_elem.set('Operator', '#_set_max_')
                 clamp_elem.text = min_val
-                additional_elements.append(clamp_elem)
+                after_elements.append(clamp_elem)
             if max_val:
                 # max_val means "maximum allowed value" -> use #_set_min_
                 clamp_elem = etree.Element('Set')
                 clamp_elem.set('Variable', var_name)
                 clamp_elem.set('Operator', '#_set_min_')
                 clamp_elem.text = max_val
-                additional_elements.append(clamp_elem)
+                after_elements.append(clamp_elem)
 
     # Blink element
     elif tag == 'Blink':
@@ -657,7 +707,9 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> T
     # Origin conversion for positionable elements (must be done before alignment sets ParentAlign)
     if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
                'Container', 'Line', 'Polygon', 'Ellipse', 'Arc'):
-        origin_comment = convert_origin_attributes(elem)
+        origin_before, origin_after, origin_comment = convert_origin_attributes(elem)
+        before_elements.extend(origin_before)
+        after_elements.extend(origin_after)
         if origin_comment:
             comment = origin_comment
 
@@ -683,7 +735,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> T
     elif tag in ELEMENT_RENAMES:
         elem.tag = ELEMENT_RENAMES[tag]
 
-    return (additional_elements, comment)
+    return (before_elements, after_elements, comment)
 
 
 def process_mask_element(elem: etree._Element) -> None:
@@ -722,11 +774,11 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
 
     Returns a list of additional elements to insert after elem.
     """
-    all_additional = []
+    all_after = []
 
     # Skip comments and other non-element nodes
     if not isinstance(elem.tag, str):
-        return all_additional
+        return all_after
 
     # Special handling for Mask elements
     if elem.tag == 'Mask':
@@ -748,11 +800,17 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
         idx = list(parent).index(elem)
         parent.remove(elem)
         parent.insert(idx, comment)
-        return all_additional  # Don't process children
+        return all_after  # Don't process children
 
     # Process this element
-    additional, todo_comment = process_element(elem, parent_tag)
-    all_additional.extend(additional)
+    before_elements, after_elements, todo_comment = process_element(elem, parent_tag)
+    all_after.extend(after_elements)
+
+    # Insert before elements (e.g., push/negate for origin conversion)
+    if before_elements and parent is not None:
+        idx = list(parent).index(elem)
+        for i, before_elem in enumerate(before_elements):
+            parent.insert(idx + i, before_elem)
 
     # Insert TODO comment before element if origin conversion needs manual review
     if todo_comment and parent is not None:
@@ -766,15 +824,15 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
         # Skip comments (their tag is a callable, not a string)
         if not isinstance(child.tag, str):
             continue
-        child_additional = process_tree(child, elem, elem.tag)
+        child_after = process_tree(child, elem, elem.tag)
 
         # Insert additional elements after the child
-        if child_additional:
+        if child_after:
             child_index = list(elem).index(child)
-            for j, add_elem in enumerate(child_additional):
+            for j, add_elem in enumerate(child_after):
                 elem.insert(child_index + 1 + j, add_elem)
 
-    return all_additional
+    return all_after
 
 
 def convert_xml(input_text: str) -> str:

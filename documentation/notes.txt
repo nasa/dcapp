@@ -758,6 +758,9 @@ Set Operations:
     #_set_divide_
     #_set_max_          (clamp to minimum: ensures value >= operand)
     #_set_min_          (clamp to maximum: ensures value <= operand)
+    #_set_push_         (push current value onto stack)
+    #_set_pop_          (pop value from stack, restore variable)
+    #_set_negate_       (negate the variable: x = -x)
 
 
 ================================================================================
