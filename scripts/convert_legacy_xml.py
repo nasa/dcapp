@@ -95,6 +95,7 @@ COMMENT_OUT_ATTRIBUTES = {
     'KeyASCII',         # Button - ASCII key binding
     'Face',             # Text - font face
     'Camera',           # PixelStream/Terrain - camera binding
+    'ZeroTrim',         # Text - snap near-zero values to zero (use format specifier instead)
 }
 
 # Elements to comment out with TODO markers
