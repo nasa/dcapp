@@ -881,7 +881,7 @@ static const char *_valid_attrs_if[]             = {"Value", "Value1", "Value2",
 static const char *_valid_attrs_image[]          = {"File", NULL};
 static const char *_valid_attrs_logic[]          = {"File", NULL};
 static const char *_valid_attrs_mouse_motion[]   = {"VariableX", "VariableY", NULL};
-static const char *_valid_attrs_panel[]          = {NULL};
+static const char *_valid_attrs_panel[]          = {"DisplayIndex", NULL};
 static const char *_valid_attrs_pixelstream[]    = {"Type", "URL", "Protocol", "Timeout", NULL};
 static const char *_valid_attrs_set[]            = {"Variable", "Operator", NULL};
 static const char *_valid_attrs_sphere[]         = {"Radius", "Image", "Roll", "Pitch", "Yaw", NULL};
@@ -893,7 +893,7 @@ static const char *_valid_attrs_trick_io[]       = {"Host", "Port", "DataRate", 
 static const char *_valid_attrs_trick_variable[] = {"Name", "Units", NULL};
 static const char *_valid_attrs_variable[]       = {"Type", "InitialValue", NULL};
 static const char *_valid_attrs_vertex[]         = {NULL};
-static const char *_valid_attrs_window[]         = {"Title", NULL};
+static const char *_valid_attrs_window[]         = {"Title", "ActiveDisplay", NULL};
 
 // Check if an attribute name is in a list
 static bool _attr_in_list(const char *attr_name, const char **list) {
