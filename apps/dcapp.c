@@ -200,7 +200,6 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
         sbfree(ctx->sb_tx_var_contexts);
         sbfree(ctx->sb_rx_var_contexts);
         dc_trick_cleanup(ctx->trick);
-        free(ctx->trick);
     }
     sbfree(app_data->sb_tricks);
 
@@ -264,10 +263,10 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     for (int ii = 0; ii < sbcount(app_data->sb_tricks); ii++) {
 
         _TrickContext *trick_context = &(app_data->sb_tricks[ii]);
-        DcTrick       *trick         = trick_context->trick;
+        DcTrickHandle  trick         = trick_context->trick;
 
         // add tx commands to buffer
-        if (trick->is_connected) {
+        if (dc_trick_is_connected(trick)) {
             for (int jj = 0; jj < sbcount(trick_context->sb_tx_var_contexts); jj++) {
 
                 _TrickTxVarContext *tx_var_context = &(trick_context->sb_tx_var_contexts[jj]);
@@ -291,15 +290,16 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
             DcAppLookupVar *connected_var = dc_app_lookup_get_var(app_data->lookup, trick_context->connected_var_index);
             if (connected_var) {
                 DcValue *value = dc_app_lookup_get_value(app_data->lookup, connected_var->value_index);
+                bool is_connected = dc_trick_is_connected(trick);
                 switch (value->type) {
                     case DC_VALUE_TYPE_BOOLEAN:
-                        value->value_boolean = trick->is_connected;
+                        value->value_boolean = is_connected;
                         break;
                     case DC_VALUE_TYPE_INTEGER:
-                        value->value_integer = trick->is_connected ? 1 : 0;
+                        value->value_integer = is_connected ? 1 : 0;
                         break;
                     case DC_VALUE_TYPE_STRING:
-                        strncpy(value->value_string, trick->is_connected ? "true" : "false", DC_VALUE_STRING_BUFFER_SIZE - 1);
+                        strncpy(value->value_string, is_connected ? "true" : "false", DC_VALUE_STRING_BUFFER_SIZE - 1);
                         break;
                     default:
                         break;
@@ -309,7 +309,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
         }
 
         // receive the new data
-        if (trick->has_new_data && trick->is_connected) {
+        if (dc_trick_has_new_data(trick) && dc_trick_is_connected(trick)) {
             char rx_buffer[256];
             for (int jj = 0; jj < sbcount(trick_context->sb_rx_var_contexts); jj++) {
 
