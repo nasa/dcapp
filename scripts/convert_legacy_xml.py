@@ -459,10 +459,13 @@ def convert_pixelstream_attributes(elem: etree._Element) -> None:
     # Convert Type attribute
     pxs_type = elem.get('Type')
     if pxs_type:
-        if pxs_type.lower() == 'mjpeg':
+        pxs_type_lower = pxs_type.lower()
+        if pxs_type_lower == 'mjpeg':
             elem.set('Type', '#_pixelstream_mjpeg_')
+        elif pxs_type_lower in ('dfile', 'dynamicfile', 'dynamic_file', 'shmem'):
+            elem.set('Type', '#_pixelstream_shmem_')
         else:
-            # Comment out non-mjpeg types (WIP)
+            # Comment out unknown types (WIP)
             del elem.attrib['Type']
             elem.set('_Type', pxs_type + ' (WIP)')
 

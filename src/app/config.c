@@ -184,7 +184,7 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const_int(&context, "_conditional_gt_", DC_APP_CONDITIONAL_TYPE_GT, true);
     _add_const_int(&context, "_conditional_lte_", DC_APP_CONDITIONAL_TYPE_LTE, true);
     _add_const_int(&context, "_conditional_gte_", DC_APP_CONDITIONAL_TYPE_GTE, true);
-    _add_const_int(&context, "_pixelstream_dynamic_file_", DC_APP_PIXELSTREAM_TYPE_DYNAMIC_FILE, true);
+    _add_const_int(&context, "_pixelstream_shmem_", DC_APP_PIXELSTREAM_TYPE_SHMEM, true);
     _add_const_int(&context, "_pixelstream_mjpeg_", DC_APP_PIXELSTREAM_TYPE_MJPEG, true);
     _add_const_int(&context, "_set_equal_", DC_APP_SET_TYPE_EQUAL, true);
     _add_const_int(&context, "_set_add_", DC_APP_SET_TYPE_ADD, true);

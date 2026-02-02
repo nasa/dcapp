@@ -2317,12 +2317,40 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
                 if (node->pixelstream.frame_height * node->pixelstream.frame_width > _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT) {
                     fprintf(stderr, "DCApp draw_node() pixelstream: max image dimensions exceeded\n");
                 }
+            }
+            break;
+        }
+        case DC_APP_PIXELSTREAM_TYPE_SHMEM: {
 
+            // don't show anything if disconnected
+            if (!dc_ps_shmem_is_connected(node->pixelstream.shmem.handle)) {
                 break;
             }
-        }
-        case DC_APP_PIXELSTREAM_TYPE_DYNAMIC_FILE: {
-            // TODO implement
+
+            // get latest frame data
+            if (dc_ps_shmem_has_new_data(node->pixelstream.shmem.handle)) {
+
+                // get dimensions
+                uint32_t width  = dc_ps_shmem_get_width(node->pixelstream.shmem.handle);
+                uint32_t height = dc_ps_shmem_get_height(node->pixelstream.shmem.handle);
+
+                // check size
+                if (width * height > _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT) {
+                    fprintf(stderr, "DCApp draw_node() pixelstream shmem: max image dimensions exceeded\n");
+                    break;
+                }
+
+                // allocate frame buffer if needed
+                size_t frame_size = (size_t)width * height * 4;
+                node->pixelstream.frame = realloc(node->pixelstream.frame, frame_size);
+
+                // get data directly (already RGBA)
+                size_t out_size;
+                dc_ps_shmem_get_data(node->pixelstream.shmem.handle, node->pixelstream.frame, frame_size, &out_size);
+
+                node->pixelstream.frame_width  = (int)width;
+                node->pixelstream.frame_height = (int)height;
+            }
             break;
         }
         default:

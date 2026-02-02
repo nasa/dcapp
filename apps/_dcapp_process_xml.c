@@ -2516,8 +2516,25 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
     // iterate over type
     switch (dc_node.pixelstream.type) {
 
-        case DC_APP_PIXELSTREAM_TYPE_DYNAMIC_FILE: {
-            // TODO
+        case DC_APP_PIXELSTREAM_TYPE_SHMEM: {
+
+            // parse filepath (also used as shmem key via ftok)
+            xmlChar *raw_filepath = xmlGetProp(xml_node, BAD_CAST "File");
+            if (!raw_filepath) {
+                raw_filepath = xmlGetProp(xml_node, BAD_CAST "URL");  // fallback
+            }
+            char filepath[256];
+            if (raw_filepath) {
+                strncpy(filepath, (const char *)raw_filepath, 256);
+                filepath[255] = '\0';
+                xmlFree(raw_filepath);
+            } else {
+                fprintf(stderr, "DCApp _process_xml_node() pixelstream: Missing 'File' field for shmem type\n");
+                filepath[0] = '\0';
+            }
+
+            // set shmem field
+            dc_node.pixelstream.shmem.handle = dc_ps_shmem_add_source(filepath);
             break;
         }
 

@@ -53,6 +53,7 @@ const plImageI       *_ext_image        = NULL;
 #include "../src/app/lookup.h"
 #include "../src/app/config.h"
 #include "../src/pixelstream/mjpeg.h"
+#include "../src/pixelstream/shmem.h"
 #include "../src/trick.h"
 #include <libxml/parser.h>
 
@@ -363,6 +364,10 @@ typedef struct __PixelstreamMjpegData {
     size_t          raw_jpeg_size;
 } _PixelstreamMjpegData;
 
+typedef struct __PixelstreamShmemData {
+    DcPsShmemHandle handle;
+} _PixelstreamShmemData;
+
 typedef struct __NodePixelstream {
     _ValIndex2    position;
     _ValIndex2    dimension;
@@ -385,6 +390,7 @@ typedef struct __NodePixelstream {
     int                  frame_height;
     union {
         _PixelstreamMjpegData mjpeg;
+        _PixelstreamShmemData shmem;
     };
 } _NodePixelstream;
 

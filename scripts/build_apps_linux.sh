@@ -136,7 +136,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/sock.c ../src/value.c ../src/trick.c ../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/pixelstream/mjpeg.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../apps/dcapp.c "
+PL_SOURCES="../src/sock.c ../src/trick.c ../src/value.c ../src/app/elem.c ../src/app/lookup.c ../src/app/config.c ../src/pixelstream/mjpeg.c ../src/pixelstream/shmem.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../apps/dcapp.c "
 
 # run compiler (and linker)
 echo
@@ -165,7 +165,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/value.c ../apps/dcapp-genheader.c "
+PL_SOURCES="../src/app/elem.c ../src/app/lookup.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/value.c ../apps/dcapp-genheader.c "
 
 # run compiler (and linker)
 echo
@@ -194,7 +194,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/value.c ../apps/dcapp-validate.c "
+PL_SOURCES="../src/app/elem.c ../src/app/lookup.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/value.c ../apps/dcapp-validate.c "
 
 # run compiler (and linker)
 echo
@@ -309,7 +309,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES="-l:dearimguid.a "
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/sock.c ../src/value.c ../src/trick.c ../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/pixelstream/mjpeg.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../apps/dcapp.c "
+PL_SOURCES="../src/sock.c ../src/trick.c ../src/value.c ../src/app/elem.c ../src/app/lookup.c ../src/app/config.c ../src/pixelstream/mjpeg.c ../src/pixelstream/shmem.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../apps/dcapp.c "
 
 # run compiler (and linker)
 echo
@@ -338,7 +338,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/value.c ../apps/dcapp-genheader.c "
+PL_SOURCES="../src/app/elem.c ../src/app/lookup.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/value.c ../apps/dcapp-genheader.c "
 
 # run compiler (and linker)
 echo
@@ -367,7 +367,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/value.c ../apps/dcapp-validate.c "
+PL_SOURCES="../src/app/elem.c ../src/app/lookup.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/value.c ../apps/dcapp-validate.c "
 
 # run compiler (and linker)
 echo

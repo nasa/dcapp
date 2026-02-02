@@ -33,7 +33,7 @@ typedef enum _DcAppConditionalType {
 
 typedef enum _DcAppPixelstreamType {
     DC_APP_PIXELSTREAM_TYPE_UNDEFINED,
-    DC_APP_PIXELSTREAM_TYPE_DYNAMIC_FILE,
+    DC_APP_PIXELSTREAM_TYPE_SHMEM,
     DC_APP_PIXELSTREAM_TYPE_MJPEG
 } DcAppPixelstreamType;
 

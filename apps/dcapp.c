@@ -113,8 +113,9 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     // preprocess XML file
     dc_app_config_preprocess_xml(app_data->config, app_data->lookup);
 
-    // initialize mjpeg context
+    // initialize pixelstream contexts
     dc_ps_mjpeg_init();
+    dc_ps_shmem_init();
 
     // build dcapp node tree
     xmlNodePtr root_node = xmlDocGetRootElement(app_data->config->xml_doc);
@@ -155,12 +156,16 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 sbfree(node->line.sb_vertices);
                 break;
             case NODE_TYPE_PIXELSTREAM:
-                if (node->pixelstream.frame) {
-                    _ext_image->free(node->pixelstream.frame);
-                }
                 if (node->pixelstream.type == DC_APP_PIXELSTREAM_TYPE_MJPEG) {
+                    if (node->pixelstream.frame) {
+                        _ext_image->free(node->pixelstream.frame);
+                    }
                     if (node->pixelstream.mjpeg.raw_jpeg) {
                         free(node->pixelstream.mjpeg.raw_jpeg);
+                    }
+                } else if (node->pixelstream.type == DC_APP_PIXELSTREAM_TYPE_SHMEM) {
+                    if (node->pixelstream.frame) {
+                        free(node->pixelstream.frame);
                     }
                 }
                 break;
@@ -199,8 +204,9 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     }
     sbfree(app_data->sb_tricks);
 
-    // cleanup MJPEG global context
+    // cleanup pixelstream global contexts
     dc_ps_mjpeg_cleanup();
+    dc_ps_shmem_cleanup();
 
     // cleanup textures
     for (int i = 0; i < sbcount(app_data->sb_textures); i++) {
@@ -317,8 +323,9 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
         }
     }
 
-    // process pixelstream mjpeg data
+    // process pixelstream data
     dc_ps_mjpeg_update();
+    dc_ps_shmem_update();
 
     // process logic
     if (app_data->logic_draw) {
