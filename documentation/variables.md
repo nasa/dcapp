@@ -235,7 +235,7 @@ Use `<If>` to show/hide content based on variable values:
 ```xml
 <Variable Type="#_variable_double_" InitialValue="100">fuel</Variable>
 
-<If Value="@fuel" Value2="20" Operation="#_conditional_lt_">
+<If Value="@fuel" Value2="20" Operation="#_if_lt_">
     <True>
         <Text FillColor="1,0,0,1">LOW FUEL WARNING</Text>
     </True>
@@ -246,14 +246,14 @@ Use `<If>` to show/hide content based on variable values:
 
 | Constant | Description |
 |----------|-------------|
-| `#_conditional_true_` | Check if value is truthy (non-zero, non-empty) |
-| `#_conditional_false_` | Check if value is falsy |
-| `#_conditional_eq_` | Equal to |
-| `#_conditional_ne_` | Not equal to |
-| `#_conditional_lt_` | Less than |
-| `#_conditional_gt_` | Greater than |
-| `#_conditional_lte_` | Less than or equal |
-| `#_conditional_gte_` | Greater than or equal |
+| `#_if_true_` | Check if value is truthy (non-zero, non-empty) |
+| `#_if_false_` | Check if value is falsy |
+| `#_if_eq_` | Equal to |
+| `#_if_ne_` | Not equal to |
+| `#_if_lt_` | Less than |
+| `#_if_gt_` | Greater than |
+| `#_if_lte_` | Less than or equal |
+| `#_if_gte_` | Greater than or equal |
 
 See the [Constants documentation](dcapp_constants.md) for the complete list.
 

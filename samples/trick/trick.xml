@@ -93,7 +93,7 @@
         <Container X="750" Y="10" Width="100" Height="80">
             <Rectangle Width="100" Height="80" FillColor="0.1 0.1 0.2 0.9" LineColor="0.3 0.3 0.4" LineWidth="1"/>
             <Text X="10" Y="60" Size="12" FillColor="0.6 0.6 0.7">Status</Text>
-            <If Value="@impact" Value2="1" Operation="#_conditional_eq_">
+            <If Value="@impact" Value2="1" Operation="#_if_eq_">
                 <True>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="16" FillColor="1 0.3 0.3">IMPACT!</Text>
                 </True>

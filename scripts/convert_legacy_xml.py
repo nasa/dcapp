@@ -156,20 +156,20 @@ VERTICAL_ALIGN_MAP = {
 # ============================================================================
 
 CONDITIONAL_OP_MAP = {
-    'gt': '#_conditional_gt_',
-    'lt': '#_conditional_lt_',
-    'eq': '#_conditional_eq_',
-    'ne': '#_conditional_ne_',
-    'gte': '#_conditional_gte_',
-    'lte': '#_conditional_lte_',
-    'ge': '#_conditional_gte_',
-    'le': '#_conditional_lte_',
-    '>': '#_conditional_gt_',
-    '<': '#_conditional_lt_',
-    '==': '#_conditional_eq_',
-    '!=': '#_conditional_ne_',
-    '>=': '#_conditional_gte_',
-    '<=': '#_conditional_lte_',
+    'gt': '#_if_gt_',
+    'lt': '#_if_lt_',
+    'eq': '#_if_eq_',
+    'ne': '#_if_ne_',
+    'gte': '#_if_gte_',
+    'lte': '#_if_lte_',
+    'ge': '#_if_gte_',
+    'le': '#_if_lte_',
+    '>': '#_if_gt_',
+    '<': '#_if_lt_',
+    '==': '#_if_eq_',
+    '!=': '#_if_ne_',
+    '>=': '#_if_gte_',
+    '<=': '#_if_lte_',
 }
 
 
@@ -553,10 +553,10 @@ def convert_display_index_pattern(elem: etree._Element) -> None:
 
     After:
         <Window>
-            <If Value1="@currentPage" Value2="1" Operation="#_conditional_eq_">
+            <If Value1="@currentPage" Value2="1" Operation="#_if_eq_">
                 <Panel>...</Panel>
             </If>
-            <If Value1="@currentPage" Value2="2" Operation="#_conditional_eq_">
+            <If Value1="@currentPage" Value2="2" Operation="#_if_eq_">
                 <Panel>...</Panel>
             </If>
         </Window>
@@ -594,7 +594,7 @@ def convert_display_index_pattern(elem: etree._Element) -> None:
         if_elem = etree.Element('If')
         if_elem.set('Value1', active_display)
         if_elem.set('Value2', display_index)
-        if_elem.set('Operation', '#_conditional_eq_')
+        if_elem.set('Operation', '#_if_eq_')
 
         # Add panel as child of If
         if_elem.append(panel)

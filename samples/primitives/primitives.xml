@@ -11,7 +11,7 @@
 
             <!-- Animate angle for arc demo -->
             <Set Variable="ANGLE" Operator="#_set_add_">1</Set>
-            <If Value1="@ANGLE" Operation="#_conditional_gt_" Value2="360">
+            <If Value1="@ANGLE" Operation="#_if_gt_" Value2="360">
                 <Set Variable="ANGLE" Operator="#_set_equal_">0</Set>
             </If>
 

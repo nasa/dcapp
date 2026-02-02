@@ -14,7 +14,7 @@
 
             <!-- Animate counter -->
             <Set Variable="COUNTER" Operator="#_set_add_">1</Set>
-            <If Value1="@COUNTER" Operation="#_conditional_gt_" Value2="100">
+            <If Value1="@COUNTER" Operation="#_if_gt_" Value2="100">
                 <Set Variable="COUNTER" Operator="#_set_equal_">0</Set>
             </If>
 
@@ -31,13 +31,13 @@
                 <Text X="125" Y="130" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Counter: @COUNTER(%.0f)</Text>
 
                 <!-- Show different content based on counter value -->
-                <If Value1="@COUNTER" Operation="#_conditional_lt_" Value2="50">
+                <If Value1="@COUNTER" Operation="#_if_lt_" Value2="50">
                     <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.3 0.8 0.3"/>
                     <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">LOW</Text>
                     <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Counter &lt; 50</Text>
                 </If>
 
-                <If Value1="@COUNTER" Operation="#_conditional_gte_" Value2="50">
+                <If Value1="@COUNTER" Operation="#_if_gte_" Value2="50">
                     <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.8 0.3 0.3"/>
                     <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">HIGH</Text>
                     <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Counter &gt;= 50</Text>
@@ -54,26 +54,26 @@
                 <Text X="125" Y="130" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Counter: @COUNTER(%.0f)</Text>
 
                 <!-- Multiple conditions using separate If statements -->
-                <If Value1="@COUNTER" Operation="#_conditional_lt_" Value2="25">
+                <If Value1="@COUNTER" Operation="#_if_lt_" Value2="25">
                     <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.2 0.5 0.8"/>
                     <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 1</Text>
                     <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">0-24</Text>
                 </If>
-                <If Value1="@COUNTER" Operation="#_conditional_gte_" Value2="25">
-                    <If Value1="@COUNTER" Operation="#_conditional_lt_" Value2="50">
+                <If Value1="@COUNTER" Operation="#_if_gte_" Value2="25">
+                    <If Value1="@COUNTER" Operation="#_if_lt_" Value2="50">
                         <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.5 0.8 0.2"/>
                         <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 2</Text>
                         <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">25-49</Text>
                     </If>
                 </If>
-                <If Value1="@COUNTER" Operation="#_conditional_gte_" Value2="50">
-                    <If Value1="@COUNTER" Operation="#_conditional_lt_" Value2="75">
+                <If Value1="@COUNTER" Operation="#_if_gte_" Value2="50">
+                    <If Value1="@COUNTER" Operation="#_if_lt_" Value2="75">
                         <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.8 0.5 0.2"/>
                         <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 3</Text>
                         <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">50-74</Text>
                     </If>
                 </If>
-                <If Value1="@COUNTER" Operation="#_conditional_gte_" Value2="75">
+                <If Value1="@COUNTER" Operation="#_if_gte_" Value2="75">
                     <Rectangle X="75" Y="40" Width="100" Height="60" FillColor="0.8 0.2 0.5"/>
                     <Text X="125" Y="70" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">PHASE 4</Text>
                     <Text X="125" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">75-100</Text>
@@ -90,43 +90,43 @@
                 <Text X="150" Y="130" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">VALUE = @VALUE(%.0f)</Text>
 
                 <!-- Show which comparisons are true -->
-                <Text X="20" Y="100" Size="9" FillColor="0.6 0.6 0.6">#_conditional_lt_ (&lt;)</Text>
-                <If Value1="@VALUE" Operation="#_conditional_lt_" Value2="50">
+                <Text X="20" Y="100" Size="9" FillColor="0.6 0.6 0.6">#_if_lt_ (&lt;)</Text>
+                <If Value1="@VALUE" Operation="#_if_lt_" Value2="50">
                     <Circle X="270" Y="103" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
-                <If Value1="@VALUE" Operation="#_conditional_gte_" Value2="50">
+                <If Value1="@VALUE" Operation="#_if_gte_" Value2="50">
                     <Circle X="270" Y="103" Radius="6" FillColor="0.8 0.3 0.3"/>
                 </If>
 
-                <Text X="20" Y="80" Size="9" FillColor="0.6 0.6 0.6">#_conditional_lte_ (&lt;=)</Text>
-                <If Value1="@VALUE" Operation="#_conditional_lte_" Value2="50">
+                <Text X="20" Y="80" Size="9" FillColor="0.6 0.6 0.6">#_if_lte_ (&lt;=)</Text>
+                <If Value1="@VALUE" Operation="#_if_lte_" Value2="50">
                     <Circle X="270" Y="83" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
-                <If Value1="@VALUE" Operation="#_conditional_gt_" Value2="50">
+                <If Value1="@VALUE" Operation="#_if_gt_" Value2="50">
                     <Circle X="270" Y="83" Radius="6" FillColor="0.8 0.3 0.3"/>
                 </If>
 
-                <Text X="20" Y="60" Size="9" FillColor="0.6 0.6 0.6">#_conditional_eq_ (==)</Text>
-                <If Value1="@VALUE" Operation="#_conditional_eq_" Value2="50">
+                <Text X="20" Y="60" Size="9" FillColor="0.6 0.6 0.6">#_if_eq_ (==)</Text>
+                <If Value1="@VALUE" Operation="#_if_eq_" Value2="50">
                     <Circle X="270" Y="63" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
-                <If Value1="@VALUE" Operation="#_conditional_ne_" Value2="50">
+                <If Value1="@VALUE" Operation="#_if_ne_" Value2="50">
                     <Circle X="270" Y="63" Radius="6" FillColor="0.8 0.3 0.3"/>
                 </If>
 
-                <Text X="20" Y="40" Size="9" FillColor="0.6 0.6 0.6">#_conditional_gt_ (&gt;)</Text>
-                <If Value1="@VALUE" Operation="#_conditional_gt_" Value2="50">
+                <Text X="20" Y="40" Size="9" FillColor="0.6 0.6 0.6">#_if_gt_ (&gt;)</Text>
+                <If Value1="@VALUE" Operation="#_if_gt_" Value2="50">
                     <Circle X="270" Y="43" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
-                <If Value1="@VALUE" Operation="#_conditional_lte_" Value2="50">
+                <If Value1="@VALUE" Operation="#_if_lte_" Value2="50">
                     <Circle X="270" Y="43" Radius="6" FillColor="0.8 0.3 0.3"/>
                 </If>
 
-                <Text X="20" Y="20" Size="9" FillColor="0.6 0.6 0.6">#_conditional_gte_ (&gt;=)</Text>
-                <If Value1="@VALUE" Operation="#_conditional_gte_" Value2="50">
+                <Text X="20" Y="20" Size="9" FillColor="0.6 0.6 0.6">#_if_gte_ (&gt;=)</Text>
+                <If Value1="@VALUE" Operation="#_if_gte_" Value2="50">
                     <Circle X="270" Y="23" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
-                <If Value1="@VALUE" Operation="#_conditional_lt_" Value2="50">
+                <If Value1="@VALUE" Operation="#_if_lt_" Value2="50">
                     <Circle X="270" Y="23" Radius="6" FillColor="0.8 0.3 0.3"/>
                 </If>
 
@@ -169,19 +169,19 @@
                 </Button>
 
                 <!-- Mode display using If statements -->
-                <If Value1="@MODE" Operation="#_conditional_eq_" Value2="1">
+                <If Value1="@MODE" Operation="#_if_eq_" Value2="1">
                     <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.8 0.3 0.3"/>
                     <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">Mode 1</Text>
                 </If>
-                <If Value1="@MODE" Operation="#_conditional_eq_" Value2="2">
+                <If Value1="@MODE" Operation="#_if_eq_" Value2="2">
                     <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.3 0.8 0.3"/>
                     <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">Mode 2</Text>
                 </If>
-                <If Value1="@MODE" Operation="#_conditional_eq_" Value2="3">
+                <If Value1="@MODE" Operation="#_if_eq_" Value2="3">
                     <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.3 0.3 0.8"/>
                     <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">Mode 3</Text>
                 </If>
-                <If Value1="@MODE" Operation="#_conditional_gt_" Value2="3">
+                <If Value1="@MODE" Operation="#_if_gt_" Value2="3">
                     <Rectangle X="75" Y="30" Width="100" Height="60" FillColor="0.8 0.8 0.3"/>
                     <Text X="125" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="0 0 0">Mode 4+</Text>
                 </If>
@@ -234,11 +234,11 @@
 
                 <!-- Value bar -->
                 <Rectangle X="20" Y="15" Width="210" Height="20" FillColor="0.2 0.2 0.2" LineColor="0.4 0.4 0.4" LineWidth="1"/>
-                <If Value1="@VALUE" Operation="#_conditional_gt_" Value2="0">
-                    <If Value1="@VALUE" Operation="#_conditional_lte_" Value2="210">
+                <If Value1="@VALUE" Operation="#_if_gt_" Value2="0">
+                    <If Value1="@VALUE" Operation="#_if_lte_" Value2="210">
                         <Rectangle X="20" Y="15" Width="@VALUE" Height="20" FillColor="0.3 0.6 0.8"/>
                     </If>
-                    <If Value1="@VALUE" Operation="#_conditional_gt_" Value2="210">
+                    <If Value1="@VALUE" Operation="#_if_gt_" Value2="210">
                         <Rectangle X="20" Y="15" Width="210" Height="20" FillColor="0.8 0.3 0.3"/>
                     </If>
                 </If>
@@ -265,12 +265,12 @@
                 </Button>
 
                 <!-- Conditionally shown elements -->
-                <If Value1="@TOGGLE" Operation="#_conditional_eq_" Value2="1">
+                <If Value1="@TOGGLE" Operation="#_if_eq_" Value2="1">
                     <Rectangle X="50" Y="30" Width="80" Height="60" FillColor="0.3 0.8 0.3"/>
                     <Text X="90" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Visible</Text>
                 </If>
 
-                <If Value1="@TOGGLE" Operation="#_conditional_eq_" Value2="0">
+                <If Value1="@TOGGLE" Operation="#_if_eq_" Value2="0">
                     <Rectangle X="170" Y="30" Width="80" Height="60" FillColor="0.8 0.3 0.3"/>
                     <Text X="210" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Hidden</Text>
                 </If>
@@ -297,9 +297,9 @@
 
                 <!-- Column 3: Operations -->
                 <Text X="610" Y="120" Size="11" FillColor="0.8 0.8 0.3">Operations</Text>
-                <Text X="610" Y="100" Size="9" FillColor="0.6 0.6 0.6">#_conditional_lt_  #_conditional_lte_</Text>
-                <Text X="610" Y="80" Size="9" FillColor="0.6 0.6 0.6">#_conditional_gt_  #_conditional_gte_</Text>
-                <Text X="610" Y="60" Size="9" FillColor="0.6 0.6 0.6">#_conditional_eq_  #_conditional_ne_</Text>
+                <Text X="610" Y="100" Size="9" FillColor="0.6 0.6 0.6">#_if_lt_  #_if_lte_</Text>
+                <Text X="610" Y="80" Size="9" FillColor="0.6 0.6 0.6">#_if_gt_  #_if_gte_</Text>
+                <Text X="610" Y="60" Size="9" FillColor="0.6 0.6 0.6">#_if_eq_  #_if_ne_</Text>
 
                 <!-- Set operators -->
                 <Text X="30" Y="35" Size="11" FillColor="0.8 0.8 0.3">Set Operators</Text>

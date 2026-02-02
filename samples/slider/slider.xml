@@ -38,7 +38,7 @@
             <Container X="300" Y="500" Width="400" Height="30" VirtualWidth="100">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
 
-                <If Value1="@SliderXSelected" Operation="#_conditional_eq_" Value2="1">
+                <If Value1="@SliderXSelected" Operation="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderX"/>
                 </If>
 
@@ -63,7 +63,7 @@
             <Container X="740" Y="100" Width="30" Height="280" VirtualHeight="100">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
 
-                <If Value1="@SliderYSelected" Operation="#_conditional_eq_" Value2="1">
+                <If Value1="@SliderYSelected" Operation="#_if_eq_" Value2="1">
                     <MouseMotion VariableY="SliderY"/>
                 </If>
 
@@ -86,7 +86,7 @@
             <Text X="200" Y="380" LocalAlignX="#_align_right_">@SliderRed(%.0f)</Text>
             <Container X="220" Y="380" Width="300" Height="20" VirtualWidth="255" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="0.3 0 0" LineColor="#_color_red_" LineWidth="1"/>
-                <If Value1="@SliderRedSelected" Operation="#_conditional_eq_" Value2="1">
+                <If Value1="@SliderRedSelected" Operation="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderRed"/>
                 </If>
                 <Set Variable="SliderRed" Operator="#_set_max_">0</Set>
@@ -105,7 +105,7 @@
             <Text X="200" Y="340" LocalAlignX="#_align_right_">@SliderGreen(%.0f)</Text>
             <Container X="220" Y="340" Width="300" Height="20" VirtualWidth="255" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="0 0.3 0" LineColor="#_color_green_" LineWidth="1"/>
-                <If Value1="@SliderGreenSelected" Operation="#_conditional_eq_" Value2="1">
+                <If Value1="@SliderGreenSelected" Operation="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderGreen"/>
                 </If>
                 <Set Variable="SliderGreen" Operator="#_set_max_">0</Set>
@@ -124,7 +124,7 @@
             <Text X="200" Y="300" LocalAlignX="#_align_right_">@SliderBlue(%.0f)</Text>
             <Container X="220" Y="300" Width="300" Height="20" VirtualWidth="255" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="0 0 0.3" LineColor="#_color_blue_" LineWidth="1"/>
-                <If Value1="@SliderBlueSelected" Operation="#_conditional_eq_" Value2="1">
+                <If Value1="@SliderBlueSelected" Operation="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderBlue"/>
                 </If>
                 <Set Variable="SliderBlue" Operator="#_set_max_">0</Set>

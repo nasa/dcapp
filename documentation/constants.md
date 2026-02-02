@@ -13,7 +13,7 @@ Constants are referenced using the `#` prefix:
 ```xml
 <Text LocalAlignX="#_align_center_">Centered Text</Text>
 <Button Type="#_button_toggle_" .../>
-<If Operation="#_conditional_gt_" .../>
+<If Operation="#_if_gt_" .../>
 ```
 
 ---
@@ -168,18 +168,18 @@ dcapp provides many predefined constants for common values.
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `#_conditional_true_` | 0 | Check if value is truthy |
-| `#_conditional_false_` | 1 | Check if value is falsy |
-| `#_conditional_eq_` | 2 | Equal to |
-| `#_conditional_ne_` | 3 | Not equal to |
-| `#_conditional_lt_` | 4 | Less than |
-| `#_conditional_gt_` | 5 | Greater than |
-| `#_conditional_lte_` | 6 | Less than or equal |
-| `#_conditional_gte_` | 7 | Greater than or equal |
+| `#_if_true_` | 0 | Check if value is truthy |
+| `#_if_false_` | 1 | Check if value is falsy |
+| `#_if_eq_` | 2 | Equal to |
+| `#_if_ne_` | 3 | Not equal to |
+| `#_if_lt_` | 4 | Less than |
+| `#_if_gt_` | 5 | Greater than |
+| `#_if_lte_` | 6 | Less than or equal |
+| `#_if_gte_` | 7 | Greater than or equal |
 
 **Example:**
 ```xml
-<If Value="@altitude" Value2="10000" Operation="#_conditional_gt_">
+<If Value="@altitude" Value2="10000" Operation="#_if_gt_">
     <True>
         <Text FillColor="1,0,0,1">HIGH ALTITUDE WARNING</Text>
     </True>
@@ -383,14 +383,14 @@ Color constants use space-separated RGB values. Add alpha when using:
 | **Button Type** | `#_button_standard_` | 0 |
 | | `#_button_momentary_` | 1 |
 | | `#_button_toggle_` | 2 |
-| **Conditional** | `#_conditional_true_` | 0 |
-| | `#_conditional_false_` | 1 |
-| | `#_conditional_eq_` | 2 |
-| | `#_conditional_ne_` | 3 |
-| | `#_conditional_lt_` | 4 |
-| | `#_conditional_gt_` | 5 |
-| | `#_conditional_lte_` | 6 |
-| | `#_conditional_gte_` | 7 |
+| **Conditional** | `#_if_true_` | 0 |
+| | `#_if_false_` | 1 |
+| | `#_if_eq_` | 2 |
+| | `#_if_ne_` | 3 |
+| | `#_if_lt_` | 4 |
+| | `#_if_gt_` | 5 |
+| | `#_if_lte_` | 6 |
+| | `#_if_gte_` | 7 |
 | **Set Operation** | `#_set_equal_` | 0 |
 | | `#_set_add_` | 1 |
 | | `#_set_subtract_` | 2 |
@@ -471,7 +471,7 @@ dcapp display.xml serverHost="192.168.1.50" serverPort="8000"
 
 3. **Group related constants** — Put theme colors together, layout values together, etc.
 
-4. **Use built-in constants** — `Operation="#_conditional_gt_"` is more readable than `Operation="5"`.
+4. **Use built-in constants** — `Operation="#_if_gt_"` is more readable than `Operation="5"`.
 
 5. **Mark version/config constants as immutable** — Prevent accidental command-line overrides.
 

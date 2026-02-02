@@ -463,14 +463,14 @@ Conditional rendering based on variable comparison.
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `#_conditional_true_` | 0 | Boolean truthy check (default when `Value2` not provided) |
-| `#_conditional_false_` | 1 | Boolean falsy check |
-| `#_conditional_eq_` | 2 | Equal |
-| `#_conditional_ne_` | 3 | Not equal |
-| `#_conditional_lt_` | 4 | Less than |
-| `#_conditional_gt_` | 5 | Greater than |
-| `#_conditional_lte_` | 6 | Less than or equal |
-| `#_conditional_gte_` | 7 | Greater than or equal |
+| `#_if_true_` | 0 | Boolean truthy check (default when `Value2` not provided) |
+| `#_if_false_` | 1 | Boolean falsy check |
+| `#_if_eq_` | 2 | Equal |
+| `#_if_ne_` | 3 | Not equal |
+| `#_if_lt_` | 4 | Less than |
+| `#_if_gt_` | 5 | Greater than |
+| `#_if_lte_` | 6 | Less than or equal |
+| `#_if_gte_` | 7 | Greater than or equal |
 
 **Children:**
 - `<True>` - Content shown when condition is true
@@ -479,7 +479,7 @@ Conditional rendering based on variable comparison.
 
 **Example:**
 ```xml
-<If Value="@altitude" Value2="1000" Operation="#_conditional_gt_">
+<If Value="@altitude" Value2="1000" Operation="#_if_gt_">
     <True>
         <Text FillColor="1,0,0,1">HIGH ALTITUDE</Text>
     </True>
@@ -505,7 +505,7 @@ When `Static="true"` is set on an `<If>` element, it evaluates once during XML p
 **Example:**
 ```xml
 <!-- Conditionally register debug variables -->
-<If Static="true" Value="#debugMode" Value2="1" Operation="#_conditional_eq_">
+<If Static="true" Value="#debugMode" Value2="1" Operation="#_if_eq_">
     <Variable Type="#_variable_double_" InitialValue="0">debugCounter</Variable>
     <Variable Type="#_variable_string_" InitialValue="">debugMessage</Variable>
 </If>
@@ -514,7 +514,7 @@ When `Static="true"` is set on an `<If>` element, it evaluates once during XML p
 <TrickIO Host="localhost" Port="7000">
     <FromTrick>
         <TrickVariable Name="rocket.altitude">altitude</TrickVariable>
-        <If Static="true" Value="#useAdvancedTelemetry" Value2="1" Operation="#_conditional_eq_">
+        <If Static="true" Value="#useAdvancedTelemetry" Value2="1" Operation="#_if_eq_">
             <TrickVariable Name="rocket.fuel_temp">fuelTemp</TrickVariable>
             <TrickVariable Name="rocket.chamber_pressure">chamberPressure</TrickVariable>
         </If>
@@ -784,7 +784,7 @@ All built-in constants use the `#` prefix followed by the constant name:
 | **Alignment (Horizontal)** | `#_align_left_`, `#_align_center_`, `#_align_right_` |
 | **Alignment (Vertical)** | `#_align_bottom_`, `#_align_middle_`, `#_align_top_` |
 | **Button Types** | `#_button_standard_`, `#_button_momentary_`, `#_button_toggle_` |
-| **Conditionals** | `#_conditional_true_`, `#_conditional_false_`, `#_conditional_eq_`, `#_conditional_ne_`, `#_conditional_lt_`, `#_conditional_gt_`, `#_conditional_lte_`, `#_conditional_gte_` |
+| **Conditionals** | `#_if_true_`, `#_if_false_`, `#_if_eq_`, `#_if_ne_`, `#_if_lt_`, `#_if_gt_`, `#_if_lte_`, `#_if_gte_` |
 | **Set Operations** | `#_set_equal_`, `#_set_add_`, `#_set_subtract_`, `#_set_multiply_`, `#_set_divide_` |
 | **Pixelstream Types** | `#_pixelstream_dynamic_file_`, `#_pixelstream_mjpeg_` |
 
@@ -846,7 +846,7 @@ Attributes marked as `number/var` can contain:
         </Button>
         
         <!-- Altitude Warning -->
-        <If Value="@altitude" Value2="10000" Operation="#_conditional_gt_">
+        <If Value="@altitude" Value2="10000" Operation="#_if_gt_">
             <True>
                 <Text X="400" Y="300" Size="48" FillColor="1,0,0,1" LocalAlignX="#_align_center_">
                     ⚠ HIGH ALTITUDE

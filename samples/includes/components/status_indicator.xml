@@ -5,10 +5,10 @@
         <Rectangle Width="120" Height="40" FillColor="0.15 0.15 0.2" LineColor="0.3 0.3 0.4" LineWidth="1"/>
 
         <!-- Status light -->
-        <If Value1="@STATUS_VAR" Operation="#_conditional_eq_" Value2="1">
+        <If Value1="@STATUS_VAR" Operation="#_if_eq_" Value2="1">
             <Circle X="25" Y="20" Radius="12" FillColor="0.2 0.8 0.3" LineColor="0.3 0.9 0.4" LineWidth="1"/>
         </If>
-        <If Value1="@STATUS_VAR" Operation="#_conditional_eq_" Value2="0">
+        <If Value1="@STATUS_VAR" Operation="#_if_eq_" Value2="0">
             <Circle X="25" Y="20" Radius="12" FillColor="0.8 0.2 0.2" LineColor="0.9 0.3 0.3" LineWidth="1"/>
         </If>
 

@@ -13,7 +13,7 @@
 
             <!-- Animate offset for scrolling demo -->
             <Set Variable="OFFSET" Operator="#_set_add_">0.5</Set>
-            <If Value1="@OFFSET" Operation="#_conditional_gt_" Value2="100">
+            <If Value1="@OFFSET" Operation="#_if_gt_" Value2="100">
                 <Set Variable="OFFSET" Operator="#_set_equal_">0</Set>
             </If>
 

@@ -18,28 +18,28 @@
         <Panel VirtualWidth="100" VirtualHeight="100" BackgroundColor="0.08 0.08 0.12">
 
             <!-- Clamp all values to 0..1 range -->
-            <If Value1="@RED" Operation="#_conditional_lt_" Value2="0">
+            <If Value1="@RED" Operation="#_if_lt_" Value2="0">
                 <Set Variable="RED" Operator="#_set_equal_">0</Set>
             </If>
-            <If Value1="@RED" Operation="#_conditional_gt_" Value2="1">
+            <If Value1="@RED" Operation="#_if_gt_" Value2="1">
                 <Set Variable="RED" Operator="#_set_equal_">1</Set>
             </If>
-            <If Value1="@GREEN" Operation="#_conditional_lt_" Value2="0">
+            <If Value1="@GREEN" Operation="#_if_lt_" Value2="0">
                 <Set Variable="GREEN" Operator="#_set_equal_">0</Set>
             </If>
-            <If Value1="@GREEN" Operation="#_conditional_gt_" Value2="1">
+            <If Value1="@GREEN" Operation="#_if_gt_" Value2="1">
                 <Set Variable="GREEN" Operator="#_set_equal_">1</Set>
             </If>
-            <If Value1="@BLUE" Operation="#_conditional_lt_" Value2="0">
+            <If Value1="@BLUE" Operation="#_if_lt_" Value2="0">
                 <Set Variable="BLUE" Operator="#_set_equal_">0</Set>
             </If>
-            <If Value1="@BLUE" Operation="#_conditional_gt_" Value2="1">
+            <If Value1="@BLUE" Operation="#_if_gt_" Value2="1">
                 <Set Variable="BLUE" Operator="#_set_equal_">1</Set>
             </If>
-            <If Value1="@ALPHA" Operation="#_conditional_lt_" Value2="0">
+            <If Value1="@ALPHA" Operation="#_if_lt_" Value2="0">
                 <Set Variable="ALPHA" Operator="#_set_equal_">0</Set>
             </If>
-            <If Value1="@ALPHA" Operation="#_conditional_gt_" Value2="1">
+            <If Value1="@ALPHA" Operation="#_if_gt_" Value2="1">
                 <Set Variable="ALPHA" Operator="#_set_equal_">1</Set>
             </If>
 

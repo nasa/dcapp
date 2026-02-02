@@ -317,12 +317,12 @@ Legacy syntax:
     <If Value1="@x" Operator="lte" Value2="0">
 
 New syntax:
-    <If Value1="@x" Operation="#_conditional_gt_" Value2="100">
-    <If Value1="@x" Operation="#_conditional_lt_" Value2="0">
-    <If Value1="@x" Operation="#_conditional_eq_" Value2="50">
-    <If Value1="@x" Operation="#_conditional_ne_" Value2="50">
-    <If Value1="@x" Operation="#_conditional_gte_" Value2="100">
-    <If Value1="@x" Operation="#_conditional_lte_" Value2="0">
+    <If Value1="@x" Operation="#_if_gt_" Value2="100">
+    <If Value1="@x" Operation="#_if_lt_" Value2="0">
+    <If Value1="@x" Operation="#_if_eq_" Value2="50">
+    <If Value1="@x" Operation="#_if_ne_" Value2="50">
+    <If Value1="@x" Operation="#_if_gte_" Value2="100">
+    <If Value1="@x" Operation="#_if_lte_" Value2="0">
 
 Note: The attribute name changed from "Operator" to "Operation".
 
@@ -344,7 +344,7 @@ BOOLEAN CONDITIONALS:
 The preprocessor also wraps implicit children (elements directly inside <If>)
 in <True> blocks automatically:
 
-    <If Value1="@x" Operation="#_conditional_gt_" Value2="10">
+    <If Value1="@x" Operation="#_if_gt_" Value2="10">
         <Rectangle .../>   <!-- implicitly wrapped in <True> -->
     </If>
 
@@ -353,13 +353,13 @@ SINGLE-VALUE BOOLEAN TESTS:
 --------------------------------------------------------------------------------
 
 For testing a single boolean value (not comparing two values), use the
-#_conditional_true_ or #_conditional_false_ operations:
+#_if_true_ or #_if_false_ operations:
 
-    <If Value1="@isEnabled" Operation="#_conditional_true_">
+    <If Value1="@isEnabled" Operation="#_if_true_">
         <!-- shown when isEnabled is truthy (non-zero) -->
     </If>
 
-    <If Value1="@isEnabled" Operation="#_conditional_false_">
+    <If Value1="@isEnabled" Operation="#_if_false_">
         <!-- shown when isEnabled is falsy (zero) -->
     </If>
 
@@ -380,7 +380,7 @@ Legacy (no variables - static):
     </If>
 
 New:
-    <If Static="true" Value1="1" Operation="#_conditional_eq_" Value2="1">
+    <If Static="true" Value1="1" Operation="#_if_eq_" Value2="1">
         <True>
             <Rectangle .../>
         </True>
@@ -742,14 +742,14 @@ Alignment (Vertical/Y):
     #_align_top_
 
 Conditional Operations:
-    #_conditional_eq_
-    #_conditional_ne_
-    #_conditional_lt_
-    #_conditional_gt_
-    #_conditional_lte_
-    #_conditional_gte_
-    #_conditional_true_
-    #_conditional_false_
+    #_if_eq_
+    #_if_ne_
+    #_if_lt_
+    #_if_gt_
+    #_if_lte_
+    #_if_gte_
+    #_if_true_
+    #_if_false_
 
 Set Operations:
     #_set_equal_
@@ -828,7 +828,7 @@ New XML:
                 <Button X="400" Y="300" LocalAlignX="#_align_center_" Variable="buttonState">
                     <MousePressed>
                         <Set Variable="value" Operator="#_set_add_">0.1</Set>
-                        <If Value1="@value" Operation="#_conditional_gt_" Value2="1">
+                        <If Value1="@value" Operation="#_if_gt_" Value2="1">
                             <Set Variable="value" Operator="#_set_equal_">0</Set>
                         </If>
                     </MousePressed>
