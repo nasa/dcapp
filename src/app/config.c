@@ -595,212 +595,6 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
             return;
         }
 
-        case DC_APP_ELEM_TYPE_STATIC_IF: {
-            // Parse Operation (already dereferenced by _dereference_node_attrs_and_content)
-            xmlChar *raw_operation = xmlGetProp(node, BAD_CAST "Operation");
-            int cond_type = DC_APP_CONDITIONAL_TYPE_TRUE;
-            if (raw_operation) {
-                cond_type = dc_utils_string_to_integer((const char *)raw_operation);
-                xmlFree(raw_operation);
-            }
-
-            // Parse Value1 (already dereferenced)
-            xmlChar *raw_value1 = xmlGetProp(node, BAD_CAST "Value");
-            if (!raw_value1) {
-                raw_value1 = xmlGetProp(node, BAD_CAST "Value1");
-            }
-            if (!raw_value1) {
-                fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: no value specified\n");
-                xmlUnlinkNode(node);
-                xmlFreeNode(node);
-                return;
-            }
-
-            // Parse Value2 (optional, already dereferenced)
-            xmlChar *raw_value2 = xmlGetProp(node, BAD_CAST "Value2");
-
-            // Copy to stack buffers and free xmlChar* immediately
-            char value1_buf[256];
-            char value2_buf[256];
-            strncpy(value1_buf, (const char *)raw_value1, sizeof(value1_buf) - 1);
-            value1_buf[sizeof(value1_buf) - 1] = '\0';
-            xmlFree(raw_value1);
-
-            const char *value1 = value1_buf;
-            const char *value2 = NULL;
-            if (raw_value2) {
-                strncpy(value2_buf, (const char *)raw_value2, sizeof(value2_buf) - 1);
-                value2_buf[sizeof(value2_buf) - 1] = '\0';
-                value2 = value2_buf;
-                xmlFree(raw_value2);
-            }
-
-            // Check for runtime variables (not allowed in StaticIf)
-            if (value1[0] == '@') {
-                fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: Value1 '%s' uses runtime variable (@), only constants (#) are allowed in StaticIf\n", value1);
-                xmlUnlinkNode(node);
-                xmlFreeNode(node);
-                return;
-            }
-            if (value2 && value2[0] == '@') {
-                fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: Value2 '%s' uses runtime variable (@), only constants (#) are allowed in StaticIf\n", value2);
-                xmlUnlinkNode(node);
-                xmlFreeNode(node);
-                return;
-            }
-
-            // Evaluate the condition
-            bool result = false;
-            if (value2) {
-                // Two-value comparison - determine type from value1
-                // Note: Integer check is skipped because dc_utils_string_is_double() accepts integers.
-                // Both "1" and "1.5" will be treated as doubles, which is fine for constant comparisons.
-                bool is_double = dc_utils_string_is_double(value1);
-                bool is_bool = !is_double && dc_utils_string_is_boolean(value1);
-
-                if (is_double) {
-                    // Numeric comparison (handles both integers and doubles)
-                    if (!dc_utils_string_is_double(value2)) {
-                        fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: Value1 is numeric but Value2 '%s' is not, ignoring StaticIf\n", value2);
-                        xmlUnlinkNode(node);
-                        xmlFreeNode(node);
-                        return;
-                    }
-
-                    double num1 = dc_utils_string_to_double(value1);
-                    double num2 = dc_utils_string_to_double(value2);
-
-                    switch (cond_type) {
-                        case DC_APP_CONDITIONAL_TYPE_EQ:
-                            result = dc_utils_double_equals(num1, num2, 1e-9);
-                            break;
-                        case DC_APP_CONDITIONAL_TYPE_NE:
-                            result = !dc_utils_double_equals(num1, num2, 1e-9);
-                            break;
-                        case DC_APP_CONDITIONAL_TYPE_LT:
-                            result = (num1 < num2);
-                            break;
-                        case DC_APP_CONDITIONAL_TYPE_GT:
-                            result = (num1 > num2);
-                            break;
-                        case DC_APP_CONDITIONAL_TYPE_LTE:
-                            result = (num1 <= num2);
-                            break;
-                        case DC_APP_CONDITIONAL_TYPE_GTE:
-                            result = (num1 >= num2);
-                            break;
-                        default:
-                            fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: invalid Operation %d, expected EQ/NE/LT/GT/LTE/GTE (3-8)\n", cond_type);
-                            break;
-                    }
-                } else if (is_bool) {
-                    // Boolean comparison
-                    int bool1 = dc_utils_string_to_boolean(value1);
-                    int bool2 = dc_utils_string_to_boolean(value2);
-
-                    switch (cond_type) {
-                        case DC_APP_CONDITIONAL_TYPE_EQ:
-                            result = (bool1 == bool2);
-                            break;
-                        case DC_APP_CONDITIONAL_TYPE_NE:
-                            result = (bool1 != bool2);
-                            break;
-                        case DC_APP_CONDITIONAL_TYPE_LT:
-                        case DC_APP_CONDITIONAL_TYPE_GT:
-                        case DC_APP_CONDITIONAL_TYPE_LTE:
-                        case DC_APP_CONDITIONAL_TYPE_GTE:
-                            fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: operator %d not supported for boolean values, ignoring StaticIf\n", cond_type);
-                            xmlUnlinkNode(node);
-                            xmlFreeNode(node);
-                            return;
-                        default:
-                            fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: invalid Operation %d for boolean comparison, expected EQ/NE (3-4)\n", cond_type);
-                            break;
-                    }
-                } else {
-                    // String comparison
-                    switch (cond_type) {
-                        case DC_APP_CONDITIONAL_TYPE_EQ:
-                            result = (strcmp(value1, value2) == 0);
-                            break;
-                        case DC_APP_CONDITIONAL_TYPE_NE:
-                            result = (strcmp(value1, value2) != 0);
-                            break;
-                        case DC_APP_CONDITIONAL_TYPE_LT:
-                        case DC_APP_CONDITIONAL_TYPE_GT:
-                        case DC_APP_CONDITIONAL_TYPE_LTE:
-                        case DC_APP_CONDITIONAL_TYPE_GTE:
-                            fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: operator %d not supported for string values, ignoring StaticIf\n", cond_type);
-                            xmlUnlinkNode(node);
-                            xmlFreeNode(node);
-                            return;
-                        default:
-                            fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: invalid Operation %d for string comparison, expected EQ/NE (3-4)\n", cond_type);
-                            break;
-                    }
-                }
-            } else {
-                // Single value boolean evaluation
-                bool bool_val = dc_utils_string_to_boolean(value1);
-                switch (cond_type) {
-                    case DC_APP_CONDITIONAL_TYPE_TRUE:
-                        result = bool_val;
-                        break;
-                    case DC_APP_CONDITIONAL_TYPE_FALSE:
-                        result = !bool_val;
-                        break;
-                    default:
-                        fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: Operation %d (EQ/NE/LT/GT/LTE/GTE) requires Value2 attribute\n", cond_type);
-                        break;
-                }
-            }
-
-            // Step 1b: Remove non-matching branch (True or False) WITHOUT processing
-            // This ensures constants in the pruned branch are never registered
-            DcAppElemType keep_type = result ? DC_APP_ELEM_TYPE_TRUE : DC_APP_ELEM_TYPE_FALSE;
-            xmlNodePtr child = node->children;
-            while (child) {
-                xmlNodePtr next = child->next;
-                if (child->type == XML_ELEMENT_NODE) {
-                    DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
-                    if (child_type == DC_APP_ELEM_TYPE_TRUE || child_type == DC_APP_ELEM_TYPE_FALSE) {
-                        if (child_type != keep_type) {
-                            xmlUnlinkNode(child);
-                            xmlFreeNode(child);
-                        }
-                    } else {
-                        fprintf(stderr, "DCAPP _preprocess_xml_node(): StaticIf: invalid child <%s>, only <True> and <False> allowed\n", (const char *)child->name);
-                    }
-                }
-                child = next;
-            }
-
-            // Step 2: NOW process surviving children (constants get registered here)
-            child = node->children;
-            while (child) {
-                xmlNodePtr child_next = child->next;
-                _preprocess_xml_node(context, child, directory);
-                child = child_next;
-            }
-
-            // Step 3: Unwrap True/False wrappers
-            child = node->children;
-            while (child) {
-                xmlNodePtr next = child->next;
-                if (child->type == XML_ELEMENT_NODE) {
-                    DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
-                    if (child_type == DC_APP_ELEM_TYPE_TRUE || child_type == DC_APP_ELEM_TYPE_FALSE) {
-                        _splice_children_into_parent_and_free_wrapper(child);
-                    }
-                }
-                child = next;
-            }
-
-            // Step 4: Splice StaticIf's remaining children into parent
-            _splice_children_into_parent_and_free_wrapper(node);
-            return;
-        }
-
         case DC_APP_ELEM_TYPE_INCLUDE: {
 
             // check if include is optional
@@ -957,7 +751,7 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
         }
 
         case DC_APP_ELEM_TYPE_IF: {
-            // Wrap implicit true children in <True> blocks
+            // Wrap implicit true children in <True> blocks (for both static and runtime)
             xmlNodePtr wrapper = NULL;
             xmlNodePtr child = node->children;
             while (child) {
@@ -977,6 +771,217 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                 }
                 child = next;
             }
+
+            // Check if this is a static if (<If Static="true">)
+            bool is_static = false;
+            xmlChar *static_attr = xmlGetProp(node, BAD_CAST "Static");
+            if (static_attr) {
+                is_static = dc_utils_string_to_boolean((const char *)static_attr);
+                xmlFree(static_attr);
+            }
+
+            if (is_static) {
+                // ===== STATIC IF PROCESSING =====
+                // Parse Operation (already dereferenced by _dereference_node_attrs_and_content)
+                xmlChar *raw_operation = xmlGetProp(node, BAD_CAST "Operation");
+                int cond_type = DC_APP_CONDITIONAL_TYPE_TRUE;
+                if (raw_operation) {
+                    cond_type = dc_utils_string_to_integer((const char *)raw_operation);
+                    xmlFree(raw_operation);
+                }
+
+                // Parse Value1 (already dereferenced)
+                xmlChar *raw_value1 = xmlGetProp(node, BAD_CAST "Value");
+                if (!raw_value1) {
+                    raw_value1 = xmlGetProp(node, BAD_CAST "Value1");
+                }
+                if (!raw_value1) {
+                    fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: no value specified\n");
+                    xmlUnlinkNode(node);
+                    xmlFreeNode(node);
+                    return;
+                }
+
+                // Parse Value2 (optional, already dereferenced)
+                xmlChar *raw_value2 = xmlGetProp(node, BAD_CAST "Value2");
+
+                // Copy to stack buffers and free xmlChar* immediately
+                char value1_buf[256];
+                char value2_buf[256];
+                strncpy(value1_buf, (const char *)raw_value1, sizeof(value1_buf) - 1);
+                value1_buf[sizeof(value1_buf) - 1] = '\0';
+                xmlFree(raw_value1);
+
+                const char *value1 = value1_buf;
+                const char *value2 = NULL;
+                if (raw_value2) {
+                    strncpy(value2_buf, (const char *)raw_value2, sizeof(value2_buf) - 1);
+                    value2_buf[sizeof(value2_buf) - 1] = '\0';
+                    value2 = value2_buf;
+                    xmlFree(raw_value2);
+                }
+
+                // Check for runtime variables (not allowed in static If)
+                if (value1[0] == '@') {
+                    fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: Value1 '%s' uses runtime variable (@), only constants (#) are allowed\n", value1);
+                    xmlUnlinkNode(node);
+                    xmlFreeNode(node);
+                    return;
+                }
+                if (value2 && value2[0] == '@') {
+                    fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: Value2 '%s' uses runtime variable (@), only constants (#) are allowed\n", value2);
+                    xmlUnlinkNode(node);
+                    xmlFreeNode(node);
+                    return;
+                }
+
+                // Evaluate the condition
+                bool result = false;
+                if (value2) {
+                    // Two-value comparison - determine type from value1
+                    bool is_double = dc_utils_string_is_double(value1);
+                    bool is_bool = !is_double && dc_utils_string_is_boolean(value1);
+
+                    if (is_double) {
+                        // Numeric comparison (handles both integers and doubles)
+                        if (!dc_utils_string_is_double(value2)) {
+                            fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: Value1 is numeric but Value2 '%s' is not\n", value2);
+                            xmlUnlinkNode(node);
+                            xmlFreeNode(node);
+                            return;
+                        }
+
+                        double num1 = dc_utils_string_to_double(value1);
+                        double num2 = dc_utils_string_to_double(value2);
+
+                        switch (cond_type) {
+                            case DC_APP_CONDITIONAL_TYPE_EQ:
+                                result = dc_utils_double_equals(num1, num2, 1e-9);
+                                break;
+                            case DC_APP_CONDITIONAL_TYPE_NE:
+                                result = !dc_utils_double_equals(num1, num2, 1e-9);
+                                break;
+                            case DC_APP_CONDITIONAL_TYPE_LT:
+                                result = (num1 < num2);
+                                break;
+                            case DC_APP_CONDITIONAL_TYPE_GT:
+                                result = (num1 > num2);
+                                break;
+                            case DC_APP_CONDITIONAL_TYPE_LTE:
+                                result = (num1 <= num2);
+                                break;
+                            case DC_APP_CONDITIONAL_TYPE_GTE:
+                                result = (num1 >= num2);
+                                break;
+                            default:
+                                fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: invalid Operation %d\n", cond_type);
+                                break;
+                        }
+                    } else if (is_bool) {
+                        // Boolean comparison
+                        int bool1 = dc_utils_string_to_boolean(value1);
+                        int bool2 = dc_utils_string_to_boolean(value2);
+
+                        switch (cond_type) {
+                            case DC_APP_CONDITIONAL_TYPE_EQ:
+                                result = (bool1 == bool2);
+                                break;
+                            case DC_APP_CONDITIONAL_TYPE_NE:
+                                result = (bool1 != bool2);
+                                break;
+                            case DC_APP_CONDITIONAL_TYPE_LT:
+                            case DC_APP_CONDITIONAL_TYPE_GT:
+                            case DC_APP_CONDITIONAL_TYPE_LTE:
+                            case DC_APP_CONDITIONAL_TYPE_GTE:
+                                fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: operator %d not supported for boolean values\n", cond_type);
+                                xmlUnlinkNode(node);
+                                xmlFreeNode(node);
+                                return;
+                            default:
+                                fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: invalid Operation %d for boolean comparison\n", cond_type);
+                                break;
+                        }
+                    } else {
+                        // String comparison
+                        switch (cond_type) {
+                            case DC_APP_CONDITIONAL_TYPE_EQ:
+                                result = (strcmp(value1, value2) == 0);
+                                break;
+                            case DC_APP_CONDITIONAL_TYPE_NE:
+                                result = (strcmp(value1, value2) != 0);
+                                break;
+                            case DC_APP_CONDITIONAL_TYPE_LT:
+                            case DC_APP_CONDITIONAL_TYPE_GT:
+                            case DC_APP_CONDITIONAL_TYPE_LTE:
+                            case DC_APP_CONDITIONAL_TYPE_GTE:
+                                fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: operator %d not supported for string values\n", cond_type);
+                                xmlUnlinkNode(node);
+                                xmlFreeNode(node);
+                                return;
+                            default:
+                                fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: invalid Operation %d for string comparison\n", cond_type);
+                                break;
+                        }
+                    }
+                } else {
+                    // Single value boolean evaluation
+                    bool bool_val = dc_utils_string_to_boolean(value1);
+                    switch (cond_type) {
+                        case DC_APP_CONDITIONAL_TYPE_TRUE:
+                            result = bool_val;
+                            break;
+                        case DC_APP_CONDITIONAL_TYPE_FALSE:
+                            result = !bool_val;
+                            break;
+                        default:
+                            fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: Operation %d requires Value2 attribute\n", cond_type);
+                            break;
+                    }
+                }
+
+                // Remove non-matching branch (True or False) WITHOUT processing
+                DcAppElemType keep_type = result ? DC_APP_ELEM_TYPE_TRUE : DC_APP_ELEM_TYPE_FALSE;
+                child = node->children;
+                while (child) {
+                    xmlNodePtr next = child->next;
+                    if (child->type == XML_ELEMENT_NODE) {
+                        DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
+                        if ((child_type == DC_APP_ELEM_TYPE_TRUE || child_type == DC_APP_ELEM_TYPE_FALSE) && child_type != keep_type) {
+                            xmlUnlinkNode(child);
+                            xmlFreeNode(child);
+                        }
+                    }
+                    child = next;
+                }
+
+                // Process surviving children (constants get registered here)
+                child = node->children;
+                while (child) {
+                    xmlNodePtr child_next = child->next;
+                    _preprocess_xml_node(context, child, directory);
+                    child = child_next;
+                }
+
+                // Unwrap True/False wrappers
+                child = node->children;
+                while (child) {
+                    xmlNodePtr next = child->next;
+                    if (child->type == XML_ELEMENT_NODE) {
+                        DcAppElemType child_type = dc_app_xml_node_to_elem_type(child);
+                        if (child_type == DC_APP_ELEM_TYPE_TRUE || child_type == DC_APP_ELEM_TYPE_FALSE) {
+                            _splice_children_into_parent_and_free_wrapper(child);
+                        }
+                    }
+                    child = next;
+                }
+
+                // Splice If's remaining children into parent
+                _splice_children_into_parent_and_free_wrapper(node);
+                return;
+            }
+
+            // ===== RUNTIME IF PROCESSING =====
+            // Implicit children already wrapped above, nothing more to do
             break;
         }
 

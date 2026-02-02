@@ -370,8 +370,9 @@ STATIC CONDITIONALS:
 --------------------------------------------------------------------------------
 
 If an <If> element has no runtime variable references (no @ prefix or #{}
-macro in Value1 or Value2), it is converted to <StaticIf>. Static conditionals
-are evaluated at load time and their branch is baked into the display tree.
+macro in Value1 or Value2), the conversion script adds Static="true". Static
+conditionals are evaluated at load time and their branch is baked into the
+display tree.
 
 Legacy (no variables - static):
     <If Value1="1" Operator="eq" Value2="1">
@@ -379,17 +380,17 @@ Legacy (no variables - static):
     </If>
 
 New:
-    <StaticIf Value1="1" Operation="#_conditional_eq_" Value2="1">
+    <If Static="true" Value1="1" Operation="#_conditional_eq_" Value2="1">
         <True>
             <Rectangle .../>
         </True>
-    </StaticIf>
+    </If>
 
 Runtime variables are detected by @ or #{} patterns:
-    @VARNAME           - stays as <If>
-    @#{MACRO}_SUFFIX   - stays as <If>
-    #{MACRO}           - stays as <If>
-    literal values     - becomes <StaticIf>
+    @VARNAME           - stays as <If> (no Static attribute)
+    @#{MACRO}_SUFFIX   - stays as <If> (no Static attribute)
+    #{MACRO}           - stays as <If> (no Static attribute)
+    literal values     - becomes <If Static="true">
 
 
 ================================================================================

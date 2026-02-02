@@ -112,7 +112,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
     switch (child_type) {
         case DC_APP_ELEM_TYPE_CONSTANT:
         case DC_APP_ELEM_TYPE_STYLE:
-        case DC_APP_ELEM_TYPE_STATIC_IF:
         case DC_APP_ELEM_TYPE_INCLUDE:
         case DC_APP_ELEM_TYPE_DUMMY:
             return false; // These should never exist after preprocessing
@@ -719,8 +718,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             break;
         }
 
-        case DC_APP_ELEM_TYPE_IF:
-        case DC_APP_ELEM_TYPE_STATIC_IF: {
+        case DC_APP_ELEM_TYPE_IF: {
             xmlChar *value = xmlGetProp(node, BAD_CAST "Value");
             if (!value) {
                 value = xmlGetProp(node, BAD_CAST "Value1");
@@ -879,7 +877,7 @@ static const char *_valid_attrs_circle[]         = {"Radius", "Segments", NULL};
 static const char *_valid_attrs_ellipse[]        = {"RadiusX", "RadiusY", "Segments", NULL};
 static const char *_valid_attrs_constant[]       = {"Name", NULL};
 static const char *_valid_attrs_function[]       = {"Name", NULL};
-static const char *_valid_attrs_if[]             = {"Value", "Value1", "Value2", "Operation", NULL};
+static const char *_valid_attrs_if[]             = {"Value", "Value1", "Value2", "Operation", "Static", NULL};
 static const char *_valid_attrs_image[]          = {"File", NULL};
 static const char *_valid_attrs_logic[]          = {"File", NULL};
 static const char *_valid_attrs_mouse_motion[]   = {"VariableX", "VariableY", NULL};
@@ -996,7 +994,6 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
             return _attr_in_list(attr_name, _valid_attrs_function);
 
         case DC_APP_ELEM_TYPE_IF:
-        case DC_APP_ELEM_TYPE_STATIC_IF:
             return _attr_in_list(attr_name, _valid_attrs_if);
 
         case DC_APP_ELEM_TYPE_IMAGE:
@@ -1220,11 +1217,40 @@ void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppEl
 
     // Element-specific enum attributes
     switch (elem_type) {
-        case DC_APP_ELEM_TYPE_IF:
-        case DC_APP_ELEM_TYPE_STATIC_IF:
+        case DC_APP_ELEM_TYPE_IF: {
             _validate_enum_attr(ctx, node, "Operation", 1, 8,
                                 "true(1), false(2), eq(3), ne(4), lt(5), gt(6), lte(7), gte(8)");
+
+            // Check for Static="true" - Value/Value1/Value2 cannot be runtime variables
+            xmlChar *static_attr = xmlGetProp(node, BAD_CAST "Static");
+            if (static_attr && (strcmp((const char *)static_attr, "true") == 0 || strcmp((const char *)static_attr, "1") == 0)) {
+                xmlChar *value = xmlGetProp(node, BAD_CAST "Value");
+                xmlChar *value1 = xmlGetProp(node, BAD_CAST "Value1");
+                xmlChar *value2 = xmlGetProp(node, BAD_CAST "Value2");
+
+                if (value && _is_variable_ref((const char *)value)) {
+                    fprintf(stderr, "ERROR: <If Static=\"true\"> Value '%s' cannot be a runtime variable (@) (line %ld)\n",
+                            value, xmlGetLineNo(node));
+                    ctx->error_count++;
+                }
+                if (value1 && _is_variable_ref((const char *)value1)) {
+                    fprintf(stderr, "ERROR: <If Static=\"true\"> Value1 '%s' cannot be a runtime variable (@) (line %ld)\n",
+                            value1, xmlGetLineNo(node));
+                    ctx->error_count++;
+                }
+                if (value2 && _is_variable_ref((const char *)value2)) {
+                    fprintf(stderr, "ERROR: <If Static=\"true\"> Value2 '%s' cannot be a runtime variable (@) (line %ld)\n",
+                            value2, xmlGetLineNo(node));
+                    ctx->error_count++;
+                }
+
+                if (value) xmlFree(value);
+                if (value1) xmlFree(value1);
+                if (value2) xmlFree(value2);
+            }
+            if (static_attr) xmlFree(static_attr);
             break;
+        }
 
         case DC_APP_ELEM_TYPE_SET:
             _validate_enum_attr(ctx, node, "Operator", 1, 10,

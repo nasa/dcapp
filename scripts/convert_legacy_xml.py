@@ -246,7 +246,7 @@ def convert_button_type(elem: etree._Element) -> None:
         elem.set('Type', BUTTON_TYPE_MAP[btn_type])
 
 
-def convert_conditional_operator(elem: etree._Element) -> None:
+def convert_if_operator(elem: etree._Element) -> None:
     """Convert If element Operator to Operation with constant."""
     operator = elem.get('Operator')
     if operator:
@@ -262,9 +262,9 @@ def has_variable_reference(value: Optional[str]) -> bool:
     return '@' in value or '#{' in value
 
 
-def convert_if_to_staticif(elem: etree._Element) -> bool:
+def convert_if_to_static(elem: etree._Element) -> bool:
     """
-    Convert <If> to <StaticIf> if it has no runtime variable references.
+    Add Static="true" to <If> if it has no runtime variable references.
 
     Returns True if conversion was made, False otherwise.
     """
@@ -273,17 +273,17 @@ def convert_if_to_staticif(elem: etree._Element) -> bool:
 
     # If neither value has a @ variable reference, this is a static conditional
     if not has_variable_reference(value1) and not has_variable_reference(value2):
-        elem.tag = 'StaticIf'
+        elem.set('Static', 'true')
         return True
     return False
 
 
 def wrap_implicit_children_in_true(elem: etree._Element) -> None:
     """
-    Wrap implicit children of StaticIf in explicit <True> blocks.
+    Wrap implicit children of static If in explicit <True> blocks.
 
-    Only needed for StaticIf - the preprocessor handles implicit children
-    for runtime If elements automatically.
+    Only needed for static If (Static="true") - the preprocessor handles
+    implicit children for runtime If elements automatically.
 
     Children that are not <True> or <False> are implicit true-branch children.
     These get collected and wrapped in a <True> element inserted at the beginning.
@@ -639,14 +639,14 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
 
     # If element
     elif tag == 'If':
-        convert_conditional_operator(elem)
+        convert_if_operator(elem)
         # Handle Value -> Value1 rename
         if 'Value' in elem.attrib and 'Value1' not in elem.attrib:
             elem.set('Value1', elem.get('Value'))
             del elem.attrib['Value']
-        # Convert to StaticIf if no runtime variables
-        # Only StaticIf needs explicit <True> wrapper (preprocessor handles If)
-        if convert_if_to_staticif(elem):
+        # Add Static="true" if no runtime variables
+        # Only static If needs explicit <True> wrapper (preprocessor handles runtime If)
+        if convert_if_to_static(elem):
             wrap_implicit_children_in_true(elem)
 
     # Panel element

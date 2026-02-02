@@ -7,23 +7,23 @@
     <!-- Runtime variables -->
     <Variable Type="#_variable_double_" InitialValue="0">COUNTER</Variable>
 
-    <!-- StaticIf: Conditionally create debug variables at parse time -->
-    <StaticIf Value="#DEBUG_MODE" Value2="1" Operation="#_conditional_eq_">
+    <!-- If Static="true": Conditionally create debug variables at parse time -->
+    <If Static="true" Value="#DEBUG_MODE" Value2="1" Operation="#_conditional_eq_">
         <True>
             <Variable Type="#_variable_string_" InitialValue="Debug build">BUILD_TYPE</Variable>
             <Variable Type="#_variable_double_" InitialValue="0">DEBUG_COUNTER</Variable>
         </True>
-    </StaticIf>
+    </If>
 
-    <!-- StaticIf: Conditionally create production variables at parse time -->
-    <StaticIf Value="#PRODUCTION_MODE" Value2="1" Operation="#_conditional_eq_">
+    <!-- If Static="true": Conditionally create production variables at parse time -->
+    <If Static="true" Value="#PRODUCTION_MODE" Value2="1" Operation="#_conditional_eq_">
         <True>
             <Variable Type="#_variable_string_" InitialValue="Production build">BUILD_TYPE</Variable>
             <Variable Type="#_variable_double_" InitialValue="1">OPTIMIZE_ENABLED</Variable>
         </True>
-    </StaticIf>
+    </If>
 
-    <Window Title="StaticIf vs If Demo" X="30" Y="30" Width="1000" Height="700">
+    <Window Title="Static If vs Runtime If Demo" X="30" Y="30" Width="1000" Height="700">
         <Default>
             <Text Size="12" FillColor="1 1 1"/>
         </Default>
@@ -37,13 +37,13 @@
             </If>
 
             <!-- Title -->
-            <Text X="500" Y="660" LocalAlignX="#_align_center_" Size="20" FillColor="1 1 1">StaticIf vs If Demonstration</Text>
+            <Text X="500" Y="660" LocalAlignX="#_align_center_" Size="20" FillColor="1 1 1">Static If vs Runtime If Demonstration</Text>
 
-            <!-- ========== LEFT SIDE: StaticIf (Parse-Time) ========== -->
+            <!-- ========== LEFT SIDE: If Static="true" (Parse-Time) ========== -->
             <Container X="30" Y="145" Width="460" Height="470">
                 <Rectangle Width="460" Height="470" FillColor="0.12 0.12 0.15" LineColor="0.3 0.5 0.7" LineWidth="2"/>
 
-                <Text X="230" Y="445" LocalAlignX="#_align_center_" Size="18" FillColor="0.4 0.8 1">&lt;StaticIf&gt; (Parse-Time)</Text>
+                <Text X="230" Y="445" LocalAlignX="#_align_center_" Size="18" FillColor="0.4 0.8 1">&lt;If Static="true"&gt; (Parse-Time)</Text>
                 <Text X="230" Y="420" LocalAlignX="#_align_center_" Size="11" FillColor="0.7 0.7 0.7">Evaluated ONCE during XML parsing</Text>
 
                 <!-- Configuration section -->
@@ -56,31 +56,31 @@
                 <Text X="230" Y="270" LocalAlignX="#_align_center_" Size="14" FillColor="0.9 0.9 0.3">Variables Created at Parse Time</Text>
 
                 <!-- Debug mode content -->
-                <StaticIf Value="#DEBUG_MODE" Value2="1" Operation="#_conditional_eq_">
+                <If Static="true" Value="#DEBUG_MODE" Value2="1" Operation="#_conditional_eq_">
                     <True>
                         <Rectangle X="30" Y="180" Width="400" Height="70" FillColor="0.2 0.5 0.3"/>
                         <Text X="230" Y="235" LocalAlignX="#_align_center_" Size="12" FillColor="1 1 1">DEBUG MODE ACTIVE</Text>
                         <Text X="40" Y="210" Size="10" FillColor="0.9 0.9 0.9">- BUILD_TYPE = @BUILD_TYPE</Text>
                         <Text X="40" Y="190" Size="10" FillColor="0.9 0.9 0.9">- DEBUG_COUNTER = @DEBUG_COUNTER(%.0f)</Text>
                     </True>
-                </StaticIf>
+                </If>
 
                 <!-- Production mode content -->
-                <StaticIf Value="#PRODUCTION_MODE" Value2="1" Operation="#_conditional_eq_">
+                <If Static="true" Value="#PRODUCTION_MODE" Value2="1" Operation="#_conditional_eq_">
                     <True>
                         <Rectangle X="30" Y="180" Width="400" Height="70" FillColor="0.5 0.2 0.2"/>
                         <Text X="230" Y="235" LocalAlignX="#_align_center_" Size="12" FillColor="1 1 1">PRODUCTION MODE ACTIVE</Text>
                         <Text X="40" Y="210" Size="10" FillColor="0.9 0.9 0.9">- BUILD_TYPE = @BUILD_TYPE</Text>
                         <Text X="40" Y="190" Size="10" FillColor="0.9 0.9 0.9">- OPTIMIZE_ENABLED = @OPTIMIZE_ENABLED(%.0f)</Text>
                     </True>
-                </StaticIf>
+                </If>
 
                 <!-- How it works -->
                 <Rectangle X="30" Y="150" Width="400" Height="2" FillColor="0.3 0.5 0.7"/>
                 <Text X="230" Y="125" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.8 1">How it works:</Text>
                 <Text X="40" Y="95" Size="9" FillColor="0.7 0.7 0.7">1. Checks condition during XML parsing</Text>
                 <Text X="40" Y="75" Size="9" FillColor="0.7 0.7 0.7">2. Only matching branch is included</Text>
-                <Text X="40" Y="55" Size="9" FillColor="0.7 0.7 0.7">3. &lt;StaticIf&gt; disappears from scene</Text>
+                <Text X="40" Y="55" Size="9" FillColor="0.7 0.7 0.7">3. &lt;If&gt; element disappears from scene</Text>
                 <Text X="40" Y="35" Size="9" FillColor="0.7 0.7 0.7">4. No runtime overhead</Text>
 
                 <Text X="230" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.9 0.6 0.3">* Reload to see different results</Text>
@@ -135,8 +135,8 @@
             <!-- Bottom explanation -->
             <Container X="30" Y="10" Width="940" Height="120">
                 <Rectangle Width="940" Height="120" FillColor="0.15 0.15 0.2" LineColor="0.5 0.5 0.6" LineWidth="1"/>
-                <Text X="470" Y="105" LocalAlignX="#_align_center_" Size="11" FillColor="0.9 0.9 1">Key Difference: &lt;StaticIf&gt; = Parse-time (evaluated once) | &lt;If&gt; = Runtime (evaluated every frame)</Text>
-                <Text X="470" Y="90" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.8">Use &lt;StaticIf&gt; for: Config setup, conditional variable registration, TrickIO selection</Text>
+                <Text X="470" Y="105" LocalAlignX="#_align_center_" Size="11" FillColor="0.9 0.9 1">Key Difference: Static="true" = Parse-time (evaluated once) | Default = Runtime (evaluated every frame)</Text>
+                <Text X="470" Y="90" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.8">Use &lt;If Static="true"&gt; for: Config setup, conditional variable registration, TrickIO selection</Text>
                 <Text X="470" Y="75" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.8">Use &lt;If&gt; for: Dynamic UI, sensor displays, user interaction responses</Text>
 
                 <Rectangle X="10" Y="55" Width="920" Height="1" FillColor="0.4 0.4 0.5"/>
