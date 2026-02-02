@@ -1031,7 +1031,8 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_PANEL:
             return _attr_in_list(attr_name, _valid_attrs_virtual_dimension) ||
-                   _attr_in_list(attr_name, _valid_attrs_color);
+                   _attr_in_list(attr_name, _valid_attrs_color) ||
+                   _attr_in_list(attr_name, _valid_attrs_panel);
 
         case DC_APP_ELEM_TYPE_PIXELSTREAM:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
