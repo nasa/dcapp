@@ -2288,14 +2288,15 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
     plDevice  *pl_device  = _ext_starter->get_device();
     plTexture *pl_texture = _ext_gfx->get_texture(pl_device, texture.texture_handle);
 
+    // track connection state for test pattern fallback
+    bool is_connected = false;
+
     // switch over types to get the raw image data in the buffer
     switch (node->pixelstream.type) {
         case DC_APP_PIXELSTREAM_TYPE_MJPEG: {
 
-            // don't show anything if disconnected
-            if (!dc_ps_mjpeg_server_is_connected(node->pixelstream.mjpeg.handle)) {
-                // TODO show disconnected picture here instead
-                // (or maybe not....I think it's better to let the user display whatever they feel)
+            is_connected = dc_ps_mjpeg_server_is_connected(node->pixelstream.mjpeg.handle);
+            if (!is_connected) {
                 break;
             }
 
@@ -2322,8 +2323,8 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
         }
         case DC_APP_PIXELSTREAM_TYPE_SHMEM: {
 
-            // don't show anything if disconnected
-            if (!dc_ps_shmem_is_connected(node->pixelstream.shmem.handle)) {
+            is_connected = dc_ps_shmem_is_connected(node->pixelstream.shmem.handle);
+            if (!is_connected) {
                 break;
             }
 
@@ -2358,13 +2359,16 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
             break;
     }
 
-    // don't draw anything if no data
-    if (node->pixelstream.frame == NULL) {
+    // determine whether to use test pattern
+    bool use_test_pattern = !is_connected && node->pixelstream.test_pattern_texture_index != TEXTURE_INDEX_UNDEFINED;
+
+    // don't draw anything if no data and no test pattern
+    if (node->pixelstream.frame == NULL && !use_test_pattern) {
         return;
     }
 
-    // copy to GPU image
-    {
+    // copy to GPU image (only if not using test pattern)
+    if (!use_test_pattern) {
         // get device
         plDevice *device = _ext_starter->get_device();
 
@@ -2606,13 +2610,24 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // compute UV coordinates
-    plVec3 pl_texture_dimensions = pl_texture->tDesc.tDimensions;
-    plVec2 min_uv                = {
-        0.0f,
-        0.0f};
-    plVec2 max_uv = {
-        ((float)node->pixelstream.frame_width) / pl_texture_dimensions.x,
-        ((float)node->pixelstream.frame_height) / pl_texture_dimensions.y};
+    plVec2 min_uv = {0.0f, 0.0f};
+    plVec2 max_uv;
+    plBindGroupHandle bind_group_handle;
+
+    if (use_test_pattern) {
+        // test pattern uses full texture
+        _Texture test_tex = app_data->sb_textures[node->pixelstream.test_pattern_texture_index];
+        max_uv = (plVec2){1.0f, 1.0f};
+        bind_group_handle = test_tex.bind_group_handle;
+    } else {
+        // streaming texture
+        plVec3 pl_texture_dimensions = pl_texture->tDesc.tDimensions;
+        max_uv = (plVec2){
+            ((float)node->pixelstream.frame_width) / pl_texture_dimensions.x,
+            ((float)node->pixelstream.frame_height) / pl_texture_dimensions.y};
+        bind_group_handle = app_data->sb_textures[node->pixelstream.texture_index].bind_group_handle;
+    }
+
     plVec2 uv0 = (plVec2){min_uv.x, min_uv.y};
     plVec2 uv1 = (plVec2){min_uv.x, max_uv.y};
     plVec2 uv2 = (plVec2){max_uv.x, max_uv.y};
@@ -2629,7 +2644,6 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
     plVec2 point3      = (plVec2){point3_vec4.x, point3_vec4.y};
 
     // draw
-    plBindGroupHandle bind_group_handle = app_data->sb_textures[node->image.texture_index].bind_group_handle;
     _ext_draw->add_image_quad_ex(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3, uv0, uv1, uv2, uv3, 0xFFFFFFFF);
 
     // mouse events and children

@@ -92,7 +92,6 @@ COMMENT_OUT_ATTRIBUTES = {
     'DisconnectAction', # TrickIO - action on disconnect
     'FullScreen',       # Window - fullscreen mode
     'Font',             # Text - font selection
-    'TestPattern',      # PixelStream - test pattern mode
     'KeyASCII',         # Button - ASCII key binding
     'Face',             # Text - font face
     'Camera',           # PixelStream/Terrain - camera binding

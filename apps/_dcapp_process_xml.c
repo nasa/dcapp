@@ -2588,6 +2588,74 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         dc_node.pixelstream.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
     }
 
+    // test pattern
+    {
+        // get filepath (default to assets/testpattern.png)
+        xmlChar *raw_test_pattern = xmlGetProp(xml_node, BAD_CAST "TestPattern");
+        char     test_pattern_path[512];
+        if (raw_test_pattern) {
+            snprintf(test_pattern_path, sizeof(test_pattern_path), "%s/%s", directory, (const char *)raw_test_pattern);
+            xmlFree(raw_test_pattern);
+        } else {
+            snprintf(test_pattern_path, sizeof(test_pattern_path), "%s/../assets/testpattern.png", directory);
+        }
+
+        // canonicalize path
+        char canon_filepath[512];
+        if (realpath(test_pattern_path, canon_filepath) == NULL) {
+            fprintf(stderr, "DCApp _process_xml_node() pixelstream: TestPattern file not found: %s\n", test_pattern_path);
+            dc_node.pixelstream.test_pattern_texture_index = TEXTURE_INDEX_UNDEFINED;
+        } else {
+            // check for existing texture
+            _TextureIndex texture_index = TEXTURE_INDEX_UNDEFINED;
+            for (int ii = 0; ii < sbcount(app_data->sb_textures); ii++) {
+                const char *comp_name = &(app_data->sb_texture_names[app_data->sb_texture_name_offsets[ii]]);
+                if (strcmp(canon_filepath, comp_name) == 0) {
+                    texture_index = ii;
+                }
+            }
+
+            // load new texture if it doesn't exist
+            if (texture_index == TEXTURE_INDEX_UNDEFINED) {
+                plDevice *device = _ext_starter->get_device();
+
+                size_t         file_data_size;
+                unsigned char *file_data = dc_utils_load_binary_file(canon_filepath, &file_data_size);
+
+                int            image_width, image_height, channels;
+                unsigned char *image_data = _ext_image->load(file_data, (int)file_data_size, &image_width, &image_height, &channels, 4);
+                free(file_data);
+
+                _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath);
+
+                plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
+                _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
+
+                plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
+                memcpy(staging_buffer->tMemoryAllocation.pHostMapped, image_data, image_width * image_height * 4);
+
+                plBufferImageCopy buffer_image_copy;
+                memset(&buffer_image_copy, 0, sizeof(plBufferImageCopy));
+                buffer_image_copy.uImageWidth    = (uint32_t)image_width;
+                buffer_image_copy.uImageHeight   = (uint32_t)image_height;
+                buffer_image_copy.uImageDepth    = 1;
+                buffer_image_copy.uLayerCount    = 1;
+                buffer_image_copy.szBufferOffset = 0;
+                _ext_gfx->copy_buffer_to_texture(encoder, app_data->pl_staging_buffer_handle, texture.texture_handle, 1, &buffer_image_copy);
+
+                _ext_starter->return_blit_encoder(encoder);
+                _ext_image->free(image_data);
+
+                sbpush(app_data->sb_texture_name_offsets, sbcount(app_data->sb_texture_names));
+                sbpushn(app_data->sb_texture_names, canon_filepath, (int)strlen(canon_filepath) + 1);
+                sbpush(app_data->sb_textures, texture);
+                texture_index = sbcount(app_data->sb_textures) - 1;
+            }
+
+            dc_node.pixelstream.test_pattern_texture_index = texture_index;
+        }
+    }
+
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 

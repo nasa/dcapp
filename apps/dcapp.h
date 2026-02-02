@@ -380,6 +380,7 @@ typedef struct __NodePixelstream {
     DcAppValIndex negate_y;
 
     _TextureIndex texture_index;
+    _TextureIndex test_pattern_texture_index;
 
     _NodeIndex child;
     uint32_t   state_flags;
