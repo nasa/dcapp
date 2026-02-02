@@ -38,6 +38,14 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "Default";
         case DC_APP_ELEM_TYPE_DUMMY:
             return "Dummy";
+        case DC_APP_ELEM_TYPE_EDGE_FROM:
+            return "FromEdge";
+        case DC_APP_ELEM_TYPE_EDGE_IO:
+            return "EdgeIO";
+        case DC_APP_ELEM_TYPE_EDGE_TO:
+            return "ToEdge";
+        case DC_APP_ELEM_TYPE_EDGE_VARIABLE:
+            return "EdgeVariable";
         case DC_APP_ELEM_TYPE_ELLIPSE:
             return "Ellipse";
         case DC_APP_ELEM_TYPE_FALSE:
@@ -151,10 +159,16 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_DEFAULT;
     if (strcmp(name, "Dummy") == 0)
         return DC_APP_ELEM_TYPE_DUMMY;
+    if (strcmp(name, "EdgeIO") == 0)
+        return DC_APP_ELEM_TYPE_EDGE_IO;
+    if (strcmp(name, "EdgeVariable") == 0)
+        return DC_APP_ELEM_TYPE_EDGE_VARIABLE;
     if (strcmp(name, "Ellipse") == 0)
         return DC_APP_ELEM_TYPE_ELLIPSE;
     if (strcmp(name, "False") == 0)
         return DC_APP_ELEM_TYPE_FALSE;
+    if (strcmp(name, "FromEdge") == 0)
+        return DC_APP_ELEM_TYPE_EDGE_FROM;
     if (strcmp(name, "FromTrick") == 0)
         return DC_APP_ELEM_TYPE_TRICK_FROM;
     if (strcmp(name, "Function") == 0)
@@ -209,6 +223,8 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_TERRAIN_DEM;
     if (strcmp(name, "Text") == 0)
         return DC_APP_ELEM_TYPE_TEXT;
+    if (strcmp(name, "ToEdge") == 0)
+        return DC_APP_ELEM_TYPE_EDGE_TO;
     if (strcmp(name, "ToTrick") == 0)
         return DC_APP_ELEM_TYPE_TRICK_TO;
     if (strcmp(name, "TrickIO") == 0)

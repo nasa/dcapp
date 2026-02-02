@@ -203,6 +203,15 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     }
     sbfree(app_data->sb_tricks);
 
+    // cleanup edge contexts
+    for (int i = 0; i < sbcount(app_data->sb_edges); i++) {
+        _EdgeContext *ctx = &app_data->sb_edges[i];
+        sbfree(ctx->sb_tx_var_contexts);
+        sbfree(ctx->sb_rx_var_contexts);
+        dc_edge_cleanup(ctx->edge);
+    }
+    sbfree(app_data->sb_edges);
+
     // cleanup pixelstream global contexts
     dc_ps_mjpeg_cleanup();
     dc_ps_shmem_cleanup();
@@ -318,6 +327,70 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
                 DcValue            *value          = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
 
                 dc_trick_get_rx_var_value(trick, rx_var_context->trick_var_index, rx_buffer);
+                dc_app_lookup_set_var_to_string(app_data->lookup, rx_var_context->dcapp_var_index, rx_buffer);
+            }
+        }
+    }
+
+    // send edge data
+    for (int ii = 0; ii < sbcount(app_data->sb_edges); ii++) {
+
+        _EdgeContext *edge_context = &(app_data->sb_edges[ii]);
+        DcEdgeHandle  edge         = edge_context->edge;
+
+        // add tx commands to buffer
+        if (dc_edge_is_connected(edge)) {
+            for (int jj = 0; jj < sbcount(edge_context->sb_tx_var_contexts); jj++) {
+
+                _EdgeTxVarContext *tx_var_context = &(edge_context->sb_tx_var_contexts[jj]);
+                DcAppLookupVar    *dc_app_var     = dc_app_lookup_get_var(app_data->lookup, tx_var_context->dcapp_var_index);
+                DcValue           *curr_value     = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
+                DcValue           *prev_value     = &tx_var_context->prev_value;
+
+                // send if new value is different
+                if (!dc_value_is_equal(curr_value, prev_value)) {
+                    dc_edge_set_tx_var(edge, tx_var_context->edge_var_index, curr_value->value_string);
+                    *prev_value = *curr_value;
+                }
+            }
+        }
+
+        // send the updated buffer, receive the new data, update the connection status
+        dc_edge_update(edge);
+
+        // update connected variable if defined
+        if (edge_context->connected_var_index != DC_APP_VAR_INDEX_UNDEFINED) {
+            DcAppLookupVar *connected_var = dc_app_lookup_get_var(app_data->lookup, edge_context->connected_var_index);
+            if (connected_var) {
+                DcValue *value = dc_app_lookup_get_value(app_data->lookup, connected_var->value_index);
+                bool is_connected = dc_edge_is_connected(edge);
+                switch (value->type) {
+                    case DC_VALUE_TYPE_BOOLEAN:
+                        value->value_boolean = is_connected;
+                        break;
+                    case DC_VALUE_TYPE_INTEGER:
+                        value->value_integer = is_connected ? 1 : 0;
+                        break;
+                    case DC_VALUE_TYPE_STRING:
+                        strncpy(value->value_string, is_connected ? "true" : "false", DC_VALUE_STRING_BUFFER_SIZE - 1);
+                        break;
+                    default:
+                        break;
+                }
+                dc_value_refresh(value);
+            }
+        }
+
+        // receive the new data
+        if (dc_edge_has_new_data(edge) && dc_edge_is_connected(edge)) {
+            char rx_buffer[256];
+            for (int jj = 0; jj < sbcount(edge_context->sb_rx_var_contexts); jj++) {
+
+                _EdgeRxVarContext *rx_var_context = &(edge_context->sb_rx_var_contexts[jj]);
+                DcAppLookupVar    *dc_app_var     = dc_app_lookup_get_var(app_data->lookup, rx_var_context->dcapp_var_index);
+                DcValue           *value          = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
+
+                dc_edge_get_rx_var_value(edge, rx_var_context->edge_var_index, rx_buffer);
                 dc_app_lookup_set_var_to_string(app_data->lookup, rx_var_context->dcapp_var_index, rx_buffer);
             }
         }

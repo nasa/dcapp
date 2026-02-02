@@ -25,6 +25,10 @@ static _NodeIndex    _process_xml_node_constant(_AppData *app_data, xmlNodePtr x
 static _NodeIndex    _process_xml_node_container(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_dcapp(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_default(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_edge_from(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_edge_io(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_edge_to(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_false(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -176,6 +180,18 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_DEFAULT:
             return _process_xml_node_default(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_EDGE_FROM:
+            return _process_xml_node_edge_from(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_EDGE_IO:
+            return _process_xml_node_edge_io(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_EDGE_TO:
+            return _process_xml_node_edge_to(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_EDGE_VARIABLE:
+            return _process_xml_node_edge_variable(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_ELLIPSE:
             return _process_xml_node_ellipse(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -1606,6 +1622,163 @@ static _NodeIndex _process_xml_node_default(_AppData *app_data, xmlNodePtr xml_n
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
     // ignore at this point
+    return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_edge_from(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    switch (parent_elem_type) {
+        case DC_APP_ELEM_TYPE_EDGE_IO: {
+            _process_xml_node_children(app_data, xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
+            break;
+        }
+        default: {
+            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for FromEdge\n", dc_app_elem_type_to_string(parent_elem_type));
+            break;
+        }
+    }
+
+    // return
+    return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_edge_io(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    // host
+    xmlChar *raw_host = xmlGetProp(xml_node, BAD_CAST "Host");
+    char     host[DC_VALUE_STRING_BUFFER_SIZE];
+    if (raw_host) {
+        strncpy(host, (const char *)raw_host, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        xmlFree(raw_host);
+    } else {
+        strncpy(host, "localhost", DC_VALUE_STRING_BUFFER_SIZE - 1);
+    }
+
+    // port (default 5451 for EDGE RCS)
+    xmlChar *raw_port = xmlGetProp(xml_node, BAD_CAST "Port");
+    int      port     = 5451;
+    if (raw_port) {
+        port = (int)dc_utils_string_to_double((const char *)raw_port);
+        xmlFree(raw_port);
+    }
+
+    // data rate
+    xmlChar *raw_data_rate = xmlGetProp(xml_node, BAD_CAST "DataRate");
+    double   data_rate     = 1.0;
+    if (raw_data_rate) {
+        data_rate = dc_utils_string_to_double((const char *)raw_data_rate);
+        xmlFree(raw_data_rate);
+    }
+
+    // connected variable (optional)
+    xmlChar      *raw_connected_var   = xmlGetProp(xml_node, BAD_CAST "ConnectedVariable");
+    DcAppVarIndex connected_var_index = DC_APP_VAR_INDEX_UNDEFINED;
+    if (raw_connected_var) {
+        connected_var_index = dc_app_lookup_get_var_index(app_data->lookup, (const char *)raw_connected_var);
+        xmlFree(raw_connected_var);
+    }
+
+    // create edge instance
+    _EdgeContext edge_context = {};
+    edge_context.edge                = dc_edge_create(host, port, (float)data_rate, 2);
+    edge_context.connected_var_index = connected_var_index;
+    sbpush(app_data->sb_edges, edge_context);
+
+    // process children
+    _process_xml_node_children(app_data, xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
+
+    // return
+    return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_edge_to(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    switch (parent_elem_type) {
+        case DC_APP_ELEM_TYPE_EDGE_IO: {
+            _process_xml_node_children(app_data, xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
+            break;
+        }
+        default: {
+            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for ToEdge\n", dc_app_elem_type_to_string(parent_elem_type));
+            break;
+        }
+    }
+
+    // return
+    return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+
+    // check for invalid elem type
+    switch (parent_elem_type) {
+        case DC_APP_ELEM_TYPE_EDGE_FROM:
+        case DC_APP_ELEM_TYPE_EDGE_TO:
+            break;
+        default:
+            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for EdgeVariable\n", dc_app_elem_type_to_string(parent_elem_type));
+    }
+
+    // edge command
+    xmlChar *raw_edge_cmd = xmlGetProp(xml_node, BAD_CAST "Command");
+    char     edge_cmd[DC_VALUE_STRING_BUFFER_SIZE];
+    if (raw_edge_cmd) {
+        strncpy(edge_cmd, (const char *)raw_edge_cmd, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        xmlFree(raw_edge_cmd);
+    } else {
+        fprintf(stderr, "DCApp _process_xml_node: Missing Command for EdgeVariable\n");
+        edge_cmd[0] = '\0';
+    }
+
+    // dcapp var
+    xmlChar *raw_dcapp_var = xmlNodeGetContent(xml_node);
+    char     dcapp_var[DC_VALUE_STRING_BUFFER_SIZE];
+    if (raw_dcapp_var) {
+        strncpy(dcapp_var, (const char *)raw_dcapp_var, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        xmlFree(raw_dcapp_var);
+        dc_utils_trim_whitespace_inplace(dcapp_var);
+        dcapp_var[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+    } else {
+        fprintf(stderr, "DCApp _process_xml_node: Missing dcapp Var for EdgeVariable\n");
+        dcapp_var[0] = '\0';
+    }
+
+    // get current edge context
+    _EdgeContext *edge_context = &(app_data->sb_edges[sbcount(app_data->sb_edges) - 1]);
+
+    // handle depending on parent
+    switch (parent_elem_type) {
+        case DC_APP_ELEM_TYPE_EDGE_FROM: {
+
+            // create + add rx var
+            _EdgeRxVarContext var = {};
+            var.edge_var_index    = dc_edge_add_rx_var(edge_context->edge, edge_cmd);
+            var.dcapp_var_index   = dc_app_lookup_get_var_index(app_data->lookup, dcapp_var);
+            sbpush(edge_context->sb_rx_var_contexts, var);
+            break;
+        }
+        case DC_APP_ELEM_TYPE_EDGE_TO: {
+
+            // create + add tx var
+            _EdgeTxVarContext var = {};
+            var.dcapp_var_index   = dc_app_lookup_get_var_index(app_data->lookup, dcapp_var);
+            DcValue *dc_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, var.dcapp_var_index)->value_index);
+            var.edge_var_index    = dc_edge_add_tx_var(edge_context->edge, edge_cmd);
+            var.prev_value        = *dc_var_value;
+            sbpush(edge_context->sb_tx_var_contexts, var);
+            break;
+        }
+        default:
+            // should never reach here
+            fprintf(stderr, "DCApp _process_xml_node(): Invalid parent for EdgeVariable\n");
+            break;
+    }
+
+    // return
     return NODE_INDEX_UNDEFINED;
 }
 

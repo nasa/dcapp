@@ -102,7 +102,6 @@ COMMENT_OUT_ATTRIBUTES = {
 # Elements to comment out with TODO markers
 # Maps element name -> (marker, message)
 COMMENT_OUT_ELEMENTS = {
-    'EdgeIo': ('TODO(migration)', 'EdgeIo not yet supported'),
     'ADI': ('TODO(deprecated)', 'Use TexturedSphere instead of ADI'),
     'Animation': ('TODO(migration)', 'Animation not yet supported'),
     'Map': ('TODO(deprecated)', 'Use Terrain instead of Map'),
@@ -706,6 +705,16 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     # PixelStream element
     elif tag == 'PixelStream' or tag == 'Pixelstream':
         convert_pixelstream_attributes(elem)
+
+    # EdgeIO element - rename to proper casing
+    elif tag == 'EdgeIo':
+        elem.tag = 'EdgeIO'
+
+    # EdgeVariable - rename RcsCommand to Command
+    elif tag == 'EdgeVariable':
+        if 'RcsCommand' in elem.attrib:
+            elem.set('Command', elem.get('RcsCommand'))
+            del elem.attrib['RcsCommand']
 
     # ---- Common conversions ----
 

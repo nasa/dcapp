@@ -55,6 +55,7 @@ const plImageI       *_ext_image        = NULL;
 #include "../src/pixelstream/mjpeg.h"
 #include "../src/pixelstream/shmem.h"
 #include "../src/trick.h"
+#include "../src/edge.h"
 #include <libxml/parser.h>
 
 // dcapp node structs
@@ -587,6 +588,25 @@ typedef struct __TrickContext {
     DcAppVarIndex       connected_var_index;  // variable updated with connection status
 } _TrickContext;
 
+// dcapp edge structs
+typedef struct __EdgeTxVarContext {
+    DcAppVarIndex  dcapp_var_index;
+    DcEdgeVarIndex edge_var_index;
+    DcValue        prev_value;
+} _EdgeTxVarContext;
+
+typedef struct __EdgeRxVarContext {
+    DcAppVarIndex  dcapp_var_index;
+    DcEdgeVarIndex edge_var_index;
+} _EdgeRxVarContext;
+
+typedef struct __EdgeContext {
+    DcEdgeHandle       edge;
+    _EdgeTxVarContext *sb_tx_var_contexts;
+    _EdgeRxVarContext *sb_rx_var_contexts;
+    DcAppVarIndex      connected_var_index;  // variable updated with connection status
+} _EdgeContext;
+
 // callback used for logic file DLL loading
 typedef void *(*_GetVariableValueAddr)(const char *name);
 
@@ -682,6 +702,9 @@ typedef struct __AppData {
 
     // trick
     _TrickContext *sb_tricks;
+
+    // edge
+    _EdgeContext *sb_edges;
 
     // frame data
     _FrameData frame_data;
