@@ -424,10 +424,11 @@ def convert_pixelstream_attributes(elem: etree._Element) -> None:
     Convert PixelStream attributes from legacy to new format.
 
     - Host/Port/Path -> URL (e.g., "localhost:8080/video")
-    - Type="mjpeg" -> Type="#_pixelstream_mjpeg_"
-    - Type="shmem"/"dfile"/etc -> Type="#_pixelstream_shmem_"
+    - Protocol="MJPEG" -> Type="#_pixelstream_mjpeg_"
+    - Protocol="DFILE" -> Type="#_pixelstream_shmem_"
+    - Type (if present) also converted
 
-    Note: Unsupported Type values are handled in process_tree() by commenting
+    Note: Unsupported Protocol/Type values are handled in process_tree() by commenting
     out the entire element before this function is called.
     """
     # Convert Host/Port/Path to URL
@@ -459,9 +460,19 @@ def convert_pixelstream_attributes(elem: etree._Element) -> None:
         if url:
             elem.set('URL', url)
 
-    # Convert Type attribute
+    # Convert Protocol attribute (legacy) to Type
+    protocol = elem.get('Protocol')
+    if protocol:
+        protocol_lower = protocol.lower()
+        if protocol_lower == 'mjpeg':
+            elem.set('Type', '#_pixelstream_mjpeg_')
+        elif protocol_lower in ('dfile', 'dynamicfile', 'dynamic_file', 'shmem'):
+            elem.set('Type', '#_pixelstream_shmem_')
+        del elem.attrib['Protocol']
+
+    # Also handle Type attribute if present (for already-converted or mixed files)
     pxs_type = elem.get('Type')
-    if pxs_type:
+    if pxs_type and not pxs_type.startswith('#'):
         pxs_type_lower = pxs_type.lower()
         if pxs_type_lower == 'mjpeg':
             elem.set('Type', '#_pixelstream_mjpeg_')
@@ -753,13 +764,15 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
         parent.insert(idx, comment)
         return all_after  # Don't process children
 
-    # Comment out PixelStream with unsupported Type
+    # Comment out PixelStream with unsupported Type/Protocol
     if (elem.tag == 'PixelStream' or elem.tag == 'Pixelstream') and parent is not None:
-        pxs_type = elem.get('Type', '').lower()
-        supported_types = ('mjpeg', 'dfile', 'dynamicfile', 'dynamic_file', 'shmem')
-        if pxs_type and pxs_type not in supported_types:
+        # Check both Protocol (legacy) and Type attributes
+        pxs_type = (elem.get('Protocol') or elem.get('Type') or '').lower()
+        supported_types = ('mjpeg', 'dfile', 'dynamicfile', 'dynamic_file', 'shmem', '')
+        if pxs_type not in supported_types:
             elem_xml = etree.tostring(elem, encoding='unicode', pretty_print=True).strip()
-            comment_text = f' TODO(deprecated): PixelStream Type="{elem.get("Type")}" not supported, use shmem or mjpeg\n{elem_xml}\n'
+            orig_attr = elem.get('Protocol') or elem.get('Type')
+            comment_text = f' TODO(deprecated): PixelStream Protocol/Type="{orig_attr}" not supported, use shmem or mjpeg\n{elem_xml}\n'
             comment = etree.Comment(comment_text)
             idx = list(parent).index(elem)
             parent.remove(elem)
