@@ -205,14 +205,18 @@ def convert_alignment(elem: etree._Element, has_x: bool, has_y: bool) -> None:
     Rules:
     - If axis has explicit position (X/Y), use only LocalAlign
     - If axis has no position, use AlignX/AlignY shorthand (expands to both Local and Parent)
-    - Invalid values fall back to legacy defaults (Left for horizontal, Bottom for vertical)
+    - Preserve constants (#) and variables (@) as-is
+    - Convert literal values (Left, Center, Right, etc.) to constants
     """
     h_align = elem.get('HorizontalAlign')
     v_align = elem.get('VerticalAlign')
 
     if h_align:
-        # Legacy default for invalid horizontal values was Left
-        new_value = HORIZONTAL_ALIGN_MAP.get(h_align, '#_align_left_')
+        # Preserve constants and variables as-is, only convert literal values
+        if h_align.startswith('#') or h_align.startswith('@'):
+            new_value = h_align
+        else:
+            new_value = HORIZONTAL_ALIGN_MAP.get(h_align, '#_align_left_')
         if has_x:
             # Only local align when position is explicit
             elem.set('LocalAlignX', new_value)
@@ -222,8 +226,11 @@ def convert_alignment(elem: etree._Element, has_x: bool, has_y: bool) -> None:
         del elem.attrib['HorizontalAlign']
 
     if v_align:
-        # Legacy default for invalid vertical values was Bottom
-        new_value = VERTICAL_ALIGN_MAP.get(v_align, '#_align_bottom_')
+        # Preserve constants and variables as-is, only convert literal values
+        if v_align.startswith('#') or v_align.startswith('@'):
+            new_value = v_align
+        else:
+            new_value = VERTICAL_ALIGN_MAP.get(v_align, '#_align_bottom_')
         if has_y:
             # Only local align when position is explicit
             elem.set('LocalAlignY', new_value)
@@ -257,10 +264,10 @@ def convert_if_operator(elem: etree._Element) -> None:
 
 
 def has_variable_reference(value: Optional[str]) -> bool:
-    """Check if a value contains a runtime variable reference (@prefix or #{} macro)."""
+    """Check if a value contains a runtime variable reference (@prefix)."""
     if value is None:
         return False
-    return '@' in value or '#{' in value
+    return '@' in value
 
 
 def convert_if_to_static(elem: etree._Element) -> bool:
@@ -277,43 +284,6 @@ def convert_if_to_static(elem: etree._Element) -> bool:
         elem.set('Static', 'true')
         return True
     return False
-
-
-def wrap_implicit_children_in_true(elem: etree._Element) -> None:
-    """
-    Wrap implicit children of static If in explicit <True> blocks.
-
-    Only needed for static If (Static="true") - the preprocessor handles
-    implicit children for runtime If elements automatically.
-
-    Children that are not <True> or <False> are implicit true-branch children.
-    These get collected and wrapped in a <True> element inserted at the beginning.
-    """
-    implicit_children = []
-    children_to_remove = []
-
-    for child in elem:
-        # Skip comments and non-element nodes
-        if not isinstance(child.tag, str):
-            continue
-        # Collect non-True/False children (these are implicit true-branch)
-        if child.tag not in ('True', 'False'):
-            implicit_children.append(child)
-            children_to_remove.append(child)
-
-    # If we have implicit children, wrap them in <True>
-    if implicit_children:
-        # Remove from parent first
-        for child in children_to_remove:
-            elem.remove(child)
-
-        # Create True wrapper and add implicit children to it
-        true_elem = etree.Element('True')
-        for child in implicit_children:
-            true_elem.append(child)
-
-        # Insert True at the beginning (before any existing True/False)
-        elem.insert(0, true_elem)
 
 
 def convert_set_operator(elem: etree._Element) -> Tuple[Optional[str], Optional[str]]:
@@ -463,16 +433,22 @@ def convert_pixelstream_attributes(elem: etree._Element) -> None:
     # Convert Protocol attribute (legacy) to Type
     protocol = elem.get('Protocol')
     if protocol:
-        protocol_lower = protocol.lower()
-        if protocol_lower == 'mjpeg':
-            elem.set('Type', '#_pixelstream_mjpeg_')
-        elif protocol_lower in ('dfile', 'dynamicfile', 'dynamic_file', 'shmem'):
-            elem.set('Type', '#_pixelstream_shmem_')
+        # Preserve constants and variables as-is
+        if protocol.startswith('#') or protocol.startswith('@'):
+            elem.set('Type', protocol)
+        else:
+            protocol_lower = protocol.lower()
+            if protocol_lower == 'mjpeg':
+                elem.set('Type', '#_pixelstream_mjpeg_')
+            elif protocol_lower in ('dfile', 'dynamicfile', 'dynamic_file', 'shmem'):
+                elem.set('Type', '#_pixelstream_shmem_')
+            else:
+                elem.set('Type', protocol)  # preserve unknown literal
         del elem.attrib['Protocol']
 
     # Also handle Type attribute if present (for already-converted or mixed files)
     pxs_type = elem.get('Type')
-    if pxs_type and not pxs_type.startswith('#'):
+    if pxs_type and not pxs_type.startswith('#') and not pxs_type.startswith('@'):
         pxs_type_lower = pxs_type.lower()
         if pxs_type_lower == 'mjpeg':
             elem.set('Type', '#_pixelstream_mjpeg_')
@@ -489,63 +465,71 @@ def convert_origin_attributes(elem: etree._Element) -> None:
 
     For literal values, the X/Y value is negated directly.
     For variable values, NegateX/NegateY="true" is used to negate at runtime.
-    For constant references, we can't convert properly but still remove the attribute.
+    Constants and variables are preserved as ParentAlignX/Y.
     """
     origin_x_raw = elem.get('OriginX')
     origin_y_raw = elem.get('OriginY')
 
     if origin_x_raw:
-        origin_x = origin_x_raw.strip().lower()
-        if origin_x == 'right' or origin_x == '3':  # 3 = right enum value
-            x_val = elem.get('X')
-            if x_val and has_variable_reference(x_val):
-                # Use NegateX for variable references
-                elem.set('NegateX', 'true')
-                elem.set('ParentAlignX', '#_align_right_')
-            elif x_val:
-                # Negate the literal X value
-                try:
-                    x_num = float(x_val)
-                    negated = -x_num if x_num != 0 else 0
-                    # Format as int if it's a whole number
-                    elem.set('X', str(int(negated)) if negated == int(negated) else str(negated))
-                except ValueError:
-                    pass  # Not a number, leave as-is
-                elem.set('ParentAlignX', '#_align_right_')
-            else:
-                # No X value, just set the alignment
-                elem.set('ParentAlignX', '#_align_right_')
-        elif origin_x == 'center' or origin_x == '2':  # 2 = center enum value
-            # Center origin - set alignment, no negation needed
-            elem.set('ParentAlignX', '#_align_center_')
-        # Always remove OriginX (Left/1 is default, constants can't be converted)
+        # Preserve constants and variables as-is
+        if origin_x_raw.startswith('#') or origin_x_raw.startswith('@'):
+            elem.set('ParentAlignX', origin_x_raw)
+        else:
+            origin_x = origin_x_raw.strip().lower()
+            if origin_x == 'right' or origin_x == '3':  # 3 = right enum value
+                x_val = elem.get('X')
+                if x_val and has_variable_reference(x_val):
+                    # Use NegateX for variable references
+                    elem.set('NegateX', 'true')
+                    elem.set('ParentAlignX', '#_align_right_')
+                elif x_val:
+                    # Negate the literal X value
+                    try:
+                        x_num = float(x_val)
+                        negated = -x_num if x_num != 0 else 0
+                        # Format as int if it's a whole number
+                        elem.set('X', str(int(negated)) if negated == int(negated) else str(negated))
+                    except ValueError:
+                        pass  # Not a number, leave as-is
+                    elem.set('ParentAlignX', '#_align_right_')
+                else:
+                    # No X value, just set the alignment
+                    elem.set('ParentAlignX', '#_align_right_')
+            elif origin_x == 'center' or origin_x == '2':  # 2 = center enum value
+                # Center origin - set alignment, no negation needed
+                elem.set('ParentAlignX', '#_align_center_')
+            # Left/1 is default, no action needed
         del elem.attrib['OriginX']
 
     if origin_y_raw:
-        origin_y = origin_y_raw.strip().lower()
-        if origin_y == 'top' or origin_y == '6':  # 6 = top enum value
-            y_val = elem.get('Y')
-            if y_val and has_variable_reference(y_val):
-                # Use NegateY for variable references
-                elem.set('NegateY', 'true')
-                elem.set('ParentAlignY', '#_align_top_')
-            elif y_val:
-                # Negate the literal Y value
-                try:
-                    y_num = float(y_val)
-                    negated = -y_num if y_num != 0 else 0
-                    # Format as int if it's a whole number
-                    elem.set('Y', str(int(negated)) if negated == int(negated) else str(negated))
-                except ValueError:
-                    pass  # Not a number, leave as-is
-                elem.set('ParentAlignY', '#_align_top_')
-            else:
-                # No Y value, just set the alignment
-                elem.set('ParentAlignY', '#_align_top_')
-        elif origin_y == 'middle' or origin_y == '5':  # 5 = middle enum value
-            # Middle origin - set alignment, no negation needed
-            elem.set('ParentAlignY', '#_align_middle_')
-        # Always remove OriginY (Bottom/4 is default, constants can't be converted)
+        # Preserve constants and variables as-is
+        if origin_y_raw.startswith('#') or origin_y_raw.startswith('@'):
+            elem.set('ParentAlignY', origin_y_raw)
+        else:
+            origin_y = origin_y_raw.strip().lower()
+            if origin_y == 'top' or origin_y == '6':  # 6 = top enum value
+                y_val = elem.get('Y')
+                if y_val and has_variable_reference(y_val):
+                    # Use NegateY for variable references
+                    elem.set('NegateY', 'true')
+                    elem.set('ParentAlignY', '#_align_top_')
+                elif y_val:
+                    # Negate the literal Y value
+                    try:
+                        y_num = float(y_val)
+                        negated = -y_num if y_num != 0 else 0
+                        # Format as int if it's a whole number
+                        elem.set('Y', str(int(negated)) if negated == int(negated) else str(negated))
+                    except ValueError:
+                        pass  # Not a number, leave as-is
+                    elem.set('ParentAlignY', '#_align_top_')
+                else:
+                    # No Y value, just set the alignment
+                    elem.set('ParentAlignY', '#_align_top_')
+            elif origin_y == 'middle' or origin_y == '5':  # 5 = middle enum value
+                # Middle origin - set alignment, no negation needed
+                elem.set('ParentAlignY', '#_align_middle_')
+            # Bottom/4 is default, no action needed
         del elem.attrib['OriginY']
 
 
@@ -591,9 +575,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
             elem.set('Value1', elem.get('Value'))
             del elem.attrib['Value']
         # Add Static="true" if no runtime variables
-        # Only static If needs explicit <True> wrapper (preprocessor handles runtime If)
-        if convert_if_to_static(elem):
-            wrap_implicit_children_in_true(elem)
+        convert_if_to_static(elem)
 
     # Panel element
     elif tag == 'Panel':
@@ -764,20 +746,22 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
         parent.insert(idx, comment)
         return all_after  # Don't process children
 
-    # Comment out PixelStream with unsupported Type/Protocol
+    # Comment out PixelStream with unsupported Type/Protocol (but not constants/variables)
     if (elem.tag == 'PixelStream' or elem.tag == 'Pixelstream') and parent is not None:
         # Check both Protocol (legacy) and Type attributes
-        pxs_type = (elem.get('Protocol') or elem.get('Type') or '').lower()
-        supported_types = ('mjpeg', 'dfile', 'dynamicfile', 'dynamic_file', 'shmem', '')
-        if pxs_type not in supported_types:
-            elem_xml = etree.tostring(elem, encoding='unicode', pretty_print=True).strip()
-            orig_attr = elem.get('Protocol') or elem.get('Type')
-            comment_text = f' TODO(deprecated): PixelStream Protocol/Type="{orig_attr}" not supported, use shmem or mjpeg\n{elem_xml}\n'
-            comment = etree.Comment(comment_text)
-            idx = list(parent).index(elem)
-            parent.remove(elem)
-            parent.insert(idx, comment)
-            return all_after
+        pxs_type_raw = elem.get('Protocol') or elem.get('Type') or ''
+        # Don't comment out constants or variables - they might resolve to valid types at runtime
+        if not pxs_type_raw.startswith('#') and not pxs_type_raw.startswith('@'):
+            pxs_type = pxs_type_raw.lower()
+            supported_types = ('mjpeg', 'dfile', 'dynamicfile', 'dynamic_file', 'shmem', '')
+            if pxs_type not in supported_types:
+                elem_xml = etree.tostring(elem, encoding='unicode', pretty_print=True).strip()
+                comment_text = f' TODO(deprecated): PixelStream Protocol/Type="{pxs_type_raw}" not supported, use shmem or mjpeg\n{elem_xml}\n'
+                comment = etree.Comment(comment_text)
+                idx = list(parent).index(elem)
+                parent.remove(elem)
+                parent.insert(idx, comment)
+                return all_after
 
     # Process this element
     after_elements = process_element(elem, parent_tag)
@@ -916,8 +900,10 @@ def main():
     parser.add_argument('input', nargs='?', help='Input XML file')
     parser.add_argument('output', nargs='?', help='Output XML file (default: stdout)')
     parser.add_argument('-d', '--directory', help='Process all XML files in directory recursively (in-place)')
-    parser.add_argument('-f', '--format', action='store_true',
-                        help='Format output with indentation')
+    parser.add_argument('-f', '--format', action='store_true', default=True,
+                        help='Format output with indentation (default: True)')
+    parser.add_argument('--no-format', action='store_false', dest='format',
+                        help='Disable output formatting')
     parser.add_argument('-i', '--in-place', action='store_true',
                         help='Modify input file in place')
 
