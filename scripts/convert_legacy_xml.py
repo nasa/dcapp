@@ -85,6 +85,7 @@ COMMENT_OUT_ATTRIBUTES = {
     'UpdateRate',       # Text - throttle string refresh rate
     'Pattern',          # Shapes/Lines - line pattern (dashed, dotted, etc.)
     'LinePattern',      # Lines - line pattern (dashed, dotted, etc.)
+    'LineFactor',       # Lines - line pattern repeat factor
     'Key',              # Button - keyboard shortcut
     'BezelKey',         # Button - bezel key binding
     'ShadowOffset',     # Text - shadow/drop shadow effect
@@ -699,6 +700,9 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     elif tag == 'Circle':
         if 'Angle' in elem.attrib:
             elem.tag = 'Arc'
+            # Legacy Circle with FillColor draws as pie slice (filled from center)
+            if 'FillColor' in elem.attrib:
+                elem.set('Pie', 'true')
 
     # PixelStream element
     elif tag == 'PixelStream' or tag == 'Pixelstream':
