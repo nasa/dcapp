@@ -426,7 +426,10 @@ def convert_pixelstream_attributes(elem: etree._Element) -> None:
 
     - Host/Port/Path -> URL (e.g., "localhost:8080/video")
     - Type="mjpeg" -> Type="#_pixelstream_mjpeg_"
-    - Other Type values -> _Type (commented out, WIP)
+    - Type="shmem"/"dfile"/etc -> Type="#_pixelstream_shmem_"
+
+    Note: Unsupported Type values are handled in process_tree() by commenting
+    out the entire element before this function is called.
     """
     # Convert Host/Port/Path to URL
     host = elem.get('Host')
@@ -465,10 +468,6 @@ def convert_pixelstream_attributes(elem: etree._Element) -> None:
             elem.set('Type', '#_pixelstream_mjpeg_')
         elif pxs_type_lower in ('dfile', 'dynamicfile', 'dynamic_file', 'shmem'):
             elem.set('Type', '#_pixelstream_shmem_')
-        else:
-            # Comment out unknown types (WIP)
-            del elem.attrib['Type']
-            elem.set('_Type', pxs_type + ' (WIP)')
 
 
 def convert_origin_attributes(elem: etree._Element) -> None:
@@ -811,6 +810,19 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
         parent.remove(elem)
         parent.insert(idx, comment)
         return all_after  # Don't process children
+
+    # Comment out PixelStream with unsupported Type
+    if (elem.tag == 'PixelStream' or elem.tag == 'Pixelstream') and parent is not None:
+        pxs_type = elem.get('Type', '').lower()
+        supported_types = ('mjpeg', 'dfile', 'dynamicfile', 'dynamic_file', 'shmem')
+        if pxs_type and pxs_type not in supported_types:
+            elem_xml = etree.tostring(elem, encoding='unicode', pretty_print=True).strip()
+            comment_text = f' TODO(deprecated): PixelStream Type="{elem.get("Type")}" not supported, use shmem or mjpeg\n{elem_xml}\n'
+            comment = etree.Comment(comment_text)
+            idx = list(parent).index(elem)
+            parent.remove(elem)
+            parent.insert(idx, comment)
+            return all_after
 
     # Process this element
     after_elements = process_element(elem, parent_tag)
