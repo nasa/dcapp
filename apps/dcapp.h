@@ -532,11 +532,12 @@ typedef struct __NodeTerrain {
 } _NodeTerrain;
 
 typedef struct __NodeWindow {
-    plVec2     init_position;
-    plVec2     init_dimension;
-    _ValIndex2 virtual_dimension;
-    _NodeIndex child;
-    char      *title;
+    plVec2        init_position;
+    plVec2        init_dimension;
+    _ValIndex2    virtual_dimension;
+    _NodeIndex    child;
+    char         *title;
+    DcAppValIndex active_display;
 } _NodeWindow;
 
 typedef struct __Node {

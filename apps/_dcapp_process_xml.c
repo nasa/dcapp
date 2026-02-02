@@ -2486,6 +2486,15 @@ static _NodeIndex _process_xml_node_panel(_AppData *app_data, xmlNodePtr xml_nod
         dc_node.panel.virtual_dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
     }
 
+    // display index (matched against Window's ActiveDisplay)
+    xmlChar *raw_display_index = xmlGetProp(xml_node, BAD_CAST "DisplayIndex");
+    if (raw_display_index) {
+        dc_node.panel.index = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_display_index);
+        xmlFree(raw_display_index);
+    } else {
+        dc_node.panel.index = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
@@ -4542,6 +4551,15 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         xmlFree(raw_y_virtual_dimension);
     } else {
         dc_node.window.virtual_dimension.y = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
+    // active display (for Panel DisplayIndex matching)
+    xmlChar *raw_active_display = xmlGetProp(xml_node, BAD_CAST "ActiveDisplay");
+    if (raw_active_display) {
+        dc_node.window.active_display = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_active_display);
+        xmlFree(raw_active_display);
+    } else {
+        dc_node.window.active_display = DC_APP_VAL_INDEX_UNDEFINED;
     }
 
     // register node

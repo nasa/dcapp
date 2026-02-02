@@ -77,7 +77,7 @@ ELEMENT_ATTRIBUTE_RENAMES = {
 REMOVE_ATTRIBUTES = {
     'ForceUpdate',      # Window - frame rate limiter (use vsync instead)
     # Note: MinimumValue/MaximumValue are handled specially by convert_set_operator()
-    # Note: DisplayIndex/ActiveDisplay are handled specially by convert_display_index_pattern()
+    # Note: DisplayIndex/ActiveDisplay are preserved for runtime handling
 }
 
 # Attributes to prefix with '_' (not yet implemented, preserved for future)
@@ -538,71 +538,6 @@ def convert_origin_attributes(elem: etree._Element) -> None:
         del elem.attrib['OriginY']
 
 
-def convert_display_index_pattern(elem: etree._Element) -> None:
-    """
-    Convert DisplayIndex/ActiveDisplay pattern to If conditionals.
-
-    This handles the legacy page-switching pattern where Window has ActiveDisplay
-    and Panel children have DisplayIndex. Converts to explicit If conditionals.
-
-    Before:
-        <Window ActiveDisplay="@currentPage">
-            <Panel DisplayIndex="1">...</Panel>
-            <Panel DisplayIndex="2">...</Panel>
-        </Window>
-
-    After:
-        <Window>
-            <If Value1="@currentPage" Value2="1" Operation="#_if_eq_">
-                <Panel>...</Panel>
-            </If>
-            <If Value1="@currentPage" Value2="2" Operation="#_if_eq_">
-                <Panel>...</Panel>
-            </If>
-        </Window>
-    """
-    # Only process Window elements with ActiveDisplay
-    if elem.tag != 'Window':
-        return
-
-    active_display = elem.get('ActiveDisplay')
-    if not active_display:
-        return
-
-    # Remove ActiveDisplay from Window
-    del elem.attrib['ActiveDisplay']
-
-    # Find Panel children with DisplayIndex and wrap them in If
-    panels_to_wrap = []
-    for child in elem:
-        if not isinstance(child.tag, str):
-            continue
-        if child.tag == 'Panel' and child.get('DisplayIndex'):
-            panels_to_wrap.append(child)
-
-    for panel in panels_to_wrap:
-        display_index = panel.get('DisplayIndex')
-        del panel.attrib['DisplayIndex']
-
-        # Get panel's position in parent
-        panel_index = list(elem).index(panel)
-
-        # Remove panel from parent
-        elem.remove(panel)
-
-        # Create If wrapper
-        if_elem = etree.Element('If')
-        if_elem.set('Value1', active_display)
-        if_elem.set('Value2', display_index)
-        if_elem.set('Operation', '#_if_eq_')
-
-        # Add panel as child of If
-        if_elem.append(panel)
-
-        # Insert If at panel's original position
-        elem.insert(panel_index, if_elem)
-
-
 def get_element_context(elem: etree._Element, parent_tag: Optional[str]) -> str:
     """Determine the context of an element for context-dependent conversions."""
     return parent_tag or ''
@@ -802,9 +737,7 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
     if elem.tag == 'Mask':
         process_mask_element(elem)
 
-    # Convert DisplayIndex/ActiveDisplay pattern to If conditionals
-    if elem.tag == 'Window':
-        convert_display_index_pattern(elem)
+    # Note: DisplayIndex/ActiveDisplay are preserved - runtime handles this pattern
 
     # Comment out deprecated/unsupported elements (e.g., EdgeIo, ADI)
     if elem.tag in COMMENT_OUT_ELEMENTS and parent is not None:

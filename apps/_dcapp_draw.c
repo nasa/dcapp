@@ -2250,6 +2250,17 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
 
 static void _draw_node_panel(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
+    // DisplayIndex/ActiveDisplay check - skip panel if index doesn't match window's active display
+    DcAppValIndex window_active_display = app_data->sb_nodes[app_data->window].window.active_display;
+    DcAppValIndex panel_index = node->panel.index;
+    if (window_active_display != DC_APP_VAL_INDEX_UNDEFINED && panel_index != DC_APP_VAL_INDEX_UNDEFINED) {
+        int active_display_value = dc_app_lookup_get_value(app_data->lookup, window_active_display)->value_integer;
+        int panel_index_value = dc_app_lookup_get_value(app_data->lookup, panel_index)->value_integer;
+        if (active_display_value != panel_index_value) {
+            return;  // skip this panel - DisplayIndex doesn't match ActiveDisplay
+        }
+    }
+
     // boolean checks
     bool use_virtual_dimension[2] = {
         node->panel.virtual_dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
