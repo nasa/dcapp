@@ -2054,9 +2054,11 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
     plVec2 point2      = (plVec2){point2_vec4.x, point2_vec4.y};
     plVec2 point3      = (plVec2){point3_vec4.x, point3_vec4.y};
 
-    // draw
-    plBindGroupHandle bind_group_handle = app_data->sb_textures[node->image.texture_index].bind_group_handle;
-    _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3);
+    // draw (skip if texture failed to load)
+    if (node->image.texture_index != TEXTURE_INDEX_UNDEFINED) {
+        plBindGroupHandle bind_group_handle = app_data->sb_textures[node->image.texture_index].bind_group_handle;
+        _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3);
+    }
 
     // mouse events and children
     if (node->image.child != NODE_INDEX_UNDEFINED) {

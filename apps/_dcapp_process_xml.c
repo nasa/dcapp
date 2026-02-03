@@ -1932,11 +1932,21 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
         // load raw data
         size_t         file_data_size;
         unsigned char *file_data = dc_utils_load_binary_file(canon_filepath, &file_data_size);
+        if (!file_data) {
+            fprintf(stderr, "DCApp: Failed to load image file: %s\n", canon_filepath);
+            dc_node.image.texture_index = TEXTURE_INDEX_UNDEFINED;
+            return _register_node(app_data, &dc_node);
+        }
 
         // load as image data
         int            image_width, image_height, channels;
         unsigned char *image_data = _ext_image->load(file_data, (int)file_data_size, &image_width, &image_height, &channels, 4);
         free(file_data);
+        if (!image_data) {
+            fprintf(stderr, "DCApp: Failed to decode image: %s\n", canon_filepath);
+            dc_node.image.texture_index = TEXTURE_INDEX_UNDEFINED;
+            return _register_node(app_data, &dc_node);
+        }
 
         // create texture (allocate image, buffer, bind)
         _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath);
@@ -2810,10 +2820,18 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
 
                 size_t         file_data_size;
                 unsigned char *file_data = dc_utils_load_binary_file(canon_filepath, &file_data_size);
+                if (!file_data) {
+                    fprintf(stderr, "DCApp: Failed to load test pattern file: %s\n", canon_filepath);
+                    goto skip_test_pattern;
+                }
 
                 int            image_width, image_height, channels;
                 unsigned char *image_data = _ext_image->load(file_data, (int)file_data_size, &image_width, &image_height, &channels, 4);
                 free(file_data);
+                if (!image_data) {
+                    fprintf(stderr, "DCApp: Failed to decode test pattern: %s\n", canon_filepath);
+                    goto skip_test_pattern;
+                }
 
                 _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath);
 
@@ -2840,6 +2858,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
                 sbpush(app_data->sb_textures, texture);
                 texture_index = sbcount(app_data->sb_textures) - 1;
             }
+            skip_test_pattern:
 
             dc_node.pixelstream.test_pattern_texture_index = texture_index;
         }
