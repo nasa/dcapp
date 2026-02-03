@@ -663,49 +663,33 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                 fprintf(stderr, "DCAPP _preprocess_xml_node(): Unable to get root element of config file %s\n", canon_filepath);
             }
 
-            // copy loaded content
+            // copy loaded content (keep root element)
             xmlNodePtr new_node = xmlDocCopyNode(sub_node, node->doc, 1);
 
-            // add _Directory attribute to all direct children
-            for (xmlNodePtr child = new_node->children; child; child = child->next) {
-                if (child->type == XML_ELEMENT_NODE) {
-                    xmlSetProp(child, BAD_CAST "_Directory", BAD_CAST include_directory);
-                }
-            }
+            // add _Directory attribute to root element
+            xmlSetProp(new_node, BAD_CAST "_Directory", BAD_CAST include_directory);
 
-            // replace Include's children with loaded content
+            // free old child (text node with filename)
             xmlNodePtr old_child = node->children;
-            node->children = new_node->children;
-            node->last = new_node->last;
-
-            // update parent pointers for all children
-            for (xmlNodePtr child = node->children; child; child = child->next) {
-                child->parent = node;
-            }
-
-            // unlink loaded content (now owned by Include node)
-            new_node->children = NULL;
-            new_node->last = NULL;
-            xmlFreeNode(new_node);
-
-            // free old child (text node)
             if (old_child) {
                 xmlUnlinkNode(old_child);
                 xmlFreeNode(old_child);
             }
 
+            // set root element as the only child of Include node
+            node->children = new_node;
+            node->last = new_node;
+            new_node->parent = node;
+            new_node->next = NULL;
+            new_node->prev = NULL;
+
             // free loaded document
             xmlFreeDoc(sub_doc);
 
-            // process children first with include directory
-            xmlNodePtr child = node->children;
-            while (child) {
-                xmlNodePtr child_next = child->next;
-                _preprocess_xml_node(context, child, include_directory);
-                child = child_next;
-            }
+            // process root element (which will process its children)
+            _preprocess_xml_node(context, new_node, include_directory);
 
-            // splice children into parent and free wrapper
+            // splice children (the root element) into parent and free Include wrapper
             _splice_children_into_parent_and_free_wrapper(node);
             return;
         }
