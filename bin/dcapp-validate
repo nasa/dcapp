@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 set -e
 
-DCAPP_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DCAPP_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_DIR="$DCAPP_HOME/pilotlight/out"
 
 if [ $# -eq 0 ]; then
-    CONFIG="$DCAPP_HOME/samples/welcome/welcome.xml"
-else
-    CONFIG="$1"
-    shift
+    echo "Usage: dcapp-validate <config.xml> [CONSTANT=value ...]"
+    exit 1
 fi
+
+CONFIG="$1"
+shift
 
 # Get absolute path of config (works on both Linux and macOS)
 CONFIG_ABS="$(cd "$(dirname "$CONFIG")" && pwd)/$(basename "$CONFIG")"
@@ -39,7 +40,6 @@ get_relative_path() {
 CONFIG_REL="$(get_relative_path "$RUN_DIR" "$CONFIG_ABS")"
 
 cd "$RUN_DIR"
-pwd
-cmd="./pilot_light -a dcapp $CONFIG_REL $*"
+cmd="./dcapp-validate $CONFIG_REL $*"
 echo "$cmd"
 exec $cmd

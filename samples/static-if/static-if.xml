@@ -141,8 +141,8 @@
 
                 <Rectangle X="10" Y="55" Width="920" Height="1" FillColor="0.4 0.4 0.5"/>
                 <Text X="470" Y="40" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.9 0.6">Try different modes via command line:</Text>
-                <Text X="470" Y="22" LocalAlignX="#_align_center_" Size="9" FillColor="0.8 0.8 0.8">./start.sh samples/static-if/static-if.xml DEBUG_MODE=0 PRODUCTION_MODE=1</Text>
-                <Text X="470" Y="7" LocalAlignX="#_align_center_" Size="9" FillColor="0.8 0.8 0.8">./start.sh samples/static-if/static-if.xml DEBUG_MODE=0 PRODUCTION_MODE=0</Text>
+                <Text X="470" Y="22" LocalAlignX="#_align_center_" Size="9" FillColor="0.8 0.8 0.8">bin/dcapp.sh samples/static-if/static-if.xml DEBUG_MODE=0 PRODUCTION_MODE=1</Text>
+                <Text X="470" Y="7" LocalAlignX="#_align_center_" Size="9" FillColor="0.8 0.8 0.8">bin/dcapp.sh samples/static-if/static-if.xml DEBUG_MODE=0 PRODUCTION_MODE=0</Text>
             </Container>
 
         </Panel>

@@ -22,6 +22,29 @@ Rendering powered by [PilotLight](https://github.com/PilotLightTech/pilotlight).
 
 ---
 
+## Quick Start
+
+```bash
+# Run a display (defaults to samples/welcome/welcome.xml)
+bin/dcapp.sh
+
+# Run a specific display
+bin/dcapp.sh path/to/display.xml
+
+# Run with constants
+bin/dcapp.sh path/to/display.xml DEBUG_MODE=1
+
+# Validate a display file
+bin/dcapp-validate path/to/display.xml
+
+# Generate a C header from a display
+bin/dcapp-genheader path/to/display.xml output.h
+```
+
+On Windows, use the `.bat` equivalents (`bin/dcapp.bat`, `bin/dcapp-validate.bat`, `bin/dcapp-genheader.bat`).
+
+---
+
 ## Documentation
 
 | Document | Description |

@@ -1,12 +1,14 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "DCAPP_HOME=%~dp0"
-set "DCAPP_HOME=%DCAPP_HOME:~0,-1%"
+set "DCAPP_HOME=%~dp0.."
+pushd "%DCAPP_HOME%"
+set "DCAPP_HOME=%CD%"
+popd
 set "RUN_DIR=%DCAPP_HOME%\pilotlight\out"
 
 if "%~1"=="" (
-    echo Usage: validate.bat ^<config.xml^> [CONSTANT=value ...]
+    echo Usage: dcapp-validate.bat ^<config.xml^> [CONSTANT=value ...]
     exit /b 1
 )
 

@@ -1,16 +1,19 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "DCAPP_HOME=%~dp0"
-set "DCAPP_HOME=%DCAPP_HOME:~0,-1%"
+set "DCAPP_HOME=%~dp0.."
+pushd "%DCAPP_HOME%"
+set "DCAPP_HOME=%CD%"
+popd
 set "RUN_DIR=%DCAPP_HOME%\pilotlight\out"
 
 if "%~1"=="" (
-    set "CONFIG=%DCAPP_HOME%\samples\welcome\welcome.xml"
-) else (
-    set "CONFIG=%~f1"
-    shift
+    echo Usage: dcapp-genheader.bat ^<config.xml^> [output.h]
+    exit /b 1
 )
+
+set "CONFIG=%~f1"
+shift
 
 set "ARGS="
 :argloop
@@ -24,6 +27,6 @@ REM Use PowerShell to compute relative path
 for /f "delims=" %%i in ('powershell -Command "[System.IO.Path]::GetRelativePath('%RUN_DIR%', '%CONFIG%')"') do set "CONFIG_REL=%%i"
 
 cd /d "%RUN_DIR%"
-set "cmd=pilot_light.exe -a dcapp %CONFIG_REL%%ARGS%"
+set "cmd=dcapp-genheader.exe %CONFIG_REL%%ARGS%"
 echo %cmd%
 %cmd%
