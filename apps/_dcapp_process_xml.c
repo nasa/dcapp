@@ -2316,14 +2316,14 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
         }
 
         if (!loaded) {
-            fprintf(stderr, "DCApp _process_xml_node_logic(): Failed to load logic library (%s.so/.dylib/.dll)\n", base_filepath);
+            fprintf(stderr, "DCApp: Failed to load logic library (%s.so/.dylib/.dll)\n", base_filepath);
+        } else {
+            // load functions (only if library loaded successfully)
+            app_data->logic_pre_init = (void (*)(_GetVariableValueAddr))_ext_library->load_function(app_data->logic_lib, "display_pre_init");
+            app_data->logic_init     = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_init");
+            app_data->logic_draw     = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_draw");
+            app_data->logic_close    = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_close");
         }
-
-        // load functions
-        app_data->logic_pre_init = (void (*)(_GetVariableValueAddr))_ext_library->load_function(app_data->logic_lib, "display_pre_init");
-        app_data->logic_init     = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_init");
-        app_data->logic_draw     = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_draw");
-        app_data->logic_close    = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_close");
     } else {
         fprintf(stderr, "DCAPP _process_xml_node_logic(): <Logic> has no File element\n");
     }
