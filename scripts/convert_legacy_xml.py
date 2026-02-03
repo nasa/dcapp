@@ -341,12 +341,9 @@ def convert_blink_attributes(elem: etree._Element) -> None:
 
 
 def convert_image_content_to_attribute(elem: etree._Element) -> None:
-    """Convert <Image>path.tga</Image> to <Image File="path.png"/>."""
+    """Convert <Image>path.tga</Image> to <Image File="path.tga"/>."""
     if elem.text and elem.text.strip():
         file_path = elem.text.strip()
-        # Also convert .tga to .png (recommended)
-        if file_path.lower().endswith('.tga'):
-            file_path = file_path[:-4] + '.png'
         elem.set('File', file_path)
         elem.text = None
 
