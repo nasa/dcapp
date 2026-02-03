@@ -279,6 +279,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
             for (int jj = 0; jj < sbcount(trick_context->sb_tx_var_contexts); jj++) {
 
                 _TrickTxVarContext *tx_var_context = &(trick_context->sb_tx_var_contexts[jj]);
+                if (tx_var_context->dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) continue;
                 DcAppLookupVar     *dc_app_var     = dc_app_lookup_get_var(app_data->lookup, tx_var_context->dcapp_var_index);
                 DcValue            *curr_value     = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
                 DcValue            *prev_value     = &tx_var_context->prev_value;
@@ -323,6 +324,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
             for (int jj = 0; jj < sbcount(trick_context->sb_rx_var_contexts); jj++) {
 
                 _TrickRxVarContext *rx_var_context = &(trick_context->sb_rx_var_contexts[jj]);
+                if (rx_var_context->dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) continue;
                 DcAppLookupVar     *dc_app_var     = dc_app_lookup_get_var(app_data->lookup, rx_var_context->dcapp_var_index);
                 DcValue            *value          = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
 
@@ -343,6 +345,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
             for (int jj = 0; jj < sbcount(edge_context->sb_tx_var_contexts); jj++) {
 
                 _EdgeTxVarContext *tx_var_context = &(edge_context->sb_tx_var_contexts[jj]);
+                if (tx_var_context->dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) continue;
                 DcAppLookupVar    *dc_app_var     = dc_app_lookup_get_var(app_data->lookup, tx_var_context->dcapp_var_index);
                 DcValue           *curr_value     = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
                 DcValue           *prev_value     = &tx_var_context->prev_value;
@@ -387,6 +390,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
             for (int jj = 0; jj < sbcount(edge_context->sb_rx_var_contexts); jj++) {
 
                 _EdgeRxVarContext *rx_var_context = &(edge_context->sb_rx_var_contexts[jj]);
+                if (rx_var_context->dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) continue;
                 DcAppLookupVar    *dc_app_var     = dc_app_lookup_get_var(app_data->lookup, rx_var_context->dcapp_var_index);
                 DcValue           *value          = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
 

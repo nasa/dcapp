@@ -1758,6 +1758,9 @@ static _NodeIndex _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr
             _EdgeRxVarContext var = {};
             var.edge_var_index    = dc_edge_add_rx_var(edge_context->edge, edge_cmd);
             var.dcapp_var_index   = dc_app_lookup_get_var_index(app_data->lookup, dcapp_var);
+            if (var.dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) {
+                fprintf(stderr, "DCApp _process_xml_node(): Unknown variable '%s' in EdgeVariable (from)\n", dcapp_var);
+            }
             sbpush(edge_context->sb_rx_var_contexts, var);
             break;
         }
@@ -1766,9 +1769,13 @@ static _NodeIndex _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr
             // create + add tx var
             _EdgeTxVarContext var = {};
             var.dcapp_var_index   = dc_app_lookup_get_var_index(app_data->lookup, dcapp_var);
-            DcValue *dc_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, var.dcapp_var_index)->value_index);
             var.edge_var_index    = dc_edge_add_tx_var(edge_context->edge, edge_cmd);
-            var.prev_value        = *dc_var_value;
+            if (var.dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) {
+                fprintf(stderr, "DCApp _process_xml_node(): Unknown variable '%s' in EdgeVariable (to)\n", dcapp_var);
+            } else {
+                DcValue *dc_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, var.dcapp_var_index)->value_index);
+                var.prev_value        = *dc_var_value;
+            }
             sbpush(edge_context->sb_tx_var_contexts, var);
             break;
         }
@@ -3910,9 +3917,14 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                     var[len] = '\0';
                 }
 
-                DcAppValIndex   var_index = dc_app_lookup_get_var_index(app_data->lookup, var);
+                DcAppVarIndex   var_index = dc_app_lookup_get_var_index(app_data->lookup, var);
                 DcAppLookupVar *var_var   = dc_app_lookup_get_var(app_data->lookup, var_index);
-                sbpush(dc_node.text.sb_vals, var_var->value_index);
+                if (var_var) {
+                    sbpush(dc_node.text.sb_vals, var_var->value_index);
+                } else {
+                    fprintf(stderr, "DCApp _process_xml_node(): Unknown variable '%s' in Text\n", var);
+                    sbpush(dc_node.text.sb_vals, DC_APP_VAL_INDEX_UNDEFINED);
+                }
                 // Check for format specifier
                 char format_spec[DC_VALUE_STRING_BUFFER_SIZE] = {0};
                 if (ii < strlen(cleaned_text) && cleaned_text[ii] == '(') {
@@ -4281,6 +4293,9 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
             _TrickRxVarContext var = {};
             var.trick_var_index    = dc_trick_add_rx_var(trick_context->trick, trick_path, units);
             var.dcapp_var_index    = dc_app_lookup_get_var_index(app_data->lookup, dcapp_var);
+            if (var.dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) {
+                fprintf(stderr, "DCApp _process_xml_node(): Unknown variable '%s' in TrickVariable (from)\n", dcapp_var);
+            }
             sbpush(trick_context->sb_rx_var_contexts, var);
             break;
         }
@@ -4289,9 +4304,14 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
             // create + add tx var
             _TrickTxVarContext var = {};
             var.dcapp_var_index    = dc_app_lookup_get_var_index(app_data->lookup, dcapp_var);
-            DcValue *dc_var_value  = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, var.dcapp_var_index)->value_index);
-            var.trick_var_index    = dc_trick_add_tx_var(trick_context->trick, trick_path, units, dc_var_value->type == DC_VALUE_TYPE_STRING);
-            var.prev_value         = *dc_var_value;
+            var.trick_var_index    = dc_trick_add_tx_var(trick_context->trick, trick_path, units, false); // default to non-string if var undefined
+            if (var.dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) {
+                fprintf(stderr, "DCApp _process_xml_node(): Unknown variable '%s' in TrickVariable (to)\n", dcapp_var);
+            } else {
+                DcValue *dc_var_value  = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, var.dcapp_var_index)->value_index);
+                var.trick_var_index    = dc_trick_add_tx_var(trick_context->trick, trick_path, units, dc_var_value->type == DC_VALUE_TYPE_STRING);
+                var.prev_value         = *dc_var_value;
+            }
             sbpush(trick_context->sb_tx_var_contexts, var);
             break;
         }

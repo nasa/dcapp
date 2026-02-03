@@ -3943,23 +3943,27 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
         // value
         DcValueType format_type = node->text.sb_format_types[ii];
         char       *format      = &(node->text.sb_formats[node->text.sb_format_indices[ii]]);
-        DcValue    *val         = dc_app_lookup_get_value(app_data->lookup, node->text.sb_vals[ii]);
         static char val_str[256]; // assume text won't be that long..
-        switch (format_type) {
-            case DC_VALUE_TYPE_STRING:
-                snprintf(val_str, sizeof(val_str), format, val->value_string);
-                break;
-            case DC_VALUE_TYPE_INTEGER:
-                snprintf(val_str, sizeof(val_str), format, val->value_integer);
-                break;
-            case DC_VALUE_TYPE_DOUBLE:
-                snprintf(val_str, sizeof(val_str), format, val->value_double);
-                break;
-            case DC_VALUE_TYPE_BOOLEAN:
-                snprintf(val_str, sizeof(val_str), format, val->value_boolean);
-                break;
-            default:
-                fprintf(stderr, "Unknown value type for text: %d\n", format_type);
+        if (node->text.sb_vals[ii] == DC_APP_VAL_INDEX_UNDEFINED) {
+            val_str[0] = '\0'; // empty string for undefined variable
+        } else {
+            DcValue *val = dc_app_lookup_get_value(app_data->lookup, node->text.sb_vals[ii]);
+            switch (format_type) {
+                case DC_VALUE_TYPE_STRING:
+                    snprintf(val_str, sizeof(val_str), format, val->value_string);
+                    break;
+                case DC_VALUE_TYPE_INTEGER:
+                    snprintf(val_str, sizeof(val_str), format, val->value_integer);
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    snprintf(val_str, sizeof(val_str), format, val->value_double);
+                    break;
+                case DC_VALUE_TYPE_BOOLEAN:
+                    snprintf(val_str, sizeof(val_str), format, val->value_boolean);
+                    break;
+                default:
+                    fprintf(stderr, "Unknown value type for text: %d\n", format_type);
+            }
         }
         sbpushn(sb_text, val_str, (int)strlen(val_str));
     }
