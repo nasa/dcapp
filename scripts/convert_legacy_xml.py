@@ -33,6 +33,10 @@ ELEMENT_RENAMES = {
     'TrickIo': 'TrickIO',
     'FromTrick': 'TrickFrom',
     'ToTrick': 'TrickTo',
+    # EdgeIO renames
+    'EdgeIo': 'EdgeIO',
+    'FromEdge': 'EdgeFrom',
+    'ToEdge': 'EdgeTo',
 }
 
 # Button-specific child element renames
@@ -637,10 +641,6 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     # PixelStream element
     elif tag == 'PixelStream' or tag == 'Pixelstream':
         convert_pixelstream_attributes(elem)
-
-    # EdgeIO element - rename to proper casing
-    elif tag == 'EdgeIo':
-        elem.tag = 'EdgeIO'
 
     # EdgeVariable - rename RcsCommand to Command
     elif tag == 'EdgeVariable':

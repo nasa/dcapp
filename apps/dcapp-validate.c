@@ -474,20 +474,8 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         return true;
     }
 
-    // TrickIO can contain Trick elements
+    // TrickIO can contain TrickFrom/TrickTo
     if (parent_type == DC_APP_ELEM_TYPE_TRICK_IO) {
-        switch (child_type) {
-            case DC_APP_ELEM_TYPE_TRICK_VARIABLE:
-            case DC_APP_ELEM_TYPE_TRICK_FROM:
-            case DC_APP_ELEM_TYPE_TRICK_TO:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    // TrickVariable can contain TrickFrom/TrickTo
-    if (parent_type == DC_APP_ELEM_TYPE_TRICK_VARIABLE) {
         switch (child_type) {
             case DC_APP_ELEM_TYPE_TRICK_FROM:
             case DC_APP_ELEM_TYPE_TRICK_TO:
@@ -508,20 +496,8 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         }
     }
 
-    // EdgeIO can contain Edge elements
+    // EdgeIO can contain EdgeFrom/EdgeTo
     if (parent_type == DC_APP_ELEM_TYPE_EDGE_IO) {
-        switch (child_type) {
-            case DC_APP_ELEM_TYPE_EDGE_VARIABLE:
-            case DC_APP_ELEM_TYPE_EDGE_FROM:
-            case DC_APP_ELEM_TYPE_EDGE_TO:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    // EdgeVariable can contain EdgeFrom/EdgeTo
-    if (parent_type == DC_APP_ELEM_TYPE_EDGE_VARIABLE) {
         switch (child_type) {
             case DC_APP_ELEM_TYPE_EDGE_FROM:
             case DC_APP_ELEM_TYPE_EDGE_TO:
