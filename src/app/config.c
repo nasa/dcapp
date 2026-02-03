@@ -134,37 +134,6 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _ElemStyle default_style = {};
     sbpush(context.sb_styles, default_style);
 
-    // process input arguments
-    // TODO get rid of all the heap allocation..
-    for (int ii = 0; ii < arg_count; ii++) {
-
-        // get eq sign
-        const char *eq_addr = strchr(args[ii], '=');
-        if (!eq_addr) {
-            fprintf(stderr, "DCApp dc_app_config_create(): input argument '%s' has no value set; ignoring", args[ii]);
-            continue;
-        }
-
-        // extract the argument name (before '=')
-        size_t name_len  = eq_addr - args[ii];
-        char  *name_part = strndup(args[ii], name_len);
-
-        // extract the value (after '=')
-        const char *value_part = eq_addr + 1;
-
-        // unquote both parts
-        char *arg_name  = _unquote(name_part);
-        char *arg_value = _unquote(value_part);
-
-        // register
-        _register_const_by_name(&context, arg_name, arg_value, true);
-
-        // free memory
-        free(name_part);
-        free(arg_name);
-        free(arg_value);
-    }
-
     // add default constants
     // set initial values
     _add_const_int(&context, "_align_left_", DC_APP_ALIGN_TYPE_LEFT, true);
@@ -301,6 +270,41 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const(&context, "_color_khaki_", "0.76 0.69 0.57", false);
     _add_const(&context, "_color_sand_", "0.94 0.87 0.73", false);
     _add_const(&context, "_color_taupe_", "0.56 0.52 0.51", false);
+
+    // process input arguments
+    // TODO get rid of all the heap allocation..
+    for (int ii = 0; ii < arg_count; ii++) {
+
+        // get eq sign
+        const char *eq_addr = strchr(args[ii], '=');
+        if (!eq_addr) {
+            fprintf(stderr, "DCApp dc_app_config_create(): input argument '%s' has no value set; ignoring", args[ii]);
+            continue;
+        }
+
+        // extract the argument name (before '=')
+        size_t name_len  = eq_addr - args[ii];
+        char  *name_part = strndup(args[ii], name_len);
+
+        // extract the value (after '=')
+        const char *value_part = eq_addr + 1;
+
+        // unquote both parts
+        char *arg_name  = _unquote(name_part);
+        char *arg_value = _unquote(value_part);
+
+        // dereference constants in the value (e.g., mycolor=#_color_red_ -> mycolor=1.0 0.0 0.0)
+        char arg_value_dereferenced[DC_VALUE_STRING_BUFFER_SIZE];
+        _dereference_constants(&context, arg_value, arg_value_dereferenced, sizeof(arg_value_dereferenced));
+
+        // register
+        _register_const_by_name(&context, arg_name, arg_value_dereferenced, true);
+
+        // free memory
+        free(name_part);
+        free(arg_name);
+        free(arg_value);
+    }
 
     // add to contexts
     sbpush(_sb_contexts, context);
