@@ -125,6 +125,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_WINDOW:
             case DC_APP_ELEM_TYPE_VARIABLE:
             case DC_APP_ELEM_TYPE_TRICK_IO:
+            case DC_APP_ELEM_TYPE_EDGE_IO:
             case DC_APP_ELEM_TYPE_LOGIC:
             case DC_APP_ELEM_TYPE_FUNCTION:
                 return true;
@@ -496,6 +497,51 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         }
     }
 
+    // TrickFrom/TrickTo can contain TrickVariable
+    if (parent_type == DC_APP_ELEM_TYPE_TRICK_FROM ||
+        parent_type == DC_APP_ELEM_TYPE_TRICK_TO) {
+        switch (child_type) {
+            case DC_APP_ELEM_TYPE_TRICK_VARIABLE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    // EdgeIO can contain Edge elements
+    if (parent_type == DC_APP_ELEM_TYPE_EDGE_IO) {
+        switch (child_type) {
+            case DC_APP_ELEM_TYPE_EDGE_VARIABLE:
+            case DC_APP_ELEM_TYPE_EDGE_FROM:
+            case DC_APP_ELEM_TYPE_EDGE_TO:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    // EdgeVariable can contain EdgeFrom/EdgeTo
+    if (parent_type == DC_APP_ELEM_TYPE_EDGE_VARIABLE) {
+        switch (child_type) {
+            case DC_APP_ELEM_TYPE_EDGE_FROM:
+            case DC_APP_ELEM_TYPE_EDGE_TO:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    // EdgeFrom/EdgeTo can contain EdgeVariable
+    if (parent_type == DC_APP_ELEM_TYPE_EDGE_FROM ||
+        parent_type == DC_APP_ELEM_TYPE_EDGE_TO) {
+        switch (child_type) {
+            case DC_APP_ELEM_TYPE_EDGE_VARIABLE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     // Terrain can contain TerrainDEM
     if (parent_type == DC_APP_ELEM_TYPE_TERRAIN) {
         switch (child_type) {
@@ -773,6 +819,29 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             break;
         }
 
+        case DC_APP_ELEM_TYPE_EDGE_IO: {
+            xmlChar *host = xmlGetProp(node, BAD_CAST "Host");
+            xmlChar *port = xmlGetProp(node, BAD_CAST "Port");
+            if (!host) {
+                fprintf(stderr, "WARNING: <EdgeIO> missing 'Host' attribute (line %ld)\n", xmlGetLineNo(node));
+                ctx->warning_count++;
+            }
+            if (!port) {
+                fprintf(stderr, "WARNING: <EdgeIO> missing 'Port' attribute (line %ld)\n", xmlGetLineNo(node));
+                ctx->warning_count++;
+            }
+            if (host)
+                xmlFree(host);
+            if (port)
+                xmlFree(port);
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_EDGE_VARIABLE: {
+            // EdgeVariable uses content for variable name, Command attribute is optional
+            break;
+        }
+
         case DC_APP_ELEM_TYPE_IMAGE: {
             xmlChar *file = xmlGetProp(node, BAD_CAST "File");
             if (!file) {
@@ -891,6 +960,8 @@ static const char *_valid_attrs_terrain_dem[]    = {"File", NULL};
 static const char *_valid_attrs_text[]           = {"Size", NULL};
 static const char *_valid_attrs_trick_io[]       = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};
 static const char *_valid_attrs_trick_variable[] = {"Name", "Units", NULL};
+static const char *_valid_attrs_edge_io[]        = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};
+static const char *_valid_attrs_edge_variable[]  = {"Command", NULL};
 static const char *_valid_attrs_variable[]       = {"Type", "InitialValue", NULL};
 static const char *_valid_attrs_vertex[]         = {NULL};
 static const char *_valid_attrs_window[]         = {"Title", "ActiveDisplay", NULL};
@@ -1109,6 +1180,16 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_TRICK_VARIABLE:
             return _attr_in_list(attr_name, _valid_attrs_trick_variable);
+
+        case DC_APP_ELEM_TYPE_EDGE_IO:
+            return _attr_in_list(attr_name, _valid_attrs_edge_io);
+
+        case DC_APP_ELEM_TYPE_EDGE_FROM:
+        case DC_APP_ELEM_TYPE_EDGE_TO:
+            return true; // These just group variables
+
+        case DC_APP_ELEM_TYPE_EDGE_VARIABLE:
+            return _attr_in_list(attr_name, _valid_attrs_edge_variable);
 
         case DC_APP_ELEM_TYPE_VARIABLE:
             return _attr_in_list(attr_name, _valid_attrs_variable);

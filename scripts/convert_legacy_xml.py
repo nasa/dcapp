@@ -104,7 +104,9 @@ COMMENT_OUT_ATTRIBUTES = {
 COMMENT_OUT_ELEMENTS = {
     'ADI': ('TODO(deprecated)', 'Use TexturedSphere instead of ADI'),
     'Animation': ('TODO(migration)', 'Animation not yet supported'),
+    'CAN': ('TODO(deprecated)', 'CAN hardware interface not yet supported'),
     'Map': ('TODO(deprecated)', 'Use Terrain instead of Map'),
+    'UEI': ('TODO(deprecated)', 'UEI hardware interface not yet supported'),
 }
 
 
@@ -551,6 +553,16 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     if not isinstance(tag, str):
         return after_elements
 
+    # ---- Early tag conversions (before attribute processing) ----
+
+    # Circle with Angle -> Arc conversion (must happen before attribute checks)
+    if tag == 'Circle' and 'Angle' in elem.attrib:
+        elem.tag = 'Arc'
+        tag = 'Arc'  # Update local variable for subsequent checks
+        # Legacy Circle with FillColor draws as pie slice (filled from center)
+        if 'FillColor' in elem.attrib:
+            elem.set('Pie', 'true')
+
     # ---- Element-specific attribute conversions ----
 
     # Variable element
@@ -621,14 +633,6 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     # DisplayLogic element (before rename)
     elif tag == 'DisplayLogic':
         convert_displaylogic_to_logic(elem)
-
-    # Circle with Angle -> Arc conversion
-    elif tag == 'Circle':
-        if 'Angle' in elem.attrib:
-            elem.tag = 'Arc'
-            # Legacy Circle with FillColor draws as pie slice (filled from center)
-            if 'FillColor' in elem.attrib:
-                elem.set('Pie', 'true')
 
     # PixelStream element
     elif tag == 'PixelStream' or tag == 'Pixelstream':
