@@ -1634,7 +1634,7 @@ static _NodeIndex _process_xml_node_edge_from(_AppData *app_data, xmlNodePtr xml
             break;
         }
         default: {
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for FromEdge\n", dc_app_elem_type_to_string(parent_elem_type));
+            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for EdgeFrom\n", dc_app_elem_type_to_string(parent_elem_type));
             break;
         }
     }
@@ -1702,7 +1702,7 @@ static _NodeIndex _process_xml_node_edge_to(_AppData *app_data, xmlNodePtr xml_n
             break;
         }
         default: {
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for ToEdge\n", dc_app_elem_type_to_string(parent_elem_type));
+            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for EdgeTo\n", dc_app_elem_type_to_string(parent_elem_type));
             break;
         }
     }
@@ -4147,7 +4147,7 @@ static _NodeIndex _process_xml_node_trick_from(_AppData *app_data, xmlNodePtr xm
             break;
         }
         default: {
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for FromTrick\n", dc_app_elem_type_to_string(parent_elem_type));
+            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for TrickFrom\n", dc_app_elem_type_to_string(parent_elem_type));
             break;
         }
     }
@@ -4217,7 +4217,7 @@ static _NodeIndex _process_xml_node_trick_to(_AppData *app_data, xmlNodePtr xml_
             break;
         }
         default: {
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for ToTrick\n", dc_app_elem_type_to_string(parent_elem_type));
+            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for TrickTo\n", dc_app_elem_type_to_string(parent_elem_type));
             break;
         }
     }

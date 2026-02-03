@@ -267,13 +267,13 @@ Variables can be bound to Trick simulation variables for real-time data exchange
 
 ```xml
 <TrickIO Host="localhost" Port="7000" DataRate="0.1">
-    <FromTrick>
+    <TrickFrom>
         <TrickVariable Name="rocket.altitude" Units="ft">altitude</TrickVariable>
         <TrickVariable Name="rocket.velocity" Units="fps">velocity</TrickVariable>
-    </FromTrick>
-    <ToTrick>
+    </TrickFrom>
+    <TrickTo>
         <TrickVariable Name="rocket.throttle">throttleCommand</TrickVariable>
-    </ToTrick>
+    </TrickTo>
 </TrickIO>
 ```
 

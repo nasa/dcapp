@@ -443,9 +443,9 @@ Color constants use space-separated RGB values. Add alpha when using:
     <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
     
     <TrickIO Host="#serverHost" Port="#serverPort" DataRate="#updateRate">
-        <FromTrick>
+        <TrickFrom>
             <TrickVariable Name="vehicle.altitude">altitude</TrickVariable>
-        </FromTrick>
+        </TrickFrom>
     </TrickIO>
     
     <Window Title="Display v#version" Width="800" Height="600">

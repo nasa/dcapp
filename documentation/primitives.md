@@ -512,13 +512,13 @@ When `Static="true"` is set on an `<If>` element, it evaluates once during XML p
 
 <!-- Conditionally include TrickVariables -->
 <TrickIO Host="localhost" Port="7000">
-    <FromTrick>
+    <TrickFrom>
         <TrickVariable Name="rocket.altitude">altitude</TrickVariable>
         <If Static="true" Value="#useAdvancedTelemetry" Value2="1" Operation="#_if_eq_">
             <TrickVariable Name="rocket.fuel_temp">fuelTemp</TrickVariable>
             <TrickVariable Name="rocket.chamber_pressure">chamberPressure</TrickVariable>
         </If>
-    </FromTrick>
+    </TrickFrom>
 </TrickIO>
 ```
 
@@ -600,11 +600,11 @@ Establishes connection to Trick simulation.
 | `Port` | integer | **Yes** | Trick port number |
 | `DataRate` | number | No | Data rate in Hz (default: 0.1) |
 
-**Children:** `<FromTrick>`, `<ToTrick>`
+**Children:** `<TrickFrom>`, `<TrickTo>`
 
 ---
 
-### `<FromTrick>`
+### `<TrickFrom>`
 
 Container for variables received from Trick.
 
@@ -612,7 +612,7 @@ Container for variables received from Trick.
 
 ---
 
-### `<ToTrick>`
+### `<TrickTo>`
 
 Container for variables sent to Trick.
 
@@ -634,13 +634,13 @@ Maps a Trick variable to a dcapp variable.
 **Example:**
 ```xml
 <TrickIO Host="localhost" Port="7000">
-    <FromTrick>
+    <TrickFrom>
         <TrickVariable Name="vehicle.altitude">altitude</TrickVariable>
         <TrickVariable Name="vehicle.speed" Units="kn">airspeed</TrickVariable>
-    </FromTrick>
-    <ToTrick>
+    </TrickFrom>
+    <TrickTo>
         <TrickVariable Name="controls.throttle">throttlePosition</TrickVariable>
-    </ToTrick>
+    </TrickTo>
 </TrickIO>
 ```
 
