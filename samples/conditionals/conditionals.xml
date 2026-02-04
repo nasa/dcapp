@@ -92,42 +92,42 @@
                 <!-- Show which comparisons are true -->
                 <Text X="20" Y="100" Size="9" FillColor="0.6 0.6 0.6">#_if_lt_ (&lt;)</Text>
                 <If Value1="@VALUE" Operation="#_if_lt_" Value2="50">
-                    <Circle X="270" Y="103" Radius="6" FillColor="0.3 0.8 0.3"/>
+                    <Ellipse X="270" Y="103" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
                 <If Value1="@VALUE" Operation="#_if_gte_" Value2="50">
-                    <Circle X="270" Y="103" Radius="6" FillColor="0.8 0.3 0.3"/>
+                    <Ellipse X="270" Y="103" Radius="6" FillColor="0.8 0.3 0.3"/>
                 </If>
 
                 <Text X="20" Y="80" Size="9" FillColor="0.6 0.6 0.6">#_if_lte_ (&lt;=)</Text>
                 <If Value1="@VALUE" Operation="#_if_lte_" Value2="50">
-                    <Circle X="270" Y="83" Radius="6" FillColor="0.3 0.8 0.3"/>
+                    <Ellipse X="270" Y="83" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
                 <If Value1="@VALUE" Operation="#_if_gt_" Value2="50">
-                    <Circle X="270" Y="83" Radius="6" FillColor="0.8 0.3 0.3"/>
+                    <Ellipse X="270" Y="83" Radius="6" FillColor="0.8 0.3 0.3"/>
                 </If>
 
                 <Text X="20" Y="60" Size="9" FillColor="0.6 0.6 0.6">#_if_eq_ (==)</Text>
                 <If Value1="@VALUE" Operation="#_if_eq_" Value2="50">
-                    <Circle X="270" Y="63" Radius="6" FillColor="0.3 0.8 0.3"/>
+                    <Ellipse X="270" Y="63" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
                 <If Value1="@VALUE" Operation="#_if_ne_" Value2="50">
-                    <Circle X="270" Y="63" Radius="6" FillColor="0.8 0.3 0.3"/>
+                    <Ellipse X="270" Y="63" Radius="6" FillColor="0.8 0.3 0.3"/>
                 </If>
 
                 <Text X="20" Y="40" Size="9" FillColor="0.6 0.6 0.6">#_if_gt_ (&gt;)</Text>
                 <If Value1="@VALUE" Operation="#_if_gt_" Value2="50">
-                    <Circle X="270" Y="43" Radius="6" FillColor="0.3 0.8 0.3"/>
+                    <Ellipse X="270" Y="43" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
                 <If Value1="@VALUE" Operation="#_if_lte_" Value2="50">
-                    <Circle X="270" Y="43" Radius="6" FillColor="0.8 0.3 0.3"/>
+                    <Ellipse X="270" Y="43" Radius="6" FillColor="0.8 0.3 0.3"/>
                 </If>
 
                 <Text X="20" Y="20" Size="9" FillColor="0.6 0.6 0.6">#_if_gte_ (&gt;=)</Text>
                 <If Value1="@VALUE" Operation="#_if_gte_" Value2="50">
-                    <Circle X="270" Y="23" Radius="6" FillColor="0.3 0.8 0.3"/>
+                    <Ellipse X="270" Y="23" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
                 <If Value1="@VALUE" Operation="#_if_lt_" Value2="50">
-                    <Circle X="270" Y="23" Radius="6" FillColor="0.8 0.3 0.3"/>
+                    <Ellipse X="270" Y="23" Radius="6" FillColor="0.8 0.3 0.3"/>
                 </If>
 
                 <Text X="250" Y="130" Size="8" FillColor="0.5 0.5 0.5">vs 50</Text>

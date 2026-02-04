@@ -110,7 +110,6 @@ typedef enum __NodeType {
     NODE_TYPE_ARC,
     NODE_TYPE_BLINK,
     NODE_TYPE_BUTTON,
-    NODE_TYPE_CIRCLE,
     NODE_TYPE_CONTAINER,
     NODE_TYPE_ELLIPSE,
     NODE_TYPE_CONDITIONAL,
@@ -237,29 +236,6 @@ typedef struct __NodeButton {
     DcAppButtonType type;
 } _NodeButton;
 
-#define _NODE_CIRCLE_MAX_SEGMENTS 1000
-typedef struct __NodeCircle {
-    _ValIndex2    position;
-    _ValIndex2    pivot_local_align;
-    _ValIndex2    pivot_position;
-    _ValIndex2    local_align;
-    _ValIndex2    parent_align;
-    DcAppValIndex rotation;
-    DcAppValIndex radius;
-    DcAppValIndex num_segments;
-    _ValIndex4    fill_color;
-    _ValIndex4    line_color;
-    DcAppValIndex line_width;
-
-    _NodeIndex child;
-    uint32_t   state_flags;
-
-    bool fill_enabled;
-    bool line_enabled;
-    bool negate_x;
-    bool negate_y;
-} _NodeCircle;
-
 #define _NODE_ELLIPSE_MAX_SEGMENTS 1000
 typedef struct __NodeEllipse {
     _ValIndex2    position;
@@ -280,8 +256,8 @@ typedef struct __NodeEllipse {
 
     bool fill_enabled;
     bool line_enabled;
-    bool negate_x;
-    bool negate_y;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
 } _NodeEllipse;
 
 typedef struct __NodeConditional {
@@ -548,7 +524,6 @@ typedef struct __Node {
         _NodeArc              arc;
         _NodeBlink            blink;
         _NodeButton           button;
-        _NodeCircle           circle;
         _NodeConditional      conditional;
         _NodeEllipse          ellipse;
         _NodeContainer        container;

@@ -7,8 +7,6 @@
 
 static const char *_node_type_to_string(_NodeType type) {
     switch (type) {
-        case NODE_TYPE_CIRCLE:
-            return "Circle";
         case NODE_TYPE_CONTAINER:
             return "Container";
         case NODE_TYPE_CONDITIONAL:

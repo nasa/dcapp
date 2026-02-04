@@ -31,13 +31,13 @@
 
                 <!-- ButtonIndicatorOn: green circle when ON -->
                 <ButtonIndicatorOn>
-                    <Circle X="370" Y="270" Radius="20" FillColor="0.2 0.8 0.2"/>
+                    <Ellipse X="370" Y="270" Radius="20" FillColor="0.2 0.8 0.2"/>
                     <Text X="370" Y="270" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="1 1 1">ON</Text>
                 </ButtonIndicatorOn>
 
                 <!-- ButtonIndicatorOff: red circle when OFF -->
                 <ButtonIndicatorOff>
-                    <Circle X="370" Y="270" Radius="20" FillColor="0.5 0.2 0.2"/>
+                    <Ellipse X="370" Y="270" Radius="20" FillColor="0.5 0.2 0.2"/>
                     <Text X="370" Y="270" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="12" FillColor="0.7 0.7 0.7">OFF</Text>
                 </ButtonIndicatorOff>
 

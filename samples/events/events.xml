@@ -22,12 +22,12 @@
             </Rectangle>
 
             <!-- Circle with hover -->
-            <Circle X="290" Y="460" Radius="40" FillColor="0.25 0.35 0.25" LineColor="0.45 0.55 0.45" LineWidth="2">
+            <Ellipse X="290" Y="460" Radius="40" FillColor="0.25 0.35 0.25" LineColor="0.45 0.55 0.45" LineWidth="2">
                 <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 0.6 0.6">Hover</Text>
                 <MouseHovered>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.3 1 0.3">HOVERED!</Text>
                 </MouseHovered>
-            </Circle>
+            </Ellipse>
 
             <!-- Ellipse with hover -->
             <Ellipse X="420" Y="460" RadiusX="70" RadiusY="35" FillColor="0.35 0.25 0.25" LineColor="0.55 0.45 0.45" LineWidth="2">
@@ -70,12 +70,12 @@
             </Rectangle>
 
             <!-- Circle with active -->
-            <Circle X="290" Y="320" Radius="40" FillColor="0.3 0.25 0.2" LineColor="0.5 0.45 0.4" LineWidth="2">
+            <Ellipse X="290" Y="320" Radius="40" FillColor="0.3 0.25 0.2" LineColor="0.5 0.45 0.4" LineWidth="2">
                 <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 0.6 0.6">Hold</Text>
                 <MouseActive>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 0.5 0.2">ACTIVE!</Text>
                 </MouseActive>
-            </Circle>
+            </Ellipse>
 
             <!-- Ellipse with active -->
             <Ellipse X="420" Y="320" RadiusX="70" RadiusY="35" FillColor="0.3 0.2 0.3" LineColor="0.5 0.4 0.5" LineWidth="2">
@@ -104,12 +104,12 @@
             </Rectangle>
 
             <!-- Circle with pressed -->
-            <Circle X="290" Y="180" Radius="40" FillColor="0.2 0.25 0.2" LineColor="0.4 0.45 0.4" LineWidth="2">
+            <Ellipse X="290" Y="180" Radius="40" FillColor="0.2 0.25 0.2" LineColor="0.4 0.45 0.4" LineWidth="2">
                 <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 0.6 0.6">Click</Text>
                 <MousePressed>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="0.2 1 0.5">PRESSED!</Text>
                 </MousePressed>
-            </Circle>
+            </Ellipse>
 
             <!-- Rectangle with released -->
             <Rectangle X="380" Y="140" Width="160" Height="80" FillColor="0.2 0.2 0.25" LineColor="0.4 0.4 0.45" LineWidth="2">
@@ -120,12 +120,12 @@
             </Rectangle>
 
             <!-- Circle with released -->
-            <Circle X="640" Y="180" Radius="40" FillColor="0.25 0.2 0.25" LineColor="0.45 0.4 0.45" LineWidth="2">
+            <Ellipse X="640" Y="180" Radius="40" FillColor="0.25 0.2 0.25" LineColor="0.45 0.4 0.45" LineWidth="2">
                 <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 0.6 0.6">Click</Text>
                 <MouseReleased>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 0.4 0.6">RELEASED!</Text>
                 </MouseReleased>
-            </Circle>
+            </Ellipse>
 
             <!-- ========== ROW 4: Combined ========== -->
             <Text X="30" Y="100" Size="14" FillColor="0.4 0.8 1">Combined Events</Text>
@@ -148,7 +148,7 @@
             </Rectangle>
 
             <!-- Circle with all events -->
-            <Circle X="380" Y="45" Radius="35" FillColor="0.22 0.28 0.22" LineColor="0.42 0.48 0.42" LineWidth="2">
+            <Ellipse X="380" Y="45" Radius="35" FillColor="0.22 0.28 0.22" LineColor="0.42 0.48 0.42" LineWidth="2">
                 <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="9" FillColor="0.5 0.5 0.5">All events</Text>
                 <MouseHovered>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="0.6 1 0.6">Hovered</Text>
@@ -162,7 +162,7 @@
                 <MouseReleased>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 0.5 0.3">Released!</Text>
                 </MouseReleased>
-            </Circle>
+            </Ellipse>
 
             <!-- Container with all events -->
             <Container X="480" Y="10" Width="140" Height="70">

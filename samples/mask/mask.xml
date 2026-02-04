@@ -30,10 +30,10 @@
       <Stencil>
         <!-- Define the mask shape using circles -->
         <StencilAdd>
-          <Circle X="750" Y="600" Radius="@RADIUS1" FillColor="1 1 1"/>
-          <Circle X="275" Y="200" Radius="@RADIUS2" FillColor="1 1 1"/>
-          <Circle X="1050" Y="400" Radius="@RADIUS3" FillColor="1 1 1"/>
-          <Circle X="1020" Y="835" Radius="@RADIUS4" FillColor="1 1 1"/>
+          <Ellipse X="750" Y="600" Radius="@RADIUS1" FillColor="1 1 1"/>
+          <Ellipse X="275" Y="200" Radius="@RADIUS2" FillColor="1 1 1"/>
+          <Ellipse X="1050" Y="400" Radius="@RADIUS3" FillColor="1 1 1"/>
+          <Ellipse X="1020" Y="835" Radius="@RADIUS4" FillColor="1 1 1"/>
         </StencilAdd>
 
         <!-- Draw content only within the mask -->

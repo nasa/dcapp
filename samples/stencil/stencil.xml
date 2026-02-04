@@ -41,11 +41,11 @@
       <Stencil>
         <StencilAdd>
           <!-- Outer circle -->
-          <Circle X="600" Y="750" Radius="100" FillColor="1 1 1"/>
+          <Ellipse X="600" Y="750" Radius="100" FillColor="1 1 1"/>
         </StencilAdd>
         <StencilRemove>
           <!-- Inner circle creates the hole -->
-          <Circle X="600" Y="750" Radius="50" FillColor="1 1 1"/>
+          <Ellipse X="600" Y="750" Radius="50" FillColor="1 1 1"/>
         </StencilRemove>
         <StencilDraw>
           <!-- Draw gradient inside the donut -->
@@ -67,17 +67,17 @@
       <Stencil>
         <StencilAdd>
           <!-- Add three overlapping circles -->
-          <Circle X="880" Y="760" Radius="60" FillColor="1 1 1"/>
-          <Circle X="960" Y="760" Radius="60" FillColor="1 1 1"/>
-          <Circle X="920" Y="700" Radius="60" FillColor="1 1 1"/>
+          <Ellipse X="880" Y="760" Radius="60" FillColor="1 1 1"/>
+          <Ellipse X="960" Y="760" Radius="60" FillColor="1 1 1"/>
+          <Ellipse X="920" Y="700" Radius="60" FillColor="1 1 1"/>
         </StencilAdd>
         <StencilRemove>
           <!-- Remove center intersection -->
-          <Circle X="920" Y="740" Radius="25" FillColor="1 1 1"/>
+          <Ellipse X="920" Y="740" Radius="25" FillColor="1 1 1"/>
         </StencilRemove>
         <StencilAdd>
           <!-- Add a small circle back in the center -->
-          <Circle X="920" Y="740" Radius="10" FillColor="1 1 1"/>
+          <Ellipse X="920" Y="740" Radius="10" FillColor="1 1 1"/>
         </StencilAdd>
         <StencilDraw>
           <!-- Checkerboard pattern -->
@@ -154,7 +154,7 @@
       <!-- ================================================================== -->
       <Text X="20" Y="600" Size="18" FillColor="0.2 0.8 0.2">Regular content between stencils</Text>
       <Rectangle X="20" Y="560" Width="300" Height="30" FillColor="0.2 0.6 0.2"/>
-      <Circle X="400" Y="575" Radius="30" FillColor="0.2 0.8 0.2"/>
+      <Ellipse X="400" Y="575" Radius="30" FillColor="0.2 0.8 0.2"/>
 
       <!-- ================================================================== -->
       <!-- SECTION 6: Drawing text INTO a shape stencil -->
@@ -183,10 +183,10 @@
 
       <Stencil>
         <StencilAdd>
-          <Circle X="600" Y="380" Radius="90" FillColor="1 1 1"/>
+          <Ellipse X="600" Y="380" Radius="90" FillColor="1 1 1"/>
         </StencilAdd>
         <StencilRemove>
-          <Circle X="600" Y="380" Radius="40" FillColor="1 1 1"/>
+          <Ellipse X="600" Y="380" Radius="40" FillColor="1 1 1"/>
         </StencilRemove>
         <StencilDraw>
           <!-- Gradient background -->
@@ -206,7 +206,7 @@
 
       <Stencil>
         <StencilAdd>
-          <Circle X="950" Y="380" Radius="80" FillColor="1 1 1"/>
+          <Ellipse X="950" Y="380" Radius="80" FillColor="1 1 1"/>
         </StencilAdd>
         <StencilDraw>
           <!-- Stripes -->
@@ -234,7 +234,7 @@
           <Rectangle X="1150" Y="380" Width="80" Height="80" FillColor="1 1 1"/>
         </StencilAdd>
         <StencilDraw>
-          <Circle X="1190" Y="420" Radius="60" FillColor="0 0 1"/>
+          <Ellipse X="1190" Y="420" Radius="60" FillColor="0 0 1"/>
           <Text X="1160" Y="410" Size="14" FillColor="1 1 1">BOX1</Text>
         </StencilDraw>
       </Stencil>
@@ -242,7 +242,7 @@
       <!-- Second stencil (should be independent) -->
       <Stencil>
         <StencilAdd>
-          <Circle X="1350" Y="420" Radius="50" FillColor="1 1 1"/>
+          <Ellipse X="1350" Y="420" Radius="50" FillColor="1 1 1"/>
         </StencilAdd>
         <StencilDraw>
           <Rectangle X="1280" Y="360" Width="140" Height="120" FillColor="0 1 0"/>

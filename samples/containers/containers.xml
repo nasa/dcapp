@@ -96,7 +96,7 @@
                 <Rectangle Width="300" Height="180" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
 
                 <!-- Origin marker -->
-                <Circle X="0" Y="0" Radius="5" FillColor="1 0 0"/>
+                <Ellipse X="0" Y="0" Radius="5" FillColor="1 0 0"/>
                 <Text X="10" Y="10" Size="9" FillColor="1 0.5 0.5">Origin (0,0)</Text>
 
                 <!-- Axis lines -->
@@ -114,10 +114,10 @@
                 <Text X="5" Y="150" Size="10" FillColor="0.4 0.8 0.4">Y+</Text>
 
                 <!-- Sample points -->
-                <Circle X="100" Y="50" Radius="4" FillColor="0.3 0.6 1"/>
+                <Ellipse X="100" Y="50" Radius="4" FillColor="0.3 0.6 1"/>
                 <Text X="105" Y="55" Size="8" FillColor="0.6 0.6 0.6">(100, 50)</Text>
 
-                <Circle X="200" Y="100" Radius="4" FillColor="0.3 0.6 1"/>
+                <Ellipse X="200" Y="100" Radius="4" FillColor="0.3 0.6 1"/>
                 <Text X="205" Y="105" Size="8" FillColor="0.6 0.6 0.6">(200, 100)</Text>
 
                 <Text X="150" Y="165" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.7">Bottom-left origin, Y increases upward</Text>
@@ -191,11 +191,11 @@
                 <Rectangle X="240" Y="30" Width="190" Height="150" FillColor="0.2 0.2 0.25" LineColor="0.4 0.4 0.5" LineWidth="1"/>
                 <Text X="335" Y="185" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">LocalAlign sets anchor point</Text>
 
-                <Circle X="335" Y="105" Radius="3" FillColor="1 1 0"/>
+                <Ellipse X="335" Y="105" Radius="3" FillColor="1 1 0"/>
                 <Rectangle X="335" Y="105" Width="60" Height="30" FillColor="0.8 0.5 0.2"/>
                 <Text X="280" Y="75" Size="8" FillColor="0.6 0.6 0.6">Default (bottom-left)</Text>
 
-                <Circle X="335" Y="55" Radius="3" FillColor="1 1 0"/>
+                <Ellipse X="335" Y="55" Radius="3" FillColor="1 1 0"/>
                 <Rectangle X="335" Y="55" Width="60" Height="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" FillColor="0.5 0.2 0.8"/>
                 <Text X="280" Y="38" Size="8" FillColor="0.6 0.6 0.6">Center/Middle</Text>
             </Container>

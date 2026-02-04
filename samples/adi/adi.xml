@@ -218,12 +218,12 @@
             <!-- ========== ADI DISPLAY ========== -->
 
             <!-- Outer ring -->
-            <Circle X="#ADI_CenterX" Y="#ADI_CenterY" Radius="#OuterRadius" LineColor="#_color_gray_" LineWidth="3"/>
+            <Ellipse X="#ADI_CenterX" Y="#ADI_CenterY" Radius="#OuterRadius" LineColor="#_color_gray_" LineWidth="3"/>
 
             <!-- Stencil mask for the ball (circular clip) -->
             <Stencil>
                 <StencilAdd>
-                    <Circle X="#ADI_CenterX" Y="#ADI_CenterY" Radius="#BallRadius" FillColor="#_color_white_"/>
+                    <Ellipse X="#ADI_CenterX" Y="#ADI_CenterY" Radius="#BallRadius" FillColor="#_color_white_"/>
                 </StencilAdd>
                 <StencilDraw>
                     <!-- Textured Sphere (the ADI ball) -->
