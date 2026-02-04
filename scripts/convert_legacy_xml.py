@@ -573,12 +573,16 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     # Button element
     elif tag == 'Button':
         convert_button_type(elem)
-        convert_variable_reference(elem, 'Variable')
         # Rename Button-specific attributes
         for old_attr, new_attr in BUTTON_ATTRIBUTE_RENAMES.items():
             if old_attr in elem.attrib:
                 elem.set(new_attr, elem.get(old_attr))
                 del elem.attrib[old_attr]
+        # remoev leading @s
+        convert_variable_reference(elem, 'Variable')
+        convert_variable_reference(elem, 'IndicatorVariable')
+        convert_variable_reference(elem, 'TargetVariable')
+        convert_variable_reference(elem, 'EnabledVariable')
 
     # If element
     elif tag == 'If':
