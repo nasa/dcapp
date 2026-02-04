@@ -748,6 +748,57 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
         transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
     }
 
+    // xform local alignment
+    {
+        float diameter = 2 * radius;
+
+        // get alignment
+        DcAppAlignType local_aligns[2] = {
+            node->arc.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.local_align.x)->value_integer,
+            node->arc.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.local_align.y)->value_integer};
+
+        // compute offsets
+        float trans_align_offsets[2];
+        switch (local_aligns[0]) {
+            case DC_APP_ALIGN_TYPE_LEFT:
+                trans_align_offsets[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_CENTER:
+                trans_align_offsets[0] = -1 * diameter / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                trans_align_offsets[0] = -1 * diameter;
+                break;
+            default:
+                fprintf(stderr, "Unknown alignment in <Arc> draw call: %d\n", local_aligns[0]);
+                trans_align_offsets[0] = -1 * diameter / 2;
+                break;
+        }
+        switch (local_aligns[1]) {
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                trans_align_offsets[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                trans_align_offsets[1] = -1 * diameter / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                trans_align_offsets[1] = -1 * diameter;
+                break;
+            default:
+                fprintf(stderr, "Unknown alignment in <Arc> draw call: %d\n", local_aligns[1]);
+                trans_align_offsets[1] = -1 * diameter / 2;
+                break;
+        }
+
+        // compute matrix
+        plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
+
+        // apply transform
+        transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
+    }
+
     // xform position
     {
         bool use_position[2] = {
@@ -812,9 +863,9 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // calculate arc points
-    // Arc is centered at origin, rotation=0 means center of arc points up (positive Y)
-    // angle_span is the total span of the arc
-    // Points are calculated relative to center (0,0) then transformed
+    // Corner-based: points range from (0,0) to (diameter, diameter), center at (radius, radius)
+    // Rotation=0 means center of arc points up (positive Y)
+    // LocalAlign (default=CENTER) shifts by -radius to center at position
     int num_segments = node->arc.num_segments == DC_APP_VAL_INDEX_UNDEFINED ?
         (int)(angle_span / 3.0f) + 2 : // roughly 1 segment per 3 degrees
         (int)dc_app_lookup_get_value(app_data->lookup, node->arc.num_segments)->value_double;
@@ -836,8 +887,9 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
     int arc_start_index = 0;
 
     // If pie mode, center point goes first for proper convex polygon winding
+    // Center is at (radius, radius) in corner-based local coords
     if (node->arc.pie) {
-        plVec4 center4 = (plVec4){0, 0, 0, 1};
+        plVec4 center4 = (plVec4){radius, radius, 0, 1};
         center4 = pl_mul_mat4_vec4(&transform, center4);
         points[0] = (plVec2){center4.x, center4.y};
         num_points = 1;
@@ -850,9 +902,10 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
         // Offset by PI/2 so 0 = up, and add rotation
         float final_angle = angle + (float)M_PI_2 + rotation_rad;
 
+        // Corner-based: center at (radius, radius), points from 0 to diameter
         plVec4 point4 = (plVec4){
-            radius * cosf(final_angle),
-            radius * sinf(final_angle),
+            radius * (1.0f + cosf(final_angle)),
+            radius * (1.0f + sinf(final_angle)),
             0, 1};
         point4 = pl_mul_mat4_vec4(&transform, point4);
         points[arc_start_index + ii] = (plVec2){point4.x, point4.y};
