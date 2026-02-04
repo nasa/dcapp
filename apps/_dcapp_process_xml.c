@@ -1767,6 +1767,7 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
             const char *comp_name = &(app_data->sb_texture_names[app_data->sb_texture_name_offsets[ii]]);
             if (strcmp(canon_filepath, comp_name) == 0) {
                 texture_index = ii;
+                break;
             }
         }
 
@@ -1826,8 +1827,10 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
             sbpush(app_data->sb_texture_name_offsets, sbcount(app_data->sb_texture_names));
             sbpushn(app_data->sb_texture_names, canon_filepath, (int)strlen(canon_filepath) + 1);
             sbpush(app_data->sb_textures, texture);
-            dc_node.image.texture_index = sbcount(app_data->sb_textures) - 1;
+            texture_index = sbcount(app_data->sb_textures) - 1;
         }
+
+        dc_node.image.texture_index = texture_index;
     } else {
         fprintf(stderr, "DCAPP _process_xml_node() image: 'File' field missing for Image node\n");
         dc_node.image.texture_index = TEXTURE_INDEX_UNDEFINED;
@@ -2661,6 +2664,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
                 const char *comp_name = &(app_data->sb_texture_names[app_data->sb_texture_name_offsets[ii]]);
                 if (strcmp(canon_filepath, comp_name) == 0) {
                     texture_index = ii;
+                    break;
                 }
             }
 
@@ -3270,6 +3274,7 @@ static _NodeIndex _process_xml_node_sphere(_AppData *app_data, xmlNodePtr xml_no
             const char *comp_name = &(app_data->sb_texture_names[app_data->sb_texture_name_offsets[ii]]);
             if (strcmp(canon_filepath, comp_name) == 0) {
                 texture_index = ii;
+                break;
             }
         }
 
