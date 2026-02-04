@@ -4084,8 +4084,8 @@ static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *
     // all transform parameters
     float dimension[2]         = {(float)dimensionX, (float)dimensionY};
     float virtual_dimension[2] = {
-        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->window.virtual_dimension.x)->value_double : dimension[0],
-        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->window.virtual_dimension.y)->value_double : dimension[1]};
+        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->window.virtual_dimension.x)->value_double : node->window.init_dimension.x,
+        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->window.virtual_dimension.y)->value_double : node->window.init_dimension.y};
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
