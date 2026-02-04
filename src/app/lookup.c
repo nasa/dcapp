@@ -72,7 +72,10 @@ DcAppValIndex dc_app_create_and_register_typed_value_from_string(DcAppLookup *lo
     // check for var
     if (strlen(text_cleaned) > 1 && text_cleaned[0] == '@') {
         DcAppLookupVar *var = dc_app_lookup_get_var_by_name(lookup, &(text_cleaned[1]));
-        return var->value_index;
+        if (var) {
+            return var->value_index;
+        }
+        return DC_APP_VAL_INDEX_UNDEFINED;
     }
 
     // otherwise create new DcValue and return its index

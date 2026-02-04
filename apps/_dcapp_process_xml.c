@@ -2,6 +2,7 @@
 
 #include "../src/utils/file.h"
 #include "../src/utils/string.h"
+#include "libxml/tree.h"
 #include "libxml/xmlstring.h"
 
 #include <ctype.h>
@@ -1742,93 +1743,95 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
 
     // get filepath
     xmlChar *filepath = xmlGetProp(xml_node, BAD_CAST "File");
-    if (!filepath) {
-        fprintf(stderr, "DCAPP _process_xml_node() image: 'File' field missing for Image node\n");
+    if (!filepath || xmlStrlen(filepath) == 0) {
+        filepath = xmlNodeGetContent(xml_node);
     }
-    char cleaned_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
-    strncpy(cleaned_filepath, (const char *)filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
-    xmlFree(filepath);
+    if (filepath) {
+        char cleaned_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+        strncpy(cleaned_filepath, (const char *)filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        xmlFree(filepath);
 
-    // get canonical path
-    char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
-    if (dc_utils_is_relative_path(cleaned_filepath)) {
-        char abs_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
-        dc_utils_join_paths(directory, cleaned_filepath, abs_filepath, sizeof(abs_filepath));
-        dc_utils_canonicalize_path(abs_filepath, canon_filepath, sizeof(canon_filepath));
+        // get canonical path
+        char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+        if (dc_utils_is_relative_path(cleaned_filepath)) {
+            char abs_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+            dc_utils_join_paths(directory, cleaned_filepath, abs_filepath, sizeof(abs_filepath));
+            dc_utils_canonicalize_path(abs_filepath, canon_filepath, sizeof(canon_filepath));
+        } else {
+            dc_utils_canonicalize_path(cleaned_filepath, canon_filepath, sizeof(canon_filepath));
+        }
+
+        // check for existing texture
+        _TextureIndex texture_index = TEXTURE_INDEX_UNDEFINED;
+        for (int ii = 0; ii < sbcount(app_data->sb_textures); ii++) {
+            const char *comp_name = &(app_data->sb_texture_names[app_data->sb_texture_name_offsets[ii]]);
+            if (strcmp(canon_filepath, comp_name) == 0) {
+                texture_index = ii;
+            }
+        }
+
+        // load new texture if it doesn't exist
+        if (texture_index == TEXTURE_INDEX_UNDEFINED) {
+
+            // get device
+            plDevice *device = _ext_starter->get_device();
+
+            // load raw data
+            size_t         file_data_size;
+            unsigned char *file_data = dc_utils_load_binary_file(canon_filepath, &file_data_size);
+            if (!file_data) {
+                fprintf(stderr, "DCApp: Failed to load image file: %s\n", canon_filepath);
+                dc_node.image.texture_index = TEXTURE_INDEX_UNDEFINED;
+                return _register_node(app_data, &dc_node);
+            }
+
+            // load as image data
+            int            image_width, image_height, channels;
+            unsigned char *image_data = _ext_image->load(file_data, (int)file_data_size, &image_width, &image_height, &channels, 4);
+            free(file_data);
+            if (!image_data) {
+                fprintf(stderr, "DCApp: Failed to decode image: %s\n", canon_filepath);
+                dc_node.image.texture_index = TEXTURE_INDEX_UNDEFINED;
+                return _register_node(app_data, &dc_node);
+            }
+
+            // create texture (allocate image, buffer, bind)
+            _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath);
+
+            // set the initial pl_texture usage (this is a no-op in metal but does layout transition for vulkan)
+            plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
+            _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
+
+            // copy memory to mapped staging buffer
+            plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
+            memcpy(staging_buffer->tMemoryAllocation.pHostMapped, image_data, image_width * image_height * 4);
+
+            // copy staging buffer to image
+            plBufferImageCopy buffer_image_copy;
+            memset(&buffer_image_copy, 0, sizeof(plBufferImageCopy));
+            buffer_image_copy.uImageWidth    = (uint32_t)image_width;
+            buffer_image_copy.uImageHeight   = (uint32_t)image_height;
+            buffer_image_copy.uImageDepth    = 1;
+            buffer_image_copy.uLayerCount    = 1;
+            buffer_image_copy.szBufferOffset = 0;
+            _ext_gfx->copy_buffer_to_texture(encoder, app_data->pl_staging_buffer_handle, texture.texture_handle, 1, &buffer_image_copy);
+
+            // return encoder
+            _ext_starter->return_blit_encoder(encoder);
+
+            // free image data
+            _ext_image->free(image_data);
+
+            // add texture to internal arrays
+            sbpush(app_data->sb_texture_name_offsets, sbcount(app_data->sb_texture_names));
+            sbpushn(app_data->sb_texture_names, canon_filepath, (int)strlen(canon_filepath) + 1);
+            sbpush(app_data->sb_textures, texture);
+            dc_node.image.texture_index = sbcount(app_data->sb_textures) - 1;
+        }
     } else {
-        dc_utils_canonicalize_path(cleaned_filepath, canon_filepath, sizeof(canon_filepath));
+        fprintf(stderr, "DCAPP _process_xml_node() image: 'File' field missing for Image node\n");
+        dc_node.image.texture_index = TEXTURE_INDEX_UNDEFINED;
     }
-
-    // check for existing texture
-    _TextureIndex texture_index = TEXTURE_INDEX_UNDEFINED;
-    for (int ii = 0; ii < sbcount(app_data->sb_textures); ii++) {
-        const char *comp_name = &(app_data->sb_texture_names[app_data->sb_texture_name_offsets[ii]]);
-        if (strcmp(canon_filepath, comp_name) == 0) {
-            texture_index = ii;
-        }
-    }
-
-    // load new texture if it doesn't exist
-    if (texture_index == TEXTURE_INDEX_UNDEFINED) {
-
-        // get device
-        plDevice *device = _ext_starter->get_device();
-
-        // load raw data
-        size_t         file_data_size;
-        unsigned char *file_data = dc_utils_load_binary_file(canon_filepath, &file_data_size);
-        if (!file_data) {
-            fprintf(stderr, "DCApp: Failed to load image file: %s\n", canon_filepath);
-            dc_node.image.texture_index = TEXTURE_INDEX_UNDEFINED;
-            return _register_node(app_data, &dc_node);
-        }
-
-        // load as image data
-        int            image_width, image_height, channels;
-        unsigned char *image_data = _ext_image->load(file_data, (int)file_data_size, &image_width, &image_height, &channels, 4);
-        free(file_data);
-        if (!image_data) {
-            fprintf(stderr, "DCApp: Failed to decode image: %s\n", canon_filepath);
-            dc_node.image.texture_index = TEXTURE_INDEX_UNDEFINED;
-            return _register_node(app_data, &dc_node);
-        }
-
-        // create texture (allocate image, buffer, bind)
-        _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath);
-
-        // set the initial pl_texture usage (this is a no-op in metal but does layout transition for vulkan)
-        plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
-        _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
-
-        // copy memory to mapped staging buffer
-        plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
-        memcpy(staging_buffer->tMemoryAllocation.pHostMapped, image_data, image_width * image_height * 4);
-
-        // copy staging buffer to image
-        plBufferImageCopy buffer_image_copy;
-        memset(&buffer_image_copy, 0, sizeof(plBufferImageCopy));
-        buffer_image_copy.uImageWidth    = (uint32_t)image_width;
-        buffer_image_copy.uImageHeight   = (uint32_t)image_height;
-        buffer_image_copy.uImageDepth    = 1;
-        buffer_image_copy.uLayerCount    = 1;
-        buffer_image_copy.szBufferOffset = 0;
-        _ext_gfx->copy_buffer_to_texture(encoder, app_data->pl_staging_buffer_handle, texture.texture_handle, 1, &buffer_image_copy);
-
-        // return encoder
-        _ext_starter->return_blit_encoder(encoder);
-
-        // free image data
-        _ext_image->free(image_data);
-
-        // add texture to internal arrays
-        sbpush(app_data->sb_texture_name_offsets, sbcount(app_data->sb_texture_names));
-        sbpushn(app_data->sb_texture_names, canon_filepath, (int)strlen(canon_filepath) + 1);
-        sbpush(app_data->sb_textures, texture);
-        texture_index = sbcount(app_data->sb_textures) - 1;
-    }
-
-    // update structure
-    dc_node.image.texture_index = texture_index;
 
     // x position
     xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
