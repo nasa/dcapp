@@ -160,6 +160,14 @@ typedef enum __NodeStateFlags {
     NODE_STATE_FLAG_FALSE         = 1 << 8,
 } _NodeStateFlags;
 
+// Config flags set at parse time (never change at runtime)
+typedef enum __NodeConfigFlags {
+    NODE_CONFIG_FLAG_NONE               = 0,
+    NODE_CONFIG_FLAG_FILL_ENABLED       = 1 << 0,
+    NODE_CONFIG_FLAG_LINE_ENABLED       = 1 << 1,
+    NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS = 1 << 2,
+} _NodeConfigFlags;
+
 typedef int      _NodeIndex;
 const _NodeIndex NODE_INDEX_UNDEFINED = -1;
 
@@ -250,9 +258,8 @@ typedef struct __NodeEllipse {
 
     _NodeIndex child;
     uint32_t   state_flags;
+    uint8_t    config_flags;
 
-    bool fill_enabled;
-    bool line_enabled;
     DcAppValIndex negate_x;
     DcAppValIndex negate_y;
 } _NodeEllipse;
@@ -278,6 +285,7 @@ typedef struct __NodeContainer {
     DcAppValIndex negate_y;
     _NodeIndex    child;
     uint32_t      state_flags;
+    uint8_t       config_flags;
 } _NodeContainer;
 
 typedef int _TextureIndex;
@@ -301,6 +309,7 @@ typedef struct __NodeImage {
 
     _NodeIndex child;
     uint32_t   state_flags;
+    uint8_t    config_flags;
 } _NodeImage;
 
 #define _NODE_LINE_MAX_POINTS 1000
@@ -314,8 +323,7 @@ typedef struct __NodeLine {
     DcAppValIndex line_width;
 
     _VertexData *sb_vertices;
-    bool         fill_enabled;
-    bool         line_enabled;
+    uint8_t      config_flags;
 } _NodeLine;
 
 typedef struct __NodeMouseMotion {
@@ -358,6 +366,7 @@ typedef struct __NodePixelstream {
 
     _NodeIndex child;
     uint32_t   state_flags;
+    uint8_t    config_flags;
 
     DcAppPixelstreamType type;
     unsigned char       *frame;
@@ -382,10 +391,9 @@ typedef struct __NodePolygon {
 
     _NodeIndex child;
     uint32_t   state_flags;
+    uint8_t    config_flags;
 
     _VertexData *sb_vertices;
-    bool         fill_enabled;
-    bool         line_enabled;
 } _NodePolygon;
 
 typedef struct __NodeRectangle {
@@ -404,9 +412,7 @@ typedef struct __NodeRectangle {
 
     _NodeIndex child;
     uint32_t   state_flags;
-
-    bool fill_enabled;
-    bool line_enabled;
+    uint8_t    config_flags;
 } _NodeRectangle;
 
 typedef struct __NodeSet {
@@ -470,8 +476,7 @@ typedef struct __NodeText {
     DcAppValIndex size;
     _ValIndex4    fill_color;
     _ValIndex4    line_color;
-    bool          fill_enabled;
-    bool          line_enabled;
+    uint8_t       config_flags;
     // DcAppValIndex  font;
 
     // stretchy buffers contains values and formats

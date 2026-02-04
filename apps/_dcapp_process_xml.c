@@ -677,8 +677,11 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
     }
 
     // colors
-    dc_node.ellipse.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.ellipse.fill_color));
-    dc_node.ellipse.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.ellipse.line_color));
+    dc_node.ellipse.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.ellipse.fill_color)))
+        dc_node.ellipse.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.ellipse.line_color)))
+        dc_node.ellipse.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
@@ -1133,6 +1136,34 @@ static _NodeIndex _create_state_event_node(_AppData *app_data, _NodeType node_ty
     dc_node.next = NODE_INDEX_UNDEFINED;
     dc_node.state_event.child = child_index;
     return _register_node(app_data, &dc_node);
+}
+
+// Helper to set HAS_MOUSE_HANDLERS flag on parent node
+static void _set_parent_has_mouse_handlers(_AppData *app_data, _NodeIndex parent_node_index) {
+    _Node *parent_node = _get_node(app_data, parent_node_index);
+    switch (parent_node->type) {
+        case NODE_TYPE_CONTAINER:
+            parent_node->container.config_flags |= NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS;
+            break;
+        case NODE_TYPE_ELLIPSE:
+            parent_node->ellipse.config_flags |= NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS;
+            break;
+        case NODE_TYPE_IMAGE:
+            parent_node->image.config_flags |= NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS;
+            break;
+        case NODE_TYPE_PIXELSTREAM:
+            parent_node->pixelstream.config_flags |= NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS;
+            break;
+        case NODE_TYPE_POLYGON:
+            parent_node->polygon.config_flags |= NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS;
+            break;
+        case NODE_TYPE_RECTANGLE:
+            parent_node->rectangle.config_flags |= NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS;
+            break;
+        default:
+            // Button and other types don't need this flag
+            break;
+    }
 }
 
 static _NodeIndex _process_xml_node_button_disabled(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
@@ -2046,7 +2077,9 @@ static _NodeIndex _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node
     }
 
     // colors
-    dc_node.line.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.line.line_color));
+    dc_node.line.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.line.line_color)))
+        dc_node.line.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
@@ -2153,6 +2186,7 @@ static _NodeIndex _process_xml_node_mouse_active(_AppData *app_data, xmlNodePtr 
         case NODE_TYPE_PIXELSTREAM:
         case NODE_TYPE_POLYGON:
         case NODE_TYPE_RECTANGLE: {
+            _set_parent_has_mouse_handlers(app_data, parent_node_index);
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_ACTIVE, parent_node_index, first_child_index);
         }
@@ -2174,6 +2208,7 @@ static _NodeIndex _process_xml_node_mouse_hovered(_AppData *app_data, xmlNodePtr
         case NODE_TYPE_PIXELSTREAM:
         case NODE_TYPE_POLYGON:
         case NODE_TYPE_RECTANGLE: {
+            _set_parent_has_mouse_handlers(app_data, parent_node_index);
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_HOVERED, parent_node_index, first_child_index);
         }
@@ -2195,6 +2230,7 @@ static _NodeIndex _process_xml_node_mouse_inactive(_AppData *app_data, xmlNodePt
         case NODE_TYPE_PIXELSTREAM:
         case NODE_TYPE_POLYGON:
         case NODE_TYPE_RECTANGLE: {
+            _set_parent_has_mouse_handlers(app_data, parent_node_index);
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_INACTIVE, parent_node_index, first_child_index);
         }
@@ -2245,6 +2281,7 @@ static _NodeIndex _process_xml_node_mouse_pressed(_AppData *app_data, xmlNodePtr
         case NODE_TYPE_PIXELSTREAM:
         case NODE_TYPE_POLYGON:
         case NODE_TYPE_RECTANGLE: {
+            _set_parent_has_mouse_handlers(app_data, parent_node_index);
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_PRESSED, parent_node_index, first_child_index);
         }
@@ -2266,6 +2303,7 @@ static _NodeIndex _process_xml_node_mouse_released(_AppData *app_data, xmlNodePt
         case NODE_TYPE_PIXELSTREAM:
         case NODE_TYPE_POLYGON:
         case NODE_TYPE_RECTANGLE: {
+            _set_parent_has_mouse_handlers(app_data, parent_node_index);
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_RELEASED, parent_node_index, first_child_index);
         }
@@ -2758,8 +2796,11 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
     }
 
     // colors
-    dc_node.polygon.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.polygon.fill_color));
-    dc_node.polygon.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.polygon.line_color));
+    dc_node.polygon.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.polygon.fill_color)))
+        dc_node.polygon.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.polygon.line_color)))
+        dc_node.polygon.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
@@ -2956,8 +2997,11 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
     }
 
     // colors
-    dc_node.rectangle.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.rectangle.fill_color));
-    dc_node.rectangle.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.rectangle.line_color));
+    dc_node.rectangle.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.rectangle.fill_color)))
+        dc_node.rectangle.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.rectangle.line_color)))
+        dc_node.rectangle.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
@@ -3950,8 +3994,11 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         dc_node.text.size = DC_APP_VAL_INDEX_UNDEFINED;
     }
 
-    dc_node.text.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.text.fill_color));
-    dc_node.text.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.text.line_color));
+    dc_node.text.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.text.fill_color)))
+        dc_node.text.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.text.line_color)))
+        dc_node.text.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");

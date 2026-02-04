@@ -1227,7 +1227,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
     }
 
     // draw fill
-    if (node->ellipse.fill_enabled) {
+    if (node->ellipse.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
         float fill_color[4] = {
             node->ellipse.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.fill_color.r)->value_double,
             node->ellipse.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.fill_color.g)->value_double,
@@ -1259,7 +1259,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
     }
 
     // draw outline
-    if (node->ellipse.line_enabled) {
+    if (node->ellipse.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
         float line_thickness = node->ellipse.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_width)->value_double;
         float line_color[4]  = {
             node->ellipse.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_color.r)->value_double,
@@ -1271,8 +1271,8 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
         _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
-    // mouse events and children
-    if (node->ellipse.child != NODE_INDEX_UNDEFINED) {
+    // mouse events
+    if (node->ellipse.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -1316,12 +1316,12 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
         if (app_data->frame_data.hovered_node == node_index) {
             node->ellipse.state_flags |= NODE_STATE_FLAG_HOVERED;
         }
-
-        // draw children (including state event nodes)
-        plVec2 position   = (plVec2){0.0f, 0.0f};
-        plVec2 dimensions = (plVec2){diameter_x, diameter_y};
-        _draw_node_list(app_data, node->ellipse.child, &position, &dimensions, &transform);
     }
+
+    // draw children
+    plVec2 position   = (plVec2){0.0f, 0.0f};
+    plVec2 dimensions = (plVec2){diameter_x, diameter_y};
+    _draw_node_list(app_data, node->ellipse.child, &position, &dimensions, &transform);
 }
 
 static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -1546,7 +1546,8 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // mouse events
-    {
+    if (node->container.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
+
         // process mouse position
         plVec4 mouse_position = (plVec4){
             app_data->frame_data.mouse_position.x,
@@ -1885,8 +1886,8 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
         _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3);
     }
 
-    // mouse events and children
-    if (node->image.child != NODE_INDEX_UNDEFINED) {
+    // mouse events
+    if (node->image.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -1922,12 +1923,12 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
         if (app_data->frame_data.hovered_node == node_index) {
             node->image.state_flags |= NODE_STATE_FLAG_HOVERED;
         }
-
-        // draw children (including state event nodes)
-        plVec2 position   = (plVec2){0.0f, 0.0f};
-        plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
-        _draw_node_list(app_data, node->image.child, &position, &dimensions, &transform);
     }
+
+    // draw children
+    plVec2 position   = (plVec2){0.0f, 0.0f};
+    plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
+    _draw_node_list(app_data, node->image.child, &position, &dimensions, &transform);
 }
 
 static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -2062,7 +2063,7 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
     }
 
     // draw outline
-    if (node->line.line_enabled) {
+    if (node->line.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
         float line_thickness = node->line.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_width)->value_double;
         float line_color[4]  = {
             node->line.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.r)->value_double,
@@ -2484,8 +2485,8 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
     // draw
     _ext_draw->add_image_quad_ex(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3, uv0, uv1, uv2, uv3, 0xFFFFFFFF);
 
-    // mouse events and children
-    if (node->pixelstream.child != NODE_INDEX_UNDEFINED) {
+    // mouse events
+    if (node->pixelstream.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -2521,12 +2522,12 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
         if (app_data->frame_data.hovered_node == node_index) {
             node->pixelstream.state_flags |= NODE_STATE_FLAG_HOVERED;
         }
-
-        // draw children (including state event nodes)
-        plVec2 position   = (plVec2){0.0f, 0.0f};
-        plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
-        _draw_node_list(app_data, node->pixelstream.child, &position, &dimensions, &transform);
     }
+
+    // draw children
+    plVec2 position   = (plVec2){0.0f, 0.0f};
+    plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
+    _draw_node_list(app_data, node->pixelstream.child, &position, &dimensions, &transform);
 }
 
 static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -2661,7 +2662,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
     }
 
     // draw fill
-    if (node->polygon.fill_enabled) {
+    if (node->polygon.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
 
         float fill_color[4] = {
             node->polygon.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.r)->value_double,
@@ -2674,7 +2675,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
     }
 
     // draw outline
-    if (node->polygon.line_enabled) {
+    if (node->polygon.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
         float line_thickness = node->polygon.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_width)->value_double;
         float line_color[4]  = {
             node->polygon.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.r)->value_double,
@@ -2686,8 +2687,8 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
         _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
-    // mouse events and children
-    if (node->polygon.child != NODE_INDEX_UNDEFINED) {
+    // mouse events
+    if (node->polygon.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -2737,12 +2738,12 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
         if (app_data->frame_data.hovered_node == node_index) {
             node->polygon.state_flags |= NODE_STATE_FLAG_HOVERED;
         }
-
-        // draw children (including state event nodes)
-        plVec2 position   = (plVec2){min_pos.x, min_pos.y};
-        plVec2 dimensions = (plVec2){max_pos.x - min_pos.x, max_pos.y - min_pos.y};
-        _draw_node_list(app_data, node->polygon.child, &position, &dimensions, &transform);
     }
+
+    // draw children
+    plVec2 position   = (plVec2){min_pos.x, min_pos.y};
+    plVec2 dimensions = (plVec2){max_pos.x - min_pos.x, max_pos.y - min_pos.y};
+    _draw_node_list(app_data, node->polygon.child, &position, &dimensions, &transform);
 }
 
 static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -2968,7 +2969,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
     }
 
     // draw fill
-    if (node->rectangle.fill_enabled) {
+    if (node->rectangle.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
 
         float fill_color[4] = {
             node->rectangle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.r)->value_double,
@@ -2981,7 +2982,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
     }
 
     // draw outline
-    if (node->rectangle.line_enabled) {
+    if (node->rectangle.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
         float line_thickness = node->rectangle.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_width)->value_double;
         float line_color[4]  = {
             node->rectangle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.r)->value_double,
@@ -2993,8 +2994,8 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
         _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, 4, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
-    // mouse events and children
-    if (node->rectangle.child != NODE_INDEX_UNDEFINED) {
+    // mouse events
+    if (node->rectangle.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -3030,12 +3031,12 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
         if (app_data->frame_data.hovered_node == node_index) {
             node->rectangle.state_flags |= NODE_STATE_FLAG_HOVERED;
         }
-
-        // draw children (including state event nodes)
-        plVec2 position   = (plVec2){0.0f, 0.0f};
-        plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
-        _draw_node_list(app_data, node->rectangle.child, &position, &dimensions, &transform);
     }
+
+    // draw children
+    plVec2 position   = (plVec2){0.0f, 0.0f};
+    plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
+    _draw_node_list(app_data, node->rectangle.child, &position, &dimensions, &transform);
 }
 
 static void _draw_node_mouse_motion(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
