@@ -21,7 +21,6 @@ static _NodeIndex    _process_xml_node_button_indicator_on(_AppData *app_data, x
 static _NodeIndex    _process_xml_node_button_pressed(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_button_released(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_button_transition(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static _NodeIndex    _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_constant(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_container(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_dcapp(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -166,9 +165,6 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_BUTTON_TRANSITION:
             return _process_xml_node_button_transition(app_data, xml_node, parent_node_index, parent_elem_type, directory);
-
-        case DC_APP_ELEM_TYPE_CIRCLE:
-            return _process_xml_node_circle(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_CONSTANT:
             return _process_xml_node_constant(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -469,18 +465,8 @@ static _NodeIndex _process_xml_node_arc(_AppData *app_data, xmlNodePtr xml_node,
         dc_node.arc.line_width = DC_APP_VAL_INDEX_UNDEFINED;
     }
 
-    // colors
-    dc_node.arc.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.arc.fill_color));
-    dc_node.arc.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.arc.line_color));
-
-    // pie mode (draw lines from endpoints to center)
-    xmlChar *raw_pie = xmlGetProp(xml_node, BAD_CAST "Pie");
-    if (raw_pie) {
-        dc_node.arc.pie = (strcmp((const char *)raw_pie, "true") == 0 || strcmp((const char *)raw_pie, "1") == 0);
-        xmlFree(raw_pie);
-    } else {
-        dc_node.arc.pie = false;
-    }
+    // line color
+    _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.arc.line_color));
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
@@ -503,198 +489,6 @@ static _NodeIndex _process_xml_node_arc(_AppData *app_data, xmlNodePtr xml_node,
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
-    return node_index;
-}
-
-static _NodeIndex _process_xml_node_circle(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
-    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
-
-    _Node dc_node  = {};
-    dc_node.type   = NODE_TYPE_CIRCLE;
-    dc_node.parent = parent_node_index;
-    dc_node.next   = NODE_INDEX_UNDEFINED;
-
-    dc_node.circle.child = NODE_INDEX_UNDEFINED;
-
-    // x position
-    xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
-    if (!raw_x_position) {
-        raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
-    }
-    if (raw_x_position) {
-        dc_node.circle.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
-        xmlFree(raw_x_position);
-    } else {
-        dc_node.circle.position.x = DC_APP_VAL_INDEX_UNDEFINED;
-    }
-
-    // y position
-    xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
-    if (!raw_y_position) {
-        raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
-    }
-    if (raw_y_position) {
-        dc_node.circle.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
-        xmlFree(raw_y_position);
-    } else {
-        dc_node.circle.position.y = DC_APP_VAL_INDEX_UNDEFINED;
-    }
-
-    // parent x align
-    xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
-    if (raw_parent_x_align) {
-        dc_node.circle.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
-        xmlFree(raw_parent_x_align);
-    } else {
-        dc_node.circle.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
-    }
-
-    // parent y align
-    xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
-    if (raw_parent_y_align) {
-        dc_node.circle.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
-        xmlFree(raw_parent_y_align);
-    } else {
-        dc_node.circle.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
-    }
-
-    // local x align
-    xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignX");
-    if (!raw_x_align) {
-        raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
-    }
-    if (raw_x_align) {
-        dc_node.circle.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
-        xmlFree(raw_x_align);
-    } else {
-        dc_node.circle.local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
-    }
-
-    // local y align
-    xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignY");
-    if (!raw_y_align) {
-        raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
-    }
-    if (raw_y_align) {
-        dc_node.circle.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
-        xmlFree(raw_y_align);
-    } else {
-        dc_node.circle.local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
-    }
-
-    // rotation
-    xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
-    if (!raw_rotation) {
-        raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
-    }
-    if (raw_rotation) {
-        dc_node.circle.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
-        xmlFree(raw_rotation);
-    } else {
-        dc_node.circle.rotation = DC_APP_VAL_INDEX_UNDEFINED;
-    }
-
-    // pivots
-    xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
-    if (!raw_pivot_position_x) {
-        raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
-    }
-    xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
-    if (!raw_pivot_position_y) {
-        raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
-    }
-    if (raw_pivot_position_x && raw_pivot_position_y) {
-
-        dc_node.circle.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
-        xmlFree(raw_pivot_position_x);
-
-        dc_node.circle.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
-        xmlFree(raw_pivot_position_y);
-
-        dc_node.circle.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
-        dc_node.circle.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
-
-    } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
-
-        xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
-        if (raw_pivot_align_x) {
-            dc_node.circle.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
-            xmlFree(raw_pivot_align_x);
-        } else {
-            dc_node.circle.pivot_local_align.x = DC_APP_VAL_INDEX_UNDEFINED;
-        }
-
-        xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
-        if (raw_pivot_align_y) {
-            dc_node.circle.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
-            xmlFree(raw_pivot_align_y);
-        } else {
-            dc_node.circle.pivot_local_align.y = DC_APP_VAL_INDEX_UNDEFINED;
-        }
-
-        dc_node.circle.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
-        dc_node.circle.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
-    } else {
-        fprintf(stderr, "DCAPP _process_xml_node(): Circle: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
-    }
-
-    // radius
-    xmlChar *raw_radius = xmlGetProp(xml_node, BAD_CAST "Radius");
-    if (raw_radius) {
-        dc_node.circle.radius = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius);
-        xmlFree(raw_radius);
-    } else {
-        dc_node.circle.radius = DC_APP_VAL_INDEX_UNDEFINED;
-    }
-
-    // segments
-    xmlChar *raw_segments = xmlGetProp(xml_node, BAD_CAST "Segments");
-    if (raw_segments) {
-        dc_node.circle.num_segments = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_segments);
-        xmlFree(raw_segments);
-    } else {
-        dc_node.circle.num_segments = DC_APP_VAL_INDEX_UNDEFINED;
-    }
-
-    // line width
-    xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
-    if (raw_line_width) {
-        dc_node.circle.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
-        xmlFree(raw_line_width);
-    } else {
-        dc_node.circle.line_width = DC_APP_VAL_INDEX_UNDEFINED;
-    }
-
-    // colors
-    dc_node.circle.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.circle.fill_color));
-    dc_node.circle.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.circle.line_color));
-
-    // negate x
-    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
-    if (raw_negate_x) {
-        dc_node.circle.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
-        xmlFree(raw_negate_x);
-    } else {
-        dc_node.circle.negate_x = DC_APP_VAL_INDEX_UNDEFINED;
-    }
-
-    // negate y
-    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
-    if (raw_negate_y) {
-        dc_node.circle.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
-        xmlFree(raw_negate_y);
-    } else {
-        dc_node.circle.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
-    }
-
-    // register node
-    _NodeIndex node_index = _register_node(app_data, &dc_node);
-
-    // process children (must store result first to avoid stale pointer after sb reallocation)
-    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
-    _get_node(app_data, node_index)->circle.child = first_child_index;
-
-    // return
     return node_index;
 }
 
@@ -830,22 +624,39 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
         fprintf(stderr, "DCAPP _process_xml_node(): Ellipse: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
     }
 
-    // radius x
+    // angle (span of the wedge in degrees, 360 = full ellipse)
+    xmlChar *raw_angle = xmlGetProp(xml_node, BAD_CAST "Angle");
+    if (raw_angle) {
+        dc_node.ellipse.angle = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_angle);
+        xmlFree(raw_angle);
+    } else {
+        dc_node.ellipse.angle = DC_APP_VAL_INDEX_UNDEFINED;  // undefined means full ellipse (360)
+    }
+
+    // radius (shorthand for both RadiusX and RadiusY)
+    xmlChar *raw_radius = xmlGetProp(xml_node, BAD_CAST "Radius");
+    DcAppValIndex radius_val = DC_APP_VAL_INDEX_UNDEFINED;
+    if (raw_radius) {
+        radius_val = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius);
+        xmlFree(raw_radius);
+    }
+
+    // radius x (overrides Radius if specified)
     xmlChar *raw_radius_x = xmlGetProp(xml_node, BAD_CAST "RadiusX");
     if (raw_radius_x) {
         dc_node.ellipse.radius_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius_x);
         xmlFree(raw_radius_x);
     } else {
-        dc_node.ellipse.radius_x = DC_APP_VAL_INDEX_UNDEFINED;
+        dc_node.ellipse.radius_x = radius_val;  // fallback to Radius
     }
 
-    // radius y
+    // radius y (overrides Radius if specified)
     xmlChar *raw_radius_y = xmlGetProp(xml_node, BAD_CAST "RadiusY");
     if (raw_radius_y) {
         dc_node.ellipse.radius_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius_y);
         xmlFree(raw_radius_y);
     } else {
-        dc_node.ellipse.radius_y = DC_APP_VAL_INDEX_UNDEFINED;
+        dc_node.ellipse.radius_y = radius_val;  // fallback to Radius
     }
 
     // segments
@@ -867,8 +678,11 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
     }
 
     // colors
-    dc_node.ellipse.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.ellipse.fill_color));
-    dc_node.ellipse.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.ellipse.line_color));
+    dc_node.ellipse.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.ellipse.fill_color)))
+        dc_node.ellipse.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.ellipse.line_color)))
+        dc_node.ellipse.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
@@ -1325,6 +1139,34 @@ static _NodeIndex _create_state_event_node(_AppData *app_data, _NodeType node_ty
     return _register_node(app_data, &dc_node);
 }
 
+// Helper to set HAS_MOUSE_HANDLERS flag on parent node
+static void _set_parent_has_mouse_handlers(_AppData *app_data, _NodeIndex parent_node_index) {
+    _Node *parent_node = _get_node(app_data, parent_node_index);
+    switch (parent_node->type) {
+        case NODE_TYPE_CONTAINER:
+            parent_node->container.config_flags |= NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS;
+            break;
+        case NODE_TYPE_ELLIPSE:
+            parent_node->ellipse.config_flags |= NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS;
+            break;
+        case NODE_TYPE_IMAGE:
+            parent_node->image.config_flags |= NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS;
+            break;
+        case NODE_TYPE_PIXELSTREAM:
+            parent_node->pixelstream.config_flags |= NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS;
+            break;
+        case NODE_TYPE_POLYGON:
+            parent_node->polygon.config_flags |= NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS;
+            break;
+        case NODE_TYPE_RECTANGLE:
+            parent_node->rectangle.config_flags |= NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS;
+            break;
+        default:
+            // Button and other types don't need this flag
+            break;
+    }
+}
+
 static _NodeIndex _process_xml_node_button_disabled(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
@@ -1740,9 +1582,12 @@ static _NodeIndex _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr
     char     dcapp_var[DC_VALUE_STRING_BUFFER_SIZE];
     if (raw_dcapp_var) {
         strncpy(dcapp_var, (const char *)raw_dcapp_var, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dcapp_var[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
         xmlFree(raw_dcapp_var);
         dc_utils_trim_whitespace_inplace(dcapp_var);
-        dcapp_var[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        if (dcapp_var[0] == '\0') {
+            fprintf(stderr, "DCApp _process_xml_node: Empty dcapp Var for EdgeVariable\n");
+        }
     } else {
         fprintf(stderr, "DCApp _process_xml_node: Missing dcapp Var for EdgeVariable\n");
         dcapp_var[0] = '\0';
@@ -2238,7 +2083,9 @@ static _NodeIndex _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node
     }
 
     // colors
-    dc_node.line.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.line.line_color));
+    dc_node.line.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.line.line_color)))
+        dc_node.line.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
@@ -2339,13 +2186,13 @@ static _NodeIndex _process_xml_node_mouse_active(_AppData *app_data, xmlNodePtr 
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
         case NODE_TYPE_BUTTON:
-        case NODE_TYPE_CIRCLE:
         case NODE_TYPE_CONTAINER:
         case NODE_TYPE_ELLIPSE:
         case NODE_TYPE_IMAGE:
         case NODE_TYPE_PIXELSTREAM:
         case NODE_TYPE_POLYGON:
         case NODE_TYPE_RECTANGLE: {
+            _set_parent_has_mouse_handlers(app_data, parent_node_index);
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_ACTIVE, parent_node_index, first_child_index);
         }
@@ -2361,13 +2208,13 @@ static _NodeIndex _process_xml_node_mouse_hovered(_AppData *app_data, xmlNodePtr
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
         case NODE_TYPE_BUTTON:
-        case NODE_TYPE_CIRCLE:
         case NODE_TYPE_CONTAINER:
         case NODE_TYPE_ELLIPSE:
         case NODE_TYPE_IMAGE:
         case NODE_TYPE_PIXELSTREAM:
         case NODE_TYPE_POLYGON:
         case NODE_TYPE_RECTANGLE: {
+            _set_parent_has_mouse_handlers(app_data, parent_node_index);
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_HOVERED, parent_node_index, first_child_index);
         }
@@ -2383,13 +2230,13 @@ static _NodeIndex _process_xml_node_mouse_inactive(_AppData *app_data, xmlNodePt
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
         case NODE_TYPE_BUTTON:
-        case NODE_TYPE_CIRCLE:
         case NODE_TYPE_CONTAINER:
         case NODE_TYPE_ELLIPSE:
         case NODE_TYPE_IMAGE:
         case NODE_TYPE_PIXELSTREAM:
         case NODE_TYPE_POLYGON:
         case NODE_TYPE_RECTANGLE: {
+            _set_parent_has_mouse_handlers(app_data, parent_node_index);
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_INACTIVE, parent_node_index, first_child_index);
         }
@@ -2434,13 +2281,13 @@ static _NodeIndex _process_xml_node_mouse_pressed(_AppData *app_data, xmlNodePtr
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
         case NODE_TYPE_BUTTON:
-        case NODE_TYPE_CIRCLE:
         case NODE_TYPE_CONTAINER:
         case NODE_TYPE_ELLIPSE:
         case NODE_TYPE_IMAGE:
         case NODE_TYPE_PIXELSTREAM:
         case NODE_TYPE_POLYGON:
         case NODE_TYPE_RECTANGLE: {
+            _set_parent_has_mouse_handlers(app_data, parent_node_index);
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_PRESSED, parent_node_index, first_child_index);
         }
@@ -2456,13 +2303,13 @@ static _NodeIndex _process_xml_node_mouse_released(_AppData *app_data, xmlNodePt
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
         case NODE_TYPE_BUTTON:
-        case NODE_TYPE_CIRCLE:
         case NODE_TYPE_CONTAINER:
         case NODE_TYPE_ELLIPSE:
         case NODE_TYPE_IMAGE:
         case NODE_TYPE_PIXELSTREAM:
         case NODE_TYPE_POLYGON:
         case NODE_TYPE_RECTANGLE: {
+            _set_parent_has_mouse_handlers(app_data, parent_node_index);
             _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, parent_node_index, parent_elem_type, directory);
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_RELEASED, parent_node_index, first_child_index);
         }
@@ -2955,8 +2802,11 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
     }
 
     // colors
-    dc_node.polygon.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.polygon.fill_color));
-    dc_node.polygon.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.polygon.line_color));
+    dc_node.polygon.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.polygon.fill_color)))
+        dc_node.polygon.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.polygon.line_color)))
+        dc_node.polygon.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
@@ -3153,8 +3003,11 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
     }
 
     // colors
-    dc_node.rectangle.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.rectangle.fill_color));
-    dc_node.rectangle.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.rectangle.line_color));
+    dc_node.rectangle.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.rectangle.fill_color)))
+        dc_node.rectangle.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.rectangle.line_color)))
+        dc_node.rectangle.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
@@ -3207,9 +3060,12 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
     if (raw_operand) {
         char operand[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(operand, (const char *)raw_operand, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        operand[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
         xmlFree(raw_operand);
         dc_utils_trim_whitespace_inplace(operand);
-        operand[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        if (operand[0] == '\0') {
+            fprintf(stderr, "DCAPP _process_xml_node: Empty content in <Set> element\n");
+        }
         dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, operand);
     } else {
         fprintf(stderr, "DCAPP _process_xml_node: Missing Node content in <Set> element\n");
@@ -3868,8 +3724,8 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     if (raw_text) {
         char cleaned_text[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(cleaned_text, (const char *)raw_text, DC_VALUE_STRING_BUFFER_SIZE - 1);
-        xmlFree(raw_text);
         cleaned_text[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        xmlFree(raw_text);
         dc_utils_trim_whitespace_inplace(cleaned_text);
 
         static char *sb_curr_filler = NULL;
@@ -4147,8 +4003,11 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         dc_node.text.size = DC_APP_VAL_INDEX_UNDEFINED;
     }
 
-    dc_node.text.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.text.fill_color));
-    dc_node.text.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.text.line_color));
+    dc_node.text.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.text.fill_color)))
+        dc_node.text.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.text.line_color)))
+        dc_node.text.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
@@ -4287,11 +4146,15 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
     char     dcapp_var[DC_VALUE_STRING_BUFFER_SIZE];
     if (raw_dcapp_var) {
         strncpy(dcapp_var, (const char *)raw_dcapp_var, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dcapp_var[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
         xmlFree(raw_dcapp_var);
         dc_utils_trim_whitespace_inplace(dcapp_var);
-        dcapp_var[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        if (dcapp_var[0] == '\0') {
+            fprintf(stderr, "DCApp _process_xml_node: Empty dcapp Var path for TrickVariable\n");
+        }
     } else {
         fprintf(stderr, "DCApp _process_xml_node: Missing dcapp Var path for TrickVariable\n");
+        dcapp_var[0] = '\0';
     }
 
     // units
@@ -4370,11 +4233,15 @@ static _NodeIndex _process_xml_node_variable(_AppData *app_data, xmlNodePtr xml_
     char     name[DC_VALUE_STRING_BUFFER_SIZE];
     if (raw_name) {
         strncpy(name, (const char *)raw_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        name[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
         xmlFree(raw_name);
         dc_utils_trim_whitespace_inplace(name);
-        name[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        if (name[0] == '\0') {
+            fprintf(stderr, "DCApp _process_xml_node: Empty variable name in <Variable> definition\n");
+        }
     } else {
         fprintf(stderr, "DCApp _process_xml_node: Non-existent node content in <Variable> definition\n");
+        name[0] = '\0';
     }
 
     xmlChar    *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");

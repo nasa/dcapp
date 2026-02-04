@@ -85,7 +85,7 @@
                 <Rectangle Width="400" Height="150" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
 
                 <!-- Reference point -->
-                <Circle X="200" Y="75" Radius="5" FillColor="1 1 0"/>
+                <Ellipse X="200" Y="75" Radius="5" FillColor="1 1 0"/>
 
                 <!-- All rectangles at same X=200, Y=75 with different LocalAlign -->
                 <Rectangle X="200" Y="75" Width="60" Height="35"
@@ -122,13 +122,13 @@
                 <Rectangle X="200" Y="60" Width="2" Height="120" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" FillColor="0.4 0.4 0.4"/>
 
                 <!-- Text alignment examples -->
-                <Circle X="200" Y="90" Radius="4" FillColor="1 0.3 0.3"/>
+                <Ellipse X="200" Y="90" Radius="4" FillColor="1 0.3 0.3"/>
                 <Text X="200" Y="90" LocalAlignX="#_align_left_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">Left aligned</Text>
 
-                <Circle X="200" Y="60" Radius="4" FillColor="0.3 1 0.3"/>
+                <Ellipse X="200" Y="60" Radius="4" FillColor="0.3 1 0.3"/>
                 <Text X="200" Y="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">Center aligned</Text>
 
-                <Circle X="200" Y="30" Radius="4" FillColor="0.3 0.3 1"/>
+                <Ellipse X="200" Y="30" Radius="4" FillColor="0.3 0.3 1"/>
                 <Text X="200" Y="30" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_" Size="11" FillColor="1 1 1">Right aligned</Text>
             </Container>
 
@@ -140,7 +140,7 @@
                 <Rectangle Width="400" Height="120" FillColor="0.15 0.15 0.2" LineColor="0.4 0.4 0.5" LineWidth="1"/>
 
                 <!-- Bottom-left pivot -->
-                <Circle X="70" Y="60" Radius="4" FillColor="1 1 0"/>
+                <Ellipse X="70" Y="60" Radius="4" FillColor="1 1 0"/>
                 <Container X="70" Y="60" Width="50" Height="15" Rotation="@ROTATION"
                     LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_"
                     PivotLocalAlignX="#_align_left_" PivotLocalAlignY="#_align_bottom_">
@@ -149,7 +149,7 @@
                 <Text X="70" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.7">left, bottom</Text>
 
                 <!-- Center-middle pivot -->
-                <Circle X="200" Y="60" Radius="4" FillColor="1 1 0"/>
+                <Ellipse X="200" Y="60" Radius="4" FillColor="1 1 0"/>
                 <Container X="200" Y="60" Width="50" Height="15" Rotation="@ROTATION"
                     LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                     PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_middle_">
@@ -158,7 +158,7 @@
                 <Text X="200" Y="15" LocalAlignX="#_align_center_" Size="9" FillColor="0.7 0.7 0.7">center, middle</Text>
 
                 <!-- Top-right pivot -->
-                <Circle X="330" Y="60" Radius="4" FillColor="1 1 0"/>
+                <Ellipse X="330" Y="60" Radius="4" FillColor="1 1 0"/>
                 <Container X="330" Y="60" Width="50" Height="15" Rotation="@ROTATION"
                     LocalAlignX="#_align_right_" LocalAlignY="#_align_top_"
                     PivotLocalAlignX="#_align_right_" PivotLocalAlignY="#_align_top_">

@@ -4,6 +4,7 @@
 #include "dcapp.h"
 
 #include "../src/app/enums.h"
+#include "../src/utils/math.h"
 #include "../src/utils/string.h"
 #include "../src/utils/time.h"
 
@@ -11,7 +12,6 @@
 static void _draw_node_blink(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -72,10 +72,6 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
 
         case NODE_TYPE_BUTTON:
             _draw_node_button(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
-            break;
-
-        case NODE_TYPE_CIRCLE:
-            _draw_node_circle(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_CONDITIONAL:
@@ -603,8 +599,6 @@ static uint32_t _get_parent_state_flags(_AppData *app_data, _Node *node) {
     switch (parent_node->type) {
         case NODE_TYPE_BUTTON:
             return parent_node->button.state_flags;
-        case NODE_TYPE_CIRCLE:
-            return parent_node->circle.state_flags;
         case NODE_TYPE_CONTAINER:
             return parent_node->container.state_flags;
         case NODE_TYPE_ELLIPSE:
@@ -748,6 +742,57 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
         transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
     }
 
+    // xform local alignment
+    {
+        float diameter = 2 * radius;
+
+        // get alignment
+        DcAppAlignType local_aligns[2] = {
+            node->arc.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.local_align.x)->value_integer,
+            node->arc.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.local_align.y)->value_integer};
+
+        // compute offsets
+        float trans_align_offsets[2];
+        switch (local_aligns[0]) {
+            case DC_APP_ALIGN_TYPE_LEFT:
+                trans_align_offsets[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_CENTER:
+                trans_align_offsets[0] = -1 * diameter / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                trans_align_offsets[0] = -1 * diameter;
+                break;
+            default:
+                fprintf(stderr, "Unknown alignment in <Arc> draw call: %d\n", local_aligns[0]);
+                trans_align_offsets[0] = -1 * diameter / 2;
+                break;
+        }
+        switch (local_aligns[1]) {
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                trans_align_offsets[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                trans_align_offsets[1] = -1 * diameter / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                trans_align_offsets[1] = -1 * diameter;
+                break;
+            default:
+                fprintf(stderr, "Unknown alignment in <Arc> draw call: %d\n", local_aligns[1]);
+                trans_align_offsets[1] = -1 * diameter / 2;
+                break;
+        }
+
+        // compute matrix
+        plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
+
+        // apply transform
+        transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
+    }
+
     // xform position
     {
         bool use_position[2] = {
@@ -808,388 +853,107 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
+    // xform local rotation
+    if (use_rotation && !use_pivot_position) {
+        float diameter = 2 * radius;
+
+        // get alignment
+        DcAppAlignType local_pivot_aligns[2] = {
+            node->arc.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.pivot_local_align.x)->value_integer,
+            node->arc.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.pivot_local_align.y)->value_integer};
+
+        // get pivot XY
+        float pivot_position[2];
+        switch (local_pivot_aligns[0]) {
+            case DC_APP_ALIGN_TYPE_LEFT:
+                pivot_position[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_CENTER:
+                pivot_position[0] = diameter / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                pivot_position[0] = diameter;
+                break;
+            default:
+                fprintf(stderr, "Unknown pivot alignment in <Arc> draw call: %d\n", local_pivot_aligns[0]);
+                pivot_position[0] = diameter / 2;
+                break;
+        }
+        switch (local_pivot_aligns[1]) {
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                pivot_position[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                pivot_position[1] = diameter / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                pivot_position[1] = diameter;
+                break;
+            default:
+                fprintf(stderr, "Unknown pivot alignment in <Arc> draw call: %d\n", local_pivot_aligns[1]);
+                pivot_position[1] = diameter / 2;
+                break;
+        }
+        float rotation = pl_radiansf(arc_rotation);
+
+        // compute matrices
+        plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+        plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+        plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+        // apply transform
+        transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+        transform = pl_mul_mat4t(&transform, &rotate_xform);
+        transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+    }
+
     // parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // calculate arc points
-    // Arc is centered at origin, rotation=0 means center of arc points up (positive Y)
-    // angle_span is the total span of the arc
-    // Points are calculated relative to center (0,0) then transformed
+    // Corner-based: points range from (0,0) to (diameter, diameter), center at (radius, radius)
+    // Arc starts at top (12 o'clock), rotation handled by transform matrix
+    // LocalAlign (default=CENTER) shifts by -radius to center at position
     int num_segments = node->arc.num_segments == DC_APP_VAL_INDEX_UNDEFINED ?
         (int)(angle_span / 3.0f) + 2 : // roughly 1 segment per 3 degrees
         (int)dc_app_lookup_get_value(app_data->lookup, node->arc.num_segments)->value_double;
     if (num_segments < 2) num_segments = 2;
-    if (num_segments > _NODE_ARC_MAX_SEGMENTS) num_segments = _NODE_ARC_MAX_SEGMENTS;
+    if (num_segments > _NODE_ARC_MAX_SEGMENTS - 1) num_segments = _NODE_ARC_MAX_SEGMENTS - 1;
 
     // Convert to radians
-    float half_span_rad = pl_radiansf(angle_span / 2.0f);
-    float rotation_rad = pl_radiansf(arc_rotation);
+    float span_rad = pl_radiansf(angle_span);
 
-    // Generate arc points
-    // Start angle and end angle relative to "up" (positive Y in screen coords)
-    // In dcapp, Y increases upward, so "up" is +Y
-    // We want 0 rotation to put arc at top, centered
-    // Angle 0 in standard trig is right (+X), so we offset by PI/2 to make 0 = up
-    plVec2 points[_NODE_ARC_MAX_SEGMENTS + 2]; // +2 for center point if pie mode
+    // Generate arc points (start-based)
+    // Arc starts at top (12 o'clock), rotation handled by transform matrix
+    plVec2 points[_NODE_ARC_MAX_SEGMENTS];
     int num_arc_points = num_segments + 1; // segments + 1 = number of vertices on arc
-    int num_points = 0;
-    int arc_start_index = 0;
-
-    // If pie mode, center point goes first for proper convex polygon winding
-    if (node->arc.pie) {
-        plVec4 center4 = (plVec4){0, 0, 0, 1};
-        center4 = pl_mul_mat4_vec4(&transform, center4);
-        points[0] = (plVec2){center4.x, center4.y};
-        num_points = 1;
-        arc_start_index = 1;
-    }
 
     for (int ii = 0; ii <= num_segments; ii++) {
         float t = (float)ii / (float)num_segments; // 0 to 1
-        float angle = -half_span_rad + t * (2.0f * half_span_rad); // from -half to +half
-        // Offset by PI/2 so 0 = up, and add rotation
-        float final_angle = angle + (float)M_PI_2 + rotation_rad;
+        float angle = t * span_rad; // from 0 to span
+        float final_angle = angle + (float)M_PI_2;
 
+        // Corner-based: center at (radius, radius), points from 0 to diameter
         plVec4 point4 = (plVec4){
-            radius * cosf(final_angle),
-            radius * sinf(final_angle),
+            radius * (1.0f + cosf(final_angle)),
+            radius * (1.0f + sinf(final_angle)),
             0, 1};
         point4 = pl_mul_mat4_vec4(&transform, point4);
-        points[arc_start_index + ii] = (plVec2){point4.x, point4.y};
-    }
-    num_points += num_arc_points;
-
-    // draw fill (only makes sense for pie mode)
-    if (node->arc.fill_enabled && node->arc.pie) {
-        float fill_color[4] = {
-            node->arc.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.fill_color.r)->value_double,
-            node->arc.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.fill_color.g)->value_double,
-            node->arc.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.fill_color.b)->value_double,
-            node->arc.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.fill_color.a)->value_double,
-        };
-        uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
-    }
-
-    // draw outline
-    if (node->arc.line_enabled) {
-        float line_thickness = node->arc.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_width)->value_double;
-        float line_color[4] = {
-            node->arc.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.r)->value_double,
-            node->arc.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.g)->value_double,
-            node->arc.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.b)->value_double,
-            node->arc.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.a)->value_double,
-        };
-        uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-
-        if (node->arc.pie) {
-            // Draw closed polygon for pie
-            _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
-        } else {
-            // Draw just the arc (open polyline) - use lines between consecutive points
-            _ext_draw->add_lines(_draw_batch_get_2d(app_data), points, num_arc_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
-        }
-    }
-}
-
-static void _draw_node_circle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
-
-    // boolean checks
-    bool use_radius         = node->circle.radius != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_rotation       = node->circle.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->circle.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->circle.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
-
-    // get dimensions
-    float radius, diameter;
-    if (use_radius) {
-        radius   = (float)dc_app_lookup_get_value(app_data->lookup, node->circle.radius)->value_double;
-        diameter = 2 * radius;
-    } else {
-        diameter = fminf(parent_dimensions->x, parent_dimensions->y);
-        radius   = diameter / 2;
-    }
-
-    // transform
-    plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
-
-    // xform rotation (around a point)
-    {
-        if (use_rotation && use_pivot_position) {
-
-            // get pivot XY, rotation
-            float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(app_data->lookup, node->circle.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(app_data->lookup, node->circle.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->circle.rotation)->value_double);
-
-            // compute matrices
-            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
-            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
-            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
-
-            // apply transform
-            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
-            transform = pl_mul_mat4t(&transform, &rotate_xform);
-            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
-        }
-    }
-
-    // xform local alignment
-    {
-        // get alignment
-        DcAppAlignType local_aligns[2] = {
-            node->circle.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->circle.local_align.x)->value_integer,
-            node->circle.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->circle.local_align.y)->value_integer};
-
-        // compute offsets
-        float trans_align_offsets[2];
-        switch (local_aligns[0]) {
-            case DC_APP_ALIGN_TYPE_LEFT:
-                trans_align_offsets[0] = 0;
-                break;
-            case DC_APP_ALIGN_TYPE_UNDEFINED:
-            case DC_APP_ALIGN_TYPE_CENTER:
-                trans_align_offsets[0] = -1 * diameter / 2;
-                break;
-            case DC_APP_ALIGN_TYPE_RIGHT:
-                trans_align_offsets[0] = -1 * diameter;
-                break;
-            default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
-                break;
-        }
-        switch (local_aligns[1]) {
-            case DC_APP_ALIGN_TYPE_BOTTOM:
-                trans_align_offsets[1] = 0;
-                break;
-            case DC_APP_ALIGN_TYPE_UNDEFINED:
-            case DC_APP_ALIGN_TYPE_MIDDLE:
-                trans_align_offsets[1] = -1 * diameter / 2;
-                break;
-            case DC_APP_ALIGN_TYPE_TOP:
-                trans_align_offsets[1] = -1 * diameter;
-                break;
-            default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
-                break;
-        }
-
-        // compute matrix
-        plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
-
-        // apply transform
-        transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
-    }
-
-    // xform position
-    {
-        bool use_position[2] = {
-            node->circle.position.x != DC_APP_VAL_INDEX_UNDEFINED,
-            node->circle.position.y != DC_APP_VAL_INDEX_UNDEFINED};
-
-        float anchor[2] = {0, 0};
-        DcAppAlignType parent_align_x = node->circle.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->circle.parent_align.x)->value_integer;
-        switch (parent_align_x) {
-            case DC_APP_ALIGN_TYPE_UNDEFINED:
-            case DC_APP_ALIGN_TYPE_LEFT:
-                anchor[0] = 0;
-                break;
-            case DC_APP_ALIGN_TYPE_CENTER:
-                anchor[0] = parent_dimensions->x / 2;
-                break;
-            case DC_APP_ALIGN_TYPE_RIGHT:
-                anchor[0] = parent_dimensions->x;
-                break;
-            default:
-                fprintf(stderr, "DCAPP _draw_node() circle: Invalid parent_align_x value %d\n", parent_align_x);
-                break;
-        }
-        DcAppAlignType parent_align_y = node->circle.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->circle.parent_align.y)->value_integer;
-        switch (parent_align_y) {
-            case DC_APP_ALIGN_TYPE_UNDEFINED:
-            case DC_APP_ALIGN_TYPE_BOTTOM:
-                anchor[1] = 0;
-                break;
-            case DC_APP_ALIGN_TYPE_MIDDLE:
-                anchor[1] = parent_dimensions->y / 2;
-                break;
-            case DC_APP_ALIGN_TYPE_TOP:
-                anchor[1] = parent_dimensions->y;
-                break;
-            default:
-                fprintf(stderr, "DCAPP _draw_node() circle: Invalid parent_align_y value %d\n", parent_align_y);
-                break;
-        }
-
-        float offset[2] = {
-            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->circle.position.x)->value_double : 0,
-            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->circle.position.y)->value_double : 0};
-
-        // apply negate
-        if (node->circle.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->circle.negate_x)->value_boolean) {
-            offset[0] = -offset[0];
-        }
-        if (node->circle.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->circle.negate_y)->value_boolean) {
-            offset[1] = -offset[1];
-        }
-
-        float position[2] = {
-            parent_position->x + anchor[0] + offset[0],
-            parent_position->y + anchor[1] + offset[1]};
-
-        plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-        transform = pl_mul_mat4t(&transform, &trans_position_xform);
-    }
-
-    // xform local rotation
-    {
-        if (use_rotation && !use_pivot_position) {
-
-            // get alignment
-            DcAppAlignType local_pivot_aligns[2] = {
-                node->circle.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->circle.pivot_local_align.x)->value_integer,
-                node->circle.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->circle.pivot_local_align.y)->value_integer};
-
-            // get pivot XY, rotation
-            float pivot_position[2];
-            switch (local_pivot_aligns[0]) {
-                case DC_APP_ALIGN_TYPE_LEFT:
-                    pivot_position[0] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_CENTER:
-                    pivot_position[0] = diameter / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_RIGHT:
-                    pivot_position[0] = diameter;
-                    break;
-                default:
-                    fprintf(stderr, "Unknown pivot alignment in <circle> draw call: %d\n", local_pivot_aligns[0]);
-                    break;
-            }
-            switch (local_pivot_aligns[1]) {
-                case DC_APP_ALIGN_TYPE_BOTTOM:
-                    pivot_position[1] = 0;
-                    break;
-                case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_MIDDLE:
-                    pivot_position[1] = diameter / 2;
-                    break;
-                case DC_APP_ALIGN_TYPE_TOP:
-                    pivot_position[1] = diameter;
-                    break;
-                default:
-                    fprintf(stderr, "Unknown pivot alignment in <circle> draw call: %d\n", local_pivot_aligns[1]);
-                    break;
-            }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->circle.rotation)->value_double);
-
-            // compute matrices
-            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
-            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
-            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
-
-            // apply transform
-            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
-            transform = pl_mul_mat4t(&transform, &rotate_xform);
-            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
-        }
-    }
-
-    // parent transform
-    transform = pl_mul_mat4t(parent_transform, &transform);
-
-    // get points
-    int    num_points = node->circle.num_segments == DC_APP_VAL_INDEX_UNDEFINED ? 40 : dc_app_lookup_get_value(app_data->lookup, node->circle.num_segments)->value_integer;
-    plVec2 points[_NODE_CIRCLE_MAX_SEGMENTS];
-    for (int ii = 0; ii < num_points; ii++) {
-        float  angle  = ii * (2.0f * (float)M_PI / num_points);
-        plVec4 point4 = (plVec4){
-            radius * (1.0f + cosf(angle)),
-            radius * (1.0f + sinf(angle)),
-            0, 1};
-        point4     = pl_mul_mat4_vec4(&transform, point4);
         points[ii] = (plVec2){point4.x, point4.y};
     }
 
-    // draw fill
-    if (node->circle.fill_enabled) {
-
-        float fill_color[4] = {
-            node->circle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.r)->value_double,
-            node->circle.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.g)->value_double,
-            node->circle.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.b)->value_double,
-            node->circle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.fill_color.a)->value_double,
-        };
-        uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
-    }
-
-    // draw outline
-    if (node->circle.line_enabled) {
-        float line_thickness = node->circle.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_width)->value_double;
-        float line_color[4]  = {
-            node->circle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.r)->value_double,
-            node->circle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.g)->value_double,
-            node->circle.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.b)->value_double,
-            node->circle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->circle.line_color.a)->value_double,
-        };
-        uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
-    }
-
-    // mouse events and children
-    if (node->circle.child != NODE_INDEX_UNDEFINED) {
-
-        // process mouse position
-        plVec4 mouse_position = (plVec4){
-            app_data->frame_data.mouse_position.x,
-            app_data->frame_data.mouse_position.y,
-            0, 1};
-        plMat4 transform_inverse = pl_mat4t_invert(&transform);
-        mouse_position           = pl_mul_mat4_vec4(&transform_inverse, mouse_position);
-
-        // check whether mouse is over/in
-        bool inside = false;
-        if (mouse_position.x > 0 && mouse_position.x < diameter && mouse_position.y > 0 && mouse_position.y < diameter) {
-
-            // now do the actual check
-            float dx      = mouse_position.x - radius;
-            float dy      = mouse_position.y - radius;
-            float dist_sq = dx * dx + dy * dy;
-            float r_sq    = radius * radius;
-            inside        = dist_sq <= r_sq;
-        }
-
-        // update global states
-        if (inside) {
-            app_data->frame_data.next_hovered_node = node_index;
-
-            if (app_data->frame_data.is_mouse_pressed) {
-                app_data->frame_data.next_pressed_node = node_index;
-            }
-        }
-
-        // set state flags for children to check
-        node->circle.state_flags = NODE_STATE_FLAG_NONE;
-        if (app_data->frame_data.pressed_node == node_index) {
-            node->circle.state_flags |= NODE_STATE_FLAG_PRESSED;
-        }
-        if (app_data->frame_data.active_node == node_index) {
-            node->circle.state_flags |= NODE_STATE_FLAG_ACTIVE;
-        }
-        if (app_data->frame_data.released_node == node_index) {
-            node->circle.state_flags |= NODE_STATE_FLAG_RELEASED;
-        }
-        if (app_data->frame_data.hovered_node == node_index) {
-            node->circle.state_flags |= NODE_STATE_FLAG_HOVERED;
-        }
-
-        // draw children (including state event nodes)
-        plVec2 position   = (plVec2){0.0f, 0.0f};
-        plVec2 dimensions = (plVec2){diameter, diameter};
-        _draw_node_list(app_data, node->circle.child, &position, &dimensions, &transform);
-    }
+    // draw arc line
+    float line_thickness = node->arc.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_width)->value_double;
+    float line_color[4] = {
+        node->arc.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.r)->value_double,
+        node->arc.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.g)->value_double,
+        node->arc.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.b)->value_double,
+        node->arc.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.a)->value_double,
+    };
+    uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
+    _ext_draw->add_lines(_draw_batch_get_2d(app_data), points, num_arc_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
 }
 
 static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -1407,22 +1171,63 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
     // parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // get points
-    int    num_points = node->ellipse.num_segments == DC_APP_VAL_INDEX_UNDEFINED ? 40 : dc_app_lookup_get_value(app_data->lookup, node->ellipse.num_segments)->value_integer;
+    // check if this is a pie/wedge (angle specified and != 360)
+    bool use_angle = node->ellipse.angle != DC_APP_VAL_INDEX_UNDEFINED;
+    float angle_span = use_angle ? (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.angle)->value_double : 360.0f;
+    bool is_pie = use_angle && !dc_utils_float_equals(angle_span, 360.0f, 0.001f);
+
+    // get number of segments
+    int num_segments = node->ellipse.num_segments == DC_APP_VAL_INDEX_UNDEFINED ?
+        (is_pie ? (int)(angle_span / 3.0f) + 2 : 40) :
+        dc_app_lookup_get_value(app_data->lookup, node->ellipse.num_segments)->value_integer;
+    if (num_segments < 2) num_segments = 2;
+    if (num_segments > _NODE_ELLIPSE_MAX_SEGMENTS - 2) num_segments = _NODE_ELLIPSE_MAX_SEGMENTS - 2;
+
+    // generate points
     plVec2 points[_NODE_ELLIPSE_MAX_SEGMENTS];
-    for (int ii = 0; ii < num_points; ii++) {
-        float  angle  = ii * (2.0f * (float)M_PI / num_points);
-        plVec4 point4 = (plVec4){
-            radius_x * (1.0f + cosf(angle)),
-            radius_y * (1.0f + sinf(angle)),
-            0, 1};
-        point4     = pl_mul_mat4_vec4(&transform, point4);
-        points[ii] = (plVec2){point4.x, point4.y};
+    int num_points = 0;
+
+    if (is_pie) {
+        // Pie/wedge mode: center point + arc points
+        // Center point goes first for proper convex polygon winding
+        plVec4 center4 = (plVec4){radius_x, radius_y, 0, 1};
+        center4 = pl_mul_mat4_vec4(&transform, center4);
+        points[0] = (plVec2){center4.x, center4.y};
+        num_points = 1;
+
+        // Generate arc points (start-based)
+        // Wedge starts at top (12 o'clock), rotation handled by transform matrix
+        float span_rad = pl_radiansf(angle_span);
+        int num_arc_points = num_segments + 1;
+
+        for (int ii = 0; ii <= num_segments; ii++) {
+            float t = (float)ii / (float)num_segments;
+            float angle = t * span_rad; // from 0 to span
+            float final_angle = angle + (float)M_PI_2;
+
+            plVec4 point4 = (plVec4){
+                radius_x * (1.0f + cosf(final_angle)),
+                radius_y * (1.0f + sinf(final_angle)),
+                0, 1};
+            point4 = pl_mul_mat4_vec4(&transform, point4);
+            points[num_points++] = (plVec2){point4.x, point4.y};
+        }
+    } else {
+        // Full ellipse mode
+        for (int ii = 0; ii < num_segments; ii++) {
+            float angle = ii * (2.0f * (float)M_PI / num_segments);
+            plVec4 point4 = (plVec4){
+                radius_x * (1.0f + cosf(angle)),
+                radius_y * (1.0f + sinf(angle)),
+                0, 1};
+            point4 = pl_mul_mat4_vec4(&transform, point4);
+            points[ii] = (plVec2){point4.x, point4.y};
+        }
+        num_points = num_segments;
     }
 
     // draw fill
-    if (node->ellipse.fill_enabled) {
-
+    if (node->ellipse.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
         float fill_color[4] = {
             node->ellipse.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.fill_color.r)->value_double,
             node->ellipse.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.fill_color.g)->value_double,
@@ -1430,11 +1235,31 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
             node->ellipse.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+
+        if (is_pie && num_points >= 3) {
+            // Use triangle fan for pie/wedge (works for any angle, including > 180 degrees)
+            // points[0] = center, points[1..num_points-1] = arc points
+            // Note: using static to avoid large stack allocation that can cause issues
+            // with stack guard pages during rapid redraws (e.g., window resize)
+            int num_triangles = num_points - 2;
+            if (num_triangles > 0) {
+                static plVec2 triangle_points[_NODE_ELLIPSE_MAX_SEGMENTS * 3];
+                int tri_idx = 0;
+                for (int ii = 0; ii < num_triangles; ii++) {
+                    triangle_points[tri_idx++] = points[0];       // center
+                    triangle_points[tri_idx++] = points[ii + 1];  // arc point i
+                    triangle_points[tri_idx++] = points[ii + 2];  // arc point i+1
+                }
+                _ext_draw->add_triangles_filled(_draw_batch_get_2d(app_data), triangle_points, num_triangles * 3, (plDrawSolidOptions){.uColor = pl_fill_color});
+            }
+        } else if (!is_pie) {
+            // Full ellipse - use convex polygon fill
+            _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+        }
     }
 
     // draw outline
-    if (node->ellipse.line_enabled) {
+    if (node->ellipse.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
         float line_thickness = node->ellipse.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_width)->value_double;
         float line_color[4]  = {
             node->ellipse.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_color.r)->value_double,
@@ -1446,8 +1271,8 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
         _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
-    // mouse events and children
-    if (node->ellipse.child != NODE_INDEX_UNDEFINED) {
+    // mouse events
+    if (node->ellipse.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -1491,12 +1316,12 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
         if (app_data->frame_data.hovered_node == node_index) {
             node->ellipse.state_flags |= NODE_STATE_FLAG_HOVERED;
         }
-
-        // draw children (including state event nodes)
-        plVec2 position   = (plVec2){0.0f, 0.0f};
-        plVec2 dimensions = (plVec2){diameter_x, diameter_y};
-        _draw_node_list(app_data, node->ellipse.child, &position, &dimensions, &transform);
     }
+
+    // draw children
+    plVec2 position   = (plVec2){0.0f, 0.0f};
+    plVec2 dimensions = (plVec2){diameter_x, diameter_y};
+    _draw_node_list(app_data, node->ellipse.child, &position, &dimensions, &transform);
 }
 
 static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -1721,7 +1546,8 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // mouse events
-    {
+    if (node->container.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
+
         // process mouse position
         plVec4 mouse_position = (plVec4){
             app_data->frame_data.mouse_position.x,
@@ -2060,8 +1886,8 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
         _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3);
     }
 
-    // mouse events and children
-    if (node->image.child != NODE_INDEX_UNDEFINED) {
+    // mouse events
+    if (node->image.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -2097,12 +1923,12 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
         if (app_data->frame_data.hovered_node == node_index) {
             node->image.state_flags |= NODE_STATE_FLAG_HOVERED;
         }
-
-        // draw children (including state event nodes)
-        plVec2 position   = (plVec2){0.0f, 0.0f};
-        plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
-        _draw_node_list(app_data, node->image.child, &position, &dimensions, &transform);
     }
+
+    // draw children
+    plVec2 position   = (plVec2){0.0f, 0.0f};
+    plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
+    _draw_node_list(app_data, node->image.child, &position, &dimensions, &transform);
 }
 
 static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -2237,7 +2063,7 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
     }
 
     // draw outline
-    if (node->line.line_enabled) {
+    if (node->line.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
         float line_thickness = node->line.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_width)->value_double;
         float line_color[4]  = {
             node->line.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.r)->value_double,
@@ -2659,8 +2485,8 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
     // draw
     _ext_draw->add_image_quad_ex(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3, uv0, uv1, uv2, uv3, 0xFFFFFFFF);
 
-    // mouse events and children
-    if (node->pixelstream.child != NODE_INDEX_UNDEFINED) {
+    // mouse events
+    if (node->pixelstream.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -2696,12 +2522,12 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
         if (app_data->frame_data.hovered_node == node_index) {
             node->pixelstream.state_flags |= NODE_STATE_FLAG_HOVERED;
         }
-
-        // draw children (including state event nodes)
-        plVec2 position   = (plVec2){0.0f, 0.0f};
-        plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
-        _draw_node_list(app_data, node->pixelstream.child, &position, &dimensions, &transform);
     }
+
+    // draw children
+    plVec2 position   = (plVec2){0.0f, 0.0f};
+    plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
+    _draw_node_list(app_data, node->pixelstream.child, &position, &dimensions, &transform);
 }
 
 static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -2836,7 +2662,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
     }
 
     // draw fill
-    if (node->polygon.fill_enabled) {
+    if (node->polygon.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
 
         float fill_color[4] = {
             node->polygon.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.r)->value_double,
@@ -2849,7 +2675,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
     }
 
     // draw outline
-    if (node->polygon.line_enabled) {
+    if (node->polygon.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
         float line_thickness = node->polygon.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_width)->value_double;
         float line_color[4]  = {
             node->polygon.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.r)->value_double,
@@ -2861,8 +2687,8 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
         _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
-    // mouse events and children
-    if (node->polygon.child != NODE_INDEX_UNDEFINED) {
+    // mouse events
+    if (node->polygon.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -2912,12 +2738,12 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
         if (app_data->frame_data.hovered_node == node_index) {
             node->polygon.state_flags |= NODE_STATE_FLAG_HOVERED;
         }
-
-        // draw children (including state event nodes)
-        plVec2 position   = (plVec2){min_pos.x, min_pos.y};
-        plVec2 dimensions = (plVec2){max_pos.x - min_pos.x, max_pos.y - min_pos.y};
-        _draw_node_list(app_data, node->polygon.child, &position, &dimensions, &transform);
     }
+
+    // draw children
+    plVec2 position   = (plVec2){min_pos.x, min_pos.y};
+    plVec2 dimensions = (plVec2){max_pos.x - min_pos.x, max_pos.y - min_pos.y};
+    _draw_node_list(app_data, node->polygon.child, &position, &dimensions, &transform);
 }
 
 static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -3143,7 +2969,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
     }
 
     // draw fill
-    if (node->rectangle.fill_enabled) {
+    if (node->rectangle.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
 
         float fill_color[4] = {
             node->rectangle.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.r)->value_double,
@@ -3156,7 +2982,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
     }
 
     // draw outline
-    if (node->rectangle.line_enabled) {
+    if (node->rectangle.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
         float line_thickness = node->rectangle.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_width)->value_double;
         float line_color[4]  = {
             node->rectangle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.r)->value_double,
@@ -3168,8 +2994,8 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
         _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, 4, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
-    // mouse events and children
-    if (node->rectangle.child != NODE_INDEX_UNDEFINED) {
+    // mouse events
+    if (node->rectangle.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
 
         // process mouse position
         plVec4 mouse_position = (plVec4){
@@ -3205,12 +3031,12 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
         if (app_data->frame_data.hovered_node == node_index) {
             node->rectangle.state_flags |= NODE_STATE_FLAG_HOVERED;
         }
-
-        // draw children (including state event nodes)
-        plVec2 position   = (plVec2){0.0f, 0.0f};
-        plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
-        _draw_node_list(app_data, node->rectangle.child, &position, &dimensions, &transform);
     }
+
+    // draw children
+    plVec2 position   = (plVec2){0.0f, 0.0f};
+    plVec2 dimensions = (plVec2){dimension[0], dimension[1]};
+    _draw_node_list(app_data, node->rectangle.child, &position, &dimensions, &transform);
 }
 
 static void _draw_node_mouse_motion(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -4258,8 +4084,8 @@ static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *
     // all transform parameters
     float dimension[2]         = {(float)dimensionX, (float)dimensionY};
     float virtual_dimension[2] = {
-        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->window.virtual_dimension.x)->value_double : dimension[0],
-        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->window.virtual_dimension.y)->value_double : dimension[1]};
+        use_virtual_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->window.virtual_dimension.x)->value_double : node->window.init_dimension.x,
+        use_virtual_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->window.virtual_dimension.y)->value_double : node->window.init_dimension.y};
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};

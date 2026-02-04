@@ -26,7 +26,7 @@
         </Style>
 
         <Style Name="StatusGreen">
-            <Circle FillColor="0.2 0.8 0.3"/>
+            <Ellipse FillColor="0.2 0.8 0.3"/>
         </Style>
 
         <!-- Constants -->
@@ -58,7 +58,7 @@
                 <Text X="125" Y="130" LocalAlignX="#_align_center_" Style="Label">Apply with Style attr</Text>
                 <Text X="20" Y="90" Style="Heading">Heading</Text>
                 <Text X="20" Y="60" Style="Label">Label Style</Text>
-                <Circle X="200" Y="75" Radius="15" Style="StatusGreen"/>
+                <Ellipse X="200" Y="75" Radius="15" Style="StatusGreen"/>
             </Container>
 
             <!-- Section 3: Constants -->

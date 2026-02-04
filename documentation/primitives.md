@@ -158,19 +158,71 @@ Draws a rectangle.
 
 ---
 
-### `<Circle>`
+### `<Circle>` *(Deprecated)*
 
-Draws a circle or ellipse.
+**Deprecated:** Use `<Arc>` for line-only circles or `<Ellipse>` for filled circles.
+
+The legacy conversion script (`scripts/convert_legacy_xml.py`) automatically converts:
+- `<Circle>` with `Angle` and `FillColor` → `<Ellipse>` (pie/wedge shape)
+- `<Circle>` with `Angle` only → `<Arc>` (line-only arc)
+- `<Circle>` in `<Style>` → both `<Arc>` and `<Ellipse>` styles
+
+---
+
+### `<Arc>`
+
+Draws an arc (partial circle outline). Arc is a **line-only** element and does not support fill.
 
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
 | `PositionX` | `X` | number/var | No | Center X position |
 | `PositionY` | `Y` | number/var | No | Center Y position |
-| `Radius` | — | number/var | No | Circle radius |
+| `Radius` | — | number/var | No | Arc radius |
+| `Angle` | — | number/var | No | Arc angle in degrees (default: 360 = full circle) |
 | `Segments` | — | number/var | No | Number of segments for rendering |
+| `LocalAlignX` | `HorizontalAlign` | align | No | Horizontal alignment |
+| `LocalAlignY` | `VerticalAlign` | align | No | Vertical alignment |
 | `ParentAlignX` | — | align | No | Parent anchor (horizontal) |
 | `ParentAlignY` | — | align | No | Parent anchor (vertical) |
-| `Rotation` | `Rotate` | number/var | No | Rotation in degrees |
+| `Rotation` | `Rotate` | number/var | No | Rotation in degrees (0° = top, clockwise) |
+| `PivotPositionX` | `PivotX` | number/var | No | Pivot point X |
+| `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
+| `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
+| `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
+| `LineColor` | — | color | No | Arc line color (RGBA) |
+| `LineWidth` | — | number/var | No | Line width |
+
+**Note:** Arc starts drawing from the top (12 o'clock position) and proceeds clockwise. Use `Rotation` to change the starting position.
+
+**Example:**
+```xml
+<!-- 90-degree arc starting from top -->
+<Arc X="100" Y="100" Radius="50" Angle="90" LineColor="1,1,1,1" LineWidth="2"/>
+
+<!-- Arc rotated to start from the right (3 o'clock) -->
+<Arc X="200" Y="100" Radius="50" Angle="90" Rotation="90" LineColor="0,1,0,1"/>
+```
+
+---
+
+### `<Ellipse>`
+
+Draws a filled ellipse or pie/wedge shape.
+
+| Attribute | Aliases | Type | Required | Description |
+|-----------|---------|------|----------|-------------|
+| `PositionX` | `X` | number/var | No | Center X position |
+| `PositionY` | `Y` | number/var | No | Center Y position |
+| `Radius` | — | number/var | No | Circle radius (sets both RadiusX and RadiusY) |
+| `RadiusX` | — | number/var | No | Horizontal radius |
+| `RadiusY` | — | number/var | No | Vertical radius |
+| `Angle` | — | number/var | No | Wedge angle in degrees (default: 360 = full ellipse) |
+| `Segments` | — | number/var | No | Number of segments for rendering |
+| `LocalAlignX` | `HorizontalAlign` | align | No | Horizontal alignment |
+| `LocalAlignY` | `VerticalAlign` | align | No | Vertical alignment |
+| `ParentAlignX` | — | align | No | Parent anchor (horizontal) |
+| `ParentAlignY` | — | align | No | Parent anchor (vertical) |
+| `Rotation` | `Rotate` | number/var | No | Rotation in degrees (0° = top, clockwise) |
 | `PivotPositionX` | `PivotX` | number/var | No | Pivot point X |
 | `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
 | `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
@@ -179,7 +231,21 @@ Draws a circle or ellipse.
 | `LineColor` | — | color | No | Border color (RGBA) |
 | `LineWidth` | — | number/var | No | Border width |
 
+**Note:** When `Angle` is less than 360, Ellipse draws a pie/wedge shape (filled sector). The wedge starts from the top (12 o'clock position) and proceeds clockwise. Use `Rotation` to change the starting position.
+
 **Children:** `<Pressed>`, `<Released>`, `<Active>`, `<Inactive>`, `<Hovered>` (mouse events)
+
+**Example:**
+```xml
+<!-- Full ellipse -->
+<Ellipse X="100" Y="100" RadiusX="80" RadiusY="50" FillColor="0,0,1,1"/>
+
+<!-- Pie wedge (quarter circle) -->
+<Ellipse X="200" Y="100" Radius="50" Angle="90" FillColor="1,0,0,1"/>
+
+<!-- Pie wedge rotated to start from right side -->
+<Ellipse X="300" Y="100" Radius="50" Angle="90" Rotation="90" FillColor="0,1,0,1"/>
+```
 
 ---
 
@@ -427,7 +493,7 @@ Creates an interactive button with multiple visual states.
 
 ## Mouse Event Elements
 
-These elements can be children of `<Rectangle>`, `<Circle>`, `<Image>`, `<Polygon>`, `<Pixelstream>`, or `<Button>`.
+These elements can be children of `<Rectangle>`, `<Ellipse>`, `<Image>`, `<Polygon>`, `<Pixelstream>`, or `<Button>`.
 
 ### `<Pressed>`
 Content/actions executed when mouse button is pressed down on the element.
@@ -765,7 +831,7 @@ If a `<Default>` sets `ParentAlignX`, any X values on child elements become offs
 
 **Special Cases:**
 
-- **Circle and Sphere** elements default to center-aligned (`LocalAlignX="#_align_center_"`, `LocalAlignY="#_align_middle_"`) since their natural anchor is their center
+- **Arc, Ellipse, and Sphere** elements default to center-aligned (`LocalAlignX="#_align_center_"`, `LocalAlignY="#_align_middle_"`) since their natural anchor is their center
 - **Container, Panel, Window, and Button** reset the parent_position to {0,0} for their children, so children position relative to the container's top-left corner
 
 **Example:**

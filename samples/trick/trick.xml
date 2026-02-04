@@ -63,7 +63,7 @@
             </Polygon>
 
             <!-- Cannonball - position driven by simulation -->
-            <Circle X="@posX" Y="@posY" Radius="4" LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_" FillColor="0.3 0.3 0.3" LineColor="0.6 0.6 0.6" LineWidth="1"/>
+            <Ellipse X="@posX" Y="@posY" Radius="4" LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_" FillColor="0.3 0.3 0.3" LineColor="0.6 0.6 0.6" LineWidth="1"/>
         </Container>
 
         <!-- Data Panel - Metric (10Hz update) -->

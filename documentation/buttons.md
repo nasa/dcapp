@@ -202,12 +202,12 @@ A button that's only "on" while being held:
         Variable="firing" On="1" Off="0" Type="#_button_momentary_">
     <Enabled>
         <On>
-            <Circle X="40" Y="40" Radius="38" FillColor="1,0,0,1"/>
+            <Ellipse X="40" Y="40" Radius="38" FillColor="1,0,0,1"/>
             <Text X="40" Y="40" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="1,1,1,1" Size="14">FIRING</Text>
         </On>
         <Off>
-            <Circle X="40" Y="40" Radius="38" FillColor="0.3,0,0,1"/>
+            <Ellipse X="40" Y="40" Radius="38" FillColor="0.3,0,0,1"/>
             <Text X="40" Y="40" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="0.7,0.7,0.7,1" Size="14">FIRE</Text>
         </Off>

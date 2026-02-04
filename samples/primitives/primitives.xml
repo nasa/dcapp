@@ -44,15 +44,15 @@
                 <Text X="150" Y="155" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Circle</Text>
 
                 <!-- Filled circle -->
-                <Circle X="60" Y="80" Radius="35" FillColor="0.8 0.5 0.2"/>
+                <Ellipse X="60" Y="80" Radius="35" FillColor="0.8 0.5 0.2"/>
                 <Text X="60" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Filled</Text>
 
                 <!-- Outlined circle -->
-                <Circle X="150" Y="80" Radius="35" LineColor="0.2 0.8 0.5" LineWidth="2"/>
+                <Ellipse X="150" Y="80" Radius="35" LineColor="0.2 0.8 0.5" LineWidth="2"/>
                 <Text X="150" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Outlined</Text>
 
                 <!-- Both -->
-                <Circle X="240" Y="80" Radius="35" FillColor="0.5 0.2 0.8" LineColor="0.8 0.5 1" LineWidth="2"/>
+                <Ellipse X="240" Y="80" Radius="35" FillColor="0.5 0.2 0.8" LineColor="0.8 0.5 1" LineWidth="2"/>
                 <Text X="240" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Both</Text>
             </Container>
 
@@ -238,9 +238,9 @@
                 <Rectangle X="150" Y="40" Width="120" Height="35" FillColor="0.3 0.3 0.3"/>
 
                 <!-- Overlapping circles with different alpha values -->
-                <Circle X="100" Y="75" Radius="35" FillColor="1 0 0 0.8"/>
-                <Circle X="150" Y="75" Radius="35" FillColor="0 1 0 0.6"/>
-                <Circle X="200" Y="75" Radius="35" FillColor="0 0 1 0.4"/>
+                <Ellipse X="100" Y="75" Radius="35" FillColor="1 0 0 0.8"/>
+                <Ellipse X="150" Y="75" Radius="35" FillColor="0 1 0 0.6"/>
+                <Ellipse X="200" Y="75" Radius="35" FillColor="0 0 1 0.4"/>
 
                 <Text X="100" Y="25" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">0.8</Text>
                 <Text X="150" Y="25" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">0.6</Text>

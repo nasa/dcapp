@@ -1,7 +1,7 @@
 <!-- Simple shapes component -->
 <Dummy>
     <Rectangle X="30" Y="40" Width="80" Height="60" FillColor="0.8 0.3 0.3"/>
-    <Circle X="200" Y="70" Radius="35" FillColor="0.3 0.8 0.3"/>
+    <Ellipse X="200" Y="70" Radius="35" FillColor="0.3 0.8 0.3"/>
     <Polygon FillColor="0.3 0.3 0.8">
         <Vertex X="300" Y="40"/>
         <Vertex X="360" Y="40"/>

@@ -110,7 +110,6 @@ typedef enum __NodeType {
     NODE_TYPE_ARC,
     NODE_TYPE_BLINK,
     NODE_TYPE_BUTTON,
-    NODE_TYPE_CIRCLE,
     NODE_TYPE_CONTAINER,
     NODE_TYPE_ELLIPSE,
     NODE_TYPE_CONDITIONAL,
@@ -161,6 +160,14 @@ typedef enum __NodeStateFlags {
     NODE_STATE_FLAG_FALSE         = 1 << 8,
 } _NodeStateFlags;
 
+// Config flags set at parse time (never change at runtime)
+typedef enum __NodeConfigFlags {
+    NODE_CONFIG_FLAG_NONE               = 0,
+    NODE_CONFIG_FLAG_FILL_ENABLED       = 1 << 0,
+    NODE_CONFIG_FLAG_LINE_ENABLED       = 1 << 1,
+    NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS = 1 << 2,
+} _NodeConfigFlags;
+
 typedef int      _NodeIndex;
 const _NodeIndex NODE_INDEX_UNDEFINED = -1;
 
@@ -170,16 +177,12 @@ typedef struct __NodeArc {
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
-    DcAppValIndex rotation;      // where the center of the arc points (0 = top)
+    DcAppValIndex rotation;      // where the arc starts (0 = right, 90 = top)
     DcAppValIndex radius;
     DcAppValIndex angle;         // span of the arc in degrees
     DcAppValIndex num_segments;
     _ValIndex4    line_color;
-    _ValIndex4    fill_color;
     DcAppValIndex line_width;
-    bool          pie;           // if true, draw lines from endpoints to center (pie/wedge shape)
-    bool          line_enabled;
-    bool          fill_enabled;
     DcAppValIndex negate_x;
     DcAppValIndex negate_y;
 } _NodeArc;
@@ -237,29 +240,6 @@ typedef struct __NodeButton {
     DcAppButtonType type;
 } _NodeButton;
 
-#define _NODE_CIRCLE_MAX_SEGMENTS 1000
-typedef struct __NodeCircle {
-    _ValIndex2    position;
-    _ValIndex2    pivot_local_align;
-    _ValIndex2    pivot_position;
-    _ValIndex2    local_align;
-    _ValIndex2    parent_align;
-    DcAppValIndex rotation;
-    DcAppValIndex radius;
-    DcAppValIndex num_segments;
-    _ValIndex4    fill_color;
-    _ValIndex4    line_color;
-    DcAppValIndex line_width;
-
-    _NodeIndex child;
-    uint32_t   state_flags;
-
-    bool fill_enabled;
-    bool line_enabled;
-    bool negate_x;
-    bool negate_y;
-} _NodeCircle;
-
 #define _NODE_ELLIPSE_MAX_SEGMENTS 1000
 typedef struct __NodeEllipse {
     _ValIndex2    position;
@@ -267,7 +247,8 @@ typedef struct __NodeEllipse {
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
-    DcAppValIndex rotation;
+    DcAppValIndex rotation;       // where the wedge starts (0 = right, 90 = top)
+    DcAppValIndex angle;          // span of the wedge in degrees (360 = full ellipse)
     DcAppValIndex radius_x;
     DcAppValIndex radius_y;
     DcAppValIndex num_segments;
@@ -277,11 +258,10 @@ typedef struct __NodeEllipse {
 
     _NodeIndex child;
     uint32_t   state_flags;
+    uint8_t    config_flags;
 
-    bool fill_enabled;
-    bool line_enabled;
-    bool negate_x;
-    bool negate_y;
+    DcAppValIndex negate_x;
+    DcAppValIndex negate_y;
 } _NodeEllipse;
 
 typedef struct __NodeConditional {
@@ -305,6 +285,7 @@ typedef struct __NodeContainer {
     DcAppValIndex negate_y;
     _NodeIndex    child;
     uint32_t      state_flags;
+    uint8_t       config_flags;
 } _NodeContainer;
 
 typedef int _TextureIndex;
@@ -328,6 +309,7 @@ typedef struct __NodeImage {
 
     _NodeIndex child;
     uint32_t   state_flags;
+    uint8_t    config_flags;
 } _NodeImage;
 
 #define _NODE_LINE_MAX_POINTS 1000
@@ -341,8 +323,7 @@ typedef struct __NodeLine {
     DcAppValIndex line_width;
 
     _VertexData *sb_vertices;
-    bool         fill_enabled;
-    bool         line_enabled;
+    uint8_t      config_flags;
 } _NodeLine;
 
 typedef struct __NodeMouseMotion {
@@ -385,6 +366,7 @@ typedef struct __NodePixelstream {
 
     _NodeIndex child;
     uint32_t   state_flags;
+    uint8_t    config_flags;
 
     DcAppPixelstreamType type;
     unsigned char       *frame;
@@ -409,10 +391,9 @@ typedef struct __NodePolygon {
 
     _NodeIndex child;
     uint32_t   state_flags;
+    uint8_t    config_flags;
 
     _VertexData *sb_vertices;
-    bool         fill_enabled;
-    bool         line_enabled;
 } _NodePolygon;
 
 typedef struct __NodeRectangle {
@@ -431,9 +412,7 @@ typedef struct __NodeRectangle {
 
     _NodeIndex child;
     uint32_t   state_flags;
-
-    bool fill_enabled;
-    bool line_enabled;
+    uint8_t    config_flags;
 } _NodeRectangle;
 
 typedef struct __NodeSet {
@@ -497,8 +476,7 @@ typedef struct __NodeText {
     DcAppValIndex size;
     _ValIndex4    fill_color;
     _ValIndex4    line_color;
-    bool          fill_enabled;
-    bool          line_enabled;
+    uint8_t       config_flags;
     // DcAppValIndex  font;
 
     // stretchy buffers contains values and formats
@@ -548,7 +526,6 @@ typedef struct __Node {
         _NodeArc              arc;
         _NodeBlink            blink;
         _NodeButton           button;
-        _NodeCircle           circle;
         _NodeConditional      conditional;
         _NodeEllipse          ellipse;
         _NodeContainer        container;

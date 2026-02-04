@@ -19,7 +19,7 @@
             <Text X="200" Y="300" File="test.txt" FillColor="1 1 1">Hello World</Text>
 
             <!-- Valid elements for comparison -->
-            <Circle X="500" Y="300" Radius="50" FillColor="0 0 1"/>
+            <Ellipse X="500" Y="300" Radius="50" FillColor="0 0 1"/>
             <Text X="400" Y="400" Size="16" FillColor="1 1 1">Valid Text</Text>
 
             <!-- Invalid attribute "BackgroundColor" on Container (not a valid container attr) -->

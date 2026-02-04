@@ -561,13 +561,19 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
             xmlFree(name);
 
             xmlChar *value = xmlNodeGetContent(node);
-            if (!value) {
+            char     cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
+            if (value) {
+                strncpy(cleaned_value, (const char *)value, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                cleaned_value[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+                xmlFree(value);
+                dc_utils_trim_whitespace_inplace(cleaned_value);
+                if (cleaned_value[0] == '\0') {
+                    fprintf(stderr, "DCAPP _preprocess_xml_node(): Empty content in <Constant> definition\n");
+                }
+            } else {
                 fprintf(stderr, "DCAPP _preprocess_xml_node(): Node content missing in <Constant> definition\n");
+                cleaned_value[0] = '\0';
             }
-            char cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
-            strncpy(cleaned_value, (const char *)value, DC_VALUE_STRING_BUFFER_SIZE - 1);
-            cleaned_value[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
-            xmlFree(value);
 
             bool     is_immutable     = false;
             xmlChar *raw_is_immutable = xmlGetProp(node, BAD_CAST "Immutable");
@@ -610,16 +616,30 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
 
             // get include file name
             xmlChar *filepath = xmlNodeGetContent(node);
-            if (!filepath || xmlStrlen(filepath) == 0) {
-                filepath = xmlGetProp(node, BAD_CAST "File");
-                if (!filepath) {
-                    fprintf(stderr, "DCAPP _preprocess_xml_node(): File path missing in <Include> definition\n");
+            char     cleaned_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+            bool     has_filepath = false;
+            if (filepath) {
+                strncpy(cleaned_filepath, (const char *)filepath, sizeof(cleaned_filepath) - 1);
+                cleaned_filepath[sizeof(cleaned_filepath) - 1] = '\0';
+                xmlFree(filepath);
+                dc_utils_trim_whitespace_inplace(cleaned_filepath);
+                has_filepath = (cleaned_filepath[0] != '\0');
+            }
+            if (!has_filepath) {
+                // fallback to File attribute
+                xmlChar *file_attr = xmlGetProp(node, BAD_CAST "File");
+                if (file_attr) {
+                    strncpy(cleaned_filepath, (const char *)file_attr, sizeof(cleaned_filepath) - 1);
+                    cleaned_filepath[sizeof(cleaned_filepath) - 1] = '\0';
+                    xmlFree(file_attr);
+                    dc_utils_trim_whitespace_inplace(cleaned_filepath);
+                    has_filepath = (cleaned_filepath[0] != '\0');
                 }
             }
-            char cleaned_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
-            strncpy(cleaned_filepath, (const char *)filepath, sizeof(cleaned_filepath) - 1);
-            cleaned_filepath[sizeof(cleaned_filepath) - 1] = '\0';
-            xmlFree(filepath);
+            if (!has_filepath) {
+                fprintf(stderr, "DCAPP _preprocess_xml_node(): File path missing in <Include> definition\n");
+                cleaned_filepath[0] = '\0';
+            }
 
             // get absolute path
             char absolute_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
@@ -1351,10 +1371,12 @@ void _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr nod
     while (child) {
         if (child->type == XML_TEXT_NODE) {
             xmlChar *value = xmlNodeGetContent(child);
-            char     cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
-            _dereference_constants(context, (char *)value, cleaned_value, sizeof(cleaned_value));
-            xmlNodeSetContent(child, BAD_CAST cleaned_value);
-            xmlFree(value);
+            if (value) {
+                char cleaned_value[DC_VALUE_STRING_BUFFER_SIZE];
+                _dereference_constants(context, (char *)value, cleaned_value, sizeof(cleaned_value));
+                xmlNodeSetContent(child, BAD_CAST cleaned_value);
+                xmlFree(value);
+            }
         }
         child = child->next;
     }

@@ -47,10 +47,10 @@
 
                 <!-- Active indicator -->
                 <If Value1="@MOMENTARY_ACTIVE" Operation="#_if_eq_" Value2="1">
-                    <Circle X="200" Y="85" Radius="10" FillColor="0.3 0.8 0.3"/>
+                    <Ellipse X="200" Y="85" Radius="10" FillColor="0.3 0.8 0.3"/>
                 </If>
                 <If Value1="@MOMENTARY_ACTIVE" Operation="#_if_eq_" Value2="0">
-                    <Circle X="200" Y="85" Radius="10" FillColor="0.3 0.3 0.3"/>
+                    <Ellipse X="200" Y="85" Radius="10" FillColor="0.3 0.3 0.3"/>
                 </If>
                 <Text X="200" Y="62" LocalAlignX="#_align_center_" Size="8" FillColor="0.5 0.5 0.5">Active</Text>
             </Container>
@@ -96,7 +96,7 @@
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Option 1</Text>
                 </Button>
                 <If Value1="@RADIO_STATE" Operation="#_if_eq_" Value2="1">
-                    <Circle X="60" Y="110" Radius="6" FillColor="0.3 0.8 0.3"/>
+                    <Ellipse X="60" Y="110" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
 
                 <Button Type="#_button_momentary_" X="110" Y="60" Width="80" Height="40">
@@ -106,7 +106,7 @@
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Option 2</Text>
                 </Button>
                 <If Value1="@RADIO_STATE" Operation="#_if_eq_" Value2="2">
-                    <Circle X="150" Y="110" Radius="6" FillColor="0.3 0.8 0.3"/>
+                    <Ellipse X="150" Y="110" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
 
                 <Button Type="#_button_momentary_" X="200" Y="60" Width="80" Height="40">
@@ -116,7 +116,7 @@
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Option 3</Text>
                 </Button>
                 <If Value1="@RADIO_STATE" Operation="#_if_eq_" Value2="3">
-                    <Circle X="240" Y="110" Radius="6" FillColor="0.3 0.8 0.3"/>
+                    <Ellipse X="240" Y="110" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
 
                 <Text X="150" Y="35" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.6 0.6">Selected: @RADIO_STATE(%.0f)</Text>
@@ -135,12 +135,12 @@
                 <Button Type="#_button_toggle_" X="50" Y="50" Width="150" Height="70" Variable="HOVER_ACTIVE">
                     <ButtonIndicatorOn>
                         <Rectangle Width="150" Height="70" FillColor="0.2 0.5 0.3" LineColor="0.3 0.7 0.4" LineWidth="3"/>
-                        <Circle X="30" Y="35" Radius="15" FillColor="0.3 0.8 0.3"/>
+                        <Ellipse X="30" Y="35" Radius="15" FillColor="0.3 0.8 0.3"/>
                         <Text X="90" Y="35" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="14" FillColor="1 1 1">ACTIVE</Text>
                     </ButtonIndicatorOn>
                     <ButtonIndicatorOff>
                         <Rectangle Width="150" Height="70" FillColor="0.3 0.2 0.2" LineColor="0.5 0.3 0.3" LineWidth="3"/>
-                        <Circle X="30" Y="35" Radius="15" FillColor="0.6 0.2 0.2"/>
+                        <Ellipse X="30" Y="35" Radius="15" FillColor="0.6 0.2 0.2"/>
                         <Text X="90" Y="35" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="14" FillColor="0.7 0.7 0.7">INACTIVE</Text>
                     </ButtonIndicatorOff>
                 </Button>

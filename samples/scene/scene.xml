@@ -157,9 +157,9 @@
             <Rectangle Width="900" Height="100" FillColor="0.45 0.6 0.4"/>
 
             <!-- ========== POND ========== -->
-            <Circle X="650" Y="80" Radius="100" FillColor="0.4 0.55 0.7"/>
-            <Circle X="650" Y="80" Radius="85" FillColor="0.45 0.6 0.75"/>
-            <Circle X="650" Y="80" Radius="70" FillColor="0.5 0.65 0.8"/>
+            <Ellipse X="650" Y="80" Radius="100" FillColor="0.4 0.55 0.7"/>
+            <Ellipse X="650" Y="80" Radius="85" FillColor="0.45 0.6 0.75"/>
+            <Ellipse X="650" Y="80" Radius="70" FillColor="0.5 0.65 0.8"/>
 
             <!-- Pond reflection shimmer -->
             <Rectangle X="600" Y="90" Width="40" Height="4" FillColor="0.7 0.8 0.9"/>
@@ -219,83 +219,83 @@
 
                 <!-- ========== CHERRY BLOSSOMS ========== -->
                 <!-- Cluster 1 - right branch -->
-                <Circle X="160" Y="90" Radius="35" FillColor="1 0.85 0.88"/>
-                <Circle X="140" Y="110" Radius="30" FillColor="1 0.82 0.86"/>
-                <Circle X="180" Y="100" Radius="28" FillColor="0.98 0.8 0.85"/>
-                <Circle X="150" Y="75" Radius="25" FillColor="1 0.88 0.9"/>
-                <Circle X="175" Y="120" Radius="22" FillColor="0.95 0.78 0.83"/>
+                <Ellipse X="160" Y="90" Radius="35" FillColor="1 0.85 0.88"/>
+                <Ellipse X="140" Y="110" Radius="30" FillColor="1 0.82 0.86"/>
+                <Ellipse X="180" Y="100" Radius="28" FillColor="0.98 0.8 0.85"/>
+                <Ellipse X="150" Y="75" Radius="25" FillColor="1 0.88 0.9"/>
+                <Ellipse X="175" Y="120" Radius="22" FillColor="0.95 0.78 0.83"/>
 
                 <!-- Cluster 2 - left branch -->
-                <Circle X="-130" Y="110" Radius="32" FillColor="1 0.84 0.87"/>
-                <Circle X="-110" Y="130" Radius="28" FillColor="0.98 0.82 0.86"/>
-                <Circle X="-150" Y="120" Radius="26" FillColor="1 0.86 0.88"/>
-                <Circle X="-125" Y="95" Radius="24" FillColor="0.96 0.8 0.84"/>
-                <Circle X="-145" Y="140" Radius="20" FillColor="1 0.88 0.9"/>
+                <Ellipse X="-130" Y="110" Radius="32" FillColor="1 0.84 0.87"/>
+                <Ellipse X="-110" Y="130" Radius="28" FillColor="0.98 0.82 0.86"/>
+                <Ellipse X="-150" Y="120" Radius="26" FillColor="1 0.86 0.88"/>
+                <Ellipse X="-125" Y="95" Radius="24" FillColor="0.96 0.8 0.84"/>
+                <Ellipse X="-145" Y="140" Radius="20" FillColor="1 0.88 0.9"/>
 
                 <!-- Cluster 3 - top branch -->
-                <Circle X="75" Y="160" Radius="30" FillColor="1 0.85 0.88"/>
-                <Circle X="90" Y="145" Radius="26" FillColor="0.98 0.83 0.86"/>
-                <Circle X="60" Y="175" Radius="24" FillColor="1 0.87 0.89"/>
-                <Circle X="95" Y="170" Radius="22" FillColor="0.97 0.81 0.85"/>
+                <Ellipse X="75" Y="160" Radius="30" FillColor="1 0.85 0.88"/>
+                <Ellipse X="90" Y="145" Radius="26" FillColor="0.98 0.83 0.86"/>
+                <Ellipse X="60" Y="175" Radius="24" FillColor="1 0.87 0.89"/>
+                <Ellipse X="95" Y="170" Radius="22" FillColor="0.97 0.81 0.85"/>
 
                 <!-- Cluster 4 - far right sub-branch -->
-                <Circle X="185" Y="125" Radius="25" FillColor="1 0.86 0.88"/>
-                <Circle X="200" Y="115" Radius="22" FillColor="0.98 0.84 0.87"/>
-                <Circle X="175" Y="140" Radius="20" FillColor="1 0.88 0.9"/>
+                <Ellipse X="185" Y="125" Radius="25" FillColor="1 0.86 0.88"/>
+                <Ellipse X="200" Y="115" Radius="22" FillColor="0.98 0.84 0.87"/>
+                <Ellipse X="175" Y="140" Radius="20" FillColor="1 0.88 0.9"/>
 
                 <!-- Cluster 5 - far left sub-branch -->
-                <Circle X="-160" Y="135" Radius="24" FillColor="1 0.85 0.87"/>
-                <Circle X="-175" Y="125" Radius="20" FillColor="0.97 0.83 0.86"/>
-                <Circle X="-150" Y="150" Radius="18" FillColor="1 0.87 0.89"/>
+                <Ellipse X="-160" Y="135" Radius="24" FillColor="1 0.85 0.87"/>
+                <Ellipse X="-175" Y="125" Radius="20" FillColor="0.97 0.83 0.86"/>
+                <Ellipse X="-150" Y="150" Radius="18" FillColor="1 0.87 0.89"/>
 
                 <!-- Small accent blossoms -->
-                <Circle X="120" Y="65" Radius="15" FillColor="1 0.9 0.92"/>
-                <Circle X="-90" Y="85" Radius="14" FillColor="1 0.89 0.91"/>
-                <Circle X="50" Y="130" Radius="16" FillColor="0.98 0.87 0.9"/>
-                <Circle X="-100" Y="150" Radius="13" FillColor="1 0.9 0.91"/>
+                <Ellipse X="120" Y="65" Radius="15" FillColor="1 0.9 0.92"/>
+                <Ellipse X="-90" Y="85" Radius="14" FillColor="1 0.89 0.91"/>
+                <Ellipse X="50" Y="130" Radius="16" FillColor="0.98 0.87 0.9"/>
+                <Ellipse X="-100" Y="150" Radius="13" FillColor="1 0.9 0.91"/>
             </Container>
 
             <!-- ========== FALLING PETALS (animated) ========== -->
-            <Circle X="350" Y="@PETAL1_Y" Radius="4" FillColor="1 0.88 0.9"/>
-            <Circle X="420" Y="@PETAL2_Y" Radius="3" FillColor="1 0.85 0.88"/>
-            <Circle X="280" Y="@PETAL3_Y" Radius="4" FillColor="0.98 0.86 0.89"/>
-            <Circle X="500" Y="@PETAL4_Y" Radius="3" FillColor="1 0.87 0.9"/>
-            <Circle X="380" Y="@PETAL5_Y" Radius="3" FillColor="0.97 0.84 0.87"/>
-            <Circle X="620" Y="@PETAL6_Y" Radius="4" FillColor="1 0.89 0.91"/>
-            <Circle X="450" Y="@PETAL7_Y" Radius="3" FillColor="1 0.86 0.89"/>
-            <Circle X="250" Y="@PETAL8_Y" Radius="3" FillColor="0.98 0.85 0.88"/>
-            <Circle X="700" Y="@PETAL9_Y" Radius="4" FillColor="1 0.88 0.9"/>
-            <Circle X="180" Y="@PETAL10_Y" Radius="3" FillColor="1 0.87 0.89"/>
-            <Circle X="520" Y="@PETAL11_Y" Radius="4" FillColor="0.98 0.86 0.89"/>
-            <Circle X="320" Y="@PETAL12_Y" Radius="3" FillColor="1 0.85 0.88"/>
-            <Circle X="750" Y="@PETAL13_Y" Radius="3" FillColor="1 0.88 0.9"/>
-            <Circle X="580" Y="@PETAL14_Y" Radius="4" FillColor="0.97 0.84 0.87"/>
-            <Circle X="400" Y="@PETAL15_Y" Radius="3" FillColor="1 0.89 0.91"/>
+            <Ellipse X="350" Y="@PETAL1_Y" Radius="4" FillColor="1 0.88 0.9"/>
+            <Ellipse X="420" Y="@PETAL2_Y" Radius="3" FillColor="1 0.85 0.88"/>
+            <Ellipse X="280" Y="@PETAL3_Y" Radius="4" FillColor="0.98 0.86 0.89"/>
+            <Ellipse X="500" Y="@PETAL4_Y" Radius="3" FillColor="1 0.87 0.9"/>
+            <Ellipse X="380" Y="@PETAL5_Y" Radius="3" FillColor="0.97 0.84 0.87"/>
+            <Ellipse X="620" Y="@PETAL6_Y" Radius="4" FillColor="1 0.89 0.91"/>
+            <Ellipse X="450" Y="@PETAL7_Y" Radius="3" FillColor="1 0.86 0.89"/>
+            <Ellipse X="250" Y="@PETAL8_Y" Radius="3" FillColor="0.98 0.85 0.88"/>
+            <Ellipse X="700" Y="@PETAL9_Y" Radius="4" FillColor="1 0.88 0.9"/>
+            <Ellipse X="180" Y="@PETAL10_Y" Radius="3" FillColor="1 0.87 0.89"/>
+            <Ellipse X="520" Y="@PETAL11_Y" Radius="4" FillColor="0.98 0.86 0.89"/>
+            <Ellipse X="320" Y="@PETAL12_Y" Radius="3" FillColor="1 0.85 0.88"/>
+            <Ellipse X="750" Y="@PETAL13_Y" Radius="3" FillColor="1 0.88 0.9"/>
+            <Ellipse X="580" Y="@PETAL14_Y" Radius="4" FillColor="0.97 0.84 0.87"/>
+            <Ellipse X="400" Y="@PETAL15_Y" Radius="3" FillColor="1 0.89 0.91"/>
 
             <!-- ========== SMALL FLOWERS IN GRASS ========== -->
             <!-- Pink flowers -->
-            <Circle X="50" Y="30" Radius="6" FillColor="1 0.7 0.75"/>
-            <Circle X="120" Y="45" Radius="5" FillColor="0.95 0.65 0.7"/>
-            <Circle X="300" Y="25" Radius="6" FillColor="1 0.72 0.77"/>
-            <Circle X="380" Y="50" Radius="5" FillColor="0.98 0.68 0.73"/>
-            <Circle X="480" Y="35" Radius="6" FillColor="1 0.7 0.75"/>
+            <Ellipse X="50" Y="30" Radius="6" FillColor="1 0.7 0.75"/>
+            <Ellipse X="120" Y="45" Radius="5" FillColor="0.95 0.65 0.7"/>
+            <Ellipse X="300" Y="25" Radius="6" FillColor="1 0.72 0.77"/>
+            <Ellipse X="380" Y="50" Radius="5" FillColor="0.98 0.68 0.73"/>
+            <Ellipse X="480" Y="35" Radius="6" FillColor="1 0.7 0.75"/>
 
             <!-- White flowers -->
-            <Circle X="80" Y="55" Radius="4" FillColor="1 1 0.95"/>
-            <Circle X="220" Y="40" Radius="5" FillColor="1 1 0.97"/>
-            <Circle X="420" Y="30" Radius="4" FillColor="0.98 0.98 0.95"/>
-            <Circle X="550" Y="55" Radius="5" FillColor="1 1 0.96"/>
+            <Ellipse X="80" Y="55" Radius="4" FillColor="1 1 0.95"/>
+            <Ellipse X="220" Y="40" Radius="5" FillColor="1 1 0.97"/>
+            <Ellipse X="420" Y="30" Radius="4" FillColor="0.98 0.98 0.95"/>
+            <Ellipse X="550" Y="55" Radius="5" FillColor="1 1 0.96"/>
 
             <!-- ========== STONES BY POND ========== -->
-            <Circle X="550" Y="45" Radius="15" FillColor="0.5 0.48 0.45"/>
-            <Circle X="570" Y="35" Radius="12" FillColor="0.55 0.52 0.48"/>
-            <Circle X="540" Y="30" Radius="10" FillColor="0.52 0.5 0.46"/>
-            <Circle X="750" Y="50" Radius="14" FillColor="0.48 0.46 0.43"/>
-            <Circle X="770" Y="40" Radius="11" FillColor="0.53 0.5 0.47"/>
+            <Ellipse X="550" Y="45" Radius="15" FillColor="0.5 0.48 0.45"/>
+            <Ellipse X="570" Y="35" Radius="12" FillColor="0.55 0.52 0.48"/>
+            <Ellipse X="540" Y="30" Radius="10" FillColor="0.52 0.5 0.46"/>
+            <Ellipse X="750" Y="50" Radius="14" FillColor="0.48 0.46 0.43"/>
+            <Ellipse X="770" Y="40" Radius="11" FillColor="0.53 0.5 0.47"/>
 
             <!-- ========== SUN/MOON ========== -->
-            <Circle X="780" Y="600" Radius="50" FillColor="1 0.95 0.85"/>
-            <Circle X="780" Y="600" Radius="45" FillColor="1 0.98 0.9"/>
+            <Ellipse X="780" Y="600" Radius="50" FillColor="1 0.95 0.85"/>
+            <Ellipse X="780" Y="600" Radius="45" FillColor="1 0.98 0.9"/>
 
         </Panel>
     </Window>

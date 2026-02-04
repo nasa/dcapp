@@ -279,17 +279,17 @@
             <Button Type="#_button_toggle_" X="550" Y="75" Width="50" Height="50" Variable="PowerLevel" On="100" Off="0"
                 LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <ButtonIndicatorOn>
-                    <Circle Radius="25" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                    <Ellipse Radius="25" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
                         FillColor="0.1 0.6 0.2" LineColor="0.2 0.8 0.3" LineWidth="3"/>
-                    <Circle Radius="18" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                    <Ellipse Radius="18" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
                         FillColor="0.15 0.7 0.25"/>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                         Size="20" FillColor="1 1 1">I</Text>
                 </ButtonIndicatorOn>
                 <ButtonIndicatorOff>
-                    <Circle Radius="25" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                    <Ellipse Radius="25" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
                         FillColor="0.5 0.15 0.1" LineColor="0.7 0.25 0.15" LineWidth="3"/>
-                    <Circle Radius="18" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                    <Ellipse Radius="18" ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
                         FillColor="0.6 0.2 0.15"/>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                         Size="20" FillColor="1 1 1">O</Text>

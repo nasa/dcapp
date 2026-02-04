@@ -233,18 +233,18 @@
             </Line>
 
             <!-- Floating particles (ambient decoration) -->
-            <Circle X="@Particle1X" Y="@Particle1Y" Radius="3" FillColor="0.2 0.6 1 0.3"/>
-            <Circle X="@Particle2X" Y="@Particle2Y" Radius="2" FillColor="0.6 0.3 0.9 0.4"/>
-            <Circle X="@Particle3X" Y="@Particle3Y" Radius="4" FillColor="0.2 0.9 0.9 0.25"/>
-            <Circle X="@Particle4X" Y="@Particle4Y" Radius="2" FillColor="0.9 0.3 0.6 0.35"/>
-            <Circle X="@Particle5X" Y="@Particle5Y" Radius="3" FillColor="0.3 0.8 0.5 0.3"/>
-            <Circle X="@Particle6X" Y="@Particle6Y" Radius="2" FillColor="1 0.5 0.2 0.35"/>
-            <Circle X="@Particle7X" Y="@Particle7Y" Radius="4" FillColor="0.2 0.6 1 0.25"/>
-            <Circle X="@Particle8X" Y="@Particle8Y" Radius="2" FillColor="0.6 0.3 0.9 0.3"/>
-            <Circle X="@Particle9X" Y="@Particle9Y" Radius="3" FillColor="0.9 0.3 0.6 0.28"/>
-            <Circle X="@Particle10X" Y="@Particle10Y" Radius="2" FillColor="0.2 0.9 0.9 0.35"/>
-            <Circle X="@Particle11X" Y="@Particle11Y" Radius="3" FillColor="0.8 0.6 0.2 0.3"/>
-            <Circle X="@Particle12X" Y="@Particle12Y" Radius="2" FillColor="0.5 0.3 0.9 0.32"/>
+            <Ellipse X="@Particle1X" Y="@Particle1Y" Radius="3" FillColor="0.2 0.6 1 0.3"/>
+            <Ellipse X="@Particle2X" Y="@Particle2Y" Radius="2" FillColor="0.6 0.3 0.9 0.4"/>
+            <Ellipse X="@Particle3X" Y="@Particle3Y" Radius="4" FillColor="0.2 0.9 0.9 0.25"/>
+            <Ellipse X="@Particle4X" Y="@Particle4Y" Radius="2" FillColor="0.9 0.3 0.6 0.35"/>
+            <Ellipse X="@Particle5X" Y="@Particle5Y" Radius="3" FillColor="0.3 0.8 0.5 0.3"/>
+            <Ellipse X="@Particle6X" Y="@Particle6Y" Radius="2" FillColor="1 0.5 0.2 0.35"/>
+            <Ellipse X="@Particle7X" Y="@Particle7Y" Radius="4" FillColor="0.2 0.6 1 0.25"/>
+            <Ellipse X="@Particle8X" Y="@Particle8Y" Radius="2" FillColor="0.6 0.3 0.9 0.3"/>
+            <Ellipse X="@Particle9X" Y="@Particle9Y" Radius="3" FillColor="0.9 0.3 0.6 0.28"/>
+            <Ellipse X="@Particle10X" Y="@Particle10Y" Radius="2" FillColor="0.2 0.9 0.9 0.35"/>
+            <Ellipse X="@Particle11X" Y="@Particle11Y" Radius="3" FillColor="0.8 0.6 0.2 0.3"/>
+            <Ellipse X="@Particle12X" Y="@Particle12Y" Radius="2" FillColor="0.5 0.3 0.9 0.32"/>
 
             <!-- Corner accents -->
             <Line LineColor="#AccentBlue" LineWidth="2">
@@ -330,15 +330,15 @@
                 </Polygon>
 
                 <!-- Central dot -->
-                <Circle X="250" Y="150" Radius="8" FillColor="#AccentBlue"/>
-                <Circle X="250" Y="150" Radius="4" FillColor="#TextWhite"/>
+                <Ellipse X="250" Y="150" Radius="8" FillColor="#AccentBlue"/>
+                <Ellipse X="250" Y="150" Radius="4" FillColor="#TextWhite"/>
 
                 <!-- Orbiting dots -->
-                <Circle X="250" Y="50" Radius="6" FillColor="#AccentPink" LineColor="0 0 0" LineWidth="1"
+                <Ellipse X="250" Y="50" Radius="6" FillColor="#AccentPink" LineColor="0 0 0" LineWidth="1"
                     Rotation="@OrbitAngle" PivotX="250" PivotY="150"/>
-                <Circle X="150" Y="150" Radius="5" FillColor="#AccentCyan" LineColor="0 0 0" LineWidth="1"
+                <Ellipse X="150" Y="150" Radius="5" FillColor="#AccentCyan" LineColor="0 0 0" LineWidth="1"
                     Rotation="@OrbitAngle" PivotX="250" PivotY="150"/>
-                <Circle X="320" Y="200" Radius="4" FillColor="#AccentOrange" LineColor="0 0 0" LineWidth="1"
+                <Ellipse X="320" Y="200" Radius="4" FillColor="#AccentOrange" LineColor="0 0 0" LineWidth="1"
                     Rotation="@OrbitAngle" PivotX="250" PivotY="150"/>
             </Container>
 
@@ -352,7 +352,7 @@
 
                 <!-- Mini showcase -->
                 <Rectangle X="30" Y="100" Width="40" Height="30" FillColor="#AccentBlue" LineColor="#AccentCyan" LineWidth="1"/>
-                <Circle X="110" Y="115" Radius="20" FillColor="#AccentPurple"/>
+                <Ellipse X="110" Y="115" Radius="20" FillColor="#AccentPurple"/>
                 <Polygon FillColor="#AccentPink">
                     <Vertex X="160" Y="135"/>
                     <Vertex X="180" Y="95"/>
@@ -378,7 +378,7 @@
 
                 <!-- Animated elements -->
                 <Arc X="70" Y="100" Radius="35" Angle="@PulseAngle" Rotation="0" FillColor="#AccentCyan" Pie="true"/>
-                <Circle X="70" Y="100" Radius="20" FillColor="#BgMedium"/>
+                <Ellipse X="70" Y="100" Radius="20" FillColor="#BgMedium"/>
 
                 <Rectangle X="130" Y="60" Width="60" Height="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                     Rotation="@Ring1Angle" FillColor="#AccentPurple" LineColor="#AccentPink" LineWidth="2"/>
@@ -476,10 +476,10 @@
                 <!-- Donut stencil demo -->
                 <Stencil>
                     <StencilAdd>
-                        <Circle X="70" Y="100" Radius="40" FillColor="1 1 1"/>
+                        <Ellipse X="70" Y="100" Radius="40" FillColor="1 1 1"/>
                     </StencilAdd>
                     <StencilRemove>
-                        <Circle X="70" Y="100" Radius="20" FillColor="1 1 1"/>
+                        <Ellipse X="70" Y="100" Radius="20" FillColor="1 1 1"/>
                     </StencilRemove>
                     <StencilDraw>
                         <Rectangle X="20" Y="140" Width="100" Height="20" FillColor="#AccentPink"/>
@@ -543,7 +543,7 @@
             <Text X="1100" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="#AccentBlue">v1.0</Text>
 
             <!-- Animated status indicator -->
-            <Circle X="600" Y="25" Radius="4" FillColor="0.2 0.8 0.4"/>
+            <Ellipse X="600" Y="25" Radius="4" FillColor="0.2 0.8 0.4"/>
             <Arc X="600" Y="25" Radius="8" Angle="@PulseAngle" Rotation="0" LineColor="0.2 0.8 0.4 0.5" LineWidth="1"/>
             <Text X="615" Y="25" LocalAlignY="#_align_middle_" Size="10" FillColor="#TextDim">Running</Text>
 

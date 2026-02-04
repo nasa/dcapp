@@ -216,15 +216,15 @@ CORRECT (remove ParentAlignX from Default if using absolute X positions):
     <Button X="50">...</Button>   <!-- Correctly at X=50 -->
 
 --------------------------------------------------------------------------------
-SPECIAL CASE - Circles and Spheres:
+SPECIAL CASE - Arcs, Ellipses, and Spheres:
 --------------------------------------------------------------------------------
 
-Circle and Sphere elements default to LocalAlignX="#_align_center_" and
+Arc, Ellipse, and Sphere elements default to LocalAlignX="#_align_center_" and
 LocalAlignY="#_align_middle_" because their natural anchor point is their
 center. If you need corner-based positioning, explicitly set LocalAlign:
 
-    <Circle X="100" Y="100" Radius="50"
-            LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_"/>
+    <Ellipse X="100" Y="100" Radius="50"
+             LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_"/>
 
 --------------------------------------------------------------------------------
 ALIGNMENT VALUE CONSTANTS:

@@ -116,21 +116,21 @@
                 FillColor="0.1 0.1 0.1" LineColor="0.3 0.3 0.3" LineWidth="2"/>
 
             <!-- Green status light (slow) -->
-            <Circle X="660" Y="380" Radius="12" FillColor="0.1 0.2 0.1" LineColor="0.2 0.3 0.2" LineWidth="1"/>
+            <Ellipse X="660" Y="380" Radius="12" FillColor="0.1 0.2 0.1" LineColor="0.2 0.3 0.2" LineWidth="1"/>
             <Blink Frequency="0.5" DutyCycle="0.5" Duration="0" Variable="StatusTrigger">
-                <Circle X="660" Y="380" Radius="12" FillColor="0 1 0" LineColor="0.5 1 0.5" LineWidth="1"/>
+                <Ellipse X="660" Y="380" Radius="12" FillColor="0 1 0" LineColor="0.5 1 0.5" LineWidth="1"/>
             </Blink>
 
             <!-- Yellow status light (medium) -->
-            <Circle X="700" Y="380" Radius="12" FillColor="0.2 0.15 0.05" LineColor="0.3 0.25 0.1" LineWidth="1"/>
+            <Ellipse X="700" Y="380" Radius="12" FillColor="0.2 0.15 0.05" LineColor="0.3 0.25 0.1" LineWidth="1"/>
             <Blink Frequency="1.5" DutyCycle="0.5" Duration="0" Variable="StatusTrigger">
-                <Circle X="700" Y="380" Radius="12" FillColor="1 0.8 0" LineColor="1 0.9 0.5" LineWidth="1"/>
+                <Ellipse X="700" Y="380" Radius="12" FillColor="1 0.8 0" LineColor="1 0.9 0.5" LineWidth="1"/>
             </Blink>
 
             <!-- Red status light (fast) -->
-            <Circle X="740" Y="380" Radius="12" FillColor="0.2 0.05 0.05" LineColor="0.3 0.1 0.1" LineWidth="1"/>
+            <Ellipse X="740" Y="380" Radius="12" FillColor="0.2 0.05 0.05" LineColor="0.3 0.1 0.1" LineWidth="1"/>
             <Blink Frequency="3" DutyCycle="0.5" Duration="0" Variable="StatusTrigger">
-                <Circle X="740" Y="380" Radius="12" FillColor="1 0 0" LineColor="1 0.5 0.5" LineWidth="1"/>
+                <Ellipse X="740" Y="380" Radius="12" FillColor="1 0 0" LineColor="1 0.5 0.5" LineWidth="1"/>
             </Blink>
 
             <!-- Trigger button -->

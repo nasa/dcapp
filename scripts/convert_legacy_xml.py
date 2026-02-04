@@ -11,6 +11,7 @@ Usage:
 If output.xml is not specified, outputs to stdout.
 """
 
+import copy
 import re
 import sys
 import argparse
@@ -556,13 +557,31 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
 
     # ---- Early tag conversions (before attribute processing) ----
 
-    # Circle with Angle -> Arc conversion (must happen before attribute checks)
-    if tag == 'Circle' and 'Angle' in elem.attrib:
+    # Circle inside Style -> duplicate as both Arc and Ellipse
+    # (can't know which will be used, so provide both style defaults)
+    if tag == 'Circle' and parent_tag == 'Style':
+        # Create Ellipse copy first (preserves FillColor if present)
+        ellipse_elem = copy.deepcopy(elem)
+        ellipse_elem.tag = 'Ellipse'
+        after_elements.append(ellipse_elem)
+        # Convert this Circle to Arc
         elem.tag = 'Arc'
-        tag = 'Arc'  # Update local variable for subsequent checks
-        # Legacy Circle with FillColor draws as pie slice (filled from center)
+        tag = 'Arc'
+        # Remove FillColor from Arc (line-only)
         if 'FillColor' in elem.attrib:
-            elem.set('Pie', 'true')
+            del elem.attrib['FillColor']
+
+    # Circle with Angle -> Arc or Ellipse conversion (must happen before attribute checks)
+    # Arc is line-only (no fill). Ellipse supports fill and pie/wedge shapes.
+    elif tag == 'Circle' and 'Angle' in elem.attrib:
+        if 'FillColor' in elem.attrib:
+            # Has fill color - convert to Ellipse (pie/wedge)
+            elem.tag = 'Ellipse'
+            tag = 'Ellipse'
+        else:
+            # Line only - convert to Arc
+            elem.tag = 'Arc'
+            tag = 'Arc'
 
     # ---- Element-specific attribute conversions ----
 

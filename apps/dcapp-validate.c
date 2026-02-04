@@ -144,7 +144,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -176,7 +175,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -208,7 +206,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -244,7 +241,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -272,7 +268,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -319,7 +314,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -352,7 +346,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -384,7 +377,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -416,7 +408,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -446,7 +437,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -535,7 +525,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -574,8 +563,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
     }
 
     // Shapes that can contain drawable content and mouse events
-    if (parent_type == DC_APP_ELEM_TYPE_CIRCLE ||
-        parent_type == DC_APP_ELEM_TYPE_ELLIPSE ||
+    if (parent_type == DC_APP_ELEM_TYPE_ELLIPSE ||
         parent_type == DC_APP_ELEM_TYPE_IMAGE ||
         parent_type == DC_APP_ELEM_TYPE_PIXELSTREAM ||
         parent_type == DC_APP_ELEM_TYPE_RECTANGLE) {
@@ -583,7 +571,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -621,7 +608,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // drawing elements
             case DC_APP_ELEM_TYPE_CONTAINER:
             case DC_APP_ELEM_TYPE_RECTANGLE:
-            case DC_APP_ELEM_TYPE_CIRCLE:
             case DC_APP_ELEM_TYPE_ELLIPSE:
             case DC_APP_ELEM_TYPE_LINE:
             case DC_APP_ELEM_TYPE_ARC:
@@ -915,11 +901,10 @@ static const char *_valid_attrs_rotation[]          = {"Rotation", "Rotate", NUL
 static const char *_valid_attrs_color[]             = {"FillColor", "LineColor", "BackgroundColor", NULL};
 static const char *_valid_attrs_line[]              = {"LineWidth", NULL};
 
-static const char *_valid_attrs_arc[]            = {"Radius", "Angle", "Segments", "Pie", NULL};
+static const char *_valid_attrs_arc[]            = {"Radius", "Angle", "Segments", "LineColor", NULL};
 static const char *_valid_attrs_blink[]          = {"Variable", "Frequency", "DutyCycle", "Duration", NULL};
 static const char *_valid_attrs_button[]         = {"Type", "Variable", "EnabledVariable", "EnabledOn", "TargetVariable", "TargetOn", "TargetOff", "On", "Off", "IndicatorVariable", "IndicatorOn", NULL};
-static const char *_valid_attrs_circle[]         = {"Radius", "Segments", NULL};
-static const char *_valid_attrs_ellipse[]        = {"RadiusX", "RadiusY", "Segments", NULL};
+static const char *_valid_attrs_ellipse[]        = {"Radius", "RadiusX", "RadiusY", "Segments", "Angle", NULL};
 static const char *_valid_attrs_constant[]       = {"Name", NULL};
 static const char *_valid_attrs_function[]       = {"Name", NULL};
 static const char *_valid_attrs_if[]             = {"Value", "Value1", "Value2", "Operation", "Static", NULL};
@@ -968,7 +953,6 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
-                   _attr_in_list(attr_name, _valid_attrs_color) ||
                    _attr_in_list(attr_name, _valid_attrs_line) ||
                    _attr_in_list(attr_name, _valid_attrs_arc);
 
@@ -993,16 +977,6 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
         case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_ON:
         case DC_APP_ELEM_TYPE_BUTTON_INDICATOR_OFF:
             return true; // No specific attributes, allow common
-
-        case DC_APP_ELEM_TYPE_CIRCLE:
-            return _attr_in_list(attr_name, _valid_attrs_position) ||
-                   _attr_in_list(attr_name, _valid_attrs_negate) ||
-                   _attr_in_list(attr_name, _valid_attrs_align) ||
-                   _attr_in_list(attr_name, _valid_attrs_pivot) ||
-                   _attr_in_list(attr_name, _valid_attrs_rotation) ||
-                   _attr_in_list(attr_name, _valid_attrs_color) ||
-                   _attr_in_list(attr_name, _valid_attrs_line) ||
-                   _attr_in_list(attr_name, _valid_attrs_circle);
 
         case DC_APP_ELEM_TYPE_CONSTANT:
             return _attr_in_list(attr_name, _valid_attrs_constant);
