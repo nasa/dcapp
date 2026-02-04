@@ -209,9 +209,15 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup) {
             char     clean_name[DC_VALUE_STRING_BUFFER_SIZE];
             if (raw_name) {
                 strncpy(clean_name, (const char *)raw_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                clean_name[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
                 xmlFree(raw_name);
+                dc_utils_trim_whitespace_inplace(clean_name);
+                if (clean_name[0] == '\0') {
+                    fprintf(stderr, "DCAPP _process_node(): Empty variable name in <Variable> definition\n");
+                }
             } else {
                 fprintf(stderr, "DCAPP _process_node(): Node content missing in <Variable> definition\n");
+                clean_name[0] = '\0';
             }
 
             // type
@@ -219,9 +225,11 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup) {
             char     clean_type[DC_VALUE_STRING_BUFFER_SIZE];
             if (raw_type) {
                 strncpy(clean_type, (const char *)raw_type, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                clean_type[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
                 xmlFree(raw_type);
             } else {
                 fprintf(stderr, "DCAPP _process_node(): Attribute Type missing in <Variable> definition\n");
+                clean_type[0] = '\0';
             }
 
             // don't care about initial value here

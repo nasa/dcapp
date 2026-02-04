@@ -1581,9 +1581,12 @@ static _NodeIndex _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr
     char     dcapp_var[DC_VALUE_STRING_BUFFER_SIZE];
     if (raw_dcapp_var) {
         strncpy(dcapp_var, (const char *)raw_dcapp_var, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dcapp_var[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
         xmlFree(raw_dcapp_var);
         dc_utils_trim_whitespace_inplace(dcapp_var);
-        dcapp_var[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        if (dcapp_var[0] == '\0') {
+            fprintf(stderr, "DCApp _process_xml_node: Empty dcapp Var for EdgeVariable\n");
+        }
     } else {
         fprintf(stderr, "DCApp _process_xml_node: Missing dcapp Var for EdgeVariable\n");
         dcapp_var[0] = '\0';
@@ -3054,9 +3057,12 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
     if (raw_operand) {
         char operand[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(operand, (const char *)raw_operand, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        operand[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
         xmlFree(raw_operand);
         dc_utils_trim_whitespace_inplace(operand);
-        operand[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        if (operand[0] == '\0') {
+            fprintf(stderr, "DCAPP _process_xml_node: Empty content in <Set> element\n");
+        }
         dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, operand);
     } else {
         fprintf(stderr, "DCAPP _process_xml_node: Missing Node content in <Set> element\n");
@@ -3715,8 +3721,8 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     if (raw_text) {
         char cleaned_text[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(cleaned_text, (const char *)raw_text, DC_VALUE_STRING_BUFFER_SIZE - 1);
-        xmlFree(raw_text);
         cleaned_text[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        xmlFree(raw_text);
         dc_utils_trim_whitespace_inplace(cleaned_text);
 
         static char *sb_curr_filler = NULL;
@@ -4137,11 +4143,15 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
     char     dcapp_var[DC_VALUE_STRING_BUFFER_SIZE];
     if (raw_dcapp_var) {
         strncpy(dcapp_var, (const char *)raw_dcapp_var, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        dcapp_var[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
         xmlFree(raw_dcapp_var);
         dc_utils_trim_whitespace_inplace(dcapp_var);
-        dcapp_var[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        if (dcapp_var[0] == '\0') {
+            fprintf(stderr, "DCApp _process_xml_node: Empty dcapp Var path for TrickVariable\n");
+        }
     } else {
         fprintf(stderr, "DCApp _process_xml_node: Missing dcapp Var path for TrickVariable\n");
+        dcapp_var[0] = '\0';
     }
 
     // units
@@ -4220,11 +4230,15 @@ static _NodeIndex _process_xml_node_variable(_AppData *app_data, xmlNodePtr xml_
     char     name[DC_VALUE_STRING_BUFFER_SIZE];
     if (raw_name) {
         strncpy(name, (const char *)raw_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        name[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
         xmlFree(raw_name);
         dc_utils_trim_whitespace_inplace(name);
-        name[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        if (name[0] == '\0') {
+            fprintf(stderr, "DCApp _process_xml_node: Empty variable name in <Variable> definition\n");
+        }
     } else {
         fprintf(stderr, "DCApp _process_xml_node: Non-existent node content in <Variable> definition\n");
+        name[0] = '\0';
     }
 
     xmlChar    *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");
