@@ -571,11 +571,11 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
         if 'FillColor' in elem.attrib:
             del elem.attrib['FillColor']
 
-    # Circle with Angle -> Arc or Ellipse conversion (must happen before attribute checks)
+    # Circle -> Arc or Ellipse conversion (must happen before attribute checks)
     # Arc is line-only (no fill). Ellipse supports fill and pie/wedge shapes.
-    elif tag == 'Circle' and 'Angle' in elem.attrib:
+    elif tag == 'Circle':
         if 'FillColor' in elem.attrib:
-            # Has fill color - convert to Ellipse (pie/wedge)
+            # Has fill color - convert to Ellipse
             elem.tag = 'Ellipse'
             tag = 'Ellipse'
         else:
