@@ -1,0 +1,191 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Window X="30" Y="30" Width="1100" Height="900">
+        <Panel VirtualWidth="1100" VirtualHeight="900" BackgroundColor="0.06 0.06 0.1">
+
+            <!-- Title at top -->
+            <Text X="550" Y="870" Size="28" FillColor="1 1 1" LocalAlignX="#_align_center_">Arc &amp; Ellipse Primitives</Text>
+
+            <!-- ================================================================== -->
+            <!-- ELLIPSE SECTION (upper half: Y=450 to Y=840) -->
+            <!-- ================================================================== -->
+            <Rectangle X="20" Y="450" Width="1060" Height="390" LineColor="0.3 0.3 0.5" LineWidth="1"/>
+            <Text X="550" Y="820" Size="18" FillColor="0.6 0.8 1" LocalAlignX="#_align_center_">Ellipse (supports fill, outline, and pie/wedge shapes)</Text>
+
+            <!-- Row 1: RadiusX/RadiusY (Y ~750, labels below at Y~680) -->
+            <Text X="120" Y="680" Size="13" FillColor="0.7 0.7 0.7" LocalAlignX="#_align_center_">RadiusX / RadiusY</Text>
+
+            <Ellipse X="70" Y="750" RadiusX="50" RadiusY="50" FillColor="0.2 0.4 0.6"/>
+            <Text X="70" Y="690" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">50/50</Text>
+
+            <Ellipse X="190" Y="750" RadiusX="60" RadiusY="30" FillColor="0.25 0.45 0.6"/>
+            <Text X="190" Y="690" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">60/30</Text>
+
+            <Ellipse X="320" Y="750" RadiusX="30" RadiusY="60" FillColor="0.3 0.5 0.6"/>
+            <Text X="320" Y="680" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">30/60</Text>
+
+            <!-- Row 1: Fill + Outline combinations -->
+            <Text X="520" Y="680" Size="13" FillColor="0.7 0.7 0.7" LocalAlignX="#_align_center_">Fill + Outline</Text>
+
+            <Ellipse X="450" Y="750" RadiusX="45" RadiusY="45" FillColor="0.6 0.2 0.4"/>
+            <Text X="450" Y="690" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">Fill only</Text>
+
+            <Ellipse X="560" Y="750" RadiusX="45" RadiusY="45" LineColor="0.8 0.3 0.5" LineWidth="3"/>
+            <Text X="560" Y="690" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">Outline only</Text>
+
+            <Ellipse X="680" Y="750" RadiusX="45" RadiusY="45" FillColor="0.4 0.15 0.3" LineColor="0.9 0.4 0.6" LineWidth="3"/>
+            <Text X="680" Y="690" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">Both</Text>
+
+            <!-- Row 1: Line Width variations -->
+            <Text X="900" Y="680" Size="13" FillColor="0.7 0.7 0.7" LocalAlignX="#_align_center_">LineWidth</Text>
+
+            <Ellipse X="820" Y="750" RadiusX="40" RadiusY="40" LineColor="0.7 0.7 0.2" LineWidth="1"/>
+            <Text X="820" Y="695" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">1px</Text>
+
+            <Ellipse X="910" Y="750" RadiusX="40" RadiusY="40" LineColor="0.75 0.75 0.25" LineWidth="4"/>
+            <Text X="910" Y="695" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">4px</Text>
+
+            <Ellipse X="1010" Y="750" RadiusX="40" RadiusY="40" LineColor="0.8 0.8 0.3" LineWidth="8"/>
+            <Text X="1010" Y="695" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">8px</Text>
+
+            <!-- Row 2: Pie/Wedge with Angle (Y ~560, labels below at Y~480) -->
+            <Text X="150" Y="480" Size="13" FillColor="0.7 0.7 0.7" LocalAlignX="#_align_center_">Angle (pie/wedge)</Text>
+
+            <Ellipse X="70" Y="560" RadiusX="45" RadiusY="45" Angle="90" FillColor="0.2 0.5 0.3" LineColor="0.3 0.7 0.4" LineWidth="2"/>
+            <Text X="70" Y="500" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">90°</Text>
+
+            <Ellipse X="180" Y="560" RadiusX="45" RadiusY="45" Angle="180" FillColor="0.25 0.5 0.35" LineColor="0.35 0.7 0.45" LineWidth="2"/>
+            <Text X="180" Y="500" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">180°</Text>
+
+            <Ellipse X="290" Y="560" RadiusX="45" RadiusY="45" Angle="270" FillColor="0.3 0.5 0.4" LineColor="0.4 0.7 0.5" LineWidth="2"/>
+            <Text X="290" Y="500" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">270°</Text>
+
+            <!-- Row 2: Rotation of wedges -->
+            <Text X="480" Y="480" Size="13" FillColor="0.7 0.7 0.7" LocalAlignX="#_align_center_">Rotation (wedge start)</Text>
+
+            <Ellipse X="400" Y="560" RadiusX="40" RadiusY="40" Angle="90" Rotation="0" FillColor="0.5 0.3 0.2"/>
+            <Text X="400" Y="505" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">0°</Text>
+
+            <Ellipse X="490" Y="560" RadiusX="40" RadiusY="40" Angle="90" Rotation="90" FillColor="0.55 0.35 0.25"/>
+            <Text X="490" Y="505" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">90°</Text>
+
+            <Ellipse X="580" Y="560" RadiusX="40" RadiusY="40" Angle="90" Rotation="180" FillColor="0.6 0.4 0.3"/>
+            <Text X="580" Y="505" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">180°</Text>
+
+            <Ellipse X="670" Y="560" RadiusX="40" RadiusY="40" Angle="90" Rotation="270" FillColor="0.65 0.45 0.35"/>
+            <Text X="670" Y="505" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">270°</Text>
+
+            <!-- Row 2: Elliptical wedges -->
+            <Text X="900" Y="480" Size="13" FillColor="0.7 0.7 0.7" LocalAlignX="#_align_center_">Elliptical Wedges</Text>
+
+            <Ellipse X="820" Y="560" RadiusX="55" RadiusY="35" Angle="120" Rotation="0" FillColor="0.4 0.2 0.5" LineColor="0.6 0.3 0.7" LineWidth="2"/>
+            <Ellipse X="940" Y="560" RadiusX="35" RadiusY="55" Angle="120" Rotation="90" FillColor="0.45 0.25 0.55" LineColor="0.65 0.35 0.75" LineWidth="2"/>
+            <Ellipse X="1040" Y="560" RadiusX="50" RadiusY="30" Angle="240" Rotation="45" FillColor="0.5 0.3 0.6" LineColor="0.7 0.4 0.8" LineWidth="2"/>
+
+            <!-- ================================================================== -->
+            <!-- ARC SECTION (lower half: Y=40 to Y=430) -->
+            <!-- ================================================================== -->
+            <Rectangle X="20" Y="40" Width="1060" Height="390" LineColor="0.5 0.3 0.3" LineWidth="1"/>
+            <Text X="550" Y="410" Size="18" FillColor="1 0.8 0.6" LocalAlignX="#_align_center_">Arc (line-only, no fill)</Text>
+
+            <!-- Row 1: Angle variations (Y ~330, labels below at Y~260) -->
+            <Text X="150" Y="260" Size="13" FillColor="0.7 0.7 0.7" LocalAlignX="#_align_center_">Angle (span)</Text>
+
+            <Arc X="60" Y="330" Radius="40" Angle="45" LineColor="1 0.5 0.3" LineWidth="3"/>
+            <Text X="60" Y="275" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">45°</Text>
+
+            <Arc X="140" Y="330" Radius="40" Angle="90" LineColor="1 0.55 0.35" LineWidth="3"/>
+            <Text X="140" Y="275" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">90°</Text>
+
+            <Arc X="230" Y="330" Radius="40" Angle="180" LineColor="1 0.6 0.4" LineWidth="3"/>
+            <Text X="230" Y="275" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">180°</Text>
+
+            <Arc X="330" Y="330" Radius="40" Angle="270" LineColor="1 0.65 0.45" LineWidth="3"/>
+            <Text X="330" Y="275" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">270°</Text>
+
+            <Arc X="430" Y="330" Radius="40" Angle="360" LineColor="1 0.7 0.5" LineWidth="3"/>
+            <Text X="430" Y="275" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">360°</Text>
+
+            <!-- Row 1: Rotation -->
+            <Text X="580" Y="260" Size="13" FillColor="0.7 0.7 0.7" LocalAlignX="#_align_center_">Rotation</Text>
+
+            <Arc X="520" Y="330" Radius="35" Angle="90" Rotation="0" LineColor="0.3 0.7 0.9" LineWidth="3"/>
+            <Text X="520" Y="280" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">0°</Text>
+
+            <Arc X="600" Y="330" Radius="35" Angle="90" Rotation="90" LineColor="0.35 0.75 0.85" LineWidth="3"/>
+            <Text X="600" Y="280" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">90°</Text>
+
+            <Arc X="680" Y="330" Radius="35" Angle="90" Rotation="180" LineColor="0.4 0.8 0.8" LineWidth="3"/>
+            <Text X="680" Y="280" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">180°</Text>
+
+            <!-- Row 1: LineWidth -->
+            <Text X="870" Y="260" Size="13" FillColor="0.7 0.7 0.7" LocalAlignX="#_align_center_">LineWidth</Text>
+
+            <Arc X="790" Y="330" Radius="35" Angle="180" LineColor="0.8 0.4 0.8" LineWidth="1"/>
+            <Text X="790" Y="280" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">1px</Text>
+
+            <Arc X="880" Y="330" Radius="35" Angle="180" LineColor="0.85 0.45 0.85" LineWidth="5"/>
+            <Text X="880" Y="280" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">5px</Text>
+
+            <Arc X="980" Y="330" Radius="35" Angle="180" LineColor="0.9 0.5 0.9" LineWidth="10"/>
+            <Text X="980" Y="280" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">10px</Text>
+
+            <!-- Row 2: Radius + Segments (Y ~150, labels below at Y~80) -->
+            <Text X="150" Y="80" Size="13" FillColor="0.7 0.7 0.7" LocalAlignX="#_align_center_">Radius + Segments</Text>
+
+            <Arc X="60" Y="150" Radius="20" Angle="270" LineColor="0.3 0.8 0.5" LineWidth="2"/>
+            <Text X="60" Y="115" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">r=20</Text>
+
+            <Arc X="130" Y="150" Radius="35" Angle="270" LineColor="0.35 0.8 0.55" LineWidth="2"/>
+            <Text X="130" Y="100" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">r=35</Text>
+
+            <Arc X="220" Y="150" Radius="50" Angle="270" LineColor="0.4 0.8 0.6" LineWidth="2"/>
+            <Text X="220" Y="85" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">r=50</Text>
+
+            <Arc X="330" Y="150" Radius="40" Angle="270" Segments="4" LineColor="0.5 0.7 0.3" LineWidth="2"/>
+            <Text X="330" Y="95" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">seg=4</Text>
+
+            <Arc X="420" Y="150" Radius="40" Angle="270" Segments="8" LineColor="0.55 0.75 0.35" LineWidth="2"/>
+            <Text X="420" Y="95" Size="10" FillColor="0.5 0.5 0.5" LocalAlignX="#_align_center_">seg=8</Text>
+
+            <!-- Row 2: Practical examples -->
+            <Text X="750" Y="80" Size="13" FillColor="0.7 0.7 0.7" LocalAlignX="#_align_center_">Practical Examples</Text>
+
+            <!-- Gauge -->
+            <Arc X="530" Y="160" Radius="35" Angle="180" Rotation="90" LineColor="0.2 0.2 0.2" LineWidth="8"/>
+            <Arc X="530" Y="160" Radius="35" Angle="130" Rotation="90" LineColor="0.2 0.9 0.4" LineWidth="8"/>
+            <Text X="530" Y="110" Size="9" FillColor="0.4 0.4 0.4" LocalAlignX="#_align_center_">Gauge</Text>
+
+            <!-- Progress ring -->
+            <Arc X="620" Y="155" Radius="32" Angle="360" LineColor="0.15 0.15 0.15" LineWidth="6"/>
+            <Arc X="620" Y="155" Radius="32" Angle="270" Rotation="0" LineColor="0.3 0.6 1" LineWidth="6"/>
+            <Text X="620" Y="110" Size="9" FillColor="0.4 0.4 0.4" LocalAlignX="#_align_center_">Progress</Text>
+
+            <!-- Multi-zone meter -->
+            <Arc X="720" Y="160" Radius="35" Angle="60" Rotation="90" LineColor="0.2 0.8 0.2" LineWidth="5"/>
+            <Arc X="720" Y="160" Radius="35" Angle="60" Rotation="150" LineColor="0.9 0.9 0.2" LineWidth="5"/>
+            <Arc X="720" Y="160" Radius="35" Angle="60" Rotation="210" LineColor="0.9 0.2 0.2" LineWidth="5"/>
+            <Text X="720" Y="110" Size="9" FillColor="0.4 0.4 0.4" LocalAlignX="#_align_center_">Meter</Text>
+
+            <!-- Concentric -->
+            <Arc X="830" Y="155" Radius="35" Angle="240" Rotation="0" LineColor="1 0.3 0.3" LineWidth="3"/>
+            <Arc X="830" Y="155" Radius="26" Angle="240" Rotation="60" LineColor="0.3 1 0.3" LineWidth="3"/>
+            <Arc X="830" Y="155" Radius="17" Angle="240" Rotation="120" LineColor="0.3 0.3 1" LineWidth="3"/>
+            <Text X="830" Y="105" Size="9" FillColor="0.4 0.4 0.4" LocalAlignX="#_align_center_">Concentric</Text>
+
+            <!-- Spinner -->
+            <Arc X="940" Y="155" Radius="30" Angle="50" Rotation="0" LineColor="0.95 0.95 0.95" LineWidth="4"/>
+            <Arc X="940" Y="155" Radius="30" Angle="50" Rotation="90" LineColor="0.65 0.65 0.65" LineWidth="4"/>
+            <Arc X="940" Y="155" Radius="30" Angle="50" Rotation="180" LineColor="0.4 0.4 0.4" LineWidth="4"/>
+            <Arc X="940" Y="155" Radius="30" Angle="50" Rotation="270" LineColor="0.2 0.2 0.2" LineWidth="4"/>
+            <Text X="940" Y="110" Size="9" FillColor="0.4 0.4 0.4" LocalAlignX="#_align_center_">Spinner</Text>
+
+            <!-- Signal -->
+            <Arc X="1040" Y="140" Radius="15" Angle="90" Rotation="-45" LineColor="0.2 0.9 0.5" LineWidth="2"/>
+            <Arc X="1040" Y="140" Radius="25" Angle="90" Rotation="-45" LineColor="0.2 0.9 0.5" LineWidth="2"/>
+            <Arc X="1040" Y="140" Radius="35" Angle="90" Rotation="-45" LineColor="0.3 0.3 0.3" LineWidth="2"/>
+            <Text X="1040" Y="90" Size="9" FillColor="0.4 0.4 0.4" LocalAlignX="#_align_center_">Signal</Text>
+
+        </Panel>
+    </Window>
+</DCAPP>

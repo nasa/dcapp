@@ -464,18 +464,8 @@ static _NodeIndex _process_xml_node_arc(_AppData *app_data, xmlNodePtr xml_node,
         dc_node.arc.line_width = DC_APP_VAL_INDEX_UNDEFINED;
     }
 
-    // colors
-    dc_node.arc.fill_enabled = _load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.arc.fill_color));
-    dc_node.arc.line_enabled = _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.arc.line_color));
-
-    // pie mode (draw lines from endpoints to center)
-    xmlChar *raw_pie = xmlGetProp(xml_node, BAD_CAST "Pie");
-    if (raw_pie) {
-        dc_node.arc.pie = (strcmp((const char *)raw_pie, "true") == 0 || strcmp((const char *)raw_pie, "1") == 0);
-        xmlFree(raw_pie);
-    } else {
-        dc_node.arc.pie = false;
-    }
+    // line color
+    _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.arc.line_color));
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
@@ -631,6 +621,15 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
         dc_node.ellipse.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
     } else {
         fprintf(stderr, "DCAPP _process_xml_node(): Ellipse: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+    }
+
+    // angle (span of the wedge in degrees, 360 = full ellipse)
+    xmlChar *raw_angle = xmlGetProp(xml_node, BAD_CAST "Angle");
+    if (raw_angle) {
+        dc_node.ellipse.angle = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_angle);
+        xmlFree(raw_angle);
+    } else {
+        dc_node.ellipse.angle = DC_APP_VAL_INDEX_UNDEFINED;  // undefined means full ellipse (360)
     }
 
     // radius (shorthand for both RadiusX and RadiusY)

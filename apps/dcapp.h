@@ -169,16 +169,12 @@ typedef struct __NodeArc {
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
-    DcAppValIndex rotation;      // where the center of the arc points (0 = top)
+    DcAppValIndex rotation;      // where the arc starts (0 = right, 90 = top)
     DcAppValIndex radius;
     DcAppValIndex angle;         // span of the arc in degrees
     DcAppValIndex num_segments;
     _ValIndex4    line_color;
-    _ValIndex4    fill_color;
     DcAppValIndex line_width;
-    bool          pie;           // if true, draw lines from endpoints to center (pie/wedge shape)
-    bool          line_enabled;
-    bool          fill_enabled;
     DcAppValIndex negate_x;
     DcAppValIndex negate_y;
 } _NodeArc;
@@ -243,7 +239,8 @@ typedef struct __NodeEllipse {
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
-    DcAppValIndex rotation;
+    DcAppValIndex rotation;       // where the wedge starts (0 = right, 90 = top)
+    DcAppValIndex angle;          // span of the wedge in degrees (360 = full ellipse)
     DcAppValIndex radius_x;
     DcAppValIndex radius_y;
     DcAppValIndex num_segments;

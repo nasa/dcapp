@@ -4,6 +4,7 @@
 #include "dcapp.h"
 
 #include "../src/app/enums.h"
+#include "../src/utils/math.h"
 #include "../src/utils/string.h"
 #include "../src/utils/time.h"
 
@@ -852,48 +853,87 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
+    // xform local rotation
+    if (use_rotation && !use_pivot_position) {
+        float diameter = 2 * radius;
+
+        // get alignment
+        DcAppAlignType local_pivot_aligns[2] = {
+            node->arc.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.pivot_local_align.x)->value_integer,
+            node->arc.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.pivot_local_align.y)->value_integer};
+
+        // get pivot XY
+        float pivot_position[2];
+        switch (local_pivot_aligns[0]) {
+            case DC_APP_ALIGN_TYPE_LEFT:
+                pivot_position[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_CENTER:
+                pivot_position[0] = diameter / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                pivot_position[0] = diameter;
+                break;
+            default:
+                fprintf(stderr, "Unknown pivot alignment in <Arc> draw call: %d\n", local_pivot_aligns[0]);
+                pivot_position[0] = diameter / 2;
+                break;
+        }
+        switch (local_pivot_aligns[1]) {
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                pivot_position[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                pivot_position[1] = diameter / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                pivot_position[1] = diameter;
+                break;
+            default:
+                fprintf(stderr, "Unknown pivot alignment in <Arc> draw call: %d\n", local_pivot_aligns[1]);
+                pivot_position[1] = diameter / 2;
+                break;
+        }
+        float rotation = pl_radiansf(arc_rotation);
+
+        // compute matrices
+        plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+        plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+        plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+        // apply transform
+        transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+        transform = pl_mul_mat4t(&transform, &rotate_xform);
+        transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+    }
+
     // parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // calculate arc points
     // Corner-based: points range from (0,0) to (diameter, diameter), center at (radius, radius)
-    // Rotation=0 means center of arc points up (positive Y)
+    // Arc starts at top (12 o'clock), rotation handled by transform matrix
     // LocalAlign (default=CENTER) shifts by -radius to center at position
     int num_segments = node->arc.num_segments == DC_APP_VAL_INDEX_UNDEFINED ?
         (int)(angle_span / 3.0f) + 2 : // roughly 1 segment per 3 degrees
         (int)dc_app_lookup_get_value(app_data->lookup, node->arc.num_segments)->value_double;
     if (num_segments < 2) num_segments = 2;
-    if (num_segments > _NODE_ARC_MAX_SEGMENTS) num_segments = _NODE_ARC_MAX_SEGMENTS;
+    if (num_segments > _NODE_ARC_MAX_SEGMENTS - 1) num_segments = _NODE_ARC_MAX_SEGMENTS - 1;
 
     // Convert to radians
-    float half_span_rad = pl_radiansf(angle_span / 2.0f);
-    float rotation_rad = pl_radiansf(arc_rotation);
+    float span_rad = pl_radiansf(angle_span);
 
-    // Generate arc points
-    // Start angle and end angle relative to "up" (positive Y in screen coords)
-    // In dcapp, Y increases upward, so "up" is +Y
-    // We want 0 rotation to put arc at top, centered
-    // Angle 0 in standard trig is right (+X), so we offset by PI/2 to make 0 = up
-    plVec2 points[_NODE_ARC_MAX_SEGMENTS + 2]; // +2 for center point if pie mode
+    // Generate arc points (start-based)
+    // Arc starts at top (12 o'clock), rotation handled by transform matrix
+    plVec2 points[_NODE_ARC_MAX_SEGMENTS];
     int num_arc_points = num_segments + 1; // segments + 1 = number of vertices on arc
-    int num_points = 0;
-    int arc_start_index = 0;
-
-    // If pie mode, center point goes first for proper convex polygon winding
-    // Center is at (radius, radius) in corner-based local coords
-    if (node->arc.pie) {
-        plVec4 center4 = (plVec4){radius, radius, 0, 1};
-        center4 = pl_mul_mat4_vec4(&transform, center4);
-        points[0] = (plVec2){center4.x, center4.y};
-        num_points = 1;
-        arc_start_index = 1;
-    }
 
     for (int ii = 0; ii <= num_segments; ii++) {
         float t = (float)ii / (float)num_segments; // 0 to 1
-        float angle = -half_span_rad + t * (2.0f * half_span_rad); // from -half to +half
-        // Offset by PI/2 so 0 = up, and add rotation
-        float final_angle = angle + (float)M_PI_2 + rotation_rad;
+        float angle = t * span_rad; // from 0 to span
+        float final_angle = angle + (float)M_PI_2;
 
         // Corner-based: center at (radius, radius), points from 0 to diameter
         plVec4 point4 = (plVec4){
@@ -901,41 +941,19 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
             radius * (1.0f + sinf(final_angle)),
             0, 1};
         point4 = pl_mul_mat4_vec4(&transform, point4);
-        points[arc_start_index + ii] = (plVec2){point4.x, point4.y};
-    }
-    num_points += num_arc_points;
-
-    // draw fill (only makes sense for pie mode)
-    if (node->arc.fill_enabled && node->arc.pie) {
-        float fill_color[4] = {
-            node->arc.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.fill_color.r)->value_double,
-            node->arc.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.fill_color.g)->value_double,
-            node->arc.fill_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.fill_color.b)->value_double,
-            node->arc.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.fill_color.a)->value_double,
-        };
-        uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+        points[ii] = (plVec2){point4.x, point4.y};
     }
 
-    // draw outline
-    if (node->arc.line_enabled) {
-        float line_thickness = node->arc.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_width)->value_double;
-        float line_color[4] = {
-            node->arc.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.r)->value_double,
-            node->arc.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.g)->value_double,
-            node->arc.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.b)->value_double,
-            node->arc.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.a)->value_double,
-        };
-        uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-
-        if (node->arc.pie) {
-            // Draw closed polygon for pie
-            _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
-        } else {
-            // Draw just the arc (open polyline) - use lines between consecutive points
-            _ext_draw->add_lines(_draw_batch_get_2d(app_data), points, num_arc_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
-        }
-    }
+    // draw arc line
+    float line_thickness = node->arc.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_width)->value_double;
+    float line_color[4] = {
+        node->arc.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.r)->value_double,
+        node->arc.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.g)->value_double,
+        node->arc.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.b)->value_double,
+        node->arc.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.a)->value_double,
+    };
+    uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
+    _ext_draw->add_lines(_draw_batch_get_2d(app_data), points, num_arc_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
 }
 
 static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -1153,22 +1171,63 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
     // parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // get points
-    int    num_points = node->ellipse.num_segments == DC_APP_VAL_INDEX_UNDEFINED ? 40 : dc_app_lookup_get_value(app_data->lookup, node->ellipse.num_segments)->value_integer;
+    // check if this is a pie/wedge (angle specified and != 360)
+    bool use_angle = node->ellipse.angle != DC_APP_VAL_INDEX_UNDEFINED;
+    float angle_span = use_angle ? (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.angle)->value_double : 360.0f;
+    bool is_pie = use_angle && !dc_utils_float_equals(angle_span, 360.0f, 0.001f);
+
+    // get number of segments
+    int num_segments = node->ellipse.num_segments == DC_APP_VAL_INDEX_UNDEFINED ?
+        (is_pie ? (int)(angle_span / 3.0f) + 2 : 40) :
+        dc_app_lookup_get_value(app_data->lookup, node->ellipse.num_segments)->value_integer;
+    if (num_segments < 2) num_segments = 2;
+    if (num_segments > _NODE_ELLIPSE_MAX_SEGMENTS - 2) num_segments = _NODE_ELLIPSE_MAX_SEGMENTS - 2;
+
+    // generate points
     plVec2 points[_NODE_ELLIPSE_MAX_SEGMENTS];
-    for (int ii = 0; ii < num_points; ii++) {
-        float  angle  = ii * (2.0f * (float)M_PI / num_points);
-        plVec4 point4 = (plVec4){
-            radius_x * (1.0f + cosf(angle)),
-            radius_y * (1.0f + sinf(angle)),
-            0, 1};
-        point4     = pl_mul_mat4_vec4(&transform, point4);
-        points[ii] = (plVec2){point4.x, point4.y};
+    int num_points = 0;
+
+    if (is_pie) {
+        // Pie/wedge mode: center point + arc points
+        // Center point goes first for proper convex polygon winding
+        plVec4 center4 = (plVec4){radius_x, radius_y, 0, 1};
+        center4 = pl_mul_mat4_vec4(&transform, center4);
+        points[0] = (plVec2){center4.x, center4.y};
+        num_points = 1;
+
+        // Generate arc points (start-based)
+        // Wedge starts at top (12 o'clock), rotation handled by transform matrix
+        float span_rad = pl_radiansf(angle_span);
+        int num_arc_points = num_segments + 1;
+
+        for (int ii = 0; ii <= num_segments; ii++) {
+            float t = (float)ii / (float)num_segments;
+            float angle = t * span_rad; // from 0 to span
+            float final_angle = angle + (float)M_PI_2;
+
+            plVec4 point4 = (plVec4){
+                radius_x * (1.0f + cosf(final_angle)),
+                radius_y * (1.0f + sinf(final_angle)),
+                0, 1};
+            point4 = pl_mul_mat4_vec4(&transform, point4);
+            points[num_points++] = (plVec2){point4.x, point4.y};
+        }
+    } else {
+        // Full ellipse mode
+        for (int ii = 0; ii < num_segments; ii++) {
+            float angle = ii * (2.0f * (float)M_PI / num_segments);
+            plVec4 point4 = (plVec4){
+                radius_x * (1.0f + cosf(angle)),
+                radius_y * (1.0f + sinf(angle)),
+                0, 1};
+            point4 = pl_mul_mat4_vec4(&transform, point4);
+            points[ii] = (plVec2){point4.x, point4.y};
+        }
+        num_points = num_segments;
     }
 
     // draw fill
     if (node->ellipse.fill_enabled) {
-
         float fill_color[4] = {
             node->ellipse.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.fill_color.r)->value_double,
             node->ellipse.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.fill_color.g)->value_double,
@@ -1176,7 +1235,27 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
             node->ellipse.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+
+        if (is_pie && num_points >= 3) {
+            // Use triangle fan for pie/wedge (works for any angle, including > 180 degrees)
+            // points[0] = center, points[1..num_points-1] = arc points
+            // Note: using static to avoid large stack allocation that can cause issues
+            // with stack guard pages during rapid redraws (e.g., window resize)
+            int num_triangles = num_points - 2;
+            if (num_triangles > 0) {
+                static plVec2 triangle_points[_NODE_ELLIPSE_MAX_SEGMENTS * 3];
+                int tri_idx = 0;
+                for (int ii = 0; ii < num_triangles; ii++) {
+                    triangle_points[tri_idx++] = points[0];       // center
+                    triangle_points[tri_idx++] = points[ii + 1];  // arc point i
+                    triangle_points[tri_idx++] = points[ii + 2];  // arc point i+1
+                }
+                _ext_draw->add_triangles_filled(_draw_batch_get_2d(app_data), triangle_points, num_triangles * 3, (plDrawSolidOptions){.uColor = pl_fill_color});
+            }
+        } else if (!is_pie) {
+            // Full ellipse - use convex polygon fill
+            _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+        }
     }
 
     // draw outline

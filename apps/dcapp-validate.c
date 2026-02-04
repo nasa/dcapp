@@ -901,10 +901,10 @@ static const char *_valid_attrs_rotation[]          = {"Rotation", "Rotate", NUL
 static const char *_valid_attrs_color[]             = {"FillColor", "LineColor", "BackgroundColor", NULL};
 static const char *_valid_attrs_line[]              = {"LineWidth", NULL};
 
-static const char *_valid_attrs_arc[]            = {"Radius", "Angle", "Segments", "Pie", NULL};
+static const char *_valid_attrs_arc[]            = {"Radius", "Angle", "Segments", "LineColor", NULL};
 static const char *_valid_attrs_blink[]          = {"Variable", "Frequency", "DutyCycle", "Duration", NULL};
 static const char *_valid_attrs_button[]         = {"Type", "Variable", "EnabledVariable", "EnabledOn", "TargetVariable", "TargetOn", "TargetOff", "On", "Off", "IndicatorVariable", "IndicatorOn", NULL};
-static const char *_valid_attrs_ellipse[]        = {"Radius", "RadiusX", "RadiusY", "Segments", NULL};
+static const char *_valid_attrs_ellipse[]        = {"Radius", "RadiusX", "RadiusY", "Segments", "Angle", NULL};
 static const char *_valid_attrs_constant[]       = {"Name", NULL};
 static const char *_valid_attrs_function[]       = {"Name", NULL};
 static const char *_valid_attrs_if[]             = {"Value", "Value1", "Value2", "Operation", "Static", NULL};
@@ -953,7 +953,6 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
-                   _attr_in_list(attr_name, _valid_attrs_color) ||
                    _attr_in_list(attr_name, _valid_attrs_line) ||
                    _attr_in_list(attr_name, _valid_attrs_arc);
 
