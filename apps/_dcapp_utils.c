@@ -312,6 +312,11 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     // get device
     plDevice *device = _ext_starter->get_device();
 
+    // initialize dc_draw_ext and dc_draw_backend_ext (pl_starter doesn't do this since we use dcDrawI)
+    plDrawInit tDrawInit = {0};
+    _ext_draw->initialize(&tDrawInit);
+    _ext_draw_backend->initialize(device);
+
     // init default staging buffer
     {
         // set size to 10 MB
@@ -341,6 +346,9 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
 
     // create font atlas
     {
+        // create and set font atlas
+        plFontAtlas* font_atlas = _ext_draw->create_font_atlas();
+        _ext_draw->set_font_atlas(font_atlas);
 
         // typical font range (you can also add individual characters)
         const plFontRange font_range = {
@@ -358,9 +366,16 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
         font_config.uRangeCount    = 1;
         font_config.ptRanges       = &font_range;
 
-        app_data->pl_vera_sdf_font = _ext_draw->add_font_from_file_ttf(_ext_draw->get_current_font_atlas(), font_config, "../../assets/fonts/bitstream-vera-sans/Vera.ttf");
+        app_data->pl_vera_sdf_font = _ext_draw->add_font_from_file_ttf(font_atlas, font_config, "../../assets/fonts/bitstream-vera-sans/Vera.ttf");
+
+        // build font atlas (CPU prepare + GPU upload - backend handles prepare internally)
+        plCommandBuffer* command_buffer = _ext_gfx->request_command_buffer(_ext_starter->get_current_command_pool(), "dcapp font atlas");
+        _ext_draw_backend->build_font_atlas(command_buffer, font_atlas);
+        _ext_gfx->wait_on_command_buffer(command_buffer);
+        _ext_gfx->return_command_buffer(command_buffer);
     }
-    _ext_starter->set_default_font(app_data->pl_vera_sdf_font);
+    // Note: don't call set_default_font - pl_starter uses plDrawI with its own font atlas,
+    // while dcapp uses dcDrawI with a separate font atlas. Let pl_starter create its own default font.
 
     // initialize shader compiler
     plShaderOptions shader_options          = {};

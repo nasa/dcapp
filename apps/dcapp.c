@@ -34,8 +34,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
         // load extensions
         _ext_windows      = pl_get_api_latest(api_registry, plWindowI);
-        _ext_draw         = pl_get_api_latest(api_registry, plDrawI);
-        _ext_draw_backend = pl_get_api_latest(api_registry, plDrawBackendI);
+        _ext_draw         = pl_get_api_latest(api_registry, dcDrawI);
+        _ext_draw_backend = pl_get_api_latest(api_registry, dcDrawBackendI);
         _ext_starter      = pl_get_api_latest(api_registry, plStarterI);
         _ext_profile      = pl_get_api_latest(api_registry, plProfileI);
         _ext_memory       = pl_get_api_latest(api_registry, plMemoryI);
@@ -62,15 +62,15 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     extension_registry->load("pl_unity_ext", NULL, NULL, true);
     extension_registry->load("pl_platform_ext", NULL, NULL, false);
 
-    // load dcapp extensions (these override pilotlight's draw extensions)
+    // load dcapp extensions (separate from pilotlight's draw extensions)
     extension_registry->load("dc_draw_ext", NULL, NULL, true);
     extension_registry->load("dc_draw_backend_ext", NULL, NULL, true);
     extension_registry->load("pl_terrain_ext", NULL, NULL, true);
 
     // load extensions
     _ext_windows      = pl_get_api_latest(api_registry, plWindowI);
-    _ext_draw         = pl_get_api_latest(api_registry, plDrawI);
-    _ext_draw_backend = pl_get_api_latest(api_registry, plDrawBackendI);
+    _ext_draw         = pl_get_api_latest(api_registry, dcDrawI);
+    _ext_draw_backend = pl_get_api_latest(api_registry, dcDrawBackendI);
     _ext_starter      = pl_get_api_latest(api_registry, plStarterI);
     _ext_profile      = pl_get_api_latest(api_registry, plProfileI);
     _ext_memory       = pl_get_api_latest(api_registry, plMemoryI);
@@ -432,11 +432,8 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    // _ext_draw_backend->new_frame();
-
-    // reset 3D draw lists for new frame
-    // alias for pl_new_draw_3d_frame()- only needed for 3d frame resets
-    _ext_draw->new_frame();
+    // new_frame: backend calls draw's new_frame + allocates dynamic data block
+    _ext_draw_backend->new_frame();
 
     // reset draw batch system for new frame
     _draw_batch_reset(app_data);

@@ -49,7 +49,8 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plDrawI_version {1, 4, 0}
+// dcapp's custom draw API (separate from pilotlight's plDrawI)
+#define dcDrawI_version {1, 4, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -230,6 +231,9 @@ typedef struct _plDrawI
     void (*add_3d_cone)        (plDrawList3D*, plCone, uint32_t segments, plDrawLineOptions);
 
 } plDrawI;
+
+// Alias for API registration
+typedef plDrawI dcDrawI;
 
 //-----------------------------------------------------------------------------
 // [SECTION] enums
