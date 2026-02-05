@@ -153,30 +153,43 @@ int dc_utils_string_to_integer(const char *text) {
 }
 
 int dc_utils_string_to_boolean(const char *text) {
-
     if (!text) {
         return 0;
     }
 
-    if (strlen(text) > DC_UTILS_STRING_MAX_BUFFER_SIZE) {
+    // Work buffer
+    char result[DC_UTILS_STRING_MAX_BUFFER_SIZE];
+
+    // Defensive length check using strnlen (caps scanning)
+    size_t in_len = strnlen(text, DC_UTILS_STRING_MAX_BUFFER_SIZE + 1);
+    if (in_len > DC_UTILS_STRING_MAX_BUFFER_SIZE) {
         DC_LOG_WARN("String", "dc_utils_string_to_boolean(): input text exceeds max string buffer size");
+        // Option: treat oversize as invalid
+        // return false;
     }
 
-    char result[DC_UTILS_STRING_MAX_BUFFER_SIZE];
+    // Copy with trim; if this helper is not guaranteed to NUL-terminate,
+    // replace with a safe copy + explicit trim.
     dc_utils_trim_whitespace_copy(text, result, sizeof(result));
+    result[sizeof(result) - 1] = '\0';  // hard guarantee
 
     if (result[0] == '\0') {
         return 0;
     }
-    for (char *c = result; *c; c++) {
-        if (*c >= 'A' && *c <= 'Z') {
-            *c = (char)(*c + 32);
-        }
+
+    // Lowercase safely
+    for (char *p = result; *p; ++p) {
+        *p = (char)tolower((unsigned char)*p);
     }
 
-    if (strcmp(result, "false") == 0 || strcmp(result, "no") == 0 || strcmp(result, "off") == 0) {
+    // Recognized falsy tokens
+    if (strcmp(result, "false") == 0 ||
+        strcmp(result, "no")    == 0 ||
+        strcmp(result, "off")   == 0 ||
+        strcmp(result, "0")     == 0) {
         return 0;
     }
+
     return 1;
 }
 
