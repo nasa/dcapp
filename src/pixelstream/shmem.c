@@ -1,5 +1,6 @@
 #include "shmem.h"
 #include "../utils/stb_sb.h"
+#include "../utils/log.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -132,7 +133,7 @@ void dc_ps_shmem_get_data(DcPsShmemHandle handle, unsigned char *out_data, size_
     size_t frame_size = (size_t)ctx->width * ctx->height * 4;  // RGBA
 
     if (out_data_size < frame_size) {
-        fprintf(stderr, "DCApp dc_ps_shmem_get_data(): output buffer too small\n");
+        DC_LOG_ERROR("Shmem", "dc_ps_shmem_get_data(): output buffer too small");
         *out_size = 0;
         return;
     }
@@ -168,21 +169,21 @@ static int _try_attach_shm(_Context *ctx) {
     // Generate shared memory key from filepath
     key_t key = ftok(ctx->filepath, 'R');
     if (key == -1) {
-        fprintf(stderr, "DCApp dc_ps_shmem: ftok failed: %s\n", strerror(errno));
+        DC_LOG_ERROR("Shmem", "ftok failed: %s", strerror(errno));
         return -1;
     }
 
     // Get shared memory segment
     int shmid = shmget(key, _SHM_HEADER_SIZE, IPC_CREAT | 0777);
     if (shmid < 0) {
-        fprintf(stderr, "DCApp dc_ps_shmem: shmget failed: %s\n", strerror(errno));
+        DC_LOG_ERROR("Shmem", "shmget failed: %s", strerror(errno));
         return -1;
     }
 
     // Attach to shared memory
     ctx->shm = (_ShmemHeader *)shmat(shmid, NULL, 0);
     if (ctx->shm == (void *)-1) {
-        fprintf(stderr, "DCApp dc_ps_shmem: shmat failed: %s\n", strerror(errno));
+        DC_LOG_ERROR("Shmem", "shmat failed: %s", strerror(errno));
         ctx->shm = NULL;
         return -1;
     }

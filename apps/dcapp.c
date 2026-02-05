@@ -1,6 +1,7 @@
 #include "dcapp.h"
 
 #include "../src/utils/env.h"
+#include "../src/utils/log.h"
 
 // static members
 // TODO hate this solution, but needed for DLL lookup
@@ -33,18 +34,19 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     if (app_data) {
 
         // load extensions
-        _ext_windows      = pl_get_api_latest(api_registry, plWindowI);
-        _ext_draw         = pl_get_api_latest(api_registry, plDrawI);
-        _ext_draw_backend = pl_get_api_latest(api_registry, plDrawBackendI);
-        _ext_starter      = pl_get_api_latest(api_registry, plStarterI);
-        _ext_profile      = pl_get_api_latest(api_registry, plProfileI);
-        _ext_memory       = pl_get_api_latest(api_registry, plMemoryI);
-        _ext_library      = pl_get_api_latest(api_registry, plLibraryI);
-        _ext_ioi          = pl_get_api_latest(api_registry, plIOI);
-        _ext_gfx          = pl_get_api_latest(api_registry, plGraphicsI);
-        _ext_vfs          = pl_get_api_latest(api_registry, plVfsI);
-        _ext_shader       = pl_get_api_latest(api_registry, plShaderI);
-        // _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
+        _ext_windows        = pl_get_api_latest(api_registry, plWindowI);
+        _ext_draw           = pl_get_api_latest(api_registry, dcDrawI);
+        _ext_draw_backend   = pl_get_api_latest(api_registry, dcDrawBackendI);
+        _ext_starter        = pl_get_api_latest(api_registry, plStarterI);
+        _ext_profile        = pl_get_api_latest(api_registry, plProfileI);
+        _ext_memory         = pl_get_api_latest(api_registry, plMemoryI);
+        _ext_library        = pl_get_api_latest(api_registry, plLibraryI);
+        _ext_ioi            = pl_get_api_latest(api_registry, plIOI);
+        _ext_gfx            = pl_get_api_latest(api_registry, plGraphicsI);
+        _ext_gpu_allocators = pl_get_api_latest(api_registry, plGPUAllocatorsI);
+        _ext_vfs            = pl_get_api_latest(api_registry, plVfsI);
+        _ext_shader         = pl_get_api_latest(api_registry, plShaderI);
+        // _ext_terrain     = pl_get_api_latest(api_registry, plTerrainI);
         _ext_camera = pl_get_api_latest(api_registry, plCameraI);
         _ext_image  = pl_get_api_latest(api_registry, plImageI);
 
@@ -62,24 +64,25 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     extension_registry->load("pl_unity_ext", NULL, NULL, true);
     extension_registry->load("pl_platform_ext", NULL, NULL, false);
 
-    // load dcapp extensions (these override pilotlight's draw extensions)
+    // load dcapp extensions (separate from pilotlight's draw extensions)
     extension_registry->load("dc_draw_ext", NULL, NULL, true);
     extension_registry->load("dc_draw_backend_ext", NULL, NULL, true);
     extension_registry->load("pl_terrain_ext", NULL, NULL, true);
 
     // load extensions
-    _ext_windows      = pl_get_api_latest(api_registry, plWindowI);
-    _ext_draw         = pl_get_api_latest(api_registry, plDrawI);
-    _ext_draw_backend = pl_get_api_latest(api_registry, plDrawBackendI);
-    _ext_starter      = pl_get_api_latest(api_registry, plStarterI);
-    _ext_profile      = pl_get_api_latest(api_registry, plProfileI);
-    _ext_memory       = pl_get_api_latest(api_registry, plMemoryI);
-    _ext_library      = pl_get_api_latest(api_registry, plLibraryI);
-    _ext_ioi          = pl_get_api_latest(api_registry, plIOI);
-    _ext_gfx          = pl_get_api_latest(api_registry, plGraphicsI);
-    _ext_vfs          = pl_get_api_latest(api_registry, plVfsI);
-    _ext_shader       = pl_get_api_latest(api_registry, plShaderI);
-    // _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
+    _ext_windows        = pl_get_api_latest(api_registry, plWindowI);
+    _ext_draw           = pl_get_api_latest(api_registry, dcDrawI);
+    _ext_draw_backend   = pl_get_api_latest(api_registry, dcDrawBackendI);
+    _ext_starter        = pl_get_api_latest(api_registry, plStarterI);
+    _ext_profile        = pl_get_api_latest(api_registry, plProfileI);
+    _ext_memory         = pl_get_api_latest(api_registry, plMemoryI);
+    _ext_library        = pl_get_api_latest(api_registry, plLibraryI);
+    _ext_ioi            = pl_get_api_latest(api_registry, plIOI);
+    _ext_gfx            = pl_get_api_latest(api_registry, plGraphicsI);
+    _ext_gpu_allocators = pl_get_api_latest(api_registry, plGPUAllocatorsI);
+    _ext_vfs            = pl_get_api_latest(api_registry, plVfsI);
+    _ext_shader         = pl_get_api_latest(api_registry, plShaderI);
+    // _ext_terrain     = pl_get_api_latest(api_registry, plTerrainI);
     _ext_camera = pl_get_api_latest(api_registry, plCameraI);
     _ext_image  = pl_get_api_latest(api_registry, plImageI);
 
@@ -93,7 +96,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     // parse input arguments
     plIO *_ext_io = _ext_ioi->get_io();
     if (_ext_io->iArgc < 4) {
-        fprintf(stderr, "DCApp pl_app_load(): missing dcapp config file\n");
+        DC_LOG_ERROR("App", "Missing dcapp config file");
     }
 
     // create config
@@ -432,11 +435,8 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    // _ext_draw_backend->new_frame();
-
-    // reset 3D draw lists for new frame
-    // alias for pl_new_draw_3d_frame()- only needed for 3d frame resets
-    _ext_draw->new_frame();
+    // new_frame: backend calls draw's new_frame + allocates dynamic data block
+    _ext_draw_backend->new_frame();
 
     // reset draw batch system for new frame
     _draw_batch_reset(app_data);

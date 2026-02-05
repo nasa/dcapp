@@ -6,6 +6,7 @@
 #include "../value.h"
 #include "../utils/env.h"
 #include "../utils/file.h"
+#include "../utils/log.h"
 #include "../utils/math.h"
 #include "../utils/stb_sb.h"
 #include "../utils/string.h"
@@ -121,7 +122,7 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     // get XML doc
     config->xml_doc = xmlReadFile(config->config_file_path, "UTF-8", XML_PARSE_NOBLANKS);
     if (!config->xml_doc) {
-        fprintf(stderr, "DCAPP dc_app_config_create: unable to read config file '%s'\n", config->config_file_path);
+        DC_LOG_ERROR("Config", "dc_app_config_create: unable to read config file '%s'", config->config_file_path);
     }
     config->xml_doc_is_cleaned = false;
 
@@ -278,7 +279,7 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
         // get eq sign
         const char *eq_addr = strchr(args[ii], '=');
         if (!eq_addr) {
-            fprintf(stderr, "DCApp dc_app_config_create(): input argument '%s' has no value set; ignoring", args[ii]);
+            DC_LOG_WARN("Config", "dc_app_config_create(): input argument '%s' has no value set; ignoring", args[ii]);
             continue;
         }
 
@@ -351,12 +352,12 @@ void dc_app_config_preprocess_xml(DcAppConfig *config, DcAppLookup *lookup) {
     // get root element
     xmlNodePtr node = xmlDocGetRootElement(config->xml_doc);
     if (node == NULL) {
-        fprintf(stderr, "DCAPP dc_app_config_preprocess_xml(): unable to get root element of config file\n");
+        DC_LOG_ERROR("Config", "dc_app_config_preprocess_xml(): unable to get root element of config file");
     }
 
     // verify root node is valid
     if (dc_app_xml_node_to_elem_type(node) != DC_APP_ELEM_TYPE_DCAPP) {
-        fprintf(stderr, "DCAPP dc_app_config_preprocess_xml(): configuration root element is not DCAPP\n");
+        DC_LOG_ERROR("Config", "dc_app_config_preprocess_xml(): configuration root element is not DCAPP");
     }
 
     // parse SuppressWarnings attribute from DCAPP element
@@ -495,7 +496,7 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                 }
             } else {
                 if (!(context->suppress_warnings & DC_APP_SUPPRESS_MISSING_STYLE)) {
-                    fprintf(stderr, "DCAPP _preprocess_xml_node(): style %s is undefined\n", (char *)style_name);
+                    DC_LOG_WARN("Config", "_preprocess_xml_node(): style %s is undefined", (char *)style_name);
                 }
             }
 
@@ -553,7 +554,7 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
         case DC_APP_ELEM_TYPE_CONSTANT: {
             xmlChar *name = xmlGetProp(node, BAD_CAST "Name");
             if (!name) {
-                fprintf(stderr, "DCAPP _preprocess_xml_node(): 'Name' attribute missing in <Constant> definition\n");
+                DC_LOG_ERROR("Config", "_preprocess_xml_node(): 'Name' attribute missing in <Constant> definition");
             }
             char cleaned_name[DC_VALUE_STRING_BUFFER_SIZE];
             strncpy(cleaned_name, (const char *)name, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -568,10 +569,10 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                 xmlFree(value);
                 dc_utils_trim_whitespace_inplace(cleaned_value);
                 if (cleaned_value[0] == '\0') {
-                    fprintf(stderr, "DCAPP _preprocess_xml_node(): Empty content in <Constant> definition\n");
+                    DC_LOG_WARN("Config", "_preprocess_xml_node(): Empty content in <Constant> definition");
                 }
             } else {
-                fprintf(stderr, "DCAPP _preprocess_xml_node(): Node content missing in <Constant> definition\n");
+                DC_LOG_ERROR("Config", "_preprocess_xml_node(): Node content missing in <Constant> definition");
                 cleaned_value[0] = '\0';
             }
 
@@ -637,7 +638,7 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                 }
             }
             if (!has_filepath) {
-                fprintf(stderr, "DCAPP _preprocess_xml_node(): File path missing in <Include> definition\n");
+                DC_LOG_ERROR("Config", "_preprocess_xml_node(): File path missing in <Include> definition");
                 cleaned_filepath[0] = '\0';
             }
 
@@ -654,9 +655,9 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
             if (!dc_utils_file_exists(absolute_path)) {
                 if (optional) {
                     // file doesn't exist and include is optional, skip it
-                    fprintf(stderr, "DCAPP _preprocess_xml_node(): Optional include file '%s' not found, skipping\n", absolute_path);
+                    DC_LOG_INFO("Config", "_preprocess_xml_node(): Optional include file '%s' not found, skipping", absolute_path);
                 } else {
-                    fprintf(stderr, "DCAPP _preprocess_xml_node(): mandatory include file '%s' not found\n", absolute_path);
+                    DC_LOG_ERROR("Config", "_preprocess_xml_node(): mandatory include file '%s' not found", absolute_path);
                 }
                 xmlUnlinkNode(node);
                 xmlFreeNode(node);
@@ -674,13 +675,13 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
             // read XML file
             xmlDocPtr sub_doc = xmlReadFile(canon_filepath, NULL, XML_PARSE_NOBLANKS);
             if (!sub_doc) {
-                fprintf(stderr, "DCAPP _preprocess_xml_node(): Unable to read config file %s\n", canon_filepath);
+                DC_LOG_ERROR("Config", "_preprocess_xml_node(): Unable to read config file %s", canon_filepath);
             }
 
             // get root element
             xmlNodePtr sub_node = xmlDocGetRootElement(sub_doc);
             if (!sub_node) {
-                fprintf(stderr, "DCAPP _preprocess_xml_node(): Unable to get root element of config file %s\n", canon_filepath);
+                DC_LOG_ERROR("Config", "_preprocess_xml_node(): Unable to get root element of config file %s", canon_filepath);
             }
 
             // copy loaded content (keep root element)
@@ -724,7 +725,7 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
             } else {
                 xmlChar *raw_style_name = xmlGetProp(node, BAD_CAST "Name");
                 if (!raw_style_name) {
-                    fprintf(stderr, "DCAPP _preprocess_xml_node(): Style name missing in <Style> definition\n");
+                    DC_LOG_ERROR("Config", "_preprocess_xml_node(): Style name missing in <Style> definition");
                 }
                 strncpy(style_name, (const char *)raw_style_name, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 style_name[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
@@ -804,7 +805,7 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                     raw_value1 = xmlGetProp(node, BAD_CAST "Value1");
                 }
                 if (!raw_value1) {
-                    fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: no value specified\n");
+                    DC_LOG_ERROR("Config", "_preprocess_xml_node(): If Static: no value specified");
                     xmlUnlinkNode(node);
                     xmlFreeNode(node);
                     return;
@@ -831,13 +832,13 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
 
                 // Check for runtime variables (not allowed in static If)
                 if (value1[0] == '@') {
-                    fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: Value1 '%s' uses runtime variable (@), only constants (#) are allowed\n", value1);
+                    DC_LOG_ERROR("Config", "_preprocess_xml_node(): If Static: Value1 '%s' uses runtime variable (@), only constants (#) are allowed", value1);
                     xmlUnlinkNode(node);
                     xmlFreeNode(node);
                     return;
                 }
                 if (value2 && value2[0] == '@') {
-                    fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: Value2 '%s' uses runtime variable (@), only constants (#) are allowed\n", value2);
+                    DC_LOG_ERROR("Config", "_preprocess_xml_node(): If Static: Value2 '%s' uses runtime variable (@), only constants (#) are allowed", value2);
                     xmlUnlinkNode(node);
                     xmlFreeNode(node);
                     return;
@@ -853,7 +854,7 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                     if (is_double) {
                         // Numeric comparison (handles both integers and doubles)
                         if (!dc_utils_string_is_double(value2)) {
-                            fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: Value1 is numeric but Value2 '%s' is not\n", value2);
+                            DC_LOG_ERROR("Config", "_preprocess_xml_node(): If Static: Value1 is numeric but Value2 '%s' is not", value2);
                             xmlUnlinkNode(node);
                             xmlFreeNode(node);
                             return;
@@ -882,7 +883,7 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                                 result = (num1 >= num2);
                                 break;
                             default:
-                                fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: invalid Operation %d\n", cond_type);
+                                DC_LOG_ERROR("Config", "_preprocess_xml_node(): If Static: invalid Operation %d", cond_type);
                                 break;
                         }
                     } else if (is_bool) {
@@ -901,12 +902,12 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                             case DC_APP_CONDITIONAL_TYPE_GT:
                             case DC_APP_CONDITIONAL_TYPE_LTE:
                             case DC_APP_CONDITIONAL_TYPE_GTE:
-                                fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: operator %d not supported for boolean values\n", cond_type);
+                                DC_LOG_ERROR("Config", "_preprocess_xml_node(): If Static: operator %d not supported for boolean values", cond_type);
                                 xmlUnlinkNode(node);
                                 xmlFreeNode(node);
                                 return;
                             default:
-                                fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: invalid Operation %d for boolean comparison\n", cond_type);
+                                DC_LOG_ERROR("Config", "_preprocess_xml_node(): If Static: invalid Operation %d for boolean comparison", cond_type);
                                 break;
                         }
                     } else {
@@ -922,12 +923,12 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                             case DC_APP_CONDITIONAL_TYPE_GT:
                             case DC_APP_CONDITIONAL_TYPE_LTE:
                             case DC_APP_CONDITIONAL_TYPE_GTE:
-                                fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: operator %d not supported for string values\n", cond_type);
+                                DC_LOG_ERROR("Config", "_preprocess_xml_node(): If Static: operator %d not supported for string values", cond_type);
                                 xmlUnlinkNode(node);
                                 xmlFreeNode(node);
                                 return;
                             default:
-                                fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: invalid Operation %d for string comparison\n", cond_type);
+                                DC_LOG_ERROR("Config", "_preprocess_xml_node(): If Static: invalid Operation %d for string comparison", cond_type);
                                 break;
                         }
                     }
@@ -942,7 +943,7 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                             result = !bool_val;
                             break;
                         default:
-                            fprintf(stderr, "DCAPP _preprocess_xml_node(): If Static: Operation %d requires Value2 attribute\n", cond_type);
+                            DC_LOG_ERROR("Config", "_preprocess_xml_node(): If Static: Operation %d requires Value2 attribute", cond_type);
                             break;
                     }
                 }
@@ -1151,7 +1152,7 @@ void _register_const_by_name(_ConfigContext *context, const char *name, const ch
         _add_const(context, name, new_value, is_immutable);
     } else {
         if (context->sb_consts[const_index].is_immutable) {
-            fprintf(stderr, "DCApp _register_const_by_name(): ignoring constant registration for '%s': immutable\n", name);
+            DC_LOG_WARN("Config", "_register_const_by_name(): ignoring constant registration for '%s': immutable", name);
         } else {
             _set_const(context, const_index, new_value);
         }
@@ -1171,7 +1172,7 @@ const char *_get_const_by_name(_ConfigContext *context, const char *name) {
         if (context->suppress_warnings & DC_APP_SUPPRESS_MISSING_CONSTANT) {
             return "";  // silently expand to nothing
         }
-        fprintf(stderr, "DCAPP _get_const_by_name(): constant '%s' does not exist\n", name);
+        DC_LOG_WARN("Config", "_get_const_by_name(): constant '%s' does not exist", name);
         return NULL;
     } else {
         return context->sb_consts[const_index].val;
@@ -1204,7 +1205,7 @@ void _dereference_constants(_ConfigContext *context, const char *in, char *out, 
         if (in[in_index] == '#' || in[in_index] == '$') {
             // error if ending on a #/$
             if (in_index + 1 >= in_length) {
-                fprintf(stderr, "DCAPP _dereference_constants(): Cannot have string ending on an unescaped #/$: '%s'\n", in);
+                DC_LOG_ERROR("Config", "_dereference_constants(): Cannot have string ending on an unescaped #/$: '%s'", in);
                 return;
             }
 
@@ -1228,7 +1229,7 @@ void _dereference_constants(_ConfigContext *context, const char *in, char *out, 
                 }
 
                 if (num_open_brackets > 0) {
-                    fprintf(stderr, "DCAPP _dereference_constants(): mismatch with squiggly braces: '%s'\n", in);
+                    DC_LOG_ERROR("Config", "_dereference_constants(): mismatch with squiggly braces: '%s'", in);
                     return;
                 }
 
@@ -1254,7 +1255,7 @@ void _dereference_constants(_ConfigContext *context, const char *in, char *out, 
             strncpy(subtext, &in[subtext_start_index], subtext_length);
             subtext[subtext_length] = '\0';
             if (dc_utils_str_find_first(subtext, '@') != -1) {
-                fprintf(stderr, "DCAPP _dereference_constants(): cannot have variable nested inside variable/constant expansion: '%s'\n", in);
+                DC_LOG_ERROR("Config", "_dereference_constants(): cannot have variable nested inside variable/constant expansion: '%s'", in);
                 return;
             }
 
@@ -1321,14 +1322,14 @@ static void _add_style(_ConfigContext *context, const char *name, DcAppElemType 
         _ElemStyle *style = &(context->sb_styles[style_index]);
         if (style->xml_nodes[elem_type] != NULL) {
             if (!(context->suppress_warnings & DC_APP_SUPPRESS_STYLE_OVERRIDE)) {
-                fprintf(stderr, "DCApp _add_style(): style '%s' already contains an entry for element '%s'; overwriting\n", name, dc_app_elem_type_to_string(elem_type));
+                DC_LOG_WARN("Config", "_add_style(): style '%s' already contains an entry for element '%s'; overwriting", name, dc_app_elem_type_to_string(elem_type));
             }
             xmlFree(style->xml_nodes[elem_type]);
         }
         style->xml_nodes[elem_type] = xml_node;
     } else {
         if (!(context->suppress_warnings & DC_APP_SUPPRESS_MISSING_STYLE)) {
-            fprintf(stderr, "DCAPP _set_style(): name %s is undefined\n", name);
+            DC_LOG_WARN("Config", "_set_style(): name %s is undefined", name);
         }
     }
 }

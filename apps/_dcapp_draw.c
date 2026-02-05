@@ -4,6 +4,7 @@
 #include "dcapp.h"
 
 #include "../src/app/enums.h"
+#include "../src/utils/log.h"
 #include "../src/utils/math.h"
 #include "../src/utils/string.h"
 #include "../src/utils/time.h"
@@ -57,7 +58,7 @@ static void _draw_node_list(_AppData *app_data, _NodeIndex node_index, plVec2 *p
 
 static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
     if (node_index == NODE_INDEX_UNDEFINED) {
-        fprintf(stderr, "DCAPP _draw_node(): attempting to draw undefined node index\n");
+        DC_LOG_ERROR("Draw", "Attempting to draw undefined node index");
     }
 
     _Node *node = _get_node(app_data, node_index);
@@ -302,7 +303,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
                 trans_align_offsets[0] = -1 * dimension[0];
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Button> draw call: %d\n", local_aligns[0]);
+                DC_LOG_WARN("Button", "Unknown X alignment: %d", local_aligns[0]);
                 break;
         }
         switch (local_aligns[1]) {
@@ -317,7 +318,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
                 trans_align_offsets[1] = -1 * dimension[1];
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Button> draw call: %d\n", local_aligns[1]);
+                DC_LOG_WARN("Button", "Unknown Y alignment: %d", local_aligns[1]);
                 break;
         }
 
@@ -348,7 +349,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
                 anchor[0] = parent_dimensions->x;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() button: Invalid parent_align_x value %d\n", parent_align_x);
+                DC_LOG_WARN("Button", "Invalid parent_align_x: %d", parent_align_x);
                 break;
         }
         DcAppAlignType parent_align_y = node->button.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->button.parent_align.y)->value_integer;
@@ -364,7 +365,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
                 anchor[1] = parent_dimensions->y;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() button: Invalid parent_align_y value %d\n", parent_align_y);
+                DC_LOG_WARN("Button", "Invalid parent_align_y: %d", parent_align_y);
                 break;
         }
 
@@ -414,7 +415,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
                     pivot_position[0] = dimension[0];
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <Button> draw call: %d\n", local_pivot_aligns[0]);
+                    DC_LOG_WARN("Button", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
                     break;
             }
             switch (local_pivot_aligns[1]) {
@@ -429,7 +430,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
                     pivot_position[1] = dimension[1];
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <Button> draw call: %d\n", local_pivot_aligns[1]);
+                    DC_LOG_WARN("Button", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                     break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->button.rotation)->value_double);
@@ -765,7 +766,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
                 trans_align_offsets[0] = -1 * diameter;
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Arc> draw call: %d\n", local_aligns[0]);
+                DC_LOG_WARN("Arc", "Unknown X alignment: %d", local_aligns[0]);
                 trans_align_offsets[0] = -1 * diameter / 2;
                 break;
         }
@@ -781,7 +782,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
                 trans_align_offsets[1] = -1 * diameter;
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Arc> draw call: %d\n", local_aligns[1]);
+                DC_LOG_WARN("Arc", "Unknown Y alignment: %d", local_aligns[1]);
                 trans_align_offsets[1] = -1 * diameter / 2;
                 break;
         }
@@ -876,7 +877,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
                 pivot_position[0] = diameter;
                 break;
             default:
-                fprintf(stderr, "Unknown pivot alignment in <Arc> draw call: %d\n", local_pivot_aligns[0]);
+                DC_LOG_WARN("Arc", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
                 pivot_position[0] = diameter / 2;
                 break;
         }
@@ -892,7 +893,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
                 pivot_position[1] = diameter;
                 break;
             default:
-                fprintf(stderr, "Unknown pivot alignment in <Arc> draw call: %d\n", local_pivot_aligns[1]);
+                DC_LOG_WARN("Arc", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                 pivot_position[1] = diameter / 2;
                 break;
         }
@@ -1027,7 +1028,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
                 trans_align_offsets[0] = -1 * diameter_x;
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Ellipse> draw call: %d\n", local_aligns[0]);
+                DC_LOG_WARN("Ellipse", "Unknown X alignment: %d", local_aligns[0]);
                 break;
         }
         switch (local_aligns[1]) {
@@ -1042,7 +1043,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
                 trans_align_offsets[1] = -1 * diameter_y;
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Ellipse> draw call: %d\n", local_aligns[1]);
+                DC_LOG_WARN("Ellipse", "Unknown Y alignment: %d", local_aligns[1]);
                 break;
         }
 
@@ -1073,7 +1074,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
                 anchor[0] = parent_dimensions->x;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() ellipse: Invalid parent_align_x value %d\n", parent_align_x);
+                DC_LOG_WARN("Ellipse", "Invalid parent_align_x: %d", parent_align_x);
                 break;
         }
         DcAppAlignType parent_align_y = node->ellipse.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->ellipse.parent_align.y)->value_integer;
@@ -1089,7 +1090,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
                 anchor[1] = parent_dimensions->y;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() ellipse: Invalid parent_align_y value %d\n", parent_align_y);
+                DC_LOG_WARN("Ellipse", "Invalid parent_align_y: %d", parent_align_y);
                 break;
         }
 
@@ -1136,7 +1137,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
                     pivot_position[0] = diameter_x;
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <Ellipse> draw call: %d\n", local_pivot_aligns[0]);
+                    DC_LOG_WARN("Ellipse", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
                     break;
             }
             switch (local_pivot_aligns[1]) {
@@ -1151,7 +1152,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
                     pivot_position[1] = diameter_y;
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <Ellipse> draw call: %d\n", local_pivot_aligns[1]);
+                    DC_LOG_WARN("Ellipse", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                     break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.rotation)->value_double);
@@ -1392,7 +1393,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
                 trans_align_offsets[0] = -1 * dimension[0];
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
+                DC_LOG_WARN("Text", "Unknown X alignment: %d", local_aligns[0]);
                 break;
         }
         switch (local_aligns[1]) {
@@ -1407,7 +1408,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
                 trans_align_offsets[1] = -1 * dimension[1];
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
+                DC_LOG_WARN("Text", "Unknown Y alignment: %d", local_aligns[1]);
                 break;
         }
 
@@ -1438,7 +1439,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
                 anchor[0] = parent_dimensions->x;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() container: Invalid parent_align_x value %d\n", parent_align_x);
+                DC_LOG_WARN("Container", "Invalid parent_align_x: %d", parent_align_x);
                 break;
         }
         DcAppAlignType parent_align_y = node->container.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->container.parent_align.y)->value_integer;
@@ -1454,7 +1455,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
                 anchor[1] = parent_dimensions->y;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() container: Invalid parent_align_y value %d\n", parent_align_y);
+                DC_LOG_WARN("Container", "Invalid parent_align_y: %d", parent_align_y);
                 break;
         }
 
@@ -1501,7 +1502,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
                     pivot_position[0] = dimension[0];
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <container> draw call: %d\n", local_pivot_aligns[0]);
+                    DC_LOG_WARN("Container", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
                     break;
             }
             switch (local_pivot_aligns[1]) {
@@ -1516,7 +1517,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
                     pivot_position[1] = dimension[1];
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <container> draw call: %d\n", local_pivot_aligns[1]);
+                    DC_LOG_WARN("Container", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                     break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->container.rotation)->value_double);
@@ -1623,7 +1624,7 @@ static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _N
                 result = dc_value_is_greater_or_equal(val1, val2);
                 break;
             default:
-                fprintf(stderr, "DCApp _draw_node(): unknown conditional_type on evaluation %d for valid Val2\n", type);
+                DC_LOG_WARN("If", "Unknown conditional type %d with Val2", type);
                 break;
         }
     } else {
@@ -1635,7 +1636,7 @@ static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _N
                 result = !(val1->value_boolean);
                 break;
             default:
-                fprintf(stderr, "DCApp _draw_node(): unknown conditional_type on evaluation %d for Val1 only\n", type);
+                DC_LOG_WARN("If", "Unknown conditional type %d with Val1 only", type);
                 break;
         }
     }
@@ -1713,7 +1714,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
                 trans_align_offsets[0] = -1 * dimension[0];
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
+                DC_LOG_WARN("Text", "Unknown X alignment: %d", local_aligns[0]);
                 break;
         }
         switch (local_aligns[1]) {
@@ -1728,7 +1729,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
                 trans_align_offsets[1] = -1 * dimension[1];
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
+                DC_LOG_WARN("Text", "Unknown Y alignment: %d", local_aligns[1]);
                 break;
         }
 
@@ -1759,7 +1760,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
                 anchor[0] = parent_dimensions->x;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() image: Invalid parent_align_x value %d\n", parent_align_x);
+                DC_LOG_WARN("Image", "Invalid parent_align_x: %d", parent_align_x);
                 break;
         }
         DcAppAlignType parent_align_y = node->image.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->image.parent_align.y)->value_integer;
@@ -1775,7 +1776,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
                 anchor[1] = parent_dimensions->y;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() image: Invalid parent_align_y value %d\n", parent_align_y);
+                DC_LOG_WARN("Image", "Invalid parent_align_y: %d", parent_align_y);
                 break;
         }
 
@@ -1822,7 +1823,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
                     pivot_position[0] = dimension[0];
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <image> draw call: %d\n", local_pivot_aligns[0]);
+                    DC_LOG_WARN("Image", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
                     break;
             }
             switch (local_pivot_aligns[1]) {
@@ -1837,7 +1838,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
                     pivot_position[1] = dimension[1];
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <image> draw call: %d\n", local_pivot_aligns[1]);
+                    DC_LOG_WARN("Image", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                     break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->image.rotation)->value_double);
@@ -2155,7 +2156,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
 
                 // check size
                 if (node->pixelstream.frame_height * node->pixelstream.frame_width > _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT) {
-                    fprintf(stderr, "DCApp draw_node() pixelstream: max image dimensions exceeded\n");
+                    DC_LOG_WARN("PixelStream", "Max image dimensions exceeded");
                 }
             }
             break;
@@ -2176,7 +2177,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
 
                 // check size
                 if (width * height > _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT) {
-                    fprintf(stderr, "DCApp draw_node() pixelstream shmem: max image dimensions exceeded\n");
+                    DC_LOG_WARN("PixelStream", "Shmem max image dimensions exceeded");
                     break;
                 }
 
@@ -2194,7 +2195,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
             break;
         }
         default:
-            fprintf(stderr, "DCApp _draw_node(): unknown pixelstram type of %d\n", node->pixelstream.type);
+            DC_LOG_ERROR("PixelStream", "Unknown type: %d", node->pixelstream.type);
             break;
     }
 
@@ -2291,7 +2292,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
                 trans_align_offsets[0] = -1 * dimension[0];
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
+                DC_LOG_WARN("Text", "Unknown X alignment: %d", local_aligns[0]);
                 break;
         }
         switch (local_aligns[1]) {
@@ -2306,7 +2307,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
                 trans_align_offsets[1] = -1 * dimension[1];
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
+                DC_LOG_WARN("Text", "Unknown Y alignment: %d", local_aligns[1]);
                 break;
         }
 
@@ -2337,7 +2338,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
                 anchor[0] = parent_dimensions->x;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() pixelstream: Invalid parent_align_x value %d\n", parent_align_x);
+                DC_LOG_WARN("PixelStream", "Invalid parent_align_x: %d", parent_align_x);
                 break;
         }
         DcAppAlignType parent_align_y = node->pixelstream.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->pixelstream.parent_align.y)->value_integer;
@@ -2353,7 +2354,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
                 anchor[1] = parent_dimensions->y;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() pixelstream: Invalid parent_align_y value %d\n", parent_align_y);
+                DC_LOG_WARN("PixelStream", "Invalid parent_align_y: %d", parent_align_y);
                 break;
         }
 
@@ -2400,7 +2401,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
                     pivot_position[0] = dimension[0];
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <pixelstream> draw call: %d\n", local_pivot_aligns[0]);
+                    DC_LOG_WARN("PixelStream", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
                     break;
             }
             switch (local_pivot_aligns[1]) {
@@ -2415,7 +2416,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
                     pivot_position[1] = dimension[1];
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <pixelstream> draw call: %d\n", local_pivot_aligns[1]);
+                    DC_LOG_WARN("PixelStream", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                     break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.rotation)->value_double);
@@ -2806,7 +2807,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
                 trans_align_offsets[0] = -1 * dimension[0];
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
+                DC_LOG_WARN("Text", "Unknown X alignment: %d", local_aligns[0]);
                 break;
         }
         switch (local_aligns[1]) {
@@ -2821,7 +2822,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
                 trans_align_offsets[1] = -1 * dimension[1];
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
+                DC_LOG_WARN("Text", "Unknown Y alignment: %d", local_aligns[1]);
                 break;
         }
 
@@ -2852,7 +2853,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
                 anchor[0] = parent_dimensions->x;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() rectangle: Invalid parent_align_x value %d\n", parent_align_x);
+                DC_LOG_WARN("Rectangle", "Invalid parent_align_x: %d", parent_align_x);
                 break;
         }
         DcAppAlignType parent_align_y = node->rectangle.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->rectangle.parent_align.y)->value_integer;
@@ -2868,7 +2869,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
                 anchor[1] = parent_dimensions->y;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() rectangle: Invalid parent_align_y value %d\n", parent_align_y);
+                DC_LOG_WARN("Rectangle", "Invalid parent_align_y: %d", parent_align_y);
                 break;
         }
 
@@ -2915,7 +2916,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
                     pivot_position[0] = dimension[0];
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <rectangle> draw call: %d\n", local_pivot_aligns[0]);
+                    DC_LOG_WARN("Rectangle", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
                     break;
             }
             switch (local_pivot_aligns[1]) {
@@ -2930,7 +2931,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
                     pivot_position[1] = dimension[1];
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <rectangle> draw call: %d\n", local_pivot_aligns[1]);
+                    DC_LOG_WARN("Rectangle", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                     break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.rotation)->value_double);
@@ -3239,7 +3240,7 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
             }
             break;
         default:
-            fprintf(stderr, "Invalid <Set> Operator value of enum %d\n", operation);
+            DC_LOG_ERROR("Set", "Invalid operator: %d", operation);
             break;
     }
 
@@ -3305,7 +3306,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
                 trans_align_offsets[0] = -radius;  // move left so right edge aligns
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Sphere> draw call: %d\n", local_aligns[0]);
+                DC_LOG_WARN("Sphere", "Unknown X alignment: %d", local_aligns[0]);
                 break;
         }
         switch (local_aligns[1]) {
@@ -3320,7 +3321,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
                 trans_align_offsets[1] = -radius;  // move up so top edge aligns
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Sphere> draw call: %d\n", local_aligns[1]);
+                DC_LOG_WARN("Sphere", "Unknown Y alignment: %d", local_aligns[1]);
                 break;
         }
 
@@ -3348,7 +3349,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
                 anchor[0] = parent_dimensions->x;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() sphere: Invalid parent_align_x value %d\n", parent_align_x);
+                DC_LOG_WARN("Sphere", "Invalid parent_align_x: %d", parent_align_x);
                 break;
         }
         DcAppAlignType parent_align_y = node->sphere.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->sphere.parent_align.y)->value_integer;
@@ -3364,7 +3365,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
                 anchor[1] = parent_dimensions->y;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() sphere: Invalid parent_align_y value %d\n", parent_align_y);
+                DC_LOG_WARN("Sphere", "Invalid parent_align_y: %d", parent_align_y);
                 break;
         }
 
@@ -3408,7 +3409,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
                     pivot_position[0] = diameter;
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <Sphere> draw call: %d\n", local_pivot_aligns[0]);
+                    DC_LOG_WARN("Sphere", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
                     break;
             }
             switch (local_pivot_aligns[1]) {
@@ -3423,7 +3424,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
                     pivot_position[1] = diameter;
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <Sphere> draw call: %d\n", local_pivot_aligns[1]);
+                    DC_LOG_WARN("Sphere", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                     break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rotation)->value_double);
@@ -3594,7 +3595,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
                 trans_align_offsets[0] = -1 * dimension[0];
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
+                DC_LOG_WARN("Text", "Unknown X alignment: %d", local_aligns[0]);
                 break;
         }
         switch (local_aligns[1]) {
@@ -3609,7 +3610,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
                 trans_align_offsets[1] = -1 * dimension[1];
                 break;
             default:
-                fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
+                DC_LOG_WARN("Text", "Unknown Y alignment: %d", local_aligns[1]);
                 break;
         }
 
@@ -3640,7 +3641,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
                 anchor[0] = parent_dimensions->x;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() terrain: Invalid parent_align_x value %d\n", parent_align_x);
+                DC_LOG_WARN("Terrain", "Invalid parent_align_x: %d", parent_align_x);
                 break;
         }
         DcAppAlignType parent_align_y = node->terrain.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->terrain.parent_align.y)->value_integer;
@@ -3656,7 +3657,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
                 anchor[1] = parent_dimensions->y;
                 break;
             default:
-                fprintf(stderr, "DCAPP _draw_node() terrain: Invalid parent_align_y value %d\n", parent_align_y);
+                DC_LOG_WARN("Terrain", "Invalid parent_align_y: %d", parent_align_y);
                 break;
         }
 
@@ -3703,7 +3704,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
                     pivot_position[0] = dimension[0];
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <terrain> draw call: %d\n", local_pivot_aligns[0]);
+                    DC_LOG_WARN("Terrain", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
                     break;
             }
             switch (local_pivot_aligns[1]) {
@@ -3718,7 +3719,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
                     pivot_position[1] = dimension[1];
                     break;
                 default:
-                    fprintf(stderr, "Unknown pivot alignment in <terrain> draw call: %d\n", local_pivot_aligns[1]);
+                    DC_LOG_WARN("Terrain", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                     break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->terrain.rotation)->value_double);
@@ -3790,7 +3791,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                     snprintf(val_str, sizeof(val_str), format, val->value_boolean);
                     break;
                 default:
-                    fprintf(stderr, "Unknown value type for text: %d\n", format_type);
+                    DC_LOG_WARN("Text", "Unknown value type: %d", format_type);
             }
         }
         sbpushn(sb_text, val_str, (int)strlen(val_str));
@@ -3886,7 +3887,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                     trans_align_offsets[0] = -1 * dimensions[ii].x;
                     break;
                 default:
-                    fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[0]);
+                    DC_LOG_WARN("Text", "Unknown X alignment: %d", local_aligns[0]);
                     break;
             }
             switch (local_aligns[1]) {
@@ -3904,7 +3905,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                     trans_align_offsets[1] -= 1.0f * dimensions[ii].y * (num_lines - 1);
                     break;
                 default:
-                    fprintf(stderr, "Unknown alignment in <Text> draw call: %d\n", local_aligns[1]);
+                    DC_LOG_WARN("Text", "Unknown Y alignment: %d", local_aligns[1]);
                     break;
             }
 
@@ -3937,7 +3938,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                     anchor[0] = parent_dimensions->x;
                     break;
                 default:
-                    fprintf(stderr, "DCAPP _draw_node() text: Invalid parent_align_x value %d\n", parent_align_x);
+                    DC_LOG_WARN("Text", "Invalid parent_align_x: %d", parent_align_x);
                     break;
             }
             DcAppAlignType parent_align_y = node->text.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->text.parent_align.y)->value_integer;
@@ -3953,7 +3954,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                     anchor[1] = parent_dimensions->y;
                     break;
                 default:
-                    fprintf(stderr, "DCAPP _draw_node() text: Invalid parent_align_y value %d\n", parent_align_y);
+                    DC_LOG_WARN("Text", "Invalid parent_align_y: %d", parent_align_y);
                     break;
             }
 
@@ -4000,7 +4001,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                         pivot_position[0] = total_dimensions.x;
                         break;
                     default:
-                        fprintf(stderr, "Unknown pivot alignment in <text> draw call: %d\n", local_pivot_aligns[0]);
+                        DC_LOG_WARN("Text", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
                         break;
                 }
                 switch (local_pivot_aligns[1]) {
@@ -4015,7 +4016,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                         pivot_position[1] = total_dimensions.y;
                         break;
                     default:
-                        fprintf(stderr, "Unknown pivot alignment in <text> draw call: %d\n", local_pivot_aligns[1]);
+                        DC_LOG_WARN("Text", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                         break;
                 }
                 float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->text.rotation)->value_double);

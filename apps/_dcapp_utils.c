@@ -3,6 +3,7 @@
 
 #include "dcapp.h"
 
+#include "../src/utils/log.h"
 #include "../src/utils/string.h"
 
 static const char *_node_type_to_string(_NodeType type) {
@@ -30,7 +31,7 @@ static const char *_node_type_to_string(_NodeType type) {
         case NODE_TYPE_WINDOW:
             return "Window";
         default:
-            fprintf(stderr, "DCAPP _node_type_to_string(): Unknown node type %d\n", type);
+            DC_LOG_WARN("NodeType", "Unknown type: %d", type);
             return "";
     }
 }
@@ -312,6 +313,16 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     // get device
     plDevice *device = _ext_starter->get_device();
 
+    // initialize dc_draw_ext and dc_draw_backend_ext (pl_starter doesn't do this since we use dcDrawI)
+    plDrawInit tDrawInit = {0};
+    _ext_draw->initialize(&tDrawInit);
+    _ext_draw_backend->initialize(device);
+
+    // initialize GPU memory allocators
+    app_data->gpu_local_dedicated_allocator  = _ext_gpu_allocators->get_local_dedicated_allocator(device);
+    app_data->gpu_local_buddy_allocator      = _ext_gpu_allocators->get_local_buddy_allocator(device);
+    app_data->gpu_staging_uncached_allocator = _ext_gpu_allocators->get_staging_uncached_allocator(device);
+
     // init default staging buffer
     {
         // set size to 10 MB
@@ -327,12 +338,13 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
         // retrieve buffer to get memory allocation requirements
         plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
 
-        // allocate memory for the vertex buffer
-        const plDeviceMemoryAllocation staging_buffer_allocation = _ext_gfx->allocate_memory(
-            device,
-            staging_buffer->tMemoryRequirements.ulSize,
-            PL_MEMORY_FLAGS_HOST_VISIBLE | PL_MEMORY_FLAGS_HOST_COHERENT,
+        // allocate memory using staging allocator
+        plDeviceMemoryAllocatorI *allocator = app_data->gpu_staging_uncached_allocator;
+        const plDeviceMemoryAllocation staging_buffer_allocation = allocator->allocate(
+            allocator->ptInst,
             staging_buffer->tMemoryRequirements.uMemoryTypeBits,
+            staging_buffer->tMemoryRequirements.ulSize,
+            staging_buffer->tMemoryRequirements.ulAlignment,
             "staging buffer memory");
 
         // bind the buffer to the new memory allocation
@@ -341,6 +353,9 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
 
     // create font atlas
     {
+        // create and set font atlas
+        plFontAtlas* font_atlas = _ext_draw->create_font_atlas();
+        _ext_draw->set_font_atlas(font_atlas);
 
         // typical font range (you can also add individual characters)
         const plFontRange font_range = {
@@ -358,9 +373,16 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
         font_config.uRangeCount    = 1;
         font_config.ptRanges       = &font_range;
 
-        app_data->pl_vera_sdf_font = _ext_draw->add_font_from_file_ttf(_ext_draw->get_current_font_atlas(), font_config, "../../assets/fonts/bitstream-vera-sans/Vera.ttf");
+        app_data->pl_vera_sdf_font = _ext_draw->add_font_from_file_ttf(font_atlas, font_config, "../../assets/fonts/bitstream-vera-sans/Vera.ttf");
+
+        // build font atlas (CPU prepare + GPU upload - backend handles prepare internally)
+        plCommandBuffer* command_buffer = _ext_gfx->request_command_buffer(_ext_starter->get_current_command_pool(), "dcapp font atlas");
+        _ext_draw_backend->build_font_atlas(command_buffer, font_atlas);
+        _ext_gfx->wait_on_command_buffer(command_buffer);
+        _ext_gfx->return_command_buffer(command_buffer);
     }
-    _ext_starter->set_default_font(app_data->pl_vera_sdf_font);
+    // Note: don't call set_default_font - pl_starter uses plDrawI with its own font atlas,
+    // while dcapp uses dcDrawI with a separate font atlas. Let pl_starter create its own default font.
 
     // initialize shader compiler
     plShaderOptions shader_options          = {};
@@ -413,8 +435,18 @@ static _Texture _create_texture(_AppData *app_data, uint32_t texture_width, uint
     plTexture      *pl_texture;
     plTextureHandle pl_texture_handle = _ext_gfx->create_texture(device, &pl_texture_desc, &pl_texture);
 
-    // allocate memory
-    const plDeviceMemoryAllocation pl_texture_allocation = _ext_gfx->allocate_memory(device, pl_texture->tMemoryRequirements.ulSize, PL_MEMORY_FLAGS_DEVICE_LOCAL, pl_texture->tMemoryRequirements.uMemoryTypeBits, NULL);
+    // choose allocator based on texture size
+    // use buddy allocator for smaller textures, dedicated for large ones
+    plDeviceMemoryAllocatorI *allocator = app_data->gpu_local_buddy_allocator;
+    if (pl_texture->tMemoryRequirements.ulSize > _ext_gpu_allocators->get_buddy_block_size())
+        allocator = app_data->gpu_local_dedicated_allocator;
+
+    const plDeviceMemoryAllocation pl_texture_allocation = allocator->allocate(
+        allocator->ptInst,
+        pl_texture->tMemoryRequirements.uMemoryTypeBits,
+        pl_texture->tMemoryRequirements.ulSize,
+        pl_texture->tMemoryRequirements.ulAlignment,
+        texture_name);
 
     // bind memory
     _ext_gfx->bind_texture_to_memory(device, pl_texture_handle, &pl_texture_allocation);

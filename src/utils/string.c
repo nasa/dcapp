@@ -1,4 +1,5 @@
 #include "string.h"
+#include "log.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -158,7 +159,7 @@ int dc_utils_string_to_boolean(const char *text) {
     }
 
     if (strlen(text) > DC_UTILS_STRING_MAX_BUFFER_SIZE) {
-        fprintf(stderr, "DCApp dc_utils_string_to_boolean(): input text exceeds max string buffer size\n");
+        DC_LOG_WARN("String", "dc_utils_string_to_boolean(): input text exceeds max string buffer size");
     }
 
     char result[DC_UTILS_STRING_MAX_BUFFER_SIZE];

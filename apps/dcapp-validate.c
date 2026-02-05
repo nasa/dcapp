@@ -3,6 +3,7 @@
 #include "../src/app/lookup.h"
 #include "../src/utils/env.h"
 #include "../src/utils/file.h"
+#include "../src/utils/log.h"
 
 #include <libxml/parser.h>
 
@@ -28,7 +29,7 @@ static void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, 
 int main(int argc, char **argv) {
 
     if (argc < 2) {
-        fprintf(stderr, "Usage: dcapp-validate <config.xml> [CONSTANT=value ...]\n");
+        DC_LOG_ERROR("Validate", "Usage: dcapp-validate <config.xml> [CONSTANT=value ...]");
         return 1;
     }
 
@@ -61,8 +62,7 @@ int main(int argc, char **argv) {
     _validate_node(&ctx, root_node, DC_APP_ELEM_TYPE_NONELEM);
 
     // report summary
-    printf("\n");
-    printf("Validation complete: %d error(s), %d warning(s)\n", ctx.error_count, ctx.warning_count);
+    DC_LOG_INFO("Validate", "Complete: %d error(s), %d warning(s)", ctx.error_count, ctx.warning_count);
 
     return ctx.error_count > 0 ? 1 : 0;
 }
@@ -86,7 +86,7 @@ void _validate_node(ValidationContext *ctx, xmlNodePtr node, DcAppElemType paren
 
     // check parent-child relationship
     if (!_is_valid_child(parent_type, elem_type)) {
-        fprintf(stderr, "ERROR: <%s> is not a valid child of <%s> (line %ld)\n",
+        DC_LOG_ERROR("Validate", "<%s> is not a valid child of <%s> (line %ld)",
                 node->name, node->parent ? node->parent->name : (xmlChar *)"root", xmlGetLineNo(node));
         ctx->error_count++;
     }
@@ -666,7 +666,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         case DC_APP_ELEM_TYPE_VARIABLE: {
             xmlChar *type = xmlGetProp(node, BAD_CAST "Type");
             if (!type) {
-                fprintf(stderr, "ERROR: <Variable> missing required attribute 'Type' (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<Variable> missing required attribute 'Type' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(type);
@@ -674,7 +674,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
 
             xmlChar *content = xmlNodeGetContent(node);
             if (!content || strlen((char *)content) == 0) {
-                fprintf(stderr, "ERROR: <Variable> missing variable name (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<Variable> missing variable name (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             }
             if (content)
@@ -685,7 +685,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         case DC_APP_ELEM_TYPE_CONSTANT: {
             xmlChar *name = xmlGetProp(node, BAD_CAST "Name");
             if (!name) {
-                fprintf(stderr, "ERROR: <Constant> missing required attribute 'Name' (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<Constant> missing required attribute 'Name' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(name);
@@ -705,7 +705,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             if (!vh)
                 vh = xmlGetProp(node, BAD_CAST "VirtualDimensionY");
             if (!vw || !vh) {
-                fprintf(stderr, "WARNING: <Panel> missing 'VirtualWidth' or 'VirtualHeight' attribute (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_WARN("Validate", "<Panel> missing 'VirtualWidth' or 'VirtualHeight' attribute (line %ld)", xmlGetLineNo(node));
                 ctx->warning_count++;
             }
             if (vw)
@@ -718,7 +718,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         case DC_APP_ELEM_TYPE_SET: {
             xmlChar *var = xmlGetProp(node, BAD_CAST "Variable");
             if (!var) {
-                fprintf(stderr, "ERROR: <Set> missing required attribute 'Variable' (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<Set> missing required attribute 'Variable' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(var);
@@ -732,7 +732,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
                 value = xmlGetProp(node, BAD_CAST "Value1");
             }
             if (!value) {
-                fprintf(stderr, "ERROR: <%s> missing required attribute 'Value' or 'Value1' (line %ld)\n",
+                DC_LOG_ERROR("Validate", "<%s> missing required attribute 'Value' or 'Value1' (line %ld)",
                         node->name, xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
@@ -744,7 +744,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         case DC_APP_ELEM_TYPE_STYLE: {
             xmlChar *name = xmlGetProp(node, BAD_CAST "Name");
             if (!name) {
-                fprintf(stderr, "ERROR: <Style> missing required attribute 'Name' (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<Style> missing required attribute 'Name' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(name);
@@ -756,11 +756,11 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             xmlChar *host = xmlGetProp(node, BAD_CAST "Host");
             xmlChar *port = xmlGetProp(node, BAD_CAST "Port");
             if (!host) {
-                fprintf(stderr, "WARNING: <TrickIO> missing 'Host' attribute (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_WARN("Validate", "<TrickIO> missing 'Host' attribute (line %ld)", xmlGetLineNo(node));
                 ctx->warning_count++;
             }
             if (!port) {
-                fprintf(stderr, "WARNING: <TrickIO> missing 'Port' attribute (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_WARN("Validate", "<TrickIO> missing 'Port' attribute (line %ld)", xmlGetLineNo(node));
                 ctx->warning_count++;
             }
             if (host)
@@ -773,7 +773,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         case DC_APP_ELEM_TYPE_TRICK_VARIABLE: {
             xmlChar *name = xmlGetProp(node, BAD_CAST "Name");
             if (!name) {
-                fprintf(stderr, "ERROR: <TrickVariable> missing required attribute 'Name' (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<TrickVariable> missing required attribute 'Name' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(name);
@@ -785,11 +785,11 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             xmlChar *host = xmlGetProp(node, BAD_CAST "Host");
             xmlChar *port = xmlGetProp(node, BAD_CAST "Port");
             if (!host) {
-                fprintf(stderr, "WARNING: <EdgeIO> missing 'Host' attribute (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_WARN("Validate", "<EdgeIO> missing 'Host' attribute (line %ld)", xmlGetLineNo(node));
                 ctx->warning_count++;
             }
             if (!port) {
-                fprintf(stderr, "WARNING: <EdgeIO> missing 'Port' attribute (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_WARN("Validate", "<EdgeIO> missing 'Port' attribute (line %ld)", xmlGetLineNo(node));
                 ctx->warning_count++;
             }
             if (host)
@@ -807,7 +807,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         case DC_APP_ELEM_TYPE_IMAGE: {
             xmlChar *file = xmlGetProp(node, BAD_CAST "File");
             if (!file) {
-                fprintf(stderr, "ERROR: <Image> missing required attribute 'File' (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<Image> missing required attribute 'File' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(file);
@@ -818,7 +818,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         case DC_APP_ELEM_TYPE_LOGIC: {
             xmlChar *file = xmlGetProp(node, BAD_CAST "File");
             if (!file) {
-                fprintf(stderr, "ERROR: <Logic> missing required attribute 'File' (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<Logic> missing required attribute 'File' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(file);
@@ -829,7 +829,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         case DC_APP_ELEM_TYPE_FUNCTION: {
             xmlChar *name = xmlGetProp(node, BAD_CAST "Name");
             if (!name) {
-                fprintf(stderr, "ERROR: <Function> missing required attribute 'Name' (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<Function> missing required attribute 'Name' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(name);
@@ -840,7 +840,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         case DC_APP_ELEM_TYPE_BLINK: {
             xmlChar *var = xmlGetProp(node, BAD_CAST "Variable");
             if (!var) {
-                fprintf(stderr, "ERROR: <Blink> missing required attribute 'Variable' (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<Blink> missing required attribute 'Variable' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(var);
@@ -852,7 +852,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             xmlChar *vx = xmlGetProp(node, BAD_CAST "VariableX");
             xmlChar *vy = xmlGetProp(node, BAD_CAST "VariableY");
             if (!vx && !vy) {
-                fprintf(stderr, "WARNING: <MouseMotion> has no VariableX or VariableY (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_WARN("Validate", "<MouseMotion> has no VariableX or VariableY (line %ld)", xmlGetLineNo(node));
                 ctx->warning_count++;
             }
             if (vx)
@@ -865,7 +865,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         case DC_APP_ELEM_TYPE_TERRAIN_DEM: {
             xmlChar *file = xmlGetProp(node, BAD_CAST "File");
             if (!file) {
-                fprintf(stderr, "ERROR: <TerrainDEM> missing required attribute 'File' (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<TerrainDEM> missing required attribute 'File' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(file);
@@ -876,7 +876,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         case DC_APP_ELEM_TYPE_PIXELSTREAM: {
             xmlChar *type = xmlGetProp(node, BAD_CAST "Type");
             if (!type) {
-                fprintf(stderr, "ERROR: <PixelStream> missing required attribute 'Type' (line %ld)\n", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<PixelStream> missing required attribute 'Type' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(type);
@@ -1180,7 +1180,7 @@ void _validate_attribute_names(ValidationContext *ctx, xmlNodePtr node, DcAppEle
 
         // Check if attribute is valid for this element type
         if (!_is_valid_attr_for_elem(attr_name, elem_type)) {
-            fprintf(stderr, "WARNING: <%s> has unrecognized attribute '%s' (line %ld)\n",
+            DC_LOG_WARN("Validate", "<%s> has unrecognized attribute '%s' (line %ld)",
                     node->name, attr_name, xmlGetLineNo(node));
             ctx->warning_count++;
         }
@@ -1222,9 +1222,8 @@ static void _validate_enum_attr(ValidationContext *ctx, xmlNodePtr node, const c
 
     // Check if it's a valid integer value
     if (!_is_valid_int_in_range(value, min_val, max_val)) {
-        fprintf(stderr, "ERROR: <%s> attribute '%s' has invalid value '%s' (line %ld)\n",
-                node->name, attr_name, value, xmlGetLineNo(node));
-        fprintf(stderr, "       Valid values: %s\n", valid_values_desc);
+        DC_LOG_ERROR("Validate", "<%s> attribute '%s' has invalid value '%s' (line %ld). Valid values: %s",
+                node->name, attr_name, value, xmlGetLineNo(node), valid_values_desc);
         ctx->error_count++;
     }
 
@@ -1261,17 +1260,17 @@ void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppEl
                 xmlChar *value2 = xmlGetProp(node, BAD_CAST "Value2");
 
                 if (value && _is_variable_ref((const char *)value)) {
-                    fprintf(stderr, "ERROR: <If Static=\"true\"> Value '%s' cannot be a runtime variable (@) (line %ld)\n",
+                    DC_LOG_ERROR("Validate", "<If Static=\"true\"> Value '%s' cannot be a runtime variable (@) (line %ld)",
                             value, xmlGetLineNo(node));
                     ctx->error_count++;
                 }
                 if (value1 && _is_variable_ref((const char *)value1)) {
-                    fprintf(stderr, "ERROR: <If Static=\"true\"> Value1 '%s' cannot be a runtime variable (@) (line %ld)\n",
+                    DC_LOG_ERROR("Validate", "<If Static=\"true\"> Value1 '%s' cannot be a runtime variable (@) (line %ld)",
                             value1, xmlGetLineNo(node));
                     ctx->error_count++;
                 }
                 if (value2 && _is_variable_ref((const char *)value2)) {
-                    fprintf(stderr, "ERROR: <If Static=\"true\"> Value2 '%s' cannot be a runtime variable (@) (line %ld)\n",
+                    DC_LOG_ERROR("Validate", "<If Static=\"true\"> Value2 '%s' cannot be a runtime variable (@) (line %ld)",
                             value2, xmlGetLineNo(node));
                     ctx->error_count++;
                 }

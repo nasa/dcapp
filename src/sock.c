@@ -1,4 +1,5 @@
 #include "sock.h"
+#include "utils/log.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -52,7 +53,7 @@ DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
     hints.ai_family       = AF_UNSPEC;
     hints.ai_socktype     = SOCK_STREAM;
     if (getaddrinfo(host, NULL, &hints, &result) != 0) {
-        fprintf(stderr, "Failed to resolve host: %s\n", host);
+        DC_LOG_ERROR("Sock", "Failed to resolve host: %s", host);
         return DC_SOCK_RESULT_FAIL;
     }
 
@@ -137,7 +138,7 @@ DcSockResult dc_sock_connect(DcSock *sock, const char *ip, int port) {
         socket_addr_len   = sizeof(addr6);
         addr_ptr          = (struct sockaddr *)&addr6;
     } else {
-        fprintf(stderr, "Invalid IP address: %s\n", ip);
+        DC_LOG_ERROR("Sock", "Invalid IP address: %s", ip);
         return DC_SOCK_RESULT_FAIL;
     }
 

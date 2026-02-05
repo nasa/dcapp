@@ -22,7 +22,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plDrawBackendI_version {1, 1, 0}
+#define dcDrawBackendI_version {1, 1, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -85,5 +85,8 @@ typedef struct _plDrawBackendI
     // pass NULL for both shaders to reset to default
     void (*set_shader)(plDrawLayer2D*, plShaderHandle* pt2dShader, plShaderHandle* ptSdfShader);
 } plDrawBackendI;
+
+// Alias for API registration (separate from pilotlight's plDrawBackendI)
+typedef plDrawBackendI dcDrawBackendI;
 
 #endif // PL_DRAW_BACKEND_EXT_H

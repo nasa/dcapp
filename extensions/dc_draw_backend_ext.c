@@ -1468,12 +1468,12 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .use_linear_sampler            = pl_use_linear_sampler,
         .set_shader                    = pl_set_shader,
     };
-    pl_set_api(ptApiRegistry, plDrawBackendI, &tApi);
+    pl_set_api(ptApiRegistry, dcDrawBackendI, &tApi);
 
     gptMemory = pl_get_api_latest(ptApiRegistry, plMemoryI);
     gptStats  = pl_get_api_latest(ptApiRegistry, plStatsI);
     gptGfx    = pl_get_api_latest(ptApiRegistry, plGraphicsI);
-    gptDraw   = pl_get_api_latest(ptApiRegistry, plDrawI);
+    gptDraw   = pl_get_api_latest(ptApiRegistry, dcDrawI);
     gptShader = pl_get_api_latest(ptApiRegistry, plShaderI);
     gptLog    = pl_get_api_latest(ptApiRegistry, plLogI);
     gptIOI    = pl_get_api_latest(ptApiRegistry, plIOI);
@@ -1505,7 +1505,7 @@ pl_unload_ext(plApiRegistryI* ptApiRegistry, bool bReload)
     if(bReload)
         return;
         
-    const plDrawBackendI* ptApi = pl_get_api_latest(ptApiRegistry, plDrawBackendI);
+    const dcDrawBackendI* ptApi = pl_get_api_latest(ptApiRegistry, dcDrawBackendI);
     ptApiRegistry->remove_api(ptApi);
 }
 

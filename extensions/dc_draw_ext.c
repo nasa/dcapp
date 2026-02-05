@@ -3984,7 +3984,7 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .add_bezier_quad            = pl_add_bezier_quad,
         .add_bezier_cubic           = pl_add_bezier_cubic,
     };
-    pl_set_api(ptApiRegistry, plDrawI, &tApi);
+    pl_set_api(ptApiRegistry, dcDrawI, &tApi);
 
 
     #ifndef PL_UNITY_BUILD
@@ -4011,7 +4011,7 @@ pl_unload_ext(plApiRegistryI* ptApiRegistry, bool bReload)
     if(bReload)
         return;
         
-    const plDrawI* ptApi = pl_get_api_latest(ptApiRegistry, plDrawI);
+    const dcDrawI* ptApi = pl_get_api_latest(ptApiRegistry, dcDrawI);
     ptApiRegistry->remove_api(ptApi);
 }
 

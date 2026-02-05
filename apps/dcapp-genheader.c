@@ -3,6 +3,7 @@
 #include "../src/app/lookup.h"
 #include "../src/utils/env.h"
 #include "../src/utils/file.h"
+#include "../src/utils/log.h"
 #include "../src/utils/string.h"
 
 #include <libxml/parser.h>
@@ -16,7 +17,7 @@ static void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup);
 int main(int argc, char **argv) {
 
     if (argc < 2) {
-        fprintf(stderr, "DCAPP main(): Missing config file\n");
+        DC_LOG_ERROR("GenHeader", "Missing config file");
     }
 
     // create config
@@ -96,7 +97,7 @@ int main(int argc, char **argv) {
                 fprintf(file, "bool   *%s;\n", var_name);
                 break;
             default:
-                fprintf(stderr, "DCAPP main(): Invalid variable value type %d\n", value->type);
+                DC_LOG_ERROR("GenHeader", "Invalid variable value type %d", value->type);
                 break;
         }
     }
@@ -136,7 +137,7 @@ int main(int argc, char **argv) {
                 fprintf(file, "        %-*s = (bool *)get_variable_value_addr(\"%s\");\n", longest_string_size, var_name, var_name);
                 break;
             default:
-                fprintf(stderr, "DCAPP main(): Invalid variable value type %d\n", value->type);
+                DC_LOG_ERROR("GenHeader", "Invalid variable value type %d", value->type);
                 break;
         }
     }
@@ -171,7 +172,7 @@ int main(int argc, char **argv) {
                 fprintf(file, "extern bool   *%s;\n", var_name);
                 break;
             default:
-                fprintf(stderr, "DCAPP main(): Invalid variable value type %d\n", value->type);
+                DC_LOG_ERROR("GenHeader", "Invalid variable value type %d", value->type);
                 break;
         }
     }
@@ -213,10 +214,10 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup) {
                 xmlFree(raw_name);
                 dc_utils_trim_whitespace_inplace(clean_name);
                 if (clean_name[0] == '\0') {
-                    fprintf(stderr, "DCAPP _process_node(): Empty variable name in <Variable> definition\n");
+                    DC_LOG_ERROR("GenHeader", "Empty variable name in <Variable> definition");
                 }
             } else {
-                fprintf(stderr, "DCAPP _process_node(): Node content missing in <Variable> definition\n");
+                DC_LOG_ERROR("GenHeader", "Node content missing in <Variable> definition");
                 clean_name[0] = '\0';
             }
 
@@ -228,7 +229,7 @@ void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup) {
                 clean_type[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
                 xmlFree(raw_type);
             } else {
-                fprintf(stderr, "DCAPP _process_node(): Attribute Type missing in <Variable> definition\n");
+                DC_LOG_ERROR("GenHeader", "Attribute 'Type' missing in <Variable> definition");
                 clean_type[0] = '\0';
             }
 

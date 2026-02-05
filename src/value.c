@@ -1,5 +1,6 @@
 #include "value.h"
 #include "utils/string.h"
+#include "utils/log.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -76,7 +77,7 @@ void dc_value_refresh_from_type(DcValue *value, DcValueType type) {
             value->value_integer = dc_utils_string_to_integer(value->value_string);
             break;
         default:
-            fprintf(stderr, "DCAPP dc_value_refresh(): invalid value type %d\n", value->type);
+            DC_LOG_ERROR("Value", "dc_value_refresh(): invalid value type %d", value->type);
             break;
     }
 }
@@ -97,7 +98,7 @@ void dc_value_set_from_string(DcValue *value, const char *value_str) {
             value->value_string[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
             break;
         default:
-            fprintf(stderr, "DCAPP dc_value_set_from_string(): invalid value type %d\n", value->type);
+            DC_LOG_ERROR("Value", "dc_value_set_from_string(): invalid value type %d", value->type);
             break;
     }
     dc_value_refresh(value);
@@ -114,7 +115,7 @@ void *dc_value_get_addr(DcValue *value) {
         case DC_VALUE_TYPE_STRING:
             return value->value_string;
         default:
-            fprintf(stderr, "DCAPP dc_value_set_from_string(): invalid value type %d\n", value->type);
+            DC_LOG_ERROR("Value", "dc_value_set_from_string(): invalid value type %d", value->type);
             break;
     }
     return NULL;
@@ -131,7 +132,7 @@ bool dc_value_is_equal(DcValue *value1, DcValue *value2) {
         case DC_VALUE_TYPE_STRING:
             return strcmp(value1->value_string, value2->value_string) == 0;
         default:
-            fprintf(stderr, "DCAPP dc_value_set_from_string(): invalid value type %d\n", value1->type);
+            DC_LOG_ERROR("Value", "dc_value_set_from_string(): invalid value type %d", value1->type);
             break;
     }
     return false;
@@ -148,7 +149,7 @@ bool dc_value_is_not_equal(DcValue *value1, DcValue *value2) {
         case DC_VALUE_TYPE_STRING:
             return strcmp(value1->value_string, value2->value_string) != 0;
         default:
-            fprintf(stderr, "DCAPP dc_value_is_not_equal(): invalid value type %d\n", value1->type);
+            DC_LOG_ERROR("Value", "dc_value_is_not_equal(): invalid value type %d", value1->type);
             break;
     }
     return false;
@@ -161,7 +162,7 @@ bool dc_value_is_greater(DcValue *value1, DcValue *value2) {
         case DC_VALUE_TYPE_DOUBLE:
             return value1->value_double > value2->value_double;
         default:
-            fprintf(stderr, "DCAPP dc_value_is_greater(): invalid value type %d\n", value1->type);
+            DC_LOG_ERROR("Value", "dc_value_is_greater(): invalid value type %d", value1->type);
             break;
     }
     return false;
@@ -174,7 +175,7 @@ bool dc_value_is_greater_or_equal(DcValue *value1, DcValue *value2) {
         case DC_VALUE_TYPE_DOUBLE:
             return value1->value_double >= value2->value_double;
         default:
-            fprintf(stderr, "DCAPP dc_value_is_greater_or_equal(): invalid value type %d\n", value1->type);
+            DC_LOG_ERROR("Value", "dc_value_is_greater_or_equal(): invalid value type %d", value1->type);
             break;
     }
     return false;
@@ -187,7 +188,7 @@ bool dc_value_is_less(DcValue *value1, DcValue *value2) {
         case DC_VALUE_TYPE_DOUBLE:
             return value1->value_double < value2->value_double;
         default:
-            fprintf(stderr, "DCAPP dc_value_is_less(): invalid value type %d\n", value1->type);
+            DC_LOG_ERROR("Value", "dc_value_is_less(): invalid value type %d", value1->type);
             break;
     }
     return false;
@@ -200,7 +201,7 @@ bool dc_value_is_less_or_equal(DcValue *value1, DcValue *value2) {
         case DC_VALUE_TYPE_DOUBLE:
             return value1->value_double <= value2->value_double;
         default:
-            fprintf(stderr, "DCAPP dc_value_is_less_or_equal(): invalid value type %d\n", value1->type);
+            DC_LOG_ERROR("Value", "dc_value_is_less_or_equal(): invalid value type %d", value1->type);
             break;
     }
     return false;
