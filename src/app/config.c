@@ -569,7 +569,7 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
                 xmlFree(value);
                 dc_utils_trim_whitespace_inplace(cleaned_value);
                 if (cleaned_value[0] == '\0') {
-                    DC_LOG_WARN("Config", "_preprocess_xml_node(): Empty content in <Constant> definition");
+                    // DC_LOG_WARN("Config", "_preprocess_xml_node(): Empty content in <Constant> definition");
                 }
             } else {
                 DC_LOG_ERROR("Config", "_preprocess_xml_node(): Node content missing in <Constant> definition");
