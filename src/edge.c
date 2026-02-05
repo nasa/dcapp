@@ -1,5 +1,6 @@
 #include "edge.h"
 #include "utils/stb_sb.h"
+#include "utils/log.h"
 #include "sock.h"
 
 #include <stdio.h>
@@ -122,17 +123,17 @@ void dc_edge_update(DcEdgeHandle edge) {
     // check if we need to reconnect
     if (!context->is_connected) {
         if (difftime(time(NULL), context->reconnect_start) > context->timeout_s) {
-            printf("EDGE: attempting connection to %s:%d\n", context->ip, context->port);
+            DC_LOG_INFO("EDGE", "Attempting reconnect..: %s:%d", context->ip, context->port);
             DcEdgeResult result = _dc_edge_connect(edge);
             if (result == DC_EDGE_RESULT_SUCCESS) {
-                printf("EDGE: connected\n");
+                DC_LOG_INFO("EDGE", "connected\n");
                 context->is_connected = true;
 
                 // setup command group for rx variables
                 if (sbcount(context->rx_cmd_offsets) > 0) {
                     result = _dc_edge_setup_command_group(edge);
                     if (result != DC_EDGE_RESULT_SUCCESS) {
-                        printf("EDGE: failed to setup command group\n");
+                        DC_LOG_ERROR("EDGE", "failed to setup command group\n");
                         _dc_edge_close(edge);
                     }
                 }
@@ -160,7 +161,7 @@ void dc_edge_update(DcEdgeHandle edge) {
         free(response);
 
         if (result != DC_EDGE_RESULT_SUCCESS) {
-            printf("EDGE: tx command failed, disconnecting\n");
+            DC_LOG_WARN("EDGE", "tx command failed, disconnecting\n");
             _dc_edge_close(edge);
             return;
         }
@@ -177,7 +178,7 @@ void dc_edge_update(DcEdgeHandle edge) {
         DcEdgeResult result = _dc_edge_send_command(edge, context->temp_buffer, &response);
 
         if (result != DC_EDGE_RESULT_SUCCESS || !response) {
-            printf("EDGE: execute_command_group failed, disconnecting\n");
+            DC_LOG_WARN("EDGE", "execute_command_group failed, disconnecting\n");
             free(response);
             _dc_edge_close(edge);
             return;
@@ -211,7 +212,7 @@ void dc_edge_update(DcEdgeHandle edge) {
         if (sbcount(context->rx_var_offsets) == sbcount(context->rx_cmd_offsets)) {
             context->has_new_data = true;
         } else {
-            printf("EDGE: value count mismatch (got %d, expected %d)\n",
+            DC_LOG_WARN("EDGE", "value count mismatch (got %d, expected %d)\n",
                    sbcount(context->rx_var_offsets), sbcount(context->rx_cmd_offsets));
         }
     }
@@ -298,7 +299,7 @@ static DcEdgeResult _dc_edge_connect(DcEdgeHandle edge) {
             char *version = NULL;
             DcEdgeResult result = _dc_edge_read_message(edge, &version);
             if (result == DC_EDGE_RESULT_SUCCESS && version) {
-                printf("EDGE: server version: %s\n", version);
+                DC_LOG_INFO("EDGE", "server version: %s\n", version);
                 free(version);
                 context->state = DC_SOCK_STATE_CONNECTED;
                 return DC_EDGE_RESULT_SUCCESS;

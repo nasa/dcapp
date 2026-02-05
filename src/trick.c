@@ -139,7 +139,7 @@ void dc_trick_update(DcTrickHandle trick) {
                         if (curr_state == DC_SOCK_STATE_CONNECTING) {
                             _dc_trick_close(trick);
                         }
-                        printf("attempting reconnect..\n");
+                        DC_LOG_ERROR("Trick", "Attempting reconnect..: %s:%d", context->ip, context->port);
                         _dc_trick_connect(trick);
                     }
                     break;
@@ -425,7 +425,7 @@ DcTrickResult _dc_trick_receive(DcTrickHandle trick) {
                     // raise fag that there are new values
                     context->has_new_data = true;
                     if (sbcount(context->rx_var_offsets) != sbcount(context->rx_cmd_offsets)) {
-                        printf("size mismatch\n");
+                        DC_LOG_ERROR("Trick", "size mismatch between expected and received variable count: %s:%d", context->ip, context->port);
                         context->has_new_data = false;
                     }
                 }

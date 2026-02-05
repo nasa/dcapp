@@ -662,11 +662,19 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     elif tag == 'PixelStream' or tag == 'Pixelstream':
         convert_pixelstream_attributes(elem)
 
+    # TrickIo - updated variable reference
+    elif tag == 'TrickIo':
+        convert_variable_reference(elem, 'ConnectedVariable')
+
     # EdgeVariable - rename RcsCommand to Command
     elif tag == 'EdgeVariable':
         if 'RcsCommand' in elem.attrib:
             elem.set('Command', elem.get('RcsCommand'))
             del elem.attrib['RcsCommand']
+
+    # EdgeIo - updated variable reference
+    elif tag == 'EdgeIo':
+        convert_variable_reference(elem, 'ConnectedVariable')
 
     # ---- Common conversions ----
 
