@@ -317,6 +317,11 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     _ext_draw->initialize(&tDrawInit);
     _ext_draw_backend->initialize(device);
 
+    // initialize GPU memory allocators
+    app_data->gpu_local_dedicated_allocator  = _ext_gpu_allocators->get_local_dedicated_allocator(device);
+    app_data->gpu_local_buddy_allocator      = _ext_gpu_allocators->get_local_buddy_allocator(device);
+    app_data->gpu_staging_uncached_allocator = _ext_gpu_allocators->get_staging_uncached_allocator(device);
+
     // init default staging buffer
     {
         // set size to 10 MB
@@ -332,12 +337,13 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
         // retrieve buffer to get memory allocation requirements
         plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
 
-        // allocate memory for the vertex buffer
-        const plDeviceMemoryAllocation staging_buffer_allocation = _ext_gfx->allocate_memory(
-            device,
-            staging_buffer->tMemoryRequirements.ulSize,
-            PL_MEMORY_FLAGS_HOST_VISIBLE | PL_MEMORY_FLAGS_HOST_COHERENT,
+        // allocate memory using staging allocator
+        plDeviceMemoryAllocatorI *allocator = app_data->gpu_staging_uncached_allocator;
+        const plDeviceMemoryAllocation staging_buffer_allocation = allocator->allocate(
+            allocator->ptInst,
             staging_buffer->tMemoryRequirements.uMemoryTypeBits,
+            staging_buffer->tMemoryRequirements.ulSize,
+            staging_buffer->tMemoryRequirements.ulAlignment,
             "staging buffer memory");
 
         // bind the buffer to the new memory allocation
@@ -428,8 +434,18 @@ static _Texture _create_texture(_AppData *app_data, uint32_t texture_width, uint
     plTexture      *pl_texture;
     plTextureHandle pl_texture_handle = _ext_gfx->create_texture(device, &pl_texture_desc, &pl_texture);
 
-    // allocate memory
-    const plDeviceMemoryAllocation pl_texture_allocation = _ext_gfx->allocate_memory(device, pl_texture->tMemoryRequirements.ulSize, PL_MEMORY_FLAGS_DEVICE_LOCAL, pl_texture->tMemoryRequirements.uMemoryTypeBits, NULL);
+    // choose allocator based on texture size
+    // use buddy allocator for smaller textures, dedicated for large ones
+    plDeviceMemoryAllocatorI *allocator = app_data->gpu_local_buddy_allocator;
+    if (pl_texture->tMemoryRequirements.ulSize > _ext_gpu_allocators->get_buddy_block_size())
+        allocator = app_data->gpu_local_dedicated_allocator;
+
+    const plDeviceMemoryAllocation pl_texture_allocation = allocator->allocate(
+        allocator->ptInst,
+        pl_texture->tMemoryRequirements.uMemoryTypeBits,
+        pl_texture->tMemoryRequirements.ulSize,
+        pl_texture->tMemoryRequirements.ulAlignment,
+        texture_name);
 
     // bind memory
     _ext_gfx->bind_texture_to_memory(device, pl_texture_handle, &pl_texture_allocation);

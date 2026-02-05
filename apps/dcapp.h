@@ -12,6 +12,7 @@
 #include "../pilotlight/extensions/pl_profile_ext.h"
 #include "../pilotlight/extensions/pl_starter_ext.h"
 #include "../pilotlight/extensions/pl_graphics_ext.h"
+#include "../pilotlight/extensions/pl_gpu_allocators_ext.h"
 #include "../pilotlight/extensions/pl_vfs_ext.h"
 #include "../pilotlight/extensions/pl_shader_ext.h"
 #include "../pilotlight/extensions/pl_image_ext.h"
@@ -31,20 +32,21 @@
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
 // PL extensions
-const plWindowI      *_ext_windows      = NULL;
-const plDrawI        *_ext_draw         = NULL;
-const plDrawBackendI *_ext_draw_backend = NULL;
-const plStarterI     *_ext_starter      = NULL;
-const plProfileI     *_ext_profile      = NULL;
-const plMemoryI      *_ext_memory       = NULL;
-const plLibraryI     *_ext_library      = NULL;
-const plIOI          *_ext_ioi          = NULL;
-const plGraphicsI    *_ext_gfx          = NULL;
-const plTerrainI     *_ext_terrain      = NULL;
-const plVfsI         *_ext_vfs          = NULL;
-const plShaderI      *_ext_shader       = NULL;
-const plCameraI      *_ext_camera       = NULL;
-const plImageI       *_ext_image        = NULL;
+const plWindowI        *_ext_windows       = NULL;
+const plDrawI          *_ext_draw          = NULL;
+const plDrawBackendI   *_ext_draw_backend  = NULL;
+const plStarterI       *_ext_starter       = NULL;
+const plProfileI       *_ext_profile       = NULL;
+const plMemoryI        *_ext_memory        = NULL;
+const plLibraryI       *_ext_library       = NULL;
+const plIOI            *_ext_ioi           = NULL;
+const plGraphicsI      *_ext_gfx           = NULL;
+const plGPUAllocatorsI *_ext_gpu_allocators = NULL;
+const plTerrainI       *_ext_terrain       = NULL;
+const plVfsI           *_ext_vfs           = NULL;
+const plShaderI        *_ext_shader        = NULL;
+const plCameraI        *_ext_camera        = NULL;
+const plImageI         *_ext_image         = NULL;
 
 // dcapp includes
 #include "../src/utils/stb_sb.h"
@@ -643,6 +645,11 @@ typedef struct __AppData {
     plDrawLayer2D *pl_layer;
     plDrawList2D  *pl_draw_list;
     plFont        *pl_vera_sdf_font;
+
+    // GPU memory allocators
+    plDeviceMemoryAllocatorI *gpu_local_dedicated_allocator;
+    plDeviceMemoryAllocatorI *gpu_local_buddy_allocator;
+    plDeviceMemoryAllocatorI *gpu_staging_uncached_allocator;
 
     // staging buffer
     plBufferHandle pl_staging_buffer_handle;

@@ -33,18 +33,19 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     if (app_data) {
 
         // load extensions
-        _ext_windows      = pl_get_api_latest(api_registry, plWindowI);
-        _ext_draw         = pl_get_api_latest(api_registry, dcDrawI);
-        _ext_draw_backend = pl_get_api_latest(api_registry, dcDrawBackendI);
-        _ext_starter      = pl_get_api_latest(api_registry, plStarterI);
-        _ext_profile      = pl_get_api_latest(api_registry, plProfileI);
-        _ext_memory       = pl_get_api_latest(api_registry, plMemoryI);
-        _ext_library      = pl_get_api_latest(api_registry, plLibraryI);
-        _ext_ioi          = pl_get_api_latest(api_registry, plIOI);
-        _ext_gfx          = pl_get_api_latest(api_registry, plGraphicsI);
-        _ext_vfs          = pl_get_api_latest(api_registry, plVfsI);
-        _ext_shader       = pl_get_api_latest(api_registry, plShaderI);
-        // _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
+        _ext_windows        = pl_get_api_latest(api_registry, plWindowI);
+        _ext_draw           = pl_get_api_latest(api_registry, dcDrawI);
+        _ext_draw_backend   = pl_get_api_latest(api_registry, dcDrawBackendI);
+        _ext_starter        = pl_get_api_latest(api_registry, plStarterI);
+        _ext_profile        = pl_get_api_latest(api_registry, plProfileI);
+        _ext_memory         = pl_get_api_latest(api_registry, plMemoryI);
+        _ext_library        = pl_get_api_latest(api_registry, plLibraryI);
+        _ext_ioi            = pl_get_api_latest(api_registry, plIOI);
+        _ext_gfx            = pl_get_api_latest(api_registry, plGraphicsI);
+        _ext_gpu_allocators = pl_get_api_latest(api_registry, plGPUAllocatorsI);
+        _ext_vfs            = pl_get_api_latest(api_registry, plVfsI);
+        _ext_shader         = pl_get_api_latest(api_registry, plShaderI);
+        // _ext_terrain     = pl_get_api_latest(api_registry, plTerrainI);
         _ext_camera = pl_get_api_latest(api_registry, plCameraI);
         _ext_image  = pl_get_api_latest(api_registry, plImageI);
 
@@ -68,18 +69,19 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     extension_registry->load("pl_terrain_ext", NULL, NULL, true);
 
     // load extensions
-    _ext_windows      = pl_get_api_latest(api_registry, plWindowI);
-    _ext_draw         = pl_get_api_latest(api_registry, dcDrawI);
-    _ext_draw_backend = pl_get_api_latest(api_registry, dcDrawBackendI);
-    _ext_starter      = pl_get_api_latest(api_registry, plStarterI);
-    _ext_profile      = pl_get_api_latest(api_registry, plProfileI);
-    _ext_memory       = pl_get_api_latest(api_registry, plMemoryI);
-    _ext_library      = pl_get_api_latest(api_registry, plLibraryI);
-    _ext_ioi          = pl_get_api_latest(api_registry, plIOI);
-    _ext_gfx          = pl_get_api_latest(api_registry, plGraphicsI);
-    _ext_vfs          = pl_get_api_latest(api_registry, plVfsI);
-    _ext_shader       = pl_get_api_latest(api_registry, plShaderI);
-    // _ext_terrain      = pl_get_api_latest(api_registry, plTerrainI);
+    _ext_windows        = pl_get_api_latest(api_registry, plWindowI);
+    _ext_draw           = pl_get_api_latest(api_registry, dcDrawI);
+    _ext_draw_backend   = pl_get_api_latest(api_registry, dcDrawBackendI);
+    _ext_starter        = pl_get_api_latest(api_registry, plStarterI);
+    _ext_profile        = pl_get_api_latest(api_registry, plProfileI);
+    _ext_memory         = pl_get_api_latest(api_registry, plMemoryI);
+    _ext_library        = pl_get_api_latest(api_registry, plLibraryI);
+    _ext_ioi            = pl_get_api_latest(api_registry, plIOI);
+    _ext_gfx            = pl_get_api_latest(api_registry, plGraphicsI);
+    _ext_gpu_allocators = pl_get_api_latest(api_registry, plGPUAllocatorsI);
+    _ext_vfs            = pl_get_api_latest(api_registry, plVfsI);
+    _ext_shader         = pl_get_api_latest(api_registry, plShaderI);
+    // _ext_terrain     = pl_get_api_latest(api_registry, plTerrainI);
     _ext_camera = pl_get_api_latest(api_registry, plCameraI);
     _ext_image  = pl_get_api_latest(api_registry, plImageI);
 
