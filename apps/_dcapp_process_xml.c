@@ -1,6 +1,7 @@
 #include "dcapp.h"
 
 #include "../src/utils/file.h"
+#include "../src/utils/log.h"
 #include "../src/utils/string.h"
 #include "libxml/tree.h"
 #include "libxml/xmlstring.h"
@@ -425,7 +426,7 @@ static _NodeIndex _process_xml_node_arc(_AppData *app_data, xmlNodePtr xml_node,
         dc_node.arc.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.arc.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node(): Arc: invalid PivotParameters; must use both PivotPosition params, or none.\n");
+        DC_LOG_ERROR("Arc", "PivotX and PivotY must both be specified, or neither");
     }
 
     // radius
@@ -621,7 +622,7 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
         dc_node.ellipse.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.ellipse.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node(): Ellipse: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+        DC_LOG_ERROR("Ellipse", "PivotX and PivotY must both be specified, or neither");
     }
 
     // angle (span of the wedge in degrees, 360 = full ellipse)
@@ -976,7 +977,7 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         dc_node.button.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.button.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node_button(): invalid PivotParameters; must use both PivotPosition params, or none.\n");
+        DC_LOG_ERROR("Button", "PivotX and PivotY must both be specified, or neither");
     }
 
     // button type
@@ -1176,7 +1177,7 @@ static _NodeIndex _process_xml_node_button_disabled(_AppData *app_data, xmlNodeP
             return _create_state_event_node(app_data, NODE_TYPE_STATE_BUTTON_DISABLED, parent_node_index, first_child_index);
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node_button_disabled(): Invalid parent of type %s for <Disabled>\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("Disabled", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
     }
     return NODE_INDEX_UNDEFINED;
 }
@@ -1190,7 +1191,7 @@ static _NodeIndex _process_xml_node_button_enabled(_AppData *app_data, xmlNodePt
             return _create_state_event_node(app_data, NODE_TYPE_STATE_BUTTON_ENABLED, parent_node_index, first_child_index);
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node_button_enabled(): Invalid parent of type %s for <Enabled>\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("Enabled", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
     }
     return NODE_INDEX_UNDEFINED;
 }
@@ -1204,7 +1205,7 @@ static _NodeIndex _process_xml_node_button_indicator_off(_AppData *app_data, xml
             return _create_state_event_node(app_data, NODE_TYPE_STATE_BUTTON_INDICATOR_OFF, parent_node_index, first_child_index);
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node_button_indicator_off(): Invalid parent of type %s for <Off>\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("Off", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
     }
     return NODE_INDEX_UNDEFINED;
 }
@@ -1218,7 +1219,7 @@ static _NodeIndex _process_xml_node_button_indicator_on(_AppData *app_data, xmlN
             return _create_state_event_node(app_data, NODE_TYPE_STATE_BUTTON_INDICATOR_ON, parent_node_index, first_child_index);
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node_button_indicator_on(): Invalid parent of type %s for <On>\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("On", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
     }
     return NODE_INDEX_UNDEFINED;
 }
@@ -1232,7 +1233,7 @@ static _NodeIndex _process_xml_node_button_transition(_AppData *app_data, xmlNod
             return _create_state_event_node(app_data, NODE_TYPE_STATE_BUTTON_TRANSITION, parent_node_index, first_child_index);
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node_button_transition(): Invalid parent of type %s for <Transition>\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("Transition", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
     }
     return NODE_INDEX_UNDEFINED;
 }
@@ -1419,7 +1420,7 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
         dc_node.container.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.container.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node(): Container: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+        DC_LOG_ERROR("Container", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
 
     // negate x
@@ -1477,7 +1478,7 @@ static _NodeIndex _process_xml_node_edge_from(_AppData *app_data, xmlNodePtr xml
             break;
         }
         default: {
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for EdgeFrom\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("EdgeFrom", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
             break;
         }
     }
@@ -1545,7 +1546,7 @@ static _NodeIndex _process_xml_node_edge_to(_AppData *app_data, xmlNodePtr xml_n
             break;
         }
         default: {
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for EdgeTo\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("EdgeTo", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
             break;
         }
     }
@@ -1563,7 +1564,7 @@ static _NodeIndex _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr
         case DC_APP_ELEM_TYPE_EDGE_TO:
             break;
         default:
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for EdgeVariable\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("EdgeVariable", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
     }
 
     // edge command
@@ -1573,7 +1574,7 @@ static _NodeIndex _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr
         strncpy(edge_cmd, (const char *)raw_edge_cmd, DC_VALUE_STRING_BUFFER_SIZE - 1);
         xmlFree(raw_edge_cmd);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node: Missing Command for EdgeVariable\n");
+        DC_LOG_ERROR("EdgeVariable", "Missing 'Command' attribute");
         edge_cmd[0] = '\0';
     }
 
@@ -1586,10 +1587,10 @@ static _NodeIndex _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr
         xmlFree(raw_dcapp_var);
         dc_utils_trim_whitespace_inplace(dcapp_var);
         if (dcapp_var[0] == '\0') {
-            fprintf(stderr, "DCApp _process_xml_node: Empty dcapp Var for EdgeVariable\n");
+            DC_LOG_ERROR("EdgeVariable", "Empty variable name");
         }
     } else {
-        fprintf(stderr, "DCApp _process_xml_node: Missing dcapp Var for EdgeVariable\n");
+        DC_LOG_ERROR("EdgeVariable", "Missing variable name");
         dcapp_var[0] = '\0';
     }
 
@@ -1605,7 +1606,7 @@ static _NodeIndex _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr
             var.edge_var_index    = dc_edge_add_rx_var(edge_context->edge, edge_cmd);
             var.dcapp_var_index   = dc_app_lookup_get_var_index(app_data->lookup, dcapp_var);
             if (var.dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) {
-                fprintf(stderr, "DCApp _process_xml_node(): Unknown variable '%s' in EdgeVariable (from)\n", dcapp_var);
+                DC_LOG_ERROR("EdgeVariable", "Unknown variable '%s' in EdgeFrom", dcapp_var);
             }
             sbpush(edge_context->sb_rx_var_contexts, var);
             break;
@@ -1617,7 +1618,7 @@ static _NodeIndex _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr
             var.dcapp_var_index   = dc_app_lookup_get_var_index(app_data->lookup, dcapp_var);
             var.edge_var_index    = dc_edge_add_tx_var(edge_context->edge, edge_cmd);
             if (var.dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) {
-                fprintf(stderr, "DCApp _process_xml_node(): Unknown variable '%s' in EdgeVariable (to)\n", dcapp_var);
+                DC_LOG_ERROR("EdgeVariable", "Unknown variable '%s' in EdgeTo", dcapp_var);
             } else {
                 DcValue *dc_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, var.dcapp_var_index)->value_index);
                 var.prev_value        = *dc_var_value;
@@ -1627,7 +1628,7 @@ static _NodeIndex _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr
         }
         default:
             // should never reach here
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid parent for EdgeVariable\n");
+            DC_LOG_ERROR("EdgeVariable", "Invalid parent node");
             break;
     }
 
@@ -1644,7 +1645,7 @@ static _NodeIndex _process_xml_node_false(_AppData *app_data, xmlNodePtr xml_nod
             return _create_state_event_node(app_data, NODE_TYPE_STATE_IF_FALSE, parent_node_index, first_child_index);
         }
         default:
-            fprintf(stderr, "DCAPP _process_xml_node(): Invalid elem parent of type %s for <False>\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("False", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
     }
     return NODE_INDEX_UNDEFINED;
 }
@@ -1663,14 +1664,14 @@ static _NodeIndex _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_
         if (app_data->logic_lib) {
             dc_node.function.callback = (void (*)(void))_ext_library->load_function(app_data->logic_lib, (const char *)raw_name);
             if (!dc_node.function.callback) {
-                fprintf(stderr, "DCAPP _process_xml_node_function(): Failed to load function '%s' from logic library\n", (const char *)raw_name);
+                DC_LOG_ERROR("Function", "Failed to load function '%s' from logic library", (const char *)raw_name);
             }
         } else {
-            fprintf(stderr, "DCAPP _process_xml_node_function(): No logic library loaded, cannot load function '%s'\n", (const char *)raw_name);
+            DC_LOG_ERROR("Function", "No logic library loaded, cannot load function '%s'", (const char *)raw_name);
         }
         xmlFree(raw_name);
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node_function(): Missing 'Name' attribute\n");
+        DC_LOG_ERROR("Function", "Missing 'Name' attribute");
     }
 
     // register node
@@ -1705,7 +1706,7 @@ static _NodeIndex _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, 
         dc_node.conditional.value1 = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_STRING, (const char *)raw_value1);
         xmlFree(raw_value1);
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node: Conditional: no value specified\n");
+        DC_LOG_ERROR("If", "No value specified for conditional");
     }
 
     // value2
@@ -1781,7 +1782,7 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
             size_t         file_data_size;
             unsigned char *file_data = dc_utils_load_binary_file(canon_filepath, &file_data_size);
             if (!file_data) {
-                fprintf(stderr, "DCApp: Failed to load image file: %s\n", canon_filepath);
+                DC_LOG_ERROR("Image", "Failed to load file: %s", canon_filepath);
                 dc_node.image.texture_index = TEXTURE_INDEX_UNDEFINED;
                 return _register_node(app_data, &dc_node);
             }
@@ -1791,7 +1792,7 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
             unsigned char *image_data = _ext_image->load(file_data, (int)file_data_size, &image_width, &image_height, &channels, 4);
             free(file_data);
             if (!image_data) {
-                fprintf(stderr, "DCApp: Failed to decode image: %s\n", canon_filepath);
+                DC_LOG_ERROR("Image", "Failed to decode file: %s", canon_filepath);
                 dc_node.image.texture_index = TEXTURE_INDEX_UNDEFINED;
                 return _register_node(app_data, &dc_node);
             }
@@ -1832,7 +1833,7 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
 
         dc_node.image.texture_index = texture_index;
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node() image: 'File' field missing for Image node\n");
+        DC_LOG_ERROR("Image", "Missing 'File' attribute");
         dc_node.image.texture_index = TEXTURE_INDEX_UNDEFINED;
     }
 
@@ -1979,7 +1980,7 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
         dc_node.image.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.image.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node(): Image: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+        DC_LOG_ERROR("Image", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
 
     // negate x
@@ -2073,7 +2074,7 @@ static _NodeIndex _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node
         xmlFree(raw_pivot_position_y);
 
     } else if (raw_pivot_position_x || raw_pivot_position_y) {
-        fprintf(stderr, "DCAPP _process_xml_node(): line: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+        DC_LOG_ERROR("Line", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
 
     // line width
@@ -2122,7 +2123,7 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
     if (app_data->logic_lib) {
-        fprintf(stderr, "DCApp _process_xml_node_logic(): duplicate <Logic> definitions\n");
+        DC_LOG_ERROR("Logic", "Duplicate <Logic> definitions");
     }
 
     xmlChar *raw_filepath = xmlGetProp(xml_node, BAD_CAST "File");
@@ -2169,7 +2170,7 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
         }
 
         if (!loaded) {
-            fprintf(stderr, "DCApp: Failed to load logic library (%s.so/.dylib/.dll)\n", base_filepath);
+            DC_LOG_ERROR("Logic", "Failed to load library: %s.so/.dylib/.dll", base_filepath);
         } else {
             // load functions (only if library loaded successfully)
             app_data->logic_pre_init = (void (*)(_GetVariableValueAddr))_ext_library->load_function(app_data->logic_lib, "display_pre_init");
@@ -2178,7 +2179,7 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
             app_data->logic_close    = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_close");
         }
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node_logic(): <Logic> has no File element\n");
+        DC_LOG_ERROR("Logic", "Missing 'File' attribute");
     }
 
     // return
@@ -2200,8 +2201,7 @@ static _NodeIndex _process_xml_node_mouse_active(_AppData *app_data, xmlNodePtr 
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_ACTIVE, parent_node_index, first_child_index);
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node() mouse_active: unknown parent of type %s\n",
-                    _node_type_to_string(parent_node->type));
+            DC_LOG_ERROR("MouseActive", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
             break;
     }
     return NODE_INDEX_UNDEFINED;
@@ -2222,8 +2222,7 @@ static _NodeIndex _process_xml_node_mouse_hovered(_AppData *app_data, xmlNodePtr
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_HOVERED, parent_node_index, first_child_index);
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node() mouse_hovered: unknown parent of type %s\n",
-                    _node_type_to_string(parent_node->type));
+            DC_LOG_ERROR("MouseHovered", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
             break;
     }
     return NODE_INDEX_UNDEFINED;
@@ -2244,8 +2243,7 @@ static _NodeIndex _process_xml_node_mouse_inactive(_AppData *app_data, xmlNodePt
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_INACTIVE, parent_node_index, first_child_index);
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node() mouse_inactive: unknown parent of type %s\n",
-                    _node_type_to_string(parent_node->type));
+            DC_LOG_ERROR("MouseInactive", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
             break;
     }
     return NODE_INDEX_UNDEFINED;
@@ -2295,8 +2293,7 @@ static _NodeIndex _process_xml_node_mouse_pressed(_AppData *app_data, xmlNodePtr
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_PRESSED, parent_node_index, first_child_index);
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node() mouse_pressed: unknown parent of type %s\n",
-                    _node_type_to_string(parent_node->type));
+            DC_LOG_ERROR("MousePressed", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
             break;
     }
     return NODE_INDEX_UNDEFINED;
@@ -2317,8 +2314,7 @@ static _NodeIndex _process_xml_node_mouse_released(_AppData *app_data, xmlNodePt
             return _create_state_event_node(app_data, NODE_TYPE_STATE_MOUSE_RELEASED, parent_node_index, first_child_index);
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node() mouse_released: unknown parent of type %s\n",
-                    _node_type_to_string(parent_node->type));
+            DC_LOG_ERROR("MouseReleased", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
             break;
     }
     return NODE_INDEX_UNDEFINED;
@@ -2550,7 +2546,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         dc_node.pixelstream.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.pixelstream.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node(): Pixelstream: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+        DC_LOG_ERROR("PixelStream", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
 
     // set type
@@ -2562,7 +2558,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         dc_node.pixelstream.type = dc_utils_string_to_integer((const char *)raw_type);
         xmlFree(raw_type);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node() pixelstream: Missing 'Type' field\n");
+        DC_LOG_ERROR("PixelStream", "Missing 'Type' attribute");
     }
 
     // iterate over type
@@ -2581,7 +2577,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
                 filepath[255] = '\0';
                 xmlFree(raw_filepath);
             } else {
-                fprintf(stderr, "DCApp _process_xml_node() pixelstream: Missing 'File' field for shmem type\n");
+                DC_LOG_ERROR("PixelStream", "Missing 'File' attribute for shmem type");
                 filepath[0] = '\0';
             }
 
@@ -2599,7 +2595,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
                 strncpy(cleaned_url, (const char *)raw_url, 256);
                 xmlFree(raw_url);
             } else {
-                fprintf(stderr, "DCApp _process_xml_node() pixelstream: Missing 'URL' field\n");
+                DC_LOG_ERROR("PixelStream", "Missing 'URL' attribute");
             }
 
             // parse timeout
@@ -2618,7 +2614,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         }
 
         default:
-            fprintf(stderr, "DCApp _process_xml_node() pixelstream: Unknown pixelstream type\n");
+            DC_LOG_ERROR("PixelStream", "Unknown pixelstream type");
             break;
     }
 
@@ -2655,7 +2651,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         // canonicalize path
         char canon_filepath[512];
         if (realpath(test_pattern_path, canon_filepath) == NULL) {
-            fprintf(stderr, "DCApp _process_xml_node() pixelstream: TestPattern file not found: %s\n", test_pattern_path);
+            DC_LOG_ERROR("PixelStream", "TestPattern file not found: %s", test_pattern_path);
             dc_node.pixelstream.test_pattern_texture_index = TEXTURE_INDEX_UNDEFINED;
         } else {
             // check for existing texture
@@ -2675,7 +2671,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
                 size_t         file_data_size;
                 unsigned char *file_data = dc_utils_load_binary_file(canon_filepath, &file_data_size);
                 if (!file_data) {
-                    fprintf(stderr, "DCApp: Failed to load test pattern file: %s\n", canon_filepath);
+                    DC_LOG_ERROR("PixelStream", "Failed to load test pattern file: %s", canon_filepath);
                     goto skip_test_pattern;
                 }
 
@@ -2683,7 +2679,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
                 unsigned char *image_data = _ext_image->load(file_data, (int)file_data_size, &image_width, &image_height, &channels, 4);
                 free(file_data);
                 if (!image_data) {
-                    fprintf(stderr, "DCApp: Failed to decode test pattern: %s\n", canon_filepath);
+                    DC_LOG_ERROR("PixelStream", "Failed to decode test pattern: %s", canon_filepath);
                     goto skip_test_pattern;
                 }
 
@@ -2793,7 +2789,7 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
         xmlFree(raw_pivot_position_y);
 
     } else if (raw_pivot_position_x || raw_pivot_position_y) {
-        fprintf(stderr, "DCAPP _process_xml_node(): polygon: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+        DC_LOG_ERROR("Polygon", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
 
     // line width
@@ -2994,7 +2990,7 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
         dc_node.rectangle.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.rectangle.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node(): Rectangle: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+        DC_LOG_ERROR("Rectangle", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
 
     // line width
@@ -3056,7 +3052,7 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
         dc_node.set.var_index = dc_app_lookup_get_var_index(app_data->lookup, (const char *)raw_variable);
         xmlFree(raw_variable);
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node: Missing attribute 'Variable' in <Set> element\n");
+        DC_LOG_ERROR("Set", "Missing 'Variable' attribute");
     }
 
     // operand
@@ -3068,11 +3064,11 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
         xmlFree(raw_operand);
         dc_utils_trim_whitespace_inplace(operand);
         if (operand[0] == '\0') {
-            fprintf(stderr, "DCAPP _process_xml_node: Empty content in <Set> element\n");
+            DC_LOG_ERROR("Set", "Empty content");
         }
         dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, operand);
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node: Missing Node content in <Set> element\n");
+        DC_LOG_ERROR("Set", "Missing node content");
     }
 
     // operator
@@ -3290,7 +3286,7 @@ static _NodeIndex _process_xml_node_sphere(_AppData *app_data, xmlNodePtr xml_no
             free(file_data);
 
             if (!image_data) {
-                fprintf(stderr, "DCAPP _process_xml_node_sphere: Failed to load image: %s\n", canon_filepath);
+                DC_LOG_ERROR("Sphere", "Failed to load image: %s", canon_filepath);
                 return _register_node(app_data, &dc_node);
             }
 
@@ -3381,7 +3377,7 @@ static _NodeIndex _process_xml_node_stencil_add(_AppData *app_data, xmlNodePtr x
             break;
         }
         default:
-            fprintf(stderr, "DCAPP _process_xml_node(): Invalid elem parent of type %s for <StencilAdd>\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("StencilAdd", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
     }
     return NODE_INDEX_UNDEFINED;
 }
@@ -3404,7 +3400,7 @@ static _NodeIndex _process_xml_node_stencil_draw(_AppData *app_data, xmlNodePtr 
             break;
         }
         default:
-            fprintf(stderr, "DCAPP _process_xml_node(): Invalid elem parent of type %s for <StencilDraw>\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("StencilDraw", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
     }
     return NODE_INDEX_UNDEFINED;
 }
@@ -3427,7 +3423,7 @@ static _NodeIndex _process_xml_node_stencil_remove(_AppData *app_data, xmlNodePt
             break;
         }
         default:
-            fprintf(stderr, "DCAPP _process_xml_node(): Invalid elem parent of type %s for <StencilRemove>\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("StencilRemove", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
     }
     return NODE_INDEX_UNDEFINED;
 }
@@ -3590,7 +3586,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         dc_node.terrain.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.terrain.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node(): terrain: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+        DC_LOG_ERROR("Terrain", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
 
     // lat
@@ -3599,7 +3595,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         dc_node.terrain.lle.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
         xmlFree(raw_lat);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Latitude with Terrain primitive");
+        DC_LOG_ERROR("Terrain", "Missing 'Latitude' attribute");
     }
 
     // lon
@@ -3608,7 +3604,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         dc_node.terrain.lle.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
         xmlFree(raw_lon);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Longitude with Terrain primitive");
+        DC_LOG_ERROR("Terrain", "Missing 'Longitude' attribute");
     }
 
     // ele
@@ -3617,7 +3613,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         dc_node.terrain.lle.ele = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_ele);
         xmlFree(raw_ele);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Elevation with Terrain primitive");
+        DC_LOG_ERROR("Terrain", "Missing 'Elevation' attribute");
     }
 
     // roll
@@ -3626,7 +3622,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         dc_node.terrain.rpy.roll = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_roll);
         xmlFree(raw_roll);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Roll with Terrain primitive");
+        DC_LOG_ERROR("Terrain", "Missing 'Roll' attribute");
     }
 
     // pitch
@@ -3635,7 +3631,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         dc_node.terrain.rpy.pitch = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pitch);
         xmlFree(raw_pitch);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Pitch with Terrain primitive");
+        DC_LOG_ERROR("Terrain", "Missing 'Pitch' attribute");
     }
 
     // yaw
@@ -3644,7 +3640,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         dc_node.terrain.rpy.yaw = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_yaw);
         xmlFree(raw_yaw);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node(): Must supply attribute Yaw with Terrain primitive");
+        DC_LOG_ERROR("Terrain", "Missing 'Yaw' attribute");
     }
 
     // negate x
@@ -3701,15 +3697,15 @@ static _NodeIndex _process_xml_node_terrain_dem(_AppData *app_data, xmlNodePtr x
 
                 // TODO open file
                 // print for now
-                printf("TerrainDEM file: %s\n", abs_filepath);
+                DC_LOG_INFO("TerrainDEM", "Loading file: %s", abs_filepath);
             } else {
-                fprintf(stderr, "DCAPP _process_xml_node(): <Logic> has no File element\n");
+                DC_LOG_ERROR("TerrainDEM", "Missing 'File' attribute");
             }
 
             break;
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid parent of type %s for TerrainDEM\n", _node_type_to_string(parent_node->type));
+            DC_LOG_ERROR("TerrainDEM", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
     }
 
     // return
@@ -3805,7 +3801,7 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                 if (var_var) {
                     sbpush(dc_node.text.sb_vals, var_var->value_index);
                 } else {
-                    fprintf(stderr, "DCApp _process_xml_node(): Unknown variable '%s' in Text\n", var);
+                    DC_LOG_ERROR("Text", "Unknown variable '%s'", var);
                     sbpush(dc_node.text.sb_vals, DC_APP_VAL_INDEX_UNDEFINED);
                 }
                 // Check for format specifier
@@ -3837,7 +3833,7 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
                             sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
                             sbpushn(dc_node.text.sb_formats, format_spec, (int)strlen(format_spec) + 1);
                         } else {
-                            fprintf(stderr, "DCApp _process_xml_node(): Unknown format specifier: %s\n", format_spec);
+                            DC_LOG_ERROR("Text", "Unknown format specifier: %s", format_spec);
                             sbpush(dc_node.text.sb_format_types, DC_VALUE_TYPE_STRING);
                             sbpush(dc_node.text.sb_format_indices, (uint8_t)sbcount(dc_node.text.sb_formats));
                             sbpushn(dc_node.text.sb_formats, "%s", 3);
@@ -3874,7 +3870,7 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         // clear temp buffer
         sbclear(sb_curr_filler);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node(): Missing node content for text\n");
+        DC_LOG_ERROR("Text", "Missing node content");
     }
 
     // x position
@@ -3996,7 +3992,7 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         dc_node.text.pivot_position.x = DC_APP_VAL_INDEX_UNDEFINED;
         dc_node.text.pivot_position.y = DC_APP_VAL_INDEX_UNDEFINED;
     } else {
-        fprintf(stderr, "DCAPP _process_xml_node(): text: invalid PivotParameters; must use both PivotPosition params, or none. Using one is not allowed.\n");
+        DC_LOG_ERROR("Text", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
 
     // size
@@ -4045,7 +4041,7 @@ static _NodeIndex _process_xml_node_trick_from(_AppData *app_data, xmlNodePtr xm
             break;
         }
         default: {
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for TrickFrom\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("TrickFrom", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
             break;
         }
     }
@@ -4064,7 +4060,7 @@ static _NodeIndex _process_xml_node_trick_io(_AppData *app_data, xmlNodePtr xml_
         strncpy(host, (const char *)raw_host, DC_VALUE_STRING_BUFFER_SIZE - 1);
         xmlFree(raw_host);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node: Missing Port for TrickIO\n");
+        DC_LOG_ERROR("TrickIO", "Missing 'Port' attribute");
     }
 
     // port
@@ -4074,7 +4070,7 @@ static _NodeIndex _process_xml_node_trick_io(_AppData *app_data, xmlNodePtr xml_
         port = (int)dc_utils_string_to_double((const char *)raw_port);
         xmlFree(raw_port);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node: Missing Port for TrickIO\n");
+        DC_LOG_ERROR("TrickIO", "Missing 'Port' attribute");
     }
 
     // data rate
@@ -4115,7 +4111,7 @@ static _NodeIndex _process_xml_node_trick_to(_AppData *app_data, xmlNodePtr xml_
             break;
         }
         default: {
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for TrickTo\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("TrickTo", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
             break;
         }
     }
@@ -4133,7 +4129,7 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
         case DC_APP_ELEM_TYPE_TRICK_TO:
             break;
         default:
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for TrickVariable\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("TrickVariable", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
     }
 
     // var path
@@ -4143,7 +4139,7 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
         strncpy(trick_path, (const char *)raw_trick_path, DC_VALUE_STRING_BUFFER_SIZE - 1);
         xmlFree(raw_trick_path);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node: Missing trick Var path for TrickVariable\n");
+        DC_LOG_ERROR("TrickVariable", "Missing trick variable path");
     }
 
     // dcapp var
@@ -4155,10 +4151,10 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
         xmlFree(raw_dcapp_var);
         dc_utils_trim_whitespace_inplace(dcapp_var);
         if (dcapp_var[0] == '\0') {
-            fprintf(stderr, "DCApp _process_xml_node: Empty dcapp Var path for TrickVariable\n");
+            DC_LOG_ERROR("TrickVariable", "Empty dcapp variable path");
         }
     } else {
-        fprintf(stderr, "DCApp _process_xml_node: Missing dcapp Var path for TrickVariable\n");
+        DC_LOG_ERROR("TrickVariable", "Missing dcapp variable path");
         dcapp_var[0] = '\0';
     }
 
@@ -4184,7 +4180,7 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
             var.trick_var_index    = dc_trick_add_rx_var(trick_context->trick, trick_path, units);
             var.dcapp_var_index    = dc_app_lookup_get_var_index(app_data->lookup, dcapp_var);
             if (var.dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) {
-                fprintf(stderr, "DCApp _process_xml_node(): Unknown variable '%s' in TrickVariable (from)\n", dcapp_var);
+                DC_LOG_ERROR("TrickVariable", "Unknown variable '%s' in TrickFrom", dcapp_var);
             }
             sbpush(trick_context->sb_rx_var_contexts, var);
             break;
@@ -4196,7 +4192,7 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
             var.dcapp_var_index    = dc_app_lookup_get_var_index(app_data->lookup, dcapp_var);
             var.trick_var_index    = dc_trick_add_tx_var(trick_context->trick, trick_path, units, false); // default to non-string if var undefined
             if (var.dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) {
-                fprintf(stderr, "DCApp _process_xml_node(): Unknown variable '%s' in TrickVariable (to)\n", dcapp_var);
+                DC_LOG_ERROR("TrickVariable", "Unknown variable '%s' in TrickTo", dcapp_var);
             } else {
                 DcValue *dc_var_value  = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, var.dcapp_var_index)->value_index);
                 var.trick_var_index    = dc_trick_add_tx_var(trick_context->trick, trick_path, units, dc_var_value->type == DC_VALUE_TYPE_STRING);
@@ -4207,7 +4203,7 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
         }
         default:
             // should never reach here
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid parent for TrickVariable\n");
+            DC_LOG_ERROR("TrickVariable", "Invalid parent node");
             break;
     }
 
@@ -4224,7 +4220,7 @@ static _NodeIndex _process_xml_node_true(_AppData *app_data, xmlNodePtr xml_node
             return _create_state_event_node(app_data, NODE_TYPE_STATE_IF_TRUE, parent_node_index, first_child_index);
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid elem parent of type %s for <True>.\n", dc_app_elem_type_to_string(parent_elem_type));
+            DC_LOG_ERROR("True", "Invalid parent of type %s", dc_app_elem_type_to_string(parent_elem_type));
     }
 
     return NODE_INDEX_UNDEFINED;
@@ -4242,10 +4238,10 @@ static _NodeIndex _process_xml_node_variable(_AppData *app_data, xmlNodePtr xml_
         xmlFree(raw_name);
         dc_utils_trim_whitespace_inplace(name);
         if (name[0] == '\0') {
-            fprintf(stderr, "DCApp _process_xml_node: Empty variable name in <Variable> definition\n");
+            DC_LOG_ERROR("Variable", "Empty variable name");
         }
     } else {
-        fprintf(stderr, "DCApp _process_xml_node: Non-existent node content in <Variable> definition\n");
+        DC_LOG_ERROR("Variable", "Missing node content");
         name[0] = '\0';
     }
 
@@ -4299,7 +4295,7 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
                 vertex.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
                 xmlFree(raw_x_position);
             } else {
-                fprintf(stderr, "DCAPP _process_xml_node: Invalid Vertex: No X attribute\n");
+                DC_LOG_ERROR("Vertex", "Missing 'X' attribute");
             }
 
             // y position
@@ -4311,7 +4307,7 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
                 vertex.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
                 xmlFree(raw_y_position);
             } else {
-                fprintf(stderr, "DCAPP _process_xml_node: Invalid Vertex: No Y attribute\n");
+                DC_LOG_ERROR("Vertex", "Missing 'Y' attribute");
             }
 
             // parent x align
@@ -4353,7 +4349,7 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
 
                     // check point count
                     if (sbcount(parent_node->line.sb_vertices) > _NODE_LINE_MAX_POINTS) {
-                        fprintf(stderr, "_process_xml_node() line: Maximum number of points exceeded\n");
+                        DC_LOG_ERROR("Line", "Maximum number of points exceeded");
                     }
                     break;
                 case NODE_TYPE_POLYGON:
@@ -4362,7 +4358,7 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
 
                     // check point count
                     if (sbcount(parent_node->polygon.sb_vertices) > _NODE_POLYGON_MAX_POINTS) {
-                        fprintf(stderr, "_process_xml_node() polygon: Maximum number of points exceeded\n");
+                        DC_LOG_ERROR("Polygon", "Maximum number of points exceeded");
                     }
                     break;
                 default:
@@ -4371,7 +4367,7 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
             break;
         }
         default:
-            fprintf(stderr, "DCApp _process_xml_node(): Invalid parent of type %s for vertex\n", _node_type_to_string(parent_node->type));
+            DC_LOG_ERROR("Vertex", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
     }
 
     // return
@@ -4428,7 +4424,7 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         dc_node.window.init_dimension.x = (float)dc_utils_string_to_double((const char *)raw_x_dimension);
         xmlFree(raw_x_dimension);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node: missing x dimension for Window\n");
+        DC_LOG_ERROR("Window", "Missing 'Width' attribute");
     }
 
     // y dimension
@@ -4440,7 +4436,7 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         dc_node.window.init_dimension.y = (float)dc_utils_string_to_double((const char *)raw_y_dimension);
         xmlFree(raw_y_dimension);
     } else {
-        fprintf(stderr, "DCApp _process_xml_node: missing y dimension for Window\n");
+        DC_LOG_ERROR("Window", "Missing 'Height' attribute");
     }
 
     // virtual x dimension

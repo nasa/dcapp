@@ -1,5 +1,7 @@
 #include "elem.h"
 
+#include "../utils/log.h"
+
 #include <string.h>
 
 #include <libxml/parser.h>
@@ -243,7 +245,7 @@ DcAppElemType dc_app_xml_node_to_elem_type(xmlNodePtr node) {
         const char   *name = (const char *)(node->name);
         DcAppElemType type = dc_app_string_to_elem_type(name);
         if (type == DC_APP_ELEM_TYPE_UNDEFINED) {
-            fprintf(stderr, "DCAPP dc_app_xml_node_to_elem_type: Undefined element name: %s\n", name);
+            DC_LOG_WARN("Elem", "dc_app_xml_node_to_elem_type: Undefined element name: %s", name);
         }
         return type;
     }

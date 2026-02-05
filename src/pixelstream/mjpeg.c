@@ -1,5 +1,6 @@
 #include "mjpeg.h"
 #include "../utils/stb_sb.h"
+#include "../utils/log.h"
 
 #include <curl/curl.h>
 
@@ -120,20 +121,20 @@ void dc_ps_mjpeg_update() {
                 case CURLE_GOT_NOTHING:
                 case CURLE_PARTIAL_FILE:
                 case CURLE_SSL_CONNECT_ERROR: {
-                    fprintf(stderr, "DCApp dc_ps_mjpeg_update(): Disconnected or failed to connect: %s\n", curl_easy_strerror(result));
+                    DC_LOG_ERROR("MJPEG", "Disconnected or failed to connect: %s", curl_easy_strerror(result));
                     context->state = _CONNECTION_STATE_DISCONNECTED;
                     break;
                 }
 
                 case CURLE_PEER_FAILED_VERIFICATION:
                 case CURLE_USE_SSL_FAILED: {
-                    fprintf(stderr, "DCApp dc_ps_mjpeg_update(): SSL verification or setup failed: %s\n", curl_easy_strerror(result));
+                    DC_LOG_ERROR("MJPEG", "SSL verification or setup failed: %s", curl_easy_strerror(result));
                     context->state = _CONNECTION_STATE_DISCONNECTED;
                     break;
                 }
 
                 default:
-                    fprintf(stderr, "DCApp dc_ps_mjpeg_update(): Unknown code from curl_multi_info_read()\n");
+                    DC_LOG_ERROR("MJPEG", "Unknown code from curl_multi_info_read()");
                     break;
             }
         }
@@ -162,7 +163,7 @@ DcPsMjpegHandle dc_ps_mjpeg_add_server(const char *url, int timeout_s) {
 
     // check url
     if (strlen(url) > _MAX_URL_LENGTH - 1) {
-        fprintf(stderr, "DCApp dc_pixelstream_mjpeg_create(): Length of URL exceeds maximum length\n");
+        DC_LOG_ERROR("MJPEG", "dc_pixelstream_mjpeg_create(): Length of URL exceeds maximum length");
     }
 
     // create context
@@ -217,7 +218,7 @@ void dc_ps_mjpeg_get_server_data(DcPsMjpegHandle handle, unsigned char *out_data
     _Context *context = &(_sb_contexts[handle._index]);
 
     if (out_data_size < context->latest_frame_size) {
-        fprintf(stderr, "DCApp dc_ps_mjpeg_get_server_data(): output buffer too small\n");
+        DC_LOG_ERROR("MJPEG", "dc_ps_mjpeg_get_server_data(): output buffer too small");
         return;
     }
     memcpy(out_data, context->sb_latest_frame, context->latest_frame_size);
@@ -311,7 +312,7 @@ static void _mjpeg_connect(_Context *context) {
     // set new states
     context->state         = _CONNECTION_STATE_CONNECTING;
     context->timeout_begin = time(NULL);
-    printf("DCApp _mjpeg_connect(): MJPEG Attempting to connect...\n");
+    DC_LOG_INFO("MJPEG", "Attempting to connect...");
 }
 
 // does not account for timeouts

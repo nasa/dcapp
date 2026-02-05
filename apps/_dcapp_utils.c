@@ -3,6 +3,7 @@
 
 #include "dcapp.h"
 
+#include "../src/utils/log.h"
 #include "../src/utils/string.h"
 
 static const char *_node_type_to_string(_NodeType type) {
@@ -30,7 +31,7 @@ static const char *_node_type_to_string(_NodeType type) {
         case NODE_TYPE_WINDOW:
             return "Window";
         default:
-            fprintf(stderr, "DCAPP _node_type_to_string(): Unknown node type %d\n", type);
+            DC_LOG_WARN("NodeType", "Unknown type: %d", type);
             return "";
     }
 }

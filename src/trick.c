@@ -1,5 +1,6 @@
 #include "trick.h"
 #include "utils/stb_sb.h"
+#include "utils/log.h"
 #include "sock.h"
 
 #include <stdio.h>
@@ -204,7 +205,7 @@ void dc_trick_update(DcTrickHandle trick) {
             break;
         }
         default:
-            fprintf(stderr, "Unknown sock state: %d\n", last_state);
+            DC_LOG_ERROR("Trick", "Unknown sock state: %d", last_state);
             break;
     }
 }
@@ -333,7 +334,7 @@ DcTrickResult _dc_trick_send(DcTrickHandle trick) {
                 break;
 
             default:
-                fprintf(stderr, "dc_trick_send(): unknown result from dc_sock_send() %d", result);
+                DC_LOG_ERROR("Trick", "dc_trick_send(): unknown result from dc_sock_send() %d", result);
                 return DC_TRICK_RESULT_FAIL;
                 break;
         }
@@ -436,7 +437,7 @@ DcTrickResult _dc_trick_receive(DcTrickHandle trick) {
             break;
 
         default:
-            fprintf(stderr, "dc_trick_send(): unknown result from dc_sock_send() %d", result);
+            DC_LOG_ERROR("Trick", "dc_trick_send(): unknown result from dc_sock_send() %d", result);
             return DC_TRICK_RESULT_FAIL;
             break;
     }

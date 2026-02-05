@@ -2,6 +2,7 @@
 
 #include "../utils/string.h"
 #include "../utils/stb_sb.h"
+#include "../utils/log.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -51,7 +52,7 @@ void dc_app_lookup_cleanup(DcAppLookup *lookup) {
 DcValue *dc_app_lookup_get_value(DcAppLookup *lookup, DcAppValIndex index) {
     _LookupContext *context = &(_sb_contexts[lookup->index]);
     if (index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
-        fprintf(stderr, "dc_app_lookup_get_value(): attempting to fetch invalid index %d\n", index);
+        DC_LOG_ERROR("Lookup", "dc_app_lookup_get_value(): attempting to fetch invalid index %d", index);
         return NULL;
     }
     return &(context->sb_vals[index]);
@@ -102,7 +103,7 @@ DcAppVarIndex dc_app_lookup_get_var_index(DcAppLookup *lookup, const char *name)
 DcAppLookupVar *dc_app_lookup_get_var(DcAppLookup *lookup, DcAppVarIndex index) {
     _LookupContext *context = &(_sb_contexts[lookup->index]);
     if (index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
-        fprintf(stderr, "dc_app_lookup_get_var(): attempting to fetch invalid index %d\n", index);
+        DC_LOG_ERROR("Lookup", "dc_app_lookup_get_var(): attempting to fetch invalid index %d", index);
         return NULL;
     }
     return &(context->sb_vars[index]);
@@ -113,7 +114,7 @@ DcAppLookupVar *dc_app_lookup_get_var_by_name(DcAppLookup *lookup, const char *n
     DcAppVarIndex   index   = dc_app_lookup_get_var_index(lookup, name);
     if (index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
         if (!(context->suppress_warnings & DC_APP_SUPPRESS_MISSING_VARIABLE)) {
-            fprintf(stderr, "dc_app_lookup_get_var_by_name(): attempting to fetch non-existant variable '%s'\n", name);
+            DC_LOG_WARN("Lookup", "dc_app_lookup_get_var_by_name(): attempting to fetch non-existant variable '%s'", name);
         }
         return NULL;
     }
@@ -125,7 +126,7 @@ DcAppVarIndex dc_app_lookup_register_var(DcAppLookup *lookup, const char *name, 
 
     DcAppVarIndex index = dc_app_lookup_get_var_index(lookup, name);
     if (index != DC_APP_LOOKUP_INDEX_UNDEFINED) {
-        fprintf(stderr, "dc_app_lookup_register_var(): variable already exists '%s'\n", name);
+        DC_LOG_WARN("Lookup", "dc_app_lookup_register_var(): variable already exists '%s'", name);
         return index;
     }
 
@@ -162,7 +163,7 @@ void dc_app_lookup_var_pop(DcAppLookup *lookup, DcAppVarIndex var_index) {
         DcValue *value = dc_app_lookup_get_value(lookup, var->value_index);
         *value = sbpop(var->sb_value_stack);
     } else {
-        fprintf(stderr, "dc_app_lookup_var_pop(): stack underflow for variable index %d\n", var_index);
+        DC_LOG_ERROR("Lookup", "dc_app_lookup_var_pop(): stack underflow for variable index %d", var_index);
     }
 }
 

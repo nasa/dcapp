@@ -1,6 +1,7 @@
 #include "dcapp.h"
 
 #include "../src/utils/env.h"
+#include "../src/utils/log.h"
 
 // static members
 // TODO hate this solution, but needed for DLL lookup
@@ -95,7 +96,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     // parse input arguments
     plIO *_ext_io = _ext_ioi->get_io();
     if (_ext_io->iArgc < 4) {
-        fprintf(stderr, "DCApp pl_app_load(): missing dcapp config file\n");
+        DC_LOG_ERROR("App", "Missing dcapp config file");
     }
 
     // create config

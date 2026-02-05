@@ -1,4 +1,5 @@
 #include "file.h"
+#include "log.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -99,7 +100,7 @@ int dc_utils_join_paths(const char *dir, const char *rel_path, char *out, size_t
 
 bool dc_utils_is_relative_path(const char *path) {
     if (!path || !*path) {
-        fprintf(stderr, "DCAPP dc_utils_is_relative_path(): invalid buffer\n");
+        DC_LOG_ERROR("File", "dc_utils_is_relative_path(): invalid buffer");
         return false;
     }
 
@@ -117,7 +118,7 @@ bool dc_utils_is_relative_path(const char *path) {
 // check if path is absolute
 bool dc_utils_is_absolute_path(const char *path) {
     if (!path || !*path) {
-        fprintf(stderr, "DCAPP dc_utils_is_absolute_path(): invalid buffer\n");
+        DC_LOG_ERROR("File", "dc_utils_is_absolute_path(): invalid buffer");
         return false;
     }
 
@@ -132,7 +133,7 @@ bool dc_utils_is_absolute_path(const char *path) {
 // check if path is canonical (no symbolic links, relatives)
 bool dc_utils_is_canonical_path(const char *path) {
     if (!path || !*path) {
-        fprintf(stderr, "DCAPP dc_utils_is_canonical_path(): invalid buffer\n");
+        DC_LOG_ERROR("File", "dc_utils_is_canonical_path(): invalid buffer");
         return false;
     }
 
@@ -157,7 +158,7 @@ bool dc_utils_is_canonical_path(const char *path) {
 int dc_utils_canonicalize_path(const char *path, char *out, size_t out_size) {
 
     if (path == NULL || out == NULL || out_size == 0) {
-        fprintf(stderr, "DCAPP dc_utils_canonicalize_path(): invalid buffers\n");
+        DC_LOG_ERROR("File", "dc_utils_canonicalize_path(): invalid buffers");
         return -1;
     }
 
@@ -177,7 +178,7 @@ int dc_utils_canonicalize_path(const char *path, char *out, size_t out_size) {
     }
 
     if (strlen(fullpath) >= out_size) {
-        fprintf(stderr, "DCAPP dc_utils_canonicalize_path(): canonical path too long for buffer\n");
+        DC_LOG_ERROR("File", "dc_utils_canonicalize_path(): canonical path too long for buffer");
         return -1;
     }
 
@@ -188,7 +189,7 @@ int dc_utils_canonicalize_path(const char *path, char *out, size_t out_size) {
 
 int dc_utils_get_directory(const char *path, char *out, size_t out_size) {
     if (!path || !out || out_size == 0) {
-        fprintf(stderr, "DCAPP dc_utils_get_directory(): invalid buffers\n");
+        DC_LOG_ERROR("File", "dc_utils_get_directory(): invalid buffers");
         return -1;
     }
 
@@ -216,7 +217,7 @@ int dc_utils_get_directory(const char *path, char *out, size_t out_size) {
 
 int dc_utils_create_directory(const char *path) {
     if (!path) {
-        fprintf(stderr, "DCAPP dc_utils_create_directory(): invalid buffer\n");
+        DC_LOG_ERROR("File", "dc_utils_create_directory(): invalid buffer");
         return -1;
     }
 
