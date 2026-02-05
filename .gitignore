@@ -16,3 +16,26 @@ samples/**/dcapp.h
 
 # windows
 vcpkg_installed/
+
+# trick stuffs
+build/
+makefile
+S_main_*.exe
+S_source.hh
+S_sie.resource
+trick.zip
+.trick/
+DP_Product/
+_init_log.csv
+S_run_summary
+S_job_execution
+send_hs
+varserver_log
+log_*.csv
+log_*.trk
+log_*.header
+chkpnt_*
+*.o
+*.d
+*.pyc
+__pycache__/
