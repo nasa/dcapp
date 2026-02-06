@@ -38,6 +38,8 @@ ELEMENT_RENAMES = {
     'EdgeIo': 'EdgeIO',
     'FromEdge': 'EdgeFrom',
     'ToEdge': 'EdgeTo',
+    # Case fix
+    'Pixelstream': 'PixelStream',
 }
 
 # Button-specific child element renames
@@ -64,12 +66,10 @@ BUTTON_ATTRIBUTE_RENAMES = {
 # SECTION 2: ATTRIBUTE NAME MAPPINGS
 # ============================================================================
 
-# Simple attribute renames (element-agnostic)
-ATTRIBUTE_RENAMES = {
-    'Operator': 'Operation',  # In <If> elements
-    'Value': 'Value1',        # In <If> elements (single-value conditional)
-    'Color': 'FillColor',     # For Text elements (not Line!)
-}
+# Reference: attribute renames handled inline per element type
+# - If: Operator → Operation, Value → Value1 (lines 607-612)
+# - Text/String: Color → FillColor (via ELEMENT_ATTRIBUTE_RENAMES)
+# - Line: Color → LineColor (via ELEMENT_ATTRIBUTE_RENAMES)
 
 # Element-specific attribute renames
 ELEMENT_ATTRIBUTE_RENAMES = {
@@ -110,6 +110,8 @@ COMMENT_OUT_ELEMENTS = {
     'ADI': ('TODO(deprecated)', 'Use TexturedSphere instead of ADI'),
     'Animation': ('TODO(migration)', 'Animation not yet supported'),
     'CAN': ('TODO(deprecated)', 'CAN hardware interface not yet supported'),
+    'Hagstrom': ('TODO(deprecated)', 'Hagstrom bezel keyboard not yet supported'),
+    'KeyboardEvent': ('TODO(migration)', 'KeyboardEvent not yet supported'),
     'Map': ('TODO(deprecated)', 'Use Terrain instead of Map'),
     'UEI': ('TODO(deprecated)', 'UEI hardware interface not yet supported'),
 }
@@ -597,7 +599,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
             if old_attr in elem.attrib:
                 elem.set(new_attr, elem.get(old_attr))
                 del elem.attrib[old_attr]
-        # remoev leading @s
+        # remove leading @s
         convert_variable_reference(elem, 'Variable')
         convert_variable_reference(elem, 'IndicatorVariable')
         convert_variable_reference(elem, 'TargetVariable')
@@ -681,7 +683,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     # Alignment conversion for positionable elements
     if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
                'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex',
-               'Sphere', 'Terrain', 'PixelStream'):
+               'Sphere', 'Terrain', 'PixelStream', 'Pixelstream'):
         has_x = 'X' in elem.attrib or 'PositionX' in elem.attrib
         has_y = 'Y' in elem.attrib or 'PositionY' in elem.attrib
         convert_alignment(elem, has_x, has_y)
@@ -689,7 +691,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     # Origin conversion for positionable elements
     if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
                'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex',
-               'Sphere', 'Terrain', 'PixelStream'):
+               'Sphere', 'Terrain', 'PixelStream', 'Pixelstream'):
         convert_origin_attributes(elem)
 
     # Element-specific attribute renames
