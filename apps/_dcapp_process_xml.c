@@ -4010,6 +4010,15 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.text.line_color)))
         dc_node.text.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
+    // shadow offset
+    xmlChar *raw_shadow_offset = xmlGetProp(xml_node, BAD_CAST "ShadowOffset");
+    if (raw_shadow_offset) {
+        dc_node.text.shadow_offset = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_shadow_offset);
+        xmlFree(raw_shadow_offset);
+    } else {
+        dc_node.text.shadow_offset = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
     if (raw_negate_x) {

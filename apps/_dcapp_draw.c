@@ -4064,6 +4064,18 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
         // update text options
         text_options.tTransform = transform3;
 
+        // shadow pass
+        if (node->text.shadow_offset != DC_APP_VAL_INDEX_UNDEFINED) {
+            plDrawTextOptions shadow_opts = text_options;
+            shadow_opts.uColor = PL_COLOR_32_RGBA(0, 0, 0, 1);
+
+            float offset = (float)dc_app_lookup_get_value(app_data->lookup, node->text.shadow_offset)->value_double;
+            shadow_opts.tTransform.x13 += offset;
+            shadow_opts.tTransform.x23 += offset;
+
+            _ext_draw->add_text(_draw_batch_get_2d(app_data), (plVec2){0, 0}, &sb_text[subtext_indices[ii]], shadow_opts);
+        }
+
         // draw
         _ext_draw->add_text(_draw_batch_get_2d(app_data), (plVec2){0, 0}, &sb_text[subtext_indices[ii]], text_options);
     }

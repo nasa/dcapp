@@ -479,6 +479,7 @@ typedef struct __NodeText {
     _ValIndex4    fill_color;
     _ValIndex4    line_color;
     uint8_t       config_flags;
+    DcAppValIndex shadow_offset;
     // DcAppValIndex  font;
 
     // stretchy buffers contains values and formats

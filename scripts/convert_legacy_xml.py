@@ -93,7 +93,6 @@ COMMENT_OUT_ATTRIBUTES = {
     'LineFactor',       # Lines - line pattern repeat factor
     'Key',              # Button - keyboard shortcut
     'BezelKey',         # Button - bezel key binding
-    'ShadowOffset',     # Text - shadow/drop shadow effect
     'ForceMono',        # Text - force monospace rendering
     'DisconnectAction', # TrickIO - action on disconnect
     'FullScreen',       # Window - fullscreen mode
