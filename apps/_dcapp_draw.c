@@ -2148,7 +2148,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
                 dc_ps_mjpeg_get_server_data(node->pixelstream.mjpeg.handle, node->pixelstream.mjpeg.raw_jpeg, node->pixelstream.mjpeg.raw_jpeg_size, &jpeg_size);
 
                 // free prior image data
-                free(node->pixelstream.frame);
+                _ext_image->free(node->pixelstream.frame);
 
                 // convert to raw image format
                 int channels;

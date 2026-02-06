@@ -254,6 +254,13 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     dc_app_lookup_cleanup(app_data->lookup);
     dc_app_config_cleanup(app_data->config);
 
+    // cleanup draw backend (GPU buffers, bind group pool, font atlas, drawlists)
+    _ext_draw_backend->cleanup_font_atlas(NULL);
+    _ext_draw_backend->cleanup();
+
+    // cleanup GPU memory allocators (buddy heap, staging allocators)
+    _ext_gpu_allocators->cleanup(device);
+
     _ext_starter->cleanup();
     _ext_windows->destroy(app_data->pl_window);
     PL_FREE(app_data);
