@@ -52,15 +52,15 @@
 :release
 
 :: create output directories
-@if not exist "../samples/functions/logic" @mkdir "../samples/functions/logic"
+@if not exist "../samples/lissajous/logic" @mkdir "../samples/lissajous/logic"
 
 @if not exist "../samples/ptz/logic" @mkdir "../samples/ptz/logic"
+
+@if not exist "../samples/functions/logic" @mkdir "../samples/functions/logic"
 
 @if not exist "../samples/mask/logic" @mkdir "../samples/mask/logic"
 
 @if not exist "../samples/screensaver/logic" @mkdir "../samples/screensaver/logic"
-
-@if not exist "../samples/lissajous/logic" @mkdir "../samples/lissajous/logic"
 
 :: create lock file(s)
 @echo LOCKING > "../samples/screensaver/logic/lock.tmp"
@@ -82,7 +82,7 @@
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../../samples/functions/logic/logic.c" 
+@set PL_SOURCES="../samples/functions/logic/logic.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -115,7 +115,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/functions/logic/logic.dll" -F
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../../samples/lissajous/logic/logic.c" 
+@set PL_SOURCES="../samples/lissajous/logic/logic.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -148,7 +148,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/lissajous/logic/logic.dll" -F
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../../samples/mask/logic/logic.c" 
+@set PL_SOURCES="../samples/mask/logic/logic.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -181,7 +181,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/mask/logic/logic.dll" -Fo"../
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../../samples/ptz/logic/logic.c" 
+@set PL_SOURCES="../samples/ptz/logic/logic.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -214,7 +214,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/ptz/logic/logic.dll" -Fo"../s
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../../samples/screensaver/logic/logic.c" 
+@set PL_SOURCES="../samples/screensaver/logic/logic.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -246,11 +246,11 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/screensaver/logic/logic.dll" 
 @echo [1m[36mCleaning...[0m
 
 :: delete obj files(s)
-@del "..\samples\functions\logic\*.obj"  > nul 2> nul
+@del "..\samples\lissajous\logic\*.obj"  > nul 2> nul
 @del "..\samples\ptz\logic\*.obj"  > nul 2> nul
+@del "..\samples\functions\logic\*.obj"  > nul 2> nul
 @del "..\samples\mask\logic\*.obj"  > nul 2> nul
 @del "..\samples\screensaver\logic\*.obj"  > nul 2> nul
-@del "..\samples\lissajous\logic\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
 @if exist "../samples/screensaver/logic/lock.tmp" del "..\samples\screensaver\logic\lock.tmp"
@@ -266,15 +266,15 @@ goto ExitLabel
 :debug
 
 :: create output directories
-@if not exist "../samples/functions/logic" @mkdir "../samples/functions/logic"
+@if not exist "../samples/lissajous/logic" @mkdir "../samples/lissajous/logic"
 
 @if not exist "../samples/ptz/logic" @mkdir "../samples/ptz/logic"
+
+@if not exist "../samples/functions/logic" @mkdir "../samples/functions/logic"
 
 @if not exist "../samples/mask/logic" @mkdir "../samples/mask/logic"
 
 @if not exist "../samples/screensaver/logic" @mkdir "../samples/screensaver/logic"
-
-@if not exist "../samples/lissajous/logic" @mkdir "../samples/lissajous/logic"
 
 :: create lock file(s)
 @echo LOCKING > "../samples/screensaver/logic/lock.tmp"
@@ -296,7 +296,7 @@ goto ExitLabel
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../../samples/functions/logic/logic.c" 
+@set PL_SOURCES="../samples/functions/logic/logic.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -329,7 +329,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/functions/logic/logic.dll" -F
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../../samples/lissajous/logic/logic.c" 
+@set PL_SOURCES="../samples/lissajous/logic/logic.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -362,7 +362,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/lissajous/logic/logic.dll" -F
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../../samples/mask/logic/logic.c" 
+@set PL_SOURCES="../samples/mask/logic/logic.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -395,7 +395,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/mask/logic/logic.dll" -Fo"../
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../../samples/ptz/logic/logic.c" 
+@set PL_SOURCES="../samples/ptz/logic/logic.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -428,7 +428,7 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/ptz/logic/logic.dll" -Fo"../s
 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no 
-@set PL_SOURCES="../../samples/screensaver/logic/logic.c" 
+@set PL_SOURCES="../samples/screensaver/logic/logic.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -460,11 +460,11 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/screensaver/logic/logic.dll" 
 @echo [1m[36mCleaning...[0m
 
 :: delete obj files(s)
-@del "..\samples\functions\logic\*.obj"  > nul 2> nul
+@del "..\samples\lissajous\logic\*.obj"  > nul 2> nul
 @del "..\samples\ptz\logic\*.obj"  > nul 2> nul
+@del "..\samples\functions\logic\*.obj"  > nul 2> nul
 @del "..\samples\mask\logic\*.obj"  > nul 2> nul
 @del "..\samples\screensaver\logic\*.obj"  > nul 2> nul
-@del "..\samples\lissajous\logic\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
 @if exist "../samples/screensaver/logic/lock.tmp" del "..\samples\screensaver\logic\lock.tmp"

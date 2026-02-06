@@ -54,11 +54,11 @@ done
 if [[ "$PL_CONFIG" == "release" ]]; then
 
 # create output directory(s)
-mkdir -p "../samples/functions/logic"
+mkdir -p "../samples/lissajous/logic"
 mkdir -p "../samples/ptz/logic"
+mkdir -p "../samples/functions/logic"
 mkdir -p "../samples/mask/logic"
 mkdir -p "../samples/screensaver/logic"
-mkdir -p "../samples/lissajous/logic"
 
 # create lock file(s)
 echo LOCKING > "../samples/screensaver/logic/lock.tmp"
@@ -86,7 +86,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/functions/logic/logic.c "
+PL_SOURCES="../samples/functions/logic/logic.c "
 
 # run compiler (and linker)
 echo
@@ -117,7 +117,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/lissajous/logic/logic.c "
+PL_SOURCES="../samples/lissajous/logic/logic.c "
 
 # run compiler (and linker)
 echo
@@ -148,7 +148,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/mask/logic/logic.c "
+PL_SOURCES="../samples/mask/logic/logic.c "
 
 # run compiler (and linker)
 echo
@@ -179,7 +179,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/ptz/logic/logic.c "
+PL_SOURCES="../samples/ptz/logic/logic.c "
 
 # run compiler (and linker)
 echo
@@ -210,7 +210,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/screensaver/logic/logic.c "
+PL_SOURCES="../samples/screensaver/logic/logic.c "
 
 # run compiler (and linker)
 echo
@@ -243,11 +243,11 @@ fi
 if [[ "$PL_CONFIG" == "debug" ]]; then
 
 # create output directory(s)
-mkdir -p "../samples/functions/logic"
+mkdir -p "../samples/lissajous/logic"
 mkdir -p "../samples/ptz/logic"
+mkdir -p "../samples/functions/logic"
 mkdir -p "../samples/mask/logic"
 mkdir -p "../samples/screensaver/logic"
-mkdir -p "../samples/lissajous/logic"
 
 # create lock file(s)
 echo LOCKING > "../samples/screensaver/logic/lock.tmp"
@@ -275,7 +275,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/functions/logic/logic.c "
+PL_SOURCES="../samples/functions/logic/logic.c "
 
 # run compiler (and linker)
 echo
@@ -306,7 +306,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/lissajous/logic/logic.c "
+PL_SOURCES="../samples/lissajous/logic/logic.c "
 
 # run compiler (and linker)
 echo
@@ -337,7 +337,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/mask/logic/logic.c "
+PL_SOURCES="../samples/mask/logic/logic.c "
 
 # run compiler (and linker)
 echo
@@ -368,7 +368,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/ptz/logic/logic.c "
+PL_SOURCES="../samples/ptz/logic/logic.c "
 
 # run compiler (and linker)
 echo
@@ -399,7 +399,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../samples/screensaver/logic/logic.c "
+PL_SOURCES="../samples/screensaver/logic/logic.c "
 
 # run compiler (and linker)
 echo
