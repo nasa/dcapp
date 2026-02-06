@@ -2640,16 +2640,16 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
     {
         // get filepath (default to assets/testpattern.png)
         xmlChar *raw_test_pattern = xmlGetProp(xml_node, BAD_CAST "TestPattern");
-        char     test_pattern_path[512];
+        char     test_pattern_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
         if (raw_test_pattern) {
             snprintf(test_pattern_path, sizeof(test_pattern_path), "%s/%s", directory, (const char *)raw_test_pattern);
             xmlFree(raw_test_pattern);
         } else {
-            snprintf(test_pattern_path, sizeof(test_pattern_path), "%s/../assets/testpattern.png", directory);
+            snprintf(test_pattern_path, sizeof(test_pattern_path), "%s/assets/testpattern.png", app_data->config->dcapp_dir_path);
         }
 
         // canonicalize path
-        char canon_filepath[512];
+        char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
         if (realpath(test_pattern_path, canon_filepath) == NULL) {
             DC_LOG_ERROR("PixelStream", "TestPattern file not found: %s", test_pattern_path);
             dc_node.pixelstream.test_pattern_texture_index = TEXTURE_INDEX_UNDEFINED;
