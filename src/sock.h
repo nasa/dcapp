@@ -3,12 +3,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
-#ifdef _WIN32
 #include <stdint.h>
-typedef uintptr_t DcSockFd;
-#else
-typedef int DcSockFd;
-#endif
 
 typedef enum {
     DC_SOCK_RESULT_SUCCESS = 0,
@@ -31,24 +26,24 @@ typedef enum {
     DC_SOCK_STATE_CONNECTED
 } DcSockState;
 
-typedef struct _DcSock {
-    DcSockFd    sock_fd;
-    DcSockFlags flags;
-} DcSock;
+typedef struct _DcSockHandle {
+    uint8_t index;
+} DcSockHandle;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-DcSock       dc_sock_create(DcSockFlags flags);
+DcSockHandle dc_sock_create(DcSockFlags flags);
 DcSockResult dc_sock_host_to_ip(const char *host, char *out);
-DcSockResult dc_sock_set_non_nagle(DcSock *sock);
-DcSockResult dc_sock_set_non_blocking(DcSock *sock);
-DcSockResult dc_sock_connect(DcSock *sock, const char *ip, int port);
-void         dc_sock_close(DcSock *sock);
-DcSockState  dc_sock_connection_status(DcSock *sock);
-DcSockResult dc_sock_send(DcSock *sock, const char *in, size_t in_size, int *sent_size);
-DcSockResult dc_sock_receive(DcSock *sock, char *out, size_t out_size, int *receive_size);
+DcSockResult dc_sock_connect(DcSockHandle sock, const char *ip, int port);
+void         dc_sock_close(DcSockHandle sock);
+DcSockState  dc_sock_connection_status(DcSockHandle sock);
+DcSockResult dc_sock_send(DcSockHandle sock, const char *in, size_t in_size, int *sent_size);
+DcSockResult dc_sock_receive(DcSockHandle sock, char *out, size_t out_size, int *receive_size);
+DcSockResult dc_sock_set_blocking(DcSockHandle sock);
+DcSockResult dc_sock_set_recv_timeout(DcSockHandle sock, int timeout_s);
+DcSockResult dc_sock_shutdown_write(DcSockHandle sock);
 
 #ifdef __cplusplus
 }

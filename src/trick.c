@@ -24,7 +24,7 @@ typedef struct __DcTrickContext {
     bool has_new_data;
 
     // socket
-    DcSock      sock;
+    DcSockHandle sock;
     DcSockState state;
 
     // time between reconnects
@@ -128,7 +128,7 @@ void dc_trick_update(DcTrickHandle trick) {
     switch (last_state) {
         case DC_SOCK_STATE_DISCONNECTED:
         case DC_SOCK_STATE_CONNECTING: {
-            DcSockState curr_state = dc_sock_connection_status(&(context->sock));
+            DcSockState curr_state = dc_sock_connection_status(context->sock);
             switch (curr_state) {
 
                 // if it's still disconnected, check the timeout and reconnect if needed
@@ -139,7 +139,7 @@ void dc_trick_update(DcTrickHandle trick) {
                         if (curr_state == DC_SOCK_STATE_CONNECTING) {
                             _dc_trick_close(trick);
                         }
-                        DC_LOG_ERROR("Trick", "Attempting reconnect..: %s:%d", context->ip, context->port);
+                        DC_LOG_ERROR("Trick", "[%s:%d] Attempting reconnect..", context->ip, context->port);
                         _dc_trick_connect(trick);
                     }
                     break;
@@ -205,7 +205,7 @@ void dc_trick_update(DcTrickHandle trick) {
             break;
         }
         default:
-            DC_LOG_ERROR("Trick", "Unknown sock state: %d", last_state);
+            DC_LOG_ERROR("Trick", "[%s:%d] Unknown sock state: %d", context->ip, context->port, last_state);
             break;
     }
 }
@@ -315,7 +315,7 @@ DcTrickResult _dc_trick_send(DcTrickHandle trick) {
     if (sbcount(context->tx_buffer)) {
 
         int          sent_count;
-        DcSockResult result = dc_sock_send(&(context->sock), context->tx_buffer, sbcount(context->tx_buffer), &sent_count);
+        DcSockResult result = dc_sock_send(context->sock, context->tx_buffer, sbcount(context->tx_buffer), &sent_count);
         switch (result) {
             case DC_SOCK_RESULT_FAIL:
             case DC_SOCK_RESULT_CONN_CLOSED:
@@ -334,7 +334,7 @@ DcTrickResult _dc_trick_send(DcTrickHandle trick) {
                 break;
 
             default:
-                DC_LOG_ERROR("Trick", "dc_trick_send(): unknown result from dc_sock_send() %d", result);
+                DC_LOG_ERROR("Trick", "[%s:%d] Unknown result from dc_sock_send(): %d", context->ip, context->port, result);
                 return DC_TRICK_RESULT_FAIL;
                 break;
         }
@@ -350,7 +350,7 @@ DcTrickResult _dc_trick_receive(DcTrickHandle trick) {
     bool received_any = false;
     for (;;) {
         int          recv_count;
-        DcSockResult result = dc_sock_receive(&(context->sock), context->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, &recv_count);
+        DcSockResult result = dc_sock_receive(context->sock, context->temp_buffer, DC_TRICK_TEMP_BUFFER_SIZE, &recv_count);
         if (result == DC_SOCK_RESULT_FAIL || result == DC_SOCK_RESULT_CONN_CLOSED) {
             context->has_new_data = false;
             return DC_TRICK_RESULT_FAIL;
@@ -359,7 +359,7 @@ DcTrickResult _dc_trick_receive(DcTrickHandle trick) {
             break;
         }
         if (result != DC_SOCK_RESULT_SUCCESS) {
-            DC_LOG_ERROR("Trick", "dc_trick_receive(): unknown result from dc_sock_receive() %d", result);
+            DC_LOG_ERROR("Trick", "[%s:%d] unknown result from dc_sock_receive(): %d", context->ip, context->port, result);
             return DC_TRICK_RESULT_FAIL;
         }
         sbpushn(context->rx_buffer, context->temp_buffer, recv_count);
@@ -428,7 +428,7 @@ DcTrickResult _dc_trick_receive(DcTrickHandle trick) {
             // raise flag that there are new values
             context->has_new_data = true;
             if (sbcount(context->rx_var_offsets) != sbcount(context->rx_cmd_offsets)) {
-                DC_LOG_ERROR("Trick", "size mismatch between expected and received variable count: %s:%d", context->ip, context->port);
+                DC_LOG_ERROR("Trick", "[%s:%d] Size mismatch between expected and received variable count", context->ip, context->port);
                 context->has_new_data = false;
             }
         }
@@ -442,7 +442,7 @@ DcTrickResult _dc_trick_receive(DcTrickHandle trick) {
 
 void _dc_trick_connect(DcTrickHandle trick) {
     _DcTrickContext *context = &(_contexts[trick.index]);
-    dc_sock_connect(&(context->sock), context->ip, context->port);
+    dc_sock_connect(context->sock, context->ip, context->port);
     context->reconnect_start = time(NULL);
 }
 
@@ -452,11 +452,11 @@ void _dc_trick_close(DcTrickHandle trick) {
     // send cleanup commands if connected
     if (context->is_connected) {
         int sent;
-        dc_sock_send(&(context->sock), "trick.var_clear()\n", 18, &sent);
-        dc_sock_send(&(context->sock), "trick.var_exit()\n", 17, &sent);
+        dc_sock_send(context->sock, "trick.var_clear()\n", 18, &sent);
+        dc_sock_send(context->sock, "trick.var_exit()\n", 17, &sent);
     }
 
-    dc_sock_close(&(context->sock));
+    dc_sock_close(context->sock);
     context->state        = DC_SOCK_STATE_DISCONNECTED;
     context->is_connected = false;
     context->has_new_data = false;
