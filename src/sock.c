@@ -34,7 +34,7 @@ DcSock dc_sock_create(DcSockFlags flags) {
 
     // create sock
     DcSock sock;
-    sock.sock_fd = 0;
+    sock.sock_fd = -1;
     sock.flags   = flags;
     return sock;
 }
@@ -227,7 +227,11 @@ DcSockState dc_sock_connection_status(DcSock *s) {
 }
 
 DcSockResult dc_sock_send(DcSock *sock, const char *in, size_t in_size, int *sent_size) {
+#if defined(__linux__)
+    int sent = send(sock->sock_fd, in, (int)in_size, MSG_NOSIGNAL);
+#else
     int sent = send(sock->sock_fd, in, (int)in_size, 0);
+#endif
     if (sent_size) {
         *sent_size = sent;
     }

@@ -19,7 +19,7 @@
 #define DC_EDGE_DEFAULT_PORT 5451
 
 typedef struct __DcEdgeContext {
-    char  ip[20];
+    char  ip[46]; // INET6_ADDRSTRLEN
     int   port;
     float data_rate;
     int   timeout_s;

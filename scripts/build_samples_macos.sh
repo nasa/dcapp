@@ -56,11 +56,11 @@ done
 if [[ "$PL_CONFIG" == "release" ]]; then
 
 # create output directory(s)
+mkdir -p "../samples/functions/logic"
+mkdir -p "../samples/ptz/logic"
 mkdir -p "../samples/mask/logic"
 mkdir -p "../samples/screensaver/logic"
 mkdir -p "../samples/lissajous/logic"
-mkdir -p "../samples/functions/logic"
-mkdir -p "../samples/ptz/logic"
 
 # create lock file(s)
 echo LOCKING > "../samples/screensaver/logic/lock.tmp"
@@ -87,7 +87,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/functions/logic/logic.c "
+PL_SOURCES="../../samples/functions/logic/logic.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -126,7 +126,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/lissajous/logic/logic.c "
+PL_SOURCES="../../samples/lissajous/logic/logic.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -165,7 +165,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/mask/logic/logic.c "
+PL_SOURCES="../../samples/mask/logic/logic.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -204,7 +204,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/ptz/logic/logic.c "
+PL_SOURCES="../../samples/ptz/logic/logic.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -243,7 +243,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/screensaver/logic/logic.c "
+PL_SOURCES="../../samples/screensaver/logic/logic.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -284,11 +284,11 @@ fi
 if [[ "$PL_CONFIG" == "debug" ]]; then
 
 # create output directory(s)
+mkdir -p "../samples/functions/logic"
+mkdir -p "../samples/ptz/logic"
 mkdir -p "../samples/mask/logic"
 mkdir -p "../samples/screensaver/logic"
 mkdir -p "../samples/lissajous/logic"
-mkdir -p "../samples/functions/logic"
-mkdir -p "../samples/ptz/logic"
 
 # create lock file(s)
 echo LOCKING > "../samples/screensaver/logic/lock.tmp"
@@ -315,7 +315,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/functions/logic/logic.c "
+PL_SOURCES="../../samples/functions/logic/logic.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -354,7 +354,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/lissajous/logic/logic.c "
+PL_SOURCES="../../samples/lissajous/logic/logic.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -393,7 +393,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/mask/logic/logic.c "
+PL_SOURCES="../../samples/mask/logic/logic.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -432,7 +432,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/ptz/logic/logic.c "
+PL_SOURCES="../../samples/ptz/logic/logic.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -471,7 +471,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/screensaver/logic/logic.c "
+PL_SOURCES="../../samples/screensaver/logic/logic.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
