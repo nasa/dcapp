@@ -27,8 +27,9 @@ ELEMENT_RENAMES = {
     'String': 'Text',
     'Defaults': 'Default',
     'DisplayLogic': 'Logic',
-    # Button child elements - context-dependent, handled separately
+    # Button event handlers (global - can appear inside Button or other elements)
     'OnPress': 'MousePressed',
+    'OnRelease': 'MouseReleased',
     # Mask child elements - handled by process_mask_element, NOT here
     # TrickIO renames
     'TrickIo': 'TrickIO',
@@ -49,7 +50,6 @@ BUTTON_CHILD_RENAMES = {
     'Active': 'ButtonEnabled',
     'Inactive': 'ButtonDisabled',
     'Transition': 'ButtonTransition',
-    'OnRelease': 'MouseReleased',
 }
 
 # Button-specific attribute renames
@@ -544,6 +544,16 @@ def get_element_context(elem: etree._Element, parent_tag: Optional[str]) -> str:
     return parent_tag or ''
 
 
+def _is_inside_default_or_style(elem: etree._Element) -> bool:
+    """Check if element is inside a Default/Defaults or Style template."""
+    parent = elem.getparent()
+    while parent is not None:
+        if isinstance(parent.tag, str) and parent.tag in ('Default', 'Defaults', 'Style'):
+            return True
+        parent = parent.getparent()
+    return False
+
+
 def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> list:
     """
     Process a single element and its attributes.
@@ -693,6 +703,22 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
                'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex',
                'Sphere', 'Terrain', 'PixelStream', 'Pixelstream'):
         convert_origin_attributes(elem)
+
+    # Prevent Default/Style alignment inheritance from making explicit positions relative.
+    # ParentAlignX="#_align_left_" and ParentAlignY="#_align_bottom_" are the defaults, so
+    # this is harmless for elements not inheriting from Default/Style. But it blocks an
+    # inherited AlignX/AlignY (which expands to ParentAlignX + LocalAlignX) from turning
+    # absolute positions into relative offsets from the parent anchor.
+    if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
+               'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex',
+               'Sphere', 'Terrain', 'PixelStream', 'Pixelstream'):
+        if not _is_inside_default_or_style(elem):
+            has_x = 'X' in elem.attrib or 'PositionX' in elem.attrib
+            has_y = 'Y' in elem.attrib or 'PositionY' in elem.attrib
+            if has_x and 'ParentAlignX' not in elem.attrib:
+                elem.set('ParentAlignX', '#_align_left_')
+            if has_y and 'ParentAlignY' not in elem.attrib:
+                elem.set('ParentAlignY', '#_align_bottom_')
 
     # Element-specific attribute renames
     if tag in ELEMENT_ATTRIBUTE_RENAMES:
