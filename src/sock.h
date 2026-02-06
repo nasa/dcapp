@@ -42,7 +42,7 @@ DcSockState  dc_sock_connection_status(DcSockHandle sock);
 DcSockResult dc_sock_send(DcSockHandle sock, const char *in, size_t in_size, int *sent_size);
 DcSockResult dc_sock_receive(DcSockHandle sock, char *out, size_t out_size, int *receive_size);
 DcSockResult dc_sock_set_blocking(DcSockHandle sock);
-DcSockResult dc_sock_set_recv_timeout(DcSockHandle sock, int timeout_s);
+DcSockResult dc_sock_set_recv_timeout(DcSockHandle sock, int timeout_ms);
 DcSockResult dc_sock_shutdown_write(DcSockHandle sock);
 
 #ifdef __cplusplus

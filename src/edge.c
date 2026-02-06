@@ -294,6 +294,10 @@ static DcEdgeResult _dc_edge_connect(DcEdgeHandle edge) {
     while (difftime(time(NULL), start) < 2.0) {
         DcSockState state = dc_sock_connection_status(context->sock);
         if (state == DC_SOCK_STATE_CONNECTED) {
+            // switch to blocking for data I/O
+            dc_sock_set_blocking(context->sock);
+            dc_sock_set_recv_timeout(context->sock, 2000);
+
             // read server version string
             char *version = NULL;
             DcEdgeResult result = _dc_edge_read_message(edge, &version);
@@ -363,6 +367,10 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
         return DC_EDGE_RESULT_FAIL;
     }
 
+    // switch to blocking for data I/O (short timeout to avoid stalling render)
+    dc_sock_set_blocking(cmd_sock);
+    dc_sock_set_recv_timeout(cmd_sock, 500);
+
     // read and discard server version
     int buf_size = 256;
     int nread = 0;
@@ -372,32 +380,19 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
         return DC_EDGE_RESULT_FAIL;
     }
 
-    start = time(NULL);
-    bool got_version = false;
-    while (difftime(time(NULL), start) < 2.0) {
+    for (;;) {
         char c;
         int recv_count;
         DcSockResult res = dc_sock_receive(cmd_sock, &c, 1, &recv_count);
 
-        if (res == DC_SOCK_RESULT_CONN_WOULD_BLOCK || res == DC_SOCK_RESULT_CONN_INTERRUPTED) {
-            #ifdef _WIN32
-            Sleep(1);
-            #else
-            usleep(1000);
-            #endif
-            continue;
-        }
-
+        if (res == DC_SOCK_RESULT_CONN_INTERRUPTED) continue;
         if (res != DC_SOCK_RESULT_SUCCESS || recv_count != 1) {
             free(buf);
             dc_sock_close(cmd_sock);
             return DC_EDGE_RESULT_FAIL;
         }
 
-        if (c == DC_EDGE_END_OF_MSG) {
-            got_version = true;
-            break;
-        }
+        if (c == DC_EDGE_END_OF_MSG) break;
 
         if (nread + 2 > buf_size) {
             buf_size *= 2;
@@ -412,11 +407,6 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
         buf[nread++] = c;
     }
     free(buf);
-
-    if (!got_version) {
-        dc_sock_close(cmd_sock);
-        return DC_EDGE_RESULT_FAIL;
-    }
 
     // send command
     int cmd_len = (int)strlen(cmd);
@@ -439,21 +429,12 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
         return DC_EDGE_RESULT_FAIL;
     }
 
-    start = time(NULL);
-    while (difftime(time(NULL), start) < 2.0) {
+    for (;;) {
         char c;
         int recv_count;
         DcSockResult res = dc_sock_receive(cmd_sock, &c, 1, &recv_count);
 
-        if (res == DC_SOCK_RESULT_CONN_WOULD_BLOCK || res == DC_SOCK_RESULT_CONN_INTERRUPTED) {
-            #ifdef _WIN32
-            Sleep(1);
-            #else
-            usleep(1000);
-            #endif
-            continue;
-        }
-
+        if (res == DC_SOCK_RESULT_CONN_INTERRUPTED) continue;
         if (res != DC_SOCK_RESULT_SUCCESS || recv_count != 1) {
             free(buf);
             dc_sock_close(cmd_sock);
@@ -483,47 +464,30 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
         }
         buf[nread++] = c;
     }
-
-    // timeout
-    free(buf);
-    dc_sock_close(cmd_sock);
-    return DC_EDGE_RESULT_FAIL;
 }
 
 static DcEdgeResult _dc_edge_read_message(DcEdgeHandle edge, char **response) {
     _DcEdgeContext *context = &(_contexts[edge.index]);
 
-    // set socket to blocking mode temporarily for read
-    // (the legacy code does this)
     int buf_size = 256;
     int nread = 0;
     char *buf = (char *)malloc(buf_size);
     if (!buf) return DC_EDGE_RESULT_FAIL;
 
-    // read until END_OF_MSG character (0x04)
-    time_t start = time(NULL);
-    while (difftime(time(NULL), start) < 2.0) {
+    // blocking read until END_OF_MSG character (0x04)
+    // (socket is already set to blocking with recv timeout)
+    for (;;) {
         char c;
         int recv_count;
         DcSockResult result = dc_sock_receive(context->sock, &c, 1, &recv_count);
 
-        if (result == DC_SOCK_RESULT_CONN_WOULD_BLOCK || result == DC_SOCK_RESULT_CONN_INTERRUPTED) {
-            // no data yet, small sleep
-            #ifdef _WIN32
-            Sleep(1);
-            #else
-            usleep(1000);
-            #endif
-            continue;
-        }
-
+        if (result == DC_SOCK_RESULT_CONN_INTERRUPTED) continue;
         if (result != DC_SOCK_RESULT_SUCCESS || recv_count != 1) {
             free(buf);
             return DC_EDGE_RESULT_FAIL;
         }
 
         if (c == DC_EDGE_END_OF_MSG) {
-            // end of message
             buf[nread] = '\0';
             if (response) {
                 *response = buf;
@@ -533,7 +497,6 @@ static DcEdgeResult _dc_edge_read_message(DcEdgeHandle edge, char **response) {
             return DC_EDGE_RESULT_SUCCESS;
         }
 
-        // grow buffer if needed
         if (nread + 2 > buf_size) {
             buf_size *= 2;
             char *new_buf = (char *)realloc(buf, buf_size);
@@ -546,10 +509,6 @@ static DcEdgeResult _dc_edge_read_message(DcEdgeHandle edge, char **response) {
 
         buf[nread++] = c;
     }
-
-    // timeout
-    free(buf);
-    return DC_EDGE_RESULT_FAIL;
 }
 
 static DcEdgeResult _dc_edge_setup_command_group(DcEdgeHandle edge) {

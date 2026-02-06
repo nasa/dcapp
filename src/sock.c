@@ -361,15 +361,15 @@ DcSockResult dc_sock_set_blocking(DcSockHandle sock) {
     return DC_SOCK_RESULT_SUCCESS;
 }
 
-DcSockResult dc_sock_set_recv_timeout(DcSockHandle sock, int timeout_s) {
+DcSockResult dc_sock_set_recv_timeout(DcSockHandle sock, int timeout_ms) {
     _DcSockContext *ctx = &_contexts[sock.index];
 #ifdef _WIN32
-    DWORD tv = (DWORD)(timeout_s * 1000);
+    DWORD tv = (DWORD)timeout_ms;
     if (setsockopt(ctx->sock_fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)) < 0) {
 #else
     struct timeval tv;
-    tv.tv_sec  = timeout_s;
-    tv.tv_usec = 0;
+    tv.tv_sec  = timeout_ms / 1000;
+    tv.tv_usec = (timeout_ms % 1000) * 1000;
     if (setsockopt(ctx->sock_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
 #endif
         DC_LOG_ERROR("Sock", "set_recv_timeout: %s", strerror(errno));
