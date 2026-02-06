@@ -104,6 +104,10 @@ void dc_ps_mjpeg_update() {
             switch (result) {
 
                 case (CURLE_OK): {
+                    // for MJPEG streams, a completed transfer means the server
+                    // closed the connection (the stream is supposed to be continuous)
+                    DC_LOG_WARN("MJPEG", "Stream ended, will reconnect");
+                    context->state = _CONNECTION_STATE_DISCONNECTED;
                     break;
                 }
 
