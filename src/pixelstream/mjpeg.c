@@ -16,7 +16,7 @@ typedef enum {
 } _ConnectionState;
 
 #define _MAX_CONNECTIONS 10
-#define _MAX_URL_LENGTH 256
+#define _MAX_URL_LENGTH 2048
 
 typedef struct __Context {
 

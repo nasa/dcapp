@@ -2571,10 +2571,10 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
             if (!raw_filepath) {
                 raw_filepath = xmlGetProp(xml_node, BAD_CAST "URL");  // fallback
             }
-            char filepath[256];
+            char filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
             if (raw_filepath) {
-                strncpy(filepath, (const char *)raw_filepath, 256);
-                filepath[255] = '\0';
+                strncpy(filepath, (const char *)raw_filepath, DC_UTILS_FILEPATH_BUFFER_SIZE);
+                filepath[DC_UTILS_FILEPATH_BUFFER_SIZE - 1] = '\0';
                 xmlFree(raw_filepath);
             } else {
                 DC_LOG_ERROR("PixelStream", "Missing 'File' attribute for shmem type");
@@ -2590,9 +2590,9 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
 
             // parse URL
             xmlChar *raw_url = xmlGetProp(xml_node, BAD_CAST "URL");
-            char     cleaned_url[256];
+            char     cleaned_url[2048];
             if (raw_url) {
-                strncpy(cleaned_url, (const char *)raw_url, 256);
+                strncpy(cleaned_url, (const char *)raw_url, 2048);
                 xmlFree(raw_url);
             } else {
                 DC_LOG_ERROR("PixelStream", "Missing 'URL' attribute");
