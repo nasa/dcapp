@@ -661,6 +661,13 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     elif tag == 'MouseMotion':
         convert_variable_reference(elem, 'XVariable')
         convert_variable_reference(elem, 'YVariable')
+        # Rename XVariable → VariableX, YVariable → VariableY
+        if 'XVariable' in elem.attrib:
+            elem.set('VariableX', elem.get('XVariable'))
+            del elem.attrib['XVariable']
+        if 'YVariable' in elem.attrib:
+            elem.set('VariableY', elem.get('YVariable'))
+            del elem.attrib['YVariable']
 
     # Image element
     elif tag == 'Image':
