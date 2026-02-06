@@ -160,7 +160,7 @@ with pl.project("samples"):
 
             # add source files
             logic_src_file = os.path.relpath(
-                logic_dir_rel + "/logic.c", build_script_out_dir_abs
+                sample_dirs_abs[ii] + "/logic/logic.c", build_script_out_dir_abs
             )
             pl.add_source_files(logic_src_file)
 

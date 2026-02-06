@@ -787,7 +787,24 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
             if (static_attr) {
                 is_static = dc_utils_string_to_boolean((const char *)static_attr);
                 xmlFree(static_attr);
+            } else {
+                // auto-detect static: if no values reference runtime variables (@), treat as static
+                xmlChar *v1 = xmlGetProp(node, BAD_CAST "Value");
+                if (!v1) v1 = xmlGetProp(node, BAD_CAST "Value1");
+                xmlChar *v2 = xmlGetProp(node, BAD_CAST "Value2");
+
+                bool has_runtime = false;
+                if (v1 && v1[0] == '@') has_runtime = true;
+                if (v2 && v2[0] == '@') has_runtime = true;
+
+                bool has_value = (v1 != NULL);
+                if (v1) xmlFree(v1);
+                if (v2) xmlFree(v2);
+
+                if (!has_runtime && has_value) is_static = true;
             }
+
+            
 
             if (is_static) {
                 // ===== STATIC IF PROCESSING =====

@@ -143,7 +143,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-noimplib -noexp -incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib libcurl.lib 
-@set PL_SOURCES="../src/edge.c" "../src/trick.c" "../src/sock.c" "../src/value.c" "../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/pixelstream/shmem.c" "../src/pixelstream/mjpeg.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/log.c" "../src/utils/file.c" "../src/utils/string.c" "../apps/dcapp.c" 
+@set PL_SOURCES="../src/value.c" "../src/trick.c" "../src/sock.c" "../src/edge.c" "../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/pixelstream/shmem.c" "../src/pixelstream/mjpeg.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/file.c" "../src/utils/string.c" "../src/utils/log.c" "../apps/dcapp.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -179,7 +179,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib 
-@set PL_SOURCES="../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/log.c" "../src/utils/file.c" "../src/utils/string.c" "../src/value.c" "../apps/dcapp-genheader.c" 
+@set PL_SOURCES="../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/file.c" "../src/utils/string.c" "../src/utils/log.c" "../src/value.c" "../apps/dcapp-genheader.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -217,7 +217,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib 
-@set PL_SOURCES="../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/log.c" "../src/utils/file.c" "../src/utils/string.c" "../src/value.c" "../apps/dcapp-validate.c" 
+@set PL_SOURCES="../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/file.c" "../src/utils/string.c" "../src/utils/log.c" "../src/value.c" "../apps/dcapp-validate.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -358,7 +358,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-noimplib -noexp -incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=dearimguid.lib libxml2.lib libcurl.lib 
-@set PL_SOURCES="../src/edge.c" "../src/trick.c" "../src/sock.c" "../src/value.c" "../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/pixelstream/shmem.c" "../src/pixelstream/mjpeg.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/log.c" "../src/utils/file.c" "../src/utils/string.c" "../apps/dcapp.c" 
+@set PL_SOURCES="../src/value.c" "../src/trick.c" "../src/sock.c" "../src/edge.c" "../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/pixelstream/shmem.c" "../src/pixelstream/mjpeg.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/file.c" "../src/utils/string.c" "../src/utils/log.c" "../apps/dcapp.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -394,7 +394,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib 
-@set PL_SOURCES="../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/log.c" "../src/utils/file.c" "../src/utils/string.c" "../src/value.c" "../apps/dcapp-genheader.c" 
+@set PL_SOURCES="../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/file.c" "../src/utils/string.c" "../src/utils/log.c" "../src/value.c" "../apps/dcapp-genheader.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -432,7 +432,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib 
-@set PL_SOURCES="../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/log.c" "../src/utils/file.c" "../src/utils/string.c" "../src/value.c" "../apps/dcapp-validate.c" 
+@set PL_SOURCES="../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/file.c" "../src/utils/string.c" "../src/utils/log.c" "../src/value.c" "../apps/dcapp-validate.c" 
 
 :: run compiler (and linker)
 @echo.

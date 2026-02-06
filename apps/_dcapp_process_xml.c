@@ -2571,10 +2571,10 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
             if (!raw_filepath) {
                 raw_filepath = xmlGetProp(xml_node, BAD_CAST "URL");  // fallback
             }
-            char filepath[256];
+            char filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
             if (raw_filepath) {
-                strncpy(filepath, (const char *)raw_filepath, 256);
-                filepath[255] = '\0';
+                strncpy(filepath, (const char *)raw_filepath, DC_UTILS_FILEPATH_BUFFER_SIZE);
+                filepath[DC_UTILS_FILEPATH_BUFFER_SIZE - 1] = '\0';
                 xmlFree(raw_filepath);
             } else {
                 DC_LOG_ERROR("PixelStream", "Missing 'File' attribute for shmem type");
@@ -2590,9 +2590,9 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
 
             // parse URL
             xmlChar *raw_url = xmlGetProp(xml_node, BAD_CAST "URL");
-            char     cleaned_url[256];
+            char     cleaned_url[2048];
             if (raw_url) {
-                strncpy(cleaned_url, (const char *)raw_url, 256);
+                strncpy(cleaned_url, (const char *)raw_url, 2048);
                 xmlFree(raw_url);
             } else {
                 DC_LOG_ERROR("PixelStream", "Missing 'URL' attribute");
@@ -2640,16 +2640,16 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
     {
         // get filepath (default to assets/testpattern.png)
         xmlChar *raw_test_pattern = xmlGetProp(xml_node, BAD_CAST "TestPattern");
-        char     test_pattern_path[512];
+        char     test_pattern_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
         if (raw_test_pattern) {
             snprintf(test_pattern_path, sizeof(test_pattern_path), "%s/%s", directory, (const char *)raw_test_pattern);
             xmlFree(raw_test_pattern);
         } else {
-            snprintf(test_pattern_path, sizeof(test_pattern_path), "%s/../assets/testpattern.png", directory);
+            snprintf(test_pattern_path, sizeof(test_pattern_path), "%s/assets/testpattern.png", app_data->config->dcapp_dir_path);
         }
 
         // canonicalize path
-        char canon_filepath[512];
+        char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
         if (realpath(test_pattern_path, canon_filepath) == NULL) {
             DC_LOG_ERROR("PixelStream", "TestPattern file not found: %s", test_pattern_path);
             dc_node.pixelstream.test_pattern_texture_index = TEXTURE_INDEX_UNDEFINED;
@@ -4009,6 +4009,15 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         dc_node.text.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
     if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.text.line_color)))
         dc_node.text.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
+
+    // shadow offset
+    xmlChar *raw_shadow_offset = xmlGetProp(xml_node, BAD_CAST "ShadowOffset");
+    if (raw_shadow_offset) {
+        dc_node.text.shadow_offset = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_shadow_offset);
+        xmlFree(raw_shadow_offset);
+    } else {
+        dc_node.text.shadow_offset = DC_APP_VAL_INDEX_UNDEFINED;
+    }
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");

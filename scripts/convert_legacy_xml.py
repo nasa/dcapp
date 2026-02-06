@@ -27,8 +27,9 @@ ELEMENT_RENAMES = {
     'String': 'Text',
     'Defaults': 'Default',
     'DisplayLogic': 'Logic',
-    # Button child elements - context-dependent, handled separately
+    # Button event handlers (global - can appear inside Button or other elements)
     'OnPress': 'MousePressed',
+    'OnRelease': 'MouseReleased',
     # Mask child elements - handled by process_mask_element, NOT here
     # TrickIO renames
     'TrickIo': 'TrickIO',
@@ -38,6 +39,8 @@ ELEMENT_RENAMES = {
     'EdgeIo': 'EdgeIO',
     'FromEdge': 'EdgeFrom',
     'ToEdge': 'EdgeTo',
+    # Case fix
+    'Pixelstream': 'PixelStream',
 }
 
 # Button-specific child element renames
@@ -47,7 +50,6 @@ BUTTON_CHILD_RENAMES = {
     'Active': 'ButtonEnabled',
     'Inactive': 'ButtonDisabled',
     'Transition': 'ButtonTransition',
-    'OnRelease': 'MouseReleased',
 }
 
 # Button-specific attribute renames
@@ -64,12 +66,10 @@ BUTTON_ATTRIBUTE_RENAMES = {
 # SECTION 2: ATTRIBUTE NAME MAPPINGS
 # ============================================================================
 
-# Simple attribute renames (element-agnostic)
-ATTRIBUTE_RENAMES = {
-    'Operator': 'Operation',  # In <If> elements
-    'Value': 'Value1',        # In <If> elements (single-value conditional)
-    'Color': 'FillColor',     # For Text elements (not Line!)
-}
+# Reference: attribute renames handled inline per element type
+# - If: Operator → Operation, Value → Value1 (lines 607-612)
+# - Text/String: Color → FillColor (via ELEMENT_ATTRIBUTE_RENAMES)
+# - Line: Color → LineColor (via ELEMENT_ATTRIBUTE_RENAMES)
 
 # Element-specific attribute renames
 ELEMENT_ATTRIBUTE_RENAMES = {
@@ -93,7 +93,6 @@ COMMENT_OUT_ATTRIBUTES = {
     'LineFactor',       # Lines - line pattern repeat factor
     'Key',              # Button - keyboard shortcut
     'BezelKey',         # Button - bezel key binding
-    'ShadowOffset',     # Text - shadow/drop shadow effect
     'ForceMono',        # Text - force monospace rendering
     'DisconnectAction', # TrickIO - action on disconnect
     'FullScreen',       # Window - fullscreen mode
@@ -110,6 +109,8 @@ COMMENT_OUT_ELEMENTS = {
     'ADI': ('TODO(deprecated)', 'Use TexturedSphere instead of ADI'),
     'Animation': ('TODO(migration)', 'Animation not yet supported'),
     'CAN': ('TODO(deprecated)', 'CAN hardware interface not yet supported'),
+    'Hagstrom': ('TODO(deprecated)', 'Hagstrom bezel keyboard not yet supported'),
+    'KeyboardEvent': ('TODO(migration)', 'KeyboardEvent not yet supported'),
     'Map': ('TODO(deprecated)', 'Use Terrain instead of Map'),
     'UEI': ('TODO(deprecated)', 'UEI hardware interface not yet supported'),
 }
@@ -542,6 +543,16 @@ def get_element_context(elem: etree._Element, parent_tag: Optional[str]) -> str:
     return parent_tag or ''
 
 
+def _is_inside_default_or_style(elem: etree._Element) -> bool:
+    """Check if element is inside a Default/Defaults or Style template."""
+    parent = elem.getparent()
+    while parent is not None:
+        if isinstance(parent.tag, str) and parent.tag in ('Default', 'Defaults', 'Style'):
+            return True
+        parent = parent.getparent()
+    return False
+
+
 def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> list:
     """
     Process a single element and its attributes.
@@ -597,7 +608,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
             if old_attr in elem.attrib:
                 elem.set(new_attr, elem.get(old_attr))
                 del elem.attrib[old_attr]
-        # remoev leading @s
+        # remove leading @s
         convert_variable_reference(elem, 'Variable')
         convert_variable_reference(elem, 'IndicatorVariable')
         convert_variable_reference(elem, 'TargetVariable')
@@ -649,6 +660,13 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     elif tag == 'MouseMotion':
         convert_variable_reference(elem, 'XVariable')
         convert_variable_reference(elem, 'YVariable')
+        # Rename XVariable → VariableX, YVariable → VariableY
+        if 'XVariable' in elem.attrib:
+            elem.set('VariableX', elem.get('XVariable'))
+            del elem.attrib['XVariable']
+        if 'YVariable' in elem.attrib:
+            elem.set('VariableY', elem.get('YVariable'))
+            del elem.attrib['YVariable']
 
     # Image element
     elif tag == 'Image':
@@ -681,7 +699,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     # Alignment conversion for positionable elements
     if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
                'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex',
-               'Sphere', 'Terrain', 'PixelStream'):
+               'Sphere', 'Terrain', 'PixelStream', 'Pixelstream'):
         has_x = 'X' in elem.attrib or 'PositionX' in elem.attrib
         has_y = 'Y' in elem.attrib or 'PositionY' in elem.attrib
         convert_alignment(elem, has_x, has_y)
@@ -689,8 +707,24 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     # Origin conversion for positionable elements
     if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
                'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex',
-               'Sphere', 'Terrain', 'PixelStream'):
+               'Sphere', 'Terrain', 'PixelStream', 'Pixelstream'):
         convert_origin_attributes(elem)
+
+    # Prevent Default/Style alignment inheritance from making explicit positions relative.
+    # ParentAlignX="#_align_left_" and ParentAlignY="#_align_bottom_" are the defaults, so
+    # this is harmless for elements not inheriting from Default/Style. But it blocks an
+    # inherited AlignX/AlignY (which expands to ParentAlignX + LocalAlignX) from turning
+    # absolute positions into relative offsets from the parent anchor.
+    if tag in ('Text', 'String', 'Button', 'Rectangle', 'Circle', 'Image',
+               'Container', 'Line', 'Polygon', 'Ellipse', 'Arc', 'Vertex',
+               'Sphere', 'Terrain', 'PixelStream', 'Pixelstream'):
+        if not _is_inside_default_or_style(elem):
+            has_x = 'X' in elem.attrib or 'PositionX' in elem.attrib
+            has_y = 'Y' in elem.attrib or 'PositionY' in elem.attrib
+            if has_x and 'ParentAlignX' not in elem.attrib:
+                elem.set('ParentAlignX', '#_align_left_')
+            if has_y and 'ParentAlignY' not in elem.attrib:
+                elem.set('ParentAlignY', '#_align_bottom_')
 
     # Element-specific attribute renames
     if tag in ELEMENT_ATTRIBUTE_RENAMES:

@@ -52,15 +52,15 @@
 :release
 
 :: create output directories
-@if not exist "../samples/mask/logic" @mkdir "../samples/mask/logic"
-
-@if not exist "../samples/screensaver/logic" @mkdir "../samples/screensaver/logic"
-
 @if not exist "../samples/lissajous/logic" @mkdir "../samples/lissajous/logic"
+
+@if not exist "../samples/ptz/logic" @mkdir "../samples/ptz/logic"
 
 @if not exist "../samples/functions/logic" @mkdir "../samples/functions/logic"
 
-@if not exist "../samples/ptz/logic" @mkdir "../samples/ptz/logic"
+@if not exist "../samples/mask/logic" @mkdir "../samples/mask/logic"
+
+@if not exist "../samples/screensaver/logic" @mkdir "../samples/screensaver/logic"
 
 :: create lock file(s)
 @echo LOCKING > "../samples/screensaver/logic/lock.tmp"
@@ -246,11 +246,11 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/screensaver/logic/logic.dll" 
 @echo [1m[36mCleaning...[0m
 
 :: delete obj files(s)
+@del "..\samples\lissajous\logic\*.obj"  > nul 2> nul
+@del "..\samples\ptz\logic\*.obj"  > nul 2> nul
+@del "..\samples\functions\logic\*.obj"  > nul 2> nul
 @del "..\samples\mask\logic\*.obj"  > nul 2> nul
 @del "..\samples\screensaver\logic\*.obj"  > nul 2> nul
-@del "..\samples\lissajous\logic\*.obj"  > nul 2> nul
-@del "..\samples\functions\logic\*.obj"  > nul 2> nul
-@del "..\samples\ptz\logic\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
 @if exist "../samples/screensaver/logic/lock.tmp" del "..\samples\screensaver\logic\lock.tmp"
@@ -266,15 +266,15 @@ goto ExitLabel
 :debug
 
 :: create output directories
-@if not exist "../samples/mask/logic" @mkdir "../samples/mask/logic"
-
-@if not exist "../samples/screensaver/logic" @mkdir "../samples/screensaver/logic"
-
 @if not exist "../samples/lissajous/logic" @mkdir "../samples/lissajous/logic"
+
+@if not exist "../samples/ptz/logic" @mkdir "../samples/ptz/logic"
 
 @if not exist "../samples/functions/logic" @mkdir "../samples/functions/logic"
 
-@if not exist "../samples/ptz/logic" @mkdir "../samples/ptz/logic"
+@if not exist "../samples/mask/logic" @mkdir "../samples/mask/logic"
+
+@if not exist "../samples/screensaver/logic" @mkdir "../samples/screensaver/logic"
 
 :: create lock file(s)
 @echo LOCKING > "../samples/screensaver/logic/lock.tmp"
@@ -460,11 +460,11 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../samples/screensaver/logic/logic.dll" 
 @echo [1m[36mCleaning...[0m
 
 :: delete obj files(s)
+@del "..\samples\lissajous\logic\*.obj"  > nul 2> nul
+@del "..\samples\ptz\logic\*.obj"  > nul 2> nul
+@del "..\samples\functions\logic\*.obj"  > nul 2> nul
 @del "..\samples\mask\logic\*.obj"  > nul 2> nul
 @del "..\samples\screensaver\logic\*.obj"  > nul 2> nul
-@del "..\samples\lissajous\logic\*.obj"  > nul 2> nul
-@del "..\samples\functions\logic\*.obj"  > nul 2> nul
-@del "..\samples\ptz\logic\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
 @if exist "../samples/screensaver/logic/lock.tmp" del "..\samples\screensaver\logic\lock.tmp"

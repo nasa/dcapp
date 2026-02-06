@@ -16,7 +16,7 @@ typedef enum {
 } _ConnectionState;
 
 #define _MAX_CONNECTIONS 10
-#define _MAX_URL_LENGTH 256
+#define _MAX_URL_LENGTH 2048
 
 typedef struct __Context {
 
@@ -104,6 +104,10 @@ void dc_ps_mjpeg_update() {
             switch (result) {
 
                 case (CURLE_OK): {
+                    // for MJPEG streams, a completed transfer means the server
+                    // closed the connection (the stream is supposed to be continuous)
+                    DC_LOG_WARN("MJPEG", "[%s] Stream ended, will reconnect", context->url);
+                    context->state = _CONNECTION_STATE_DISCONNECTED;
                     break;
                 }
 
@@ -121,14 +125,14 @@ void dc_ps_mjpeg_update() {
                 case CURLE_GOT_NOTHING:
                 case CURLE_PARTIAL_FILE:
                 case CURLE_SSL_CONNECT_ERROR: {
-                    DC_LOG_ERROR("MJPEG", "Disconnected or failed to connect: %s", curl_easy_strerror(result));
+                    DC_LOG_ERROR("MJPEG", "[%s] Disconnected or failed to connect: %s", context->url, curl_easy_strerror(result));
                     context->state = _CONNECTION_STATE_DISCONNECTED;
                     break;
                 }
 
                 case CURLE_PEER_FAILED_VERIFICATION:
                 case CURLE_USE_SSL_FAILED: {
-                    DC_LOG_ERROR("MJPEG", "SSL verification or setup failed: %s", curl_easy_strerror(result));
+                    DC_LOG_ERROR("MJPEG", "[%s] SSL verification or setup failed: %s", context->url, curl_easy_strerror(result));
                     context->state = _CONNECTION_STATE_DISCONNECTED;
                     break;
                 }
@@ -312,7 +316,7 @@ static void _mjpeg_connect(_Context *context) {
     // set new states
     context->state         = _CONNECTION_STATE_CONNECTING;
     context->timeout_begin = time(NULL);
-    DC_LOG_INFO("MJPEG", "Attempting to connect...");
+    DC_LOG_INFO("MJPEG", "[%s] Attempting to connect...", context->url);
 }
 
 // does not account for timeouts

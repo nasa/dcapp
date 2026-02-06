@@ -2,6 +2,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <time.h>
 
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
@@ -11,6 +12,7 @@
     #define fileno _fileno
 #else
     #include <unistd.h>
+    #include <sys/time.h>
 #endif
 
 // ANSI color codes
@@ -83,12 +85,28 @@ void dc_log(DcLogLevel level, const char *tag, const char *fmt, ...) {
         default:                 level_str = "???";   break;
     }
 
+    // timestamp
+    char timestamp[16];
+#ifdef _WIN32
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    snprintf(timestamp, sizeof(timestamp), "%02d:%02d:%02d.%03d",
+             st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    struct tm tm_buf;
+    localtime_r(&tv.tv_sec, &tm_buf);
+    snprintf(timestamp, sizeof(timestamp), "%02d:%02d:%02d.%03d",
+             tm_buf.tm_hour, tm_buf.tm_min, tm_buf.tm_sec, (int)(tv.tv_usec / 1000));
+#endif
+
     int use_colors = _dc_should_use_colors(out);
 
     if (use_colors) {
-        fprintf(out, "%s[DCAPP %s]%s %s: ", color, level_str, ANSI_RESET, tag);
+        fprintf(out, "%s %s[DCAPP %s]%s %s: ", timestamp, color, level_str, ANSI_RESET, tag);
     } else {
-        fprintf(out, "[DCAPP %s] %s: ", level_str, tag);
+        fprintf(out, "%s [DCAPP %s] %s: ", timestamp, level_str, tag);
     }
 
     va_list args;
