@@ -7,7 +7,6 @@
 
 #include <libxml/parser.h>
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -25,6 +24,7 @@ static bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type)
 static void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type);
 static void _validate_attribute_names(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type);
 static void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type);
+static void _validate_variable_references(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type);
 
 int main(int argc, char **argv) {
 
@@ -59,6 +59,7 @@ int main(int argc, char **argv) {
     // validate
     ValidationContext ctx = {0};
     xmlNodePtr root_node  = xmlDocGetRootElement(config->xml_doc);
+
     _validate_node(&ctx, root_node, DC_APP_ELEM_TYPE_NONELEM);
 
     // report summary
@@ -99,6 +100,9 @@ void _validate_node(ValidationContext *ctx, xmlNodePtr node, DcAppElemType paren
 
     // validate attribute values are valid
     _validate_attribute_values(ctx, node, elem_type);
+
+    // validate variable references point to declared variables
+    _validate_variable_references(ctx, node, elem_type);
 
     // recurse into children
     _validate_children(ctx, node, elem_type);
@@ -1301,6 +1305,60 @@ void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppEl
         case DC_APP_ELEM_TYPE_PIXELSTREAM:
             _validate_enum_attr(ctx, node, "Type", 1, 2,
                                 "dynamic_file(1), mjpeg(2)");
+            break;
+
+        default:
+            break;
+    }
+}
+
+// ============================================================================
+// Variable reference validation
+// ============================================================================
+
+// Attributes that take a variable NAME should not have a leading '@'.
+// The '@' prefix is the legacy dereference syntax and should have been
+// stripped during conversion.
+static void _check_var_attr(ValidationContext *ctx, xmlNodePtr node, const char *attr_name) {
+    xmlChar *value = xmlGetProp(node, BAD_CAST attr_name);
+    if (!value) return;
+
+    if (((const char *)value)[0] == '@') {
+        DC_LOG_WARN("Validate", "<%s %s=\"%s\"> should be a variable name, not a dereferenced variable (remove leading '@') (line %ld)",
+                    node->name, attr_name, value, xmlGetLineNo(node));
+        ctx->warning_count++;
+    }
+    xmlFree(value);
+}
+
+void _validate_variable_references(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type) {
+    switch (elem_type) {
+        case DC_APP_ELEM_TYPE_BLINK:
+            _check_var_attr(ctx, node, "Variable");
+            break;
+
+        case DC_APP_ELEM_TYPE_BUTTON:
+            _check_var_attr(ctx, node, "Variable");
+            _check_var_attr(ctx, node, "TargetVariable");
+            _check_var_attr(ctx, node, "IndicatorVariable");
+            _check_var_attr(ctx, node, "EnabledVariable");
+            break;
+
+        case DC_APP_ELEM_TYPE_SET:
+            _check_var_attr(ctx, node, "Variable");
+            break;
+
+        case DC_APP_ELEM_TYPE_MOUSE_MOTION:
+            _check_var_attr(ctx, node, "VariableX");
+            _check_var_attr(ctx, node, "VariableY");
+            break;
+
+        case DC_APP_ELEM_TYPE_EDGE_IO:
+            _check_var_attr(ctx, node, "ConnectedVariable");
+            break;
+
+        case DC_APP_ELEM_TYPE_TRICK_IO:
+            _check_var_attr(ctx, node, "ConnectedVariable");
             break;
 
         default:
