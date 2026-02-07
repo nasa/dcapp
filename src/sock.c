@@ -92,7 +92,7 @@ DcSockHandle dc_sock_create(DcSockFlags flags) {
         return handle;
     }
 
-    _contexts[handle.index].sock_fd = -1;
+    _contexts[handle.index].sock_fd = -2; // -2 = allocated but not connected (-1 = free)
     _contexts[handle.index].flags   = flags;
     return handle;
 }
