@@ -8,11 +8,6 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef _WIN32
-#else
-#include <unistd.h>
-#endif
-
 typedef struct __DcTrickContext {
     char  ip[46]; // INET6_ADDRSTRLEN
     int   port;
