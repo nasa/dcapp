@@ -56,9 +56,7 @@ BUTTON_CHILD_RENAMES = {
 BUTTON_ATTRIBUTE_RENAMES = {
     'ActiveVariable': 'EnabledVariable',
     'ActiveOn': 'EnabledOn',
-    'SwitchVariable': 'TargetVariable',
-    'SwitchOn': 'TargetOn',
-    'SwitchOff': 'TargetOff',
+    # SwitchVariable/SwitchOn/SwitchOff handled by custom logic in process_element
 }
 
 
@@ -204,6 +202,16 @@ def strip_at_prefix(value: str) -> str:
     if value.startswith('@'):
         return value[1:]
     return value
+
+
+def _is_inside_event_block(elem: etree._Element) -> bool:
+    """Check if element is inside a MousePressed/MouseReleased event block."""
+    parent = elem.getparent()
+    while parent is not None:
+        if isinstance(parent.tag, str) and parent.tag in ('MousePressed', 'MouseReleased'):
+            return True
+        parent = parent.getparent()
+    return False
 
 
 def convert_alignment(elem: etree._Element, has_x: bool, has_y: bool) -> None:
@@ -603,7 +611,46 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     # Button element
     elif tag == 'Button':
         convert_button_type(elem)
-        # Rename Button-specific attributes
+
+        # Handle SwitchVariable -> IndicatorVariable + explicit queued Set
+        switch_var_raw = elem.get('SwitchVariable')
+        if switch_var_raw:
+            switch_var = strip_at_prefix(switch_var_raw)
+            switch_on = elem.get('SwitchOn')
+            switch_off = elem.get('SwitchOff')
+            on_value = elem.get('On')
+            btn_type_raw = elem.get('Type') or ''
+
+            # Determine the on/off values for the queued set
+            set_on_value = switch_on or on_value or '1'
+            set_off_value = switch_off or elem.get('Off') or '0'
+
+            # Determine indicator variable and on value for toggle conditional
+            indicator_var = strip_at_prefix(elem.get('IndicatorVariable') or switch_var_raw)
+            indicator_on = elem.get('IndicatorOn') or switch_on or on_value or '1'
+
+            # Set IndicatorVariable (only if not already explicitly provided)
+            if 'IndicatorVariable' not in elem.attrib:
+                elem.set('IndicatorVariable', switch_var)
+            if switch_on and 'IndicatorOn' not in elem.attrib:
+                elem.set('IndicatorOn', switch_on)
+
+            # Remove old attributes
+            del elem.attrib['SwitchVariable']
+            if 'SwitchOn' in elem.attrib:
+                del elem.attrib['SwitchOn']
+            if 'SwitchOff' in elem.attrib:
+                del elem.attrib['SwitchOff']
+
+            # Store metadata for post-children generation in process_tree
+            elem.set('_dcapp_switch_var', switch_var)
+            elem.set('_dcapp_switch_on', set_on_value)
+            elem.set('_dcapp_switch_off', set_off_value)
+            elem.set('_dcapp_switch_btn_type', btn_type_raw)
+            elem.set('_dcapp_switch_ind_var', indicator_var)
+            elem.set('_dcapp_switch_ind_on', indicator_on)
+
+        # Rename remaining Button-specific attributes
         for old_attr, new_attr in BUTTON_ATTRIBUTE_RENAMES.items():
             if old_attr in elem.attrib:
                 elem.set(new_attr, elem.get(old_attr))
@@ -633,8 +680,13 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
         convert_variable_reference(elem, 'Variable')
         min_val, max_val = convert_set_operator(elem)
 
+        # Add Queue="" to Sets inside event blocks (legacy queuing behavior)
+        if _is_inside_event_block(elem):
+            elem.set('Queue', '')
+
         # Generate additional Set elements for min/max clamping
         var_name = elem.get('Variable')
+        inside_event = _is_inside_event_block(elem)
         if var_name:
             if min_val:
                 # min_val means "minimum allowed value" -> use #_set_max_
@@ -642,6 +694,8 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
                 clamp_elem.set('Variable', var_name)
                 clamp_elem.set('Operator', '#_set_max_')
                 clamp_elem.text = min_val
+                if inside_event:
+                    clamp_elem.set('Queue', '')
                 after_elements.append(clamp_elem)
             if max_val:
                 # max_val means "maximum allowed value" -> use #_set_min_
@@ -649,6 +703,8 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
                 clamp_elem.set('Variable', var_name)
                 clamp_elem.set('Operator', '#_set_min_')
                 clamp_elem.text = max_val
+                if inside_event:
+                    clamp_elem.set('Queue', '')
                 after_elements.append(clamp_elem)
 
     # Blink element
@@ -846,6 +902,68 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
             child_index = list(elem).index(child)
             for j, add_elem in enumerate(child_after):
                 elem.insert(child_index + 1 + j, add_elem)
+
+    # Post-children: generate queued Set for SwitchVariable buttons
+    if isinstance(elem.tag, str) and elem.tag == 'Button' and '_dcapp_switch_var' in elem.attrib:
+        switch_var = elem.get('_dcapp_switch_var')
+        switch_on = elem.get('_dcapp_switch_on')
+        switch_off = elem.get('_dcapp_switch_off')
+        btn_type = elem.get('_dcapp_switch_btn_type')
+        indicator_var = elem.get('_dcapp_switch_ind_var')
+        indicator_on = elem.get('_dcapp_switch_ind_on')
+
+        # Clean up temporary attributes
+        del elem.attrib['_dcapp_switch_var']
+        del elem.attrib['_dcapp_switch_on']
+        del elem.attrib['_dcapp_switch_off']
+        del elem.attrib['_dcapp_switch_btn_type']
+        del elem.attrib['_dcapp_switch_ind_var']
+        del elem.attrib['_dcapp_switch_ind_on']
+
+        is_toggle = btn_type.lower() in ('toggle', '#_button_toggle_') if btn_type else False
+        is_momentary = btn_type.lower() in ('momentary', '#_button_momentary_') if btn_type else False
+
+        if is_toggle:
+            # Toggle: conditional set — flip based on indicator state
+            mouse_pressed = etree.Element('MousePressed')
+            if_elem = etree.SubElement(mouse_pressed, 'If')
+            if_elem.set('Value1', '@' + indicator_var)
+            if_elem.set('Operation', '#_if_eq_')
+            if_elem.set('Value2', indicator_on)
+            # If indicator is On -> set to Off
+            true_elem = etree.SubElement(if_elem, 'True')
+            set_off_elem = etree.SubElement(true_elem, 'Set')
+            set_off_elem.set('Variable', switch_var)
+            set_off_elem.set('Operator', '#_set_equal_')
+            set_off_elem.set('Queue', '')
+            set_off_elem.text = switch_off
+            # If indicator is Off -> set to On
+            false_elem = etree.SubElement(if_elem, 'False')
+            set_on_elem = etree.SubElement(false_elem, 'Set')
+            set_on_elem.set('Variable', switch_var)
+            set_on_elem.set('Operator', '#_set_equal_')
+            set_on_elem.set('Queue', '')
+            set_on_elem.text = switch_on
+            elem.insert(0, mouse_pressed)
+        else:
+            # Standard/Momentary: set to On value on press
+            mouse_pressed = etree.Element('MousePressed')
+            set_elem = etree.SubElement(mouse_pressed, 'Set')
+            set_elem.set('Variable', switch_var)
+            set_elem.set('Operator', '#_set_equal_')
+            set_elem.set('Queue', '')
+            set_elem.text = switch_on
+            elem.insert(0, mouse_pressed)
+
+            # Momentary: also set to Off value on release
+            if is_momentary:
+                mouse_released = etree.Element('MouseReleased')
+                set_rel_elem = etree.SubElement(mouse_released, 'Set')
+                set_rel_elem.set('Variable', switch_var)
+                set_rel_elem.set('Operator', '#_set_equal_')
+                set_rel_elem.set('Queue', '')
+                set_rel_elem.text = switch_off
+                elem.insert(1, mouse_released)
 
     return all_after
 

@@ -43,6 +43,10 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 
+// queued set operations
+static bool _apply_set_operation(_AppData *app_data, DcAppVarIndex var_index, DcValue *var_value, DcValue *op_value, DcAppSetType operation);
+static void _flush_queued_sets(_AppData *app_data);
+
 // draw batch utils
 static void           _draw_batch_reset(_AppData *app_data);
 static plDrawLayer2D *_draw_batch_get_2d(_AppData *app_data);
@@ -3075,20 +3079,7 @@ static void _draw_node_mouse_motion(_AppData *app_data, _NodeIndex node_index, _
     }
 }
 
-static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
-
-    // skip if variable is undefined
-    if (node->set.var_index == DC_APP_VAR_INDEX_UNDEFINED) {
-        return;
-    }
-
-    DcValue *var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->set.var_index)->value_index);
-    DcValue *op_value  = dc_app_lookup_get_value(app_data->lookup, node->set.operand);
-
-    // get operation
-    DcAppSetType operation = node->set.operation == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_SET_TYPE_UNDEFINED : (DcAppSetType)(dc_app_lookup_get_value(app_data->lookup, node->set.operation)->value_integer);
-
-    // apply operation
+static bool _apply_set_operation(_AppData *app_data, DcAppVarIndex var_index, DcValue *var_value, DcValue *op_value, DcAppSetType operation) {
     switch (operation) {
         case DC_APP_SET_TYPE_UNDEFINED:
         case DC_APP_SET_TYPE_EQUAL:
@@ -3221,11 +3212,10 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
             }
             break;
         case DC_APP_SET_TYPE_PUSH:
-            dc_app_lookup_var_push(app_data->lookup, node->set.var_index);
-            return; // don't refresh - we're just saving state
+            dc_app_lookup_var_push(app_data->lookup, var_index);
+            return false; // don't refresh - we're just saving state
         case DC_APP_SET_TYPE_POP:
-            dc_app_lookup_var_pop(app_data->lookup, node->set.var_index);
-            var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->set.var_index)->value_index);
+            dc_app_lookup_var_pop(app_data->lookup, var_index);
             break;
         case DC_APP_SET_TYPE_NEGATE:
             switch (var_value->type) {
@@ -3241,11 +3231,62 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
             break;
         default:
             DC_LOG_ERROR("Set", "Invalid operator: %d", operation);
-            break;
+            return false;
+    }
+    return true; // refresh needed
+}
+
+static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+
+    // skip if variable is undefined
+    if (node->set.var_index == DC_APP_VAR_INDEX_UNDEFINED) {
+        return;
     }
 
-    // refresh variable
-    dc_value_refresh(var_value);
+    DcValue *op_value = dc_app_lookup_get_value(app_data->lookup, node->set.operand);
+
+    // get operation
+    DcAppSetType operation = node->set.operation == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_SET_TYPE_UNDEFINED : (DcAppSetType)(dc_app_lookup_get_value(app_data->lookup, node->set.operation)->value_integer);
+
+    // if queued, snapshot the value and defer execution
+    if (node->set.queued) {
+        _QueuedSetOp qop;
+        qop.var_index = node->set.var_index;
+        qop.operation = operation;
+        qop.value     = *op_value; // struct copy snapshot
+        sbpush(app_data->sb_queued_sets, qop);
+        return;
+    }
+
+    // immediate execution
+    DcValue *var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->set.var_index)->value_index);
+    if (_apply_set_operation(app_data, node->set.var_index, var_value, op_value, operation)) {
+        // re-fetch var_value after POP (value_index may have changed)
+        if (operation == DC_APP_SET_TYPE_POP) {
+            var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->set.var_index)->value_index);
+        }
+        dc_value_refresh(var_value);
+    }
+}
+
+static void _flush_queued_sets(_AppData *app_data) {
+    int count = sbcount(app_data->sb_queued_sets);
+    for (int i = 0; i < count; i++) {
+        _QueuedSetOp *qop = &app_data->sb_queued_sets[i];
+        DcValue *var_value = dc_app_lookup_get_value(
+            app_data->lookup,
+            dc_app_lookup_get_var(app_data->lookup, qop->var_index)->value_index);
+        if (_apply_set_operation(app_data, qop->var_index, var_value, &qop->value, qop->operation)) {
+            // re-fetch var_value after POP (value_index may have changed)
+            if (qop->operation == DC_APP_SET_TYPE_POP) {
+                var_value = dc_app_lookup_get_value(
+                    app_data->lookup,
+                    dc_app_lookup_get_var(app_data->lookup, qop->var_index)->value_index);
+            }
+            dc_value_refresh(var_value);
+        }
+    }
+    sbclear(app_data->sb_queued_sets);
 }
 
 static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {

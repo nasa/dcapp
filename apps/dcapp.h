@@ -421,7 +421,14 @@ typedef struct __NodeSet {
     DcAppVarIndex var_index;
     DcAppValIndex operation; // because operator was taken :(
     DcAppValIndex operand;
+    bool          queued;    // defer to end of draw pass
 } _NodeSet;
+
+typedef struct __QueuedSetOp {
+    DcAppVarIndex var_index;
+    DcAppSetType  operation;
+    DcValue       value; // copied by value at queue time
+} _QueuedSetOp;
 
 typedef struct __NodeFunction {
     void (*callback)(void);
@@ -701,6 +708,9 @@ typedef struct __AppData {
 
     // frame data
     _FrameData frame_data;
+
+    // queued set operations (flushed after draw pass)
+    _QueuedSetOp *sb_queued_sets;
 
     // draw batch system
     _DrawBatch    *sb_draw_batches;      // batches for current frame (cleared each frame)

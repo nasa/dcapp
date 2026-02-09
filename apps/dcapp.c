@@ -14,6 +14,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data);
 PL_EXPORT void  pl_app_shutdown(_AppData *app_data);
 PL_EXPORT void  pl_app_resize(_AppData *app_data);
 PL_EXPORT void  pl_app_update(_AppData *app_data);
+static void     _flush_queued_sets(_AppData *app_data);
 
 // -- handlers for logic files --
 // * only works once all variables are registered, as pointer
@@ -243,6 +244,9 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
         _ext_gfx->destroy_shader(device, app_data->stencil_draw_sdf_shader[i]);
     }
 
+    // cleanup queued sets
+    sbfree(app_data->sb_queued_sets);
+
     // cleanup draw batch system
     sbfree(app_data->sb_draw_batches);
     for (int i = 0; i < sbcount(app_data->sb_draw_list_2d_pool); i++) {
@@ -457,6 +461,9 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
     // draw node
     _draw_node(app_data, app_data->window, NULL, NULL, NULL);
+
+    // flush queued set operations (deferred Sets applied atomically)
+    _flush_queued_sets(app_data);
 
     // reset any unpoped variable stacks
     dc_app_lookup_reset_var_stacks(app_data->lookup);

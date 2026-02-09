@@ -843,5 +843,154 @@ New XML:
 
 
 ================================================================================
+SECTION 21: QUEUED SET OPERATIONS (LEGACY COMPATIBILITY)
+================================================================================
+
+The new dcapp engine executes <Set> operations immediately during the draw pass.
+The legacy engine had a different execution model with two separate code paths:
+
+    1. Draw pass: Sets executed immediately via draw()
+    2. Event pass: Sets inside OnPress/OnRelease were QUEUED to a list and
+       executed atomically after all event handlers finished
+
+This means legacy Sets inside event blocks (OnPress/OnRelease) were deferred -
+other elements drawn later in the same frame still saw the OLD variable values.
+The new engine's immediate execution changes this ordering, which can break
+converted legacy displays that depend on the deferred behavior.
+
+--------------------------------------------------------------------------------
+THE QUEUE ATTRIBUTE:
+--------------------------------------------------------------------------------
+
+To support legacy conversion, <Set> elements accept an optional Queue attribute:
+
+    <Set Variable="myVar" Operator="#_set_equal_" Queue="">newValue</Set>
+
+When Queue is present (value is ignored, presence-based), the Set operation is
+collected during the draw pass and applied atomically AFTER the entire draw pass
+completes. This matches the legacy engine's deferred execution behavior.
+
+Without Queue, Sets execute immediately as before. Modern XML should NOT use
+Queue - it exists solely for legacy conversion compatibility.
+
+--------------------------------------------------------------------------------
+LEGACY EXECUTION MODEL (from legacy-dcapp source):
+--------------------------------------------------------------------------------
+
+The legacy engine (primitives/setvalue.cc) had two methods:
+
+    dcSetValue::draw()        - Called during draw pass, executes immediately
+    dcSetValue::handleEvent() - Called during event handling, queues to
+                                AppData.events list for deferred execution
+
+State blocks (Active/Inactive/On/Off/Transition) used draw(), so any Sets
+inside them executed immediately. Only event blocks (OnPress/OnRelease) used
+handleEvent(), which queued Sets for deferred execution.
+
+After event propagation completed, ProcessEvents() (handle_utils.cc) iterated
+the queue, called updateData() on each entry, cleared the queue, and triggered
+a display refresh.
+
+This means:
+
+    IMMEDIATE (during draw pass):
+        - Sets inside <Active>/<Inactive> (now ButtonEnabled/ButtonDisabled)
+        - Sets inside <On>/<Off> (now ButtonIndicatorOn/ButtonIndicatorOff)
+        - Sets inside <Transition> (now ButtonTransition)
+        - Sets at the top level or inside <If> blocks outside events
+        - Any Set reached via the draw() code path
+
+    DEFERRED (queued until end of event handling):
+        - Sets inside <OnPress> (now MousePressed)
+        - Sets inside <OnRelease> (now MouseReleased)
+        - Nested Sets (e.g., OnPress > If > Set) - handleEvent() propagated
+          recursively through the entire child tree
+
+--------------------------------------------------------------------------------
+CONVERSION SCRIPT BEHAVIOR:
+--------------------------------------------------------------------------------
+
+The conversion script (convert_legacy_xml.py) automatically adds Queue="" to
+all <Set> elements that are descendants of MousePressed or MouseReleased blocks.
+This includes deeply nested Sets (e.g., MousePressed > If > True > Set).
+
+Sets outside event blocks are left as immediate execution, matching legacy.
+
+--------------------------------------------------------------------------------
+SWITCHVARIABLE CONVERSION:
+--------------------------------------------------------------------------------
+
+Legacy SwitchVariable was a button attribute that set a variable when the button
+was pressed. The legacy engine implemented this internally by creating event
+handlers (dcMouseEvent) with Sets in the PressList/ReleaseList.
+
+The conversion script converts SwitchVariable to explicit queued Set elements
+rather than using TargetVariable. This is because TargetVariable is handled by
+the engine's built-in button logic, which would bypass the Queue mechanism.
+
+Legacy:
+    <Button SwitchVariable="@CAMERA_SELECT" On="#Camera02Target" Type="Standard">
+        <OnPress>
+            <Set Variable="@PIXELSTREAMID">0</Set>
+        </OnPress>
+    </Button>
+
+Converted:
+    <Button IndicatorVariable="CAMERA_SELECT" IndicatorOn="#Camera02Target"
+            Type="#_button_standard_">
+        <MousePressed>
+            <Set Variable="CAMERA_SELECT" Operator="#_set_equal_"
+                 Queue="">#Camera02Target</Set>
+        </MousePressed>
+        <MousePressed>
+            <Set Variable="PIXELSTREAMID" Operator="#_set_equal_"
+                 Queue="">0</Set>
+        </MousePressed>
+    </Button>
+
+The first MousePressed (generated for SwitchVariable) is inserted as the first
+child. The second (original OnPress content) retains its position. Both use
+Queue="" so all Sets are deferred and applied atomically after the draw pass.
+
+IndicatorVariable replaces SwitchVariable for visual indicator state. No
+TargetVariable is set, so the button's built-in auto-set writes to an internal
+anonymous variable (harmless).
+
+Fallback chain for switch values (matches legacy xml_parse.cc lines 713-714):
+    Switch On value:  SwitchOn -> On -> "1"
+    Switch Off value: SwitchOff -> Off -> "0"
+
+Button type handling:
+    Standard:  MousePressed with Set to On value
+    Toggle:    MousePressed with If/True/False conditional to flip between
+               On and Off values based on IndicatorVariable state
+    Momentary: MousePressed with Set to On value, PLUS MouseReleased with
+               Set to Off value (resets on release)
+
+--------------------------------------------------------------------------------
+IMPLEMENTATION DETAILS:
+--------------------------------------------------------------------------------
+
+C engine files modified:
+    apps/dcapp.h             - _NodeSet.queued flag, _QueuedSetOp struct,
+                               _AppData.sb_queued_sets stretchy buffer
+    apps/_dcapp_process_xml.c - Parses Queue attribute (presence-based)
+    apps/_dcapp_draw.c        - _apply_set_operation() helper, queue check in
+                               _draw_node_set(), _flush_queued_sets() function
+    apps/dcapp.c             - Calls _flush_queued_sets() after _draw_node(),
+                               sbfree() in shutdown cleanup
+
+Queue mechanism:
+    1. During draw pass, if a Set has queued=true, its operation type and
+       operand value are snapshotted into a _QueuedSetOp struct and pushed
+       onto the sb_queued_sets stretchy buffer. The Set returns without
+       modifying the variable.
+    2. After _draw_node() returns, _flush_queued_sets() iterates the buffer,
+       applies each operation via _apply_set_operation(), and clears the buffer.
+    3. Multiple queued Sets to the same variable are applied in queue order
+       (last write wins for EQUAL operations).
+
+
+================================================================================
 END OF DOCUMENT
 ================================================================================
