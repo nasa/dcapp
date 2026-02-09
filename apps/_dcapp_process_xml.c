@@ -3077,7 +3077,7 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
         if (operand[0] == '\0') {
             DC_LOG_ERROR("Set", "Empty content");
         }
-        dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, operand);
+        dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_STRING, operand);
     } else {
         DC_LOG_ERROR("Set", "Missing node content");
     }
