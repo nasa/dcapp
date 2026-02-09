@@ -444,8 +444,8 @@ static _NodeIndex _process_xml_node_arc(_AppData *app_data, xmlNodePtr xml_node,
         dc_node.arc.angle = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_angle);
         xmlFree(raw_angle);
     } else {
-        // default to 90 degrees if not specified
-        dc_node.arc.angle = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, "90");
+        // default to 360 degrees if not specified (matches legacy Circle behavior)
+        dc_node.arc.angle = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, "360");
     }
 
     // segments

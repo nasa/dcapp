@@ -919,7 +919,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
 
     // calculate arc points
     // Corner-based: points range from (0,0) to (diameter, diameter), center at (radius, radius)
-    // Arc starts at top (12 o'clock), rotation handled by transform matrix
+    // Arc starts at 3 o'clock (standard math convention), rotation handled by transform matrix
     // LocalAlign (default=CENTER) shifts by -radius to center at position
     int num_segments = node->arc.num_segments == DC_APP_VAL_INDEX_UNDEFINED ?
         (int)(angle_span / 3.0f) + 2 : // roughly 1 segment per 3 degrees
@@ -931,14 +931,14 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
     float span_rad = pl_radiansf(angle_span);
 
     // Generate arc points (start-based)
-    // Arc starts at top (12 o'clock), rotation handled by transform matrix
+    // Arc starts at 3 o'clock (standard math convention), rotation handled by transform matrix
     plVec2 points[_NODE_ARC_MAX_SEGMENTS];
     int num_arc_points = num_segments + 1; // segments + 1 = number of vertices on arc
 
     for (int ii = 0; ii <= num_segments; ii++) {
         float t = (float)ii / (float)num_segments; // 0 to 1
         float angle = t * span_rad; // from 0 to span
-        float final_angle = angle + (float)M_PI_2;
+        float final_angle = angle;
 
         // Corner-based: center at (radius, radius), points from 0 to diameter
         plVec4 point4 = (plVec4){
@@ -1201,14 +1201,14 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
         num_points = 1;
 
         // Generate arc points (start-based)
-        // Wedge starts at top (12 o'clock), rotation handled by transform matrix
+        // Wedge starts at 3 o'clock (standard math convention), rotation handled by transform matrix
         float span_rad = pl_radiansf(angle_span);
         int num_arc_points = num_segments + 1;
 
         for (int ii = 0; ii <= num_segments; ii++) {
             float t = (float)ii / (float)num_segments;
             float angle = t * span_rad; // from 0 to span
-            float final_angle = angle + (float)M_PI_2;
+            float final_angle = angle;
 
             plVec4 point4 = (plVec4){
                 radius_x * (1.0f + cosf(final_angle)),

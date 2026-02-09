@@ -991,6 +991,26 @@ Queue mechanism:
        (last write wins for EQUAL operations).
 
 
+22. ARC/ELLIPSE STARTING ANGLE — LEGACY COMPATIBILITY
+------------------------------------------------------
+
+Legacy Circle elements start drawing at 3 o'clock (standard math convention:
+angle=0 produces x=r, y=0). The modern Arc and Ellipse elements originally
+started at 12 o'clock by adding a M_PI_2 (90-degree) offset. This was changed
+to match legacy behavior — arcs and ellipse wedges now start at 3 o'clock.
+
+Changes made:
+- _dcapp_draw.c: Removed "+ (float)M_PI_2" from arc vertex generation and
+  ellipse pie/wedge vertex generation. Full ellipse mode was already correct
+  (no offset).
+- _dcapp_process_xml.c: Changed Arc default Angle from 90 to 360 to match
+  legacy Circle default (full circle). Ellipse already defaulted to 360
+  (DC_APP_VAL_INDEX_UNDEFINED treated as 360).
+
+No conversion script changes needed — Circle->Arc/Ellipse renaming works
+correctly since the C code now matches legacy behavior directly.
+
+
 ================================================================================
 END OF DOCUMENT
 ================================================================================
