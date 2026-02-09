@@ -629,18 +629,25 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
             indicator_var = strip_at_prefix(elem.get('IndicatorVariable') or switch_var_raw)
             indicator_on = elem.get('IndicatorOn') or switch_on or on_value or '1'
 
-            # Set IndicatorVariable (only if not already explicitly provided)
+            # Set IndicatorVariable and IndicatorOn (only if not already explicitly provided)
             if 'IndicatorVariable' not in elem.attrib:
                 elem.set('IndicatorVariable', switch_var)
-            if switch_on and 'IndicatorOn' not in elem.attrib:
-                elem.set('IndicatorOn', switch_on)
+            if 'IndicatorOn' not in elem.attrib:
+                elem.set('IndicatorOn', set_on_value)
 
-            # Remove old attributes
+            # Remove old attributes — SwitchVariable consumed by explicit Set,
+            # On/Off consumed by IndicatorOn. Leaving On/Off would cause the
+            # C parser to create an anonymous TargetVariable, which breaks
+            # the transition check (anonymous var != indicator var = always transitioning).
             del elem.attrib['SwitchVariable']
             if 'SwitchOn' in elem.attrib:
                 del elem.attrib['SwitchOn']
             if 'SwitchOff' in elem.attrib:
                 del elem.attrib['SwitchOff']
+            if 'On' in elem.attrib:
+                del elem.attrib['On']
+            if 'Off' in elem.attrib:
+                del elem.attrib['Off']
 
             # Store metadata for post-children generation in process_tree
             elem.set('_dcapp_switch_var', switch_var)

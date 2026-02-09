@@ -1072,6 +1072,11 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         } else {
             if (default_variable_index != DC_APP_VAR_INDEX_UNDEFINED) {
                 dc_node.button.var_target = default_variable_index;
+            } else if (raw_indicator_variable) {
+                // IndicatorVariable is explicitly specified with no Variable/TargetVariable,
+                // so skip creating an anonymous target variable. An anonymous target would
+                // never match the indicator variable, causing permanent transitioning.
+                dc_node.button.var_target = DC_APP_VAR_INDEX_UNDEFINED;
             } else {
                 const char *initial_value_str = dc_app_lookup_get_value(app_data->lookup, dc_node.button.val_target_off)->value_string;
                 dc_node.button.var_target     = _register_anonymous_variable(app_data, DC_VALUE_TYPE_STRING, initial_value_str);
