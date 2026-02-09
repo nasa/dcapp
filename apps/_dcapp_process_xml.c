@@ -2642,7 +2642,13 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         xmlChar *raw_test_pattern = xmlGetProp(xml_node, BAD_CAST "TestPattern");
         char     test_pattern_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
         if (raw_test_pattern) {
-            snprintf(test_pattern_path, sizeof(test_pattern_path), "%s/%s", directory, (const char *)raw_test_pattern);
+            if (dc_utils_is_relative_path((const char *)raw_test_pattern)) {
+                char abs_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+                dc_utils_join_paths(directory, (const char *)raw_test_pattern, abs_filepath, sizeof(abs_filepath));
+                dc_utils_canonicalize_path(abs_filepath, test_pattern_path, sizeof(test_pattern_path));
+            } else {
+                dc_utils_canonicalize_path((const char *)raw_test_pattern, test_pattern_path, sizeof(test_pattern_path));
+            }
             xmlFree(raw_test_pattern);
         } else {
             snprintf(test_pattern_path, sizeof(test_pattern_path), "%s/assets/testpattern.png", app_data->config->dcapp_dir_path);

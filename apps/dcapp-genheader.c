@@ -117,8 +117,10 @@ int main(int argc, char **argv) {
 
     // define display_pre_init()
     fprintf(file, "%s\n", "typedef void *(*_GetVariableValueAddr)(const char *name);");
+    fprintf(file, "%s\n", "_GetVariableValueAddr get_pointer;");
     fprintf(file, "%s\n", "void display_pre_init(_GetVariableValueAddr get_variable_value_addr) {");
     fprintf(file, "%s\n", "    if (get_variable_value_addr) {");
+    fprintf(file, "%s\n", "        get_pointer = get_variable_value_addr;");
     for (DcAppVarIndex var_index = 0; var_index < var_count; var_index++) {
         DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
         const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
@@ -154,6 +156,20 @@ int main(int argc, char **argv) {
     // extern definitions for logic externs
     fprintf(file, "%s\n", "#else");
     fprintf(file, "%s\n", "");
+
+    // get pointer function ofr externs
+    fprintf(file, "%s\n", "#ifdef __cplusplus");
+    fprintf(file, "%s\n", "extern \"C\" {");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "typedef void *(*_GetVariableValueAddr)(const char *name);");
+    fprintf(file, "%s\n", "extern _GetVariableValueAddr get_pointer;");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "#ifdef __cplusplus");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
+
     for (DcAppVarIndex var_index = 0; var_index < var_count; var_index++) {
         DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
         const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
