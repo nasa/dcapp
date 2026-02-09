@@ -1598,6 +1598,10 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
 static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     DcValue             *val1     = dc_app_lookup_get_value(app_data->lookup, node->conditional.value1);
+    if (!val1) {
+        DC_LOG_WARN("If", "Value1 is undefined, skipping conditional");
+        return;
+    }
     DcAppConditionalType type     = (node->conditional.type == DC_APP_VAL_INDEX_UNDEFINED)
                                         ? DC_APP_CONDITIONAL_TYPE_TRUE
                                         : (DcAppConditionalType)dc_app_lookup_get_value(app_data->lookup, node->conditional.type)->value_integer;
@@ -1607,6 +1611,10 @@ static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _N
     bool result = false;
     if (use_val2) {
         DcValue *val2 = dc_app_lookup_get_value(app_data->lookup, node->conditional.value2);
+        if (!val2) {
+            DC_LOG_WARN("If", "Value2 is undefined, skipping conditional");
+            return;
+        }
 
         switch (type) {
             case DC_APP_CONDITIONAL_TYPE_EQ:
@@ -3238,8 +3246,8 @@ static bool _apply_set_operation(_AppData *app_data, DcAppVarIndex var_index, Dc
 
 static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
-    // skip if variable is undefined
-    if (node->set.var_index == DC_APP_VAR_INDEX_UNDEFINED) {
+    // skip if variable or operand is undefined
+    if (node->set.var_index == DC_APP_VAR_INDEX_UNDEFINED || node->set.operand == DC_APP_VAL_INDEX_UNDEFINED) {
         return;
     }
 
