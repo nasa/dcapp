@@ -498,7 +498,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
 
             // toggle: flip based on current indicator state (on release)
             case DC_APP_BUTTON_TYPE_TOGGLE:
-                if (is_released) {
+                if (is_pressed) {
                     if (is_indicator_on) {
                         *target_var_value = *target_off_value;
                     } else {
@@ -518,7 +518,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
 
             // standard: set to on value on release
             case DC_APP_BUTTON_TYPE_STANDARD:
-                if (is_released) {
+                if (is_pressed) {
                     *target_var_value = *target_on_value;
                 }
                 break;
