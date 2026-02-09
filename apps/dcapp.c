@@ -23,9 +23,12 @@ void *get_variable_value_addr(const char *name) {
     // get variable
     DcAppLookupVar *var = dc_app_lookup_get_var_by_name(_global_app_data->lookup, name);
 
-    // return value address
-    DcValue *val = dc_app_lookup_get_value(_global_app_data->lookup, var->value_index);
-    return dc_value_get_addr(val);
+    // return value 
+    if (var) {
+        DcValue *val = dc_app_lookup_get_value(_global_app_data->lookup, var->value_index);
+        return dc_value_get_addr(val);
+    }
+    return NULL;
 }
 
 // definitions
