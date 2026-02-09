@@ -249,7 +249,7 @@
 
             <!-- ========== ROLL ERROR INDICATOR ========== -->
             <!-- Purple arc centered at ADI center, radius 150, spanning 60 degrees, pointing up -->
-            <Arc X="#ADI_CenterX" Y="#ADI_CenterY" Radius="150" Angle="60" Rotation="0"
+            <Arc X="#ADI_CenterX" Y="#ADI_CenterY" Radius="150" Angle="60" Rotation="60"
                 LineColor="0.8 0.2 0.8" LineWidth="6"/>
 
             <!-- Tick marks - using Rectangle with Pivot to rotate around ADI center -->
@@ -309,7 +309,7 @@
 
             <!-- ========== PITCH ERROR INDICATOR (right side) ========== -->
             <!-- Purple arc centered at ADI center, radius 150, spanning 60 degrees, pointing right (Rotation=-90) -->
-            <Arc X="#ADI_CenterX" Y="#ADI_CenterY" Radius="150" Angle="60" Rotation="-90"
+            <Arc X="#ADI_CenterX" Y="#ADI_CenterY" Radius="150" Angle="60" Rotation="-30"
                 LineColor="0.8 0.2 0.8" LineWidth="6"/>
 
             <!-- Tick marks - positioned at X=550 (ADI center 400 + radius 150), ticks extend left toward center -->
@@ -351,7 +351,7 @@
 
             <!-- ========== YAW ERROR INDICATOR (bottom) ========== -->
             <!-- Purple arc centered at ADI center, radius 150, spanning 60 degrees, pointing down (Rotation=180) -->
-            <Arc X="#ADI_CenterX" Y="#ADI_CenterY" Radius="150" Angle="60" Rotation="180"
+            <Arc X="#ADI_CenterX" Y="#ADI_CenterY" Radius="150" Angle="60" Rotation="240"
                 LineColor="0.8 0.2 0.8" LineWidth="6"/>
 
             <!-- Tick marks - positioned at Y=300 (ADI center 450 - radius 150), ticks extend up toward center -->

@@ -3499,6 +3499,9 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
         float pitch = node->sphere.rpy.pitch == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rpy.pitch)->value_double);
         float yaw   = node->sphere.rpy.yaw   == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rpy.yaw)->value_double);
 
+        // offset yaw by -90 degrees to match legacy ADI ball orientation
+        yaw -= (float)M_PI_2;
+
         // apply rotations in order: yaw (Y), pitch (X), roll (Z) for globe-like rotation
         if (yaw != 0.0f) {
             plMat4 yaw_xform = pl_mat4_rotate_vec3(yaw, (plVec3){0.0f, 1.0f, 0.0f});
