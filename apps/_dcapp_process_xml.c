@@ -3086,10 +3086,14 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
         dc_node.set.operation = DC_APP_VAL_INDEX_UNDEFINED;
     }
 
-    // queue flag (presence-based: Queue="" means queued)
+    // queue flag
     xmlChar *raw_queue = xmlGetProp(xml_node, BAD_CAST "Queue");
-    dc_node.set.queued = (raw_queue != NULL);
-    if (raw_queue) xmlFree(raw_queue);
+    if (raw_queue) {
+        dc_node.set.queued = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_queue);
+        xmlFree(raw_queue);
+    } else {
+        dc_node.set.queued = DC_APP_VAL_INDEX_UNDEFINED;
+    }
 
     // register node
     return _register_node(app_data, &dc_node);

@@ -3249,7 +3249,7 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
     DcAppSetType operation = node->set.operation == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_SET_TYPE_UNDEFINED : (DcAppSetType)(dc_app_lookup_get_value(app_data->lookup, node->set.operation)->value_integer);
 
     // if queued, snapshot the value and defer execution
-    if (node->set.queued) {
+    if (node->set.queued != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->set.queued)->value_boolean) {
         _QueuedSetOp qop;
         qop.var_index = node->set.var_index;
         qop.operation = operation;

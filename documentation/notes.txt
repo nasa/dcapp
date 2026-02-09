@@ -864,11 +864,12 @@ THE QUEUE ATTRIBUTE:
 
 To support legacy conversion, <Set> elements accept an optional Queue attribute:
 
-    <Set Variable="myVar" Operator="#_set_equal_" Queue="">newValue</Set>
+    <Set Variable="myVar" Operator="#_set_equal_" Queue="true">newValue</Set>
 
-When Queue is present (value is ignored, presence-based), the Set operation is
-collected during the draw pass and applied atomically AFTER the entire draw pass
-completes. This matches the legacy engine's deferred execution behavior.
+When Queue is "true", the Set operation is collected during the draw pass and
+applied atomically AFTER the entire draw pass completes. This matches the legacy
+engine's deferred execution behavior. Queue is a standard DcAppValIndex boolean,
+parsed via dc_app_create_and_register_typed_value_from_string.
 
 Without Queue, Sets execute immediately as before. Modern XML should NOT use
 Queue - it exists solely for legacy conversion compatibility.
@@ -910,7 +911,7 @@ This means:
 CONVERSION SCRIPT BEHAVIOR:
 --------------------------------------------------------------------------------
 
-The conversion script (convert_legacy_xml.py) automatically adds Queue="" to
+The conversion script (convert_legacy_xml.py) automatically adds Queue="true" to
 all <Set> elements that are descendants of MousePressed or MouseReleased blocks.
 This includes deeply nested Sets (e.g., MousePressed > If > True > Set).
 
@@ -940,17 +941,17 @@ Converted:
             Type="#_button_standard_">
         <MousePressed>
             <Set Variable="CAMERA_SELECT" Operator="#_set_equal_"
-                 Queue="">#Camera02Target</Set>
+                 Queue="true">#Camera02Target</Set>
         </MousePressed>
         <MousePressed>
             <Set Variable="PIXELSTREAMID" Operator="#_set_equal_"
-                 Queue="">0</Set>
+                 Queue="true">0</Set>
         </MousePressed>
     </Button>
 
 The first MousePressed (generated for SwitchVariable) is inserted as the first
 child. The second (original OnPress content) retains its position. Both use
-Queue="" so all Sets are deferred and applied atomically after the draw pass.
+Queue="true" so all Sets are deferred and applied atomically after the draw pass.
 
 IndicatorVariable replaces SwitchVariable for visual indicator state. No
 TargetVariable is set, so the button's built-in auto-set writes to an internal

@@ -680,9 +680,9 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
         convert_variable_reference(elem, 'Variable')
         min_val, max_val = convert_set_operator(elem)
 
-        # Add Queue="" to Sets inside event blocks (legacy queuing behavior)
+        # Add Queue="true" to Sets inside event blocks (legacy queuing behavior)
         if _is_inside_event_block(elem):
-            elem.set('Queue', '')
+            elem.set('Queue', 'true')
 
         # Generate additional Set elements for min/max clamping
         var_name = elem.get('Variable')
@@ -695,7 +695,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
                 clamp_elem.set('Operator', '#_set_max_')
                 clamp_elem.text = min_val
                 if inside_event:
-                    clamp_elem.set('Queue', '')
+                    clamp_elem.set('Queue', 'true')
                 after_elements.append(clamp_elem)
             if max_val:
                 # max_val means "maximum allowed value" -> use #_set_min_
@@ -704,7 +704,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
                 clamp_elem.set('Operator', '#_set_min_')
                 clamp_elem.text = max_val
                 if inside_event:
-                    clamp_elem.set('Queue', '')
+                    clamp_elem.set('Queue', 'true')
                 after_elements.append(clamp_elem)
 
     # Blink element
@@ -935,14 +935,14 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
             set_off_elem = etree.SubElement(true_elem, 'Set')
             set_off_elem.set('Variable', switch_var)
             set_off_elem.set('Operator', '#_set_equal_')
-            set_off_elem.set('Queue', '')
+            set_off_elem.set('Queue', 'true')
             set_off_elem.text = switch_off
             # If indicator is Off -> set to On
             false_elem = etree.SubElement(if_elem, 'False')
             set_on_elem = etree.SubElement(false_elem, 'Set')
             set_on_elem.set('Variable', switch_var)
             set_on_elem.set('Operator', '#_set_equal_')
-            set_on_elem.set('Queue', '')
+            set_on_elem.set('Queue', 'true')
             set_on_elem.text = switch_on
             elem.insert(0, mouse_pressed)
         else:
@@ -951,7 +951,7 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
             set_elem = etree.SubElement(mouse_pressed, 'Set')
             set_elem.set('Variable', switch_var)
             set_elem.set('Operator', '#_set_equal_')
-            set_elem.set('Queue', '')
+            set_elem.set('Queue', 'true')
             set_elem.text = switch_on
             elem.insert(0, mouse_pressed)
 
@@ -961,7 +961,7 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
                 set_rel_elem = etree.SubElement(mouse_released, 'Set')
                 set_rel_elem.set('Variable', switch_var)
                 set_rel_elem.set('Operator', '#_set_equal_')
-                set_rel_elem.set('Queue', '')
+                set_rel_elem.set('Queue', 'true')
                 set_rel_elem.text = switch_off
                 elem.insert(1, mouse_released)
 
