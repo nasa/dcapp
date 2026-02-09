@@ -449,6 +449,8 @@ typedef struct __NodeSphere {
     _TextureIndex texture_index;
 } _NodeSphere;
 
+#define DC_STENCIL_MAX_DEPTH 8
+
 typedef enum __StencilChildType {
     STENCIL_CHILD_TYPE_UNDEFINED,
     STENCIL_CHILD_TYPE_ADD,
@@ -659,12 +661,17 @@ typedef struct __AppData {
     // stencil shaders (2D)
     plShaderHandle stencil_create_2d_shader;
     plShaderHandle stencil_remove_2d_shader;
-    plShaderHandle stencil_draw_2d_shader;
+    plShaderHandle stencil_draw_2d_shader[DC_STENCIL_MAX_DEPTH];
+    plShaderHandle stencil_cleanup_2d_shader;
 
     // stencil shaders (SDF)
     plShaderHandle stencil_create_sdf_shader;
     plShaderHandle stencil_remove_sdf_shader;
-    plShaderHandle stencil_draw_sdf_shader;
+    plShaderHandle stencil_draw_sdf_shader[DC_STENCIL_MAX_DEPTH];
+    plShaderHandle stencil_cleanup_sdf_shader;
+
+    // stencil state
+    int stencil_depth;
 
     // config + lookup
     DcAppLookup *lookup;

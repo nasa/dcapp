@@ -1,0 +1,244 @@
+<?xml version="1.0"?>
+<DCAPP>
+  <!-- Nested stencil test: verifies stencil-within-stencil, cleanup, and sibling isolation -->
+  <!-- Note: Y=0 is at BOTTOM, Y increases upward -->
+
+  <Window X="30" Y="30" Width="1500" Height="1000">
+    <Panel VirtualWidth="1500" VirtualHeight="1000" BackgroundColor="0.15 0.15 0.2">
+
+      <!-- ================================================================== -->
+      <!-- TEST 1: Basic nested stencil (circle inside rectangle) -->
+      <!-- ================================================================== -->
+      <Text X="20" Y="960" Size="18" FillColor="0.8 0.8 0.2">Test 1: Nested stencil (circle clipped to rectangle)</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <Rectangle X="20" Y="750" Width="300" Height="180" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilDraw>
+          <!-- Background for outer stencil -->
+          <Rectangle X="20" Y="750" Width="300" Height="180" FillColor="0.2 0.2 0.5"/>
+
+          <!-- Inner stencil: circle mask inside the rectangle -->
+          <Stencil>
+            <StencilAdd>
+              <Ellipse X="170" Y="840" Radius="70" FillColor="1 1 1"/>
+            </StencilAdd>
+            <StencilDraw>
+              <!-- Stripes visible only in the circle, which is itself inside the rectangle -->
+              <Rectangle X="20" Y="920" Width="300" Height="20" FillColor="1 0 0"/>
+              <Rectangle X="20" Y="900" Width="300" Height="20" FillColor="1 0.5 0"/>
+              <Rectangle X="20" Y="880" Width="300" Height="20" FillColor="1 1 0"/>
+              <Rectangle X="20" Y="860" Width="300" Height="20" FillColor="0 1 0"/>
+              <Rectangle X="20" Y="840" Width="300" Height="20" FillColor="0 0.5 1"/>
+              <Rectangle X="20" Y="820" Width="300" Height="20" FillColor="0 0 1"/>
+              <Rectangle X="20" Y="800" Width="300" Height="20" FillColor="0.5 0 1"/>
+              <Rectangle X="20" Y="780" Width="300" Height="20" FillColor="1 0 0.5"/>
+              <Rectangle X="20" Y="760" Width="300" Height="20" FillColor="1 0 0"/>
+            </StencilDraw>
+          </Stencil>
+
+          <!-- This text should be clipped to the outer rectangle only (not the inner circle) -->
+          <Text X="30" Y="770" Size="14" FillColor="1 1 1">OUTER ONLY</Text>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- TEST 2: Sibling content after nested stencil (isolation test) -->
+      <!-- ================================================================== -->
+      <Text X="380" Y="960" Size="18" FillColor="0.8 0.8 0.2">Test 2: Sibling after nested (isolation)</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <Ellipse X="500" Y="840" Radius="80" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilDraw>
+          <Rectangle X="400" Y="750" Width="200" Height="200" FillColor="0.8 0.2 0.2"/>
+
+          <!-- Nested stencil -->
+          <Stencil>
+            <StencilAdd>
+              <Rectangle X="440" Y="800" Width="120" Height="80" FillColor="1 1 1"/>
+            </StencilAdd>
+            <StencilDraw>
+              <Rectangle X="400" Y="750" Width="200" Height="200" FillColor="0.2 0.8 0.2"/>
+              <Text X="455" Y="835" Size="14" FillColor="0 0 0">INNER</Text>
+            </StencilDraw>
+          </Stencil>
+
+          <!-- Sibling content after nested stencil - should be clipped to outer circle only -->
+          <Text X="455" Y="775" Size="14" FillColor="1 1 1">OUTER</Text>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- Regular content after - should be completely unclipped -->
+      <Text X="380" Y="730" Size="14" FillColor="0.2 0.8 0.8">This text should be normal (no clipping)</Text>
+
+      <!-- ================================================================== -->
+      <!-- TEST 3: Nested donut (donut inside a donut) -->
+      <!-- ================================================================== -->
+      <Text X="700" Y="960" Size="18" FillColor="0.8 0.8 0.2">Test 3: Nested donut</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <Ellipse X="850" Y="840" Radius="100" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilRemove>
+          <Ellipse X="850" Y="840" Radius="40" FillColor="1 1 1"/>
+        </StencilRemove>
+        <StencilDraw>
+          <!-- Background for outer donut -->
+          <Rectangle X="700" Y="700" Width="300" Height="300" FillColor="0.3 0.3 0.6"/>
+
+          <!-- Inner stencil: creates a band within the donut -->
+          <Stencil>
+            <StencilAdd>
+              <Ellipse X="850" Y="840" Radius="80" FillColor="1 1 1"/>
+            </StencilAdd>
+            <StencilRemove>
+              <Ellipse X="850" Y="840" Radius="60" FillColor="1 1 1"/>
+            </StencilRemove>
+            <StencilDraw>
+              <!-- Yellow ring visible only in the narrow band -->
+              <Rectangle X="700" Y="700" Width="300" Height="300" FillColor="1 1 0"/>
+            </StencilDraw>
+          </Stencil>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- TEST 4: Three levels deep -->
+      <!-- ================================================================== -->
+      <Text X="1100" Y="960" Size="18" FillColor="0.8 0.8 0.2">Test 4: Three levels deep</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <!-- Level 1: large rectangle -->
+          <Rectangle X="1100" Y="750" Width="350" Height="180" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilDraw>
+          <Rectangle X="1100" Y="750" Width="350" Height="180" FillColor="0.4 0.1 0.1"/>
+
+          <!-- Level 2: ellipse inside the rectangle -->
+          <Stencil>
+            <StencilAdd>
+              <Ellipse X="1275" Y="840" Radius="80" FillColor="1 1 1"/>
+            </StencilAdd>
+            <StencilDraw>
+              <Rectangle X="1100" Y="750" Width="350" Height="180" FillColor="0.1 0.4 0.1"/>
+
+              <!-- Level 3: small rectangle inside the ellipse inside the rectangle -->
+              <Stencil>
+                <StencilAdd>
+                  <Rectangle X="1225" Y="810" Width="100" Height="60" FillColor="1 1 1"/>
+                </StencilAdd>
+                <StencilDraw>
+                  <Rectangle X="1100" Y="750" Width="350" Height="180" FillColor="0.1 0.1 0.4"/>
+                  <Text X="1240" Y="835" Size="14" FillColor="1 1 1">LVL 3</Text>
+                </StencilDraw>
+              </Stencil>
+
+              <!-- Level 2 sibling text (outside level 3, inside level 2) -->
+              <Text X="1210" Y="780" Size="14" FillColor="1 1 0">LVL 2</Text>
+            </StencilDraw>
+          </Stencil>
+
+          <!-- Level 1 sibling text (outside level 2, inside level 1) -->
+          <Text X="1110" Y="770" Size="14" FillColor="1 0.5 0.5">LVL 1</Text>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- TEST 5: Two independent stencils after nesting (global cleanup) -->
+      <!-- ================================================================== -->
+      <Text X="20" Y="600" Size="18" FillColor="0.8 0.8 0.2">Test 5: Independent stencils after nested (cleanup test)</Text>
+
+      <!-- First independent stencil -->
+      <Stencil>
+        <StencilAdd>
+          <Ellipse X="120" Y="500" Radius="60" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilDraw>
+          <Rectangle X="40" Y="420" Width="160" Height="160" FillColor="1 0 0"/>
+          <Text X="85" Y="495" Size="14" FillColor="1 1 1">A</Text>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- Second independent stencil -->
+      <Stencil>
+        <StencilAdd>
+          <Rectangle X="250" Y="460" Width="120" Height="80" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilDraw>
+          <Ellipse X="310" Y="500" Radius="80" FillColor="0 0 1"/>
+          <Text X="285" Y="495" Size="14" FillColor="1 1 1">B</Text>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- TEST 6: Nested stencil with SDF text as mask -->
+      <!-- ================================================================== -->
+      <Text X="450" Y="600" Size="18" FillColor="0.8 0.8 0.2">Test 6: Nested SDF text mask</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <Rectangle X="450" Y="420" Width="300" Height="150" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilDraw>
+          <Rectangle X="450" Y="420" Width="300" Height="150" FillColor="0.15 0.15 0.3"/>
+
+          <!-- Nested: text mask inside the rectangle -->
+          <Stencil>
+            <StencilAdd>
+              <Text X="470" Y="480" Size="60" FillColor="1 1 1">CLIP</Text>
+            </StencilAdd>
+            <StencilDraw>
+              <!-- Rainbow stripes through the text, clipped to outer rectangle -->
+              <Rectangle X="450" Y="560" Width="300" Height="25" FillColor="1 0 0"/>
+              <Rectangle X="450" Y="535" Width="300" Height="25" FillColor="1 0.5 0"/>
+              <Rectangle X="450" Y="510" Width="300" Height="25" FillColor="1 1 0"/>
+              <Rectangle X="450" Y="485" Width="300" Height="25" FillColor="0 1 0"/>
+              <Rectangle X="450" Y="460" Width="300" Height="25" FillColor="0 0.5 1"/>
+              <Rectangle X="450" Y="435" Width="300" Height="25" FillColor="0.5 0 1"/>
+            </StencilDraw>
+          </Stencil>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- TEST 7: Nested with remove at inner level -->
+      <!-- ================================================================== -->
+      <Text X="820" Y="600" Size="18" FillColor="0.8 0.8 0.2">Test 7: Nested with inner remove</Text>
+
+      <Stencil>
+        <StencilAdd>
+          <Ellipse X="970" Y="500" Radius="80" FillColor="1 1 1"/>
+        </StencilAdd>
+        <StencilDraw>
+          <Rectangle X="870" Y="400" Width="200" Height="200" FillColor="0.5 0.2 0.5"/>
+
+          <!-- Inner stencil with its own add+remove -->
+          <Stencil>
+            <StencilAdd>
+              <Ellipse X="970" Y="500" Radius="60" FillColor="1 1 1"/>
+            </StencilAdd>
+            <StencilRemove>
+              <Ellipse X="970" Y="500" Radius="30" FillColor="1 1 1"/>
+            </StencilRemove>
+            <StencilDraw>
+              <Rectangle X="870" Y="400" Width="200" Height="200" FillColor="0.2 0.8 0.8"/>
+            </StencilDraw>
+          </Stencil>
+        </StencilDraw>
+      </Stencil>
+
+      <!-- ================================================================== -->
+      <!-- Bottom status -->
+      <!-- ================================================================== -->
+      <Rectangle X="0" Y="0" Width="1500" Height="80" FillColor="0.1 0.1 0.15"/>
+      <Text X="20" Y="50" Size="16" FillColor="0.6 0.6 0.6">Nested Stencil Test - All sections should render correctly</Text>
+      <Text X="20" Y="25" Size="14" FillColor="0.5 0.5 0.5">Tests: nested, sibling isolation, nested donut, 3-deep, cleanup, nested SDF, nested remove</Text>
+
+    </Panel>
+  </Window>
+</DCAPP>

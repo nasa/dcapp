@@ -3500,39 +3500,53 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
 
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
     int num_children = sbcount(node->stencil.sb_children);
+    int depth = ++app_data->stencil_depth;
 
     for (int i = 0; i < num_children; i++) {
         _StencilChild *stencil_child = &node->stencil.sb_children[i];
 
-        // select shaders based on child type (separate for 2D and SDF)
         plShaderHandle* pt2dShader = NULL;
         plShaderHandle* ptSdfShader = NULL;
         switch (stencil_child->type) {
             case STENCIL_CHILD_TYPE_ADD:
-                pt2dShader = &app_data->stencil_create_2d_shader;
+                pt2dShader  = &app_data->stencil_create_2d_shader;
                 ptSdfShader = &app_data->stencil_create_sdf_shader;
                 break;
             case STENCIL_CHILD_TYPE_REMOVE:
-                pt2dShader = &app_data->stencil_remove_2d_shader;
+                pt2dShader  = &app_data->stencil_remove_2d_shader;
                 ptSdfShader = &app_data->stencil_remove_sdf_shader;
                 break;
             case STENCIL_CHILD_TYPE_DRAW:
-                pt2dShader = &app_data->stencil_draw_2d_shader;
-                ptSdfShader = &app_data->stencil_draw_sdf_shader;
+                pt2dShader  = &app_data->stencil_draw_2d_shader[depth - 1];
+                ptSdfShader = &app_data->stencil_draw_sdf_shader[depth - 1];
                 break;
             default:
                 continue;
         }
 
-        // set the stencil shader overrides
         _ext_draw_backend->set_shader(_draw_batch_get_2d(app_data), pt2dShader, ptSdfShader);
-
-        // draw child nodes
         _draw_node_list(app_data, stencil_child->child, parent_position, parent_dimensions, parent_transform);
     }
 
-    // reset to normal rendering (pass NULL to clear shader overrides)
-    _ext_draw_backend->set_shader(_draw_batch_get_2d(app_data), NULL, NULL);
+    // cleanup: replay ADD geometry with decrement shader to restore stencil buffer
+    for (int i = 0; i < num_children; i++) {
+        _StencilChild *stencil_child = &node->stencil.sb_children[i];
+        if (stencil_child->type == STENCIL_CHILD_TYPE_ADD) {
+            _ext_draw_backend->set_shader(_draw_batch_get_2d(app_data), &app_data->stencil_cleanup_2d_shader, &app_data->stencil_cleanup_sdf_shader);
+            _draw_node_list(app_data, stencil_child->child, parent_position, parent_dimensions, parent_transform);
+        }
+    }
+
+    app_data->stencil_depth--;
+
+    // restore parent draw shader or reset to normal rendering
+    if (app_data->stencil_depth > 0) {
+        _ext_draw_backend->set_shader(_draw_batch_get_2d(app_data),
+            &app_data->stencil_draw_2d_shader[app_data->stencil_depth - 1],
+            &app_data->stencil_draw_sdf_shader[app_data->stencil_depth - 1]);
+    } else {
+        _ext_draw_backend->set_shader(_draw_batch_get_2d(app_data), NULL, NULL);
+    }
 }
 
 static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
