@@ -1111,14 +1111,18 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
 
     const float fAspectRatio = fWidth / fHeight;
 
+    const plVec2 tClipScale = gptIOI->get_io()->tMainFramebufferScale;
+    const float fScaledWidth  = fWidth * tClipScale.x;
+    const float fScaledHeight = fHeight * tClipScale.y;
+
     const plScissor tScissor = {
-        .uWidth = (uint32_t)fWidth,
-        .uHeight = (uint32_t)fHeight
+        .uWidth = (uint32_t)fScaledWidth,
+        .uHeight = (uint32_t)fScaledHeight
     };
 
     const plRenderViewport tViewport = {
-        .fWidth = fWidth,
-        .fHeight = fHeight,
+        .fWidth = fScaledWidth,
+        .fHeight = fScaledHeight,
         .fMaxDepth = 1.0f
     };
 
