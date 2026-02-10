@@ -485,6 +485,7 @@ typedef struct __NodeText {
     DcAppValIndex negate_x;
     DcAppValIndex negate_y;
     DcAppValIndex size;
+    DcAppValIndex log;
     _ValIndex4    fill_color;
     _ValIndex4    line_color;
     uint8_t       config_flags;

@@ -3868,6 +3868,12 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
     sbpushn(sb_text, filler, (int)strlen(filler));
     sbpush(sb_text, '\0');
 
+    // log
+    if (node->text.log != DC_APP_VAL_INDEX_UNDEFINED) {
+        const char *label = dc_app_lookup_get_value(app_data->lookup, node->text.log)->value_string;
+        printf("[%s] %s\n", label, sb_text);
+    }
+
     // get text substrings per newline
     size_t subtext_indices[_NODE_TEXT_MAX_LINES];
     size_t num_lines;

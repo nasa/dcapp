@@ -4060,6 +4060,15 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         dc_node.text.negate_y = DC_APP_VAL_INDEX_UNDEFINED;
     }
 
+    // log
+    xmlChar *raw_log = xmlGetProp(xml_node, BAD_CAST "Log");
+    if (raw_log) {
+        dc_node.text.log = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_STRING, (const char *)raw_log);
+        xmlFree(raw_log);
+    } else {
+        dc_node.text.log = DC_APP_VAL_INDEX_UNDEFINED;
+    }
+
     // register node
     return _register_node(app_data, &dc_node);
 }
