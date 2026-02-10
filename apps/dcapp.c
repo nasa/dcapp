@@ -295,8 +295,17 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
         _TrickContext *trick_context = &(app_data->sb_tricks[ii]);
         DcTrickHandle  trick         = trick_context->trick;
 
+        // on (re)connect, zero out prev_values so all tx vars get sent to initialize the sim
+        bool is_trick_connected = dc_trick_is_connected(trick);
+        if (is_trick_connected && !trick_context->was_connected) {
+            for (int jj = 0; jj < sbcount(trick_context->sb_tx_var_contexts); jj++) {
+                memset(&trick_context->sb_tx_var_contexts[jj].prev_value, 0, sizeof(DcValue));
+            }
+        }
+        trick_context->was_connected = is_trick_connected;
+
         // add tx commands to buffer
-        if (dc_trick_is_connected(trick)) {
+        if (is_trick_connected) {
             for (int jj = 0; jj < sbcount(trick_context->sb_tx_var_contexts); jj++) {
 
                 _TrickTxVarContext *tx_var_context = &(trick_context->sb_tx_var_contexts[jj]);
