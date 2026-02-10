@@ -595,6 +595,7 @@ typedef struct __EdgeContext {
     _EdgeTxVarContext *sb_tx_var_contexts;
     _EdgeRxVarContext *sb_rx_var_contexts;
     DcAppVarIndex      connected_var_index;  // variable updated with connection status
+    bool               was_connected;        // previous connection state for disconnect detection
 } _EdgeContext;
 
 // callback used for logic file DLL loading
