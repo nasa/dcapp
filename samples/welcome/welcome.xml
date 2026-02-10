@@ -277,7 +277,7 @@
             <!-- Title with stencil effect -->
             <Stencil>
                 <StencilAdd>
-                    <Text X="600" Y="730" LocalAlignX="#_align_center_" Size="56" FillColor="1 1 1">DCAPP</Text>
+                    <Text X="600" Y="730" LocalAlignX="#_align_center_" Size="56" FillColor="#_stencil_color_">DCAPP</Text>
                 </StencilAdd>
                 <StencilDraw>
                     <!-- Gradient stripes through the title -->
@@ -476,10 +476,10 @@
                 <!-- Donut stencil demo -->
                 <Stencil>
                     <StencilAdd>
-                        <Ellipse X="70" Y="100" Radius="40" FillColor="1 1 1"/>
+                        <Ellipse X="70" Y="100" Radius="40" FillColor="#_stencil_color_"/>
                     </StencilAdd>
                     <StencilRemove>
-                        <Ellipse X="70" Y="100" Radius="20" FillColor="1 1 1"/>
+                        <Ellipse X="70" Y="100" Radius="20" FillColor="#_stencil_color_"/>
                     </StencilRemove>
                     <StencilDraw>
                         <Rectangle X="20" Y="140" Width="100" Height="20" FillColor="#AccentPink"/>
@@ -493,7 +493,7 @@
                 <!-- Text stencil demo -->
                 <Stencil>
                     <StencilAdd>
-                        <Text X="130" Y="85" Size="36" FillColor="1 1 1">DC</Text>
+                        <Text X="130" Y="85" Size="36" FillColor="#_stencil_color_">DC</Text>
                     </StencilAdd>
                     <StencilDraw>
                         <Rectangle X="120" Y="60" Width="90" Height="80" FillColor="#AccentOrange"/>

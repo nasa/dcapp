@@ -271,6 +271,8 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const(&context, "_color_khaki_", "0.76 0.69 0.57", false);
     _add_const(&context, "_color_sand_", "0.94 0.87 0.73", false);
     _add_const(&context, "_color_taupe_", "0.56 0.52 0.51", false);
+    // Stencil
+    _add_const(&context, "_stencil_color_", "0 0 0 1", false);
 
     // process input arguments
     // TODO get rid of all the heap allocation..

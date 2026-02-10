@@ -1031,6 +1031,24 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
     return all_after
 
 
+def force_stencil_mask_colors(root: etree._Element) -> None:
+    """
+    Post-pass: set FillColor/LineColor to #_stencil_color_ on elements inside
+    StencilAdd/StencilRemove so stencil masks are fully opaque.
+    """
+    STENCIL_COLOR = '#_stencil_color_'
+    FILL_ELEMENTS = {'Rectangle', 'Ellipse', 'Polygon', 'Text'}
+
+    for stencil in root.iter('StencilAdd', 'StencilRemove'):
+        for elem in stencil.iter():
+            if not isinstance(elem.tag, str):
+                continue
+            if elem.tag in FILL_ELEMENTS:
+                elem.set('FillColor', STENCIL_COLOR)
+            if 'LineColor' in elem.attrib:
+                elem.set('LineColor', STENCIL_COLOR)
+
+
 def convert_xml(input_text: str) -> str:
     """
     Convert legacy dcapp XML to new syntax.
@@ -1055,6 +1073,9 @@ def convert_xml(input_text: str) -> str:
     # (shouldn't normally happen, but handle it)
     for add_elem in additional:
         root.append(add_elem)
+
+    # Post-pass: force stencil mask colors
+    force_stencil_mask_colors(root)
 
     # Convert back to string (lxml preserves comments)
     output = etree.tostring(root, encoding='unicode', pretty_print=False)
