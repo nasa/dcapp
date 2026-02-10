@@ -223,6 +223,8 @@ def convert_alignment(elem: etree._Element, has_x: bool, has_y: bool) -> None:
     - If axis has no position, use AlignX/AlignY shorthand (expands to both Local and Parent)
     - Preserve constants (#) and variables (@) as-is
     - Convert literal values (Left, Center, Right, etc.) to constants
+    - Also set PivotLocalAlignX/Y to match, since legacy used alignment for both
+      the anchor point and the rotation pivot
     """
     h_align = elem.get('HorizontalAlign')
     v_align = elem.get('VerticalAlign')
@@ -239,6 +241,8 @@ def convert_alignment(elem: etree._Element, has_x: bool, has_y: bool) -> None:
         else:
             # Use shorthand when both would be the same
             elem.set('AlignX', new_value)
+        # Legacy used alignment as the rotation pivot too
+        elem.set('PivotLocalAlignX', new_value)
         del elem.attrib['HorizontalAlign']
 
     if v_align:
@@ -253,6 +257,8 @@ def convert_alignment(elem: etree._Element, has_x: bool, has_y: bool) -> None:
         else:
             # Use shorthand when both would be the same
             elem.set('AlignY', new_value)
+        # Legacy used alignment as the rotation pivot too
+        elem.set('PivotLocalAlignY', new_value)
         del elem.attrib['VerticalAlign']
 
 
@@ -561,6 +567,39 @@ def _is_inside_default_or_style(elem: etree._Element) -> bool:
     return False
 
 
+def flag_circles_with_rotation_pivot(root: etree._Element) -> None:
+    """
+    Pre-pass: add TODO comments for Circle elements with non-default alignment
+    AND rotation. Legacy circles use parent dimensions for rotation pivot, which
+    doesn't translate directly to modern Arc/Ellipse. Flag for manual review.
+    """
+    for circle in list(root.iter('Circle')):
+        parent = circle.getparent()
+        if parent is None:
+            continue
+
+        h_align = circle.get('HorizontalAlign')
+        v_align = circle.get('VerticalAlign')
+        rotation = circle.get('Rotation') or circle.get('Rotate')
+
+        if not rotation:
+            continue
+
+        has_nondefault_h = h_align and h_align != 'Left'
+        has_nondefault_v = v_align and v_align != 'Bottom'
+
+        if not has_nondefault_h and not has_nondefault_v:
+            continue
+
+        comment = etree.Comment(
+            ' TODO: Circle with alignment+rotation. Legacy rotation pivot is '
+            'relative to parent dimensions, not circle center. May need manual '
+            'adjustment. '
+        )
+        idx = list(parent).index(circle)
+        parent.insert(idx, comment)
+
+
 def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> list:
     """
     Process a single element and its attributes.
@@ -582,6 +621,11 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
         # Create Ellipse copy first (preserves FillColor if present)
         ellipse_elem = copy.deepcopy(elem)
         ellipse_elem.tag = 'Ellipse'
+        # Strip alignment from Ellipse copy (not re-processed through convert)
+        if 'HorizontalAlign' in ellipse_elem.attrib:
+            del ellipse_elem.attrib['HorizontalAlign']
+        if 'VerticalAlign' in ellipse_elem.attrib:
+            del ellipse_elem.attrib['VerticalAlign']
         after_elements.append(ellipse_elem)
         # Convert this Circle to Arc
         elem.tag = 'Arc'
@@ -601,6 +645,18 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
             # Line only - convert to Arc
             elem.tag = 'Arc'
             tag = 'Arc'
+
+    # Strip alignment from Circle->Arc/Ellipse conversions.
+    # Legacy circles use containerw/containerh (parent dimensions) for alignment
+    # math, not the circle's own diameter. X,Y is always the circle center
+    # regardless of alignment. Modern Arc/Ellipse default to CENTER alignment,
+    # which correctly makes X,Y the center. Converting legacy alignment would
+    # override this default and break positioning.
+    if tag in ('Arc', 'Ellipse'):
+        if 'HorizontalAlign' in elem.attrib:
+            del elem.attrib['HorizontalAlign']
+        if 'VerticalAlign' in elem.attrib:
+            del elem.attrib['VerticalAlign']
 
     # ---- Element-specific attribute conversions ----
 
@@ -975,6 +1031,24 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
     return all_after
 
 
+def force_stencil_mask_colors(root: etree._Element) -> None:
+    """
+    Post-pass: set FillColor/LineColor to #_stencil_color_ on elements inside
+    StencilAdd/StencilRemove so stencil masks are fully opaque.
+    """
+    STENCIL_COLOR = '#_stencil_color_'
+    FILL_ELEMENTS = {'Rectangle', 'Ellipse', 'Polygon', 'Text'}
+
+    for stencil in root.iter('StencilAdd', 'StencilRemove'):
+        for elem in stencil.iter():
+            if not isinstance(elem.tag, str):
+                continue
+            if elem.tag in FILL_ELEMENTS:
+                elem.set('FillColor', STENCIL_COLOR)
+            if 'LineColor' in elem.attrib:
+                elem.set('LineColor', STENCIL_COLOR)
+
+
 def convert_xml(input_text: str) -> str:
     """
     Convert legacy dcapp XML to new syntax.
@@ -989,6 +1063,9 @@ def convert_xml(input_text: str) -> str:
     parser = etree.XMLParser(remove_comments=False, remove_blank_text=False)
     root = etree.fromstring(input_text.encode('utf-8'), parser)
 
+    # Pre-pass: flag circles with alignment+rotation for manual review
+    flag_circles_with_rotation_pivot(root)
+
     # Process tree
     additional = process_tree(root)
 
@@ -996,6 +1073,9 @@ def convert_xml(input_text: str) -> str:
     # (shouldn't normally happen, but handle it)
     for add_elem in additional:
         root.append(add_elem)
+
+    # Post-pass: force stencil mask colors
+    force_stencil_mask_colors(root)
 
     # Convert back to string (lxml preserves comments)
     output = etree.tostring(root, encoding='unicode', pretty_print=False)

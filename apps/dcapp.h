@@ -485,6 +485,7 @@ typedef struct __NodeText {
     DcAppValIndex negate_x;
     DcAppValIndex negate_y;
     DcAppValIndex size;
+    DcAppValIndex log;
     _ValIndex4    fill_color;
     _ValIndex4    line_color;
     uint8_t       config_flags;
@@ -576,6 +577,7 @@ typedef struct __TrickContext {
     _TrickTxVarContext *sb_tx_var_contexts;
     _TrickRxVarContext *sb_rx_var_contexts;
     DcAppVarIndex       connected_var_index;  // variable updated with connection status
+    bool                was_connected;        // previous connection state for init-on-connect
 } _TrickContext;
 
 // dcapp edge structs
@@ -595,6 +597,7 @@ typedef struct __EdgeContext {
     _EdgeTxVarContext *sb_tx_var_contexts;
     _EdgeRxVarContext *sb_rx_var_contexts;
     DcAppVarIndex      connected_var_index;  // variable updated with connection status
+    bool               was_connected;        // previous connection state for disconnect detection
 } _EdgeContext;
 
 // callback used for logic file DLL loading

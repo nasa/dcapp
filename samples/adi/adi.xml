@@ -223,7 +223,7 @@
             <!-- Stencil mask for the ball (circular clip) -->
             <Stencil>
                 <StencilAdd>
-                    <Ellipse X="#ADI_CenterX" Y="#ADI_CenterY" Radius="#BallRadius" FillColor="#_color_white_"/>
+                    <Ellipse X="#ADI_CenterX" Y="#ADI_CenterY" Radius="#BallRadius" FillColor="#_stencil_color_"/>
                 </StencilAdd>
                 <StencilDraw>
                     <!-- Textured Sphere (the ADI ball) -->

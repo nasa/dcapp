@@ -13,7 +13,7 @@
 
       <Stencil>
         <StencilAdd>
-          <Rectangle X="20" Y="750" Width="300" Height="180" FillColor="1 1 1"/>
+          <Rectangle X="20" Y="750" Width="300" Height="180" FillColor="#_stencil_color_"/>
         </StencilAdd>
         <StencilDraw>
           <!-- Background for outer stencil -->
@@ -22,7 +22,7 @@
           <!-- Inner stencil: circle mask inside the rectangle -->
           <Stencil>
             <StencilAdd>
-              <Ellipse X="170" Y="840" Radius="70" FillColor="1 1 1"/>
+              <Ellipse X="170" Y="840" Radius="70" FillColor="#_stencil_color_"/>
             </StencilAdd>
             <StencilDraw>
               <!-- Stripes visible only in the circle, which is itself inside the rectangle -->
@@ -50,7 +50,7 @@
 
       <Stencil>
         <StencilAdd>
-          <Ellipse X="500" Y="840" Radius="80" FillColor="1 1 1"/>
+          <Ellipse X="500" Y="840" Radius="80" FillColor="#_stencil_color_"/>
         </StencilAdd>
         <StencilDraw>
           <Rectangle X="400" Y="750" Width="200" Height="200" FillColor="0.8 0.2 0.2"/>
@@ -58,7 +58,7 @@
           <!-- Nested stencil -->
           <Stencil>
             <StencilAdd>
-              <Rectangle X="440" Y="800" Width="120" Height="80" FillColor="1 1 1"/>
+              <Rectangle X="440" Y="800" Width="120" Height="80" FillColor="#_stencil_color_"/>
             </StencilAdd>
             <StencilDraw>
               <Rectangle X="400" Y="750" Width="200" Height="200" FillColor="0.2 0.8 0.2"/>
@@ -81,10 +81,10 @@
 
       <Stencil>
         <StencilAdd>
-          <Ellipse X="850" Y="840" Radius="100" FillColor="1 1 1"/>
+          <Ellipse X="850" Y="840" Radius="100" FillColor="#_stencil_color_"/>
         </StencilAdd>
         <StencilRemove>
-          <Ellipse X="850" Y="840" Radius="40" FillColor="1 1 1"/>
+          <Ellipse X="850" Y="840" Radius="40" FillColor="#_stencil_color_"/>
         </StencilRemove>
         <StencilDraw>
           <!-- Background for outer donut -->
@@ -93,10 +93,10 @@
           <!-- Inner stencil: creates a band within the donut -->
           <Stencil>
             <StencilAdd>
-              <Ellipse X="850" Y="840" Radius="80" FillColor="1 1 1"/>
+              <Ellipse X="850" Y="840" Radius="80" FillColor="#_stencil_color_"/>
             </StencilAdd>
             <StencilRemove>
-              <Ellipse X="850" Y="840" Radius="60" FillColor="1 1 1"/>
+              <Ellipse X="850" Y="840" Radius="60" FillColor="#_stencil_color_"/>
             </StencilRemove>
             <StencilDraw>
               <!-- Yellow ring visible only in the narrow band -->
@@ -114,7 +114,7 @@
       <Stencil>
         <StencilAdd>
           <!-- Level 1: large rectangle -->
-          <Rectangle X="1100" Y="750" Width="350" Height="180" FillColor="1 1 1"/>
+          <Rectangle X="1100" Y="750" Width="350" Height="180" FillColor="#_stencil_color_"/>
         </StencilAdd>
         <StencilDraw>
           <Rectangle X="1100" Y="750" Width="350" Height="180" FillColor="0.4 0.1 0.1"/>
@@ -122,7 +122,7 @@
           <!-- Level 2: ellipse inside the rectangle -->
           <Stencil>
             <StencilAdd>
-              <Ellipse X="1275" Y="840" Radius="80" FillColor="1 1 1"/>
+              <Ellipse X="1275" Y="840" Radius="80" FillColor="#_stencil_color_"/>
             </StencilAdd>
             <StencilDraw>
               <Rectangle X="1100" Y="750" Width="350" Height="180" FillColor="0.1 0.4 0.1"/>
@@ -130,7 +130,7 @@
               <!-- Level 3: small rectangle inside the ellipse inside the rectangle -->
               <Stencil>
                 <StencilAdd>
-                  <Rectangle X="1225" Y="810" Width="100" Height="60" FillColor="1 1 1"/>
+                  <Rectangle X="1225" Y="810" Width="100" Height="60" FillColor="#_stencil_color_"/>
                 </StencilAdd>
                 <StencilDraw>
                   <Rectangle X="1100" Y="750" Width="350" Height="180" FillColor="0.1 0.1 0.4"/>
@@ -156,7 +156,7 @@
       <!-- First independent stencil -->
       <Stencil>
         <StencilAdd>
-          <Ellipse X="120" Y="500" Radius="60" FillColor="1 1 1"/>
+          <Ellipse X="120" Y="500" Radius="60" FillColor="#_stencil_color_"/>
         </StencilAdd>
         <StencilDraw>
           <Rectangle X="40" Y="420" Width="160" Height="160" FillColor="1 0 0"/>
@@ -167,7 +167,7 @@
       <!-- Second independent stencil -->
       <Stencil>
         <StencilAdd>
-          <Rectangle X="250" Y="460" Width="120" Height="80" FillColor="1 1 1"/>
+          <Rectangle X="250" Y="460" Width="120" Height="80" FillColor="#_stencil_color_"/>
         </StencilAdd>
         <StencilDraw>
           <Ellipse X="310" Y="500" Radius="80" FillColor="0 0 1"/>
@@ -182,7 +182,7 @@
 
       <Stencil>
         <StencilAdd>
-          <Rectangle X="450" Y="420" Width="300" Height="150" FillColor="1 1 1"/>
+          <Rectangle X="450" Y="420" Width="300" Height="150" FillColor="#_stencil_color_"/>
         </StencilAdd>
         <StencilDraw>
           <Rectangle X="450" Y="420" Width="300" Height="150" FillColor="0.15 0.15 0.3"/>
@@ -190,7 +190,7 @@
           <!-- Nested: text mask inside the rectangle -->
           <Stencil>
             <StencilAdd>
-              <Text X="470" Y="480" Size="60" FillColor="1 1 1">CLIP</Text>
+              <Text X="470" Y="480" Size="60" FillColor="#_stencil_color_">CLIP</Text>
             </StencilAdd>
             <StencilDraw>
               <!-- Rainbow stripes through the text, clipped to outer rectangle -->
@@ -212,7 +212,7 @@
 
       <Stencil>
         <StencilAdd>
-          <Ellipse X="970" Y="500" Radius="80" FillColor="1 1 1"/>
+          <Ellipse X="970" Y="500" Radius="80" FillColor="#_stencil_color_"/>
         </StencilAdd>
         <StencilDraw>
           <Rectangle X="870" Y="400" Width="200" Height="200" FillColor="0.5 0.2 0.5"/>
@@ -220,10 +220,10 @@
           <!-- Inner stencil with its own add+remove -->
           <Stencil>
             <StencilAdd>
-              <Ellipse X="970" Y="500" Radius="60" FillColor="1 1 1"/>
+              <Ellipse X="970" Y="500" Radius="60" FillColor="#_stencil_color_"/>
             </StencilAdd>
             <StencilRemove>
-              <Ellipse X="970" Y="500" Radius="30" FillColor="1 1 1"/>
+              <Ellipse X="970" Y="500" Radius="30" FillColor="#_stencil_color_"/>
             </StencilRemove>
             <StencilDraw>
               <Rectangle X="870" Y="400" Width="200" Height="200" FillColor="0.2 0.8 0.8"/>
