@@ -517,10 +517,12 @@ typedef struct __NodeTerrain {
     DcAppValIndex negate_x;
     DcAppValIndex negate_y;
 
-    // terrain specific
-    _ValIndex3 lle;
-    _ValIndex3 rpy;
-    uint8_t    terrain_index;
+    // terrain camera
+    _ValIndex3    lle;
+    _ValIndex3    xyz;
+    _ValIndex3    rpy;
+    DcAppValIndex orthographic;
+    uint8_t       terrain_index;
 
 } _NodeTerrain;
 

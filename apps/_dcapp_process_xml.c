@@ -3230,58 +3230,66 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         DC_LOG_ERROR("Terrain", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
 
-    // lat
+    // LLE camera mode (orthogonal to surface)
     xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
-    if (raw_lat) {
-        dc_node.terrain.lle.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
-        xmlFree(raw_lat);
-    } else {
-        DC_LOG_ERROR("Terrain", "Missing 'Latitude' attribute");
-    }
-
-    // lon
     xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
-    if (raw_lon) {
-        dc_node.terrain.lle.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
-        xmlFree(raw_lon);
-    } else {
-        DC_LOG_ERROR("Terrain", "Missing 'Longitude' attribute");
-    }
-
-    // ele
     xmlChar *raw_ele = xmlGetProp(xml_node, BAD_CAST "Elevation");
-    if (raw_ele) {
-        dc_node.terrain.lle.ele = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_ele);
-        xmlFree(raw_ele);
-    } else {
-        DC_LOG_ERROR("Terrain", "Missing 'Elevation' attribute");
-    }
+    bool has_lle = raw_lat || raw_lon || raw_ele;
 
-    // roll
-    xmlChar *raw_roll = xmlGetProp(xml_node, BAD_CAST "Roll");
-    if (raw_roll) {
-        dc_node.terrain.rpy.roll = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_roll);
-        xmlFree(raw_roll);
-    } else {
-        DC_LOG_ERROR("Terrain", "Missing 'Roll' attribute");
+    if (has_lle) {
+        if (raw_lat && raw_lon && raw_ele) {
+            dc_node.terrain.lle.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+            dc_node.terrain.lle.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+            dc_node.terrain.lle.ele = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_ele);
+        } else {
+            DC_LOG_ERROR("Terrain", "Incomplete LLE: must specify all of Latitude, Longitude, and Elevation");
+        }
     }
+    if (raw_lat) xmlFree(raw_lat);
+    if (raw_lon) xmlFree(raw_lon);
+    if (raw_ele) xmlFree(raw_ele);
 
-    // pitch
+    // XYZ/RPY camera mode (raw world coordinates)
+    xmlChar *raw_cam_x = xmlGetProp(xml_node, BAD_CAST "CameraX");
+    xmlChar *raw_cam_y = xmlGetProp(xml_node, BAD_CAST "CameraY");
+    xmlChar *raw_cam_z = xmlGetProp(xml_node, BAD_CAST "CameraZ");
+    xmlChar *raw_roll  = xmlGetProp(xml_node, BAD_CAST "Roll");
     xmlChar *raw_pitch = xmlGetProp(xml_node, BAD_CAST "Pitch");
-    if (raw_pitch) {
-        dc_node.terrain.rpy.pitch = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pitch);
-        xmlFree(raw_pitch);
-    } else {
-        DC_LOG_ERROR("Terrain", "Missing 'Pitch' attribute");
+    xmlChar *raw_yaw   = xmlGetProp(xml_node, BAD_CAST "Yaw");
+    bool has_xyz = raw_cam_x || raw_cam_y || raw_cam_z || raw_roll || raw_pitch || raw_yaw;
+
+    if (has_lle && has_xyz) {
+        DC_LOG_WARN("Terrain", "Both LLE and XYZ/RPY specified; using XYZ/RPY");
     }
 
-    // yaw
-    xmlChar *raw_yaw = xmlGetProp(xml_node, BAD_CAST "Yaw");
-    if (raw_yaw) {
-        dc_node.terrain.rpy.yaw = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_yaw);
-        xmlFree(raw_yaw);
-    } else {
-        DC_LOG_ERROR("Terrain", "Missing 'Yaw' attribute");
+    if (has_xyz) {
+        if (raw_cam_x && raw_cam_y && raw_cam_z && raw_roll && raw_pitch && raw_yaw) {
+            dc_node.terrain.xyz.x     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_x);
+            dc_node.terrain.xyz.y     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_y);
+            dc_node.terrain.xyz.z     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_z);
+            dc_node.terrain.rpy.roll  = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_roll);
+            dc_node.terrain.rpy.pitch = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pitch);
+            dc_node.terrain.rpy.yaw   = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_yaw);
+        } else {
+            DC_LOG_ERROR("Terrain", "Incomplete XYZ/RPY: must specify all of CameraX, CameraY, CameraZ, Roll, Pitch, and Yaw");
+        }
+    }
+    if (raw_cam_x) xmlFree(raw_cam_x);
+    if (raw_cam_y) xmlFree(raw_cam_y);
+    if (raw_cam_z) xmlFree(raw_cam_z);
+    if (raw_roll)  xmlFree(raw_roll);
+    if (raw_pitch) xmlFree(raw_pitch);
+    if (raw_yaw)   xmlFree(raw_yaw);
+
+    if (!has_lle && !has_xyz) {
+        DC_LOG_ERROR("Terrain", "Must specify either LLE (Latitude/Longitude/Elevation) or XYZ/RPY (CameraX/CameraY/CameraZ/Roll/Pitch/Yaw)");
+    }
+
+    // orthographic projection
+    xmlChar *raw_ortho = xmlGetProp(xml_node, BAD_CAST "Orthographic");
+    if (raw_ortho) {
+        dc_node.terrain.orthographic = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_ortho);
+        xmlFree(raw_ortho);
     }
 
     // negate x
