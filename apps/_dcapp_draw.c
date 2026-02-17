@@ -43,9 +43,9 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 
-// queued set operations
+// deferred set operations
 static bool _apply_set_operation(_AppData *app_data, DcAppVarIndex var_index, DcValue *var_value, DcValue *op_value, DcAppSetType operation);
-static void _flush_queued_sets(_AppData *app_data);
+static void _flush_deferred_sets(_AppData *app_data);
 
 // draw batch utils
 static void           _draw_batch_reset(_AppData *app_data);
@@ -3256,13 +3256,13 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
     // get operation
     DcAppSetType operation = node->set.operation == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_SET_TYPE_UNDEFINED : (DcAppSetType)(dc_app_lookup_get_value(app_data->lookup, node->set.operation)->value_integer);
 
-    // if queued, snapshot the value and defer execution
-    if (node->set.queued != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->set.queued)->value_boolean) {
-        _QueuedSetOp qop;
+    // if deferred, snapshot the value and defer execution
+    if (node->set.deferred != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->set.deferred)->value_boolean) {
+        _DeferredSetOp qop;
         qop.var_index = node->set.var_index;
         qop.operation = operation;
         qop.value     = *op_value; // struct copy snapshot
-        sbpush(app_data->sb_queued_sets, qop);
+        sbpush(app_data->sb_deferred_sets, qop);
         return;
     }
 
@@ -3277,10 +3277,10 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
     }
 }
 
-static void _flush_queued_sets(_AppData *app_data) {
-    int count = sbcount(app_data->sb_queued_sets);
+static void _flush_deferred_sets(_AppData *app_data) {
+    int count = sbcount(app_data->sb_deferred_sets);
     for (int i = 0; i < count; i++) {
-        _QueuedSetOp *qop = &app_data->sb_queued_sets[i];
+        _DeferredSetOp *qop = &app_data->sb_deferred_sets[i];
         DcValue *var_value = dc_app_lookup_get_value(
             app_data->lookup,
             dc_app_lookup_get_var(app_data->lookup, qop->var_index)->value_index);
@@ -3294,7 +3294,7 @@ static void _flush_queued_sets(_AppData *app_data) {
             dc_value_refresh(var_value);
         }
     }
-    sbclear(app_data->sb_queued_sets);
+    sbclear(app_data->sb_deferred_sets);
 }
 
 static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {

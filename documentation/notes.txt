@@ -843,14 +843,14 @@ New XML:
 
 
 ================================================================================
-SECTION 21: QUEUED SET OPERATIONS (LEGACY COMPATIBILITY)
+SECTION 21: DEFERRED SET OPERATIONS (LEGACY COMPATIBILITY)
 ================================================================================
 
 The new dcapp engine executes <Set> operations immediately during the draw pass.
 The legacy engine had a different execution model with two separate code paths:
 
     1. Draw pass: Sets executed immediately via draw()
-    2. Event pass: Sets inside OnPress/OnRelease were QUEUED to a list and
+    2. Event pass: Sets inside OnPress/OnRelease were DEFERRED to a list and
        executed atomically after all event handlers finished
 
 This means legacy Sets inside event blocks (OnPress/OnRelease) were deferred -
@@ -859,20 +859,20 @@ The new engine's immediate execution changes this ordering, which can break
 converted legacy displays that depend on the deferred behavior.
 
 --------------------------------------------------------------------------------
-THE QUEUE ATTRIBUTE:
+THE DEFER ATTRIBUTE:
 --------------------------------------------------------------------------------
 
-To support legacy conversion, <Set> elements accept an optional Queue attribute:
+To support legacy conversion, <Set> elements accept an optional Defer attribute:
 
-    <Set Variable="myVar" Operator="#_set_equal_" Queue="true">newValue</Set>
+    <Set Variable="myVar" Operator="#_set_equal_" Defer="true">newValue</Set>
 
-When Queue is "true", the Set operation is collected during the draw pass and
+When Defer is "true", the Set operation is collected during the draw pass and
 applied atomically AFTER the entire draw pass completes. This matches the legacy
-engine's deferred execution behavior. Queue is a standard DcAppValIndex boolean,
+engine's deferred execution behavior. Defer is a standard DcAppValIndex boolean,
 parsed via dc_app_create_and_register_typed_value_from_string.
 
-Without Queue, Sets execute immediately as before. Modern XML should NOT use
-Queue - it exists solely for legacy conversion compatibility.
+Without Defer, Sets execute immediately as before. Modern XML should NOT use
+Defer - it exists solely for legacy conversion compatibility.
 
 --------------------------------------------------------------------------------
 LEGACY EXECUTION MODEL (from legacy-dcapp source):
@@ -881,15 +881,15 @@ LEGACY EXECUTION MODEL (from legacy-dcapp source):
 The legacy engine (primitives/setvalue.cc) had two methods:
 
     dcSetValue::draw()        - Called during draw pass, executes immediately
-    dcSetValue::handleEvent() - Called during event handling, queues to
+    dcSetValue::handleEvent() - Called during event handling, defers to
                                 AppData.events list for deferred execution
 
 State blocks (Active/Inactive/On/Off/Transition) used draw(), so any Sets
 inside them executed immediately. Only event blocks (OnPress/OnRelease) used
-handleEvent(), which queued Sets for deferred execution.
+handleEvent(), which deferred Sets for deferred execution.
 
 After event propagation completed, ProcessEvents() (handle_utils.cc) iterated
-the queue, called updateData() on each entry, cleared the queue, and triggered
+the defer, called updateData() on each entry, cleared the defer, and triggered
 a display refresh.
 
 This means:
@@ -901,7 +901,7 @@ This means:
         - Sets at the top level or inside <If> blocks outside events
         - Any Set reached via the draw() code path
 
-    DEFERRED (queued until end of event handling):
+    DEFERRED (deferred until end of event handling):
         - Sets inside <OnPress> (now MousePressed)
         - Sets inside <OnRelease> (now MouseReleased)
         - Nested Sets (e.g., OnPress > If > Set) - handleEvent() propagated
@@ -911,7 +911,7 @@ This means:
 CONVERSION SCRIPT BEHAVIOR:
 --------------------------------------------------------------------------------
 
-The conversion script (convert_legacy_xml.py) automatically adds Queue="true" to
+The conversion script (convert_legacy_xml.py) automatically adds Defer="true" to
 all <Set> elements that are descendants of MousePressed or MouseReleased blocks.
 This includes deeply nested Sets (e.g., MousePressed > If > True > Set).
 
@@ -925,9 +925,9 @@ Legacy SwitchVariable was a button attribute that set a variable when the button
 was pressed. The legacy engine implemented this internally by creating event
 handlers (dcMouseEvent) with Sets in the PressList/ReleaseList.
 
-The conversion script converts SwitchVariable to explicit queued Set elements
+The conversion script converts SwitchVariable to explicit deferred Set elements
 rather than using TargetVariable. This is because TargetVariable is handled by
-the engine's built-in button logic, which would bypass the Queue mechanism.
+the engine's built-in button logic, which would bypass the Defer mechanism.
 
 Legacy:
     <Button SwitchVariable="@CAMERA_SELECT" On="#Camera02Target" Type="Standard">
@@ -941,17 +941,17 @@ Converted:
             Type="#_button_standard_">
         <MousePressed>
             <Set Variable="CAMERA_SELECT" Operator="#_set_equal_"
-                 Queue="true">#Camera02Target</Set>
+                 Defer="true">#Camera02Target</Set>
         </MousePressed>
         <MousePressed>
             <Set Variable="PIXELSTREAMID" Operator="#_set_equal_"
-                 Queue="true">0</Set>
+                 Defer="true">0</Set>
         </MousePressed>
     </Button>
 
 The first MousePressed (generated for SwitchVariable) is inserted as the first
 child. The second (original OnPress content) retains its position. Both use
-Queue="true" so all Sets are deferred and applied atomically after the draw pass.
+Defer="true" so all Sets are deferred and applied atomically after the draw pass.
 
 IndicatorVariable replaces SwitchVariable for visual indicator state. No
 TargetVariable is set, so the button's built-in auto-set writes to an internal
@@ -973,22 +973,22 @@ IMPLEMENTATION DETAILS:
 --------------------------------------------------------------------------------
 
 C engine files modified:
-    apps/dcapp.h             - _NodeSet.queued flag, _QueuedSetOp struct,
-                               _AppData.sb_queued_sets stretchy buffer
-    apps/_dcapp_process_xml.c - Parses Queue attribute (presence-based)
-    apps/_dcapp_draw.c        - _apply_set_operation() helper, queue check in
-                               _draw_node_set(), _flush_queued_sets() function
-    apps/dcapp.c             - Calls _flush_queued_sets() after _draw_node(),
+    apps/dcapp.h             - _NodeSet.deferred flag, _DeferredSetOp struct,
+                               _AppData.sb_deferred_sets stretchy buffer
+    apps/_dcapp_process_xml.c - Parses Defer attribute (presence-based)
+    apps/_dcapp_draw.c        - _apply_set_operation() helper, defer check in
+                               _draw_node_set(), _flush_deferred_sets() function
+    apps/dcapp.c             - Calls _flush_deferred_sets() after _draw_node(),
                                sbfree() in shutdown cleanup
 
-Queue mechanism:
-    1. During draw pass, if a Set has queued=true, its operation type and
-       operand value are snapshotted into a _QueuedSetOp struct and pushed
-       onto the sb_queued_sets stretchy buffer. The Set returns without
+Defer mechanism:
+    1. During draw pass, if a Set has deferred=true, its operation type and
+       operand value are snapshotted into a _DeferredSetOp struct and pushed
+       onto the sb_deferred_sets stretchy buffer. The Set returns without
        modifying the variable.
-    2. After _draw_node() returns, _flush_queued_sets() iterates the buffer,
+    2. After _draw_node() returns, _flush_deferred_sets() iterates the buffer,
        applies each operation via _apply_set_operation(), and clears the buffer.
-    3. Multiple queued Sets to the same variable are applied in queue order
+    3. Multiple deferred Sets to the same variable are applied in defer order
        (last write wins for EQUAL operations).
 
 

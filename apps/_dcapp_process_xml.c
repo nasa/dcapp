@@ -2783,11 +2783,11 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
         xmlFree(raw_operator);
     }
 
-    // queue flag
-    xmlChar *raw_queue = xmlGetProp(xml_node, BAD_CAST "Queue");
-    if (raw_queue) {
-        dc_node.set.queued = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_queue);
-        xmlFree(raw_queue);
+    // defer flag
+    xmlChar *raw_defer = xmlGetProp(xml_node, BAD_CAST "Defer");
+    if (raw_defer) {
+        dc_node.set.deferred = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_defer);
+        xmlFree(raw_defer);
     }
 
     // register node
