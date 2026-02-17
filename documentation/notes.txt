@@ -56,8 +56,8 @@ Single-value conditional attribute:
 
 Button attributes (enable/disable state):
 
-    ActiveVariable  -->  EnabledVariable
-    ActiveOn        -->  EnabledOn
+    ActiveVariable  -->  EnableVariable
+    ActiveOn        -->  EnableOn
 
 Button attributes (target variable):
 
@@ -292,8 +292,8 @@ BUTTON ATTRIBUTE RENAMES:
 
 Enable/disable state:
 
-    ActiveVariable  -->  EnabledVariable
-    ActiveOn        -->  EnabledOn
+    ActiveVariable  -->  EnableVariable
+    ActiveOn        -->  EnableOn
 
 Target variable (what gets set when button is pressed):
 

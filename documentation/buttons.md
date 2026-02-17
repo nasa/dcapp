@@ -97,7 +97,7 @@ These attributes define what values represent the "on" and "off" states.
 | `TargetOn` | Value written to target variable when button activates | Inherits from `On` |
 | `TargetOff` | Value written to target variable when button deactivates | Inherits from `Off` |
 | `IndicatorOn` | Value that causes indicator to show "on" state | Inherits from `TargetOn` |
-| `EnabledOn` | Value that means button is enabled/interactive | `1` |
+| `EnableOn` | Value that means button is enabled/interactive | `1` |
 
 ### Value Inheritance Diagram
 
@@ -106,7 +106,7 @@ On ─────────┬──────────► TargetOn ─�
             │
 Off ────────┴──────────► TargetOff
 
-EnabledOn (independent, defaults to 1)
+EnableOn (independent, defaults to 1)
 ```
 
 ---
@@ -120,14 +120,14 @@ These attributes define which variables the button reads from and writes to.
 | `Variable` | Default variable (used by all others if not specified) | Creates anonymous variable |
 | `TargetVariable` | Variable modified when button is clicked | Inherits from `Variable` |
 | `IndicatorVariable` | Variable checked for visual indicator state | Inherits from `TargetVariable` |
-| `EnabledVariable` | Variable checked to determine if button is enabled | Creates anonymous variable (always enabled) |
+| `EnableVariable` | Variable checked to determine if button is enabled | Creates anonymous variable (always enabled) |
 
 ### Variable Inheritance Diagram
 
 ```
 Variable ──────┬──────────► TargetVariable ──────► IndicatorVariable
                │
-               └──────────► (EnabledVariable is independent)
+               └──────────► (EnableVariable is independent)
 ```
 
 ---
@@ -253,8 +253,8 @@ A button that can be disabled based on a condition:
 
 <Button X="100" Y="100" Width="100" Height="50"
         TargetVariable="armState"
-        EnabledVariable="systemReady"
-        EnabledOn="1"
+        EnableVariable="systemReady"
+        EnableOn="1"
         On="ARMED" Off="SAFE"
         Type="#_button_toggle_">
     <Enabled>

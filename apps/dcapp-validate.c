@@ -907,7 +907,7 @@ static const char *_valid_attrs_line[]              = {"LineWidth", NULL};
 
 static const char *_valid_attrs_arc[]            = {"Radius", "Angle", "Segments", "LineColor", NULL};
 static const char *_valid_attrs_blink[]          = {"Variable", "Frequency", "DutyCycle", "Duration", NULL};
-static const char *_valid_attrs_button[]         = {"Type", "Variable", "EnabledVariable", "EnabledOn", "TargetVariable", "TargetOn", "TargetOff", "On", "Off", "IndicatorVariable", "IndicatorOn", NULL};
+static const char *_valid_attrs_button[]         = {"Type", "Variable", "EnableVariable", "EnableOn", "TargetVariable", "TargetOn", "TargetOff", "On", "Off", "IndicatorVariable", "IndicatorOn", NULL};
 static const char *_valid_attrs_ellipse[]        = {"Radius", "RadiusX", "RadiusY", "Segments", "Angle", NULL};
 static const char *_valid_attrs_constant[]       = {"Name", NULL};
 static const char *_valid_attrs_function[]       = {"Name", NULL};
@@ -1341,7 +1341,7 @@ void _validate_variable_references(ValidationContext *ctx, xmlNodePtr node, DcAp
             _check_var_attr(ctx, node, "Variable");
             _check_var_attr(ctx, node, "TargetVariable");
             _check_var_attr(ctx, node, "IndicatorVariable");
-            _check_var_attr(ctx, node, "EnabledVariable");
+            _check_var_attr(ctx, node, "EnableVariable");
             break;
 
         case DC_APP_ELEM_TYPE_SET:

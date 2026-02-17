@@ -450,7 +450,7 @@ Creates an interactive button with multiple visual states.
 | `TargetOn` | Value to set target variable when pressed (inherits from `On`) |
 | `TargetOff` | Value to set target variable when released (inherits from `Off`) |
 | `IndicatorOn` | Value that means indicator shows "on" state (inherits from `TargetOn`) |
-| `EnabledOn` | Value that means button is enabled (default: 1) |
+| `EnableOn` | Value that means button is enabled (default: 1) |
 
 **Variable Attributes (control which variables are used):**
 
@@ -459,7 +459,7 @@ Creates an interactive button with multiple visual states.
 | `Variable` | Default variable for target, indicator, and enabled |
 | `TargetVariable` | Variable to modify when clicked (inherits from `Variable`) |
 | `IndicatorVariable` | Variable to check for indicator state (inherits from `TargetVariable`) |
-| `EnabledVariable` | Variable to check for enabled state |
+| `EnableVariable` | Variable to check for enabled state |
 
 **Children (visual states):**
 - `<Enabled>` - Content shown when button is enabled (interactive)

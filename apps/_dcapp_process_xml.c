@@ -886,7 +886,7 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
     {
         xmlChar *raw_default_on   = xmlGetProp(xml_node, BAD_CAST "On");
         xmlChar *raw_default_off  = xmlGetProp(xml_node, BAD_CAST "Off");
-        xmlChar *raw_enabled_on   = xmlGetProp(xml_node, BAD_CAST "EnabledOn");
+        xmlChar *raw_enabled_on   = xmlGetProp(xml_node, BAD_CAST "EnableOn");
         xmlChar *raw_target_on    = xmlGetProp(xml_node, BAD_CAST "TargetOn");
         xmlChar *raw_target_off   = xmlGetProp(xml_node, BAD_CAST "TargetOff");
         xmlChar *raw_indicator_on = xmlGetProp(xml_node, BAD_CAST "IndicatorOn");
@@ -950,7 +950,7 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
     // process variable inheritance
     {
         xmlChar *raw_default_variable   = xmlGetProp(xml_node, BAD_CAST "Variable");
-        xmlChar *raw_enabled_variable   = xmlGetProp(xml_node, BAD_CAST "EnabledVariable");
+        xmlChar *raw_enabled_variable   = xmlGetProp(xml_node, BAD_CAST "EnableVariable");
         xmlChar *raw_target_variable    = xmlGetProp(xml_node, BAD_CAST "TargetVariable");
         xmlChar *raw_indicator_variable = xmlGetProp(xml_node, BAD_CAST "IndicatorVariable");
 

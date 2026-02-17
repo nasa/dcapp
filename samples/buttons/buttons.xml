@@ -129,7 +129,7 @@
             <!-- Controlled button -->
             <Text X="300" Y="295" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.6 0.6">Controlled Button</Text>
             <Button Type="#_button_toggle_" X="300" Y="260" Width="100" Height="40" Variable="ControlledState" On="1" Off="0"
-                EnabledVariable="MasterEnable" EnabledOn="1"
+                EnableVariable="MasterEnable" EnableOn="1"
                 LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0.6 0.5 0.1" LineColor="0.8 0.7 0.2" LineWidth="2"/>

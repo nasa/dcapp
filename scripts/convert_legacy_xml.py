@@ -54,8 +54,8 @@ BUTTON_CHILD_RENAMES = {
 
 # Button-specific attribute renames
 BUTTON_ATTRIBUTE_RENAMES = {
-    'ActiveVariable': 'EnabledVariable',
-    'ActiveOn': 'EnabledOn',
+    'ActiveVariable': 'EnableVariable',
+    'ActiveOn': 'EnableOn',
     # SwitchVariable/SwitchOn/SwitchOff handled by custom logic in process_element
 }
 
@@ -722,7 +722,7 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
         convert_variable_reference(elem, 'Variable')
         convert_variable_reference(elem, 'IndicatorVariable')
         convert_variable_reference(elem, 'TargetVariable')
-        convert_variable_reference(elem, 'EnabledVariable')
+        convert_variable_reference(elem, 'EnableVariable')
 
     # If element
     elif tag == 'If':
