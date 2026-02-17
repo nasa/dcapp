@@ -20,6 +20,9 @@ typedef uint32_t DcTrickVarIndex;
 extern "C" {
 #endif
 
+// initialization
+void dc_trick_init(void);
+
 // lifecycle
 DcTrickHandle dc_trick_create(const char *host, int port, float data_rate, int timeout_s);
 void          dc_trick_cleanup(DcTrickHandle trick);

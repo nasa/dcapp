@@ -9,7 +9,8 @@
 
 // lookup types
 typedef int DcAppLookupIndex;
-#define DC_APP_LOOKUP_INDEX_UNDEFINED (-1)
+#define DC_APP_LOOKUP_INDEX_UNDEFINED (0)
+#define DC_APP_LOOKUP_FIRST_INDEX    (1)
 
 typedef DcAppLookupIndex   DcAppVarIndex;
 typedef DcAppLookupIndex   DcAppValIndex;

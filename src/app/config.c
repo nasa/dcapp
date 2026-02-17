@@ -20,8 +20,11 @@
 
 // style utils
 typedef int              _StyleIndex;
-static const _StyleIndex _STYLE_INDEX_UNDEFINED = -1;
-static const _StyleIndex _STYLE_INDEX_DEFAULT   = 0;
+static const _StyleIndex _STYLE_INDEX_UNDEFINED = 0;
+static const _StyleIndex _STYLE_INDEX_DEFAULT   = 1;
+
+// const utils
+#define _CONST_FIRST_INDEX 1
 
 typedef struct __ElemStyle {
     xmlNodePtr xml_nodes[DC_APP_ELEM_TYPE__COUNT];
@@ -129,14 +132,23 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     // create internal context
     _ConfigContext context = {};
 
-    // reserve index 0 for default style
-    sbpush(context.sb_style_name_offsets, 0);
+    // reserve index 0 as undefined
+    sbresize(context.sb_styles, 1);
+    sbresize(context.sb_style_name_offsets, 1);
+    sbresize(context.sb_style_names, 1);
+
+    // reserve index 1 for default style
+    sbpush(context.sb_style_name_offsets, sbcount(context.sb_style_names));
     sbpushn(context.sb_style_names, "default", (int)(strlen("default") + 1));
     _ElemStyle default_style = {};
     sbpush(context.sb_styles, default_style);
 
+    // reserve index 0 as undefined for constants
+    sbresize(context.sb_consts, 1);
+    sbresize(context.sb_const_name_offsets, 1);
+    sbresize(context.sb_const_names, 1);
+
     // add default constants
-    // set initial values
     _add_const_int(&context, "_align_left_", DC_APP_ALIGN_TYPE_LEFT, true);
     _add_const_int(&context, "_align_center_", DC_APP_ALIGN_TYPE_CENTER, true);
     _add_const_int(&context, "_align_right_", DC_APP_ALIGN_TYPE_RIGHT, true);
@@ -329,7 +341,7 @@ void dc_app_config_cleanup(DcAppConfig *config) {
     sbfree(context->sb_style_names);
 
     // free style xml nodes
-    for (int ii = 0; ii < sbcount(context->sb_styles); ii++) {
+    for (int ii = _STYLE_INDEX_DEFAULT; ii < sbcount(context->sb_styles); ii++) {
         for (int jj = 0; jj < DC_APP_ELEM_TYPE__COUNT; jj++) {
             if (context->sb_styles[ii].xml_nodes[jj]) {
                 xmlFreeNode(context->sb_styles[ii].xml_nodes[jj]);
@@ -340,7 +352,7 @@ void dc_app_config_cleanup(DcAppConfig *config) {
 
     sbfree(context->sb_const_names);
     sbfree(context->sb_const_name_offsets);
-    for (int ii = 0; ii < sbcount(context->sb_consts); ii++) {
+    for (int ii = _CONST_FIRST_INDEX; ii < sbcount(context->sb_consts); ii++) {
         sbfree(context->sb_consts[ii].val);
     }
     sbfree(context->sb_consts);
@@ -1123,7 +1135,7 @@ void dc_app_config_save_to_file(DcAppConfig *config, const char *filepath) {
 
 DcAppLookupIndex _get_const_index(_ConfigContext *context, const char *name) {
 
-    for (int ii = 0; ii < sbcount(context->sb_const_name_offsets); ii++) {
+    for (int ii = _CONST_FIRST_INDEX; ii < sbcount(context->sb_const_name_offsets); ii++) {
         const char *lookup_name = &(context->sb_const_names[context->sb_const_name_offsets[ii]]);
         if (strcmp(name, lookup_name) == 0) {
             return ii;
@@ -1313,7 +1325,7 @@ void _dereference_constants(_ConfigContext *context, const char *in, char *out, 
 
 static DcAppStyleIndex _get_style_index(_ConfigContext *context, const char *name) {
     if (name) {
-        for (int ii = 0; ii < sbcount(context->sb_styles); ii++) {
+        for (int ii = _STYLE_INDEX_DEFAULT; ii < sbcount(context->sb_styles); ii++) {
             const char *comp_name = &(context->sb_style_names[context->sb_style_name_offsets[ii]]);
             if (strcmp(name, comp_name) == 0) {
                 return ii;

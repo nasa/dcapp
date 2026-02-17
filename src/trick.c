@@ -62,6 +62,10 @@ static DcTrickResult _dc_trick_receive(DcTrickHandle trick);
 
 #define DC_TRICK_TEMP_BUFFER_SIZE 16384
 
+void dc_trick_init(void) {
+    sbresize(_contexts, 1);
+}
+
 DcTrickHandle dc_trick_create(const char *host, int port, float data_rate, int timeout_s) {
 
     _DcTrickContext context;

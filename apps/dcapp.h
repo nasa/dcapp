@@ -171,7 +171,8 @@ typedef enum __NodeConfigFlags {
 } _NodeConfigFlags;
 
 typedef int      _NodeIndex;
-const _NodeIndex NODE_INDEX_UNDEFINED = -1;
+const _NodeIndex NODE_INDEX_UNDEFINED = 0;
+const _NodeIndex NODE_FIRST_INDEX     = 1;
 
 typedef struct __NodeArc {
     _ValIndex2    position;
@@ -291,7 +292,8 @@ typedef struct __NodeContainer {
 } _NodeContainer;
 
 typedef int _TextureIndex;
-#define TEXTURE_INDEX_UNDEFINED -1
+#define TEXTURE_INDEX_UNDEFINED 0
+#define TEXTURE_FIRST_INDEX    1
 typedef struct __Texture {
     plTextureHandle   texture_handle;
     plBindGroupHandle bind_group_handle;

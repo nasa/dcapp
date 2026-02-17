@@ -53,7 +53,7 @@ void dc_value_refresh_from_type(DcValue *value, DcValueType type) {
     switch (type) {
         case DC_VALUE_TYPE_BOOLEAN:
             value->value_integer = (int)value->value_boolean;
-            value->value_boolean = (double)value->value_boolean;
+            value->value_double = (double)value->value_boolean;
             if (value->value_boolean) {
                 strncpy(value->value_string, "True", DC_VALUE_STRING_BUFFER_SIZE - 1);
             } else {

@@ -114,6 +114,16 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     // create lookup
     app_data->lookup = dc_app_lookup_create();
 
+    // reserve index 0 as undefined for nodes and textures
+    sbresize(app_data->sb_nodes, 1);
+    sbresize(app_data->sb_textures, 1);
+    sbresize(app_data->sb_texture_name_offsets, 1);
+    sbresize(app_data->sb_texture_names, 1);
+
+    // initialize subsystem contexts
+    dc_trick_init();
+    dc_edge_init();
+
     // set environment (used for dcapp XMLs)
     dc_utils_set_env("dcappDisplayHome", app_data->config->config_dir_path, 1);
 
@@ -156,7 +166,7 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     _ext_gfx->flush_device(device);
 
     // cleanup per-node resources (stretchy buffers and malloc'd memory)
-    for (int i = 0; i < sbcount(app_data->sb_nodes); i++) {
+    for (int i = NODE_FIRST_INDEX; i < sbcount(app_data->sb_nodes); i++) {
         _Node *node = &app_data->sb_nodes[i];
         switch (node->type) {
             case NODE_TYPE_LINE:
@@ -224,7 +234,7 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     dc_ps_shmem_cleanup();
 
     // cleanup textures
-    for (int i = 0; i < sbcount(app_data->sb_textures); i++) {
+    for (int i = TEXTURE_FIRST_INDEX; i < sbcount(app_data->sb_textures); i++) {
         _ext_gfx->destroy_bind_group(device, app_data->sb_textures[i].bind_group_handle);
         _ext_gfx->destroy_texture(device, app_data->sb_textures[i].texture_handle);
     }
@@ -449,7 +459,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     }
 
     // refresh variables
-    for (int ii = 0; ii < dc_app_lookup_get_var_count(app_data->lookup); ii++) {
+    for (int ii = DC_APP_LOOKUP_FIRST_INDEX; ii < dc_app_lookup_get_var_count(app_data->lookup); ii++) {
         DcAppLookupVar *var   = dc_app_lookup_get_var(app_data->lookup, ii);
         DcValue        *value = dc_app_lookup_get_value(app_data->lookup, var->value_index);
         dc_value_refresh(value);

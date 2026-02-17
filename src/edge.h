@@ -20,6 +20,9 @@ typedef uint32_t DcEdgeVarIndex;
 extern "C" {
 #endif
 
+// initialization
+void dc_edge_init(void);
+
 // lifecycle
 DcEdgeHandle dc_edge_create(const char *host, int port, float data_rate, int timeout_s);
 void         dc_edge_cleanup(DcEdgeHandle edge);

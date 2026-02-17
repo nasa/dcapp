@@ -68,6 +68,10 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
 static DcEdgeResult _dc_edge_read_message(DcEdgeHandle edge, char **response);
 static DcEdgeResult _dc_edge_setup_command_group(DcEdgeHandle edge);
 
+void dc_edge_init(void) {
+    sbresize(_contexts, 1);
+}
+
 DcEdgeHandle dc_edge_create(const char *host, int port, float data_rate, int timeout_s) {
 
     _DcEdgeContext context;
