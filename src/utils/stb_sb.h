@@ -92,6 +92,13 @@ static inline void *sbgrow(void *a, int inc, int sz) {
         }                                                                                 \
     } while (0)
 
+#define sbresize(a, n)                                            \
+    do {                                                          \
+        if (!(a) || (n) > sbheader(a)->sbcap)                     \
+            (a) = sbgrow((a), (n) - sbcapacity(a), sizeof(*(a))); \
+        sbheader(a)->sbcnt = (n);                                 \
+    } while (0)
+
 #define sbfree(a)              \
     do {                       \
         if (a)                 \

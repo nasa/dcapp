@@ -26,7 +26,20 @@ static _LookupContext *_sb_contexts;
 
 // create an app lookup
 DcAppLookup *dc_app_lookup_create() {
+
+    // reserve index 0 as undefined on first call
+    if (_sb_contexts == NULL) {
+        sbresize(_sb_contexts, 1);
+    }
+
     _LookupContext context = {0};
+
+    // reserve index 0 as undefined for values and variables
+    sbresize(context.sb_vals, 1);
+    sbresize(context.sb_vars, 1);
+    sbresize(context.sb_var_name_offsets, 1);
+    sbresize(context.sb_var_names, 1);
+
     sbpush(_sb_contexts, context);
 
     DcAppLookup *lookup = (DcAppLookup *)malloc(sizeof(DcAppLookup));
@@ -40,7 +53,7 @@ void dc_app_lookup_cleanup(DcAppLookup *lookup) {
     sbfree(context->sb_var_name_offsets);
 
     // free per-variable stacks
-    for (int ii = 0; ii < sbcount(context->sb_vars); ii++) {
+    for (int ii = DC_APP_LOOKUP_FIRST_INDEX; ii < sbcount(context->sb_vars); ii++) {
         sbfree(context->sb_vars[ii].sb_value_stack);
     }
     sbfree(context->sb_vars);
@@ -91,7 +104,7 @@ int dc_app_lookup_get_var_count(DcAppLookup *lookup) {
 
 DcAppVarIndex dc_app_lookup_get_var_index(DcAppLookup *lookup, const char *name) {
     _LookupContext *context = &(_sb_contexts[lookup->index]);
-    for (int ii = 0; ii < sbcount(context->sb_var_name_offsets); ii++) {
+    for (int ii = DC_APP_LOOKUP_FIRST_INDEX; ii < sbcount(context->sb_var_name_offsets); ii++) {
         const char *lookup_name = &(context->sb_var_names[context->sb_var_name_offsets[ii]]);
         if (strcmp(name, lookup_name) == 0) {
             return ii;
@@ -139,6 +152,10 @@ DcAppVarIndex dc_app_lookup_register_var(DcAppLookup *lookup, const char *name, 
 
 const char *dc_app_lookup_get_var_name(DcAppLookup *lookup, DcAppVarIndex index) {
     _LookupContext *context = &(_sb_contexts[lookup->index]);
+    if (index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
+        DC_LOG_ERROR("Lookup", "dc_app_lookup_get_var_name(): attempting to fetch invalid index %d", index);
+        return NULL;
+    }
     return &(context->sb_var_names[context->sb_var_name_offsets[index]]);
 }
 
@@ -169,7 +186,7 @@ void dc_app_lookup_var_pop(DcAppLookup *lookup, DcAppVarIndex var_index) {
 
 void dc_app_lookup_reset_var_stacks(DcAppLookup *lookup) {
     _LookupContext *context = &(_sb_contexts[lookup->index]);
-    for (int ii = 0; ii < sbcount(context->sb_vars); ii++) {
+    for (int ii = DC_APP_LOOKUP_FIRST_INDEX; ii < sbcount(context->sb_vars); ii++) {
         DcAppLookupVar *var = &context->sb_vars[ii];
         if (sbcount(var->sb_value_stack) > 0) {
             // restore original value (bottom of stack) and clear

@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     // get longest string name (padding)
     int longest_string_size = 0;
     int var_count           = dc_app_lookup_get_var_count(lookup);
-    for (DcAppVarIndex var_index = 0; var_index < var_count; var_index++) {
+    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
         DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
         const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
         if (strlen(var_name) > longest_string_size) {
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "");
 
     // file variable definitions
-    for (DcAppVarIndex var_index = 0; var_index < var_count; var_index++) {
+    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
         DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
         const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
         DcValue        *value    = dc_app_lookup_get_value(lookup, var->value_index);
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "void display_pre_init(_GetVariableValueAddr get_variable_value_addr) {");
     fprintf(file, "%s\n", "    if (get_variable_value_addr) {");
     fprintf(file, "%s\n", "        get_pointer = get_variable_value_addr;");
-    for (DcAppVarIndex var_index = 0; var_index < var_count; var_index++) {
+    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
         DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
         const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
         DcValue        *value    = dc_app_lookup_get_value(lookup, var->value_index);
@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "#endif");
     fprintf(file, "%s\n", "");
 
-    for (DcAppVarIndex var_index = 0; var_index < var_count; var_index++) {
+    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
         DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
         const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
         DcValue        *value    = dc_app_lookup_get_value(lookup, var->value_index);

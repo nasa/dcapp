@@ -3805,23 +3805,36 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
     // parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // convert to 3D matrix
-    plMat3 transform3 = (plMat3){0};
-    transform3.x11    = transform.x11;
-    transform3.x12    = transform.x12;
-    transform3.x13    = transform.x14;
-    transform3.x21    = transform.x21;
-    transform3.x22    = transform.x22;
-    transform3.x23    = transform.x24;
-    transform3.x31    = transform.x31;
-    transform3.x32    = transform.x32;
-    transform3.x33    = transform.x33;
+    // compute quad points (same as image)
+    plVec4 point0_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, 0.0f, 0.0f, 1.0f});
+    plVec4 point1_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, dimension[1], 0.0f, 1.0f});
+    plVec4 point2_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){dimension[0], dimension[1], 0.0f, 1.0f});
+    plVec4 point3_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){dimension[0], 0.0f, 0.0f, 1.0f});
+    plVec2 point0      = (plVec2){point0_vec4.x, point0_vec4.y};
+    plVec2 point1      = (plVec2){point1_vec4.x, point1_vec4.y};
+    plVec2 point2      = (plVec2){point2_vec4.x, point2_vec4.y};
+    plVec2 point3      = (plVec2){point3_vec4.x, point3_vec4.y};
 
-    // update text options
-    // text_options.tTransform = transform3;
-
-    // draw
-    // ext_draw->add_text(_draw_batch_get_2d(app_data), (plVec2){0, 0}, sb_text, text_options);
+    //=========================================================================
+    // TODO: terrain rendering
+    //
+    // 1. Build camera matrix from node parameters:
+    //    - If xyz/rpy are set: use CameraX/Y/Z + Roll/Pitch/Yaw directly
+    //    - If lle is set: convert Lat/Lon/Ele to world XYZ, orient orthogonal to surface
+    //
+    // 2. Check orthographic flag:
+    //    - If node->terrain.orthographic is set and true, use orthographic projection
+    //    - Otherwise, use perspective
+    //
+    // 3. Update terrain and render to texture:
+    //    _ext_terrain->set_camera(...);
+    //    _ext_terrain->render(terrain, cmd_buf);
+    //
+    // 4. Get texture and draw quad:
+    //    plBindGroupHandle bind_group = _ext_terrain->get_terrain_texture(terrain);
+    //    _ext_draw->add_image_quad(_draw_batch_get_2d(app_data),
+    //        bind_group.uData, point0, point1, point2, point3);
+    //=========================================================================
 }
 
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
