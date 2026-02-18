@@ -147,7 +147,8 @@ static unsigned char*        ptrDOut_ = NULL;
 // [SECTION] internal api
 //-----------------------------------------------------------------------------
 
-static void pl__prepare_draw_command(plDrawLayer2D*, plTextureID, bool sdf);
+static void pl__prepare_draw_command  (plDrawLayer2D*, plTextureID, bool sdf);
+static void pl__prepare_3d_draw_command(plDrawList3D*, plDrawCommand3DType, plTextureID);
 static void pl__reserve_triangles   (plDrawLayer2D*, uint32_t uIndexCount, uint32_t uVertexCount);
 static void pl__add_vertex          (plDrawLayer2D*, plVec2 tPos, uint32_t uColor, plVec2 tUv);
 static void pl__add_index           (plDrawLayer2D*, uint32_t uVertexStart, uint32_t i0, uint32_t i1, uint32_t i2);
@@ -174,6 +175,8 @@ pl__add_3d_indexed_lines(
     plDrawList3D* ptDrawlist, uint32_t uIndexCount, const plVec3* atPoints,
     const uint32_t* auIndices, plDrawLineOptions tOptions)
 {
+    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_LINE, 0);
+    const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
 
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
     const uint32_t uIndexStart = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
@@ -228,13 +231,17 @@ pl__add_3d_indexed_lines(
         uCurrentVertex += 4;
         uCurrentIndex += 6;
     }
+    ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D].uElementCount += pl_sb_size(ptDrawlist->sbtLineIndexBuffer) - uIdxBefore;
 }
 
 static inline void
 pl__add_3d_lines(plDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoints, plDrawLineOptions tOptions)
 {
+    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_LINE, 0);
+    const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
+
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
-    const uint32_t uIndexStart = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
+    const uint32_t uIndexStart = uIdxBefore;
 
     pl_sb_resize(ptDrawlist->sbtLineVertexBuffer, uVertexStart + 4 * uCount);
     pl_sb_resize(ptDrawlist->sbtLineIndexBuffer, uIndexStart + 6 * uCount);
@@ -282,13 +289,17 @@ pl__add_3d_lines(plDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoin
         uCurrentVertex += 4;
         uCurrentIndex += 6;
     }
+    ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D].uElementCount += pl_sb_size(ptDrawlist->sbtLineIndexBuffer) - uIdxBefore;
 }
 
 static inline void
 pl__add_3d_path(plDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoints, plDrawLineOptions tOptions)
 {
+    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_LINE, 0);
+    const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
+
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
-    const uint32_t uIndexStart = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
+    const uint32_t uIndexStart = uIdxBefore;
 
     pl_sb_resize(ptDrawlist->sbtLineVertexBuffer, uVertexStart + 4 * (uCount - 1));
     pl_sb_resize(ptDrawlist->sbtLineIndexBuffer, uIndexStart + 6 * (uCount - 1));
@@ -336,6 +347,7 @@ pl__add_3d_path(plDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoint
         uCurrentVertex += 4;
         uCurrentIndex += 6;
     }
+    ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D].uElementCount += pl_sb_size(ptDrawlist->sbtLineIndexBuffer) - uIdxBefore;
 }
 
 //-----------------------------------------------------------------------------
@@ -650,6 +662,20 @@ pl_add_2d_callback(plDrawLayer2D* ptLayer, plDrawCallback tCallback, void* pUser
     pl_sb_push(ptLayer->sbtCommandBuffer, tNewDrawCommand);
 
     ptLayer->ptLastCommand = NULL;
+}
+
+static void
+pl_add_3d_callback(plDrawList3D* ptDrawlist, plDrawCallback3D tCallback, void* pUserData, uint32_t uUserDataSize)
+{
+    plDrawCommand3D tNewDrawCommand =
+    {
+        .tUserCallback         = tCallback,
+        .uUserCallbackDataSize = uUserDataSize,
+        .pUserCallbackData     = pUserData
+    };
+    pl_sb_push(ptDrawlist->sbtDrawCommands3D, tNewDrawCommand);
+
+    ptDrawlist->iLastCommand3D = -1;
 }
 
 static void
@@ -2343,7 +2369,15 @@ pl_new_draw_3d_frame(void)
         pl_sb_reset(ptDrawlist->sbtLineIndexBuffer);
         pl_sb_reset(ptDrawlist->sbtTexturedVertexBuffer);
         pl_sb_reset(ptDrawlist->sbtTexturedIndexBuffer);
-        pl_sb_reset(ptDrawlist->sbtTextEntries);    
+        // free any heap-allocated callback data from previous frame
+        for(uint32_t j = 0; j < pl_sb_size(ptDrawlist->sbtDrawCommands3D); j++)
+        {
+            if(ptDrawlist->sbtDrawCommands3D[j].tUserCallback && ptDrawlist->sbtDrawCommands3D[j].pUserCallbackData)
+                PL_FREE(ptDrawlist->sbtDrawCommands3D[j].pUserCallbackData);
+        }
+        pl_sb_reset(ptDrawlist->sbtDrawCommands3D);
+        pl_sb_reset(ptDrawlist->sbtTextEntries);
+        ptDrawlist->iLastCommand3D = -1;
     }
 
     // reset 3d drawlists
@@ -2373,9 +2407,11 @@ pl__add_3d_triangles(
         plDrawList3D* ptDrawlist, uint32_t uVertexCount, const plVec3* atPoints,
         uint32_t uTriangleCount, const uint32_t* auIndices, uint32_t uColor)
 {
+    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_SOLID, 0);
+    const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
 
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtSolidVertexBuffer);
-    const uint32_t uIndexStart = pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
+    const uint32_t uIndexStart = uIdxBefore;
 
     pl_sb_resize(ptDrawlist->sbtSolidVertexBuffer, pl_sb_size(ptDrawlist->sbtSolidVertexBuffer) + uVertexCount);
     pl_sb_resize(ptDrawlist->sbtSolidIndexBuffer, pl_sb_size(ptDrawlist->sbtSolidIndexBuffer) + 3 * uTriangleCount);
@@ -2391,11 +2427,14 @@ pl__add_3d_triangles(
         ptDrawlist->sbtSolidIndexBuffer[uIndexStart + i * 3 + 1] = uVertexStart + auIndices[i * 3 + 1];
         ptDrawlist->sbtSolidIndexBuffer[uIndexStart + i * 3 + 2] = uVertexStart + auIndices[i * 3 + 2];
     }
+    ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D].uElementCount += pl_sb_size(ptDrawlist->sbtSolidIndexBuffer) - uIdxBefore;
 }
 
 static void
 pl__add_3d_triangle_filled(plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plVec3 tP2, plDrawSolidOptions tOptions)
 {
+    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_SOLID, 0);
+    const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
 
     pl_sb_reserve(ptDrawlist->sbtSolidVertexBuffer, pl_sb_size(ptDrawlist->sbtSolidVertexBuffer) + 3);
     pl_sb_reserve(ptDrawlist->sbtSolidIndexBuffer, pl_sb_size(ptDrawlist->sbtSolidIndexBuffer) + 3);
@@ -2409,13 +2448,17 @@ pl__add_3d_triangle_filled(plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plV
     pl_sb_push(ptDrawlist->sbtSolidIndexBuffer, uVertexStart + 0);
     pl_sb_push(ptDrawlist->sbtSolidIndexBuffer, uVertexStart + 1);
     pl_sb_push(ptDrawlist->sbtSolidIndexBuffer, uVertexStart + 2);
+    ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D].uElementCount += pl_sb_size(ptDrawlist->sbtSolidIndexBuffer) - uIdxBefore;
 }
 
 static void
 pl__add_3d_sphere_filled(plDrawList3D* ptDrawlist, plSphere tDesc, uint32_t uLatBands, uint32_t uLongBands, plDrawSolidOptions tOptions)
 {
+    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_SOLID, 0);
+    const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
+
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtSolidVertexBuffer);
-    const uint32_t uIndexStart = pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
+    const uint32_t uIndexStart = uIdxBefore;
 
     if(uLatBands == 0)
         uLatBands = 16;
@@ -2468,13 +2511,17 @@ pl__add_3d_sphere_filled(plDrawList3D* ptDrawlist, plSphere tDesc, uint32_t uLat
             uCurrentPoint += 6;
         }
     }
+    ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D].uElementCount += pl_sb_size(ptDrawlist->sbtSolidIndexBuffer) - uIdxBefore;
 }
 
 static void
 pl__add_3d_sphere_textured(plDrawList3D* ptDrawlist, plTextureID tTexture, plSphere tDesc, const plMat4* ptTransform, uint32_t uLatBands, uint32_t uLongBands, uint32_t uColor)
 {
+    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_TEXTURED, tTexture);
+    const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer);
+
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer);
-    const uint32_t uIndexStart = pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer);
+    const uint32_t uIndexStart = uIdxBefore;
 
     if(uLatBands == 0)
         uLatBands = 16;
@@ -2547,6 +2594,7 @@ pl__add_3d_sphere_textured(plDrawList3D* ptDrawlist, plTextureID tTexture, plSph
             uCurrentPoint += 6;
         }
     }
+    ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D].uElementCount += pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer) - uIdxBefore;
 }
 
 static void
@@ -2938,6 +2986,9 @@ pl__add_3d_cone_filled(plDrawList3D* ptDrawlist, plCone tDesc, uint32_t uSegment
 static void
 pl__add_3d_line(plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plDrawLineOptions tOptions)
 {
+    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_LINE, 0);
+    const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
+
     pl_sb_reserve(ptDrawlist->sbtLineVertexBuffer, pl_sb_size(ptDrawlist->sbtLineVertexBuffer) + 4);
     pl_sb_reserve(ptDrawlist->sbtLineIndexBuffer, pl_sb_size(ptDrawlist->sbtLineIndexBuffer) + 6);
 
@@ -2975,6 +3026,8 @@ pl__add_3d_line(plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plDrawLineOpti
     pl_sb_push(ptDrawlist->sbtLineIndexBuffer, uVertexStart + 0);
     pl_sb_push(ptDrawlist->sbtLineIndexBuffer, uVertexStart + 2);
     pl_sb_push(ptDrawlist->sbtLineIndexBuffer, uVertexStart + 3);
+
+    ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D].uElementCount += pl_sb_size(ptDrawlist->sbtLineIndexBuffer) - uIdxBefore;
 }
 
 static void
@@ -3789,6 +3842,47 @@ pl_add_default_font(plFontAtlas* ptAtlas)
 //-----------------------------------------------------------------------------
 
 static void
+pl__prepare_3d_draw_command(plDrawList3D* ptDrawlist, plDrawCommand3DType eType, plTextureID tTexture)
+{
+    if(ptDrawlist->iLastCommand3D >= 0)
+    {
+        plDrawCommand3D* ptLastCmd = &ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D];
+        // merge if same type (and same texture for textured)
+        if(ptLastCmd->tUserCallback == NULL &&
+           ptLastCmd->eType == eType &&
+           (eType != PL_DRAW_COMMAND_3D_TEXTURED || ptLastCmd->tTextureId == tTexture))
+        {
+            return;
+        }
+    }
+
+    plDrawCommand3D tNewCommand = {
+        .eType         = eType,
+        .uElementCount = 0,
+        .tTextureId    = tTexture
+    };
+
+    switch(eType)
+    {
+        case PL_DRAW_COMMAND_3D_SOLID:
+            tNewCommand.uVertexOffset = pl_sb_size(ptDrawlist->sbtSolidVertexBuffer);
+            tNewCommand.uIndexOffset  = pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
+            break;
+        case PL_DRAW_COMMAND_3D_LINE:
+            tNewCommand.uVertexOffset = pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
+            tNewCommand.uIndexOffset  = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
+            break;
+        case PL_DRAW_COMMAND_3D_TEXTURED:
+            tNewCommand.uVertexOffset = pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer);
+            tNewCommand.uIndexOffset  = pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer);
+            break;
+    }
+
+    pl_sb_push(ptDrawlist->sbtDrawCommands3D, tNewCommand);
+    ptDrawlist->iLastCommand3D = pl_sb_size(ptDrawlist->sbtDrawCommands3D) - 1;
+}
+
+static void
 pl__prepare_draw_command(plDrawLayer2D* ptLayer, plTextureID tTextureID, bool bSdf)
 {
     bool bCreateNewCommand = true;
@@ -3962,6 +4056,7 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .add_line                   = pl_add_line,
         .add_lines                  = pl_add_lines,
         .add_2d_callback            = pl_add_2d_callback,
+        .add_3d_callback            = pl_add_3d_callback,
         .add_text                   = pl_add_text_ex,
         .add_text_clipped           = pl_add_text_clipped_ex,
         .add_triangle               = pl_add_triangle,

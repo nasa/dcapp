@@ -69,7 +69,8 @@ typedef struct _plFontAtlas   plFontAtlas;   // font atlas data
 typedef struct _plDrawList2D  plDrawList2D;  // drawlist data for 2D
 typedef struct _plDrawList3D  plDrawList3D;  // drawlist data for 3D
 typedef struct _plDrawLayer2D plDrawLayer2D; // opaque type for 2D draw layers
-typedef struct _plDrawCommand plDrawCommand; // opaque type for 2D draw layers
+typedef struct _plDrawCommand   plDrawCommand;   // opaque type for 2D draw layers
+typedef struct _plDrawCommand3D plDrawCommand3D; // 3D draw command
 
 // vertex buffer types
 typedef struct _plDrawVertex          plDrawVertex;          // vertex type (LAYOUT & PADDING MATTERS)
@@ -98,12 +99,17 @@ typedef void (*plDrawCallback)(const plDrawList2D*, const plDrawCommand*);
 #define plDrawCallbackResetRenderState (plDrawCallback)(-8)
 #define plDrawCallbackSetShader        (plDrawCallback)(-9)
 
+// 3D callbacks
+typedef void (*plDrawCallback3D)(const plDrawList3D*, const plDrawCommand3D*);
+#define plDrawCallback3DSetShader (plDrawCallback3D)(-10)
+
 // character types
 typedef uint16_t plUiWChar;
 
 // enums
 typedef int plDrawFlags;     // -> enum _plDrawFlags     // Flags:
 typedef int plDrawRectFlags; // -> enum _plDrawRectFlags // Flags:
+typedef int plDrawCommand3DType; // -> enum _plDrawCommand3DType
 
 // backend texture type
 #ifndef plTextureID
@@ -188,6 +194,7 @@ typedef struct _plDrawI
 
     // advanced (you probably shouldn't be using this, mostly for backends)
     void (*add_2d_callback)(plDrawLayer2D*, plDrawCallback, void* userData, uint32_t userDataSize);
+    void (*add_3d_callback)(plDrawList3D*,  plDrawCallback3D, void* userData, uint32_t userDataSize);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~3D~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -248,6 +255,13 @@ enum _plDrawFlags
     PL_DRAW_FLAG_CULL_BACK       = 1 << 3,
     PL_DRAW_FLAG_FRONT_FACE_CW   = 1 << 4,
     PL_DRAW_FLAG_REVERSE_Z_DEPTH = 1 << 5,
+};
+
+enum _plDrawCommand3DType
+{
+    PL_DRAW_COMMAND_3D_SOLID,
+    PL_DRAW_COMMAND_3D_LINE,
+    PL_DRAW_COMMAND_3D_TEXTURED,
 };
 
 enum _plDrawRectFlags
@@ -411,6 +425,18 @@ typedef struct _plDraw3DText
     float    fWrap;
 } plDraw3DText;
 
+typedef struct _plDrawCommand3D
+{
+    plDrawCommand3DType eType;
+    uint32_t            uVertexOffset;
+    uint32_t            uIndexOffset;
+    uint32_t            uElementCount;
+    plTextureID         tTextureId;      // textured commands only
+    plDrawCallback3D    tUserCallback;
+    void*               pUserCallbackData;
+    uint32_t            uUserCallbackDataSize;
+} plDrawCommand3D;
+
 typedef struct _plDrawList3D
 {
     // solid
@@ -426,10 +452,16 @@ typedef struct _plDrawList3D
     uint32_t*               sbtTexturedIndexBuffer;
     plTextureID             tTexturedTexture;
 
+    // commands
+    plDrawCommand3D* sbtDrawCommands3D;
+
     // text
     plDraw3DText*  sbtTextEntries;
     plDrawList2D*  pt2dDrawlist;
     plDrawLayer2D* ptLayer;
+
+    // [INTERNAL]
+    int iLastCommand3D;
 } plDrawList3D;
 
 typedef struct _plDrawCommand

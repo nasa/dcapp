@@ -684,6 +684,26 @@ typedef struct __AppData {
     plShaderHandle stencil_draw_sdf_shader[DC_STENCIL_MAX_DEPTH];
     plShaderHandle stencil_cleanup_sdf_shader;
 
+    // stencil shaders (3D solid)
+    plShaderHandle stencil_create_3d_solid_shader;
+    plShaderHandle stencil_remove_3d_solid_shader;
+    plShaderHandle stencil_draw_3d_solid_shader[DC_STENCIL_MAX_DEPTH];
+    plShaderHandle stencil_cleanup_3d_solid_shader;
+
+    // stencil shaders (3D textured)
+    plShaderHandle stencil_create_3d_textured_shader;
+    plShaderHandle stencil_remove_3d_textured_shader;
+    plShaderHandle stencil_draw_3d_textured_shader[DC_STENCIL_MAX_DEPTH];
+    plShaderHandle stencil_cleanup_3d_textured_shader;
+
+    // active stencil shader overrides (injected by _draw_batch_get_*)
+    plShaderHandle* active_2d_shader_override;
+    plShaderHandle* active_sdf_shader_override;
+    plShaderHandle* active_3d_solid_shader_override;
+    plShaderHandle* active_3d_textured_shader_override;
+    bool stencil_2d_dirty;
+    bool stencil_3d_dirty;
+
     // stencil state
     int stencil_depth;
 

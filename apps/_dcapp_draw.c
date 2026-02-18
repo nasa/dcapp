@@ -3557,26 +3557,31 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
     for (int i = 0; i < num_children; i++) {
         _StencilChild *stencil_child = &node->stencil.sb_children[i];
 
-        plShaderHandle* pt2dShader = NULL;
-        plShaderHandle* ptSdfShader = NULL;
         switch (stencil_child->type) {
             case STENCIL_CHILD_TYPE_ADD:
-                pt2dShader  = &app_data->stencil_create_2d_shader;
-                ptSdfShader = &app_data->stencil_create_sdf_shader;
+                app_data->active_2d_shader_override          = &app_data->stencil_create_2d_shader;
+                app_data->active_sdf_shader_override         = &app_data->stencil_create_sdf_shader;
+                app_data->active_3d_solid_shader_override    = &app_data->stencil_create_3d_solid_shader;
+                app_data->active_3d_textured_shader_override = &app_data->stencil_create_3d_textured_shader;
                 break;
             case STENCIL_CHILD_TYPE_REMOVE:
-                pt2dShader  = &app_data->stencil_remove_2d_shader;
-                ptSdfShader = &app_data->stencil_remove_sdf_shader;
+                app_data->active_2d_shader_override          = &app_data->stencil_remove_2d_shader;
+                app_data->active_sdf_shader_override         = &app_data->stencil_remove_sdf_shader;
+                app_data->active_3d_solid_shader_override    = &app_data->stencil_remove_3d_solid_shader;
+                app_data->active_3d_textured_shader_override = &app_data->stencil_remove_3d_textured_shader;
                 break;
             case STENCIL_CHILD_TYPE_DRAW:
-                pt2dShader  = &app_data->stencil_draw_2d_shader[depth - 1];
-                ptSdfShader = &app_data->stencil_draw_sdf_shader[depth - 1];
+                app_data->active_2d_shader_override          = &app_data->stencil_draw_2d_shader[depth - 1];
+                app_data->active_sdf_shader_override         = &app_data->stencil_draw_sdf_shader[depth - 1];
+                app_data->active_3d_solid_shader_override    = &app_data->stencil_draw_3d_solid_shader[depth - 1];
+                app_data->active_3d_textured_shader_override = &app_data->stencil_draw_3d_textured_shader[depth - 1];
                 break;
             default:
                 continue;
         }
 
-        _ext_draw_backend->set_shader(_draw_batch_get_2d(app_data), pt2dShader, ptSdfShader);
+        app_data->stencil_2d_dirty = true;
+        app_data->stencil_3d_dirty = true;
         _draw_node_list(app_data, stencil_child->child, parent_position, parent_dimensions, parent_transform);
     }
 
@@ -3584,7 +3589,12 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
     for (int i = 0; i < num_children; i++) {
         _StencilChild *stencil_child = &node->stencil.sb_children[i];
         if (stencil_child->type == STENCIL_CHILD_TYPE_ADD) {
-            _ext_draw_backend->set_shader(_draw_batch_get_2d(app_data), &app_data->stencil_cleanup_2d_shader, &app_data->stencil_cleanup_sdf_shader);
+            app_data->active_2d_shader_override          = &app_data->stencil_cleanup_2d_shader;
+            app_data->active_sdf_shader_override         = &app_data->stencil_cleanup_sdf_shader;
+            app_data->active_3d_solid_shader_override    = &app_data->stencil_cleanup_3d_solid_shader;
+            app_data->active_3d_textured_shader_override = &app_data->stencil_cleanup_3d_textured_shader;
+            app_data->stencil_2d_dirty = true;
+            app_data->stencil_3d_dirty = true;
             _draw_node_list(app_data, stencil_child->child, parent_position, parent_dimensions, parent_transform);
         }
     }
@@ -3593,12 +3603,18 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
 
     // restore parent draw shader or reset to normal rendering
     if (app_data->stencil_depth > 0) {
-        _ext_draw_backend->set_shader(_draw_batch_get_2d(app_data),
-            &app_data->stencil_draw_2d_shader[app_data->stencil_depth - 1],
-            &app_data->stencil_draw_sdf_shader[app_data->stencil_depth - 1]);
+        app_data->active_2d_shader_override          = &app_data->stencil_draw_2d_shader[app_data->stencil_depth - 1];
+        app_data->active_sdf_shader_override         = &app_data->stencil_draw_sdf_shader[app_data->stencil_depth - 1];
+        app_data->active_3d_solid_shader_override    = &app_data->stencil_draw_3d_solid_shader[app_data->stencil_depth - 1];
+        app_data->active_3d_textured_shader_override = &app_data->stencil_draw_3d_textured_shader[app_data->stencil_depth - 1];
     } else {
-        _ext_draw_backend->set_shader(_draw_batch_get_2d(app_data), NULL, NULL);
+        app_data->active_2d_shader_override          = NULL;
+        app_data->active_sdf_shader_override         = NULL;
+        app_data->active_3d_solid_shader_override    = NULL;
+        app_data->active_3d_textured_shader_override = NULL;
     }
+    app_data->stencil_2d_dirty = true;
+    app_data->stencil_3d_dirty = true;
 }
 
 static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -4238,7 +4254,14 @@ static plDrawLayer2D *_draw_batch_get_2d(_AppData *app_data) {
     // if last batch is already 2D, return the same layer
     int count = sbcount(app_data->sb_draw_batches);
     if (count > 0 && app_data->sb_draw_batches[count - 1].type == DRAW_BATCH_TYPE_2D) {
-        return app_data->sb_draw_batches[count - 1].draw_list_2d.layer;
+        plDrawLayer2D *layer = app_data->sb_draw_batches[count - 1].draw_list_2d.layer;
+
+        // inject stencil override on phase change
+        if (app_data->stencil_2d_dirty) {
+            _ext_draw_backend->set_shader(layer, app_data->active_2d_shader_override, app_data->active_sdf_shader_override);
+            app_data->stencil_2d_dirty = false;
+        }
+        return layer;
     }
 
     // grow pool if needed - request from extension
@@ -4261,6 +4284,12 @@ static plDrawLayer2D *_draw_batch_get_2d(_AppData *app_data) {
     };
     sbpush(app_data->sb_draw_batches, batch);
 
+    // inject stencil override if active (new batch after batch break)
+    if (app_data->stencil_2d_dirty || app_data->active_2d_shader_override || app_data->active_sdf_shader_override) {
+        _ext_draw_backend->set_shader(draw_list_2d->layer, app_data->active_2d_shader_override, app_data->active_sdf_shader_override);
+        app_data->stencil_2d_dirty = false;
+    }
+
     return draw_list_2d->layer;
 }
 
@@ -4268,7 +4297,16 @@ static plDrawList3D *_draw_batch_get_3d(_AppData *app_data) {
     // if last batch is already 3D, return the same draw list
     int count = sbcount(app_data->sb_draw_batches);
     if (count > 0 && app_data->sb_draw_batches[count - 1].type == DRAW_BATCH_TYPE_3D) {
-        return app_data->sb_draw_batches[count - 1].draw_list_3d;
+        plDrawList3D *draw_list = app_data->sb_draw_batches[count - 1].draw_list_3d;
+
+        // inject stencil override on phase change
+        if (app_data->stencil_3d_dirty) {
+            _ext_draw_backend->set_3d_shader(draw_list,
+                app_data->active_3d_solid_shader_override,
+                app_data->active_3d_textured_shader_override);
+            app_data->stencil_3d_dirty = false;
+        }
+        return draw_list;
     }
 
     // grow pool if needed - request from extension
@@ -4288,6 +4326,14 @@ static plDrawList3D *_draw_batch_get_3d(_AppData *app_data) {
         .draw_list_3d = draw_list
     };
     sbpush(app_data->sb_draw_batches, batch);
+
+    // inject stencil override if active (new batch after batch break)
+    if (app_data->stencil_3d_dirty || app_data->active_3d_solid_shader_override || app_data->active_3d_textured_shader_override) {
+        _ext_draw_backend->set_3d_shader(draw_list,
+            app_data->active_3d_solid_shader_override,
+            app_data->active_3d_textured_shader_override);
+        app_data->stencil_3d_dirty = false;
+    }
 
     return draw_list;
 }

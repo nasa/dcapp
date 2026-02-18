@@ -56,6 +56,13 @@ typedef struct _plShaderOverride
     plShaderHandle* ptSdfShader; // for SDF draws (NULL = use default)
 } plShaderOverride;
 
+// 3D shader override data (passed via callback userData)
+typedef struct _plShaderOverride3D
+{
+    plShaderHandle* ptSolidShader;    // for solid draws (NULL = use default)
+    plShaderHandle* ptTexturedShader; // for textured draws (NULL = use default)
+} plShaderOverride3D;
+
 //-----------------------------------------------------------------------------
 // [SECTION] public api struct
 //-----------------------------------------------------------------------------
@@ -83,7 +90,8 @@ typedef struct _plDrawBackendI
 
     // shader overrides (inserts callback into command stream)
     // pass NULL for both shaders to reset to default
-    void (*set_shader)(plDrawLayer2D*, plShaderHandle* pt2dShader, plShaderHandle* ptSdfShader);
+    void (*set_shader)   (plDrawLayer2D*, plShaderHandle* pt2dShader, plShaderHandle* ptSdfShader);
+    void (*set_3d_shader)(plDrawList3D*,  plShaderHandle* ptSolidShader, plShaderHandle* ptTexturedShader);
 } plDrawBackendI;
 
 // Alias for API registration (separate from pilotlight's plDrawBackendI)

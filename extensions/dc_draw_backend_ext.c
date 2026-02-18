@@ -113,6 +113,11 @@ typedef struct _plDrawBackendContext
     plShaderHandle* pt2dShaderOverride;
     plShaderHandle* ptSdfShaderOverride;
     bool            bCustomShaderActive;
+
+    // current 3D shader overrides (set via callback during submit)
+    plShaderHandle* pt3dSolidShaderOverride;
+    plShaderHandle* pt3dTexturedShaderOverride;
+    bool            bCustom3DShaderActive;
 } plDrawBackendContext;
 
 //-----------------------------------------------------------------------------
@@ -836,6 +841,21 @@ pl_set_shader(plDrawLayer2D* ptLayer, plShaderHandle* pt2dShader, plShaderHandle
 }
 
 void
+pl_set_3d_shader(plDrawList3D* ptDrawlist, plShaderHandle* ptSolidShader, plShaderHandle* ptTexturedShader)
+{
+    // allocate shader override data that persists until submit
+    plShaderOverride3D* ptOverride = NULL;
+    if(ptSolidShader != NULL || ptTexturedShader != NULL)
+    {
+        ptOverride = PL_ALLOC(sizeof(plShaderOverride3D));
+        ptOverride->ptSolidShader = ptSolidShader;
+        ptOverride->ptTexturedShader = ptTexturedShader;
+    }
+    // insert callback into 3D command stream (NULL userData means reset to default)
+    gptDraw->add_3d_callback(ptDrawlist, plDrawCallback3DSetShader, ptOverride, sizeof(plShaderOverride3D));
+}
+
+void
 pl_submit_2d_drawlist(plDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, uint32_t uMSAASampleCount)
 {
     gptGfx->set_depth_bias( ptEncoder, 0.0f, 0.0f, 0.0f);
@@ -1129,293 +1149,333 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     gptGfx->set_scissor_region(ptEncoder, &tScissor);
     gptGfx->set_viewport(ptEncoder, &tViewport);
 
-    // regular 3D
+    // base offsets for each geometry type (GPU buffer offsets after upload)
+    int32_t iSolidVertexBase = 0, iSolidIndexBase = 0;
+    int32_t iLineVertexBase = 0, iLineIndexBase = 0;
+    int32_t iTexturedVertexBase = 0, iTexturedIndexBase = 0;
+
+    //=========================================================================
+    // Phase 1: Upload all vertex/index data
+    //=========================================================================
+
+    // solid
     if(pl_sb_size(ptDrawlist->sbtSolidVertexBuffer) > 0)
     {
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~vertex buffer prep~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        // ensure gpu vertex buffer size is adequate
         const uint32_t uVtxBufSzNeeded = sizeof(plDrawVertex3DSolid) * pl_sb_size(ptDrawlist->sbtSolidVertexBuffer);
-
         plBufferInfo* ptBufferInfo = &gptDrawBackendCtx->at3DBufferInfo[uFrameIdx];
-
-        // space left in vertex buffer
         const uint32_t uAvailableVertexBufferSpace = ptBufferInfo->uVertexBufferSize - ptBufferInfo->uVertexBufferOffset;
-
-        // grow buffer if not enough room
         if(uVtxBufSzNeeded >= uAvailableVertexBufferSpace)
         {
-
             gptGfx->queue_buffer_for_deletion(ptDevice, ptBufferInfo->tVertexBuffer);
-
             const plBufferDesc tBufferDesc = {
                 .tUsage     = PL_BUFFER_USAGE_VERTEX,
                 .szByteSize = pl_max(ptBufferInfo->uVertexBufferSize * 2, uVtxBufSzNeeded + uAvailableVertexBufferSpace),
                 .pcDebugName = "3D Draw Vertex Buffer"
             };
-            pl_log_debug_f(gptLog, uLogChannelDrawBackend, "Grow \"%s\" %u to %u frame %llu", tBufferDesc.pcDebugName, ptBufferInfo->uVertexBufferSize, (uint32_t)tBufferDesc.szByteSize, gptIO->ulFrameCount);
             ptBufferInfo->uVertexBufferSize = (uint32_t)tBufferDesc.szByteSize;
-
             ptBufferInfo->tVertexBuffer = pl__create_staging_buffer(&tBufferDesc, "3d draw vtx buffer", uFrameIdx);
         }
-
-        // vertex GPU data transfer
         plBuffer* ptVertexBuffer = gptGfx->get_buffer(ptDevice, ptBufferInfo->tVertexBuffer);
-        char* pucMappedVertexBufferLocation = ptVertexBuffer->tMemoryAllocation.pHostMapped;
-        memcpy(&pucMappedVertexBufferLocation[ptBufferInfo->uVertexBufferOffset], ptDrawlist->sbtSolidVertexBuffer, sizeof(plDrawVertex3DSolid) * pl_sb_size(ptDrawlist->sbtSolidVertexBuffer));
+        memcpy(&((char*)ptVertexBuffer->tMemoryAllocation.pHostMapped)[ptBufferInfo->uVertexBufferOffset],
+            ptDrawlist->sbtSolidVertexBuffer, uVtxBufSzNeeded);
 
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~index buffer prep~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        // ensure gpu index buffer size is adequate
         const uint32_t uIdxBufSzNeeded = sizeof(uint32_t) * pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
-
-        // space left in index buffer
         const uint32_t uAvailableIndexBufferSpace = gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] - gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx];
-
         if(uIdxBufSzNeeded >= uAvailableIndexBufferSpace)
         {
-            gptGfx->queue_buffer_for_deletion(gptDrawBackendCtx->ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
-
+            gptGfx->queue_buffer_for_deletion(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
             const plBufferDesc tBufferDesc = {
                 .tUsage     = PL_BUFFER_USAGE_INDEX,
                 .szByteSize = pl_max(gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] * 2, uIdxBufSzNeeded + uAvailableIndexBufferSpace),
                 .pcDebugName = "Draw Index Buffer"
             };
-            pl_log_debug_f(gptLog, uLogChannelDrawBackend, "(3D) Grow \"%s\" %u to %u frame %llu", tBufferDesc.pcDebugName, gptDrawBackendCtx->auIndexBufferSize[uFrameIdx], (uint32_t)tBufferDesc.szByteSize, gptIO->ulFrameCount);
             gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] = (uint32_t)tBufferDesc.szByteSize;
-
             gptDrawBackendCtx->atIndexBuffer[uFrameIdx] = pl__create_staging_buffer(&tBufferDesc, "3d draw idx buffer", uFrameIdx);
             gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] = 0;
         }
-
-        // index GPU data transfer
         plBuffer* ptIndexBuffer = gptGfx->get_buffer(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
-        char* pucMappedIndexBufferLocation = ptIndexBuffer->tMemoryAllocation.pHostMapped;
-        memcpy(&pucMappedIndexBufferLocation[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]], ptDrawlist->sbtSolidIndexBuffer, sizeof(uint32_t) * pl_sb_size(ptDrawlist->sbtSolidIndexBuffer));
+        memcpy(&((char*)ptIndexBuffer->tMemoryAllocation.pHostMapped)[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]],
+            ptDrawlist->sbtSolidIndexBuffer, uIdxBufSzNeeded);
 
-        plDynamicBinding tSolidDynamicData = pl_allocate_dynamic_data(gptGfx, gptDrawBackendCtx->ptDevice, &gptDrawBackendCtx->tCurrentDynamicDataBlock);
-        plMat4* ptSolidDynamicData = (plMat4*)tSolidDynamicData.pcData;
-        *ptSolidDynamicData = *ptMVP;
-
-        gptGfx->bind_vertex_buffer(ptEncoder, ptBufferInfo->tVertexBuffer);
-        gptGfx->bind_shader(ptEncoder, ptEntry->tRegularPipeline);
-        gptGfx->bind_graphics_bind_groups(ptEncoder, ptEntry->tRegularPipeline, 0, 0, NULL, 1, &tSolidDynamicData);
-
-        const int32_t iVertexOffset = ptBufferInfo->uVertexBufferOffset / sizeof(plDrawVertex3DSolid);
-        const int32_t iIndexOffset = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
-
-        const plDrawIndex tDrawIndex = {
-            .tIndexBuffer = gptDrawBackendCtx->atIndexBuffer[uFrameIdx],
-            .uIndexCount = pl_sb_size(ptDrawlist->sbtSolidIndexBuffer),
-            .uIndexStart = iIndexOffset,
-            .uInstance = 0,
-            .uInstanceCount = 1,
-            .uVertexStart = iVertexOffset
-        };
-
-        gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
-        
-        // bump vertex & index buffer offset
+        iSolidVertexBase = ptBufferInfo->uVertexBufferOffset / sizeof(plDrawVertex3DSolid);
+        iSolidIndexBase  = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
         ptBufferInfo->uVertexBufferOffset += uVtxBufSzNeeded;
         gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] += uIdxBufSzNeeded;
     }
 
-    // 3D lines
+    // lines
     if(pl_sb_size(ptDrawlist->sbtLineVertexBuffer) > 0u)
     {
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~vertex buffer prep~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        // ensure gpu vertex buffer size is adequate
         const uint32_t uVtxBufSzNeeded = sizeof(plDrawVertex3DLine) * pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
-
         plBufferInfo* ptBufferInfo = &gptDrawBackendCtx->atLineBufferInfo[uFrameIdx];
-
-        // space left in vertex buffer
         const uint32_t uAvailableVertexBufferSpace = ptBufferInfo->uVertexBufferSize - ptBufferInfo->uVertexBufferOffset;
-
-        // grow buffer if not enough room
         if(uVtxBufSzNeeded >= uAvailableVertexBufferSpace)
         {
             gptGfx->queue_buffer_for_deletion(ptDevice, ptBufferInfo->tVertexBuffer);
-
             const plBufferDesc tBufferDesc = {
                 .tUsage     = PL_BUFFER_USAGE_VERTEX,
                 .szByteSize = pl_max(ptBufferInfo->uVertexBufferSize * 2, uVtxBufSzNeeded + uAvailableVertexBufferSpace),
                 .pcDebugName = "3D Lines Vertex Buffer"
             };
-            pl_log_debug_f(gptLog, uLogChannelDrawBackend, "Grow \"%s\" %u to %u frame %llu", tBufferDesc.pcDebugName, ptBufferInfo->uVertexBufferSize, (uint32_t)tBufferDesc.szByteSize, gptIO->ulFrameCount);
             ptBufferInfo->uVertexBufferSize = (uint32_t)tBufferDesc.szByteSize;
-
             ptBufferInfo->tVertexBuffer = pl__create_staging_buffer(&tBufferDesc, "draw vtx buffer", uFrameIdx);
         }
-
-        // vertex GPU data transfer
         plBuffer* ptVertexBuffer = gptGfx->get_buffer(ptDevice, ptBufferInfo->tVertexBuffer);
-        char* pucMappedVertexBufferLocation = ptVertexBuffer->tMemoryAllocation.pHostMapped;
-        memcpy(&pucMappedVertexBufferLocation[ptBufferInfo->uVertexBufferOffset], ptDrawlist->sbtLineVertexBuffer, sizeof(plDrawVertex3DLine) * pl_sb_size(ptDrawlist->sbtLineVertexBuffer));
+        memcpy(&((char*)ptVertexBuffer->tMemoryAllocation.pHostMapped)[ptBufferInfo->uVertexBufferOffset],
+            ptDrawlist->sbtLineVertexBuffer, uVtxBufSzNeeded);
 
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~index buffer prep~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        // ensure gpu index buffer size is adequate
         const uint32_t uIdxBufSzNeeded = sizeof(uint32_t) * pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
-
-        // space left in index buffer
         const uint32_t uAvailableIndexBufferSpace = gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] - gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx];
-
         if(uIdxBufSzNeeded >= uAvailableIndexBufferSpace)
         {
-
             gptGfx->queue_buffer_for_deletion(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
-
             const plBufferDesc tBufferDesc = {
                 .tUsage     = PL_BUFFER_USAGE_INDEX,
                 .szByteSize = pl_max(gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] * 2, uIdxBufSzNeeded + uAvailableIndexBufferSpace),
                 .pcDebugName = "Draw Index Buffer"
             };
-            pl_log_debug_f(gptLog, uLogChannelDrawBackend, "(3D) Grow \"%s\" %u to %u frame %llu", tBufferDesc.pcDebugName, gptDrawBackendCtx->auIndexBufferSize[uFrameIdx], (uint32_t)tBufferDesc.szByteSize, gptIO->ulFrameCount);
             gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] = (uint32_t)tBufferDesc.szByteSize;
-
             gptDrawBackendCtx->atIndexBuffer[uFrameIdx] = pl__create_staging_buffer(&tBufferDesc, "draw idx buffer", uFrameIdx);
             gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] = 0;
         }
-
-        // index GPU data transfer
         plBuffer* ptIndexBuffer = gptGfx->get_buffer(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
-        char* pucMappedIndexBufferLocation = ptIndexBuffer->tMemoryAllocation.pHostMapped;
-        memcpy(&pucMappedIndexBufferLocation[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]], ptDrawlist->sbtLineIndexBuffer, sizeof(uint32_t) * pl_sb_size(ptDrawlist->sbtLineIndexBuffer));
+        memcpy(&((char*)ptIndexBuffer->tMemoryAllocation.pHostMapped)[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]],
+            ptDrawlist->sbtLineIndexBuffer, uIdxBufSzNeeded);
 
-        typedef struct _plLineDynamiceData
-        {
-            plMat4 tMVP;
-            float fAspect;
-            int   padding[3];
-        } plLineDynamiceData;
-
-        plDynamicBinding tLineDynamicData = pl_allocate_dynamic_data(gptGfx, gptDrawBackendCtx->ptDevice, &gptDrawBackendCtx->tCurrentDynamicDataBlock);
-        plLineDynamiceData* ptLineDynamicData = (plLineDynamiceData*)tLineDynamicData.pcData;
-        ptLineDynamicData->tMVP = *ptMVP;
-        ptLineDynamicData->fAspect = fAspectRatio;
-
-        gptGfx->bind_vertex_buffer(ptEncoder, ptBufferInfo->tVertexBuffer);
-        gptGfx->bind_shader(ptEncoder, ptEntry->tSecondaryPipeline);
-        gptGfx->bind_graphics_bind_groups(ptEncoder, ptEntry->tSecondaryPipeline, 0, 0, NULL, 1, &tLineDynamicData);
-
-        const int32_t iVertexOffset = ptBufferInfo->uVertexBufferOffset / sizeof(plDrawVertex3DLine);
-        const int32_t iIndexOffset = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
-
-        const plDrawIndex tDrawIndex = {
-            .tIndexBuffer = gptDrawBackendCtx->atIndexBuffer[uFrameIdx],
-            .uIndexCount = pl_sb_size(ptDrawlist->sbtLineIndexBuffer),
-            .uIndexStart = iIndexOffset,
-            .uInstance = 0,
-            .uInstanceCount = 1,
-            .uVertexStart = iVertexOffset
-        };
-
-        gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
-
-        // bump vertex & index buffer offset
+        iLineVertexBase = ptBufferInfo->uVertexBufferOffset / sizeof(plDrawVertex3DLine);
+        iLineIndexBase  = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
         ptBufferInfo->uVertexBufferOffset += uVtxBufSzNeeded;
         gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] += uIdxBufSzNeeded;
     }
 
-    // 3D textured
+    // textured
+    const plPipelineEntry* ptTexturedEntry = NULL;
     if(pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer) > 0u)
     {
-        const plPipelineEntry* ptTexturedEntry = pl__get_3d_textured_pipeline(gptGfx->get_encoder_render_pass(ptEncoder), uMSAASampleCount, tFlags, gptGfx->get_render_encoder_subpass(ptEncoder));
+        ptTexturedEntry = pl__get_3d_textured_pipeline(gptGfx->get_encoder_render_pass(ptEncoder), uMSAASampleCount, tFlags, gptGfx->get_render_encoder_subpass(ptEncoder));
 
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~vertex buffer prep~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        // ensure gpu vertex buffer size is adequate
         const uint32_t uVtxBufSzNeeded = sizeof(plDrawVertex3DTextured) * pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer);
-
         plBufferInfo* ptBufferInfo = &gptDrawBackendCtx->at3DTexturedBufferInfo[uFrameIdx];
-
-        // space left in vertex buffer
         const uint32_t uAvailableVertexBufferSpace = ptBufferInfo->uVertexBufferSize - ptBufferInfo->uVertexBufferOffset;
-
-        // grow buffer if not enough room
         if(uVtxBufSzNeeded >= uAvailableVertexBufferSpace)
         {
             gptGfx->queue_buffer_for_deletion(ptDevice, ptBufferInfo->tVertexBuffer);
-
             const plBufferDesc tBufferDesc = {
                 .tUsage     = PL_BUFFER_USAGE_VERTEX,
                 .szByteSize = pl_max(ptBufferInfo->uVertexBufferSize * 2, uVtxBufSzNeeded + uAvailableVertexBufferSpace),
                 .pcDebugName = "3D Textured Vertex Buffer"
             };
-            pl_log_debug_f(gptLog, uLogChannelDrawBackend, "Grow \"%s\" %u to %u frame %llu", tBufferDesc.pcDebugName, ptBufferInfo->uVertexBufferSize, (uint32_t)tBufferDesc.szByteSize, gptIO->ulFrameCount);
             ptBufferInfo->uVertexBufferSize = (uint32_t)tBufferDesc.szByteSize;
-
             ptBufferInfo->tVertexBuffer = pl__create_staging_buffer(&tBufferDesc, "3d textured draw vtx buffer", uFrameIdx);
         }
-
-        // vertex GPU data transfer
         plBuffer* ptVertexBuffer = gptGfx->get_buffer(ptDevice, ptBufferInfo->tVertexBuffer);
-        char* pucMappedVertexBufferLocation = ptVertexBuffer->tMemoryAllocation.pHostMapped;
-        memcpy(&pucMappedVertexBufferLocation[ptBufferInfo->uVertexBufferOffset], ptDrawlist->sbtTexturedVertexBuffer, sizeof(plDrawVertex3DTextured) * pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer));
+        memcpy(&((char*)ptVertexBuffer->tMemoryAllocation.pHostMapped)[ptBufferInfo->uVertexBufferOffset],
+            ptDrawlist->sbtTexturedVertexBuffer, uVtxBufSzNeeded);
 
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~index buffer prep~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        // ensure gpu index buffer size is adequate
         const uint32_t uIdxBufSzNeeded = sizeof(uint32_t) * pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer);
-
-        // space left in index buffer
         const uint32_t uAvailableIndexBufferSpace = gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] - gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx];
-
         if(uIdxBufSzNeeded >= uAvailableIndexBufferSpace)
         {
             gptGfx->queue_buffer_for_deletion(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
-
             const plBufferDesc tBufferDesc = {
                 .tUsage     = PL_BUFFER_USAGE_INDEX,
                 .szByteSize = pl_max(gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] * 2, uIdxBufSzNeeded + uAvailableIndexBufferSpace),
                 .pcDebugName = "Draw Index Buffer"
             };
-            pl_log_debug_f(gptLog, uLogChannelDrawBackend, "(3D Textured) Grow \"%s\" %u to %u frame %llu", tBufferDesc.pcDebugName, gptDrawBackendCtx->auIndexBufferSize[uFrameIdx], (uint32_t)tBufferDesc.szByteSize, gptIO->ulFrameCount);
             gptDrawBackendCtx->auIndexBufferSize[uFrameIdx] = (uint32_t)tBufferDesc.szByteSize;
-
             gptDrawBackendCtx->atIndexBuffer[uFrameIdx] = pl__create_staging_buffer(&tBufferDesc, "draw idx buffer", uFrameIdx);
             gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] = 0;
         }
-
-        // index GPU data transfer
         plBuffer* ptIndexBuffer = gptGfx->get_buffer(ptDevice, gptDrawBackendCtx->atIndexBuffer[uFrameIdx]);
-        char* pucMappedIndexBufferLocation = ptIndexBuffer->tMemoryAllocation.pHostMapped;
-        memcpy(&pucMappedIndexBufferLocation[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]], ptDrawlist->sbtTexturedIndexBuffer, sizeof(uint32_t) * pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer));
+        memcpy(&((char*)ptIndexBuffer->tMemoryAllocation.pHostMapped)[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]],
+            ptDrawlist->sbtTexturedIndexBuffer, uIdxBufSzNeeded);
 
-        plDynamicBinding tTexturedDynamicData = pl_allocate_dynamic_data(gptGfx, gptDrawBackendCtx->ptDevice, &gptDrawBackendCtx->tCurrentDynamicDataBlock);
-        plMat4* ptTexturedDynamicData = (plMat4*)tTexturedDynamicData.pcData;
-        *ptTexturedDynamicData = *ptMVP;
-
-        // bind texture
-        plBindGroupHandle tTexture = {.uData = ptDrawlist->tTexturedTexture};
-        plBindGroupHandle atBindGroups[] = {
-            gptDrawBackendCtx->tFontSamplerBindGroup,  // Slot 0: Sampler
-            tTexture                                   // Slot 1: Texture
-        };
-
-        gptGfx->bind_vertex_buffer(ptEncoder, ptBufferInfo->tVertexBuffer);
-        gptGfx->bind_shader(ptEncoder, ptTexturedEntry->tRegularPipeline);
-        gptGfx->bind_graphics_bind_groups(ptEncoder, ptTexturedEntry->tRegularPipeline, 0, 2, atBindGroups, 1, &tTexturedDynamicData);
-
-        const int32_t iVertexOffset = ptBufferInfo->uVertexBufferOffset / sizeof(plDrawVertex3DTextured);
-        const int32_t iIndexOffset = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
-
-        const plDrawIndex tDrawIndex = {
-            .tIndexBuffer = gptDrawBackendCtx->atIndexBuffer[uFrameIdx],
-            .uIndexCount = pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer),
-            .uIndexStart = iIndexOffset,
-            .uInstance = 0,
-            .uInstanceCount = 1,
-            .uVertexStart = iVertexOffset
-        };
-
-        gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
-
-        // bump vertex & index buffer offset
+        iTexturedVertexBase = ptBufferInfo->uVertexBufferOffset / sizeof(plDrawVertex3DTextured);
+        iTexturedIndexBase  = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
         ptBufferInfo->uVertexBufferOffset += uVtxBufSzNeeded;
         gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] += uIdxBufSzNeeded;
+    }
+
+    //=========================================================================
+    // Phase 2: Issue draw calls via command buffer
+    //=========================================================================
+
+    // allocate shared dynamic data for MVP
+    plDynamicBinding tMvpDynamicData = pl_allocate_dynamic_data(gptGfx, gptDrawBackendCtx->ptDevice, &gptDrawBackendCtx->tCurrentDynamicDataBlock);
+    plMat4* ptMvpDynamicData = (plMat4*)tMvpDynamicData.pcData;
+    *ptMvpDynamicData = *ptMVP;
+
+    // line dynamic data (MVP + aspect)
+    typedef struct _plLineDynamiceData
+    {
+        plMat4 tMVP;
+        float fAspect;
+        int   padding[3];
+    } plLineDynamiceData;
+
+    plDynamicBinding tLineDynamicData = pl_allocate_dynamic_data(gptGfx, gptDrawBackendCtx->ptDevice, &gptDrawBackendCtx->tCurrentDynamicDataBlock);
+    plLineDynamiceData* ptLineDynamicData = (plLineDynamiceData*)tLineDynamicData.pcData;
+    ptLineDynamicData->tMVP = *ptMVP;
+    ptLineDynamicData->fAspect = fAspectRatio;
+
+    const uint32_t uCmdCount = pl_sb_size(ptDrawlist->sbtDrawCommands3D);
+    if(uCmdCount > 0)
+    {
+        // reset 3D shader override state
+        gptDrawBackendCtx->bCustom3DShaderActive = false;
+        gptDrawBackendCtx->pt3dSolidShaderOverride = NULL;
+        gptDrawBackendCtx->pt3dTexturedShaderOverride = NULL;
+
+        for(uint32_t i = 0; i < uCmdCount; i++)
+        {
+            plDrawCommand3D cmd = ptDrawlist->sbtDrawCommands3D[i];
+
+            // callback (shader changes)
+            if(cmd.tUserCallback != NULL)
+            {
+                if(cmd.tUserCallback == plDrawCallback3DSetShader)
+                {
+                    plShaderOverride3D* ptOverride = (plShaderOverride3D*)cmd.pUserCallbackData;
+                    if(ptOverride)
+                    {
+                        gptDrawBackendCtx->pt3dSolidShaderOverride = ptOverride->ptSolidShader;
+                        gptDrawBackendCtx->pt3dTexturedShaderOverride = ptOverride->ptTexturedShader;
+                        gptDrawBackendCtx->bCustom3DShaderActive = true;
+                        PL_FREE(ptOverride);
+                        ptDrawlist->sbtDrawCommands3D[i].pUserCallbackData = NULL;
+                    }
+                    else
+                    {
+                        gptDrawBackendCtx->pt3dSolidShaderOverride = NULL;
+                        gptDrawBackendCtx->pt3dTexturedShaderOverride = NULL;
+                        gptDrawBackendCtx->bCustom3DShaderActive = false;
+                    }
+                }
+                continue;
+            }
+
+            if(cmd.uElementCount == 0)
+                continue;
+
+            if(cmd.eType == PL_DRAW_COMMAND_3D_SOLID)
+            {
+                plShaderHandle tShader = gptDrawBackendCtx->bCustom3DShaderActive && gptDrawBackendCtx->pt3dSolidShaderOverride
+                    ? *gptDrawBackendCtx->pt3dSolidShaderOverride
+                    : ptEntry->tRegularPipeline;
+
+                gptGfx->bind_vertex_buffer(ptEncoder, gptDrawBackendCtx->at3DBufferInfo[uFrameIdx].tVertexBuffer);
+                gptGfx->bind_shader(ptEncoder, tShader);
+                gptGfx->bind_graphics_bind_groups(ptEncoder, tShader, 0, 0, NULL, 1, &tMvpDynamicData);
+
+                const plDrawIndex tDrawIndex = {
+                    .tIndexBuffer   = gptDrawBackendCtx->atIndexBuffer[uFrameIdx],
+                    .uIndexCount    = cmd.uElementCount,
+                    .uIndexStart    = iSolidIndexBase + cmd.uIndexOffset,
+                    .uInstance      = 0,
+                    .uInstanceCount = 1,
+                    .uVertexStart   = iSolidVertexBase + cmd.uVertexOffset
+                };
+                gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
+            }
+            else if(cmd.eType == PL_DRAW_COMMAND_3D_LINE)
+            {
+                plShaderHandle tShader = ptEntry->tSecondaryPipeline;
+
+                gptGfx->bind_vertex_buffer(ptEncoder, gptDrawBackendCtx->atLineBufferInfo[uFrameIdx].tVertexBuffer);
+                gptGfx->bind_shader(ptEncoder, tShader);
+                gptGfx->bind_graphics_bind_groups(ptEncoder, tShader, 0, 0, NULL, 1, &tLineDynamicData);
+
+                const plDrawIndex tDrawIndex = {
+                    .tIndexBuffer   = gptDrawBackendCtx->atIndexBuffer[uFrameIdx],
+                    .uIndexCount    = cmd.uElementCount,
+                    .uIndexStart    = iLineIndexBase + cmd.uIndexOffset,
+                    .uInstance      = 0,
+                    .uInstanceCount = 1,
+                    .uVertexStart   = iLineVertexBase + cmd.uVertexOffset
+                };
+                gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
+            }
+            else if(cmd.eType == PL_DRAW_COMMAND_3D_TEXTURED && ptTexturedEntry)
+            {
+                plShaderHandle tShader = gptDrawBackendCtx->bCustom3DShaderActive && gptDrawBackendCtx->pt3dTexturedShaderOverride
+                    ? *gptDrawBackendCtx->pt3dTexturedShaderOverride
+                    : ptTexturedEntry->tRegularPipeline;
+
+                plBindGroupHandle tTexture = {.uData = cmd.tTextureId};
+                plBindGroupHandle atBindGroups[] = {
+                    gptDrawBackendCtx->tFontSamplerBindGroup,
+                    tTexture
+                };
+
+                gptGfx->bind_vertex_buffer(ptEncoder, gptDrawBackendCtx->at3DTexturedBufferInfo[uFrameIdx].tVertexBuffer);
+                gptGfx->bind_shader(ptEncoder, tShader);
+                gptGfx->bind_graphics_bind_groups(ptEncoder, tShader, 0, 2, atBindGroups, 1, &tMvpDynamicData);
+
+                const plDrawIndex tDrawIndex = {
+                    .tIndexBuffer   = gptDrawBackendCtx->atIndexBuffer[uFrameIdx],
+                    .uIndexCount    = cmd.uElementCount,
+                    .uIndexStart    = iTexturedIndexBase + cmd.uIndexOffset,
+                    .uInstance      = 0,
+                    .uInstanceCount = 1,
+                    .uVertexStart   = iTexturedVertexBase + cmd.uVertexOffset
+                };
+                gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
+            }
+        }
+    }
+    else
+    {
+        // fallback: no command buffer (backward compatibility)
+        if(pl_sb_size(ptDrawlist->sbtSolidVertexBuffer) > 0)
+        {
+            gptGfx->bind_vertex_buffer(ptEncoder, gptDrawBackendCtx->at3DBufferInfo[uFrameIdx].tVertexBuffer);
+            gptGfx->bind_shader(ptEncoder, ptEntry->tRegularPipeline);
+            gptGfx->bind_graphics_bind_groups(ptEncoder, ptEntry->tRegularPipeline, 0, 0, NULL, 1, &tMvpDynamicData);
+            const plDrawIndex tDrawIndex = {
+                .tIndexBuffer   = gptDrawBackendCtx->atIndexBuffer[uFrameIdx],
+                .uIndexCount    = pl_sb_size(ptDrawlist->sbtSolidIndexBuffer),
+                .uIndexStart    = iSolidIndexBase,
+                .uInstance      = 0,
+                .uInstanceCount = 1,
+                .uVertexStart   = iSolidVertexBase
+            };
+            gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
+        }
+        if(pl_sb_size(ptDrawlist->sbtLineVertexBuffer) > 0u)
+        {
+            gptGfx->bind_vertex_buffer(ptEncoder, gptDrawBackendCtx->atLineBufferInfo[uFrameIdx].tVertexBuffer);
+            gptGfx->bind_shader(ptEncoder, ptEntry->tSecondaryPipeline);
+            gptGfx->bind_graphics_bind_groups(ptEncoder, ptEntry->tSecondaryPipeline, 0, 0, NULL, 1, &tLineDynamicData);
+            const plDrawIndex tDrawIndex = {
+                .tIndexBuffer   = gptDrawBackendCtx->atIndexBuffer[uFrameIdx],
+                .uIndexCount    = pl_sb_size(ptDrawlist->sbtLineIndexBuffer),
+                .uIndexStart    = iLineIndexBase,
+                .uInstance      = 0,
+                .uInstanceCount = 1,
+                .uVertexStart   = iLineVertexBase
+            };
+            gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
+        }
+        if(pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer) > 0u && ptTexturedEntry)
+        {
+            plBindGroupHandle tTexture = {.uData = ptDrawlist->tTexturedTexture};
+            plBindGroupHandle atBindGroups[] = {
+                gptDrawBackendCtx->tFontSamplerBindGroup,
+                tTexture
+            };
+            gptGfx->bind_vertex_buffer(ptEncoder, gptDrawBackendCtx->at3DTexturedBufferInfo[uFrameIdx].tVertexBuffer);
+            gptGfx->bind_shader(ptEncoder, ptTexturedEntry->tRegularPipeline);
+            gptGfx->bind_graphics_bind_groups(ptEncoder, ptTexturedEntry->tRegularPipeline, 0, 2, atBindGroups, 1, &tMvpDynamicData);
+            const plDrawIndex tDrawIndex = {
+                .tIndexBuffer   = gptDrawBackendCtx->atIndexBuffer[uFrameIdx],
+                .uIndexCount    = pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer),
+                .uIndexStart    = iTexturedIndexBase,
+                .uInstance      = 0,
+                .uInstanceCount = 1,
+                .uVertexStart   = iTexturedVertexBase
+            };
+            gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
+        }
     }
 
     const uint32_t uTextCount = pl_sb_size(ptDrawlist->sbtTextEntries);
@@ -1471,6 +1531,7 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .use_nearest_sampler           = pl_use_nearest_sampler,
         .use_linear_sampler            = pl_use_linear_sampler,
         .set_shader                    = pl_set_shader,
+        .set_3d_shader                 = pl_set_3d_shader,
     };
     pl_set_api(ptApiRegistry, dcDrawBackendI, &tApi);
 
