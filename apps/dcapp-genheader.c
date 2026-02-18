@@ -34,6 +34,7 @@ int main(int argc, char **argv) {
 
     // set environment (used for dcapp XMLs)
     dc_utils_set_env("dcappDisplayHome", config->config_dir_path, 1);
+    dc_utils_set_env("dcappHome", config->dcapp_dir_path, 1);
 
     // preprocess XML file
     dc_app_config_preprocess_xml(config, lookup);

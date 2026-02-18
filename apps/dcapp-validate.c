@@ -44,6 +44,7 @@ int main(int argc, char **argv) {
 
     // set environment
     dc_utils_set_env("dcappDisplayHome", config->config_dir_path, 1);
+    dc_utils_set_env("dcappHome", config->dcapp_dir_path, 1);
 
     // create lookup (needed for config_clean_xml)
     DcAppLookup *lookup = dc_app_lookup_create();

@@ -2768,7 +2768,6 @@ static _NodeIndex _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node,
         xmlFree(raw_operand);
         dc_utils_trim_whitespace_inplace(operand);
         if (operand[0] == '\0') {
-            DC_LOG_WARN("Set", "Empty content, skipping");
         } else {
             dc_node.set.operand = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_STRING, operand);
         }
