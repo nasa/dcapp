@@ -19,8 +19,8 @@
             <Text X="500" Y="770" LocalAlignX="#_align_center_" Size="24" FillColor="1 1 1">Rotation Demo</Text>
             <Text X="500" Y="745" LocalAlignX="#_align_center_" Size="11" FillColor="0.6 0.6 0.6">Yellow dots show pivot points</Text>
 
-            <!-- ========== ROW 1: Rectangle ========== -->
-            <Text X="80" Y="710" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Rectangle</Text>
+            <!-- ========== ROW 1: PivotLocalAlign - Rectangle ========== -->
+            <Text X="250" Y="710" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">PivotLocalAlign</Text>
 
             <!-- Default pivot (bottom-left) -->
             <Container X="30" Y="600" Width="100" Height="90">
@@ -45,8 +45,8 @@
             <!-- Center-middle pivot -->
             <Container X="250" Y="600" Width="100" Height="90">
                 <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="50" Y="45" Radius="4" FillColor="1 1 0"/>
-                <Rectangle X="50" Y="45" Width="40" Height="25" Rotation="@ROTATION"
+                <Ellipse X="50" Y="42" Radius="4" FillColor="1 1 0"/>
+                <Rectangle X="50" Y="42" Width="40" Height="25" Rotation="@ROTATION"
                     LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                     PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_middle_"
                     FillColor="0.3 0.8 0.3" LineColor="0.5 1 0.5" LineWidth="1"/>
@@ -64,11 +64,10 @@
                 <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">right, top</Text>
             </Container>
 
-            <!-- ========== ROW 2: Circle ========== -->
-            <Text X="80" Y="570" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Circle</Text>
+            <!-- ========== ROW 2: PivotLocalAlign - Circle ========== -->
 
             <!-- Default pivot -->
-            <Container X="30" Y="460" Width="100" Height="90">
+            <Container X="30" Y="490" Width="100" Height="90">
                 <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
                 <Ellipse X="0" Y="0" Radius="4" FillColor="1 1 0"/>
                 <Ellipse X="0" Y="0" Radius="20" Rotation="@ROTATION"
@@ -76,19 +75,8 @@
                 <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">default</Text>
             </Container>
 
-            <!-- Bottom-left pivot -->
-            <Container X="140" Y="460" Width="100" Height="90">
-                <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="30" Y="30" Radius="4" FillColor="1 1 0"/>
-                <Ellipse X="30" Y="30" Radius="20" Rotation="@ROTATION"
-                    LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_"
-                    PivotLocalAlignX="#_align_left_" PivotLocalAlignY="#_align_bottom_"
-                    FillColor="0.8 0.5 0.3" LineColor="1 0.7 0.5" LineWidth="1"/>
-                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">left, bottom</Text>
-            </Container>
-
             <!-- Center-middle pivot -->
-            <Container X="250" Y="460" Width="100" Height="90">
+            <Container X="140" Y="490" Width="100" Height="90">
                 <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
                 <Ellipse X="50" Y="45" Radius="4" FillColor="1 1 0"/>
                 <Ellipse X="50" Y="45" Radius="20" Rotation="@ROTATION"
@@ -99,7 +87,7 @@
             </Container>
 
             <!-- Top-right pivot -->
-            <Container X="360" Y="460" Width="100" Height="90">
+            <Container X="250" Y="490" Width="100" Height="90">
                 <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
                 <Ellipse X="70" Y="60" Radius="4" FillColor="1 1 0"/>
                 <Ellipse X="70" Y="60" Radius="20" Rotation="@ROTATION"
@@ -109,252 +97,192 @@
                 <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">right, top</Text>
             </Container>
 
-            <!-- ========== ROW 3: Text ========== -->
-            <Text X="80" Y="430" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Text</Text>
+            <!-- ========== ROW 3: PivotLocalAlign - Text & Image ========== -->
 
-            <!-- Default pivot -->
-            <Container X="30" Y="320" Width="100" Height="90">
-                <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="0" Y="0" Radius="4" FillColor="1 1 0"/>
-                <Text X="0" Y="0" Rotation="@ROTATION" Size="14" FillColor="0.8 0.3 0.3">Text</Text>
-                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">default</Text>
-            </Container>
-
-            <!-- Bottom-left pivot -->
-            <Container X="140" Y="320" Width="100" Height="90">
-                <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="30" Y="30" Radius="4" FillColor="1 1 0"/>
-                <Text X="30" Y="30" Rotation="@ROTATION"
-                    LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_"
-                    PivotLocalAlignX="#_align_left_" PivotLocalAlignY="#_align_bottom_"
-                    Size="14" FillColor="0.8 0.5 0.3">Text</Text>
-                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">left, bottom</Text>
-            </Container>
-
-            <!-- Center-middle pivot -->
-            <Container X="250" Y="320" Width="100" Height="90">
+            <!-- Text center-middle -->
+            <Container X="360" Y="490" Width="100" Height="90">
                 <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
                 <Ellipse X="50" Y="45" Radius="4" FillColor="1 1 0"/>
                 <Text X="50" Y="45" Rotation="@ROTATION"
                     LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                     PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_middle_"
                     Size="14" FillColor="0.3 0.8 0.3">Text</Text>
-                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">center, middle</Text>
+                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">text center</Text>
             </Container>
 
-            <!-- Top-right pivot -->
-            <Container X="360" Y="320" Width="100" Height="90">
-                <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="70" Y="60" Radius="4" FillColor="1 1 0"/>
-                <Text X="70" Y="60" Rotation="@ROTATION"
-                    LocalAlignX="#_align_right_" LocalAlignY="#_align_top_"
-                    PivotLocalAlignX="#_align_right_" PivotLocalAlignY="#_align_top_"
-                    Size="14" FillColor="0.3 0.3 0.8">Text</Text>
-                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">right, top</Text>
-            </Container>
-
-            <!-- ========== ROW 4: Image ========== -->
-            <Text X="80" Y="290" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Image</Text>
-
-            <!-- Default pivot -->
-            <Container X="30" Y="180" Width="100" Height="90">
-                <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="0" Y="0" Radius="4" FillColor="1 1 0"/>
-                <Image X="0" Y="0" Width="40" Height="40" Rotation="@ROTATION"
-                    File="../../assets/nasa.png"/>
-                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">default</Text>
-            </Container>
-
-            <!-- Bottom-left pivot -->
-            <Container X="140" Y="180" Width="100" Height="90">
-                <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="30" Y="30" Radius="4" FillColor="1 1 0"/>
-                <Image X="30" Y="30" Width="40" Height="40" Rotation="@ROTATION"
-                    LocalAlignX="#_align_left_" LocalAlignY="#_align_bottom_"
-                    PivotLocalAlignX="#_align_left_" PivotLocalAlignY="#_align_bottom_"
-                    File="../../assets/nasa.png"/>
-                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">left, bottom</Text>
-            </Container>
-
-            <!-- Center-middle pivot -->
-            <Container X="250" Y="180" Width="100" Height="90">
+            <!-- Image center-middle -->
+            <Container X="30" Y="380" Width="100" Height="90">
                 <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
                 <Ellipse X="50" Y="45" Radius="4" FillColor="1 1 0"/>
                 <Image X="50" Y="45" Width="40" Height="40" Rotation="@ROTATION"
                     LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                     PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_middle_"
                     File="../../assets/nasa.png"/>
-                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">center, middle</Text>
+                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">image center</Text>
             </Container>
 
-            <!-- Top-right pivot -->
-            <Container X="360" Y="180" Width="100" Height="90">
+            <!-- Image right-top -->
+            <Container X="140" Y="380" Width="100" Height="90">
                 <Rectangle Width="100" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
                 <Ellipse X="70" Y="60" Radius="4" FillColor="1 1 0"/>
                 <Image X="70" Y="60" Width="40" Height="40" Rotation="@ROTATION"
                     LocalAlignX="#_align_right_" LocalAlignY="#_align_top_"
                     PivotLocalAlignX="#_align_right_" PivotLocalAlignY="#_align_top_"
                     File="../../assets/nasa.png"/>
-                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">right, top</Text>
+                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">image right, top</Text>
             </Container>
 
-            <!-- ========== RIGHT SIDE: Additional pivot positions ========== -->
-            <Rectangle X="480" Y="710" Width="2" Height="540" FillColor="0.3 0.3 0.35"/>
+            <!-- ========== ROW 4: PivotPosition (pixel offsets) ========== -->
+            <Text X="250" Y="350" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">PivotPosition (Pixel Offsets)</Text>
 
-            <Text X="730" Y="710" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">More Pivot Positions</Text>
-
-            <!-- Row labels -->
-            <Text X="510" Y="650" Size="11" FillColor="0.7 0.7 0.7">left, middle</Text>
-            <Text X="510" Y="530" Size="11" FillColor="0.7 0.7 0.7">center, bottom</Text>
-            <Text X="510" Y="410" Size="11" FillColor="0.7 0.7 0.7">center, top</Text>
-            <Text X="510" Y="290" Size="11" FillColor="0.7 0.7 0.7">right, middle</Text>
-
-            <!-- Left-middle pivots -->
-            <Container X="620" Y="600" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="25" Y="40" Radius="4" FillColor="1 1 0"/>
-                <Rectangle X="25" Y="40" Width="40" Height="25" Rotation="@ROTATION"
-                    LocalAlignX="#_align_left_" LocalAlignY="#_align_middle_"
-                    PivotLocalAlignX="#_align_left_" PivotLocalAlignY="#_align_middle_"
-                    FillColor="0.8 0.3 0.8" LineColor="1 0.5 1" LineWidth="1"/>
-            </Container>
-            <Container X="720" Y="600" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="45" Y="40" Radius="4" FillColor="1 1 0"/>
-                <Text X="45" Y="40" Rotation="@ROTATION"
-                    LocalAlignX="#_align_left_" LocalAlignY="#_align_middle_"
-                    PivotLocalAlignX="#_align_left_" PivotLocalAlignY="#_align_middle_"
-                    Size="14" FillColor="0.8 0.3 0.8">Text</Text>
-            </Container>
-            <Container X="820" Y="600" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="25" Y="40" Radius="4" FillColor="1 1 0"/>
-                <Image X="25" Y="40" Width="40" Height="40" Rotation="@ROTATION"
-                    LocalAlignX="#_align_left_" LocalAlignY="#_align_middle_"
-                    PivotLocalAlignX="#_align_left_" PivotLocalAlignY="#_align_middle_"
-                    File="../../assets/nasa.png"/>
-            </Container>
-
-            <!-- Center-bottom pivots -->
-            <Container X="620" Y="480" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="45" Y="25" Radius="4" FillColor="1 1 0"/>
-                <Rectangle X="45" Y="25" Width="40" Height="25" Rotation="@ROTATION"
-                    LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
-                    PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_bottom_"
-                    FillColor="0.3 0.8 0.8" LineColor="0.5 1 1" LineWidth="1"/>
-            </Container>
-            <Container X="720" Y="480" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="45" Y="25" Radius="4" FillColor="1 1 0"/>
-                <Text X="45" Y="25" Rotation="@ROTATION"
-                    LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
-                    PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_bottom_"
-                    Size="14" FillColor="0.3 0.8 0.8">Text</Text>
-            </Container>
-            <Container X="820" Y="480" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="45" Y="20" Radius="4" FillColor="1 1 0"/>
-                <Image X="45" Y="20" Width="40" Height="40" Rotation="@ROTATION"
-                    LocalAlignX="#_align_center_" LocalAlignY="#_align_bottom_"
-                    PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_bottom_"
-                    File="../../assets/nasa.png"/>
-            </Container>
-
-            <!-- Center-top pivots -->
-            <Container X="620" Y="360" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="45" Y="55" Radius="4" FillColor="1 1 0"/>
-                <Rectangle X="45" Y="55" Width="40" Height="25" Rotation="@ROTATION"
-                    LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
-                    PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_top_"
-                    FillColor="0.8 0.8 0.3" LineColor="1 1 0.5" LineWidth="1"/>
-            </Container>
-            <Container X="720" Y="360" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="45" Y="55" Radius="4" FillColor="1 1 0"/>
-                <Text X="45" Y="55" Rotation="@ROTATION"
-                    LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
-                    PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_top_"
-                    Size="14" FillColor="0.8 0.8 0.3">Text</Text>
-            </Container>
-            <Container X="820" Y="360" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="45" Y="60" Radius="4" FillColor="1 1 0"/>
-                <Image X="45" Y="60" Width="40" Height="40" Rotation="@ROTATION"
-                    LocalAlignX="#_align_center_" LocalAlignY="#_align_top_"
-                    PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_top_"
-                    File="../../assets/nasa.png"/>
-            </Container>
-
-            <!-- Right-middle pivots -->
-            <Container X="620" Y="240" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="65" Y="40" Radius="4" FillColor="1 1 0"/>
-                <Rectangle X="65" Y="40" Width="40" Height="25" Rotation="@ROTATION"
-                    LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
-                    PivotLocalAlignX="#_align_right_" PivotLocalAlignY="#_align_middle_"
-                    FillColor="0.5 0.3 0.8" LineColor="0.7 0.5 1" LineWidth="1"/>
-            </Container>
-            <Container X="720" Y="240" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="45" Y="40" Radius="4" FillColor="1 1 0"/>
-                <Text X="45" Y="40" Rotation="@ROTATION"
-                    LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
-                    PivotLocalAlignX="#_align_right_" PivotLocalAlignY="#_align_middle_"
-                    Size="14" FillColor="0.5 0.3 0.8">Text</Text>
-            </Container>
-            <Container X="820" Y="240" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="65" Y="40" Radius="4" FillColor="1 1 0"/>
-                <Image X="65" Y="40" Width="40" Height="40" Rotation="@ROTATION"
-                    LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
-                    PivotLocalAlignX="#_align_right_" PivotLocalAlignY="#_align_middle_"
-                    File="../../assets/nasa.png"/>
-            </Container>
-
-            <!-- ========== PivotX/PivotY: Arbitrary Pixel Offsets ========== -->
-            <Text X="510" Y="190" Size="14" FillColor="0.4 0.8 1">PivotX / PivotY (Pixel Offsets)</Text>
-
-            <!-- PivotX=0, PivotY=0 (same as default) -->
-            <Container X="620" Y="100" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="45" Y="40" Radius="4" FillColor="1 1 0"/>
-                <Rectangle X="45" Y="40" Width="40" Height="25" Rotation="@ROTATION"
+            <!-- PivotX=0, PivotY=0 -->
+            <Container X="30" Y="250" Width="100" Height="80">
+                <Rectangle Width="100" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="0" Y="0" Radius="4" FillColor="1 1 0"/>
+                <Rectangle X="30" Y="30" Width="40" Height="25" Rotation="@ROTATION"
                     PivotX="0" PivotY="0"
                     FillColor="0.8 0.4 0.2" LineColor="1 0.6 0.4" LineWidth="1"/>
-                <Text X="45" Y="5" LocalAlignX="#_align_center_" Size="7" FillColor="0.6 0.6 0.6">PivotX=0\nPivotY=0</Text>
+                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="7" FillColor="0.6 0.6 0.6">PivotX=0\nPivotY=0</Text>
             </Container>
 
-            <!-- PivotX=20, PivotY=12.5 (center of 40x25 rect) -->
-            <Container X="720" Y="100" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="45" Y="40" Radius="4" FillColor="1 1 0"/>
-                <Rectangle X="45" Y="40" Width="40" Height="25" Rotation="@ROTATION"
-                    PivotX="20" PivotY="12.5"
+            <!-- PivotX=50, PivotY=40 (center of container) -->
+            <Container X="140" Y="250" Width="100" Height="80">
+                <Rectangle Width="100" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="50" Y="40" Radius="4" FillColor="1 1 0"/>
+                <Rectangle X="30" Y="30" Width="40" Height="25" Rotation="@ROTATION"
+                    PivotX="50" PivotY="40"
                     FillColor="0.2 0.8 0.4" LineColor="0.4 1 0.6" LineWidth="1"/>
-                <Text X="45" Y="5" LocalAlignX="#_align_center_" Size="7" FillColor="0.6 0.6 0.6">PivotX=20\nPivotY=12.5</Text>
+                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="7" FillColor="0.6 0.6 0.6">PivotX=50\nPivotY=40</Text>
             </Container>
 
-            <!-- PivotX=40, PivotY=25 (top-right corner of 40x25 rect) -->
-            <Container X="820" Y="100" Width="90" Height="80">
-                <Rectangle Width="90" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Ellipse X="45" Y="40" Radius="4" FillColor="1 1 0"/>
-                <Rectangle X="45" Y="40" Width="40" Height="25" Rotation="@ROTATION"
-                    PivotX="40" PivotY="25"
+            <!-- PivotX=100, PivotY=80 (top-right of container) -->
+            <Container X="250" Y="250" Width="100" Height="80">
+                <Rectangle Width="100" Height="80" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="100" Y="80" Radius="4" FillColor="1 1 0"/>
+                <Rectangle X="30" Y="30" Width="40" Height="25" Rotation="@ROTATION"
+                    PivotX="100" PivotY="80"
                     FillColor="0.2 0.4 0.8" LineColor="0.4 0.6 1" LineWidth="1"/>
-                <Text X="45" Y="5" LocalAlignX="#_align_center_" Size="7" FillColor="0.6 0.6 0.6">PivotX=40\nPivotY=25</Text>
+                <Text X="50" Y="5" LocalAlignX="#_align_center_" Size="7" FillColor="0.6 0.6 0.6">PivotX=100\nPivotY=80</Text>
+            </Container>
+
+            <!-- ================================================= -->
+            <!-- RIGHT SIDE: PivotParentAlign                      -->
+            <!-- ================================================= -->
+            <Rectangle X="490" Y="710" Width="2" Height="540" FillColor="0.3 0.3 0.35"/>
+
+            <Text X="740" Y="710" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">PivotParentAlign</Text>
+            <Text X="740" Y="690" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Rotates around a point on the parent container</Text>
+
+            <!-- Parent left, bottom -->
+            <Container X="510" Y="580" Width="120" Height="90">
+                <Rectangle Width="120" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="0" Y="0" Radius="4" FillColor="1 1 0"/>
+                <Rectangle X="40" Y="30" Width="40" Height="25" Rotation="@ROTATION"
+                    PivotParentAlignX="#_align_left_" PivotParentAlignY="#_align_bottom_"
+                    FillColor="0.8 0.3 0.3" LineColor="1 0.5 0.5" LineWidth="1"/>
+                <Text X="60" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">left, bottom</Text>
+            </Container>
+
+            <!-- Parent center, middle -->
+            <Container X="650" Y="580" Width="120" Height="90">
+                <Rectangle Width="120" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="60" Y="45" Radius="4" FillColor="1 1 0"/>
+                <Rectangle X="40" Y="30" Width="40" Height="25" Rotation="@ROTATION"
+                    PivotParentAlignX="#_align_center_" PivotParentAlignY="#_align_middle_"
+                    FillColor="0.3 0.8 0.3" LineColor="0.5 1 0.5" LineWidth="1"/>
+                <Text X="60" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">center, middle</Text>
+            </Container>
+
+            <!-- Parent right, top -->
+            <Container X="790" Y="580" Width="120" Height="90">
+                <Rectangle Width="120" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="120" Y="90" Radius="4" FillColor="1 1 0"/>
+                <Rectangle X="40" Y="30" Width="40" Height="25" Rotation="@ROTATION"
+                    PivotParentAlignX="#_align_right_" PivotParentAlignY="#_align_top_"
+                    FillColor="0.3 0.3 0.8" LineColor="0.5 0.5 1" LineWidth="1"/>
+                <Text X="60" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">right, top</Text>
+            </Container>
+
+            <!-- Parent center, bottom - Ellipse -->
+            <Container X="510" Y="460" Width="120" Height="90">
+                <Rectangle Width="120" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="60" Y="0" Radius="4" FillColor="1 1 0"/>
+                <Ellipse X="40" Y="30" Radius="20" Rotation="@ROTATION"
+                    PivotParentAlignX="#_align_center_" PivotParentAlignY="#_align_bottom_"
+                    FillColor="0.3 0.8 0.8" LineColor="0.5 1 1" LineWidth="1"/>
+                <Text X="60" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">circle ctr, btm</Text>
+            </Container>
+
+            <!-- Parent center, middle - Ellipse -->
+            <Container X="650" Y="460" Width="120" Height="90">
+                <Rectangle Width="120" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="60" Y="45" Radius="4" FillColor="1 1 0"/>
+                <Ellipse X="40" Y="30" Radius="20" Rotation="@ROTATION"
+                    PivotParentAlignX="#_align_center_" PivotParentAlignY="#_align_middle_"
+                    FillColor="0.8 0.3 0.8" LineColor="1 0.5 1" LineWidth="1"/>
+                <Text X="60" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">circle ctr, mid</Text>
+            </Container>
+
+            <!-- Parent right, top - Ellipse -->
+            <Container X="790" Y="460" Width="120" Height="90">
+                <Rectangle Width="120" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="120" Y="90" Radius="4" FillColor="1 1 0"/>
+                <Ellipse X="40" Y="30" Radius="20" Rotation="@ROTATION"
+                    PivotParentAlignX="#_align_right_" PivotParentAlignY="#_align_top_"
+                    FillColor="0.8 0.8 0.3" LineColor="1 1 0.5" LineWidth="1"/>
+                <Text X="60" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">circle rt, top</Text>
+            </Container>
+
+            <!-- Parent center, middle - Text -->
+            <Container X="510" Y="340" Width="120" Height="90">
+                <Rectangle Width="120" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="60" Y="45" Radius="4" FillColor="1 1 0"/>
+                <Text X="20" Y="30" Rotation="@ROTATION"
+                    PivotParentAlignX="#_align_center_" PivotParentAlignY="#_align_middle_"
+                    Size="14" FillColor="0.3 0.8 0.3">Text</Text>
+                <Text X="60" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">text ctr, mid</Text>
+            </Container>
+
+            <!-- Parent right, top - Text -->
+            <Container X="650" Y="340" Width="120" Height="90">
+                <Rectangle Width="120" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="120" Y="90" Radius="4" FillColor="1 1 0"/>
+                <Text X="20" Y="30" Rotation="@ROTATION"
+                    PivotParentAlignX="#_align_right_" PivotParentAlignY="#_align_top_"
+                    Size="14" FillColor="0.3 0.3 0.8">Text</Text>
+                <Text X="60" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">text rt, top</Text>
+            </Container>
+
+            <!-- Parent center, middle - Image -->
+            <Container X="510" Y="220" Width="120" Height="90">
+                <Rectangle Width="120" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="60" Y="45" Radius="4" FillColor="1 1 0"/>
+                <Image X="20" Y="15" Width="40" Height="40" Rotation="@ROTATION"
+                    PivotParentAlignX="#_align_center_" PivotParentAlignY="#_align_middle_"
+                    File="../../assets/nasa.png"/>
+                <Text X="60" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">image ctr, mid</Text>
+            </Container>
+
+            <!-- Parent right, top - Image -->
+            <Container X="650" Y="220" Width="120" Height="90">
+                <Rectangle Width="120" Height="90" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Ellipse X="120" Y="90" Radius="4" FillColor="1 1 0"/>
+                <Image X="20" Y="15" Width="40" Height="40" Rotation="@ROTATION"
+                    PivotParentAlignX="#_align_right_" PivotParentAlignY="#_align_top_"
+                    File="../../assets/nasa.png"/>
+                <Text X="60" Y="5" LocalAlignX="#_align_center_" Size="8" FillColor="0.6 0.6 0.6">image rt, top</Text>
             </Container>
 
             <!-- Legend -->
-            <Container X="30" Y="30" Width="450" Height="130">
-                <Rectangle Width="450" Height="130" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <Text X="225" Y="115" LocalAlignX="#_align_center_" Size="12" FillColor="0.7 0.7 0.7">Legend</Text>
-                <Text X="10" Y="90" Size="9" FillColor="0.6 0.6 0.6">default: No pivot set (rotates around element origin)</Text>
-                <Text X="10" Y="70" Size="9" FillColor="0.6 0.6 0.6">PivotLocalAlignX/Y: Pivot at predefined positions (left/center/right, bottom/middle/top)</Text>
-                <Text X="10" Y="50" Size="9" FillColor="0.6 0.6 0.6">PivotX/Y: Pivot at arbitrary pixel offset from element origin</Text>
-                <Text X="10" Y="30" Size="9" FillColor="0.6 0.6 0.6">LocalAlignX/Y: Sets the anchor point (usually matches pivot)</Text>
-                <Text X="10" Y="10" Size="9" FillColor="1 1 0">Yellow dots indicate the pivot point location</Text>
+            <Container X="30" Y="30" Width="450" Height="160">
+                <Rectangle Width="450" Height="160" FillColor="0.12 0.12 0.15" LineColor="0.3 0.3 0.35" LineWidth="1"/>
+                <Text X="225" Y="145" LocalAlignX="#_align_center_" Size="12" FillColor="0.7 0.7 0.7">Legend</Text>
+                <Text X="10" Y="120" Size="9" FillColor="0.6 0.6 0.6">default: No pivot set (rotates around element origin)</Text>
+                <Text X="10" Y="100" Size="9" FillColor="0.6 0.6 0.6">PivotLocalAlignX/Y: Pivot relative to the element's own dimensions</Text>
+                <Text X="10" Y="80" Size="9" FillColor="0.6 0.6 0.6">PivotParentAlignX/Y: Pivot relative to the parent container's dimensions</Text>
+                <Text X="10" Y="60" Size="9" FillColor="0.6 0.6 0.6">PivotX/Y: Pivot at arbitrary pixel coordinate in parent space</Text>
+                <Text X="10" Y="40" Size="9" FillColor="0.6 0.6 0.6">Priority: PivotPosition > PivotParentAlign > PivotLocalAlign</Text>
+                <Text X="10" Y="20" Size="9" FillColor="1 1 0">Yellow dots indicate the pivot point location</Text>
             </Container>
 
             <!-- Rotation display -->

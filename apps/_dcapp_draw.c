@@ -250,6 +250,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
         node->button.virtual_dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
     bool use_rotation       = node->button.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->button.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->button.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->button.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->button.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
     float dimension[2] = {
@@ -280,6 +281,40 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
             plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
             // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        } else if (use_rotation && use_pivot_parent_align) {
+
+            DcAppAlignType parent_pivot_aligns[2] = {
+                node->button.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->button.pivot_parent_align.x)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED,
+                node->button.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->button.pivot_parent_align.y)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED};
+
+            float pivot_position[2];
+            switch (parent_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
+                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
+                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
+                default: DC_LOG_WARN("Button", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+            }
+            switch (parent_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
+                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
+                default: DC_LOG_WARN("Button", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+            }
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->button.rotation)->value_double);
+
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -398,7 +433,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
 
     // xform local rotation
     {
-        if (use_rotation && !use_pivot_position) {
+        if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
@@ -715,6 +750,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
     bool use_radius         = node->arc.radius != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_rotation       = node->arc.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->arc.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->arc.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->arc.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->arc.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get radius
     float radius;
@@ -736,6 +772,40 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
         float pivot_position[2] = {
             (float)dc_app_lookup_get_value(app_data->lookup, node->arc.pivot_position.x)->value_double,
             (float)dc_app_lookup_get_value(app_data->lookup, node->arc.pivot_position.y)->value_double};
+        float rotation = pl_radiansf(arc_rotation);
+
+        plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+        plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+        plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+        transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+        transform = pl_mul_mat4t(&transform, &rotate_xform);
+        transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+    } else if (use_rotation && use_pivot_parent_align) {
+
+        DcAppAlignType parent_pivot_aligns[2] = {
+            node->arc.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.pivot_parent_align.x)->value_integer
+                : DC_APP_ALIGN_TYPE_UNDEFINED,
+            node->arc.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.pivot_parent_align.y)->value_integer
+                : DC_APP_ALIGN_TYPE_UNDEFINED};
+
+        float pivot_position[2];
+        switch (parent_pivot_aligns[0]) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
+            case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
+            case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
+            default: DC_LOG_WARN("Arc", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+        }
+        switch (parent_pivot_aligns[1]) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
+            case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
+            default: DC_LOG_WARN("Arc", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+        }
         float rotation = pl_radiansf(arc_rotation);
 
         plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -859,7 +929,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
     }
 
     // xform local rotation
-    if (use_rotation && !use_pivot_position) {
+    if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
         float diameter = 2 * radius;
 
         // get alignment
@@ -968,6 +1038,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
     bool use_radius_y       = node->ellipse.radius_y != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_rotation       = node->ellipse.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->ellipse.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->ellipse.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->ellipse.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->ellipse.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
     float radius_x, radius_y, diameter_x, diameter_y;
@@ -1005,6 +1076,40 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
             plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
             // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        } else if (use_rotation && use_pivot_parent_align) {
+
+            DcAppAlignType parent_pivot_aligns[2] = {
+                node->ellipse.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->ellipse.pivot_parent_align.x)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED,
+                node->ellipse.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->ellipse.pivot_parent_align.y)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED};
+
+            float pivot_position[2];
+            switch (parent_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
+                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
+                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
+                default: DC_LOG_WARN("Ellipse", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+            }
+            switch (parent_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
+                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
+                default: DC_LOG_WARN("Ellipse", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+            }
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.rotation)->value_double);
+
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -1120,7 +1225,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
 
     // xform local rotation
     {
-        if (use_rotation && !use_pivot_position) {
+        if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
@@ -1340,6 +1445,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
         node->container.virtual_dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
     bool use_rotation       = node->container.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->container.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->container.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->container.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->container.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
     float dimension[2] = {
@@ -1370,6 +1476,40 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
             plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
             // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        } else if (use_rotation && use_pivot_parent_align) {
+
+            DcAppAlignType parent_pivot_aligns[2] = {
+                node->container.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->container.pivot_parent_align.x)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED,
+                node->container.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->container.pivot_parent_align.y)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED};
+
+            float pivot_position[2];
+            switch (parent_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
+                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
+                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
+                default: DC_LOG_WARN("Container", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+            }
+            switch (parent_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
+                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
+                default: DC_LOG_WARN("Container", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+            }
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->container.rotation)->value_double);
+
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -1485,7 +1625,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
 
     // xform local rotation
     {
-        if (use_rotation && !use_pivot_position) {
+        if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
@@ -1674,6 +1814,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
         node->image.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
     bool use_rotation       = node->image.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->image.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->image.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->image.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->image.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
     float dimension[2] = {
@@ -1699,6 +1840,40 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
             plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
             // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        } else if (use_rotation && use_pivot_parent_align) {
+
+            DcAppAlignType parent_pivot_aligns[2] = {
+                node->image.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->image.pivot_parent_align.x)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED,
+                node->image.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->image.pivot_parent_align.y)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED};
+
+            float pivot_position[2];
+            switch (parent_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
+                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
+                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
+                default: DC_LOG_WARN("Image", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+            }
+            switch (parent_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
+                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
+                default: DC_LOG_WARN("Image", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+            }
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->image.rotation)->value_double);
+
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -1814,7 +1989,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
 
     // xform local rotation
     {
-        if (use_rotation && !use_pivot_position) {
+        if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
@@ -1949,6 +2124,7 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
     // boolean checks
     bool use_rotation       = node->line.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->line.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->line.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->line.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->line.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -1969,6 +2145,40 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
             plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
             // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        } else if (use_rotation && use_pivot_parent_align) {
+
+            DcAppAlignType parent_pivot_aligns[2] = {
+                node->line.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->line.pivot_parent_align.x)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED,
+                node->line.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->line.pivot_parent_align.y)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED};
+
+            float pivot_position[2];
+            switch (parent_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
+                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
+                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
+                default: DC_LOG_WARN("Line", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+            }
+            switch (parent_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
+                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
+                default: DC_LOG_WARN("Line", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+            }
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->line.rotation)->value_double);
+
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -2252,6 +2462,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
         node->pixelstream.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
     bool use_rotation       = node->pixelstream.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->pixelstream.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->pixelstream.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->pixelstream.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->pixelstream.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
     float dimension[2] = {
@@ -2277,6 +2488,40 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
             plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
             // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        } else if (use_rotation && use_pivot_parent_align) {
+
+            DcAppAlignType parent_pivot_aligns[2] = {
+                node->pixelstream.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.pivot_parent_align.x)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED,
+                node->pixelstream.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.pivot_parent_align.y)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED};
+
+            float pivot_position[2];
+            switch (parent_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
+                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
+                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
+                default: DC_LOG_WARN("Pixelstream", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+            }
+            switch (parent_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
+                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
+                default: DC_LOG_WARN("Pixelstream", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+            }
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.rotation)->value_double);
+
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -2392,7 +2637,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
 
     // xform local rotation
     {
-        if (use_rotation && !use_pivot_position) {
+        if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
@@ -2548,6 +2793,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
     // boolean checks
     bool use_rotation       = node->polygon.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->polygon.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->polygon.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->polygon.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->polygon.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -2568,6 +2814,40 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
             plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
             // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        } else if (use_rotation && use_pivot_parent_align) {
+
+            DcAppAlignType parent_pivot_aligns[2] = {
+                node->polygon.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->polygon.pivot_parent_align.x)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED,
+                node->polygon.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->polygon.pivot_parent_align.y)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED};
+
+            float pivot_position[2];
+            switch (parent_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
+                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
+                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
+                default: DC_LOG_WARN("Polygon", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+            }
+            switch (parent_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
+                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
+                default: DC_LOG_WARN("Polygon", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+            }
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->polygon.rotation)->value_double);
+
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -2767,6 +3047,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
         node->rectangle.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
     bool use_rotation       = node->rectangle.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->rectangle.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->rectangle.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->rectangle.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->rectangle.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
     float dimension[2] = {
@@ -2792,6 +3073,40 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
             // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        } else if (use_rotation && use_pivot_parent_align) {
+
+            DcAppAlignType parent_pivot_aligns[2] = {
+                node->rectangle.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->rectangle.pivot_parent_align.x)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED,
+                node->rectangle.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->rectangle.pivot_parent_align.y)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED};
+
+            float pivot_position[2];
+            switch (parent_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
+                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
+                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
+                default: DC_LOG_WARN("Rectangle", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+            }
+            switch (parent_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
+                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
+                default: DC_LOG_WARN("Rectangle", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+            }
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.rotation)->value_double);
+
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -2907,7 +3222,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
 
     // xform local rotation
     {
-        if (use_rotation && !use_pivot_position) {
+        if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
@@ -3303,6 +3618,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
     bool use_radius         = node->sphere.radius != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_rotation       = node->sphere.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->sphere.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->sphere.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->sphere.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->sphere.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get radius
     float radius, diameter;
@@ -3323,6 +3639,40 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
             float pivot_position[2] = {
                 (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_position.x)->value_double,
                 (float)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rotation)->value_double);
+
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        } else if (use_rotation && use_pivot_parent_align) {
+
+            DcAppAlignType parent_pivot_aligns[2] = {
+                node->sphere.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_parent_align.x)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED,
+                node->sphere.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_parent_align.y)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED};
+
+            float pivot_position[2];
+            switch (parent_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
+                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
+                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
+                default: DC_LOG_WARN("Sphere", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+            }
+            switch (parent_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
+                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
+                default: DC_LOG_WARN("Sphere", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+            }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rotation)->value_double);
 
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -3440,7 +3790,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
 
     // xform local rotation (around local pivot)
     {
-        if (use_rotation && !use_pivot_position) {
+        if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
             DcAppAlignType local_pivot_aligns[2] = {
                 node->sphere.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_local_align.x)->value_integer,
                 node->sphere.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_local_align.y)->value_integer};
@@ -3625,6 +3975,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
         node->terrain.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
     bool use_rotation       = node->terrain.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->terrain.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->terrain.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->terrain.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->terrain.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
     float dimension[2] = {
@@ -3650,6 +4001,40 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
             plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
             // apply transform
+            transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+            transform = pl_mul_mat4t(&transform, &rotate_xform);
+            transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+        } else if (use_rotation && use_pivot_parent_align) {
+
+            DcAppAlignType parent_pivot_aligns[2] = {
+                node->terrain.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->terrain.pivot_parent_align.x)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED,
+                node->terrain.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->terrain.pivot_parent_align.y)->value_integer
+                    : DC_APP_ALIGN_TYPE_UNDEFINED};
+
+            float pivot_position[2];
+            switch (parent_pivot_aligns[0]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
+                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
+                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
+                default: DC_LOG_WARN("Terrain", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+            }
+            switch (parent_pivot_aligns[1]) {
+                case DC_APP_ALIGN_TYPE_UNDEFINED:
+                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
+                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
+                default: DC_LOG_WARN("Terrain", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+            }
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->terrain.rotation)->value_double);
+
+            plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+            plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+            plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -3765,7 +4150,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
 
     // xform local rotation
     {
-        if (use_rotation && !use_pivot_position) {
+        if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
@@ -3937,6 +4322,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
     // boolean checks
     bool use_rotation       = node->text.rotation != DC_APP_VAL_INDEX_UNDEFINED;
     bool use_pivot_position = (node->text.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->text.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->text.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->text.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // iterate over each string
     // TODO this has some redundant transforms.....clean this up!
@@ -3961,6 +4347,40 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                 plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
                 // apply transform
+                transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
+                transform = pl_mul_mat4t(&transform, &rotate_xform);
+                transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
+            } else if (use_rotation && use_pivot_parent_align) {
+
+                DcAppAlignType parent_pivot_aligns[2] = {
+                    node->text.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                        ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_parent_align.x)->value_integer
+                        : DC_APP_ALIGN_TYPE_UNDEFINED,
+                    node->text.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                        ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_parent_align.y)->value_integer
+                        : DC_APP_ALIGN_TYPE_UNDEFINED};
+
+                float pivot_position[2];
+                switch (parent_pivot_aligns[0]) {
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
+                    case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
+                    default: DC_LOG_WARN("Text", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                }
+                switch (parent_pivot_aligns[1]) {
+                    case DC_APP_ALIGN_TYPE_UNDEFINED:
+                    case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
+                    case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
+                    case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
+                    default: DC_LOG_WARN("Text", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                }
+                float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->text.rotation)->value_double);
+
+                plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
+                plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
+                plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
+
                 transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
                 transform = pl_mul_mat4t(&transform, &rotate_xform);
                 transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -4081,7 +4501,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
 
         // xform local rotation
         {
-            if (use_rotation && !use_pivot_position) {
+            if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
                 // get alignment
                 DcAppAlignType local_pivot_aligns[2] = {
