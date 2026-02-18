@@ -177,6 +177,7 @@ const _NodeIndex NODE_FIRST_INDEX     = 1;
 typedef struct __NodeArc {
     _ValIndex2    position;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -215,6 +216,7 @@ typedef struct __NodeButton {
     _ValIndex2    dimension;
     _ValIndex2    virtual_dimension;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -247,6 +249,7 @@ typedef struct __NodeButton {
 typedef struct __NodeEllipse {
     _ValIndex2    position;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -280,6 +283,7 @@ typedef struct __NodeContainer {
     _ValIndex2    dimension;
     _ValIndex2    virtual_dimension;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -302,6 +306,7 @@ typedef struct __NodeImage {
     _ValIndex2    position;
     _ValIndex2    dimension;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -319,6 +324,7 @@ typedef struct __NodeImage {
 #define _NODE_LINE_MAX_POINTS 1000
 typedef struct __NodeLine {
     _ValIndex2    position;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     DcAppValIndex rotation;
     DcAppValIndex negate_x;
@@ -358,6 +364,7 @@ typedef struct __NodePixelstream {
     _ValIndex2    position;
     _ValIndex2    dimension;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -385,6 +392,7 @@ typedef struct __NodePixelstream {
 #define _NODE_POLYGON_MAX_POINTS 1000
 typedef struct __NodePolygon {
     _ValIndex2    position;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     DcAppValIndex rotation;
     DcAppValIndex negate_x;
@@ -404,6 +412,7 @@ typedef struct __NodeRectangle {
     _ValIndex2    position;
     _ValIndex2    dimension;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -440,6 +449,7 @@ typedef struct __NodeSphere {
     // 2D positioning (where to draw in the orthographic view)
     _ValIndex2    position;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -482,6 +492,7 @@ typedef struct __NodeText {
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     DcAppValIndex rotation;
     DcAppValIndex negate_x;
@@ -512,6 +523,7 @@ typedef struct __NodeTerrain {
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
     _ValIndex2    pivot_position;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_local_align;
     DcAppValIndex rotation;
     DcAppValIndex negate_x;
