@@ -631,6 +631,22 @@ static void _init_planets(_AppData *app_data) {
         planet_init.uOutputWidth  = (uint32_t)output_width;
         planet_init.uOutputHeight = (uint32_t)output_height;
 
+        // texture overlay
+        if (node->planet.planet_texture_file) {
+            planet_init.atTextures[0].pcPath = node->planet.planet_texture_file;
+            if (node->planet.planet_texture_mpp != DC_APP_VAL_INDEX_UNDEFINED)
+                planet_init.atTextures[0].fMetersPerPixel = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_texture_mpp)->value_double;
+            if (node->planet.planet_texture_lat != DC_APP_VAL_INDEX_UNDEFINED)
+                planet_init.atTextures[0].fLatitude = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_texture_lat)->value_double;
+            if (node->planet.planet_texture_lon != DC_APP_VAL_INDEX_UNDEFINED)
+                planet_init.atTextures[0].fLongitude = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_texture_lon)->value_double;
+            DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, lat=%.1f, lon=%.1f)",
+                i, node->planet.planet_texture_file,
+                planet_init.atTextures[0].fMetersPerPixel,
+                planet_init.atTextures[0].fLatitude,
+                planet_init.atTextures[0].fLongitude);
+        }
+
         // get temporary command buffer for planet creation (blocks until complete)
         plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
 

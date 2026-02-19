@@ -542,6 +542,12 @@ typedef struct __NodePlanet {
     uint8_t       planet_index;          // 1-based index into sb_planets (0 = uninitialized)
     double        planet_radius;         // set during init from .planet.json
 
+    // texture overlay
+    char         *planet_texture_file;  // heap-allocated path (NULL = no texture)
+    DcAppValIndex planet_texture_mpp;   // meters per pixel
+    DcAppValIndex planet_texture_lat;   // latitude (degrees)
+    DcAppValIndex planet_texture_lon;   // longitude (degrees)
+
 } _NodePlanet;
 
 typedef struct __NodeWindow {

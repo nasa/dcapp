@@ -3504,12 +3504,46 @@ static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePt
     switch (parent_node->type) {
         case NODE_TYPE_PLANET: {
 
+            // source file
             xmlChar *raw_source = xmlGetProp(xml_node, BAD_CAST "Source");
             if (raw_source) {
-                DC_LOG_INFO("PlanetTexture", "Texture: %s", (const char *)raw_source);
+
+                char cleaned_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_filepath, (const char *)raw_source, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 xmlFree(raw_source);
+
+                char abs_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+                if (dc_utils_is_relative_path(cleaned_filepath)) {
+                    dc_utils_join_paths(directory, cleaned_filepath, abs_filepath, sizeof(abs_filepath));
+                } else {
+                    strcpy(abs_filepath, cleaned_filepath);
+                }
+
+                parent_node->planet.planet_texture_file = strdup(abs_filepath);
+                DC_LOG_INFO("PlanetTexture", "Texture: %s", abs_filepath);
             } else {
                 DC_LOG_ERROR("PlanetTexture", "Missing 'Source' attribute");
+            }
+
+            // meters per pixel
+            xmlChar *raw_mpp = xmlGetProp(xml_node, BAD_CAST "MetersPerPixel");
+            if (raw_mpp) {
+                parent_node->planet.planet_texture_mpp = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_mpp);
+                xmlFree(raw_mpp);
+            }
+
+            // latitude
+            xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
+            if (raw_lat) {
+                parent_node->planet.planet_texture_lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+                xmlFree(raw_lat);
+            }
+
+            // longitude
+            xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
+            if (raw_lon) {
+                parent_node->planet.planet_texture_lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+                xmlFree(raw_lon);
             }
 
             break;
