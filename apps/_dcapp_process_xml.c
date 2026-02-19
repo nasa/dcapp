@@ -54,8 +54,9 @@ static _NodeIndex    _process_xml_node_stencil_add(_AppData *app_data, xmlNodePt
 static _NodeIndex    _process_xml_node_stencil_draw(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_stencil_remove(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_style(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static _NodeIndex    _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static _NodeIndex    _process_xml_node_terrain_dem(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_texture(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_trick_from(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_trick_io(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -263,11 +264,14 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
         case DC_APP_ELEM_TYPE_STYLE:
             return _process_xml_node_style(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
-        case DC_APP_ELEM_TYPE_TERRAIN:
-            return _process_xml_node_terrain(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+        case DC_APP_ELEM_TYPE_PLANET:
+            return _process_xml_node_planet(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
-        case DC_APP_ELEM_TYPE_TERRAIN_DEM:
-            return _process_xml_node_terrain_dem(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+        case DC_APP_ELEM_TYPE_PLANET_DATA:
+            return _process_xml_node_planet_data(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
+            return _process_xml_node_planet_texture(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_TEXT:
             return _process_xml_node_text(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -390,16 +394,29 @@ static _NodeIndex _process_xml_node_arc(_AppData *app_data, xmlNodePtr xml_node,
         xmlFree(raw_pivot_position_y);
 
     } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
-        xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
-        if (raw_pivot_align_x) {
-            dc_node.arc.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
-            xmlFree(raw_pivot_align_x);
-        }
+        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+        if (raw_pivot_parent_align_x || raw_pivot_parent_align_y) {
+            if (raw_pivot_parent_align_x) {
+                dc_node.arc.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+                xmlFree(raw_pivot_parent_align_x);
+            }
+            if (raw_pivot_parent_align_y) {
+                dc_node.arc.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+                xmlFree(raw_pivot_parent_align_y);
+            }
+        } else {
+            xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+            if (raw_pivot_align_x) {
+                dc_node.arc.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
+                xmlFree(raw_pivot_align_x);
+            }
 
-        xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
-        if (raw_pivot_align_y) {
-            dc_node.arc.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
-            xmlFree(raw_pivot_align_y);
+            xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+            if (raw_pivot_align_y) {
+                dc_node.arc.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
+                xmlFree(raw_pivot_align_y);
+            }
         }
 
     } else {
@@ -549,17 +566,29 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
         xmlFree(raw_pivot_position_y);
 
     } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+        if (raw_pivot_parent_align_x || raw_pivot_parent_align_y) {
+            if (raw_pivot_parent_align_x) {
+                dc_node.ellipse.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+                xmlFree(raw_pivot_parent_align_x);
+            }
+            if (raw_pivot_parent_align_y) {
+                dc_node.ellipse.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+                xmlFree(raw_pivot_parent_align_y);
+            }
+        } else {
+            xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+            if (raw_pivot_align_x) {
+                dc_node.ellipse.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
+                xmlFree(raw_pivot_align_x);
+            }
 
-        xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
-        if (raw_pivot_align_x) {
-            dc_node.ellipse.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
-            xmlFree(raw_pivot_align_x);
-        }
-
-        xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
-        if (raw_pivot_align_y) {
-            dc_node.ellipse.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
-            xmlFree(raw_pivot_align_y);
+            xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+            if (raw_pivot_align_y) {
+                dc_node.ellipse.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
+                xmlFree(raw_pivot_align_y);
+            }
         }
 
     } else {
@@ -857,17 +886,29 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
         xmlFree(raw_pivot_position_y);
 
     } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+        if (raw_pivot_parent_align_x || raw_pivot_parent_align_y) {
+            if (raw_pivot_parent_align_x) {
+                dc_node.button.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+                xmlFree(raw_pivot_parent_align_x);
+            }
+            if (raw_pivot_parent_align_y) {
+                dc_node.button.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+                xmlFree(raw_pivot_parent_align_y);
+            }
+        } else {
+            xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+            if (raw_pivot_align_x) {
+                dc_node.button.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
+                xmlFree(raw_pivot_align_x);
+            }
 
-        xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
-        if (raw_pivot_align_x) {
-            dc_node.button.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
-            xmlFree(raw_pivot_align_x);
-        }
-
-        xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
-        if (raw_pivot_align_y) {
-            dc_node.button.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
-            xmlFree(raw_pivot_align_y);
+            xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+            if (raw_pivot_align_y) {
+                dc_node.button.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
+                xmlFree(raw_pivot_align_y);
+            }
         }
 
     } else {
@@ -1266,17 +1307,29 @@ static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml
         xmlFree(raw_pivot_position_y);
 
     } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+        if (raw_pivot_parent_align_x || raw_pivot_parent_align_y) {
+            if (raw_pivot_parent_align_x) {
+                dc_node.container.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+                xmlFree(raw_pivot_parent_align_x);
+            }
+            if (raw_pivot_parent_align_y) {
+                dc_node.container.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+                xmlFree(raw_pivot_parent_align_y);
+            }
+        } else {
+            xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+            if (raw_pivot_align_x) {
+                dc_node.container.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
+                xmlFree(raw_pivot_align_x);
+            }
 
-        xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
-        if (raw_pivot_align_x) {
-            dc_node.container.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
-            xmlFree(raw_pivot_align_x);
-        }
-
-        xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
-        if (raw_pivot_align_y) {
-            dc_node.container.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
-            xmlFree(raw_pivot_align_y);
+            xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+            if (raw_pivot_align_y) {
+                dc_node.container.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
+                xmlFree(raw_pivot_align_y);
+            }
         }
 
     } else {
@@ -1781,17 +1834,29 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
         xmlFree(raw_pivot_position_y);
 
     } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+        if (raw_pivot_parent_align_x || raw_pivot_parent_align_y) {
+            if (raw_pivot_parent_align_x) {
+                dc_node.image.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+                xmlFree(raw_pivot_parent_align_x);
+            }
+            if (raw_pivot_parent_align_y) {
+                dc_node.image.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+                xmlFree(raw_pivot_parent_align_y);
+            }
+        } else {
+            xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+            if (raw_pivot_align_x) {
+                dc_node.image.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
+                xmlFree(raw_pivot_align_x);
+            }
 
-        xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
-        if (raw_pivot_align_x) {
-            dc_node.image.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
-            xmlFree(raw_pivot_align_x);
-        }
-
-        xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
-        if (raw_pivot_align_y) {
-            dc_node.image.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
-            xmlFree(raw_pivot_align_y);
+            xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+            if (raw_pivot_align_y) {
+                dc_node.image.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
+                xmlFree(raw_pivot_align_y);
+            }
         }
 
     } else {
@@ -1877,6 +1942,17 @@ static _NodeIndex _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node
         dc_node.line.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
 
+    } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+        if (raw_pivot_parent_align_x) {
+            dc_node.line.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+            xmlFree(raw_pivot_parent_align_x);
+        }
+        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+        if (raw_pivot_parent_align_y) {
+            dc_node.line.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+            xmlFree(raw_pivot_parent_align_y);
+        }
     } else if (raw_pivot_position_x || raw_pivot_position_y) {
         DC_LOG_ERROR("Line", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
@@ -2287,17 +2363,29 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
         xmlFree(raw_pivot_position_y);
 
     } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+        if (raw_pivot_parent_align_x || raw_pivot_parent_align_y) {
+            if (raw_pivot_parent_align_x) {
+                dc_node.pixelstream.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+                xmlFree(raw_pivot_parent_align_x);
+            }
+            if (raw_pivot_parent_align_y) {
+                dc_node.pixelstream.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+                xmlFree(raw_pivot_parent_align_y);
+            }
+        } else {
+            xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+            if (raw_pivot_align_x) {
+                dc_node.pixelstream.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
+                xmlFree(raw_pivot_align_x);
+            }
 
-        xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
-        if (raw_pivot_align_x) {
-            dc_node.pixelstream.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
-            xmlFree(raw_pivot_align_x);
-        }
-
-        xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
-        if (raw_pivot_align_y) {
-            dc_node.pixelstream.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
-            xmlFree(raw_pivot_align_y);
+            xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+            if (raw_pivot_align_y) {
+                dc_node.pixelstream.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
+                xmlFree(raw_pivot_align_y);
+            }
         }
 
     } else {
@@ -2535,6 +2623,17 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
         dc_node.polygon.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
 
+    } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+        if (raw_pivot_parent_align_x) {
+            dc_node.polygon.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+            xmlFree(raw_pivot_parent_align_x);
+        }
+        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+        if (raw_pivot_parent_align_y) {
+            dc_node.polygon.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+            xmlFree(raw_pivot_parent_align_y);
+        }
     } else if (raw_pivot_position_x || raw_pivot_position_y) {
         DC_LOG_ERROR("Polygon", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
@@ -2687,17 +2786,29 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
         xmlFree(raw_pivot_position_y);
 
     } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+        if (raw_pivot_parent_align_x || raw_pivot_parent_align_y) {
+            if (raw_pivot_parent_align_x) {
+                dc_node.rectangle.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+                xmlFree(raw_pivot_parent_align_x);
+            }
+            if (raw_pivot_parent_align_y) {
+                dc_node.rectangle.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+                xmlFree(raw_pivot_parent_align_y);
+            }
+        } else {
+            xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+            if (raw_pivot_align_x) {
+                dc_node.rectangle.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
+                xmlFree(raw_pivot_align_x);
+            }
 
-        xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
-        if (raw_pivot_align_x) {
-            dc_node.rectangle.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
-            xmlFree(raw_pivot_align_x);
-        }
-
-        xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
-        if (raw_pivot_align_y) {
-            dc_node.rectangle.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
-            xmlFree(raw_pivot_align_y);
+            xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+            if (raw_pivot_align_y) {
+                dc_node.rectangle.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
+                xmlFree(raw_pivot_align_y);
+            }
         }
 
     } else {
@@ -2854,6 +2965,20 @@ static _NodeIndex _process_xml_node_sphere(_AppData *app_data, xmlNodePtr xml_no
     if (raw_y_align) {
         dc_node.sphere.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
         xmlFree(raw_y_align);
+    }
+
+    // pivot parent x align
+    xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+    if (raw_pivot_parent_align_x) {
+        dc_node.sphere.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+        xmlFree(raw_pivot_parent_align_x);
+    }
+
+    // pivot parent y align
+    xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+    if (raw_pivot_parent_align_y) {
+        dc_node.sphere.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+        xmlFree(raw_pivot_parent_align_y);
     }
 
     // pivot local x align
@@ -3103,11 +3228,11 @@ static _NodeIndex _process_xml_node_style(_AppData *app_data, xmlNodePtr xml_nod
     return NODE_INDEX_UNDEFINED;
 }
 
-static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+static _NodeIndex _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
     _Node dc_node  = {};
-    dc_node.type   = NODE_TYPE_TERRAIN;
+    dc_node.type   = NODE_TYPE_PLANET;
     dc_node.parent = parent_node_index;
 
     // x position
@@ -3116,7 +3241,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
     }
     if (raw_x_position) {
-        dc_node.terrain.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
+        dc_node.planet.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
         xmlFree(raw_x_position);
     }
 
@@ -3126,7 +3251,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
     }
     if (raw_y_position) {
-        dc_node.terrain.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
+        dc_node.planet.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
         xmlFree(raw_y_position);
     }
 
@@ -3136,7 +3261,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
     }
     if (raw_x_dimension) {
-        dc_node.terrain.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_dimension);
+        dc_node.planet.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_dimension);
         xmlFree(raw_x_dimension);
     }
 
@@ -3146,7 +3271,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
     }
     if (raw_y_dimension) {
-        dc_node.terrain.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_dimension);
+        dc_node.planet.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_dimension);
         xmlFree(raw_y_dimension);
     }
 
@@ -3156,7 +3281,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
     }
     if (raw_x_align) {
-        dc_node.terrain.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
+        dc_node.planet.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
         xmlFree(raw_x_align);
     }
 
@@ -3166,21 +3291,21 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
     }
     if (raw_y_align) {
-        dc_node.terrain.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
+        dc_node.planet.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
         xmlFree(raw_y_align);
     }
 
     // parent x align
     xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
     if (raw_parent_x_align) {
-        dc_node.terrain.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
+        dc_node.planet.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
         xmlFree(raw_parent_x_align);
     }
 
     // parent y align
     xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
     if (raw_parent_y_align) {
-        dc_node.terrain.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
+        dc_node.planet.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
         xmlFree(raw_parent_y_align);
     }
 
@@ -3190,7 +3315,7 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
         raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
     }
     if (raw_rotation) {
-        dc_node.terrain.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
+        dc_node.planet.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
         xmlFree(raw_rotation);
     }
 
@@ -3205,28 +3330,40 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     }
     if (raw_pivot_position_x && raw_pivot_position_y) {
 
-        dc_node.terrain.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
+        dc_node.planet.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
         xmlFree(raw_pivot_position_x);
 
-        dc_node.terrain.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
+        dc_node.planet.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
         xmlFree(raw_pivot_position_y);
 
     } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+        if (raw_pivot_parent_align_x || raw_pivot_parent_align_y) {
+            if (raw_pivot_parent_align_x) {
+                dc_node.planet.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+                xmlFree(raw_pivot_parent_align_x);
+            }
+            if (raw_pivot_parent_align_y) {
+                dc_node.planet.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+                xmlFree(raw_pivot_parent_align_y);
+            }
+        } else {
+            xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+            if (raw_pivot_align_x) {
+                dc_node.planet.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
+                xmlFree(raw_pivot_align_x);
+            }
 
-        xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
-        if (raw_pivot_align_x) {
-            dc_node.terrain.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
-            xmlFree(raw_pivot_align_x);
-        }
-
-        xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
-        if (raw_pivot_align_y) {
-            dc_node.terrain.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
-            xmlFree(raw_pivot_align_y);
+            xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+            if (raw_pivot_align_y) {
+                dc_node.planet.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
+                xmlFree(raw_pivot_align_y);
+            }
         }
 
     } else {
-        DC_LOG_ERROR("Terrain", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
+        DC_LOG_ERROR("Planet", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
 
     // LLE camera mode (orthogonal to surface)
@@ -3237,11 +3374,11 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
 
     if (has_lle) {
         if (raw_lat && raw_lon && raw_ele) {
-            dc_node.terrain.lle.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
-            dc_node.terrain.lle.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
-            dc_node.terrain.lle.ele = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_ele);
+            dc_node.planet.lle.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+            dc_node.planet.lle.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+            dc_node.planet.lle.ele = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_ele);
         } else {
-            DC_LOG_ERROR("Terrain", "Incomplete LLE: must specify all of Latitude, Longitude, and Elevation");
+            DC_LOG_ERROR("Planet", "Incomplete LLE: must specify all of Latitude, Longitude, and Elevation");
         }
     }
     if (raw_lat) xmlFree(raw_lat);
@@ -3258,19 +3395,19 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     bool has_xyz = raw_cam_x || raw_cam_y || raw_cam_z || raw_roll || raw_pitch || raw_yaw;
 
     if (has_lle && has_xyz) {
-        DC_LOG_WARN("Terrain", "Both LLE and XYZ/RPY specified; using XYZ/RPY");
+        DC_LOG_WARN("Planet", "Both LLE and XYZ/RPY specified; using XYZ/RPY");
     }
 
     if (has_xyz) {
         if (raw_cam_x && raw_cam_y && raw_cam_z && raw_roll && raw_pitch && raw_yaw) {
-            dc_node.terrain.xyz.x     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_x);
-            dc_node.terrain.xyz.y     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_y);
-            dc_node.terrain.xyz.z     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_z);
-            dc_node.terrain.rpy.roll  = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_roll);
-            dc_node.terrain.rpy.pitch = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pitch);
-            dc_node.terrain.rpy.yaw   = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_yaw);
+            dc_node.planet.xyz.x     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_x);
+            dc_node.planet.xyz.y     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_y);
+            dc_node.planet.xyz.z     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_z);
+            dc_node.planet.rpy.roll  = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_roll);
+            dc_node.planet.rpy.pitch = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pitch);
+            dc_node.planet.rpy.yaw   = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_yaw);
         } else {
-            DC_LOG_ERROR("Terrain", "Incomplete XYZ/RPY: must specify all of CameraX, CameraY, CameraZ, Roll, Pitch, and Yaw");
+            DC_LOG_ERROR("Planet", "Incomplete XYZ/RPY: must specify all of CameraX, CameraY, CameraZ, Roll, Pitch, and Yaw");
         }
     }
     if (raw_cam_x) xmlFree(raw_cam_x);
@@ -3281,32 +3418,35 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     if (raw_yaw)   xmlFree(raw_yaw);
 
     if (!has_lle && !has_xyz) {
-        DC_LOG_ERROR("Terrain", "Must specify either LLE (Latitude/Longitude/Elevation) or XYZ/RPY (CameraX/CameraY/CameraZ/Roll/Pitch/Yaw)");
+        DC_LOG_ERROR("Planet", "Must specify either LLE (Latitude/Longitude/Elevation) or XYZ/RPY (CameraX/CameraY/CameraZ/Roll/Pitch/Yaw)");
     }
 
     // orthographic projection
     xmlChar *raw_ortho = xmlGetProp(xml_node, BAD_CAST "Orthographic");
     if (raw_ortho) {
-        dc_node.terrain.orthographic = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_ortho);
+        dc_node.planet.orthographic = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_ortho);
         xmlFree(raw_ortho);
     }
 
     // negate x
     xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
     if (raw_negate_x) {
-        dc_node.terrain.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        dc_node.planet.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
         xmlFree(raw_negate_x);
     }
 
     // negate y
     xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
     if (raw_negate_y) {
-        dc_node.terrain.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        dc_node.planet.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
         xmlFree(raw_negate_y);
     }
 
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
+
+    // collect planet node index for post-tree initialization
+    sbpush(app_data->sb_planet_node_indices, node_index);
 
     // process children
     _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
@@ -3315,12 +3455,13 @@ static _NodeIndex _process_xml_node_terrain(_AppData *app_data, xmlNodePtr xml_n
     return node_index;
 }
 
-static _NodeIndex _process_xml_node_terrain_dem(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+static _NodeIndex _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+    (void)elem_type;
 
     _Node *parent_node = _get_node(app_data, parent_node_index);
     switch (parent_node->type) {
-        case NODE_TYPE_TERRAIN: {
+        case NODE_TYPE_PLANET: {
 
             // file
             xmlChar *raw_filepath = xmlGetProp(xml_node, BAD_CAST "File");
@@ -3339,17 +3480,76 @@ static _NodeIndex _process_xml_node_terrain_dem(_AppData *app_data, xmlNodePtr x
                     strcpy(abs_filepath, cleaned_filepath);
                 }
 
-                // TODO open file
-                // print for now
-                DC_LOG_INFO("TerrainDEM", "Loading file: %s", abs_filepath);
+                sbpush(parent_node->planet.sb_planet_data_files, strdup(abs_filepath));
+                DC_LOG_INFO("PlanetData", "Loading file: %s", abs_filepath);
             } else {
-                DC_LOG_ERROR("TerrainDEM", "Missing 'File' attribute");
+                DC_LOG_ERROR("PlanetData", "Missing 'File' attribute");
             }
 
             break;
         }
         default:
-            DC_LOG_ERROR("TerrainDEM", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
+            DC_LOG_ERROR("PlanetData", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
+    }
+
+    // return
+    return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+    (void)elem_type;
+
+    _Node *parent_node = _get_node(app_data, parent_node_index);
+    switch (parent_node->type) {
+        case NODE_TYPE_PLANET: {
+
+            // source file
+            xmlChar *raw_source = xmlGetProp(xml_node, BAD_CAST "Source");
+            if (raw_source) {
+
+                char cleaned_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned_filepath, (const char *)raw_source, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                xmlFree(raw_source);
+
+                char abs_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+                if (dc_utils_is_relative_path(cleaned_filepath)) {
+                    dc_utils_join_paths(directory, cleaned_filepath, abs_filepath, sizeof(abs_filepath));
+                } else {
+                    strcpy(abs_filepath, cleaned_filepath);
+                }
+
+                parent_node->planet.planet_texture_file = strdup(abs_filepath);
+                DC_LOG_INFO("PlanetTexture", "Texture: %s", abs_filepath);
+            } else {
+                DC_LOG_ERROR("PlanetTexture", "Missing 'Source' attribute");
+            }
+
+            // meters per pixel
+            xmlChar *raw_mpp = xmlGetProp(xml_node, BAD_CAST "MetersPerPixel");
+            if (raw_mpp) {
+                parent_node->planet.planet_texture_mpp = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_mpp);
+                xmlFree(raw_mpp);
+            }
+
+            // latitude
+            xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
+            if (raw_lat) {
+                parent_node->planet.planet_texture_lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+                xmlFree(raw_lat);
+            }
+
+            // longitude
+            xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
+            if (raw_lon) {
+                parent_node->planet.planet_texture_lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+                xmlFree(raw_lon);
+            }
+
+            break;
+        }
+        default:
+            DC_LOG_ERROR("PlanetTexture", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
     }
 
     // return
@@ -3598,17 +3798,29 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         xmlFree(raw_pivot_position_y);
 
     } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+        if (raw_pivot_parent_align_x || raw_pivot_parent_align_y) {
+            if (raw_pivot_parent_align_x) {
+                dc_node.text.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+                xmlFree(raw_pivot_parent_align_x);
+            }
+            if (raw_pivot_parent_align_y) {
+                dc_node.text.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+                xmlFree(raw_pivot_parent_align_y);
+            }
+        } else {
+            xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+            if (raw_pivot_align_x) {
+                dc_node.text.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
+                xmlFree(raw_pivot_align_x);
+            }
 
-        xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
-        if (raw_pivot_align_x) {
-            dc_node.text.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
-            xmlFree(raw_pivot_align_x);
-        }
-
-        xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
-        if (raw_pivot_align_y) {
-            dc_node.text.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
-            xmlFree(raw_pivot_align_y);
+            xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+            if (raw_pivot_align_y) {
+                dc_node.text.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
+                xmlFree(raw_pivot_align_y);
+            }
         }
 
     } else {

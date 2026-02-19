@@ -3,6 +3,10 @@
 
 #include "dcapp.h"
 
+#define PL_JSON_IMPLEMENTATION
+#include "../pilotlight/libs/pl_json.h"
+
+#include "../src/utils/file.h"
 #include "../src/utils/log.h"
 #include "../src/utils/string.h"
 
@@ -24,8 +28,8 @@ static const char *_node_type_to_string(_NodeType type) {
             return "Rectangle";
         case NODE_TYPE_SET:
             return "Set";
-        case NODE_TYPE_TERRAIN:
-            return "Terrain";
+        case NODE_TYPE_PLANET:
+            return "Planet";
         case NODE_TYPE_TEXT:
             return "Text";
         case NODE_TYPE_WINDOW:
@@ -506,6 +510,162 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
             .tMSAASampleCount      = sample_count
         };
         app_data->stencil_draw_3d_textured_shader[i] = _ext_gfx->create_shader(device, &stencil_draw_3d_textured_desc);
+    }
+}
+
+static void _init_planets(_AppData *app_data) {
+    int planet_count = sbcount(app_data->sb_planet_node_indices);
+    if (planet_count == 0) return;
+
+    DC_LOG_INFO("Planet", "Initializing %d planet(s)", planet_count);
+
+    // initialize planet extension
+    plPlanetExtInit planet_ext_init = {0};
+    planet_ext_init.ptDevice = _ext_starter->get_device();
+    _ext_planet->initialize(planet_ext_init);
+
+    for (int i = 0; i < planet_count; i++) {
+        _NodeIndex node_index = app_data->sb_planet_node_indices[i];
+        _Node *node = _get_node(app_data, node_index);
+
+        int file_count = sbcount(node->planet.sb_planet_data_files);
+        if (file_count == 0) {
+            DC_LOG_WARN("Planet", "  [%d] no PlanetData file specified, skipping", i);
+            sbpush(app_data->sb_planets, NULL);
+            node->planet.planet_index = i + 1;
+            continue;
+        }
+
+        // use first data file
+        const char *json_path = node->planet.sb_planet_data_files[0];
+        DC_LOG_INFO("Planet", "  [%d] loading: %s", i, json_path);
+
+        // load JSON file
+        char *json_str = dc_utils_load_text_file(json_path);
+        if (!json_str) {
+            DC_LOG_ERROR("Planet", "  [%d] failed to load file: %s", i, json_path);
+            sbpush(app_data->sb_planets, NULL);
+            node->planet.planet_index = i + 1;
+            continue;
+        }
+
+        // parse JSON
+        plJsonObject *root = NULL;
+        if (!pl_load_json(json_str, &root)) {
+            DC_LOG_ERROR("Planet", "  [%d] failed to parse JSON: %s", i, json_path);
+            free(json_str);
+            sbpush(app_data->sb_planets, NULL);
+            node->planet.planet_index = i + 1;
+            continue;
+        }
+
+        // extract metadata
+        double radius           = pl_json_double_member(root, "radius", 0.0);
+        float  meters_per_pixel = pl_json_float_member(root, "meters_per_pixel", 0.0f);
+        int    tile_size        = pl_json_int_member(root, "tile_size", 0);
+        int    cols             = pl_json_int_member(root, "cols", 0);
+        int    rows             = pl_json_int_member(root, "rows", 0);
+        float  min_height       = pl_json_float_member(root, "min_height", 0.0f);
+        float  max_height       = pl_json_float_member(root, "max_height", 0.0f);
+        int    tree_depth       = pl_json_int_member(root, "tree_depth", 0);
+        float  max_base_error   = pl_json_float_member(root, "max_base_error", 0.0f);
+
+        // store radius on node for camera LLE conversion
+        node->planet.planet_radius = radius;
+
+        // extract tiles array
+        uint32_t tile_count = 0;
+        plJsonObject *tile_array = pl_json_array_member(root, "tiles", &tile_count);
+
+        // build process info
+        plPlanetProcessInfo process_info = {0};
+        process_info.fRadius          = (float)radius;
+        process_info.fMetersPerPixel  = meters_per_pixel;
+        process_info.uSize            = (uint32_t)tile_size;
+        process_info.uTileCount       = tile_count;
+        process_info.uHorizontalTiles = (uint32_t)cols;
+        process_info.uVerticalTiles   = (uint32_t)rows;
+        process_info.atTiles          = (plPlanetProcessTileInfo *)malloc(tile_count * sizeof(plPlanetProcessTileInfo));
+
+        // get directory of the JSON file for resolving relative chunk paths
+        char json_dir[DC_VALUE_STRING_BUFFER_SIZE];
+        dc_utils_get_directory(json_path, json_dir, sizeof(json_dir));
+
+        for (uint32_t t = 0; t < tile_count; t++) {
+            plJsonObject *tile_obj = pl_json_member_by_index(tile_array, t);
+
+            plPlanetProcessTileInfo *tile = &process_info.atTiles[t];
+            memset(tile, 0, sizeof(plPlanetProcessTileInfo));
+            tile->fLatitude     = pl_json_float_member(tile_obj, "lat", 0.0f);
+            tile->fLongitude    = pl_json_float_member(tile_obj, "lon", 0.0f);
+            tile->fMaxBaseError = max_base_error;
+            tile->fMaxHeight    = max_height;
+            tile->fMinHeight    = min_height;
+            tile->iTreeDepth    = tree_depth;
+
+            // resolve chunk file path
+            char chunk_file[256] = {0};
+            pl_json_string_member(tile_obj, "file", chunk_file, sizeof(chunk_file));
+
+            char abs_chunk_path[DC_VALUE_STRING_BUFFER_SIZE];
+            if (dc_utils_is_relative_path(chunk_file)) {
+                dc_utils_join_paths(json_dir, chunk_file, abs_chunk_path, sizeof(abs_chunk_path));
+            } else {
+                strncpy(abs_chunk_path, chunk_file, sizeof(abs_chunk_path) - 1);
+            }
+            strncpy(tile->acOutputFile, abs_chunk_path, sizeof(tile->acOutputFile) - 1);
+        }
+
+        // get output dimensions from the node
+        float output_width  = 1024.0f;
+        float output_height = 1024.0f;
+        if (node->planet.dimension.x != DC_APP_VAL_INDEX_UNDEFINED)
+            output_width = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.dimension.x)->value_double;
+        if (node->planet.dimension.y != DC_APP_VAL_INDEX_UNDEFINED)
+            output_height = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.dimension.y)->value_double;
+
+        // build planet init
+        plPlanetInit planet_init = {0};
+        planet_init.dRadius       = radius;
+        planet_init.tLoadFlags    = PL_PLANET_LOAD_FLAGS_NONE;
+        planet_init.uOutputWidth  = (uint32_t)output_width;
+        planet_init.uOutputHeight = (uint32_t)output_height;
+
+        // texture overlay
+        if (node->planet.planet_texture_file) {
+            planet_init.atTextures[0].pcPath = node->planet.planet_texture_file;
+            if (node->planet.planet_texture_mpp != DC_APP_VAL_INDEX_UNDEFINED)
+                planet_init.atTextures[0].fMetersPerPixel = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_texture_mpp)->value_double;
+            if (node->planet.planet_texture_lat != DC_APP_VAL_INDEX_UNDEFINED)
+                planet_init.atTextures[0].fLatitude = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_texture_lat)->value_double;
+            if (node->planet.planet_texture_lon != DC_APP_VAL_INDEX_UNDEFINED)
+                planet_init.atTextures[0].fLongitude = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_texture_lon)->value_double;
+            DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, lat=%.1f, lon=%.1f)",
+                i, node->planet.planet_texture_file,
+                planet_init.atTextures[0].fMetersPerPixel,
+                planet_init.atTextures[0].fLatitude,
+                planet_init.atTextures[0].fLongitude);
+        }
+
+        // get temporary command buffer for planet creation (blocks until complete)
+        plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
+
+        // create planet
+        plPlanet *planet = _ext_planet->create_planet(cmd_buf, planet_init, &process_info);
+
+        // submit command buffer
+        _ext_starter->submit_temporary_command_buffer(cmd_buf);
+
+        // store planet
+        sbpush(app_data->sb_planets, planet);
+        node->planet.planet_index = i + 1; // 1-based (0 = uninitialized)
+
+        DC_LOG_INFO("Planet", "  [%d] created (radius=%.0f, %ux%u, %u tiles)", i, radius, (uint32_t)output_width, (uint32_t)output_height, tile_count);
+
+        // cleanup
+        free(process_info.atTiles);
+        pl_unload_json(&root);
+        free(json_str);
     }
 }
 
