@@ -50,7 +50,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         _ext_gpu_allocators = pl_get_api_latest(api_registry, plGPUAllocatorsI);
         _ext_vfs            = pl_get_api_latest(api_registry, plVfsI);
         _ext_shader         = pl_get_api_latest(api_registry, plShaderI);
-        // _ext_terrain     = pl_get_api_latest(api_registry, plTerrainI);
+        _ext_planet           = pl_get_api_latest(api_registry, plPlanetI);
+        _ext_planet_processor = pl_get_api_latest(api_registry, plPlanetProcessorI);
         _ext_camera = pl_get_api_latest(api_registry, plCameraI);
         _ext_image  = pl_get_api_latest(api_registry, plImageI);
 
@@ -86,7 +87,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     _ext_gpu_allocators = pl_get_api_latest(api_registry, plGPUAllocatorsI);
     _ext_vfs            = pl_get_api_latest(api_registry, plVfsI);
     _ext_shader         = pl_get_api_latest(api_registry, plShaderI);
-    // _ext_terrain     = pl_get_api_latest(api_registry, plTerrainI);
+    _ext_planet           = pl_get_api_latest(api_registry, plPlanetI);
+    _ext_planet_processor = pl_get_api_latest(api_registry, plPlanetProcessorI);
     _ext_camera = pl_get_api_latest(api_registry, plCameraI);
     _ext_image  = pl_get_api_latest(api_registry, plImageI);
 
@@ -138,6 +140,9 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     // build dcapp node tree
     xmlNodePtr root_node = xmlDocGetRootElement(app_data->config->xml_doc);
     _process_xml_node(app_data, root_node, NODE_INDEX_UNDEFINED, DC_APP_ELEM_TYPE_UNDEFINED, app_data->config->config_dir_path);
+
+    // initialize planet rendering instances
+    _init_planets(app_data);
 
     // initialize logic (link values)
     if (app_data->logic_pre_init) {
@@ -201,6 +206,12 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 sbfree(node->text.sb_format_indices);
                 sbfree(node->text.sb_format_types);
                 break;
+            case NODE_TYPE_PLANET:
+                for (int j = 0; j < sbcount(node->planet.sb_planet_data_files); j++) {
+                    free(node->planet.sb_planet_data_files[j]);
+                }
+                sbfree(node->planet.sb_planet_data_files);
+                break;
             case NODE_TYPE_WINDOW:
                 if (node->window.title) {
                     free(node->window.title);
@@ -211,6 +222,15 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
         }
     }
     sbfree(app_data->sb_nodes);
+
+    // cleanup planet instances
+    for (int i = 0; i < sbcount(app_data->sb_planets); i++) {
+        if (app_data->sb_planets[i]) {
+            _ext_planet->cleanup_planet(app_data->sb_planets[i]);
+        }
+    }
+    sbfree(app_data->sb_planets);
+    sbfree(app_data->sb_planet_node_indices);
 
     // cleanup trick contexts
     for (int i = 0; i < sbcount(app_data->sb_tricks); i++) {

@@ -509,6 +509,31 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
     }
 }
 
+static void _init_planets(_AppData *app_data) {
+    int planet_count = sbcount(app_data->sb_planet_node_indices);
+    if (planet_count == 0) return;
+
+    DC_LOG_INFO("Planet", "Initializing %d planet(s)", planet_count);
+
+    for (int i = 0; i < planet_count; i++) {
+        _NodeIndex node_index = app_data->sb_planet_node_indices[i];
+        _Node *node = _get_node(app_data, node_index);
+
+        int file_count = sbcount(node->planet.sb_planet_data_files);
+        if (file_count > 0) {
+            for (int j = 0; j < file_count; j++) {
+                DC_LOG_INFO("Planet", "  [%d] data[%d]: %s", i, j, node->planet.sb_planet_data_files[j]);
+            }
+        } else {
+            DC_LOG_WARN("Planet", "  [%d] no PlanetData file specified", i);
+        }
+
+        // TODO: parse .planet.json, build plPlanetProcessInfo, call create_planet
+        // node->planet.planet_index = i + 1;  // 0 = uninitialized
+        // sbpush(app_data->sb_planets, planet_ptr);
+    }
+}
+
 static void _init_app_data(_AppData *app_data, _Node *window_node) {
 
     // mount VFS dirs
