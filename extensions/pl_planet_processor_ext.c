@@ -332,10 +332,7 @@ pl_planet_process(plPlanetProcessInfo* ptInfo)
 
         int iRootLevel = ptInfo->atTiles[i].iTreeDepth - 1;
 
-        plVfsFileHandle tFileHandle = gptVfs->register_file(ptInfo->atTiles[i].acOutputFile, false);
-        const char* pcPath = gptVfs->get_real_path(tFileHandle);
-
-        FILE* ptDataFile = fopen(pcPath, "wb");
+        FILE* ptDataFile = fopen(ptInfo->atTiles[i].acOutputFile, "wb");
 
         fwrite(&ptInfo->atTiles[i].iTreeDepth, 1, sizeof(int), ptDataFile);
         fwrite(&tHeightMap.fMaxBaseError, 1, sizeof(float), ptDataFile);
@@ -361,7 +358,7 @@ bool
 pl_terrain_load_chunk_file(const char* pcPath, plPlanetChunkFile* ptFile, uint32_t uFileID)
 {
 
-    plVfsFileHandle tFileHandle = gptVfs->register_file(pcPath, true);
+    plVfsFileHandle tFileHandle = gptVfs->register_file(pcPath);
     pcPath = gptVfs->get_real_path(tFileHandle);
     
     FILE* ptDataFile = fopen(pcPath, "rb");
