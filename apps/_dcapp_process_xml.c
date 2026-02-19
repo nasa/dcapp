@@ -2596,6 +2596,20 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
         xmlFree(raw_y_position);
     }
 
+    // parent x align
+    xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
+    if (raw_parent_x_align) {
+        dc_node.polygon.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
+        xmlFree(raw_parent_x_align);
+    }
+
+    // parent y align
+    xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
+    if (raw_parent_y_align) {
+        dc_node.polygon.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
+        xmlFree(raw_parent_y_align);
+    }
+
     // rotation
     xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
     if (!raw_rotation) {

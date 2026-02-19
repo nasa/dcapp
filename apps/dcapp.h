@@ -394,6 +394,7 @@ typedef struct __NodePixelstream {
 #define _NODE_POLYGON_MAX_POINTS 1000
 typedef struct __NodePolygon {
     _ValIndex2    position;
+    _ValIndex2    parent_align;
     _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     DcAppValIndex rotation;

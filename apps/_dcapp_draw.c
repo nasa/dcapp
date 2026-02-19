@@ -2856,29 +2856,61 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
 
     // xform position
     {
-        // boolean check
         bool use_position[2] = {
             node->polygon.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->polygon.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        // get position
-        float position[2] = {
-            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.position.x)->value_double : 0.0f,
-            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.position.y)->value_double : 0.0f,
-        };
+        float anchor[2] = {0, 0};
+        DcAppAlignType parent_align_x = node->polygon.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->polygon.parent_align.x)->value_integer;
+        switch (parent_align_x) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_LEFT:
+                anchor[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                anchor[0] = parent_dimensions->x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                anchor[0] = parent_dimensions->x;
+                break;
+            default:
+                DC_LOG_WARN("polygon", "Invalid parent_align_x: %d", parent_align_x);
+                break;
+        }
+        DcAppAlignType parent_align_y = node->polygon.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->polygon.parent_align.y)->value_integer;
+        switch (parent_align_y) {
+            case DC_APP_ALIGN_TYPE_UNDEFINED:
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                anchor[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                anchor[1] = parent_dimensions->y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                anchor[1] = parent_dimensions->y;
+                break;
+            default:
+                DC_LOG_WARN("polygon", "Invalid parent_align_y: %d", parent_align_y);
+                break;
+        }
+
+        float offset[2] = {
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.position.y)->value_double : 0};
 
         // apply negate
         if (node->polygon.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->polygon.negate_x)->value_boolean) {
-            position[0] = -position[0];
+            offset[0] = -offset[0];
         }
         if (node->polygon.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->polygon.negate_y)->value_boolean) {
-            position[1] = -position[1];
+            offset[1] = -offset[1];
         }
 
-        // compute matrix
-        plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
+        float position[2] = {
+            parent_position->x + anchor[0] + offset[0],
+            parent_position->y + anchor[1] + offset[1]};
 
-        // apply transform
+        plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
         transform = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
