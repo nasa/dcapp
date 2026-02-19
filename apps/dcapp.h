@@ -20,7 +20,8 @@
 // dcapp extension includes
 #include "../extensions/dc_draw_ext.h"
 #include "../extensions/dc_draw_backend_ext.h"
-#include "../extensions/pl_terrain_ext.h"
+#include "../extensions/pl_planet_ext.h"
+#include "../extensions/pl_planet_processor_ext.h"
 
 // general includes
 #include <float.h>
@@ -32,21 +33,22 @@
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
 // PL extensions
-const plWindowI        *_ext_windows       = NULL;
-const plDrawI          *_ext_draw          = NULL;
-const plDrawBackendI   *_ext_draw_backend  = NULL;
-const plStarterI       *_ext_starter       = NULL;
-const plProfileI       *_ext_profile       = NULL;
-const plMemoryI        *_ext_memory        = NULL;
-const plLibraryI       *_ext_library       = NULL;
-const plIOI            *_ext_ioi           = NULL;
-const plGraphicsI      *_ext_gfx           = NULL;
-const plGPUAllocatorsI *_ext_gpu_allocators = NULL;
-const plTerrainI       *_ext_terrain       = NULL;
-const plVfsI           *_ext_vfs           = NULL;
-const plShaderI        *_ext_shader        = NULL;
-const plCameraI        *_ext_camera        = NULL;
-const plImageI         *_ext_image         = NULL;
+const plWindowI          *_ext_windows          = NULL;
+const plDrawI            *_ext_draw             = NULL;
+const plDrawBackendI     *_ext_draw_backend     = NULL;
+const plStarterI         *_ext_starter          = NULL;
+const plProfileI         *_ext_profile          = NULL;
+const plMemoryI          *_ext_memory           = NULL;
+const plLibraryI         *_ext_library          = NULL;
+const plIOI              *_ext_ioi              = NULL;
+const plGraphicsI        *_ext_gfx              = NULL;
+const plGPUAllocatorsI   *_ext_gpu_allocators   = NULL;
+const plPlanetI          *_ext_planet           = NULL;
+const plPlanetProcessorI *_ext_planet_processor = NULL;
+const plVfsI             *_ext_vfs              = NULL;
+const plShaderI          *_ext_shader           = NULL;
+const plCameraI          *_ext_camera           = NULL;
+const plImageI           *_ext_image            = NULL;
 
 // dcapp includes
 #include "../src/utils/stb_sb.h"
@@ -536,7 +538,7 @@ typedef struct __NodePlanet {
     DcAppValIndex orthographic;
 
     // data
-    char         *planet_data_file;
+    char        **sb_planet_data_files;  // stretchy buffer of heap-allocated file paths
     uint8_t       planet_index;
 
 } _NodePlanet;
@@ -761,10 +763,15 @@ typedef struct __AppData {
     int            draw_list_2d_index;   // current index into 2D pool
     int            draw_list_3d_index;   // current index into 3D pool
 
+    // planet instances
+    _NodeIndex *sb_planet_node_indices;  // collected during XML parse
+    plPlanet  **sb_planets;              // created planet instances
+
 } _AppData;
 
 // pl utils
 static void _init_app_data(_AppData *app_data, _Node *window_node);
+static void _init_planets(_AppData *app_data);
 
 // node utils
 static const char *_node_type_to_string(_NodeType type);

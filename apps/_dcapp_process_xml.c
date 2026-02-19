@@ -3445,6 +3445,9 @@ static _NodeIndex _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_no
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
+    // collect planet node index for post-tree initialization
+    sbpush(app_data->sb_planet_node_indices, node_index);
+
     // process children
     _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
 
@@ -3477,7 +3480,7 @@ static _NodeIndex _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr x
                     strcpy(abs_filepath, cleaned_filepath);
                 }
 
-                parent_node->planet.planet_data_file = strdup(abs_filepath);
+                sbpush(parent_node->planet.sb_planet_data_files, strdup(abs_filepath));
                 DC_LOG_INFO("PlanetData", "Loading file: %s", abs_filepath);
             } else {
                 DC_LOG_ERROR("PlanetData", "Missing 'File' attribute");
