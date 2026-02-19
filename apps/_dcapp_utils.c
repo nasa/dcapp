@@ -24,8 +24,8 @@ static const char *_node_type_to_string(_NodeType type) {
             return "Rectangle";
         case NODE_TYPE_SET:
             return "Set";
-        case NODE_TYPE_TERRAIN:
-            return "Terrain";
+        case NODE_TYPE_PLANET:
+            return "Planet";
         case NODE_TYPE_TEXT:
             return "Text";
         case NODE_TYPE_WINDOW:

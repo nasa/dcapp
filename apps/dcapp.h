@@ -126,7 +126,7 @@ typedef enum __NodeType {
     NODE_TYPE_SET,
     NODE_TYPE_SPHERE,
     NODE_TYPE_STENCIL,
-    NODE_TYPE_TERRAIN,
+    NODE_TYPE_PLANET,
     NODE_TYPE_TEXT,
     NODE_TYPE_WINDOW,
 
@@ -515,7 +515,7 @@ typedef struct __NodeText {
     DcValueType   *sb_format_types;
 } _NodeText;
 
-typedef struct __NodeTerrain {
+typedef struct __NodePlanet {
 
     // general positioning of display
     _ValIndex2    dimension;
@@ -529,14 +529,17 @@ typedef struct __NodeTerrain {
     DcAppValIndex negate_x;
     DcAppValIndex negate_y;
 
-    // terrain camera
+    // camera
     _ValIndex3    lle;
     _ValIndex3    xyz;
     _ValIndex3    rpy;
     DcAppValIndex orthographic;
-    uint8_t       terrain_index;
 
-} _NodeTerrain;
+    // data
+    char         *planet_data_file;
+    uint8_t       planet_index;
+
+} _NodePlanet;
 
 typedef struct __NodeWindow {
     plVec2        init_position;
@@ -570,7 +573,7 @@ typedef struct __Node {
         _NodeSphere           sphere;
         _NodeStateEvent       state_event;
         _NodeStencil          stencil;
-        _NodeTerrain          terrain;
+        _NodePlanet           planet;
         _NodeText             text;
         _NodeWindow           window;
     };

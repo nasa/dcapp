@@ -39,7 +39,7 @@ static void _draw_node_state_mouse_hovered(_AppData *app_data, _NodeIndex node_i
 static void _draw_node_state_if_true(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_state_if_false(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 
@@ -135,8 +135,8 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
             _draw_node_stencil(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
-        case NODE_TYPE_TERRAIN:
-            _draw_node_terrain(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+        case NODE_TYPE_PLANET:
+            _draw_node_planet(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_TEXT:
@@ -3967,20 +3967,20 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
     app_data->stencil_3d_dirty = true;
 }
 
-static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
     bool use_dimension[2] = {
-        node->terrain.dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
-        node->terrain.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
-    bool use_rotation       = node->terrain.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->terrain.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->terrain.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
-    bool use_pivot_parent_align = (node->terrain.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->terrain.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
+        node->planet.dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
+        node->planet.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
+    bool use_rotation       = node->planet.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position = (node->planet.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->planet.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->planet.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->planet.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
     float dimension[2] = {
-        use_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.dimension.x)->value_double : parent_dimensions->x,
-        use_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.dimension.y)->value_double : parent_dimensions->y};
+        use_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet.dimension.x)->value_double : parent_dimensions->x,
+        use_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet.dimension.y)->value_double : parent_dimensions->y};
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -3991,9 +3991,9 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
 
             // get pivot XY, rotation
             float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->terrain.rotation)->value_double);
+                (float)dc_app_lookup_get_value(app_data->lookup, node->planet.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->planet.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -4007,11 +4007,11 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
         } else if (use_rotation && use_pivot_parent_align) {
 
             DcAppAlignType parent_pivot_aligns[2] = {
-                node->terrain.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
-                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->terrain.pivot_parent_align.x)->value_integer
+                node->planet.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet.pivot_parent_align.x)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED,
-                node->terrain.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
-                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->terrain.pivot_parent_align.y)->value_integer
+                node->planet.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet.pivot_parent_align.y)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED};
 
             float pivot_position[2];
@@ -4029,7 +4029,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
                 case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
                 default: DC_LOG_WARN("Terrain", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
             }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->terrain.rotation)->value_double);
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet.rotation)->value_double);
 
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
@@ -4045,8 +4045,8 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
     {
         // get alignment
         DcAppAlignType local_aligns[2] = {
-            node->terrain.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->terrain.local_align.x)->value_integer,
-            node->terrain.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->terrain.local_align.y)->value_integer};
+            node->planet.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet.local_align.x)->value_integer,
+            node->planet.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet.local_align.y)->value_integer};
 
         // compute offsets
         float trans_align_offsets[2];
@@ -4091,11 +4091,11 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
     // xform position
     {
         bool use_position[2] = {
-            node->terrain.position.x != DC_APP_VAL_INDEX_UNDEFINED,
-            node->terrain.position.y != DC_APP_VAL_INDEX_UNDEFINED};
+            node->planet.position.x != DC_APP_VAL_INDEX_UNDEFINED,
+            node->planet.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
         float anchor[2] = {0, 0};
-        DcAppAlignType parent_align_x = node->terrain.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->terrain.parent_align.x)->value_integer;
+        DcAppAlignType parent_align_x = node->planet.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->planet.parent_align.x)->value_integer;
         switch (parent_align_x) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_LEFT:
@@ -4111,7 +4111,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
                 DC_LOG_WARN("Terrain", "Invalid parent_align_x: %d", parent_align_x);
                 break;
         }
-        DcAppAlignType parent_align_y = node->terrain.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->terrain.parent_align.y)->value_integer;
+        DcAppAlignType parent_align_y = node->planet.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->planet.parent_align.y)->value_integer;
         switch (parent_align_y) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_BOTTOM:
@@ -4129,14 +4129,14 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
         }
 
         float offset[2] = {
-            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.position.x)->value_double : 0,
-            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->terrain.position.y)->value_double : 0};
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet.position.y)->value_double : 0};
 
         // apply negate
-        if (node->terrain.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->terrain.negate_x)->value_boolean) {
+        if (node->planet.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->planet.negate_x)->value_boolean) {
             offset[0] = -offset[0];
         }
-        if (node->terrain.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->terrain.negate_y)->value_boolean) {
+        if (node->planet.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->planet.negate_y)->value_boolean) {
             offset[1] = -offset[1];
         }
 
@@ -4154,8 +4154,8 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
 
             // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
-                node->terrain.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->terrain.pivot_local_align.x)->value_integer,
-                node->terrain.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->terrain.pivot_local_align.y)->value_integer};
+                node->planet.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet.pivot_local_align.x)->value_integer,
+                node->planet.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
             float pivot_position[2];
@@ -4189,7 +4189,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
                     DC_LOG_WARN("Terrain", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                     break;
             }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->terrain.rotation)->value_double);
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet.rotation)->value_double);
 
             // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
@@ -4224,7 +4224,7 @@ static void _draw_node_terrain(_AppData *app_data, _NodeIndex node_index, _Node 
     //    - If lle is set: convert Lat/Lon/Ele to world XYZ, orient orthogonal to surface
     //
     // 2. Check orthographic flag:
-    //    - If node->terrain.orthographic is set and true, use orthographic projection
+    //    - If node->planet.orthographic is set and true, use orthographic projection
     //    - Otherwise, use perspective
     //
     // 3. Update terrain and render to texture:
