@@ -4020,14 +4020,14 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
                 case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
                 case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                default: DC_LOG_WARN("Terrain", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                default: DC_LOG_WARN("Planet", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
             }
             switch (parent_pivot_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
                 case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
                 case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                default: DC_LOG_WARN("Terrain", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                default: DC_LOG_WARN("Planet", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet.rotation)->value_double);
 
@@ -4108,7 +4108,7 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 anchor[0] = parent_dimensions->x;
                 break;
             default:
-                DC_LOG_WARN("Terrain", "Invalid parent_align_x: %d", parent_align_x);
+                DC_LOG_WARN("Planet", "Invalid parent_align_x: %d", parent_align_x);
                 break;
         }
         DcAppAlignType parent_align_y = node->planet.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->planet.parent_align.y)->value_integer;
@@ -4124,7 +4124,7 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 anchor[1] = parent_dimensions->y;
                 break;
             default:
-                DC_LOG_WARN("Terrain", "Invalid parent_align_y: %d", parent_align_y);
+                DC_LOG_WARN("Planet", "Invalid parent_align_y: %d", parent_align_y);
                 break;
         }
 
@@ -4171,7 +4171,7 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                     pivot_position[0] = dimension[0];
                     break;
                 default:
-                    DC_LOG_WARN("Terrain", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
+                    DC_LOG_WARN("Planet", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
                     break;
             }
             switch (local_pivot_aligns[1]) {
@@ -4186,7 +4186,7 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                     pivot_position[1] = dimension[1];
                     break;
                 default:
-                    DC_LOG_WARN("Terrain", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
+                    DC_LOG_WARN("Planet", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                     break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet.rotation)->value_double);
@@ -4216,26 +4216,83 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
     plVec2 point2      = (plVec2){point2_vec4.x, point2_vec4.y};
     plVec2 point3      = (plVec2){point3_vec4.x, point3_vec4.y};
 
-    //=========================================================================
-    // TODO: terrain rendering
-    //
-    // 1. Build camera matrix from node parameters:
-    //    - If xyz/rpy are set: use CameraX/Y/Z + Roll/Pitch/Yaw directly
-    //    - If lle is set: convert Lat/Lon/Ele to world XYZ, orient orthogonal to surface
-    //
-    // 2. Check orthographic flag:
-    //    - If node->planet.orthographic is set and true, use orthographic projection
-    //    - Otherwise, use perspective
-    //
-    // 3. Update terrain and render to texture:
-    //    _ext_terrain->set_camera(...);
-    //    _ext_terrain->render(terrain, cmd_buf);
-    //
-    // 4. Get texture and draw quad:
-    //    plBindGroupHandle bind_group = _ext_terrain->get_terrain_texture(terrain);
-    //    _ext_draw->add_image_quad(_draw_batch_get_2d(app_data),
-    //        bind_group.uData, point0, point1, point2, point3);
-    //=========================================================================
+    // planet rendering
+    if (node->planet.planet_index > 0 && node->planet.planet_index <= (uint8_t)sbcount(app_data->sb_planets)) {
+        plPlanet *planet = app_data->sb_planets[node->planet.planet_index - 1];
+        if (planet) {
+
+            // determine camera mode
+            bool use_lle = (node->planet.lle.lat != DC_APP_VAL_INDEX_UNDEFINED &&
+                            node->planet.lle.lon != DC_APP_VAL_INDEX_UNDEFINED &&
+                            node->planet.lle.ele != DC_APP_VAL_INDEX_UNDEFINED);
+            bool use_xyz = (node->planet.xyz.x != DC_APP_VAL_INDEX_UNDEFINED &&
+                            node->planet.xyz.y != DC_APP_VAL_INDEX_UNDEFINED &&
+                            node->planet.xyz.z != DC_APP_VAL_INDEX_UNDEFINED);
+            bool use_ortho = (node->planet.orthographic != DC_APP_VAL_INDEX_UNDEFINED &&
+                              dc_app_lookup_get_value(app_data->lookup, node->planet.orthographic)->value_boolean);
+
+            // build camera
+            plCamera camera = {0};
+            camera.tType        = use_ortho ? PL_CAMERA_TYPE_ORTHOGRAPHIC : PL_CAMERA_TYPE_PERSPECTIVE;
+            camera.fFieldOfView = 60.0f * (float)(M_PI / 180.0);
+            camera.fAspectRatio = dimension[0] / dimension[1];
+            camera.fNearZ       = 1.0f;
+            camera.fFarZ        = 100000000.0f;
+            camera.fWidth       = dimension[0];
+            camera.fHeight      = dimension[1];
+
+            if (use_xyz) {
+                // XYZ/RPY mode: direct world coordinates
+                float cam_x = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.xyz.x)->value_double;
+                float cam_y = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.xyz.y)->value_double;
+                float cam_z = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.xyz.z)->value_double;
+                _ext_camera->set_pos(&camera, cam_x, cam_y, cam_z);
+
+                if (node->planet.rpy.pitch != DC_APP_VAL_INDEX_UNDEFINED &&
+                    node->planet.rpy.yaw   != DC_APP_VAL_INDEX_UNDEFINED) {
+                    float pitch = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.rpy.pitch)->value_double;
+                    float yaw   = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.rpy.yaw)->value_double;
+                    _ext_camera->set_pitch_yaw(&camera, pl_radiansf(pitch), pl_radiansf(yaw));
+                }
+                if (node->planet.rpy.roll != DC_APP_VAL_INDEX_UNDEFINED) {
+                    camera.fRoll = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet.rpy.roll)->value_double);
+                }
+            } else if (use_lle) {
+                // LLE mode: convert lat/lon/elevation to world XYZ, look toward center
+                double lat_deg = dc_app_lookup_get_value(app_data->lookup, node->planet.lle.lat)->value_double;
+                double lon_deg = dc_app_lookup_get_value(app_data->lookup, node->planet.lle.lon)->value_double;
+                double ele     = dc_app_lookup_get_value(app_data->lookup, node->planet.lle.ele)->value_double;
+
+                double lat_rad = lat_deg * M_PI / 180.0;
+                double lon_rad = lon_deg * M_PI / 180.0;
+                double r       = node->planet.planet_radius + ele;
+
+                _ext_camera->set_pos(&camera,
+                    (float)(r * cos(lat_rad) * cos(lon_rad)),
+                    (float)(r * sin(lat_rad)),
+                    (float)(r * cos(lat_rad) * sin(lon_rad)));
+
+                // orient camera to look toward planet center
+                _ext_camera->look_at(&camera, camera.tPosDouble, (plDVec3){0, 0, 0});
+            }
+
+            _ext_camera->update(&camera);
+
+            // get command buffer for planet rendering (use between begin_frame and begin_main_pass)
+            plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();
+
+            // prepare and render planet to offscreen texture
+            _ext_planet->prepare(planet, cmd_buf);
+            _ext_planet->render(planet, &camera, cmd_buf);
+
+            // submit command buffer
+            _ext_starter->submit_command_buffer(cmd_buf);
+
+            // get the rendered texture and draw as 2D quad
+            plBindGroupHandle bind_group = _ext_planet->get_texture(planet);
+            _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group.uData, point0, point1, point2, point3);
+        }
+    }
 }
 
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
