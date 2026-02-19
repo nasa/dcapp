@@ -4243,9 +4243,9 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
 
             if (use_xyz) {
                 // XYZ/RPY mode: direct world coordinates
-                float cam_x = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.xyz.x)->value_double;
-                float cam_y = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.xyz.y)->value_double;
-                float cam_z = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.xyz.z)->value_double;
+                double cam_x = dc_app_lookup_get_value(app_data->lookup, node->planet.xyz.x)->value_double;
+                double cam_y = dc_app_lookup_get_value(app_data->lookup, node->planet.xyz.y)->value_double;
+                double cam_z = dc_app_lookup_get_value(app_data->lookup, node->planet.xyz.z)->value_double;
                 _ext_camera->set_pos(&camera, cam_x, cam_y, cam_z);
 
                 if (node->planet.rpy.pitch != DC_APP_VAL_INDEX_UNDEFINED &&
@@ -4268,9 +4268,9 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 double r       = node->planet.planet_radius + ele;
 
                 _ext_camera->set_pos(&camera,
-                    (float)(r * cos(lat_rad) * cos(lon_rad)),
-                    (float)(r * sin(lat_rad)),
-                    (float)(r * cos(lat_rad) * sin(lon_rad)));
+                    r * cos(lat_rad) * cos(lon_rad),
+                    r * sin(lat_rad),
+                    r * cos(lat_rad) * sin(lon_rad));
 
                 // orient camera to look toward planet center
                 _ext_camera->look_at(&camera, camera.tPosDouble, (plDVec3){0, 0, 0});
