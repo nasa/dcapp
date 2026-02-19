@@ -212,6 +212,9 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                     free(node->planet.sb_planet_data_files[j]);
                 }
                 sbfree(node->planet.sb_planet_data_files);
+                if (node->planet.planet_texture_file) {
+                    free(node->planet.planet_texture_file);
+                }
                 break;
             case NODE_TYPE_WINDOW:
                 if (node->window.title) {
