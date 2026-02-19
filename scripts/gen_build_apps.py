@@ -78,9 +78,11 @@ with pl.project("apps"):
     pl.add_include_directories(
         os.path.relpath(dcapp_home_abs + "/src", output_dir_abs),
         os.path.relpath(dcapp_home_abs + "/extensions", output_dir_abs),
+        os.path.relpath(dcapp_home_abs + "/shaders", output_dir_abs),
         pl_dir_rel + "/src",
         pl_dir_rel + "/libs",
         pl_dir_rel + "/extensions",
+        pl_dir_rel + "/shaders",
         pl_dir_rel + "/dependencies/stb")
 
     #-----------------------------------------------------------------------------
@@ -132,6 +134,7 @@ with pl.project("apps"):
         "dc_draw_ext",
         "dc_draw_backend_ext",
         "pl_planet_processor_ext",
+        "pl_planet_ext",
     ]
 
     for ext_name in dcapp_extensions:

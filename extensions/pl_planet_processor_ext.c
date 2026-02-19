@@ -358,7 +358,7 @@ bool
 pl_terrain_load_chunk_file(const char* pcPath, plPlanetChunkFile* ptFile, uint32_t uFileID)
 {
 
-    plVfsFileHandle tFileHandle = gptVfs->register_file(pcPath);
+    plVfsFileHandle tFileHandle = gptVfs->register_file(pcPath, true);
     pcPath = gptVfs->get_real_path(tFileHandle);
     
     FILE* ptDataFile = fopen(pcPath, "rb");

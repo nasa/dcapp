@@ -72,7 +72,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     // load dcapp extensions (separate from pilotlight's draw extensions)
     extension_registry->load("dc_draw_ext", NULL, NULL, true);
     extension_registry->load("dc_draw_backend_ext", NULL, NULL, true);
-    extension_registry->load("pl_terrain_ext", NULL, NULL, true);
+    extension_registry->load("pl_planet_processor_ext", NULL, NULL, true);
+    extension_registry->load("pl_planet_ext", NULL, NULL, true);
 
     // load extensions
     _ext_windows        = pl_get_api_latest(api_registry, plWindowI);
@@ -223,14 +224,20 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     }
     sbfree(app_data->sb_nodes);
 
-    // cleanup planet instances
-    for (int i = 0; i < sbcount(app_data->sb_planets); i++) {
-        if (app_data->sb_planets[i]) {
-            _ext_planet->cleanup_planet(app_data->sb_planets[i]);
+    // cleanup planet instances and extension
+    {
+        bool had_planets = sbcount(app_data->sb_planets) > 0;
+        for (int i = 0; i < sbcount(app_data->sb_planets); i++) {
+            if (app_data->sb_planets[i]) {
+                _ext_planet->cleanup_planet(app_data->sb_planets[i]);
+            }
         }
+        if (had_planets) {
+            _ext_planet->cleanup();
+        }
+        sbfree(app_data->sb_planets);
+        sbfree(app_data->sb_planet_node_indices);
     }
-    sbfree(app_data->sb_planets);
-    sbfree(app_data->sb_planet_node_indices);
 
     // cleanup trick contexts
     for (int i = 0; i < sbcount(app_data->sb_tricks); i++) {

@@ -268,6 +268,28 @@ unsigned char *dc_utils_load_binary_file(const char *path, size_t *out_size) {
     return buffer;
 }
 
+char *dc_utils_load_text_file(const char *path) {
+    FILE *file = fopen(path, "r");
+    if (!file) {
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    rewind(file);
+
+    char *buffer = (char *)malloc(size + 1);
+    if (!buffer) {
+        fclose(file);
+        return NULL;
+    }
+
+    size_t read = fread(buffer, 1, size, file);
+    buffer[read] = '\0';
+    fclose(file);
+    return buffer;
+}
+
 bool dc_utils_file_exists(const char *path) {
     if (!path) {
         return false;

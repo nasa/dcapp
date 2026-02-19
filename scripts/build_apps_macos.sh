@@ -67,6 +67,8 @@ rm -f ../pilotlight/out/dc_draw_backend_ext.dylib
 rm -f ../pilotlight/out/dc_draw_backend_ext_*.dylib
 rm -f ../pilotlight/out/pl_planet_processor_ext.dylib
 rm -f ../pilotlight/out/pl_planet_processor_ext_*.dylib
+rm -f ../pilotlight/out/pl_planet_ext.dylib
+rm -f ../pilotlight/out/pl_planet_ext_*.dylib
 rm -f ../pilotlight/out/dcapp.dylib
 rm -f ../pilotlight/out/dcapp_*.dylib
 rm -f ../pilotlight/out/dcapp-genheader
@@ -77,7 +79,7 @@ rm -f ../pilotlight/out/dcapp-planet-chunkgen_*.dylib
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
@@ -114,7 +116,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
@@ -151,7 +153,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
@@ -184,17 +186,54 @@ fi
 echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~ pl_planet_ext | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
+PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../extensions/pl_planet_ext.c "
+PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
+
+# add flags for specific hardware
+if [[ "$ARCH" == "arm64" ]]; then
+    PL_COMPILER_FLAGS+="-arch arm64 "
+else
+    PL_COMPILER_FLAGS+="-arch x86_64 "
+fi
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: pl_planet_ext${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+clang -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINK_FRAMEWORKS $PL_LINKER_FLAGS -o "./../pilotlight/out/pl_planet_ext.dylib"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/sock.c ../src/trick.c ../src/edge.c ../src/value.c ../src/app/elem.c ../src/app/config.c ../src/app/lookup.c ../src/pixelstream/shmem.c ../src/pixelstream/mjpeg.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/utils/log.c ../apps/dcapp.c "
+PL_SOURCES="../src/sock.c ../src/trick.c ../src/edge.c ../src/value.c ../src/app/config.c ../src/app/lookup.c ../src/app/elem.c ../src/pixelstream/shmem.c ../src/pixelstream/mjpeg.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/string.c ../src/utils/log.c ../src/utils/file.c ../apps/dcapp.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -225,13 +264,13 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/elem.c ../src/app/config.c ../src/app/lookup.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/utils/log.c ../src/value.c ../apps/dcapp-genheader.c "
+PL_SOURCES="../src/app/config.c ../src/app/lookup.c ../src/app/elem.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/string.c ../src/utils/log.c ../src/utils/file.c ../src/value.c ../apps/dcapp-genheader.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -262,13 +301,13 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/elem.c ../src/app/config.c ../src/app/lookup.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/utils/log.c ../src/value.c ../apps/dcapp-validate.c "
+PL_SOURCES="../src/app/config.c ../src/app/lookup.c ../src/app/elem.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/string.c ../src/utils/log.c ../src/utils/file.c ../src/value.c ../apps/dcapp-validate.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -295,11 +334,11 @@ fi
 echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-planet-chunkgen | release ~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~ dcapp-planet-chunkgen | release ~~~~~~~~~~~~~~~~~~~~~~~~
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
@@ -357,6 +396,8 @@ rm -f ../pilotlight/out/dc_draw_backend_ext.dylib
 rm -f ../pilotlight/out/dc_draw_backend_ext_*.dylib
 rm -f ../pilotlight/out/pl_planet_processor_ext.dylib
 rm -f ../pilotlight/out/pl_planet_processor_ext_*.dylib
+rm -f ../pilotlight/out/pl_planet_ext.dylib
+rm -f ../pilotlight/out/pl_planet_ext_*.dylib
 rm -f ../pilotlight/out/dcapp.dylib
 rm -f ../pilotlight/out/dcapp_*.dylib
 rm -f ../pilotlight/out/dcapp-genheader
@@ -367,7 +408,7 @@ rm -f ../pilotlight/out/dcapp-planet-chunkgen_*.dylib
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
@@ -404,7 +445,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
@@ -441,7 +482,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
@@ -474,17 +515,54 @@ fi
 echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~ pl_planet_ext | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
+PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../extensions/pl_planet_ext.c "
+PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
+
+# add flags for specific hardware
+if [[ "$ARCH" == "arm64" ]]; then
+    PL_COMPILER_FLAGS+="-arch arm64 "
+else
+    PL_COMPILER_FLAGS+="-arch x86_64 "
+fi
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: pl_planet_ext${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+clang -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINK_FRAMEWORKS $PL_LINKER_FLAGS -o "./../pilotlight/out/pl_planet_ext.dylib"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES="-ldearimguid "
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/sock.c ../src/trick.c ../src/edge.c ../src/value.c ../src/app/elem.c ../src/app/config.c ../src/app/lookup.c ../src/pixelstream/shmem.c ../src/pixelstream/mjpeg.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/utils/log.c ../apps/dcapp.c "
+PL_SOURCES="../src/sock.c ../src/trick.c ../src/edge.c ../src/value.c ../src/app/config.c ../src/app/lookup.c ../src/app/elem.c ../src/pixelstream/shmem.c ../src/pixelstream/mjpeg.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/string.c ../src/utils/log.c ../src/utils/file.c ../apps/dcapp.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -515,13 +593,13 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/elem.c ../src/app/config.c ../src/app/lookup.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/utils/log.c ../src/value.c ../apps/dcapp-genheader.c "
+PL_SOURCES="../src/app/config.c ../src/app/lookup.c ../src/app/elem.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/string.c ../src/utils/log.c ../src/utils/file.c ../src/value.c ../apps/dcapp-genheader.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -552,13 +630,13 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/elem.c ../src/app/config.c ../src/app/lookup.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/utils/log.c ../src/value.c ../apps/dcapp-validate.c "
+PL_SOURCES="../src/app/config.c ../src/app/lookup.c ../src/app/elem.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/string.c ../src/utils/log.c ../src/utils/file.c ../src/value.c ../apps/dcapp-validate.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -585,11 +663,11 @@ fi
 echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-planet-chunkgen | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-planet-chunkgen | debug ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "

@@ -539,7 +539,8 @@ typedef struct __NodePlanet {
 
     // data
     char        **sb_planet_data_files;  // stretchy buffer of heap-allocated file paths
-    uint8_t       planet_index;
+    uint8_t       planet_index;          // 1-based index into sb_planets (0 = uninitialized)
+    double        planet_radius;         // set during init from .planet.json
 
 } _NodePlanet;
 

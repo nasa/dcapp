@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <!-- Planet Demo -->
+    <!-- Shows a planet view with sliders for Latitude, Longitude, and Elevation -->
+
+    <!-- Slider raw values -->
+    <Variable Type="#_variable_double_" InitialValue="45">SliderLat</Variable>
+    <Variable Type="#_variable_double_" InitialValue="180">SliderLon</Variable>
+    <Variable Type="#_variable_double_" InitialValue="200">SliderEle</Variable>
+
+    <!-- Computed camera values -->
+    <Variable Type="#_variable_double_">Latitude</Variable>
+    <Variable Type="#_variable_double_">Longitude</Variable>
+    <Variable Type="#_variable_double_">Elevation</Variable>
+
+    <!-- Button state variables -->
+    <Variable Type="#_variable_integer_">SliderLatSelected</Variable>
+    <Variable Type="#_variable_integer_">SliderLonSelected</Variable>
+    <Variable Type="#_variable_integer_">SliderEleSelected</Variable>
+
+    <Default>
+        <Text ForceMono="Numeric" Size="16" FillColor="#_color_white_"/>
+    </Default>
+
+    <Window X="0" Y="20" Width="1100" Height="660">
+        <Panel VirtualWidth="1100" VirtualHeight="660" BackgroundColor="#_color_charcoal_">
+
+            <Text X="550" Y="640" LocalAlignX="#_align_center_" Size="24" FillColor="#_color_white_">Planet Demo</Text>
+
+            <!-- ========== PLANET VIEW (left side) ========== -->
+            <Planet X="20" Y="20" Width="600" Height="600"
+                Latitude="@Latitude" Longitude="@Longitude" Elevation="@Elevation">
+                <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
+            </Planet>
+
+            <!-- ========== CONTROLS (right side) ========== -->
+
+            <!-- Compute Latitude: SliderLat(0-180) -> Latitude(-90 to 90) -->
+            <Set Variable="Latitude">@SliderLat</Set>
+            <Set Variable="Latitude" Operator="#_set_subtract_">90</Set>
+
+            <!-- Compute Longitude: direct (0-360) -->
+            <Set Variable="Longitude">@SliderLon</Set>
+
+            <!-- Compute Elevation: SliderEle(0-500) * 10000 -> 0 to 5,000,000 meters -->
+            <Set Variable="Elevation">@SliderEle</Set>
+            <Set Variable="Elevation" Operator="#_set_multiply_">10000</Set>
+
+            <!-- ===== LATITUDE SLIDER ===== -->
+            <Text X="640" Y="560" LocalAlignX="#_align_left_">Latitude:</Text>
+            <Text X="850" Y="560" LocalAlignX="#_align_right_">@Latitude(%.1f) deg</Text>
+
+            <Container X="640" Y="530" Width="420" Height="20" VirtualWidth="180">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+
+                <If Value1="@SliderLatSelected" Operation="#_if_eq_" Value2="1">
+                    <MouseMotion VariableX="SliderLat"/>
+                </If>
+
+                <Set Variable="SliderLat" Operator="#_set_max_">0</Set>
+                <Set Variable="SliderLat" Operator="#_set_min_">180</Set>
+
+                <Button Type="#_button_momentary_" X="@SliderLat" Y="10" Width="8" Height="26" Variable="SliderLatSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn>
+                        <Rectangle FillColor="#_color_lime_"/>
+                    </ButtonIndicatorOn>
+                    <ButtonIndicatorOff>
+                        <Rectangle FillColor="#_color_gray_"/>
+                    </ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- ===== LONGITUDE SLIDER ===== -->
+            <Text X="640" Y="490" LocalAlignX="#_align_left_">Longitude:</Text>
+            <Text X="850" Y="490" LocalAlignX="#_align_right_">@Longitude(%.1f) deg</Text>
+
+            <Container X="640" Y="460" Width="420" Height="20" VirtualWidth="360">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+
+                <If Value1="@SliderLonSelected" Operation="#_if_eq_" Value2="1">
+                    <MouseMotion VariableX="SliderLon"/>
+                </If>
+
+                <Set Variable="SliderLon" Operator="#_set_max_">0</Set>
+                <Set Variable="SliderLon" Operator="#_set_min_">360</Set>
+
+                <Button Type="#_button_momentary_" X="@SliderLon" Y="10" Width="8" Height="26" Variable="SliderLonSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn>
+                        <Rectangle FillColor="#_color_lime_"/>
+                    </ButtonIndicatorOn>
+                    <ButtonIndicatorOff>
+                        <Rectangle FillColor="#_color_gray_"/>
+                    </ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- ===== ELEVATION SLIDER ===== -->
+            <Text X="640" Y="420" LocalAlignX="#_align_left_">Elevation:</Text>
+            <Text X="850" Y="420" LocalAlignX="#_align_right_">@Elevation(%.0f) m</Text>
+
+            <Container X="640" Y="390" Width="420" Height="20" VirtualWidth="500">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+
+                <If Value1="@SliderEleSelected" Operation="#_if_eq_" Value2="1">
+                    <MouseMotion VariableX="SliderEle"/>
+                </If>
+
+                <Set Variable="SliderEle" Operator="#_set_max_">1</Set>
+                <Set Variable="SliderEle" Operator="#_set_min_">500</Set>
+
+                <Button Type="#_button_momentary_" X="@SliderEle" Y="10" Width="8" Height="26" Variable="SliderEleSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn>
+                        <Rectangle FillColor="#_color_lime_"/>
+                    </ButtonIndicatorOn>
+                    <ButtonIndicatorOff>
+                        <Rectangle FillColor="#_color_gray_"/>
+                    </ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+        </Panel>
+    </Window>
+</DCAPP>
