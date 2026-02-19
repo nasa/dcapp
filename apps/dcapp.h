@@ -20,7 +20,8 @@
 // dcapp extension includes
 #include "../extensions/dc_draw_ext.h"
 #include "../extensions/dc_draw_backend_ext.h"
-#include "../extensions/pl_terrain_ext.h"
+#include "../extensions/pl_planet_ext.h"
+#include "../extensions/pl_planet_processor_ext.h"
 
 // general includes
 #include <float.h>
@@ -32,21 +33,22 @@
 #define PL_FREE(x) _ext_memory->tracked_realloc((x), 0, __FILE__, __LINE__)
 
 // PL extensions
-const plWindowI        *_ext_windows       = NULL;
-const plDrawI          *_ext_draw          = NULL;
-const plDrawBackendI   *_ext_draw_backend  = NULL;
-const plStarterI       *_ext_starter       = NULL;
-const plProfileI       *_ext_profile       = NULL;
-const plMemoryI        *_ext_memory        = NULL;
-const plLibraryI       *_ext_library       = NULL;
-const plIOI            *_ext_ioi           = NULL;
-const plGraphicsI      *_ext_gfx           = NULL;
-const plGPUAllocatorsI *_ext_gpu_allocators = NULL;
-const plTerrainI       *_ext_terrain       = NULL;
-const plVfsI           *_ext_vfs           = NULL;
-const plShaderI        *_ext_shader        = NULL;
-const plCameraI        *_ext_camera        = NULL;
-const plImageI         *_ext_image         = NULL;
+const plWindowI          *_ext_windows          = NULL;
+const plDrawI            *_ext_draw             = NULL;
+const plDrawBackendI     *_ext_draw_backend     = NULL;
+const plStarterI         *_ext_starter          = NULL;
+const plProfileI         *_ext_profile          = NULL;
+const plMemoryI          *_ext_memory           = NULL;
+const plLibraryI         *_ext_library          = NULL;
+const plIOI              *_ext_ioi              = NULL;
+const plGraphicsI        *_ext_gfx              = NULL;
+const plGPUAllocatorsI   *_ext_gpu_allocators   = NULL;
+const plPlanetI          *_ext_planet           = NULL;
+const plPlanetProcessorI *_ext_planet_processor = NULL;
+const plVfsI             *_ext_vfs              = NULL;
+const plShaderI          *_ext_shader           = NULL;
+const plCameraI          *_ext_camera           = NULL;
+const plImageI           *_ext_image            = NULL;
 
 // dcapp includes
 #include "../src/utils/stb_sb.h"
@@ -126,7 +128,7 @@ typedef enum __NodeType {
     NODE_TYPE_SET,
     NODE_TYPE_SPHERE,
     NODE_TYPE_STENCIL,
-    NODE_TYPE_TERRAIN,
+    NODE_TYPE_PLANET,
     NODE_TYPE_TEXT,
     NODE_TYPE_WINDOW,
 
@@ -177,6 +179,7 @@ const _NodeIndex NODE_FIRST_INDEX     = 1;
 typedef struct __NodeArc {
     _ValIndex2    position;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -215,6 +218,7 @@ typedef struct __NodeButton {
     _ValIndex2    dimension;
     _ValIndex2    virtual_dimension;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -247,6 +251,7 @@ typedef struct __NodeButton {
 typedef struct __NodeEllipse {
     _ValIndex2    position;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -280,6 +285,7 @@ typedef struct __NodeContainer {
     _ValIndex2    dimension;
     _ValIndex2    virtual_dimension;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -302,6 +308,7 @@ typedef struct __NodeImage {
     _ValIndex2    position;
     _ValIndex2    dimension;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -319,6 +326,7 @@ typedef struct __NodeImage {
 #define _NODE_LINE_MAX_POINTS 1000
 typedef struct __NodeLine {
     _ValIndex2    position;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     DcAppValIndex rotation;
     DcAppValIndex negate_x;
@@ -358,6 +366,7 @@ typedef struct __NodePixelstream {
     _ValIndex2    position;
     _ValIndex2    dimension;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -385,6 +394,7 @@ typedef struct __NodePixelstream {
 #define _NODE_POLYGON_MAX_POINTS 1000
 typedef struct __NodePolygon {
     _ValIndex2    position;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     DcAppValIndex rotation;
     DcAppValIndex negate_x;
@@ -404,6 +414,7 @@ typedef struct __NodeRectangle {
     _ValIndex2    position;
     _ValIndex2    dimension;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -440,6 +451,7 @@ typedef struct __NodeSphere {
     // 2D positioning (where to draw in the orthographic view)
     _ValIndex2    position;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
@@ -482,6 +494,7 @@ typedef struct __NodeText {
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
     _ValIndex2    pivot_local_align;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_position;
     DcAppValIndex rotation;
     DcAppValIndex negate_x;
@@ -504,7 +517,7 @@ typedef struct __NodeText {
     DcValueType   *sb_format_types;
 } _NodeText;
 
-typedef struct __NodeTerrain {
+typedef struct __NodePlanet {
 
     // general positioning of display
     _ValIndex2    dimension;
@@ -512,19 +525,30 @@ typedef struct __NodeTerrain {
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
     _ValIndex2    pivot_position;
+    _ValIndex2    pivot_parent_align;
     _ValIndex2    pivot_local_align;
     DcAppValIndex rotation;
     DcAppValIndex negate_x;
     DcAppValIndex negate_y;
 
-    // terrain camera
+    // camera
     _ValIndex3    lle;
     _ValIndex3    xyz;
     _ValIndex3    rpy;
     DcAppValIndex orthographic;
-    uint8_t       terrain_index;
 
-} _NodeTerrain;
+    // data
+    char        **sb_planet_data_files;  // stretchy buffer of heap-allocated file paths
+    uint8_t       planet_index;          // 1-based index into sb_planets (0 = uninitialized)
+    double        planet_radius;         // set during init from .planet.json
+
+    // texture overlay
+    char         *planet_texture_file;  // heap-allocated path (NULL = no texture)
+    DcAppValIndex planet_texture_mpp;   // meters per pixel
+    DcAppValIndex planet_texture_lat;   // latitude (degrees)
+    DcAppValIndex planet_texture_lon;   // longitude (degrees)
+
+} _NodePlanet;
 
 typedef struct __NodeWindow {
     plVec2        init_position;
@@ -558,7 +582,7 @@ typedef struct __Node {
         _NodeSphere           sphere;
         _NodeStateEvent       state_event;
         _NodeStencil          stencil;
-        _NodeTerrain          terrain;
+        _NodePlanet           planet;
         _NodeText             text;
         _NodeWindow           window;
     };
@@ -746,10 +770,15 @@ typedef struct __AppData {
     int            draw_list_2d_index;   // current index into 2D pool
     int            draw_list_3d_index;   // current index into 3D pool
 
+    // planet instances
+    _NodeIndex *sb_planet_node_indices;  // collected during XML parse
+    plPlanet  **sb_planets;              // created planet instances
+
 } _AppData;
 
 // pl utils
 static void _init_app_data(_AppData *app_data, _Node *window_node);
+static void _init_planets(_AppData *app_data);
 
 // node utils
 static const char *_node_type_to_string(_NodeType type);

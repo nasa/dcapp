@@ -158,7 +158,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
@@ -189,7 +189,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
@@ -220,7 +220,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
@@ -255,7 +255,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -282,7 +282,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
@@ -328,7 +328,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -360,7 +360,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -391,7 +391,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -422,7 +422,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -451,7 +451,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -513,10 +513,11 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         }
     }
 
-    // Terrain can contain TerrainDEM
-    if (parent_type == DC_APP_ELEM_TYPE_TERRAIN) {
+    // Planet can contain PlanetData and PlanetTexture
+    if (parent_type == DC_APP_ELEM_TYPE_PLANET) {
         switch (child_type) {
-            case DC_APP_ELEM_TYPE_TERRAIN_DEM:
+            case DC_APP_ELEM_TYPE_PLANET_DATA:
+            case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
                 return true;
             default:
                 return false;
@@ -539,7 +540,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -585,7 +586,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -622,7 +623,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_TERRAIN:
+            case DC_APP_ELEM_TYPE_PLANET:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -645,7 +646,8 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         case DC_APP_ELEM_TYPE_TRICK_FROM:
         case DC_APP_ELEM_TYPE_TRICK_TO:
         case DC_APP_ELEM_TYPE_VERTEX:
-        case DC_APP_ELEM_TYPE_TERRAIN_DEM:
+        case DC_APP_ELEM_TYPE_PLANET_DATA:
+        case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
         case DC_APP_ELEM_TYPE_LOGIC:
         case DC_APP_ELEM_TYPE_FUNCTION:
         case DC_APP_ELEM_TYPE_MOUSE_MOTION:
@@ -867,13 +869,24 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             break;
         }
 
-        case DC_APP_ELEM_TYPE_TERRAIN_DEM: {
+        case DC_APP_ELEM_TYPE_PLANET_DATA: {
             xmlChar *file = xmlGetProp(node, BAD_CAST "File");
             if (!file) {
-                DC_LOG_ERROR("Validate", "<TerrainDEM> missing required attribute 'File' (line %ld)", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<PlanetData> missing required attribute 'File' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(file);
+            }
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_PLANET_TEXTURE: {
+            xmlChar *source = xmlGetProp(node, BAD_CAST "Source");
+            if (!source) {
+                DC_LOG_ERROR("Validate", "<PlanetTexture> missing required attribute 'Source' (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            } else {
+                xmlFree(source);
             }
             break;
         }
@@ -921,8 +934,9 @@ static const char *_valid_attrs_pixelstream[]    = {"Type", "URL", "Protocol", "
 static const char *_valid_attrs_set[]            = {"Variable", "Operator", "Defer", NULL};
 static const char *_valid_attrs_sphere[]         = {"Radius", "Image", "Roll", "Pitch", "Yaw", NULL};
 static const char *_valid_attrs_style[]          = {"Name", NULL};
-static const char *_valid_attrs_terrain[]        = {"Latitude", "Longitude", "Elevation", "CameraX", "CameraY", "CameraZ", "Roll", "Pitch", "Yaw", "Orthographic", NULL};
-static const char *_valid_attrs_terrain_dem[]    = {"File", NULL};
+static const char *_valid_attrs_planet[]          = {"Latitude", "Longitude", "Elevation", "CameraX", "CameraY", "CameraZ", "Roll", "Pitch", "Yaw", "Orthographic", NULL};
+static const char *_valid_attrs_planet_data[]    = {"File", NULL};
+static const char *_valid_attrs_planet_texture[] = {"Source", "MetersPerPixel", "Latitude", "Longitude", NULL};
 static const char *_valid_attrs_text[]           = {"Size", "ShadowOffset", NULL};
 static const char *_valid_attrs_trick_io[]       = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};
 static const char *_valid_attrs_trick_variable[] = {"Name", "Units", NULL};
@@ -1105,17 +1119,20 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
         case DC_APP_ELEM_TYPE_STENCIL_DRAW:
             return true; // Stencil elements are wrappers
 
-        case DC_APP_ELEM_TYPE_TERRAIN:
+        case DC_APP_ELEM_TYPE_PLANET:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
                    _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_dimension) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
-                   _attr_in_list(attr_name, _valid_attrs_terrain);
+                   _attr_in_list(attr_name, _valid_attrs_planet);
 
-        case DC_APP_ELEM_TYPE_TERRAIN_DEM:
-            return _attr_in_list(attr_name, _valid_attrs_terrain_dem);
+        case DC_APP_ELEM_TYPE_PLANET_DATA:
+            return _attr_in_list(attr_name, _valid_attrs_planet_data);
+
+        case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
+            return _attr_in_list(attr_name, _valid_attrs_planet_texture);
 
         case DC_APP_ELEM_TYPE_TEXT:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
