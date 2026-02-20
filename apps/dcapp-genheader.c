@@ -63,8 +63,8 @@ int main(int argc, char **argv) {
     for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
         DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
         const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
-        if (strlen(var_name) > longest_string_size) {
-            longest_string_size = strlen(var_name);
+        if (strlen(var_name) > (size_t)longest_string_size) {
+            longest_string_size = (int)strlen(var_name);
         }
     }
 

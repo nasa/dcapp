@@ -1,3 +1,5 @@
+#ifndef _WIN32
+
 #include "shmem.h"
 #include "../utils/stb_sb.h"
 #include "../utils/log.h"
@@ -235,3 +237,9 @@ static int _read_frame(_Context *ctx) {
 
     return ctx->has_new_data ? 1 : 0;
 }
+
+#else
+
+typedef int _dc_ps_shmem_c_unused;  // !_WIN32
+
+#endif  // !_WIN32

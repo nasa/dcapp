@@ -416,7 +416,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
             DcAppLookupVar *connected_var = dc_app_lookup_get_var(app_data->lookup, edge_context->connected_var_index);
             if (connected_var) {
                 DcValue *value = dc_app_lookup_get_value(app_data->lookup, connected_var->value_index);
-                bool is_connected = dc_edge_is_connected(edge);
+                is_connected = dc_edge_is_connected(edge);
                 switch (value->type) {
                     case DC_VALUE_TYPE_BOOLEAN:
                         value->value_boolean = is_connected;

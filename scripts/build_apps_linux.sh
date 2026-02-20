@@ -54,38 +54,38 @@ done
 if [[ "$PL_CONFIG" == "release" ]]; then
 
 # create output directory(s)
-mkdir -p "../pilotlight/out"
+mkdir -p "..\pilotlight\out"
 
 # create lock file(s)
-echo LOCKING > "../pilotlight/out/lock.tmp"
+echo LOCKING > "..\pilotlight\out/lock.tmp"
 
-rm -f ../pilotlight/out/dc_draw_ext.so
-rm -f ../pilotlight/out/dc_draw_ext_*.so
-rm -f ../pilotlight/out/dc_draw_backend_ext.so
-rm -f ../pilotlight/out/dc_draw_backend_ext_*.so
-rm -f ../pilotlight/out/dcapp.so
-rm -f ../pilotlight/out/dcapp_*.so
-rm -f ../pilotlight/out/dcapp-genheader
-rm -f ../pilotlight/out/dcapp-validate
+rm -f ..\pilotlight\out/dc_draw_ext.so
+rm -f ..\pilotlight\out/dc_draw_ext_*.so
+rm -f ..\pilotlight\out/dc_draw_backend_ext.so
+rm -f ..\pilotlight\out/dc_draw_backend_ext_*.so
+rm -f ..\pilotlight\out/dcapp.so
+rm -f ..\pilotlight\out/dcapp_*.so
+rm -f ..\pilotlight\out/dcapp-genheader
+rm -f ..\pilotlight\out/dcapp-validate
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dc_draw_ext | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_INCLUDE_DIRECTORIES="-I..\src -I..\extensions -I..\pilotlight/src -I..\pilotlight/libs -I..\pilotlight/extensions -I..\pilotlight/dependencies/stb "
+PL_LINK_DIRECTORIES="-L..\pilotlight\out -Wl,-rpath,..\pilotlight\out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../extensions/dc_draw_ext.c "
+PL_SOURCES="..\extensions\dc_draw_ext.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: dc_draw_ext${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dc_draw_ext.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./..\pilotlight\out/dc_draw_ext.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -101,20 +101,20 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_INCLUDE_DIRECTORIES="-I..\src -I..\extensions -I..\pilotlight/src -I..\pilotlight/libs -I..\pilotlight/extensions -I..\pilotlight/dependencies/stb "
+PL_LINK_DIRECTORIES="-L..\pilotlight\out -Wl,-rpath,..\pilotlight\out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../extensions/dc_draw_backend_ext.c "
+PL_SOURCES="..\extensions\dc_draw_backend_ext.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: dc_draw_backend_ext${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dc_draw_backend_ext.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./..\pilotlight\out/dc_draw_backend_ext.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -130,20 +130,20 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/usr/include/libxml2 "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_INCLUDE_DIRECTORIES="-I..\src -I..\extensions -I..\pilotlight/src -I..\pilotlight/libs -I..\pilotlight/extensions -I..\pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_LINK_DIRECTORIES="-L..\pilotlight\out -Wl,-rpath,..\pilotlight\out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/value.c ../src/trick.c ../src/sock.c ../src/edge.c ../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/pixelstream/shmem.c ../src/pixelstream/mjpeg.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/utils/log.c ../apps/dcapp.c "
+PL_SOURCES="..\src\edge.c ..\src\sock.c ..\src\trick.c ..\src\value.c ..\src\app\config.c ..\src\app\elem.c ..\src\app\lookup.c ..\src\pixelstream\mjpeg.c ..\src\pixelstream\shmem.c ..\src\utils\env.c ..\src\utils\file.c ..\src\utils\log.c ..\src\utils\math.c ..\src\utils\string.c ..\src\utils\time.c ..\apps\dcapp.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: dcapp${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dcapp.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./..\pilotlight\out/dcapp.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -159,20 +159,20 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/usr/include/libxml2 "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_INCLUDE_DIRECTORIES="-I..\src -I..\extensions -I..\pilotlight/src -I..\pilotlight/libs -I..\pilotlight/extensions -I..\pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_LINK_DIRECTORIES="-L..\pilotlight\out -Wl,-rpath,..\pilotlight\out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/utils/log.c ../src/value.c ../apps/dcapp-genheader.c "
+PL_SOURCES="..\src\app\config.c ..\src\app\elem.c ..\src\app\lookup.c ..\src\utils\env.c ..\src\utils\file.c ..\src\utils\log.c ..\src\utils\math.c ..\src\utils\string.c ..\src\utils\time.c ..\src\value.c ..\apps\dcapp-genheader.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: dcapp-genheader${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dcapp-genheader"
+gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./..\pilotlight\out/dcapp-genheader"
 
 # check build status
 if [ $? -ne 0 ]
@@ -188,20 +188,20 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/usr/include/libxml2 "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_INCLUDE_DIRECTORIES="-I..\src -I..\extensions -I..\pilotlight/src -I..\pilotlight/libs -I..\pilotlight/extensions -I..\pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_LINK_DIRECTORIES="-L..\pilotlight\out -Wl,-rpath,..\pilotlight\out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/utils/log.c ../src/value.c ../apps/dcapp-validate.c "
+PL_SOURCES="..\src\app\config.c ..\src\app\elem.c ..\src\app\lookup.c ..\src\utils\env.c ..\src\utils\file.c ..\src\utils\log.c ..\src\utils\math.c ..\src\utils\string.c ..\src\utils\time.c ..\src\value.c ..\apps\dcapp-validate.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: dcapp-validate${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dcapp-validate"
+gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./..\pilotlight\out/dcapp-validate"
 
 # check build status
 if [ $? -ne 0 ]
@@ -214,7 +214,7 @@ echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 # delete lock file(s)
-rm -f ../pilotlight/out/lock.tmp
+rm -f ..\pilotlight\out/lock.tmp
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # end of release
@@ -227,38 +227,38 @@ fi
 if [[ "$PL_CONFIG" == "debug" ]]; then
 
 # create output directory(s)
-mkdir -p "../pilotlight/out"
+mkdir -p "..\pilotlight\out"
 
 # create lock file(s)
-echo LOCKING > "../pilotlight/out/lock.tmp"
+echo LOCKING > "..\pilotlight\out/lock.tmp"
 
-rm -f ../pilotlight/out/dc_draw_ext.so
-rm -f ../pilotlight/out/dc_draw_ext_*.so
-rm -f ../pilotlight/out/dc_draw_backend_ext.so
-rm -f ../pilotlight/out/dc_draw_backend_ext_*.so
-rm -f ../pilotlight/out/dcapp.so
-rm -f ../pilotlight/out/dcapp_*.so
-rm -f ../pilotlight/out/dcapp-genheader
-rm -f ../pilotlight/out/dcapp-validate
+rm -f ..\pilotlight\out/dc_draw_ext.so
+rm -f ..\pilotlight\out/dc_draw_ext_*.so
+rm -f ..\pilotlight\out/dc_draw_backend_ext.so
+rm -f ..\pilotlight\out/dc_draw_backend_ext_*.so
+rm -f ..\pilotlight\out/dcapp.so
+rm -f ..\pilotlight\out/dcapp_*.so
+rm -f ..\pilotlight\out/dcapp-genheader
+rm -f ..\pilotlight\out/dcapp-validate
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dc_draw_ext | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_INCLUDE_DIRECTORIES="-I..\src -I..\extensions -I..\pilotlight/src -I..\pilotlight/libs -I..\pilotlight/extensions -I..\pilotlight/dependencies/stb "
+PL_LINK_DIRECTORIES="-L..\pilotlight\out -Wl,-rpath,..\pilotlight\out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../extensions/dc_draw_ext.c "
+PL_SOURCES="..\extensions\dc_draw_ext.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: dc_draw_ext${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dc_draw_ext.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./..\pilotlight\out/dc_draw_ext.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -274,20 +274,20 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_INCLUDE_DIRECTORIES="-I..\src -I..\extensions -I..\pilotlight/src -I..\pilotlight/libs -I..\pilotlight/extensions -I..\pilotlight/dependencies/stb "
+PL_LINK_DIRECTORIES="-L..\pilotlight\out -Wl,-rpath,..\pilotlight\out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../extensions/dc_draw_backend_ext.c "
+PL_SOURCES="..\extensions\dc_draw_backend_ext.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: dc_draw_backend_ext${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dc_draw_backend_ext.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./..\pilotlight\out/dc_draw_backend_ext.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -303,20 +303,20 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/usr/include/libxml2 "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_INCLUDE_DIRECTORIES="-I..\src -I..\extensions -I..\pilotlight/src -I..\pilotlight/libs -I..\pilotlight/extensions -I..\pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_LINK_DIRECTORIES="-L..\pilotlight\out -Wl,-rpath,..\pilotlight\out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES="-l:dearimguid.a "
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/value.c ../src/trick.c ../src/sock.c ../src/edge.c ../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/pixelstream/shmem.c ../src/pixelstream/mjpeg.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/utils/log.c ../apps/dcapp.c "
+PL_SOURCES="..\src\edge.c ..\src\sock.c ..\src\trick.c ..\src\value.c ..\src\app\config.c ..\src\app\elem.c ..\src\app\lookup.c ..\src\pixelstream\mjpeg.c ..\src\pixelstream\shmem.c ..\src\utils\env.c ..\src\utils\file.c ..\src\utils\log.c ..\src\utils\math.c ..\src\utils\string.c ..\src\utils\time.c ..\apps\dcapp.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: dcapp${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dcapp.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./..\pilotlight\out/dcapp.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -332,20 +332,20 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/usr/include/libxml2 "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_INCLUDE_DIRECTORIES="-I..\src -I..\extensions -I..\pilotlight/src -I..\pilotlight/libs -I..\pilotlight/extensions -I..\pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_LINK_DIRECTORIES="-L..\pilotlight\out -Wl,-rpath,..\pilotlight\out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/utils/log.c ../src/value.c ../apps/dcapp-genheader.c "
+PL_SOURCES="..\src\app\config.c ..\src\app\elem.c ..\src\app\lookup.c ..\src\utils\env.c ..\src\utils\file.c ..\src\utils\log.c ..\src\utils\math.c ..\src\utils\string.c ..\src\utils\time.c ..\src\value.c ..\apps\dcapp-genheader.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: dcapp-genheader${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dcapp-genheader"
+gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./..\pilotlight\out/dcapp-genheader"
 
 # check build status
 if [ $? -ne 0 ]
@@ -361,20 +361,20 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/dependencies/stb -I/usr/include/libxml2 "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_INCLUDE_DIRECTORIES="-I..\src -I..\extensions -I..\pilotlight/src -I..\pilotlight/libs -I..\pilotlight/extensions -I..\pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_LINK_DIRECTORIES="-L..\pilotlight\out -Wl,-rpath,..\pilotlight\out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../src/app/lookup.c ../src/app/elem.c ../src/app/config.c ../src/utils/env.c ../src/utils/math.c ../src/utils/time.c ../src/utils/file.c ../src/utils/string.c ../src/utils/log.c ../src/value.c ../apps/dcapp-validate.c "
+PL_SOURCES="..\src\app\config.c ..\src\app\elem.c ..\src\app\lookup.c ..\src\utils\env.c ..\src\utils\file.c ..\src\utils\log.c ..\src\utils\math.c ..\src\utils\string.c ..\src\utils\time.c ..\src\value.c ..\apps\dcapp-validate.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: dcapp-validate${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../pilotlight/out/dcapp-validate"
+gcc $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./..\pilotlight\out/dcapp-validate"
 
 # check build status
 if [ $? -ne 0 ]
@@ -387,7 +387,7 @@ echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 # delete lock file(s)
-rm -f ../pilotlight/out/lock.tmp
+rm -f ..\pilotlight\out/lock.tmp
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # end of debug

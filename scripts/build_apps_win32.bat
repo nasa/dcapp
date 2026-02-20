@@ -52,36 +52,36 @@
 :release
 
 :: create output directories
-@if not exist "../pilotlight/out" @mkdir "../pilotlight/out"
+@if not exist "..\pilotlight\out" @mkdir "..\pilotlight\out"
 
 :: create lock file(s)
-@echo LOCKING > "../pilotlight/out/lock.tmp"
+@echo LOCKING > "..\pilotlight\out/lock.tmp"
 
-@if exist "../pilotlight/out/dc_draw_ext.dll" del "..\pilotlight\out\dc_draw_ext.dll"
-@if exist "../pilotlight/out/dc_draw_ext_*.pdb" del "..\pilotlight\out\dc_draw_ext_*.pdb"
-@if exist "../pilotlight/out/dc_draw_backend_ext.dll" del "..\pilotlight\out\dc_draw_backend_ext.dll"
-@if exist "../pilotlight/out/dc_draw_backend_ext_*.pdb" del "..\pilotlight\out\dc_draw_backend_ext_*.pdb"
-@if exist "../pilotlight/out/dcapp.dll" del "..\pilotlight\out\dcapp.dll"
-@if exist "../pilotlight/out/dcapp_*.pdb" del "..\pilotlight\out\dcapp_*.pdb"
-@if exist "../pilotlight/out/dcapp-genheader.exe" del "..\pilotlight\out\dcapp-genheader.exe"
-@if exist "../pilotlight/out/dcapp-genheader_*.pdb" del "..\pilotlight\out\dcapp-genheader_*.pdb"
-@if exist "../pilotlight/out/dcapp-validate.exe" del "..\pilotlight\out\dcapp-validate.exe"
-@if exist "../pilotlight/out/dcapp-validate_*.pdb" del "..\pilotlight\out\dcapp-validate_*.pdb"
+@if exist "..\pilotlight\out/dc_draw_ext.dll" del "..\pilotlight\out\dc_draw_ext.dll"
+@if exist "..\pilotlight\out/dc_draw_ext_*.pdb" del "..\pilotlight\out\dc_draw_ext_*.pdb"
+@if exist "..\pilotlight\out/dc_draw_backend_ext.dll" del "..\pilotlight\out\dc_draw_backend_ext.dll"
+@if exist "..\pilotlight\out/dc_draw_backend_ext_*.pdb" del "..\pilotlight\out\dc_draw_backend_ext_*.pdb"
+@if exist "..\pilotlight\out/dcapp.dll" del "..\pilotlight\out\dcapp.dll"
+@if exist "..\pilotlight\out/dcapp_*.pdb" del "..\pilotlight\out\dcapp_*.pdb"
+@if exist "..\pilotlight\out/dcapp-genheader.exe" del "..\pilotlight\out\dcapp-genheader.exe"
+@if exist "..\pilotlight\out/dcapp-genheader_*.pdb" del "..\pilotlight\out\dcapp-genheader_*.pdb"
+@if exist "..\pilotlight\out/dcapp-validate.exe" del "..\pilotlight\out\dcapp-validate.exe"
+@if exist "..\pilotlight\out/dcapp-validate_*.pdb" del "..\pilotlight\out\dcapp-validate_*.pdb"
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dc_draw_ext | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/dependencies/stb" -I"/include" 
-@set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"/lib" 
+@set PL_INCLUDE_DIRECTORIES=-I"..\src" -I"..\extensions" -I"..\pilotlight/src" -I"..\pilotlight/libs" -I"..\pilotlight/extensions" -I"..\pilotlight/dependencies/stb" -I"..\vcpkg_installed\x64-windows/include" 
+@set PL_LINK_DIRECTORIES=-LIBPATH:"..\pilotlight\out" -LIBPATH:"..\vcpkg_installed\x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-noimplib -noexp -incremental:no -nologo -noimplib -noexp 
-@set PL_SOURCES="../extensions/dc_draw_ext.c" 
+@set PL_SOURCES="..\extensions\dc_draw_ext.c" 
 
 :: run compiler (and linker)
 @echo.
 @echo [1m[93mStep: dc_draw_ext[0m
 @echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
 @echo [1m[36mCompiling and Linking...[0m
-cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dc_draw_ext.dll" -Fo"../pilotlight/out/" -LD -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dc_draw_ext_%random%.pdb" %PL_LINK_DIRECTORIES%
+cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"..\pilotlight\out/dc_draw_ext.dll" -Fo"..\pilotlight\out/" -LD -link %PL_LINKER_FLAGS% -PDB:"..\pilotlight\out/dc_draw_ext_%random%.pdb" %PL_LINK_DIRECTORIES%
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -103,18 +103,18 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~ dc_draw_backend_ext | release ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/dependencies/stb" -I"/include" 
-@set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"/lib" 
+@set PL_INCLUDE_DIRECTORIES=-I"..\src" -I"..\extensions" -I"..\pilotlight/src" -I"..\pilotlight/libs" -I"..\pilotlight/extensions" -I"..\pilotlight/dependencies/stb" -I"..\vcpkg_installed\x64-windows/include" 
+@set PL_LINK_DIRECTORIES=-LIBPATH:"..\pilotlight\out" -LIBPATH:"..\vcpkg_installed\x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-noimplib -noexp -incremental:no -nologo -noimplib -noexp 
-@set PL_SOURCES="../extensions/dc_draw_backend_ext.c" 
+@set PL_SOURCES="..\extensions\dc_draw_backend_ext.c" 
 
 :: run compiler (and linker)
 @echo.
 @echo [1m[93mStep: dc_draw_backend_ext[0m
 @echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
 @echo [1m[36mCompiling and Linking...[0m
-cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dc_draw_backend_ext.dll" -Fo"../pilotlight/out/" -LD -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dc_draw_backend_ext_%random%.pdb" %PL_LINK_DIRECTORIES%
+cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"..\pilotlight\out/dc_draw_backend_ext.dll" -Fo"..\pilotlight\out/" -LD -link %PL_LINKER_FLAGS% -PDB:"..\pilotlight\out/dc_draw_backend_ext_%random%.pdb" %PL_LINK_DIRECTORIES%
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -136,21 +136,21 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+xcopy /Y /I "..\vcpkg_installed\x64-windows\bin\*.dll" "..\pilotlight\out\"
 
-
-@set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/dependencies/stb" -I"/include" -I"/include/libxml2" 
-@set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"/lib" 
+@set PL_INCLUDE_DIRECTORIES=-I"..\src" -I"..\extensions" -I"..\pilotlight/src" -I"..\pilotlight/libs" -I"..\pilotlight/extensions" -I"..\pilotlight/dependencies/stb" -I"..\vcpkg_installed\x64-windows/include" -I"..\vcpkg_installed\x64-windows/include/libxml2" 
+@set PL_LINK_DIRECTORIES=-LIBPATH:"..\pilotlight\out" -LIBPATH:"..\vcpkg_installed\x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-noimplib -noexp -incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib libcurl.lib 
-@set PL_SOURCES="../src/value.c" "../src/trick.c" "../src/sock.c" "../src/edge.c" "../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/pixelstream/shmem.c" "../src/pixelstream/mjpeg.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/file.c" "../src/utils/string.c" "../src/utils/log.c" "../apps/dcapp.c" 
+@set PL_SOURCES="..\src\edge.c" "..\src\sock.c" "..\src\trick.c" "..\src\value.c" "..\src\app\config.c" "..\src\app\elem.c" "..\src\app\lookup.c" "..\src\pixelstream\mjpeg.c" "..\src\pixelstream\shmem.c" "..\src\utils\env.c" "..\src\utils\file.c" "..\src\utils\log.c" "..\src\utils\math.c" "..\src\utils\string.c" "..\src\utils\time.c" "..\apps\dcapp.c" 
 
 :: run compiler (and linker)
 @echo.
 @echo [1m[93mStep: dcapp[0m
 @echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
 @echo [1m[36mCompiling and Linking...[0m
-cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dcapp.dll" -Fo"../pilotlight/out/" -LD -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dcapp_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
+cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"..\pilotlight\out/dcapp.dll" -Fo"..\pilotlight\out/" -LD -link %PL_LINKER_FLAGS% -PDB:"..\pilotlight\out/dcapp_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -172,14 +172,14 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-genheader | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+xcopy /Y /I "..\vcpkg_installed\x64-windows\bin\*.dll" "..\pilotlight\out\"
 
-
-@set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/dependencies/stb" -I"/include" -I"/include/libxml2" 
-@set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"/lib" 
+@set PL_INCLUDE_DIRECTORIES=-I"..\src" -I"..\extensions" -I"..\pilotlight/src" -I"..\pilotlight/libs" -I"..\pilotlight/extensions" -I"..\pilotlight/dependencies/stb" -I"..\vcpkg_installed\x64-windows/include" -I"..\vcpkg_installed\x64-windows/include/libxml2" 
+@set PL_LINK_DIRECTORIES=-LIBPATH:"..\pilotlight\out" -LIBPATH:"..\vcpkg_installed\x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib 
-@set PL_SOURCES="../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/file.c" "../src/utils/string.c" "../src/utils/log.c" "../src/value.c" "../apps/dcapp-genheader.c" 
+@set PL_SOURCES="..\src\app\config.c" "..\src\app\elem.c" "..\src\app\lookup.c" "..\src\utils\env.c" "..\src\utils\file.c" "..\src\utils\log.c" "..\src\utils\math.c" "..\src\utils\string.c" "..\src\utils\time.c" "..\src\value.c" "..\apps\dcapp-genheader.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -188,7 +188,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @echo [1m[36mCompiling and Linking...[0m
 
 :: call compiler
-cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dcapp-genheader.exe" -Fo"../pilotlight/out/" -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dcapp-genheader_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
+cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"..\pilotlight\out/dcapp-genheader.exe" -Fo"..\pilotlight\out/" -link %PL_LINKER_FLAGS% -PDB:"..\pilotlight\out/dcapp-genheader_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -210,14 +210,14 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-validate | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+xcopy /Y /I "..\vcpkg_installed\x64-windows\bin\*.dll" "..\pilotlight\out\"
 
-
-@set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/dependencies/stb" -I"/include" -I"/include/libxml2" 
-@set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"/lib" 
+@set PL_INCLUDE_DIRECTORIES=-I"..\src" -I"..\extensions" -I"..\pilotlight/src" -I"..\pilotlight/libs" -I"..\pilotlight/extensions" -I"..\pilotlight/dependencies/stb" -I"..\vcpkg_installed\x64-windows/include" -I"..\vcpkg_installed\x64-windows/include/libxml2" 
+@set PL_LINK_DIRECTORIES=-LIBPATH:"..\pilotlight\out" -LIBPATH:"..\vcpkg_installed\x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib 
-@set PL_SOURCES="../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/file.c" "../src/utils/string.c" "../src/utils/log.c" "../src/value.c" "../apps/dcapp-validate.c" 
+@set PL_SOURCES="..\src\app\config.c" "..\src\app\elem.c" "..\src\app\lookup.c" "..\src\utils\env.c" "..\src\utils\file.c" "..\src\utils\log.c" "..\src\utils\math.c" "..\src\utils\string.c" "..\src\utils\time.c" "..\src\value.c" "..\apps\dcapp-validate.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -226,7 +226,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @echo [1m[36mCompiling and Linking...[0m
 
 :: call compiler
-cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dcapp-validate.exe" -Fo"../pilotlight/out/" -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dcapp-validate_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
+cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"..\pilotlight\out/dcapp-validate.exe" -Fo"..\pilotlight\out/" -link %PL_LINKER_FLAGS% -PDB:"..\pilotlight\out/dcapp-validate_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -254,7 +254,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @del "..\pilotlight\out\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
-@if exist "../pilotlight/out/lock.tmp" del "..\pilotlight\out\lock.tmp"
+@if exist "..\pilotlight\out/lock.tmp" del "..\pilotlight\out\lock.tmp"
 
 :: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :: end of release configuration
@@ -267,36 +267,36 @@ goto ExitLabel
 :debug
 
 :: create output directories
-@if not exist "../pilotlight/out" @mkdir "../pilotlight/out"
+@if not exist "..\pilotlight\out" @mkdir "..\pilotlight\out"
 
 :: create lock file(s)
-@echo LOCKING > "../pilotlight/out/lock.tmp"
+@echo LOCKING > "..\pilotlight\out/lock.tmp"
 
-@if exist "../pilotlight/out/dc_draw_ext.dll" del "..\pilotlight\out\dc_draw_ext.dll"
-@if exist "../pilotlight/out/dc_draw_ext_*.pdb" del "..\pilotlight\out\dc_draw_ext_*.pdb"
-@if exist "../pilotlight/out/dc_draw_backend_ext.dll" del "..\pilotlight\out\dc_draw_backend_ext.dll"
-@if exist "../pilotlight/out/dc_draw_backend_ext_*.pdb" del "..\pilotlight\out\dc_draw_backend_ext_*.pdb"
-@if exist "../pilotlight/out/dcapp.dll" del "..\pilotlight\out\dcapp.dll"
-@if exist "../pilotlight/out/dcapp_*.pdb" del "..\pilotlight\out\dcapp_*.pdb"
-@if exist "../pilotlight/out/dcapp-genheader.exe" del "..\pilotlight\out\dcapp-genheader.exe"
-@if exist "../pilotlight/out/dcapp-genheader_*.pdb" del "..\pilotlight\out\dcapp-genheader_*.pdb"
-@if exist "../pilotlight/out/dcapp-validate.exe" del "..\pilotlight\out\dcapp-validate.exe"
-@if exist "../pilotlight/out/dcapp-validate_*.pdb" del "..\pilotlight\out\dcapp-validate_*.pdb"
+@if exist "..\pilotlight\out/dc_draw_ext.dll" del "..\pilotlight\out\dc_draw_ext.dll"
+@if exist "..\pilotlight\out/dc_draw_ext_*.pdb" del "..\pilotlight\out\dc_draw_ext_*.pdb"
+@if exist "..\pilotlight\out/dc_draw_backend_ext.dll" del "..\pilotlight\out\dc_draw_backend_ext.dll"
+@if exist "..\pilotlight\out/dc_draw_backend_ext_*.pdb" del "..\pilotlight\out\dc_draw_backend_ext_*.pdb"
+@if exist "..\pilotlight\out/dcapp.dll" del "..\pilotlight\out\dcapp.dll"
+@if exist "..\pilotlight\out/dcapp_*.pdb" del "..\pilotlight\out\dcapp_*.pdb"
+@if exist "..\pilotlight\out/dcapp-genheader.exe" del "..\pilotlight\out\dcapp-genheader.exe"
+@if exist "..\pilotlight\out/dcapp-genheader_*.pdb" del "..\pilotlight\out\dcapp-genheader_*.pdb"
+@if exist "..\pilotlight\out/dcapp-validate.exe" del "..\pilotlight\out\dcapp-validate.exe"
+@if exist "..\pilotlight\out/dcapp-validate_*.pdb" del "..\pilotlight\out\dcapp-validate_*.pdb"
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dc_draw_ext | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/dependencies/stb" -I"/include" 
-@set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"/lib" 
+@set PL_INCLUDE_DIRECTORIES=-I"..\src" -I"..\extensions" -I"..\pilotlight/src" -I"..\pilotlight/libs" -I"..\pilotlight/extensions" -I"..\pilotlight/dependencies/stb" -I"..\vcpkg_installed\x64-windows/include" 
+@set PL_LINK_DIRECTORIES=-LIBPATH:"..\pilotlight\out" -LIBPATH:"..\vcpkg_installed\x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-noimplib -noexp -incremental:no -nologo -noimplib -noexp 
-@set PL_SOURCES="../extensions/dc_draw_ext.c" 
+@set PL_SOURCES="..\extensions\dc_draw_ext.c" 
 
 :: run compiler (and linker)
 @echo.
 @echo [1m[93mStep: dc_draw_ext[0m
 @echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
 @echo [1m[36mCompiling and Linking...[0m
-cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dc_draw_ext.dll" -Fo"../pilotlight/out/" -LD -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dc_draw_ext_%random%.pdb" %PL_LINK_DIRECTORIES%
+cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"..\pilotlight\out/dc_draw_ext.dll" -Fo"..\pilotlight\out/" -LD -link %PL_LINKER_FLAGS% -PDB:"..\pilotlight\out/dc_draw_ext_%random%.pdb" %PL_LINK_DIRECTORIES%
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -318,18 +318,18 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~ dc_draw_backend_ext | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/dependencies/stb" -I"/include" 
-@set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"/lib" 
+@set PL_INCLUDE_DIRECTORIES=-I"..\src" -I"..\extensions" -I"..\pilotlight/src" -I"..\pilotlight/libs" -I"..\pilotlight/extensions" -I"..\pilotlight/dependencies/stb" -I"..\vcpkg_installed\x64-windows/include" 
+@set PL_LINK_DIRECTORIES=-LIBPATH:"..\pilotlight\out" -LIBPATH:"..\vcpkg_installed\x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-noimplib -noexp -incremental:no -nologo -noimplib -noexp 
-@set PL_SOURCES="../extensions/dc_draw_backend_ext.c" 
+@set PL_SOURCES="..\extensions\dc_draw_backend_ext.c" 
 
 :: run compiler (and linker)
 @echo.
 @echo [1m[93mStep: dc_draw_backend_ext[0m
 @echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
 @echo [1m[36mCompiling and Linking...[0m
-cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dc_draw_backend_ext.dll" -Fo"../pilotlight/out/" -LD -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dc_draw_backend_ext_%random%.pdb" %PL_LINK_DIRECTORIES%
+cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"..\pilotlight\out/dc_draw_backend_ext.dll" -Fo"..\pilotlight\out/" -LD -link %PL_LINKER_FLAGS% -PDB:"..\pilotlight\out/dc_draw_backend_ext_%random%.pdb" %PL_LINK_DIRECTORIES%
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -351,21 +351,21 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+xcopy /Y /I "..\vcpkg_installed\x64-windows\bin\*.dll" "..\pilotlight\out\"
 
-
-@set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/dependencies/stb" -I"/include" -I"/include/libxml2" 
-@set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"/lib" 
+@set PL_INCLUDE_DIRECTORIES=-I"..\src" -I"..\extensions" -I"..\pilotlight/src" -I"..\pilotlight/libs" -I"..\pilotlight/extensions" -I"..\pilotlight/dependencies/stb" -I"..\vcpkg_installed\x64-windows/include" -I"..\vcpkg_installed\x64-windows/include/libxml2" 
+@set PL_LINK_DIRECTORIES=-LIBPATH:"..\pilotlight\out" -LIBPATH:"..\vcpkg_installed\x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-noimplib -noexp -incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=dearimguid.lib libxml2.lib libcurl.lib 
-@set PL_SOURCES="../src/value.c" "../src/trick.c" "../src/sock.c" "../src/edge.c" "../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/pixelstream/shmem.c" "../src/pixelstream/mjpeg.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/file.c" "../src/utils/string.c" "../src/utils/log.c" "../apps/dcapp.c" 
+@set PL_SOURCES="..\src\edge.c" "..\src\sock.c" "..\src\trick.c" "..\src\value.c" "..\src\app\config.c" "..\src\app\elem.c" "..\src\app\lookup.c" "..\src\pixelstream\mjpeg.c" "..\src\pixelstream\shmem.c" "..\src\utils\env.c" "..\src\utils\file.c" "..\src\utils\log.c" "..\src\utils\math.c" "..\src\utils\string.c" "..\src\utils\time.c" "..\apps\dcapp.c" 
 
 :: run compiler (and linker)
 @echo.
 @echo [1m[93mStep: dcapp[0m
 @echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
 @echo [1m[36mCompiling and Linking...[0m
-cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dcapp.dll" -Fo"../pilotlight/out/" -LD -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dcapp_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
+cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"..\pilotlight\out/dcapp.dll" -Fo"..\pilotlight\out/" -LD -link %PL_LINKER_FLAGS% -PDB:"..\pilotlight\out/dcapp_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -387,14 +387,14 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-genheader | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+xcopy /Y /I "..\vcpkg_installed\x64-windows\bin\*.dll" "..\pilotlight\out\"
 
-
-@set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/dependencies/stb" -I"/include" -I"/include/libxml2" 
-@set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"/lib" 
+@set PL_INCLUDE_DIRECTORIES=-I"..\src" -I"..\extensions" -I"..\pilotlight/src" -I"..\pilotlight/libs" -I"..\pilotlight/extensions" -I"..\pilotlight/dependencies/stb" -I"..\vcpkg_installed\x64-windows/include" -I"..\vcpkg_installed\x64-windows/include/libxml2" 
+@set PL_LINK_DIRECTORIES=-LIBPATH:"..\pilotlight\out" -LIBPATH:"..\vcpkg_installed\x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib 
-@set PL_SOURCES="../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/file.c" "../src/utils/string.c" "../src/utils/log.c" "../src/value.c" "../apps/dcapp-genheader.c" 
+@set PL_SOURCES="..\src\app\config.c" "..\src\app\elem.c" "..\src\app\lookup.c" "..\src\utils\env.c" "..\src\utils\file.c" "..\src\utils\log.c" "..\src\utils\math.c" "..\src\utils\string.c" "..\src\utils\time.c" "..\src\value.c" "..\apps\dcapp-genheader.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -403,7 +403,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @echo [1m[36mCompiling and Linking...[0m
 
 :: call compiler
-cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dcapp-genheader.exe" -Fo"../pilotlight/out/" -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dcapp-genheader_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
+cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"..\pilotlight\out/dcapp-genheader.exe" -Fo"..\pilotlight\out/" -link %PL_LINKER_FLAGS% -PDB:"..\pilotlight\out/dcapp-genheader_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -425,14 +425,14 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-validate | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+xcopy /Y /I "..\vcpkg_installed\x64-windows\bin\*.dll" "..\pilotlight\out\"
 
-
-@set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/dependencies/stb" -I"/include" -I"/include/libxml2" 
-@set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"/lib" 
+@set PL_INCLUDE_DIRECTORIES=-I"..\src" -I"..\extensions" -I"..\pilotlight/src" -I"..\pilotlight/libs" -I"..\pilotlight/extensions" -I"..\pilotlight/dependencies/stb" -I"..\vcpkg_installed\x64-windows/include" -I"..\vcpkg_installed\x64-windows/include/libxml2" 
+@set PL_LINK_DIRECTORIES=-LIBPATH:"..\pilotlight\out" -LIBPATH:"..\vcpkg_installed\x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib 
-@set PL_SOURCES="../src/app/lookup.c" "../src/app/elem.c" "../src/app/config.c" "../src/utils/env.c" "../src/utils/math.c" "../src/utils/time.c" "../src/utils/file.c" "../src/utils/string.c" "../src/utils/log.c" "../src/value.c" "../apps/dcapp-validate.c" 
+@set PL_SOURCES="..\src\app\config.c" "..\src\app\elem.c" "..\src\app\lookup.c" "..\src\utils\env.c" "..\src\utils\file.c" "..\src\utils\log.c" "..\src\utils\math.c" "..\src\utils\string.c" "..\src\utils\time.c" "..\src\value.c" "..\apps\dcapp-validate.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -441,7 +441,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @echo [1m[36mCompiling and Linking...[0m
 
 :: call compiler
-cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dcapp-validate.exe" -Fo"../pilotlight/out/" -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dcapp-validate_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
+cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"..\pilotlight\out/dcapp-validate.exe" -Fo"..\pilotlight\out/" -link %PL_LINKER_FLAGS% -PDB:"..\pilotlight\out/dcapp-validate_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -469,7 +469,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @del "..\pilotlight\out\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
-@if exist "../pilotlight/out/lock.tmp" del "..\pilotlight\out\lock.tmp"
+@if exist "..\pilotlight\out/lock.tmp" del "..\pilotlight\out\lock.tmp"
 
 :: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :: end of debug configuration

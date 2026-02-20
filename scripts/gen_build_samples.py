@@ -171,7 +171,13 @@ with pl.project("samples"):
                 with pl.platform("Windows"):
                     with pl.compiler("msvc"):
                         pl.set_pre_target_build_step(
-                            f"{genheader_rel}.exe {sample_xml_rel}"
+                            f"\"{genheader_rel}.exe\" {sample_xml_rel}"
+                        )
+                        pl.add_linker_flags(
+                            "-EXPORT:display_pre_init",
+                            "-EXPORT:display_init",
+                            "-EXPORT:display_draw",
+                            "-EXPORT:display_close",
                         )
 
                 # linux
@@ -191,7 +197,13 @@ with pl.project("samples"):
                 with pl.platform("Windows"):
                     with pl.compiler("msvc"):
                         pl.set_pre_target_build_step(
-                            f"{genheader_rel}.exe {sample_xml_rel}"
+                            f"\"{genheader_rel}.exe\" {sample_xml_rel}"
+                        )
+                        pl.add_linker_flags(
+                            "-EXPORT:display_pre_init",
+                            "-EXPORT:display_init",
+                            "-EXPORT:display_draw",
+                            "-EXPORT:display_close",
                         )
 
                 # linux

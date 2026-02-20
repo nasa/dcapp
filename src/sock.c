@@ -22,6 +22,13 @@ typedef int _DcSockFd;
 
 #define DC_SOCK_MAX_SOCKETS 256
 
+// Sentinel values for sock_fd slots.
+// _DcSockFd is 'int' on POSIX and 'uintptr_t' on Windows (unsigned), so we
+// can't use raw negative literals in comparisons — define typed sentinels instead.
+#define _DC_SOCK_FD_FREE      ((_DcSockFd)-1)  // slot is unoccupied
+#define _DC_SOCK_FD_ALLOCATED ((_DcSockFd)-2)  // reserved but not yet connected
+#define _DC_SOCK_FD_IS_INVALID(fd) ((fd) == _DC_SOCK_FD_FREE || (fd) == _DC_SOCK_FD_ALLOCATED)
+
 typedef struct {
     _DcSockFd   sock_fd;
     DcSockFlags flags;
@@ -34,7 +41,7 @@ static int            _winsock_count = 0;
 static void _ensure_initialized(void) {
     if (!_initialized) {
         for (int i = 0; i < DC_SOCK_MAX_SOCKETS; i++) {
-            _contexts[i].sock_fd = -1;
+            _contexts[i].sock_fd = _DC_SOCK_FD_FREE;
         }
         _initialized = true;
     }
@@ -81,7 +88,7 @@ DcSockHandle dc_sock_create(DcSockFlags flags) {
     DcSockHandle handle;
     handle.index = 255;
     for (int i = 0; i < DC_SOCK_MAX_SOCKETS; i++) {
-        if (_contexts[i].sock_fd == -1) {
+        if (_contexts[i].sock_fd == _DC_SOCK_FD_FREE) {
             handle.index = (uint8_t)i;
             break;
         }
@@ -92,7 +99,7 @@ DcSockHandle dc_sock_create(DcSockFlags flags) {
         return handle;
     }
 
-    _contexts[handle.index].sock_fd = -2; // -2 = allocated but not connected (-1 = free)
+    _contexts[handle.index].sock_fd = _DC_SOCK_FD_ALLOCATED;
     _contexts[handle.index].flags   = flags;
     return handle;
 }
@@ -180,7 +187,11 @@ DcSockResult dc_sock_connect(DcSockHandle sock, const char *ip, int port) {
 
     // create socket
     ctx->sock_fd = socket(family, SOCK_STREAM, 0);
+#ifdef _WIN32
+    if (ctx->sock_fd == INVALID_SOCKET) {
+#else
     if (ctx->sock_fd < 0) {
+#endif
         DC_LOG_ERROR("Sock", "Failed to create socket: %s", strerror(errno));
         return DC_SOCK_RESULT_FAIL;
     }
@@ -226,13 +237,13 @@ void dc_sock_close(DcSockHandle sock) {
     close(ctx->sock_fd);
 #endif
 
-    ctx->sock_fd = -1;
+    ctx->sock_fd = _DC_SOCK_FD_FREE;
 }
 
 DcSockState dc_sock_connection_status(DcSockHandle sock) {
     _DcSockContext *ctx = &_contexts[sock.index];
 
-    if (ctx->sock_fd < 0)
+    if (_DC_SOCK_FD_IS_INVALID(ctx->sock_fd))
         return DC_SOCK_STATE_DISCONNECTED;
 
     if (ctx->flags & DC_SOCK_FLAGS_NON_BLOCKING) {

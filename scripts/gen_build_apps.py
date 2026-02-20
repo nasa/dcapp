@@ -61,14 +61,10 @@ bin_dir_abs = os.path.abspath(pl_dir_abs + "/out")
 pl_dir_rel = os.path.relpath(pl_dir_abs, output_dir_abs)
 bin_dir_rel = os.path.relpath(bin_dir_abs, output_dir_abs)
 
-# set vcpkg (windows only)
-vcpkg_abs = ""
-vcpkg_rel = ""
-vcpkg_copy_cmd = ""
-if plat.system() == "Windows":
-    vcpkg_abs = os.path.abspath(dcapp_home_abs + "/vcpkg_installed/x64-windows")
-    vcpkg_rel = os.path.relpath(vcpkg_abs, output_dir_abs)
-    vcpkg_copy_cmd = f'xcopy /Y /I "{vcpkg_rel}\\bin\\*.dll" "{bin_dir_rel}\\"'
+# set vcpkg paths (always computed so the windows bat is correct regardless of host platform)
+vcpkg_abs = os.path.abspath(dcapp_home_abs + "/vcpkg_installed/x64-windows")
+vcpkg_rel = os.path.relpath(vcpkg_abs, output_dir_abs)
+vcpkg_copy_cmd = f'xcopy /Y /I "{vcpkg_rel}\\bin\\*.dll" "{bin_dir_rel}\\"'
 
 with pl.project("apps"):
 
