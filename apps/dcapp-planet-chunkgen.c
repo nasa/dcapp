@@ -6,8 +6,6 @@
 
    Usage:
      pilot_light -a dcapp-planet-chunkgen <input_dem> <output_dir> --radius N [options]
-
-   Requires GDAL tools (gdalinfo, gdal_translate) on PATH.
 */
 
 /*
@@ -33,10 +31,10 @@ Index of this file:
 #include <stdbool.h>
 #include <stdint.h>
 #include <math.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
+#include <gdal.h>
+#include <gdal_utils.h>
 #include "pl.h"
+#include "../src/utils/file.h"
 #include "pl_planet_processor_ext.h"
 
 #define PL_JSON_IMPLEMENTATION
@@ -46,7 +44,6 @@ Index of this file:
 // [SECTION] forward declarations
 //-----------------------------------------------------------------------------
 
-static bool  _run_command(const char *cmd, char *output, size_t output_size);
 static bool  _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y);
 static bool  _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *max_val);
 static bool  _run_gdal_translate(const char *input, const char *output, uint32_t src_x, uint32_t src_y, uint32_t w, uint32_t h, double min_h, double max_h);
@@ -158,23 +155,13 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         return NULL;
     }
 
-    if (access(input_dem, R_OK) != 0) {
+    if (!dc_utils_file_exists(input_dem)) {
         fprintf(stderr, "Error: input file not found: %s\n", input_dem);
         io->bRunning = false;
         return NULL;
     }
 
-    // check GDAL tools
-    if (system("which gdalinfo > /dev/null 2>&1") != 0) {
-        fprintf(stderr, "Error: gdalinfo not found on PATH\n");
-        io->bRunning = false;
-        return NULL;
-    }
-    if (system("which gdal_translate > /dev/null 2>&1") != 0) {
-        fprintf(stderr, "Error: gdal_translate not found on PATH\n");
-        io->bRunning = false;
-        return NULL;
-    }
+    GDALAllRegister();
 
     // derive prefix
     char prefix_buf[256];
@@ -246,9 +233,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
 
     //---- create output directory ----
 
-    char cmd[2048];
-    snprintf(cmd, sizeof(cmd), "mkdir -p \"%s\"", output_dir);
-    system(cmd);
+    dc_utils_create_directory(output_dir);
 
     //---- setup tile info ----
 
@@ -381,7 +366,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         printf("Cleaning up intermediate PNGs...\n");
         for (uint32_t i = 0; i < tile_count; i++) {
             remove(tiles[i].acHeightMapFile);
-            // also remove .png.aux.xml files that GDAL creates
+            // also remove .aux.xml sidecar files that GDAL creates
             char aux[512];
             snprintf(aux, sizeof(aux), "%s.aux.xml", tiles[i].acHeightMapFile);
             remove(aux);
@@ -394,7 +379,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     printf("Done. %u chunk files written to %s/\n", tile_count, output_dir);
     printf("========================================\n");
 
-    exit(0);
+    io->bRunning = false;
     return NULL;
 }
 
@@ -450,105 +435,83 @@ static char *_get_stem(const char *path, char *buf, size_t buf_size) {
 // [SECTION] GDAL helpers
 //-----------------------------------------------------------------------------
 
-static bool _run_command(const char *cmd, char *output, size_t output_size) {
-    FILE *pipe = popen(cmd, "r");
-    if (!pipe) {
-        fprintf(stderr, "Error: failed to run: %s\n", cmd);
+static bool _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y) {
+    GDALDatasetH ds = GDALOpen(dem_path, GA_ReadOnly);
+    if (!ds) {
+        fprintf(stderr, "Error: GDALOpen failed for: %s\n", dem_path);
         return false;
     }
 
-    size_t total = 0;
-    char   buf[512];
-    while (fgets(buf, sizeof(buf), pipe)) {
-        size_t len = strlen(buf);
-        if (total + len < output_size - 1) {
-            memcpy(output + total, buf, len);
-            total += len;
-        }
-    }
-    output[total] = '\0';
+    *width  = (uint32_t)GDALGetRasterXSize(ds);
+    *height = (uint32_t)GDALGetRasterYSize(ds);
 
-    int status = pclose(pipe);
-    return status == 0;
+    double gt[6] = {0};
+    if (GDALGetGeoTransform(ds, gt) == CE_None) {
+        *pixel_scale = fabs(gt[1]);
+        *origin_x    = gt[0];
+        *origin_y    = gt[3] + (double)(*height) * gt[5]; // lower-left Y
+    }
+
+    GDALClose(ds);
+    return true;
 }
 
-static bool _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y) {
-    char cmd[2048];
-    snprintf(cmd, sizeof(cmd), "gdalinfo \"%s\"", dem_path);
-
-    char output[32768];
-    if (!_run_command(cmd, output, sizeof(output))) {
-        fprintf(stderr, "Error: gdalinfo failed\n");
+static bool _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *max_val) {
+    GDALDatasetH ds = GDALOpen(dem_path, GA_ReadOnly);
+    if (!ds) {
+        fprintf(stderr, "Error: GDALOpen failed for: %s\n", dem_path);
         return false;
     }
 
-    bool  found_size = false;
-    char *line       = strtok(output, "\n");
-    while (line) {
-        if (strstr(line, "Size is")) {
-            if (sscanf(line, " Size is %u, %u", width, height) == 2)
-                found_size = true;
-        } else if (strstr(line, "Pixel Size")) {
-            double sx, sy;
-            char  *paren = strchr(line, '(');
-            if (paren && sscanf(paren, "(%lf,%lf)", &sx, &sy) == 2)
-                *pixel_scale = fabs(sx);
-        } else if (strstr(line, "Lower Left")) {
-            char *paren = strchr(line, '(');
-            if (paren)
-                sscanf(paren, "(%lf,%lf)", origin_x, origin_y);
-        }
-        line = strtok(NULL, "\n");
-    }
+    GDALRasterBandH band = GDALGetRasterBand(ds, 1);
+    CPLErr err = GDALComputeRasterStatistics(band, FALSE, min_val, max_val, NULL, NULL, NULL, NULL);
+    GDALClose(ds);
 
-    if (!found_size) {
-        fprintf(stderr, "Error: could not parse raster size from gdalinfo\n");
+    if (err != CE_None) {
+        fprintf(stderr, "Error: GDALComputeRasterStatistics failed\n");
         return false;
     }
     return true;
 }
 
-static bool _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *max_val) {
-    char cmd[2048];
-    snprintf(cmd, sizeof(cmd), "gdalinfo -mm \"%s\"", dem_path);
-
-    char output[32768];
-    if (!_run_command(cmd, output, sizeof(output))) {
-        fprintf(stderr, "Error: gdalinfo -mm failed\n");
-        return false;
-    }
-
-    char *line = strtok(output, "\n");
-    while (line) {
-        char *found = strstr(line, "Computed Min/Max=");
-        if (found) {
-            found += strlen("Computed Min/Max=");
-            if (sscanf(found, "%lf,%lf", min_val, max_val) == 2)
-                return true;
-        }
-        line = strtok(NULL, "\n");
-    }
-
-    fprintf(stderr, "Error: could not parse min/max from gdalinfo -mm\n");
-    return false;
-}
-
 static bool _run_gdal_translate(const char *input, const char *output, uint32_t src_x, uint32_t src_y, uint32_t w, uint32_t h, double min_h, double max_h) {
-    char cmd[4096];
-    snprintf(cmd, sizeof(cmd),
-             "gdal_translate -q -r cubic -of PNG "
-             "-srcwin %u %u %u %u "
-             "-ot UInt16 -scale %f %f 0 65535 "
-             "\"%s\" \"%s\"",
-             src_x, src_y, w, h,
-             min_h, max_h,
-             input, output);
-
-    int ret = system(cmd);
-    if (ret != 0) {
-        fprintf(stderr, "Error: gdal_translate failed for tile at (%u, %u)\n", src_x, src_y);
+    GDALDatasetH src_ds = GDALOpen(input, GA_ReadOnly);
+    if (!src_ds) {
+        fprintf(stderr, "Error: GDALOpen failed for: %s\n", input);
         return false;
     }
+
+    char sx_str[32],  sy_str[32],  w_str[32],  h_str[32];
+    char min_str[64], max_str[64];
+    snprintf(sx_str,  sizeof(sx_str),  "%u",  src_x);
+    snprintf(sy_str,  sizeof(sy_str),  "%u",  src_y);
+    snprintf(w_str,   sizeof(w_str),   "%u",  w);
+    snprintf(h_str,   sizeof(h_str),   "%u",  h);
+    snprintf(min_str, sizeof(min_str), "%f",  min_h);
+    snprintf(max_str, sizeof(max_str), "%f",  max_h);
+
+    char *args[] = {
+        "-r",      "cubic",
+        "-of",     "PNG",
+        "-srcwin", sx_str, sy_str, w_str, h_str,
+        "-ot",     "UInt16",
+        "-scale",  min_str, max_str, "0", "65535",
+        NULL
+    };
+
+    GDALTranslateOptions *opts    = GDALTranslateOptionsNew(args, NULL);
+    int                   bError  = 0;
+    GDALDatasetH          dst_ds  = GDALTranslate(output, src_ds, opts, &bError);
+    GDALTranslateOptionsFree(opts);
+    GDALClose(src_ds);
+
+    if (!dst_ds || bError) {
+        fprintf(stderr, "Error: GDALTranslate failed for tile at (%u, %u)\n", src_x, src_y);
+        if (dst_ds) GDALClose(dst_ds);
+        return false;
+    }
+
+    GDALClose(dst_ds);
     return true;
 }
 

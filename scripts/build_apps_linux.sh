@@ -281,13 +281,13 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/usr/include/gdal "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC "
-PL_LINKER_FLAGS="-ldl -lm "
+PL_LINKER_FLAGS="-ldl -lm -lgdal "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../apps/dcapp-planet-chunkgen.c "
+PL_SOURCES="../apps/dcapp-planet-chunkgen.c ../src/utils/file.c ../src/utils/log.c "
 
 # run compiler (and linker)
 echo
@@ -547,13 +547,13 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/usr/include/gdal "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
-PL_LINKER_FLAGS="-ldl -lm "
+PL_LINKER_FLAGS="-ldl -lm -lgdal "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../apps/dcapp-planet-chunkgen.c "
+PL_SOURCES="../apps/dcapp-planet-chunkgen.c ../src/utils/file.c ../src/utils/log.c "
 
 # run compiler (and linker)
 echo
