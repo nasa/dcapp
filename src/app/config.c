@@ -178,6 +178,16 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const_int(&context, "_set_push_", DC_APP_SET_TYPE_PUSH, true);
     _add_const_int(&context, "_set_pop_", DC_APP_SET_TYPE_POP, true);
     _add_const_int(&context, "_set_negate_", DC_APP_SET_TYPE_NEGATE, true);
+    _add_const_int(&context, "_set_reciprocal_", DC_APP_SET_TYPE_RECIPROCAL, true);
+    _add_const_int(&context, "_set_absolute_", DC_APP_SET_TYPE_ABSOLUTE, true);
+    _add_const_int(&context, "_set_square_", DC_APP_SET_TYPE_SQUARE, true);
+    _add_const_int(&context, "_set_sqrt_", DC_APP_SET_TYPE_SQRT, true);
+    _add_const_int(&context, "_set_modulo_", DC_APP_SET_TYPE_MODULO, true);
+    _add_const_int(&context, "_set_power_", DC_APP_SET_TYPE_POWER, true);
+    _add_const_int(&context, "_set_log_", DC_APP_SET_TYPE_LOG, true);
+    _add_const_int(&context, "_set_exp_", DC_APP_SET_TYPE_EXP, true);
+    _add_const_int(&context, "_set_round_", DC_APP_SET_TYPE_ROUND, true);
+    _add_const_int(&context, "_set_sign_", DC_APP_SET_TYPE_SIGN, true);
     _add_const_int(&context, "_variable_string_", DC_VALUE_TYPE_STRING, true);
     _add_const_int(&context, "_variable_integer_", DC_VALUE_TYPE_INTEGER, true);
     _add_const_int(&context, "_variable_double_", DC_VALUE_TYPE_DOUBLE, true);

@@ -3477,6 +3477,7 @@ static bool _apply_set_operation(_AppData *app_data, DcAppVarIndex var_index, Dc
                     break;
             }
             break;
+
         case DC_APP_SET_TYPE_SUBTRACT:
             switch (var_value->type) {
                 case DC_VALUE_TYPE_STRING:
@@ -3494,6 +3495,7 @@ static bool _apply_set_operation(_AppData *app_data, DcAppVarIndex var_index, Dc
                     break;
             }
             break;
+
         case DC_APP_SET_TYPE_MULTIPLY:
             switch (var_value->type) {
                 case DC_VALUE_TYPE_STRING:
@@ -3511,23 +3513,37 @@ static bool _apply_set_operation(_AppData *app_data, DcAppVarIndex var_index, Dc
                     break;
             }
             break;
+
         case DC_APP_SET_TYPE_DIVIDE:
             switch (var_value->type) {
                 case DC_VALUE_TYPE_STRING:
                     break;
                 case DC_VALUE_TYPE_INTEGER:
+                    if (op_value->value_integer == 0) {
+                        DC_LOG_ERROR("Set", "Divide by zero (int)");
+                        return false;
+                    }
                     var_value->value_integer /= op_value->value_integer;
                     break;
                 case DC_VALUE_TYPE_DOUBLE:
+                    if (op_value->value_double == 0.0) {
+                        DC_LOG_ERROR("Set", "Divide by zero (double)");
+                        return false;
+                    }
                     var_value->value_double /= op_value->value_double;
                     break;
                 case DC_VALUE_TYPE_BOOLEAN:
+                    if (op_value->value_boolean == 0) {
+                        DC_LOG_ERROR("Set", "Divide by zero (bool)");
+                        return false;
+                    }
                     var_value->value_boolean /= op_value->value_boolean;
                     break;
                 default:
                     break;
             }
             break;
+
         case DC_APP_SET_TYPE_MIN:
             // min(var, operand) - caps value at operand (upper bound)
             switch (var_value->type) {
@@ -3547,6 +3563,7 @@ static bool _apply_set_operation(_AppData *app_data, DcAppVarIndex var_index, Dc
                     break;
             }
             break;
+
         case DC_APP_SET_TYPE_MAX:
             // max(var, operand) - floors value at operand (lower bound)
             switch (var_value->type) {
@@ -3566,12 +3583,15 @@ static bool _apply_set_operation(_AppData *app_data, DcAppVarIndex var_index, Dc
                     break;
             }
             break;
+
         case DC_APP_SET_TYPE_PUSH:
             dc_app_lookup_var_push(app_data->lookup, var_index);
             return false; // don't refresh - we're just saving state
+
         case DC_APP_SET_TYPE_POP:
             dc_app_lookup_var_pop(app_data->lookup, var_index);
             break;
+
         case DC_APP_SET_TYPE_NEGATE:
             switch (var_value->type) {
                 case DC_VALUE_TYPE_INTEGER:
@@ -3584,10 +3604,188 @@ static bool _apply_set_operation(_AppData *app_data, DcAppVarIndex var_index, Dc
                     break;
             }
             break;
+
+        case DC_APP_SET_TYPE_RECIPROCAL:
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_INTEGER:
+                    if (var_value->value_integer == 0) {
+                        DC_LOG_ERROR("Set", "Reciprocal of zero (int)");
+                        break;
+                    }
+                    var_value->value_integer = 1 / var_value->value_integer;
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    if (var_value->value_double == 0.0) {
+                        DC_LOG_ERROR("Set", "Reciprocal of zero (double)");
+                        break;
+                    }
+                    var_value->value_double = 1.0 / var_value->value_double;
+                    break;
+                default:
+                    break;
+            }
+            break;
+
+        case DC_APP_SET_TYPE_ABSOLUTE:
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_INTEGER:
+                    if (var_value->value_integer < 0)
+                        var_value->value_integer = -var_value->value_integer;
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    var_value->value_double = fabs(var_value->value_double);
+                    break;
+                default:
+                    break;
+            }
+            break;
+
+        case DC_APP_SET_TYPE_SQUARE:
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_INTEGER:
+                    var_value->value_integer = var_value->value_integer * var_value->value_integer;
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    var_value->value_double = var_value->value_double * var_value->value_double;
+                    break;
+                default:
+                    break;
+            }
+            break;
+
+        case DC_APP_SET_TYPE_SQRT:
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_INTEGER:
+                    if (var_value->value_integer < 0) {
+                        DC_LOG_ERROR("Set", "Sqrt of negative (int)");
+                        break;
+                    }
+                    var_value->value_integer = (int)floor(sqrt((double)var_value->value_integer));
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    if (var_value->value_double < 0.0) {
+                        DC_LOG_ERROR("Set", "Sqrt of negative (double)");
+                        break;
+                    }
+                    var_value->value_double = sqrt(var_value->value_double);
+                    break;
+                default:
+                    break;
+            }
+            break;
+
+        case DC_APP_SET_TYPE_MODULO:
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_INTEGER:
+                    if (op_value->value_integer == 0) {
+                        DC_LOG_ERROR("Set", "Modulo by zero (int)");
+                        break;
+                    }
+                    var_value->value_integer %= op_value->value_integer;
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    if (op_value->value_double == 0.0) {
+                        DC_LOG_ERROR("Set", "Modulo by zero (double)");
+                        break;
+                    }
+                    var_value->value_double = fmod(var_value->value_double, op_value->value_double);
+                    break;
+                case DC_VALUE_TYPE_BOOLEAN:
+                    if (op_value->value_boolean == 0) {
+                        DC_LOG_ERROR("Set", "Modulo by zero (bool)");
+                        break;
+                    }
+                    var_value->value_boolean %= op_value->value_boolean;
+                    break;
+                default:
+                    break;
+            }
+            break;
+
+        case DC_APP_SET_TYPE_POWER:
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_INTEGER:
+                    var_value->value_integer = (int)pow((double)var_value->value_integer, (double)op_value->value_integer);
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    var_value->value_double = pow(var_value->value_double, op_value->value_double);
+                    break;
+                case DC_VALUE_TYPE_BOOLEAN:
+                    var_value->value_boolean = (int)pow((double)var_value->value_boolean, (double)op_value->value_boolean);
+                    break;
+                default:
+                    break;
+            }
+            break;
+
+        case DC_APP_SET_TYPE_LOG:
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_INTEGER:
+                    if (var_value->value_integer <= 0) {
+                        DC_LOG_ERROR("Set", "Log domain error (int)");
+                        break;
+                    }
+                    var_value->value_integer = (int)log((double)var_value->value_integer); // natural log
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    if (var_value->value_double <= 0.0) {
+                        DC_LOG_ERROR("Set", "Log domain error (double)");
+                        break;
+                    }
+                    var_value->value_double = log(var_value->value_double); // natural log
+                    break;
+                default:
+                    break;
+            }
+            break;
+
+        case DC_APP_SET_TYPE_EXP:
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_INTEGER:
+                    var_value->value_integer = (int)exp((double)var_value->value_integer);
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    var_value->value_double = exp(var_value->value_double);
+                    break;
+                default:
+                    break;
+            }
+            break;
+
+        case DC_APP_SET_TYPE_ROUND:
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_INTEGER:
+                    // already an integer; no-op
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    var_value->value_double = round(var_value->value_double);
+                    break;
+                default:
+                    break;
+            }
+            break;
+
+        case DC_APP_SET_TYPE_SIGN:
+            switch (var_value->type) {
+                case DC_VALUE_TYPE_INTEGER:
+                    var_value->value_integer = (var_value->value_integer > 0) - (var_value->value_integer < 0);
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    var_value->value_double = (var_value->value_double > 0.0) - (var_value->value_double < 0.0);
+                    break;
+                case DC_VALUE_TYPE_BOOLEAN:
+                    var_value->value_boolean = var_value->value_boolean ? 1 : 0;
+                    break;
+                default:
+                    break;
+            }
+            break;
+
         default:
             DC_LOG_ERROR("Set", "Invalid operator: %d", operation);
             return false;
     }
+
     return true; // refresh needed
 }
 
