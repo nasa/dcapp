@@ -125,7 +125,6 @@ typedef struct _plPlanetResidencyNode
     plPlanetResidencyNode* ptPrev;
     plPlanetChunk*         ptChunk;
     uint64_t                uFrameRequested;
-    float                   fDistance;
 } plPlanetResidencyNode;
 
 typedef struct _plOBB2
@@ -168,6 +167,12 @@ typedef struct _plPlanet
 
     const char* pcVertexShader;
     const char* pcFragmentShader;
+
+    plBufferHandle tIndexBuffer;
+    plFreeList tIndexBufferManager;
+    
+    plBufferHandle tVertexBuffer;
+    plFreeList tVertexBufferManager;
 } plPlanet;
 
 typedef struct _plPlanetContext
@@ -198,11 +203,7 @@ typedef struct _plPlanetContext
     plBufferHandle tStagingBuffer;
     uint32_t       uStagingBufferSize;
 
-    plBufferHandle tIndexBuffer;
-    plFreeList tIndexBufferManager;
-    
-    plBufferHandle tVertexBuffer;
-    plFreeList tVertexBufferManager;
+
 } plPlanetContext;
 
 
@@ -215,7 +216,7 @@ void pl_planet_load_shaders(plPlanet* ptPlanet);
 
 // rendering
 static void pl__handle_residency (plPlanet*, plCommandBuffer*);
-static void pl__request_residency(plPlanet*, plPlanetChunk*, float);
+static void pl__request_residency(plPlanet*, plPlanetChunk*);
 static void pl__touch_chunk(plPlanet*, plPlanetChunk*);
 static void pl__make_unresident  (plPlanet*, plPlanetChunk*);
 static bool pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture* ptTexture, plPlanetLoadFlags tFlags);
@@ -223,7 +224,7 @@ static bool pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plP
 static void pl__render_chunk(plPlanet*, plCamera*, plRenderEncoder*, plPlanetChunk*, plPlanetChunkFile*);
 static bool pl__sat_visibility_test(plCamera*, const plAABB*);
 
-static void pl__free_chunk(plPlanet* ptPlanet , float, uint64_t);
+static void pl__free_chunk(plPlanet* ptPlanet, uint64_t);
 
 static plTextureHandle pl__planet_create_texture(plCommandBuffer* ptCmdBuffer, const plTextureDesc* ptDesc, const char* pcName, plTextureUsage);
 static plTextureHandle pl__planet_create_texture_with_data (const plTextureDesc*, const char* pcName, uint32_t uIdentifier, const void*, size_t);
@@ -352,56 +353,10 @@ pl_planet_initialize(plPlanetExtInit tInit)
     gptCtx->tDummyTexture = pl__planet_create_texture_with_data(&tDummyTextureDesc, "dummy", 0, afDummyTextureData, sizeof(afDummyTextureData));
     gptCtx->uDummyIndex = pl__planet_get_bindless_texture_index(gptCtx->tDummyTexture);
 
-    if(tInit.uStagingBufferSize == 0) tInit.uStagingBufferSize = 268435456;
-    if(tInit.uIndexBufferSize == 0)   tInit.uIndexBufferSize = 268435456;
-    if(tInit.uVertexBufferSize == 0)  tInit.uVertexBufferSize = 268435456;
-    gptCtx->uStagingBufferSize = tInit.uStagingBufferSize;
-
-    gptFreeList->create(tInit.uVertexBufferSize, 256, &gptCtx->tVertexBufferManager);
-    gptFreeList->create(tInit.uIndexBufferSize, 256, &gptCtx->tIndexBufferManager);
-
     plDevice* ptDevice = gptCtx->ptDevice;
 
-    const plBufferDesc tVertexBufferDesc = {
-        .tUsage      = PL_BUFFER_USAGE_VERTEX | PL_BUFFER_USAGE_TRANSFER_DESTINATION,
-        .szByteSize  = gptCtx->tVertexBufferManager.uSize,
-        .pcDebugName = "vertex buffer"
-    };
-    gptCtx->tVertexBuffer = gptGfx->create_buffer(ptDevice, &tVertexBufferDesc, NULL);
-
-    // retrieve buffer to get memory allocation requirements (do not store buffer pointer)
-    plBuffer* ptVertexBuffer = gptGfx->get_buffer(ptDevice, gptCtx->tVertexBuffer);
-
-    // allocate memory for the vertex buffer
-    const plDeviceMemoryAllocation tVertexBufferAllocation = gptGfx->allocate_memory(ptDevice,
-        ptVertexBuffer->tMemoryRequirements.ulSize,
-        PL_MEMORY_FLAGS_DEVICE_LOCAL,
-        ptVertexBuffer->tMemoryRequirements.uMemoryTypeBits,
-        "vertex buffer memory");
-
-    // bind the buffer to the new memory allocation
-    gptGfx->bind_buffer_to_memory(ptDevice, gptCtx->tVertexBuffer, &tVertexBufferAllocation);
-
-    // create index buffer
-    const plBufferDesc tIndexBufferDesc = {
-        .tUsage      = PL_BUFFER_USAGE_INDEX | PL_BUFFER_USAGE_TRANSFER_DESTINATION,
-        .szByteSize  = gptCtx->tIndexBufferManager.uSize,
-        .pcDebugName = "index buffer"
-    };
-    gptCtx->tIndexBuffer = gptGfx->create_buffer(ptDevice, &tIndexBufferDesc, NULL);
-
-    // retrieve buffer to get memory allocation requirements (do not store buffer pointer)
-    plBuffer* ptIndexBuffer = gptGfx->get_buffer(ptDevice, gptCtx->tIndexBuffer);
-
-    // allocate memory for the index buffer
-    const plDeviceMemoryAllocation tIndexBufferAllocation = gptGfx->allocate_memory(ptDevice,
-        ptIndexBuffer->tMemoryRequirements.ulSize,
-        PL_MEMORY_FLAGS_DEVICE_LOCAL,
-        ptIndexBuffer->tMemoryRequirements.uMemoryTypeBits,
-        "index buffer memory");
-
-    // bind the buffer to the new memory allocation
-    gptGfx->bind_buffer_to_memory(ptDevice, gptCtx->tIndexBuffer, &tIndexBufferAllocation);
+    if(tInit.uStagingBufferSize == 0) tInit.uStagingBufferSize = 268435456;
+    gptCtx->uStagingBufferSize = tInit.uStagingBufferSize;
 
     // create vertex buffer
     const plBufferDesc tStagingBufferDesc = {
@@ -430,11 +385,8 @@ pl_planet_cleanup(void)
 {
     plDevice* ptDevice = gptCtx->ptDevice;
 
-    gptGfx->destroy_buffer(ptDevice, gptCtx->tVertexBuffer);
-    gptGfx->destroy_buffer(ptDevice, gptCtx->tIndexBuffer);
     gptGfx->destroy_buffer(ptDevice, gptCtx->tStagingBuffer);
-    gptFreeList->cleanup(&gptCtx->tVertexBufferManager);
-    gptFreeList->cleanup(&gptCtx->tIndexBufferManager);
+
     pl_sb_free(gptCtx->sbcScratchBuffer);
     pl_sb_free(gptCtx->sbcScratchBuffer2);
     pl_hm_free(&gptCtx->tTextureIndexHashmap);
@@ -530,10 +482,60 @@ pl_create_planet(plCommandBuffer* ptCmdBuffer, plPlanetInit tInit, plPlanetProce
     };
     ptPlanet->tRenderPass = gptGfx->create_render_pass(gptCtx->ptDevice, &tRenderPassDesc, atAttachmentSets);
 
+    if(tInit.uIndexBufferSize == 0)   tInit.uIndexBufferSize = 268435456;
+    if(tInit.uVertexBufferSize == 0)  tInit.uVertexBufferSize = 268435456;
+    
+
+    gptFreeList->create(tInit.uVertexBufferSize, 256, &ptPlanet->tVertexBufferManager);
+    gptFreeList->create(tInit.uIndexBufferSize, 256, &ptPlanet->tIndexBufferManager);
+
+    plDevice* ptDevice = gptCtx->ptDevice;
+
+    const plBufferDesc tVertexBufferDesc = {
+        .tUsage      = PL_BUFFER_USAGE_VERTEX | PL_BUFFER_USAGE_TRANSFER_DESTINATION,
+        .szByteSize  = ptPlanet->tVertexBufferManager.uSize,
+        .pcDebugName = "vertex buffer"
+    };
+    ptPlanet->tVertexBuffer = gptGfx->create_buffer(ptDevice, &tVertexBufferDesc, NULL);
+
+    // retrieve buffer to get memory allocation requirements (do not store buffer pointer)
+    plBuffer* ptVertexBuffer = gptGfx->get_buffer(ptDevice, ptPlanet->tVertexBuffer);
+
+    // allocate memory for the vertex buffer
+    const plDeviceMemoryAllocation tVertexBufferAllocation = gptGfx->allocate_memory(ptDevice,
+        ptVertexBuffer->tMemoryRequirements.ulSize,
+        PL_MEMORY_FLAGS_DEVICE_LOCAL,
+        ptVertexBuffer->tMemoryRequirements.uMemoryTypeBits,
+        "vertex buffer memory");
+
+    // bind the buffer to the new memory allocation
+    gptGfx->bind_buffer_to_memory(ptDevice, ptPlanet->tVertexBuffer, &tVertexBufferAllocation);
+
+    // create index buffer
+    const plBufferDesc tIndexBufferDesc = {
+        .tUsage      = PL_BUFFER_USAGE_INDEX | PL_BUFFER_USAGE_TRANSFER_DESTINATION,
+        .szByteSize  = ptPlanet->tIndexBufferManager.uSize,
+        .pcDebugName = "index buffer"
+    };
+    ptPlanet->tIndexBuffer = gptGfx->create_buffer(ptDevice, &tIndexBufferDesc, NULL);
+
+    // retrieve buffer to get memory allocation requirements (do not store buffer pointer)
+    plBuffer* ptIndexBuffer = gptGfx->get_buffer(ptDevice, ptPlanet->tIndexBuffer);
+
+    // allocate memory for the index buffer
+    const plDeviceMemoryAllocation tIndexBufferAllocation = gptGfx->allocate_memory(ptDevice,
+        ptIndexBuffer->tMemoryRequirements.ulSize,
+        PL_MEMORY_FLAGS_DEVICE_LOCAL,
+        ptIndexBuffer->tMemoryRequirements.uMemoryTypeBits,
+        "index buffer memory");
+
+    // bind the buffer to the new memory allocation
+    gptGfx->bind_buffer_to_memory(ptDevice, ptPlanet->tIndexBuffer, &tIndexBufferAllocation);
+
     pl__planet_load(ptPlanet, ptInfo, tInit.atTextures[0].fMetersPerPixel > 0.0f ? &tInit.atTextures[0] : NULL, tInit.tLoadFlags);
 
     for(uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
-        pl__request_residency(ptPlanet, &ptPlanet->sbtChunkFiles[i].tFile.atChunks[0], 0.0f);
+        pl__request_residency(ptPlanet, &ptPlanet->sbtChunkFiles[i].tFile.atChunks[0]);
     return ptPlanet;
 }
 
@@ -558,6 +560,10 @@ pl_cleanup_planet(plPlanet* ptPlanet)
     gptGfx->destroy_render_pass(ptDevice, ptPlanet->tRenderPass);
     gptGfx->destroy_texture(ptDevice, ptPlanet->tOutputTexture);
     gptGfx->destroy_texture(ptDevice, ptPlanet->tOutputTextureDepth);
+    gptGfx->destroy_buffer(ptDevice, ptPlanet->tVertexBuffer);
+    gptGfx->destroy_buffer(ptDevice, ptPlanet->tIndexBuffer);
+    gptFreeList->cleanup(&ptPlanet->tVertexBufferManager);
+    gptFreeList->cleanup(&ptPlanet->tIndexBufferManager);
 
 
 
@@ -846,8 +852,8 @@ pl_render_planet(plPlanet* ptPlanet, plCamera* ptCamera, plCommandBuffer* ptCmdB
     // gptGfx->set_depth_bias(ptEncoder, -1.25f, 0.0f, -10.75f);
     gptGfx->set_depth_bias(ptEncoder, 0.0f, 0.0f, 0.0f);
 
-    gptScreenLog->add_message_ex(193, 10.0, PL_COLOR_32_GREEN, 1.0f, "Index Buffer Usage:  %0.2f %%", 100.0f * (float)gptCtx->tIndexBufferManager.uUsedSpace / (float)gptCtx->tIndexBufferManager.uSize);
-    gptScreenLog->add_message_ex(194, 10.0, PL_COLOR_32_GREEN, 1.0f, "Vertex Buffer Usage:  %0.2f %%", 100.0f * (float)gptCtx->tVertexBufferManager.uUsedSpace / (float)gptCtx->tVertexBufferManager.uSize);
+    gptScreenLog->add_message_ex(193, 10.0, PL_COLOR_32_GREEN, 1.0f, "Index Buffer Usage:  %0.2f %%", 100.0f * (float)ptPlanet->tIndexBufferManager.uUsedSpace / (float)ptPlanet->tIndexBufferManager.uSize);
+    gptScreenLog->add_message_ex(194, 10.0, PL_COLOR_32_GREEN, 1.0f, "Vertex Buffer Usage:  %0.2f %%", 100.0f * (float)ptPlanet->tVertexBufferManager.uUsedSpace / (float)ptPlanet->tVertexBufferManager.uSize);
 
     for(uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
         pl__render_chunk(ptPlanet, ptCamera, ptEncoder, &ptPlanet->sbtChunkFiles[i].tFile.atChunks[0], &ptPlanet->sbtChunkFiles[i].tFile);
@@ -944,7 +950,7 @@ pl__remove_from_replacement_queue(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
 }
 
 static void
-pl__free_chunk(plPlanet* ptPlanet, float fDistance, uint64_t uIndexCount)
+pl__free_chunk(plPlanet* ptPlanet, uint64_t uIndexCount)
 {
     const uint64_t uCurrentFrame = gptIOI->get_io()->ulFrameCount;
 
@@ -988,37 +994,6 @@ pl__free_chunk(plPlanet* ptPlanet, float fDistance, uint64_t uIndexCount)
                 ptCurrentRequest = ptCurrentRequest->ptPrev;
         }
     }
-
-    
-    // if(uCurrentFrame - ptCurrentRequest->uLastFrameUsed > 1)
-    // {
-    //     pl__make_unresident(ptPlanet, ptCurrentRequest);
-    //     bChunkFreed = true;
-    // }
-    
-    // find further distance chunk to release
-    // if(!bChunkFreed)
-    // {
-    //     ptCurrentRequest = ptPlanet->tReplacementQueue.ptNext;
-    //     plPlanetChunk* ptFurthestChunk = ptCurrentRequest;
-
-    //     while(ptCurrentRequest)
-    //     {
-
-    //         if(ptCurrentRequest->uIndexCount >= ptFurthestChunk->uIndexCount)
-    //         {
-    //             ptFurthestChunk = ptCurrentRequest;
-
-    //         }
-    //         ptCurrentRequest = ptCurrentRequest->ptNext;
-    //     }
-
-    //     if(ptFurthestChunk->uIndexCount > uIndexCount)
-    //     {
-    //         pl__make_unresident(ptPlanet, ptFurthestChunk);
-    //         bChunkFreed = true;
-    //     }
-    // }
 
     if(!bChunkFreed)
         printf("Couldn't free chunks\n");
@@ -1082,9 +1057,9 @@ pl__make_unresident(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
         }
 
         if(ptChunk->ptIndexHole)
-            gptFreeList->return_node(&gptCtx->tIndexBufferManager, ptChunk->ptIndexHole);
+            gptFreeList->return_node(&ptPlanet->tIndexBufferManager, ptChunk->ptIndexHole);
         if(ptChunk->ptVertexHole)
-            gptFreeList->return_node(&gptCtx->tVertexBufferManager, ptChunk->ptVertexHole);
+            gptFreeList->return_node(&ptPlanet->tVertexBufferManager, ptChunk->ptVertexHole);
         ptChunk->uIndexCount = 0;
         ptChunk->uLastFrameUsed = 0;
         ptChunk->ptIndexHole = NULL;
@@ -1137,23 +1112,23 @@ pl__handle_residency(plPlanet* ptPlanet, plCommandBuffer* ptCommandBuffer)
         const uint32_t uVertexStageOffset = uIndexBufferSizeBytes;
 
         // update chunk offsets
-        plFreeListNode* ptIndexHole = gptFreeList->get_node(&gptCtx->tIndexBufferManager, uIndexCount * sizeof(uint32_t));
-        plFreeListNode* ptVertexHole = gptFreeList->get_node(&gptCtx->tVertexBufferManager, uVertexCount * sizeof(plPlanetVertex));
+        plFreeListNode* ptIndexHole = gptFreeList->get_node(&ptPlanet->tIndexBufferManager, uIndexCount * sizeof(uint32_t));
+        plFreeListNode* ptVertexHole = gptFreeList->get_node(&ptPlanet->tVertexBufferManager, uVertexCount * sizeof(plPlanetVertex));
 
         if(ptIndexHole == NULL || ptVertexHole == NULL)
         {
-            if(ptIndexHole) gptFreeList->return_node(&gptCtx->tIndexBufferManager, ptIndexHole);
-            if(ptVertexHole) gptFreeList->return_node(&gptCtx->tVertexBufferManager, ptVertexHole);
-            pl__free_chunk(ptPlanet, ptCurrentRequest->fDistance, uIndexCount);
-            ptIndexHole = gptFreeList->get_node(&gptCtx->tIndexBufferManager, uIndexCount * sizeof(uint32_t));
-            ptVertexHole = gptFreeList->get_node(&gptCtx->tVertexBufferManager, uVertexCount * sizeof(plPlanetVertex));
+            if(ptIndexHole) gptFreeList->return_node(&ptPlanet->tIndexBufferManager, ptIndexHole);
+            if(ptVertexHole) gptFreeList->return_node(&ptPlanet->tVertexBufferManager, ptVertexHole);
+            pl__free_chunk(ptPlanet, uIndexCount);
+            ptIndexHole = gptFreeList->get_node(&ptPlanet->tIndexBufferManager, uIndexCount * sizeof(uint32_t));
+            ptVertexHole = gptFreeList->get_node(&ptPlanet->tVertexBufferManager, uVertexCount * sizeof(plPlanetVertex));
         }
 
         if(ptIndexHole == NULL || ptVertexHole == NULL)
         {
-            if(ptIndexHole) gptFreeList->return_node(&gptCtx->tIndexBufferManager, ptIndexHole);
-            if(ptVertexHole) gptFreeList->return_node(&gptCtx->tVertexBufferManager, ptVertexHole);
-            pl__free_chunk(ptPlanet, ptCurrentRequest->fDistance, uIndexCount);
+            if(ptIndexHole) gptFreeList->return_node(&ptPlanet->tIndexBufferManager, ptIndexHole);
+            if(ptVertexHole) gptFreeList->return_node(&ptPlanet->tVertexBufferManager, ptVertexHole);
+            pl__free_chunk(ptPlanet, uIndexCount);
             PL_FREE(ptVertices);
             PL_FREE(ptIndices);
             fclose(ptDataFile);
@@ -1201,8 +1176,8 @@ pl__handle_residency(plPlanet* ptPlanet, plCommandBuffer* ptCommandBuffer)
         plBlitEncoder* ptEncoder = gptGfx->begin_blit_pass(ptCommandBuffer);
         gptGfx->pipeline_barrier_blit(ptEncoder, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE);
 
-        gptGfx->copy_buffer(ptEncoder, gptCtx->tStagingBuffer, gptCtx->tIndexBuffer, uIndexStageOffset, uIndexFinalOffset, uIndexBufferSizeBytes);
-        gptGfx->copy_buffer(ptEncoder, gptCtx->tStagingBuffer, gptCtx->tVertexBuffer, uVertexStageOffset, uVertexFinalOffset, uVertexBufferSizeBytes);
+        gptGfx->copy_buffer(ptEncoder, gptCtx->tStagingBuffer, ptPlanet->tIndexBuffer, uIndexStageOffset, uIndexFinalOffset, uIndexBufferSizeBytes);
+        gptGfx->copy_buffer(ptEncoder, gptCtx->tStagingBuffer, ptPlanet->tVertexBuffer, uVertexStageOffset, uVertexFinalOffset, uVertexBufferSizeBytes);
         
         gptGfx->pipeline_barrier_blit(ptEncoder, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ);
         gptGfx->end_blit_pass(ptEncoder);
@@ -1269,7 +1244,7 @@ pl__touch_chunk(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
 }
 
 static void
-pl__request_residency(plPlanet* ptPlanet, plPlanetChunk* ptChunk, float fDistance)
+pl__request_residency(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
 {
     if(ptChunk == NULL)
         return;
@@ -1332,7 +1307,6 @@ pl__request_residency(plPlanet* ptPlanet, plPlanetChunk* ptChunk, float fDistanc
             ptExistingRequest->ptNext->ptPrev = ptExistingRequest;
 
         ptExistingRequest->uFrameRequested = gptIOI->get_io()->ulFrameCount;
-        ptExistingRequest->fDistance = fDistance;
         ptExistingRequest->ptChunk = ptChunk;
     }
 }
@@ -1353,7 +1327,7 @@ pl__render_chunk(plPlanet* ptPlanet, plCamera* ptCamera , plRenderEncoder* ptEnc
     plVec3 tClosestPoint = gptCollision->point_closest_point_aabb(ptCamera->tPos, tAABB);
     float fDistance = fabsf(pl_length_vec3(pl_sub_vec3(tClosestPoint, ptCamera->tPos)));
 
-    pl__request_residency(ptPlanet, ptChunk, fDistance);
+    pl__request_residency(ptPlanet, ptChunk);
 
     if(ptChunk->ptIndexHole == NULL)
         return;
@@ -1384,7 +1358,7 @@ pl__render_chunk(plPlanet* ptPlanet, plCamera* ptCamera , plRenderEncoder* ptEnc
         // submit nonindexed draw using basic API
         plShaderHandle tShader = (ptPlanet->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_WIREFRAME) ? ptPlanet->tWireframeShader : ptPlanet->tShader;
         gptGfx->bind_shader(ptEncoder, tShader);
-        gptGfx->bind_vertex_buffer(ptEncoder, gptCtx->tVertexBuffer);
+        gptGfx->bind_vertex_buffer(ptEncoder, ptPlanet->tVertexBuffer);
         gptGfx->bind_graphics_bind_groups(ptEncoder, tShader, 0, 1, &gptCtx->atBindGroups[gptGfx->get_current_frame_index()], 1, &tDynamicBinding);
 
         const plDrawIndex tDraw = {
@@ -1392,7 +1366,7 @@ pl__render_chunk(plPlanet* ptPlanet, plCamera* ptCamera , plRenderEncoder* ptEnc
             .uIndexCount    = ptChunk->uIndexCount,
             .uVertexStart   = (uint32_t)ptChunk->ptVertexHole->uOffset / sizeof(plPlanetVertex),
             .uIndexStart    = (uint32_t)ptChunk->ptIndexHole->uOffset / sizeof(uint32_t),
-            .tIndexBuffer   = gptCtx->tIndexBuffer
+            .tIndexBuffer   = ptPlanet->tIndexBuffer
         };
         gptGfx->draw_indexed(ptEncoder, 1, &tDraw);
 
@@ -1411,7 +1385,7 @@ pl__render_chunk(plPlanet* ptPlanet, plCamera* ptCamera , plRenderEncoder* ptEnc
                 };
                 plVec3 tClosestChildPoint = gptCollision->point_closest_point_aabb(ptCamera->tPos, tChildAABB);
                 float fChildDistance = fabsf(pl_length_vec3(pl_sub_vec3(tClosestChildPoint, ptCamera->tPos)));
-                pl__request_residency(ptPlanet, ptChunk->aptChildren[i], fChildDistance);
+                pl__request_residency(ptPlanet, ptChunk->aptChildren[i]);
             }
         }
         else // we actually want this chunk, not children
@@ -2046,10 +2020,10 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .render              = pl_render_planet,
         .prepare             = pl_prepare_planet,
         .reload_shaders      = pl_planet_load_shaders,
-        .set_shaders         = pl_planet_set_shaders,
         .set_runtime_options = pl_planet_set_runtime_options,
         .get_runtime_options = pl_planet_get_runtime_options,
         .get_texture         = pl_get_planet_texture,
+        .set_shaders         = pl_planet_set_shaders,
         .draw_sphere         = pl_draw_sphere,
     };
     pl_set_api(ptApiRegistry, plPlanetI, &tApi);
