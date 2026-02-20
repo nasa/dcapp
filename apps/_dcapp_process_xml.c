@@ -57,6 +57,7 @@ static _NodeIndex    _process_xml_node_style(_AppData *app_data, xmlNodePtr xml_
 static _NodeIndex    _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_texture(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_trick_from(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_trick_io(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -272,6 +273,9 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
             return _process_xml_node_planet_texture(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_PLANET_SHADER:
+            return _process_xml_node_planet_shader(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_TEXT:
             return _process_xml_node_text(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -3443,6 +3447,15 @@ static _NodeIndex _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_no
         xmlFree(raw_negate_y);
     }
 
+    // shader variable (selects active PlanetShader by index at runtime)
+    dc_node.planet.planet_shader_var          = DC_APP_VAL_INDEX_UNDEFINED;
+    dc_node.planet.planet_active_shader_index = -2; // uninitialized sentinel
+    xmlChar *raw_shader_var = xmlGetProp(xml_node, BAD_CAST "ShaderVariable");
+    if (raw_shader_var) {
+        dc_node.planet.planet_shader_var = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_shader_var);
+        xmlFree(raw_shader_var);
+    }
+
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
@@ -3482,7 +3495,6 @@ static _NodeIndex _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr x
                 }
 
                 sbpush(parent_node->planet.sb_planet_data_files, strdup(abs_filepath));
-                DC_LOG_INFO("PlanetData", "Loading file: %s", abs_filepath);
             } else {
                 DC_LOG_ERROR("PlanetData", "Missing 'File' attribute");
             }
@@ -3521,7 +3533,6 @@ static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePt
                 }
 
                 parent_node->planet.planet_texture_file = strdup(abs_filepath);
-                DC_LOG_INFO("PlanetTexture", "Texture: %s", abs_filepath);
             } else {
                 DC_LOG_ERROR("PlanetTexture", "Missing 'Source' attribute");
             }
@@ -3554,6 +3565,94 @@ static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePt
     }
 
     // return
+    return NODE_INDEX_UNDEFINED;
+}
+
+// Mounts the directory containing abs_path under a stable VFS mount point
+// (derived by hashing the directory), then writes the VFS path into vfs_out.
+static void _planet_shader_abs_to_vfs(const char *abs_path, char *vfs_out, size_t vfs_out_size) {
+    char dir[DC_VALUE_STRING_BUFFER_SIZE];
+    dc_utils_get_directory(abs_path, dir, sizeof(dir));
+
+    char hash[32];
+    dc_utils_string_to_hash(dir, hash, sizeof(hash));
+
+    char vfs_mount[32];
+    snprintf(vfs_mount, sizeof(vfs_mount), "/%s", hash);
+
+    // idempotent — VFS silently ignores duplicate mounts to the same virtual path
+    _ext_vfs->mount_directory(vfs_mount, dir, PL_VFS_MOUNT_FLAGS_NONE);
+
+    // extract filename (handle both / and \ separators)
+    const char *fslash = strrchr(abs_path, '/');
+    const char *bslash = strrchr(abs_path, '\\');
+    const char *filename = (fslash > bslash) ? fslash + 1 : (bslash ? bslash + 1 : abs_path);
+
+    snprintf(vfs_out, vfs_out_size, "%s/%s", vfs_mount, filename);
+}
+
+static _NodeIndex _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+    (void)elem_type;
+    (void)parent_elem_type;
+
+    _Node *parent_node = _get_node(app_data, parent_node_index);
+    switch (parent_node->type) {
+        case NODE_TYPE_PLANET: {
+
+            // Index (required)
+            xmlChar *raw_index = xmlGetProp(xml_node, BAD_CAST "Index");
+            if (!raw_index) {
+                DC_LOG_ERROR("PlanetShader", "Missing required 'Index' attribute");
+                break;
+            }
+            _PlanetShaderEntry entry = {0};
+            entry.index = atoi((const char *)raw_index);
+            xmlFree(raw_index);
+
+            // VertexSource (optional)
+            xmlChar *raw_vert = xmlGetProp(xml_node, BAD_CAST "VertexSource");
+            if (raw_vert) {
+                char cleaned[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned, (const char *)raw_vert, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                cleaned[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+                xmlFree(raw_vert);
+                char abs_path[DC_VALUE_STRING_BUFFER_SIZE];
+                if (dc_utils_is_relative_path(cleaned)) {
+                    dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
+                } else {
+                    strncpy(abs_path, cleaned, sizeof(abs_path) - 1);
+                }
+                char vfs_path[DC_VALUE_STRING_BUFFER_SIZE];
+                _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
+                entry.vertex_path = strdup(vfs_path);
+            }
+
+            // FragmentSource (optional)
+            xmlChar *raw_frag = xmlGetProp(xml_node, BAD_CAST "FragmentSource");
+            if (raw_frag) {
+                char cleaned[DC_VALUE_STRING_BUFFER_SIZE];
+                strncpy(cleaned, (const char *)raw_frag, DC_VALUE_STRING_BUFFER_SIZE - 1);
+                cleaned[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+                xmlFree(raw_frag);
+                char abs_path[DC_VALUE_STRING_BUFFER_SIZE];
+                if (dc_utils_is_relative_path(cleaned)) {
+                    dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
+                } else {
+                    strncpy(abs_path, cleaned, sizeof(abs_path) - 1);
+                }
+                char vfs_path[DC_VALUE_STRING_BUFFER_SIZE];
+                _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
+                entry.fragment_path = strdup(vfs_path);
+            }
+
+            sbpush(parent_node->planet.sb_planet_shaders, entry);
+            break;
+        }
+        default:
+            DC_LOG_ERROR("PlanetShader", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
+    }
+
     return NODE_INDEX_UNDEFINED;
 }
 

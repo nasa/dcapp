@@ -4221,6 +4221,22 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
         plPlanet *planet = app_data->sb_planets[node->planet.planet_index - 1];
         if (planet) {
 
+            // runtime shader swap — only fires when ShaderVariable changes value
+            if (node->planet.planet_shader_var != DC_APP_VAL_INDEX_UNDEFINED && sbcount(node->planet.sb_planet_shaders) > 0) {
+                int desired_idx = (int)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_shader_var)->value_double;
+                if (desired_idx != node->planet.planet_active_shader_index) {
+                    _PlanetShaderEntry *found = NULL;
+                    for (int j = 0; j < sbcount(node->planet.sb_planet_shaders); j++) {
+                        if (node->planet.sb_planet_shaders[j].index == desired_idx) {
+                            found = &node->planet.sb_planet_shaders[j];
+                            break;
+                        }
+                    }
+                    _ext_planet->set_shaders(planet, found ? found->vertex_path : NULL, found ? found->fragment_path : NULL);
+                    node->planet.planet_active_shader_index = desired_idx;
+                }
+            }
+
             // determine camera mode
             bool use_lle = (node->planet.lle.lat != DC_APP_VAL_INDEX_UNDEFINED &&
                             node->planet.lle.lon != DC_APP_VAL_INDEX_UNDEFINED &&

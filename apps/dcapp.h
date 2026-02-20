@@ -517,6 +517,12 @@ typedef struct __NodeText {
     DcValueType   *sb_format_types;
 } _NodeText;
 
+typedef struct {
+    char         *vertex_path;    // heap-allocated (NULL = keep default "planet.vert")
+    char         *fragment_path;  // heap-allocated (NULL = keep default "planet.frag")
+    int           index;
+} _PlanetShaderEntry;
+
 typedef struct __NodePlanet {
 
     // general positioning of display
@@ -547,6 +553,11 @@ typedef struct __NodePlanet {
     DcAppValIndex planet_texture_mpp;   // meters per pixel
     DcAppValIndex planet_texture_lat;   // latitude (degrees)
     DcAppValIndex planet_texture_lon;   // longitude (degrees)
+
+    // shader overrides (runtime swapping via ShaderVariable)
+    _PlanetShaderEntry *sb_planet_shaders;       // stretchy buffer
+    DcAppValIndex       planet_shader_var;       // variable holding active index (DC_APP_VAL_INDEX_UNDEFINED = disabled)
+    int                 planet_active_shader_index; // last-applied index (-2 = uninitialized, -1 = default)
 
 } _NodePlanet;
 

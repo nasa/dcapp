@@ -421,8 +421,10 @@ static void _show_help(void) {
 }
 
 static char *_get_stem(const char *path, char *buf, size_t buf_size) {
-    const char *slash = strrchr(path, '/');
-    const char *name  = slash ? slash + 1 : path;
+    const char *fslash = strrchr(path, '/');
+    const char *bslash = strrchr(path, '\\');
+    const char *slash  = (fslash > bslash) ? fslash : bslash;
+    const char *name   = slash ? slash + 1 : path;
     strncpy(buf, name, buf_size - 1);
     buf[buf_size - 1] = '\0';
     char *dot         = strrchr(buf, '.');
