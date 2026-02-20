@@ -80,7 +80,7 @@ rm -f ../pilotlight/out/dcapp-planet-chunkgen_*.dylib
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
@@ -117,7 +117,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
@@ -154,7 +154,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
@@ -191,7 +191,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
@@ -228,7 +228,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
@@ -265,7 +265,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
@@ -302,7 +302,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
@@ -339,7 +339,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/gdal/include "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lgdal "
 PL_STATIC_LINK_LIBRARIES=""
@@ -409,7 +409,7 @@ rm -f ../pilotlight/out/dcapp-planet-chunkgen_*.dylib
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
@@ -446,7 +446,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
@@ -483,7 +483,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
@@ -520,7 +520,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
 PL_STATIC_LINK_LIBRARIES=""
@@ -557,7 +557,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES="-ldearimguid "
@@ -594,7 +594,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
@@ -631,7 +631,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/libxml2/include/libxml2 "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
@@ -668,7 +668,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/gdal/include "
-PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
+PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lgdal "
 PL_STATIC_LINK_LIBRARIES=""

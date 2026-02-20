@@ -117,7 +117,8 @@ with pl.project("apps"):
 
     # macos or clang only
     pl.add_profile(platform_filter=["Darwin"],
-                    link_frameworks=["Metal", "MetalKit", "Cocoa", "IOKit", "CoreVideo", "QuartzCore"])
+                    link_frameworks=["Metal", "MetalKit", "Cocoa", "IOKit", "CoreVideo", "QuartzCore"],
+                    link_directories=["$(brew --prefix)/lib"])
     pl.add_profile(compiler_filter=["clang"],
                     linker_flags=["-Wl,-rpath,/usr/local/lib"],
                     compiler_flags=["-fmodules", "-ObjC", "-fPIC"])
