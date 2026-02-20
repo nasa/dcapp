@@ -4295,14 +4295,14 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
             _ext_camera->update(&camera);
 
             // get command buffer for planet rendering (use between begin_frame and begin_main_pass)
-            plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();
+            plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
 
             // prepare and render planet to offscreen texture
             _ext_planet->prepare(planet, cmd_buf);
             _ext_planet->render(planet, &camera, cmd_buf);
 
-            // submit command buffer
-            _ext_starter->submit_command_buffer(cmd_buf);
+            // submit and CPU-wait — guarantees staging buffer and texture are fully done
+            _ext_starter->submit_temporary_command_buffer(cmd_buf);
 
             // get the rendered texture and draw as 2D quad
             plBindGroupHandle bind_group = _ext_planet->get_texture(planet);
