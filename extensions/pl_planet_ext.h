@@ -24,7 +24,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plPlanetI_version {0, 2, 0}
+#define plPlanetI_version {0, 1, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -86,7 +86,7 @@ typedef struct _plPlanetI
     void                   (*set_runtime_options)(plPlanet*, plPlanetRuntimeOptions);
     plPlanetRuntimeOptions (*get_runtime_options)(plPlanet*);
     void                   (*reload_shaders)     (plPlanet*);
-    void                   (*set_shaders)        (plPlanet*, const char* pcVertexShader, const char* pcFragmentShader);
+     void                  (*set_shaders)        (plPlanet*, const char* pcVertexShader, const char* pcFragmentShader);
 
 } plPlanetI;
 
@@ -97,11 +97,7 @@ typedef struct _plPlanetI
 typedef struct _plPlanetExtInit
 {
     plDevice* ptDevice;
-
-    // memory allocations
     uint32_t uStagingBufferSize; // default: 268435456 bytes
-    uint32_t uVertexBufferSize;  // default: 268435456 bytes
-    uint32_t uIndexBufferSize;   // default: 268435456 bytes
 } plPlanetExtInit;
 
 typedef struct _plPlanetTexture
@@ -117,6 +113,10 @@ typedef struct _plPlanetInit
     double dRadius;
 
     plPlanetLoadFlags tLoadFlags;
+
+    // memory allocations
+    uint32_t uVertexBufferSize;  // default: 268435456 bytes
+    uint32_t uIndexBufferSize;   // default: 268435456 bytes
 
     // output texture
     uint32_t uOutputWidth;

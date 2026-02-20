@@ -103,9 +103,6 @@
                 </ButtonIndicatorOff>
             </Button>
 
-            <!-- ========== TITLE ========== -->
-            <Text X="500" Y="682" LocalAlignX="#_align_center_" Size="18" FillColor="#_color_white_">Planet Demo: LLE vs XYZ/RPY</Text>
-
             <!-- ========== PLANET VIEWS ========== -->
             <Text X="240" Y="662" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_yellow_">LLE Camera</Text>
             <Planet X="15" Y="200" Width="450" Height="450"
