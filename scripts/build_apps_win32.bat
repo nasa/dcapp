@@ -244,8 +244,6 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-genheader | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-xcopy /Y /I "../vcpkg_installed/x64-windows\bin\*.dll" "../pilotlight/out\"
-
 @set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../shaders" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/shaders" -I"../pilotlight/dependencies/stb" -I"../vcpkg_installed/x64-windows/include" -I"../vcpkg_installed/x64-windows/include/libxml2" 
 @set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"../vcpkg_installed/x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
@@ -281,8 +279,6 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @del "..\pilotlight\out\*.obj"  > nul 2> nul
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-validate | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-xcopy /Y /I "../vcpkg_installed/x64-windows\bin\*.dll" "../pilotlight/out\"
 
 @set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../shaders" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/shaders" -I"../pilotlight/dependencies/stb" -I"../vcpkg_installed/x64-windows/include" -I"../vcpkg_installed/x64-windows/include/libxml2" 
 @set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"../vcpkg_installed/x64-windows/lib" 
@@ -324,14 +320,15 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"../vcpkg_installed/x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD 
 @set PL_LINKER_FLAGS=-noimplib -noexp -incremental:no -nologo -noimplib -noexp 
-@set PL_SOURCES="../apps/dcapp-planet-chunkgen.c" 
+@set PL_STATIC_LINK_LIBRARIES=gdal.lib 
+@set PL_SOURCES="../apps/dcapp-planet-chunkgen.c" "../src/utils/file.c" "../src/utils/log.c" 
 
 :: run compiler (and linker)
 @echo.
 @echo [1m[93mStep: dcapp-planet-chunkgen[0m
 @echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
 @echo [1m[36mCompiling and Linking...[0m
-cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dcapp-planet-chunkgen.dll" -Fo"../pilotlight/out/" -LD -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dcapp-planet-chunkgen_%random%.pdb" %PL_LINK_DIRECTORIES%
+cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dcapp-planet-chunkgen.dll" -Fo"../pilotlight/out/" -LD -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dcapp-planet-chunkgen_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%
@@ -564,8 +561,6 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-genheader | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-xcopy /Y /I "../vcpkg_installed/x64-windows\bin\*.dll" "../pilotlight/out\"
-
 @set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../shaders" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/shaders" -I"../pilotlight/dependencies/stb" -I"../vcpkg_installed/x64-windows/include" -I"../vcpkg_installed/x64-windows/include/libxml2" 
 @set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"../vcpkg_installed/x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
@@ -601,8 +596,6 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @del "..\pilotlight\out\*.obj"  > nul 2> nul
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-validate | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-xcopy /Y /I "../vcpkg_installed/x64-windows\bin\*.dll" "../pilotlight/out\"
 
 @set PL_INCLUDE_DIRECTORIES=-I"../src" -I"../extensions" -I"../shaders" -I"../pilotlight/src" -I"../pilotlight/libs" -I"../pilotlight/extensions" -I"../pilotlight/shaders" -I"../pilotlight/dependencies/stb" -I"../vcpkg_installed/x64-windows/include" -I"../vcpkg_installed/x64-windows/include/libxml2" 
 @set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"../vcpkg_installed/x64-windows/lib" 
@@ -644,14 +637,15 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/o
 @set PL_LINK_DIRECTORIES=-LIBPATH:"../pilotlight/out" -LIBPATH:"../vcpkg_installed/x64-windows/lib" 
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-noimplib -noexp -incremental:no -nologo -noimplib -noexp 
-@set PL_SOURCES="../apps/dcapp-planet-chunkgen.c" 
+@set PL_STATIC_LINK_LIBRARIES=gdal.lib 
+@set PL_SOURCES="../apps/dcapp-planet-chunkgen.c" "../src/utils/file.c" "../src/utils/log.c" 
 
 :: run compiler (and linker)
 @echo.
 @echo [1m[93mStep: dcapp-planet-chunkgen[0m
 @echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
 @echo [1m[36mCompiling and Linking...[0m
-cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dcapp-planet-chunkgen.dll" -Fo"../pilotlight/out/" -LD -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dcapp-planet-chunkgen_%random%.pdb" %PL_LINK_DIRECTORIES%
+cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../pilotlight/out/dcapp-planet-chunkgen.dll" -Fo"../pilotlight/out/" -LD -link %PL_LINKER_FLAGS% -PDB:"../pilotlight/out/dcapp-planet-chunkgen_%random%.pdb" %PL_LINK_DIRECTORIES% %PL_STATIC_LINK_LIBRARIES%
 
 :: check build status
 @set PL_BUILD_STATUS=%ERRORLEVEL%

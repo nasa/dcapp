@@ -8,7 +8,7 @@ popd
 set "RUN_DIR=%DCAPP_HOME%\pilotlight\out"
 
 if "%~1"=="" (
-    "%RUN_DIR%\dcapp-planet-chunkgen.exe" --help
+    echo Usage: dcapp-planet-chunkgen.bat ^<input_dem^> ^<output_dir^> --radius ^<N^> [options]
     exit /b 1
 )
 
@@ -25,11 +25,6 @@ shift
 goto argloop
 :endargs
 
-REM Use PowerShell to compute relative paths
-for /f "delims=" %%i in ('powershell -Command "[System.IO.Path]::GetRelativePath('%RUN_DIR%', '%INPUT%')"') do set "INPUT_REL=%%i"
-for /f "delims=" %%i in ('powershell -Command "[System.IO.Path]::GetRelativePath('%RUN_DIR%', '%OUTPUT%')"') do set "OUTPUT_REL=%%i"
-
 cd /d "%RUN_DIR%"
-set "cmd=dcapp-planet-chunkgen.exe %INPUT_REL% %OUTPUT_REL%%ARGS%"
-echo %cmd%
-%cmd%
+echo pilot_light.exe -a dcapp-planet-chunkgen "%INPUT%" "%OUTPUT%"%ARGS%
+pilot_light.exe -a dcapp-planet-chunkgen "%INPUT%" "%OUTPUT%"%ARGS%

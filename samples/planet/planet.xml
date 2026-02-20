@@ -27,14 +27,17 @@
     <Variable Type="#_variable_integer_">SliderLonSelected</Variable>
     <Variable Type="#_variable_integer_">SliderEleSelected</Variable>
 
+    <!-- Active shader index: 0=default, 1=elevation, 2=slope -->
+    <Variable Type="#_variable_integer_" InitialValue="0">ActiveShader</Variable>
+
     <Logic File="logic/logic.so"/>
 
     <Default>
         <Text ForceMono="Numeric" Size="14" FillColor="#_color_white_"/>
     </Default>
 
-    <Window X="0" Y="20" Width="1000" Height="700">
-        <Panel VirtualWidth="1000" VirtualHeight="700" BackgroundColor="#_color_charcoal_">
+    <Window X="0" Y="20" Width="1000" Height="740">
+        <Panel VirtualWidth="1000" VirtualHeight="740" BackgroundColor="#_color_charcoal_">
 
             <!-- Compute LLE from sliders -->
             <Set Variable="Latitude">@SliderLat</Set>
@@ -43,21 +46,84 @@
             <Set Variable="Elevation">@SliderEle</Set>
             <Set Variable="Elevation" Operator="#_set_multiply_">10000</Set>
 
+            <!-- ========== SHADER SELECTOR ========== -->
+            <Text X="230" Y="728" LocalAlignX="#_align_right_" Size="13" FillColor="#_color_white_">Shader:</Text>
+
+            <!-- Default shader (index 0) -->
+            <Button Type="#_button_toggle_" X="370" Y="706" Width="120" Height="22"
+                Variable="ActiveShader" On="0" Off="0"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="#_color_white_">Default</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="0.6 0.6 0.6">Default</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- Elevation gradient shader (index 1) -->
+            <Button Type="#_button_toggle_" X="500" Y="706" Width="120" Height="22"
+                Variable="ActiveShader" On="1" Off="1"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="#_color_white_">Elevation</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="0.6 0.6 0.6">Elevation</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- Slope shader (index 2) -->
+            <Button Type="#_button_toggle_" X="630" Y="706" Width="120" Height="22"
+                Variable="ActiveShader" On="2" Off="2"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="#_color_white_">Slope</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="0.6 0.6 0.6">Slope</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
             <!-- ========== TITLE ========== -->
             <Text X="500" Y="682" LocalAlignX="#_align_center_" Size="18" FillColor="#_color_white_">Planet Demo: LLE vs XYZ/RPY</Text>
 
             <!-- ========== PLANET VIEWS ========== -->
             <Text X="240" Y="662" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_yellow_">LLE Camera</Text>
             <Planet X="15" Y="200" Width="450" Height="450"
-                Latitude="@Latitude" Longitude="@Longitude" Elevation="@Elevation">
+                Latitude="@Latitude" Longitude="@Longitude" Elevation="@Elevation"
+                ShaderVariable="@ActiveShader">
                 <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
+                <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
+                <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
             </Planet>
 
             <Text X="760" Y="662" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">XYZ/RPY Camera</Text>
             <Planet X="535" Y="200" Width="450" Height="450"
                 CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
-                Roll="@CamRoll" Pitch="@CamPitch" Yaw="@CamYaw">
+                Roll="@CamRoll" Pitch="@CamPitch" Yaw="@CamYaw"
+                ShaderVariable="@ActiveShader">
                 <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
+                <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
+                <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
             </Planet>
 
             <!-- ========== SLIDERS (below planets) ========== -->

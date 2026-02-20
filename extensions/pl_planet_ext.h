@@ -24,7 +24,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plPlanetI_version {0, 1, 0}
+#define plPlanetI_version {0, 2, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -86,6 +86,7 @@ typedef struct _plPlanetI
     void                   (*set_runtime_options)(plPlanet*, plPlanetRuntimeOptions);
     plPlanetRuntimeOptions (*get_runtime_options)(plPlanet*);
     void                   (*reload_shaders)     (plPlanet*);
+    void                   (*set_shaders)        (plPlanet*, const char* pcVertexShader, const char* pcFragmentShader);
 
 } plPlanetI;
 

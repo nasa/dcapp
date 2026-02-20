@@ -772,6 +772,14 @@ pl_planet_load_shaders(plPlanet* ptPlanet)
     ptPlanet->tWireframeShader = gptGfx->create_shader(ptDevice, &tShaderDesc);
 }
 
+static void
+pl_planet_set_shaders(plPlanet* ptPlanet, const char* pcVertexShader, const char* pcFragmentShader)
+{
+    ptPlanet->pcVertexShader   = pcVertexShader   ? pcVertexShader   : "planet.vert";
+    ptPlanet->pcFragmentShader = pcFragmentShader ? pcFragmentShader : "planet.frag";
+    pl_planet_load_shaders(ptPlanet);
+}
+
 void
 pl_draw_sphere(plPlanet* ptPlanet, float fLongitude, float fLatitude, float fHeight, float fSphereRadius, uint32_t uColor)
 {
@@ -2038,6 +2046,7 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .render              = pl_render_planet,
         .prepare             = pl_prepare_planet,
         .reload_shaders      = pl_planet_load_shaders,
+        .set_shaders         = pl_planet_set_shaders,
         .set_runtime_options = pl_planet_set_runtime_options,
         .get_runtime_options = pl_planet_get_runtime_options,
         .get_texture         = pl_get_planet_texture,

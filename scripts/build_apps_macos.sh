@@ -338,13 +338,13 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/gdal/include "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC "
-PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
+PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lgdal "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../apps/dcapp-planet-chunkgen.c "
+PL_SOURCES="../apps/dcapp-planet-chunkgen.c ../src/utils/file.c ../src/utils/log.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -667,13 +667,13 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../src -I../extensions -I../shaders -I../pilotlight/src -I../pilotlight/libs -I../pilotlight/extensions -I../pilotlight/shaders -I../pilotlight/dependencies/stb -I/opt/homebrew/opt/gdal/include "
 PL_LINK_DIRECTORIES="-L../pilotlight/out -Wl,-rpath,../pilotlight/out "
 PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
-PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
+PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lgdal "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../apps/dcapp-planet-chunkgen.c "
+PL_SOURCES="../apps/dcapp-planet-chunkgen.c ../src/utils/file.c ../src/utils/log.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware

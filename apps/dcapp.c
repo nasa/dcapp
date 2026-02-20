@@ -215,6 +215,11 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 if (node->planet.planet_texture_file) {
                     free(node->planet.planet_texture_file);
                 }
+                for (int j = 0; j < sbcount(node->planet.sb_planet_shaders); j++) {
+                    free(node->planet.sb_planet_shaders[j].vertex_path);   // free(NULL) is safe
+                    free(node->planet.sb_planet_shaders[j].fragment_path);
+                }
+                sbfree(node->planet.sb_planet_shaders);
                 break;
             case NODE_TYPE_WINDOW:
                 if (node->window.title) {

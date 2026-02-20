@@ -4451,6 +4451,22 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
         plPlanet *planet = app_data->sb_planets[node->planet.planet_index - 1];
         if (planet) {
 
+            // runtime shader swap — only fires when ShaderVariable changes value
+            if (node->planet.planet_shader_var != DC_APP_VAL_INDEX_UNDEFINED && sbcount(node->planet.sb_planet_shaders) > 0) {
+                int desired_idx = (int)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_shader_var)->value_double;
+                if (desired_idx != node->planet.planet_active_shader_index) {
+                    _PlanetShaderEntry *found = NULL;
+                    for (int j = 0; j < sbcount(node->planet.sb_planet_shaders); j++) {
+                        if (node->planet.sb_planet_shaders[j].index == desired_idx) {
+                            found = &node->planet.sb_planet_shaders[j];
+                            break;
+                        }
+                    }
+                    _ext_planet->set_shaders(planet, found ? found->vertex_path : NULL, found ? found->fragment_path : NULL);
+                    node->planet.planet_active_shader_index = desired_idx;
+                }
+            }
+
             // determine camera mode
             bool use_lle = (node->planet.lle.lat != DC_APP_VAL_INDEX_UNDEFINED &&
                             node->planet.lle.lon != DC_APP_VAL_INDEX_UNDEFINED &&
@@ -4509,14 +4525,14 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
             _ext_camera->update(&camera);
 
             // get command buffer for planet rendering (use between begin_frame and begin_main_pass)
-            plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();
+            plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
 
             // prepare and render planet to offscreen texture
             _ext_planet->prepare(planet, cmd_buf);
             _ext_planet->render(planet, &camera, cmd_buf);
 
-            // submit command buffer
-            _ext_starter->submit_command_buffer(cmd_buf);
+            // submit and CPU-wait — guarantees staging buffer and texture are fully done
+            _ext_starter->submit_temporary_command_buffer(cmd_buf);
 
             // get the rendered texture and draw as 2D quad
             plBindGroupHandle bind_group = _ext_planet->get_texture(planet);

@@ -4,6 +4,7 @@
 
 - **Git for Windows** — [git-scm.com](https://git-scm.com/download/win)
 - **Visual Studio 2022** (Community, Professional, or Enterprise) with the **Desktop development with C++** workload
+- **Python 3** — [python.org](https://www.python.org/downloads/) — required to regenerate build scripts via `gen_build_apps.py` / `gen_build_samples.py`
 - **vcpkg** — Microsoft's C++ package manager
 
 ---
@@ -42,11 +43,13 @@ C:\vcpkg\bootstrap-vcpkg.bat
 
 ## 4. Install Dependencies
 
-From the root of the dcapp repository, run `vcpkg install`. This reads `vcpkg.json` and installs `libxml2` and `curl` into the local `vcpkg_installed/` directory:
+From the root of the dcapp repository, run `vcpkg install`. This reads `vcpkg.json` and installs `libxml2`, `curl`, and `gdal` into the local `vcpkg_installed/` directory:
 
 ```bat
 C:\vcpkg\vcpkg.exe install
 ```
+
+> **Note:** GDAL pulls in several transitive dependencies (PROJ, SQLite, etc.) so this may take a few minutes on a fresh machine.
 
 ---
 
@@ -65,3 +68,17 @@ build.bat -c debug
 ```
 
 Output binaries are placed in `bin/`.
+
+---
+
+## Regenerating Build Scripts
+
+The build scripts in `scripts/` are auto-generated. If you modify `gen_build_apps.py` or `gen_build_samples.py` (e.g. to add a new source file or dependency), regenerate them with:
+
+```bat
+cd scripts
+python gen_build_apps.py
+python gen_build_samples.py
+```
+
+Commit the resulting `.bat`, `.sh` files alongside any changes to the gen scripts.

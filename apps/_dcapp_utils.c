@@ -532,7 +532,7 @@ static void _init_planets(_AppData *app_data) {
         if (file_count == 0) {
             DC_LOG_WARN("Planet", "  [%d] no PlanetData file specified, skipping", i);
             sbpush(app_data->sb_planets, NULL);
-            node->planet.planet_index = i + 1;
+            node->planet.planet_index = (uint8_t)(i + 1);
             continue;
         }
 
@@ -545,7 +545,7 @@ static void _init_planets(_AppData *app_data) {
         if (!json_str) {
             DC_LOG_ERROR("Planet", "  [%d] failed to load file: %s", i, json_path);
             sbpush(app_data->sb_planets, NULL);
-            node->planet.planet_index = i + 1;
+            node->planet.planet_index = (uint8_t)(i + 1);
             continue;
         }
 
@@ -555,7 +555,7 @@ static void _init_planets(_AppData *app_data) {
             DC_LOG_ERROR("Planet", "  [%d] failed to parse JSON: %s", i, json_path);
             free(json_str);
             sbpush(app_data->sb_planets, NULL);
-            node->planet.planet_index = i + 1;
+            node->planet.planet_index = (uint8_t)(i + 1);
             continue;
         }
 
@@ -658,7 +658,7 @@ static void _init_planets(_AppData *app_data) {
 
         // store planet
         sbpush(app_data->sb_planets, planet);
-        node->planet.planet_index = i + 1; // 1-based (0 = uninitialized)
+        node->planet.planet_index = (uint8_t)(i + 1); // 1-based (0 = uninitialized)
 
         DC_LOG_INFO("Planet", "  [%d] created (radius=%.0f, %ux%u, %u tiles)", i, radius, (uint32_t)output_width, (uint32_t)output_height, tile_count);
 
