@@ -572,7 +572,6 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
     }
 
     // processing before targeting children
-    char new_directory[DC_UTILS_FILEPATH_BUFFER_SIZE];
     switch (elem_type) {
 
         case DC_APP_ELEM_TYPE_CONSTANT: {

@@ -2034,6 +2034,7 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
 
         for (int i = 0; i < 3 && !loaded; i++) {
             snprintf(try_filepath, sizeof(try_filepath), "%s%s", base_filepath, extensions[i]);
+            if (!dc_utils_file_exists(try_filepath)) continue;
             const plLibraryDesc logic_so_desc = {
                 .tFlags = PL_LIBRARY_FLAGS_NONE,
                 .pcName = try_filepath,
@@ -2495,7 +2496,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
 
         // canonicalize path
         char canon_filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
-        if (realpath(test_pattern_path, canon_filepath) == NULL) {
+        if (dc_utils_canonicalize_path(test_pattern_path, canon_filepath, DC_UTILS_FILEPATH_BUFFER_SIZE) != 0) {
             DC_LOG_ERROR("PixelStream", "TestPattern file not found: %s", test_pattern_path);
         } else {
             // check for existing texture

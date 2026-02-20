@@ -22,10 +22,6 @@ shift
 goto argloop
 :endargs
 
-REM Use PowerShell to compute relative path
-for /f "delims=" %%i in ('powershell -Command "[System.IO.Path]::GetRelativePath('%RUN_DIR%', '%CONFIG%')"') do set "CONFIG_REL=%%i"
-
 cd /d "%RUN_DIR%"
-set "cmd=pilot_light.exe -a dcapp %CONFIG_REL%%ARGS%"
-echo %cmd%
-%cmd%
+echo pilot_light.exe -a dcapp "%CONFIG%"%ARGS%
+pilot_light.exe -a dcapp "%CONFIG%"%ARGS%

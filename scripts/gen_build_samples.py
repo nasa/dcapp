@@ -11,6 +11,9 @@ import os
 import sys
 import platform as plat
 
+def fwd(path):
+    return path.replace("\\", "/")
+
 # default pilotlight location (absolute)
 file_dir_rel = os.path.dirname(__file__)
 if not file_dir_rel:
@@ -42,8 +45,8 @@ build_script_out_dir_abs = os.path.abspath(dcapp_home_abs + "/scripts")
 app_bin_dir_abs = os.path.abspath(pl_dir_abs + "/out")
 
 # now, update directories to be relative to the output directory
-pl_dir_rel = os.path.relpath(pl_dir_abs, build_script_out_dir_abs)
-app_bin_dir_rel = os.path.relpath(app_bin_dir_abs, build_script_out_dir_abs)
+pl_dir_rel      = fwd(os.path.relpath(pl_dir_abs, build_script_out_dir_abs))
+app_bin_dir_rel = fwd(os.path.relpath(app_bin_dir_abs, build_script_out_dir_abs))
 
 # get list of all samples with logic, relative to output dir
 samples_dir = dcapp_home_abs + "/samples"
@@ -57,7 +60,7 @@ for entry in sorted(os.listdir(samples_dir)):
         if os.path.isdir(logic_path):
             abs_path = os.path.abspath(full_path)
             sample_dirs_abs.append(abs_path)
-sample_dirs_rel = [os.path.relpath(dir_abs, build_script_out_dir_abs) for dir_abs in sample_dirs_abs]
+sample_dirs_rel = [fwd(os.path.relpath(dir_abs, build_script_out_dir_abs)) for dir_abs in sample_dirs_abs]
 sample_names    = [os.path.basename(dir_rel) for dir_rel in sample_dirs_rel]
 
 with pl.project("samples"):
@@ -142,7 +145,7 @@ with pl.project("samples"):
     # -----------------------------------------------------------------------------
 
     genheader_abs = app_bin_dir_abs + "/dcapp-genheader"
-    genheader_rel = os.path.relpath(genheader_abs, build_script_out_dir_abs)
+    genheader_rel = fwd(os.path.relpath(genheader_abs, build_script_out_dir_abs))
 
     for ii in range(len(sample_names)):
 
@@ -159,9 +162,9 @@ with pl.project("samples"):
             pl.set_output_binary("logic")
 
             # add source files
-            logic_src_file = os.path.relpath(
+            logic_src_file = fwd(os.path.relpath(
                 sample_dirs_abs[ii] + "/logic/logic.c", build_script_out_dir_abs
-            )
+            ))
             pl.add_source_files(logic_src_file)
 
             # release config
@@ -171,7 +174,13 @@ with pl.project("samples"):
                 with pl.platform("Windows"):
                     with pl.compiler("msvc"):
                         pl.set_pre_target_build_step(
-                            f"{genheader_rel}.exe {sample_xml_rel}"
+                            f"\"{genheader_rel}.exe\" {sample_xml_rel}"
+                        )
+                        pl.add_linker_flags(
+                            "-EXPORT:display_pre_init",
+                            "-EXPORT:display_init",
+                            "-EXPORT:display_draw",
+                            "-EXPORT:display_close",
                         )
 
                 # linux
@@ -191,7 +200,13 @@ with pl.project("samples"):
                 with pl.platform("Windows"):
                     with pl.compiler("msvc"):
                         pl.set_pre_target_build_step(
-                            f"{genheader_rel}.exe {sample_xml_rel}"
+                            f"\"{genheader_rel}.exe\" {sample_xml_rel}"
+                        )
+                        pl.add_linker_flags(
+                            "-EXPORT:display_pre_init",
+                            "-EXPORT:display_init",
+                            "-EXPORT:display_draw",
+                            "-EXPORT:display_close",
                         )
 
                 # linux

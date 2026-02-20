@@ -1,18 +1,15 @@
 #include <string.h>
 #include <time.h>
-#include <sys/time.h>
 #include "dcapp.h"
 
 void display_init(void) {
 }
 
 void display_draw(void) {
-    struct timeval tp;
-    struct timezone tzp;
+    time_t now = time(NULL);
     static double deltax = 8, deltay = 8;
 
-    gettimeofday(&tp, &tzp);
-    char *time_str = asctime(localtime((time_t *)(&tp.tv_sec)));
+    char *time_str = asctime(localtime(&now));
     
     // Copy to CURRENT_TIME, remove trailing newline
     strncpy(*CURRENT_TIME, time_str, 255);

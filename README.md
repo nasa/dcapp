@@ -49,6 +49,7 @@ On Windows, use the `.bat` equivalents (`bin/dcapp.bat`, `bin/dcapp-validate.bat
 
 | Document | Description |
 |----------|-------------|
+| [Windows Setup](documentation/windows-setup.md) | Getting started on Windows |
 | [Variables](documentation/variables.md) | Runtime values, text interpolation, and the `<Set>` element |
 | [Constants](documentation/constants.md) | Built-in and user-defined constants, color palette |
 | [Buttons](documentation/buttons.md) | Interactive controls with visual states |
