@@ -56,11 +56,11 @@ done
 if [[ "$PL_CONFIG" == "release" ]]; then
 
 # create output directory(s)
-mkdir -p "../samples/mask/logic"
-mkdir -p "../samples/lissajous/logic"
-mkdir -p "../samples/ptz/logic"
-mkdir -p "../samples/planet/logic"
 mkdir -p "../samples/functions/logic"
+mkdir -p "../samples/lissajous/logic"
+mkdir -p "../samples/mask/logic"
+mkdir -p "../samples/planet/logic"
+mkdir -p "../samples/ptz/logic"
 mkdir -p "../samples/screensaver/logic"
 
 # create lock file(s)
@@ -326,11 +326,11 @@ fi
 if [[ "$PL_CONFIG" == "debug" ]]; then
 
 # create output directory(s)
-mkdir -p "../samples/mask/logic"
-mkdir -p "../samples/lissajous/logic"
-mkdir -p "../samples/ptz/logic"
-mkdir -p "../samples/planet/logic"
 mkdir -p "../samples/functions/logic"
+mkdir -p "../samples/lissajous/logic"
+mkdir -p "../samples/mask/logic"
+mkdir -p "../samples/planet/logic"
+mkdir -p "../samples/ptz/logic"
 mkdir -p "../samples/screensaver/logic"
 
 # create lock file(s)

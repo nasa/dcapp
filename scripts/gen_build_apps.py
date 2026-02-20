@@ -12,6 +12,9 @@ import os
 import sys
 import platform as plat
 
+def fwd(path):
+    return path.replace("\\", "/")
+
 # default pilotlight location (absolute)
 file_dir_rel = os.path.dirname(__file__)
 if not file_dir_rel:
@@ -58,12 +61,12 @@ output_dir_abs = os.path.abspath(dcapp_home_abs + "/scripts")
 bin_dir_abs = os.path.abspath(pl_dir_abs + "/out")
 
 # now, update directories to be relative to the output directory
-pl_dir_rel = os.path.relpath(pl_dir_abs, output_dir_abs)
-bin_dir_rel = os.path.relpath(bin_dir_abs, output_dir_abs)
+pl_dir_rel  = fwd(os.path.relpath(pl_dir_abs, output_dir_abs))
+bin_dir_rel = fwd(os.path.relpath(bin_dir_abs, output_dir_abs))
 
 # set vcpkg paths (always computed so the windows bat is correct regardless of host platform)
 vcpkg_abs = os.path.abspath(dcapp_home_abs + "/vcpkg_installed/x64-windows")
-vcpkg_rel = os.path.relpath(vcpkg_abs, output_dir_abs)
+vcpkg_rel = fwd(os.path.relpath(vcpkg_abs, output_dir_abs))
 vcpkg_copy_cmd = f'xcopy /Y /I "{vcpkg_rel}\\bin\\*.dll" "{bin_dir_rel}\\"'
 
 with pl.project("apps"):
@@ -72,9 +75,9 @@ with pl.project("apps"):
     pl.set_output_directory(bin_dir_rel)
     pl.add_link_directories(bin_dir_rel)
     pl.add_include_directories(
-        os.path.relpath(dcapp_home_abs + "/src", output_dir_abs),
-        os.path.relpath(dcapp_home_abs + "/extensions", output_dir_abs),
-        os.path.relpath(dcapp_home_abs + "/shaders", output_dir_abs),
+        fwd(os.path.relpath(dcapp_home_abs + "/src", output_dir_abs)),
+        fwd(os.path.relpath(dcapp_home_abs + "/extensions", output_dir_abs)),
+        fwd(os.path.relpath(dcapp_home_abs + "/shaders", output_dir_abs)),
         pl_dir_rel + "/src",
         pl_dir_rel + "/libs",
         pl_dir_rel + "/extensions",
@@ -137,7 +140,7 @@ with pl.project("apps"):
         with pl.target(ext_name, pl.TargetType.DYNAMIC_LIBRARY):
             pl.set_output_binary(ext_name)
             pl.add_source_files(
-                os.path.relpath(dcapp_home_abs + "/extensions/" + ext_name + ".c", output_dir_abs)
+                fwd(os.path.relpath(dcapp_home_abs + "/extensions/" + ext_name + ".c", output_dir_abs))
             )
 
             # release config
@@ -186,11 +189,11 @@ with pl.project("apps"):
         pl.set_output_binary("dcapp")
 
         # list source files relative to the output directory
-        src_files_abs = list_files_recursive(dcapp_home_abs + "/src", ".c")
-        sources_files_rel = [os.path.relpath(src_file, output_dir_abs) for src_file in src_files_abs]
+        src_files_abs = sorted(list_files_recursive(dcapp_home_abs + "/src", ".c"))
+        sources_files_rel = [fwd(os.path.relpath(src_file, output_dir_abs)) for src_file in src_files_abs]
         pl.add_source_files(
             *sources_files_rel,
-            os.path.relpath(dcapp_home_abs + "/apps/dcapp.c", output_dir_abs)
+            fwd(os.path.relpath(dcapp_home_abs + "/apps/dcapp.c", output_dir_abs))
         )
 
         # release config
@@ -248,13 +251,13 @@ with pl.project("apps"):
         pl.set_output_binary("dcapp-genheader")
 
         # list source files relative to the output directory
-        src_files_abs =  list_files_recursive(dcapp_home_abs + "/src/app", ".c")
-        src_files_abs += list_files_recursive(dcapp_home_abs + "/src/utils", ".c")
+        src_files_abs  = sorted(list_files_recursive(dcapp_home_abs + "/src/app", ".c"))
+        src_files_abs += sorted(list_files_recursive(dcapp_home_abs + "/src/utils", ".c"))
         src_files_abs += [dcapp_home_abs + "/src/value.c"]
-        sources_files_rel = [os.path.relpath(src_file, output_dir_abs) for src_file in src_files_abs]
+        sources_files_rel = [fwd(os.path.relpath(src_file, output_dir_abs)) for src_file in src_files_abs]
         pl.add_source_files(
             *sources_files_rel,
-            os.path.relpath(dcapp_home_abs + "/apps/dcapp-genheader.c", output_dir_abs)
+            fwd(os.path.relpath(dcapp_home_abs + "/apps/dcapp-genheader.c", output_dir_abs))
         )
 
         # release config
@@ -310,13 +313,13 @@ with pl.project("apps"):
         pl.set_output_binary("dcapp-validate")
 
         # list source files relative to the output directory
-        src_files_abs =  list_files_recursive(dcapp_home_abs + "/src/app", ".c")
-        src_files_abs += list_files_recursive(dcapp_home_abs + "/src/utils", ".c")
+        src_files_abs  = sorted(list_files_recursive(dcapp_home_abs + "/src/app", ".c"))
+        src_files_abs += sorted(list_files_recursive(dcapp_home_abs + "/src/utils", ".c"))
         src_files_abs += [dcapp_home_abs + "/src/value.c"]
-        sources_files_rel = [os.path.relpath(src_file, output_dir_abs) for src_file in src_files_abs]
+        sources_files_rel = [fwd(os.path.relpath(src_file, output_dir_abs)) for src_file in src_files_abs]
         pl.add_source_files(
             *sources_files_rel,
-            os.path.relpath(dcapp_home_abs + "/apps/dcapp-validate.c", output_dir_abs)
+            fwd(os.path.relpath(dcapp_home_abs + "/apps/dcapp-validate.c", output_dir_abs))
         )
 
         # release config
@@ -372,7 +375,7 @@ with pl.project("apps"):
         pl.set_output_binary("dcapp-planet-chunkgen")
 
         pl.add_source_files(
-            os.path.relpath(dcapp_home_abs + "/apps/dcapp-planet-chunkgen.c", output_dir_abs)
+            fwd(os.path.relpath(dcapp_home_abs + "/apps/dcapp-planet-chunkgen.c", output_dir_abs))
         )
 
         # release config
