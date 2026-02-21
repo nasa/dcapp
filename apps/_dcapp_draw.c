@@ -4479,7 +4479,7 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
 
             // build camera
             plCamera camera = {0};
-            camera.tType        = use_ortho ? PL_CAMERA_TYPE_ORTHOGRAPHIC : PL_CAMERA_TYPE_PERSPECTIVE;
+            camera.tType        = PL_CAMERA_TYPE_PERSPECTIVE;
             camera.fFieldOfView = 60.0f * (float)(M_PI / 180.0);
             camera.fAspectRatio = dimension[0] / dimension[1];
             camera.fNearZ       = 1.0f;
@@ -4523,6 +4523,26 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
             }
 
             _ext_camera->update(&camera);
+
+            if (use_ortho) {
+                // compute distance from camera to planet surface
+                double cam_dist = sqrt(camera.tPosDouble.x * camera.tPosDouble.x +
+                                       camera.tPosDouble.y * camera.tPosDouble.y +
+                                       camera.tPosDouble.z * camera.tPosDouble.z);
+                double surface_dist = cam_dist - node->planet.planet_radius;
+                if (surface_dist < 1.0) surface_dist = 1.0;
+
+                // match the perspective FOV coverage at the surface
+                float half_h = (float)surface_dist * tanf(camera.fFieldOfView / 2.0f);
+                float half_w = half_h * camera.fAspectRatio;
+
+                // overwrite projection matrix with orthographic
+                camera.tProjMat = (plMat4){0};
+                camera.tProjMat.col[0].x = 1.0f / half_w;
+                camera.tProjMat.col[1].y = 1.0f / half_h;
+                camera.tProjMat.col[2].z = 1.0f / (camera.fFarZ - camera.fNearZ);
+                camera.tProjMat.col[3].w = 1.0f;
+            }
 
             // get command buffer for planet rendering (use between begin_frame and begin_main_pass)
             plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();

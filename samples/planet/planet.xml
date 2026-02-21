@@ -30,6 +30,9 @@
     <!-- Active shader index: 0=default, 1=elevation, 2=slope -->
     <Variable Type="#_variable_integer_" InitialValue="0">ActiveShader</Variable>
 
+    <!-- Orthographic projection toggle -->
+    <Variable Type="#_variable_integer_" InitialValue="0">UseOrtho</Variable>
+
     <Logic File="logic/logic.so"/>
 
     <Default>
@@ -45,6 +48,24 @@
             <Set Variable="Longitude">@SliderLon</Set>
             <Set Variable="Elevation">@SliderEle</Set>
             <Set Variable="Elevation" Operator="#_set_multiply_">10000</Set>
+
+            <!-- ========== ORTHO TOGGLE ========== -->
+            <Button Type="#_button_toggle_" X="120" Y="706" Width="120" Height="22"
+                Variable="UseOrtho" On="1" Off="0"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="#_color_white_">Ortho</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="0.6 0.6 0.6">Ortho</Text>
+                </ButtonIndicatorOff>
+            </Button>
 
             <!-- ========== SHADER SELECTOR ========== -->
             <Text X="230" Y="728" LocalAlignX="#_align_right_" Size="13" FillColor="#_color_white_">Shader:</Text>
@@ -107,6 +128,7 @@
             <Text X="240" Y="662" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_yellow_">LLE Camera</Text>
             <Planet X="15" Y="200" Width="450" Height="450"
                 Latitude="@Latitude" Longitude="@Longitude" Elevation="@Elevation"
+                Orthographic="@UseOrtho"
                 ShaderVariable="@ActiveShader">
                 <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
                 <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
@@ -117,6 +139,7 @@
             <Planet X="535" Y="200" Width="450" Height="450"
                 CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
                 Roll="@CamRoll" Pitch="@CamPitch" Yaw="@CamYaw"
+                Orthographic="@UseOrtho"
                 ShaderVariable="@ActiveShader">
                 <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
                 <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
