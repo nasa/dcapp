@@ -451,7 +451,7 @@ static bool _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *hei
     if (GDALGetGeoTransform(ds, gt) == CE_None) {
         *pixel_scale = fabs(gt[1]);
         *origin_x    = gt[0];
-        *origin_y    = gt[3] + (double)(*height) * gt[5]; // lower-left Y
+        *origin_y    = gt[3]; // upper-left Y
     }
 
     GDALClose(ds);
@@ -524,7 +524,7 @@ static bool _run_gdal_translate(const char *input, const char *output, uint32_t 
 static void _compute_tile_latlon(double origin_x, double origin_y, double pixel_scale, uint32_t col, uint32_t row, uint32_t tile_size, double radius, float *lat_deg, float *lon_deg) {
     // model coordinates of tile center
     double model_x = origin_x + ((double)col * tile_size + tile_size * 0.5) * pixel_scale;
-    double model_y = origin_y + ((double)row * tile_size + tile_size * 0.5) * pixel_scale;
+    double model_y = origin_y - ((double)row * tile_size + tile_size * 0.5) * pixel_scale;
 
     // inverse south-pole stereographic (matching dcapp-terrain.c:292-300)
     float x         = (float)model_x;
