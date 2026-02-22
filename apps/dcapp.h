@@ -547,6 +547,7 @@ typedef struct __NodePlanet {
     // data
     char        **sb_planet_data_files;  // stretchy buffer of heap-allocated file paths
     uint8_t       planet_index;          // 1-based index into sb_planets (0 = uninitialized)
+    uint8_t       planet_view_index;    // 1-based index into sb_planet_views (0 = use planet's default RT)
     double        planet_radius;         // set during init from .planet.json
 
     // texture overlay
@@ -783,8 +784,9 @@ typedef struct __AppData {
     int            draw_list_3d_index;   // current index into 3D pool
 
     // planet instances
-    _NodeIndex *sb_planet_node_indices;  // collected during XML parse
-    plPlanet  **sb_planets;              // created planet instances
+    _NodeIndex    *sb_planet_node_indices;  // collected during XML parse
+    plPlanet     **sb_planets;              // created planet instances (deduplicated by data files)
+    plPlanetView **sb_planet_views;         // created view instances (one per shared planet element)
 
 } _AppData;
 

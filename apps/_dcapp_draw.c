@@ -4433,6 +4433,19 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
         }
     }
 
+    // PL specific fixes
+    {
+        // move from top-left reference to bottom-left
+        plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0, dimension[1], 0.0f);
+
+        // flip over the y axis
+        plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
+
+        // apply transforms
+        transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
+        transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
+    }
+
     // parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
@@ -4481,7 +4494,7 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
             plCamera camera = {0};
             camera.tType        = PL_CAMERA_TYPE_PERSPECTIVE;
             camera.fFieldOfView = 60.0f * (float)(M_PI / 180.0);
-            camera.fAspectRatio = dimension[0] / dimension[1];
+            camera.fAspectRatio = (dimension[1] > 0.0f) ? dimension[0] / dimension[1] : 1.0f;
             camera.fNearZ       = 1.0f;
             camera.fFarZ        = 100000000.0f;
             camera.fWidth       = dimension[0];
@@ -4532,7 +4545,8 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 double surface_dist = cam_dist - node->planet.planet_radius;
                 if (surface_dist < 1.0) surface_dist = 1.0;
 
-                // match the perspective FOV coverage at the surface
+                // ortho half-extents: elevation * tan(fov/2) gives the visible
+                // half-height at the surface (same coverage as perspective at that distance)
                 float half_h = (float)surface_dist * tanf(camera.fFieldOfView / 2.0f);
                 float half_w = half_h * camera.fAspectRatio;
 
@@ -4546,16 +4560,23 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
 
             // get command buffer for planet rendering (use between begin_frame and begin_main_pass)
             plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
+            plBindGroupHandle bind_group;
 
-            // prepare and render planet to offscreen texture
-            _ext_planet->prepare(planet, cmd_buf);
-            _ext_planet->render(planet, &camera, cmd_buf);
+            if (node->planet.planet_view_index > 0) {
+                // shared planet: render to separate view
+                plPlanetView *view = app_data->sb_planet_views[node->planet.planet_view_index - 1];
+                _ext_planet->prepare(planet, cmd_buf);
+                _ext_planet->render_to_view(planet, view, &camera, cmd_buf);
+                _ext_starter->submit_temporary_command_buffer(cmd_buf);
+                bind_group = _ext_planet->get_view_texture(view);
+            } else {
+                // default: render to planet's built-in target
+                _ext_planet->prepare(planet, cmd_buf);
+                _ext_planet->render(planet, &camera, cmd_buf);
+                _ext_starter->submit_temporary_command_buffer(cmd_buf);
+                bind_group = _ext_planet->get_texture(planet);
+            }
 
-            // submit and CPU-wait — guarantees staging buffer and texture are fully done
-            _ext_starter->submit_temporary_command_buffer(cmd_buf);
-
-            // get the rendered texture and draw as 2D quad
-            plBindGroupHandle bind_group = _ext_planet->get_texture(planet);
             _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group.uData, point0, point1, point2, point3);
         }
     }

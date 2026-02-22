@@ -232,9 +232,14 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     }
     sbfree(app_data->sb_nodes);
 
-    // cleanup planet instances and extension
+    // cleanup planet views, instances, and extension
     {
         bool had_planets = sbcount(app_data->sb_planets) > 0;
+        for (int i = 0; i < sbcount(app_data->sb_planet_views); i++) {
+            if (app_data->sb_planet_views[i]) {
+                _ext_planet->cleanup_view(app_data->sb_planet_views[i]);
+            }
+        }
         for (int i = 0; i < sbcount(app_data->sb_planets); i++) {
             if (app_data->sb_planets[i]) {
                 _ext_planet->cleanup_planet(app_data->sb_planets[i]);
@@ -243,6 +248,7 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
         if (had_planets) {
             _ext_planet->cleanup();
         }
+        sbfree(app_data->sb_planet_views);
         sbfree(app_data->sb_planets);
         sbfree(app_data->sb_planet_node_indices);
     }
