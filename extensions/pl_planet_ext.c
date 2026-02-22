@@ -175,6 +175,17 @@ typedef struct _plPlanet
     plFreeList tVertexBufferManager;
 } plPlanet;
 
+typedef struct _plPlanetView
+{
+    plRenderPassHandle tRenderPass;
+    plTextureHandle    tOutputTexture;
+    plTextureHandle    tOutputTextureDepth;
+    plBindGroupHandle  tOutputTextureHandle;
+    uint32_t           uOutputWidth;
+    uint32_t           uOutputHeight;
+    plDrawList3D*      pt3dDrawlist;
+} plPlanetView;
+
 typedef struct _plPlanetContext
 {
     plDevice*                ptDevice;
@@ -576,6 +587,142 @@ plBindGroupHandle
 pl_get_planet_texture(plPlanet* ptPlanet)
 {
     return ptPlanet->tOutputTextureHandle;
+}
+
+//-----------------------------------------------------------------------------
+// [SECTION] planet view api
+//-----------------------------------------------------------------------------
+
+plPlanetView*
+pl_create_planet_view(plPlanet* ptPlanet, plCommandBuffer* ptCmdBuffer, plPlanetViewInit tInit)
+{
+    plPlanetView* ptView = PL_ALLOC(sizeof(plPlanetView));
+    memset(ptView, 0, sizeof(plPlanetView));
+
+    ptView->uOutputWidth  = tInit.uOutputWidth;
+    ptView->uOutputHeight = tInit.uOutputHeight;
+    ptView->pt3dDrawlist  = gptDraw->request_3d_drawlist();
+
+    // color texture
+    const plTextureDesc tOutputTextureDesc = {
+        .tDimensions = {(float)ptView->uOutputWidth, (float)ptView->uOutputHeight, 1},
+        .tFormat     = PL_FORMAT_R8G8B8A8_UNORM,
+        .uLayers     = 1,
+        .uMips       = 1,
+        .tType       = PL_TEXTURE_TYPE_2D,
+        .tUsage      = PL_TEXTURE_USAGE_SAMPLED | PL_TEXTURE_USAGE_COLOR_ATTACHMENT,
+        .pcDebugName = "view output"
+    };
+    ptView->tOutputTexture = pl__planet_create_texture(ptCmdBuffer, &tOutputTextureDesc, "view output", PL_TEXTURE_USAGE_SAMPLED);
+    ptView->tOutputTextureHandle = gptDraw->create_bind_group_for_texture(ptView->tOutputTexture);
+
+    // depth texture
+    const plTextureDesc tDepthTextureDesc = {
+        .tDimensions = {(float)ptView->uOutputWidth, (float)ptView->uOutputHeight, 1},
+        .tFormat     = PL_FORMAT_D32_FLOAT_S8_UINT,
+        .uLayers     = 1,
+        .uMips       = 1,
+        .tType       = PL_TEXTURE_TYPE_2D,
+        .tUsage      = PL_TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT,
+        .pcDebugName = "view depth"
+    };
+    ptView->tOutputTextureDepth = pl__planet_create_texture(ptCmdBuffer, &tDepthTextureDesc, "view depth", PL_TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT);
+
+    // render pass
+    plRenderPassAttachments atAttachmentSets[PL_MAX_FRAMES_IN_FLIGHT] = {0};
+    for(uint32_t i = 0; i < gptGfx->get_frames_in_flight(); i++)
+    {
+        atAttachmentSets[i].atViewAttachments[0] = ptView->tOutputTextureDepth;
+        atAttachmentSets[i].atViewAttachments[1] = ptView->tOutputTexture;
+    }
+
+    const plRenderPassDesc tRenderPassDesc = {
+        .tLayout = gptCtx->tRenderPassLayout,
+        .tDepthTarget = {
+                .tLoadOp         = PL_LOAD_OP_CLEAR,
+                .tStoreOp        = PL_STORE_OP_STORE,
+                .tStencilLoadOp  = PL_LOAD_OP_CLEAR,
+                .tStencilStoreOp = PL_STORE_OP_STORE,
+                .tCurrentUsage   = PL_TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT,
+                .tNextUsage      = PL_TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT,
+                .fClearZ         = 0.0f
+        },
+        .atColorTargets = {
+            {
+                .tLoadOp       = PL_LOAD_OP_CLEAR,
+                .tStoreOp      = PL_STORE_OP_STORE,
+                .tCurrentUsage = PL_TEXTURE_USAGE_SAMPLED,
+                .tNextUsage    = PL_TEXTURE_USAGE_SAMPLED,
+                .tClearColor   = {0.0f, 0.0f, 0.0f, 1.0f}
+            }
+        },
+        .tDimensions = {.x = (float)ptView->uOutputWidth, .y = (float)ptView->uOutputHeight},
+        .pcDebugName = "View"
+    };
+    ptView->tRenderPass = gptGfx->create_render_pass(gptCtx->ptDevice, &tRenderPassDesc, atAttachmentSets);
+
+    return ptView;
+}
+
+void
+pl_cleanup_planet_view(plPlanetView* ptView)
+{
+    plDevice* ptDevice = gptCtx->ptDevice;
+    gptGfx->destroy_render_pass(ptDevice, ptView->tRenderPass);
+    gptGfx->destroy_texture(ptDevice, ptView->tOutputTexture);
+    gptGfx->destroy_texture(ptDevice, ptView->tOutputTextureDepth);
+    PL_FREE(ptView);
+}
+
+void
+pl_render_to_planet_view(plPlanet* ptPlanet, plPlanetView* ptView, plCamera* ptCamera, plCommandBuffer* ptCmdBuffer)
+{
+    plDevice* ptDevice = gptCtx->ptDevice;
+    gptCtx->tCurrentDynamicBufferBlock = gptGfx->allocate_dynamic_data_block(ptDevice);
+
+    plRenderEncoder* ptEncoder = gptGfx->begin_render_pass(ptCmdBuffer, ptView->tRenderPass, NULL);
+
+    plRenderViewport tViewport = {
+        .fWidth    = (float)ptView->uOutputWidth,
+        .fHeight   = (float)ptView->uOutputHeight,
+        .fMinDepth = 0.0f,
+        .fMaxDepth = 1.0f
+    };
+    gptGfx->set_viewport(ptEncoder, &tViewport);
+
+    plScissor tScissor = {
+        .uWidth  = ptView->uOutputWidth,
+        .uHeight = ptView->uOutputHeight
+    };
+    gptGfx->set_scissor_region(ptEncoder, &tScissor);
+    gptGfx->set_depth_bias(ptEncoder, 0.0f, 0.0f, 0.0f);
+
+    for(uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
+        pl__render_chunk(ptPlanet, ptCamera, ptEncoder, &ptPlanet->sbtChunkFiles[i].tFile.atChunks[0], &ptPlanet->sbtChunkFiles[i].tFile);
+
+    const plMat4 tMVP = pl_mul_mat4(&ptCamera->tProjMat, &ptCamera->tViewMat);
+
+    if(ptPlanet->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_SHOW_ORIGIN)
+    {
+        const plMat4 tOrigin = pl_identity_mat4();
+        gptDraw->add_3d_transform(ptView->pt3dDrawlist, &tOrigin, 1737400.0f * 1.2f, (plDrawLineOptions){0, 1000.0f});
+    }
+
+    gptDraw->submit_3d_drawlist(ptView->pt3dDrawlist,
+        ptEncoder,
+        (float)ptView->uOutputWidth,
+        (float)ptView->uOutputHeight,
+        &tMVP,
+        PL_DRAW_FLAG_DEPTH_TEST | PL_DRAW_FLAG_DEPTH_WRITE | PL_DRAW_FLAG_REVERSE_Z_DEPTH,
+        PL_SAMPLE_COUNT_1);
+
+    gptGfx->end_render_pass(ptEncoder);
+}
+
+plBindGroupHandle
+pl_get_planet_view_texture(plPlanetView* ptView)
+{
+    return ptView->tOutputTextureHandle;
 }
 
 bool
@@ -2025,6 +2172,10 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .get_texture         = pl_get_planet_texture,
         .set_shaders         = pl_planet_set_shaders,
         .draw_sphere         = pl_draw_sphere,
+        .create_view         = pl_create_planet_view,
+        .cleanup_view        = pl_cleanup_planet_view,
+        .render_to_view      = pl_render_to_planet_view,
+        .get_view_texture    = pl_get_planet_view_texture,
     };
     pl_set_api(ptApiRegistry, plPlanetI, &tApi);
 

@@ -43,6 +43,8 @@ typedef struct _plPlanetExtInit        plPlanetExtInit;
 typedef struct _plPlanetInit           plPlanetInit;
 typedef struct _plPlanetRuntimeOptions plPlanetRuntimeOptions;
 typedef struct _plPlanet               plPlanet;
+typedef struct _plPlanetView           plPlanetView;
+typedef struct _plPlanetViewInit       plPlanetViewInit;
 typedef struct _plPlanetTexture        plPlanetTexture;
 
 // enums/flags
@@ -78,6 +80,12 @@ typedef struct _plPlanetI
     void              (*prepare)    (plPlanet*, plCommandBuffer*);
     void              (*render)     (plPlanet*, plCamera*, plCommandBuffer*);
     plBindGroupHandle (*get_texture)(plPlanet*);
+
+    // views (share terrain data, separate render targets)
+    plPlanetView*     (*create_view)     (plPlanet*, plCommandBuffer*, plPlanetViewInit);
+    void              (*cleanup_view)    (plPlanetView*);
+    void              (*render_to_view)  (plPlanet*, plPlanetView*, plCamera*, plCommandBuffer*);
+    plBindGroupHandle (*get_view_texture)(plPlanetView*);
 
     // drawing
     void (*draw_sphere)(plPlanet*, float longitude, float latitude, float height, float radius, uint32_t color);
@@ -129,6 +137,12 @@ typedef struct _plPlanetInit
     // textures
     plPlanetTexture atTextures[1];
 } plPlanetInit;
+
+typedef struct _plPlanetViewInit
+{
+    uint32_t uOutputWidth;
+    uint32_t uOutputHeight;
+} plPlanetViewInit;
 
 typedef struct _plPlanetRuntimeOptions
 {
