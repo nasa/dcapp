@@ -616,6 +616,7 @@ static void _init_planets(_AppData *app_data) {
         float  max_height       = pl_json_float_member(root, "max_height", 0.0f);
         int    tree_depth       = pl_json_int_member(root, "tree_depth", 0);
         float  max_base_error   = pl_json_float_member(root, "max_base_error", 0.0f);
+        bool   ups_north        = pl_json_bool_member(root, "ups_north", false);
 
         // store radius on node for camera LLE conversion
         node->planet.planet_radius = radius;
@@ -632,6 +633,7 @@ static void _init_planets(_AppData *app_data) {
         process_info.uTileCount       = tile_count;
         process_info.uHorizontalTiles = (uint32_t)cols;
         process_info.uVerticalTiles   = (uint32_t)rows;
+        process_info.bUpsNorth        = ups_north;
         process_info.atTiles          = (plPlanetProcessTileInfo *)malloc(tile_count * sizeof(plPlanetProcessTileInfo));
 
         // get directory of the JSON file for resolving relative chunk paths

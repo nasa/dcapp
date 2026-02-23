@@ -106,6 +106,7 @@ typedef struct _plPlanetHeightMap
     float                fMinHeight;
     float                fRadius;
     plVec3               tCenter;
+    bool                 bUpsNorth;
     plPlanetMapElement* atElements;
     const char*          pcOutputFile;
     plEdgeEntry*         sbtEdges;
@@ -297,11 +298,19 @@ pl_planet_process(plPlanetProcessInfo* ptInfo)
             .uRequestedSize  = ptInfo->uSize,
             .pcOutputFile    = ptInfo->atTiles[i].acOutputFile
         };
+        tHeightMap.bUpsNorth = ptInfo->bUpsNorth;
         float fLatitude = pl_radiansf(ptInfo->atTiles[i].fLatitude);
         float fLongitude = pl_radiansf(ptInfo->atTiles[i].fLongitude);
-        float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-        tHeightMap.tCenter.x = fR * sinf(fLongitude);
-        tHeightMap.tCenter.z = fR * cosf(fLongitude);
+        float fR;
+        if (ptInfo->bUpsNorth) {
+            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+            tHeightMap.tCenter.x = fR * sinf(fLongitude);
+            tHeightMap.tCenter.z = -fR * cosf(fLongitude);
+        } else {
+            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 + 0.5f * fLatitude);
+            tHeightMap.tCenter.x = fR * sinf(fLongitude);
+            tHeightMap.tCenter.z = fR * cosf(fLongitude);
+        }
 
 
         pl__initialize_cdlod_heightmap(&tHeightMap, ptInfo, i);
@@ -1135,14 +1144,16 @@ pl__get_cartesian(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
     fX += ptHeightMap->tCenter.x;
     fZ += ptHeightMap->tCenter.z;
 
-    float fLongitude = atan2f(fX, (fZ - 0.0f));
     float fR = hypotf(fX, fZ);
-    // float fLatitude = -PL_PI_2 + 2.0f * atanf(fR, ptHeightMap->fRadius);
-
     float c = 2.0f * atanf( fR / (2.0f * ptHeightMap->fRadius) );
-    float fLatitude    = -PL_PI_2 + c;   // south hem
-    // float fLatitude    = PL_PI_2 - c;   // north hem
-    // float fLongitude    = atan2f(fZ, fX);
+    float fLongitude, fLatitude;
+    if (ptHeightMap->bUpsNorth) {
+        fLongitude = atan2f(fX, -fZ);
+        fLatitude  = PL_PI_2 - c;
+    } else {
+        fLongitude = atan2f(fX, fZ);
+        fLatitude  = -PL_PI_2 + c;
+    }
 
     // elliptical
     plVec3 tEllipsePosition = {

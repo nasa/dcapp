@@ -1806,9 +1806,14 @@ pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture
     {
         float fLatitude = pl_radiansf(ptInfo->atTiles[0].fLatitude);
         float fLongitude = pl_radiansf(ptInfo->atTiles[0].fLongitude);
-        float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+        float fR;
+        if (ptInfo->bUpsNorth) {
+            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+        } else {
+            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 + 0.5f * fLatitude);
+        }
         float fX = fR * sinf(fLongitude);
-        float fY = fR * cosf(fLongitude);
+        float fY = ptInfo->bUpsNorth ? -fR * cosf(fLongitude) : fR * cosf(fLongitude);
         tTopLeftGlobal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
         tTopLeftGlobal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
     }
@@ -1816,9 +1821,14 @@ pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture
     {
         float fLatitude = pl_radiansf(ptInfo->atTiles[ptInfo->uTileCount - 1].fLatitude);
         float fLongitude = pl_radiansf(ptInfo->atTiles[ptInfo->uTileCount - 1].fLongitude);
-        float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+        float fR;
+        if (ptInfo->bUpsNorth) {
+            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+        } else {
+            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 + 0.5f * fLatitude);
+        }
         float fX = fR * sinf(fLongitude);
-        float fY = fR * cosf(fLongitude);
+        float fY = ptInfo->bUpsNorth ? -fR * cosf(fLongitude) : fR * cosf(fLongitude);
         tBottomRightGlobal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
         tBottomRightGlobal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
     }
@@ -1827,9 +1837,14 @@ pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture
     {
         float fLatitude = pl_radiansf(ptTexture->fLatitude);
         float fLongitude = pl_radiansf(ptTexture->fLongitude);
-        float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+        float fR;
+        if (ptInfo->bUpsNorth) {
+            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+        } else {
+            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 + 0.5f * fLatitude);
+        }
         float fX = fR * sinf(fLongitude);
-        float fY = fR * cosf(fLongitude);
+        float fY = ptInfo->bUpsNorth ? -fR * cosf(fLongitude) : fR * cosf(fLongitude);
 
         plImageInfo tImageInfo = {0};
         gptImage->get_info_from_file(ptTexture->pcPath, &tImageInfo);
@@ -1856,18 +1871,26 @@ pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture
         {
             fLatitude = pl_radiansf(ptInfo->atTiles[uTopLeftXIndex + uTopLeftYIndex * ptInfo->uHorizontalTiles].fLatitude);
             fLongitude = pl_radiansf(ptInfo->atTiles[uTopLeftXIndex + uTopLeftYIndex * ptInfo->uHorizontalTiles].fLongitude);
-            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+            if (ptInfo->bUpsNorth) {
+                fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+            } else {
+                fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 + 0.5f * fLatitude);
+            }
             fX = fR * sinf(fLongitude);
-            fY = fR * cosf(fLongitude);
+            fY = ptInfo->bUpsNorth ? -fR * cosf(fLongitude) : fR * cosf(fLongitude);
             tTopLeftLocal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
             tTopLeftLocal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
         }
         {
             fLatitude = pl_radiansf(ptInfo->atTiles[uBottomRightXIndex + uBottomRightYIndex * ptInfo->uHorizontalTiles].fLatitude);
             fLongitude = pl_radiansf(ptInfo->atTiles[uBottomRightXIndex + uBottomRightYIndex * ptInfo->uHorizontalTiles].fLongitude);
-            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+            if (ptInfo->bUpsNorth) {
+                fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+            } else {
+                fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 + 0.5f * fLatitude);
+            }
             fX = fR * sinf(fLongitude);
-            fY = fR * cosf(fLongitude);
+            fY = ptInfo->bUpsNorth ? -fR * cosf(fLongitude) : fR * cosf(fLongitude);
             tBottomRightLocal.x = fX + 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
             tBottomRightLocal.y = fY + 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
         }

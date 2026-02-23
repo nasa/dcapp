@@ -84,6 +84,7 @@ typedef struct _plPlanetProcessInfo
     plPlanetProcessTileInfo* atTiles;
     uint32_t                 uHorizontalTiles;
     uint32_t                 uVerticalTiles;
+    bool                     bUpsNorth;
 } plPlanetProcessInfo;
 
 typedef struct _plPlanetChunk
