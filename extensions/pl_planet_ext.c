@@ -943,7 +943,7 @@ pl_draw_sphere(plPlanet* ptPlanet, float fLongitude, float fLatitude, float fHei
     // float fLatitude = pl_radiansf(-45.0f);
     float fRadius = (float)ptPlanet->dRadius + fHeight;
 
-    float fX = fRadius * cosf(fLatitude) * cosf(fLongitude);
+    float fX = -1 * fRadius * cosf(fLatitude) * cosf(fLongitude);
     float fY = fRadius * sinf(fLatitude);
     float fZ = fRadius * cosf(fLatitude) * sinf(fLongitude);
 

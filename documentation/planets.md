@@ -89,12 +89,21 @@ The chunkgen uses a different latitude convention
 through the forward projection recovers the exact stereographic
 coordinates regardless of sign convention.
 
-## 3D Cartesian
+## WGS to Pilotlight Coordinate Frame
+
+```
+WGS -> PL:
+  x -> -x
+  y ->  z
+  z ->  y
+```
+
+## 3D Cartesian (Pilotlight frame)
 
 ```c
-X = radius * cos(lat) * cos(lon)
-Y = radius * sin(lat)              // Y-up; south pole at Y = -radius
-Z = radius * cos(lat) * sin(lon)
+X = -radius * cos(lat) * cos(lon)   // negated (WGS x -> PL -x)
+Y =  radius * sin(lat)              // Y-up; south pole at Y = -radius
+Z =  radius * cos(lat) * sin(lon)
 ```
 
 Final vertex position = `surface_point + normal * elevation`.
@@ -106,12 +115,3 @@ Final vertex position = `surface_point + normal * elevation`.
 - `tZ = cartesian(eU) - cartesian(eD)` (increasing iZ direction)
 - `normal = cross(tZ, tX)`
 - Halo elements provide neighbor data for edge normals.
-
-## LOLA DEM Specifics (LDEM_45S_100M)
-
-- South-pole polar stereographic, center latitude = -90 deg
-- 28800 x 28800 pixels, 100 m/pixel
-- `LINE_PROJECTION_OFFSET = SAMPLE_PROJECTION_OFFSET = 14399.5`
-- GeoTransform: `gt[3]` ~ +1,440,000 (upper-left Y), `gt[5]` ~ -100
-- Standard raster order: row 0 = top = max Y = farthest from pole
-- Current tiling: 8x8 grid, `tile_size = 4096`

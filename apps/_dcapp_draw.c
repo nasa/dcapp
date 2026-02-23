@@ -4527,7 +4527,7 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 double r       = node->planet.planet_radius + ele;
 
                 _ext_camera->set_pos(&camera,
-                    r * cos(lat_rad) * cos(lon_rad),
+                    -r * cos(lat_rad) * cos(lon_rad),
                     r * sin(lat_rad),
                     r * cos(lat_rad) * sin(lon_rad));
 
