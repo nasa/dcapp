@@ -77,18 +77,16 @@ typedef struct _plPlanetI
     void      (*cleanup_planet)(plPlanet*);
 
     // per frame
-    void              (*prepare)    (plPlanet*, plCommandBuffer*);
-    void              (*render)     (plPlanet*, plCamera*, plCommandBuffer*);
-    plBindGroupHandle (*get_texture)(plPlanet*);
+    void (*prepare)(plPlanet*, plCommandBuffer*);
 
     // views (share terrain data, separate render targets)
     plPlanetView*     (*create_view)     (plPlanet*, plCommandBuffer*, plPlanetViewInit);
     void              (*cleanup_view)    (plPlanetView*);
-    void              (*render_to_view)  (plPlanet*, plPlanetView*, plCamera*, plCommandBuffer*);
+    void              (*render_view)     (plPlanetView*, plCamera*, plCommandBuffer*);
     plBindGroupHandle (*get_view_texture)(plPlanetView*);
 
     // drawing
-    void (*draw_sphere)(plPlanet*, float longitude, float latitude, float height, float radius, uint32_t color);
+    void (*draw_sphere)(plPlanetView*, float longitude, float latitude, float height, float radius, uint32_t color);
 
     // debugging helpers mostly
     void                   (*set_runtime_options)(plPlanet*, plPlanetRuntimeOptions);
@@ -125,10 +123,6 @@ typedef struct _plPlanetInit
     // memory allocations
     uint32_t uVertexBufferSize;  // default: 268435456 bytes
     uint32_t uIndexBufferSize;   // default: 268435456 bytes
-
-    // output texture
-    uint32_t uOutputWidth;
-    uint32_t uOutputHeight;
 
     // shaders
     const char* pcVertexShader;   // default: "planet.vert"

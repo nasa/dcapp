@@ -47,6 +47,7 @@ Index of this file:
 #include "pl_draw_ext.h"
 #include "pl_vfs_ext.h"
 #include "pl_pak_ext.h"
+#include "pl_stats_ext.h"
 
 // unstable extensions
 #include "pl_collision_ext.h"
@@ -102,12 +103,13 @@ static const plStarterI*          gptStarter          = NULL;
 static const plCollisionI*        gptCollision        = NULL;
 static const plScreenLogI*        gptScreenLog        = NULL;
 static const plDrawI*             gptDraw             = NULL;
-static const plPlanetProcessorI* gptTerrainProcessor  = NULL;
-static const plGPUAllocatorsI*   gptGpuAllocators     = NULL;
-static const plImageOpsI*        gptImageOps          = NULL;
-static const plVfsI*             gptVfs               = NULL;
-static const plResourceI*        gptResource          = NULL;
-static const plPakI*             gptPak               = NULL;
+static const plPlanetProcessorI*  gptTerrainProcessor = NULL;
+static const plGPUAllocatorsI*    gptGpuAllocators    = NULL;
+static const plImageOpsI*         gptImageOps         = NULL;
+static const plVfsI*              gptVfs              = NULL;
+static const plResourceI*         gptResource         = NULL;
+static const plPakI*              gptPak              = NULL;
+static const plStatsI*            gptStats            = NULL;
 
 
 #include "pl_ds.h"
@@ -157,14 +159,6 @@ typedef struct _plPlanet
 
     plPlanetChunk tReplacementQueue;
 
-    plRenderPassHandle tRenderPass;
-    plTextureHandle    tOutputTexture;
-    plTextureHandle    tOutputTextureDepth;
-    plBindGroupHandle  tOutputTextureHandle;
-    uint32_t           uOutputWidth;
-    uint32_t           uOutputHeight;
-    plDrawList3D*      pt3dDrawlist;
-
     const char* pcVertexShader;
     const char* pcFragmentShader;
 
@@ -177,6 +171,7 @@ typedef struct _plPlanet
 
 typedef struct _plPlanetView
 {
+    plPlanet*          ptPlanet;
     plRenderPassHandle tRenderPass;
     plTextureHandle    tOutputTexture;
     plTextureHandle    tOutputTextureDepth;
@@ -213,6 +208,7 @@ typedef struct _plPlanetContext
 
     plBufferHandle tStagingBuffer;
     uint32_t       uStagingBufferSize;
+    double*        pdDrawCalls;
 
 
 } plPlanetContext;
@@ -231,16 +227,30 @@ static void pl__request_residency(plPlanet*, plPlanetChunk*);
 static void pl__touch_chunk(plPlanet*, plPlanetChunk*);
 static void pl__make_unresident  (plPlanet*, plPlanetChunk*);
 static bool pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture* ptTexture, plPlanetLoadFlags tFlags);
+void pl__remove_from_replacement_queue(plPlanet* ptPlanet, plPlanetChunk* ptChunk);
 
-static void pl__render_chunk(plPlanet*, plCamera*, plRenderEncoder*, plPlanetChunk*, plPlanetChunkFile*);
+static void pl__render_chunk(plPlanet*, plCamera*, plRenderEncoder*, plPlanetChunk*, plPlanetChunkFile*, const plMat4* ptMVP);
 static bool pl__sat_visibility_test(plCamera*, const plAABB*);
 
 static void pl__free_chunk(plPlanet* ptPlanet, uint64_t);
+
+static void pl__free_chunk_until(plPlanet* P, uint64_t idx_bytes_needed, uint64_t vtx_bytes_needed);
 
 static plTextureHandle pl__planet_create_texture(plCommandBuffer* ptCmdBuffer, const plTextureDesc* ptDesc, const char* pcName, plTextureUsage);
 static plTextureHandle pl__planet_create_texture_with_data (const plTextureDesc*, const char* pcName, uint32_t uIdentifier, const void*, size_t);
 static uint32_t pl__planet_get_bindless_texture_index(plTextureHandle tTexture);
 static void pl__planet_return_bindless_texture_index(plTextureHandle tTexture);
+
+
+static inline bool pl__is_leaf_resident(const plPlanetChunk* c)
+{
+    if (!c->aptChildren[0]) return true; // no children in tree
+    return !(c->aptChildren[0]->ptIndexHole ||
+             c->aptChildren[1]->ptIndexHole ||
+             c->aptChildren[2]->ptIndexHole ||
+             c->aptChildren[3]->ptIndexHole);
+}
+
 
 
 //-----------------------------------------------------------------------------
@@ -251,6 +261,7 @@ void
 pl_planet_initialize(plPlanetExtInit tInit)
 {
     gptCtx->ptDevice = tInit.ptDevice;
+    gptCtx->pdDrawCalls = gptStats->get_counter("planet draw calls");
 
     const plRenderPassLayoutDesc tRenderPassLayoutDesc = {
         .atRenderTargets = {
@@ -424,74 +435,14 @@ pl_create_planet(plCommandBuffer* ptCmdBuffer, plPlanetInit tInit, plPlanetProce
     ptPlanet->pcFragmentShader = tInit.pcFragmentShader;
     pl_planet_load_shaders(ptPlanet);
 
-    ptPlanet->uOutputWidth = tInit.uOutputWidth;
-    ptPlanet->uOutputHeight = tInit.uOutputHeight;
     ptPlanet->dRadius = tInit.dRadius;
     
-    ptPlanet->pt3dDrawlist = gptDraw->request_3d_drawlist();
-
     pl_sb_resize(ptPlanet->sbuFreeRequests, PL_REQUEST_QUEUE_SIZE);
 
     for(uint32_t i = 0; i < PL_REQUEST_QUEUE_SIZE; i++) 
     {
         ptPlanet->sbuFreeRequests[i] = i;
     }
-
-    const plTextureDesc tOutputTextureDesc = {
-        .tDimensions   = {(float)ptPlanet->uOutputWidth, (float)ptPlanet->uOutputHeight, 1},
-        .tFormat       = PL_FORMAT_R8G8B8A8_UNORM,
-        .uLayers       = 1,
-        .uMips         = 1,
-        .tType         = PL_TEXTURE_TYPE_2D,
-        .tUsage        = PL_TEXTURE_USAGE_SAMPLED | PL_TEXTURE_USAGE_COLOR_ATTACHMENT,
-        .pcDebugName   = "final output"
-    };
-    ptPlanet->tOutputTexture = pl__planet_create_texture(ptCmdBuffer, &tOutputTextureDesc, "final output", PL_TEXTURE_USAGE_SAMPLED);
-    ptPlanet->tOutputTextureHandle = gptDraw->create_bind_group_for_texture(ptPlanet->tOutputTexture);
-
-    const plTextureDesc tDepthTextureDesc = {
-        .tDimensions   = {(float)ptPlanet->uOutputWidth, (float)ptPlanet->uOutputHeight, 1},
-        .tFormat       = PL_FORMAT_D32_FLOAT_S8_UINT,
-        .uLayers       = 1,
-        .uMips         = 1,
-        .tType         = PL_TEXTURE_TYPE_2D,
-        .tUsage        = PL_TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT,
-        .pcDebugName   = "final output depth"
-    };
-    ptPlanet->tOutputTextureDepth = pl__planet_create_texture(ptCmdBuffer, &tDepthTextureDesc, "final output depth", PL_TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT);
-
-    plRenderPassAttachments atAttachmentSets[PL_MAX_FRAMES_IN_FLIGHT] = {0};
-
-    for(uint32_t i = 0; i < gptGfx->get_frames_in_flight(); i++)
-    {
-        atAttachmentSets[i].atViewAttachments[0] = ptPlanet->tOutputTextureDepth;
-        atAttachmentSets[i].atViewAttachments[1] = ptPlanet->tOutputTexture;
-    }
-
-    const plRenderPassDesc tRenderPassDesc = {
-        .tLayout = gptCtx->tRenderPassLayout,
-        .tDepthTarget = {
-                .tLoadOp         = PL_LOAD_OP_CLEAR,
-                .tStoreOp        = PL_STORE_OP_STORE,
-                .tStencilLoadOp  = PL_LOAD_OP_CLEAR,
-                .tStencilStoreOp = PL_STORE_OP_STORE,
-                .tCurrentUsage   = PL_TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT,
-                .tNextUsage      = PL_TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT,
-                .fClearZ         = 0.0f
-        },
-        .atColorTargets = {
-            {
-                .tLoadOp       = PL_LOAD_OP_CLEAR,
-                .tStoreOp      = PL_STORE_OP_STORE,
-                .tCurrentUsage = PL_TEXTURE_USAGE_SAMPLED,
-                .tNextUsage    = PL_TEXTURE_USAGE_SAMPLED,
-                .tClearColor   = {0.0f, 0.0f, 0.0f, 1.0f}
-            }
-        },
-        .tDimensions = {.x = (float)ptPlanet->uOutputWidth, .y = (float)ptPlanet->uOutputHeight},
-        .pcDebugName = "Main"
-    };
-    ptPlanet->tRenderPass = gptGfx->create_render_pass(gptCtx->ptDevice, &tRenderPassDesc, atAttachmentSets);
 
     if(tInit.uIndexBufferSize == 0)   tInit.uIndexBufferSize = 268435456;
     if(tInit.uVertexBufferSize == 0)  tInit.uVertexBufferSize = 268435456;
@@ -567,10 +518,6 @@ pl_cleanup_planet(plPlanet* ptPlanet)
     }
 
     // cleanup our resources
-
-    gptGfx->destroy_render_pass(ptDevice, ptPlanet->tRenderPass);
-    gptGfx->destroy_texture(ptDevice, ptPlanet->tOutputTexture);
-    gptGfx->destroy_texture(ptDevice, ptPlanet->tOutputTextureDepth);
     gptGfx->destroy_buffer(ptDevice, ptPlanet->tVertexBuffer);
     gptGfx->destroy_buffer(ptDevice, ptPlanet->tIndexBuffer);
     gptFreeList->cleanup(&ptPlanet->tVertexBufferManager);
@@ -583,11 +530,6 @@ pl_cleanup_planet(plPlanet* ptPlanet)
     PL_FREE(ptPlanet);
 }
 
-plBindGroupHandle
-pl_get_planet_texture(plPlanet* ptPlanet)
-{
-    return ptPlanet->tOutputTextureHandle;
-}
 
 //-----------------------------------------------------------------------------
 // [SECTION] planet view api
@@ -599,6 +541,7 @@ pl_create_planet_view(plPlanet* ptPlanet, plCommandBuffer* ptCmdBuffer, plPlanet
     plPlanetView* ptView = PL_ALLOC(sizeof(plPlanetView));
     memset(ptView, 0, sizeof(plPlanetView));
 
+    ptView->ptPlanet = ptPlanet;
     ptView->uOutputWidth  = tInit.uOutputWidth;
     ptView->uOutputHeight = tInit.uOutputHeight;
     ptView->pt3dDrawlist  = gptDraw->request_3d_drawlist();
@@ -675,8 +618,9 @@ pl_cleanup_planet_view(plPlanetView* ptView)
 }
 
 void
-pl_render_to_planet_view(plPlanet* ptPlanet, plPlanetView* ptView, plCamera* ptCamera, plCommandBuffer* ptCmdBuffer)
+pl_render_to_planet_view(plPlanetView* ptView, plCamera* ptCamera, plCommandBuffer* ptCmdBuffer)
 {
+    const plMat4 tMVP = pl_mul_mat4(&ptCamera->tProjMat, &ptCamera->tViewMat);
     plDevice* ptDevice = gptCtx->ptDevice;
     gptCtx->tCurrentDynamicBufferBlock = gptGfx->allocate_dynamic_data_block(ptDevice);
 
@@ -697,12 +641,24 @@ pl_render_to_planet_view(plPlanet* ptPlanet, plPlanetView* ptView, plCamera* ptC
     gptGfx->set_scissor_region(ptEncoder, &tScissor);
     gptGfx->set_depth_bias(ptEncoder, 0.0f, 0.0f, 0.0f);
 
-    for(uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
-        pl__render_chunk(ptPlanet, ptCamera, ptEncoder, &ptPlanet->sbtChunkFiles[i].tFile.atChunks[0], &ptPlanet->sbtChunkFiles[i].tFile);
+        plShaderHandle tShader =
+            (ptView->ptPlanet->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_WIREFRAME)
+            ? ptView->ptPlanet->tWireframeShader : ptView->ptPlanet->tShader;
 
-    const plMat4 tMVP = pl_mul_mat4(&ptCamera->tProjMat, &ptCamera->tViewMat);
+        gptGfx->bind_shader(ptEncoder, tShader);
+        gptGfx->bind_vertex_buffer(ptEncoder, ptView->ptPlanet->tVertexBuffer);
+        gptGfx->bind_graphics_bind_groups(
+            ptEncoder,
+            tShader,
+            0, 1,
+            &gptCtx->atBindGroups[gptGfx->get_current_frame_index()],
+            0, NULL
+        );
 
-    if(ptPlanet->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_SHOW_ORIGIN)
+    for(uint32_t i = 0; i < pl_sb_size(ptView->ptPlanet->sbtChunkFiles); i++)
+        pl__render_chunk(ptView->ptPlanet, ptCamera, ptEncoder, &ptView->ptPlanet->sbtChunkFiles[i].tFile.atChunks[0], &ptView->ptPlanet->sbtChunkFiles[i].tFile, &tMVP);
+
+    if(ptView->ptPlanet->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_SHOW_ORIGIN)
     {
         const plMat4 tOrigin = pl_identity_mat4();
         gptDraw->add_3d_transform(ptView->pt3dDrawlist, &tOrigin, 1737400.0f * 1.2f, (plDrawLineOptions){0, 1000.0f});
@@ -934,18 +890,16 @@ pl_planet_set_shaders(plPlanet* ptPlanet, const char* pcVertexShader, const char
 }
 
 void
-pl_draw_sphere(plPlanet* ptPlanet, float fLongitude, float fLatitude, float fHeight, float fSphereRadius, uint32_t uColor)
+pl_draw_sphere(plPlanetView* ptPlanet, float fLongitude, float fLatitude, float fHeight, float fSphereRadius, uint32_t uColor)
 {
     fLongitude = pl_radiansf(fLongitude);
     fLatitude = pl_radiansf(fLatitude);
     
-    // float fLongitude = pl_radiansf(-29.0f);
-    // float fLatitude = pl_radiansf(-45.0f);
-    float fRadius = (float)ptPlanet->dRadius + fHeight;
+    float fRadius = (float)ptPlanet->ptPlanet->dRadius + fHeight;
 
-    float fX = -1 * fRadius * cosf(fLatitude) * cosf(fLongitude);
+    float fZ = fRadius * cosf(fLatitude) * cosf(fLongitude);
     float fY = fRadius * sinf(fLatitude);
-    float fZ = fRadius * cosf(fLatitude) * sinf(fLongitude);
+    float fX = fRadius * cosf(fLatitude) * sinf(fLongitude);
 
     plSphere tSphere = {
         .fRadius = fSphereRadius,
@@ -969,60 +923,6 @@ pl_prepare_planet(plPlanet* ptPlanet, plCommandBuffer* ptCmdBuffer)
     {
         gptScreenLog->add_message_ex(294, 10.0, PL_COLOR_32_RED, 1.0f, "Stream Inactive");
     }
-}
-
-void
-pl_render_planet(plPlanet* ptPlanet, plCamera* ptCamera, plCommandBuffer* ptCmdBuffer)
-{
-
-
-    // pl_prepare_planet(ptPlanet, ptCmdBuffer);
-
-    plDevice* ptDevice = gptCtx->ptDevice;
-    gptCtx->tCurrentDynamicBufferBlock = gptGfx->allocate_dynamic_data_block(ptDevice);
-
-    plRenderEncoder* ptEncoder = gptGfx->begin_render_pass(ptCmdBuffer, ptPlanet->tRenderPass, NULL);
-
-    plRenderViewport tViewport = {
-        .fWidth = (float)ptPlanet->uOutputWidth,
-        .fHeight = (float)ptPlanet->uOutputHeight,
-        .fMinDepth = 0.0f,
-        .fMaxDepth = 1.0f
-    };
-    gptGfx->set_viewport(ptEncoder, &tViewport);
-
-    plScissor tScissor = {
-        .uWidth  = ptPlanet->uOutputWidth,
-        .uHeight = ptPlanet->uOutputHeight
-    };
-    gptGfx->set_scissor_region(ptEncoder, &tScissor);
-    // gptGfx->set_depth_bias(ptEncoder, -1.25f, 0.0f, -10.75f);
-    gptGfx->set_depth_bias(ptEncoder, 0.0f, 0.0f, 0.0f);
-
-    gptScreenLog->add_message_ex(193, 10.0, PL_COLOR_32_GREEN, 1.0f, "Index Buffer Usage:  %0.2f %%", 100.0f * (float)ptPlanet->tIndexBufferManager.uUsedSpace / (float)ptPlanet->tIndexBufferManager.uSize);
-    gptScreenLog->add_message_ex(194, 10.0, PL_COLOR_32_GREEN, 1.0f, "Vertex Buffer Usage:  %0.2f %%", 100.0f * (float)ptPlanet->tVertexBufferManager.uUsedSpace / (float)ptPlanet->tVertexBufferManager.uSize);
-
-    for(uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
-        pl__render_chunk(ptPlanet, ptCamera, ptEncoder, &ptPlanet->sbtChunkFiles[i].tFile.atChunks[0], &ptPlanet->sbtChunkFiles[i].tFile);
-    
-    const plMat4 tMVP = pl_mul_mat4(&ptCamera->tProjMat, &ptCamera->tViewMat);
-
-    if(ptPlanet->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_SHOW_ORIGIN)
-    {
-        const plMat4 tOrigin = pl_identity_mat4();
-        gptDraw->add_3d_transform(ptPlanet->pt3dDrawlist, &tOrigin, 1737400.0f * 1.2f, (plDrawLineOptions){0, 1000.0f});
-    }
-
-    gptDraw->submit_3d_drawlist(ptPlanet->pt3dDrawlist,
-        ptEncoder,
-        (float)ptPlanet->uOutputWidth,
-        (float)ptPlanet->uOutputHeight,
-        &tMVP,
-        PL_DRAW_FLAG_DEPTH_TEST | PL_DRAW_FLAG_DEPTH_WRITE | PL_DRAW_FLAG_REVERSE_Z_DEPTH,
-        PL_SAMPLE_COUNT_1);
-
-    gptGfx->end_render_pass(ptEncoder);
-
 }
 
 void
@@ -1064,87 +964,153 @@ pl__all_children_resident(plPlanetChunk* ptChunk)
     return true;
 }
 
-void
-pl__remove_from_replacement_queue(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
-{
-    plPlanetChunk* ptCurrentRequest = ptPlanet->tReplacementQueue.ptNext;
 
-    plPlanetChunk* ptExistingRequest = NULL;
-    plPlanetChunk* ptLastRequest = NULL;
 
-    while(ptCurrentRequest)
-    {
-        if(ptCurrentRequest == ptChunk)
-        {
-            ptExistingRequest = ptCurrentRequest;
-            break;
-        }
-        ptCurrentRequest = ptCurrentRequest->ptNext;
-    }
+// void
+// pl__remove_from_replacement_queue(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
+// {
+//     plPlanetChunk* ptCurrentRequest = ptPlanet->tReplacementQueue.ptNext;
 
-    if(ptExistingRequest)
-    {
+//     plPlanetChunk* ptExistingRequest = NULL;
+//     plPlanetChunk* ptLastRequest = NULL;
 
-        // remove node
-        if(ptExistingRequest->ptPrev)
-            ptExistingRequest->ptPrev->ptNext = ptExistingRequest->ptNext;
-        else
-            ptPlanet->tReplacementQueue.ptNext = ptExistingRequest->ptNext;
+//     while(ptCurrentRequest)
+//     {
+//         if(ptCurrentRequest == ptChunk)
+//         {
+//             ptExistingRequest = ptCurrentRequest;
+//             break;
+//         }
+//         ptCurrentRequest = ptCurrentRequest->ptNext;
+//     }
 
-        if(ptExistingRequest->ptNext)
-            ptExistingRequest->ptNext->ptPrev = ptExistingRequest->ptPrev;
-    }
-}
+//     if(ptExistingRequest)
+//     {
+
+//         // remove node
+//         if(ptExistingRequest->ptPrev)
+//             ptExistingRequest->ptPrev->ptNext = ptExistingRequest->ptNext;
+//         else
+//             ptPlanet->tReplacementQueue.ptNext = ptExistingRequest->ptNext;
+
+//         if(ptExistingRequest->ptNext)
+//             ptExistingRequest->ptNext->ptPrev = ptExistingRequest->ptPrev;
+//     }
+// }
 
 static void
 pl__free_chunk(plPlanet* ptPlanet, uint64_t uIndexCount)
 {
+
     const uint64_t uCurrentFrame = gptIOI->get_io()->ulFrameCount;
 
-    // find last used item
-    plPlanetChunk* ptCurrentRequest = ptPlanet->tReplacementQueue.ptNext;
+    // find tail (least-recently used)
+    plPlanetChunk* tail = ptPlanet->tReplacementQueue.ptNext;
+    if (!tail) {
+        // nothing to evict -> dead end
+        printf("Couldn't free chunks (replacement list empty)\n");
+        return;
+    }
+    while (tail->ptNext) tail = tail->ptNext;
 
-    if(ptCurrentRequest == NULL)
+    // Pass 1: try to evict a chunk that fully satisfies the need by size
+
+    uint64_t freed = 0;
+    // move to tail
+    plPlanetChunk* c = ptPlanet->tReplacementQueue.ptNext;
+    if (!c) return; 
+    while (c->ptNext) c = c->ptNext;
+
+    while (c && freed < uIndexCount)
+    {
+        plPlanetChunk* prev = c->ptPrev;
+        freed += c->uIndexCount;
+        pl__make_unresident(ptPlanet, c);
+        c = prev;
+    }
+
+    if (freed >= uIndexCount)
         return;
 
-    while(ptCurrentRequest->ptNext)
-        ptCurrentRequest = ptCurrentRequest->ptNext;
 
-    plPlanetChunk* ptEndRequest = ptCurrentRequest;
-
-    bool bChunkFreed = false;
-    while(ptCurrentRequest->ptPrev)
+    // Pass 2: age-based eviction
+    for (c = tail; c; c = c->ptPrev)
     {
-        if(ptCurrentRequest->uIndexCount > uIndexCount)
+        if (uCurrentFrame - c->uLastFrameUsed > 30)
         {
-            pl__make_unresident(ptPlanet, ptCurrentRequest);
-            bChunkFreed = true;
-            break;
-        }
-        ptCurrentRequest = ptCurrentRequest->ptPrev;
-    }
-
-    ptCurrentRequest = ptEndRequest;
-    if(!bChunkFreed)
-    {
-        while(ptCurrentRequest->ptPrev)
-        {
-            if(uCurrentFrame - ptCurrentRequest->uLastFrameUsed > 30)
-            {
-                plPlanetChunk* ptChunkToRemove = ptCurrentRequest;
-                ptCurrentRequest = ptCurrentRequest->ptPrev;
-                pl__make_unresident(ptPlanet, ptChunkToRemove);
-                bChunkFreed = true;
-                // break;
-            }
-            else
-                ptCurrentRequest = ptCurrentRequest->ptPrev;
+            pl__make_unresident(ptPlanet, c);
+            return;
         }
     }
 
-    if(!bChunkFreed)
-        printf("Couldn't free chunks\n");
+    // Pass 3 (fallback): evict strictly by LRU, even if it was recently used.
+    // This prevents deadlock when memory is insufficient to hold both parent and child.
+    pl__make_unresident(ptPlanet, tail);
+
 }
+
+
+// Free from LRU tail until we have at least the requested bytes for BOTH pools.
+// Never evict level 0, and never evict non-leaves (chunks with resident children).
+static void
+pl__free_chunk_until(plPlanet* P,
+                     uint64_t idx_bytes_needed,
+                     uint64_t vtx_bytes_needed)
+{
+    // Walk to tail (oldest / least-recently-used)
+    plPlanetChunk* tail = P->tReplacementQueue.ptNext;
+    if (!tail) {
+        printf("Couldn't free chunks (replacement list empty)\n");
+        return;
+    }
+    while (tail->ptNext) tail = tail->ptNext;
+
+    uint64_t freed_idx = 0;
+    uint64_t freed_vtx = 0;
+
+    // Pass 1: strictly leaf, non-root, LRU → MRU until enough bytes
+    for (plPlanetChunk* c = tail; c; c = c->ptPrev) {
+        if (!c->ptIndexHole) continue;            // not resident -> skip
+        if (c->uLevel == 0) continue;             // keep roots
+        if (!pl__is_leaf_resident(c)) continue;   // don't drop nodes with resident children
+
+        freed_idx += (uint64_t)c->uIndexCount * sizeof(uint32_t);
+        freed_vtx += (uint64_t)c->ptVertexHole->uSize; // size was requested to freelist; safe to use
+
+        pl__make_unresident(P, c);
+
+        if (freed_idx >= idx_bytes_needed && freed_vtx >= vtx_bytes_needed)
+            return; // ✅ sufficient
+    }
+
+    // Pass 2: allow evicting non-leaf (still avoid root). Prefer aged items.
+    const uint64_t now = gptIOI->get_io()->ulFrameCount;
+    for (plPlanetChunk* c = tail; c; c = c->ptPrev) {
+        if (!c->ptIndexHole) continue;
+        if (c->uLevel == 0) continue;
+        if (now - c->uLastFrameUsed <= 30) continue;
+
+        freed_idx += (uint64_t)c->uIndexCount * sizeof(uint32_t);
+        freed_vtx += (uint64_t)c->ptVertexHole->uSize;
+        pl__make_unresident(P, c);
+
+        if (freed_idx >= idx_bytes_needed && freed_vtx >= vtx_bytes_needed)
+            return; // ✅ sufficient
+    }
+
+    // Pass 3: final fallback — evict oldest non-root regardless of age/leaf.
+    for (plPlanetChunk* c = tail; c; c = c->ptPrev) {
+        if (!c->ptIndexHole) continue;
+        if (c->uLevel == 0) continue;
+
+        pl__make_unresident(P, c);
+        return; // free at least one to make progress
+    }
+
+    // If we reached here, nothing could be evicted (only root is resident)
+    printf("Eviction failed: only root or no resident chunks available\n");
+}
+
 
 void
 pl__remove_from_residency_queue(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
@@ -1243,7 +1209,7 @@ pl__handle_residency(plPlanet* ptPlanet, plCommandBuffer* ptCommandBuffer)
         uint32_t uVertexCount = 0;
         fread(&uVertexCount, 1, sizeof(uint32_t), ptDataFile);
 
-        plVec3* ptVertices = PL_ALLOC(uVertexCount * sizeof(plPlanetVertex));
+        plPlanetVertex* ptVertices = PL_ALLOC(uVertexCount * sizeof(plPlanetVertex));
         fread(ptVertices, 1, sizeof(plPlanetVertex) * uVertexCount, ptDataFile);
 
         uint32_t uIndexCount = 0;
@@ -1252,40 +1218,47 @@ pl__handle_residency(plPlanet* ptPlanet, plCommandBuffer* ptCommandBuffer)
         uint32_t* ptIndices = PL_ALLOC(uIndexCount * sizeof(uint32_t));
         fread(ptIndices, 1, sizeof(uint32_t) * uIndexCount, ptDataFile);
 
-        const uint32_t uVertexBufferSizeBytes = uVertexCount * sizeof(plPlanetVertex);
-        const uint32_t uIndexBufferSizeBytes = uIndexCount * sizeof(uint32_t);
+        
 
-        const uint32_t uIndexStageOffset = 0;
-        const uint32_t uVertexStageOffset = uIndexBufferSizeBytes;
 
-        // update chunk offsets
-        plFreeListNode* ptIndexHole = gptFreeList->get_node(&ptPlanet->tIndexBufferManager, uIndexCount * sizeof(uint32_t));
-        plFreeListNode* ptVertexHole = gptFreeList->get_node(&ptPlanet->tVertexBufferManager, uVertexCount * sizeof(plPlanetVertex));
+        // bytes needed for this chunk
+        const uint64_t idx_bytes = (uint64_t)uIndexCount * sizeof(uint32_t);
+        const uint64_t vtx_bytes = (uint64_t)uVertexCount * sizeof(plPlanetVertex);
 
-        if(ptIndexHole == NULL || ptVertexHole == NULL)
+        const uint64_t uVertexStageOffset = idx_bytes;
+        const uint64_t uIndexStageOffset = 0;
+
+        // Try once
+        plFreeListNode* idx_hole = gptFreeList->get_node(&ptPlanet->tIndexBufferManager, idx_bytes);
+        plFreeListNode* vtx_hole = gptFreeList->get_node(&ptPlanet->tVertexBufferManager, vtx_bytes);
+
+        if (!idx_hole || !vtx_hole)
         {
-            if(ptIndexHole) gptFreeList->return_node(&ptPlanet->tIndexBufferManager, ptIndexHole);
-            if(ptVertexHole) gptFreeList->return_node(&ptPlanet->tVertexBufferManager, ptVertexHole);
-            pl__free_chunk(ptPlanet, uIndexCount);
-            ptIndexHole = gptFreeList->get_node(&ptPlanet->tIndexBufferManager, uIndexCount * sizeof(uint32_t));
-            ptVertexHole = gptFreeList->get_node(&ptPlanet->tVertexBufferManager, uVertexCount * sizeof(plPlanetVertex));
+            if (idx_hole) gptFreeList->return_node(&ptPlanet->tIndexBufferManager, idx_hole);
+            if (vtx_hole) gptFreeList->return_node(&ptPlanet->tVertexBufferManager, vtx_hole);
+
+            // Free enough for BOTH pools and try again
+            pl__free_chunk_until(ptPlanet, idx_bytes, vtx_bytes);
+
+            idx_hole = gptFreeList->get_node(&ptPlanet->tIndexBufferManager, idx_bytes);
+            vtx_hole = gptFreeList->get_node(&ptPlanet->tVertexBufferManager, vtx_bytes);
         }
 
-        if(ptIndexHole == NULL || ptVertexHole == NULL)
+        if (!idx_hole || !vtx_hole)
         {
-            if(ptIndexHole) gptFreeList->return_node(&ptPlanet->tIndexBufferManager, ptIndexHole);
-            if(ptVertexHole) gptFreeList->return_node(&ptPlanet->tVertexBufferManager, ptVertexHole);
-            pl__free_chunk(ptPlanet, uIndexCount);
+            if (idx_hole) gptFreeList->return_node(&ptPlanet->tIndexBufferManager, idx_hole);
+            if (vtx_hole) gptFreeList->return_node(&ptPlanet->tVertexBufferManager, vtx_hole);
+
             PL_FREE(ptVertices);
             PL_FREE(ptIndices);
             fclose(ptDataFile);
-            printf("No Memory\n");
+            printf("No Memory (post-eviction)\n");
             return;
         }
 
-        ptChunk->uIndexCount = uIndexCount;
-        ptChunk->ptIndexHole = ptIndexHole;
-        ptChunk->ptVertexHole = ptVertexHole;
+        ptChunk->ptIndexHole = idx_hole;
+        ptChunk->ptVertexHole = vtx_hole;
+        ptChunk->uIndexCount  = uIndexCount;
 
         if(ptPlanet->sbtChunkFiles[ptChunk->uFileID].ptPakFile)
         {
@@ -1310,8 +1283,8 @@ pl__handle_residency(plPlanet* ptPlanet, plCommandBuffer* ptCommandBuffer)
         void* ptVertexStageDest = &ptStagingBuffer->tMemoryAllocation.pHostMapped[uVertexStageOffset];
 
         // copy memory to mapped staging buffer
-        memcpy(ptIndexStageDest, ptIndices, uIndexBufferSizeBytes);
-        memcpy(ptVertexStageDest, ptVertices, uVertexBufferSizeBytes);
+        memcpy(ptIndexStageDest, ptIndices, idx_bytes);
+        memcpy(ptVertexStageDest, ptVertices, vtx_bytes);
 
         // destination offsets
         const uint64_t uIndexFinalOffset = ptChunk->ptIndexHole->uOffset;
@@ -1323,8 +1296,8 @@ pl__handle_residency(plPlanet* ptPlanet, plCommandBuffer* ptCommandBuffer)
         plBlitEncoder* ptEncoder = gptGfx->begin_blit_pass(ptCommandBuffer);
         gptGfx->pipeline_barrier_blit(ptEncoder, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE);
 
-        gptGfx->copy_buffer(ptEncoder, gptCtx->tStagingBuffer, ptPlanet->tIndexBuffer, uIndexStageOffset, uIndexFinalOffset, uIndexBufferSizeBytes);
-        gptGfx->copy_buffer(ptEncoder, gptCtx->tStagingBuffer, ptPlanet->tVertexBuffer, uVertexStageOffset, uVertexFinalOffset, uVertexBufferSizeBytes);
+        gptGfx->copy_buffer(ptEncoder, gptCtx->tStagingBuffer, ptPlanet->tIndexBuffer, uIndexStageOffset, uIndexFinalOffset, idx_bytes);
+        gptGfx->copy_buffer(ptEncoder, gptCtx->tStagingBuffer, ptPlanet->tVertexBuffer, uVertexStageOffset, uVertexFinalOffset, vtx_bytes);
         
         gptGfx->pipeline_barrier_blit(ptEncoder, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ);
         gptGfx->end_blit_pass(ptEncoder);
@@ -1336,58 +1309,98 @@ pl__handle_residency(plPlanet* ptPlanet, plCommandBuffer* ptCommandBuffer)
         fclose(ptDataFile);
 
         pl__remove_from_residency_queue(ptPlanet, ptCurrentRequest->ptChunk);
+        pl__touch_chunk(ptPlanet, ptChunk);
     }
 }
 
-static void
-pl__touch_chunk(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
+static inline void
+pl__lru_unlink(plPlanet* P, plPlanetChunk* c)
 {
-    if(ptChunk == NULL)
-        return;
+    if (!c->bInReplacementList) return;
+    if (c->ptPrev) c->ptPrev->ptNext = c->ptNext;
+    else           P->tReplacementQueue.ptNext = c->ptNext;
+    if (c->ptNext) c->ptNext->ptPrev = c->ptPrev;
+    c->ptPrev = c->ptNext = NULL;
+    c->bInReplacementList = false;
+}
+
+static inline void
+pl__lru_push_front(plPlanet* P, plPlanetChunk* c)
+{
+    // Head insert
+    c->ptPrev = NULL;
+    c->ptNext = P->tReplacementQueue.ptNext;
+    if (c->ptNext) c->ptNext->ptPrev = c;
+    P->tReplacementQueue.ptNext = c;
+    c->bInReplacementList = true;
+}
+
+
+static void
+pl__touch_chunk(plPlanet* P, plPlanetChunk* c)
+{
+    if (!c) return;
+    c->uLastFrameUsed = gptIOI->get_io()->ulFrameCount;
+
+    pl__lru_unlink(P, c);
+    pl__lru_push_front(P, c);
+}
+
+
+// static void
+// pl__touch_chunk(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
+// {
+//     if(ptChunk == NULL)
+//         return;
 
   
-    ptChunk->uLastFrameUsed = gptIOI->get_io()->ulFrameCount;
+//     ptChunk->uLastFrameUsed = gptIOI->get_io()->ulFrameCount;
 
-    plPlanetChunk* ptCurrentRequest = ptPlanet->tReplacementQueue.ptNext;
+//     plPlanetChunk* ptCurrentRequest = ptPlanet->tReplacementQueue.ptNext;
 
-    plPlanetChunk* ptExistingRequest = NULL;
+//     plPlanetChunk* ptExistingRequest = NULL;
 
-    while(ptCurrentRequest)
-    {
-        if(ptCurrentRequest == ptChunk)
-        {
-            ptExistingRequest = ptCurrentRequest;
-            break;
-        }
-        ptCurrentRequest = ptCurrentRequest->ptNext;
-    }
+//     while(ptCurrentRequest)
+//     {
+//         if(ptCurrentRequest == ptChunk)
+//         {
+//             ptExistingRequest = ptCurrentRequest;
+//             break;
+//         }
+//         ptCurrentRequest = ptCurrentRequest->ptNext;
+//     }
 
-    if(ptExistingRequest)
-    {
+//     if(ptExistingRequest)
+//     {
 
-        // remove node
-        if(ptExistingRequest->ptPrev)
-            ptExistingRequest->ptPrev->ptNext = ptExistingRequest->ptNext;
+//         // remove node
+//         if(ptExistingRequest->ptPrev)
+//             ptExistingRequest->ptPrev->ptNext = ptExistingRequest->ptNext;
 
-        if(ptExistingRequest->ptNext)
-            ptExistingRequest->ptNext->ptPrev = ptExistingRequest->ptPrev;   
-    }
-    else
-    {
-        ptExistingRequest = ptChunk;
-    }
+//         if(ptExistingRequest->ptNext)
+//             ptExistingRequest->ptNext->ptPrev = ptExistingRequest->ptPrev;   
+//     }
+//     else
+//     {
+//         ptExistingRequest = ptChunk;
+//     }
 
-    // place node at beginning
-    ptExistingRequest->ptPrev = NULL;
-    if(ptExistingRequest != ptPlanet->tReplacementQueue.ptNext)
-        ptExistingRequest->ptNext = ptPlanet->tReplacementQueue.ptNext;
-    ptPlanet->tReplacementQueue.ptNext = ptExistingRequest;
-    if(ptExistingRequest->ptNext)
-        ptExistingRequest->ptNext->ptPrev = ptExistingRequest;
+//     // place node at beginning
+//     ptExistingRequest->ptPrev = NULL;
+//     if(ptExistingRequest != ptPlanet->tReplacementQueue.ptNext)
+//         ptExistingRequest->ptNext = ptPlanet->tReplacementQueue.ptNext;
+//     ptPlanet->tReplacementQueue.ptNext = ptExistingRequest;
+//     if(ptExistingRequest->ptNext)
+//         ptExistingRequest->ptNext->ptPrev = ptExistingRequest;
 
-    ptExistingRequest->uLastFrameUsed = gptIOI->get_io()->ulFrameCount;
-    // ptExistingRequest->fDistance = fDistance;
-    // ptExistingRequest->ptChunk = ptChunk;
+//     ptExistingRequest->uLastFrameUsed = gptIOI->get_io()->ulFrameCount;
+// }
+
+
+void
+pl__remove_from_replacement_queue(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
+{
+    pl__lru_unlink(ptPlanet, ptChunk);
 }
 
 static void
@@ -1459,7 +1472,7 @@ pl__request_residency(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
 }
 
 static void
-pl__render_chunk(plPlanet* ptPlanet, plCamera* ptCamera , plRenderEncoder* ptEncoder, plPlanetChunk* ptChunk, plPlanetChunkFile* ptFile)
+pl__render_chunk(plPlanet* ptPlanet, plCamera* ptCamera , plRenderEncoder* ptEncoder, plPlanetChunk* ptChunk, plPlanetChunkFile* ptFile, const plMat4* ptMVP)
 {
     PL_ASSERT(ptChunk != NULL);
 
@@ -1480,70 +1493,82 @@ pl__render_chunk(plPlanet* ptPlanet, plCamera* ptCamera , plRenderEncoder* ptEnc
         return;
     
     float fViewportWidth = gptIOI->get_io()->tMainViewportSize.x;
-    float fHorizontalFieldOfView = ptCamera->fFieldOfView * ptCamera->fAspectRatio;
+    float fHorizontalFieldOfView = 2.0f * atanf(tanf(0.5f * ptCamera->fFieldOfView) * ptCamera->fAspectRatio);
 
     float fK = fViewportWidth / (2.0f * tanf(0.5f * fHorizontalFieldOfView));
 
     float fGeometricError = ptFile->fMaxBaseError * (float)ptChunk->uLevel;
-
-
     float fRho = fGeometricError * fK / fDistance;
 
-    if(!pl__all_children_resident(ptChunk) || fRho <= ptPlanet->tRuntimeOptions.fTau)
-    {
 
+    float tauSubdivide = ptPlanet->tRuntimeOptions.fTau;
+    float tauMerge     = tauSubdivide * 0.5f;
+
+    bool bChildrenResident = pl__all_children_resident(ptChunk);
+
+    // Decide refinement using hysteresis
+    if(!bChildrenResident || fRho <= tauSubdivide)
+    {
+        // Draw parent
         const plMat4 tMVP = pl_mul_mat4(&ptCamera->tProjMat, &ptCamera->tViewMat);
         plDevice* ptDevice = gptCtx->ptDevice;
-        plDynamicBinding tDynamicBinding = pl_allocate_dynamic_data(gptGfx, ptDevice, &gptCtx->tCurrentDynamicBufferBlock);
+        plDynamicBinding tDynamicBinding =
+            pl_allocate_dynamic_data(gptGfx, ptDevice, &gptCtx->tCurrentDynamicBufferBlock);
         plGpuDynPlanetData* ptDynamic = (plGpuDynPlanetData*)tDynamicBinding.pcData;
-        ptDynamic->tMvp = tMVP;
-        ptDynamic->iLevel = (int)ptChunk->uLevel;
-        ptDynamic->tFlags = ptPlanet->tRuntimeOptions.tFlags;
-        ptDynamic->uTextureIndex = ptChunk->uTextureIndex;
+
+        ptDynamic->tMvp            = tMVP;
+        ptDynamic->iLevel          = (int)ptChunk->uLevel;
+        ptDynamic->tFlags          = ptPlanet->tRuntimeOptions.tFlags;
+        ptDynamic->uTextureIndex   = ptChunk->uTextureIndex;
         ptDynamic->tLightDirection = ptPlanet->tRuntimeOptions.tLightDirection;
 
-        // submit nonindexed draw using basic API
-        plShaderHandle tShader = (ptPlanet->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_WIREFRAME) ? ptPlanet->tWireframeShader : ptPlanet->tShader;
-        gptGfx->bind_shader(ptEncoder, tShader);
-        gptGfx->bind_vertex_buffer(ptEncoder, ptPlanet->tVertexBuffer);
-        gptGfx->bind_graphics_bind_groups(ptEncoder, tShader, 0, 1, &gptCtx->atBindGroups[gptGfx->get_current_frame_index()], 1, &tDynamicBinding);
+        plShaderHandle tShader =
+            (ptPlanet->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_WIREFRAME)
+            ? ptPlanet->tWireframeShader : ptPlanet->tShader;
+
+        gptGfx->bind_graphics_bind_groups(
+            ptEncoder,
+            tShader,
+            0, 0,
+            NULL,
+            1, &tDynamicBinding
+        );
 
         const plDrawIndex tDraw = {
             .uInstanceCount = 1,
             .uIndexCount    = ptChunk->uIndexCount,
-            .uVertexStart   = (uint32_t)ptChunk->ptVertexHole->uOffset / sizeof(plPlanetVertex),
-            .uIndexStart    = (uint32_t)ptChunk->ptIndexHole->uOffset / sizeof(uint32_t),
+            .uVertexStart   = (uint32_t)(ptChunk->ptVertexHole->uOffset / sizeof(plPlanetVertex)),
+            .uIndexStart    = (uint32_t)(ptChunk->ptIndexHole->uOffset / sizeof(uint32_t)),
             .tIndexBuffer   = ptPlanet->tIndexBuffer
         };
-        gptGfx->draw_indexed(ptEncoder, 1, &tDraw);
 
+        gptGfx->draw_indexed(ptEncoder, 1, &tDraw);
+        *gptCtx->pdDrawCalls += 1;
 
         pl__touch_chunk(ptPlanet, ptChunk);
-        if(fRho > ptPlanet->tRuntimeOptions.fTau) // we actually want children
+
+        // --- Hysteresis refinement logic ---
+        if(fRho > tauSubdivide)
         {
+            // Need children soon – schedule them
             for(uint32_t i = 0; i < 4; i++)
             {
-                if(ptChunk->aptChildren[i] == NULL)
-                    break;
-
-                plAABB tChildAABB = {
-                    .tMin = ptChunk->aptChildren[i]->tMinBound,
-                    .tMax = ptChunk->aptChildren[i]->tMaxBound
-                };
-                plVec3 tClosestChildPoint = gptCollision->point_closest_point_aabb(ptCamera->tPos, tChildAABB);
-                float fChildDistance = fabsf(pl_length_vec3(pl_sub_vec3(tClosestChildPoint, ptCamera->tPos)));
-                pl__request_residency(ptPlanet, ptChunk->aptChildren[i]);
+                if(ptChunk->aptChildren[i])
+                    pl__request_residency(ptPlanet, ptChunk->aptChildren[i]);
             }
         }
-        else // we actually want this chunk, not children
+        else if(fRho < tauMerge)
         {
+            // Clearly low detail – unload children
             pl__unload_children(ptPlanet, ptChunk);
         }
+        // else: middle band → keep current state, prevent thrash
     }
     else
     {
+        // Descend into children
         for(uint32_t i = 0; i < 4; i++)
-            pl__render_chunk(ptPlanet, ptCamera, ptEncoder, ptChunk->aptChildren[i], ptFile);
+            pl__render_chunk(ptPlanet, ptCamera, ptEncoder, ptChunk->aptChildren[i], ptFile, ptMVP);
     }
 }
 
@@ -1806,14 +1831,9 @@ pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture
     {
         float fLatitude = pl_radiansf(ptInfo->atTiles[0].fLatitude);
         float fLongitude = pl_radiansf(ptInfo->atTiles[0].fLongitude);
-        float fR;
-        if (ptInfo->bUpsNorth) {
-            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-        } else {
-            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 + 0.5f * fLatitude);
-        }
+        float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
         float fX = fR * sinf(fLongitude);
-        float fY = ptInfo->bUpsNorth ? -fR * cosf(fLongitude) : fR * cosf(fLongitude);
+        float fY = fR * cosf(fLongitude);
         tTopLeftGlobal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
         tTopLeftGlobal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
     }
@@ -1821,14 +1841,9 @@ pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture
     {
         float fLatitude = pl_radiansf(ptInfo->atTiles[ptInfo->uTileCount - 1].fLatitude);
         float fLongitude = pl_radiansf(ptInfo->atTiles[ptInfo->uTileCount - 1].fLongitude);
-        float fR;
-        if (ptInfo->bUpsNorth) {
-            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-        } else {
-            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 + 0.5f * fLatitude);
-        }
+        float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
         float fX = fR * sinf(fLongitude);
-        float fY = ptInfo->bUpsNorth ? -fR * cosf(fLongitude) : fR * cosf(fLongitude);
+        float fY = fR * cosf(fLongitude);
         tBottomRightGlobal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
         tBottomRightGlobal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
     }
@@ -1837,14 +1852,9 @@ pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture
     {
         float fLatitude = pl_radiansf(ptTexture->fLatitude);
         float fLongitude = pl_radiansf(ptTexture->fLongitude);
-        float fR;
-        if (ptInfo->bUpsNorth) {
-            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-        } else {
-            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 + 0.5f * fLatitude);
-        }
+        float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
         float fX = fR * sinf(fLongitude);
-        float fY = ptInfo->bUpsNorth ? -fR * cosf(fLongitude) : fR * cosf(fLongitude);
+        float fY = fR * cosf(fLongitude);
 
         plImageInfo tImageInfo = {0};
         gptImage->get_info_from_file(ptTexture->pcPath, &tImageInfo);
@@ -1871,26 +1881,18 @@ pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture
         {
             fLatitude = pl_radiansf(ptInfo->atTiles[uTopLeftXIndex + uTopLeftYIndex * ptInfo->uHorizontalTiles].fLatitude);
             fLongitude = pl_radiansf(ptInfo->atTiles[uTopLeftXIndex + uTopLeftYIndex * ptInfo->uHorizontalTiles].fLongitude);
-            if (ptInfo->bUpsNorth) {
-                fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-            } else {
-                fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 + 0.5f * fLatitude);
-            }
+            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
             fX = fR * sinf(fLongitude);
-            fY = ptInfo->bUpsNorth ? -fR * cosf(fLongitude) : fR * cosf(fLongitude);
+            fY = fR * cosf(fLongitude);
             tTopLeftLocal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
             tTopLeftLocal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
         }
         {
             fLatitude = pl_radiansf(ptInfo->atTiles[uBottomRightXIndex + uBottomRightYIndex * ptInfo->uHorizontalTiles].fLatitude);
             fLongitude = pl_radiansf(ptInfo->atTiles[uBottomRightXIndex + uBottomRightYIndex * ptInfo->uHorizontalTiles].fLongitude);
-            if (ptInfo->bUpsNorth) {
-                fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-            } else {
-                fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 + 0.5f * fLatitude);
-            }
+            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
             fX = fR * sinf(fLongitude);
-            fY = ptInfo->bUpsNorth ? -fR * cosf(fLongitude) : fR * cosf(fLongitude);
+            fY = fR * cosf(fLongitude);
             tBottomRightLocal.x = fX + 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
             tBottomRightLocal.y = fY + 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
         }
@@ -2187,17 +2189,15 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .cleanup             = pl_planet_cleanup,
         .create_planet       = pl_create_planet,
         .cleanup_planet      = pl_cleanup_planet,
-        .render              = pl_render_planet,
         .prepare             = pl_prepare_planet,
         .reload_shaders      = pl_planet_load_shaders,
         .set_runtime_options = pl_planet_set_runtime_options,
         .get_runtime_options = pl_planet_get_runtime_options,
-        .get_texture         = pl_get_planet_texture,
         .set_shaders         = pl_planet_set_shaders,
         .draw_sphere         = pl_draw_sphere,
         .create_view         = pl_create_planet_view,
         .cleanup_view        = pl_cleanup_planet_view,
-        .render_to_view      = pl_render_to_planet_view,
+        .render_view         = pl_render_to_planet_view,
         .get_view_texture    = pl_get_planet_view_texture,
     };
     pl_set_api(ptApiRegistry, plPlanetI, &tApi);
@@ -2220,6 +2220,7 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
     gptVfs              = pl_get_api_latest(ptApiRegistry, plVfsI);
     gptResource         = pl_get_api_latest(ptApiRegistry, plResourceI);
     gptPak              = pl_get_api_latest(ptApiRegistry, plPakI);
+    gptStats            = pl_get_api_latest(ptApiRegistry, plStatsI);
 
     const plDataRegistryI* ptDataRegistry = pl_get_api_latest(ptApiRegistry, plDataRegistryI);
 
