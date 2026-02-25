@@ -784,6 +784,7 @@ Renders 3D planetary terrain from chunked heightmap data. Supports two camera mo
 | `Roll` | — | number/var | No | Camera roll angle (XYZ mode) |
 | `Pitch` | — | number/var | No | Camera pitch angle (XYZ mode) |
 | `Yaw` | — | number/var | No | Camera yaw angle (XYZ mode) |
+| `Heading` | — | number/var | No | Camera heading in LLE mode (degrees CW from north, 0=north, 90=east) |
 | `Orthographic` | — | integer/var | No | 1 for orthographic projection, 0 for perspective |
 | `ShaderIndex` | — | integer/var | No | Active shader index (selects from child `<PlanetShader>` elements) |
 

@@ -542,6 +542,7 @@ typedef struct __NodePlanet {
     _ValIndex3    lle;
     _ValIndex3    xyz;
     _ValIndex3    rpy;
+    DcAppValIndex heading;      // LLE mode: azimuth from north, CW, degrees
     DcAppValIndex orthographic;
 
     // data

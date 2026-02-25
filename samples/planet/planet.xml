@@ -13,6 +13,7 @@
     <Variable Type="#_variable_double_">Latitude</Variable>
     <Variable Type="#_variable_double_">Longitude</Variable>
     <Variable Type="#_variable_double_">Elevation</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">Heading</Variable>
 
     <!-- Computed XYZ/RPY camera values (written by logic file) -->
     <Variable Type="#_variable_double_">CamX</Variable>
@@ -26,6 +27,7 @@
     <Variable Type="#_variable_integer_">SliderLatSelected</Variable>
     <Variable Type="#_variable_integer_">SliderLonSelected</Variable>
     <Variable Type="#_variable_integer_">SliderEleSelected</Variable>
+    <Variable Type="#_variable_integer_">SliderHdgSelected</Variable>
 
     <!-- Active shader index: 0=default, 1=elevation, 2=slope -->
     <Variable Type="#_variable_integer_" InitialValue="0">ActiveShader</Variable>
@@ -128,6 +130,7 @@
             <Text X="240" Y="662" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_yellow_">LLE Camera</Text>
             <Planet X="15" Y="200" Width="450" Height="450"
                 Latitude="@Latitude" Longitude="@Longitude" Elevation="@Elevation"
+                Heading="@Heading"
                 Orthographic="@UseOrtho"
                 ShaderIndex="@ActiveShader">
                 <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
@@ -196,8 +199,24 @@
                 </Button>
             </Container>
 
+            <!-- Heading -->
+            <Text X="15" Y="20" LocalAlignX="#_align_left_">Hdg:</Text>
+            <Text X="195" Y="20" LocalAlignX="#_align_right_">@Heading(%.0f) deg</Text>
+            <Container X="210" Y="10" Width="775" Height="20" VirtualWidth="360">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <If Value1="@SliderHdgSelected" Operator="#_if_eq_" Value2="1">
+                    <MouseMotion VariableX="Heading"/>
+                </If>
+                <Set Variable="Heading" Operator="#_set_max_">0</Set>
+                <Set Variable="Heading" Operator="#_set_min_">360</Set>
+                <Button Type="#_button_momentary_" X="@Heading" Y="10" Width="8" Height="26" Variable="SliderHdgSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
+                </Button>
+            </Container>
+
             <!-- XYZ/RPY readout -->
-            <Text X="15" Y="25" LocalAlignX="#_align_left_" Size="11" FillColor="#_color_sky_blue_">XYZ: @CamX(%.0f) @CamY(%.0f) @CamZ(%.0f)    RPY: @CamRoll(%.2f) @CamPitch(%.2f) @CamYaw(%.2f)</Text>
+            <Text X="15" Y="190" LocalAlignX="#_align_left_" Size="11" FillColor="#_color_sky_blue_">XYZ: @CamX(%.0f) @CamY(%.0f) @CamZ(%.0f)    RPY: @CamRoll(%.2f) @CamPitch(%.2f) @CamYaw(%.2f)</Text>
 
         </Panel>
     </Window>

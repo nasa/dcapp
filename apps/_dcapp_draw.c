@@ -4533,6 +4533,12 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
 
                 // orient camera to look toward planet center
                 _ext_camera->look_at(&camera, camera.tPosDouble, (plDVec3){0, 0, 0});
+
+                // heading (azimuth from north, CW, degrees)
+                if (node->planet.heading != DC_APP_VAL_INDEX_UNDEFINED) {
+                    float heading_deg = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.heading)->value_double;
+                    camera.fRoll = pl_radiansf(heading_deg);
+                }
             }
 
             _ext_camera->update(&camera);

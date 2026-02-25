@@ -3404,6 +3404,13 @@ static _NodeIndex _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_no
     if (raw_lon) xmlFree(raw_lon);
     if (raw_ele) xmlFree(raw_ele);
 
+    // heading (LLE mode: azimuth from north, CW, degrees)
+    xmlChar *raw_heading = xmlGetProp(xml_node, BAD_CAST "Heading");
+    if (raw_heading) {
+        dc_node.planet.heading = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_heading);
+        xmlFree(raw_heading);
+    }
+
     // XYZ/RPY camera mode (raw world coordinates)
     xmlChar *raw_cam_x = xmlGetProp(xml_node, BAD_CAST "CameraX");
     xmlChar *raw_cam_y = xmlGetProp(xml_node, BAD_CAST "CameraY");
