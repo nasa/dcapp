@@ -46,7 +46,6 @@ Index of this file:
 #include "pl_screen_log_ext.h"
 #include "pl_draw_ext.h"
 #include "pl_vfs_ext.h"
-#include "pl_pak_ext.h"
 #include "pl_stats_ext.h"
 
 // unstable extensions
@@ -108,7 +107,6 @@ static const plGPUAllocatorsI*    gptGpuAllocators    = NULL;
 static const plImageOpsI*         gptImageOps         = NULL;
 static const plVfsI*              gptVfs              = NULL;
 static const plResourceI*         gptResource         = NULL;
-static const plPakI*              gptPak              = NULL;
 static const plStatsI*            gptStats            = NULL;
 
 
@@ -126,7 +124,7 @@ typedef struct _plPlanetResidencyNode
     plPlanetResidencyNode* ptNext;
     plPlanetResidencyNode* ptPrev;
     plPlanetChunk*         ptChunk;
-    uint64_t                uFrameRequested;
+    uint64_t               uFrameRequested;
 } plPlanetResidencyNode;
 
 typedef struct _plOBB2
@@ -139,8 +137,8 @@ typedef struct _plOBB2
 typedef struct _plChunkFileData
 {
     plPlanetChunkFile tFile;
-    plPakFile*        ptPakFile;
     char              acPakFileName[256];
+    uint32_t          uTextureIndex;
 } plChunkFileData;
 
 typedef struct _plPlanet
@@ -148,6 +146,11 @@ typedef struct _plPlanet
     plPlanetRuntimeOptions tRuntimeOptions;
     plChunkFileData* sbtChunkFiles;
     double           dRadius;
+    plPlanetProcessInfo tInfo;
+    plVec2           tTopLeftGlobal;
+    plVec2           tBottomRightGlobal;
+    uint32_t                 uTileCount;
+    plPlanetProcessTileInfo* atTiles;
 
     // shaders
     plShaderHandle tShader;
@@ -226,7 +229,7 @@ static void pl__handle_residency (plPlanet*, plCommandBuffer*);
 static void pl__request_residency(plPlanet*, plPlanetChunk*);
 static void pl__touch_chunk(plPlanet*, plPlanetChunk*);
 static void pl__make_unresident  (plPlanet*, plPlanetChunk*);
-static bool pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture* ptTexture, plPlanetLoadFlags tFlags);
+static bool pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetLoadFlags tFlags);
 void pl__remove_from_replacement_queue(plPlanet* ptPlanet, plPlanetChunk* ptChunk);
 
 static void pl__render_chunk(plPlanet*, plCamera*, plRenderEncoder*, plPlanetChunk*, plPlanetChunkFile*, const plMat4* ptMVP);
@@ -240,6 +243,7 @@ static plTextureHandle pl__planet_create_texture(plCommandBuffer* ptCmdBuffer, c
 static plTextureHandle pl__planet_create_texture_with_data (const plTextureDesc*, const char* pcName, uint32_t uIdentifier, const void*, size_t);
 static uint32_t pl__planet_get_bindless_texture_index(plTextureHandle tTexture);
 static void pl__planet_return_bindless_texture_index(plTextureHandle tTexture);
+bool pl__chlod_update_chunk_file(plPlanet* ptPlanet, uint32_t uIndex, const char* pcTexture);
 
 
 static inline bool pl__is_leaf_resident(const plPlanetChunk* c)
@@ -425,6 +429,7 @@ pl_create_planet(plCommandBuffer* ptCmdBuffer, plPlanetInit tInit, plPlanetProce
     memset(ptPlanet, 0, sizeof(plPlanet));
 
 
+    ptPlanet->tInfo = *ptInfo;
     ptPlanet->tRuntimeOptions.fTau = 0.3f;
     ptPlanet->tRuntimeOptions.tLightDirection = (plVec3){-1.0f, -1.0f, -1.0f};
 
@@ -494,7 +499,11 @@ pl_create_planet(plCommandBuffer* ptCmdBuffer, plPlanetInit tInit, plPlanetProce
     // bind the buffer to the new memory allocation
     gptGfx->bind_buffer_to_memory(ptDevice, ptPlanet->tIndexBuffer, &tIndexBufferAllocation);
 
-    pl__planet_load(ptPlanet, ptInfo, tInit.atTextures[0].fMetersPerPixel > 0.0f ? &tInit.atTextures[0] : NULL, tInit.tLoadFlags);
+    pl__planet_load(ptPlanet, ptInfo, tInit.tLoadFlags);
+    ptPlanet->atTiles = PL_ALLOC(sizeof(plPlanetProcessTileInfo) * ptInfo->uTileCount);
+    memset(ptPlanet->atTiles, 0, sizeof(plPlanetProcessTileInfo) * ptInfo->uTileCount);
+    memcpy(ptPlanet->atTiles, ptInfo->atTiles, sizeof(plPlanetProcessTileInfo) * ptInfo->uTileCount);
+    ptPlanet->uTileCount = ptInfo->uTileCount;
 
     for(uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
         pl__request_residency(ptPlanet, &ptPlanet->sbtChunkFiles[i].tFile.atChunks[0]);
@@ -513,8 +522,8 @@ pl_cleanup_planet(plPlanet* ptPlanet)
         ptPlanet->sbtChunkFiles[i].tFile.uChunkCount = 0;
         ptPlanet->sbtChunkFiles[i].tFile.fMaxBaseError = 0.0f;
         ptPlanet->sbtChunkFiles[i].tFile.iTreeDepth = 0;
-        if(ptPlanet->sbtChunkFiles[i].ptPakFile)
-            gptPak->unload(&ptPlanet->sbtChunkFiles[i].ptPakFile);
+        // if(ptPlanet->sbtChunkFiles[i].ptPakFile)
+        //     gptPak->unload(&ptPlanet->sbtChunkFiles[i].ptPakFile);
     }
 
     // cleanup our resources
@@ -681,82 +690,258 @@ pl_get_planet_view_texture(plPlanetView* ptView)
     return ptView->tOutputTextureHandle;
 }
 
-bool
-pl_chlod_load_chunk_file(plPlanet* ptPlanet, const char* pcPath, const char* pcTexture, plPlanetLoadFlags tFlags)
+void
+pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptTexture)
 {
-    plChunkFileData tChunkFileData = {0};
-    uint32_t uChunkFileID = pl_sb_size(ptPlanet->sbtChunkFiles);
-    gptTerrainProcessor->load_chunk_file(pcPath, &tChunkFileData.tFile, uChunkFileID);
+    for(uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
+    {
+        if(ptPlanet->sbtChunkFiles[i].uTextureIndex != 0)
+        {
+            plResourceHandle tTextureResource = gptResource->load_ex(
+                ptPlanet->sbtChunkFiles[i].acPakFileName,
+                PL_RESOURCE_LOAD_FLAG_NO_CACHING, NULL, 0,
+                ptPlanet->sbtChunkFiles[i].acPakFileName, 0); 
+            plTextureHandle tTexture = gptResource->get_texture(tTextureResource);
+            pl__planet_return_bindless_texture_index(tTexture);
+            ptPlanet->sbtChunkFiles[i].uTextureIndex = 0;
+            gptResource->evict(tTextureResource);
+            gptResource->unload(tTextureResource);
+        }
+    }
 
-    plPakInfo tPakFileInfo = {0};
+    bool* abActiveTextureTiles = PL_ALLOC(sizeof(bool) * ptPlanet->uTileCount);
+    memset(abActiveTextureTiles, 0, sizeof(bool) * ptPlanet->uTileCount);
 
-    char acFileNameOnly[256] = {0};
-    pl_str_get_file_name_only(pcPath, acFileNameOnly, 256);
 
+    if(ptTexture)
+    {
+        float fLatitude = pl_radiansf(ptTexture->fLatitude);
+        float fLongitude = pl_radiansf(ptTexture->fLongitude);
+        float fR = 2.0f * (float)ptPlanet->dRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+        float fX = fR * sinf(fLongitude);
+        float fY = fR * cosf(fLongitude);
+
+        plImageInfo tImageInfo = {0};
+        gptImage->get_info_from_file(ptTexture->pcPath, &tImageInfo);
+
+        plVec2 tTopLeft = {
+            .x = fX - 0.5f * (float)tImageInfo.iWidth * ptTexture->fMetersPerPixel,
+            .y = fY - 0.5f * (float)tImageInfo.iHeight * ptTexture->fMetersPerPixel,
+        };
+
+        plVec2 tBottomRight = {
+            .x = fX + 0.5f * (float)tImageInfo.iWidth * ptTexture->fMetersPerPixel,
+            .y = fY + 0.5f * (float)tImageInfo.iHeight * ptTexture->fMetersPerPixel,
+        };
+
+        uint32_t uTopLeftXIndex = (uint32_t)floorf((tTopLeft.x - ptPlanet->tTopLeftGlobal.x) / ((float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel));
+        uint32_t uTopLeftYIndex = (uint32_t)floorf((tTopLeft.y - ptPlanet->tTopLeftGlobal.y) / ((float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel));
+
+        uint32_t uBottomRightXIndex = (uint32_t)floorf((tBottomRight.x - ptPlanet->tTopLeftGlobal.x) / ((float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel));
+        uint32_t uBottomRightYIndex = (uint32_t)floorf((tBottomRight.y - ptPlanet->tTopLeftGlobal.y) / ((float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel));
+
+        plVec2 tTopLeftLocal = {0};
+        plVec2 tBottomRightLocal = {0};
+
+        {
+            fLatitude = pl_radiansf(ptPlanet->atTiles[uTopLeftXIndex + uTopLeftYIndex * ptPlanet->tInfo.uHorizontalTiles].fLatitude);
+            fLongitude = pl_radiansf(ptPlanet->atTiles[uTopLeftXIndex + uTopLeftYIndex * ptPlanet->tInfo.uHorizontalTiles].fLongitude);
+            fR = 2.0f * ptPlanet->tInfo.fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+            fX = fR * sinf(fLongitude);
+            fY = fR * cosf(fLongitude);
+            tTopLeftLocal.x = fX - 0.5f * (float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel;
+            tTopLeftLocal.y = fY - 0.5f * (float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel;
+        }
+        {
+            fLatitude = pl_radiansf(ptPlanet->atTiles[uBottomRightXIndex + uBottomRightYIndex * ptPlanet->tInfo.uHorizontalTiles].fLatitude);
+            fLongitude = pl_radiansf(ptPlanet->atTiles[uBottomRightXIndex + uBottomRightYIndex * ptPlanet->tInfo.uHorizontalTiles].fLongitude);
+            fR = 2.0f * ptPlanet->tInfo.fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
+            fX = fR * sinf(fLongitude);
+            fY = fR * cosf(fLongitude);
+            tBottomRightLocal.x = fX + 0.5f * (float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel;
+            tBottomRightLocal.y = fY + 0.5f * (float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel;
+        }
+
+        int iImageWidth = 0;
+        int iImageHeight = 0;
+        int _unused;
+        unsigned char* pucImageData = gptImage->load_from_file(ptTexture->pcPath, &iImageWidth, &iImageHeight, &_unused, 4);
+
+        uint32_t uHorizontalExtent = uBottomRightXIndex - uTopLeftXIndex + 1;
+        uint32_t uVerticalExtent = uBottomRightYIndex - uTopLeftYIndex + 1;
+
+        plImageOpInfo tFullInfo = {
+            .uWidth =  (uint32_t)((tBottomRightLocal.x - tTopLeftLocal.x) / ptTexture->fMetersPerPixel),
+            .uHeight = (uint32_t)((tBottomRightLocal.y - tTopLeftLocal.y) / ptTexture->fMetersPerPixel),
+            .uChannels = 4,
+            .uStride = 4
+        };
+        plImageOpData tFullData = {0};
+        gptImageOps->initialize(&tFullInfo, &tFullData);
+        gptImageOps->square(&tFullData);
+
+
+        plImageOpData tOriginalDataMod = {0};
+        {
+            plImageOpInfo tOriginalInfo = {
+                .uWidth = (uint32_t)iImageWidth,
+                .uHeight = (uint32_t)iImageHeight,
+                .uChannels = 4,
+                .uStride = 4
+            };
+
+            gptImageOps->initialize(&tOriginalInfo, &tOriginalDataMod); 
+            tOriginalInfo.puData = pucImageData;
+            gptImageOps->add(&tOriginalDataMod, tOriginalInfo, 0, 0);
+            gptImage->free(pucImageData);
+        }
+        
+        float fDistanceX = tTopLeft.x - tTopLeftLocal.x;
+        float fDistanceY = tTopLeft.y - tTopLeftLocal.y;
+
+        float fEffectiveMetersPerPixelX = (tBottomRightLocal.x - tTopLeftLocal.x) / tFullInfo.uWidth;
+        float fEffectiveMetersPerPixelY = (tBottomRightLocal.y - tTopLeftLocal.y) / tFullInfo.uHeight;
+
+        uint32_t uXOffsetIndex = (uint32_t)(fDistanceX / fEffectiveMetersPerPixelX);
+        uint32_t uYOffsetIndex = (uint32_t)(fDistanceY / fEffectiveMetersPerPixelY);
+
+        uint32_t uXInc = tFullInfo.uWidth / uHorizontalExtent;
+        uint32_t uYInc = tFullInfo.uHeight / uVerticalExtent;
+
+
+        plImageOpInfo tOriginalInfo2 = {
+            .uWidth = tOriginalDataMod.uWidth,
+            .uHeight = tOriginalDataMod.uHeight,
+            .uChannels = 4,
+            .uStride = 4,
+            .puData = tOriginalDataMod.puData
+        };
+        gptImageOps->add(&tFullData, tOriginalInfo2, uXOffsetIndex, uYOffsetIndex);
+
+        // if(tFlags & PL_PLANET_LOAD_FLAGS_DEBUG)
+        // {
+        //     plImageWriteInfo tWriteInfo2 = {
+        //         .iWidth = (int)tFullData.uWidth,
+        //         .iHeight = (int)tFullData.uHeight,
+        //         .iComponents = 4,
+        //         .iByteStride = (int)(tFullData.uWidth * 4)
+        //     };
+        //     gptImage->write( "hazard_prep_final.png", tFullData.puData, &tWriteInfo2);
+        // }
+
+
+        for(uint32_t i = 0; i < uHorizontalExtent; i++)
+        {
+            for(uint32_t j = 0; j < uVerticalExtent; j++)
+            {
+                plImageOpData tImageData = {0};
+                gptImageOps->extract(&tFullData, i * uXInc, j * uYInc, uXInc, uYInc, &tImageData);
+
+                
+
+                plImageWriteInfo tWriteInfo = {
+                    .iWidth = (int)uXInc,
+                    .iHeight = (int)uYInc,
+                    .iComponents = 4,
+                    .iByteStride = (int)(uXInc * 4)
+                };
+
+                char acNameBuffer[128] = {0};
+                sprintf(acNameBuffer, "hazard_prep_%u_%u.png", i + uTopLeftXIndex, j + uTopLeftYIndex);
+
+                abActiveTextureTiles[i + uTopLeftXIndex + (j + uTopLeftYIndex) * ptPlanet->tInfo.uHorizontalTiles] = true;
+
+                gptImage->write(acNameBuffer, tImageData.puData, &tWriteInfo);
+                gptImageOps->cleanup(&tImageData);
+            }
+        }
+        gptImageOps->cleanup(&tOriginalDataMod);
+        gptImageOps->cleanup(&tFullData);
+
+    }
+
+    for(uint32_t k = 0; k < ptPlanet->tInfo.uTileCount; k++)
+    {
+        uint32_t i = k % ptPlanet->tInfo.uHorizontalTiles;
+        uint32_t j = (k - i) / ptPlanet->tInfo.uVerticalTiles;
+        char acNameBuffer[128] = {0};
+        sprintf(acNameBuffer, "hazard_prep_%u_%u.png", i, j);
+        const char* pcHazard = NULL;
+        if(abActiveTextureTiles[k])
+            pcHazard = acNameBuffer;
+        pl__chlod_update_chunk_file(ptPlanet, k, pcHazard);
+        // if(!(tFlags & PL_PLANET_LOAD_FLAGS_DEBUG) && abActiveTextureTiles[k])
+        // {
+        //     gptVfs->delete_file(gptVfs->register_file(acNameBuffer, true));
+        // }
+    }
+    PL_FREE(abActiveTextureTiles);
+}
+
+bool
+pl__chlod_update_chunk_file(plPlanet* ptPlanet, uint32_t uIndex, const char* pcTexture)
+{
 
     bool bTextured = pcTexture != NULL;
     bool bPacking = false;
     plImageOpData tImageOpData = {0};
     if(bTextured)
     {
-        sprintf(tChunkFileData.acPakFileName, "/cache/%s.pak", acFileNameOnly);
+        sprintf(ptPlanet->sbtChunkFiles[uIndex].acPakFileName, "%s", pcTexture);
         
-        if(tFlags & PL_PLANET_LOAD_FLAGS_CACHE_TEXTURES && gptVfs->does_file_exist(tChunkFileData.acPakFileName))
-        {
-            gptPak->load(tChunkFileData.acPakFileName, &tPakFileInfo, &tChunkFileData.ptPakFile);
-        }
-        else
-        {
-            plVfsFileHandle tPakFileHandle = gptVfs->register_file(tChunkFileData.acPakFileName, false);
-            const char* pcPhysicalPath = gptVfs->get_real_path(tPakFileHandle);
-            gptPak->begin_packing(pcPhysicalPath, 1, &tChunkFileData.ptPakFile);
-            bPacking = true;
+        bPacking = true;
 
+        // load actual data from file data
+        int iImageWidth = 0;
+        int iImageHeight = 0;
+        int _unused;
+        unsigned char* pucImageData = gptImage->load_from_file(pcTexture,  &iImageWidth, &iImageHeight, &_unused, 4);
 
-            // load actual data from file data
-            int iImageWidth = 0;
-            int iImageHeight = 0;
-            int _unused;
-            unsigned char* pucImageData = gptImage->load_from_file(pcTexture,  &iImageWidth, &iImageHeight, &_unused, 4);
+        plImageOpInfo tImageOpInfo = {
+            .uChannels = 4,
+            .uStride = 4,
+            .uWidth = (uint32_t)iImageWidth,
+            .uHeight = (uint32_t)iImageHeight
+        };
+    
+        gptImageOps->initialize(&tImageOpInfo, &tImageOpData);
 
-            plImageOpInfo tImageOpInfo = {
-                .uChannels = 4,
-                .uStride = 4,
-                .uWidth = (uint32_t)iImageWidth,
-                .uHeight = (uint32_t)iImageHeight
-            };
-        
-            gptImageOps->initialize(&tImageOpInfo, &tImageOpData);
-
-            plImageOpInfo tImageOpInfo0 = {
-                .uChannels = 4,
-                .uStride = 4,
-                .uWidth = (uint32_t)iImageWidth,
-                .uHeight = (uint32_t)iImageHeight,
-                .puData = pucImageData
-            };
-            gptImageOps->add(&tImageOpData, tImageOpInfo0, 0, 0);
-            gptImage->free(pucImageData);
-            gptImageOps->square(&tImageOpData);
-            // gptImageOps->downsample(&tImageOpData, 1);
-        }
+        plImageOpInfo tImageOpInfo0 = {
+            .uChannels = 4,
+            .uStride = 4,
+            .uWidth = (uint32_t)iImageWidth,
+            .uHeight = (uint32_t)iImageHeight,
+            .puData = pucImageData
+        };
+        gptImageOps->add(&tImageOpData, tImageOpInfo0, 0, 0);
+        gptImage->free(pucImageData);
+        gptImageOps->square(&tImageOpData);
     }
 
-    for(uint32_t i = 0; i < tChunkFileData.tFile.uChunkCount; i++)
+    if(pcTexture)
     {
+        plResourceHandle tTextureResource = gptResource->load_ex(
+            ptPlanet->sbtChunkFiles[uIndex].acPakFileName,
+            PL_RESOURCE_LOAD_FLAG_NO_CACHING, NULL, 0,
+            NULL, 0); 
+        gptResource->make_resident(tTextureResource);
+        plTextureHandle tTexture = gptResource->get_texture(tTextureResource);
+        ptPlanet->sbtChunkFiles[uIndex].uTextureIndex = pl__planet_get_bindless_texture_index(tTexture);
+    }
 
-        tChunkFileData.tFile.atChunks[i].uIndex = i;
+    for(uint32_t i = 0; i < ptPlanet->sbtChunkFiles[uIndex].tFile.uChunkCount; i++)
+    {
 
         if(bPacking)
         {
-            uint32_t uTopDownLevel = tChunkFileData.tFile.iTreeDepth - tChunkFileData.tFile.atChunks[i].uLevel - 1;
+            uint32_t uTopDownLevel = ptPlanet->sbtChunkFiles[uIndex].tFile.iTreeDepth - ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].uLevel - 1;
 
-            plImageOpData tImageOpDataMod = {0};
+            // plImageOpData tImageOpDataMod = {0};
             uint32_t uWidth = (uint32_t)((float)tImageOpData.uWidth / powf(2.0f, (float)uTopDownLevel));
             uint32_t uHeight = (uint32_t)((float)tImageOpData.uHeight / powf(2.0f, (float)uTopDownLevel));
 
-            float fXRatio = (float)tChunkFileData.tFile.atChunks[i].uX / 4096.0f; // UV on original heightmap
-            float fYRatio = (float)tChunkFileData.tFile.atChunks[i].uY / 4096.0f; // UV on original heightmap
+            float fXRatio = (float)ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].uX / 4096.0f; // UV on original heightmap
+            float fYRatio = (float)ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].uY / 4096.0f; // UV on original heightmap
 
             uint32_t uXOffset = (uint32_t)((float)tImageOpData.uWidth * fXRatio);  // pixels on texture map
             uint32_t uYOffset = (uint32_t)((float)tImageOpData.uHeight * fYRatio); // pixels on texture map
@@ -765,53 +950,43 @@ pl_chlod_load_chunk_file(plPlanet* ptPlanet, const char* pcPath, const char* pcT
             if (uXOffset + uWidth > tImageOpData.uWidth)    uWidth = tImageOpData.uWidth  - uXOffset;
             if (uYOffset + uHeight > tImageOpData.uHeight)  uHeight = tImageOpData.uHeight - uYOffset;
 
+            ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].tUVOffset.x = (float)uXOffset / (float)tImageOpData.uWidth;
+            ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].tUVOffset.y = (float)uYOffset / (float)tImageOpData.uHeight;
 
-            gptImageOps->extract(&tImageOpData,
-                uXOffset,
-                uYOffset,
-                uWidth, uHeight, &tImageOpDataMod);
-
-            plImageWriteInfo tImageWriteInfo = {
-                .iWidth = (int)uWidth,
-                .iHeight = (int)uHeight,
-                .iComponents = 4,
-                .iByteStride = 4 * uWidth
-            };
-            
-            pl_sb_sprintf(gptCtx->sbcScratchBuffer2, "%u_tile_%u.png", uChunkFileID, i);
-            gptImage->write(gptCtx->sbcScratchBuffer2, tImageOpDataMod.puData, &tImageWriteInfo);
-            gptImageOps->cleanup(&tImageOpDataMod);
-            pl_sb_sprintf(gptCtx->sbcScratchBuffer, "%s/%u_tile_%u.png", tChunkFileData.acPakFileName, uChunkFileID, i);
-            gptPak->add_from_disk(tChunkFileData.ptPakFile, gptCtx->sbcScratchBuffer, gptCtx->sbcScratchBuffer2, false);
-            gptFile->remove(gptCtx->sbcScratchBuffer2);
-            pl_sb_reset(gptCtx->sbcScratchBuffer);
-            pl_sb_reset(gptCtx->sbcScratchBuffer2);
+            ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].tUVScale.x = (float)uWidth / (float)tImageOpData.uWidth;
+            ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].tUVScale.y = (float)uHeight / (float)tImageOpData.uHeight;
         }
-        
-        FILE* ptDataFile = fopen(tChunkFileData.tFile.acFile, "rb");
-        fseek(ptDataFile, (long)tChunkFileData.tFile.atChunks[i].szFileLocation, SEEK_SET);
-
-        fseek(ptDataFile, sizeof(plVec3) * 2 + sizeof(int) * 4, SEEK_CUR);
-
-        uint32_t uVertexCount = 0;
-        fread(&uVertexCount, 1, sizeof(uint32_t), ptDataFile);
-        fseek(ptDataFile, sizeof(plPlanetVertex) * uVertexCount, SEEK_CUR);
-
-        uint32_t uIndexCount = 0;
-        fread(&uIndexCount, 1, sizeof(uint32_t), ptDataFile);
-        
-        fclose(ptDataFile);
+        else
+        {
+            ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].tUVScale.x = 1.0f;
+            ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].tUVScale.y = 1.0f;
+        }
     }
     
     if(bPacking)
     {
         gptImageOps->cleanup(&tImageOpData);
-        gptPak->end_packing(&tChunkFileData.ptPakFile);
-        gptPak->load(tChunkFileData.acPakFileName, &tPakFileInfo, &tChunkFileData.ptPakFile);
     }
 
-    pl_sb_push(ptPlanet->sbtChunkFiles, tChunkFileData);
+    return true;
+}
 
+bool
+pl_chlod_load_chunk_file(plPlanet* ptPlanet, const char* pcPath, plPlanetLoadFlags tFlags)
+{
+    plChunkFileData tChunkFileData = {0};
+    uint32_t uChunkFileID = pl_sb_size(ptPlanet->sbtChunkFiles);
+    gptTerrainProcessor->load_chunk_file(pcPath, &tChunkFileData.tFile, uChunkFileID);
+
+    for(uint32_t i = 0; i < tChunkFileData.tFile.uChunkCount; i++)
+    {
+
+        tChunkFileData.tFile.atChunks[i].uIndex = i;
+
+        tChunkFileData.tFile.atChunks[i].tUVScale.x = 1.0f;
+        tChunkFileData.tFile.atChunks[i].tUVScale.y = 1.0f;
+    }
+    pl_sb_push(ptPlanet->sbtChunkFiles, tChunkFileData);
     return true;
 }
 
@@ -1155,19 +1330,19 @@ pl__make_unresident(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
     if(ptChunk->ptIndexHole && ptChunk->uIndexCount > 0)
     {
 
-        if(ptPlanet->sbtChunkFiles[ptChunk->uFileID].ptPakFile)
-        {
-            pl_sb_sprintf(gptCtx->sbcScratchBuffer, "%s/%u_tile_%u.png", ptPlanet->sbtChunkFiles[ptChunk->uFileID].acPakFileName, ptChunk->uFileID, ptChunk->uIndex);
-            plResourceHandle tTextureResource = gptResource->load_ex(
-                gptCtx->sbcScratchBuffer,
-                PL_RESOURCE_LOAD_FLAG_NO_CACHING, NULL, 0,
-                ptPlanet->sbtChunkFiles[ptChunk->uFileID].acPakFileName, 0); 
-            plTextureHandle tTexture = gptResource->get_texture(tTextureResource);
-            pl__planet_return_bindless_texture_index(tTexture);
-            ptChunk->uTextureIndex = 0;
-            pl_sb_reset(gptCtx->sbcScratchBuffer);
-            gptResource->evict(tTextureResource);
-        }
+        // if(ptPlanet->sbtChunkFiles[ptChunk->uFileID].ptPakFile)
+        // {
+        //     pl_sb_sprintf(gptCtx->sbcScratchBuffer, "%s/%u_tile_%u.png", ptPlanet->sbtChunkFiles[ptChunk->uFileID].acPakFileName, ptChunk->uFileID, ptChunk->uIndex);
+        //     plResourceHandle tTextureResource = gptResource->load_ex(
+        //         gptCtx->sbcScratchBuffer,
+        //         PL_RESOURCE_LOAD_FLAG_NO_CACHING, NULL, 0,
+        //         ptPlanet->sbtChunkFiles[ptChunk->uFileID].acPakFileName, 0); 
+        //     plTextureHandle tTexture = gptResource->get_texture(tTextureResource);
+        //     pl__planet_return_bindless_texture_index(tTexture);
+        //     ptChunk->uTextureIndex = 0;
+        //     pl_sb_reset(gptCtx->sbcScratchBuffer);
+        //     gptResource->evict(tTextureResource);
+        // }
 
         if(ptChunk->ptIndexHole)
             gptFreeList->return_node(&ptPlanet->tIndexBufferManager, ptChunk->ptIndexHole);
@@ -1260,19 +1435,19 @@ pl__handle_residency(plPlanet* ptPlanet, plCommandBuffer* ptCommandBuffer)
         ptChunk->ptVertexHole = vtx_hole;
         ptChunk->uIndexCount  = uIndexCount;
 
-        if(ptPlanet->sbtChunkFiles[ptChunk->uFileID].ptPakFile)
-        {
-            pl_sb_sprintf(gptCtx->sbcScratchBuffer, "%s/%u_tile_%u.png", ptPlanet->sbtChunkFiles[ptChunk->uFileID].acPakFileName, ptChunk->uFileID, ptChunk->uIndex);
-            plResourceHandle tTextureResource = gptResource->load_ex(
-                gptCtx->sbcScratchBuffer,
-                PL_RESOURCE_LOAD_FLAG_NO_CACHING, NULL, 0,
-                ptPlanet->sbtChunkFiles[ptChunk->uFileID].acPakFileName, 0); 
-            gptResource->make_resident(tTextureResource);
-            plTextureHandle tTexture = gptResource->get_texture(tTextureResource);
-            ptChunk->uTextureIndex = pl__planet_get_bindless_texture_index(tTexture);
+        // if(ptPlanet->sbtChunkFiles[ptChunk->uFileID].ptPakFile)
+        // {
+        //     pl_sb_sprintf(gptCtx->sbcScratchBuffer, "%s/%u_tile_%u.png", ptPlanet->sbtChunkFiles[ptChunk->uFileID].acPakFileName, ptChunk->uFileID, ptChunk->uIndex);
+        //     plResourceHandle tTextureResource = gptResource->load_ex(
+        //         gptCtx->sbcScratchBuffer,
+        //         PL_RESOURCE_LOAD_FLAG_NO_CACHING, NULL, 0,
+        //         ptPlanet->sbtChunkFiles[ptChunk->uFileID].acPakFileName, 0); 
+        //     gptResource->make_resident(tTextureResource);
+        //     plTextureHandle tTexture = gptResource->get_texture(tTextureResource);
+        //     ptChunk->uTextureIndex = pl__planet_get_bindless_texture_index(tTexture);
             
-            pl_sb_reset(gptCtx->sbcScratchBuffer);
-        }
+        //     pl_sb_reset(gptCtx->sbcScratchBuffer);
+        // }
 
         // update buffer offsets
 
@@ -1519,8 +1694,10 @@ pl__render_chunk(plPlanet* ptPlanet, plCamera* ptCamera , plRenderEncoder* ptEnc
         ptDynamic->tMvp            = tMVP;
         ptDynamic->iLevel          = (int)ptChunk->uLevel;
         ptDynamic->tFlags          = ptPlanet->tRuntimeOptions.tFlags;
-        ptDynamic->uTextureIndex   = ptChunk->uTextureIndex;
+        ptDynamic->uTextureIndex   = ptPlanet->sbtChunkFiles[ptChunk->uFileID].uTextureIndex;
         ptDynamic->tLightDirection = ptPlanet->tRuntimeOptions.tLightDirection;
+        ptDynamic->tUVInfo.xy       = ptChunk->tUVScale;
+        ptDynamic->tUVInfo.zw       = ptChunk->tUVOffset;
 
         plShaderHandle tShader =
             (ptPlanet->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_WIREFRAME)
@@ -1820,22 +1997,16 @@ pl__sat_visibility_test(plCamera* ptCamera, const plAABB* ptAABB)
 }
 
 static bool
-pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture* ptTexture, plPlanetLoadFlags tFlags)
+pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetLoadFlags tFlags)
 {
-
-    plVec2 tTopLeftGlobal = {0};
-    plVec2 tBottomRightGlobal = {0};
-    bool* abActiveTextureTiles = PL_ALLOC(sizeof(bool) * ptInfo->uTileCount);
-    memset(abActiveTextureTiles, 0, sizeof(bool) * ptInfo->uTileCount);
-
     {
         float fLatitude = pl_radiansf(ptInfo->atTiles[0].fLatitude);
         float fLongitude = pl_radiansf(ptInfo->atTiles[0].fLongitude);
         float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
         float fX = fR * sinf(fLongitude);
         float fY = fR * cosf(fLongitude);
-        tTopLeftGlobal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
-        tTopLeftGlobal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
+        ptPlanet->tTopLeftGlobal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
+        ptPlanet->tTopLeftGlobal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
     }
 
     {
@@ -1844,173 +2015,16 @@ pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetTexture
         float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
         float fX = fR * sinf(fLongitude);
         float fY = fR * cosf(fLongitude);
-        tBottomRightGlobal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
-        tBottomRightGlobal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
-    }
-
-    if(ptTexture)
-    {
-        float fLatitude = pl_radiansf(ptTexture->fLatitude);
-        float fLongitude = pl_radiansf(ptTexture->fLongitude);
-        float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-        float fX = fR * sinf(fLongitude);
-        float fY = fR * cosf(fLongitude);
-
-        plImageInfo tImageInfo = {0};
-        gptImage->get_info_from_file(ptTexture->pcPath, &tImageInfo);
-
-        plVec2 tTopLeft = {
-            .x = fX - 0.5f * (float)tImageInfo.iWidth * ptTexture->fMetersPerPixel,
-            .y = fY - 0.5f * (float)tImageInfo.iHeight * ptTexture->fMetersPerPixel,
-        };
-
-        plVec2 tBottomRight = {
-            .x = fX + 0.5f * (float)tImageInfo.iWidth * ptTexture->fMetersPerPixel,
-            .y = fY + 0.5f * (float)tImageInfo.iHeight * ptTexture->fMetersPerPixel,
-        };
-
-        uint32_t uTopLeftXIndex = (uint32_t)floorf((tTopLeft.x - tTopLeftGlobal.x) / ((float)ptInfo->uSize * ptInfo->fMetersPerPixel));
-        uint32_t uTopLeftYIndex = (uint32_t)floorf((tTopLeft.y - tTopLeftGlobal.y) / ((float)ptInfo->uSize * ptInfo->fMetersPerPixel));
-
-        uint32_t uBottomRightXIndex = (uint32_t)floorf((tBottomRight.x - tTopLeftGlobal.x) / ((float)ptInfo->uSize * ptInfo->fMetersPerPixel));
-        uint32_t uBottomRightYIndex = (uint32_t)floorf((tBottomRight.y - tTopLeftGlobal.y) / ((float)ptInfo->uSize * ptInfo->fMetersPerPixel));
-
-        plVec2 tTopLeftLocal = {0};
-        plVec2 tBottomRightLocal = {0};
-
-        {
-            fLatitude = pl_radiansf(ptInfo->atTiles[uTopLeftXIndex + uTopLeftYIndex * ptInfo->uHorizontalTiles].fLatitude);
-            fLongitude = pl_radiansf(ptInfo->atTiles[uTopLeftXIndex + uTopLeftYIndex * ptInfo->uHorizontalTiles].fLongitude);
-            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-            fX = fR * sinf(fLongitude);
-            fY = fR * cosf(fLongitude);
-            tTopLeftLocal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
-            tTopLeftLocal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
-        }
-        {
-            fLatitude = pl_radiansf(ptInfo->atTiles[uBottomRightXIndex + uBottomRightYIndex * ptInfo->uHorizontalTiles].fLatitude);
-            fLongitude = pl_radiansf(ptInfo->atTiles[uBottomRightXIndex + uBottomRightYIndex * ptInfo->uHorizontalTiles].fLongitude);
-            fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-            fX = fR * sinf(fLongitude);
-            fY = fR * cosf(fLongitude);
-            tBottomRightLocal.x = fX + 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
-            tBottomRightLocal.y = fY + 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
-        }
-
-        int iImageWidth = 0;
-        int iImageHeight = 0;
-        int _unused;
-        unsigned char* pucImageData = gptImage->load_from_file(ptTexture->pcPath, &iImageWidth, &iImageHeight, &_unused, 4);
-
-        uint32_t uHorizontalExtent = uBottomRightXIndex - uTopLeftXIndex + 1;
-        uint32_t uVerticalExtent = uBottomRightYIndex - uTopLeftYIndex + 1;
-
-        plImageOpInfo tFullInfo = {
-            .uWidth =  (uint32_t)((tBottomRightLocal.x - tTopLeftLocal.x) / ptTexture->fMetersPerPixel),
-            .uHeight = (uint32_t)((tBottomRightLocal.y - tTopLeftLocal.y) / ptTexture->fMetersPerPixel),
-            .uChannels = 4,
-            .uStride = 4
-        };
-        plImageOpData tFullData = {0};
-        gptImageOps->initialize(&tFullInfo, &tFullData);
-        gptImageOps->square(&tFullData);
-
-
-        plImageOpData tOriginalDataMod = {0};
-        {
-            plImageOpInfo tOriginalInfo = {
-                .uWidth = (uint32_t)iImageWidth,
-                .uHeight = (uint32_t)iImageHeight,
-                .uChannels = 4,
-                .uStride = 4
-            };
-
-            gptImageOps->initialize(&tOriginalInfo, &tOriginalDataMod); 
-            tOriginalInfo.puData = pucImageData;
-            gptImageOps->add(&tOriginalDataMod, tOriginalInfo, 0, 0);
-            gptImage->free(pucImageData);
-        }
-        
-        float fDistanceX = tTopLeft.x - tTopLeftLocal.x;
-        float fDistanceY = tTopLeft.y - tTopLeftLocal.y;
-
-        float fEffectiveMetersPerPixelX = (tBottomRightLocal.x - tTopLeftLocal.x) / tFullInfo.uWidth;
-        float fEffectiveMetersPerPixelY = (tBottomRightLocal.y - tTopLeftLocal.y) / tFullInfo.uHeight;
-
-        uint32_t uXOffsetIndex = (uint32_t)(fDistanceX / fEffectiveMetersPerPixelX);
-        uint32_t uYOffsetIndex = (uint32_t)(fDistanceY / fEffectiveMetersPerPixelY);
-
-        uint32_t uXInc = tFullInfo.uWidth / uHorizontalExtent;
-        uint32_t uYInc = tFullInfo.uHeight / uVerticalExtent;
-
-
-        plImageOpInfo tOriginalInfo2 = {
-            .uWidth = tOriginalDataMod.uWidth,
-            .uHeight = tOriginalDataMod.uHeight,
-            .uChannels = 4,
-            .uStride = 4,
-            .puData = tOriginalDataMod.puData
-        };
-        gptImageOps->add(&tFullData, tOriginalInfo2, uXOffsetIndex, uYOffsetIndex);
-
-        if(tFlags & PL_PLANET_LOAD_FLAGS_DEBUG)
-        {
-            plImageWriteInfo tWriteInfo2 = {
-                .iWidth = (int)tFullData.uWidth,
-                .iHeight = (int)tFullData.uHeight,
-                .iComponents = 4,
-                .iByteStride = (int)(tFullData.uWidth * 4)
-            };
-            gptImage->write( "hazard_prep_final.png", tFullData.puData, &tWriteInfo2);
-        }
-
-
-        for(uint32_t i = 0; i < uHorizontalExtent; i++)
-        {
-            for(uint32_t j = 0; j < uVerticalExtent; j++)
-            {
-                plImageOpData tImageData = {0};
-                gptImageOps->extract(&tFullData, i * uXInc, j * uYInc, uXInc, uYInc, &tImageData);
-
-                
-
-                plImageWriteInfo tWriteInfo = {
-                    .iWidth = (int)uXInc,
-                    .iHeight = (int)uYInc,
-                    .iComponents = 4,
-                    .iByteStride = (int)(uXInc * 4)
-                };
-
-                char acNameBuffer[128] = {0};
-                sprintf(acNameBuffer, "hazard_prep_%u_%u.png", i + uTopLeftXIndex, j + uTopLeftYIndex);
-
-                abActiveTextureTiles[i + uTopLeftXIndex + (j + uTopLeftYIndex) * ptInfo->uHorizontalTiles] = true;
-
-                gptImage->write(acNameBuffer, tImageData.puData, &tWriteInfo);
-                gptImageOps->cleanup(&tImageData);
-            }
-        }
-        gptImageOps->cleanup(&tOriginalDataMod);
-        gptImageOps->cleanup(&tFullData);
-
+        ptPlanet->tBottomRightGlobal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
+        ptPlanet->tBottomRightGlobal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
     }
 
     for(uint32_t k = 0; k < ptInfo->uTileCount; k++)
     {
         uint32_t i = k % ptInfo->uHorizontalTiles;
         uint32_t j = (k - i) / ptInfo->uVerticalTiles;
-        char acNameBuffer[128] = {0};
-        sprintf(acNameBuffer, "hazard_prep_%u_%u.png", i, j);
-        const char* pcHazard = NULL;
-        if(abActiveTextureTiles[k])
-            pcHazard = acNameBuffer;
-        pl_chlod_load_chunk_file(ptPlanet, ptInfo->atTiles[k].acOutputFile, pcHazard, tFlags);
-        if(!(tFlags & PL_PLANET_LOAD_FLAGS_DEBUG) && abActiveTextureTiles[k])
-        {
-            gptVfs->delete_file(gptVfs->register_file(acNameBuffer, true));
-        }
+        pl_chlod_load_chunk_file(ptPlanet, ptInfo->atTiles[k].acOutputFile, tFlags);
     }
-    PL_FREE(abActiveTextureTiles);
     return true;
 }
 
@@ -2195,6 +2209,7 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .get_runtime_options = pl_planet_get_runtime_options,
         .set_shaders         = pl_planet_set_shaders,
         .draw_sphere         = pl_draw_sphere,
+        .set_texture         = pl_planet_set_texture,
         .create_view         = pl_create_planet_view,
         .cleanup_view        = pl_cleanup_planet_view,
         .render_view         = pl_render_to_planet_view,
@@ -2219,7 +2234,6 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
     gptImageOps         = pl_get_api_latest(ptApiRegistry, plImageOpsI);
     gptVfs              = pl_get_api_latest(ptApiRegistry, plVfsI);
     gptResource         = pl_get_api_latest(ptApiRegistry, plResourceI);
-    gptPak              = pl_get_api_latest(ptApiRegistry, plPakI);
     gptStats            = pl_get_api_latest(ptApiRegistry, plStatsI);
 
     const plDataRegistryI* ptDataRegistry = pl_get_api_latest(ptApiRegistry, plDataRegistryI);

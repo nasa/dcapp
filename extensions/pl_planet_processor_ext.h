@@ -105,7 +105,6 @@ typedef struct _plPlanetChunk
     uint32_t        uIndexCount;
     plFreeListNode* ptVertexHole;
     plFreeListNode* ptIndexHole;
-    uint32_t        uTextureIndex;
     
 
     size_t szFileLocation;
@@ -116,6 +115,8 @@ typedef struct _plPlanetChunk
     plPlanetChunk* ptPrev;
 
     bool bInReplacementList;
+    plVec2 tUVOffset;
+    plVec2 tUVScale;
 } plPlanetChunk;
 
 typedef struct _plPlanetChunkFile

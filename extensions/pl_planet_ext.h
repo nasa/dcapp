@@ -76,6 +76,8 @@ typedef struct _plPlanetI
     plPlanet* (*create_planet) (plCommandBuffer*, plPlanetInit, plPlanetProcessInfo*);
     void      (*cleanup_planet)(plPlanet*);
 
+    void (*set_texture)(plPlanet*, plPlanetTexture*);
+
     // per frame
     void (*prepare)(plPlanet*, plCommandBuffer*);
 
@@ -127,9 +129,6 @@ typedef struct _plPlanetInit
     // shaders
     const char* pcVertexShader;   // default: "planet.vert"
     const char* pcFragmentShader; // default: "planet.frag"
-
-    // textures
-    plPlanetTexture atTextures[1];
 } plPlanetInit;
 
 typedef struct _plPlanetViewInit

@@ -29,12 +29,18 @@ PL_END_ENUM
 
 PL_BEGIN_STRUCT(plGpuDynPlanetData)
     mat4 tMvp;
+
     int iLevel;
     int tFlags;
     uint uTextureIndex;
+    int _iUnused0;
+
+    vec4 tUVInfo;
 
     vec3 tLightDirection;
-    int _iUnused0;
+    int _iUnused1;
+
+    
 PL_END_STRUCT(plGpuDynPlanetData)
 
 #endif // PL_SHADER_INTEROP_TERRAIN_H

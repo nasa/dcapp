@@ -1242,9 +1242,11 @@ pl__update(plPlanetHeightMap* ptHeightMap, float fBaseMaxError, int iApexX, int 
     plPlanetMapElement* ptLeftElement = pl__get_elem(ptHeightMap, iLeftX, iLeftZ);
     plPlanetMapElement* ptRightElement = pl__get_elem(ptHeightMap, iRightX, iRightZ);
 
-    // error is the height deviation from linear interpolation
-    // |pos| = R + h for a sphere, so |base| - (|left| + |right|) / 2 = h_base - (h_left + h_right) / 2
-    float fError = ptBaseElement->fY - (ptLeftElement->fY + ptRightElement->fY) / 2.0f;
+    plVec3 tBaseVertex = pl__get_cartesian(ptHeightMap, ptBaseElement);
+    plVec3 tLeftVertex = pl__get_cartesian(ptHeightMap, ptLeftElement);
+    plVec3 tRightVertex = pl__get_cartesian(ptHeightMap, ptRightElement);
+
+    float fError = pl_length_vec3(tBaseVertex) - (pl_length_vec3(tLeftVertex) + pl_length_vec3(tRightVertex)) / 2.0f;
 
 	pl__get_elem(ptHeightMap, iBaseX, iBaseZ)->fError = fError;	// Set this vert's error value.
 	if (fabs(fError) >= fBaseMaxError)

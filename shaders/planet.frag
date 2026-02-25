@@ -33,8 +33,12 @@ layout(set = 3, binding = 0) uniform PL_DYNAMIC_DATA
 void main() 
 {
 
+    vec2 tUVActual = tShaderIn.tUV;
+    tUVActual = tUVActual * tDynamicData.tData.tUVInfo.xy;
+    tUVActual = tUVActual + tDynamicData.tData.tUVInfo.zw;
+
     vec3 normal = normalize(tShaderIn.tWorldNormal);
-    vec4 tHazardColor = texture(sampler2D(at2DTextures[tDynamicData.tData.uTextureIndex], tSamplerLinearClamp), tShaderIn.tUV);
+    vec4 tHazardColor = texture(sampler2D(at2DTextures[tDynamicData.tData.uTextureIndex], tSamplerLinearClamp), tUVActual);
 
     vec3 sunlightColor = vec3(1.0, 1.0, 1.0);
     vec3 diffuse = vec3(0.5);
@@ -44,9 +48,7 @@ void main()
 
     outColor.xyz = diffuse * (max(0.0, dot(normal, w_i)) * sunlightColor + ambient);
     outColor.a = 1.0;
-    // outColor.rg = tShaderIn.tUV;
     outColor.rgb += tHazardColor.rgb * 0.3;
-    // outColor.rgb = normal;
 
     if(bool(tDynamicData.tData.tFlags & PL_TERRAIN_SHADER_FLAGS_SHOW_LEVELS))
     {
