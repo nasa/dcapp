@@ -83,49 +83,49 @@
 
             <!-- ========== AUTO-ANIMATE LOGIC ========== -->
             <!-- Roll auto-animate: bounce between 0 and 360 -->
-            <If Value1="@RollAutoAnimate" Operation="#_if_eq_" Value2="1">
-                <If Value1="@RollAnimateDir" Operation="#_if_eq_" Value2="1">
+            <If Value1="@RollAutoAnimate" Operator="#_if_eq_" Value2="1">
+                <If Value1="@RollAnimateDir" Operator="#_if_eq_" Value2="1">
                     <Set Variable="RollSlider" Operator="#_set_add_">0.5</Set>
                 </If>
-                <If Value1="@RollAnimateDir" Operation="#_if_eq_" Value2="-1">
+                <If Value1="@RollAnimateDir" Operator="#_if_eq_" Value2="-1">
                     <Set Variable="RollSlider" Operator="#_set_subtract_">0.5</Set>
                 </If>
-                <If Value1="@RollSlider" Operation="#_if_gte_" Value2="360">
+                <If Value1="@RollSlider" Operator="#_if_gte_" Value2="360">
                     <Set Variable="RollAnimateDir">-1</Set>
                 </If>
-                <If Value1="@RollSlider" Operation="#_if_lte_" Value2="0">
+                <If Value1="@RollSlider" Operator="#_if_lte_" Value2="0">
                     <Set Variable="RollAnimateDir">1</Set>
                 </If>
             </If>
 
             <!-- Pitch auto-animate: bounce between 0 and 180 -->
-            <If Value1="@PitchAutoAnimate" Operation="#_if_eq_" Value2="1">
-                <If Value1="@PitchAnimateDir" Operation="#_if_eq_" Value2="1">
+            <If Value1="@PitchAutoAnimate" Operator="#_if_eq_" Value2="1">
+                <If Value1="@PitchAnimateDir" Operator="#_if_eq_" Value2="1">
                     <Set Variable="PitchSlider" Operator="#_set_add_">0.3</Set>
                 </If>
-                <If Value1="@PitchAnimateDir" Operation="#_if_eq_" Value2="-1">
+                <If Value1="@PitchAnimateDir" Operator="#_if_eq_" Value2="-1">
                     <Set Variable="PitchSlider" Operator="#_set_subtract_">0.3</Set>
                 </If>
-                <If Value1="@PitchSlider" Operation="#_if_gte_" Value2="180">
+                <If Value1="@PitchSlider" Operator="#_if_gte_" Value2="180">
                     <Set Variable="PitchAnimateDir">-1</Set>
                 </If>
-                <If Value1="@PitchSlider" Operation="#_if_lte_" Value2="0">
+                <If Value1="@PitchSlider" Operator="#_if_lte_" Value2="0">
                     <Set Variable="PitchAnimateDir">1</Set>
                 </If>
             </If>
 
             <!-- Yaw auto-animate: bounce between 0 and 360 -->
-            <If Value1="@YawAutoAnimate" Operation="#_if_eq_" Value2="1">
-                <If Value1="@YawAnimateDir" Operation="#_if_eq_" Value2="1">
+            <If Value1="@YawAutoAnimate" Operator="#_if_eq_" Value2="1">
+                <If Value1="@YawAnimateDir" Operator="#_if_eq_" Value2="1">
                     <Set Variable="YawSlider" Operator="#_set_add_">0.5</Set>
                 </If>
-                <If Value1="@YawAnimateDir" Operation="#_if_eq_" Value2="-1">
+                <If Value1="@YawAnimateDir" Operator="#_if_eq_" Value2="-1">
                     <Set Variable="YawSlider" Operator="#_set_subtract_">0.5</Set>
                 </If>
-                <If Value1="@YawSlider" Operation="#_if_gte_" Value2="360">
+                <If Value1="@YawSlider" Operator="#_if_gte_" Value2="360">
                     <Set Variable="YawAnimateDir">-1</Set>
                 </If>
-                <If Value1="@YawSlider" Operation="#_if_lte_" Value2="0">
+                <If Value1="@YawSlider" Operator="#_if_lte_" Value2="0">
                     <Set Variable="YawAnimateDir">1</Set>
                 </If>
             </If>
@@ -508,7 +508,7 @@
             </Button>
             <Container X="850" Y="800" Width="300" Height="20" VirtualWidth="360" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
-                <If Value1="@RollSliderSel" Operation="#_if_eq_" Value2="1">
+                <If Value1="@RollSliderSel" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="RollSlider"/>
                 </If>
                 <Set Variable="RollSlider" Operator="#_set_max_">0</Set>
@@ -528,7 +528,7 @@
             </Button>
             <Container X="850" Y="760" Width="300" Height="20" VirtualWidth="180" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
-                <If Value1="@PitchSliderSel" Operation="#_if_eq_" Value2="1">
+                <If Value1="@PitchSliderSel" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="PitchSlider"/>
                 </If>
                 <Set Variable="PitchSlider" Operator="#_set_max_">0</Set>
@@ -548,7 +548,7 @@
             </Button>
             <Container X="850" Y="720" Width="300" Height="20" VirtualWidth="360" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
-                <If Value1="@YawSliderSel" Operation="#_if_eq_" Value2="1">
+                <If Value1="@YawSliderSel" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="YawSlider"/>
                 </If>
                 <Set Variable="YawSlider" Operator="#_set_max_">0</Set>
@@ -568,7 +568,7 @@
             <Text X="830" Y="620" LocalAlignX="#_align_right_">@RollRate(%.1f)</Text>
             <Container X="850" Y="620" Width="300" Height="20" VirtualWidth="200" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
-                <If Value1="@RollRateSliderSel" Operation="#_if_eq_" Value2="1">
+                <If Value1="@RollRateSliderSel" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="RollRateSlider"/>
                 </If>
                 <Set Variable="RollRateSlider" Operator="#_set_max_">0</Set>
@@ -584,7 +584,7 @@
             <Text X="830" Y="580" LocalAlignX="#_align_right_">@PitchRate(%.1f)</Text>
             <Container X="850" Y="580" Width="300" Height="20" VirtualWidth="200" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
-                <If Value1="@PitchRateSliderSel" Operation="#_if_eq_" Value2="1">
+                <If Value1="@PitchRateSliderSel" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="PitchRateSlider"/>
                 </If>
                 <Set Variable="PitchRateSlider" Operator="#_set_max_">0</Set>
@@ -600,7 +600,7 @@
             <Text X="830" Y="540" LocalAlignX="#_align_right_">@YawRate(%.1f)</Text>
             <Container X="850" Y="540" Width="300" Height="20" VirtualWidth="200" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
-                <If Value1="@YawRateSliderSel" Operation="#_if_eq_" Value2="1">
+                <If Value1="@YawRateSliderSel" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="YawRateSlider"/>
                 </If>
                 <Set Variable="YawRateSlider" Operator="#_set_max_">0</Set>
@@ -620,7 +620,7 @@
             <Text X="830" Y="440" LocalAlignX="#_align_right_">@RollError(%.2f)</Text>
             <Container X="850" Y="440" Width="300" Height="20" VirtualWidth="200" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
-                <If Value1="@RollErrorSliderSel" Operation="#_if_eq_" Value2="1">
+                <If Value1="@RollErrorSliderSel" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="RollErrorSlider"/>
                 </If>
                 <Set Variable="RollErrorSlider" Operator="#_set_max_">0</Set>
@@ -636,7 +636,7 @@
             <Text X="830" Y="400" LocalAlignX="#_align_right_">@PitchError(%.2f)</Text>
             <Container X="850" Y="400" Width="300" Height="20" VirtualWidth="200" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
-                <If Value1="@PitchErrorSliderSel" Operation="#_if_eq_" Value2="1">
+                <If Value1="@PitchErrorSliderSel" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="PitchErrorSlider"/>
                 </If>
                 <Set Variable="PitchErrorSlider" Operator="#_set_max_">0</Set>
@@ -652,7 +652,7 @@
             <Text X="830" Y="360" LocalAlignX="#_align_right_">@YawError(%.2f)</Text>
             <Container X="850" Y="360" Width="300" Height="20" VirtualWidth="200" LocalAlignY="#_align_middle_">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
-                <If Value1="@YawErrorSliderSel" Operation="#_if_eq_" Value2="1">
+                <If Value1="@YawErrorSliderSel" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="YawErrorSlider"/>
                 </If>
                 <Set Variable="YawErrorSlider" Operator="#_set_max_">0</Set>

@@ -4464,7 +4464,7 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
         plPlanet *planet = app_data->sb_planets[node->planet.planet_index - 1];
         if (planet) {
 
-            // runtime shader swap — only fires when ShaderVariable changes value
+            // runtime shader swap — only fires when ShaderIndex changes value
             if (node->planet.planet_shader_var != DC_APP_VAL_INDEX_UNDEFINED && sbcount(node->planet.sb_planet_shaders) > 0) {
                 int desired_idx = (int)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_shader_var)->value_double;
                 if (desired_idx != node->planet.planet_active_shader_index) {

@@ -46,10 +46,10 @@
                 <Text X="125" Y="35" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.6 0.6">Clicks: @CLICK_COUNT(%.0f)</Text>
 
                 <!-- Active indicator -->
-                <If Value1="@MOMENTARY_ACTIVE" Operation="#_if_eq_" Value2="1">
+                <If Value1="@MOMENTARY_ACTIVE" Operator="#_if_eq_" Value2="1">
                     <Ellipse X="200" Y="85" Radius="10" FillColor="0.3 0.8 0.3"/>
                 </If>
-                <If Value1="@MOMENTARY_ACTIVE" Operation="#_if_eq_" Value2="0">
+                <If Value1="@MOMENTARY_ACTIVE" Operator="#_if_eq_" Value2="0">
                     <Ellipse X="200" Y="85" Radius="10" FillColor="0.3 0.3 0.3"/>
                 </If>
                 <Text X="200" Y="62" LocalAlignX="#_align_center_" Size="8" FillColor="0.5 0.5 0.5">Active</Text>
@@ -95,7 +95,7 @@
                     <ButtonIndicatorOff><Rectangle Width="80" Height="40" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Option 1</Text>
                 </Button>
-                <If Value1="@RADIO_STATE" Operation="#_if_eq_" Value2="1">
+                <If Value1="@RADIO_STATE" Operator="#_if_eq_" Value2="1">
                     <Ellipse X="60" Y="110" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
 
@@ -105,7 +105,7 @@
                     <ButtonIndicatorOff><Rectangle Width="80" Height="40" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Option 2</Text>
                 </Button>
-                <If Value1="@RADIO_STATE" Operation="#_if_eq_" Value2="2">
+                <If Value1="@RADIO_STATE" Operator="#_if_eq_" Value2="2">
                     <Ellipse X="150" Y="110" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
 
@@ -115,7 +115,7 @@
                     <ButtonIndicatorOff><Rectangle Width="80" Height="40" FillColor="0.25 0.25 0.3"/></ButtonIndicatorOff>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">Option 3</Text>
                 </Button>
-                <If Value1="@RADIO_STATE" Operation="#_if_eq_" Value2="3">
+                <If Value1="@RADIO_STATE" Operator="#_if_eq_" Value2="3">
                     <Ellipse X="240" Y="110" Radius="6" FillColor="0.3 0.8 0.3"/>
                 </If>
 
@@ -165,7 +165,7 @@
                 <Button Type="#_button_momentary_" X="25" Y="80" Width="40" Height="40">
                     <MousePressed>
                         <Set Variable="SLIDER_VALUE" Operator="#_set_subtract_">5</Set>
-                        <If Value1="@SLIDER_VALUE" Operation="#_if_lt_" Value2="0">
+                        <If Value1="@SLIDER_VALUE" Operator="#_if_lt_" Value2="0">
                             <Set Variable="SLIDER_VALUE" Operator="#_set_equal_">0</Set>
                         </If>
                     </MousePressed>
@@ -178,7 +178,7 @@
                 <Button Type="#_button_momentary_" X="185" Y="80" Width="40" Height="40">
                     <MousePressed>
                         <Set Variable="SLIDER_VALUE" Operator="#_set_add_">5</Set>
-                        <If Value1="@SLIDER_VALUE" Operation="#_if_gt_" Value2="100">
+                        <If Value1="@SLIDER_VALUE" Operator="#_if_gt_" Value2="100">
                             <Set Variable="SLIDER_VALUE" Operator="#_set_equal_">100</Set>
                         </If>
                     </MousePressed>
@@ -189,7 +189,7 @@
 
                 <!-- Progress bar -->
                 <Rectangle X="25" Y="45" Width="200" Height="15" FillColor="0.15 0.15 0.18" LineColor="0.3 0.3 0.35" LineWidth="1"/>
-                <If Value1="@SLIDER_VALUE" Operation="#_if_gt_" Value2="0">
+                <If Value1="@SLIDER_VALUE" Operator="#_if_gt_" Value2="0">
                     <Rectangle X="25" Y="45" Width="@SLIDER_VALUE" Height="15" FillColor="0.3 0.6 0.8" ScaleX="2"/>
                 </If>
 

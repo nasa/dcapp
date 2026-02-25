@@ -520,12 +520,12 @@ Conditional rendering based on variable comparison.
 
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
-| `Operation` | — | integer | No | Comparison operation |
+| `Operator` | — | integer | No | Comparison operator |
 | `Value` | `Value1` | string/var | **Yes** | First value to compare |
 | `Value2` | — | string/var | No | Second value to compare |
 | `Static` | — | boolean | No | If "true", evaluates once at parse time (default: false) |
 
-**Operation Constants:**
+**Operator Constants:**
 
 | Constant | Value | Description |
 |----------|-------|-------------|
@@ -545,7 +545,7 @@ Conditional rendering based on variable comparison.
 
 **Example:**
 ```xml
-<If Value="@altitude" Value2="1000" Operation="#_if_gt_">
+<If Value="@altitude" Value2="1000" Operator="#_if_gt_">
     <True>
         <Text FillColor="1,0,0,1">HIGH ALTITUDE</Text>
     </True>
@@ -571,7 +571,7 @@ When `Static="true"` is set on an `<If>` element, it evaluates once during XML p
 **Example:**
 ```xml
 <!-- Conditionally register debug variables -->
-<If Static="true" Value="#debugMode" Value2="1" Operation="#_if_eq_">
+<If Static="true" Value="#debugMode" Value2="1" Operator="#_if_eq_">
     <Variable Type="#_variable_double_" InitialValue="0">debugCounter</Variable>
     <Variable Type="#_variable_string_" InitialValue="">debugMessage</Variable>
 </If>
@@ -580,7 +580,7 @@ When `Static="true"` is set on an `<If>` element, it evaluates once during XML p
 <TrickIO Host="localhost" Port="7000">
     <TrickFrom>
         <TrickVariable Name="rocket.altitude">altitude</TrickVariable>
-        <If Static="true" Value="#useAdvancedTelemetry" Value2="1" Operation="#_if_eq_">
+        <If Static="true" Value="#useAdvancedTelemetry" Value2="1" Operator="#_if_eq_">
             <TrickVariable Name="rocket.fuel_temp">fuelTemp</TrickVariable>
             <TrickVariable Name="rocket.chamber_pressure">chamberPressure</TrickVariable>
         </If>
@@ -912,7 +912,7 @@ Attributes marked as `number/var` can contain:
         </Button>
         
         <!-- Altitude Warning -->
-        <If Value="@altitude" Value2="10000" Operation="#_if_gt_">
+        <If Value="@altitude" Value2="10000" Operator="#_if_gt_">
             <True>
                 <Text X="400" Y="300" Size="48" FillColor="1,0,0,1" LocalAlignX="#_align_center_">
                     ⚠ HIGH ALTITUDE

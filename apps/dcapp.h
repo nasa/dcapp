@@ -556,7 +556,7 @@ typedef struct __NodePlanet {
     DcAppValIndex planet_texture_lat;   // latitude (degrees)
     DcAppValIndex planet_texture_lon;   // longitude (degrees)
 
-    // shader overrides (runtime swapping via ShaderVariable)
+    // shader overrides (runtime swapping via ShaderIndex)
     _PlanetShaderEntry *sb_planet_shaders;       // stretchy buffer
     DcAppValIndex       planet_shader_var;       // variable holding active index (DC_APP_VAL_INDEX_UNDEFINED = disabled)
     int                 planet_active_shader_index; // last-applied index (-2 = uninitialized, -1 = default)

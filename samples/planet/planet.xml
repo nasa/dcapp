@@ -129,7 +129,7 @@
             <Planet X="15" Y="200" Width="450" Height="450"
                 Latitude="@Latitude" Longitude="@Longitude" Elevation="@Elevation"
                 Orthographic="@UseOrtho"
-                ShaderVariable="@ActiveShader">
+                ShaderIndex="@ActiveShader">
                 <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
                 <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
                 <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
@@ -140,7 +140,7 @@
                 CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
                 Roll="@CamRoll" Pitch="@CamPitch" Yaw="@CamYaw"
                 Orthographic="@UseOrtho"
-                ShaderVariable="@ActiveShader">
+                ShaderIndex="@ActiveShader">
                 <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
                 <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
                 <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
@@ -153,7 +153,7 @@
             <Text X="195" Y="170" LocalAlignX="#_align_right_">@Latitude(%.1f) deg</Text>
             <Container X="210" Y="160" Width="775" Height="20" VirtualWidth="180">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
-                <If Value1="@SliderLatSelected" Operation="#_if_eq_" Value2="1">
+                <If Value1="@SliderLatSelected" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderLat"/>
                 </If>
                 <Set Variable="SliderLat" Operator="#_set_max_">0</Set>
@@ -169,7 +169,7 @@
             <Text X="195" Y="120" LocalAlignX="#_align_right_">@Longitude(%.1f) deg</Text>
             <Container X="210" Y="110" Width="775" Height="20" VirtualWidth="360">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
-                <If Value1="@SliderLonSelected" Operation="#_if_eq_" Value2="1">
+                <If Value1="@SliderLonSelected" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderLon"/>
                 </If>
                 <Set Variable="SliderLon" Operator="#_set_max_">0</Set>
@@ -185,7 +185,7 @@
             <Text X="195" Y="70" LocalAlignX="#_align_right_">@Elevation(%.0f) m</Text>
             <Container X="210" Y="60" Width="775" Height="20" VirtualWidth="500">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
-                <If Value1="@SliderEleSelected" Operation="#_if_eq_" Value2="1">
+                <If Value1="@SliderEleSelected" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderEle"/>
                 </If>
                 <Set Variable="SliderEle" Operator="#_set_max_">1</Set>

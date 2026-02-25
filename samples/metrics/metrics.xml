@@ -7,7 +7,7 @@
     <Panel VirtualWidth="1000" VirtualHeight="1000">
 
       <Set Variable="ROTATION" Operator="#_set_add_">2</Set>
-      <If Value1="@ROTATION" Operation="#_if_gt_" Value2="360">
+      <If Value1="@ROTATION" Operator="#_if_gt_" Value2="360">
         <Set Variable="ROTATION" Operator="#_set_equal_">0</Set>
       </If>
 

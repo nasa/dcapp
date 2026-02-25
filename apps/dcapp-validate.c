@@ -925,7 +925,7 @@ static const char *_valid_attrs_button[]         = {"Type", "Variable", "EnableV
 static const char *_valid_attrs_ellipse[]        = {"Radius", "RadiusX", "RadiusY", "Segments", "Angle", NULL};
 static const char *_valid_attrs_constant[]       = {"Name", NULL};
 static const char *_valid_attrs_function[]       = {"Name", NULL};
-static const char *_valid_attrs_if[]             = {"Value", "Value1", "Value2", "Operation", "Static", NULL};
+static const char *_valid_attrs_if[]             = {"Value", "Value1", "Value2", "Operator", "Static", NULL};
 static const char *_valid_attrs_image[]          = {"File", NULL};
 static const char *_valid_attrs_logic[]          = {"File", NULL};
 static const char *_valid_attrs_mouse_motion[]   = {"VariableX", "VariableY", NULL};
@@ -934,7 +934,7 @@ static const char *_valid_attrs_pixelstream[]    = {"Type", "URL", "Protocol", "
 static const char *_valid_attrs_set[]            = {"Variable", "Operator", "Defer", NULL};
 static const char *_valid_attrs_sphere[]         = {"Radius", "Image", "Roll", "Pitch", "Yaw", NULL};
 static const char *_valid_attrs_style[]          = {"Name", NULL};
-static const char *_valid_attrs_planet[]          = {"Latitude", "Longitude", "Elevation", "CameraX", "CameraY", "CameraZ", "Roll", "Pitch", "Yaw", "Orthographic", NULL};
+static const char *_valid_attrs_planet[]          = {"Latitude", "Longitude", "Elevation", "CameraX", "CameraY", "CameraZ", "Roll", "Pitch", "Yaw", "Orthographic", "ShaderIndex", NULL};
 static const char *_valid_attrs_planet_data[]    = {"File", NULL};
 static const char *_valid_attrs_planet_texture[] = {"Source", "MetersPerPixel", "Latitude", "Longitude", NULL};
 static const char *_valid_attrs_text[]           = {"Size", "ShadowOffset", NULL};
@@ -1271,7 +1271,7 @@ void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppEl
     // Element-specific enum attributes
     switch (elem_type) {
         case DC_APP_ELEM_TYPE_IF: {
-            _validate_enum_attr(ctx, node, "Operation", 1, 8,
+            _validate_enum_attr(ctx, node, "Operator", 1, 8,
                                 "true(1), false(2), eq(3), ne(4), lt(5), gt(6), lte(7), gte(8)");
 
             // Check for Static="true" - Value/Value1/Value2 cannot be runtime variables

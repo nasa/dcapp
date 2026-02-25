@@ -37,7 +37,7 @@
             <Text X="300" Y="550" LocalAlignY="1" FillColor="1 1 1">Bad Align Y</Text>
 
             <!-- Invalid Operation on If (should be 1-8, not 99) -->
-            <If Value="@GOOD_VAR" Operation="99">
+            <If Value="@GOOD_VAR" Operator="99">
                 <Text X="100" Y="100">Should not show</Text>
             </If>
 

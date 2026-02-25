@@ -65,7 +65,7 @@ BUTTON_ATTRIBUTE_RENAMES = {
 # ============================================================================
 
 # Reference: attribute renames handled inline per element type
-# - If: Operator → Operation, Value → Value1 (lines 607-612)
+# - If: Operation → Operator, Value → Value1 (lines 607-612)
 # - Text/String: Color → FillColor (via ELEMENT_ATTRIBUTE_RENAMES)
 # - Line: Color → LineColor (via ELEMENT_ATTRIBUTE_RENAMES)
 
@@ -277,12 +277,12 @@ def convert_button_type(elem: etree._Element) -> None:
 
 
 def convert_if_operator(elem: etree._Element) -> None:
-    """Convert If element Operator to Operation with constant."""
-    operator = elem.get('Operator')
-    if operator:
-        new_value = CONDITIONAL_OP_MAP.get(operator, operator)
-        elem.set('Operation', new_value)
-        del elem.attrib['Operator']
+    """Convert If element legacy Operation to Operator with constant."""
+    operation = elem.get('Operation')
+    if operation:
+        new_value = CONDITIONAL_OP_MAP.get(operation, operation)
+        elem.set('Operator', new_value)
+        del elem.attrib['Operation']
 
 
 def has_variable_reference(value: Optional[str]) -> bool:
@@ -991,7 +991,7 @@ def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, 
             mouse_pressed = etree.Element('MousePressed')
             if_elem = etree.SubElement(mouse_pressed, 'If')
             if_elem.set('Value1', '@' + indicator_var)
-            if_elem.set('Operation', '#_if_eq_')
+            if_elem.set('Operator', '#_if_eq_')
             if_elem.set('Value2', indicator_on)
             # If indicator is On -> set to Off
             true_elem = etree.SubElement(if_elem, 'True')

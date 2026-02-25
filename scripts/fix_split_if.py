@@ -9,11 +9,11 @@ The old converter incorrectly transformed:
     </If>
 
 Into:
-    <If Value1="@bool" Operation="#_if_true_">content_a</If>
-    <If Value1="@bool" Operation="#_if_false_">content_b</If>
+    <If Value1="@bool" Operator="#_if_true_">content_a</If>
+    <If Value1="@bool" Operator="#_if_false_">content_b</If>
 
 This script recombines them back into the correct format:
-    <If Value1="@bool" Operation="#_if_true_">
+    <If Value1="@bool" Operator="#_if_true_">
         <True>content_a</True>
         <False>content_b</False>
     </If>
@@ -57,8 +57,8 @@ def find_matching_false_if(parent, true_if, index):
         if sibling.get('Value1') != value1:
             continue
 
-        # Must have #_if_false_ operation
-        op = sibling.get('Operation')
+        # Must have #_if_false_ operator
+        op = sibling.get('Operator')
         if op in ('#_if_false_', '2'):  # 2 is the numeric value for false
             return sibling, i
 
@@ -66,18 +66,18 @@ def find_matching_false_if(parent, true_if, index):
 
 
 def is_true_conditional(elem):
-    """Check if element is an If with #_if_true_ operation."""
+    """Check if element is an If with #_if_true_ operator."""
     if elem.tag != 'If':
         return False
-    op = elem.get('Operation')
+    op = elem.get('Operator')
     return op in ('#_if_true_', '1')  # 1 is the numeric value for true
 
 
 def is_false_conditional(elem):
-    """Check if element is an If with #_if_false_ operation."""
+    """Check if element is an If with #_if_false_ operator."""
     if elem.tag != 'If':
         return False
-    op = elem.get('Operation')
+    op = elem.get('Operator')
     return op in ('#_if_false_', '2')  # 2 is the numeric value for false
 
 

@@ -13,7 +13,7 @@ Constants are referenced using the `#` prefix:
 ```xml
 <Text LocalAlignX="#_align_center_">Centered Text</Text>
 <Button Type="#_button_toggle_" .../>
-<If Operation="#_if_gt_" .../>
+<If Operator="#_if_gt_" .../>
 ```
 
 ---
@@ -179,7 +179,7 @@ dcapp provides many predefined constants for common values.
 
 **Example:**
 ```xml
-<If Value="@altitude" Value2="10000" Operation="#_if_gt_">
+<If Value="@altitude" Value2="10000" Operator="#_if_gt_">
     <True>
         <Text FillColor="1,0,0,1">HIGH ALTITUDE WARNING</Text>
     </True>
@@ -471,7 +471,7 @@ dcapp display.xml serverHost="192.168.1.50" serverPort="8000"
 
 3. **Group related constants** — Put theme colors together, layout values together, etc.
 
-4. **Use built-in constants** — `Operation="#_if_gt_"` is more readable than `Operation="5"`.
+4. **Use built-in constants** — `Operator="#_if_gt_"` is more readable than `Operator="5"`.
 
 5. **Mark version/config constants as immutable** — Prevent accidental command-line overrides.
 

@@ -48,7 +48,7 @@ Text color attribute:
 
 Conditional operator attribute (inside <If> elements):
 
-    Operator        -->  Operation
+    Operation       -->  Operator
 
 Single-value conditional attribute:
 
@@ -309,22 +309,22 @@ SECTION 6: CONDITIONAL OPERATOR CONSTANTS
 Conditional operators in <If> elements now use constants.
 
 Legacy syntax:
-    <If Value1="@x" Operator="gt" Value2="100">
-    <If Value1="@x" Operator="lt" Value2="0">
-    <If Value1="@x" Operator="eq" Value2="50">
-    <If Value1="@x" Operator="ne" Value2="50">
-    <If Value1="@x" Operator="gte" Value2="100">
-    <If Value1="@x" Operator="lte" Value2="0">
+    <If Value1="@x" Operation="gt" Value2="100">
+    <If Value1="@x" Operation="lt" Value2="0">
+    <If Value1="@x" Operation="eq" Value2="50">
+    <If Value1="@x" Operation="ne" Value2="50">
+    <If Value1="@x" Operation="gte" Value2="100">
+    <If Value1="@x" Operation="lte" Value2="0">
 
 New syntax:
-    <If Value1="@x" Operation="#_if_gt_" Value2="100">
-    <If Value1="@x" Operation="#_if_lt_" Value2="0">
-    <If Value1="@x" Operation="#_if_eq_" Value2="50">
-    <If Value1="@x" Operation="#_if_ne_" Value2="50">
-    <If Value1="@x" Operation="#_if_gte_" Value2="100">
-    <If Value1="@x" Operation="#_if_lte_" Value2="0">
+    <If Value1="@x" Operator="#_if_gt_" Value2="100">
+    <If Value1="@x" Operator="#_if_lt_" Value2="0">
+    <If Value1="@x" Operator="#_if_eq_" Value2="50">
+    <If Value1="@x" Operator="#_if_ne_" Value2="50">
+    <If Value1="@x" Operator="#_if_gte_" Value2="100">
+    <If Value1="@x" Operator="#_if_lte_" Value2="0">
 
-Note: The attribute name changed from "Operator" to "Operation".
+Note: The attribute name changed from "Operation" to "Operator".
 
 --------------------------------------------------------------------------------
 BOOLEAN CONDITIONALS:
@@ -344,7 +344,7 @@ BOOLEAN CONDITIONALS:
 The preprocessor also wraps implicit children (elements directly inside <If>)
 in <True> blocks automatically:
 
-    <If Value1="@x" Operation="#_if_gt_" Value2="10">
+    <If Value1="@x" Operator="#_if_gt_" Value2="10">
         <Rectangle .../>   <!-- implicitly wrapped in <True> -->
     </If>
 
@@ -353,13 +353,13 @@ SINGLE-VALUE BOOLEAN TESTS:
 --------------------------------------------------------------------------------
 
 For testing a single boolean value (not comparing two values), use the
-#_if_true_ or #_if_false_ operations:
+#_if_true_ or #_if_false_ operators:
 
-    <If Value1="@isEnabled" Operation="#_if_true_">
+    <If Value1="@isEnabled" Operator="#_if_true_">
         <!-- shown when isEnabled is truthy (non-zero) -->
     </If>
 
-    <If Value1="@isEnabled" Operation="#_if_false_">
+    <If Value1="@isEnabled" Operator="#_if_false_">
         <!-- shown when isEnabled is falsy (zero) -->
     </If>
 
@@ -375,12 +375,12 @@ conditionals are evaluated at load time and their branch is baked into the
 display tree.
 
 Legacy (no variables - static):
-    <If Value1="1" Operator="eq" Value2="1">
+    <If Value1="1" Operation="eq" Value2="1">
         <Rectangle .../>
     </If>
 
 New:
-    <If Static="true" Value1="1" Operation="#_if_eq_" Value2="1">
+    <If Static="true" Value1="1" Operator="#_if_eq_" Value2="1">
         <True>
             <Rectangle .../>
         </True>
@@ -741,7 +741,7 @@ Alignment (Vertical/Y):
     #_align_middle_
     #_align_top_
 
-Conditional Operations:
+Conditional Operators:
     #_if_eq_
     #_if_ne_
     #_if_lt_
@@ -828,7 +828,7 @@ New XML:
                 <Button X="400" Y="300" LocalAlignX="#_align_center_" Variable="buttonState">
                     <MousePressed>
                         <Set Variable="value" Operator="#_set_add_">0.1</Set>
-                        <If Value1="@value" Operation="#_if_gt_" Value2="1">
+                        <If Value1="@value" Operator="#_if_gt_" Value2="1">
                             <Set Variable="value" Operator="#_set_equal_">0</Set>
                         </If>
                     </MousePressed>

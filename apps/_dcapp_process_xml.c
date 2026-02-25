@@ -1599,7 +1599,7 @@ static _NodeIndex _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, 
     dc_node.conditional.state_flags   = NODE_STATE_FLAG_NONE;
 
     // conditional type
-    xmlChar *raw_type = xmlGetProp(xml_node, BAD_CAST "Operation");
+    xmlChar *raw_type = xmlGetProp(xml_node, BAD_CAST "Operator");
     if (raw_type) {
         dc_node.conditional.type = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_type);
         xmlFree(raw_type);
@@ -3464,7 +3464,7 @@ static _NodeIndex _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_no
     // shader variable (selects active PlanetShader by index at runtime)
     dc_node.planet.planet_shader_var          = DC_APP_VAL_INDEX_UNDEFINED;
     dc_node.planet.planet_active_shader_index = -2; // uninitialized sentinel
-    xmlChar *raw_shader_var = xmlGetProp(xml_node, BAD_CAST "ShaderVariable");
+    xmlChar *raw_shader_var = xmlGetProp(xml_node, BAD_CAST "ShaderIndex");
     if (raw_shader_var) {
         dc_node.planet.planet_shader_var = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_shader_var);
         xmlFree(raw_shader_var);

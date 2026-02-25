@@ -14,12 +14,12 @@
         <Rectangle X="15" Y="10" Width="120" Height="15" FillColor="0.1 0.1 0.12" LineColor="0.3 0.3 0.35" LineWidth="1"/>
 
         <!-- Progress bar fill (clamped to 0-100) -->
-        <If Value1="@GAUGE_VALUE" Operation="#_if_gt_" Value2="0">
-            <If Value1="@GAUGE_VALUE" Operation="#_if_lte_" Value2="100">
+        <If Value1="@GAUGE_VALUE" Operator="#_if_gt_" Value2="0">
+            <If Value1="@GAUGE_VALUE" Operator="#_if_lte_" Value2="100">
                 <!-- Scale: 120px width for 100 value = 1.2px per unit -->
                 <Rectangle X="15" Y="10" Width="@GAUGE_VALUE" Height="15" FillColor="0.3 0.6 0.8" ScaleX="1.2"/>
             </If>
-            <If Value1="@GAUGE_VALUE" Operation="#_if_gt_" Value2="100">
+            <If Value1="@GAUGE_VALUE" Operator="#_if_gt_" Value2="100">
                 <Rectangle X="15" Y="10" Width="120" Height="15" FillColor="0.8 0.3 0.3"/>
             </If>
         </If>

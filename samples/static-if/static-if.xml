@@ -8,7 +8,7 @@
     <Variable Type="#_variable_double_" InitialValue="0">COUNTER</Variable>
 
     <!-- If Static="true": Conditionally create debug variables at parse time -->
-    <If Static="true" Value="#DEBUG_MODE" Value2="1" Operation="#_if_eq_">
+    <If Static="true" Value="#DEBUG_MODE" Value2="1" Operator="#_if_eq_">
         <True>
             <Variable Type="#_variable_string_" InitialValue="Debug build">BUILD_TYPE</Variable>
             <Variable Type="#_variable_double_" InitialValue="0">DEBUG_COUNTER</Variable>
@@ -16,7 +16,7 @@
     </If>
 
     <!-- If Static="true": Conditionally create production variables at parse time -->
-    <If Static="true" Value="#PRODUCTION_MODE" Value2="1" Operation="#_if_eq_">
+    <If Static="true" Value="#PRODUCTION_MODE" Value2="1" Operator="#_if_eq_">
         <True>
             <Variable Type="#_variable_string_" InitialValue="Production build">BUILD_TYPE</Variable>
             <Variable Type="#_variable_double_" InitialValue="1">OPTIMIZE_ENABLED</Variable>
@@ -32,7 +32,7 @@
 
             <!-- Animate counter -->
             <Set Variable="COUNTER" Operator="#_set_add_">1</Set>
-            <If Value1="@COUNTER" Operation="#_if_gt_" Value2="100">
+            <If Value1="@COUNTER" Operator="#_if_gt_" Value2="100">
                 <Set Variable="COUNTER" Operator="#_set_equal_">0</Set>
             </If>
 
@@ -56,7 +56,7 @@
                 <Text X="230" Y="270" LocalAlignX="#_align_center_" Size="14" FillColor="0.9 0.9 0.3">Variables Created at Parse Time</Text>
 
                 <!-- Debug mode content -->
-                <If Static="true" Value="#DEBUG_MODE" Value2="1" Operation="#_if_eq_">
+                <If Static="true" Value="#DEBUG_MODE" Value2="1" Operator="#_if_eq_">
                     <True>
                         <Rectangle X="30" Y="180" Width="400" Height="70" FillColor="0.2 0.5 0.3"/>
                         <Text X="230" Y="235" LocalAlignX="#_align_center_" Size="12" FillColor="1 1 1">DEBUG MODE ACTIVE</Text>
@@ -66,7 +66,7 @@
                 </If>
 
                 <!-- Production mode content -->
-                <If Static="true" Value="#PRODUCTION_MODE" Value2="1" Operation="#_if_eq_">
+                <If Static="true" Value="#PRODUCTION_MODE" Value2="1" Operator="#_if_eq_">
                     <True>
                         <Rectangle X="30" Y="180" Width="400" Height="70" FillColor="0.5 0.2 0.2"/>
                         <Text X="230" Y="235" LocalAlignX="#_align_center_" Size="12" FillColor="1 1 1">PRODUCTION MODE ACTIVE</Text>
@@ -102,14 +102,14 @@
                 <Text X="230" Y="290" LocalAlignX="#_align_center_" Size="14" FillColor="0.9 0.9 0.3">Dynamic Content (Changes Every Frame)</Text>
 
                 <!-- Counter low -->
-                <If Value1="@COUNTER" Operation="#_if_lt_" Value2="50">
+                <If Value1="@COUNTER" Operator="#_if_lt_" Value2="50">
                     <Rectangle X="30" Y="200" Width="400" Height="70" FillColor="0.3 0.6 0.8"/>
                     <Text X="230" Y="255" LocalAlignX="#_align_center_" Size="14" FillColor="1 1 1">COUNTER IS LOW (&lt; 50)</Text>
                     <Text X="230" Y="230" LocalAlignX="#_align_center_" Size="10" FillColor="0.8 0.8 0.8">This appears when COUNTER &lt; 50</Text>
                 </If>
 
                 <!-- Counter high -->
-                <If Value1="@COUNTER" Operation="#_if_gte_" Value2="50">
+                <If Value1="@COUNTER" Operator="#_if_gte_" Value2="50">
                     <Rectangle X="30" Y="200" Width="400" Height="70" FillColor="0.8 0.3 0.3"/>
                     <Text X="230" Y="255" LocalAlignX="#_align_center_" Size="14" FillColor="1 1 1">COUNTER IS HIGH (&gt;= 50)</Text>
                     <Text X="230" Y="230" LocalAlignX="#_align_center_" Size="10" FillColor="0.8 0.8 0.8">This appears when COUNTER &gt;= 50</Text>
@@ -117,7 +117,7 @@
 
                 <!-- Progress bar -->
                 <Rectangle X="30" Y="175" Width="400" Height="15" FillColor="0.2 0.2 0.2" LineColor="0.4 0.4 0.4" LineWidth="1"/>
-                <If Value1="@COUNTER" Operation="#_if_lte_" Value2="400">
+                <If Value1="@COUNTER" Operator="#_if_lte_" Value2="400">
                     <Rectangle X="30" Y="175" Width="@COUNTER" Height="15" FillColor="0.3 0.8 0.5"/>
                 </If>
 

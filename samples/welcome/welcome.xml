@@ -111,19 +111,19 @@
 
             <!-- Pulse animation (0-360 degrees) -->
             <Set Variable="PulseAngle" Operator="#_set_add_">2</Set>
-            <If Value1="@PulseAngle" Operation="#_if_gt_" Value2="360">
+            <If Value1="@PulseAngle" Operator="#_if_gt_" Value2="360">
                 <Set Variable="PulseAngle" Operator="#_set_subtract_">360</Set>
             </If>
 
             <!-- Orbit animation -->
             <Set Variable="OrbitAngle" Operator="#_set_add_">0.8</Set>
-            <If Value1="@OrbitAngle" Operation="#_if_gt_" Value2="360">
+            <If Value1="@OrbitAngle" Operator="#_if_gt_" Value2="360">
                 <Set Variable="OrbitAngle" Operator="#_set_subtract_">360</Set>
             </If>
 
             <!-- Wave phase -->
             <Set Variable="WavePhase" Operator="#_set_add_">3</Set>
-            <If Value1="@WavePhase" Operation="#_if_gt_" Value2="360">
+            <If Value1="@WavePhase" Operator="#_if_gt_" Value2="360">
                 <Set Variable="WavePhase" Operator="#_set_subtract_">360</Set>
             </If>
 
@@ -134,57 +134,57 @@
 
             <!-- Sphere rotation -->
             <Set Variable="SphereYaw" Operator="#_set_add_">0.4</Set>
-            <If Value1="@SphereYaw" Operation="#_if_gt_" Value2="360">
+            <If Value1="@SphereYaw" Operator="#_if_gt_" Value2="360">
                 <Set Variable="SphereYaw" Operator="#_set_subtract_">360</Set>
             </If>
 
             <!-- Floating particle animations -->
             <Set Variable="Particle1Y" Operator="#_set_add_">0.3</Set>
-            <If Value1="@Particle1Y" Operation="#_if_gt_" Value2="800">
+            <If Value1="@Particle1Y" Operator="#_if_gt_" Value2="800">
                 <Set Variable="Particle1Y">0</Set>
             </If>
             <Set Variable="Particle2Y" Operator="#_set_add_">0.5</Set>
-            <If Value1="@Particle2Y" Operation="#_if_gt_" Value2="800">
+            <If Value1="@Particle2Y" Operator="#_if_gt_" Value2="800">
                 <Set Variable="Particle2Y">0</Set>
             </If>
             <Set Variable="Particle3Y" Operator="#_set_add_">0.4</Set>
-            <If Value1="@Particle3Y" Operation="#_if_gt_" Value2="800">
+            <If Value1="@Particle3Y" Operator="#_if_gt_" Value2="800">
                 <Set Variable="Particle3Y">0</Set>
             </If>
             <Set Variable="Particle4Y" Operator="#_set_add_">0.6</Set>
-            <If Value1="@Particle4Y" Operation="#_if_gt_" Value2="800">
+            <If Value1="@Particle4Y" Operator="#_if_gt_" Value2="800">
                 <Set Variable="Particle4Y">0</Set>
             </If>
             <Set Variable="Particle5Y" Operator="#_set_add_">0.35</Set>
-            <If Value1="@Particle5Y" Operation="#_if_gt_" Value2="800">
+            <If Value1="@Particle5Y" Operator="#_if_gt_" Value2="800">
                 <Set Variable="Particle5Y">0</Set>
             </If>
             <Set Variable="Particle6Y" Operator="#_set_add_">0.55</Set>
-            <If Value1="@Particle6Y" Operation="#_if_gt_" Value2="800">
+            <If Value1="@Particle6Y" Operator="#_if_gt_" Value2="800">
                 <Set Variable="Particle6Y">0</Set>
             </If>
             <Set Variable="Particle7Y" Operator="#_set_add_">0.25</Set>
-            <If Value1="@Particle7Y" Operation="#_if_gt_" Value2="800">
+            <If Value1="@Particle7Y" Operator="#_if_gt_" Value2="800">
                 <Set Variable="Particle7Y">0</Set>
             </If>
             <Set Variable="Particle8Y" Operator="#_set_add_">0.45</Set>
-            <If Value1="@Particle8Y" Operation="#_if_gt_" Value2="800">
+            <If Value1="@Particle8Y" Operator="#_if_gt_" Value2="800">
                 <Set Variable="Particle8Y">0</Set>
             </If>
             <Set Variable="Particle9Y" Operator="#_set_add_">0.38</Set>
-            <If Value1="@Particle9Y" Operation="#_if_gt_" Value2="800">
+            <If Value1="@Particle9Y" Operator="#_if_gt_" Value2="800">
                 <Set Variable="Particle9Y">0</Set>
             </If>
             <Set Variable="Particle10Y" Operator="#_set_add_">0.52</Set>
-            <If Value1="@Particle10Y" Operation="#_if_gt_" Value2="800">
+            <If Value1="@Particle10Y" Operator="#_if_gt_" Value2="800">
                 <Set Variable="Particle10Y">0</Set>
             </If>
             <Set Variable="Particle11Y" Operator="#_set_add_">0.32</Set>
-            <If Value1="@Particle11Y" Operation="#_if_gt_" Value2="800">
+            <If Value1="@Particle11Y" Operator="#_if_gt_" Value2="800">
                 <Set Variable="Particle11Y">0</Set>
             </If>
             <Set Variable="Particle12Y" Operator="#_set_add_">0.48</Set>
-            <If Value1="@Particle12Y" Operation="#_if_gt_" Value2="800">
+            <If Value1="@Particle12Y" Operator="#_if_gt_" Value2="800">
                 <Set Variable="Particle12Y">0</Set>
             </If>
 
@@ -397,7 +397,7 @@
                 <Container X="70" Y="120" Width="150" Height="16" VirtualWidth="100" LocalAlignY="#_align_middle_">
                     <Rectangle FillColor="0.1 0.1 0.15" LineColor="0.2 0.2 0.25" LineWidth="1"/>
                     <Rectangle X="0" Y="0" Width="@SliderValue" Height="16" FillColor="@SliderColor 0.5 1"/>
-                    <If Value1="@SliderSelected" Operation="#_if_eq_" Value2="1">
+                    <If Value1="@SliderSelected" Operator="#_if_eq_" Value2="1">
                         <MouseMotion VariableX="SliderValue"/>
                     </If>
                     <Set Variable="SliderValue" Operator="#_set_max_">0</Set>

@@ -235,7 +235,7 @@ Use `<If>` to show/hide content based on variable values:
 ```xml
 <Variable Type="#_variable_double_" InitialValue="100">fuel</Variable>
 
-<If Value="@fuel" Value2="20" Operation="#_if_lt_">
+<If Value="@fuel" Value2="20" Operator="#_if_lt_">
     <True>
         <Text FillColor="1,0,0,1">LOW FUEL WARNING</Text>
     </True>
