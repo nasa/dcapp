@@ -513,11 +513,12 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         }
     }
 
-    // Planet can contain PlanetData and PlanetTexture
+    // Planet can contain PlanetData, PlanetTexture, and PlanetShader
     if (parent_type == DC_APP_ELEM_TYPE_PLANET) {
         switch (child_type) {
             case DC_APP_ELEM_TYPE_PLANET_DATA:
             case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
+            case DC_APP_ELEM_TYPE_PLANET_SHADER:
                 return true;
             default:
                 return false;
@@ -648,6 +649,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         case DC_APP_ELEM_TYPE_VERTEX:
         case DC_APP_ELEM_TYPE_PLANET_DATA:
         case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
+        case DC_APP_ELEM_TYPE_PLANET_SHADER:
         case DC_APP_ELEM_TYPE_LOGIC:
         case DC_APP_ELEM_TYPE_FUNCTION:
         case DC_APP_ELEM_TYPE_MOUSE_MOTION:
@@ -891,6 +893,17 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             break;
         }
 
+        case DC_APP_ELEM_TYPE_PLANET_SHADER: {
+            xmlChar *index = xmlGetProp(node, BAD_CAST "Index");
+            if (!index) {
+                DC_LOG_ERROR("Validate", "<PlanetShader> missing required attribute 'Index' (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            } else {
+                xmlFree(index);
+            }
+            break;
+        }
+
         case DC_APP_ELEM_TYPE_PIXELSTREAM: {
             xmlChar *type = xmlGetProp(node, BAD_CAST "Type");
             if (!type) {
@@ -937,6 +950,7 @@ static const char *_valid_attrs_style[]          = {"Name", NULL};
 static const char *_valid_attrs_planet[]          = {"Latitude", "Longitude", "Elevation", "CameraX", "CameraY", "CameraZ", "Roll", "Pitch", "Yaw", "Orthographic", "ShaderIndex", NULL};
 static const char *_valid_attrs_planet_data[]    = {"File", NULL};
 static const char *_valid_attrs_planet_texture[] = {"Source", "MetersPerPixel", "Latitude", "Longitude", NULL};
+static const char *_valid_attrs_planet_shader[]  = {"Index", "VertexSource", "FragmentSource", NULL};
 static const char *_valid_attrs_text[]           = {"Size", "ShadowOffset", NULL};
 static const char *_valid_attrs_trick_io[]       = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};
 static const char *_valid_attrs_trick_variable[] = {"Name", "Units", NULL};
@@ -1133,6 +1147,9 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
             return _attr_in_list(attr_name, _valid_attrs_planet_texture);
+
+        case DC_APP_ELEM_TYPE_PLANET_SHADER:
+            return _attr_in_list(attr_name, _valid_attrs_planet_shader);
 
         case DC_APP_ELEM_TYPE_TEXT:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
