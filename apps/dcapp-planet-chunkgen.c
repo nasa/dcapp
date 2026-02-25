@@ -99,7 +99,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     double      max_height       = NAN;
     double      meters_per_pixel = 0.0;
     int         tree_depth       = 6;
-    float       max_base_error   = 15.0f;
+    float       max_base_error   = 0.0f;
     const char *prefix           = NULL;
     bool        keep_tiles       = false;
 
@@ -219,6 +219,11 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
 
     printf("Elevation range: %.2f to %.2f m\n", min_height, max_height);
 
+    // default max_base_error from meters per pixel if not specified
+    if (max_base_error <= 0.0f)
+        max_base_error = 0.15f * (float)meters_per_pixel;
+    printf("Max base error: %.2f\n", max_base_error);
+
     //---- compute tile grid ----
 
     uint32_t cols       = (raster_w + tile_size - 1) / tile_size;
@@ -228,7 +233,6 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     printf("Tile size: %u px\n", tile_size);
     printf("Grid: %u x %u (%u tiles)\n", cols, rows, tile_count);
     printf("Tree depth: %d\n", tree_depth);
-    printf("Max base error: %.2f\n", max_base_error);
     printf("Prefix: %s\n", prefix);
     printf("========================================\n\n");
 
@@ -431,7 +435,7 @@ static void _show_help(void) {
     printf("  --max-height N         Max elevation in meters (default: auto-detect)\n");
     printf("  --meters-per-pixel N   Meters per pixel (default: auto-detect from DEM)\n");
     printf("  --tree-depth N         CDLOD quadtree depth (default: 6)\n");
-    printf("  --max-base-error N     LOD error threshold (default: 15.0)\n");
+    printf("  --max-base-error N     LOD error threshold (default: 0.15 * meters_per_pixel)\n");
     printf("  --prefix NAME          Output naming prefix (default: input filename stem)\n");
     printf("  --keep-tiles           Don't delete intermediate PNG tiles\n");
     printf("  -h, --help             Show this help\n");
