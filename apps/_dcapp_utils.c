@@ -616,8 +616,6 @@ static void _init_planets(_AppData *app_data) {
         float  max_height       = pl_json_float_member(root, "max_height", 0.0f);
         int    tree_depth       = pl_json_int_member(root, "tree_depth", 0);
         float  max_base_error   = pl_json_float_member(root, "max_base_error", 0.0f);
-        bool   ups_north        = pl_json_bool_member(root, "ups_north", false);
-
         // store radius on node for camera LLE conversion
         node->planet.planet_radius = radius;
 
@@ -633,7 +631,6 @@ static void _init_planets(_AppData *app_data) {
         process_info.uTileCount       = tile_count;
         process_info.uHorizontalTiles = (uint32_t)cols;
         process_info.uVerticalTiles   = (uint32_t)rows;
-        process_info.bUpsNorth        = ups_north;
         process_info.atTiles          = (plPlanetProcessTileInfo *)malloc(tile_count * sizeof(plPlanetProcessTileInfo));
 
         // get directory of the JSON file for resolving relative chunk paths
@@ -681,9 +678,6 @@ static void _init_planets(_AppData *app_data) {
         plPlanetInit planet_init = {0};
         planet_init.dRadius       = radius;
         planet_init.tLoadFlags    = PL_PLANET_LOAD_FLAGS_NONE;
-        planet_init.uOutputWidth  = (uint32_t)output_width;
-        planet_init.uOutputHeight = (uint32_t)output_height;
-
         // texture overlay
         if (node->planet.planet_texture_file) {
             planet_init.atTextures[0].pcPath = node->planet.planet_texture_file;
@@ -712,6 +706,18 @@ static void _init_planets(_AppData *app_data) {
         // store planet
         sbpush(app_data->sb_planets, planet);
         node->planet.planet_index = (uint8_t)sbcount(app_data->sb_planets); // 1-based (0 = uninitialized)
+
+        // create a view for this planet
+        plPlanetViewInit view_init = {0};
+        view_init.uOutputWidth  = (uint32_t)output_width;
+        view_init.uOutputHeight = (uint32_t)output_height;
+
+        cmd_buf = _ext_starter->get_temporary_command_buffer();
+        plPlanetView *view = _ext_planet->create_view(planet, cmd_buf, view_init);
+        _ext_starter->submit_temporary_command_buffer(cmd_buf);
+
+        sbpush(app_data->sb_planet_views, view);
+        node->planet.planet_view_index = (uint8_t)sbcount(app_data->sb_planet_views); // 1-based
 
         DC_LOG_INFO("Planet", "  [%d] created (radius=%.0f, %ux%u, %u tiles)", i, radius, (uint32_t)output_width, (uint32_t)output_height, tile_count);
 

@@ -23,9 +23,9 @@ void display_draw(void) {
 
     // spherical to cartesian (matches _draw_node_planet LLE path)
     double r = MOON_RADIUS + ele;
-    double x = -r * cos(lat_rad) * cos(lon_rad);
+    double x = r * cos(lat_rad) * sin(lon_rad);
     double y = r * sin(lat_rad);
-    double z = r * cos(lat_rad) * sin(lon_rad);
+    double z = r * cos(lat_rad) * cos(lon_rad);
 
     *CamX = x;
     *CamY = y;

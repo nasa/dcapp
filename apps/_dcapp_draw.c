@@ -4527,9 +4527,9 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 double r       = node->planet.planet_radius + ele;
 
                 _ext_camera->set_pos(&camera,
-                    -r * cos(lat_rad) * cos(lon_rad),
+                    r * cos(lat_rad) * sin(lon_rad),
                     r * sin(lat_rad),
-                    r * cos(lat_rad) * sin(lon_rad));
+                    r * cos(lat_rad) * cos(lon_rad));
 
                 // orient camera to look toward planet center
                 _ext_camera->look_at(&camera, camera.tPosDouble, (plDVec3){0, 0, 0});
@@ -4558,24 +4558,18 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 camera.tProjMat.col[3].w = 1.0f;
             }
 
-            // get command buffer for planet rendering (use between begin_frame and begin_main_pass)
+            // prepare planet (temporary command buffer)
             plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
-            plBindGroupHandle bind_group;
+            _ext_planet->prepare(planet, cmd_buf);
+            _ext_starter->submit_temporary_command_buffer(cmd_buf);
 
-            if (node->planet.planet_view_index > 0) {
-                // shared planet: render to separate view
-                plPlanetView *view = app_data->sb_planet_views[node->planet.planet_view_index - 1];
-                _ext_planet->prepare(planet, cmd_buf);
-                _ext_planet->render_to_view(planet, view, &camera, cmd_buf);
-                _ext_starter->submit_temporary_command_buffer(cmd_buf);
-                bind_group = _ext_planet->get_view_texture(view);
-            } else {
-                // default: render to planet's built-in target
-                _ext_planet->prepare(planet, cmd_buf);
-                _ext_planet->render(planet, &camera, cmd_buf);
-                _ext_starter->submit_temporary_command_buffer(cmd_buf);
-                bind_group = _ext_planet->get_texture(planet);
-            }
+            // render view (regular command buffer)
+            plPlanetView *view = app_data->sb_planet_views[node->planet.planet_view_index - 1];
+            cmd_buf = _ext_starter->get_command_buffer();
+            _ext_planet->render_view(view, &camera, cmd_buf);
+            _ext_starter->submit_command_buffer(cmd_buf);
+
+            plBindGroupHandle bind_group = _ext_planet->get_view_texture(view);
 
             _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group.uData, point0, point1, point2, point3);
         }

@@ -32,4 +32,4 @@ fi
 
 echo ""
 echo "Running chunkgen..."
-"$DCAPP_HOME/bin/dcapp-planet-chunkgen.sh" "$LBL_FILE" "$CACHE_DIR" --radius 1737400
+"$DCAPP_HOME/bin/dcapp-planet-chunkgen.sh" "$LBL_FILE" "$CACHE_DIR" --radius 1737400 --max-base-error 400 --tree-depth 4

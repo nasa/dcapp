@@ -45,10 +45,10 @@ Index of this file:
 // [SECTION] forward declarations
 //-----------------------------------------------------------------------------
 
-static bool  _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y, bool *ups_north);
+static bool  _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y);
 static bool  _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *max_val);
 static bool  _run_gdal_translate(const char *input, const char *output, uint32_t src_x, uint32_t src_y, uint32_t w, uint32_t h, double min_h, double max_h);
-static void  _compute_tile_latlon(double origin_x, double origin_y, double pixel_scale, uint32_t col, uint32_t row, uint32_t tile_size, double radius, bool ups_north, float *lat_deg, float *lon_deg);
+static void  _compute_tile_latlon(double origin_x, double origin_y, double pixel_scale, uint32_t col, uint32_t row, uint32_t tile_size, double radius, float *lat_deg, float *lon_deg);
 static void  _show_help(void);
 static char *_get_stem(const char *path, char *buf, size_t buf_size);
 
@@ -180,9 +180,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
 
     uint32_t raster_w = 0, raster_h = 0;
     double   pixel_scale = 0.0, origin_x = 0.0, origin_y = 0.0;
-    bool     ups_north = false;
 
-    if (!_parse_gdalinfo(input_dem, &raster_w, &raster_h, &pixel_scale, &origin_x, &origin_y, &ups_north)) {
+    if (!_parse_gdalinfo(input_dem, &raster_w, &raster_h, &pixel_scale, &origin_x, &origin_y)) {
         io->bRunning = false;
         return NULL;
     }
@@ -191,7 +190,6 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     printf("Radius: %.1f m\n", radius);
     printf("Pixel scale: %.6f m\n", pixel_scale);
     printf("Origin: (%.6f, %.6f)\n", origin_x, origin_y);
-    printf("Projection: UPS %s\n", ups_north ? "North" : "South");
 
     // auto-detect meters per pixel from DEM pixel scale
     if (meters_per_pixel <= 0.0) {
@@ -255,7 +253,6 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         .atTiles          = tiles,
         .uHorizontalTiles = cols,
         .uVerticalTiles   = rows,
-        .bUpsNorth        = ups_north,
     };
 
     for (uint32_t row = 0; row < rows; row++) {
@@ -270,7 +267,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
             // compute lat/lon for tile center
             float lat = 0.0f, lon = 0.0f;
             _compute_tile_latlon(origin_x, origin_y, pixel_scale,
-                                 col, row, tile_size, radius, ups_north, &lat, &lon);
+                                 col, row, tile_size, radius, &lat, &lon);
             tiles[idx].fLatitude  = lat;
             tiles[idx].fLongitude = lon;
 
@@ -298,8 +295,6 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     pl_json_add_double_member(root, "max_height", max_height);
     pl_json_add_int_member(root, "tree_depth", tree_depth);
     pl_json_add_float_member(root, "max_base_error", max_base_error);
-    pl_json_add_bool_member(root, "ups_north", ups_north);
-
     plJsonObject *tile_array = pl_json_add_member_array(root, "tiles", tile_count);
     for (uint32_t i = 0; i < tile_count; i++) {
         plJsonObject *tile_obj = pl_json_member_by_index(tile_array, i);
@@ -350,6 +345,23 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
 
         char tile_path[2048];
         snprintf(tile_path, sizeof(tile_path), "%s/%s_%u_%u.png", output_dir, prefix, col, row);
+
+        // skip if a valid PNG already exists (signature + minimum size)
+        {
+            FILE *fp = fopen(tile_path, "rb");
+            if (fp) {
+                static const uint8_t png_sig[8] = {0x89,'P','N','G',0x0D,0x0A,0x1A,0x0A};
+                uint8_t header[8] = {0};
+                size_t n = fread(header, 1, 8, fp);
+                fseek(fp, 0, SEEK_END);
+                long size = ftell(fp);
+                fclose(fp);
+                if (n == 8 && memcmp(header, png_sig, 8) == 0 && size > 1024) {
+                    printf("  [%u/%u] %s_%u_%u.png (valid, skipping)\n", t + 1, tile_count, prefix, col, row);
+                    continue;
+                }
+            }
+        }
 
         printf("  [%u/%u] %s_%u_%u.png\n", t + 1, tile_count, prefix, col, row);
 
@@ -442,7 +454,7 @@ static char *_get_stem(const char *path, char *buf, size_t buf_size) {
 // [SECTION] GDAL helpers
 //-----------------------------------------------------------------------------
 
-static bool _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y, bool *ups_north) {
+static bool _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y) {
     GDALDatasetH ds = GDALOpen(dem_path, GA_ReadOnly);
     if (!ds) {
         fprintf(stderr, "Error: GDALOpen failed for: %s\n", dem_path);
@@ -457,16 +469,6 @@ static bool _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *hei
         *pixel_scale = fabs(gt[1]);
         *origin_x    = gt[0];
         *origin_y    = gt[3] + (double)(*height) * gt[5]; // lower-left Y
-    }
-
-    // detect UPS North vs South from the CRS latitude of origin
-    *ups_north = false;
-    OGRSpatialReferenceH srs = GDALGetSpatialRef(ds);
-    if (srs) {
-        OGRErr err = OGRERR_NONE;
-        double lat_origin = OSRGetProjParm(srs, SRS_PP_LATITUDE_OF_ORIGIN, 0.0, &err);
-        if (err == OGRERR_NONE)
-            *ups_north = (lat_origin > 0.0);
     }
 
     GDALClose(ds);
@@ -536,7 +538,7 @@ static bool _run_gdal_translate(const char *input, const char *output, uint32_t 
 // [SECTION] stereographic projection
 //-----------------------------------------------------------------------------
 
-static void _compute_tile_latlon(double origin_x, double origin_y, double pixel_scale, uint32_t col, uint32_t row, uint32_t tile_size, double radius, bool ups_north, float *lat_deg, float *lon_deg) {
+static void _compute_tile_latlon(double origin_x, double origin_y, double pixel_scale, uint32_t col, uint32_t row, uint32_t tile_size, double radius, float *lat_deg, float *lon_deg) {
     // model coordinates of tile center
     double model_x = origin_x + ((double)col * tile_size + tile_size * 0.5) * pixel_scale;
     double model_y = origin_y + ((double)row * tile_size + tile_size * 0.5) * pixel_scale;
@@ -546,14 +548,8 @@ static void _compute_tile_latlon(double origin_x, double origin_y, double pixel_
     float r = hypotf(x, y);
     float c = 2.0f * atanf(r / (2.0f * (float)radius));
 
-    float longitude, latitude;
-    if (ups_north) {
-        longitude = atan2f(x, -y);
-        latitude  = (float)(M_PI / 2.0) - c;
-    } else {
-        longitude = atan2f(x, y);
-        latitude  = -(float)(M_PI / 2.0) + c;
-    }
+    float longitude = atan2f(x, y);
+    float latitude  = (float)(M_PI / 2.0) - c;
 
     *lon_deg = longitude * (180.0f / (float)M_PI);
     *lat_deg = latitude * (180.0f / (float)M_PI);
