@@ -32,7 +32,12 @@ layout(set = 3, binding = 0) uniform PL_DYNAMIC_DATA
 
 void main()
 {
+    vec2 tUVActual = tShaderIn.tUV;
+    tUVActual = tUVActual * tDynamicData.tData.tUVInfo.xy;
+    tUVActual = tUVActual + tDynamicData.tData.tUVInfo.zw;
+
     vec3 normal = normalize(tShaderIn.tWorldNormal);
+    vec4 tHazardColor = texture(sampler2D(at2DTextures[tDynamicData.tData.uTextureIndex], tSamplerLinearClamp), tUVActual);
 
     // Slope: deviation of surface normal from the radial (outward) direction.
     // slope = 0   → normal points straight up  → flat terrain
@@ -58,6 +63,7 @@ void main()
 
     outColor.rgb = color * (diffuse + ambient);
     outColor.a   = 1.0;
+    outColor.rgb += tHazardColor.rgb * 0.3;
 
     if (bool(tDynamicData.tData.tFlags & PL_TERRAIN_SHADER_FLAGS_SHOW_LEVELS))
     {

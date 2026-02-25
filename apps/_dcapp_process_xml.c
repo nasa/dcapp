@@ -11,7 +11,6 @@
 // Forward declarations
 static DcAppVarIndex _register_anonymous_variable(_AppData *app_data, DcValueType type, const char *initial_value_str);
 static _NodeIndex    _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static _NodeIndex    _process_xml_node_nonelem(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_arc(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_blink(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -43,8 +42,15 @@ static _NodeIndex    _process_xml_node_mouse_inactive(_AppData *app_data, xmlNod
 static _NodeIndex    _process_xml_node_mouse_motion(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_mouse_pressed(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_mouse_released(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_nonelem(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_panel(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_texture(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static void          _planet_shader_abs_to_vfs(const char *abs_path, char *vfs_out, size_t vfs_out_size);
+static _NodeIndex    _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_set(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -54,10 +60,6 @@ static _NodeIndex    _process_xml_node_stencil_add(_AppData *app_data, xmlNodePt
 static _NodeIndex    _process_xml_node_stencil_draw(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_stencil_remove(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_style(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static _NodeIndex    _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static _NodeIndex    _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static _NodeIndex    _process_xml_node_planet_texture(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static _NodeIndex    _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_trick_from(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_trick_io(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -276,6 +278,9 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_PLANET_SHADER:
             return _process_xml_node_planet_shader(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_PLANET_VIEW:
+            return _process_xml_node_planet_view(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_TEXT:
             return _process_xml_node_text(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -3249,343 +3254,137 @@ static _NodeIndex _process_xml_node_style(_AppData *app_data, xmlNodePtr xml_nod
 
 static _NodeIndex _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+    (void)parent_node_index;
+    (void)parent_elem_type;
 
-    _Node dc_node  = {};
-    dc_node.type   = NODE_TYPE_PLANET;
-    dc_node.parent = parent_node_index;
+    // planet definition (top-level resource, no drawable node)
+    _PlanetDef def = {0};
 
-    // x position
-    xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
-    if (!raw_x_position) {
-        raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
-    }
-    if (raw_x_position) {
-        dc_node.planet.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
-        xmlFree(raw_x_position);
-    }
+    // Name
+    xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
+    def.name = strdup((const char *)raw_name);
+    xmlFree(raw_name);
 
-    // y position
-    xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
-    if (!raw_y_position) {
-        raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
-    }
-    if (raw_y_position) {
-        dc_node.planet.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
-        xmlFree(raw_y_position);
+    // ShaderIndex (optional — selects active PlanetShader by index at runtime)
+    def.shader_index = DC_APP_VAL_INDEX_UNDEFINED;
+    xmlChar *raw_shader_index = xmlGetProp(xml_node, BAD_CAST "ShaderIndex");
+    if (raw_shader_index) {
+        def.shader_index = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_shader_index);
+        xmlFree(raw_shader_index);
     }
 
-    // x dimension
-    xmlChar *raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionX");
-    if (!raw_x_dimension) {
-        raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
-    }
-    if (raw_x_dimension) {
-        dc_node.planet.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_dimension);
-        xmlFree(raw_x_dimension);
-    }
+    // collect definition
+    sbpush(app_data->sb_planet_defs, def);
 
-    // y dimension
-    xmlChar *raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionY");
-    if (!raw_y_dimension) {
-        raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
-    }
-    if (raw_y_dimension) {
-        dc_node.planet.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_dimension);
-        xmlFree(raw_y_dimension);
-    }
+    // process children (PlanetData, PlanetTexture, PlanetShader store into this def)
+    _process_xml_node_children(app_data, xml_node, NODE_INDEX_UNDEFINED, elem_type, directory);
 
-    // local x align
-    xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignX");
-    if (!raw_x_align) {
-        raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
-    }
-    if (raw_x_align) {
-        dc_node.planet.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
-        xmlFree(raw_x_align);
-    }
-
-    // local y align
-    xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignY");
-    if (!raw_y_align) {
-        raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
-    }
-    if (raw_y_align) {
-        dc_node.planet.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
-        xmlFree(raw_y_align);
-    }
-
-    // parent x align
-    xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
-    if (raw_parent_x_align) {
-        dc_node.planet.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
-        xmlFree(raw_parent_x_align);
-    }
-
-    // parent y align
-    xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
-    if (raw_parent_y_align) {
-        dc_node.planet.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
-        xmlFree(raw_parent_y_align);
-    }
-
-    // rotation
-    xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
-    if (!raw_rotation) {
-        raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
-    }
-    if (raw_rotation) {
-        dc_node.planet.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
-        xmlFree(raw_rotation);
-    }
-
-    // pivots
-    xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
-    if (!raw_pivot_position_x) {
-        raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
-    }
-    xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
-    if (!raw_pivot_position_y) {
-        raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
-    }
-    if (raw_pivot_position_x && raw_pivot_position_y) {
-
-        dc_node.planet.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
-        xmlFree(raw_pivot_position_x);
-
-        dc_node.planet.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
-        xmlFree(raw_pivot_position_y);
-
-    } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
-        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
-        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
-        if (raw_pivot_parent_align_x || raw_pivot_parent_align_y) {
-            if (raw_pivot_parent_align_x) {
-                dc_node.planet.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
-                xmlFree(raw_pivot_parent_align_x);
-            }
-            if (raw_pivot_parent_align_y) {
-                dc_node.planet.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
-                xmlFree(raw_pivot_parent_align_y);
-            }
-        } else {
-            xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
-            if (raw_pivot_align_x) {
-                dc_node.planet.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
-                xmlFree(raw_pivot_align_x);
-            }
-
-            xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
-            if (raw_pivot_align_y) {
-                dc_node.planet.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
-                xmlFree(raw_pivot_align_y);
-            }
-        }
-
-    } else {
-        DC_LOG_ERROR("Planet", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
-    }
-
-    // LLE camera mode (orthogonal to surface)
-    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
-    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
-    xmlChar *raw_ele = xmlGetProp(xml_node, BAD_CAST "Elevation");
-    bool has_lle = raw_lat || raw_lon || raw_ele;
-
-    if (has_lle) {
-        if (raw_lat && raw_lon && raw_ele) {
-            dc_node.planet.lle.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
-            dc_node.planet.lle.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
-            dc_node.planet.lle.ele = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_ele);
-        } else {
-            DC_LOG_ERROR("Planet", "Incomplete LLE: must specify all of Latitude, Longitude, and Elevation");
-        }
-    }
-    if (raw_lat) xmlFree(raw_lat);
-    if (raw_lon) xmlFree(raw_lon);
-    if (raw_ele) xmlFree(raw_ele);
-
-    // heading (LLE mode: azimuth from north, CW, degrees)
-    xmlChar *raw_heading = xmlGetProp(xml_node, BAD_CAST "Heading");
-    if (raw_heading) {
-        dc_node.planet.heading = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_heading);
-        xmlFree(raw_heading);
-    }
-
-    // XYZ/RPY camera mode (raw world coordinates)
-    xmlChar *raw_cam_x = xmlGetProp(xml_node, BAD_CAST "CameraX");
-    xmlChar *raw_cam_y = xmlGetProp(xml_node, BAD_CAST "CameraY");
-    xmlChar *raw_cam_z = xmlGetProp(xml_node, BAD_CAST "CameraZ");
-    xmlChar *raw_roll  = xmlGetProp(xml_node, BAD_CAST "Roll");
-    xmlChar *raw_pitch = xmlGetProp(xml_node, BAD_CAST "Pitch");
-    xmlChar *raw_yaw   = xmlGetProp(xml_node, BAD_CAST "Yaw");
-    bool has_xyz = raw_cam_x || raw_cam_y || raw_cam_z || raw_roll || raw_pitch || raw_yaw;
-
-    if (has_lle && has_xyz) {
-        DC_LOG_WARN("Planet", "Both LLE and XYZ/RPY specified; using XYZ/RPY");
-    }
-
-    if (has_xyz) {
-        if (raw_cam_x && raw_cam_y && raw_cam_z && raw_roll && raw_pitch && raw_yaw) {
-            dc_node.planet.xyz.x     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_x);
-            dc_node.planet.xyz.y     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_y);
-            dc_node.planet.xyz.z     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_z);
-            dc_node.planet.rpy.roll  = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_roll);
-            dc_node.planet.rpy.pitch = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pitch);
-            dc_node.planet.rpy.yaw   = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_yaw);
-        } else {
-            DC_LOG_ERROR("Planet", "Incomplete XYZ/RPY: must specify all of CameraX, CameraY, CameraZ, Roll, Pitch, and Yaw");
-        }
-    }
-    if (raw_cam_x) xmlFree(raw_cam_x);
-    if (raw_cam_y) xmlFree(raw_cam_y);
-    if (raw_cam_z) xmlFree(raw_cam_z);
-    if (raw_roll)  xmlFree(raw_roll);
-    if (raw_pitch) xmlFree(raw_pitch);
-    if (raw_yaw)   xmlFree(raw_yaw);
-
-    if (!has_lle && !has_xyz) {
-        DC_LOG_ERROR("Planet", "Must specify either LLE (Latitude/Longitude/Elevation) or XYZ/RPY (CameraX/CameraY/CameraZ/Roll/Pitch/Yaw)");
-    }
-
-    // orthographic projection
-    xmlChar *raw_ortho = xmlGetProp(xml_node, BAD_CAST "Orthographic");
-    if (raw_ortho) {
-        dc_node.planet.orthographic = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_ortho);
-        xmlFree(raw_ortho);
-    }
-
-    // negate x
-    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
-    if (raw_negate_x) {
-        dc_node.planet.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
-        xmlFree(raw_negate_x);
-    }
-
-    // negate y
-    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
-    if (raw_negate_y) {
-        dc_node.planet.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
-        xmlFree(raw_negate_y);
-    }
-
-    // shader variable (selects active PlanetShader by index at runtime)
-    dc_node.planet.planet_shader_var          = DC_APP_VAL_INDEX_UNDEFINED;
-    dc_node.planet.planet_active_shader_index = -2; // uninitialized sentinel
-    xmlChar *raw_shader_var = xmlGetProp(xml_node, BAD_CAST "ShaderIndex");
-    if (raw_shader_var) {
-        dc_node.planet.planet_shader_var = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_shader_var);
-        xmlFree(raw_shader_var);
-    }
-
-    // register node
-    _NodeIndex node_index = _register_node(app_data, &dc_node);
-
-    // collect planet node index for post-tree initialization
-    sbpush(app_data->sb_planet_node_indices, node_index);
-
-    // process children
-    _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
-
-    // return
-    return node_index;
+    // no drawable node — return undefined
+    return NODE_INDEX_UNDEFINED;
 }
 
 static _NodeIndex _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
-    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
-    (void)elem_type;
+    (void)parent_node_index;
 
-    _Node *parent_node = _get_node(app_data, parent_node_index);
-    switch (parent_node->type) {
-        case NODE_TYPE_PLANET: {
-
-            // file
-            xmlChar *raw_filepath = xmlGetProp(xml_node, BAD_CAST "File");
-            if (raw_filepath) {
-
-                // clean filepath
-                char cleaned_filepath[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_filepath, (const char *)raw_filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                xmlFree(raw_filepath);
-
-                // convert to absolute path
-                char abs_filepath[DC_VALUE_STRING_BUFFER_SIZE];
-                if (dc_utils_is_relative_path(cleaned_filepath)) {
-                    dc_utils_join_paths(directory, cleaned_filepath, abs_filepath, sizeof(abs_filepath));
-                } else {
-                    strcpy(abs_filepath, cleaned_filepath);
-                }
-
-                sbpush(parent_node->planet.sb_planet_data_files, strdup(abs_filepath));
-            } else {
-                DC_LOG_ERROR("PlanetData", "Missing 'File' attribute");
-            }
-
-            break;
-        }
-        default:
-            DC_LOG_ERROR("PlanetData", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET) {
+        DC_LOG_ERROR("PlanetData", "Invalid parent element type: %s", dc_app_elem_type_to_string(parent_elem_type));
+        return NODE_INDEX_UNDEFINED;
     }
 
-    // return
+    _PlanetDef *def = &app_data->sb_planet_defs[sbcount(app_data->sb_planet_defs) - 1];
+
+    // file
+    xmlChar *raw_filepath = xmlGetProp(xml_node, BAD_CAST "File");
+    if (raw_filepath) {
+
+        // clean filepath
+        char cleaned_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+        strncpy(cleaned_filepath, (const char *)raw_filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        cleaned_filepath[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        xmlFree(raw_filepath);
+
+        // convert to absolute path
+        char abs_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+        if (dc_utils_is_relative_path(cleaned_filepath)) {
+            dc_utils_join_paths(directory, cleaned_filepath, abs_filepath, sizeof(abs_filepath));
+        } else {
+            strcpy(abs_filepath, cleaned_filepath);
+        }
+
+        sbpush(def->sb_data_files, strdup(abs_filepath));
+    } else {
+        DC_LOG_ERROR("PlanetData", "Missing 'File' attribute");
+    }
+
     return NODE_INDEX_UNDEFINED;
 }
 
 static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
-    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
-    (void)elem_type;
+    (void)parent_node_index;
 
-    _Node *parent_node = _get_node(app_data, parent_node_index);
-    switch (parent_node->type) {
-        case NODE_TYPE_PLANET: {
-
-            // source file
-            xmlChar *raw_source = xmlGetProp(xml_node, BAD_CAST "Source");
-            if (raw_source) {
-
-                char cleaned_filepath[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned_filepath, (const char *)raw_source, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                xmlFree(raw_source);
-
-                char abs_filepath[DC_VALUE_STRING_BUFFER_SIZE];
-                if (dc_utils_is_relative_path(cleaned_filepath)) {
-                    dc_utils_join_paths(directory, cleaned_filepath, abs_filepath, sizeof(abs_filepath));
-                } else {
-                    strcpy(abs_filepath, cleaned_filepath);
-                }
-
-                parent_node->planet.planet_texture_file = strdup(abs_filepath);
-            } else {
-                DC_LOG_ERROR("PlanetTexture", "Missing 'Source' attribute");
-            }
-
-            // meters per pixel
-            xmlChar *raw_mpp = xmlGetProp(xml_node, BAD_CAST "MetersPerPixel");
-            if (raw_mpp) {
-                parent_node->planet.planet_texture_mpp = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_mpp);
-                xmlFree(raw_mpp);
-            }
-
-            // latitude
-            xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
-            if (raw_lat) {
-                parent_node->planet.planet_texture_lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
-                xmlFree(raw_lat);
-            }
-
-            // longitude
-            xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
-            if (raw_lon) {
-                parent_node->planet.planet_texture_lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
-                xmlFree(raw_lon);
-            }
-
-            break;
-        }
-        default:
-            DC_LOG_ERROR("PlanetTexture", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET) {
+        DC_LOG_ERROR("PlanetTexture", "Invalid parent element type: %s", dc_app_elem_type_to_string(parent_elem_type));
+        return NODE_INDEX_UNDEFINED;
     }
 
-    // return
+    _PlanetDef *def = &app_data->sb_planet_defs[sbcount(app_data->sb_planet_defs) - 1];
+
+    if (sbcount(def->sb_textures) >= 1) {
+        DC_LOG_ERROR("PlanetTexture", "Only one <PlanetTexture> per <Planet> is currently supported (line %ld)", xmlGetLineNo(xml_node));
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _PlanetTextureEntry entry = {0};
+
+    // file path
+    xmlChar *raw_file = xmlGetProp(xml_node, BAD_CAST "File");
+    if (raw_file) {
+        char cleaned[DC_UTILS_FILEPATH_BUFFER_SIZE];
+        strncpy(cleaned, (const char *)raw_file, DC_UTILS_FILEPATH_BUFFER_SIZE - 1);
+        cleaned[DC_UTILS_FILEPATH_BUFFER_SIZE - 1] = '\0';
+        xmlFree(raw_file);
+
+        char abs_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
+        if (dc_utils_is_relative_path(cleaned)) {
+            dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
+        } else {
+            strcpy(abs_path, cleaned);
+        }
+        char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
+        _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
+        entry.source = strdup(vfs_path);
+    }
+
+    // meters per pixel
+    xmlChar *raw_mpp = xmlGetProp(xml_node, BAD_CAST "MetersPerPixel");
+    if (raw_mpp) {
+        entry.mpp = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_mpp);
+        xmlFree(raw_mpp);
+    }
+
+    // latitude
+    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
+    if (raw_lat) {
+        entry.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+        xmlFree(raw_lat);
+    }
+
+    // longitude
+    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
+    if (raw_lon) {
+        entry.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+        xmlFree(raw_lon);
+    }
+
+    // refresh (set to 1 to refresh texture at runtime)
+    xmlChar *raw_refresh = xmlGetProp(xml_node, BAD_CAST "Refresh");
+    if (raw_refresh) {
+        entry.refresh = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_refresh);
+        xmlFree(raw_refresh);
+    }
+
+    sbpush(def->sb_textures, entry);
+
     return NODE_INDEX_UNDEFINED;
 }
 
@@ -3613,68 +3412,315 @@ static void _planet_shader_abs_to_vfs(const char *abs_path, char *vfs_out, size_
 }
 
 static _NodeIndex _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    (void)parent_node_index;
+
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET) {
+        DC_LOG_ERROR("PlanetShader", "Invalid parent element type: %s", dc_app_elem_type_to_string(parent_elem_type));
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _PlanetDef *def = &app_data->sb_planet_defs[sbcount(app_data->sb_planet_defs) - 1];
+
+    // Index (required)
+    xmlChar *raw_index = xmlGetProp(xml_node, BAD_CAST "Index");
+    if (!raw_index) {
+        DC_LOG_ERROR("PlanetShader", "Missing required 'Index' attribute");
+        return NODE_INDEX_UNDEFINED;
+    }
+    _PlanetShaderEntry entry = {0};
+    entry.index = atoi((const char *)raw_index);
+    xmlFree(raw_index);
+
+    // VertexSource (optional)
+    xmlChar *raw_vert = xmlGetProp(xml_node, BAD_CAST "VertexSource");
+    if (raw_vert) {
+        char cleaned[DC_VALUE_STRING_BUFFER_SIZE];
+        strncpy(cleaned, (const char *)raw_vert, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        cleaned[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        xmlFree(raw_vert);
+        char abs_path[DC_VALUE_STRING_BUFFER_SIZE];
+        if (dc_utils_is_relative_path(cleaned)) {
+            dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
+        } else {
+            strncpy(abs_path, cleaned, sizeof(abs_path) - 1);
+        }
+        char vfs_path[DC_VALUE_STRING_BUFFER_SIZE];
+        _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
+        entry.vertex_path = strdup(vfs_path);
+    }
+
+    // FragmentSource (optional)
+    xmlChar *raw_frag = xmlGetProp(xml_node, BAD_CAST "FragmentSource");
+    if (raw_frag) {
+        char cleaned[DC_VALUE_STRING_BUFFER_SIZE];
+        strncpy(cleaned, (const char *)raw_frag, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        cleaned[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        xmlFree(raw_frag);
+        char abs_path[DC_VALUE_STRING_BUFFER_SIZE];
+        if (dc_utils_is_relative_path(cleaned)) {
+            dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
+        } else {
+            strncpy(abs_path, cleaned, sizeof(abs_path) - 1);
+        }
+        char vfs_path[DC_VALUE_STRING_BUFFER_SIZE];
+        _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
+        entry.fragment_path = strdup(vfs_path);
+    }
+
+    sbpush(def->sb_shaders, entry);
+
+    return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
     (void)elem_type;
     (void)parent_elem_type;
+    (void)directory;
 
-    _Node *parent_node = _get_node(app_data, parent_node_index);
-    switch (parent_node->type) {
-        case NODE_TYPE_PLANET: {
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_PLANET_VIEW;
+    dc_node.parent = parent_node_index;
 
-            // Index (required)
-            xmlChar *raw_index = xmlGetProp(xml_node, BAD_CAST "Index");
-            if (!raw_index) {
-                DC_LOG_ERROR("PlanetShader", "Missing required 'Index' attribute");
+    // Planet reference (required) — resolve def index at parse time
+    xmlChar *raw_planet = xmlGetProp(xml_node, BAD_CAST "Planet");
+    dc_node.planet_view.planet_def_index = UINT8_MAX;
+    if (raw_planet) {
+        int def_count = sbcount(app_data->sb_planet_defs);
+        for (int j = 0; j < def_count; j++) {
+            if (app_data->sb_planet_defs[j].name && strcmp(app_data->sb_planet_defs[j].name, (const char *)raw_planet) == 0) {
+                dc_node.planet_view.planet_def_index = (uint8_t)j;
                 break;
             }
-            _PlanetShaderEntry entry = {0};
-            entry.index = atoi((const char *)raw_index);
-            xmlFree(raw_index);
-
-            // VertexSource (optional)
-            xmlChar *raw_vert = xmlGetProp(xml_node, BAD_CAST "VertexSource");
-            if (raw_vert) {
-                char cleaned[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned, (const char *)raw_vert, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                cleaned[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
-                xmlFree(raw_vert);
-                char abs_path[DC_VALUE_STRING_BUFFER_SIZE];
-                if (dc_utils_is_relative_path(cleaned)) {
-                    dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
-                } else {
-                    strncpy(abs_path, cleaned, sizeof(abs_path) - 1);
-                }
-                char vfs_path[DC_VALUE_STRING_BUFFER_SIZE];
-                _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
-                entry.vertex_path = strdup(vfs_path);
-            }
-
-            // FragmentSource (optional)
-            xmlChar *raw_frag = xmlGetProp(xml_node, BAD_CAST "FragmentSource");
-            if (raw_frag) {
-                char cleaned[DC_VALUE_STRING_BUFFER_SIZE];
-                strncpy(cleaned, (const char *)raw_frag, DC_VALUE_STRING_BUFFER_SIZE - 1);
-                cleaned[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
-                xmlFree(raw_frag);
-                char abs_path[DC_VALUE_STRING_BUFFER_SIZE];
-                if (dc_utils_is_relative_path(cleaned)) {
-                    dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
-                } else {
-                    strncpy(abs_path, cleaned, sizeof(abs_path) - 1);
-                }
-                char vfs_path[DC_VALUE_STRING_BUFFER_SIZE];
-                _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
-                entry.fragment_path = strdup(vfs_path);
-            }
-
-            sbpush(parent_node->planet.sb_planet_shaders, entry);
-            break;
         }
-        default:
-            DC_LOG_ERROR("PlanetShader", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
+        if (dc_node.planet_view.planet_def_index == UINT8_MAX) {
+            DC_LOG_ERROR("PlanetView", "Planet '%s' not found", (const char *)raw_planet);
+        }
+        xmlFree(raw_planet);
     }
 
-    return NODE_INDEX_UNDEFINED;
+    // x position
+    xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
+    if (!raw_x_position) {
+        raw_x_position = xmlGetProp(xml_node, BAD_CAST "X");
+    }
+    if (raw_x_position) {
+        dc_node.planet_view.position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_position);
+        xmlFree(raw_x_position);
+    }
+
+    // y position
+    xmlChar *raw_y_position = xmlGetProp(xml_node, BAD_CAST "PositionY");
+    if (!raw_y_position) {
+        raw_y_position = xmlGetProp(xml_node, BAD_CAST "Y");
+    }
+    if (raw_y_position) {
+        dc_node.planet_view.position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_position);
+        xmlFree(raw_y_position);
+    }
+
+    // x dimension
+    xmlChar *raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionX");
+    if (!raw_x_dimension) {
+        raw_x_dimension = xmlGetProp(xml_node, BAD_CAST "Width");
+    }
+    if (raw_x_dimension) {
+        dc_node.planet_view.dimension.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x_dimension);
+        xmlFree(raw_x_dimension);
+    }
+
+    // y dimension
+    xmlChar *raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "DimensionY");
+    if (!raw_y_dimension) {
+        raw_y_dimension = xmlGetProp(xml_node, BAD_CAST "Height");
+    }
+    if (raw_y_dimension) {
+        dc_node.planet_view.dimension.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y_dimension);
+        xmlFree(raw_y_dimension);
+    }
+
+    // local x align
+    xmlChar *raw_x_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignX");
+    if (!raw_x_align) {
+        raw_x_align = xmlGetProp(xml_node, BAD_CAST "HorizontalAlign");
+    }
+    if (raw_x_align) {
+        dc_node.planet_view.local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_x_align);
+        xmlFree(raw_x_align);
+    }
+
+    // local y align
+    xmlChar *raw_y_align = xmlGetProp(xml_node, BAD_CAST "LocalAlignY");
+    if (!raw_y_align) {
+        raw_y_align = xmlGetProp(xml_node, BAD_CAST "VerticalAlign");
+    }
+    if (raw_y_align) {
+        dc_node.planet_view.local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_y_align);
+        xmlFree(raw_y_align);
+    }
+
+    // parent x align
+    xmlChar *raw_parent_x_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignX");
+    if (raw_parent_x_align) {
+        dc_node.planet_view.parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_x_align);
+        xmlFree(raw_parent_x_align);
+    }
+
+    // parent y align
+    xmlChar *raw_parent_y_align = xmlGetProp(xml_node, BAD_CAST "ParentAlignY");
+    if (raw_parent_y_align) {
+        dc_node.planet_view.parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_parent_y_align);
+        xmlFree(raw_parent_y_align);
+    }
+
+    // rotation
+    xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+    if (!raw_rotation) {
+        raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotate");
+    }
+    if (raw_rotation) {
+        dc_node.planet_view.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
+        xmlFree(raw_rotation);
+    }
+
+    // pivots
+    xmlChar *raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotPositionX");
+    if (!raw_pivot_position_x) {
+        raw_pivot_position_x = xmlGetProp(xml_node, BAD_CAST "PivotX");
+    }
+    xmlChar *raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotPositionY");
+    if (!raw_pivot_position_y) {
+        raw_pivot_position_y = xmlGetProp(xml_node, BAD_CAST "PivotY");
+    }
+    if (raw_pivot_position_x && raw_pivot_position_y) {
+
+        dc_node.planet_view.pivot_position.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_x);
+        xmlFree(raw_pivot_position_x);
+
+        dc_node.planet_view.pivot_position.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pivot_position_y);
+        xmlFree(raw_pivot_position_y);
+
+    } else if (!raw_pivot_position_x && !raw_pivot_position_y) {
+        xmlChar *raw_pivot_parent_align_x = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignX");
+        xmlChar *raw_pivot_parent_align_y = xmlGetProp(xml_node, BAD_CAST "PivotParentAlignY");
+        if (raw_pivot_parent_align_x || raw_pivot_parent_align_y) {
+            if (raw_pivot_parent_align_x) {
+                dc_node.planet_view.pivot_parent_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_x);
+                xmlFree(raw_pivot_parent_align_x);
+            }
+            if (raw_pivot_parent_align_y) {
+                dc_node.planet_view.pivot_parent_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_parent_align_y);
+                xmlFree(raw_pivot_parent_align_y);
+            }
+        } else {
+            xmlChar *raw_pivot_align_x = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignX");
+            if (raw_pivot_align_x) {
+                dc_node.planet_view.pivot_local_align.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_x);
+                xmlFree(raw_pivot_align_x);
+            }
+
+            xmlChar *raw_pivot_align_y = xmlGetProp(xml_node, BAD_CAST "PivotLocalAlignY");
+            if (raw_pivot_align_y) {
+                dc_node.planet_view.pivot_local_align.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_pivot_align_y);
+                xmlFree(raw_pivot_align_y);
+            }
+        }
+
+    } else {
+        DC_LOG_ERROR("PlanetView", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
+    }
+
+    // LLE camera mode (orthogonal to surface)
+    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "CameraLatitude");
+    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "CameraLongitude");
+    xmlChar *raw_ele = xmlGetProp(xml_node, BAD_CAST "CameraElevation");
+    bool has_lle = raw_lat || raw_lon || raw_ele;
+
+    if (has_lle) {
+        if (raw_lat && raw_lon && raw_ele) {
+            dc_node.planet_view.lle.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+            dc_node.planet_view.lle.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+            dc_node.planet_view.lle.ele = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_ele);
+        } else {
+            DC_LOG_ERROR("PlanetView", "Incomplete LLE: must specify all of CameraLatitude, CameraLongitude, and CameraElevation");
+        }
+    }
+    if (raw_lat) xmlFree(raw_lat);
+    if (raw_lon) xmlFree(raw_lon);
+    if (raw_ele) xmlFree(raw_ele);
+
+    // heading (LLE mode: azimuth from north, CW, degrees)
+    xmlChar *raw_heading = xmlGetProp(xml_node, BAD_CAST "CameraHeading");
+    if (raw_heading) {
+        dc_node.planet_view.heading = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_heading);
+        xmlFree(raw_heading);
+    }
+
+    // XYZ/RPY camera mode (raw world coordinates)
+    xmlChar *raw_cam_x = xmlGetProp(xml_node, BAD_CAST "CameraX");
+    xmlChar *raw_cam_y = xmlGetProp(xml_node, BAD_CAST "CameraY");
+    xmlChar *raw_cam_z = xmlGetProp(xml_node, BAD_CAST "CameraZ");
+    xmlChar *raw_roll  = xmlGetProp(xml_node, BAD_CAST "CameraRoll");
+    xmlChar *raw_pitch = xmlGetProp(xml_node, BAD_CAST "CameraPitch");
+    xmlChar *raw_yaw   = xmlGetProp(xml_node, BAD_CAST "CameraYaw");
+    bool has_xyz = raw_cam_x || raw_cam_y || raw_cam_z || raw_roll || raw_pitch || raw_yaw;
+
+    if (has_lle && has_xyz) {
+        DC_LOG_WARN("PlanetView", "Both LLE and XYZ/RPY specified; using XYZ/RPY");
+    }
+
+    if (has_xyz) {
+        if (raw_cam_x && raw_cam_y && raw_cam_z && raw_roll && raw_pitch && raw_yaw) {
+            dc_node.planet_view.xyz.x     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_x);
+            dc_node.planet_view.xyz.y     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_y);
+            dc_node.planet_view.xyz.z     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_z);
+            dc_node.planet_view.rpy.roll  = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_roll);
+            dc_node.planet_view.rpy.pitch = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pitch);
+            dc_node.planet_view.rpy.yaw   = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_yaw);
+        } else {
+            DC_LOG_ERROR("PlanetView", "Incomplete XYZ/RPY: must specify all of CameraX, CameraY, CameraZ, CameraRoll, CameraPitch, and CameraYaw");
+        }
+    }
+    if (raw_cam_x) xmlFree(raw_cam_x);
+    if (raw_cam_y) xmlFree(raw_cam_y);
+    if (raw_cam_z) xmlFree(raw_cam_z);
+    if (raw_roll)  xmlFree(raw_roll);
+    if (raw_pitch) xmlFree(raw_pitch);
+    if (raw_yaw)   xmlFree(raw_yaw);
+
+    if (!has_lle && !has_xyz) {
+        DC_LOG_ERROR("PlanetView", "Must specify either LLE (CameraLatitude/CameraLongitude/CameraElevation) or XYZ/RPY (CameraX/CameraY/CameraZ/CameraRoll/CameraPitch/CameraYaw)");
+    }
+
+    // orthographic projection
+    xmlChar *raw_ortho = xmlGetProp(xml_node, BAD_CAST "CameraOrthographic");
+    if (raw_ortho) {
+        dc_node.planet_view.orthographic = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_ortho);
+        xmlFree(raw_ortho);
+    }
+
+    // negate x
+    xmlChar *raw_negate_x = xmlGetProp(xml_node, BAD_CAST "NegateX");
+    if (raw_negate_x) {
+        dc_node.planet_view.negate_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_x);
+        xmlFree(raw_negate_x);
+    }
+
+    // negate y
+    xmlChar *raw_negate_y = xmlGetProp(xml_node, BAD_CAST "NegateY");
+    if (raw_negate_y) {
+        dc_node.planet_view.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
+        xmlFree(raw_negate_y);
+    }
+
+    // register node
+    _NodeIndex node_index = _register_node(app_data, &dc_node);
+
+    // collect planet view node index for post-tree initialization
+    sbpush(app_data->sb_planet_view_node_indices, node_index);
+
+    // leaf element — no children
+    return node_index;
 }
 
 static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {

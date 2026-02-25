@@ -25,6 +25,7 @@ static void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr nod
 static void _validate_attribute_names(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type);
 static void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type);
 static void _validate_variable_references(ValidationContext *ctx, xmlNodePtr node, DcAppElemType elem_type);
+static bool _is_variable_ref(const char *value);
 
 int main(int argc, char **argv) {
 
@@ -133,6 +134,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_EDGE_IO:
             case DC_APP_ELEM_TYPE_LOGIC:
             case DC_APP_ELEM_TYPE_FUNCTION:
+            case DC_APP_ELEM_TYPE_PLANET:
                 return true;
             default:
                 return false;
@@ -158,7 +160,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
@@ -189,7 +191,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
@@ -220,7 +222,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
@@ -255,7 +257,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -282,7 +284,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
@@ -328,7 +330,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -360,7 +362,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -391,7 +393,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -422,7 +424,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -451,7 +453,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -541,7 +543,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -587,7 +589,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -624,7 +626,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_SPHERE:
             case DC_APP_ELEM_TYPE_STENCIL:
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
-            case DC_APP_ELEM_TYPE_PLANET:
+            case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
             // logic elements
@@ -647,6 +649,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         case DC_APP_ELEM_TYPE_TRICK_FROM:
         case DC_APP_ELEM_TYPE_TRICK_TO:
         case DC_APP_ELEM_TYPE_VERTEX:
+        case DC_APP_ELEM_TYPE_PLANET_VIEW:
         case DC_APP_ELEM_TYPE_PLANET_DATA:
         case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
         case DC_APP_ELEM_TYPE_PLANET_SHADER:
@@ -871,6 +874,32 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             break;
         }
 
+        case DC_APP_ELEM_TYPE_PLANET: {
+            xmlChar *name = xmlGetProp(node, BAD_CAST "Name");
+            if (!name) {
+                DC_LOG_ERROR("Validate", "<Planet> missing required attribute 'Name' (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            } else {
+                if (_is_variable_ref((const char *)name)) {
+                    DC_LOG_ERROR("Validate", "<Planet> Name '%s' cannot be a runtime variable (line %ld)", (const char *)name, xmlGetLineNo(node));
+                    ctx->error_count++;
+                }
+                xmlFree(name);
+            }
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_PLANET_VIEW: {
+            xmlChar *planet = xmlGetProp(node, BAD_CAST "Planet");
+            if (!planet) {
+                DC_LOG_ERROR("Validate", "<PlanetView> missing required attribute 'Planet' (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            } else {
+                xmlFree(planet);
+            }
+            break;
+        }
+
         case DC_APP_ELEM_TYPE_PLANET_DATA: {
             xmlChar *file = xmlGetProp(node, BAD_CAST "File");
             if (!file) {
@@ -882,16 +911,9 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             break;
         }
 
-        case DC_APP_ELEM_TYPE_PLANET_TEXTURE: {
-            xmlChar *source = xmlGetProp(node, BAD_CAST "Source");
-            if (!source) {
-                DC_LOG_ERROR("Validate", "<PlanetTexture> missing required attribute 'Source' (line %ld)", xmlGetLineNo(node));
-                ctx->error_count++;
-            } else {
-                xmlFree(source);
-            }
+        case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
+            // All attributes are optional (dynamic, can be set via variables at runtime)
             break;
-        }
 
         case DC_APP_ELEM_TYPE_PLANET_SHADER: {
             xmlChar *index = xmlGetProp(node, BAD_CAST "Index");
@@ -947,9 +969,10 @@ static const char *_valid_attrs_pixelstream[]    = {"Type", "URL", "Protocol", "
 static const char *_valid_attrs_set[]            = {"Variable", "Operator", "Defer", NULL};
 static const char *_valid_attrs_sphere[]         = {"Radius", "Image", "Roll", "Pitch", "Yaw", NULL};
 static const char *_valid_attrs_style[]          = {"Name", NULL};
-static const char *_valid_attrs_planet[]          = {"Latitude", "Longitude", "Elevation", "Heading", "CameraX", "CameraY", "CameraZ", "Roll", "Pitch", "Yaw", "Orthographic", "ShaderIndex", NULL};
+static const char *_valid_attrs_planet[]          = {"Name", "ShaderIndex", NULL};
+static const char *_valid_attrs_planet_view[]    = {"Planet", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", NULL};
 static const char *_valid_attrs_planet_data[]    = {"File", NULL};
-static const char *_valid_attrs_planet_texture[] = {"Source", "MetersPerPixel", "Latitude", "Longitude", NULL};
+static const char *_valid_attrs_planet_texture[] = {"File", "MetersPerPixel", "Latitude", "Longitude", "Refresh", NULL};
 static const char *_valid_attrs_planet_shader[]  = {"Index", "VertexSource", "FragmentSource", NULL};
 static const char *_valid_attrs_text[]           = {"Size", "ShadowOffset", NULL};
 static const char *_valid_attrs_trick_io[]       = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};
@@ -1134,13 +1157,16 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
             return true; // Stencil elements are wrappers
 
         case DC_APP_ELEM_TYPE_PLANET:
+            return _attr_in_list(attr_name, _valid_attrs_planet);
+
+        case DC_APP_ELEM_TYPE_PLANET_VIEW:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
                    _attr_in_list(attr_name, _valid_attrs_negate) ||
                    _attr_in_list(attr_name, _valid_attrs_dimension) ||
                    _attr_in_list(attr_name, _valid_attrs_align) ||
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
-                   _attr_in_list(attr_name, _valid_attrs_planet);
+                   _attr_in_list(attr_name, _valid_attrs_planet_view);
 
         case DC_APP_ELEM_TYPE_PLANET_DATA:
             return _attr_in_list(attr_name, _valid_attrs_planet_data);

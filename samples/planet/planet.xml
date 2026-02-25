@@ -35,7 +35,19 @@
     <!-- Orthographic projection toggle -->
     <Variable Type="#_variable_integer_" InitialValue="0">UseOrtho</Variable>
 
+    <!-- Texture overlay -->
+    <Variable Type="#_variable_integer_" InitialValue="0">TextureRefresh</Variable>
+
     <Logic File="logic/logic.so"/>
+
+    <!-- Top-level planet definition (shared by both views) -->
+    <Planet Name="Moon" ShaderIndex="@ActiveShader">
+        <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
+        <PlanetTexture File="../../assets/nasa_worm.png" MetersPerPixel="100"
+            Latitude="90" Longitude="180" Refresh="@TextureRefresh"/>
+        <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
+        <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
+    </Planet>
 
     <Default>
         <Text ForceMono="Numeric" Size="14" FillColor="#_color_white_"/>
@@ -66,6 +78,24 @@
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
                         LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                         Size="11" FillColor="0.6 0.6 0.6">Ortho</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- ========== TEXTURE REFRESH ========== -->
+            <Button Type="#_button_standard_" X="15" Y="706" Width="90" Height="22"
+                Variable="TextureRefresh" On="1" Off="0"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="#_color_white_">Refresh</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="0.6 0.6 0.6">Refresh</Text>
                 </ButtonIndicatorOff>
             </Button>
 
@@ -128,26 +158,16 @@
 
             <!-- ========== PLANET VIEWS ========== -->
             <Text X="240" Y="662" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_yellow_">LLE Camera</Text>
-            <Planet X="15" Y="200" Width="450" Height="450"
-                Latitude="@Latitude" Longitude="@Longitude" Elevation="@Elevation"
-                Heading="@Heading"
-                Orthographic="@UseOrtho"
-                ShaderIndex="@ActiveShader">
-                <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
-                <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
-                <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
-            </Planet>
+            <PlanetView Planet="Moon" X="15" Y="200" Width="450" Height="450"
+                CameraLatitude="@Latitude" CameraLongitude="@Longitude" CameraElevation="@Elevation"
+                CameraHeading="@Heading"
+                CameraOrthographic="@UseOrtho"/>
 
             <Text X="760" Y="662" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">XYZ/RPY Camera</Text>
-            <Planet X="535" Y="200" Width="450" Height="450"
+            <PlanetView Planet="Moon" X="535" Y="200" Width="450" Height="450"
                 CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
-                Roll="@CamRoll" Pitch="@CamPitch" Yaw="@CamYaw"
-                Orthographic="@UseOrtho"
-                ShaderIndex="@ActiveShader">
-                <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
-                <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
-                <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
-            </Planet>
+                CameraRoll="@CamRoll" CameraPitch="@CamPitch" CameraYaw="@CamYaw"
+                CameraOrthographic="@UseOrtho"/>
 
             <!-- ========== SLIDERS (below planets) ========== -->
 

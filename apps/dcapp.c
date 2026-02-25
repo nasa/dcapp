@@ -207,19 +207,7 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 sbfree(node->text.sb_format_indices);
                 sbfree(node->text.sb_format_types);
                 break;
-            case NODE_TYPE_PLANET:
-                for (int j = 0; j < sbcount(node->planet.sb_planet_data_files); j++) {
-                    free(node->planet.sb_planet_data_files[j]);
-                }
-                sbfree(node->planet.sb_planet_data_files);
-                if (node->planet.planet_texture_file) {
-                    free(node->planet.planet_texture_file);
-                }
-                for (int j = 0; j < sbcount(node->planet.sb_planet_shaders); j++) {
-                    free(node->planet.sb_planet_shaders[j].vertex_path);   // free(NULL) is safe
-                    free(node->planet.sb_planet_shaders[j].fragment_path);
-                }
-                sbfree(node->planet.sb_planet_shaders);
+            case NODE_TYPE_PLANET_VIEW:
                 break;
             case NODE_TYPE_WINDOW:
                 if (node->window.title) {
@@ -234,7 +222,6 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
 
     // cleanup planet views, instances, and extension
     {
-        bool had_planets = sbcount(app_data->sb_planets) > 0;
         for (int i = 0; i < sbcount(app_data->sb_planet_views); i++) {
             if (app_data->sb_planet_views[i]) {
                 _ext_planet->cleanup_view(app_data->sb_planet_views[i]);
@@ -245,12 +232,30 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 _ext_planet->cleanup_planet(app_data->sb_planets[i]);
             }
         }
-        if (had_planets) {
+        if (app_data->planet_ext_initialized) {
             _ext_planet->cleanup();
         }
         sbfree(app_data->sb_planet_views);
         sbfree(app_data->sb_planets);
-        sbfree(app_data->sb_planet_node_indices);
+        for (int i = 0; i < sbcount(app_data->sb_planet_defs); i++) {
+            _PlanetDef *def = &app_data->sb_planet_defs[i];
+            if (def->name) free(def->name);
+            for (int j = 0; j < sbcount(def->sb_data_files); j++) {
+                free(def->sb_data_files[j]);
+            }
+            sbfree(def->sb_data_files);
+            for (int j = 0; j < sbcount(def->sb_shaders); j++) {
+                if (def->sb_shaders[j].vertex_path) free(def->sb_shaders[j].vertex_path);
+                if (def->sb_shaders[j].fragment_path) free(def->sb_shaders[j].fragment_path);
+            }
+            sbfree(def->sb_shaders);
+            for (int j = 0; j < sbcount(def->sb_textures); j++) {
+                if (def->sb_textures[j].source) free(def->sb_textures[j].source);
+            }
+            sbfree(def->sb_textures);
+        }
+        sbfree(app_data->sb_planet_defs);
+        sbfree(app_data->sb_planet_view_node_indices);
     }
 
     // cleanup trick contexts
@@ -528,6 +533,9 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
     // reset draw batch system for new frame
     _draw_batch_reset(app_data);
+
+    // update planet definitions (shader swap, texture reload, prepare)
+    _update_planet_defs(app_data);
 
     // draw node
     _draw_node(app_data, app_data->window, NULL, NULL, NULL);

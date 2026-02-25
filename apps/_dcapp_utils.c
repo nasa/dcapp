@@ -28,8 +28,8 @@ static const char *_node_type_to_string(_NodeType type) {
             return "Rectangle";
         case NODE_TYPE_SET:
             return "Set";
-        case NODE_TYPE_PLANET:
-            return "Planet";
+        case NODE_TYPE_PLANET_VIEW:
+            return "PlanetView";
         case NODE_TYPE_TEXT:
             return "Text";
         case NODE_TYPE_WINDOW:
@@ -513,83 +513,51 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
     }
 }
 
-static void _init_planets(_AppData *app_data) {
-    int planet_count = sbcount(app_data->sb_planet_node_indices);
-    if (planet_count == 0) return;
+static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, plPlanetTexture *out) {
+    if (!entry->source || entry->source[0] == '\0') return false;
+    if (!dc_utils_file_exists(entry->source)) return false;
+    memset(out, 0, sizeof(*out));
+    out->pcPath = entry->source;
+    if (entry->mpp != DC_APP_VAL_INDEX_UNDEFINED)
+        out->fMetersPerPixel = (float)dc_app_lookup_get_value(app_data->lookup, entry->mpp)->value_double;
+    if (entry->lat != DC_APP_VAL_INDEX_UNDEFINED)
+        out->fLatitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lat)->value_double;
+    if (entry->lon != DC_APP_VAL_INDEX_UNDEFINED)
+        out->fLongitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lon)->value_double;
+    return true;
+}
 
-    DC_LOG_INFO("Planet", "Initializing %d planet(s)", planet_count);
+static void _init_planets(_AppData *app_data) {
+    int def_count  = sbcount(app_data->sb_planet_defs);
+    int view_count = sbcount(app_data->sb_planet_view_node_indices);
+    if (def_count == 0 && view_count == 0) return;
+
+    DC_LOG_INFO("Planet", "Initializing %d planet def(s), %d view(s)", def_count, view_count);
 
     // initialize planet extension
     plPlanetExtInit planet_ext_init = {0};
     planet_ext_init.ptDevice = _ext_starter->get_device();
     _ext_planet->initialize(planet_ext_init);
+    app_data->planet_ext_initialized = true;
 
-    for (int i = 0; i < planet_count; i++) {
-        _NodeIndex node_index = app_data->sb_planet_node_indices[i];
-        _Node *node = _get_node(app_data, node_index);
+    // reserve index 0 as sentinel (PLANET_INDEX_UNDEFINED / PLANET_VIEW_INDEX_UNDEFINED)
+    sbpush(app_data->sb_planets, NULL);
+    sbpush(app_data->sb_planet_views, NULL);
 
-        int file_count = sbcount(node->planet.sb_planet_data_files);
+    // Phase 1: create planets from definitions
+    for (int i = 0; i < def_count; i++) {
+        _PlanetDef *def = &app_data->sb_planet_defs[i];
+
+        int file_count = sbcount(def->sb_data_files);
         if (file_count == 0) {
-            DC_LOG_WARN("Planet", "  [%d] no PlanetData file specified, skipping", i);
+            DC_LOG_WARN("Planet", "  [%d] '%s': no PlanetData file specified, skipping", i, def->name ? def->name : "?");
             continue;
         }
 
         // use first data file
-        const char *json_path = node->planet.sb_planet_data_files[0];
+        const char *json_path = def->sb_data_files[0];
 
-        // check if a planet with the same data file and texture already exists
-        int existing_planet_idx = -1;
-        const char *cur_tex = node->planet.planet_texture_file;
-        for (int j = 0; j < i; j++) {
-            _Node *prev_node = _get_node(app_data, app_data->sb_planet_node_indices[j]);
-            if (prev_node->planet.planet_index > 0 &&
-                sbcount(prev_node->planet.sb_planet_data_files) > 0 &&
-                strcmp(prev_node->planet.sb_planet_data_files[0], json_path) == 0) {
-                // also check that the texture overlay matches
-                const char *prev_tex = prev_node->planet.planet_texture_file;
-                bool tex_match = (cur_tex == NULL && prev_tex == NULL) ||
-                                 (cur_tex != NULL && prev_tex != NULL && strcmp(cur_tex, prev_tex) == 0);
-                if (tex_match) {
-                    existing_planet_idx = prev_node->planet.planet_index; // 1-based
-                    node->planet.planet_radius = prev_node->planet.planet_radius;
-                    break;
-                }
-            }
-        }
-
-        if (existing_planet_idx > 0) {
-            // share existing planet, create a separate view for this element
-            node->planet.planet_index = (uint8_t)existing_planet_idx;
-
-            float output_width  = 1024.0f;
-            float output_height = 1024.0f;
-            if (node->planet.dimension.x != DC_APP_VAL_INDEX_UNDEFINED) {
-                float w = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.dimension.x)->value_double;
-                if (w > 0.0f) output_width = w;
-            }
-            if (node->planet.dimension.y != DC_APP_VAL_INDEX_UNDEFINED) {
-                float h = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.dimension.y)->value_double;
-                if (h > 0.0f) output_height = h;
-            }
-
-            plPlanetViewInit view_init = {0};
-            view_init.uOutputWidth  = (uint32_t)output_width;
-            view_init.uOutputHeight = (uint32_t)output_height;
-
-            plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
-            plPlanetView *view = _ext_planet->create_view(
-                app_data->sb_planets[existing_planet_idx - 1], cmd_buf, view_init);
-            _ext_starter->submit_temporary_command_buffer(cmd_buf);
-
-            sbpush(app_data->sb_planet_views, view);
-            node->planet.planet_view_index = (uint8_t)sbcount(app_data->sb_planet_views); // 1-based
-
-            DC_LOG_INFO("Planet", "  [%d] sharing terrain from planet %d, created view (%ux%u)",
-                i, existing_planet_idx - 1, (uint32_t)output_width, (uint32_t)output_height);
-            continue;
-        }
-
-        DC_LOG_INFO("Planet", "  [%d] loading: %s", i, json_path);
+        DC_LOG_INFO("Planet", "  [%d] '%s' loading: %s", i, def->name, json_path);
 
         // load JSON file
         char *json_str = dc_utils_load_text_file(json_path);
@@ -616,8 +584,7 @@ static void _init_planets(_AppData *app_data) {
         float  max_height       = pl_json_float_member(root, "max_height", 0.0f);
         int    tree_depth       = pl_json_int_member(root, "tree_depth", 0);
         float  max_base_error   = pl_json_float_member(root, "max_base_error", 0.0f);
-        // store radius on node for camera LLE conversion
-        node->planet.planet_radius = radius;
+        def->radius = radius;
 
         // extract tiles array
         uint32_t tile_count = 0;
@@ -631,7 +598,7 @@ static void _init_planets(_AppData *app_data) {
         process_info.uTileCount       = tile_count;
         process_info.uHorizontalTiles = (uint32_t)cols;
         process_info.uVerticalTiles   = (uint32_t)rows;
-        process_info.atTiles          = (plPlanetProcessTileInfo *)malloc(tile_count * sizeof(plPlanetProcessTileInfo));
+        process_info.atTiles          = (plPlanetProcessTileInfo *)PL_ALLOC(tile_count * sizeof(plPlanetProcessTileInfo));
 
         // get directory of the JSON file for resolving relative chunk paths
         char json_dir[DC_VALUE_STRING_BUFFER_SIZE];
@@ -662,69 +629,128 @@ static void _init_planets(_AppData *app_data) {
             strncpy(tile->acOutputFile, abs_chunk_path, sizeof(tile->acOutputFile) - 1);
         }
 
-        // get output dimensions from the node (default 1024x1024)
-        float output_width  = 1024.0f;
-        float output_height = 1024.0f;
-        if (node->planet.dimension.x != DC_APP_VAL_INDEX_UNDEFINED) {
-            float w = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.dimension.x)->value_double;
-            if (w > 0.0f) output_width = w;
-        }
-        if (node->planet.dimension.y != DC_APP_VAL_INDEX_UNDEFINED) {
-            float h = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.dimension.y)->value_double;
-            if (h > 0.0f) output_height = h;
-        }
-
         // build planet init
         plPlanetInit planet_init = {0};
-        planet_init.dRadius       = radius;
-        planet_init.tLoadFlags    = PL_PLANET_LOAD_FLAGS_NONE;
-        // texture overlay
-        if (node->planet.planet_texture_file) {
-            planet_init.atTextures[0].pcPath = node->planet.planet_texture_file;
-            if (node->planet.planet_texture_mpp != DC_APP_VAL_INDEX_UNDEFINED)
-                planet_init.atTextures[0].fMetersPerPixel = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_texture_mpp)->value_double;
-            if (node->planet.planet_texture_lat != DC_APP_VAL_INDEX_UNDEFINED)
-                planet_init.atTextures[0].fLatitude = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_texture_lat)->value_double;
-            if (node->planet.planet_texture_lon != DC_APP_VAL_INDEX_UNDEFINED)
-                planet_init.atTextures[0].fLongitude = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_texture_lon)->value_double;
-            DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, lat=%.1f, lon=%.1f)",
-                i, node->planet.planet_texture_file,
-                planet_init.atTextures[0].fMetersPerPixel,
-                planet_init.atTextures[0].fLatitude,
-                planet_init.atTextures[0].fLongitude);
-        }
-
-        // get temporary command buffer for planet creation (blocks until complete)
-        plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
+        planet_init.dRadius    = radius;
+        planet_init.tLoadFlags = PL_PLANET_LOAD_FLAGS_NONE;
 
         // create planet
+        plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
         plPlanet *planet = _ext_planet->create_planet(cmd_buf, planet_init, &process_info);
-
-        // submit command buffer
         _ext_starter->submit_temporary_command_buffer(cmd_buf);
+
+        // initial texture overlay (if source is set at parse time)
+        if (sbcount(def->sb_textures) > 0) {
+            plPlanetTexture texture;
+            if (_build_planet_texture(app_data, &def->sb_textures[0], &texture)) {
+                DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, lat=%.1f, lon=%.1f)",
+                    i, texture.pcPath, texture.fMetersPerPixel, texture.fLatitude, texture.fLongitude);
+                _ext_planet->set_texture(planet, &texture);
+            }
+        }
 
         // store planet
         sbpush(app_data->sb_planets, planet);
-        node->planet.planet_index = (uint8_t)sbcount(app_data->sb_planets); // 1-based (0 = uninitialized)
+        def->index = (uint8_t)(sbcount(app_data->sb_planets) - 1); // index 0 is sentinel
 
-        // create a view for this planet
+        // force shader mismatch on first update
+        if (def->shader_index != DC_APP_VAL_INDEX_UNDEFINED) {
+            int initial = (int)dc_app_lookup_get_value(app_data->lookup, def->shader_index)->value_integer;
+            def->active_shader_index = initial + 1;
+        }
+
+        DC_LOG_INFO("Planet", "  [%d] '%s' created (radius=%.0f, %u tiles)", i, def->name, radius, tile_count);
+
+        // cleanup
+        PL_FREE(process_info.atTiles);
+        pl_unload_json(&root);
+        free(json_str);
+    }
+
+    // Phase 2: create views from PlanetView nodes
+    for (int i = 0; i < view_count; i++) {
+        _NodeIndex node_index = app_data->sb_planet_view_node_indices[i];
+        _Node *node = _get_node(app_data, node_index);
+
+        uint8_t def_idx = node->planet_view.planet_def_index;
+        if (def_idx >= def_count) {
+            DC_LOG_ERROR("PlanetView", "  [%d] invalid planet def index", i);
+            continue;
+        }
+
+        _PlanetDef *def = &app_data->sb_planet_defs[def_idx];
+        if (def->index == PLANET_INDEX_UNDEFINED) {
+            DC_LOG_ERROR("PlanetView", "  [%d] planet '%s' not initialized", i, def->name ? def->name : "?");
+            continue;
+        }
+
+        // get output dimensions from the view node (default 1024x1024)
+        float output_width  = 1024.0f;
+        float output_height = 1024.0f;
+
+        plPlanet *planet = app_data->sb_planets[def->index];
+
         plPlanetViewInit view_init = {0};
         view_init.uOutputWidth  = (uint32_t)output_width;
         view_init.uOutputHeight = (uint32_t)output_height;
 
-        cmd_buf = _ext_starter->get_temporary_command_buffer();
+        plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
         plPlanetView *view = _ext_planet->create_view(planet, cmd_buf, view_init);
         _ext_starter->submit_temporary_command_buffer(cmd_buf);
 
         sbpush(app_data->sb_planet_views, view);
-        node->planet.planet_view_index = (uint8_t)sbcount(app_data->sb_planet_views); // 1-based
+        node->planet_view.planet_view_index = (uint8_t)(sbcount(app_data->sb_planet_views) - 1); // index 0 is sentinel
 
-        DC_LOG_INFO("Planet", "  [%d] created (radius=%.0f, %ux%u, %u tiles)", i, radius, (uint32_t)output_width, (uint32_t)output_height, tile_count);
+        DC_LOG_INFO("PlanetView", "  [%d] created view for '%s' (%ux%u)", i, def->name, (uint32_t)output_width, (uint32_t)output_height);
+    }
+}
 
-        // cleanup
-        free(process_info.atTiles);
-        pl_unload_json(&root);
-        free(json_str);
+static void _update_planet_defs(_AppData *app_data) {
+    int def_count = sbcount(app_data->sb_planet_defs);
+    if (def_count == 0) return;
+    for (int i = 0; i < def_count; i++) {
+        _PlanetDef *def = &app_data->sb_planet_defs[i];
+        if (def->index == PLANET_INDEX_UNDEFINED) continue;
+
+        plPlanet *planet = app_data->sb_planets[def->index];
+        if (!planet) continue;
+
+        // shader swap check
+        if (def->shader_index != DC_APP_VAL_INDEX_UNDEFINED && sbcount(def->sb_shaders) > 0) {
+            int desired_idx = (int)dc_app_lookup_get_value(app_data->lookup, def->shader_index)->value_integer;
+            if (desired_idx != def->active_shader_index) {
+                _PlanetShaderEntry *found = NULL;
+                for (int j = 0; j < sbcount(def->sb_shaders); j++) {
+                    if (def->sb_shaders[j].index == desired_idx) {
+                        found = &def->sb_shaders[j];
+                        break;
+                    }
+                }
+                _ext_planet->set_shaders(planet, found ? found->vertex_path : NULL, found ? found->fragment_path : NULL);
+                def->active_shader_index = desired_idx;
+            }
+        }
+
+        // texture refresh check
+        for (int t = 0; t < sbcount(def->sb_textures); t++) {
+            _PlanetTextureEntry *tex = &def->sb_textures[t];
+            if (tex->refresh == DC_APP_VAL_INDEX_UNDEFINED) continue;
+            DcValue *refresh_val = dc_app_lookup_get_value(app_data->lookup, tex->refresh);
+            if (refresh_val->value_integer != 0) {
+                plPlanetTexture texture;
+                if (_build_planet_texture(app_data, tex, &texture)) {
+                    _ext_planet->set_texture(planet, &texture);
+                } else {
+                    _ext_planet->set_texture(planet, NULL);
+                }
+                refresh_val->value_integer = 0;
+            }
+        }
+
+        // prepare planet (once per planet per frame)
+        plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
+        _ext_planet->prepare(planet, cmd_buf);
+        _ext_starter->submit_temporary_command_buffer(cmd_buf);
     }
 }
 

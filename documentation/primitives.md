@@ -758,10 +758,28 @@ Specifies a Digital Elevation Model file for terrain.
 
 ### `<Planet>`
 
-Renders 3D planetary terrain from chunked heightmap data. Supports two camera modes: LLE (latitude/longitude/elevation) and XYZ/RPY (position/orientation).
+Top-level resource definition for 3D planetary terrain. Defines the planet's data files, texture overlay, and shader overrides. Multiple `<PlanetView>` elements can reference the same `<Planet>` by name.
+
+**Parent:** `<DCAPP>` (top-level only)
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Name` | string | **Yes** | Unique name used by `<PlanetView>` to reference this planet |
+| `ShaderIndex` | integer/var | No | Active shader index (selects from child `<PlanetShader>` elements) |
+
+**Children:** `<PlanetData>`, `<PlanetShader>`, `<PlanetTexture>`
+
+---
+
+### `<PlanetView>`
+
+Renders a view of a named planet. Supports two camera modes: LLE (latitude/longitude/elevation) and XYZ/RPY (position/orientation). Multiple views can reference the same planet.
+
+**Parent:** `<Window>`, `<Panel>`, `<Container>`, or any drawable parent
 
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
+| `Planet` | — | string | **Yes** | Name of the `<Planet>` definition to render |
 | `PositionX` | `X` | number/var | No | Screen X position |
 | `PositionY` | `Y` | number/var | No | Screen Y position |
 | `DimensionX` | `Width` | number/var | No | Display width |
@@ -770,31 +788,30 @@ Renders 3D planetary terrain from chunked heightmap data. Supports two camera mo
 | `LocalAlignY` | `VerticalAlign` | align | No | Vertical alignment |
 | `ParentAlignX` | — | align | No | Parent anchor (horizontal) |
 | `ParentAlignY` | — | align | No | Parent anchor (vertical) |
-| `Rotation` | `Rotate` | number/var | No | Rotation in degrees |
+| `Rotation` | `Rotate` | number/var | No | 2D rotation in degrees |
 | `PivotPositionX` | `PivotX` | number/var | No | Pivot point X |
 | `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
 | `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
 | `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
-| `Latitude` | — | number/var | No | Camera latitude (LLE mode) |
-| `Longitude` | — | number/var | No | Camera longitude (LLE mode) |
-| `Elevation` | — | number/var | No | Camera elevation in meters (LLE mode) |
+| `CameraLatitude` | — | number/var | No | Camera latitude (LLE mode) |
+| `CameraLongitude` | — | number/var | No | Camera longitude (LLE mode) |
+| `CameraElevation` | — | number/var | No | Camera elevation in meters (LLE mode) |
+| `CameraHeading` | — | number/var | No | Camera heading (LLE mode, degrees CW from north) |
 | `CameraX` | — | number/var | No | Camera X position (XYZ mode) |
 | `CameraY` | — | number/var | No | Camera Y position (XYZ mode) |
 | `CameraZ` | — | number/var | No | Camera Z position (XYZ mode) |
-| `Roll` | — | number/var | No | Camera roll angle (XYZ mode) |
-| `Pitch` | — | number/var | No | Camera pitch angle (XYZ mode) |
-| `Yaw` | — | number/var | No | Camera yaw angle (XYZ mode) |
-| `Heading` | — | number/var | No | Camera heading in LLE mode (degrees CW from north, 0=north, 90=east) |
-| `Orthographic` | — | integer/var | No | 1 for orthographic projection, 0 for perspective |
-| `ShaderIndex` | — | integer/var | No | Active shader index (selects from child `<PlanetShader>` elements) |
+| `CameraRoll` | — | number/var | No | Camera roll angle (XYZ mode) |
+| `CameraPitch` | — | number/var | No | Camera pitch angle (XYZ mode) |
+| `CameraYaw` | — | number/var | No | Camera yaw angle (XYZ mode) |
+| `CameraOrthographic` | — | integer/var | No | 1 for orthographic projection, 0 for perspective |
 
-**Children:** `<PlanetData>`, `<PlanetShader>`, `<PlanetTexture>`
+**Children:** None (leaf element)
 
 ---
 
 ### `<PlanetData>`
 
-Specifies a planet terrain JSON file containing chunked heightmap data.
+Specifies a planet terrain JSON file containing chunked heightmap data. Child of `<Planet>`.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -804,7 +821,7 @@ Specifies a planet terrain JSON file containing chunked heightmap data.
 
 ### `<PlanetShader>`
 
-Registers a custom shader for the planet, selectable at runtime via the parent `ShaderIndex` attribute.
+Registers a custom shader for the planet, selectable at runtime via the parent `ShaderIndex` attribute. Child of `<Planet>`.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -816,14 +833,15 @@ Registers a custom shader for the planet, selectable at runtime via the parent `
 
 ### `<PlanetTexture>`
 
-Overlays a texture image onto the planet surface at a specified location.
+Configures a texture overlay on the planet surface. The `File` attribute is a static file path; all other attributes are dynamic (can be bound to variables). Set `Refresh` to 1 at runtime to re-read the texture file from disk. Child of `<Planet>`.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `Source` | string | **Yes** | Path to texture image file |
-| `MetersPerPixel` | number | No | Scale of the texture in meters per pixel |
-| `Latitude` | number | No | Latitude of texture center (uses terrain coordinate convention) |
-| `Longitude` | number | No | Longitude of texture center |
+| `File` | string | No | Path to texture image file |
+| `MetersPerPixel` | number/var | No | Scale of the texture in meters per pixel |
+| `Latitude` | number/var | No | Latitude of texture center |
+| `Longitude` | number/var | No | Longitude of texture center |
+| `Refresh` | integer/var | No | Set to 1 to re-read texture file from disk (auto-resets to 0) |
 
 ---
 

@@ -128,7 +128,7 @@ typedef enum __NodeType {
     NODE_TYPE_SET,
     NODE_TYPE_SPHERE,
     NODE_TYPE_STENCIL,
-    NODE_TYPE_PLANET,
+    NODE_TYPE_PLANET_VIEW,
     NODE_TYPE_TEXT,
     NODE_TYPE_WINDOW,
 
@@ -524,7 +524,37 @@ typedef struct {
     int           index;
 } _PlanetShaderEntry;
 
-typedef struct __NodePlanet {
+typedef struct {
+    char         *source;   // heap-allocated absolute file path
+    DcAppValIndex mpp;      // double var: meters per pixel
+    DcAppValIndex lat;      // double var: latitude (degrees)
+    DcAppValIndex lon;      // double var: longitude (degrees)
+    DcAppValIndex refresh;  // integer var: set to 1 to refresh texture
+} _PlanetTextureEntry;
+
+#define PLANET_INDEX_UNDEFINED      0
+#define PLANET_VIEW_INDEX_UNDEFINED 0
+
+typedef struct __PlanetDef {
+    char         *name;                        // lookup key (from Name attr)
+
+    // data
+    char        **sb_data_files;               // stretchy buffer of heap-allocated file paths
+    double        radius;                      // resolved from JSON at init
+
+    // texture overlays
+    _PlanetTextureEntry *sb_textures;          // stretchy buffer
+
+    // shader overrides (runtime swapping via ShaderIndex)
+    _PlanetShaderEntry *sb_shaders;            // stretchy buffer
+    DcAppValIndex       shader_index;          // variable holding active index
+    int                 active_shader_index;   // last-applied index
+
+    // runtime
+    uint8_t       index;                       // 1-based index into sb_planets
+} _PlanetDef;
+
+typedef struct __NodePlanetView {
 
     // general positioning of display
     _ValIndex2    dimension;
@@ -542,27 +572,14 @@ typedef struct __NodePlanet {
     _ValIndex3    lle;
     _ValIndex3    xyz;
     _ValIndex3    rpy;
-    DcAppValIndex heading;      // LLE mode: azimuth from north, CW, degrees
+    DcAppValIndex heading;
     DcAppValIndex orthographic;
 
-    // data
-    char        **sb_planet_data_files;  // stretchy buffer of heap-allocated file paths
-    uint8_t       planet_index;          // 1-based index into sb_planets (0 = uninitialized)
-    uint8_t       planet_view_index;    // 1-based index into sb_planet_views (0 = use planet's default RT)
-    double        planet_radius;         // set during init from .planet.json
+    // references
+    uint8_t       planet_def_index;            // index into sb_planet_defs (resolved at parse time)
+    uint8_t       planet_view_index;           // 1-based index into sb_planet_views
 
-    // texture overlay
-    char         *planet_texture_file;  // heap-allocated path (NULL = no texture)
-    DcAppValIndex planet_texture_mpp;   // meters per pixel
-    DcAppValIndex planet_texture_lat;   // latitude (degrees)
-    DcAppValIndex planet_texture_lon;   // longitude (degrees)
-
-    // shader overrides (runtime swapping via ShaderIndex)
-    _PlanetShaderEntry *sb_planet_shaders;       // stretchy buffer
-    DcAppValIndex       planet_shader_var;       // variable holding active index (DC_APP_VAL_INDEX_UNDEFINED = disabled)
-    int                 planet_active_shader_index; // last-applied index (-2 = uninitialized, -1 = default)
-
-} _NodePlanet;
+} _NodePlanetView;
 
 typedef struct __NodeWindow {
     plVec2        init_position;
@@ -596,7 +613,7 @@ typedef struct __Node {
         _NodeSphere           sphere;
         _NodeStateEvent       state_event;
         _NodeStencil          stencil;
-        _NodePlanet           planet;
+        _NodePlanetView       planet_view;
         _NodeText             text;
         _NodeWindow           window;
     };
@@ -785,15 +802,19 @@ typedef struct __AppData {
     int            draw_list_3d_index;   // current index into 3D pool
 
     // planet instances
-    _NodeIndex    *sb_planet_node_indices;  // collected during XML parse
-    plPlanet     **sb_planets;              // created planet instances (deduplicated by data files)
-    plPlanetView **sb_planet_views;         // created view instances (one per shared planet element)
+    _PlanetDef    *sb_planet_defs;           // collected during XML parse (top-level Planet definitions)
+    _NodeIndex    *sb_planet_view_node_indices; // collected PlanetView nodes for init
+    plPlanet     **sb_planets;               // created planet instances (one per PlanetDef)
+    plPlanetView **sb_planet_views;          // created view instances (one per PlanetView element)
+    bool           planet_ext_initialized;   // true after _ext_planet->initialize() called
 
 } _AppData;
 
 // pl utils
 static void _init_app_data(_AppData *app_data, _Node *window_node);
 static void _init_planets(_AppData *app_data);
+static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, plPlanetTexture *out);
+static void _update_planet_defs(_AppData *app_data);
 
 // node utils
 static const char *_node_type_to_string(_NodeType type);

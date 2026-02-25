@@ -39,7 +39,7 @@ static void _draw_node_state_mouse_hovered(_AppData *app_data, _NodeIndex node_i
 static void _draw_node_state_if_true(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_state_if_false(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 
@@ -135,8 +135,8 @@ static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent
             _draw_node_stencil(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
-        case NODE_TYPE_PLANET:
-            _draw_node_planet(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
+        case NODE_TYPE_PLANET_VIEW:
+            _draw_node_planet_view(app_data, node_index, node, parent_position, parent_dimensions, parent_transform);
             break;
 
         case NODE_TYPE_TEXT:
@@ -4197,20 +4197,28 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
     app_data->stencil_3d_dirty = true;
 }
 
-static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
+    (void)node_index;
+
+    // look up planet def
+    _PlanetDef *def = &app_data->sb_planet_defs[node->planet_view.planet_def_index];
+    if (def->index == PLANET_INDEX_UNDEFINED) return;
+
+    plPlanet *planet = app_data->sb_planets[def->index];
+    if (!planet) return;
 
     // boolean checks
     bool use_dimension[2] = {
-        node->planet.dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
-        node->planet.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
-    bool use_rotation       = node->planet.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->planet.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->planet.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
-    bool use_pivot_parent_align = (node->planet.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->planet.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
+        node->planet_view.dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
+        node->planet_view.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
+    bool use_rotation       = node->planet_view.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position = (node->planet_view.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->planet_view.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_pivot_parent_align = (node->planet_view.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->planet_view.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
     float dimension[2] = {
-        use_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet.dimension.x)->value_double : parent_dimensions->x,
-        use_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet.dimension.y)->value_double : parent_dimensions->y};
+        use_dimension[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.dimension.x)->value_double : parent_dimensions->x,
+        use_dimension[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.dimension.y)->value_double : parent_dimensions->y};
 
     // transform
     plMat4 transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -4219,29 +4227,26 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
     {
         if (use_rotation && use_pivot_position) {
 
-            // get pivot XY, rotation
             float pivot_position[2] = {
-                (float)dc_app_lookup_get_value(app_data->lookup, node->planet.pivot_position.x)->value_double,
-                (float)dc_app_lookup_get_value(app_data->lookup, node->planet.pivot_position.y)->value_double};
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet.rotation)->value_double);
+                (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.pivot_position.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.pivot_position.y)->value_double};
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
         } else if (use_rotation && use_pivot_parent_align) {
 
             DcAppAlignType parent_pivot_aligns[2] = {
-                node->planet.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
-                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet.pivot_parent_align.x)->value_integer
+                node->planet_view.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet_view.pivot_parent_align.x)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED,
-                node->planet.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
-                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet.pivot_parent_align.y)->value_integer
+                node->planet_view.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED
+                    ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet_view.pivot_parent_align.y)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED};
 
             float pivot_position[2];
@@ -4250,16 +4255,16 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
                 case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
                 case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                default: DC_LOG_WARN("Planet", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                default: DC_LOG_WARN("PlanetView", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
             }
             switch (parent_pivot_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
                 case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
                 case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                default: DC_LOG_WARN("Planet", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                default: DC_LOG_WARN("PlanetView", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
             }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet.rotation)->value_double);
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rotation)->value_double);
 
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
@@ -4273,12 +4278,10 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
 
     // xform local alignment
     {
-        // get alignment
         DcAppAlignType local_aligns[2] = {
-            node->planet.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet.local_align.x)->value_integer,
-            node->planet.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet.local_align.y)->value_integer};
+            node->planet_view.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet_view.local_align.x)->value_integer,
+            node->planet_view.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet_view.local_align.y)->value_integer};
 
-        // compute offsets
         float trans_align_offsets[2];
         switch (local_aligns[0]) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -4292,7 +4295,7 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 trans_align_offsets[0] = -1 * dimension[0];
                 break;
             default:
-                DC_LOG_WARN("Text", "Unknown X alignment: %d", local_aligns[0]);
+                DC_LOG_WARN("PlanetView", "Unknown X alignment: %d", local_aligns[0]);
                 break;
         }
         switch (local_aligns[1]) {
@@ -4307,25 +4310,22 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 trans_align_offsets[1] = -1 * dimension[1];
                 break;
             default:
-                DC_LOG_WARN("Text", "Unknown Y alignment: %d", local_aligns[1]);
+                DC_LOG_WARN("PlanetView", "Unknown Y alignment: %d", local_aligns[1]);
                 break;
         }
 
-        // compute matrix
         plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
-
-        // apply transform
         transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
     }
 
     // xform position
     {
         bool use_position[2] = {
-            node->planet.position.x != DC_APP_VAL_INDEX_UNDEFINED,
-            node->planet.position.y != DC_APP_VAL_INDEX_UNDEFINED};
+            node->planet_view.position.x != DC_APP_VAL_INDEX_UNDEFINED,
+            node->planet_view.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
         float anchor[2] = {0, 0};
-        DcAppAlignType parent_align_x = node->planet.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->planet.parent_align.x)->value_integer;
+        DcAppAlignType parent_align_x = node->planet_view.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->planet_view.parent_align.x)->value_integer;
         switch (parent_align_x) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_LEFT:
@@ -4338,10 +4338,10 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 anchor[0] = parent_dimensions->x;
                 break;
             default:
-                DC_LOG_WARN("Planet", "Invalid parent_align_x: %d", parent_align_x);
+                DC_LOG_WARN("PlanetView", "Invalid parent_align_x: %d", parent_align_x);
                 break;
         }
-        DcAppAlignType parent_align_y = node->planet.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->planet.parent_align.y)->value_integer;
+        DcAppAlignType parent_align_y = node->planet_view.parent_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->planet_view.parent_align.y)->value_integer;
         switch (parent_align_y) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_BOTTOM:
@@ -4354,19 +4354,18 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                 anchor[1] = parent_dimensions->y;
                 break;
             default:
-                DC_LOG_WARN("Planet", "Invalid parent_align_y: %d", parent_align_y);
+                DC_LOG_WARN("PlanetView", "Invalid parent_align_y: %d", parent_align_y);
                 break;
         }
 
         float offset[2] = {
-            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet.position.x)->value_double : 0,
-            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet.position.y)->value_double : 0};
+            use_position[0] ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.position.x)->value_double : 0,
+            use_position[1] ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.position.y)->value_double : 0};
 
-        // apply negate
-        if (node->planet.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->planet.negate_x)->value_boolean) {
+        if (node->planet_view.negate_x != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->planet_view.negate_x)->value_boolean) {
             offset[0] = -offset[0];
         }
-        if (node->planet.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->planet.negate_y)->value_boolean) {
+        if (node->planet_view.negate_y != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->planet_view.negate_y)->value_boolean) {
             offset[1] = -offset[1];
         }
 
@@ -4382,12 +4381,10 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
     {
         if (use_rotation && !use_pivot_position && !use_pivot_parent_align) {
 
-            // get alignment
             DcAppAlignType local_pivot_aligns[2] = {
-                node->planet.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet.pivot_local_align.x)->value_integer,
-                node->planet.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet.pivot_local_align.y)->value_integer};
+                node->planet_view.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet_view.pivot_local_align.x)->value_integer,
+                node->planet_view.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet_view.pivot_local_align.y)->value_integer};
 
-            // get pivot XY, rotation
             float pivot_position[2];
             switch (local_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -4401,7 +4398,7 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                     pivot_position[0] = dimension[0];
                     break;
                 default:
-                    DC_LOG_WARN("Planet", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
+                    DC_LOG_WARN("PlanetView", "Unknown pivot X alignment: %d", local_pivot_aligns[0]);
                     break;
             }
             switch (local_pivot_aligns[1]) {
@@ -4416,17 +4413,15 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
                     pivot_position[1] = dimension[1];
                     break;
                 default:
-                    DC_LOG_WARN("Planet", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
+                    DC_LOG_WARN("PlanetView", "Unknown pivot Y alignment: %d", local_pivot_aligns[1]);
                     break;
             }
-            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet.rotation)->value_double);
+            float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rotation)->value_double);
 
-            // compute matrices
             plMat4 trans_from_origin_xform = pl_mat4_translate_xyz(pivot_position[0], pivot_position[1], 0.0f);
             plMat4 rotate_xform            = pl_mat4_rotate_vec3(rotation, (plVec3){0.0f, 0.0f, 1.0f});
             plMat4 trans_to_origin_xform   = pl_mat4_translate_xyz(-1 * pivot_position[0], -1 * pivot_position[1], 0.0f);
 
-            // apply transform
             transform = pl_mul_mat4t(&transform, &trans_from_origin_xform);
             transform = pl_mul_mat4t(&transform, &rotate_xform);
             transform = pl_mul_mat4t(&transform, &trans_to_origin_xform);
@@ -4435,13 +4430,8 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
 
     // PL specific fixes
     {
-        // move from top-left reference to bottom-left
         plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0, dimension[1], 0.0f);
-
-        // flip over the y axis
         plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
-
-        // apply transforms
         transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
         transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
     }
@@ -4449,7 +4439,7 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
     // parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // compute quad points (same as image)
+    // compute quad points
     plVec4 point0_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, 0.0f, 0.0f, 1.0f});
     plVec4 point1_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, dimension[1], 0.0f, 1.0f});
     plVec4 point2_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){dimension[0], dimension[1], 0.0f, 1.0f});
@@ -4459,127 +4449,89 @@ static void _draw_node_planet(_AppData *app_data, _NodeIndex node_index, _Node *
     plVec2 point2      = (plVec2){point2_vec4.x, point2_vec4.y};
     plVec2 point3      = (plVec2){point3_vec4.x, point3_vec4.y};
 
-    // planet rendering
-    if (node->planet.planet_index > 0 && node->planet.planet_index <= (uint8_t)sbcount(app_data->sb_planets)) {
-        plPlanet *planet = app_data->sb_planets[node->planet.planet_index - 1];
-        if (planet) {
+    // camera setup
+    bool use_lle = (node->planet_view.lle.lat != DC_APP_VAL_INDEX_UNDEFINED &&
+                    node->planet_view.lle.lon != DC_APP_VAL_INDEX_UNDEFINED &&
+                    node->planet_view.lle.ele != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_xyz = (node->planet_view.xyz.x != DC_APP_VAL_INDEX_UNDEFINED &&
+                    node->planet_view.xyz.y != DC_APP_VAL_INDEX_UNDEFINED &&
+                    node->planet_view.xyz.z != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_ortho = (node->planet_view.orthographic != DC_APP_VAL_INDEX_UNDEFINED &&
+                      dc_app_lookup_get_value(app_data->lookup, node->planet_view.orthographic)->value_boolean);
 
-            // runtime shader swap — only fires when ShaderIndex changes value
-            if (node->planet.planet_shader_var != DC_APP_VAL_INDEX_UNDEFINED && sbcount(node->planet.sb_planet_shaders) > 0) {
-                int desired_idx = (int)dc_app_lookup_get_value(app_data->lookup, node->planet.planet_shader_var)->value_double;
-                if (desired_idx != node->planet.planet_active_shader_index) {
-                    _PlanetShaderEntry *found = NULL;
-                    for (int j = 0; j < sbcount(node->planet.sb_planet_shaders); j++) {
-                        if (node->planet.sb_planet_shaders[j].index == desired_idx) {
-                            found = &node->planet.sb_planet_shaders[j];
-                            break;
-                        }
-                    }
-                    _ext_planet->set_shaders(planet, found ? found->vertex_path : NULL, found ? found->fragment_path : NULL);
-                    node->planet.planet_active_shader_index = desired_idx;
-                }
-            }
+    plCamera camera = {0};
+    camera.tType        = PL_CAMERA_TYPE_PERSPECTIVE;
+    camera.fFieldOfView = 60.0f * (float)(M_PI / 180.0);
+    camera.fAspectRatio = (dimension[1] > 0.0f) ? dimension[0] / dimension[1] : 1.0f;
+    camera.fNearZ       = 1.0f;
+    camera.fFarZ        = 100000000.0f;
+    camera.fWidth       = dimension[0];
+    camera.fHeight      = dimension[1];
 
-            // determine camera mode
-            bool use_lle = (node->planet.lle.lat != DC_APP_VAL_INDEX_UNDEFINED &&
-                            node->planet.lle.lon != DC_APP_VAL_INDEX_UNDEFINED &&
-                            node->planet.lle.ele != DC_APP_VAL_INDEX_UNDEFINED);
-            bool use_xyz = (node->planet.xyz.x != DC_APP_VAL_INDEX_UNDEFINED &&
-                            node->planet.xyz.y != DC_APP_VAL_INDEX_UNDEFINED &&
-                            node->planet.xyz.z != DC_APP_VAL_INDEX_UNDEFINED);
-            bool use_ortho = (node->planet.orthographic != DC_APP_VAL_INDEX_UNDEFINED &&
-                              dc_app_lookup_get_value(app_data->lookup, node->planet.orthographic)->value_boolean);
+    if (use_xyz) {
+        double cam_x = dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.x)->value_double;
+        double cam_y = dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.y)->value_double;
+        double cam_z = dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.z)->value_double;
+        _ext_camera->set_pos(&camera, cam_x, cam_y, cam_z);
 
-            // build camera
-            plCamera camera = {0};
-            camera.tType        = PL_CAMERA_TYPE_PERSPECTIVE;
-            camera.fFieldOfView = 60.0f * (float)(M_PI / 180.0);
-            camera.fAspectRatio = (dimension[1] > 0.0f) ? dimension[0] / dimension[1] : 1.0f;
-            camera.fNearZ       = 1.0f;
-            camera.fFarZ        = 100000000.0f;
-            camera.fWidth       = dimension[0];
-            camera.fHeight      = dimension[1];
+        if (node->planet_view.rpy.pitch != DC_APP_VAL_INDEX_UNDEFINED &&
+            node->planet_view.rpy.yaw   != DC_APP_VAL_INDEX_UNDEFINED) {
+            float pitch = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.pitch)->value_double;
+            float yaw   = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.yaw)->value_double;
+            _ext_camera->set_pitch_yaw(&camera, pl_radiansf(pitch), pl_radiansf(yaw));
+        }
+        if (node->planet_view.rpy.roll != DC_APP_VAL_INDEX_UNDEFINED) {
+            camera.fRoll = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.roll)->value_double);
+        }
+    } else if (use_lle) {
+        double lat_deg = dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.lat)->value_double;
+        double lon_deg = dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.lon)->value_double;
+        double ele     = dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.ele)->value_double;
 
-            if (use_xyz) {
-                // XYZ/RPY mode: direct world coordinates
-                double cam_x = dc_app_lookup_get_value(app_data->lookup, node->planet.xyz.x)->value_double;
-                double cam_y = dc_app_lookup_get_value(app_data->lookup, node->planet.xyz.y)->value_double;
-                double cam_z = dc_app_lookup_get_value(app_data->lookup, node->planet.xyz.z)->value_double;
-                _ext_camera->set_pos(&camera, cam_x, cam_y, cam_z);
+        double lat_rad = lat_deg * M_PI / 180.0;
+        double lon_rad = lon_deg * M_PI / 180.0;
+        double r       = def->radius + ele;
 
-                if (node->planet.rpy.pitch != DC_APP_VAL_INDEX_UNDEFINED &&
-                    node->planet.rpy.yaw   != DC_APP_VAL_INDEX_UNDEFINED) {
-                    float pitch = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.rpy.pitch)->value_double;
-                    float yaw   = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.rpy.yaw)->value_double;
-                    _ext_camera->set_pitch_yaw(&camera, pl_radiansf(pitch), pl_radiansf(yaw));
-                }
-                if (node->planet.rpy.roll != DC_APP_VAL_INDEX_UNDEFINED) {
-                    camera.fRoll = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet.rpy.roll)->value_double);
-                }
-            } else if (use_lle) {
-                // LLE mode: convert lat/lon/elevation to world XYZ, look toward center
-                double lat_deg = dc_app_lookup_get_value(app_data->lookup, node->planet.lle.lat)->value_double;
-                double lon_deg = dc_app_lookup_get_value(app_data->lookup, node->planet.lle.lon)->value_double;
-                double ele     = dc_app_lookup_get_value(app_data->lookup, node->planet.lle.ele)->value_double;
+        _ext_camera->set_pos(&camera,
+            r * cos(lat_rad) * sin(lon_rad),
+            r * sin(lat_rad),
+            r * cos(lat_rad) * cos(lon_rad));
 
-                double lat_rad = lat_deg * M_PI / 180.0;
-                double lon_rad = lon_deg * M_PI / 180.0;
-                double r       = node->planet.planet_radius + ele;
+        _ext_camera->look_at(&camera, camera.tPosDouble, (plDVec3){0, 0, 0});
 
-                _ext_camera->set_pos(&camera,
-                    r * cos(lat_rad) * sin(lon_rad),
-                    r * sin(lat_rad),
-                    r * cos(lat_rad) * cos(lon_rad));
-
-                // orient camera to look toward planet center
-                _ext_camera->look_at(&camera, camera.tPosDouble, (plDVec3){0, 0, 0});
-
-                // heading (azimuth from north, CW, degrees)
-                if (node->planet.heading != DC_APP_VAL_INDEX_UNDEFINED) {
-                    float heading_deg = (float)dc_app_lookup_get_value(app_data->lookup, node->planet.heading)->value_double;
-                    camera.fRoll = pl_radiansf(heading_deg);
-                }
-            }
-
-            _ext_camera->update(&camera);
-
-            if (use_ortho) {
-                // compute distance from camera to planet surface
-                double cam_dist = sqrt(camera.tPosDouble.x * camera.tPosDouble.x +
-                                       camera.tPosDouble.y * camera.tPosDouble.y +
-                                       camera.tPosDouble.z * camera.tPosDouble.z);
-                double surface_dist = cam_dist - node->planet.planet_radius;
-                if (surface_dist < 1.0) surface_dist = 1.0;
-
-                // ortho half-extents: elevation * tan(fov/2) gives the visible
-                // half-height at the surface (same coverage as perspective at that distance)
-                float half_h = (float)surface_dist * tanf(camera.fFieldOfView / 2.0f);
-                float half_w = half_h * camera.fAspectRatio;
-
-                // overwrite projection matrix with orthographic
-                camera.tProjMat = (plMat4){0};
-                camera.tProjMat.col[0].x = 1.0f / half_w;
-                camera.tProjMat.col[1].y = 1.0f / half_h;
-                camera.tProjMat.col[2].z = 1.0f / (camera.fFarZ - camera.fNearZ);
-                camera.tProjMat.col[3].w = 1.0f;
-            }
-
-            // prepare planet (temporary command buffer)
-            plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
-            _ext_planet->prepare(planet, cmd_buf);
-            _ext_starter->submit_temporary_command_buffer(cmd_buf);
-
-            // render view (regular command buffer)
-            plPlanetView *view = app_data->sb_planet_views[node->planet.planet_view_index - 1];
-            cmd_buf = _ext_starter->get_command_buffer();
-            _ext_planet->render_view(view, &camera, cmd_buf);
-            _ext_starter->submit_command_buffer(cmd_buf);
-
-            plBindGroupHandle bind_group = _ext_planet->get_view_texture(view);
-
-            _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group.uData, point0, point1, point2, point3);
+        if (node->planet_view.heading != DC_APP_VAL_INDEX_UNDEFINED) {
+            float heading_deg = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.heading)->value_double;
+            camera.fRoll = pl_radiansf(heading_deg);
         }
     }
+
+    _ext_camera->update(&camera);
+
+    if (use_ortho) {
+        double cam_dist = sqrt(camera.tPosDouble.x * camera.tPosDouble.x +
+                               camera.tPosDouble.y * camera.tPosDouble.y +
+                               camera.tPosDouble.z * camera.tPosDouble.z);
+        double surface_dist = cam_dist - def->radius;
+        if (surface_dist < 1.0) surface_dist = 1.0;
+
+        float half_h = (float)surface_dist * tanf(camera.fFieldOfView / 2.0f);
+        float half_w = half_h * camera.fAspectRatio;
+
+        camera.tProjMat = (plMat4){0};
+        camera.tProjMat.col[0].x = 1.0f / half_w;
+        camera.tProjMat.col[1].y = 1.0f / half_h;
+        camera.tProjMat.col[2].z = 1.0f / (camera.fFarZ - camera.fNearZ);
+        camera.tProjMat.col[3].w = 1.0f;
+    }
+
+    // render view
+    plPlanetView *view = app_data->sb_planet_views[node->planet_view.planet_view_index];
+    plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();
+    _ext_planet->render_view(view, &camera, cmd_buf);
+    _ext_starter->submit_command_buffer(cmd_buf);
+
+    plBindGroupHandle bind_group = _ext_planet->get_view_texture(view);
+    _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group.uData, point0, point1, point2, point3);
 }
 
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
