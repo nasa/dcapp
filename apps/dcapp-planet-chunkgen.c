@@ -5,7 +5,7 @@
    for the planet rendering pipeline.
 
    Usage:
-     pilot_light -a dcapp-planet-chunkgen <input_dem> <output_dir> --radius N [options]
+     pilot_light -a dcapp-planet-chunkgen <input_dem> <output_dir> [options]
 */
 
 /*
@@ -34,6 +34,7 @@ Index of this file:
 #include <gdal.h>
 #include <gdal_utils.h>
 #include <ogr_srs_api.h>
+#include <cpl_conv.h>
 #include "pl.h"
 #include "../src/utils/file.h"
 #include "pl_planet_processor_ext.h"
@@ -45,7 +46,7 @@ Index of this file:
 // [SECTION] forward declarations
 //-----------------------------------------------------------------------------
 
-static bool  _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y);
+static bool  _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y, double *out_radius, double *band_scale, double *band_offset);
 static bool  _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *max_val);
 static bool  _run_gdal_translate(const char *input, const char *output, uint32_t src_x, uint32_t src_y, uint32_t w, uint32_t h, double min_h, double max_h);
 static void  _compute_tile_latlon(double origin_x, double origin_y, double pixel_scale, uint32_t col, uint32_t row, uint32_t tile_size, double radius, float *lat_deg, float *lon_deg);
@@ -150,12 +151,6 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         return NULL;
     }
 
-    if (radius <= 0.0) {
-        fprintf(stderr, "Error: --radius is required and must be positive\n");
-        io->bRunning = false;
-        return NULL;
-    }
-
     if (!dc_utils_file_exists(input_dem)) {
         fprintf(stderr, "Error: input file not found: %s\n", input_dem);
         io->bRunning = false;
@@ -163,6 +158,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     }
 
     GDALAllRegister();
+    CPLSetConfigOption("GDAL_PAM_ENABLED", "NO");
 
     // derive prefix
     char prefix_buf[256];
@@ -181,15 +177,31 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     uint32_t raster_w = 0, raster_h = 0;
     double   pixel_scale = 0.0, origin_x = 0.0, origin_y = 0.0;
 
-    if (!_parse_gdalinfo(input_dem, &raster_w, &raster_h, &pixel_scale, &origin_x, &origin_y)) {
+    double dem_radius = 0.0;
+    double band_scale = 1.0, band_offset = 0.0;
+    if (!_parse_gdalinfo(input_dem, &raster_w, &raster_h, &pixel_scale, &origin_x, &origin_y, &dem_radius, &band_scale, &band_offset)) {
         io->bRunning = false;
         return NULL;
+    }
+
+    // use DEM radius if not overridden
+    if (radius <= 0.0) {
+        if (dem_radius > 0.0) {
+            radius = dem_radius;
+            printf("Auto-detected radius: %.1f m\n", radius);
+        } else {
+            fprintf(stderr, "Error: could not detect radius from DEM; use --radius\n");
+            io->bRunning = false;
+            return NULL;
+        }
     }
 
     printf("Raster size: %u x %u\n", raster_w, raster_h);
     printf("Radius: %.1f m\n", radius);
     printf("Pixel scale: %.6f m\n", pixel_scale);
-    printf("Origin: (%.6f, %.6f)\n", origin_x, origin_y);
+    printf("Origin: (%.6f, %.6f) m\n", origin_x, origin_y);
+    if (band_scale != 1.0 || band_offset != 0.0)
+        printf("DEM band scale: %.6f  offset: %.6f\n", band_scale, band_offset);
 
     // auto-detect meters per pixel from DEM pixel scale
     if (meters_per_pixel <= 0.0) {
@@ -211,10 +223,13 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
             io->bRunning = false;
             return NULL;
         }
+        // GDALComputeRasterStatistics returns raw pixel values;
+        // apply scale to convert to meters (offset is typically the
+        // reference radius for planetary DEMs, handled separately via fRadius)
         if (isnan(min_height))
-            min_height = detected_min;
+            min_height = detected_min * band_scale;
         if (isnan(max_height))
-            max_height = detected_max;
+            max_height = detected_max * band_scale;
     }
 
     printf("Elevation range: %.2f to %.2f m\n", min_height, max_height);
@@ -333,6 +348,10 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
 
     //---- tile DEM with GDAL ----
 
+    // convert meter heights back to raw DEM values for -scale
+    double raw_min_h = min_height / band_scale;
+    double raw_max_h = max_height / band_scale;
+
     printf("\n[Step 2/%d] Tiling DEM into %u PNGs...\n", 3, tile_count);
 
     for (uint32_t t = 0; t < tile_count; t++) {
@@ -350,26 +369,9 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         char tile_path[2048];
         snprintf(tile_path, sizeof(tile_path), "%s/%s_%u_%u.png", output_dir, prefix, col, row);
 
-        // skip if a valid PNG already exists (signature + minimum size)
-        {
-            FILE *fp = fopen(tile_path, "rb");
-            if (fp) {
-                static const uint8_t png_sig[8] = {0x89,'P','N','G',0x0D,0x0A,0x1A,0x0A};
-                uint8_t header[8] = {0};
-                size_t n = fread(header, 1, 8, fp);
-                fseek(fp, 0, SEEK_END);
-                long size = ftell(fp);
-                fclose(fp);
-                if (n == 8 && memcmp(header, png_sig, 8) == 0 && size > 1024) {
-                    printf("  [%u/%u] %s_%u_%u.png (valid, skipping)\n", t + 1, tile_count, prefix, col, row);
-                    continue;
-                }
-            }
-        }
-
         printf("  [%u/%u] %s_%u_%u.png\n", t + 1, tile_count, prefix, col, row);
 
-        if (!_run_gdal_translate(input_dem, tile_path, sx, sy, w, h, min_height, max_height)) {
+        if (!_run_gdal_translate(input_dem, tile_path, sx, sy, w, h, raw_min_h, raw_max_h)) {
             io->bRunning = false;
             return NULL;
         }
@@ -387,10 +389,6 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         printf("Cleaning up intermediate PNGs...\n");
         for (uint32_t i = 0; i < tile_count; i++) {
             remove(tiles[i].acHeightMapFile);
-            // also remove .aux.xml sidecar files that GDAL creates
-            char aux[512];
-            snprintf(aux, sizeof(aux), "%s.aux.xml", tiles[i].acHeightMapFile);
-            remove(aux);
         }
     }
 
@@ -426,10 +424,9 @@ PL_EXPORT void pl_app_shutdown(void *app_data) {}
 static void _show_help(void) {
     printf("dcapp-planet-chunkgen - Convert GeoTIFF DEM to planet chunk files\n\n");
     printf("Usage:\n");
-    printf("  dcapp-planet-chunkgen <input_dem> <output_dir> --radius N [options]\n\n");
-    printf("Required:\n");
-    printf("  --radius N             Planet radius in meters\n\n");
+    printf("  dcapp-planet-chunkgen <input_dem> <output_dir> [options]\n\n");
     printf("Options:\n");
+    printf("  --radius N             Planet radius in meters (default: auto-detect from DEM)\n");
     printf("  --tile-size N          Tile dimensions in pixels (default: 4096)\n");
     printf("  --min-height N         Min elevation in meters (default: auto-detect)\n");
     printf("  --max-height N         Max elevation in meters (default: auto-detect)\n");
@@ -458,7 +455,7 @@ static char *_get_stem(const char *path, char *buf, size_t buf_size) {
 // [SECTION] GDAL helpers
 //-----------------------------------------------------------------------------
 
-static bool _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y) {
+static bool _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y, double *out_radius, double *band_scale, double *band_offset) {
     GDALDatasetH ds = GDALOpen(dem_path, GA_ReadOnly);
     if (!ds) {
         fprintf(stderr, "Error: GDALOpen failed for: %s\n", dem_path);
@@ -468,11 +465,35 @@ static bool _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *hei
     *width  = (uint32_t)GDALGetRasterXSize(ds);
     *height = (uint32_t)GDALGetRasterYSize(ds);
 
+    // get linear unit conversion factor (to meters)
+    double to_meters = 1.0;
+    OGRSpatialReferenceH srs = GDALGetSpatialRef(ds);
+    if (srs) {
+        to_meters = OSRGetLinearUnits(srs, NULL);
+
+        OGRErr err;
+        double semi_major = OSRGetSemiMajor(srs, &err);
+        if (err == OGRERR_NONE && semi_major > 0.0)
+            *out_radius = semi_major;
+    }
+
     double gt[6] = {0};
     if (GDALGetGeoTransform(ds, gt) == CE_None) {
-        *pixel_scale = fabs(gt[1]);
-        *origin_x    = gt[0];
-        *origin_y    = gt[3] + (double)(*height) * gt[5]; // lower-left Y
+        *pixel_scale = fabs(gt[1]) * to_meters;
+        *origin_x    = gt[0] * to_meters;
+        *origin_y    = (gt[3] + (double)(*height) * gt[5]) * to_meters; // lower-left Y
+    }
+
+    // raster band scale/offset for elevation unit conversion
+    // real_value = offset + raw_pixel * scale
+    *band_scale  = 1.0;
+    *band_offset = 0.0;
+    GDALRasterBandH band = GDALGetRasterBand(ds, 1);
+    if (band) {
+        int bHasScale = 0, bHasOffset = 0;
+        *band_scale  = GDALGetRasterScale(band, &bHasScale);
+        *band_offset = GDALGetRasterOffset(band, &bHasOffset);
+        if (*band_scale == 0.0) *band_scale = 1.0;
     }
 
     GDALClose(ds);
