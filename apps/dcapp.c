@@ -227,6 +227,9 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     }
     sbfree(app_data->sb_nodes);
 
+    // destroy staging buffer (must happen before planet cleanup destroys GPU allocators)
+    _ext_gfx->destroy_buffer(device, app_data->pl_staging_buffer_handle);
+
     // cleanup planet views, instances, and extension
     {
         for (int i = 0; i < sbcount(app_data->sb_planet_views); i++) {
@@ -241,8 +244,8 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
         }
         if (app_data->planet_ext_initialized) {
             _ext_planet->cleanup();
-            _ext_resource->cleanup();
         }
+        _ext_resource->cleanup();
         sbfree(app_data->sb_planet_views);
         sbfree(app_data->sb_planets);
         for (int i = 0; i < sbcount(app_data->sb_planet_defs); i++) {
@@ -323,9 +326,6 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     }
     sbfree(app_data->sb_draw_list_3d_pool);
 
-    // destroy staging buffer
-    _ext_gfx->destroy_buffer(device, app_data->pl_staging_buffer_handle);
-
     // cleanup lookup and config
     dc_app_lookup_cleanup(app_data->lookup);
     dc_app_config_cleanup(app_data->config);
@@ -333,6 +333,7 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     // cleanup draw backend (GPU buffers, bind group pool, font atlas, drawlists)
     _ext_draw_backend->cleanup_font_atlas(NULL);
     _ext_draw_backend->cleanup();
+    _ext_draw->cleanup();
 
     // cleanup GPU memory allocators (buddy heap, staging allocators)
     _ext_gpu_allocators->cleanup(device);

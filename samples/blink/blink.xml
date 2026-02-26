@@ -36,7 +36,7 @@
             <!-- Trigger button -->
             <Button Type="#_button_toggle_" X="100" Y="310" Width="100" Height="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <MousePressed>
-                    <Set FireBlink="@MasterAlarmTrigger" Operator="#_set_add_">1</Set>
+                    <Set Variable="MasterAlarmTrigger" Operator="#_set_add_">1</Set>
                 </MousePressed>
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.7 0.3" LineWidth="1"/>
@@ -65,7 +65,7 @@
             <!-- Trigger button -->
             <Button Type="#_button_momentary_" X="300" Y="310" Width="100" Height="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <MousePressed>
-                    <Set FireBlink="@CautionTrigger" Operator="#_set_add_">1</Set>
+                    <Set Variable="CautionTrigger" Operator="#_set_add_">1</Set>
                 </MousePressed>
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0.6 0.5 0.1" LineColor="0.8 0.7 0.2" LineWidth="1"/>
@@ -94,7 +94,7 @@
             <!-- Trigger button -->
             <Button Type="#_button_momentary_" X="500" Y="310" Width="100" Height="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <MousePressed>
-                    <Set FireBlink="@AttentionTrigger" Operator="#_set_add_">1</Set>
+                    <Set Variable="AttentionTrigger" Operator="#_set_add_">1</Set>
                 </MousePressed>
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0 0.4 0.5" LineColor="0 0.6 0.7" LineWidth="1"/>
@@ -136,7 +136,7 @@
             <!-- Trigger button -->
             <Button Type="#_button_toggle_" X="700" Y="310" Width="100" Height="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <MousePressed>
-                    <Set FireBlink="@StatusTrigger" Operator="#_set_add_">1</Set>
+                    <Set Variable="StatusTrigger" Operator="#_set_add_">1</Set>
                 </MousePressed>
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0.2 0.4 0.2" LineColor="0.3 0.6 0.3" LineWidth="1"/>

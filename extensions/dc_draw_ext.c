@@ -382,6 +382,14 @@ pl_cleanup(void)
         pl_sb_free(ptDrawlist->sbtLineVertexBuffer);
         pl_sb_free(ptDrawlist->sbtLineIndexBuffer);
         pl_sb_free(ptDrawlist->sbtTextEntries);
+        for(uint32_t j = 0; j < pl_sb_size(ptDrawlist->sbtDrawCommands3D); j++)
+        {
+            if(ptDrawlist->sbtDrawCommands3D[j].tUserCallback && ptDrawlist->sbtDrawCommands3D[j].pUserCallbackData)
+                PL_FREE(ptDrawlist->sbtDrawCommands3D[j].pUserCallbackData);
+        }
+        pl_sb_free(ptDrawlist->sbtDrawCommands3D);
+        pl_sb_free(ptDrawlist->sbtTexturedVertexBuffer);
+        pl_sb_free(ptDrawlist->sbtTexturedIndexBuffer);
     }
     for(uint32_t i = 0; i < gptDrawCtx->uDrawlistCount2D; i++)
     {
@@ -521,6 +529,13 @@ pl_return_3d_drawlist(plDrawList3D* ptDrawlist)
     pl_sb_free(ptDrawlist->sbtSolidVertexBuffer);
     pl_sb_free(ptDrawlist->sbtTexturedVertexBuffer);
     pl_sb_free(ptDrawlist->sbtTexturedIndexBuffer);
+    pl_sb_free(ptDrawlist->sbtTextEntries);
+    for(uint32_t j = 0; j < pl_sb_size(ptDrawlist->sbtDrawCommands3D); j++)
+    {
+        if(ptDrawlist->sbtDrawCommands3D[j].tUserCallback && ptDrawlist->sbtDrawCommands3D[j].pUserCallbackData)
+            PL_FREE(ptDrawlist->sbtDrawCommands3D[j].pUserCallbackData);
+    }
+    pl_sb_free(ptDrawlist->sbtDrawCommands3D);
 
     uint32_t uCurrentIndex = 0;
     for(uint32_t i = 0; i < gptDrawCtx->uDrawlistCount3D; i++)
