@@ -531,7 +531,8 @@ typedef struct {
     DcAppValIndex mpp;      // double var: meters per pixel
     DcAppValIndex lat;      // double var: latitude (degrees)
     DcAppValIndex lon;      // double var: longitude (degrees)
-    DcAppValIndex refresh;  // integer var: set to 1 to refresh texture
+    DcAppValIndex refresh;             // var: change triggers texture reload
+    DcValue       last_refresh_value;  // edge detection (fire on change)
 } _PlanetTextureEntry;
 
 #define PLANET_INDEX_UNDEFINED      0

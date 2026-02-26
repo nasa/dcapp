@@ -37,13 +37,14 @@
 
     <!-- Texture overlay -->
     <Variable Type="#_variable_integer_" InitialValue="0">TextureRefresh</Variable>
+    <Variable Type="#_variable_double_" InitialValue="2000">TexMpp</Variable>
 
     <Logic File="logic/logic.so"/>
 
     <!-- Top-level planet definition (shared by both views) -->
     <Planet Name="Moon" ShaderIndex="@ActiveShader">
         <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
-        <PlanetTexture File="../../assets/nasa_worm.png" MetersPerPixel="1000"
+        <PlanetTexture File="../../assets/nasa_worm.png" MetersPerPixel="@TexMpp"
             Latitude="90" Longitude="180" Refresh="@TextureRefresh"/>
         <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
         <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
@@ -63,26 +64,16 @@
             <Set Variable="Elevation">@SliderEle</Set>
             <Set Variable="Elevation" Operator="#_set_multiply_">10000</Set>
 
-            <!-- ========== ORTHO TOGGLE ========== -->
-            <Button Type="#_button_toggle_" X="120" Y="706" Width="120" Height="22"
-                Variable="UseOrtho" On="1" Off="0"
-                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
-                <ButtonIndicatorOn>
-                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="#_color_white_">Ortho</Text>
-                </ButtonIndicatorOn>
-                <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="0.6 0.6 0.6">Ortho</Text>
-                </ButtonIndicatorOff>
-            </Button>
+            <!-- Toggle texture scale based on refresh state -->
+            <If Value1="@TextureRefresh" Operator="#_if_eq_" Value2="0">
+                <Set Variable="TexMpp">1000</Set>
+            </If>
+            <If Value1="@TextureRefresh" Operator="#_if_eq_" Value2="1">
+                <Set Variable="TexMpp">2000</Set>
+            </If>
 
             <!-- ========== TEXTURE REFRESH ========== -->
-            <Button Type="#_button_standard_" X="15" Y="706" Width="90" Height="22"
+            <Button Type="#_button_toggle_" X="60" Y="706" Width="90" Height="22"
                 Variable="TextureRefresh" On="1" Off="0"
                 LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <ButtonIndicatorOn>
@@ -99,8 +90,27 @@
                 </ButtonIndicatorOff>
             </Button>
 
+            <!-- ========== ORTHO TOGGLE ========== -->
+            <Button Type="#_button_toggle_" X="170" Y="706" Width="90" Height="22"
+                Variable="UseOrtho" On="1" Off="0"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="#_color_white_">Ortho</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="0.6 0.6 0.6">Ortho</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
             <!-- ========== SHADER SELECTOR ========== -->
-            <Text X="230" Y="728" LocalAlignX="#_align_right_" Size="13" FillColor="#_color_white_">Shader:</Text>
+            <Text X="290" Y="706" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+                Size="13" FillColor="#_color_white_">Shader:</Text>
 
             <!-- Default shader (index 0) -->
             <Button Type="#_button_toggle_" X="370" Y="706" Width="120" Height="22"

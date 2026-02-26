@@ -352,6 +352,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     if (!_ext_starter->begin_frame()) {
         return;
     }
+    _ext_resource->new_frame();
     app_data->frame_data.count++;
 
     // send trick data
