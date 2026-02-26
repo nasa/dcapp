@@ -39,22 +39,23 @@ void main()
     vec3 normal = normalize(tShaderIn.tWorldNormal);
     vec4 tHazardColor = texture(sampler2D(at2DTextures[tDynamicData.tData.uTextureIndex], tSamplerLinearClamp), tUVActual);
 
-    // Slope: deviation of surface normal from the radial (outward) direction.
-    // slope = 0   → normal points straight up  → flat terrain
-    // slope = 1   → normal is horizontal       → vertical cliff
+    // Slope angle in degrees from the radial (outward) direction.
     vec3 radial = normalize(tShaderIn.tWorldPosition);
-    float slope = 1.0 - dot(normal, radial);
+    float cosAngle = dot(normal, radial);
+    float slopeDeg = degrees(acos(clamp(cosAngle, 0.0, 1.0)));
 
-    // 3-stop ramp: green (flat) → yellow (~20°) → red (steep ≥ 35°)
-    // 20°: slope ≈ 1 - cos(20°) ≈ 0.060
-    // 35°: slope ≈ 1 - cos(35°) ≈ 0.181
-    vec3 c0 = vec3(0.22, 0.74, 0.22);  // green  (flat)
-    vec3 c1 = vec3(0.94, 0.78, 0.12);  // yellow (moderate)
-    vec3 c2 = vec3(0.86, 0.14, 0.10);  // red    (steep)
+    // Discrete 3-band classification with hard transitions:
+    //   0 -  5 deg : warm stone gray   (flat terrain)
+    //   5 - 10 deg : golden amber      (moderate slopes)
+    //  10+    deg  : deep crimson       (steep / hazardous)
+    vec3 cFlat    = vec3(0.55, 0.52, 0.48);  // warm stone gray
+    vec3 cModerate = vec3(0.85, 0.62, 0.15); // golden amber
+    vec3 cSteep   = vec3(0.78, 0.12, 0.10);  // deep crimson
 
-    vec3 color = c0;
-    color = mix(color, c1, clamp(slope / 0.060,         0.0, 1.0));
-    color = mix(color, c2, clamp((slope - 0.060) / 0.121, 0.0, 1.0));
+    // Hard step transitions (no blending between bands)
+    vec3 color = cFlat;
+    color = mix(color, cModerate, step(5.0, slopeDeg));
+    color = mix(color, cSteep,    step(10.0, slopeDeg));
 
     // Diffuse lighting
     vec3 w_i = normalize(tDynamicData.tData.tLightDirection);

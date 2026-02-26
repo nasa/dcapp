@@ -44,18 +44,21 @@ void main()
     float elevation = length(tShaderIn.tWorldPosition) - 1737400.0;
     float t = clamp((elevation + 8000.0) / 13000.0, 0.0, 1.0);
 
-    // 5-stop color ramp: deep blue → cyan → green → yellow → white
-    vec3 c0 = vec3(0.05, 0.05, 0.50);  // deep blue   (lowest)
-    vec3 c1 = vec3(0.05, 0.60, 0.80);  // cyan
-    vec3 c2 = vec3(0.10, 0.65, 0.10);  // green       (near zero)
-    vec3 c3 = vec3(0.85, 0.75, 0.10);  // yellow
-    vec3 c4 = vec3(1.00, 1.00, 1.00);  // white       (highest)
+    // 6-stop warm terrain ramp:
+    //   deep olive green -> sage green -> golden amber -> burnt sienna -> umber brown -> snow white
+    vec3 c0 = vec3(0.18, 0.30, 0.08);  // deep olive     (lowest basins)
+    vec3 c1 = vec3(0.42, 0.52, 0.18);  // sage / moss    (low plains)
+    vec3 c2 = vec3(0.76, 0.65, 0.22);  // golden amber   (mid elevation)
+    vec3 c3 = vec3(0.72, 0.40, 0.14);  // burnt sienna   (highlands)
+    vec3 c4 = vec3(0.45, 0.30, 0.18);  // umber brown    (high ridges)
+    vec3 c5 = vec3(0.95, 0.94, 0.90);  // warm white     (peaks)
 
     vec3 color = c0;
-    color = mix(color, c1, clamp(t / 0.25,        0.0, 1.0));
-    color = mix(color, c2, clamp((t - 0.25) / 0.25, 0.0, 1.0));
-    color = mix(color, c3, clamp((t - 0.50) / 0.25, 0.0, 1.0));
-    color = mix(color, c4, clamp((t - 0.75) / 0.25, 0.0, 1.0));
+    color = mix(color, c1, clamp(t / 0.20,              0.0, 1.0));
+    color = mix(color, c2, clamp((t - 0.20) / 0.20,     0.0, 1.0));
+    color = mix(color, c3, clamp((t - 0.40) / 0.20,     0.0, 1.0));
+    color = mix(color, c4, clamp((t - 0.60) / 0.15,     0.0, 1.0));
+    color = mix(color, c5, clamp((t - 0.75) / 0.25,     0.0, 1.0));
 
     // Diffuse lighting
     vec3 w_i = normalize(tDynamicData.tData.tLightDirection);
