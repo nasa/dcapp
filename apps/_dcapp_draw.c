@@ -1735,7 +1735,7 @@ static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _N
 
     DcValue             *val1     = dc_app_lookup_get_value(app_data->lookup, node->conditional.value1);
     if (!val1) {
-        DC_LOG_WARN("If", "Value1 is undefined, skipping conditional");
+        // DC_LOG_WARN("If", "Value1 is undefined, skipping conditional");
         return;
     }
     DcAppConditionalType type     = (node->conditional.type == DC_APP_VAL_INDEX_UNDEFINED)
