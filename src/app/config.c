@@ -832,7 +832,7 @@ void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *direct
             if (is_static) {
                 // ===== STATIC IF PROCESSING =====
                 // Parse Operation (already dereferenced by _dereference_node_attrs_and_content)
-                xmlChar *raw_operation = xmlGetProp(node, BAD_CAST "Operation");
+                xmlChar *raw_operation = xmlGetProp(node, BAD_CAST "Operator");
                 int cond_type = DC_APP_CONDITIONAL_TYPE_TRUE;
                 if (raw_operation) {
                     cond_type = dc_utils_string_to_integer((const char *)raw_operation);
