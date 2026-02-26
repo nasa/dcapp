@@ -573,11 +573,15 @@ Legacy syntax:
     <Blink Frequency=".8" DutyCycle=".70" Duration="-1" FnStartBlink="@TRIGGER_VAR">
 
 New syntax:
-    <Blink Frequency="0.8" DutyCycle="0.7" Duration="0" Variable="TriggerVar">
+    <Blink Frequency="0.8" DutyCycle="0.7" Duration="0" FireBlink="@TriggerVar">
 
 Changes:
-    FnStartBlink="@varname"  -->  Variable="varname" (no @ prefix)
+    FnStartBlink="@varname"  -->  FireBlink="@varname"
     Duration="-1"            -->  Duration="0" (0 means indefinite, same behavior)
+
+Note: FireBlink uses the Fire* prefix convention for edge-triggered attributes.
+All Fire* attributes use DcAppValIndex and fire on value change via dc_value_is_equal().
+See also: FireRefresh on <PlanetTexture>, FireCall on <Function>.
 
 
 ================================================================================

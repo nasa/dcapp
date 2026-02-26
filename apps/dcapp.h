@@ -199,13 +199,13 @@ typedef struct __NodeBlink {
     DcAppValIndex frequency;
     DcAppValIndex duty_cycle;
     DcAppValIndex duration;
-    DcAppVarIndex var;
+    DcAppValIndex fire_blink;
     _NodeIndex    child;
 
     // runtime state
     double remaining_duration;
     double last_frame_time;
-    int    last_trigger_value;
+    DcValue last_fire_blink_value;
 } _NodeBlink;
 
 // State event node (children drawn when parent state matches)
@@ -448,6 +448,8 @@ typedef struct __DeferredSetOp {
 
 typedef struct __NodeFunction {
     void (*callback)(void);
+    DcAppValIndex fire_call;
+    DcValue       last_fire_call_value;
 } _NodeFunction;
 
 typedef struct __NodeSphere {
@@ -531,8 +533,8 @@ typedef struct {
     DcAppValIndex mpp;      // double var: meters per pixel
     DcAppValIndex lat;      // double var: latitude (degrees)
     DcAppValIndex lon;      // double var: longitude (degrees)
-    DcAppValIndex refresh;             // var: change triggers texture reload
-    DcValue       last_refresh_value;  // edge detection (fire on change)
+    DcAppValIndex fire_refresh;             // var: change triggers texture reload
+    DcValue       last_fire_refresh_value;  // edge detection (fire on change)
 } _PlanetTextureEntry;
 
 #define PLANET_INDEX_UNDEFINED      0

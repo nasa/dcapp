@@ -1,0 +1,21 @@
+Recent XML Attribute Renames
+============================
+
+Commit 4598c10 (refs #119):
+  <If>             Operation        -> Operator
+  <Planet>         ShaderVariable   -> ShaderIndex
+
+Commit 8740658 (refs #76):
+  <PlanetTexture>  Source           -> File
+  <PlanetView>     Latitude         -> CameraLatitude
+  <PlanetView>     Longitude        -> CameraLongitude
+  <PlanetView>     Elevation        -> CameraElevation
+  <PlanetView>     Roll             -> CameraRoll
+  <PlanetView>     Pitch            -> CameraPitch
+  <PlanetView>     Yaw              -> CameraYaw
+  <PlanetView>     Orthographic     -> CameraOrthographic
+
+Current branch (dcapp-pl):
+  <Blink>          Variable         -> FireBlink          (now requires @ prefix, uses ValIndex)
+  <PlanetTexture>  Refresh          -> FireRefresh
+  <Function>       (new)               FireCall

@@ -344,10 +344,13 @@ def convert_variable_reference(elem: etree._Element, attr_name: str) -> None:
 
 def convert_blink_attributes(elem: etree._Element) -> None:
     """Convert Blink element attributes."""
-    # FnStartBlink -> Variable
+    # FnStartBlink -> FireBlink (keep @ prefix — FireBlink uses ValIndex)
     fn_start = elem.get('FnStartBlink')
     if fn_start:
-        elem.set('Variable', strip_at_prefix(fn_start))
+        # Ensure @ prefix: legacy had @varname, new syntax also needs @varname
+        if not fn_start.startswith('@'):
+            fn_start = '@' + fn_start
+        elem.set('FireBlink', fn_start)
         del elem.attrib['FnStartBlink']
 
     # Duration: -1 -> 0 (both mean indefinite)
@@ -773,7 +776,6 @@ def process_element(elem: etree._Element, parent_tag: Optional[str] = None) -> l
     # Blink element
     elif tag == 'Blink':
         convert_blink_attributes(elem)
-        convert_variable_reference(elem, 'Variable')
 
     # MouseMotion element
     elif tag == 'MouseMotion':

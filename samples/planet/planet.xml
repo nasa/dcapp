@@ -45,7 +45,7 @@
     <Planet Name="Moon" ShaderIndex="@ActiveShader">
         <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
         <PlanetTexture File="../../assets/nasa_worm.png" MetersPerPixel="@TexMpp"
-            Latitude="90" Longitude="180" Refresh="@TextureRefresh"/>
+            Latitude="90" Longitude="180" FireRefresh="@TextureRefresh"/>
         <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
         <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
     </Planet>

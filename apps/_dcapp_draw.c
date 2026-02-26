@@ -198,13 +198,9 @@ static void _draw_node_blink(_AppData *app_data, _NodeIndex node_index, _Node *n
     double duration     = dc_app_lookup_get_value(app_data->lookup, node->blink.duration)->value_double;
 
     // check trigger variable for any change
-    if (node->blink.var != DC_APP_VAR_INDEX_UNDEFINED) {
-        DcAppLookupVar *var = dc_app_lookup_get_var(app_data->lookup, node->blink.var);
-        DcValue        *val = dc_app_lookup_get_value(app_data->lookup, var->value_index);
-        
-        int trigger_value = val->value_integer;
-        
-        if (trigger_value != node->blink.last_trigger_value) {
+    if (node->blink.fire_blink != DC_APP_VAL_INDEX_UNDEFINED) {
+        DcValue *val = dc_app_lookup_get_value(app_data->lookup, node->blink.fire_blink);
+        if (!dc_value_is_equal(val, &node->blink.last_fire_blink_value)) {
             if (duration <= 0.0) {
                 // indefinite: toggle (0 <-> 1)
                 node->blink.remaining_duration = 1.0 - node->blink.remaining_duration;
@@ -212,7 +208,7 @@ static void _draw_node_blink(_AppData *app_data, _NodeIndex node_index, _Node *n
                 // timed: restart
                 node->blink.remaining_duration = duration;
             }
-            node->blink.last_trigger_value = trigger_value;
+            node->blink.last_fire_blink_value = *val;
         }
     }
 
@@ -1801,7 +1797,15 @@ static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _N
 }
 
 static void _draw_node_function(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
-    if (node->function.callback) {
+    if (!node->function.callback) return;
+
+    if (node->function.fire_call != DC_APP_VAL_INDEX_UNDEFINED) {
+        DcValue *val = dc_app_lookup_get_value(app_data->lookup, node->function.fire_call);
+        if (!dc_value_is_equal(val, &node->function.last_fire_call_value)) {
+            node->function.callback();
+            node->function.last_fire_call_value = *val;
+        }
+    } else {
         node->function.callback();
     }
 }

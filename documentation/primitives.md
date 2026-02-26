@@ -833,7 +833,7 @@ Registers a custom shader for the planet, selectable at runtime via the parent `
 
 ### `<PlanetTexture>`
 
-Configures a texture overlay on the planet surface. The `File` attribute is a static file path; all other attributes are dynamic (can be bound to variables). Set `Refresh` to 1 at runtime to re-read the texture file from disk. Child of `<Planet>`.
+Configures a texture overlay on the planet surface. The `File` attribute is a static file path; all other attributes are dynamic (can be bound to variables). Changing the value of `FireRefresh` at runtime triggers a re-read of the texture file from disk. Child of `<Planet>`.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -841,7 +841,7 @@ Configures a texture overlay on the planet surface. The `File` attribute is a st
 | `MetersPerPixel` | number/var | No | Scale of the texture in meters per pixel |
 | `Latitude` | number/var | No | Latitude of texture center |
 | `Longitude` | number/var | No | Longitude of texture center |
-| `Refresh` | integer/var | No | Set to 1 to re-read texture file from disk (auto-resets to 0) |
+| `FireRefresh` | integer/var | No | Edge-triggered: changing this value re-reads the texture file from disk |
 
 ---
 

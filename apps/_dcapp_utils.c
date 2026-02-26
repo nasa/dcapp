@@ -734,16 +734,16 @@ static void _update_planet_defs(_AppData *app_data) {
         // texture refresh check
         for (int t = 0; t < sbcount(def->sb_textures); t++) {
             _PlanetTextureEntry *tex = &def->sb_textures[t];
-            if (tex->refresh == DC_APP_VAL_INDEX_UNDEFINED) continue;
-            DcValue *refresh_val = dc_app_lookup_get_value(app_data->lookup, tex->refresh);
-            if (!dc_value_is_equal(refresh_val, &tex->last_refresh_value)) {
+            if (tex->fire_refresh == DC_APP_VAL_INDEX_UNDEFINED) continue;
+            DcValue *refresh_val = dc_app_lookup_get_value(app_data->lookup, tex->fire_refresh);
+            if (!dc_value_is_equal(refresh_val, &tex->last_fire_refresh_value)) {
                 plPlanetTexture texture;
                 if (_build_planet_texture(app_data, tex, &texture)) {
                     _ext_planet->set_texture(planet, &texture);
                 } else {
                     _ext_planet->set_texture(planet, NULL);
                 }
-                tex->last_refresh_value = *refresh_val;
+                tex->last_fire_refresh_value = *refresh_val;
             }
         }
 

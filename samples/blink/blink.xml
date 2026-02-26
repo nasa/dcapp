@@ -27,7 +27,7 @@
             <!-- Alarm indicator (blinking red) -->
             <Rectangle X="100" Y="380" Width="120" Height="50" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                 FillColor="0.3 0 0" LineColor="0.5 0 0" LineWidth="2"/>
-            <Blink Frequency="4" DutyCycle="0.5" Duration="0" Variable="MasterAlarmTrigger">
+            <Blink Frequency="4" DutyCycle="0.5" Duration="0" FireBlink="@MasterAlarmTrigger">
                 <Rectangle X="100" Y="380" Width="120" Height="50" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                     FillColor="1 0 0" LineColor="1 0.3 0.3" LineWidth="2"/>
                 <Text X="100" Y="380" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="18" FillColor="1 1 1">ALARM</Text>
@@ -36,7 +36,7 @@
             <!-- Trigger button -->
             <Button Type="#_button_toggle_" X="100" Y="310" Width="100" Height="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <MousePressed>
-                    <Set Variable="MasterAlarmTrigger" Operator="#_set_add_">1</Set>
+                    <Set FireBlink="@MasterAlarmTrigger" Operator="#_set_add_">1</Set>
                 </MousePressed>
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.7 0.3" LineWidth="1"/>
@@ -56,7 +56,7 @@
             <!-- Caution indicator (blinking amber) -->
             <Rectangle X="300" Y="380" Width="120" Height="50" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                 FillColor="0.3 0.2 0" LineColor="0.5 0.4 0" LineWidth="2"/>
-            <Blink Frequency="2" DutyCycle="0.6" Duration="5" Variable="CautionTrigger">
+            <Blink Frequency="2" DutyCycle="0.6" Duration="5" FireBlink="@CautionTrigger">
                 <Rectangle X="300" Y="380" Width="120" Height="50" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                     FillColor="1 0.7 0" LineColor="1 0.85 0.3" LineWidth="2"/>
                 <Text X="300" Y="380" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="18" FillColor="0 0 0">CAUTION</Text>
@@ -65,7 +65,7 @@
             <!-- Trigger button -->
             <Button Type="#_button_momentary_" X="300" Y="310" Width="100" Height="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <MousePressed>
-                    <Set Variable="CautionTrigger" Operator="#_set_add_">1</Set>
+                    <Set FireBlink="@CautionTrigger" Operator="#_set_add_">1</Set>
                 </MousePressed>
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0.6 0.5 0.1" LineColor="0.8 0.7 0.2" LineWidth="1"/>
@@ -85,7 +85,7 @@
             <!-- Attention indicator (blinking cyan) -->
             <Rectangle X="500" Y="380" Width="120" Height="50" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                 FillColor="0 0.15 0.2" LineColor="0 0.3 0.4" LineWidth="2"/>
-            <Blink Frequency="1" DutyCycle="0.7" Duration="3" Variable="AttentionTrigger">
+            <Blink Frequency="1" DutyCycle="0.7" Duration="3" FireBlink="@AttentionTrigger">
                 <Rectangle X="500" Y="380" Width="120" Height="50" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                     FillColor="0 0.8 1" LineColor="0.3 0.9 1" LineWidth="2"/>
                 <Text X="500" Y="380" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="16" FillColor="0 0 0">ATTENTION</Text>
@@ -94,7 +94,7 @@
             <!-- Trigger button -->
             <Button Type="#_button_momentary_" X="500" Y="310" Width="100" Height="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <MousePressed>
-                    <Set Variable="AttentionTrigger" Operator="#_set_add_">1</Set>
+                    <Set FireBlink="@AttentionTrigger" Operator="#_set_add_">1</Set>
                 </MousePressed>
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0 0.4 0.5" LineColor="0 0.6 0.7" LineWidth="1"/>
@@ -117,26 +117,26 @@
 
             <!-- Green status light (slow) -->
             <Ellipse X="660" Y="380" Radius="12" FillColor="0.1 0.2 0.1" LineColor="0.2 0.3 0.2" LineWidth="1"/>
-            <Blink Frequency="0.5" DutyCycle="0.5" Duration="0" Variable="StatusTrigger">
+            <Blink Frequency="0.5" DutyCycle="0.5" Duration="0" FireBlink="@StatusTrigger">
                 <Ellipse X="660" Y="380" Radius="12" FillColor="0 1 0" LineColor="0.5 1 0.5" LineWidth="1"/>
             </Blink>
 
             <!-- Yellow status light (medium) -->
             <Ellipse X="700" Y="380" Radius="12" FillColor="0.2 0.15 0.05" LineColor="0.3 0.25 0.1" LineWidth="1"/>
-            <Blink Frequency="1.5" DutyCycle="0.5" Duration="0" Variable="StatusTrigger">
+            <Blink Frequency="1.5" DutyCycle="0.5" Duration="0" FireBlink="@StatusTrigger">
                 <Ellipse X="700" Y="380" Radius="12" FillColor="1 0.8 0" LineColor="1 0.9 0.5" LineWidth="1"/>
             </Blink>
 
             <!-- Red status light (fast) -->
             <Ellipse X="740" Y="380" Radius="12" FillColor="0.2 0.05 0.05" LineColor="0.3 0.1 0.1" LineWidth="1"/>
-            <Blink Frequency="3" DutyCycle="0.5" Duration="0" Variable="StatusTrigger">
+            <Blink Frequency="3" DutyCycle="0.5" Duration="0" FireBlink="@StatusTrigger">
                 <Ellipse X="740" Y="380" Radius="12" FillColor="1 0 0" LineColor="1 0.5 0.5" LineWidth="1"/>
             </Blink>
 
             <!-- Trigger button -->
             <Button Type="#_button_toggle_" X="700" Y="310" Width="100" Height="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <MousePressed>
-                    <Set Variable="StatusTrigger" Operator="#_set_add_">1</Set>
+                    <Set FireBlink="@StatusTrigger" Operator="#_set_add_">1</Set>
                 </MousePressed>
                 <ButtonIndicatorOn>
                     <Rectangle FillColor="0.2 0.4 0.2" LineColor="0.3 0.6 0.3" LineWidth="1"/>
@@ -163,7 +163,7 @@
             <Text X="430" Y="165" LocalAlignX="#_align_left_" Size="13" FillColor="0.7 0.7 0.9">Duration</Text>
             <Text X="430" Y="145" LocalAlignX="#_align_left_" Size="11" FillColor="0.6 0.6 0.6">Seconds to blink. 0 = blink forever until retriggered.</Text>
 
-            <Text X="430" Y="115" LocalAlignX="#_align_left_" Size="13" FillColor="0.9 0.7 0.7">Variable</Text>
+            <Text X="430" Y="115" LocalAlignX="#_align_left_" Size="13" FillColor="0.9 0.7 0.7">FireBlink</Text>
             <Text X="430" Y="95" LocalAlignX="#_align_left_" Size="11" FillColor="0.6 0.6 0.6">Trigger variable. Increment to start, again to stop.</Text>
 
         </Panel>

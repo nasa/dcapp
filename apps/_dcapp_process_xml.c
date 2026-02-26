@@ -736,11 +736,11 @@ static _NodeIndex _process_xml_node_blink(_AppData *app_data, xmlNodePtr xml_nod
         dc_node.blink.duration = dc_app_lookup_register_value(app_data->lookup, &temp_value);
     }
 
-    // variable that triggers blink
-    xmlChar *raw_var = xmlGetProp(xml_node, BAD_CAST "Variable");
-    if (raw_var) {
-        dc_node.blink.var = dc_app_lookup_get_var_index(app_data->lookup, (const char *)raw_var);
-        xmlFree(raw_var);
+    // edge-triggered blink
+    xmlChar *raw_fire_blink = xmlGetProp(xml_node, BAD_CAST "FireBlink");
+    if (raw_fire_blink) {
+        dc_node.blink.fire_blink = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_fire_blink);
+        xmlFree(raw_fire_blink);
     }
 
     // initialize child
@@ -748,7 +748,7 @@ static _NodeIndex _process_xml_node_blink(_AppData *app_data, xmlNodePtr xml_nod
     // initialize runtime state
     dc_node.blink.remaining_duration  = 0.0;
     dc_node.blink.last_frame_time     = 0.0;
-    dc_node.blink.last_trigger_value  = 0;
+    // last_fire_blink_value is zero-initialized by _Node dc_node = {0}
 
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
@@ -1589,6 +1589,13 @@ static _NodeIndex _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_
         xmlFree(raw_name);
     } else {
         DC_LOG_ERROR("Function", "Missing 'Name' attribute");
+    }
+
+    // edge-triggered call
+    xmlChar *raw_fire_call = xmlGetProp(xml_node, BAD_CAST "FireCall");
+    if (raw_fire_call) {
+        dc_node.function.fire_call = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_fire_call);
+        xmlFree(raw_fire_call);
     }
 
     // register node
@@ -3376,11 +3383,11 @@ static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePt
         xmlFree(raw_lon);
     }
 
-    // refresh (set to 1 to refresh texture at runtime)
-    xmlChar *raw_refresh = xmlGetProp(xml_node, BAD_CAST "Refresh");
-    if (raw_refresh) {
-        entry.refresh = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_refresh);
-        xmlFree(raw_refresh);
+    // edge-triggered refresh
+    xmlChar *raw_fire_refresh = xmlGetProp(xml_node, BAD_CAST "FireRefresh");
+    if (raw_fire_refresh) {
+        entry.fire_refresh = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_fire_refresh);
+        xmlFree(raw_fire_refresh);
     }
 
     sbpush(def->sb_textures, entry);

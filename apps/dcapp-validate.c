@@ -850,9 +850,9 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
         }
 
         case DC_APP_ELEM_TYPE_BLINK: {
-            xmlChar *var = xmlGetProp(node, BAD_CAST "Variable");
+            xmlChar *var = xmlGetProp(node, BAD_CAST "FireBlink");
             if (!var) {
-                DC_LOG_ERROR("Validate", "<Blink> missing required attribute 'Variable' (line %ld)", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<Blink> missing required attribute 'FireBlink' (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(var);
@@ -955,11 +955,11 @@ static const char *_valid_attrs_color[]             = {"FillColor", "LineColor",
 static const char *_valid_attrs_line[]              = {"LineWidth", NULL};
 
 static const char *_valid_attrs_arc[]            = {"Radius", "Angle", "Segments", "LineColor", NULL};
-static const char *_valid_attrs_blink[]          = {"Variable", "Frequency", "DutyCycle", "Duration", NULL};
+static const char *_valid_attrs_blink[]          = {"FireBlink", "Frequency", "DutyCycle", "Duration", NULL};
 static const char *_valid_attrs_button[]         = {"Type", "Variable", "EnableVariable", "EnableOn", "TargetVariable", "TargetOn", "TargetOff", "On", "Off", "IndicatorVariable", "IndicatorOn", NULL};
 static const char *_valid_attrs_ellipse[]        = {"Radius", "RadiusX", "RadiusY", "Segments", "Angle", NULL};
 static const char *_valid_attrs_constant[]       = {"Name", NULL};
-static const char *_valid_attrs_function[]       = {"Name", NULL};
+static const char *_valid_attrs_function[]       = {"Name", "FireCall", NULL};
 static const char *_valid_attrs_if[]             = {"Value", "Value1", "Value2", "Operator", "Static", NULL};
 static const char *_valid_attrs_image[]          = {"File", NULL};
 static const char *_valid_attrs_logic[]          = {"File", NULL};
@@ -972,7 +972,7 @@ static const char *_valid_attrs_style[]          = {"Name", NULL};
 static const char *_valid_attrs_planet[]          = {"Name", "ShaderIndex", NULL};
 static const char *_valid_attrs_planet_view[]    = {"Planet", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", NULL};
 static const char *_valid_attrs_planet_data[]    = {"File", NULL};
-static const char *_valid_attrs_planet_texture[] = {"File", "MetersPerPixel", "Latitude", "Longitude", "Refresh", NULL};
+static const char *_valid_attrs_planet_texture[] = {"File", "MetersPerPixel", "Latitude", "Longitude", "FireRefresh", NULL};
 static const char *_valid_attrs_planet_shader[]  = {"Index", "VertexSource", "FragmentSource", NULL};
 static const char *_valid_attrs_text[]           = {"Size", "ShadowOffset", NULL};
 static const char *_valid_attrs_trick_io[]       = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};

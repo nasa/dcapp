@@ -647,7 +647,17 @@ The `<Function>` element allows you to call functions from your logic file direc
 <Function Name="my_function"/>
 ```
 
-When this element is rendered, it calls the function `my_function()` from your loaded logic library.
+When this element is rendered, it calls the function `my_function()` from your loaded logic library every frame.
+
+### Edge-Triggered Calls with `FireCall`
+
+By default, `<Function>` fires every frame. To make it fire only when a value changes, use the `FireCall` attribute:
+
+```xml
+<Function Name="my_function" FireCall="@triggerVar"/>
+```
+
+The function will be called once each time the value of `triggerVar` changes. If `FireCall` is omitted, the function fires every frame (original behavior).
 
 ### Function Signature
 
@@ -697,11 +707,18 @@ void on_button_click() {
 }
 ```
 
+### Attributes
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Name` | string | Yes | Name of the C function to call |
+| `FireCall` | integer/var | No | Edge-triggered: function fires once each time this value changes. If omitted, fires every frame. |
+
 ### Use Cases
 
 - **Button handlers:** Execute code when buttons are pressed/released
 - **Conditional actions:** Run functions when conditions become true
-- **Event-driven logic:** Trigger actions without polling in `display_draw()`
+- **Event-driven logic:** Use `FireCall` to trigger actions on value change instead of polling in `display_draw()`
 
 ### Notes
 
