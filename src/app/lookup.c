@@ -65,7 +65,7 @@ void dc_app_lookup_cleanup(DcAppLookup *lookup) {
 DcValue *dc_app_lookup_get_value(DcAppLookup *lookup, DcAppValIndex index) {
     _LookupContext *context = &(_sb_contexts[lookup->index]);
     if (index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
-        DC_LOG_ERROR("Lookup", "dc_app_lookup_get_value(): attempting to fetch invalid index %d", index);
+        // DC_LOG_ERROR("Lookup", "dc_app_lookup_get_value(): attempting to fetch invalid index %d", index);
         return NULL;
     }
     return &(context->sb_vals[index]);
