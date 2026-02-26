@@ -515,7 +515,7 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
 
 static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, plPlanetTexture *out) {
     if (!entry->source || entry->source[0] == '\0') return false;
-    if (!dc_utils_file_exists(entry->source)) return false;
+    if (!_ext_vfs->does_file_exist(entry->source)) return false;
     memset(out, 0, sizeof(*out));
     out->pcPath = entry->source;
     if (entry->mpp != DC_APP_VAL_INDEX_UNDEFINED)

@@ -43,7 +43,7 @@
     <!-- Top-level planet definition (shared by both views) -->
     <Planet Name="Moon" ShaderIndex="@ActiveShader">
         <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
-        <PlanetTexture File="../../assets/nasa_worm.png" MetersPerPixel="100"
+        <PlanetTexture File="../../assets/nasa_worm.png" MetersPerPixel="1000"
             Latitude="90" Longitude="180" Refresh="@TextureRefresh"/>
         <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
         <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>

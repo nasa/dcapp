@@ -16,6 +16,7 @@
 #include "../pilotlight/extensions/pl_vfs_ext.h"
 #include "../pilotlight/extensions/pl_shader_ext.h"
 #include "../pilotlight/extensions/pl_image_ext.h"
+#include "../pilotlight/extensions/pl_resource_ext.h"
 
 // dcapp extension includes
 #include "../extensions/dc_draw_ext.h"
@@ -49,6 +50,7 @@ const plVfsI             *_ext_vfs              = NULL;
 const plShaderI          *_ext_shader           = NULL;
 const plCameraI          *_ext_camera           = NULL;
 const plImageI           *_ext_image            = NULL;
+const plResourceI        *_ext_resource         = NULL;
 
 // dcapp includes
 #include "../src/utils/stb_sb.h"

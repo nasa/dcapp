@@ -52,8 +52,9 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         _ext_shader         = pl_get_api_latest(api_registry, plShaderI);
         _ext_planet           = pl_get_api_latest(api_registry, plPlanetI);
         _ext_planet_processor = pl_get_api_latest(api_registry, plPlanetProcessorI);
-        _ext_camera = pl_get_api_latest(api_registry, plCameraI);
-        _ext_image  = pl_get_api_latest(api_registry, plImageI);
+        _ext_camera           = pl_get_api_latest(api_registry, plCameraI);
+        _ext_image            = pl_get_api_latest(api_registry, plImageI);
+        _ext_resource         = pl_get_api_latest(api_registry, plResourceI);
 
         // set global app data variable
         _global_app_data = app_data;
@@ -90,8 +91,9 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     _ext_shader         = pl_get_api_latest(api_registry, plShaderI);
     _ext_planet           = pl_get_api_latest(api_registry, plPlanetI);
     _ext_planet_processor = pl_get_api_latest(api_registry, plPlanetProcessorI);
-    _ext_camera = pl_get_api_latest(api_registry, plCameraI);
-    _ext_image  = pl_get_api_latest(api_registry, plImageI);
+    _ext_camera           = pl_get_api_latest(api_registry, plCameraI);
+    _ext_image            = pl_get_api_latest(api_registry, plImageI);
+    _ext_resource         = pl_get_api_latest(api_registry, plResourceI);
 
     // allocate app memory
     app_data = (_AppData *)PL_ALLOC(sizeof(_AppData));
@@ -141,6 +143,11 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     // build dcapp node tree
     xmlNodePtr root_node = xmlDocGetRootElement(app_data->config->xml_doc);
     _process_xml_node(app_data, root_node, NODE_INDEX_UNDEFINED, DC_APP_ELEM_TYPE_UNDEFINED, app_data->config->config_dir_path);
+
+    // initialize resource manager (needed by planet texture loading)
+    plResourceManagerInit resource_init = {0};
+    resource_init.ptDevice = _ext_starter->get_device();
+    _ext_resource->initialize(resource_init);
 
     // initialize planet rendering instances
     _init_planets(app_data);
@@ -234,6 +241,7 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
         }
         if (app_data->planet_ext_initialized) {
             _ext_planet->cleanup();
+            _ext_resource->cleanup();
         }
         sbfree(app_data->sb_planet_views);
         sbfree(app_data->sb_planets);
