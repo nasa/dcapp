@@ -1,0 +1,64 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+
+#include "pl_shader_interop_planet.h"
+
+vec3
+Decode( vec2 f )
+{
+    f = f * 2.0 - 1.0;
+    vec3 n = vec3( f.x, f.y, 1.0 - abs( f.x ) - abs( f.y ) );
+    float t = max( -n.z, 0.0 );
+    n.x += n.x >= 0.0 ? -t : t;
+    n.y += n.y >= 0.0 ? -t : t;
+    return normalize( n );
+}
+
+// input
+layout(location = 0) in vec3 inPos;
+layout(location = 1) in vec2 inNormal;
+layout(location = 2) in vec2 inUV;
+
+// output
+layout(location = 0) out struct plShaderOut {
+    vec4 tColor;
+    vec3 tWorldPosition;
+    vec3 tWorldNormal;
+    vec2 tUV;
+} tShaderOut;
+
+layout(set = 3, binding = 0) uniform PL_DYNAMIC_DATA
+{
+    plGpuDynPlanetData tData;
+} tDynamicData;
+
+void main()
+{
+    // Flatten terrain to reference spheroid (keep original normals for shading)
+    vec3 flatPos = normalize(inPos) * 1737400.0;
+
+    gl_Position = tDynamicData.tData.tMvp * vec4(flatPos, 1.0);
+
+    tShaderOut.tWorldPosition = flatPos;
+    tShaderOut.tWorldNormal = Decode(inNormal);
+    tShaderOut.tUV = inUV;
+
+    vec3 atColors[8];
+    float fColorStrength = 0.1;
+    atColors[0] = vec3(fColorStrength, 0.0, 0.0);
+    atColors[1] = vec3(0.0, fColorStrength, 0.0);
+    atColors[2] = vec3(0.0, 0.0, fColorStrength);
+    atColors[3] = vec3(fColorStrength, fColorStrength, 0.0);
+    atColors[4] = vec3(fColorStrength, 0.0, fColorStrength);
+    atColors[5] = vec3(0.0, fColorStrength, fColorStrength);
+    atColors[6] = vec3(fColorStrength, fColorStrength, fColorStrength);
+    atColors[7] = vec3(fColorStrength * 4, fColorStrength, fColorStrength);
+
+    tShaderOut.tColor.rgb = atColors[tDynamicData.tData.iLevel % 8];
+    tShaderOut.tColor.a = 1.0;
+
+    if(bool(tDynamicData.tData.tFlags & PL_TERRAIN_SHADER_FLAGS_WIREFRAME))
+    {
+        tShaderOut.tColor.rgb += vec3(0.3);
+    }
+}

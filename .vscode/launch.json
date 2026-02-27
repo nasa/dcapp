@@ -65,6 +65,7 @@
         "metrics",
         "mona-lisa",
         "planet",
+        "planet_vehicle",
         "primitives",
         "ptz",
         "rotation",
