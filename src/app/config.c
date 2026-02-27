@@ -445,6 +445,17 @@ static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node) {
             node->next->prev = last_child;
         }
 
+        // propagate _Directory to children that don't already have one
+        xmlChar *dir_attr = xmlGetProp(node, BAD_CAST "_Directory");
+        if (dir_attr) {
+            for (xmlNodePtr curr_child = first_child; curr_child; curr_child = curr_child->next) {
+                if (curr_child->type == XML_ELEMENT_NODE && !xmlHasProp(curr_child, BAD_CAST "_Directory")) {
+                    xmlSetProp(curr_child, BAD_CAST "_Directory", dir_attr);
+                }
+            }
+            xmlFree(dir_attr);
+        }
+
         // update children
         for (xmlNodePtr curr_child = first_child; curr_child; curr_child = curr_child->next) {
             curr_child->parent = node->parent;

@@ -521,7 +521,7 @@ static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry
     if (entry->mpp != DC_APP_VAL_INDEX_UNDEFINED)
         out->fMetersPerPixel = (float)dc_app_lookup_get_value(app_data->lookup, entry->mpp)->value_double;
     if (entry->lat != DC_APP_VAL_INDEX_UNDEFINED)
-        out->fLatitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lat)->value_double;
+        out->fLatitude = -1.0f * (float)dc_app_lookup_get_value(app_data->lookup, entry->lat)->value_double;
     if (entry->lon != DC_APP_VAL_INDEX_UNDEFINED)
         out->fLongitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lon)->value_double;
     return true;
