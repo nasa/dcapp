@@ -256,7 +256,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp-genheader.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp_genheader.c "
 
 # run compiler (and linker)
 echo
@@ -291,7 +291,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp-validate.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp_validate.c "
 
 # run compiler (and linker)
 echo
@@ -326,7 +326,7 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm -lgdal "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../apps/dcapp-planet-chunkgen.c ../../src/utils/file.c ../../src/utils/log.c "
+PL_SOURCES="../../apps/dcapp_planet_chunkgen.c ../../src/utils/file.c ../../src/utils/log.c "
 
 # run compiler (and linker)
 echo
@@ -566,7 +566,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp-genheader.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp_genheader.c "
 
 # run compiler (and linker)
 echo
@@ -601,7 +601,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp-validate.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp_validate.c "
 
 # run compiler (and linker)
 echo
@@ -636,7 +636,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lgdal "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../apps/dcapp-planet-chunkgen.c ../../src/utils/file.c ../../src/utils/log.c "
+PL_SOURCES="../../apps/dcapp_planet_chunkgen.c ../../src/utils/file.c ../../src/utils/log.c "
 
 # run compiler (and linker)
 echo

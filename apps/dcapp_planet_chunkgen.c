@@ -1,5 +1,5 @@
 /*
-   dcapp-planet-chunkgen.c
+   dcapp_planet_chunkgen.c
 
    Pilotlight app that converts a GeoTIFF DEM into .chu chunk files
    for the planet rendering pipeline.
