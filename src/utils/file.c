@@ -284,7 +284,7 @@ char *dc_utils_load_text_file(const char *path) {
         return NULL;
     }
 
-    size_t read = fread(buffer, 1, size, file);
+    size_t read  = fread(buffer, 1, size, file);
     buffer[read] = '\0';
     fclose(file);
     return buffer;

@@ -10,10 +10,10 @@ The `<Button>` element creates interactive UI controls with multiple visual stat
 
 ```xml
 <Button X="100" Y="100" Width="80" Height="40" Variable="myVar" On="1" Off="0">
-    <Enabled>
-        <On><!-- Content when indicator matches "on" value --></On>
-        <Off><!-- Content when indicator matches "off" value --></Off>
-    </Enabled>
+    <ButtonEnabled>
+        <ButtonIndicatorOn><!-- Content when indicator matches "on" value --></ButtonIndicatorOn>
+        <ButtonIndicatorOff><!-- Content when indicator matches "off" value --></ButtonIndicatorOff>
+    </ButtonEnabled>
 </Button>
 ```
 
@@ -48,13 +48,7 @@ These attributes control where and how the button is rendered.
 | `ParentAlignX` | — | align | Which point on the parent to align to (horizontal) |
 | `ParentAlignY` | — | align | Which point on the parent to align to (vertical) |
 
-**Alignment Constants:**
-
-| Horizontal | Vertical | Value |
-|------------|----------|-------|
-| `#_align_left_` | `#_align_bottom_` | 0 (default) |
-| `#_align_center_` | `#_align_middle_` | 1 |
-| `#_align_right_` | `#_align_top_` | 2 |
+See [Positioning and Alignment](primitives.md#positioning-and-alignment) for alignment constants.
 
 ### Rotation & Pivot
 
@@ -78,11 +72,11 @@ These attributes control where and how the button is rendered.
 
 **Type Constants:**
 
-| Constant | Description |
-|----------|-------------|
-| `#_button_standard_` | Standard button - sets target to "on" value when clicked (default) |
-| `#_button_momentary_` | Momentary button - "on" while pressed, "off" when released |
-| `#_button_toggle_` | Toggle button - alternates between "on" and "off" each click |
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `#_button_momentary_` | 1 | Momentary button - "on" while pressed, "off" when released |
+| `#_button_standard_` | 2 | Standard button - sets target to "on" value when clicked (default) |
+| `#_button_toggle_` | 3 | Toggle button - alternates between "on" and "off" each click |
 
 ---
 
@@ -140,28 +134,28 @@ Buttons use child elements to define their appearance in different states.
 
 ```
 <Button>
-    <Enabled>           <!-- Shown when button is interactive -->
-        <On>            <!-- Shown when indicator matches "on" value -->
-        <Off>           <!-- Shown when indicator matches "off" value -->
-        <Transition>    <!-- Shown during state change (optional) -->
-    </Enabled>
-    <Disabled>          <!-- Shown when button is not interactive -->
-    <Pressed>           <!-- Actions/content when mouse down -->
-    <Released>          <!-- Actions/content when mouse up -->
+    <ButtonEnabled>           <!-- Shown when button is interactive -->
+        <ButtonIndicatorOn>   <!-- Shown when indicator matches "on" value -->
+        <ButtonIndicatorOff>  <!-- Shown when indicator matches "off" value -->
+        <ButtonTransition>    <!-- Shown during state change (optional) -->
+    </ButtonEnabled>
+    <ButtonDisabled>          <!-- Shown when button is not interactive -->
+    <ButtonPressed>           <!-- Actions/content when mouse down -->
+    <ButtonReleased>          <!-- Actions/content when mouse up -->
 </Button>
 ```
 
 ### Child Element Reference
 
-| Element | Also Known As | Description |
-|---------|---------------|-------------|
-| `<Enabled>` | — | Container for enabled state visuals |
-| `<Disabled>` | — | Content shown when button is disabled |
-| `<IndicatorOn>` | `<On>` | Content shown when indicator variable equals IndicatorOn value |
-| `<IndicatorOff>` | `<Off>` | Content shown when indicator variable does not equal IndicatorOn value |
-| `<Transition>` | — | Content shown during state transition |
-| `<Pressed>` | — | Content/actions executed on mouse button down |
-| `<Released>` | — | Content/actions executed on mouse button up |
+| Element | Description |
+|---------|-------------|
+| `<ButtonEnabled>` | Container for enabled state visuals |
+| `<ButtonDisabled>` | Content shown when button is disabled |
+| `<ButtonIndicatorOn>` | Content shown when indicator variable equals IndicatorOn value |
+| `<ButtonIndicatorOff>` | Content shown when indicator variable does not equal IndicatorOn value |
+| `<ButtonTransition>` | Content shown during state transition |
+| `<ButtonPressed>` | Content/actions executed on mouse button down |
+| `<ButtonReleased>` | Content/actions executed on mouse button up |
 
 ---
 
@@ -174,20 +168,20 @@ A basic on/off toggle that controls a single variable:
 ```xml
 <Variable Type="#_variable_string_" InitialValue="OFF">power</Variable>
 
-<Button X="100" Y="100" Width="100" Height="50" 
+<Button X="100" Y="100" Width="100" Height="50"
         Variable="power" On="ON" Off="OFF" Type="#_button_toggle_">
-    <Enabled>
-        <On>
+    <ButtonEnabled>
+        <ButtonIndicatorOn>
             <Rectangle FillColor="0,0.7,0,1" Width="100" Height="50"/>
             <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="1,1,1,1" Size="18">POWER ON</Text>
-        </On>
-        <Off>
+        </ButtonIndicatorOn>
+        <ButtonIndicatorOff>
             <Rectangle FillColor="0.5,0,0,1" Width="100" Height="50"/>
             <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="1,1,1,1" Size="18">POWER OFF</Text>
-        </Off>
-    </Enabled>
+        </ButtonIndicatorOff>
+    </ButtonEnabled>
 </Button>
 ```
 
@@ -200,18 +194,18 @@ A button that's only "on" while being held:
 
 <Button X="200" Y="300" Width="80" Height="80"
         Variable="firing" On="1" Off="0" Type="#_button_momentary_">
-    <Enabled>
-        <On>
+    <ButtonEnabled>
+        <ButtonIndicatorOn>
             <Ellipse X="40" Y="40" Radius="38" FillColor="1,0,0,1"/>
             <Text X="40" Y="40" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="1,1,1,1" Size="14">FIRING</Text>
-        </On>
-        <Off>
+        </ButtonIndicatorOn>
+        <ButtonIndicatorOff>
             <Ellipse X="40" Y="40" Radius="38" FillColor="0.3,0,0,1"/>
             <Text X="40" Y="40" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="0.7,0.7,0.7,1" Size="14">FIRE</Text>
-        </Off>
-    </Enabled>
+        </ButtonIndicatorOff>
+    </ButtonEnabled>
 </Button>
 ```
 
@@ -228,18 +222,18 @@ Control one variable while displaying another's state:
         IndicatorVariable="engine_status"
         On="ON" Off="OFF"
         Type="#_button_standard_">
-    <Enabled>
-        <On>
+    <ButtonEnabled>
+        <ButtonIndicatorOn>
             <Rectangle FillColor="0,0.6,0,1" Width="120" Height="60"/>
             <Text X="60" Y="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="1,1,1,1">ENGINE RUNNING</Text>
-        </On>
-        <Off>
+        </ButtonIndicatorOn>
+        <ButtonIndicatorOff>
             <Rectangle FillColor="0.4,0.4,0.4,1" Width="120" Height="60"/>
             <Text X="60" Y="30" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="1,1,1,1">START ENGINE</Text>
-        </Off>
-    </Enabled>
+        </ButtonIndicatorOff>
+    </ButtonEnabled>
 </Button>
 ```
 
@@ -257,23 +251,23 @@ A button that can be disabled based on a condition:
         EnableOn="1"
         On="ARMED" Off="SAFE"
         Type="#_button_toggle_">
-    <Enabled>
-        <On>
+    <ButtonEnabled>
+        <ButtonIndicatorOn>
             <Rectangle FillColor="1,0,0,1" Width="100" Height="50"/>
             <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="1,1,1,1" Size="16">ARMED</Text>
-        </On>
-        <Off>
+        </ButtonIndicatorOn>
+        <ButtonIndicatorOff>
             <Rectangle FillColor="0,0.5,0,1" Width="100" Height="50"/>
             <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="1,1,1,1" Size="16">SAFE</Text>
-        </Off>
-    </Enabled>
-    <Disabled>
+        </ButtonIndicatorOff>
+    </ButtonEnabled>
+    <ButtonDisabled>
         <Rectangle FillColor="0.2,0.2,0.2,1" Width="100" Height="50"/>
         <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
               FillColor="0.5,0.5,0.5,1" Size="16">OFFLINE</Text>
-    </Disabled>
+    </ButtonDisabled>
 </Button>
 ```
 
@@ -285,21 +279,21 @@ A button that executes actions on press and release:
 <Variable Type="#_variable_double_" InitialValue="0">throttle</Variable>
 
 <Button X="100" Y="100" Width="60" Height="40" Type="#_button_momentary_">
-    <Pressed>
+    <ButtonPressed>
         <Set Variable="throttle" Operator="#_set_add_">10</Set>
-    </Pressed>
-    <Enabled>
-        <Off>
+    </ButtonPressed>
+    <ButtonEnabled>
+        <ButtonIndicatorOff>
             <Rectangle FillColor="0.3,0.3,0.6,1" Width="60" Height="40"/>
             <Text X="30" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="1,1,1,1">+10</Text>
-        </Off>
-        <On>
+        </ButtonIndicatorOff>
+        <ButtonIndicatorOn>
             <Rectangle FillColor="0.5,0.5,0.9,1" Width="60" Height="40"/>
             <Text X="30" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="1,1,1,1">+10</Text>
-        </On>
-    </Enabled>
+        </ButtonIndicatorOn>
+    </ButtonEnabled>
 </Button>
 ```
 
@@ -312,18 +306,18 @@ A button with rotation around its center:
         Rotation="45"
         PivotLocalAlignX="#_align_center_" PivotLocalAlignY="#_align_middle_"
         Variable="diagonal" On="1" Off="0" Type="#_button_toggle_">
-    <Enabled>
-        <Off>
+    <ButtonEnabled>
+        <ButtonIndicatorOff>
             <Rectangle FillColor="0.4,0.4,0.4,1" Width="100" Height="40"/>
             <Text X="50" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="1,1,1,1">DIAGONAL</Text>
-        </Off>
-        <On>
+        </ButtonIndicatorOff>
+        <ButtonIndicatorOn>
             <Rectangle FillColor="0.2,0.6,0.8,1" Width="100" Height="40"/>
             <Text X="50" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                   FillColor="1,1,1,1">ACTIVE</Text>
-        </On>
-    </Enabled>
+        </ButtonIndicatorOn>
+    </ButtonEnabled>
 </Button>
 ```
 
@@ -339,24 +333,24 @@ Use separate buttons with a shared variable:
 <Variable Type="#_variable_string_" InitialValue="A">selection</Variable>
 
 <Button X="10" Y="100" Width="60" Height="30" Variable="selection" On="A" Type="#_button_standard_">
-    <Enabled>
-        <On><Rectangle FillColor="0,0.6,0,1" Width="60" Height="30"/></On>
-        <Off><Rectangle FillColor="0.3,0.3,0.3,1" Width="60" Height="30"/></Off>
-    </Enabled>
+    <ButtonEnabled>
+        <ButtonIndicatorOn><Rectangle FillColor="0,0.6,0,1" Width="60" Height="30"/></ButtonIndicatorOn>
+        <ButtonIndicatorOff><Rectangle FillColor="0.3,0.3,0.3,1" Width="60" Height="30"/></ButtonIndicatorOff>
+    </ButtonEnabled>
 </Button>
 
 <Button X="80" Y="100" Width="60" Height="30" Variable="selection" On="B" Type="#_button_standard_">
-    <Enabled>
-        <On><Rectangle FillColor="0,0.6,0,1" Width="60" Height="30"/></On>
-        <Off><Rectangle FillColor="0.3,0.3,0.3,1" Width="60" Height="30"/></Off>
-    </Enabled>
+    <ButtonEnabled>
+        <ButtonIndicatorOn><Rectangle FillColor="0,0.6,0,1" Width="60" Height="30"/></ButtonIndicatorOn>
+        <ButtonIndicatorOff><Rectangle FillColor="0.3,0.3,0.3,1" Width="60" Height="30"/></ButtonIndicatorOff>
+    </ButtonEnabled>
 </Button>
 
 <Button X="150" Y="100" Width="60" Height="30" Variable="selection" On="C" Type="#_button_standard_">
-    <Enabled>
-        <On><Rectangle FillColor="0,0.6,0,1" Width="60" Height="30"/></On>
-        <Off><Rectangle FillColor="0.3,0.3,0.3,1" Width="60" Height="30"/></Off>
-    </Enabled>
+    <ButtonEnabled>
+        <ButtonIndicatorOn><Rectangle FillColor="0,0.6,0,1" Width="60" Height="30"/></ButtonIndicatorOn>
+        <ButtonIndicatorOff><Rectangle FillColor="0.3,0.3,0.3,1" Width="60" Height="30"/></ButtonIndicatorOff>
+    </ButtonEnabled>
 </Button>
 ```
 
@@ -366,29 +360,29 @@ Use separate buttons with a shared variable:
 <Variable Type="#_variable_double_" InitialValue="50">value</Variable>
 
 <Button X="100" Y="100" Width="40" Height="40">
-    <Pressed><Set Variable="value" Operator="#_set_subtract_">1</Set></Pressed>
-    <Enabled>
-        <Off><Rectangle FillColor="0.4,0.2,0.2,1" Width="40" Height="40"/>
-             <Text X="20" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" 
-                   FillColor="1,1,1,1" Size="24">−</Text></Off>
-        <On><Rectangle FillColor="0.6,0.3,0.3,1" Width="40" Height="40"/>
-            <Text X="20" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" 
-                  FillColor="1,1,1,1" Size="24">−</Text></On>
-    </Enabled>
+    <ButtonPressed><Set Variable="value" Operator="#_set_subtract_">1</Set></ButtonPressed>
+    <ButtonEnabled>
+        <ButtonIndicatorOff><Rectangle FillColor="0.4,0.2,0.2,1" Width="40" Height="40"/>
+             <Text X="20" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                   FillColor="1,1,1,1" Size="24">−</Text></ButtonIndicatorOff>
+        <ButtonIndicatorOn><Rectangle FillColor="0.6,0.3,0.3,1" Width="40" Height="40"/>
+            <Text X="20" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1" Size="24">−</Text></ButtonIndicatorOn>
+    </ButtonEnabled>
 </Button>
 
 <Text X="160" Y="120" LocalAlignX="#_align_center_" Size="20">@value(%.0f)</Text>
 
 <Button X="200" Y="100" Width="40" Height="40">
-    <Pressed><Set Variable="value" Operator="#_set_add_">1</Set></Pressed>
-    <Enabled>
-        <Off><Rectangle FillColor="0.2,0.4,0.2,1" Width="40" Height="40"/>
-             <Text X="20" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" 
-                   FillColor="1,1,1,1" Size="24">+</Text></Off>
-        <On><Rectangle FillColor="0.3,0.6,0.3,1" Width="40" Height="40"/>
-            <Text X="20" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" 
-                  FillColor="1,1,1,1" Size="24">+</Text></On>
-    </Enabled>
+    <ButtonPressed><Set Variable="value" Operator="#_set_add_">1</Set></ButtonPressed>
+    <ButtonEnabled>
+        <ButtonIndicatorOff><Rectangle FillColor="0.2,0.4,0.2,1" Width="40" Height="40"/>
+             <Text X="20" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                   FillColor="1,1,1,1" Size="24">+</Text></ButtonIndicatorOff>
+        <ButtonIndicatorOn><Rectangle FillColor="0.3,0.6,0.3,1" Width="40" Height="40"/>
+            <Text X="20" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                  FillColor="1,1,1,1" Size="24">+</Text></ButtonIndicatorOn>
+    </ButtonEnabled>
 </Button>
 ```
 
@@ -396,7 +390,7 @@ Use separate buttons with a shared variable:
 
 ## Tips & Best Practices
 
-1. **Always define both `<On>` and `<Off>` states** - Even if they look similar, having both ensures predictable behavior.
+1. **Always define both `<ButtonIndicatorOn>` and `<ButtonIndicatorOff>` states** - Even if they look similar, having both ensures predictable behavior.
 
 2. **Use `Type="#_button_toggle_"` for on/off switches** - It automatically handles state toggling.
 
@@ -408,4 +402,12 @@ Use separate buttons with a shared variable:
 
 6. **Center text with alignment constants** - `LocalAlignX="#_align_center_"` and `LocalAlignY="#_align_middle_"` for centered button labels.
 
-7. **Include a `<Disabled>` state** - Provides visual feedback when the button can't be used.
+7. **Include a `<ButtonDisabled>` state** - Provides visual feedback when the button can't be used.
+
+---
+
+## See Also
+
+- [Mouse Events](mouse-events.md) — MousePressed, MouseReleased, MouseMotion, and slider patterns
+- [Variables](variables.md) — Variable types and Set operators used in button actions
+- [Constants](constants.md) — All button type and alignment constants

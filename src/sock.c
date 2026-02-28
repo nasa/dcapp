@@ -25,8 +25,8 @@ typedef int _DcSockFd;
 // Sentinel values for sock_fd slots.
 // _DcSockFd is 'int' on POSIX and 'uintptr_t' on Windows (unsigned), so we
 // can't use raw negative literals in comparisons — define typed sentinels instead.
-#define _DC_SOCK_FD_FREE      ((_DcSockFd)-1)  // slot is unoccupied
-#define _DC_SOCK_FD_ALLOCATED ((_DcSockFd)-2)  // reserved but not yet connected
+#define _DC_SOCK_FD_FREE ((_DcSockFd) - 1)      // slot is unoccupied
+#define _DC_SOCK_FD_ALLOCATED ((_DcSockFd) - 2) // reserved but not yet connected
 #define _DC_SOCK_FD_IS_INVALID(fd) ((fd) == _DC_SOCK_FD_FREE || (fd) == _DC_SOCK_FD_ALLOCATED)
 
 typedef struct {
@@ -35,7 +35,7 @@ typedef struct {
 } _DcSockContext;
 
 static _DcSockContext _contexts[DC_SOCK_MAX_SOCKETS];
-static bool           _initialized = false;
+static bool           _initialized   = false;
 static int            _winsock_count = 0;
 
 static void _ensure_initialized(void) {
@@ -110,7 +110,8 @@ DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
     struct in_addr  addr4;
     struct in6_addr addr6;
     if (inet_pton(AF_INET, host, &addr4) == 1 || inet_pton(AF_INET6, host, &addr6) == 1) {
-        strcpy(out, host);
+        strncpy(out, host, INET6_ADDRSTRLEN - 1);
+        out[INET6_ADDRSTRLEN - 1] = '\0';
         return DC_SOCK_RESULT_SUCCESS;
     }
 
@@ -149,7 +150,8 @@ DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
     }
 
     if (addr_ptr && inet_ntop(family, addr_ptr, ip_str, sizeof(ip_str))) {
-        strcpy(out, ip_str);
+        strncpy(out, ip_str, INET6_ADDRSTRLEN - 1);
+        out[INET6_ADDRSTRLEN - 1] = '\0';
     } else {
         DC_LOG_ERROR("Sock", "host_to_ip inet_ntop: %s", strerror(errno));
     }

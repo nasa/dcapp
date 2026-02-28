@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 const char *dc_utils_get_env(const char *name);
-int dc_utils_set_env(const char *name, const char *value, int overwrite);
+int         dc_utils_set_env(const char *name, const char *value, int overwrite);
 
 #ifdef __cplusplus
 }

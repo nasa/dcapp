@@ -10,7 +10,7 @@
 // lookup types
 typedef int DcAppLookupIndex;
 #define DC_APP_LOOKUP_INDEX_UNDEFINED (0)
-#define DC_APP_LOOKUP_FIRST_INDEX    (1)
+#define DC_APP_LOOKUP_FIRST_INDEX (1)
 
 typedef DcAppLookupIndex   DcAppVarIndex;
 typedef DcAppLookupIndex   DcAppValIndex;
@@ -20,8 +20,8 @@ static const DcAppValIndex DC_APP_VAL_INDEX_UNDEFINED   = DC_APP_LOOKUP_INDEX_UN
 static const DcAppValIndex DC_APP_STYLE_INDEX_UNDEFINED = DC_APP_LOOKUP_INDEX_UNDEFINED;
 
 typedef struct _DcAppLookupVar {
-    DcAppValIndex  value_index;
-    DcValue       *sb_value_stack; // per-variable stack for push/pop
+    DcAppValIndex value_index;
+    DcValue      *sb_value_stack; // per-variable stack for push/pop
 } DcAppLookupVar;
 
 typedef struct _DcAppLookup {

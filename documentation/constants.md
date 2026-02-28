@@ -60,7 +60,7 @@ Use backslash to include literal `#` or `$` characters:
 Define your own constants using the `<Constant>` element:
 
 ```xml
-<dcapp>
+<DCAPP>
     <Constant Name="mainColor">0.2,0.5,0.8,1</Constant>
     <Constant Name="buttonWidth">120</Constant>
     <Constant Name="appTitle">Flight Display</Constant>
@@ -68,7 +68,7 @@ Define your own constants using the `<Constant>` element:
     <Window Title="#appTitle" Width="800" Height="600">
         <Rectangle FillColor="#mainColor" Width="#buttonWidth" Height="40"/>
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 ### Constant Element Attributes
@@ -124,95 +124,69 @@ dcapp provides many predefined constants for common values.
 
 ### Alignment Constants
 
-**Horizontal Alignment** (for `LocalAlignX`, `ParentAlignX`, `PivotLocalAlignX`):
+Used with `LocalAlignX`, `ParentAlignX`, `PivotLocalAlignX` (horizontal) and `LocalAlignY`, `ParentAlignY`, `PivotLocalAlignY` (vertical). See [Positioning and Alignment](primitives.md#positioning-and-alignment) for details.
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `#_align_left_` | 0 | Left edge (default) |
-| `#_align_center_` | 1 | Horizontal center |
-| `#_align_right_` | 2 | Right edge |
+**Horizontal:**
 
-**Vertical Alignment** (for `LocalAlignY`, `ParentAlignY`, `PivotLocalAlignY`):
+| Constant | Value |
+|----------|-------|
+| `#_align_left_` | 1 (default) |
+| `#_align_center_` | 2 |
+| `#_align_right_` | 3 |
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `#_align_bottom_` | 0 | Bottom edge (default) |
-| `#_align_middle_` | 1 | Vertical center |
-| `#_align_top_` | 2 | Top edge |
+**Vertical:**
 
-**Example:**
-```xml
-<Text X="400" Y="300" 
-      LocalAlignX="#_align_center_" 
-      LocalAlignY="#_align_middle_">
-    Centered Text
-</Text>
-```
+| Constant | Value |
+|----------|-------|
+| `#_align_bottom_` | 4 (default) |
+| `#_align_middle_` | 5 |
+| `#_align_top_` | 6 |
 
 ### Button Type Constants
 
+See [Buttons](buttons.md) for full usage details.
+
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `#_button_standard_` | 0 | Sets target to "on" value when clicked (default) |
 | `#_button_momentary_` | 1 | "On" while pressed, "off" when released |
-| `#_button_toggle_` | 2 | Alternates between "on" and "off" each click |
-
-**Example:**
-```xml
-<Button Type="#_button_toggle_" Variable="power" On="1" Off="0">
-    ...
-</Button>
-```
+| `#_button_standard_` | 2 | Sets target to "on" value when clicked (default) |
+| `#_button_toggle_` | 3 | Alternates between "on" and "off" each click |
 
 ### Conditional Constants
 
+Used with the `<If>` element's `Operator` attribute. See [Conditionals](primitives.md#conditional-rendering-if) for details.
+
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `#_if_true_` | 0 | Check if value is truthy |
-| `#_if_false_` | 1 | Check if value is falsy |
-| `#_if_eq_` | 2 | Equal to |
-| `#_if_ne_` | 3 | Not equal to |
-| `#_if_lt_` | 4 | Less than |
-| `#_if_gt_` | 5 | Greater than |
-| `#_if_lte_` | 6 | Less than or equal |
-| `#_if_gte_` | 7 | Greater than or equal |
-
-**Example:**
-```xml
-<If Value="@altitude" Value2="10000" Operator="#_if_gt_">
-    <True>
-        <Text FillColor="1,0,0,1">HIGH ALTITUDE WARNING</Text>
-    </True>
-</If>
-```
+| `#_if_true_` | 1 | Check if value is truthy |
+| `#_if_false_` | 2 | Check if value is falsy |
+| `#_if_eq_` | 3 | Equal to |
+| `#_if_ne_` | 4 | Not equal to |
+| `#_if_lt_` | 5 | Less than |
+| `#_if_gt_` | 6 | Greater than |
+| `#_if_lte_` | 7 | Less than or equal |
+| `#_if_gte_` | 8 | Greater than or equal |
 
 ### Set Operator Constants
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `#_set_equal_` | 0 | Direct assignment (default) |
-| `#_set_add_` | 1 | Add to current value |
-| `#_set_subtract_` | 2 | Subtract from current value |
-| `#_set_multiply_` | 3 | Multiply current value |
-| `#_set_divide_` | 4 | Divide current value |
-
-**Example:**
-```xml
-<Set Variable="score" Operator="#_set_add_">100</Set>
-```
-
-### Pixelstream Type Constants
+Used with the `<Set>` element's `Operator` attribute. See [Set Operators](variables.md#set-operators) for the full list including math functions.
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `#_pixelstream_dynamic_file_` | 0 | Dynamic file source |
-| `#_pixelstream_mjpeg_` | 1 | MJPEG network stream |
+| `#_set_equal_` | 1 | Direct assignment (default) |
+| `#_set_add_` | 2 | Add to current value |
+| `#_set_subtract_` | 3 | Subtract from current value |
+| `#_set_multiply_` | 4 | Multiply current value |
+| `#_set_divide_` | 5 | Divide current value |
 
-**Example:**
-```xml
-<Pixelstream Type="#_pixelstream_mjpeg_" URL="http://camera:8080/stream" 
-             X="100" Y="100" Width="640" Height="480"/>
-```
+### PixelStream Type Constants
+
+See [Integration](integration.md#pixelstream) for usage details.
+
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `#_pixelstream_shmem_` | 1 | Shared memory source |
+| `#_pixelstream_mjpeg_` | 2 | MJPEG network stream |
 
 ---
 
@@ -239,6 +213,11 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_hot_pink_` | 1.0, 0.41, 0.71 |
 | `#_color_light_pink_` | 1.0, 0.71, 0.76 |
 | `#_color_mulberry_` | 0.77, 0.29, 0.55 |
+| `#_color_scarlet_` | 1.0, 0.14, 0.0 |
+| `#_color_tomato_` | 1.0, 0.39, 0.28 |
+| `#_color_wine_` | 0.45, 0.18, 0.22 |
+| `#_color_raspberry_` | 0.89, 0.04, 0.36 |
+| `#_color_dark_red_` | 0.55, 0.0, 0.0 |
 
 ### Oranges
 
@@ -253,6 +232,9 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_burnt_orange_` | 0.8, 0.33, 0.0 |
 | `#_color_rust_` | 0.72, 0.25, 0.05 |
 | `#_color_terracotta_` | 0.89, 0.45, 0.36 |
+| `#_color_dark_orange_` | 1.0, 0.55, 0.0 |
+| `#_color_mango_` | 1.0, 0.51, 0.26 |
+| `#_color_persimmon_` | 0.93, 0.35, 0.0 |
 
 ### Yellows
 
@@ -266,6 +248,11 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_champagne_` | 0.97, 0.91, 0.81 |
 | `#_color_sunflower_` | 1.0, 0.8, 0.0 |
 | `#_color_flax_` | 0.93, 0.87, 0.51 |
+| `#_color_cream_` | 1.0, 0.99, 0.82 |
+| `#_color_ivory_` | 1.0, 1.0, 0.94 |
+| `#_color_saffron_` | 0.96, 0.77, 0.19 |
+| `#_color_golden_rod_` | 0.85, 0.65, 0.13 |
+| `#_color_canary_` | 1.0, 0.94, 0.0 |
 
 ### Greens
 
@@ -282,6 +269,14 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_pistachio_` | 0.58, 0.77, 0.45 |
 | `#_color_seafoam_` | 0.62, 0.89, 0.76 |
 | `#_color_chartreuse_` | 0.5, 1.0, 0.0 |
+| `#_color_dark_green_` | 0.0, 0.39, 0.0 |
+| `#_color_sage_` | 0.72, 0.72, 0.59 |
+| `#_color_spring_green_` | 0.0, 1.0, 0.5 |
+| `#_color_hunter_green_` | 0.21, 0.37, 0.23 |
+| `#_color_kelly_green_` | 0.3, 0.73, 0.09 |
+| `#_color_pine_` | 0.06, 0.32, 0.21 |
+| `#_color_fern_` | 0.44, 0.64, 0.26 |
+| `#_color_neon_green_` | 0.22, 1.0, 0.08 |
 
 ### Blues
 
@@ -298,6 +293,15 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_powder_blue_` | 0.69, 0.88, 0.9 |
 | `#_color_cerulean_` | 0.0, 0.48, 0.65 |
 | `#_color_teal_` | 0.0, 0.5, 0.5 |
+| `#_color_royal_blue_` | 0.25, 0.41, 0.88 |
+| `#_color_midnight_blue_` | 0.1, 0.1, 0.44 |
+| `#_color_cobalt_` | 0.0, 0.28, 0.67 |
+| `#_color_cornflower_blue_` | 0.39, 0.58, 0.93 |
+| `#_color_turquoise_` | 0.25, 0.88, 0.82 |
+| `#_color_cyan_` | 0.0, 1.0, 1.0 |
+| `#_color_aquamarine_` | 0.5, 1.0, 0.83 |
+| `#_color_electric_blue_` | 0.49, 0.98, 1.0 |
+| `#_color_periwinkle_` | 0.8, 0.8, 1.0 |
 
 ### Purples & Violets
 
@@ -312,6 +316,11 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_orchid_` | 0.85, 0.44, 0.84 |
 | `#_color_thistle_` | 0.85, 0.75, 0.85 |
 | `#_color_eggplant_` | 0.38, 0.25, 0.32 |
+| `#_color_magenta_` | 0.8, 0.0, 0.8 |
+| `#_color_mauve_` | 0.88, 0.69, 1.0 |
+| `#_color_lilac_` | 0.78, 0.64, 0.78 |
+| `#_color_grape_` | 0.44, 0.18, 0.66 |
+| `#_color_royal_purple_` | 0.47, 0.32, 0.66 |
 
 ### Browns
 
@@ -332,6 +341,9 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_wood_` | 0.76, 0.6, 0.42 |
 | `#_color_bronze_` | 0.8, 0.5, 0.2 |
 | `#_color_russet_` | 0.5, 0.27, 0.23 |
+| `#_color_sienna_` | 0.63, 0.32, 0.18 |
+| `#_color_cinnamon_` | 0.69, 0.4, 0.24 |
+| `#_color_sandy_brown_` | 0.96, 0.64, 0.38 |
 
 ### Neutrals & Grays
 
@@ -352,6 +364,13 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_khaki_` | 0.76, 0.69, 0.57 |
 | `#_color_sand_` | 0.94, 0.87, 0.73 |
 | `#_color_taupe_` | 0.56, 0.52, 0.51 |
+| `#_color_snow_` | 1.0, 0.98, 0.98 |
+| `#_color_pearl_` | 0.94, 0.92, 0.88 |
+| `#_color_smoke_` | 0.96, 0.96, 0.96 |
+| `#_color_bone_` | 0.89, 0.85, 0.79 |
+| `#_color_graphite_` | 0.29, 0.29, 0.29 |
+| `#_color_iron_` | 0.32, 0.34, 0.36 |
+| `#_color_steel_` | 0.5, 0.5, 0.55 |
 
 ### Using Color Constants
 
@@ -374,30 +393,31 @@ Color constants use space-separated RGB values. Add alpha when using:
 
 | Category | Constant | Value |
 |----------|----------|-------|
-| **Alignment (H)** | `#_align_left_` | 0 |
-| | `#_align_center_` | 1 |
-| | `#_align_right_` | 2 |
-| **Alignment (V)** | `#_align_bottom_` | 0 |
-| | `#_align_middle_` | 1 |
-| | `#_align_top_` | 2 |
-| **Button Type** | `#_button_standard_` | 0 |
-| | `#_button_momentary_` | 1 |
-| | `#_button_toggle_` | 2 |
-| **Conditional** | `#_if_true_` | 0 |
-| | `#_if_false_` | 1 |
-| | `#_if_eq_` | 2 |
-| | `#_if_ne_` | 3 |
-| | `#_if_lt_` | 4 |
-| | `#_if_gt_` | 5 |
-| | `#_if_lte_` | 6 |
-| | `#_if_gte_` | 7 |
-| **Set Operation** | `#_set_equal_` | 0 |
-| | `#_set_add_` | 1 |
-| | `#_set_subtract_` | 2 |
-| | `#_set_multiply_` | 3 |
-| | `#_set_divide_` | 4 |
-| **Pixelstream** | `#_pixelstream_dynamic_file_` | 0 |
-| | `#_pixelstream_mjpeg_` | 1 |
+| **Alignment (H)** | `#_align_left_` | 1 |
+| | `#_align_center_` | 2 |
+| | `#_align_right_` | 3 |
+| **Alignment (V)** | `#_align_bottom_` | 4 |
+| | `#_align_middle_` | 5 |
+| | `#_align_top_` | 6 |
+| **Button Type** | `#_button_momentary_` | 1 |
+| | `#_button_standard_` | 2 |
+| | `#_button_toggle_` | 3 |
+| **Conditional** | `#_if_true_` | 1 |
+| | `#_if_false_` | 2 |
+| | `#_if_eq_` | 3 |
+| | `#_if_ne_` | 4 |
+| | `#_if_lt_` | 5 |
+| | `#_if_gt_` | 6 |
+| | `#_if_lte_` | 7 |
+| | `#_if_gte_` | 8 |
+| **Set Operation** | `#_set_equal_` | 1 |
+| | `#_set_add_` | 2 |
+| | `#_set_subtract_` | 3 |
+| | `#_set_multiply_` | 4 |
+| | `#_set_divide_` | 5 |
+| **PixelStream** | `#_pixelstream_shmem_` | 1 |
+| | `#_pixelstream_mjpeg_` | 2 |
+| **Stencil** | `#_stencil_color_` | 0 0 0 1 |
 
 ---
 
@@ -406,7 +426,7 @@ Color constants use space-separated RGB values. Add alpha when using:
 ### Themed Display with Constants
 
 ```xml
-<dcapp>
+<DCAPP>
     <!-- Theme colors -->
     <Constant Name="bgColor">0.1,0.1,0.15,1</Constant>
     <Constant Name="primaryColor">0.2,0.6,0.9,1</Constant>
@@ -425,13 +445,13 @@ Color constants use space-separated RGB values. Add alpha when using:
                    Width="#buttonWidth" Height="#buttonHeight"
                    FillColor="#primaryColor"/>
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 ### Configurable Display
 
 ```xml
-<dcapp>
+<DCAPP>
     <!-- These can be overridden from command line -->
     <Constant Name="serverHost">localhost</Constant>
     <Constant Name="serverPort">7000</Constant>
@@ -453,7 +473,7 @@ Color constants use space-separated RGB values. Add alpha when using:
             Connected to #serverHost:#serverPort
         </Text>
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 Run with custom server:

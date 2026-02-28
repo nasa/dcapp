@@ -7,14 +7,14 @@
 
 DcValue dc_value_create_typed_value_from_string(DcValueType type, const char *value_str) {
     DcValue new_value = {0};
-    new_value.type = type;
+    new_value.type    = type;
     dc_value_set_from_string(&new_value, value_str);
     return new_value;
 }
 
 DcValue dc_value_create_value_string(const char *value) {
     DcValue new_value = {0};
-    new_value.type = DC_VALUE_TYPE_STRING;
+    new_value.type    = DC_VALUE_TYPE_STRING;
     strncpy(new_value.value_string, value, DC_VALUE_STRING_BUFFER_SIZE - 1);
     new_value.value_string[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
     dc_value_refresh(&new_value);
@@ -22,7 +22,7 @@ DcValue dc_value_create_value_string(const char *value) {
 }
 
 DcValue dc_value_create_value_integer(int value) {
-    DcValue new_value = {0};
+    DcValue new_value       = {0};
     new_value.type          = DC_VALUE_TYPE_INTEGER;
     new_value.value_integer = value;
     dc_value_refresh(&new_value);
@@ -30,7 +30,7 @@ DcValue dc_value_create_value_integer(int value) {
 }
 
 DcValue dc_value_create_value_double(double value) {
-    DcValue new_value = {0};
+    DcValue new_value      = {0};
     new_value.type         = DC_VALUE_TYPE_DOUBLE;
     new_value.value_double = value;
     dc_value_refresh(&new_value);
@@ -38,7 +38,7 @@ DcValue dc_value_create_value_double(double value) {
 }
 
 DcValue dc_value_create_value_boolean(bool value) {
-    DcValue new_value = {0};
+    DcValue new_value       = {0};
     new_value.type          = DC_VALUE_TYPE_BOOLEAN;
     new_value.value_boolean = value;
     dc_value_refresh(&new_value);
@@ -53,7 +53,7 @@ void dc_value_refresh_from_type(DcValue *value, DcValueType type) {
     switch (type) {
         case DC_VALUE_TYPE_BOOLEAN:
             value->value_integer = (int)value->value_boolean;
-            value->value_double = (double)value->value_boolean;
+            value->value_double  = (double)value->value_boolean;
             if (value->value_boolean) {
                 strncpy(value->value_string, "True", DC_VALUE_STRING_BUFFER_SIZE - 1);
             } else {
@@ -115,7 +115,7 @@ void *dc_value_get_addr(DcValue *value) {
         case DC_VALUE_TYPE_STRING:
             return value->value_string;
         default:
-            DC_LOG_ERROR("Value", "dc_value_set_from_string(): invalid value type %d", value->type);
+            DC_LOG_ERROR("Value", "dc_value_get_addr(): invalid value type %d", value->type);
             break;
     }
     return NULL;
@@ -132,7 +132,7 @@ bool dc_value_is_equal(DcValue *value1, DcValue *value2) {
         case DC_VALUE_TYPE_STRING:
             return strcmp(value1->value_string, value2->value_string) == 0;
         default:
-            DC_LOG_ERROR("Value", "dc_value_set_from_string(): invalid value type %d", value1->type);
+            DC_LOG_ERROR("Value", "dc_value_is_equal(): invalid value type %d", value1->type);
             break;
     }
     return false;

@@ -36,8 +36,8 @@ uint32_t        dc_ps_shmem_get_height(DcPsShmemHandle handle);
 #else
 
 // Shared memory pixel streams are not supported on Windows.
-static inline void dc_ps_shmem_init(void)    {}
-static inline void dc_ps_shmem_update(void)  {}
+static inline void dc_ps_shmem_init(void) {}
+static inline void dc_ps_shmem_update(void) {}
 static inline void dc_ps_shmem_cleanup(void) {}
 
 static inline DcPsShmemHandle dc_ps_shmem_add_source(const char *filepath) {
@@ -77,6 +77,6 @@ static inline uint32_t dc_ps_shmem_get_height(DcPsShmemHandle handle) {
     return 0;
 }
 
-#endif  // _WIN32
+#endif // _WIN32
 
 #endif

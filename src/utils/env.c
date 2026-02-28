@@ -13,7 +13,7 @@ int dc_utils_set_env(const char *name, const char *value, int overwrite) {
     if (!overwrite) {
         char *existing = getenv(name);
         if (existing != NULL) {
-            return 0;  // don't overwrite
+            return 0; // don't overwrite
         }
     }
     return _putenv_s(name, value);

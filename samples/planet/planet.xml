@@ -44,10 +44,11 @@
     <!-- Top-level planet definition (shared by both views) -->
     <Planet Name="Moon" ShaderIndex="@ActiveShader">
         <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
-        <PlanetTexture File="../../assets/nasa_worm.png" MetersPerPixel="@TexMpp"
+        <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
             Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
-        <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
-        <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
+        <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
+        <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
+        <PlanetShader Index="3" VertexShader="shaders/planet_flat.vert" FragmentShader="shaders/planet_elevation.frag"/>
     </Planet>
 
     <Default>
@@ -163,6 +164,24 @@
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
                         LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
                         Size="11" FillColor="0.6 0.6 0.6">Slope</Text>
+                </ButtonIndicatorOff>
+            </Button>
+
+            <!-- Flat map shader (index 3) -->
+            <Button Type="#_button_toggle_" X="760" Y="706" Width="120" Height="22"
+                Variable="ActiveShader" On="3" Off="3"
+                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <ButtonIndicatorOn>
+                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="#_color_white_">Flat Map</Text>
+                </ButtonIndicatorOn>
+                <ButtonIndicatorOff>
+                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
+                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
+                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                        Size="11" FillColor="0.6 0.6 0.6">Flat Map</Text>
                 </ButtonIndicatorOff>
             </Button>
 

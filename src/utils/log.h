@@ -27,8 +27,8 @@ void dc_log(DcLogLevel level, const char *tag, const char *fmt, ...);
 
 // Convenience macros
 #define DC_LOG_DEBUG(tag, fmt, ...) dc_log(DC_LOG_LEVEL_DEBUG, tag, fmt, ##__VA_ARGS__)
-#define DC_LOG_INFO(tag, fmt, ...)  dc_log(DC_LOG_LEVEL_INFO, tag, fmt, ##__VA_ARGS__)
-#define DC_LOG_WARN(tag, fmt, ...)  dc_log(DC_LOG_LEVEL_WARN, tag, fmt, ##__VA_ARGS__)
+#define DC_LOG_INFO(tag, fmt, ...) dc_log(DC_LOG_LEVEL_INFO, tag, fmt, ##__VA_ARGS__)
+#define DC_LOG_WARN(tag, fmt, ...) dc_log(DC_LOG_LEVEL_WARN, tag, fmt, ##__VA_ARGS__)
 #define DC_LOG_ERROR(tag, fmt, ...) dc_log(DC_LOG_LEVEL_ERROR, tag, fmt, ##__VA_ARGS__)
 
 #ifdef __cplusplus

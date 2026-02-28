@@ -134,7 +134,7 @@
       <Stencil>
         <StencilAdd>
           <!-- NASA logo has transparent background - only logo shape should mask -->
-          <Image X="1100" Y="650" Width="500" Height="166" File="../../assets/nasa_worm.png"/>
+          <Image X="1100" Y="650" Width="500" Height="166" File="../../assets/nasa-worm.png"/>
         </StencilAdd>
         <StencilDraw>
           <!-- Rainbow stripes drawn through the logo shape -->

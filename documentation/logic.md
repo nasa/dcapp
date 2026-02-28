@@ -23,7 +23,7 @@ Use cases for logic files:
 ### 1. Create Your Display XML
 
 ```xml
-<dcapp>
+<DCAPP>
     <!-- Declare your variables -->
     <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
     <Variable Type="#_variable_double_" InitialValue="0">velocity</Variable>
@@ -40,7 +40,7 @@ Use cases for logic files:
             Vel: @velocity(%.2f) m/s
         </Text>
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 ### 2. Generate the Header File
@@ -415,7 +415,7 @@ The path can be:
 Place `<Logic>` after your `<Variable>` declarations but before `<Window>`:
 
 ```xml
-<dcapp>
+<DCAPP>
     <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
     <Variable Type="#_variable_double_" InitialValue="0">velocity</Variable>
     
@@ -424,7 +424,7 @@ Place `<Logic>` after your `<Variable>` declarations but before `<Window>`:
     <Window ...>
         ...
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 **Note:** dcapp will warn if `<Logic>` appears after variables are defined, but it will still work. The warning exists because the header generation must happen before compilation.
@@ -545,7 +545,7 @@ void display_draw() {
 
 **myDisplay.xml:**
 ```xml
-<dcapp>
+<DCAPP>
     <Variable Type="#_variable_double_" InitialValue="10000">altitude</Variable>
     <Variable Type="#_variable_double_" InitialValue="0">velocity</Variable>
     <Variable Type="#_variable_double_" InitialValue="-9.81">gravity</Variable>
@@ -581,7 +581,7 @@ void display_draw() {
             </Enabled>
         </Button>
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 **logic/physics.c:**

@@ -48,38 +48,38 @@
 
             <Button Type="#_button_momentary_" X="17">
                 <MousePressed><Set Variable="PAN" Operator="#_set_add_">.5</Set></MousePressed>
-                <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
-                <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
+                <ButtonIndicatorOn><Image File="../../assets/button-on.png"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Image File="../../assets/button-off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Pan\nLeft</Text>
             </Button>
             <Button Type="#_button_momentary_" X="29">
                 <MousePressed><Set Variable="PAN" Operator="#_set_subtract_">.5</Set></MousePressed>
-                <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
-                <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
+                <ButtonIndicatorOn><Image File="../../assets/button-on.png"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Image File="../../assets/button-off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Pan\nRight</Text>
             </Button>
             <Button Type="#_button_momentary_" X="44">
                 <MousePressed><Set Variable="TILT" Operator="#_set_subtract_">.5</Set></MousePressed>
-                <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
-                <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
+                <ButtonIndicatorOn><Image File="../../assets/button-on.png"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Image File="../../assets/button-off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Tilt\nUp</Text>
             </Button>
             <Button Type="#_button_momentary_" X="56">
                 <MousePressed><Set Variable="TILT" Operator="#_set_add_">.5</Set></MousePressed>
-                <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
-                <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
+                <ButtonIndicatorOn><Image File="../../assets/button-on.png"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Image File="../../assets/button-off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Tilt\nDown</Text>
             </Button>
             <Button Type="#_button_momentary_" X="71">
                 <MousePressed><Set Variable="ZOOM" Operator="#_set_add_">.05</Set></MousePressed>
-                <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
-                <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
+                <ButtonIndicatorOn><Image File="../../assets/button-on.png"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Image File="../../assets/button-off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Zoom\nIn</Text>
             </Button>
             <Button Type="#_button_momentary_" X="83">
                 <MousePressed><Set Variable="ZOOM" Operator="#_set_subtract_" MinimumValue="0.05">.05</Set></MousePressed>
-                <ButtonIndicatorOn><Image File="../../assets/button_on.png"/></ButtonIndicatorOn>
-                <ButtonIndicatorOff><Image File="../../assets/button_off.png"/></ButtonIndicatorOff>
+                <ButtonIndicatorOn><Image File="../../assets/button-on.png"/></ButtonIndicatorOn>
+                <ButtonIndicatorOff><Image File="../../assets/button-off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Zoom\nOut</Text>
             </Button>
         </Panel>

@@ -25,7 +25,7 @@ Variables are referenced using the `@` prefix:
 Variables are declared at the top of your dcapp file, before the `<Window>` element:
 
 ```xml
-<dcapp>
+<DCAPP>
     <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
     <Variable Type="#_variable_double_" InitialValue="0">speed</Variable>
     <Variable Type="#_variable_string_" InitialValue="OFF">engineStatus</Variable>
@@ -33,7 +33,7 @@ Variables are declared at the top of your dcapp file, before the `<Window>` elem
     <Window Title="My Display" Width="800" Height="600">
         <!-- Display content here -->
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 ### Variable Element Attributes
@@ -154,11 +154,43 @@ Use `<Set>` to modify variable values at runtime:
 
 | Constant | Value | Description | Effect |
 |----------|-------|-------------|--------|
-| `#_set_equal_` | 0 | Direct assignment (default) | `var = value` |
-| `#_set_add_` | 1 | Addition | `var = var + value` |
-| `#_set_subtract_` | 2 | Subtraction | `var = var - value` |
-| `#_set_multiply_` | 3 | Multiplication | `var = var * value` |
-| `#_set_divide_` | 4 | Division | `var = var / value` |
+| `#_set_equal_` | 1 | Direct assignment (default) | `var = value` |
+| `#_set_add_` | 2 | Addition | `var = var + value` |
+| `#_set_subtract_` | 3 | Subtraction | `var = var - value` |
+| `#_set_multiply_` | 4 | Multiplication | `var = var * value` |
+| `#_set_divide_` | 5 | Division | `var = var / value` |
+| `#_set_min_` | 6 | Clamp maximum | `var = min(var, value)` |
+| `#_set_max_` | 7 | Clamp minimum | `var = max(var, value)` |
+| `#_set_push_` | 8 | Push onto stack | Saves current value |
+| `#_set_pop_` | 9 | Pop from stack | Restores saved value |
+| `#_set_negate_` | 10 | Negate | `var = -var` |
+| `#_set_reciprocal_` | 11 | Reciprocal | `var = 1 / var` |
+| `#_set_absolute_` | 12 | Absolute value | `var = |var|` |
+| `#_set_square_` | 13 | Square | `var = var * var` |
+| `#_set_sqrt_` | 14 | Square root | `var = sqrt(var)` |
+| `#_set_modulo_` | 15 | Modulo | `var = var % value` |
+| `#_set_power_` | 16 | Power | `var = var ^ value` |
+| `#_set_log_` | 17 | Natural log | `var = ln(var)` |
+| `#_set_exp_` | 18 | Exponential | `var = e ^ var` |
+| `#_set_round_` | 19 | Round | `var = round(var)` |
+| `#_set_sign_` | 20 | Sign | `var = sign(var)` (-1, 0, or 1) |
+
+Note: `#_set_min_` ensures `var <= value` (clamps down), `#_set_max_` ensures `var >= value` (clamps up). Use them together for range clamping:
+
+```xml
+<Set Variable="x" Operator="#_set_max_">0</Set>    <!-- x = max(x, 0) -->
+<Set Variable="x" Operator="#_set_min_">100</Set>  <!-- x = min(x, 100) -->
+```
+
+### The Defer Attribute
+
+`<Set>` accepts an optional `Defer` attribute for legacy compatibility:
+
+```xml
+<Set Variable="myVar" Operator="#_set_equal_" Defer="true">newValue</Set>
+```
+
+When `Defer="true"`, the operation is collected during the draw pass and applied atomically after the entire draw completes. This matches the legacy engine's deferred execution behavior for Sets inside event handlers. Modern XML should not use `Defer` — it exists solely for legacy conversion. See the [Migration Guide](migration.md) for details.
 
 ### Examples
 
@@ -255,33 +287,21 @@ Use `<If>` to show/hide content based on variable values:
 | `#_if_lte_` | Less than or equal |
 | `#_if_gte_` | Greater than or equal |
 
-See the [Constants documentation](dcapp_constants.md) for the complete list.
+See the [Constants documentation](constants.md) for the complete list.
 
 ---
 
 ## External Data Integration
 
-### TrickIO
+### TrickIO / EdgeIO
 
-Variables can be bound to Trick simulation variables for real-time data exchange:
-
-```xml
-<TrickIO Host="localhost" Port="7000" DataRate="0.1">
-    <TrickFrom>
-        <TrickVariable Name="rocket.altitude" Units="ft">altitude</TrickVariable>
-        <TrickVariable Name="rocket.velocity" Units="fps">velocity</TrickVariable>
-    </TrickFrom>
-    <TrickTo>
-        <TrickVariable Name="rocket.throttle">throttleCommand</TrickVariable>
-    </TrickTo>
-</TrickIO>
-```
+Variables can be bound to external simulation frameworks for real-time data exchange. See the [Integration Guide](integration.md) for TrickIO and EdgeIO setup.
 
 ### Logic Files
 
 For complex variable manipulation beyond what XML can express, you can use external C/C++ logic files. Logic files receive direct pointers to all declared variables, allowing arbitrary computation each frame.
 
-**See the [Logic Files documentation](dcapp_logic_files.md) for details on:**
+**See the [Logic Files documentation](logic.md) for details on:**
 - Setting up logic files
 - The generated `dcapp.h` header
 - Accessing variables from C/C++ code
@@ -294,7 +314,7 @@ For complex variable manipulation beyond what XML can express, you can use exter
 ### Flight Instruments Display
 
 ```xml
-<dcapp>
+<DCAPP>
     <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
     <Variable Type="#_variable_double_" InitialValue="0">speed</Variable>
     <Variable Type="#_variable_double_" InitialValue="0">heading</Variable>
@@ -314,13 +334,13 @@ For complex variable manipulation beyond what XML can express, you can use exter
         
         <Text X="20" Y="20" Size="16" FillColor="0,0.8,1,1">@flightMode</Text>
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 ### Counter with Buttons
 
 ```xml
-<dcapp>
+<DCAPP>
     <Variable Type="#_variable_integer_" InitialValue="0">counter</Variable>
 
     <Window Title="Counter" Width="300" Height="100">
@@ -360,7 +380,7 @@ For complex variable manipulation beyond what XML can express, you can use exter
             </Enabled>
         </Button>
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 ---

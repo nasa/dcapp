@@ -29,7 +29,7 @@ typedef struct __DcEdgeContext {
 
     // socket
     DcSockHandle sock;
-    DcSockState state;
+    DcSockState  state;
 
     // time tracking
     time_t reconnect_start;
@@ -94,6 +94,11 @@ DcEdgeHandle dc_edge_create(const char *host, int port, float data_rate, int tim
     context.rx_var_offsets  = NULL;
     context.tx_buffer       = NULL;
     context.temp_buffer     = (char *)malloc(DC_EDGE_TEMP_BUFFER_SIZE);
+    if (!context.temp_buffer) {
+        DC_LOG_ERROR("Edge", "Failed to allocate temp buffer");
+        DcEdgeHandle edge = {0};
+        return edge;
+    }
     sbpush(_contexts, context);
 
     DcEdgeHandle edge;
@@ -154,13 +159,13 @@ void dc_edge_update(DcEdgeHandle edge) {
     context->last_update = time(NULL);
 
     // send any pending tx commands
-    for (int ii = 0; ii < sbcount(context->tx_buffer); ) {
+    for (int ii = 0; ii < sbcount(context->tx_buffer);) {
         // find end of command (null terminated)
-        char *cmd = &context->tx_buffer[ii];
-        int cmd_len = (int)strlen(cmd);
+        char *cmd     = &context->tx_buffer[ii];
+        int   cmd_len = (int)strlen(cmd);
 
-        char *response = NULL;
-        DcEdgeResult result = _dc_edge_send_command(edge, cmd, &response);
+        char        *response = NULL;
+        DcEdgeResult result   = _dc_edge_send_command(edge, cmd, &response);
         free(response);
 
         if (result != DC_EDGE_RESULT_SUCCESS) {
@@ -177,8 +182,8 @@ void dc_edge_update(DcEdgeHandle edge) {
     if (context->cmd_group_id && sbcount(context->rx_cmd_offsets) > 0) {
         snprintf(context->temp_buffer, DC_EDGE_TEMP_BUFFER_SIZE, "execute_command_group %s", context->cmd_group_id);
 
-        char *response = NULL;
-        DcEdgeResult result = _dc_edge_send_command(edge, context->temp_buffer, &response);
+        char        *response = NULL;
+        DcEdgeResult result   = _dc_edge_send_command(edge, context->temp_buffer, &response);
 
         if (result != DC_EDGE_RESULT_SUCCESS || !response) {
             DC_LOG_WARN("EDGE", "[%s:%d] execute_command_group failed, disconnecting", context->ip, context->port);
@@ -194,7 +199,8 @@ void dc_edge_update(DcEdgeHandle edge) {
         char *ptr = response;
         while (*ptr) {
             // skip leading whitespace
-            while (*ptr == ' ' || *ptr == '\t' || *ptr == '\n' || *ptr == '\r') ptr++;
+            while (*ptr == ' ' || *ptr == '\t' || *ptr == '\n' || *ptr == '\r')
+                ptr++;
             if (!*ptr) break;
 
             // record start offset
@@ -216,7 +222,7 @@ void dc_edge_update(DcEdgeHandle edge) {
             context->has_new_data = true;
         } else {
             DC_LOG_WARN("EDGE", "[%s:%d] Value count mismatch (got %d, expected %d)",
-                   context->ip, context->port, sbcount(context->rx_var_offsets), sbcount(context->rx_cmd_offsets));
+                        context->ip, context->port, sbcount(context->rx_var_offsets), sbcount(context->rx_cmd_offsets));
         }
     }
 }
@@ -303,8 +309,8 @@ static DcEdgeResult _dc_edge_connect(DcEdgeHandle edge) {
             dc_sock_set_recv_timeout(context->sock, 2000);
 
             // read server version string
-            char *version = NULL;
-            DcEdgeResult result = _dc_edge_read_message(edge, &version);
+            char        *version = NULL;
+            DcEdgeResult result  = _dc_edge_read_message(edge, &version);
             if (result == DC_EDGE_RESULT_SUCCESS && version) {
                 DC_LOG_INFO("EDGE", "[%s:%d] Server version: %s", context->ip, context->port, version);
                 free(version);
@@ -316,12 +322,12 @@ static DcEdgeResult _dc_edge_connect(DcEdgeHandle edge) {
         } else if (state == DC_SOCK_STATE_DISCONNECTED) {
             break;
         }
-        // small sleep to avoid busy loop
-        #ifdef _WIN32
+// small sleep to avoid busy loop
+#ifdef _WIN32
         Sleep(10);
-        #else
+#else
         usleep(10000);
-        #endif
+#endif
     }
 
     _dc_edge_close(edge);
@@ -349,8 +355,8 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
     dc_sock_connect(cmd_sock, context->ip, context->port);
 
     // wait for connection (with timeout)
-    time_t start = time(NULL);
-    bool connected = false;
+    time_t start     = time(NULL);
+    bool   connected = false;
     while (difftime(time(NULL), start) < 2.0) {
         DcSockState state = dc_sock_connection_status(cmd_sock);
         if (state == DC_SOCK_STATE_CONNECTED) {
@@ -359,11 +365,11 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
         } else if (state == DC_SOCK_STATE_DISCONNECTED) {
             break;
         }
-        #ifdef _WIN32
+#ifdef _WIN32
         Sleep(10);
-        #else
+#else
         usleep(10000);
-        #endif
+#endif
     }
 
     if (!connected) {
@@ -376,17 +382,17 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
     dc_sock_set_recv_timeout(cmd_sock, 500);
 
     // read and discard server version
-    int buf_size = 256;
-    int nread = 0;
-    char *buf = (char *)malloc(buf_size);
+    int   buf_size = 256;
+    int   nread    = 0;
+    char *buf      = (char *)malloc(buf_size);
     if (!buf) {
         dc_sock_close(cmd_sock);
         return DC_EDGE_RESULT_FAIL;
     }
 
     for (;;) {
-        char c;
-        int recv_count;
+        char         c;
+        int          recv_count;
         DcSockResult res = dc_sock_receive(cmd_sock, &c, 1, &recv_count);
 
         if (res == DC_SOCK_RESULT_CONN_INTERRUPTED) continue;
@@ -413,8 +419,8 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
     free(buf);
 
     // send command
-    int cmd_len = (int)strlen(cmd);
-    int sent_count;
+    int          cmd_len = (int)strlen(cmd);
+    int          sent_count;
     DcSockResult result = dc_sock_send(cmd_sock, cmd, cmd_len, &sent_count);
     if (result != DC_SOCK_RESULT_SUCCESS || sent_count != cmd_len) {
         dc_sock_close(cmd_sock);
@@ -426,16 +432,16 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
 
     // read response
     buf_size = 256;
-    nread = 0;
-    buf = (char *)malloc(buf_size);
+    nread    = 0;
+    buf      = (char *)malloc(buf_size);
     if (!buf) {
         dc_sock_close(cmd_sock);
         return DC_EDGE_RESULT_FAIL;
     }
 
     for (;;) {
-        char c;
-        int recv_count;
+        char         c;
+        int          recv_count;
         DcSockResult res = dc_sock_receive(cmd_sock, &c, 1, &recv_count);
 
         if (res == DC_SOCK_RESULT_CONN_INTERRUPTED) continue;
@@ -473,16 +479,16 @@ static DcEdgeResult _dc_edge_send_command(DcEdgeHandle edge, const char *cmd, ch
 static DcEdgeResult _dc_edge_read_message(DcEdgeHandle edge, char **response) {
     _DcEdgeContext *context = &(_contexts[edge.index]);
 
-    int buf_size = 256;
-    int nread = 0;
-    char *buf = (char *)malloc(buf_size);
+    int   buf_size = 256;
+    int   nread    = 0;
+    char *buf      = (char *)malloc(buf_size);
     if (!buf) return DC_EDGE_RESULT_FAIL;
 
     // blocking read until END_OF_MSG character (0x04)
     // (socket is already set to blocking with recv timeout)
     for (;;) {
-        char c;
-        int recv_count;
+        char         c;
+        int          recv_count;
         DcSockResult result = dc_sock_receive(context->sock, &c, 1, &recv_count);
 
         if (result == DC_SOCK_RESULT_CONN_INTERRUPTED) continue;
@@ -519,8 +525,8 @@ static DcEdgeResult _dc_edge_setup_command_group(DcEdgeHandle edge) {
     _DcEdgeContext *context = &(_contexts[edge.index]);
 
     // create command group
-    char *group_id = NULL;
-    DcEdgeResult result = _dc_edge_send_command(edge, "create_command_group", &group_id);
+    char        *group_id = NULL;
+    DcEdgeResult result   = _dc_edge_send_command(edge, "create_command_group", &group_id);
     if (result != DC_EDGE_RESULT_SUCCESS || !group_id || !group_id[0]) {
         free(group_id);
         return DC_EDGE_RESULT_FAIL;
@@ -537,7 +543,7 @@ static DcEdgeResult _dc_edge_setup_command_group(DcEdgeHandle edge) {
                  "add_command_to_group %s \"%s\"", context->cmd_group_id, rx_cmd);
 
         char *response = NULL;
-        result = _dc_edge_send_command(edge, context->temp_buffer, &response);
+        result         = _dc_edge_send_command(edge, context->temp_buffer, &response);
         free(response);
 
         if (result != DC_EDGE_RESULT_SUCCESS) {

@@ -7,18 +7,18 @@ A comprehensive reference for all XML elements and attributes in the dcapp displ
 ## Document Structure
 
 ```xml
-<dcapp>
+<DCAPP>
     <Window ...>
         <!-- Display elements go here -->
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 ---
 
 ## Root Elements
 
-### `<dcapp>`
+### `<DCAPP>`
 
 The root element that wraps the entire display definition. Contains `<Window>`, `<Variable>`, `<Constant>`, `<Style>`, `<TrickIO>`, and `<Logic>` elements.
 
@@ -55,7 +55,7 @@ Declares a runtime variable that can be referenced and modified.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `Type` | string | No | Data type: `string`, `integer`, `double` (default: `string`) |
+| `Type` | string | No | Data type constant: `#_variable_string_`, `#_variable_integer_`, `#_variable_double_` (default: string) |
 | `InitialValue` | string | No | Initial value (default: empty string) |
 
 **Content:** Variable name
@@ -154,7 +154,7 @@ Draws a rectangle.
 | `LineColor` | — | color | No | Border color (RGBA) |
 | `LineWidth` | — | number/var | No | Border width |
 
-**Children:** `<Pressed>`, `<Released>`, `<Active>`, `<Inactive>`, `<Hovered>` (mouse events)
+**Children:** `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>` (mouse events)
 
 ---
 
@@ -162,7 +162,7 @@ Draws a rectangle.
 
 **Deprecated:** Use `<Arc>` for line-only circles or `<Ellipse>` for filled circles.
 
-The legacy conversion script (`scripts/convert_legacy_xml.py`) automatically converts:
+The legacy conversion script (`scripts/convert-legacy-xml.py`) automatically converts:
 - `<Circle>` with `Angle` and `FillColor` → `<Ellipse>` (pie/wedge shape)
 - `<Circle>` with `Angle` only → `<Arc>` (line-only arc)
 - `<Circle>` in `<Style>` → both `<Arc>` and `<Ellipse>` styles
@@ -233,7 +233,7 @@ Draws a filled ellipse or pie/wedge shape.
 
 **Note:** When `Angle` is less than 360, Ellipse draws a pie/wedge shape (filled sector). The wedge starts from the top (12 o'clock position) and proceeds clockwise. Use `Rotation` to change the starting position.
 
-**Children:** `<Pressed>`, `<Released>`, `<Active>`, `<Inactive>`, `<Hovered>` (mouse events)
+**Children:** `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>` (mouse events)
 
 **Example:**
 ```xml
@@ -245,6 +245,45 @@ Draws a filled ellipse or pie/wedge shape.
 
 <!-- Pie wedge rotated to start from right side -->
 <Ellipse X="300" Y="100" Radius="50" Angle="90" Rotation="90" FillColor="0,1,0,1"/>
+```
+
+---
+
+### `<Sphere>`
+
+Draws a 3D sphere with optional texture mapping and internal rotation. Useful for attitude indicators (ADI balls).
+
+| Attribute | Aliases | Type | Required | Description |
+|-----------|---------|------|----------|-------------|
+| `PositionX` | `X` | number/var | No | X position |
+| `PositionY` | `Y` | number/var | No | Y position |
+| `Radius` | — | number/var | No | Sphere radius |
+| `FillColor` | — | color | No | Fill color (RGBA) |
+| `Roll` | — | number/var | No | Internal roll rotation (degrees) |
+| `Pitch` | — | number/var | No | Internal pitch rotation (degrees) |
+| `Yaw` | — | number/var | No | Internal yaw rotation (degrees) |
+| `Image` | — | string | No | Path to texture image file |
+| `NegateX` | — | boolean | No | Negate X axis orientation |
+| `NegateY` | — | boolean | No | Negate Y axis orientation |
+| `Rotation` | — | number/var | No | External 2D rotation in the orthographic view |
+| `LocalAlignX` | `HorizontalAlign` | align | No | Horizontal alignment (default: center) |
+| `LocalAlignY` | `VerticalAlign` | align | No | Vertical alignment (default: middle) |
+| `ParentAlignX` | — | align | No | Parent anchor (horizontal) |
+| `ParentAlignY` | — | align | No | Parent anchor (vertical) |
+| `PivotPositionX` | `PivotX` | number/var | No | Pivot point X |
+| `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
+| `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
+| `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
+
+**Example:**
+```xml
+<!-- ADI ball driven by vehicle attitude -->
+<Sphere X="200" Y="200" Radius="100"
+        Roll="@roll" Pitch="@pitch" Yaw="@yaw"
+        Image="textures/adi_ball.png"/>
+
+<!-- Simple colored sphere -->
+<Sphere X="400" Y="300" Radius="50" FillColor="0.3 0.3 0.8 1"/>
 ```
 
 ---
@@ -280,7 +319,7 @@ Draws a filled or outlined polygon.
 | `LineColor` | — | color | No | Border color (RGBA) |
 | `LineWidth` | — | number/var | No | Border width |
 
-**Children:** `<Vertex>` elements, `<Pressed>`, `<Released>`, `<Active>`, `<Inactive>`, `<Hovered>`
+**Children:** `<Vertex>` elements, `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>`
 
 ---
 
@@ -327,39 +366,19 @@ Displays an image file.
 | `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
 | `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
 
-**Children:** `<Pressed>`, `<Released>`, `<Active>`, `<Inactive>`, `<Hovered>` (mouse events)
+**Children:** `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>` (mouse events)
 
 ---
 
-### `<Pixelstream>`
+### `<PixelStream>`
 
-Displays streaming video content (e.g., MJPEG).
+Displays streaming video content (MJPEG or dynamic file). Standard positioning/alignment attributes apply. See [Integration — PixelStream](integration.md#pixelstream) for full details.
 
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
-| `Type` | `Protocol` | integer | **Yes** | Stream type |
+| `Type` | `Protocol` | integer | **Yes** | `#_pixelstream_shmem_` or `#_pixelstream_mjpeg_` |
 | `URL` | — | string | Required for MJPEG | Stream URL |
 | `Timeout` | — | integer | No | Connection timeout in seconds (default: 5) |
-
-**Stream Type Constants:**
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `#_pixelstream_dynamic_file_` | 0 | Dynamic file source |
-| `#_pixelstream_mjpeg_` | 1 | MJPEG stream |
-| `PositionX` | `X` | number/var | No | X position |
-| `PositionY` | `Y` | number/var | No | Y position |
-| `DimensionX` | `Width` | number/var | No | Display width |
-| `DimensionY` | `Height` | number/var | No | Display height |
-| `LocalAlignX` | `HorizontalAlign` | align | No | Horizontal alignment |
-| `LocalAlignY` | `VerticalAlign` | align | No | Vertical alignment |
-| `ParentAlignX` | — | align | No | Parent anchor (horizontal) |
-| `ParentAlignY` | — | align | No | Parent anchor (vertical) |
-| `Rotation` | `Rotate` | number/var | No | Rotation in degrees |
-| `PivotPositionX` | `PivotX` | number/var | No | Pivot point X |
-| `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
-| `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
-| `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
 
 ---
 
@@ -412,103 +431,19 @@ Displays text with variable interpolation.
 
 ### `<Button>`
 
-Creates an interactive button with multiple visual states.
+Creates an interactive button with multiple visual states. See [Buttons](buttons.md) for the full reference including value/variable inheritance, visual states, and examples.
 
-| Attribute | Aliases | Type | Required | Description |
-|-----------|---------|------|----------|-------------|
-| `PositionX` | `X` | number/var | No | X position |
-| `PositionY` | `Y` | number/var | No | Y position |
-| `DimensionX` | `Width` | number/var | No | Button width |
-| `DimensionY` | `Height` | number/var | No | Button height |
-| `VirtualDimensionX` | `VirtualWidth` | number/var | No | Virtual coordinate width |
-| `VirtualDimensionY` | `VirtualHeight` | number/var | No | Virtual coordinate height |
-| `LocalAlignX` | `HorizontalAlign` | align | No | Horizontal alignment |
-| `LocalAlignY` | `VerticalAlign` | align | No | Vertical alignment |
-| `ParentAlignX` | — | align | No | Parent anchor (horizontal) |
-| `ParentAlignY` | — | align | No | Parent anchor (vertical) |
-| `Rotation` | `Rotate` | number/var | No | Rotation in degrees |
-| `PivotPositionX` | `PivotX` | number/var | No | Pivot point X |
-| `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
-| `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
-| `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
-| `Type` | — | integer | No | Button type (default: standard) |
+### Mouse Events
 
-**Button Type Constants:**
+Mouse event children (`<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>`, `<MouseMotion>`) can be added to `<Rectangle>`, `<Ellipse>`, `<Image>`, `<Polygon>`, `<PixelStream>`, or `<Button>`. See [Mouse Events](mouse-events.md) for details.
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `#_button_standard_` | 0 | Standard button (default) |
-| `#_button_momentary_` | 1 | Momentary button (active only while pressed) |
-| `#_button_toggle_` | 2 | Toggle button (alternates between on/off) |
+### `<Blink>`
 
-**Value Attributes (control what values are used):**
+Wraps child elements in a flashing container with configurable frequency, duty cycle, and duration. See [Blink](blink.md) for the full reference.
 
-| Attribute | Description |
-|-----------|-------------|
-| `On` | Default "on" value for target and indicator |
-| `Off` | Default "off" value for target and indicator |
-| `TargetOn` | Value to set target variable when pressed (inherits from `On`) |
-| `TargetOff` | Value to set target variable when released (inherits from `Off`) |
-| `IndicatorOn` | Value that means indicator shows "on" state (inherits from `TargetOn`) |
-| `EnableOn` | Value that means button is enabled (default: 1) |
+### `<Stencil>`
 
-**Variable Attributes (control which variables are used):**
-
-| Attribute | Description |
-|-----------|-------------|
-| `Variable` | Default variable for target, indicator, and enabled |
-| `TargetVariable` | Variable to modify when clicked (inherits from `Variable`) |
-| `IndicatorVariable` | Variable to check for indicator state (inherits from `TargetVariable`) |
-| `EnableVariable` | Variable to check for enabled state |
-
-**Children (visual states):**
-- `<Enabled>` - Content shown when button is enabled (interactive)
-- `<Disabled>` - Content shown when button is disabled
-- `<IndicatorOn>` or `<On>` - Content shown when indicator matches "on" value
-- `<IndicatorOff>` or `<Off>` - Content shown when indicator matches "off" value
-- `<Transition>` - Content shown during state transition
-- `<Pressed>` - Content/actions when mouse button down
-- `<Released>` - Content/actions when mouse button up
-
-**Example:**
-```xml
-<Button X="100" Y="100" Width="80" Height="40" Variable="systemPower" On="ON" Off="OFF">
-    <Enabled>
-        <On>
-            <Rectangle FillColor="0,1,0,1" Width="80" Height="40"/>
-            <Text X="40" Y="20" LocalAlignX="1">ON</Text>
-        </On>
-        <Off>
-            <Rectangle FillColor="0.3,0.3,0.3,1" Width="80" Height="40"/>
-            <Text X="40" Y="20" LocalAlignX="1">OFF</Text>
-        </Off>
-    </Enabled>
-    <Disabled>
-        <Rectangle FillColor="0.2,0.2,0.2,1" Width="80" Height="40"/>
-    </Disabled>
-</Button>
-```
-
----
-
-## Mouse Event Elements
-
-These elements can be children of `<Rectangle>`, `<Ellipse>`, `<Image>`, `<Polygon>`, `<Pixelstream>`, or `<Button>`.
-
-### `<Pressed>`
-Content/actions executed when mouse button is pressed down on the element.
-
-### `<Released>`
-Content/actions executed when mouse button is released on the element.
-
-### `<Active>`
-Content shown while mouse button is held down on the element.
-
-### `<Inactive>`
-Content shown when mouse is not pressed on the element.
-
-### `<Hovered>`
-Content shown when mouse cursor is over the element.
+Defines a stencil mask region for clipping child content. Contains `<StencilAdd>`, `<StencilRemove>`, and `<StencilDraw>` children. See [Stencil](stencil.md) for the full reference.
 
 ---
 
@@ -529,14 +464,14 @@ Conditional rendering based on variable comparison.
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `#_if_true_` | 0 | Boolean truthy check (default when `Value2` not provided) |
-| `#_if_false_` | 1 | Boolean falsy check |
-| `#_if_eq_` | 2 | Equal |
-| `#_if_ne_` | 3 | Not equal |
-| `#_if_lt_` | 4 | Less than |
-| `#_if_gt_` | 5 | Greater than |
-| `#_if_lte_` | 6 | Less than or equal |
-| `#_if_gte_` | 7 | Greater than or equal |
+| `#_if_true_` | 1 | Boolean truthy check (default when `Value2` not provided) |
+| `#_if_false_` | 2 | Boolean falsy check |
+| `#_if_eq_` | 3 | Equal |
+| `#_if_ne_` | 4 | Not equal |
+| `#_if_lt_` | 5 | Less than |
+| `#_if_gt_` | 6 | Greater than |
+| `#_if_lte_` | 7 | Less than or equal |
+| `#_if_gte_` | 8 | Greater than or equal |
 
 **Children:**
 - `<True>` - Content shown when condition is true
@@ -590,24 +525,14 @@ When `Static="true"` is set on an `<If>` element, it evaluates once during XML p
 
 ### `<Set>`
 
-Sets a variable to a value.
+Sets a variable to a value using an operator. See [Variables — Set Operators](variables.md#set-operators) for the full operator list.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `Variable` | string | **Yes** | Variable name to set |
-| `Operator` | integer | No | Operation type |
+| `Operator` | integer | No | Operation type (default: `#_set_equal_`) |
 
 **Content:** Value or expression to assign
-
-**Operator Constants:**
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `#_set_equal_` | 0 | Direct assignment (default) |
-| `#_set_add_` | 1 | Add |
-| `#_set_subtract_` | 2 | Subtract |
-| `#_set_multiply_` | 3 | Multiply |
-| `#_set_divide_` | 4 | Divide |
 
 **Example:**
 ```xml
@@ -628,10 +553,10 @@ Loads custom C logic from a shared library.
 | `File` | string | **Yes** | Path to shared library (.so/.dylib/.dll) |
 
 **Expected Functions in Library:**
-- `display_pre_init(GetVariableValueAddr)` - Called before init
-- `display_init()` - Called at startup
-- `display_draw()` - Called each frame
-- `display_close()` - Called at shutdown
+- `display_pre_init(GetVariableValueAddr)` - Auto-generated by the `dcapp.h` header; the user does not implement this
+- `display_init()` - Called at startup (user-implemented)
+- `display_draw()` - Called each frame (user-implemented)
+- `display_close()` - Called at shutdown (user-implemented)
 
 **Cross-Platform:** dcapp automatically tries `.so`, `.dylib`, and `.dll` extensions, so the same XML works on Linux, macOS, and Windows.
 
@@ -656,101 +581,9 @@ See the [Logic Files documentation](logic.md) for details on using `<Function>` 
 
 ---
 
-### `<TrickIO>`
+### `<TrickIO>`, `<EdgeIO>`, `<PixelStream>`
 
-Establishes connection to Trick simulation.
-
-| Attribute | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `Host` | string | **Yes** | Trick host address |
-| `Port` | integer | **Yes** | Trick port number |
-| `DataRate` | number | No | Data rate in Hz (default: 0.1) |
-
-**Children:** `<TrickFrom>`, `<TrickTo>`
-
----
-
-### `<TrickFrom>`
-
-Container for variables received from Trick.
-
-**Children:** `<TrickVariable>`
-
----
-
-### `<TrickTo>`
-
-Container for variables sent to Trick.
-
-**Children:** `<TrickVariable>`
-
----
-
-### `<TrickVariable>`
-
-Maps a Trick variable to a dcapp variable.
-
-| Attribute | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `Name` | string | **Yes** | Trick variable path |
-| `Units` | string | No | Unit conversion |
-
-**Content:** dcapp variable name
-
-**Example:**
-```xml
-<TrickIO Host="localhost" Port="7000">
-    <TrickFrom>
-        <TrickVariable Name="vehicle.altitude">altitude</TrickVariable>
-        <TrickVariable Name="vehicle.speed" Units="kn">airspeed</TrickVariable>
-    </TrickFrom>
-    <TrickTo>
-        <TrickVariable Name="controls.throttle">throttlePosition</TrickVariable>
-    </TrickTo>
-</TrickIO>
-```
-
----
-
-## Terrain Elements
-
-### `<Terrain>`
-
-Renders 3D terrain with camera positioning.
-
-| Attribute | Aliases | Type | Required | Description |
-|-----------|---------|------|----------|-------------|
-| `PositionX` | `X` | number/var | No | Screen X position |
-| `PositionY` | `Y` | number/var | No | Screen Y position |
-| `DimensionX` | `Width` | number/var | No | Display width |
-| `DimensionY` | `Height` | number/var | No | Display height |
-| `LocalAlignX` | `HorizontalAlign` | align | No | Horizontal alignment |
-| `LocalAlignY` | `VerticalAlign` | align | No | Vertical alignment |
-| `ParentAlignX` | — | align | No | Parent anchor (horizontal) |
-| `ParentAlignY` | — | align | No | Parent anchor (vertical) |
-| `Rotation` | `Rotate` | number/var | No | Rotation in degrees |
-| `PivotPositionX` | `PivotX` | number/var | No | Pivot point X |
-| `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
-| `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
-| `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
-| `Latitude` | — | number/var | **Yes** | Camera latitude |
-| `Longitude` | — | number/var | **Yes** | Camera longitude |
-| `Elevation` | — | number/var | **Yes** | Camera elevation |
-| `Roll` | — | number/var | **Yes** | Camera roll angle |
-| `Pitch` | — | number/var | **Yes** | Camera pitch angle |
-| `Yaw` | — | number/var | **Yes** | Camera yaw/heading angle |
-
-**Children:** `<TerrainDEM>`
-
----
-
-### `<TerrainDEM>`
-
-Specifies a Digital Elevation Model file for terrain.
-
-| Attribute | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `File` | string | **Yes** | Path to DEM file |
+See [Integration](integration.md) for full documentation on TrickIO, EdgeIO, and PixelStream elements.
 
 ---
 
@@ -826,8 +659,8 @@ Registers a custom shader for the planet, selectable at runtime via the parent `
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `Index` | integer | **Yes** | Shader index (matched against `ShaderIndex`) |
-| `VertexSource` | string | No | Path to custom vertex shader (`.vert`) |
-| `FragmentSource` | string | No | Path to custom fragment shader (`.frag`) |
+| `VertexShader` | string | No | Path to custom vertex shader (`.vert`) |
+| `FragmentShader` | string | No | Path to custom fragment shader (`.frag`) |
 
 ---
 
@@ -845,29 +678,7 @@ Configures a texture overlay on the planet surface. The `File` attribute is a st
 
 ---
 
-## Data Types
-
-### Alignment Values
-
-Integer attributes can use built-in constants with the `#` prefix (e.g., `ParentAlignX="#_align_left_"`).
-
-**Horizontal Alignment** (for `LocalAlignX`, `ParentAlignX`, `PivotLocalAlignX`):
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `#_align_left_` | 0 | Left alignment (default) |
-| `#_align_center_` | 1 | Center alignment |
-| `#_align_right_` | 2 | Right alignment |
-
-**Vertical Alignment** (for `LocalAlignY`, `ParentAlignY`, `PivotLocalAlignY`):
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `#_align_bottom_` | 0 | Bottom alignment (default) |
-| `#_align_middle_` | 1 | Middle alignment |
-| `#_align_top_` | 2 | Top alignment |
-
----
+## Positioning and Alignment
 
 ### How Alignment and Position Work Together
 
@@ -932,29 +743,18 @@ If a `<Default>` sets `ParentAlignX`, any X values on child elements become offs
 </Text>
 ```
 
-### Built-in Constants Reference
-
-All built-in constants use the `#` prefix followed by the constant name:
-
-| Category | Constants |
-|----------|-----------|
-| **Alignment (Horizontal)** | `#_align_left_`, `#_align_center_`, `#_align_right_` |
-| **Alignment (Vertical)** | `#_align_bottom_`, `#_align_middle_`, `#_align_top_` |
-| **Button Types** | `#_button_standard_`, `#_button_momentary_`, `#_button_toggle_` |
-| **Conditionals** | `#_if_true_`, `#_if_false_`, `#_if_eq_`, `#_if_ne_`, `#_if_lt_`, `#_if_gt_`, `#_if_lte_`, `#_if_gte_` |
-| **Set Operations** | `#_set_equal_`, `#_set_add_`, `#_set_subtract_`, `#_set_multiply_`, `#_set_divide_` |
-| **Pixelstream Types** | `#_pixelstream_dynamic_file_`, `#_pixelstream_mjpeg_` |
+See [Constants](constants.md) for the full built-in constants reference.
 
 ### Color Format
 
-Colors are specified as comma-separated RGBA values, each from 0.0 to 1.0:
+Colors are specified as comma-separated or space-separated RGBA values, each from 0.0 to 1.0:
 ```
-"R,G,B,A"
+"R,G,B,A"   or   "R G B A"
 ```
 
 **Examples:**
 - `"1,0,0,1"` - Red (fully opaque)
-- `"0,1,0,0.5"` - Green (50% transparent)
+- `"0 1 0 0.5"` - Green (50% transparent)
 - `"0.2,0.2,0.2,1"` - Dark gray
 
 ### Variable References
@@ -968,7 +768,7 @@ Attributes marked as `number/var` can contain:
 ## Complete Example
 
 ```xml
-<dcapp>
+<DCAPP>
     <Variable Type="#_variable_double_" InitialValue="0">altitude</Variable>
     <Variable Type="#_variable_double_" InitialValue="0">speed</Variable>
     <Variable Type="#_variable_string_" InitialValue="OFF">engineStatus</Variable>
@@ -1012,5 +812,5 @@ Attributes marked as `number/var` can contain:
         </If>
         
     </Window>
-</dcapp>
+</DCAPP>
 ```

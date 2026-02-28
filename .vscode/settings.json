@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "*.inc": "c",
-        "*.m": "objective-c",
-        "*.mm": "objective-cpp"
-    },
-    "C_Cpp.intelliSenseEngine": "disabled"
-}

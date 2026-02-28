@@ -38,7 +38,7 @@ void display_draw(void) {
 
     // convert to degrees (draw code does pl_radiansf on the variable values)
     *CamPitch = pitch_rad * 180.0 / M_PI;
-    *CamYaw   = yaw_rad   * 180.0 / M_PI;
+    *CamYaw   = yaw_rad * 180.0 / M_PI;
     *CamRoll  = *Heading;
 }
 
