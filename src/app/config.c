@@ -69,10 +69,8 @@ static xmlChar        *_get_style_attr(_ConfigContext *context, int style_index,
 static xmlChar        *_get_style_content(_ConfigContext *context, int style_index, DcAppElemType elem_type);
 
 // xml utils
-static char *_get_xml_node_attr(_ConfigContext *context, xmlNodePtr xml_node, DcAppElemType elem_type, int style_index, const char *name);
-static char *_get_xml_node_content(_ConfigContext *context, xmlNodePtr xml_node, DcAppElemType elem_type, int style_index);
 static void  _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory);
-void         _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr node);
+static void  _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr node);
 static void  _splice_children_into_parent_and_free_wrapper(xmlNodePtr node);
 
 // arg utils
@@ -516,7 +514,7 @@ static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node) {
     xmlFreeNode(node);
 }
 
-void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) {
+static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory) {
 
     // remove if not an element
     if (node->type != XML_ELEMENT_NODE && node->type != XML_TEXT_NODE && node->type != XML_ATTRIBUTE_NODE) {
@@ -1192,7 +1190,7 @@ void dc_app_config_save_to_file(DcAppConfig *config, const char *filepath) {
     fclose(f);
 }
 
-DcAppLookupIndex _get_const_index(_ConfigContext *context, const char *name) {
+static DcAppLookupIndex _get_const_index(_ConfigContext *context, const char *name) {
 
     for (int ii = _CONST_FIRST_INDEX; ii < sbcount(context->sb_const_name_offsets); ii++) {
         const char *lookup_name = &(context->sb_const_names[context->sb_const_name_offsets[ii]]);
@@ -1204,7 +1202,7 @@ DcAppLookupIndex _get_const_index(_ConfigContext *context, const char *name) {
 }
 
 // sets an existing constant
-void _set_const(_ConfigContext *context, DcAppLookupIndex index, const char *new_value) {
+static void _set_const(_ConfigContext *context, DcAppLookupIndex index, const char *new_value) {
 
     // set const value at index
     char **addr = &(context->sb_consts[index].val);
@@ -1213,7 +1211,7 @@ void _set_const(_ConfigContext *context, DcAppLookupIndex index, const char *new
 }
 
 // adds a new constant
-void _add_const(_ConfigContext *context, const char *name, const char *value, bool is_immutable) {
+static void _add_const(_ConfigContext *context, const char *name, const char *value, bool is_immutable) {
 
     // add const name to buffer
     sbpush(context->sb_const_name_offsets, sbcount(context->sb_const_names));
@@ -1236,7 +1234,7 @@ static void _add_const_int(_ConfigContext *context, const char *name, int value_
 }
 
 // set a consts value
-void _register_const_by_name(_ConfigContext *context, const char *name, const char *new_value, bool is_immutable) {
+static void _register_const_by_name(_ConfigContext *context, const char *name, const char *new_value, bool is_immutable) {
     DcAppLookupIndex const_index = _get_const_index(context, name);
     if (const_index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
         _add_const(context, name, new_value, is_immutable);
@@ -1256,7 +1254,7 @@ void dc_app_config_register_const_by_name(DcAppConfig *config, const char *name,
 }
 
 // get a consts value
-const char *_get_const_by_name(_ConfigContext *context, const char *name) {
+static const char *_get_const_by_name(_ConfigContext *context, const char *name) {
     DcAppLookupIndex const_index = _get_const_index(context, name);
     if (const_index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
         if (context->suppress_warnings & DC_APP_SUPPRESS_MISSING_CONSTANT) {
@@ -1270,7 +1268,7 @@ const char *_get_const_by_name(_ConfigContext *context, const char *name) {
 }
 
 // expand a string using consts
-void _dereference_constants(_ConfigContext *context, const char *in, char *out, size_t out_size) {
+static void _dereference_constants(_ConfigContext *context, const char *in, char *out, size_t out_size) {
 
     // return string if no '$'/'#'
     if (dc_utils_str_find_first_of(in, "#$") == -1) {
@@ -1442,7 +1440,7 @@ static xmlChar *_get_style_content(_ConfigContext *context, int style_index, DcA
     return NULL;
 }
 
-void _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr node) {
+static void _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr node) {
 
     // expands constants on each attribute
     xmlAttrPtr attr = node->properties;
