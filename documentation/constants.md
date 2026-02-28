@@ -60,7 +60,7 @@ Use backslash to include literal `#` or `$` characters:
 Define your own constants using the `<Constant>` element:
 
 ```xml
-<dcapp>
+<DCAPP>
     <Constant Name="mainColor">0.2,0.5,0.8,1</Constant>
     <Constant Name="buttonWidth">120</Constant>
     <Constant Name="appTitle">Flight Display</Constant>
@@ -68,7 +68,7 @@ Define your own constants using the `<Constant>` element:
     <Window Title="#appTitle" Width="800" Height="600">
         <Rectangle FillColor="#mainColor" Width="#buttonWidth" Height="40"/>
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 ### Constant Element Attributes
@@ -124,95 +124,69 @@ dcapp provides many predefined constants for common values.
 
 ### Alignment Constants
 
-**Horizontal Alignment** (for `LocalAlignX`, `ParentAlignX`, `PivotLocalAlignX`):
+Used with `LocalAlignX`, `ParentAlignX`, `PivotLocalAlignX` (horizontal) and `LocalAlignY`, `ParentAlignY`, `PivotLocalAlignY` (vertical). See [Positioning and Alignment](primitives.md#positioning-and-alignment) for details.
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `#_align_left_` | 0 | Left edge (default) |
-| `#_align_center_` | 1 | Horizontal center |
-| `#_align_right_` | 2 | Right edge |
+**Horizontal:**
 
-**Vertical Alignment** (for `LocalAlignY`, `ParentAlignY`, `PivotLocalAlignY`):
+| Constant | Value |
+|----------|-------|
+| `#_align_left_` | 1 (default) |
+| `#_align_center_` | 2 |
+| `#_align_right_` | 3 |
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `#_align_bottom_` | 0 | Bottom edge (default) |
-| `#_align_middle_` | 1 | Vertical center |
-| `#_align_top_` | 2 | Top edge |
+**Vertical:**
 
-**Example:**
-```xml
-<Text X="400" Y="300" 
-      LocalAlignX="#_align_center_" 
-      LocalAlignY="#_align_middle_">
-    Centered Text
-</Text>
-```
+| Constant | Value |
+|----------|-------|
+| `#_align_bottom_` | 4 (default) |
+| `#_align_middle_` | 5 |
+| `#_align_top_` | 6 |
 
 ### Button Type Constants
 
+See [Buttons](buttons.md) for full usage details.
+
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `#_button_standard_` | 0 | Sets target to "on" value when clicked (default) |
 | `#_button_momentary_` | 1 | "On" while pressed, "off" when released |
-| `#_button_toggle_` | 2 | Alternates between "on" and "off" each click |
-
-**Example:**
-```xml
-<Button Type="#_button_toggle_" Variable="power" On="1" Off="0">
-    ...
-</Button>
-```
+| `#_button_standard_` | 2 | Sets target to "on" value when clicked (default) |
+| `#_button_toggle_` | 3 | Alternates between "on" and "off" each click |
 
 ### Conditional Constants
 
+Used with the `<If>` element's `Operator` attribute. See [Conditionals](primitives.md#conditional-rendering-if) for details.
+
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `#_if_true_` | 0 | Check if value is truthy |
-| `#_if_false_` | 1 | Check if value is falsy |
-| `#_if_eq_` | 2 | Equal to |
-| `#_if_ne_` | 3 | Not equal to |
-| `#_if_lt_` | 4 | Less than |
-| `#_if_gt_` | 5 | Greater than |
-| `#_if_lte_` | 6 | Less than or equal |
-| `#_if_gte_` | 7 | Greater than or equal |
-
-**Example:**
-```xml
-<If Value="@altitude" Value2="10000" Operator="#_if_gt_">
-    <True>
-        <Text FillColor="1,0,0,1">HIGH ALTITUDE WARNING</Text>
-    </True>
-</If>
-```
+| `#_if_true_` | 1 | Check if value is truthy |
+| `#_if_false_` | 2 | Check if value is falsy |
+| `#_if_eq_` | 3 | Equal to |
+| `#_if_ne_` | 4 | Not equal to |
+| `#_if_lt_` | 5 | Less than |
+| `#_if_gt_` | 6 | Greater than |
+| `#_if_lte_` | 7 | Less than or equal |
+| `#_if_gte_` | 8 | Greater than or equal |
 
 ### Set Operator Constants
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `#_set_equal_` | 0 | Direct assignment (default) |
-| `#_set_add_` | 1 | Add to current value |
-| `#_set_subtract_` | 2 | Subtract from current value |
-| `#_set_multiply_` | 3 | Multiply current value |
-| `#_set_divide_` | 4 | Divide current value |
-
-**Example:**
-```xml
-<Set Variable="score" Operator="#_set_add_">100</Set>
-```
-
-### Pixelstream Type Constants
+Used with the `<Set>` element's `Operator` attribute. See [Set Operators](variables.md#set-operators) for the full list including math functions.
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `#_pixelstream_dynamic_file_` | 0 | Dynamic file source |
-| `#_pixelstream_mjpeg_` | 1 | MJPEG network stream |
+| `#_set_equal_` | 1 | Direct assignment (default) |
+| `#_set_add_` | 2 | Add to current value |
+| `#_set_subtract_` | 3 | Subtract from current value |
+| `#_set_multiply_` | 4 | Multiply current value |
+| `#_set_divide_` | 5 | Divide current value |
 
-**Example:**
-```xml
-<Pixelstream Type="#_pixelstream_mjpeg_" URL="http://camera:8080/stream" 
-             X="100" Y="100" Width="640" Height="480"/>
-```
+### PixelStream Type Constants
+
+See [Integration](integration.md#pixelstream) for usage details.
+
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `#_pixelstream_shmem_` | 1 | Shared memory source |
+| `#_pixelstream_mjpeg_` | 2 | MJPEG network stream |
 
 ---
 
@@ -374,30 +348,31 @@ Color constants use space-separated RGB values. Add alpha when using:
 
 | Category | Constant | Value |
 |----------|----------|-------|
-| **Alignment (H)** | `#_align_left_` | 0 |
-| | `#_align_center_` | 1 |
-| | `#_align_right_` | 2 |
-| **Alignment (V)** | `#_align_bottom_` | 0 |
-| | `#_align_middle_` | 1 |
-| | `#_align_top_` | 2 |
-| **Button Type** | `#_button_standard_` | 0 |
-| | `#_button_momentary_` | 1 |
-| | `#_button_toggle_` | 2 |
-| **Conditional** | `#_if_true_` | 0 |
-| | `#_if_false_` | 1 |
-| | `#_if_eq_` | 2 |
-| | `#_if_ne_` | 3 |
-| | `#_if_lt_` | 4 |
-| | `#_if_gt_` | 5 |
-| | `#_if_lte_` | 6 |
-| | `#_if_gte_` | 7 |
-| **Set Operation** | `#_set_equal_` | 0 |
-| | `#_set_add_` | 1 |
-| | `#_set_subtract_` | 2 |
-| | `#_set_multiply_` | 3 |
-| | `#_set_divide_` | 4 |
-| **Pixelstream** | `#_pixelstream_dynamic_file_` | 0 |
-| | `#_pixelstream_mjpeg_` | 1 |
+| **Alignment (H)** | `#_align_left_` | 1 |
+| | `#_align_center_` | 2 |
+| | `#_align_right_` | 3 |
+| **Alignment (V)** | `#_align_bottom_` | 4 |
+| | `#_align_middle_` | 5 |
+| | `#_align_top_` | 6 |
+| **Button Type** | `#_button_momentary_` | 1 |
+| | `#_button_standard_` | 2 |
+| | `#_button_toggle_` | 3 |
+| **Conditional** | `#_if_true_` | 1 |
+| | `#_if_false_` | 2 |
+| | `#_if_eq_` | 3 |
+| | `#_if_ne_` | 4 |
+| | `#_if_lt_` | 5 |
+| | `#_if_gt_` | 6 |
+| | `#_if_lte_` | 7 |
+| | `#_if_gte_` | 8 |
+| **Set Operation** | `#_set_equal_` | 1 |
+| | `#_set_add_` | 2 |
+| | `#_set_subtract_` | 3 |
+| | `#_set_multiply_` | 4 |
+| | `#_set_divide_` | 5 |
+| **PixelStream** | `#_pixelstream_shmem_` | 1 |
+| | `#_pixelstream_mjpeg_` | 2 |
+| **Stencil** | `#_stencil_color_` | 0 0 0 1 |
 
 ---
 
@@ -406,7 +381,7 @@ Color constants use space-separated RGB values. Add alpha when using:
 ### Themed Display with Constants
 
 ```xml
-<dcapp>
+<DCAPP>
     <!-- Theme colors -->
     <Constant Name="bgColor">0.1,0.1,0.15,1</Constant>
     <Constant Name="primaryColor">0.2,0.6,0.9,1</Constant>
@@ -425,13 +400,13 @@ Color constants use space-separated RGB values. Add alpha when using:
                    Width="#buttonWidth" Height="#buttonHeight"
                    FillColor="#primaryColor"/>
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 ### Configurable Display
 
 ```xml
-<dcapp>
+<DCAPP>
     <!-- These can be overridden from command line -->
     <Constant Name="serverHost">localhost</Constant>
     <Constant Name="serverPort">7000</Constant>
@@ -453,7 +428,7 @@ Color constants use space-separated RGB values. Add alpha when using:
             Connected to #serverHost:#serverPort
         </Text>
     </Window>
-</dcapp>
+</DCAPP>
 ```
 
 Run with custom server:

@@ -47,14 +47,20 @@ On Windows, use the `.bat` equivalents (`bin/dcapp.bat`, `bin/dcapp-validate.bat
 
 ## Documentation
 
+Full documentation index: [documentation/README.md](documentation/README.md)
+
 | Document | Description |
 |----------|-------------|
-| [Windows Setup](documentation/windows-setup.md) | Getting started on Windows |
-| [Variables](documentation/variables.md) | Runtime values, text interpolation, and the `<Set>` element |
+| [Getting Started](documentation/getting-started.md) | Build instructions (Linux, macOS, Windows), first display |
+| [Variables](documentation/variables.md) | Runtime values, text interpolation, Set operators |
 | [Constants](documentation/constants.md) | Built-in and user-defined constants, color palette |
+| [Primitives](documentation/primitives.md) | All XML elements: drawing, layout, logic, terrain |
 | [Buttons](documentation/buttons.md) | Interactive controls with visual states |
-| [Primitives](documentation/primitives.md) | Drawing elements: rectangles, circles, text, images, etc. |
+| [Mouse Events](documentation/mouse-events.md) | Mouse interaction and slider patterns |
 | [Logic Files](documentation/logic.md) | Extending displays with C/C++ code |
+| [Integration](documentation/integration.md) | TrickIO, EdgeIO, PixelStream |
+| [Planet](documentation/planet.md) | Chunked terrain rendering and custom shaders |
+| [Samples](documentation/samples.md) | Feature-to-sample index |
 
 ---
 
