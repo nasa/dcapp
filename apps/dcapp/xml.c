@@ -3445,8 +3445,8 @@ static _NodeIndex _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr
     entry.index              = atoi((const char *)raw_index);
     xmlFree(raw_index);
 
-    // VertexSource (optional)
-    xmlChar *raw_vert = xmlGetProp(xml_node, BAD_CAST "VertexSource");
+    // VertexShader (optional)
+    xmlChar *raw_vert = xmlGetProp(xml_node, BAD_CAST "VertexShader");
     if (raw_vert) {
         char cleaned[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(cleaned, (const char *)raw_vert, DC_VALUE_STRING_BUFFER_SIZE - 1);
@@ -3463,8 +3463,8 @@ static _NodeIndex _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr
         entry.vertex_path = strdup(vfs_path);
     }
 
-    // FragmentSource (optional)
-    xmlChar *raw_frag = xmlGetProp(xml_node, BAD_CAST "FragmentSource");
+    // FragmentShader (optional)
+    xmlChar *raw_frag = xmlGetProp(xml_node, BAD_CAST "FragmentShader");
     if (raw_frag) {
         char cleaned[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(cleaned, (const char *)raw_frag, DC_VALUE_STRING_BUFFER_SIZE - 1);

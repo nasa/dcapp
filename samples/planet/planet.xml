@@ -46,9 +46,9 @@
         <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
         <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
             Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
-        <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
-        <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
-        <PlanetShader Index="3" VertexSource="shaders/planet_flat.vert" FragmentSource="shaders/planet_elevation.frag"/>
+        <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
+        <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
+        <PlanetShader Index="3" VertexShader="shaders/planet_flat.vert" FragmentShader="shaders/planet_elevation.frag"/>
     </Planet>
 
     <Default>

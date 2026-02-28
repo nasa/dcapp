@@ -89,8 +89,8 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
     <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
-    <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
-    <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
+    <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
+    <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
 </Planet>
 ```
 
@@ -141,10 +141,10 @@ Overlays an image onto the planet surface at a specific geographic location. Mus
 Defines a custom GLSL shader program that can be applied to the terrain. Must be a child of `<Planet>`. Multiple `<PlanetShader>` elements can be defined, each at a different index.
 
 ```xml
-<PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
-<PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
-<PlanetShader Index="3" VertexSource="shaders/planet_flat.vert"
-    FragmentSource="shaders/planet_elevation.frag"/>
+<PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
+<PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
+<PlanetShader Index="3" VertexShader="shaders/planet_flat.vert"
+    FragmentShader="shaders/planet_elevation.frag"/>
 ```
 
 **Attributes:**
@@ -152,8 +152,8 @@ Defines a custom GLSL shader program that can be applied to the terrain. Must be
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `Index` | integer | Yes | The shader slot number. Index 0 is reserved for the built-in default shader. Custom shaders start at index 1. |
-| `VertexSource` | string | No | Path to a custom GLSL vertex shader file. If omitted, the built-in vertex shader is used. |
-| `FragmentSource` | string | No | Path to a custom GLSL fragment shader file. If omitted, the built-in fragment shader is used. |
+| `VertexShader` | string | No | Path to a custom GLSL vertex shader file. If omitted, the built-in vertex shader is used. |
+| `FragmentShader` | string | No | Path to a custom GLSL fragment shader file. If omitted, the built-in fragment shader is used. |
 
 ### `<PlanetView>`
 
@@ -264,10 +264,10 @@ The `ShaderIndex` attribute on `<Planet>` controls which shader is active. By bi
 <Variable Type="#_variable_integer_" InitialValue="0">ActiveShader</Variable>
 
 <Planet Name="Moon" ShaderIndex="@ActiveShader">
-    <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
-    <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
-    <PlanetShader Index="3" VertexSource="shaders/planet_flat.vert"
-        FragmentSource="shaders/planet_elevation.frag"/>
+    <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
+    <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
+    <PlanetShader Index="3" VertexShader="shaders/planet_flat.vert"
+        FragmentShader="shaders/planet_elevation.frag"/>
 </Planet>
 ```
 
@@ -400,10 +400,10 @@ A single `<Planet>` is defined with one data source, one texture overlay, and th
     <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
-    <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
-    <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
-    <PlanetShader Index="3" VertexSource="shaders/planet_flat.vert"
-        FragmentSource="shaders/planet_elevation.frag"/>
+    <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
+    <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
+    <PlanetShader Index="3" VertexShader="shaders/planet_flat.vert"
+        FragmentShader="shaders/planet_elevation.frag"/>
 </Planet>
 ```
 

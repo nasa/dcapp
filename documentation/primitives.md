@@ -659,8 +659,8 @@ Registers a custom shader for the planet, selectable at runtime via the parent `
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `Index` | integer | **Yes** | Shader index (matched against `ShaderIndex`) |
-| `VertexSource` | string | No | Path to custom vertex shader (`.vert`) |
-| `FragmentSource` | string | No | Path to custom fragment shader (`.frag`) |
+| `VertexShader` | string | No | Path to custom vertex shader (`.vert`) |
+| `FragmentShader` | string | No | Path to custom fragment shader (`.frag`) |
 
 ---
 
