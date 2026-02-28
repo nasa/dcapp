@@ -203,6 +203,11 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const(&context, "_color_hot_pink_", "1.0 0.41 0.71", false);
     _add_const(&context, "_color_light_pink_", "1.0 0.71 0.76", false);
     _add_const(&context, "_color_mulberry_", "0.77 0.29 0.55", false);
+    _add_const(&context, "_color_scarlet_", "1.0 0.14 0.0", false);
+    _add_const(&context, "_color_tomato_", "1.0 0.39 0.28", false);
+    _add_const(&context, "_color_wine_", "0.45 0.18 0.22", false);
+    _add_const(&context, "_color_raspberry_", "0.89 0.04 0.36", false);
+    _add_const(&context, "_color_dark_red_", "0.55 0.0 0.0", false);
     // Oranges
     _add_const(&context, "_color_orange_", "1.0 0.5 0.0", false);
     _add_const(&context, "_color_tangerine_", "1.0 0.6 0.0", false);
@@ -213,6 +218,9 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const(&context, "_color_burnt_orange_", "0.8 0.33 0.0", false);
     _add_const(&context, "_color_rust_", "0.72 0.25 0.05", false);
     _add_const(&context, "_color_terracotta_", "0.89 0.45 0.36", false);
+    _add_const(&context, "_color_dark_orange_", "1.0 0.55 0.0", false);
+    _add_const(&context, "_color_mango_", "1.0 0.51 0.26", false);
+    _add_const(&context, "_color_persimmon_", "0.93 0.35 0.0", false);
     // Yellows
     _add_const(&context, "_color_yellow_", "1.0 1.0 0.0", false);
     _add_const(&context, "_color_lemon_", "1.0 1.0 0.31", false);
@@ -222,6 +230,11 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const(&context, "_color_champagne_", "0.97 0.91 0.81", false);
     _add_const(&context, "_color_sunflower_", "1.0 0.8 0.0", false);
     _add_const(&context, "_color_flax_", "0.93 0.87 0.51", false);
+    _add_const(&context, "_color_cream_", "1.0 0.99 0.82", false);
+    _add_const(&context, "_color_ivory_", "1.0 1.0 0.94", false);
+    _add_const(&context, "_color_saffron_", "0.96 0.77 0.19", false);
+    _add_const(&context, "_color_golden_rod_", "0.85 0.65 0.13", false);
+    _add_const(&context, "_color_canary_", "1.0 0.94 0.0", false);
     // Greens
     _add_const(&context, "_color_green_", "0.0 1.0 0.0", false);
     _add_const(&context, "_color_lime_", "0.75 1.0 0.0", false);
@@ -234,6 +247,14 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const(&context, "_color_pistachio_", "0.58 0.77 0.45", false);
     _add_const(&context, "_color_seafoam_", "0.62 0.89 0.76", false);
     _add_const(&context, "_color_chartreuse_", "0.5 1.0 0.0", false);
+    _add_const(&context, "_color_dark_green_", "0.0 0.39 0.0", false);
+    _add_const(&context, "_color_sage_", "0.72 0.72 0.59", false);
+    _add_const(&context, "_color_spring_green_", "0.0 1.0 0.5", false);
+    _add_const(&context, "_color_hunter_green_", "0.21 0.37 0.23", false);
+    _add_const(&context, "_color_kelly_green_", "0.3 0.73 0.09", false);
+    _add_const(&context, "_color_pine_", "0.06 0.32 0.21", false);
+    _add_const(&context, "_color_fern_", "0.44 0.64 0.26", false);
+    _add_const(&context, "_color_neon_green_", "0.22 1.0 0.08", false);
     // Blues
     _add_const(&context, "_color_blue_", "0.0 0.0 1.0", false);
     _add_const(&context, "_color_navy_", "0.0 0.0 0.5", false);
@@ -246,6 +267,15 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const(&context, "_color_powder_blue_", "0.69 0.88 0.9", false);
     _add_const(&context, "_color_cerulean_", "0.0 0.48 0.65", false);
     _add_const(&context, "_color_teal_", "0.0 0.5 0.5", false);
+    _add_const(&context, "_color_royal_blue_", "0.25 0.41 0.88", false);
+    _add_const(&context, "_color_midnight_blue_", "0.1 0.1 0.44", false);
+    _add_const(&context, "_color_cobalt_", "0.0 0.28 0.67", false);
+    _add_const(&context, "_color_cornflower_blue_", "0.39 0.58 0.93", false);
+    _add_const(&context, "_color_turquoise_", "0.25 0.88 0.82", false);
+    _add_const(&context, "_color_cyan_", "0.0 1.0 1.0", false);
+    _add_const(&context, "_color_aquamarine_", "0.5 1.0 0.83", false);
+    _add_const(&context, "_color_electric_blue_", "0.49 0.98 1.0", false);
+    _add_const(&context, "_color_periwinkle_", "0.8 0.8 1.0", false);
     // Purples & Violets
     _add_const(&context, "_color_purple_", "0.5 0.0 0.5", false);
     _add_const(&context, "_color_indigo_", "0.29 0.0 0.51", false);
@@ -256,6 +286,11 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const(&context, "_color_orchid_", "0.85 0.44 0.84", false);
     _add_const(&context, "_color_thistle_", "0.85 0.75 0.85", false);
     _add_const(&context, "_color_eggplant_", "0.38 0.25 0.32", false);
+    _add_const(&context, "_color_magenta_", "0.8 0.0 0.8", false);
+    _add_const(&context, "_color_mauve_", "0.88 0.69 1.0", false);
+    _add_const(&context, "_color_lilac_", "0.78 0.64 0.78", false);
+    _add_const(&context, "_color_grape_", "0.44 0.18 0.66", false);
+    _add_const(&context, "_color_royal_purple_", "0.47 0.32 0.66", false);
     // Browns
     _add_const(&context, "_color_brown_", "0.6 0.4 0.2", false);
     _add_const(&context, "_color_chocolate_", "0.82 0.41 0.12", false);
@@ -272,6 +307,9 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const(&context, "_color_wood_", "0.76 0.6 0.42", false);
     _add_const(&context, "_color_bronze_", "0.8 0.5 0.2", false);
     _add_const(&context, "_color_russet_", "0.5 0.27 0.23", false);
+    _add_const(&context, "_color_sienna_", "0.63 0.32 0.18", false);
+    _add_const(&context, "_color_cinnamon_", "0.69 0.4 0.24", false);
+    _add_const(&context, "_color_sandy_brown_", "0.96 0.64 0.38", false);
     // Neutrals & Grays
     _add_const(&context, "_color_white_", "1.0 1.0 1.0", false);
     _add_const(&context, "_color_black_", "0.0 0.0 0.0", false);
@@ -288,6 +326,13 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const(&context, "_color_khaki_", "0.76 0.69 0.57", false);
     _add_const(&context, "_color_sand_", "0.94 0.87 0.73", false);
     _add_const(&context, "_color_taupe_", "0.56 0.52 0.51", false);
+    _add_const(&context, "_color_snow_", "1.0 0.98 0.98", false);
+    _add_const(&context, "_color_pearl_", "0.94 0.92 0.88", false);
+    _add_const(&context, "_color_smoke_", "0.96 0.96 0.96", false);
+    _add_const(&context, "_color_bone_", "0.89 0.85 0.79", false);
+    _add_const(&context, "_color_graphite_", "0.29 0.29 0.29", false);
+    _add_const(&context, "_color_iron_", "0.32 0.34 0.36", false);
+    _add_const(&context, "_color_steel_", "0.5 0.5 0.55", false);
     // Stencil
     _add_const(&context, "_stencil_color_", "0 0 0 1", false);
 

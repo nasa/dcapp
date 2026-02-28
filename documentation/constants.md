@@ -213,6 +213,11 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_hot_pink_` | 1.0, 0.41, 0.71 |
 | `#_color_light_pink_` | 1.0, 0.71, 0.76 |
 | `#_color_mulberry_` | 0.77, 0.29, 0.55 |
+| `#_color_scarlet_` | 1.0, 0.14, 0.0 |
+| `#_color_tomato_` | 1.0, 0.39, 0.28 |
+| `#_color_wine_` | 0.45, 0.18, 0.22 |
+| `#_color_raspberry_` | 0.89, 0.04, 0.36 |
+| `#_color_dark_red_` | 0.55, 0.0, 0.0 |
 
 ### Oranges
 
@@ -227,6 +232,9 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_burnt_orange_` | 0.8, 0.33, 0.0 |
 | `#_color_rust_` | 0.72, 0.25, 0.05 |
 | `#_color_terracotta_` | 0.89, 0.45, 0.36 |
+| `#_color_dark_orange_` | 1.0, 0.55, 0.0 |
+| `#_color_mango_` | 1.0, 0.51, 0.26 |
+| `#_color_persimmon_` | 0.93, 0.35, 0.0 |
 
 ### Yellows
 
@@ -240,6 +248,11 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_champagne_` | 0.97, 0.91, 0.81 |
 | `#_color_sunflower_` | 1.0, 0.8, 0.0 |
 | `#_color_flax_` | 0.93, 0.87, 0.51 |
+| `#_color_cream_` | 1.0, 0.99, 0.82 |
+| `#_color_ivory_` | 1.0, 1.0, 0.94 |
+| `#_color_saffron_` | 0.96, 0.77, 0.19 |
+| `#_color_golden_rod_` | 0.85, 0.65, 0.13 |
+| `#_color_canary_` | 1.0, 0.94, 0.0 |
 
 ### Greens
 
@@ -256,6 +269,14 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_pistachio_` | 0.58, 0.77, 0.45 |
 | `#_color_seafoam_` | 0.62, 0.89, 0.76 |
 | `#_color_chartreuse_` | 0.5, 1.0, 0.0 |
+| `#_color_dark_green_` | 0.0, 0.39, 0.0 |
+| `#_color_sage_` | 0.72, 0.72, 0.59 |
+| `#_color_spring_green_` | 0.0, 1.0, 0.5 |
+| `#_color_hunter_green_` | 0.21, 0.37, 0.23 |
+| `#_color_kelly_green_` | 0.3, 0.73, 0.09 |
+| `#_color_pine_` | 0.06, 0.32, 0.21 |
+| `#_color_fern_` | 0.44, 0.64, 0.26 |
+| `#_color_neon_green_` | 0.22, 1.0, 0.08 |
 
 ### Blues
 
@@ -272,6 +293,15 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_powder_blue_` | 0.69, 0.88, 0.9 |
 | `#_color_cerulean_` | 0.0, 0.48, 0.65 |
 | `#_color_teal_` | 0.0, 0.5, 0.5 |
+| `#_color_royal_blue_` | 0.25, 0.41, 0.88 |
+| `#_color_midnight_blue_` | 0.1, 0.1, 0.44 |
+| `#_color_cobalt_` | 0.0, 0.28, 0.67 |
+| `#_color_cornflower_blue_` | 0.39, 0.58, 0.93 |
+| `#_color_turquoise_` | 0.25, 0.88, 0.82 |
+| `#_color_cyan_` | 0.0, 1.0, 1.0 |
+| `#_color_aquamarine_` | 0.5, 1.0, 0.83 |
+| `#_color_electric_blue_` | 0.49, 0.98, 1.0 |
+| `#_color_periwinkle_` | 0.8, 0.8, 1.0 |
 
 ### Purples & Violets
 
@@ -286,6 +316,11 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_orchid_` | 0.85, 0.44, 0.84 |
 | `#_color_thistle_` | 0.85, 0.75, 0.85 |
 | `#_color_eggplant_` | 0.38, 0.25, 0.32 |
+| `#_color_magenta_` | 0.8, 0.0, 0.8 |
+| `#_color_mauve_` | 0.88, 0.69, 1.0 |
+| `#_color_lilac_` | 0.78, 0.64, 0.78 |
+| `#_color_grape_` | 0.44, 0.18, 0.66 |
+| `#_color_royal_purple_` | 0.47, 0.32, 0.66 |
 
 ### Browns
 
@@ -306,6 +341,9 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_wood_` | 0.76, 0.6, 0.42 |
 | `#_color_bronze_` | 0.8, 0.5, 0.2 |
 | `#_color_russet_` | 0.5, 0.27, 0.23 |
+| `#_color_sienna_` | 0.63, 0.32, 0.18 |
+| `#_color_cinnamon_` | 0.69, 0.4, 0.24 |
+| `#_color_sandy_brown_` | 0.96, 0.64, 0.38 |
 
 ### Neutrals & Grays
 
@@ -326,6 +364,13 @@ dcapp includes a comprehensive palette of named colors. Color constants use RGB 
 | `#_color_khaki_` | 0.76, 0.69, 0.57 |
 | `#_color_sand_` | 0.94, 0.87, 0.73 |
 | `#_color_taupe_` | 0.56, 0.52, 0.51 |
+| `#_color_snow_` | 1.0, 0.98, 0.98 |
+| `#_color_pearl_` | 0.94, 0.92, 0.88 |
+| `#_color_smoke_` | 0.96, 0.96, 0.96 |
+| `#_color_bone_` | 0.89, 0.85, 0.79 |
+| `#_color_graphite_` | 0.29, 0.29, 0.29 |
+| `#_color_iron_` | 0.32, 0.34, 0.36 |
+| `#_color_steel_` | 0.5, 0.5, 0.55 |
 
 ### Using Color Constants
 
