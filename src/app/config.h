@@ -23,7 +23,6 @@ typedef struct _DcAppConfig {
     char *config_file_path;
     char *config_dir_path;
     char *cache_dir_path;
-    char *log_dir_path;
 
 } DcAppConfig;
 

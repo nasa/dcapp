@@ -117,11 +117,6 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     dc_utils_join_paths(config->dcapp_dir_path, "cache", config->cache_dir_path, DC_UTILS_FILEPATH_BUFFER_SIZE);
     dc_utils_create_directory(config->cache_dir_path);
 
-    // get + create log dir
-    config->log_dir_path = (char *)malloc(DC_UTILS_FILEPATH_BUFFER_SIZE);
-    dc_utils_join_paths(config->dcapp_dir_path, "logs", config->log_dir_path, DC_UTILS_FILEPATH_BUFFER_SIZE);
-    dc_utils_create_directory(config->log_dir_path);
-
     // get XML doc
     config->xml_doc = xmlReadFile(config->config_file_path, "UTF-8", XML_PARSE_NOBLANKS);
     if (!config->xml_doc) {
@@ -343,7 +338,6 @@ void dc_app_config_cleanup(DcAppConfig *config) {
     free(config->config_dir_path);
     free(config->dcapp_dir_path);
     free(config->cache_dir_path);
-    free(config->log_dir_path);
     xmlFreeDoc(config->xml_doc);
 
     _ConfigContext *context = &(_sb_contexts[config->_index]);
