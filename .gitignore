@@ -8,6 +8,18 @@ compile_flags.txt
 
 .DS_Store
 
+# ai tools
+.claude/
+.cursor/
+.windsurf/
+.aider*
+.codeium/
+.continue/
+.codex/
+.copilot/
+.github/copilot/
+.tabnine/
+
 **.spv
 samples/**/dcapp.h
 **.so
