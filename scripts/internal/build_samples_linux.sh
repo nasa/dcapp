@@ -54,37 +54,34 @@ done
 if [[ "$PL_CONFIG" == "release" ]]; then
 
 # create output directory(s)
-mkdir -p "../samples/functions/logic"
-mkdir -p "../samples/screensaver/logic"
-mkdir -p "../samples/lissajous/logic"
-mkdir -p "../samples/mask/logic"
-mkdir -p "../samples/ptz/logic"
-mkdir -p "../samples/planet_vehicle/logic"
-mkdir -p "../samples/planet/logic"
+mkdir -p "../../samples/functions/logic"
+mkdir -p "../../samples/planet/logic"
+mkdir -p "../../samples/screensaver/logic"
+mkdir -p "../../samples/mask/logic"
+mkdir -p "../../samples/lissajous/logic"
+mkdir -p "../../samples/ptz/logic"
 
 # create lock file(s)
-echo LOCKING > "../samples/screensaver/logic/lock.tmp"
+echo LOCKING > "../../samples/screensaver/logic/lock.tmp"
 
 PL_BUILD_STATUS=0
 
-rm -f ../samples/functions/logic/logic.so
-rm -f ../samples/functions/logic/logic_*.so
-rm -f ../samples/lissajous/logic/logic.so
-rm -f ../samples/lissajous/logic/logic_*.so
-rm -f ../samples/mask/logic/logic.so
-rm -f ../samples/mask/logic/logic_*.so
-rm -f ../samples/planet/logic/logic.so
-rm -f ../samples/planet/logic/logic_*.so
-rm -f ../samples/planet_vehicle/logic/logic.so
-rm -f ../samples/planet_vehicle/logic/logic_*.so
-rm -f ../samples/ptz/logic/logic.so
-rm -f ../samples/ptz/logic/logic_*.so
-rm -f ../samples/screensaver/logic/logic.so
-rm -f ../samples/screensaver/logic/logic_*.so
+rm -f ../../samples/functions/logic/logic.so
+rm -f ../../samples/functions/logic/logic_*.so
+rm -f ../../samples/lissajous/logic/logic.so
+rm -f ../../samples/lissajous/logic/logic_*.so
+rm -f ../../samples/mask/logic/logic.so
+rm -f ../../samples/mask/logic/logic_*.so
+rm -f ../../samples/planet/logic/logic.so
+rm -f ../../samples/planet/logic/logic_*.so
+rm -f ../../samples/ptz/logic/logic.so
+rm -f ../../samples/ptz/logic/logic_*.so
+rm -f ../../samples/screensaver/logic/logic.so
+rm -f ../../samples/screensaver/logic/logic_*.so
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ functions | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader ../samples/functions/functions.xml
+../../pilotlight/out/dcapp-genheader ../../samples/functions/functions.xml
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
@@ -94,14 +91,14 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/functions/logic/logic.c "
+PL_SOURCES="../../samples/functions/logic/logic.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: functions${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/functions/logic/logic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/functions/logic/logic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -120,7 +117,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ lissajous | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader ../samples/lissajous/lissajous.xml
+../../pilotlight/out/dcapp-genheader ../../samples/lissajous/lissajous.xml
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
@@ -130,14 +127,14 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/lissajous/logic/logic.c "
+PL_SOURCES="../../samples/lissajous/logic/logic.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: lissajous${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/lissajous/logic/logic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/lissajous/logic/logic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -156,7 +153,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ mask | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader ../samples/mask/mask.xml
+../../pilotlight/out/dcapp-genheader ../../samples/mask/mask.xml
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
@@ -166,14 +163,14 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/mask/logic/logic.c "
+PL_SOURCES="../../samples/mask/logic/logic.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: mask${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/mask/logic/logic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/mask/logic/logic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -192,7 +189,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ planet | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader ../samples/planet/planet.xml
+../../pilotlight/out/dcapp-genheader ../../samples/planet/planet.xml
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
@@ -202,50 +199,14 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/planet/logic/logic.c "
+PL_SOURCES="../../samples/planet/logic/logic.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: planet${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/planet/logic/logic.so"
-
-# check build status
-if [ $? -ne 0 ]
-then
-    PL_RESULT=${BOLD}${RED}Failed.${NC}
-    PL_BUILD_STATUS=1
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-popd >/dev/null
-exit 1
-fi
-
-# print results
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~ planet_vehicle | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-../pilotlight/out/dcapp-genheader ../samples/planet_vehicle/planet_vehicle.xml
-
-PL_RESULT=${BOLD}${GREEN}Successful.${NC}
-PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES=""
-PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC "
-PL_LINKER_FLAGS="-ldl -lm "
-PL_STATIC_LINK_LIBRARIES=""
-PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/planet_vehicle/logic/logic.c "
-
-# run compiler (and linker)
-echo
-echo ${YELLOW}Step: planet_vehicle${NC}
-echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
-echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/planet_vehicle/logic/logic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/planet/logic/logic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -264,7 +225,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ptz | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader ../samples/ptz/ptz.xml
+../../pilotlight/out/dcapp-genheader ../../samples/ptz/ptz.xml
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
@@ -274,14 +235,14 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/ptz/logic/logic.c "
+PL_SOURCES="../../samples/ptz/logic/logic.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: ptz${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/ptz/logic/logic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/ptz/logic/logic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -300,7 +261,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~ screensaver | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader ../samples/screensaver/screensaver.xml
+../../pilotlight/out/dcapp-genheader ../../samples/screensaver/screensaver.xml
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
@@ -310,14 +271,14 @@ PL_COMPILER_FLAGS="-fPIC "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/screensaver/logic/logic.c "
+PL_SOURCES="../../samples/screensaver/logic/logic.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: screensaver${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/screensaver/logic/logic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/screensaver/logic/logic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -335,7 +296,7 @@ echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 # delete lock file(s)
-rm -f ../samples/screensaver/logic/lock.tmp
+rm -f ../../samples/screensaver/logic/lock.tmp
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # end of release
@@ -348,37 +309,34 @@ fi
 if [[ "$PL_CONFIG" == "debug" ]]; then
 
 # create output directory(s)
-mkdir -p "../samples/functions/logic"
-mkdir -p "../samples/screensaver/logic"
-mkdir -p "../samples/lissajous/logic"
-mkdir -p "../samples/mask/logic"
-mkdir -p "../samples/ptz/logic"
-mkdir -p "../samples/planet_vehicle/logic"
-mkdir -p "../samples/planet/logic"
+mkdir -p "../../samples/functions/logic"
+mkdir -p "../../samples/planet/logic"
+mkdir -p "../../samples/screensaver/logic"
+mkdir -p "../../samples/mask/logic"
+mkdir -p "../../samples/lissajous/logic"
+mkdir -p "../../samples/ptz/logic"
 
 # create lock file(s)
-echo LOCKING > "../samples/screensaver/logic/lock.tmp"
+echo LOCKING > "../../samples/screensaver/logic/lock.tmp"
 
 PL_BUILD_STATUS=0
 
-rm -f ../samples/functions/logic/logic.so
-rm -f ../samples/functions/logic/logic_*.so
-rm -f ../samples/lissajous/logic/logic.so
-rm -f ../samples/lissajous/logic/logic_*.so
-rm -f ../samples/mask/logic/logic.so
-rm -f ../samples/mask/logic/logic_*.so
-rm -f ../samples/planet/logic/logic.so
-rm -f ../samples/planet/logic/logic_*.so
-rm -f ../samples/planet_vehicle/logic/logic.so
-rm -f ../samples/planet_vehicle/logic/logic_*.so
-rm -f ../samples/ptz/logic/logic.so
-rm -f ../samples/ptz/logic/logic_*.so
-rm -f ../samples/screensaver/logic/logic.so
-rm -f ../samples/screensaver/logic/logic_*.so
+rm -f ../../samples/functions/logic/logic.so
+rm -f ../../samples/functions/logic/logic_*.so
+rm -f ../../samples/lissajous/logic/logic.so
+rm -f ../../samples/lissajous/logic/logic_*.so
+rm -f ../../samples/mask/logic/logic.so
+rm -f ../../samples/mask/logic/logic_*.so
+rm -f ../../samples/planet/logic/logic.so
+rm -f ../../samples/planet/logic/logic_*.so
+rm -f ../../samples/ptz/logic/logic.so
+rm -f ../../samples/ptz/logic/logic_*.so
+rm -f ../../samples/screensaver/logic/logic.so
+rm -f ../../samples/screensaver/logic/logic_*.so
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ functions | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader ../samples/functions/functions.xml
+../../pilotlight/out/dcapp-genheader ../../samples/functions/functions.xml
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
@@ -388,14 +346,14 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/functions/logic/logic.c "
+PL_SOURCES="../../samples/functions/logic/logic.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: functions${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/functions/logic/logic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/functions/logic/logic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -414,7 +372,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ lissajous | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader ../samples/lissajous/lissajous.xml
+../../pilotlight/out/dcapp-genheader ../../samples/lissajous/lissajous.xml
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
@@ -424,14 +382,14 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/lissajous/logic/logic.c "
+PL_SOURCES="../../samples/lissajous/logic/logic.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: lissajous${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/lissajous/logic/logic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/lissajous/logic/logic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -450,7 +408,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ mask | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader ../samples/mask/mask.xml
+../../pilotlight/out/dcapp-genheader ../../samples/mask/mask.xml
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
@@ -460,14 +418,14 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/mask/logic/logic.c "
+PL_SOURCES="../../samples/mask/logic/logic.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: mask${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/mask/logic/logic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/mask/logic/logic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -486,7 +444,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ planet | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader ../samples/planet/planet.xml
+../../pilotlight/out/dcapp-genheader ../../samples/planet/planet.xml
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
@@ -496,50 +454,14 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/planet/logic/logic.c "
+PL_SOURCES="../../samples/planet/logic/logic.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: planet${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/planet/logic/logic.so"
-
-# check build status
-if [ $? -ne 0 ]
-then
-    PL_RESULT=${BOLD}${RED}Failed.${NC}
-    PL_BUILD_STATUS=1
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-popd >/dev/null
-exit 1
-fi
-
-# print results
-echo ${CYAN}Results: ${NC} ${PL_RESULT}
-echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~ planet_vehicle | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-../pilotlight/out/dcapp-genheader ../samples/planet_vehicle/planet_vehicle.xml
-
-PL_RESULT=${BOLD}${GREEN}Successful.${NC}
-PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES=""
-PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
-PL_LINKER_FLAGS="-ldl -lm "
-PL_STATIC_LINK_LIBRARIES=""
-PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/planet_vehicle/logic/logic.c "
-
-# run compiler (and linker)
-echo
-echo ${YELLOW}Step: planet_vehicle${NC}
-echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
-echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/planet_vehicle/logic/logic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/planet/logic/logic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -558,7 +480,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ptz | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader ../samples/ptz/ptz.xml
+../../pilotlight/out/dcapp-genheader ../../samples/ptz/ptz.xml
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
@@ -568,14 +490,14 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/ptz/logic/logic.c "
+PL_SOURCES="../../samples/ptz/logic/logic.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: ptz${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/ptz/logic/logic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/ptz/logic/logic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -594,7 +516,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ screensaver | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-../pilotlight/out/dcapp-genheader ../samples/screensaver/screensaver.xml
+../../pilotlight/out/dcapp-genheader ../../samples/screensaver/screensaver.xml
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
@@ -604,14 +526,14 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../samples/screensaver/logic/logic.c "
+PL_SOURCES="../../samples/screensaver/logic/logic.c "
 
 # run compiler (and linker)
 echo
 echo ${YELLOW}Step: screensaver${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
-gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../samples/screensaver/logic/logic.so"
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../samples/screensaver/logic/logic.so"
 
 # check build status
 if [ $? -ne 0 ]
@@ -629,7 +551,7 @@ echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 # delete lock file(s)
-rm -f ../samples/screensaver/logic/lock.tmp
+rm -f ../../samples/screensaver/logic/lock.tmp
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # end of debug

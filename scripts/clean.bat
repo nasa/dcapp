@@ -3,8 +3,8 @@
 :: keep environment variables modifications local
 @setlocal
 
-:: make script directory CWD
-@pushd %~dp0
+:: make repo root CWD
+@pushd %~dp0..
 
 :: app artifacts
 @if exist "pilotlight\out" rmdir /s /q "pilotlight\out"

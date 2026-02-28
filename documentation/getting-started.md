@@ -94,13 +94,13 @@ sudo dnf install gcc gcc-c++ libxml2-devel libcurl-devel gdal-devel \
 From the repository root:
 
 ```bash
-./build.sh
+scripts/build.sh
 ```
 
 This builds pilotlight, the dcapp apps, and the dcapp samples. The default configuration is `release`. To build a debug build:
 
 ```bash
-./build.sh -c debug
+scripts/build.sh -c debug
 ```
 
 Output binaries are placed in `bin/` (wrapper scripts) and `pilotlight/out/` (compiled binaries).
@@ -130,13 +130,13 @@ brew install libxml2 curl gdal
 From the repository root:
 
 ```bash
-./build.sh
+scripts/build.sh
 ```
 
 The build script auto-detects macOS and uses the correct platform backend. The default configuration is `release`. To build a debug build:
 
 ```bash
-./build.sh -c debug
+scripts/build.sh -c debug
 ```
 
 Output binaries are placed in `bin/` (wrapper scripts) and `pilotlight/out/` (compiled binaries).
@@ -173,13 +173,13 @@ C:\vcpkg\vcpkg.exe install
 From the repository root:
 
 ```bat
-build.bat
+scripts\build.bat
 ```
 
 This builds pilotlight, the dcapp apps, and the dcapp samples. The default configuration is `release`. To build a debug build:
 
 ```bat
-build.bat -c debug
+scripts\build.bat -c debug
 ```
 
 Output binaries are placed in `bin\` (wrapper scripts) and `pilotlight\out\` (compiled binaries).
@@ -263,7 +263,7 @@ Some samples include custom C logic (located in a `logic/` subdirectory within t
 If you add a new sample with a logic file, or modify the build generation scripts, regenerate the build scripts first:
 
 ```bash
-cd scripts
+cd scripts/internal
 python3 gen_build_samples.py
 python3 gen_build_apps.py
 ```
@@ -273,16 +273,16 @@ Then rebuild from the repository root:
 **Linux / macOS:**
 
 ```bash
-./build.sh
+scripts/build.sh
 ```
 
 **Windows:**
 
 ```bat
-build.bat
+scripts\build.bat
 ```
 
-Commit the resulting `.bat` and `.sh` files in `scripts/` alongside any changes to the generation scripts.
+Commit the resulting `.bat` and `.sh` files in `scripts/internal/` alongside any changes to the generation scripts.
 
 ---
 
@@ -330,10 +330,10 @@ Make sure you ran `vcpkg install` from the dcapp repository root so that it pick
 
 ### Build configuration issues
 
-Both `build.sh` and `build.bat` accept `-c debug` or `-c release`. If you see linker errors related to debug/release mismatches, clean and rebuild with a consistent configuration:
+Both `scripts/build.sh` and `scripts\build.bat` accept `-c debug` or `-c release`. If you see linker errors related to debug/release mismatches, clean and rebuild with a consistent configuration:
 
 ```bash
-./build.sh -c release
+scripts/build.sh -c release
 ```
 
 ### Display window doesn't appear

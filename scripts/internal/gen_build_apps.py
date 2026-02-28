@@ -19,7 +19,7 @@ def fwd(path):
 file_dir_rel = os.path.dirname(__file__)
 if not file_dir_rel:
     file_dir_rel = "."
-pl_dir_abs = os.path.abspath(file_dir_rel + "/../pilotlight")
+pl_dir_abs = os.path.abspath(file_dir_rel + "/../../pilotlight")
 
 # if provided, use pilotlight location in input (absolute)
 if len(sys.argv) > 1:
@@ -56,8 +56,8 @@ def list_files_recursive(directory, *extensions):
 #-----------------------------------------------------------------------------
 
 # where to output build scripts (absolute)
-dcapp_home_abs = os.path.abspath(file_dir_rel + "/..")
-output_dir_abs = os.path.abspath(dcapp_home_abs + "/scripts")
+dcapp_home_abs = os.path.abspath(file_dir_rel + "/../..")
+output_dir_abs = os.path.abspath(file_dir_rel)
 bin_dir_abs = os.path.abspath(pl_dir_abs + "/out")
 
 # now, update directories to be relative to the output directory

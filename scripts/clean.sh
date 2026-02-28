@@ -9,7 +9,7 @@ while [ -h "$SOURCE" ]; do
 done
 DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
 
-pushd $DIR >/dev/null
+pushd "$DIR/.." >/dev/null
 
 # app artifacts
 rm -rf pilotlight/out

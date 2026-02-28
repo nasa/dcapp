@@ -4,8 +4,10 @@ setlocal enabledelayedexpansion
 :: DCAPP Build Script
 :: Builds pilotlight (with _experimental suffix) and dcapp apps/samples
 
-set "DCAPP_HOME=%~dp0"
-set "DCAPP_HOME=%DCAPP_HOME:~0,-1%"
+set "DCAPP_HOME=%~dp0.."
+pushd "%DCAPP_HOME%"
+set "DCAPP_HOME=%CD%"
+popd
 
 :: Default configuration
 set "CONFIG=release"
@@ -54,24 +56,20 @@ popd
 :: Step 2: Build dcapp apps
 echo.
 echo [2/3] Building dcapp apps...
-pushd "%DCAPP_HOME%\scripts"
-call build_apps_win32.bat -c %CONFIG%
+call "%DCAPP_HOME%\scripts\internal\build_apps_win32.bat" -c %CONFIG%
 if errorlevel 1 (
     echo Apps build failed!
-    popd
     exit /b 1
 )
 
 :: Step 3: Build dcapp samples
 echo.
 echo [3/3] Building dcapp samples...
-call build_samples_win32.bat -c %CONFIG%
+call "%DCAPP_HOME%\scripts\internal\build_samples_win32.bat" -c %CONFIG%
 if errorlevel 1 (
     echo Samples build failed!
-    popd
     exit /b 1
 )
-popd
 
 echo.
 echo ========================================

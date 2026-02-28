@@ -4,7 +4,7 @@ set -e
 # DCAPP Build Script
 # Builds pilotlight (with _experimental suffix) and dcapp apps/samples
 
-DCAPP_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DCAPP_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Default configuration
 CONFIG="release"
@@ -54,13 +54,12 @@ bash "$PL_BUILD_SCRIPT" -c "${CONFIG}_experimental"
 # Step 2: Build dcapp apps
 echo ""
 echo "[2/3] Building dcapp apps..."
-cd "$DCAPP_HOME/scripts"
-bash "build_apps_${PLATFORM}.sh" -c "$CONFIG"
+bash "$DCAPP_HOME/scripts/internal/build_apps_${PLATFORM}.sh" -c "$CONFIG"
 
 # Step 3: Build dcapp samples
 echo ""
 echo "[3/3] Building dcapp samples..."
-bash "build_samples_${PLATFORM}.sh" -c "$CONFIG"
+bash "$DCAPP_HOME/scripts/internal/build_samples_${PLATFORM}.sh" -c "$CONFIG"
 
 echo ""
 echo "========================================"
