@@ -90,7 +90,12 @@ void dc_ps_shmem_cleanup(void) {
 DcPsShmemHandle dc_ps_shmem_add_source(const char *filepath) {
     _Context ctx = {0};
 
-    ctx.filepath     = strdup(filepath);
+    ctx.filepath = strdup(filepath);
+    if (!ctx.filepath) {
+        DC_LOG_ERROR("Shmem", "Failed to allocate filepath");
+        DcPsShmemHandle handle = {0};
+        return handle;
+    }
     ctx.shm          = NULL;
     ctx.connected    = false;
     ctx.has_new_data = false;
@@ -220,7 +225,13 @@ static int _read_frame(_Context *ctx) {
 
             // Reallocate if needed
             if (nbytes > ctx->alloc_size) {
-                ctx->pixels     = realloc(ctx->pixels, nbytes);
+                void *new_pixels = realloc(ctx->pixels, nbytes);
+                if (!new_pixels) {
+                    DC_LOG_ERROR("Shmem", "Failed to reallocate pixel buffer");
+                    fclose(fp);
+                    return 0;
+                }
+                ctx->pixels     = new_pixels;
                 ctx->alloc_size = nbytes;
             }
 

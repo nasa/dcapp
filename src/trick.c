@@ -91,6 +91,11 @@ DcTrickHandle dc_trick_create(const char *host, int port, float data_rate, int t
     context.rx_oad_var_values        = NULL;
     context.rx_oad_var_value_offsets = NULL;
     context.temp_buffer              = (char *)malloc(DC_TRICK_TEMP_BUFFER_SIZE);
+    if (!context.temp_buffer) {
+        DC_LOG_ERROR("Trick", "Failed to allocate temp buffer");
+        DcTrickHandle trick = {0};
+        return trick;
+    }
     sbpush(_contexts, context);
 
     DcTrickHandle trick;
@@ -301,13 +306,13 @@ void dc_trick_get_rx_oad_value(DcTrickHandle trick, DcTrickVarIndex oad_index, c
 
 // static helpers
 
-void _dc_trick_append_to_tx_buffer(DcTrickHandle trick, const char *in, size_t in_size) {
+static void _dc_trick_append_to_tx_buffer(DcTrickHandle trick, const char *in, size_t in_size) {
     _DcTrickContext *context = &(_contexts[trick.index]);
     sbpushn(context->tx_buffer, in, (int)in_size);
 }
 
 // send chunk of tx buffer, update internal tx buffer offset
-DcTrickResult _dc_trick_send(DcTrickHandle trick) {
+static DcTrickResult _dc_trick_send(DcTrickHandle trick) {
     _DcTrickContext *context = &(_contexts[trick.index]);
 
     // only send if there is data to send
@@ -342,7 +347,7 @@ DcTrickResult _dc_trick_send(DcTrickHandle trick) {
     }
 }
 
-DcTrickResult _dc_trick_receive(DcTrickHandle trick) {
+static DcTrickResult _dc_trick_receive(DcTrickHandle trick) {
     _DcTrickContext *context = &(_contexts[trick.index]);
 
     // read all available data from socket, not just one chunk
@@ -439,13 +444,13 @@ DcTrickResult _dc_trick_receive(DcTrickHandle trick) {
     return DC_TRICK_RESULT_SUCCESS;
 }
 
-void _dc_trick_connect(DcTrickHandle trick) {
+static void _dc_trick_connect(DcTrickHandle trick) {
     _DcTrickContext *context = &(_contexts[trick.index]);
     dc_sock_connect(context->sock, context->ip, context->port);
     context->reconnect_start = time(NULL);
 }
 
-void _dc_trick_close(DcTrickHandle trick) {
+static void _dc_trick_close(DcTrickHandle trick) {
     _DcTrickContext *context = &(_contexts[trick.index]);
 
     // send cleanup commands if connected

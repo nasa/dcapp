@@ -94,6 +94,11 @@ DcEdgeHandle dc_edge_create(const char *host, int port, float data_rate, int tim
     context.rx_var_offsets  = NULL;
     context.tx_buffer       = NULL;
     context.temp_buffer     = (char *)malloc(DC_EDGE_TEMP_BUFFER_SIZE);
+    if (!context.temp_buffer) {
+        DC_LOG_ERROR("Edge", "Failed to allocate temp buffer");
+        DcEdgeHandle edge = {0};
+        return edge;
+    }
     sbpush(_contexts, context);
 
     DcEdgeHandle edge;

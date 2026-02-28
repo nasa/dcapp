@@ -115,7 +115,7 @@ void *dc_value_get_addr(DcValue *value) {
         case DC_VALUE_TYPE_STRING:
             return value->value_string;
         default:
-            DC_LOG_ERROR("Value", "dc_value_set_from_string(): invalid value type %d", value->type);
+            DC_LOG_ERROR("Value", "dc_value_get_addr(): invalid value type %d", value->type);
             break;
     }
     return NULL;
@@ -132,7 +132,7 @@ bool dc_value_is_equal(DcValue *value1, DcValue *value2) {
         case DC_VALUE_TYPE_STRING:
             return strcmp(value1->value_string, value2->value_string) == 0;
         default:
-            DC_LOG_ERROR("Value", "dc_value_set_from_string(): invalid value type %d", value1->type);
+            DC_LOG_ERROR("Value", "dc_value_is_equal(): invalid value type %d", value1->type);
             break;
     }
     return false;

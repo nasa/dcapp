@@ -110,7 +110,8 @@ DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
     struct in_addr  addr4;
     struct in6_addr addr6;
     if (inet_pton(AF_INET, host, &addr4) == 1 || inet_pton(AF_INET6, host, &addr6) == 1) {
-        strcpy(out, host);
+        strncpy(out, host, INET6_ADDRSTRLEN - 1);
+        out[INET6_ADDRSTRLEN - 1] = '\0';
         return DC_SOCK_RESULT_SUCCESS;
     }
 
@@ -149,7 +150,8 @@ DcSockResult dc_sock_host_to_ip(const char *host, char *out) {
     }
 
     if (addr_ptr && inet_ntop(family, addr_ptr, ip_str, sizeof(ip_str))) {
-        strcpy(out, ip_str);
+        strncpy(out, ip_str, INET6_ADDRSTRLEN - 1);
+        out[INET6_ADDRSTRLEN - 1] = '\0';
     } else {
         DC_LOG_ERROR("Sock", "host_to_ip inet_ntop: %s", strerror(errno));
     }
