@@ -3,26 +3,26 @@
 
 // PL includes
 #define PL_EXPERIMENTAL
-#include "../pilotlight/src/pl.h"
+#include "../../pilotlight/src/pl.h"
 #define PL_MATH_INCLUDE_FUNCTIONS
-#include "../pilotlight/libs/pl_math.h"
+#include "../../pilotlight/libs/pl_math.h"
 
 // PL extension includes
-#include "../pilotlight/extensions/pl_camera_ext.h"
-#include "../pilotlight/extensions/pl_profile_ext.h"
-#include "../pilotlight/extensions/pl_starter_ext.h"
-#include "../pilotlight/extensions/pl_graphics_ext.h"
-#include "../pilotlight/extensions/pl_gpu_allocators_ext.h"
-#include "../pilotlight/extensions/pl_vfs_ext.h"
-#include "../pilotlight/extensions/pl_shader_ext.h"
-#include "../pilotlight/extensions/pl_image_ext.h"
-#include "../pilotlight/extensions/pl_resource_ext.h"
+#include "../../pilotlight/extensions/pl_camera_ext.h"
+#include "../../pilotlight/extensions/pl_profile_ext.h"
+#include "../../pilotlight/extensions/pl_starter_ext.h"
+#include "../../pilotlight/extensions/pl_graphics_ext.h"
+#include "../../pilotlight/extensions/pl_gpu_allocators_ext.h"
+#include "../../pilotlight/extensions/pl_vfs_ext.h"
+#include "../../pilotlight/extensions/pl_shader_ext.h"
+#include "../../pilotlight/extensions/pl_image_ext.h"
+#include "../../pilotlight/extensions/pl_resource_ext.h"
 
 // dcapp extension includes
-#include "../extensions/dc_draw_ext.h"
-#include "../extensions/dc_draw_backend_ext.h"
-#include "../extensions/pl_planet_ext.h"
-#include "../extensions/pl_planet_processor_ext.h"
+#include "../../extensions/dc_draw_ext.h"
+#include "../../extensions/dc_draw_backend_ext.h"
+#include "../../extensions/pl_planet_ext.h"
+#include "../../extensions/pl_planet_processor_ext.h"
 
 // general includes
 #include <float.h>
@@ -53,15 +53,15 @@ const plImageI           *_ext_image            = NULL;
 const plResourceI        *_ext_resource         = NULL;
 
 // dcapp includes
-#include "../src/utils/stb_sb.h"
-#include "../src/app/elem.h"
-#include "../src/app/enums.h"
-#include "../src/app/lookup.h"
-#include "../src/app/config.h"
-#include "../src/pixelstream/mjpeg.h"
-#include "../src/pixelstream/shmem.h"
-#include "../src/trick.h"
-#include "../src/edge.h"
+#include "../../src/utils/stb_sb.h"
+#include "../../src/app/elem.h"
+#include "../../src/app/enums.h"
+#include "../../src/app/lookup.h"
+#include "../../src/app/config.h"
+#include "../../src/pixelstream/mjpeg.h"
+#include "../../src/pixelstream/shmem.h"
+#include "../../src/trick.h"
+#include "../../src/edge.h"
 #include <libxml/parser.h>
 
 // dcapp node structs

@@ -4,11 +4,11 @@
 #include "dcapp.h"
 
 #define PL_JSON_IMPLEMENTATION
-#include "../pilotlight/libs/pl_json.h"
+#include "../../pilotlight/libs/pl_json.h"
 
-#include "../src/utils/file.h"
-#include "../src/utils/log.h"
-#include "../src/utils/string.h"
+#include "../../src/utils/file.h"
+#include "../../src/utils/log.h"
+#include "../../src/utils/string.h"
 
 static const char *_node_type_to_string(_NodeType type) {
     switch (type) {

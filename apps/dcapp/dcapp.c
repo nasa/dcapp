@@ -1,7 +1,7 @@
 #include "dcapp.h"
 
-#include "../src/utils/env.h"
-#include "../src/utils/log.h"
+#include "../../src/utils/env.h"
+#include "../../src/utils/log.h"
 
 // static members
 // TODO hate this solution, but needed for DLL lookup
@@ -624,5 +624,5 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     app_data->frame_data.next_pressed_node = NODE_INDEX_UNDEFINED;
 }
 
-#include "_dcapp_draw.c"
-#include "_dcapp_process_xml.c"
+#include "draw.c"
+#include "xml.c"

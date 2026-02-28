@@ -1,8 +1,8 @@
 #include "dcapp.h"
 
-#include "../src/utils/file.h"
-#include "../src/utils/log.h"
-#include "../src/utils/string.h"
+#include "../../src/utils/file.h"
+#include "../../src/utils/log.h"
+#include "../../src/utils/string.h"
 #include "libxml/tree.h"
 #include "libxml/xmlstring.h"
 
@@ -4500,4 +4500,4 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
     return node_index;
 }
 
-#include "_dcapp_utils.c"
+#include "utils.c"

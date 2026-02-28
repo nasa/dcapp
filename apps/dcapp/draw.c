@@ -3,11 +3,11 @@
 
 #include "dcapp.h"
 
-#include "../src/app/enums.h"
-#include "../src/utils/log.h"
-#include "../src/utils/math.h"
-#include "../src/utils/string.h"
-#include "../src/utils/time.h"
+#include "../../src/app/enums.h"
+#include "../../src/utils/log.h"
+#include "../../src/utils/math.h"
+#include "../../src/utils/string.h"
+#include "../../src/utils/time.h"
 
 // Forward declarations
 static void _draw_node_blink(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -5058,4 +5058,4 @@ static plDrawList3D *_draw_batch_get_3d(_AppData *app_data) {
     return draw_list;
 }
 
-#include "_dcapp_utils.c"
+#include "utils.c"

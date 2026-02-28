@@ -194,7 +194,7 @@ with pl.project("apps"):
         sources_files_rel = [fwd(os.path.relpath(src_file, output_dir_abs)) for src_file in src_files_abs]
         pl.add_source_files(
             *sources_files_rel,
-            fwd(os.path.relpath(dcapp_home_abs + "/apps/dcapp.c", output_dir_abs))
+            fwd(os.path.relpath(dcapp_home_abs + "/apps/dcapp/dcapp.c", output_dir_abs))
         )
 
         # release config
