@@ -7,10 +7,10 @@ void display_init(void) {
 }
 
 void display_draw(void) {
-    *IMAGE_WIDTH = *ZOOM * BaseWidth;
+    *IMAGE_WIDTH  = *ZOOM * BaseWidth;
     *IMAGE_HEIGHT = *ZOOM * BaseHeight;
-    *IMAGE_X = 50.0 + ((*PAN) * (*ZOOM));
-    *IMAGE_Y = 50.0 + ((*TILT) * (*ZOOM));
+    *IMAGE_X      = 50.0 + ((*PAN) * (*ZOOM));
+    *IMAGE_Y      = 50.0 + ((*TILT) * (*ZOOM));
 }
 
 void display_close(void) {

@@ -6,16 +6,16 @@ void display_init(void) {
 }
 
 void display_draw(void) {
-    time_t now = time(NULL);
+    time_t        now    = time(NULL);
     static double deltax = 8, deltay = 8;
 
     char *time_str = asctime(localtime(&now));
-    
+
     // Copy to CURRENT_TIME, remove trailing newline
     strncpy(*CURRENT_TIME, time_str, 255);
     size_t len = strlen(*CURRENT_TIME);
-    if (len > 0 && (*CURRENT_TIME)[len-1] == '\n') {
-        (*CURRENT_TIME)[len-1] = '\0';
+    if (len > 0 && (*CURRENT_TIME)[len - 1] == '\n') {
+        (*CURRENT_TIME)[len - 1] = '\0';
     }
 
     if (*POS_X < 10) deltax = 8;

@@ -74,7 +74,7 @@ static _NodeIndex    _process_xml_node_window(_AppData *app_data, xmlNodePtr xml
 static const char *_node_type_to_string(_NodeType type);
 static _NodeIndex  _register_node(_AppData *app_data, _Node *node);
 static _Texture    _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name);
-static void        _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRenderPassHandle render_pass);
+static void        _init_stencil_pipelines(_AppData *app_data, plDevice *device, plRenderPassHandle render_pass);
 static void        _init_app_data(_AppData *app_data, _Node *window_node);
 
 static DcAppVarIndex _register_anonymous_variable(_AppData *app_data, DcValueType type, const char *initial_value_str) {
@@ -140,12 +140,12 @@ static _NodeIndex _process_xml_node_children(_AppData *app_data, xmlNodePtr xml_
     return first_child_index;
 }
 static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
-    char directory_buffer[DC_UTILS_FILEPATH_BUFFER_SIZE];
+    char     directory_buffer[DC_UTILS_FILEPATH_BUFFER_SIZE];
     xmlChar *dir_attr = xmlGetProp(xml_node, BAD_CAST "_Directory");
     if (dir_attr) {
         strncpy(directory_buffer, (const char *)dir_attr, sizeof(directory_buffer) - 1);
         directory_buffer[sizeof(directory_buffer) - 1] = '\0';
-        directory = directory_buffer;
+        directory                                      = directory_buffer;
         xmlFree(dir_attr);
     }
 
@@ -619,7 +619,7 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
     }
 
     // radius (shorthand for both RadiusX and RadiusY)
-    xmlChar *raw_radius = xmlGetProp(xml_node, BAD_CAST "Radius");
+    xmlChar      *raw_radius = xmlGetProp(xml_node, BAD_CAST "Radius");
     DcAppValIndex radius_val = DC_APP_VAL_INDEX_UNDEFINED;
     if (raw_radius) {
         radius_val = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius);
@@ -632,7 +632,7 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
         dc_node.ellipse.radius_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius_x);
         xmlFree(raw_radius_x);
     } else {
-        dc_node.ellipse.radius_x = radius_val;  // fallback to Radius
+        dc_node.ellipse.radius_x = radius_val; // fallback to Radius
     }
 
     // radius y (overrides Radius if specified)
@@ -641,7 +641,7 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
         dc_node.ellipse.radius_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius_y);
         xmlFree(raw_radius_y);
     } else {
-        dc_node.ellipse.radius_y = radius_val;  // fallback to Radius
+        dc_node.ellipse.radius_y = radius_val; // fallback to Radius
     }
 
     // segments
@@ -683,7 +683,7 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
     // process children (must store result first to avoid stale pointer after sb reallocation)
-    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _NodeIndex first_child_index                   = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
     _get_node(app_data, node_index)->ellipse.child = first_child_index;
 
     // return
@@ -709,7 +709,7 @@ static DcAppVarIndex _create_anonymous_variable(_AppData *app_data, DcValueType 
 static _NodeIndex _process_xml_node_blink(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
-    _Node dc_node = {0};
+    _Node dc_node  = {0};
     dc_node.type   = NODE_TYPE_BLINK;
     dc_node.parent = parent_node_index;
 
@@ -753,8 +753,8 @@ static _NodeIndex _process_xml_node_blink(_AppData *app_data, xmlNodePtr xml_nod
     // initialize child
 
     // initialize runtime state
-    dc_node.blink.remaining_duration  = 0.0;
-    dc_node.blink.last_frame_time     = 0.0;
+    dc_node.blink.remaining_duration = 0.0;
+    dc_node.blink.last_frame_time    = 0.0;
     // last_fire_blink_value is zero-initialized by _Node dc_node = {0}
 
     // register node
@@ -1074,17 +1074,17 @@ static _NodeIndex _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_no
 
     // process children (state conditional nodes become regular children)
     _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
-    _Node *node = _get_node(app_data, node_index);
-    node->button.child = first_child_index;
+    _Node     *node              = _get_node(app_data, node_index);
+    node->button.child           = first_child_index;
 
     return node_index;
 }
 
 // Helper to create a state event node
 static _NodeIndex _create_state_event_node(_AppData *app_data, _NodeType node_type, _NodeIndex parent_node_index, _NodeIndex child_index) {
-    _Node dc_node = {};
-    dc_node.type = node_type;
-    dc_node.parent = parent_node_index;
+    _Node dc_node             = {};
+    dc_node.type              = node_type;
+    dc_node.parent            = parent_node_index;
     dc_node.state_event.child = child_index;
     return _register_node(app_data, &dc_node);
 }
@@ -1197,7 +1197,7 @@ static _NodeIndex _process_xml_node_constant(_AppData *app_data, xmlNodePtr xml_
 static _NodeIndex _process_xml_node_container(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
-    _Node dc_node = {0};
+    _Node dc_node  = {0};
     dc_node.type   = NODE_TYPE_CONTAINER;
     dc_node.parent = parent_node_index;
 
@@ -1450,7 +1450,7 @@ static _NodeIndex _process_xml_node_edge_io(_AppData *app_data, xmlNodePtr xml_n
     }
 
     // create edge instance
-    _EdgeContext edge_context = {};
+    _EdgeContext edge_context        = {};
     edge_context.edge                = dc_edge_create(host, port, (float)data_rate, 2);
     edge_context.connected_var_index = connected_var_index;
     sbpush(app_data->sb_edges, edge_context);
@@ -1612,10 +1612,10 @@ static _NodeIndex _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_
 static _NodeIndex _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
-    _Node dc_node                     = {};
-    dc_node.type                      = NODE_TYPE_CONDITIONAL;
-    dc_node.parent                    = parent_node_index;
-    dc_node.conditional.state_flags   = NODE_STATE_FLAG_NONE;
+    _Node dc_node                   = {};
+    dc_node.type                    = NODE_TYPE_CONDITIONAL;
+    dc_node.parent                  = parent_node_index;
+    dc_node.conditional.state_flags = NODE_STATE_FLAG_NONE;
 
     // conditional type
     xmlChar *raw_type = xmlGetProp(xml_node, BAD_CAST "Operator");
@@ -1650,7 +1650,7 @@ static _NodeIndex _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, 
     _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
 
     // update child index
-    _Node *node           = _get_node(app_data, node_index);
+    _Node *node             = _get_node(app_data, node_index);
     node->conditional.child = first_child_index;
 
     return node_index;
@@ -1659,7 +1659,7 @@ static _NodeIndex _process_xml_node_if(_AppData *app_data, xmlNodePtr xml_node, 
 static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
-    _Node dc_node = {0};
+    _Node dc_node  = {0};
     dc_node.type   = NODE_TYPE_IMAGE;
     dc_node.parent = parent_node_index;
 
@@ -1904,7 +1904,7 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
     // process children (must store result first to avoid stale pointer after sb reallocation)
-    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _NodeIndex first_child_index                 = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
     _get_node(app_data, node_index)->image.child = first_child_index;
 
     // return
@@ -2047,13 +2047,13 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
 
         char *ext = strrchr(base_filepath, '.');
         if (ext && (strcmp(ext, ".so") == 0 || strcmp(ext, ".dylib") == 0 || strcmp(ext, ".dll") == 0)) {
-            *ext = '\0';  // strip the extension
+            *ext = '\0'; // strip the extension
         }
 
         // try each platform extension
-        const char *extensions[] = { ".so", ".dylib", ".dll" };
-        char try_filepath[DC_VALUE_STRING_BUFFER_SIZE];
-        bool loaded = false;
+        const char *extensions[] = {".so", ".dylib", ".dll"};
+        char        try_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+        bool        loaded = false;
 
         for (int i = 0; i < 3 && !loaded; i++) {
             snprintf(try_filepath, sizeof(try_filepath), "%s%s", base_filepath, extensions[i]);
@@ -2264,7 +2264,7 @@ static _NodeIndex _process_xml_node_panel(_AppData *app_data, xmlNodePtr xml_nod
 static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
-    _Node dc_node = {0};
+    _Node dc_node  = {0};
     dc_node.type   = NODE_TYPE_PIXELSTREAM;
     dc_node.parent = parent_node_index;
 
@@ -2436,7 +2436,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
             // parse filepath (also used as shmem key via ftok)
             xmlChar *raw_filepath = xmlGetProp(xml_node, BAD_CAST "File");
             if (!raw_filepath) {
-                raw_filepath = xmlGetProp(xml_node, BAD_CAST "URL");  // fallback
+                raw_filepath = xmlGetProp(xml_node, BAD_CAST "URL"); // fallback
             }
             char filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
             if (raw_filepath) {
@@ -2576,7 +2576,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
                 sbpush(app_data->sb_textures, texture);
                 texture_index = sbcount(app_data->sb_textures) - 1;
             }
-            skip_test_pattern:
+        skip_test_pattern:
 
             dc_node.pixelstream.test_pattern_texture_index = texture_index;
         }
@@ -2586,7 +2586,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
     // process children (must store result first to avoid stale pointer after sb reallocation)
-    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _NodeIndex first_child_index                       = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
     _get_node(app_data, node_index)->pixelstream.child = first_child_index;
 
     // return
@@ -2708,7 +2708,7 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
     // process children (must store result first to avoid stale pointer after sb reallocation)
-    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _NodeIndex first_child_index                   = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
     _get_node(app_data, node_index)->polygon.child = first_child_index;
 
     // return
@@ -2885,7 +2885,7 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
     // process children (must store result first to avoid stale pointer after sb reallocation)
-    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _NodeIndex first_child_index                     = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
     _get_node(app_data, node_index)->rectangle.child = first_child_index;
 
     // return
@@ -3276,11 +3276,11 @@ static _NodeIndex _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_no
 
     // Name
     xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
-    def.name = strdup((const char *)raw_name);
+    def.name          = strdup((const char *)raw_name);
     xmlFree(raw_name);
 
     // ShaderIndex (optional — selects active PlanetShader by index at runtime)
-    def.shader_index = DC_APP_VAL_INDEX_UNDEFINED;
+    def.shader_index          = DC_APP_VAL_INDEX_UNDEFINED;
     xmlChar *raw_shader_index = xmlGetProp(xml_node, BAD_CAST "ShaderIndex");
     if (raw_shader_index) {
         def.shader_index = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_shader_index);
@@ -3418,8 +3418,8 @@ static void _planet_shader_abs_to_vfs(const char *abs_path, char *vfs_out, size_
     _ext_vfs->mount_directory(vfs_mount, dir, PL_VFS_MOUNT_FLAGS_NONE);
 
     // extract filename (handle both / and \ separators)
-    const char *fslash = strrchr(abs_path, '/');
-    const char *bslash = strrchr(abs_path, '\\');
+    const char *fslash   = strrchr(abs_path, '/');
+    const char *bslash   = strrchr(abs_path, '\\');
     const char *filename = (fslash > bslash) ? fslash + 1 : (bslash ? bslash + 1 : abs_path);
 
     snprintf(vfs_out, vfs_out_size, "%s/%s", vfs_mount, filename);
@@ -3442,7 +3442,7 @@ static _NodeIndex _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr
         return NODE_INDEX_UNDEFINED;
     }
     _PlanetShaderEntry entry = {0};
-    entry.index = atoi((const char *)raw_index);
+    entry.index              = atoi((const char *)raw_index);
     xmlFree(raw_index);
 
     // VertexSource (optional)
@@ -3497,7 +3497,7 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
     dc_node.parent = parent_node_index;
 
     // Planet reference (required) — resolve def index at parse time
-    xmlChar *raw_planet = xmlGetProp(xml_node, BAD_CAST "Planet");
+    xmlChar *raw_planet                  = xmlGetProp(xml_node, BAD_CAST "Planet");
     dc_node.planet_view.planet_def_index = UINT8_MAX;
     if (raw_planet) {
         int def_count = sbcount(app_data->sb_planet_defs);
@@ -3648,7 +3648,7 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
     xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "CameraLatitude");
     xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "CameraLongitude");
     xmlChar *raw_ele = xmlGetProp(xml_node, BAD_CAST "CameraElevation");
-    bool has_lle = raw_lat || raw_lon || raw_ele;
+    bool     has_lle = raw_lat || raw_lon || raw_ele;
 
     if (has_lle) {
         if (raw_lat && raw_lon && raw_ele) {
@@ -3677,7 +3677,7 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
     xmlChar *raw_roll  = xmlGetProp(xml_node, BAD_CAST "CameraRoll");
     xmlChar *raw_pitch = xmlGetProp(xml_node, BAD_CAST "CameraPitch");
     xmlChar *raw_yaw   = xmlGetProp(xml_node, BAD_CAST "CameraYaw");
-    bool has_xyz = raw_cam_x || raw_cam_y || raw_cam_z || raw_roll || raw_pitch || raw_yaw;
+    bool     has_xyz   = raw_cam_x || raw_cam_y || raw_cam_z || raw_roll || raw_pitch || raw_yaw;
 
     if (has_lle && has_xyz) {
         DC_LOG_WARN("PlanetView", "Both LLE and XYZ/RPY specified; using XYZ/RPY");
@@ -3698,9 +3698,9 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
     if (raw_cam_x) xmlFree(raw_cam_x);
     if (raw_cam_y) xmlFree(raw_cam_y);
     if (raw_cam_z) xmlFree(raw_cam_z);
-    if (raw_roll)  xmlFree(raw_roll);
+    if (raw_roll) xmlFree(raw_roll);
     if (raw_pitch) xmlFree(raw_pitch);
-    if (raw_yaw)   xmlFree(raw_yaw);
+    if (raw_yaw) xmlFree(raw_yaw);
 
     if (!has_lle && !has_xyz) {
         DC_LOG_ERROR("PlanetView", "Must specify either LLE (CameraLatitude/CameraLongitude/CameraElevation) or XYZ/RPY (CameraX/CameraY/CameraZ/CameraRoll/CameraPitch/CameraYaw)");
@@ -4103,15 +4103,15 @@ static _NodeIndex _process_xml_node_trick_io(_AppData *app_data, xmlNodePtr xml_
     }
 
     // connected variable (optional)
-    xmlChar      *raw_connected_var     = xmlGetProp(xml_node, BAD_CAST "ConnectedVariable");
-    DcAppVarIndex connected_var_index   = DC_APP_VAR_INDEX_UNDEFINED;
+    xmlChar      *raw_connected_var   = xmlGetProp(xml_node, BAD_CAST "ConnectedVariable");
+    DcAppVarIndex connected_var_index = DC_APP_VAR_INDEX_UNDEFINED;
     if (raw_connected_var) {
         connected_var_index = dc_app_lookup_get_var_index(app_data->lookup, (const char *)raw_connected_var);
         xmlFree(raw_connected_var);
     }
 
     // create trick instance
-    _TrickContext trick_context = {};
+    _TrickContext trick_context       = {};
     trick_context.trick               = dc_trick_create(host, port, (float)data_rate, 1);
     trick_context.connected_var_index = connected_var_index;
     sbpush(app_data->sb_tricks, trick_context);
@@ -4215,9 +4215,9 @@ static _NodeIndex _process_xml_node_trick_variable(_AppData *app_data, xmlNodePt
             if (var.dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) {
                 DC_LOG_ERROR("TrickVariable", "Unknown variable '%s' in TrickTo", dcapp_var);
             } else {
-                DcValue *dc_var_value  = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, var.dcapp_var_index)->value_index);
-                var.trick_var_index    = dc_trick_add_tx_var(trick_context->trick, trick_path, units, dc_var_value->type == DC_VALUE_TYPE_STRING);
-                var.prev_value         = *dc_var_value;
+                DcValue *dc_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, var.dcapp_var_index)->value_index);
+                var.trick_var_index   = dc_trick_add_tx_var(trick_context->trick, trick_path, units, dc_var_value->type == DC_VALUE_TYPE_STRING);
+                var.prev_value        = *dc_var_value;
             }
             sbpush(trick_context->sb_tx_var_contexts, var);
             break;
@@ -4301,9 +4301,9 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
         case NODE_TYPE_POLYGON: {
 
             // vertex data
-            _VertexData vertex = {};
-            vertex.position.x = DC_APP_VAL_INDEX_UNDEFINED;
-            vertex.position.y = DC_APP_VAL_INDEX_UNDEFINED;
+            _VertexData vertex    = {};
+            vertex.position.x     = DC_APP_VAL_INDEX_UNDEFINED;
+            vertex.position.y     = DC_APP_VAL_INDEX_UNDEFINED;
             vertex.parent_align.x = DC_APP_VAL_INDEX_UNDEFINED;
             vertex.parent_align.y = DC_APP_VAL_INDEX_UNDEFINED;
 
@@ -4398,7 +4398,7 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
 static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
 
-    _Node dc_node = {0};
+    _Node dc_node  = {0};
     dc_node.type   = NODE_TYPE_WINDOW;
     dc_node.parent = parent_node_index;
 
@@ -4542,32 +4542,26 @@ static _NodeIndex _register_node(_AppData *app_data, _Node *node) {
     return sbcount(app_data->sb_nodes) - 1;
 }
 
-static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRenderPassHandle render_pass)
-{
+static void _init_stencil_pipelines(_AppData *app_data, plDevice *device, plRenderPassHandle render_pass) {
     plRenderPassLayoutHandle render_pass_layout = _ext_gfx->get_render_pass(device, render_pass)->tDesc.tLayout;
-    uint32_t sample_count = _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount;
+    uint32_t                 sample_count       = _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount;
 
     // common vertex buffer layout for 2D drawing
     const plVertexBufferLayout vertex_layout = {
-        .uByteStride = sizeof(float) * 5,
+        .uByteStride  = sizeof(float) * 5,
         .atAttributes = {
-            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT2},
+            {.uByteOffset = 0, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
             {.uByteOffset = sizeof(float) * 2, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
             {.uByteOffset = sizeof(float) * 4, .tFormat = PL_VERTEX_FORMAT_UINT},
-        }
-    };
+        }};
 
     // common bind group layouts
     const plBindGroupLayoutDesc sampler_layout = {
         .atSamplerBindings = {
-            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT}
-        }
-    };
+            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT}}};
     const plBindGroupLayoutDesc texture_layout = {
         .atTextureBindings = {
-            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}
-        }
-    };
+            {.uSlot = 0, .tStages = PL_SHADER_STAGE_FRAGMENT, .tType = PL_TEXTURE_BINDING_TYPE_SAMPLED}}};
 
     // stencil create graphics state: increment stencil buffer
     const plGraphicsState stencil_create_state = {
@@ -4580,8 +4574,7 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .ulStencilMask        = 0xFF,
         .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
         .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-        .ulStencilOpPass      = PL_STENCIL_OP_INCREMENT_AND_CLAMP
-    };
+        .ulStencilOpPass      = PL_STENCIL_OP_INCREMENT_AND_CLAMP};
 
     // stencil remove graphics state: decrement stencil buffer
     const plGraphicsState stencil_remove_state = {
@@ -4594,8 +4587,7 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .ulStencilMask        = 0xFF,
         .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
         .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-        .ulStencilOpPass      = PL_STENCIL_OP_DECREMENT_AND_CLAMP
-    };
+        .ulStencilOpPass      = PL_STENCIL_OP_DECREMENT_AND_CLAMP};
 
     // stencil cleanup graphics state: decrement stencil buffer (same as remove but separate pipeline)
     const plGraphicsState stencil_cleanup_state = {
@@ -4608,13 +4600,12 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .ulStencilMask        = 0xFF,
         .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
         .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-        .ulStencilOpPass      = PL_STENCIL_OP_DECREMENT_AND_CLAMP
-    };
+        .ulStencilOpPass      = PL_STENCIL_OP_DECREMENT_AND_CLAMP};
 
     // blend states
     const plBlendState stencil_only_blend = {
         .bBlendEnabled   = false,
-        .uColorWriteMask = PL_COLOR_WRITE_MASK_NONE  // don't write to color buffer
+        .uColorWriteMask = PL_COLOR_WRITE_MASK_NONE // don't write to color buffer
     };
     const plBlendState alpha_blend = {
         .bBlendEnabled   = true,
@@ -4624,8 +4615,7 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .tColorOp        = PL_BLEND_OP_ADD,
         .tSrcAlphaFactor = PL_BLEND_FACTOR_SRC_ALPHA,
         .tDstAlphaFactor = PL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        .tAlphaOp        = PL_BLEND_OP_ADD
-    };
+        .tAlphaOp        = PL_BLEND_OP_ADD};
 
     // load shaders (pilotlight draw shaders)
     plShaderModule vert_2d  = _ext_shader->load_glsl("draw_2d.vert", "main", NULL, NULL);
@@ -4645,13 +4635,12 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .tVertexShader         = vert_2d,
         .tFragmentShader       = frag_2d_stencil,
         .tGraphicsState        = stencil_create_state,
-        .atVertexBufferLayouts = { vertex_layout },
-        .atBlendStates         = { stencil_only_blend },
-        .atBindGroupLayouts    = { sampler_layout, texture_layout },
+        .atVertexBufferLayouts = {vertex_layout},
+        .atBlendStates         = {stencil_only_blend},
+        .atBindGroupLayouts    = {sampler_layout, texture_layout},
         .tRenderPassLayout     = render_pass_layout,
         .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count
-    };
+        .tMSAASampleCount      = sample_count};
     app_data->stencil_create_2d_shader = _ext_gfx->create_shader(device, &stencil_create_2d_desc);
 
     // Stencil remove 2D (uses discard for transparent pixels, colorWriteMask=0)
@@ -4659,13 +4648,12 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .tVertexShader         = vert_2d,
         .tFragmentShader       = frag_2d_stencil,
         .tGraphicsState        = stencil_remove_state,
-        .atVertexBufferLayouts = { vertex_layout },
-        .atBlendStates         = { stencil_only_blend },
-        .atBindGroupLayouts    = { sampler_layout, texture_layout },
+        .atVertexBufferLayouts = {vertex_layout},
+        .atBlendStates         = {stencil_only_blend},
+        .atBindGroupLayouts    = {sampler_layout, texture_layout},
         .tRenderPassLayout     = render_pass_layout,
         .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count
-    };
+        .tMSAASampleCount      = sample_count};
     app_data->stencil_remove_2d_shader = _ext_gfx->create_shader(device, &stencil_remove_2d_desc);
 
     // Stencil cleanup 2D (decrement stencil, no color write)
@@ -4673,13 +4661,12 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .tVertexShader         = vert_2d,
         .tFragmentShader       = frag_2d_stencil,
         .tGraphicsState        = stencil_cleanup_state,
-        .atVertexBufferLayouts = { vertex_layout },
-        .atBlendStates         = { stencil_only_blend },
-        .atBindGroupLayouts    = { sampler_layout, texture_layout },
+        .atVertexBufferLayouts = {vertex_layout},
+        .atBlendStates         = {stencil_only_blend},
+        .atBindGroupLayouts    = {sampler_layout, texture_layout},
         .tRenderPassLayout     = render_pass_layout,
         .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count
-    };
+        .tMSAASampleCount      = sample_count};
     app_data->stencil_cleanup_2d_shader = _ext_gfx->create_shader(device, &stencil_cleanup_2d_desc);
 
     // Stencil draw 2D (one per depth level)
@@ -4694,19 +4681,17 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
             .ulStencilMask        = 0xFF,
             .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
             .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-            .ulStencilOpPass      = PL_STENCIL_OP_KEEP
-        };
+            .ulStencilOpPass      = PL_STENCIL_OP_KEEP};
         const plShaderDesc stencil_draw_2d_desc = {
             .tVertexShader         = vert_2d,
             .tFragmentShader       = frag_2d,
             .tGraphicsState        = stencil_draw_state,
-            .atVertexBufferLayouts = { vertex_layout },
-            .atBlendStates         = { alpha_blend },
-            .atBindGroupLayouts    = { sampler_layout, texture_layout },
+            .atVertexBufferLayouts = {vertex_layout},
+            .atBlendStates         = {alpha_blend},
+            .atBindGroupLayouts    = {sampler_layout, texture_layout},
             .tRenderPassLayout     = render_pass_layout,
             .uSubpassIndex         = 0,
-            .tMSAASampleCount      = sample_count
-        };
+            .tMSAASampleCount      = sample_count};
         app_data->stencil_draw_2d_shader[i] = _ext_gfx->create_shader(device, &stencil_draw_2d_desc);
     }
 
@@ -4719,13 +4704,12 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .tVertexShader         = vert_2d,
         .tFragmentShader       = frag_sdf_stencil,
         .tGraphicsState        = stencil_create_state,
-        .atVertexBufferLayouts = { vertex_layout },
-        .atBlendStates         = { stencil_only_blend },
-        .atBindGroupLayouts    = { sampler_layout, texture_layout },
+        .atVertexBufferLayouts = {vertex_layout},
+        .atBlendStates         = {stencil_only_blend},
+        .atBindGroupLayouts    = {sampler_layout, texture_layout},
         .tRenderPassLayout     = render_pass_layout,
         .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count
-    };
+        .tMSAASampleCount      = sample_count};
     app_data->stencil_create_sdf_shader = _ext_gfx->create_shader(device, &stencil_create_sdf_desc);
 
     // Stencil remove SDF (uses discard for non-glyph pixels, colorWriteMask=0)
@@ -4733,13 +4717,12 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .tVertexShader         = vert_2d,
         .tFragmentShader       = frag_sdf_stencil,
         .tGraphicsState        = stencil_remove_state,
-        .atVertexBufferLayouts = { vertex_layout },
-        .atBlendStates         = { stencil_only_blend },
-        .atBindGroupLayouts    = { sampler_layout, texture_layout },
+        .atVertexBufferLayouts = {vertex_layout},
+        .atBlendStates         = {stencil_only_blend},
+        .atBindGroupLayouts    = {sampler_layout, texture_layout},
         .tRenderPassLayout     = render_pass_layout,
         .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count
-    };
+        .tMSAASampleCount      = sample_count};
     app_data->stencil_remove_sdf_shader = _ext_gfx->create_shader(device, &stencil_remove_sdf_desc);
 
     // Stencil cleanup SDF (decrement stencil, no color write)
@@ -4747,13 +4730,12 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .tVertexShader         = vert_2d,
         .tFragmentShader       = frag_sdf_stencil,
         .tGraphicsState        = stencil_cleanup_state,
-        .atVertexBufferLayouts = { vertex_layout },
-        .atBlendStates         = { stencil_only_blend },
-        .atBindGroupLayouts    = { sampler_layout, texture_layout },
+        .atVertexBufferLayouts = {vertex_layout},
+        .atBlendStates         = {stencil_only_blend},
+        .atBindGroupLayouts    = {sampler_layout, texture_layout},
         .tRenderPassLayout     = render_pass_layout,
         .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count
-    };
+        .tMSAASampleCount      = sample_count};
     app_data->stencil_cleanup_sdf_shader = _ext_gfx->create_shader(device, &stencil_cleanup_sdf_desc);
 
     // Stencil draw SDF (one per depth level)
@@ -4768,19 +4750,17 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
             .ulStencilMask        = 0xFF,
             .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
             .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-            .ulStencilOpPass      = PL_STENCIL_OP_KEEP
-        };
+            .ulStencilOpPass      = PL_STENCIL_OP_KEEP};
         const plShaderDesc stencil_draw_sdf_desc = {
             .tVertexShader         = vert_2d,
             .tFragmentShader       = frag_sdf,
             .tGraphicsState        = stencil_draw_state,
-            .atVertexBufferLayouts = { vertex_layout },
-            .atBlendStates         = { alpha_blend },
-            .atBindGroupLayouts    = { sampler_layout, texture_layout },
+            .atVertexBufferLayouts = {vertex_layout},
+            .atBlendStates         = {alpha_blend},
+            .atBindGroupLayouts    = {sampler_layout, texture_layout},
             .tRenderPassLayout     = render_pass_layout,
             .uSubpassIndex         = 0,
-            .tMSAASampleCount      = sample_count
-        };
+            .tMSAASampleCount      = sample_count};
         app_data->stencil_draw_sdf_shader[i] = _ext_gfx->create_shader(device, &stencil_draw_sdf_desc);
     }
 
@@ -4790,12 +4770,11 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
 
     // 3D solid vertex buffer layout (pos3 + color)
     const plVertexBufferLayout vertex_layout_3d_solid = {
-        .uByteStride = sizeof(float) * 4,
+        .uByteStride  = sizeof(float) * 4,
         .atAttributes = {
-            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = 0, .tFormat = PL_VERTEX_FORMAT_FLOAT3},
             {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_UINT},
-        }
-    };
+        }};
 
     // load 3D shaders
     plShaderModule vert_3d          = _ext_shader->load_glsl("dc_draw_3d.vert", "main", NULL, NULL);
@@ -4808,12 +4787,11 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .tVertexShader         = vert_3d,
         .tFragmentShader       = frag_3d,
         .tGraphicsState        = stencil_create_state,
-        .atVertexBufferLayouts = { vertex_layout_3d_solid },
-        .atBlendStates         = { stencil_only_blend },
+        .atVertexBufferLayouts = {vertex_layout_3d_solid},
+        .atBlendStates         = {stencil_only_blend},
         .tRenderPassLayout     = render_pass_layout,
         .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count
-    };
+        .tMSAASampleCount      = sample_count};
     app_data->stencil_create_3d_solid_shader = _ext_gfx->create_shader(device, &stencil_create_3d_solid_desc);
 
     // Stencil remove 3D solid (decrement stencil, no color write)
@@ -4821,12 +4799,11 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .tVertexShader         = vert_3d,
         .tFragmentShader       = frag_3d,
         .tGraphicsState        = stencil_remove_state,
-        .atVertexBufferLayouts = { vertex_layout_3d_solid },
-        .atBlendStates         = { stencil_only_blend },
+        .atVertexBufferLayouts = {vertex_layout_3d_solid},
+        .atBlendStates         = {stencil_only_blend},
         .tRenderPassLayout     = render_pass_layout,
         .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count
-    };
+        .tMSAASampleCount      = sample_count};
     app_data->stencil_remove_3d_solid_shader = _ext_gfx->create_shader(device, &stencil_remove_3d_solid_desc);
 
     // Stencil cleanup 3D solid (decrement stencil, no color write)
@@ -4834,12 +4811,11 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .tVertexShader         = vert_3d,
         .tFragmentShader       = frag_3d,
         .tGraphicsState        = stencil_cleanup_state,
-        .atVertexBufferLayouts = { vertex_layout_3d_solid },
-        .atBlendStates         = { stencil_only_blend },
+        .atVertexBufferLayouts = {vertex_layout_3d_solid},
+        .atBlendStates         = {stencil_only_blend},
         .tRenderPassLayout     = render_pass_layout,
         .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count
-    };
+        .tMSAASampleCount      = sample_count};
     app_data->stencil_cleanup_3d_solid_shader = _ext_gfx->create_shader(device, &stencil_cleanup_3d_solid_desc);
 
     // Stencil draw 3D solid (one per depth level, with depth test)
@@ -4854,18 +4830,16 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
             .ulStencilMask        = 0xFF,
             .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
             .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-            .ulStencilOpPass      = PL_STENCIL_OP_KEEP
-        };
+            .ulStencilOpPass      = PL_STENCIL_OP_KEEP};
         const plShaderDesc stencil_draw_3d_solid_desc = {
             .tVertexShader         = vert_3d,
             .tFragmentShader       = frag_3d,
             .tGraphicsState        = stencil_draw_3d_state,
-            .atVertexBufferLayouts = { vertex_layout_3d_solid },
-            .atBlendStates         = { alpha_blend },
+            .atVertexBufferLayouts = {vertex_layout_3d_solid},
+            .atBlendStates         = {alpha_blend},
             .tRenderPassLayout     = render_pass_layout,
             .uSubpassIndex         = 0,
-            .tMSAASampleCount      = sample_count
-        };
+            .tMSAASampleCount      = sample_count};
         app_data->stencil_draw_3d_solid_shader[i] = _ext_gfx->create_shader(device, &stencil_draw_3d_solid_desc);
     }
 
@@ -4875,26 +4849,24 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
 
     // 3D textured vertex buffer layout (pos3 + uv2 + color)
     const plVertexBufferLayout vertex_layout_3d_textured = {
-        .uByteStride = sizeof(float) * 6,
+        .uByteStride  = sizeof(float) * 6,
         .atAttributes = {
-            {.uByteOffset = 0,                 .tFormat = PL_VERTEX_FORMAT_FLOAT3},
+            {.uByteOffset = 0, .tFormat = PL_VERTEX_FORMAT_FLOAT3},
             {.uByteOffset = sizeof(float) * 3, .tFormat = PL_VERTEX_FORMAT_FLOAT2},
             {.uByteOffset = sizeof(float) * 5, .tFormat = PL_VERTEX_FORMAT_UINT},
-        }
-    };
+        }};
 
     // Stencil create 3D textured (increment stencil, no color write)
     const plShaderDesc stencil_create_3d_textured_desc = {
         .tVertexShader         = vert_3d_textured,
         .tFragmentShader       = frag_3d_textured,
         .tGraphicsState        = stencil_create_state,
-        .atVertexBufferLayouts = { vertex_layout_3d_textured },
-        .atBlendStates         = { stencil_only_blend },
-        .atBindGroupLayouts    = { sampler_layout, texture_layout },
+        .atVertexBufferLayouts = {vertex_layout_3d_textured},
+        .atBlendStates         = {stencil_only_blend},
+        .atBindGroupLayouts    = {sampler_layout, texture_layout},
         .tRenderPassLayout     = render_pass_layout,
         .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count
-    };
+        .tMSAASampleCount      = sample_count};
     app_data->stencil_create_3d_textured_shader = _ext_gfx->create_shader(device, &stencil_create_3d_textured_desc);
 
     // Stencil remove 3D textured (decrement stencil, no color write)
@@ -4902,13 +4874,12 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .tVertexShader         = vert_3d_textured,
         .tFragmentShader       = frag_3d_textured,
         .tGraphicsState        = stencil_remove_state,
-        .atVertexBufferLayouts = { vertex_layout_3d_textured },
-        .atBlendStates         = { stencil_only_blend },
-        .atBindGroupLayouts    = { sampler_layout, texture_layout },
+        .atVertexBufferLayouts = {vertex_layout_3d_textured},
+        .atBlendStates         = {stencil_only_blend},
+        .atBindGroupLayouts    = {sampler_layout, texture_layout},
         .tRenderPassLayout     = render_pass_layout,
         .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count
-    };
+        .tMSAASampleCount      = sample_count};
     app_data->stencil_remove_3d_textured_shader = _ext_gfx->create_shader(device, &stencil_remove_3d_textured_desc);
 
     // Stencil cleanup 3D textured (decrement stencil, no color write)
@@ -4916,13 +4887,12 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
         .tVertexShader         = vert_3d_textured,
         .tFragmentShader       = frag_3d_textured,
         .tGraphicsState        = stencil_cleanup_state,
-        .atVertexBufferLayouts = { vertex_layout_3d_textured },
-        .atBlendStates         = { stencil_only_blend },
-        .atBindGroupLayouts    = { sampler_layout, texture_layout },
+        .atVertexBufferLayouts = {vertex_layout_3d_textured},
+        .atBlendStates         = {stencil_only_blend},
+        .atBindGroupLayouts    = {sampler_layout, texture_layout},
         .tRenderPassLayout     = render_pass_layout,
         .uSubpassIndex         = 0,
-        .tMSAASampleCount      = sample_count
-    };
+        .tMSAASampleCount      = sample_count};
     app_data->stencil_cleanup_3d_textured_shader = _ext_gfx->create_shader(device, &stencil_cleanup_3d_textured_desc);
 
     // Stencil draw 3D textured (one per depth level, with depth test)
@@ -4937,19 +4907,17 @@ static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRend
             .ulStencilMask        = 0xFF,
             .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
             .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
-            .ulStencilOpPass      = PL_STENCIL_OP_KEEP
-        };
+            .ulStencilOpPass      = PL_STENCIL_OP_KEEP};
         const plShaderDesc stencil_draw_3d_textured_desc = {
             .tVertexShader         = vert_3d_textured,
             .tFragmentShader       = frag_3d_textured,
             .tGraphicsState        = stencil_draw_3d_state,
-            .atVertexBufferLayouts = { vertex_layout_3d_textured },
-            .atBlendStates         = { alpha_blend },
-            .atBindGroupLayouts    = { sampler_layout, texture_layout },
+            .atVertexBufferLayouts = {vertex_layout_3d_textured},
+            .atBlendStates         = {alpha_blend},
+            .atBindGroupLayouts    = {sampler_layout, texture_layout},
             .tRenderPassLayout     = render_pass_layout,
             .uSubpassIndex         = 0,
-            .tMSAASampleCount      = sample_count
-        };
+            .tMSAASampleCount      = sample_count};
         app_data->stencil_draw_3d_textured_shader[i] = _ext_gfx->create_shader(device, &stencil_draw_3d_textured_desc);
     }
 }
@@ -5009,7 +4977,7 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
         plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
 
         // allocate memory using staging allocator
-        plDeviceMemoryAllocatorI *allocator = app_data->gpu_staging_uncached_allocator;
+        plDeviceMemoryAllocatorI      *allocator                 = app_data->gpu_staging_uncached_allocator;
         const plDeviceMemoryAllocation staging_buffer_allocation = allocator->allocate(
             allocator->ptInst,
             staging_buffer->tMemoryRequirements.uMemoryTypeBits,
@@ -5024,7 +4992,7 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     // create font atlas
     {
         // create and set font atlas
-        plFontAtlas* font_atlas = _ext_draw->create_font_atlas();
+        plFontAtlas *font_atlas = _ext_draw->create_font_atlas();
         _ext_draw->set_font_atlas(font_atlas);
 
         // typical font range (you can also add individual characters)
@@ -5046,7 +5014,7 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
         app_data->pl_vera_sdf_font = _ext_draw->add_font_from_file_ttf(font_atlas, font_config, "../../assets/fonts/bitstream-vera-sans/Vera.ttf");
 
         // build font atlas (CPU prepare + GPU upload - backend handles prepare internally)
-        plCommandBuffer* command_buffer = _ext_gfx->request_command_buffer(_ext_starter->get_current_command_pool(), "dcapp font atlas");
+        plCommandBuffer *command_buffer = _ext_gfx->request_command_buffer(_ext_starter->get_current_command_pool(), "dcapp font atlas");
         _ext_draw_backend->build_font_atlas(command_buffer, font_atlas);
         _ext_gfx->wait_on_command_buffer(command_buffer);
         _ext_gfx->return_command_buffer(command_buffer);
@@ -5143,8 +5111,8 @@ static bool _load_color_from_string(_AppData *app_data, xmlNodePtr xml_node, con
 
         // split by whitespace
         // assume no more than 20 splits
-        size_t       index_buffer[20];
-        size_t       index_count;
+        size_t index_buffer[20];
+        size_t index_count;
         dc_utils_split_string_inplace(cleaned_color, dc_utils_whitespace, index_buffer, 20, &index_count);
 
         // if empty, assume no color

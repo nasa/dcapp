@@ -171,7 +171,7 @@ int dc_utils_string_to_boolean(const char *text) {
     // Copy with trim; if this helper is not guaranteed to NUL-terminate,
     // replace with a safe copy + explicit trim.
     dc_utils_trim_whitespace_copy(text, result, sizeof(result));
-    result[sizeof(result) - 1] = '\0';  // hard guarantee
+    result[sizeof(result) - 1] = '\0'; // hard guarantee
 
     if (result[0] == '\0') {
         return 0;
@@ -184,9 +184,9 @@ int dc_utils_string_to_boolean(const char *text) {
 
     // Recognized falsy tokens
     if (strcmp(result, "false") == 0 ||
-        strcmp(result, "no")    == 0 ||
-        strcmp(result, "off")   == 0 ||
-        strcmp(result, "0")     == 0) {
+        strcmp(result, "no") == 0 ||
+        strcmp(result, "off") == 0 ||
+        strcmp(result, "0") == 0) {
         return 0;
     }
 

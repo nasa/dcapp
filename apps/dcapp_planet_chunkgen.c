@@ -466,8 +466,8 @@ static bool _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *hei
     *height = (uint32_t)GDALGetRasterYSize(ds);
 
     // get linear unit conversion factor (to meters)
-    double to_meters = 1.0;
-    OGRSpatialReferenceH srs = GDALGetSpatialRef(ds);
+    double               to_meters = 1.0;
+    OGRSpatialReferenceH srs       = GDALGetSpatialRef(ds);
     if (srs) {
         to_meters = OSRGetLinearUnits(srs, NULL);
 
@@ -486,8 +486,8 @@ static bool _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *hei
 
     // raster band scale/offset for elevation unit conversion
     // real_value = offset + raw_pixel * scale
-    *band_scale  = 1.0;
-    *band_offset = 0.0;
+    *band_scale          = 1.0;
+    *band_offset         = 0.0;
     GDALRasterBandH band = GDALGetRasterBand(ds, 1);
     if (band) {
         int bHasScale = 0, bHasOffset = 0;
@@ -508,7 +508,7 @@ static bool _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *ma
     }
 
     GDALRasterBandH band = GDALGetRasterBand(ds, 1);
-    CPLErr err = GDALComputeRasterStatistics(band, FALSE, min_val, max_val, NULL, NULL, NULL, NULL);
+    CPLErr          err  = GDALComputeRasterStatistics(band, FALSE, min_val, max_val, NULL, NULL, NULL, NULL);
     GDALClose(ds);
 
     if (err != CE_None) {
@@ -525,27 +525,26 @@ static bool _run_gdal_translate(const char *input, const char *output, uint32_t 
         return false;
     }
 
-    char sx_str[32],  sy_str[32],  w_str[32],  h_str[32];
+    char sx_str[32], sy_str[32], w_str[32], h_str[32];
     char min_str[64], max_str[64];
-    snprintf(sx_str,  sizeof(sx_str),  "%u",  src_x);
-    snprintf(sy_str,  sizeof(sy_str),  "%u",  src_y);
-    snprintf(w_str,   sizeof(w_str),   "%u",  w);
-    snprintf(h_str,   sizeof(h_str),   "%u",  h);
-    snprintf(min_str, sizeof(min_str), "%f",  min_h);
-    snprintf(max_str, sizeof(max_str), "%f",  max_h);
+    snprintf(sx_str, sizeof(sx_str), "%u", src_x);
+    snprintf(sy_str, sizeof(sy_str), "%u", src_y);
+    snprintf(w_str, sizeof(w_str), "%u", w);
+    snprintf(h_str, sizeof(h_str), "%u", h);
+    snprintf(min_str, sizeof(min_str), "%f", min_h);
+    snprintf(max_str, sizeof(max_str), "%f", max_h);
 
     char *args[] = {
-        "-r",      "cubic",
-        "-of",     "PNG",
+        "-r", "cubic",
+        "-of", "PNG",
         "-srcwin", sx_str, sy_str, w_str, h_str,
-        "-ot",     "UInt16",
-        "-scale",  min_str, max_str, "0", "65535",
-        NULL
-    };
+        "-ot", "UInt16",
+        "-scale", min_str, max_str, "0", "65535",
+        NULL};
 
-    GDALTranslateOptions *opts    = GDALTranslateOptionsNew(args, NULL);
-    int                   bError  = 0;
-    GDALDatasetH          dst_ds  = GDALTranslate(output, src_ds, opts, &bError);
+    GDALTranslateOptions *opts   = GDALTranslateOptionsNew(args, NULL);
+    int                   bError = 0;
+    GDALDatasetH          dst_ds = GDALTranslate(output, src_ds, opts, &bError);
     GDALTranslateOptionsFree(opts);
     GDALClose(src_ds);
 

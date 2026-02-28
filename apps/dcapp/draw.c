@@ -217,7 +217,7 @@ static void _draw_node_blink(_AppData *app_data, _NodeIndex node_index, _Node *n
     if (node->blink.remaining_duration > 0.0) {
         double period  = (frequency > 0.0) ? (1.0 / frequency) : 1.0;
         double on_time = period * duty_cycle;
-        blink_state = (fmod(current_time, period) <= on_time);
+        blink_state    = (fmod(current_time, period) <= on_time);
 
         // countdown for timed blinks
         if (duration > 0.0) {
@@ -244,8 +244,8 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
     bool use_virtual_dimension[2] = {
         node->button.virtual_dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
         node->button.virtual_dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
-    bool use_rotation       = node->button.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->button.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->button.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_rotation           = node->button.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position     = (node->button.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->button.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->button.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->button.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
@@ -293,17 +293,33 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
             float pivot_position[2];
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
-                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
-                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                default: DC_LOG_WARN("Button", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = parent_dimensions->x;
+                    break;
+                default:
+                    DC_LOG_WARN("Button", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]);
+                    break;
             }
             switch (parent_pivot_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
-                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                default: DC_LOG_WARN("Button", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = parent_dimensions->y;
+                    break;
+                default:
+                    DC_LOG_WARN("Button", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]);
+                    break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->button.rotation)->value_double);
 
@@ -370,7 +386,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
             node->button.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->button.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        float anchor[2] = {0, 0};
+        float          anchor[2]      = {0, 0};
         DcAppAlignType parent_align_x = node->button.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->button.parent_align.x)->value_integer;
         switch (parent_align_x) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -499,16 +515,16 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
     if (node->button.var_enabled != DC_APP_VAR_INDEX_UNDEFINED) {
         DcValue *enabled_var_value = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->button.var_enabled)->value_index);
         DcValue *enabled_on_value  = dc_app_lookup_get_value(app_data->lookup, node->button.val_enabled_on);
-        is_enabled = dc_value_is_equal(enabled_var_value, enabled_on_value);
+        is_enabled                 = dc_value_is_equal(enabled_var_value, enabled_on_value);
     }
 
     // determine indicator
     DcValue *indicator_var_value = NULL;
     bool     is_indicator_on     = false; // default to off
     if (node->button.var_indicator != DC_APP_VAR_INDEX_UNDEFINED) {
-        indicator_var_value      = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->button.var_indicator)->value_index);
+        indicator_var_value         = dc_app_lookup_get_value(app_data->lookup, dc_app_lookup_get_var(app_data->lookup, node->button.var_indicator)->value_index);
         DcValue *indicator_on_value = dc_app_lookup_get_value(app_data->lookup, node->button.val_indicator_on);
-        is_indicator_on = dc_value_is_equal(indicator_var_value, indicator_on_value);
+        is_indicator_on             = dc_value_is_equal(indicator_var_value, indicator_on_value);
     }
 
     // determine transition
@@ -743,9 +759,9 @@ static void _draw_node_state_if_false(_AppData *app_data, _NodeIndex node_index,
 static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
-    bool use_radius         = node->arc.radius != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_rotation       = node->arc.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->arc.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->arc.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_radius             = node->arc.radius != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_rotation           = node->arc.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position     = (node->arc.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->arc.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->arc.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->arc.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get radius
@@ -757,7 +773,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
     }
 
     // get angle span and rotation
-    float angle_span = (float)dc_app_lookup_get_value(app_data->lookup, node->arc.angle)->value_double;
+    float angle_span   = (float)dc_app_lookup_get_value(app_data->lookup, node->arc.angle)->value_double;
     float arc_rotation = use_rotation ? (float)dc_app_lookup_get_value(app_data->lookup, node->arc.rotation)->value_double : 0.0f;
 
     // transform
@@ -790,17 +806,33 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
         float pivot_position[2];
         switch (parent_pivot_aligns[0]) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
-            case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
-            case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
-            case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-            default: DC_LOG_WARN("Arc", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+            case DC_APP_ALIGN_TYPE_LEFT:
+                pivot_position[0] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_CENTER:
+                pivot_position[0] = parent_dimensions->x / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_RIGHT:
+                pivot_position[0] = parent_dimensions->x;
+                break;
+            default:
+                DC_LOG_WARN("Arc", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]);
+                break;
         }
         switch (parent_pivot_aligns[1]) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
-            case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
-            case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
-            case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-            default: DC_LOG_WARN("Arc", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+            case DC_APP_ALIGN_TYPE_BOTTOM:
+                pivot_position[1] = 0;
+                break;
+            case DC_APP_ALIGN_TYPE_MIDDLE:
+                pivot_position[1] = parent_dimensions->y / 2;
+                break;
+            case DC_APP_ALIGN_TYPE_TOP:
+                pivot_position[1] = parent_dimensions->y;
+                break;
+            default:
+                DC_LOG_WARN("Arc", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]);
+                break;
         }
         float rotation = pl_radiansf(arc_rotation);
 
@@ -870,7 +902,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
             node->arc.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->arc.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        float anchor[2] = {0, 0};
+        float          anchor[2]      = {0, 0};
         DcAppAlignType parent_align_x = node->arc.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->arc.parent_align.x)->value_integer;
         switch (parent_align_x) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -921,7 +953,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
             parent_position->y + anchor[1] + offset[1]};
 
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-        transform = pl_mul_mat4t(&transform, &trans_position_xform);
+        transform                   = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
     // xform local rotation
@@ -987,9 +1019,8 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
     // Corner-based: points range from (0,0) to (diameter, diameter), center at (radius, radius)
     // Arc starts at 3 o'clock (standard math convention), rotation handled by transform matrix
     // LocalAlign (default=CENTER) shifts by -radius to center at position
-    int num_segments = node->arc.num_segments == DC_APP_VAL_INDEX_UNDEFINED ?
-        (int)(angle_span / 3.0f) + 2 : // roughly 1 segment per 3 degrees
-        (int)dc_app_lookup_get_value(app_data->lookup, node->arc.num_segments)->value_double;
+    int num_segments = node->arc.num_segments == DC_APP_VAL_INDEX_UNDEFINED ? (int)(angle_span / 3.0f) + 2 : // roughly 1 segment per 3 degrees
+                           (int)dc_app_lookup_get_value(app_data->lookup, node->arc.num_segments)->value_double;
     if (num_segments < 2) num_segments = 2;
     if (num_segments > _NODE_ARC_MAX_SEGMENTS - 1) num_segments = _NODE_ARC_MAX_SEGMENTS - 1;
 
@@ -999,11 +1030,11 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
     // Generate arc points (start-based)
     // Arc starts at 3 o'clock (standard math convention), rotation handled by transform matrix
     plVec2 points[_NODE_ARC_MAX_SEGMENTS];
-    int num_arc_points = num_segments + 1; // segments + 1 = number of vertices on arc
+    int    num_arc_points = num_segments + 1; // segments + 1 = number of vertices on arc
 
     for (int ii = 0; ii <= num_segments; ii++) {
-        float t = (float)ii / (float)num_segments; // 0 to 1
-        float angle = t * span_rad; // from 0 to span
+        float t           = (float)ii / (float)num_segments; // 0 to 1
+        float angle       = t * span_rad;                    // from 0 to span
         float final_angle = angle;
 
         // Corner-based: center at (radius, radius), points from 0 to diameter
@@ -1011,13 +1042,13 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
             radius * (1.0f + cosf(final_angle)),
             radius * (1.0f + sinf(final_angle)),
             0, 1};
-        point4 = pl_mul_mat4_vec4(&transform, point4);
+        point4     = pl_mul_mat4_vec4(&transform, point4);
         points[ii] = (plVec2){point4.x, point4.y};
     }
 
     // draw arc line
     float line_thickness = node->arc.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_width)->value_double;
-    float line_color[4] = {
+    float line_color[4]  = {
         node->arc.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.r)->value_double,
         node->arc.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.g)->value_double,
         node->arc.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.b)->value_double,
@@ -1030,10 +1061,10 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
 static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
-    bool use_radius_x       = node->ellipse.radius_x != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_radius_y       = node->ellipse.radius_y != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_rotation       = node->ellipse.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->ellipse.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->ellipse.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_radius_x           = node->ellipse.radius_x != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_radius_y           = node->ellipse.radius_y != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_rotation           = node->ellipse.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position     = (node->ellipse.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->ellipse.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->ellipse.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->ellipse.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
@@ -1088,17 +1119,33 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
             float pivot_position[2];
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
-                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
-                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                default: DC_LOG_WARN("Ellipse", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = parent_dimensions->x;
+                    break;
+                default:
+                    DC_LOG_WARN("Ellipse", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]);
+                    break;
             }
             switch (parent_pivot_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
-                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                default: DC_LOG_WARN("Ellipse", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = parent_dimensions->y;
+                    break;
+                default:
+                    DC_LOG_WARN("Ellipse", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]);
+                    break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.rotation)->value_double);
 
@@ -1165,7 +1212,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
             node->ellipse.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->ellipse.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        float anchor[2] = {0, 0};
+        float          anchor[2]      = {0, 0};
         DcAppAlignType parent_align_x = node->ellipse.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->ellipse.parent_align.x)->value_integer;
         switch (parent_align_x) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -1216,7 +1263,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
             parent_position->y + anchor[1] + offset[1]};
 
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-        transform = pl_mul_mat4t(&transform, &trans_position_xform);
+        transform                   = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
     // xform local rotation
@@ -1278,55 +1325,53 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // check if this is a pie/wedge (angle specified and != 360)
-    bool use_angle = node->ellipse.angle != DC_APP_VAL_INDEX_UNDEFINED;
+    bool  use_angle  = node->ellipse.angle != DC_APP_VAL_INDEX_UNDEFINED;
     float angle_span = use_angle ? (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.angle)->value_double : 360.0f;
-    bool is_pie = use_angle && !dc_utils_float_equals(angle_span, 360.0f, 0.001f);
+    bool  is_pie     = use_angle && !dc_utils_float_equals(angle_span, 360.0f, 0.001f);
 
     // get number of segments
-    int num_segments = node->ellipse.num_segments == DC_APP_VAL_INDEX_UNDEFINED ?
-        (is_pie ? (int)(angle_span / 3.0f) + 2 : 40) :
-        dc_app_lookup_get_value(app_data->lookup, node->ellipse.num_segments)->value_integer;
+    int num_segments = node->ellipse.num_segments == DC_APP_VAL_INDEX_UNDEFINED ? (is_pie ? (int)(angle_span / 3.0f) + 2 : 40) : dc_app_lookup_get_value(app_data->lookup, node->ellipse.num_segments)->value_integer;
     if (num_segments < 2) num_segments = 2;
     if (num_segments > _NODE_ELLIPSE_MAX_SEGMENTS - 2) num_segments = _NODE_ELLIPSE_MAX_SEGMENTS - 2;
 
     // generate points
     plVec2 points[_NODE_ELLIPSE_MAX_SEGMENTS];
-    int num_points = 0;
+    int    num_points = 0;
 
     if (is_pie) {
         // Pie/wedge mode: center point + arc points
         // Center point goes first for proper convex polygon winding
         plVec4 center4 = (plVec4){radius_x, radius_y, 0, 1};
-        center4 = pl_mul_mat4_vec4(&transform, center4);
-        points[0] = (plVec2){center4.x, center4.y};
-        num_points = 1;
+        center4        = pl_mul_mat4_vec4(&transform, center4);
+        points[0]      = (plVec2){center4.x, center4.y};
+        num_points     = 1;
 
         // Generate arc points (start-based)
         // Wedge starts at 3 o'clock (standard math convention), rotation handled by transform matrix
-        float span_rad = pl_radiansf(angle_span);
-        int num_arc_points = num_segments + 1;
+        float span_rad       = pl_radiansf(angle_span);
+        int   num_arc_points = num_segments + 1;
 
         for (int ii = 0; ii <= num_segments; ii++) {
-            float t = (float)ii / (float)num_segments;
-            float angle = t * span_rad; // from 0 to span
+            float t           = (float)ii / (float)num_segments;
+            float angle       = t * span_rad; // from 0 to span
             float final_angle = angle;
 
             plVec4 point4 = (plVec4){
                 radius_x * (1.0f + cosf(final_angle)),
                 radius_y * (1.0f + sinf(final_angle)),
                 0, 1};
-            point4 = pl_mul_mat4_vec4(&transform, point4);
+            point4               = pl_mul_mat4_vec4(&transform, point4);
             points[num_points++] = (plVec2){point4.x, point4.y};
         }
     } else {
         // Full ellipse mode
         for (int ii = 0; ii < num_segments; ii++) {
-            float angle = ii * (2.0f * (float)M_PI / num_segments);
+            float  angle  = ii * (2.0f * (float)M_PI / num_segments);
             plVec4 point4 = (plVec4){
                 radius_x * (1.0f + cosf(angle)),
                 radius_y * (1.0f + sinf(angle)),
                 0, 1};
-            point4 = pl_mul_mat4_vec4(&transform, point4);
+            point4     = pl_mul_mat4_vec4(&transform, point4);
             points[ii] = (plVec2){point4.x, point4.y};
         }
         num_points = num_segments;
@@ -1350,11 +1395,11 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
             int num_triangles = num_points - 2;
             if (num_triangles > 0) {
                 static plVec2 triangle_points[_NODE_ELLIPSE_MAX_SEGMENTS * 3];
-                int tri_idx = 0;
+                int           tri_idx = 0;
                 for (int ii = 0; ii < num_triangles; ii++) {
-                    triangle_points[tri_idx++] = points[0];       // center
-                    triangle_points[tri_idx++] = points[ii + 1];  // arc point i
-                    triangle_points[tri_idx++] = points[ii + 2];  // arc point i+1
+                    triangle_points[tri_idx++] = points[0];      // center
+                    triangle_points[tri_idx++] = points[ii + 1]; // arc point i
+                    triangle_points[tri_idx++] = points[ii + 2]; // arc point i+1
                 }
                 _ext_draw->add_triangles_filled(_draw_batch_get_2d(app_data), triangle_points, num_triangles * 3, (plDrawSolidOptions){.uColor = pl_fill_color});
             }
@@ -1393,10 +1438,10 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
         if (mouse_position.x > 0 && mouse_position.x < diameter_x && mouse_position.y > 0 && mouse_position.y < diameter_y) {
 
             // now do the actual check using ellipse equation
-            float dx = mouse_position.x - radius_x;
-            float dy = mouse_position.y - radius_y;
+            float dx              = mouse_position.x - radius_x;
+            float dy              = mouse_position.y - radius_y;
             float normalized_dist = (dx * dx) / (radius_x * radius_x) + (dy * dy) / (radius_y * radius_y);
-            inside = normalized_dist <= 1.0f;
+            inside                = normalized_dist <= 1.0f;
         }
 
         // update global states
@@ -1439,8 +1484,8 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
     bool use_virtual_dimension[2] = {
         node->container.virtual_dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
         node->container.virtual_dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
-    bool use_rotation       = node->container.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->container.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->container.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_rotation           = node->container.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position     = (node->container.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->container.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->container.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->container.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
@@ -1488,17 +1533,33 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
             float pivot_position[2];
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
-                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
-                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                default: DC_LOG_WARN("Container", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = parent_dimensions->x;
+                    break;
+                default:
+                    DC_LOG_WARN("Container", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]);
+                    break;
             }
             switch (parent_pivot_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
-                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                default: DC_LOG_WARN("Container", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = parent_dimensions->y;
+                    break;
+                default:
+                    DC_LOG_WARN("Container", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]);
+                    break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->container.rotation)->value_double);
 
@@ -1565,7 +1626,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
             node->container.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->container.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        float anchor[2] = {0, 0};
+        float          anchor[2]      = {0, 0};
         DcAppAlignType parent_align_x = node->container.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->container.parent_align.x)->value_integer;
         switch (parent_align_x) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -1616,7 +1677,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
             parent_position->y + anchor[1] + offset[1]};
 
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-        transform = pl_mul_mat4t(&transform, &trans_position_xform);
+        transform                   = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
     // xform local rotation
@@ -1733,7 +1794,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
 
 static void _draw_node_conditional(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
-    DcValue             *val1     = dc_app_lookup_get_value(app_data->lookup, node->conditional.value1);
+    DcValue *val1 = dc_app_lookup_get_value(app_data->lookup, node->conditional.value1);
     if (!val1) {
         // DC_LOG_WARN("If", "Value1 is undefined, skipping conditional");
         return;
@@ -1816,8 +1877,8 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
     bool use_dimension[2] = {
         node->image.dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
         node->image.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
-    bool use_rotation       = node->image.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->image.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->image.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_rotation           = node->image.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position     = (node->image.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->image.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->image.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->image.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
@@ -1860,17 +1921,33 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
             float pivot_position[2];
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
-                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
-                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                default: DC_LOG_WARN("Image", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = parent_dimensions->x;
+                    break;
+                default:
+                    DC_LOG_WARN("Image", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]);
+                    break;
             }
             switch (parent_pivot_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
-                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                default: DC_LOG_WARN("Image", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = parent_dimensions->y;
+                    break;
+                default:
+                    DC_LOG_WARN("Image", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]);
+                    break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->image.rotation)->value_double);
 
@@ -1937,7 +2014,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
             node->image.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->image.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        float anchor[2] = {0, 0};
+        float          anchor[2]      = {0, 0};
         DcAppAlignType parent_align_x = node->image.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->image.parent_align.x)->value_integer;
         switch (parent_align_x) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -1988,7 +2065,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
             parent_position->y + anchor[1] + offset[1]};
 
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-        transform = pl_mul_mat4t(&transform, &trans_position_xform);
+        transform                   = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
     // xform local rotation
@@ -2126,8 +2203,8 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
 static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
-    bool use_rotation       = node->line.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->line.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->line.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_rotation           = node->line.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position     = (node->line.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->line.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->line.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->line.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // transform
@@ -2165,17 +2242,33 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
             float pivot_position[2];
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
-                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
-                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                default: DC_LOG_WARN("Line", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = parent_dimensions->x;
+                    break;
+                default:
+                    DC_LOG_WARN("Line", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]);
+                    break;
             }
             switch (parent_pivot_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
-                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                default: DC_LOG_WARN("Line", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = parent_dimensions->y;
+                    break;
+                default:
+                    DC_LOG_WARN("Line", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]);
+                    break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->line.rotation)->value_double);
 
@@ -2307,12 +2400,12 @@ static void _draw_node_panel(_AppData *app_data, _NodeIndex node_index, _Node *n
 
     // DisplayIndex/ActiveDisplay check - skip panel if index doesn't match window's active display
     DcAppValIndex window_active_display = app_data->sb_nodes[app_data->window].window.active_display;
-    DcAppValIndex panel_index = node->panel.index;
+    DcAppValIndex panel_index           = node->panel.index;
     if (window_active_display != DC_APP_VAL_INDEX_UNDEFINED && panel_index != DC_APP_VAL_INDEX_UNDEFINED) {
         int active_display_value = dc_app_lookup_get_value(app_data->lookup, window_active_display)->value_integer;
-        int panel_index_value = dc_app_lookup_get_value(app_data->lookup, panel_index)->value_integer;
+        int panel_index_value    = dc_app_lookup_get_value(app_data->lookup, panel_index)->value_integer;
         if (active_display_value != panel_index_value) {
-            return;  // skip this panel - DisplayIndex doesn't match ActiveDisplay
+            return; // skip this panel - DisplayIndex doesn't match ActiveDisplay
         }
     }
 
@@ -2408,7 +2501,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
                 }
 
                 // allocate frame buffer if needed
-                size_t frame_size = (size_t)width * height * 4;
+                size_t frame_size       = (size_t)width * height * 4;
                 node->pixelstream.frame = realloc(node->pixelstream.frame, frame_size);
 
                 // get data directly (already RGBA)
@@ -2464,8 +2557,8 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
     bool use_dimension[2] = {
         node->pixelstream.dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
         node->pixelstream.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
-    bool use_rotation       = node->pixelstream.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->pixelstream.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->pixelstream.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_rotation           = node->pixelstream.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position     = (node->pixelstream.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->pixelstream.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->pixelstream.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->pixelstream.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
@@ -2508,17 +2601,33 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
             float pivot_position[2];
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
-                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
-                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                default: DC_LOG_WARN("Pixelstream", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = parent_dimensions->x;
+                    break;
+                default:
+                    DC_LOG_WARN("Pixelstream", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]);
+                    break;
             }
             switch (parent_pivot_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
-                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                default: DC_LOG_WARN("Pixelstream", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = parent_dimensions->y;
+                    break;
+                default:
+                    DC_LOG_WARN("Pixelstream", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]);
+                    break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.rotation)->value_double);
 
@@ -2585,7 +2694,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
             node->pixelstream.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->pixelstream.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        float anchor[2] = {0, 0};
+        float          anchor[2]      = {0, 0};
         DcAppAlignType parent_align_x = node->pixelstream.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->pixelstream.parent_align.x)->value_integer;
         switch (parent_align_x) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -2636,7 +2745,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
             parent_position->y + anchor[1] + offset[1]};
 
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-        transform = pl_mul_mat4t(&transform, &trans_position_xform);
+        transform                   = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
     // xform local rotation
@@ -2711,19 +2820,19 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
     transform = pl_mul_mat4t(parent_transform, &transform);
 
     // compute UV coordinates
-    plVec2 min_uv = {0.0f, 0.0f};
-    plVec2 max_uv;
+    plVec2            min_uv = {0.0f, 0.0f};
+    plVec2            max_uv;
     plBindGroupHandle bind_group_handle;
 
     if (use_test_pattern) {
         // test pattern uses full texture
         _Texture test_tex = app_data->sb_textures[node->pixelstream.test_pattern_texture_index];
-        max_uv = (plVec2){1.0f, 1.0f};
+        max_uv            = (plVec2){1.0f, 1.0f};
         bind_group_handle = test_tex.bind_group_handle;
     } else {
         // streaming texture
         plVec3 pl_texture_dimensions = pl_texture->tDesc.tDimensions;
-        max_uv = (plVec2){
+        max_uv                       = (plVec2){
             ((float)node->pixelstream.frame_width) / pl_texture_dimensions.x,
             ((float)node->pixelstream.frame_height) / pl_texture_dimensions.y};
         bind_group_handle = app_data->sb_textures[node->pixelstream.texture_index].bind_group_handle;
@@ -2795,8 +2904,8 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
 static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
-    bool use_rotation       = node->polygon.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->polygon.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->polygon.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_rotation           = node->polygon.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position     = (node->polygon.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->polygon.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->polygon.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->polygon.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // transform
@@ -2834,17 +2943,33 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
             float pivot_position[2];
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
-                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
-                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                default: DC_LOG_WARN("Polygon", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = parent_dimensions->x;
+                    break;
+                default:
+                    DC_LOG_WARN("Polygon", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]);
+                    break;
             }
             switch (parent_pivot_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
-                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                default: DC_LOG_WARN("Polygon", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = parent_dimensions->y;
+                    break;
+                default:
+                    DC_LOG_WARN("Polygon", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]);
+                    break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->polygon.rotation)->value_double);
 
@@ -2864,7 +2989,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
             node->polygon.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->polygon.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        float anchor[2] = {0, 0};
+        float          anchor[2]      = {0, 0};
         DcAppAlignType parent_align_x = node->polygon.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->polygon.parent_align.x)->value_integer;
         switch (parent_align_x) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -2915,7 +3040,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
             parent_position->y + anchor[1] + offset[1]};
 
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-        transform = pl_mul_mat4t(&transform, &trans_position_xform);
+        transform                   = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
     // parent transform
@@ -3081,8 +3206,8 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
     bool use_dimension[2] = {
         node->rectangle.dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
         node->rectangle.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
-    bool use_rotation       = node->rectangle.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->rectangle.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->rectangle.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_rotation           = node->rectangle.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position     = (node->rectangle.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->rectangle.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->rectangle.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->rectangle.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
@@ -3125,17 +3250,33 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             float pivot_position[2];
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
-                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
-                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                default: DC_LOG_WARN("Rectangle", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = parent_dimensions->x;
+                    break;
+                default:
+                    DC_LOG_WARN("Rectangle", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]);
+                    break;
             }
             switch (parent_pivot_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
-                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                default: DC_LOG_WARN("Rectangle", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = parent_dimensions->y;
+                    break;
+                default:
+                    DC_LOG_WARN("Rectangle", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]);
+                    break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.rotation)->value_double);
 
@@ -3202,7 +3343,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             node->rectangle.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->rectangle.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        float anchor[2] = {0, 0};
+        float          anchor[2]      = {0, 0};
         DcAppAlignType parent_align_x = node->rectangle.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->rectangle.parent_align.x)->value_integer;
         switch (parent_align_x) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -3253,7 +3394,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             parent_position->y + anchor[1] + offset[1]};
 
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-        transform = pl_mul_mat4t(&transform, &trans_position_xform);
+        transform                   = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
     // xform local rotation
@@ -3829,8 +3970,8 @@ static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *nod
 static void _flush_deferred_sets(_AppData *app_data) {
     int count = sbcount(app_data->sb_deferred_sets);
     for (int i = 0; i < count; i++) {
-        _DeferredSetOp *qop = &app_data->sb_deferred_sets[i];
-        DcValue *var_value = dc_app_lookup_get_value(
+        _DeferredSetOp *qop       = &app_data->sb_deferred_sets[i];
+        DcValue        *var_value = dc_app_lookup_get_value(
             app_data->lookup,
             dc_app_lookup_get_var(app_data->lookup, qop->var_index)->value_index);
         if (_apply_set_operation(app_data, qop->var_index, var_value, &qop->value, qop->operation)) {
@@ -3849,9 +3990,9 @@ static void _flush_deferred_sets(_AppData *app_data) {
 static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
     // boolean checks
-    bool use_radius         = node->sphere.radius != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_rotation       = node->sphere.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->sphere.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->sphere.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_radius             = node->sphere.radius != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_rotation           = node->sphere.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position     = (node->sphere.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->sphere.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->sphere.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->sphere.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get radius
@@ -3895,17 +4036,33 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
             float pivot_position[2];
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
-                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
-                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                default: DC_LOG_WARN("Sphere", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = parent_dimensions->x;
+                    break;
+                default:
+                    DC_LOG_WARN("Sphere", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]);
+                    break;
             }
             switch (parent_pivot_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
-                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                default: DC_LOG_WARN("Sphere", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = parent_dimensions->y;
+                    break;
+                default:
+                    DC_LOG_WARN("Sphere", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]);
+                    break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rotation)->value_double);
 
@@ -3929,14 +4086,14 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
         float trans_align_offsets[2];
         switch (local_aligns[0]) {
             case DC_APP_ALIGN_TYPE_LEFT:
-                trans_align_offsets[0] = radius;  // move right so left edge aligns
+                trans_align_offsets[0] = radius; // move right so left edge aligns
                 break;
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_CENTER:
-                trans_align_offsets[0] = 0;  // sphere is already centered
+                trans_align_offsets[0] = 0; // sphere is already centered
                 break;
             case DC_APP_ALIGN_TYPE_RIGHT:
-                trans_align_offsets[0] = -radius;  // move left so right edge aligns
+                trans_align_offsets[0] = -radius; // move left so right edge aligns
                 break;
             default:
                 DC_LOG_WARN("Sphere", "Unknown X alignment: %d", local_aligns[0]);
@@ -3944,14 +4101,14 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
         }
         switch (local_aligns[1]) {
             case DC_APP_ALIGN_TYPE_BOTTOM:
-                trans_align_offsets[1] = radius;  // move down so bottom edge aligns
+                trans_align_offsets[1] = radius; // move down so bottom edge aligns
                 break;
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_MIDDLE:
-                trans_align_offsets[1] = 0;  // sphere is already centered
+                trans_align_offsets[1] = 0; // sphere is already centered
                 break;
             case DC_APP_ALIGN_TYPE_TOP:
-                trans_align_offsets[1] = -radius;  // move up so top edge aligns
+                trans_align_offsets[1] = -radius; // move up so top edge aligns
                 break;
             default:
                 DC_LOG_WARN("Sphere", "Unknown Y alignment: %d", local_aligns[1]);
@@ -3959,7 +4116,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
         }
 
         plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
-        transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
+        transform                      = pl_mul_mat4t(&transform, &trans_local_align_xform);
     }
 
     // xform position
@@ -3968,7 +4125,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
             node->sphere.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->sphere.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        float anchor[2] = {0, 0};
+        float          anchor[2]      = {0, 0};
         DcAppAlignType parent_align_x = node->sphere.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->sphere.parent_align.x)->value_integer;
         switch (parent_align_x) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -4019,7 +4176,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
             parent_position->y + anchor[1] + offset[1]};
 
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-        transform = pl_mul_mat4t(&transform, &trans_position_xform);
+        transform                   = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
     // xform local rotation (around local pivot)
@@ -4079,9 +4236,9 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
     // start with internal rotation (roll, pitch, yaw) - applied first (rightmost in multiplication)
     plMat4 sphere_transform = (plMat4){1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
     {
-        float roll  = node->sphere.rpy.roll  == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rpy.roll)->value_double);
+        float roll  = node->sphere.rpy.roll == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rpy.roll)->value_double);
         float pitch = node->sphere.rpy.pitch == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rpy.pitch)->value_double);
-        float yaw   = node->sphere.rpy.yaw   == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rpy.yaw)->value_double);
+        float yaw   = node->sphere.rpy.yaw == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->sphere.rpy.yaw)->value_double);
 
         // offset yaw by -90 degrees to match legacy ADI ball orientation
         yaw -= (float)M_PI_2;
@@ -4093,11 +4250,11 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
         }
         if (pitch != 0.0f) {
             plMat4 pitch_xform = pl_mat4_rotate_vec3(pitch, (plVec3){1.0f, 0.0f, 0.0f});
-            sphere_transform = pl_mul_mat4t(&sphere_transform, &pitch_xform);
+            sphere_transform   = pl_mul_mat4t(&sphere_transform, &pitch_xform);
         }
         if (roll != 0.0f) {
             plMat4 roll_xform = pl_mat4_rotate_vec3(roll, (plVec3){0.0f, 0.0f, 1.0f});
-            sphere_transform = pl_mul_mat4t(&sphere_transform, &roll_xform);
+            sphere_transform  = pl_mul_mat4t(&sphere_transform, &roll_xform);
         }
     }
 
@@ -4116,8 +4273,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
     // create sphere geometry definition - sphere is built at origin, transform handles positioning
     plSphere sphere_def = {
         .tCenter = (plVec3){0.0f, 0.0f, 0.0f},
-        .fRadius = radius
-    };
+        .fRadius = radius};
 
     // get a 3D draw list from the batch system
     plDrawList3D *draw_list_3d = _draw_batch_get_3d(app_data);
@@ -4125,7 +4281,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
     // draw textured or solid sphere
     if (node->sphere.texture_index != TEXTURE_INDEX_UNDEFINED) {
         // textured sphere
-        _Texture *texture = &app_data->sb_textures[node->sphere.texture_index];
+        _Texture   *texture    = &app_data->sb_textures[node->sphere.texture_index];
         plTextureID texture_id = texture->bind_group_handle.uData;
         _ext_draw->add_3d_sphere_textured(draw_list_3d, texture_id, sphere_def, &sphere_transform, 32, 32, pl_fill_color);
     } else {
@@ -4136,7 +4292,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
 
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
     int num_children = sbcount(node->stencil.sb_children);
-    int depth = ++app_data->stencil_depth;
+    int depth        = ++app_data->stencil_depth;
 
     for (int i = 0; i < num_children; i++) {
         _StencilChild *stencil_child = &node->stencil.sb_children[i];
@@ -4177,8 +4333,8 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
             app_data->active_sdf_shader_override         = &app_data->stencil_cleanup_sdf_shader;
             app_data->active_3d_solid_shader_override    = &app_data->stencil_cleanup_3d_solid_shader;
             app_data->active_3d_textured_shader_override = &app_data->stencil_cleanup_3d_textured_shader;
-            app_data->stencil_2d_dirty = true;
-            app_data->stencil_3d_dirty = true;
+            app_data->stencil_2d_dirty                   = true;
+            app_data->stencil_3d_dirty                   = true;
             _draw_node_list(app_data, stencil_child->child, parent_position, parent_dimensions, parent_transform);
         }
     }
@@ -4215,8 +4371,8 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
     bool use_dimension[2] = {
         node->planet_view.dimension.x != DC_APP_VAL_INDEX_UNDEFINED,
         node->planet_view.dimension.y != DC_APP_VAL_INDEX_UNDEFINED};
-    bool use_rotation       = node->planet_view.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->planet_view.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->planet_view.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_rotation           = node->planet_view.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position     = (node->planet_view.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->planet_view.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->planet_view.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->planet_view.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // get dimensions
@@ -4256,17 +4412,33 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
             float pivot_position[2];
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
-                case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
-                case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                default: DC_LOG_WARN("PlanetView", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                case DC_APP_ALIGN_TYPE_LEFT:
+                    pivot_position[0] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_CENTER:
+                    pivot_position[0] = parent_dimensions->x / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_RIGHT:
+                    pivot_position[0] = parent_dimensions->x;
+                    break;
+                default:
+                    DC_LOG_WARN("PlanetView", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]);
+                    break;
             }
             switch (parent_pivot_aligns[1]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
-                case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
-                case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
-                case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                default: DC_LOG_WARN("PlanetView", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                case DC_APP_ALIGN_TYPE_BOTTOM:
+                    pivot_position[1] = 0;
+                    break;
+                case DC_APP_ALIGN_TYPE_MIDDLE:
+                    pivot_position[1] = parent_dimensions->y / 2;
+                    break;
+                case DC_APP_ALIGN_TYPE_TOP:
+                    pivot_position[1] = parent_dimensions->y;
+                    break;
+                default:
+                    DC_LOG_WARN("PlanetView", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]);
+                    break;
             }
             float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rotation)->value_double);
 
@@ -4319,7 +4491,7 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
         }
 
         plMat4 trans_local_align_xform = pl_mat4_translate_xyz(trans_align_offsets[0], trans_align_offsets[1], 0.0f);
-        transform = pl_mul_mat4t(&transform, &trans_local_align_xform);
+        transform                      = pl_mul_mat4t(&transform, &trans_local_align_xform);
     }
 
     // xform position
@@ -4328,7 +4500,7 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
             node->planet_view.position.x != DC_APP_VAL_INDEX_UNDEFINED,
             node->planet_view.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-        float anchor[2] = {0, 0};
+        float          anchor[2]      = {0, 0};
         DcAppAlignType parent_align_x = node->planet_view.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->planet_view.parent_align.x)->value_integer;
         switch (parent_align_x) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -4378,7 +4550,7 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
             parent_position->y + anchor[1] + offset[1]};
 
         plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-        transform = pl_mul_mat4t(&transform, &trans_position_xform);
+        transform                   = pl_mul_mat4t(&transform, &trans_position_xform);
     }
 
     // xform local rotation
@@ -4435,9 +4607,9 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
     // PL specific fixes
     {
         plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0, dimension[1], 0.0f);
-        plMat4 scale_invert_y_xform = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
-        transform = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
-        transform = pl_mul_mat4t(&transform, &scale_invert_y_xform);
+        plMat4 scale_invert_y_xform  = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
+        transform                    = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
+        transform                    = pl_mul_mat4t(&transform, &scale_invert_y_xform);
     }
 
     // parent transform
@@ -4454,16 +4626,16 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
     plVec2 point3      = (plVec2){point3_vec4.x, point3_vec4.y};
 
     // camera setup
-    bool use_lle = (node->planet_view.lle.lat != DC_APP_VAL_INDEX_UNDEFINED &&
+    bool use_lle   = (node->planet_view.lle.lat != DC_APP_VAL_INDEX_UNDEFINED &&
                     node->planet_view.lle.lon != DC_APP_VAL_INDEX_UNDEFINED &&
                     node->planet_view.lle.ele != DC_APP_VAL_INDEX_UNDEFINED);
-    bool use_xyz = (node->planet_view.xyz.x != DC_APP_VAL_INDEX_UNDEFINED &&
+    bool use_xyz   = (node->planet_view.xyz.x != DC_APP_VAL_INDEX_UNDEFINED &&
                     node->planet_view.xyz.y != DC_APP_VAL_INDEX_UNDEFINED &&
                     node->planet_view.xyz.z != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_ortho = (node->planet_view.orthographic != DC_APP_VAL_INDEX_UNDEFINED &&
                       dc_app_lookup_get_value(app_data->lookup, node->planet_view.orthographic)->value_boolean);
 
-    plCamera camera = {0};
+    plCamera camera     = {0};
     camera.tType        = PL_CAMERA_TYPE_PERSPECTIVE;
     camera.fFieldOfView = 60.0f * (float)(M_PI / 180.0);
     camera.fAspectRatio = (dimension[1] > 0.0f) ? dimension[0] / dimension[1] : 1.0f;
@@ -4479,7 +4651,7 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
         _ext_camera->set_pos(&camera, cam_x, cam_y, cam_z);
 
         if (node->planet_view.rpy.pitch != DC_APP_VAL_INDEX_UNDEFINED &&
-            node->planet_view.rpy.yaw   != DC_APP_VAL_INDEX_UNDEFINED) {
+            node->planet_view.rpy.yaw != DC_APP_VAL_INDEX_UNDEFINED) {
             float pitch = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.pitch)->value_double;
             float yaw   = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.yaw)->value_double;
             _ext_camera->set_pitch_yaw(&camera, pl_radiansf(pitch), pl_radiansf(yaw));
@@ -4497,31 +4669,31 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
         double r       = def->radius + ele;
 
         _ext_camera->set_pos(&camera,
-            r * cos(lat_rad) * sin(lon_rad),
-            r * sin(lat_rad),
-            r * cos(lat_rad) * cos(lon_rad));
+                             r * cos(lat_rad) * sin(lon_rad),
+                             r * sin(lat_rad),
+                             r * cos(lat_rad) * cos(lon_rad));
 
         _ext_camera->look_at(&camera, camera.tPosDouble, (plDVec3){0, 0, 0});
 
         if (node->planet_view.heading != DC_APP_VAL_INDEX_UNDEFINED) {
             float heading_deg = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.heading)->value_double;
-            camera.fRoll = pl_radiansf(heading_deg);
+            camera.fRoll      = pl_radiansf(heading_deg);
         }
     }
 
     _ext_camera->update(&camera);
 
     if (use_ortho) {
-        double cam_dist = sqrt(camera.tPosDouble.x * camera.tPosDouble.x +
-                               camera.tPosDouble.y * camera.tPosDouble.y +
-                               camera.tPosDouble.z * camera.tPosDouble.z);
+        double cam_dist     = sqrt(camera.tPosDouble.x * camera.tPosDouble.x +
+                                   camera.tPosDouble.y * camera.tPosDouble.y +
+                                   camera.tPosDouble.z * camera.tPosDouble.z);
         double surface_dist = cam_dist - def->radius;
         if (surface_dist < 1.0) surface_dist = 1.0;
 
         float half_h = (float)surface_dist * tanf(camera.fFieldOfView / 2.0f);
         float half_w = half_h * camera.fAspectRatio;
 
-        camera.tProjMat = (plMat4){0};
+        camera.tProjMat          = (plMat4){0};
         camera.tProjMat.col[0].x = 1.0f / half_w;
         camera.tProjMat.col[1].y = 1.0f / half_h;
         camera.tProjMat.col[2].z = 1.0f / (camera.fFarZ - camera.fNearZ);
@@ -4529,7 +4701,7 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
     }
 
     // render view
-    plPlanetView *view = app_data->sb_planet_views[node->planet_view.planet_view_index];
+    plPlanetView    *view    = app_data->sb_planet_views[node->planet_view.planet_view_index];
     plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();
     _ext_planet->render_view(view, &camera, cmd_buf);
     _ext_starter->submit_command_buffer(cmd_buf);
@@ -4620,8 +4792,8 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
     }
 
     // boolean checks
-    bool use_rotation       = node->text.rotation != DC_APP_VAL_INDEX_UNDEFINED;
-    bool use_pivot_position = (node->text.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->text.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
+    bool use_rotation           = node->text.rotation != DC_APP_VAL_INDEX_UNDEFINED;
+    bool use_pivot_position     = (node->text.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->text.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->text.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->text.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
     // iterate over each string
@@ -4663,17 +4835,33 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                 float pivot_position[2];
                 switch (parent_pivot_aligns[0]) {
                     case DC_APP_ALIGN_TYPE_UNDEFINED:
-                    case DC_APP_ALIGN_TYPE_LEFT:     pivot_position[0] = 0; break;
-                    case DC_APP_ALIGN_TYPE_CENTER:   pivot_position[0] = parent_dimensions->x / 2; break;
-                    case DC_APP_ALIGN_TYPE_RIGHT:    pivot_position[0] = parent_dimensions->x; break;
-                    default: DC_LOG_WARN("Text", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]); break;
+                    case DC_APP_ALIGN_TYPE_LEFT:
+                        pivot_position[0] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_CENTER:
+                        pivot_position[0] = parent_dimensions->x / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_RIGHT:
+                        pivot_position[0] = parent_dimensions->x;
+                        break;
+                    default:
+                        DC_LOG_WARN("Text", "Unknown pivot X alignment: %d", parent_pivot_aligns[0]);
+                        break;
                 }
                 switch (parent_pivot_aligns[1]) {
                     case DC_APP_ALIGN_TYPE_UNDEFINED:
-                    case DC_APP_ALIGN_TYPE_BOTTOM:   pivot_position[1] = 0; break;
-                    case DC_APP_ALIGN_TYPE_MIDDLE:   pivot_position[1] = parent_dimensions->y / 2; break;
-                    case DC_APP_ALIGN_TYPE_TOP:      pivot_position[1] = parent_dimensions->y; break;
-                    default: DC_LOG_WARN("Text", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]); break;
+                    case DC_APP_ALIGN_TYPE_BOTTOM:
+                        pivot_position[1] = 0;
+                        break;
+                    case DC_APP_ALIGN_TYPE_MIDDLE:
+                        pivot_position[1] = parent_dimensions->y / 2;
+                        break;
+                    case DC_APP_ALIGN_TYPE_TOP:
+                        pivot_position[1] = parent_dimensions->y;
+                        break;
+                    default:
+                        DC_LOG_WARN("Text", "Unknown pivot Y alignment: %d", parent_pivot_aligns[1]);
+                        break;
                 }
                 float rotation = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->text.rotation)->value_double);
 
@@ -4745,7 +4933,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                 node->text.position.x != DC_APP_VAL_INDEX_UNDEFINED,
                 node->text.position.y != DC_APP_VAL_INDEX_UNDEFINED};
 
-            float anchor[2] = {0, 0};
+            float          anchor[2]      = {0, 0};
             DcAppAlignType parent_align_x = node->text.parent_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : dc_app_lookup_get_value(app_data->lookup, node->text.parent_align.x)->value_integer;
             switch (parent_align_x) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
@@ -4796,7 +4984,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                 parent_position->y + anchor[1] + offset[1]};
 
             plMat4 trans_position_xform = pl_mat4_translate_xyz(position[0], position[1], 0.0f);
-            transform = pl_mul_mat4t(&transform, &trans_position_xform);
+            transform                   = pl_mul_mat4t(&transform, &trans_position_xform);
         }
 
         // xform local rotation
@@ -4888,7 +5076,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
         // shadow pass
         if (node->text.shadow_offset != DC_APP_VAL_INDEX_UNDEFINED) {
             plDrawTextOptions shadow_opts = text_options;
-            shadow_opts.uColor = PL_COLOR_32_RGBA(0, 0, 0, 1);
+            shadow_opts.uColor            = PL_COLOR_32_RGBA(0, 0, 0, 1);
 
             float offset = (float)dc_app_lookup_get_value(app_data->lookup, node->text.shadow_offset)->value_double;
             shadow_opts.tTransform.x13 += offset;
@@ -4999,9 +5187,8 @@ static plDrawLayer2D *_draw_batch_get_2d(_AppData *app_data) {
 
     // add batch entry
     _DrawBatch batch = {
-        .type = DRAW_BATCH_TYPE_2D,
-        .draw_list_2d = *draw_list_2d
-    };
+        .type         = DRAW_BATCH_TYPE_2D,
+        .draw_list_2d = *draw_list_2d};
     sbpush(app_data->sb_draw_batches, batch);
 
     // inject stencil override if active (new batch after batch break)
@@ -5022,8 +5209,8 @@ static plDrawList3D *_draw_batch_get_3d(_AppData *app_data) {
         // inject stencil override on phase change
         if (app_data->stencil_3d_dirty) {
             _ext_draw_backend->set_3d_shader(draw_list,
-                app_data->active_3d_solid_shader_override,
-                app_data->active_3d_textured_shader_override);
+                                             app_data->active_3d_solid_shader_override,
+                                             app_data->active_3d_textured_shader_override);
             app_data->stencil_3d_dirty = false;
         }
         return draw_list;
@@ -5042,16 +5229,15 @@ static plDrawList3D *_draw_batch_get_3d(_AppData *app_data) {
 
     // add batch entry
     _DrawBatch batch = {
-        .type = DRAW_BATCH_TYPE_3D,
-        .draw_list_3d = draw_list
-    };
+        .type         = DRAW_BATCH_TYPE_3D,
+        .draw_list_3d = draw_list};
     sbpush(app_data->sb_draw_batches, batch);
 
     // inject stencil override if active (new batch after batch break)
     if (app_data->stencil_3d_dirty || app_data->active_3d_solid_shader_override || app_data->active_3d_textured_shader_override) {
         _ext_draw_backend->set_3d_shader(draw_list,
-            app_data->active_3d_solid_shader_override,
-            app_data->active_3d_textured_shader_override);
+                                         app_data->active_3d_solid_shader_override,
+                                         app_data->active_3d_textured_shader_override);
         app_data->stencil_3d_dirty = false;
     }
 

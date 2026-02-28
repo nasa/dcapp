@@ -20,7 +20,7 @@ typedef struct __DcTrickContext {
 
     // socket
     DcSockHandle sock;
-    DcSockState state;
+    DcSockState  state;
 
     // time between reconnects
     time_t reconnect_start;

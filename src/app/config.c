@@ -69,9 +69,9 @@ static xmlChar        *_get_style_attr(_ConfigContext *context, int style_index,
 static xmlChar        *_get_style_content(_ConfigContext *context, int style_index, DcAppElemType elem_type);
 
 // xml utils
-static void  _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory);
-static void  _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr node);
-static void  _splice_children_into_parent_and_free_wrapper(xmlNodePtr node);
+static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char *directory);
+static void _dereference_node_attrs_and_content(_ConfigContext *context, xmlNodePtr node);
+static void _splice_children_into_parent_and_free_wrapper(xmlNodePtr node);
 
 // arg utils
 static char *_unquote(const char *str);
@@ -425,15 +425,17 @@ void dc_app_config_preprocess_xml(DcAppConfig *config, DcAppLookup *lookup) {
     xmlChar *suppress_warnings_attr = xmlGetProp(node, BAD_CAST "SuppressWarnings");
     if (suppress_warnings_attr) {
         unsigned int suppress_flags = 0;
-        char *token = strtok((char *)suppress_warnings_attr, ",");
+        char        *token          = strtok((char *)suppress_warnings_attr, ",");
         while (token) {
             // trim whitespace
-            while (*token == ' ') token++;
+            while (*token == ' ')
+                token++;
             char *end = token + strlen(token) - 1;
-            while (end > token && *end == ' ') *end-- = '\0';
+            while (end > token && *end == ' ')
+                *end-- = '\0';
 
             if (strcmp(token, "all") == 0) {
-                suppress_flags = ~0u;  // all bits set
+                suppress_flags = ~0u; // all bits set
             } else if (strcmp(token, "missing-constants") == 0) {
                 suppress_flags |= DC_APP_SUPPRESS_MISSING_CONSTANT;
             } else if (strcmp(token, "missing-variables") == 0) {
@@ -529,12 +531,12 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
     }
 
     // check for _Directory attribute and use it if present
-    char directory_buffer[DC_UTILS_FILEPATH_BUFFER_SIZE];
+    char     directory_buffer[DC_UTILS_FILEPATH_BUFFER_SIZE];
     xmlChar *dir_attr = xmlGetProp(node, BAD_CAST "_Directory");
     if (dir_attr) {
         strncpy(directory_buffer, (const char *)dir_attr, sizeof(directory_buffer) - 1);
         directory_buffer[sizeof(directory_buffer) - 1] = '\0';
-        directory = directory_buffer;
+        directory                                      = directory_buffer;
         xmlFree(dir_attr);
     }
 
@@ -552,7 +554,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
             DcAppStyleIndex style_index = _get_style_index(context, (char *)style_name);
 
             if (style_index != DC_APP_STYLE_INDEX_UNDEFINED) {
-                xmlNodePtr      style_xml_node = context->sb_styles[style_index].xml_nodes[elem_type];
+                xmlNodePtr style_xml_node = context->sb_styles[style_index].xml_nodes[elem_type];
 
                 if (style_xml_node) {
                     for (xmlAttrPtr attr = style_xml_node->properties; attr; attr = attr->next) {
@@ -681,7 +683,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
 
             // check if include is optional
             xmlChar *optional_str = xmlGetProp(node, BAD_CAST "Optional");
-            int optional = optional_str ? dc_utils_string_to_boolean((const char *)optional_str) : 0;
+            int      optional     = optional_str ? dc_utils_string_to_boolean((const char *)optional_str) : 0;
             if (optional_str) {
                 xmlFree(optional_str);
             }
@@ -769,11 +771,11 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
             }
 
             // set root element as the only child of Include node
-            node->children = new_node;
-            node->last = new_node;
+            node->children   = new_node;
+            node->last       = new_node;
             new_node->parent = node;
-            new_node->next = NULL;
-            new_node->prev = NULL;
+            new_node->next   = NULL;
+            new_node->prev   = NULL;
 
             // free loaded document
             xmlFreeDoc(sub_doc);
@@ -833,7 +835,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
         case DC_APP_ELEM_TYPE_IF: {
             // Wrap implicit true children in <True> blocks (for both static and runtime)
             xmlNodePtr wrapper = NULL;
-            xmlNodePtr child = node->children;
+            xmlNodePtr child   = node->children;
             while (child) {
                 xmlNodePtr next = child->next;
                 if (child->type == XML_ELEMENT_NODE) {
@@ -853,7 +855,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
             }
 
             // Check if this is a static if (<If Static="true">)
-            bool is_static = false;
+            bool     is_static   = false;
             xmlChar *static_attr = xmlGetProp(node, BAD_CAST "Static");
             if (static_attr) {
                 is_static = dc_utils_string_to_boolean((const char *)static_attr);
@@ -875,13 +877,11 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
                 if (!has_runtime && has_value) is_static = true;
             }
 
-            
-
             if (is_static) {
                 // ===== STATIC IF PROCESSING =====
                 // Parse Operation (already dereferenced by _dereference_node_attrs_and_content)
                 xmlChar *raw_operation = xmlGetProp(node, BAD_CAST "Operator");
-                int cond_type = DC_APP_CONDITIONAL_TYPE_TRUE;
+                int      cond_type     = DC_APP_CONDITIONAL_TYPE_TRUE;
                 if (raw_operation) {
                     cond_type = dc_utils_string_to_integer((const char *)raw_operation);
                     xmlFree(raw_operation);
@@ -914,7 +914,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
                 if (raw_value2) {
                     strncpy(value2_buf, (const char *)raw_value2, sizeof(value2_buf) - 1);
                     value2_buf[sizeof(value2_buf) - 1] = '\0';
-                    value2 = value2_buf;
+                    value2                             = value2_buf;
                     xmlFree(raw_value2);
                 }
 
@@ -937,7 +937,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
                 if (value2) {
                     // Two-value comparison - determine type from value1
                     bool is_double = dc_utils_string_is_double(value1);
-                    bool is_bool = !is_double && dc_utils_string_is_boolean(value1);
+                    bool is_bool   = !is_double && dc_utils_string_is_boolean(value1);
 
                     if (is_double) {
                         // Numeric comparison (handles both integers and doubles)
@@ -1038,7 +1038,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
 
                 // Remove non-matching branch (True or False) WITHOUT processing
                 DcAppElemType keep_type = result ? DC_APP_ELEM_TYPE_TRUE : DC_APP_ELEM_TYPE_FALSE;
-                child = node->children;
+                child                   = node->children;
                 while (child) {
                     xmlNodePtr next = child->next;
                     if (child->type == XML_ELEMENT_NODE) {
@@ -1127,8 +1127,8 @@ static void _write_xml_node(FILE *f, xmlNodePtr node, int depth) {
             // Check if element has children
             if (node->children) {
                 // Check if only child is text (no sub-elements)
-                bool has_element_children = false;
-                xmlNodePtr child = node->children;
+                bool       has_element_children = false;
+                xmlNodePtr child                = node->children;
                 while (child) {
                     if (child->type == XML_ELEMENT_NODE) {
                         has_element_children = true;
@@ -1258,7 +1258,7 @@ static const char *_get_const_by_name(_ConfigContext *context, const char *name)
     DcAppLookupIndex const_index = _get_const_index(context, name);
     if (const_index == DC_APP_LOOKUP_INDEX_UNDEFINED) {
         if (context->suppress_warnings & DC_APP_SUPPRESS_MISSING_CONSTANT) {
-            return "";  // silently expand to nothing
+            return ""; // silently expand to nothing
         }
         DC_LOG_WARN("Config", "_get_const_by_name(): constant '%s' does not exist", name);
         return NULL;
@@ -1330,7 +1330,7 @@ static void _dereference_constants(_ConfigContext *context, const char *in, char
                 if (subtext_end_index == -1) {
                     subtext_end_index = (int)in_length;
                 } else {
-                    subtext_end_index += in_index;  // Convert from relative to absolute position
+                    subtext_end_index += in_index; // Convert from relative to absolute position
                 }
 
                 subtext_start_index         = in_index + 1;

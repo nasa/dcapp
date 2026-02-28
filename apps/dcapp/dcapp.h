@@ -185,9 +185,9 @@ typedef struct __NodeArc {
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
-    DcAppValIndex rotation;      // where the arc starts (0 = right, 90 = top)
+    DcAppValIndex rotation; // where the arc starts (0 = right, 90 = top)
     DcAppValIndex radius;
-    DcAppValIndex angle;         // span of the arc in degrees
+    DcAppValIndex angle; // span of the arc in degrees
     DcAppValIndex num_segments;
     _ValIndex4    line_color;
     DcAppValIndex line_width;
@@ -203,8 +203,8 @@ typedef struct __NodeBlink {
     _NodeIndex    child;
 
     // runtime state
-    double remaining_duration;
-    double last_frame_time;
+    double  remaining_duration;
+    double  last_frame_time;
     DcValue last_fire_blink_value;
 } _NodeBlink;
 
@@ -257,8 +257,8 @@ typedef struct __NodeEllipse {
     _ValIndex2    pivot_position;
     _ValIndex2    local_align;
     _ValIndex2    parent_align;
-    DcAppValIndex rotation;       // where the wedge starts (0 = right, 90 = top)
-    DcAppValIndex angle;          // span of the wedge in degrees (360 = full ellipse)
+    DcAppValIndex rotation; // where the wedge starts (0 = right, 90 = top)
+    DcAppValIndex angle;    // span of the wedge in degrees (360 = full ellipse)
     DcAppValIndex radius_x;
     DcAppValIndex radius_y;
     DcAppValIndex num_segments;
@@ -301,7 +301,7 @@ typedef struct __NodeContainer {
 
 typedef int _TextureIndex;
 #define TEXTURE_INDEX_UNDEFINED 0
-#define TEXTURE_FIRST_INDEX    1
+#define TEXTURE_FIRST_INDEX 1
 typedef struct __Texture {
     plTextureHandle   texture_handle;
     plBindGroupHandle bind_group_handle;
@@ -437,7 +437,7 @@ typedef struct __NodeSet {
     DcAppVarIndex var_index;
     DcAppValIndex operation; // because operator was taken :(
     DcAppValIndex operand;
-    DcAppValIndex deferred;    // defer to end of draw pass
+    DcAppValIndex deferred; // defer to end of draw pass
 } _NodeSet;
 
 typedef struct __DeferredSetOp {
@@ -523,40 +523,40 @@ typedef struct __NodeText {
 } _NodeText;
 
 typedef struct {
-    char         *vertex_path;    // heap-allocated (NULL = keep default "planet.vert")
-    char         *fragment_path;  // heap-allocated (NULL = keep default "planet.frag")
-    int           index;
+    char *vertex_path;   // heap-allocated (NULL = keep default "planet.vert")
+    char *fragment_path; // heap-allocated (NULL = keep default "planet.frag")
+    int   index;
 } _PlanetShaderEntry;
 
 typedef struct {
-    char         *source;   // heap-allocated absolute file path
-    DcAppValIndex mpp;      // double var: meters per pixel
-    DcAppValIndex lat;      // double var: latitude (degrees)
-    DcAppValIndex lon;      // double var: longitude (degrees)
-    DcAppValIndex fire_refresh;             // var: change triggers texture reload
-    DcValue       last_fire_refresh_value;  // edge detection (fire on change)
+    char         *source;                  // heap-allocated absolute file path
+    DcAppValIndex mpp;                     // double var: meters per pixel
+    DcAppValIndex lat;                     // double var: latitude (degrees)
+    DcAppValIndex lon;                     // double var: longitude (degrees)
+    DcAppValIndex fire_refresh;            // var: change triggers texture reload
+    DcValue       last_fire_refresh_value; // edge detection (fire on change)
 } _PlanetTextureEntry;
 
-#define PLANET_INDEX_UNDEFINED      0
+#define PLANET_INDEX_UNDEFINED 0
 #define PLANET_VIEW_INDEX_UNDEFINED 0
 
 typedef struct __PlanetDef {
-    char         *name;                        // lookup key (from Name attr)
+    char *name; // lookup key (from Name attr)
 
     // data
-    char        **sb_data_files;               // stretchy buffer of heap-allocated file paths
-    double        radius;                      // resolved from JSON at init
+    char **sb_data_files; // stretchy buffer of heap-allocated file paths
+    double radius;        // resolved from JSON at init
 
     // texture overlays
-    _PlanetTextureEntry *sb_textures;          // stretchy buffer
+    _PlanetTextureEntry *sb_textures; // stretchy buffer
 
     // shader overrides (runtime swapping via ShaderIndex)
-    _PlanetShaderEntry *sb_shaders;            // stretchy buffer
-    DcAppValIndex       shader_index;          // variable holding active index
-    int                 active_shader_index;   // last-applied index
+    _PlanetShaderEntry *sb_shaders;          // stretchy buffer
+    DcAppValIndex       shader_index;        // variable holding active index
+    int                 active_shader_index; // last-applied index
 
     // runtime
-    uint8_t       index;                       // 1-based index into sb_planets
+    uint8_t index; // 1-based index into sb_planets
 } _PlanetDef;
 
 typedef struct __NodePlanetView {
@@ -581,8 +581,8 @@ typedef struct __NodePlanetView {
     DcAppValIndex orthographic;
 
     // references
-    uint8_t       planet_def_index;            // index into sb_planet_defs (resolved at parse time)
-    uint8_t       planet_view_index;           // 1-based index into sb_planet_views
+    uint8_t planet_def_index;  // index into sb_planet_defs (resolved at parse time)
+    uint8_t planet_view_index; // 1-based index into sb_planet_views
 
 } _NodePlanetView;
 
@@ -600,27 +600,27 @@ typedef struct __Node {
     _NodeIndex parent;
     _NodeIndex next;
     union {
-        _NodeArc              arc;
-        _NodeBlink            blink;
-        _NodeButton           button;
-        _NodeConditional      conditional;
-        _NodeEllipse          ellipse;
-        _NodeContainer        container;
-        _NodeFunction         function;
-        _NodeImage            image;
-        _NodeLine             line;
-        _NodeMouseMotion      mouse_motion;
-        _NodePanel            panel;
-        _NodePixelstream      pixelstream;
-        _NodePolygon          polygon;
-        _NodeRectangle        rectangle;
-        _NodeSet              set;
-        _NodeSphere           sphere;
-        _NodeStateEvent       state_event;
-        _NodeStencil          stencil;
-        _NodePlanetView       planet_view;
-        _NodeText             text;
-        _NodeWindow           window;
+        _NodeArc         arc;
+        _NodeBlink       blink;
+        _NodeButton      button;
+        _NodeConditional conditional;
+        _NodeEllipse     ellipse;
+        _NodeContainer   container;
+        _NodeFunction    function;
+        _NodeImage       image;
+        _NodeLine        line;
+        _NodeMouseMotion mouse_motion;
+        _NodePanel       panel;
+        _NodePixelstream pixelstream;
+        _NodePolygon     polygon;
+        _NodeRectangle   rectangle;
+        _NodeSet         set;
+        _NodeSphere      sphere;
+        _NodeStateEvent  state_event;
+        _NodeStencil     stencil;
+        _NodePlanetView  planet_view;
+        _NodeText        text;
+        _NodeWindow      window;
     };
 } _Node;
 
@@ -640,8 +640,8 @@ typedef struct __TrickContext {
     DcTrickHandle       trick;
     _TrickTxVarContext *sb_tx_var_contexts;
     _TrickRxVarContext *sb_rx_var_contexts;
-    DcAppVarIndex       connected_var_index;  // variable updated with connection status
-    bool                was_connected;        // previous connection state for init-on-connect
+    DcAppVarIndex       connected_var_index; // variable updated with connection status
+    bool                was_connected;       // previous connection state for init-on-connect
 } _TrickContext;
 
 // dcapp edge structs
@@ -660,8 +660,8 @@ typedef struct __EdgeContext {
     DcEdgeHandle       edge;
     _EdgeTxVarContext *sb_tx_var_contexts;
     _EdgeRxVarContext *sb_rx_var_contexts;
-    DcAppVarIndex      connected_var_index;  // variable updated with connection status
-    bool               was_connected;        // previous connection state for disconnect detection
+    DcAppVarIndex      connected_var_index; // variable updated with connection status
+    bool               was_connected;       // previous connection state for disconnect detection
 } _EdgeContext;
 
 // callback used for logic file DLL loading
@@ -757,12 +757,12 @@ typedef struct __AppData {
     plShaderHandle stencil_cleanup_3d_textured_shader;
 
     // active stencil shader overrides (injected by _draw_batch_get_*)
-    plShaderHandle* active_2d_shader_override;
-    plShaderHandle* active_sdf_shader_override;
-    plShaderHandle* active_3d_solid_shader_override;
-    plShaderHandle* active_3d_textured_shader_override;
-    bool stencil_2d_dirty;
-    bool stencil_3d_dirty;
+    plShaderHandle *active_2d_shader_override;
+    plShaderHandle *active_sdf_shader_override;
+    plShaderHandle *active_3d_solid_shader_override;
+    plShaderHandle *active_3d_textured_shader_override;
+    bool            stencil_2d_dirty;
+    bool            stencil_3d_dirty;
 
     // stencil state
     int stencil_depth;
@@ -807,11 +807,11 @@ typedef struct __AppData {
     int            draw_list_3d_index;   // current index into 3D pool
 
     // planet instances
-    _PlanetDef    *sb_planet_defs;           // collected during XML parse (top-level Planet definitions)
+    _PlanetDef    *sb_planet_defs;              // collected during XML parse (top-level Planet definitions)
     _NodeIndex    *sb_planet_view_node_indices; // collected PlanetView nodes for init
-    plPlanet     **sb_planets;               // created planet instances (one per PlanetDef)
-    plPlanetView **sb_planet_views;          // created view instances (one per PlanetView element)
-    bool           planet_ext_initialized;   // true after _ext_planet->initialize() called
+    plPlanet     **sb_planets;                  // created planet instances (one per PlanetDef)
+    plPlanetView **sb_planet_views;             // created view instances (one per PlanetView element)
+    bool           planet_ext_initialized;      // true after _ext_planet->initialize() called
 
 } _AppData;
 

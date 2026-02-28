@@ -59,8 +59,8 @@ int main(int argc, char **argv) {
     dc_app_config_save_to_file(config, log_file);
 
     // validate
-    ValidationContext ctx = {0};
-    xmlNodePtr root_node  = xmlDocGetRootElement(config->xml_doc);
+    ValidationContext ctx       = {0};
+    xmlNodePtr        root_node = xmlDocGetRootElement(config->xml_doc);
 
     _validate_node(&ctx, root_node, DC_APP_ELEM_TYPE_NONELEM);
 
@@ -90,7 +90,7 @@ void _validate_node(ValidationContext *ctx, xmlNodePtr node, DcAppElemType paren
     // check parent-child relationship
     if (!_is_valid_child(parent_type, elem_type)) {
         DC_LOG_ERROR("Validate", "<%s> is not a valid child of <%s> (line %ld)",
-                node->name, node->parent ? node->parent->name : (xmlChar *)"root", xmlGetLineNo(node));
+                     node->name, node->parent ? node->parent->name : (xmlChar *)"root", xmlGetLineNo(node));
         ctx->error_count++;
     }
 
@@ -745,7 +745,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             }
             if (!value) {
                 DC_LOG_ERROR("Validate", "<%s> missing required attribute 'Value' or 'Value1' (line %ld)",
-                        node->name, xmlGetLineNo(node));
+                             node->name, xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(value);
@@ -969,7 +969,7 @@ static const char *_valid_attrs_pixelstream[]    = {"Type", "URL", "Protocol", "
 static const char *_valid_attrs_set[]            = {"Variable", "Operator", "Defer", NULL};
 static const char *_valid_attrs_sphere[]         = {"Radius", "Image", "Roll", "Pitch", "Yaw", NULL};
 static const char *_valid_attrs_style[]          = {"Name", NULL};
-static const char *_valid_attrs_planet[]          = {"Name", "ShaderIndex", NULL};
+static const char *_valid_attrs_planet[]         = {"Name", "ShaderIndex", NULL};
 static const char *_valid_attrs_planet_view[]    = {"Planet", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", NULL};
 static const char *_valid_attrs_planet_data[]    = {"File", NULL};
 static const char *_valid_attrs_planet_texture[] = {"File", "MetersPerPixel", "Latitude", "Longitude", "FireRefresh", NULL};
@@ -1247,7 +1247,7 @@ void _validate_attribute_names(ValidationContext *ctx, xmlNodePtr node, DcAppEle
         // Check if attribute is valid for this element type
         if (!_is_valid_attr_for_elem(attr_name, elem_type)) {
             DC_LOG_WARN("Validate", "<%s> has unrecognized attribute '%s' (line %ld)",
-                    node->name, attr_name, xmlGetLineNo(node));
+                        node->name, attr_name, xmlGetLineNo(node));
             ctx->warning_count++;
         }
 
@@ -1289,7 +1289,7 @@ static void _validate_enum_attr(ValidationContext *ctx, xmlNodePtr node, const c
     // Check if it's a valid integer value
     if (!_is_valid_int_in_range(value, min_val, max_val)) {
         DC_LOG_ERROR("Validate", "<%s> attribute '%s' has invalid value '%s' (line %ld). Valid values: %s",
-                node->name, attr_name, value, xmlGetLineNo(node), valid_values_desc);
+                     node->name, attr_name, value, xmlGetLineNo(node), valid_values_desc);
         ctx->error_count++;
     }
 
@@ -1321,23 +1321,23 @@ void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppEl
             // Check for Static="true" - Value/Value1/Value2 cannot be runtime variables
             xmlChar *static_attr = xmlGetProp(node, BAD_CAST "Static");
             if (static_attr && (strcmp((const char *)static_attr, "true") == 0 || strcmp((const char *)static_attr, "1") == 0)) {
-                xmlChar *value = xmlGetProp(node, BAD_CAST "Value");
+                xmlChar *value  = xmlGetProp(node, BAD_CAST "Value");
                 xmlChar *value1 = xmlGetProp(node, BAD_CAST "Value1");
                 xmlChar *value2 = xmlGetProp(node, BAD_CAST "Value2");
 
                 if (value && _is_variable_ref((const char *)value)) {
                     DC_LOG_ERROR("Validate", "<If Static=\"true\"> Value '%s' cannot be a runtime variable (@) (line %ld)",
-                            value, xmlGetLineNo(node));
+                                 value, xmlGetLineNo(node));
                     ctx->error_count++;
                 }
                 if (value1 && _is_variable_ref((const char *)value1)) {
                     DC_LOG_ERROR("Validate", "<If Static=\"true\"> Value1 '%s' cannot be a runtime variable (@) (line %ld)",
-                            value1, xmlGetLineNo(node));
+                                 value1, xmlGetLineNo(node));
                     ctx->error_count++;
                 }
                 if (value2 && _is_variable_ref((const char *)value2)) {
                     DC_LOG_ERROR("Validate", "<If Static=\"true\"> Value2 '%s' cannot be a runtime variable (@) (line %ld)",
-                            value2, xmlGetLineNo(node));
+                                 value2, xmlGetLineNo(node));
                     ctx->error_count++;
                 }
 

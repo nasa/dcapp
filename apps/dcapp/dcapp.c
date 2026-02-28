@@ -18,7 +18,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data);
 PL_EXPORT void  pl_app_shutdown(_AppData *app_data);
 PL_EXPORT void  pl_app_resize(_AppData *app_data);
 PL_EXPORT void  pl_app_update(_AppData *app_data);
-void *          get_variable_value_addr(const char *name);
+void           *get_variable_value_addr(const char *name);
 static void     _flush_deferred_sets(_AppData *app_data);
 static bool     _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, plPlanetTexture *out);
 static void     _init_planets(_AppData *app_data);
@@ -29,18 +29,18 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     if (app_data) {
 
         // load extensions
-        _ext_windows        = pl_get_api_latest(api_registry, plWindowI);
-        _ext_draw           = pl_get_api_latest(api_registry, dcDrawI);
-        _ext_draw_backend   = pl_get_api_latest(api_registry, dcDrawBackendI);
-        _ext_starter        = pl_get_api_latest(api_registry, plStarterI);
-        _ext_profile        = pl_get_api_latest(api_registry, plProfileI);
-        _ext_memory         = pl_get_api_latest(api_registry, plMemoryI);
-        _ext_library        = pl_get_api_latest(api_registry, plLibraryI);
-        _ext_ioi            = pl_get_api_latest(api_registry, plIOI);
-        _ext_gfx            = pl_get_api_latest(api_registry, plGraphicsI);
-        _ext_gpu_allocators = pl_get_api_latest(api_registry, plGPUAllocatorsI);
-        _ext_vfs            = pl_get_api_latest(api_registry, plVfsI);
-        _ext_shader         = pl_get_api_latest(api_registry, plShaderI);
+        _ext_windows          = pl_get_api_latest(api_registry, plWindowI);
+        _ext_draw             = pl_get_api_latest(api_registry, dcDrawI);
+        _ext_draw_backend     = pl_get_api_latest(api_registry, dcDrawBackendI);
+        _ext_starter          = pl_get_api_latest(api_registry, plStarterI);
+        _ext_profile          = pl_get_api_latest(api_registry, plProfileI);
+        _ext_memory           = pl_get_api_latest(api_registry, plMemoryI);
+        _ext_library          = pl_get_api_latest(api_registry, plLibraryI);
+        _ext_ioi              = pl_get_api_latest(api_registry, plIOI);
+        _ext_gfx              = pl_get_api_latest(api_registry, plGraphicsI);
+        _ext_gpu_allocators   = pl_get_api_latest(api_registry, plGPUAllocatorsI);
+        _ext_vfs              = pl_get_api_latest(api_registry, plVfsI);
+        _ext_shader           = pl_get_api_latest(api_registry, plShaderI);
         _ext_planet           = pl_get_api_latest(api_registry, plPlanetI);
         _ext_planet_processor = pl_get_api_latest(api_registry, plPlanetProcessorI);
         _ext_camera           = pl_get_api_latest(api_registry, plCameraI);
@@ -68,18 +68,18 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     extension_registry->load("pl_planet_ext", NULL, NULL, true);
 
     // load extensions
-    _ext_windows        = pl_get_api_latest(api_registry, plWindowI);
-    _ext_draw           = pl_get_api_latest(api_registry, dcDrawI);
-    _ext_draw_backend   = pl_get_api_latest(api_registry, dcDrawBackendI);
-    _ext_starter        = pl_get_api_latest(api_registry, plStarterI);
-    _ext_profile        = pl_get_api_latest(api_registry, plProfileI);
-    _ext_memory         = pl_get_api_latest(api_registry, plMemoryI);
-    _ext_library        = pl_get_api_latest(api_registry, plLibraryI);
-    _ext_ioi            = pl_get_api_latest(api_registry, plIOI);
-    _ext_gfx            = pl_get_api_latest(api_registry, plGraphicsI);
-    _ext_gpu_allocators = pl_get_api_latest(api_registry, plGPUAllocatorsI);
-    _ext_vfs            = pl_get_api_latest(api_registry, plVfsI);
-    _ext_shader         = pl_get_api_latest(api_registry, plShaderI);
+    _ext_windows          = pl_get_api_latest(api_registry, plWindowI);
+    _ext_draw             = pl_get_api_latest(api_registry, dcDrawI);
+    _ext_draw_backend     = pl_get_api_latest(api_registry, dcDrawBackendI);
+    _ext_starter          = pl_get_api_latest(api_registry, plStarterI);
+    _ext_profile          = pl_get_api_latest(api_registry, plProfileI);
+    _ext_memory           = pl_get_api_latest(api_registry, plMemoryI);
+    _ext_library          = pl_get_api_latest(api_registry, plLibraryI);
+    _ext_ioi              = pl_get_api_latest(api_registry, plIOI);
+    _ext_gfx              = pl_get_api_latest(api_registry, plGraphicsI);
+    _ext_gpu_allocators   = pl_get_api_latest(api_registry, plGPUAllocatorsI);
+    _ext_vfs              = pl_get_api_latest(api_registry, plVfsI);
+    _ext_shader           = pl_get_api_latest(api_registry, plShaderI);
     _ext_planet           = pl_get_api_latest(api_registry, plPlanetI);
     _ext_planet_processor = pl_get_api_latest(api_registry, plPlanetProcessorI);
     _ext_camera           = pl_get_api_latest(api_registry, plCameraI);
@@ -137,7 +137,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     // initialize resource manager (needed by planet texture loading)
     plResourceManagerInit resource_init = {0};
-    resource_init.ptDevice = _ext_starter->get_device();
+    resource_init.ptDevice              = _ext_starter->get_device();
     _ext_resource->initialize(resource_init);
 
     // initialize planet rendering instances
@@ -368,9 +368,9 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
                 _TrickTxVarContext *tx_var_context = &(trick_context->sb_tx_var_contexts[jj]);
                 if (tx_var_context->dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) continue;
-                DcAppLookupVar     *dc_app_var     = dc_app_lookup_get_var(app_data->lookup, tx_var_context->dcapp_var_index);
-                DcValue            *curr_value     = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
-                DcValue            *prev_value     = &tx_var_context->prev_value;
+                DcAppLookupVar *dc_app_var = dc_app_lookup_get_var(app_data->lookup, tx_var_context->dcapp_var_index);
+                DcValue        *curr_value = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
+                DcValue        *prev_value = &tx_var_context->prev_value;
 
                 // send if new value is different
                 if (!dc_value_is_equal(curr_value, prev_value)) {
@@ -387,8 +387,8 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
         if (trick_context->connected_var_index != DC_APP_VAR_INDEX_UNDEFINED) {
             DcAppLookupVar *connected_var = dc_app_lookup_get_var(app_data->lookup, trick_context->connected_var_index);
             if (connected_var) {
-                DcValue *value = dc_app_lookup_get_value(app_data->lookup, connected_var->value_index);
-                bool is_connected = dc_trick_is_connected(trick);
+                DcValue *value        = dc_app_lookup_get_value(app_data->lookup, connected_var->value_index);
+                bool     is_connected = dc_trick_is_connected(trick);
                 switch (value->type) {
                     case DC_VALUE_TYPE_BOOLEAN:
                         value->value_boolean = is_connected;
@@ -413,8 +413,8 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
                 _TrickRxVarContext *rx_var_context = &(trick_context->sb_rx_var_contexts[jj]);
                 if (rx_var_context->dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) continue;
-                DcAppLookupVar     *dc_app_var     = dc_app_lookup_get_var(app_data->lookup, rx_var_context->dcapp_var_index);
-                DcValue            *value          = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
+                DcAppLookupVar *dc_app_var = dc_app_lookup_get_var(app_data->lookup, rx_var_context->dcapp_var_index);
+                DcValue        *value      = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
 
                 dc_trick_get_rx_var_value(trick, rx_var_context->trick_var_index, rx_buffer);
                 dc_app_lookup_set_var_to_string(app_data->lookup, rx_var_context->dcapp_var_index, rx_buffer);
@@ -443,9 +443,9 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
                 _EdgeTxVarContext *tx_var_context = &(edge_context->sb_tx_var_contexts[jj]);
                 if (tx_var_context->dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) continue;
-                DcAppLookupVar    *dc_app_var     = dc_app_lookup_get_var(app_data->lookup, tx_var_context->dcapp_var_index);
-                DcValue           *curr_value     = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
-                DcValue           *prev_value     = &tx_var_context->prev_value;
+                DcAppLookupVar *dc_app_var = dc_app_lookup_get_var(app_data->lookup, tx_var_context->dcapp_var_index);
+                DcValue        *curr_value = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
+                DcValue        *prev_value = &tx_var_context->prev_value;
 
                 // send if new value is different
                 if (!dc_value_is_equal(curr_value, prev_value)) {
@@ -463,7 +463,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
             DcAppLookupVar *connected_var = dc_app_lookup_get_var(app_data->lookup, edge_context->connected_var_index);
             if (connected_var) {
                 DcValue *value = dc_app_lookup_get_value(app_data->lookup, connected_var->value_index);
-                is_connected = dc_edge_is_connected(edge);
+                is_connected   = dc_edge_is_connected(edge);
                 switch (value->type) {
                     case DC_VALUE_TYPE_BOOLEAN:
                         value->value_boolean = is_connected;
@@ -488,8 +488,8 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
                 _EdgeRxVarContext *rx_var_context = &(edge_context->sb_rx_var_contexts[jj]);
                 if (rx_var_context->dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) continue;
-                DcAppLookupVar    *dc_app_var     = dc_app_lookup_get_var(app_data->lookup, rx_var_context->dcapp_var_index);
-                DcValue           *value          = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
+                DcAppLookupVar *dc_app_var = dc_app_lookup_get_var(app_data->lookup, rx_var_context->dcapp_var_index);
+                DcValue        *value      = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
 
                 dc_edge_get_rx_var_value(edge, rx_var_context->edge_var_index, rx_buffer);
                 dc_app_lookup_set_var_to_string(app_data->lookup, rx_var_context->dcapp_var_index, rx_buffer);
@@ -555,18 +555,16 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     {
         // orthographic MVP for 3D objects in 2D space
         // Note: dcapp uses bottom-left origin, so Y is NOT flipped here (parent_transform handles it)
-        float w = ptIO->tMainViewportSize.x;
-        float h = ptIO->tMainViewportSize.y;
-        float n = -1000.0f;
-        float f = 1000.0f;
+        float  w          = ptIO->tMainViewportSize.x;
+        float  h          = ptIO->tMainViewportSize.y;
+        float  n          = -1000.0f;
+        float  f          = 1000.0f;
         plMat4 ortho_proj = {
             .col = {
-                { 2.0f / w,   0.0f,         0.0f,           0.0f },
-                { 0.0f,       2.0f / h,     0.0f,           0.0f },
-                { 0.0f,       0.0f,         1.0f / (f - n), 0.0f },
-                {-1.0f,      -1.0f,        -n / (f - n),    1.0f }
-            }
-        };
+                {2.0f / w, 0.0f, 0.0f, 0.0f},
+                {0.0f, 2.0f / h, 0.0f, 0.0f},
+                {0.0f, 0.0f, 1.0f / (f - n), 0.0f},
+                {-1.0f, -1.0f, -n / (f - n), 1.0f}}};
 
         int batch_count = sbcount(app_data->sb_draw_batches);
         for (int i = 0; i < batch_count; i++) {
@@ -578,8 +576,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
                     encoder,
                     ptIO->tMainViewportSize.x,
                     ptIO->tMainViewportSize.y,
-                    _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount
-                );
+                    _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount);
             } else if (batch->type == DRAW_BATCH_TYPE_3D && batch->draw_list_3d) {
                 _ext_draw_backend->submit_3d_drawlist(
                     batch->draw_list_3d,
@@ -588,8 +585,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
                     ptIO->tMainViewportSize.y,
                     &ortho_proj,
                     PL_DRAW_FLAG_DEPTH_TEST | PL_DRAW_FLAG_DEPTH_WRITE,
-                    _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount
-                );
+                    _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount);
             }
         }
     }
@@ -654,7 +650,7 @@ static void _init_planets(_AppData *app_data) {
 
     // initialize planet extension
     plPlanetExtInit planet_ext_init = {0};
-    planet_ext_init.ptDevice = _ext_starter->get_device();
+    planet_ext_init.ptDevice        = _ext_starter->get_device();
     _ext_planet->initialize(planet_ext_init);
     app_data->planet_ext_initialized = true;
 
@@ -702,21 +698,21 @@ static void _init_planets(_AppData *app_data) {
         float  max_height       = pl_json_float_member(root, "max_height", 0.0f);
         int    tree_depth       = pl_json_int_member(root, "tree_depth", 0);
         float  max_base_error   = pl_json_float_member(root, "max_base_error", 0.0f);
-        def->radius = radius;
+        def->radius             = radius;
 
         // extract tiles array
-        uint32_t tile_count = 0;
+        uint32_t      tile_count = 0;
         plJsonObject *tile_array = pl_json_array_member(root, "tiles", &tile_count);
 
         // build process info
         plPlanetProcessInfo process_info = {0};
-        process_info.fRadius          = (float)radius;
-        process_info.fMetersPerPixel  = meters_per_pixel;
-        process_info.uSize            = (uint32_t)tile_size;
-        process_info.uTileCount       = tile_count;
-        process_info.uHorizontalTiles = (uint32_t)cols;
-        process_info.uVerticalTiles   = (uint32_t)rows;
-        process_info.atTiles          = (plPlanetProcessTileInfo *)PL_ALLOC(tile_count * sizeof(plPlanetProcessTileInfo));
+        process_info.fRadius             = (float)radius;
+        process_info.fMetersPerPixel     = meters_per_pixel;
+        process_info.uSize               = (uint32_t)tile_size;
+        process_info.uTileCount          = tile_count;
+        process_info.uHorizontalTiles    = (uint32_t)cols;
+        process_info.uVerticalTiles      = (uint32_t)rows;
+        process_info.atTiles             = (plPlanetProcessTileInfo *)PL_ALLOC(tile_count * sizeof(plPlanetProcessTileInfo));
 
         // get directory of the JSON file for resolving relative chunk paths
         char json_dir[DC_VALUE_STRING_BUFFER_SIZE];
@@ -749,12 +745,12 @@ static void _init_planets(_AppData *app_data) {
 
         // build planet init
         plPlanetInit planet_init = {0};
-        planet_init.dRadius    = radius;
-        planet_init.tLoadFlags = PL_PLANET_LOAD_FLAGS_NONE;
+        planet_init.dRadius      = radius;
+        planet_init.tLoadFlags   = PL_PLANET_LOAD_FLAGS_NONE;
 
         // create planet
         plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
-        plPlanet *planet = _ext_planet->create_planet(cmd_buf, planet_init, &process_info);
+        plPlanet        *planet  = _ext_planet->create_planet(cmd_buf, planet_init, &process_info);
         _ext_starter->submit_temporary_command_buffer(cmd_buf);
 
         // initial texture overlay (if source is set at parse time)
@@ -762,7 +758,7 @@ static void _init_planets(_AppData *app_data) {
             plPlanetTexture texture;
             if (_build_planet_texture(app_data, &def->sb_textures[0], &texture)) {
                 DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, lat=%.1f, lon=%.1f)",
-                    i, texture.pcPath, texture.fMetersPerPixel, texture.fLatitude, texture.fLongitude);
+                            i, texture.pcPath, texture.fMetersPerPixel, texture.fLatitude, texture.fLongitude);
                 _ext_planet->set_texture(planet, &texture);
             }
         }
@@ -773,7 +769,7 @@ static void _init_planets(_AppData *app_data) {
 
         // force shader mismatch on first update
         if (def->shader_index != DC_APP_VAL_INDEX_UNDEFINED) {
-            int initial = (int)dc_app_lookup_get_value(app_data->lookup, def->shader_index)->value_integer;
+            int initial              = (int)dc_app_lookup_get_value(app_data->lookup, def->shader_index)->value_integer;
             def->active_shader_index = initial + 1;
         }
 
@@ -788,7 +784,7 @@ static void _init_planets(_AppData *app_data) {
     // Phase 2: create views from PlanetView nodes
     for (int i = 0; i < view_count; i++) {
         _NodeIndex node_index = app_data->sb_planet_view_node_indices[i];
-        _Node *node = _get_node(app_data, node_index);
+        _Node     *node       = _get_node(app_data, node_index);
 
         uint8_t def_idx = node->planet_view.planet_def_index;
         if (def_idx >= def_count) {
@@ -809,11 +805,11 @@ static void _init_planets(_AppData *app_data) {
         plPlanet *planet = app_data->sb_planets[def->index];
 
         plPlanetViewInit view_init = {0};
-        view_init.uOutputWidth  = (uint32_t)output_width;
-        view_init.uOutputHeight = (uint32_t)output_height;
+        view_init.uOutputWidth     = (uint32_t)output_width;
+        view_init.uOutputHeight    = (uint32_t)output_height;
 
         plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
-        plPlanetView *view = _ext_planet->create_view(planet, cmd_buf, view_init);
+        plPlanetView    *view    = _ext_planet->create_view(planet, cmd_buf, view_init);
         _ext_starter->submit_temporary_command_buffer(cmd_buf);
 
         sbpush(app_data->sb_planet_views, view);

@@ -12,19 +12,19 @@
 
 // Shared memory structure - must match writer's layout
 typedef struct {
-    uint32_t writing;          // writer is currently writing
-    uint32_t reading;          // reader is currently reading
-    uint64_t buffercount;      // incremented each write
-    uint32_t width;            // frame width
-    uint32_t height;           // frame height
-    uint32_t bufferrequested;  // reader requests new buffer
+    uint32_t writing;         // writer is currently writing
+    uint32_t reading;         // reader is currently reading
+    uint64_t buffercount;     // incremented each write
+    uint32_t width;           // frame width
+    uint32_t height;          // frame height
+    uint32_t bufferrequested; // reader requests new buffer
 } _ShmemHeader;
 
-#define _SHM_HEADER_SIZE 1024  // safe size for shmget
+#define _SHM_HEADER_SIZE 1024 // safe size for shmget
 
 typedef struct {
     // config
-    char    *filepath;
+    char *filepath;
 
     // shared memory
     _ShmemHeader *shm;
@@ -90,20 +90,20 @@ void dc_ps_shmem_cleanup(void) {
 DcPsShmemHandle dc_ps_shmem_add_source(const char *filepath) {
     _Context ctx = {0};
 
-    ctx.filepath = strdup(filepath);
-    ctx.shm = NULL;
-    ctx.connected = false;
+    ctx.filepath     = strdup(filepath);
+    ctx.shm          = NULL;
+    ctx.connected    = false;
     ctx.has_new_data = false;
-    ctx.buffercount = 0;
-    ctx.pixels = NULL;
-    ctx.width = 0;
-    ctx.height = 0;
-    ctx.alloc_size = 0;
+    ctx.buffercount  = 0;
+    ctx.pixels       = NULL;
+    ctx.width        = 0;
+    ctx.height       = 0;
+    ctx.alloc_size   = 0;
 
     sbpush(_sb_contexts, ctx);
 
     DcPsShmemHandle handle = {0};
-    handle._index = (uint8_t)(sbcount(_sb_contexts) - 1);
+    handle._index          = (uint8_t)(sbcount(_sb_contexts) - 1);
     return handle;
 }
 
@@ -116,8 +116,8 @@ void dc_ps_shmem_remove_source(DcPsShmemHandle handle) {
     }
 
     free(ctx->pixels);
-    ctx->pixels = NULL;
-    ctx->connected = false;
+    ctx->pixels       = NULL;
+    ctx->connected    = false;
     ctx->has_new_data = false;
 }
 
@@ -132,7 +132,7 @@ bool dc_ps_shmem_has_new_data(DcPsShmemHandle handle) {
 void dc_ps_shmem_get_data(DcPsShmemHandle handle, unsigned char *out_data, size_t out_data_size, size_t *out_size) {
     _Context *ctx = &_sb_contexts[handle._index];
 
-    size_t frame_size = (size_t)ctx->width * ctx->height * 4;  // RGBA
+    size_t frame_size = (size_t)ctx->width * ctx->height * 4; // RGBA
 
     if (out_data_size < frame_size) {
         DC_LOG_ERROR("Shmem", "dc_ps_shmem_get_data(): output buffer too small");
@@ -164,7 +164,7 @@ static int _try_attach_shm(_Context *ctx) {
     // Check if file exists
     FILE *fp = fopen(ctx->filepath, "r");
     if (!fp) {
-        return -1;  // file doesn't exist yet
+        return -1; // file doesn't exist yet
     }
     fclose(fp);
 
@@ -210,17 +210,17 @@ static int _read_frame(_Context *ctx) {
     // Check if new frame available
     if (ctx->buffercount != ctx->shm->buffercount) {
         ctx->buffercount = ctx->shm->buffercount;
-        ctx->width = ctx->shm->width;
-        ctx->height = ctx->shm->height;
+        ctx->width       = ctx->shm->width;
+        ctx->height      = ctx->shm->height;
 
         // Read pixel data from file
         FILE *fp = fopen(ctx->filepath, "r");
         if (fp) {
-            size_t nbytes = (size_t)ctx->width * ctx->height * 4;  // RGBA
+            size_t nbytes = (size_t)ctx->width * ctx->height * 4; // RGBA
 
             // Reallocate if needed
             if (nbytes > ctx->alloc_size) {
-                ctx->pixels = realloc(ctx->pixels, nbytes);
+                ctx->pixels     = realloc(ctx->pixels, nbytes);
                 ctx->alloc_size = nbytes;
             }
 
@@ -240,6 +240,6 @@ static int _read_frame(_Context *ctx) {
 
 #else
 
-typedef int _dc_ps_shmem_c_unused;  // !_WIN32
+typedef int _dc_ps_shmem_c_unused; // !_WIN32
 
-#endif  // !_WIN32
+#endif // !_WIN32

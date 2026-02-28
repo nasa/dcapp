@@ -178,7 +178,7 @@ void dc_app_lookup_var_pop(DcAppLookup *lookup, DcAppVarIndex var_index) {
     if (!var) return;
     if (sbcount(var->sb_value_stack) > 0) {
         DcValue *value = dc_app_lookup_get_value(lookup, var->value_index);
-        *value = sbpop(var->sb_value_stack);
+        *value         = sbpop(var->sb_value_stack);
     } else {
         DC_LOG_ERROR("Lookup", "dc_app_lookup_var_pop(): stack underflow for variable index %d", var_index);
     }
@@ -191,7 +191,7 @@ void dc_app_lookup_reset_var_stacks(DcAppLookup *lookup) {
         if (sbcount(var->sb_value_stack) > 0) {
             // restore original value (bottom of stack) and clear
             DcValue *value = &context->sb_vals[var->value_index];
-            *value = var->sb_value_stack[0];
+            *value         = var->sb_value_stack[0];
             sbclear(var->sb_value_stack);
         }
     }

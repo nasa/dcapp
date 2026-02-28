@@ -25,8 +25,8 @@ typedef int _DcSockFd;
 // Sentinel values for sock_fd slots.
 // _DcSockFd is 'int' on POSIX and 'uintptr_t' on Windows (unsigned), so we
 // can't use raw negative literals in comparisons — define typed sentinels instead.
-#define _DC_SOCK_FD_FREE      ((_DcSockFd)-1)  // slot is unoccupied
-#define _DC_SOCK_FD_ALLOCATED ((_DcSockFd)-2)  // reserved but not yet connected
+#define _DC_SOCK_FD_FREE ((_DcSockFd) - 1)      // slot is unoccupied
+#define _DC_SOCK_FD_ALLOCATED ((_DcSockFd) - 2) // reserved but not yet connected
 #define _DC_SOCK_FD_IS_INVALID(fd) ((fd) == _DC_SOCK_FD_FREE || (fd) == _DC_SOCK_FD_ALLOCATED)
 
 typedef struct {
@@ -35,7 +35,7 @@ typedef struct {
 } _DcSockContext;
 
 static _DcSockContext _contexts[DC_SOCK_MAX_SOCKETS];
-static bool           _initialized = false;
+static bool           _initialized   = false;
 static int            _winsock_count = 0;
 
 static void _ensure_initialized(void) {

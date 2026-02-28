@@ -16,7 +16,7 @@ int stress_init(STRESS_DATA *S) {
 
 int stress_update(STRESS_DATA *S) {
     double t = exec_get_sim_time();
-    S->time = t;
+    S->time  = t;
 
     /* each variable gets a unique sin wave so we can verify correct mapping */
     for (int i = 0; i < STRESS_VAR_COUNT; i++) {
