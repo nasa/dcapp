@@ -5057,5 +5057,3 @@ static plDrawList3D *_draw_batch_get_3d(_AppData *app_data) {
 
     return draw_list;
 }
-
-#include "utils.c"

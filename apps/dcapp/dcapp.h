@@ -815,19 +815,13 @@ typedef struct __AppData {
 
 } _AppData;
 
-// pl utils
-static void _init_app_data(_AppData *app_data, _Node *window_node);
-static void _init_planets(_AppData *app_data);
-static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, plPlanetTexture *out);
-static void _update_planet_defs(_AppData *app_data);
-
-// node utils
-static const char *_node_type_to_string(_NodeType type);
-static _Node      *_get_node(_AppData *app_data, _NodeIndex index);
-static _NodeIndex  _register_node(_AppData *app_data, _Node *node);
-
-// misc. utils
-static _Texture _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name);
+// shared node utils
+static _Node *_get_node(_AppData *app_data, _NodeIndex index) {
+    if (index == NODE_INDEX_UNDEFINED) {
+        return NULL;
+    }
+    return &(app_data->sb_nodes[index]);
+}
 
 // xml processing utils
 static bool       _load_color_from_string(_AppData *app_data, xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out);
@@ -835,10 +829,8 @@ static _NodeIndex _process_xml_node_children(_AppData *app_data, xmlNodePtr xml_
 static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 
 // drawing utils
-static void _draw_init(void);
 static void _draw_batch_reset(_AppData *app_data);
 static void _draw_node_list(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform);
 static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
-static void _init_stencil_pipelines(_AppData* app_data, plDevice* device, plRenderPassHandle render_pass);
 
 #endif
