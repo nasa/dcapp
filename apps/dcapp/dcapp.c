@@ -1,11 +1,11 @@
 #include "dcapp.h"
 
 #define PL_JSON_IMPLEMENTATION
-#include "../../pilotlight/libs/pl_json.h"
+#include "pl_json.h"
 
-#include "../../src/utils/env.h"
-#include "../../src/utils/file.h"
-#include "../../src/utils/log.h"
+#include "utils/env.h"
+#include "utils/file.h"
+#include "utils/log.h"
 
 // static members
 // TODO hate this solution, but needed for DLL lookup

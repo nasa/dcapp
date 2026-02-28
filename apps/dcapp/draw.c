@@ -3,11 +3,11 @@
 
 #include "dcapp.h"
 
-#include "../../src/app/enums.h"
-#include "../../src/utils/log.h"
-#include "../../src/utils/math.h"
-#include "../../src/utils/string.h"
-#include "../../src/utils/time.h"
+#include "app/enums.h"
+#include "utils/log.h"
+#include "utils/math.h"
+#include "utils/string.h"
+#include "utils/time.h"
 
 // Forward declarations
 static void _draw_node_blink(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);

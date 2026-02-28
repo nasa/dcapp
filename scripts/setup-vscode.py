@@ -128,9 +128,9 @@ if ls_choice == "clangd":
     lines.append("CompileFlags:")
     lines.append("    Add:")
 
-    # relative include paths
+    # include paths (absolute so clangd resolves them for files in any subdirectory)
     for inc in common_includes:
-        lines.append(f"        - -I{inc}")
+        lines.append(f"        - -I{project_root}/{inc}")
 
     # platform-specific absolute paths
     for inc in platform_includes.get(plat, []):
@@ -138,7 +138,7 @@ if ls_choice == "clangd":
 
     # vcpkg on Windows
     if plat == "Windows":
-        lines.append(f"        - -I{vcpkg_include}")
+        lines.append(f"        - -I{project_root}/{vcpkg_include}")
 
     lines.append("InlayHints:")
     lines.append("    Enabled: No")

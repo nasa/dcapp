@@ -1,8 +1,8 @@
 #include "dcapp.h"
 
-#include "../../src/utils/file.h"
-#include "../../src/utils/log.h"
-#include "../../src/utils/string.h"
+#include "utils/file.h"
+#include "utils/log.h"
+#include "utils/string.h"
 #include "libxml/tree.h"
 #include "libxml/xmlstring.h"
 
