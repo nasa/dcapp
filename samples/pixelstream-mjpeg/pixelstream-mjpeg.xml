@@ -6,7 +6,7 @@
 
         Usage:
             1. Start the test server:   python3 server.py
-            2. Run dcapp:               dcapp pixelstream_mjpeg.xml
+            2. Run dcapp:               dcapp pixelstream-mjpeg.xml
     -->
 
     <Window Title="PixelStream MJPEG Demo" Width="800" Height="600" VirtualWidth="800" VirtualHeight="600">

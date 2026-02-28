@@ -87,7 +87,7 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 ```xml
 <Planet Name="Moon" ShaderIndex="@ActiveShader">
     <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
-    <PlanetTexture File="../../assets/nasa_worm.png" MetersPerPixel="@TexMpp"
+    <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
     <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>
@@ -122,7 +122,7 @@ Specifies the preprocessed terrain data for a planet. Must be a child of `<Plane
 Overlays an image onto the planet surface at a specific geographic location. Must be a child of `<Planet>`.
 
 ```xml
-<PlanetTexture File="../../assets/nasa_worm.png" MetersPerPixel="@TexMpp"
+<PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
     Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
 ```
 
@@ -398,7 +398,7 @@ A single `<Planet>` is defined with one data source, one texture overlay, and th
 ```xml
 <Planet Name="Moon" ShaderIndex="@ActiveShader">
     <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
-    <PlanetTexture File="../../assets/nasa_worm.png" MetersPerPixel="@TexMpp"
+    <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentSource="shaders/planet_elevation.frag"/>
     <PlanetShader Index="2" FragmentSource="shaders/planet_slope.frag"/>

@@ -56,7 +56,7 @@ popd
 :: Step 2: Build dcapp apps
 echo.
 echo [2/3] Building dcapp apps...
-call "%DCAPP_HOME%\scripts\internal\build_apps_win32.bat" -c %CONFIG%
+call "%DCAPP_HOME%\scripts\internal\build-apps-win32.bat" -c %CONFIG%
 if errorlevel 1 (
     echo Apps build failed!
     exit /b 1
@@ -65,7 +65,7 @@ if errorlevel 1 (
 :: Step 3: Build dcapp samples
 echo.
 echo [3/3] Building dcapp samples...
-call "%DCAPP_HOME%\scripts\internal\build_samples_win32.bat" -c %CONFIG%
+call "%DCAPP_HOME%\scripts\internal\build-samples-win32.bat" -c %CONFIG%
 if errorlevel 1 (
     echo Samples build failed!
     exit /b 1

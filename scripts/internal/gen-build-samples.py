@@ -223,9 +223,9 @@ with pl.project("samples"):
 # [SECTION] generate scripts
 # -----------------------------------------------------------------------------
 
-out_script_win32 = build_script_out_dir_abs + "/" + "build_samples_win32.bat"
-out_script_macos = build_script_out_dir_abs + "/" + "build_samples_macos.sh"
-out_script_linux = build_script_out_dir_abs + "/" + "build_samples_linux.sh"
+out_script_win32 = build_script_out_dir_abs + "/" + "build-samples-win32.bat"
+out_script_macos = build_script_out_dir_abs + "/" + "build-samples-macos.sh"
+out_script_linux = build_script_out_dir_abs + "/" + "build-samples-linux.sh"
 
 win32.generate_build(out_script_win32)
 apple.generate_build(out_script_macos)

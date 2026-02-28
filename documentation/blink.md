@@ -162,7 +162,7 @@ The following attribute names changed from the legacy format:
 | `FnStartBlink` | `FireBlink` | Same edge-triggered behavior. The `@` prefix on the variable reference is preserved. |
 | `Duration="-1"` | `Duration="0"` | Both mean indefinite. The conversion script updates `-1` to `0`. |
 
-The legacy conversion script (`scripts/convert_legacy_xml.py`) handles both renames automatically.
+The legacy conversion script (`scripts/convert-legacy-xml.py`) handles both renames automatically.
 
 ---
 

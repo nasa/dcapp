@@ -907,7 +907,7 @@ This means:
 
 ### Conversion Script Behavior
 
-The conversion script (`convert_legacy_xml.py`) automatically adds `Defer="true"` to all `<Set>` elements that are descendants of MousePressed or MouseReleased blocks. This includes deeply nested Sets (e.g., MousePressed > If > True > Set).
+The conversion script (`convert-legacy-xml.py`) automatically adds `Defer="true"` to all `<Set>` elements that are descendants of MousePressed or MouseReleased blocks. This includes deeply nested Sets (e.g., MousePressed > If > True > Set).
 
 Sets outside event blocks are left as immediate execution, matching legacy.
 

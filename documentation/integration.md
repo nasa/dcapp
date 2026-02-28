@@ -240,16 +240,16 @@ The MJPEG stream source must be running before dcapp connects to it. For the inc
 
 ```bash
 # Terminal 1: Start the MJPEG server
-cd samples/pixelstream_mjpeg
+cd samples/pixelstream-mjpeg
 python3 server.py
 
 # Terminal 2: Launch the dcapp display
-dcapp samples/pixelstream_mjpeg/pixelstream_mjpeg.xml
+dcapp samples/pixelstream-mjpeg/pixelstream-mjpeg.xml
 ```
 
 ### Example
 
-From `samples/pixelstream_mjpeg/pixelstream_mjpeg.xml`:
+From `samples/pixelstream-mjpeg/pixelstream-mjpeg.xml`:
 
 ```xml
 <DCAPP>

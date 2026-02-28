@@ -50,7 +50,7 @@ Shapes inside `<StencilAdd>` and `<StencilRemove>` must use the special fill col
 </StencilAdd>
 ```
 
-If you use a regular color instead, the mask shape may not register in the stencil buffer. The legacy conversion script (`scripts/convert_legacy_xml.py`) automatically sets this constant when converting old `<Mask>` elements.
+If you use a regular color instead, the mask shape may not register in the stencil buffer. The legacy conversion script (`scripts/convert-legacy-xml.py`) automatically sets this constant when converting old `<Mask>` elements.
 
 ---
 
@@ -126,7 +126,7 @@ Images with transparency can serve as masks. The opaque portions of the image de
 ```xml
 <Stencil>
     <StencilAdd>
-        <Image X="1100" Y="650" Width="500" Height="166" File="assets/nasa_worm.png"/>
+        <Image X="1100" Y="650" Width="500" Height="166" File="assets/nasa-worm.png"/>
     </StencilAdd>
     <StencilDraw>
         <Rectangle X="1050" Y="820" Width="600" Height="25" FillColor="1 0 0"/>
@@ -224,7 +224,7 @@ The old `<Mask>` element has been replaced by `<Stencil>`. The conversion is:
 | `<Stencil>` (child of Mask) | `<StencilAdd>` |
 | `<Projection>` | `<StencilDraw>` |
 
-The legacy conversion script (`scripts/convert_legacy_xml.py`) performs this rename automatically and sets `FillColor="#_stencil_color_"` on all shapes inside `<StencilAdd>` and `<StencilRemove>`.
+The legacy conversion script (`scripts/convert-legacy-xml.py`) performs this rename automatically and sets `FillColor="#_stencil_color_"` on all shapes inside `<StencilAdd>` and `<StencilRemove>`.
 
 See [migration.md](migration.md) for full details on legacy XML conversion.
 

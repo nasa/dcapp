@@ -6,7 +6,7 @@ Converts legacy dcapp XML files to the new syntax based on the rules
 documented in documentation/notes.txt.
 
 Usage:
-    python convert_legacy_xml.py input.xml [output.xml]
+    python convert-legacy-xml.py input.xml [output.xml]
 
 If output.xml is not specified, outputs to stdout.
 """

@@ -162,7 +162,7 @@ Draws a rectangle.
 
 **Deprecated:** Use `<Arc>` for line-only circles or `<Ellipse>` for filled circles.
 
-The legacy conversion script (`scripts/convert_legacy_xml.py`) automatically converts:
+The legacy conversion script (`scripts/convert-legacy-xml.py`) automatically converts:
 - `<Circle>` with `Angle` and `FillColor` → `<Ellipse>` (pie/wedge shape)
 - `<Circle>` with `Angle` only → `<Arc>` (line-only arc)
 - `<Circle>` in `<Style>` → both `<Arc>` and `<Ellipse>` styles

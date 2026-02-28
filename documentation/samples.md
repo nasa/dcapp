@@ -35,8 +35,8 @@ The following samples require building logic files: **functions**, **lissajous**
 
 Some samples connect to external systems that must be running before launching dcapp:
 
-- **trick** and **trick_stress** -- Require a running Trick simulation. Build and start the sim from the `sim/` directory inside each sample before launching dcapp.
-- **pixelstream_mjpeg** -- Requires a running MJPEG server. Start the included Python server (`python3 server.py`) before launching dcapp.
+- **trick** and **trick-stress** -- Require a running Trick simulation. Build and start the sim from the `sim/` directory inside each sample before launching dcapp.
+- **pixelstream-mjpeg** -- Requires a running MJPEG server. Start the included Python server (`python3 server.py`) before launching dcapp.
 
 ---
 
@@ -103,8 +103,8 @@ These samples demonstrate connecting dcapp to external systems.
 | Sample | Features | Notes |
 |--------|----------|-------|
 | trick | Trick Variable Server connection (cannonball trajectory) | Connects to a Trick simulation of a cannonball trajectory; shows dual DataRate connections with unit conversion. Requires a running Trick sim -- build and start from `sim/` directory first |
-| trick_stress | Trick stress test with trajectory visualization | Stress test with many Trick variables mapped simultaneously; requires a running Trick sim from `sim/` directory |
-| pixelstream_mjpeg | MJPEG video streaming | Embeds a live MJPEG video stream from an HTTP endpoint; requires starting the included Python server (`python3 server.py`) first |
+| trick-stress | Trick stress test with trajectory visualization | Stress test with many Trick variables mapped simultaneously; requires a running Trick sim from `sim/` directory |
+| pixelstream-mjpeg | MJPEG video streaming | Embeds a live MJPEG video stream from an HTTP endpoint; requires starting the included Python server (`python3 server.py`) first |
 
 ---
 
@@ -126,5 +126,5 @@ These samples serve special purposes such as validation testing or complex visua
 | None (pure XML) | alignment, blink, button-children, buttons, colors, conditionals, containers, environment, events, includes, input, primitives, pushpop, rotation, shapes, slider, static-if, stencil, styles, welcome, adi, mona-lisa, bad-sample, scene |
 | Build C logic (`make` in `logic/`) | functions, lissajous, mask, ptz, screensaver, planet |
 | Build + Makefile (`make` in sample dir) | metrics |
-| Running Trick simulation | trick, trick_stress |
-| Running Python MJPEG server | pixelstream_mjpeg |
+| Running Trick simulation | trick, trick-stress |
+| Running Python MJPEG server | pixelstream-mjpeg |

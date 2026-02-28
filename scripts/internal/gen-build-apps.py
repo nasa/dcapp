@@ -424,9 +424,9 @@ with pl.project("apps"):
 # [SECTION] generate scripts
 #-----------------------------------------------------------------------------
 
-out_script_win32 = output_dir_abs + "/" + "build_apps_win32.bat"
-out_script_macos = output_dir_abs + "/" + "build_apps_macos.sh"
-out_script_linux = output_dir_abs + "/" + "build_apps_linux.sh"
+out_script_win32 = output_dir_abs + "/" + "build-apps-win32.bat"
+out_script_macos = output_dir_abs + "/" + "build-apps-macos.sh"
+out_script_linux = output_dir_abs + "/" + "build-apps-linux.sh"
 
 win32.generate_build(out_script_win32)
 apple.generate_build(out_script_macos)

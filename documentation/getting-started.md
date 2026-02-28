@@ -244,7 +244,7 @@ Each tool has `.sh` (Linux/macOS) and `.bat` (Windows) wrapper scripts in `bin/`
 A setup script generates all the necessary VSCode configuration files (settings, extensions, language server config, and launch targets):
 
 ```bash
-python3 scripts/setup_vscode.py
+python3 scripts/setup-vscode.py
 ```
 
 The script will:
@@ -264,8 +264,8 @@ If you add a new sample with a logic file, or modify the build generation script
 
 ```bash
 cd scripts/internal
-python3 gen_build_samples.py
-python3 gen_build_apps.py
+python3 gen-build-samples.py
+python3 gen-build-apps.py
 ```
 
 Then rebuild from the repository root:

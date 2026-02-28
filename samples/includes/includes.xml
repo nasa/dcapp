@@ -39,15 +39,15 @@
 
                 <Constant Name="BoxColor">0.8 0.3 0.3</Constant>
                 <Constant Name="BoxX">50</Constant>
-                <Include>components/colored_box.xml</Include>
+                <Include>components/colored-box.xml</Include>
 
                 <Constant Name="BoxColor">0.3 0.8 0.3</Constant>
                 <Constant Name="BoxX">175</Constant>
-                <Include>components/colored_box.xml</Include>
+                <Include>components/colored-box.xml</Include>
 
                 <Constant Name="BoxColor">0.3 0.3 0.8</Constant>
                 <Constant Name="BoxX">300</Constant>
-                <Include>components/colored_box.xml</Include>
+                <Include>components/colored-box.xml</Include>
             </Container>
 
             <!-- ========== SECTION 3: Multiple Includes ========== -->
@@ -59,15 +59,15 @@
                 <Text X="200" Y="140" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.6 0.6">Same file included multiple times</Text>
 
                 <Container X="20" Y="20" Width="110" Height="100">
-                    <Include>components/spinning_rect.xml</Include>
+                    <Include>components/spinning-rect.xml</Include>
                 </Container>
 
                 <Container X="145" Y="20" Width="110" Height="100">
-                    <Include>components/spinning_rect.xml</Include>
+                    <Include>components/spinning-rect.xml</Include>
                 </Container>
 
                 <Container X="270" Y="20" Width="110" Height="100">
-                    <Include>components/spinning_rect.xml</Include>
+                    <Include>components/spinning-rect.xml</Include>
                 </Container>
             </Container>
 
@@ -98,8 +98,8 @@
 
                 <Text X="500" Y="95" Size="10" FillColor="0.7 0.7 0.7">Files used in this demo:</Text>
                 <Text X="500" Y="75" Size="9" FillColor="0.5 0.5 0.5">components/shapes.xml</Text>
-                <Text X="500" Y="60" Size="9" FillColor="0.5 0.5 0.5">components/colored_box.xml</Text>
-                <Text X="500" Y="45" Size="9" FillColor="0.5 0.5 0.5">components/spinning_rect.xml</Text>
+                <Text X="500" Y="60" Size="9" FillColor="0.5 0.5 0.5">components/colored-box.xml</Text>
+                <Text X="500" Y="45" Size="9" FillColor="0.5 0.5 0.5">components/spinning-rect.xml</Text>
             </Container>
 
         </Panel>
