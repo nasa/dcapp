@@ -467,4 +467,4 @@ dcapp planet.xml
 
 - [logic.md](logic.md) -- Writing logic files for custom C/C++ behavior
 - [variables.md](variables.md) -- Declaring and using variables in dcapp XML
-- [Internal coordinate system reference](internal/coordinate-frame.md) -- Internal coordinate system reference for the planet processor
+- [Coordinate frame reference](coordinate-frame.md) -- Pilotlight coordinate system and planet terrain projection
