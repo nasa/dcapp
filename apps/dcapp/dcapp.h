@@ -550,10 +550,8 @@ typedef struct __PlanetDef {
     // texture overlays
     _PlanetTextureEntry *sb_textures; // stretchy buffer
 
-    // shader overrides (runtime swapping via ShaderIndex)
-    _PlanetShaderEntry *sb_shaders;          // stretchy buffer
-    DcAppValIndex       shader_index;        // variable holding active index
-    int                 active_shader_index; // last-applied index
+    // shader overrides (library; per-view selection via PlanetView ShaderIndex)
+    _PlanetShaderEntry *sb_shaders; // stretchy buffer
 
     // runtime
     uint8_t index; // 1-based index into sb_planets
@@ -579,6 +577,10 @@ typedef struct __NodePlanetView {
     _ValIndex3    rpy;
     DcAppValIndex heading;
     DcAppValIndex orthographic;
+
+    // shader selection (per-view; indexes into parent PlanetDef's sb_shaders)
+    DcAppValIndex shader_index;      // variable holding active shader index
+    int           active_shader_index; // last-applied index (for change detection)
 
     // references
     uint8_t planet_def_index;  // index into sb_planet_defs (resolved at parse time)

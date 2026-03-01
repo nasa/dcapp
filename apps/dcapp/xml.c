@@ -3279,14 +3279,6 @@ static _NodeIndex _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_no
     def.name          = strdup((const char *)raw_name);
     xmlFree(raw_name);
 
-    // ShaderIndex (optional — selects active PlanetShader by index at runtime)
-    def.shader_index          = DC_APP_VAL_INDEX_UNDEFINED;
-    xmlChar *raw_shader_index = xmlGetProp(xml_node, BAD_CAST "ShaderIndex");
-    if (raw_shader_index) {
-        def.shader_index = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_shader_index);
-        xmlFree(raw_shader_index);
-    }
-
     // collect definition
     sbpush(app_data->sb_planet_defs, def);
 
@@ -3725,6 +3717,13 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
     if (raw_negate_y) {
         dc_node.planet_view.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
         xmlFree(raw_negate_y);
+    }
+
+    // shader index (optional — selects active PlanetShader by index at runtime)
+    xmlChar *raw_shader_index = xmlGetProp(xml_node, BAD_CAST "ShaderIndex");
+    if (raw_shader_index) {
+        dc_node.planet_view.shader_index = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_shader_index);
+        xmlFree(raw_shader_index);
     }
 
     // register node

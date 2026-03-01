@@ -42,7 +42,7 @@
     <Logic File="logic/logic.so"/>
 
     <!-- Top-level planet definition (shared by both views) -->
-    <Planet Name="Moon" ShaderIndex="@ActiveShader">
+    <Planet Name="Moon">
         <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
         <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
             Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
@@ -190,13 +190,13 @@
             <PlanetView Planet="Moon" X="15" Y="200" Width="450" Height="450"
                 CameraLatitude="@Latitude" CameraLongitude="@Longitude" CameraElevation="@Elevation"
                 CameraHeading="@Heading"
-                CameraOrthographic="@UseOrtho"/>
+                CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"/>
 
             <Text X="760" Y="662" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">XYZ/RPY Camera</Text>
             <PlanetView Planet="Moon" X="535" Y="200" Width="450" Height="450"
                 CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
                 CameraRoll="@CamRoll" CameraPitch="@CamPitch" CameraYaw="@CamYaw"
-                CameraOrthographic="@UseOrtho"/>
+                CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"/>
 
             <!-- ========== SLIDERS (below planets) ========== -->
 

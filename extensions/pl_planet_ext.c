@@ -148,22 +148,16 @@ typedef struct _plPlanet
     double           dRadius;
     plPlanetProcessInfo tInfo;
     plVec2           tTopLeftGlobal;
-    plVec2           tBottomRightGlobal;
     uint32_t                 uTileCount;
     plPlanetProcessTileInfo* atTiles;
 
-    // shaders
-    plShaderHandle tShader;
-    plShaderHandle tWireframeShader;
+
     
     plPlanetResidencyNode tRequestQueue;
     plPlanetResidencyNode atRequests[PL_REQUEST_QUEUE_SIZE];
     uint32_t*             sbuFreeRequests;
 
     plPlanetChunk tReplacementQueue;
-
-    const char* pcVertexShader;
-    const char* pcFragmentShader;
 
     plBufferHandle tIndexBuffer;
     plFreeList tIndexBufferManager;
@@ -174,6 +168,7 @@ typedef struct _plPlanet
 
 typedef struct _plPlanetView
 {
+    plPlanetViewRuntimeOptions tRuntimeOptions;
     plPlanet*          ptPlanet;
     plRenderPassHandle tRenderPass;
     plTextureHandle    tOutputTexture;
@@ -182,6 +177,12 @@ typedef struct _plPlanetView
     uint32_t           uOutputWidth;
     uint32_t           uOutputHeight;
     plDrawList3D*      pt3dDrawlist;
+
+    // shaders
+    plShaderHandle tShader;
+    plShaderHandle tWireframeShader;
+    const char* pcVertexShader;
+    const char* pcFragmentShader;
 } plPlanetView;
 
 typedef struct _plPlanetContext
@@ -222,7 +223,7 @@ typedef struct _plPlanetContext
 // [SECTION] internal helpers (rendering)
 //-----------------------------------------------------------------------------
 
-void pl_planet_load_shaders(plPlanet* ptPlanet);
+void pl_planet_load_shaders(plPlanetView* ptPlanet);
 
 // rendering
 static void pl__handle_residency (plPlanet*, plCommandBuffer*);
@@ -232,7 +233,7 @@ static void pl__make_unresident  (plPlanet*, plPlanetChunk*);
 static bool pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetLoadFlags tFlags);
 void pl__remove_from_replacement_queue(plPlanet* ptPlanet, plPlanetChunk* ptChunk);
 
-static void pl__render_chunk(plPlanet*, plCamera*, plRenderEncoder*, plPlanetChunk*, plPlanetChunkFile*, const plMat4* ptMVP);
+static void pl__render_chunk(plPlanetView*, plCamera*, plRenderEncoder*, plPlanetChunk*, plPlanetChunkFile*, const plMat4* ptMVP);
 static bool pl__sat_visibility_test(plCamera*, const plAABB*);
 
 static void pl__free_chunk(plPlanet* ptPlanet, uint64_t);
@@ -243,8 +244,6 @@ static plTextureHandle pl__planet_create_texture(plCommandBuffer* ptCmdBuffer, c
 static plTextureHandle pl__planet_create_texture_with_data (const plTextureDesc*, const char* pcName, uint32_t uIdentifier, const void*, size_t);
 static uint32_t pl__planet_get_bindless_texture_index(plTextureHandle tTexture);
 static void pl__planet_return_bindless_texture_index(plTextureHandle tTexture);
-bool pl__chlod_update_chunk_file(plPlanet* ptPlanet, uint32_t uIndex, const char* pcTexture);
-
 
 static inline bool pl__is_leaf_resident(const plPlanetChunk* c)
 {
@@ -330,8 +329,9 @@ pl_planet_initialize(plPlanetExtInit tInit)
         .tMinFilter    = PL_FILTER_LINEAR,
         .fMinMip       = 0.0f,
         .fMaxMip       = 1.0f,
-        .tVAddressMode = PL_ADDRESS_MODE_CLAMP_TO_EDGE,
-        .tUAddressMode = PL_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .tVAddressMode = PL_ADDRESS_MODE_CLAMP_TO_BORDER,
+        .tUAddressMode = PL_ADDRESS_MODE_CLAMP_TO_BORDER,
+        .tBorderColor = PL_BORDER_COLOR_INT_TRANSPARENT_BLACK,
         .pcDebugName   = "sampler"
     };
     gptCtx->tSampler = gptGfx->create_sampler(tInit.ptDevice, &tSamplerDesc);
@@ -430,15 +430,7 @@ pl_create_planet(plCommandBuffer* ptCmdBuffer, plPlanetInit tInit, plPlanetProce
 
 
     ptPlanet->tInfo = *ptInfo;
-    ptPlanet->tRuntimeOptions.fTau = 0.3f;
     ptPlanet->tRuntimeOptions.tLightDirection = (plVec3){-1.0f, -1.0f, -1.0f};
-
-    if(tInit.pcVertexShader == NULL) tInit.pcVertexShader = "planet.vert";
-    if(tInit.pcFragmentShader == NULL) tInit.pcFragmentShader = "planet.frag";
-
-    ptPlanet->pcVertexShader = tInit.pcVertexShader;
-    ptPlanet->pcFragmentShader = tInit.pcFragmentShader;
-    pl_planet_load_shaders(ptPlanet);
 
     ptPlanet->dRadius = tInit.dRadius;
     
@@ -551,6 +543,8 @@ pl_create_planet_view(plPlanet* ptPlanet, plCommandBuffer* ptCmdBuffer, plPlanet
     memset(ptView, 0, sizeof(plPlanetView));
 
     ptView->ptPlanet = ptPlanet;
+    ptView->tRuntimeOptions.fTau = 0.3f;
+    ptView->tRuntimeOptions.fHazardMapStrength = 0.3f;
     ptView->uOutputWidth  = tInit.uOutputWidth;
     ptView->uOutputHeight = tInit.uOutputHeight;
     ptView->pt3dDrawlist  = gptDraw->request_3d_drawlist();
@@ -613,6 +607,13 @@ pl_create_planet_view(plPlanet* ptPlanet, plCommandBuffer* ptCmdBuffer, plPlanet
     };
     ptView->tRenderPass = gptGfx->create_render_pass(gptCtx->ptDevice, &tRenderPassDesc, atAttachmentSets);
 
+    if(tInit.pcVertexShader == NULL) tInit.pcVertexShader = "planet.vert";
+    if(tInit.pcFragmentShader == NULL) tInit.pcFragmentShader = "planet.frag";
+
+    ptView->pcVertexShader = tInit.pcVertexShader;
+    ptView->pcFragmentShader = tInit.pcFragmentShader;
+    pl_planet_load_shaders(ptView);
+
     return ptView;
 }
 
@@ -651,8 +652,8 @@ pl_render_to_planet_view(plPlanetView* ptView, plCamera* ptCamera, plCommandBuff
     gptGfx->set_depth_bias(ptEncoder, 0.0f, 0.0f, 0.0f);
 
         plShaderHandle tShader =
-            (ptView->ptPlanet->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_WIREFRAME)
-            ? ptView->ptPlanet->tWireframeShader : ptView->ptPlanet->tShader;
+            (ptView->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_WIREFRAME)
+            ? ptView->tWireframeShader : ptView->tShader;
 
         gptGfx->bind_shader(ptEncoder, tShader);
         gptGfx->bind_vertex_buffer(ptEncoder, ptView->ptPlanet->tVertexBuffer);
@@ -665,9 +666,9 @@ pl_render_to_planet_view(plPlanetView* ptView, plCamera* ptCamera, plCommandBuff
         );
 
     for(uint32_t i = 0; i < pl_sb_size(ptView->ptPlanet->sbtChunkFiles); i++)
-        pl__render_chunk(ptView->ptPlanet, ptCamera, ptEncoder, &ptView->ptPlanet->sbtChunkFiles[i].tFile.atChunks[0], &ptView->ptPlanet->sbtChunkFiles[i].tFile, &tMVP);
+        pl__render_chunk(ptView, ptCamera, ptEncoder, &ptView->ptPlanet->sbtChunkFiles[i].tFile.atChunks[0], &ptView->ptPlanet->sbtChunkFiles[i].tFile, &tMVP);
 
-    if(ptView->ptPlanet->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_SHOW_ORIGIN)
+    if(ptView->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_SHOW_ORIGIN)
     {
         const plMat4 tOrigin = pl_identity_mat4();
         gptDraw->add_3d_transform(ptView->pt3dDrawlist, &tOrigin, 1737400.0f * 1.2f, (plDrawLineOptions){0, 1000.0f});
@@ -690,17 +691,27 @@ pl_get_planet_view_texture(plPlanetView* ptView)
     return ptView->tOutputTextureHandle;
 }
 
-void
-pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptTexture)
+// Helper: clamp integer to a range
+static inline int clampi(int v, int lo, int hi)
 {
-    for(uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
+    return v < lo ? lo : (v > hi ? hi : v);
+}
+
+void
+pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint32_t uSlot)
+{
+    // ---------------------------------------------------------------------
+    // 1) Evict/unbind previous textures for all chunk files
+    // ---------------------------------------------------------------------
+    for (uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
     {
-        if(ptPlanet->sbtChunkFiles[i].uTextureIndex != 0)
+        if (ptPlanet->sbtChunkFiles[i].uTextureIndex != 0)
         {
             plResourceHandle tTextureResource = gptResource->load_ex(
                 ptPlanet->sbtChunkFiles[i].acPakFileName,
                 PL_RESOURCE_LOAD_FLAG_NO_CACHING, NULL, 0,
-                ptPlanet->sbtChunkFiles[i].acPakFileName, 0); 
+                ptPlanet->sbtChunkFiles[i].acPakFileName, 0);
+
             plTextureHandle tTexture = gptResource->get_texture(tTextureResource);
             pl__planet_return_bindless_texture_index(tTexture);
             ptPlanet->sbtChunkFiles[i].uTextureIndex = 0;
@@ -709,266 +720,314 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptTexture)
         }
     }
 
-    bool* abActiveTextureTiles = PL_ALLOC(sizeof(bool) * ptPlanet->uTileCount);
-    memset(abActiveTextureTiles, 0, sizeof(bool) * ptPlanet->uTileCount);
+    // ---------------------------------------------------------------------
+    // 2) Active tile mask (use tInfo counts consistently)
+    // ---------------------------------------------------------------------
+    const uint32_t uH          = ptPlanet->tInfo.uHorizontalTiles;
+    const uint32_t uV          = ptPlanet->tInfo.uVerticalTiles;
+    const uint32_t uTileCount  = ptPlanet->tInfo.uTileCount;
 
+    bool* abActiveTextureTiles = PL_ALLOC(sizeof(bool) * uTileCount);
+    memset(abActiveTextureTiles, 0, sizeof(bool) * uTileCount);
 
-    if(ptTexture)
+    if (ptPlanetTexture)
     {
-        float fLatitude = pl_radiansf(ptTexture->fLatitude);
-        float fLongitude = pl_radiansf(ptTexture->fLongitude);
-        float fR = 2.0f * (float)ptPlanet->dRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-        float fX = fR * sinf(fLongitude);
-        float fY = fR * cosf(fLongitude);
+        // -----------------------------------------------------------------
+        // 3) Project texture center to south-pole stereographic (meters)
+        // -----------------------------------------------------------------
+        const float R    = (float)ptPlanet->dRadius;  // lunar radius (meters)
+        const float k0   = 1.0f;                      // scale factor
+        const float lon0 = 0.0f;                      // central meridian (radians)
 
-        plImageInfo tImageInfo = {0};
-        gptImage->get_info_from_file(ptTexture->pcPath, &tImageInfo);
+        float fLatitude  = pl_radiansf(ptPlanetTexture->fLatitude);
+        float fLongitude = pl_radiansf(-ptPlanetTexture->fLongitude + 180.0f);
 
-        plVec2 tTopLeft = {
-            .x = fX - 0.5f * (float)tImageInfo.iWidth * ptTexture->fMetersPerPixel,
-            .y = fY - 0.5f * (float)tImageInfo.iHeight * ptTexture->fMetersPerPixel,
+        // Inputs (radians)
+        float phi  = fLatitude;
+        float lam  = fLongitude;
+
+        // South-pole stereographic
+        float theta = lam - lon0;
+        float fR    = 2.0f * R * k0 * tanf(PL_PI_4 + 0.5f * phi);
+
+        // Easting / Northing (northing-positive-up; minus for south polar)
+        float fX = fR * sinf(theta);
+        float fY = fR * cosf(theta);
+
+        // -----------------------------------------------------------------
+        // 4) Compute world-space bounds of the incoming image in meters
+        // -----------------------------------------------------------------
+        plImageInfo tImageInfo = (plImageInfo){0};
+        gptImage->get_info_from_file(ptPlanetTexture->pcPath, &tImageInfo);
+
+        const float imgWm = (float)tImageInfo.iWidth  * ptPlanetTexture->fMetersPerPixel;
+        const float imgHm = (float)tImageInfo.iHeight * ptPlanetTexture->fMetersPerPixel;
+
+        const plVec2 tTopLeft = {
+            .x = fX - 0.5f * imgWm,
+            .y = fY - 0.5f * imgHm,
+        };
+        const plVec2 tBottomRight = {
+            .x = fX + 0.5f * imgWm,
+            .y = fY + 0.5f * imgHm,
         };
 
-        plVec2 tBottomRight = {
-            .x = fX + 0.5f * (float)tImageInfo.iWidth * ptTexture->fMetersPerPixel,
-            .y = fY + 0.5f * (float)tImageInfo.iHeight * ptTexture->fMetersPerPixel,
-        };
+        // -----------------------------------------------------------------
+        // 5) Compute signed tile index range (BR index inclusive)
+        // -----------------------------------------------------------------
+        const float tileSizeM = (float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel;
 
-        uint32_t uTopLeftXIndex = (uint32_t)floorf((tTopLeft.x - ptPlanet->tTopLeftGlobal.x) / ((float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel));
-        uint32_t uTopLeftYIndex = (uint32_t)floorf((tTopLeft.y - ptPlanet->tTopLeftGlobal.y) / ((float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel));
+        int tlx = (int)floorf((tTopLeft.x     - ptPlanet->tTopLeftGlobal.x) / tileSizeM);
+        int tly = (int)floorf((tTopLeft.y     - ptPlanet->tTopLeftGlobal.y) / tileSizeM);
+        int brx = (int)floorf ((tBottomRight.x - ptPlanet->tTopLeftGlobal.x) / tileSizeM);
+        int bry = (int)floorf ((tBottomRight.y - ptPlanet->tTopLeftGlobal.y) / tileSizeM);
 
-        uint32_t uBottomRightXIndex = (uint32_t)floorf((tBottomRight.x - ptPlanet->tTopLeftGlobal.x) / ((float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel));
-        uint32_t uBottomRightYIndex = (uint32_t)floorf((tBottomRight.y - ptPlanet->tTopLeftGlobal.y) / ((float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel));
-
-        plVec2 tTopLeftLocal = {0};
-        plVec2 tBottomRightLocal = {0};
-
+        // No overlap with tile grid? Early out
+        if (!(tlx > (int)uH - 1 || tly > (int)uV - 1 || brx < 0 || bry < 0))
         {
-            fLatitude = pl_radiansf(ptPlanet->atTiles[uTopLeftXIndex + uTopLeftYIndex * ptPlanet->tInfo.uHorizontalTiles].fLatitude);
-            fLongitude = pl_radiansf(ptPlanet->atTiles[uTopLeftXIndex + uTopLeftYIndex * ptPlanet->tInfo.uHorizontalTiles].fLongitude);
-            fR = 2.0f * ptPlanet->tInfo.fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-            fX = fR * sinf(fLongitude);
-            fY = fR * cosf(fLongitude);
-            tTopLeftLocal.x = fX - 0.5f * (float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel;
-            tTopLeftLocal.y = fY - 0.5f * (float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel;
-        }
-        {
-            fLatitude = pl_radiansf(ptPlanet->atTiles[uBottomRightXIndex + uBottomRightYIndex * ptPlanet->tInfo.uHorizontalTiles].fLatitude);
-            fLongitude = pl_radiansf(ptPlanet->atTiles[uBottomRightXIndex + uBottomRightYIndex * ptPlanet->tInfo.uHorizontalTiles].fLongitude);
-            fR = 2.0f * ptPlanet->tInfo.fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-            fX = fR * sinf(fLongitude);
-            fY = fR * cosf(fLongitude);
-            tBottomRightLocal.x = fX + 0.5f * (float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel;
-            tBottomRightLocal.y = fY + 0.5f * (float)ptPlanet->tInfo.uSize * ptPlanet->tInfo.fMetersPerPixel;
-        }
 
-        int iImageWidth = 0;
-        int iImageHeight = 0;
-        int _unused;
-        unsigned char* pucImageData = gptImage->load_from_file(ptTexture->pcPath, &iImageWidth, &iImageHeight, &_unused, 4);
+            // Clamp to grid
+            tlx = clampi(tlx, 0, (int)uH - 1);
+            tly = clampi(tly, 0, (int)uV - 1);
+            brx = clampi(brx, 0, (int)uH - 1);
+            bry = clampi(bry, 0, (int)uV - 1);
 
-        uint32_t uHorizontalExtent = uBottomRightXIndex - uTopLeftXIndex + 1;
-        uint32_t uVerticalExtent = uBottomRightYIndex - uTopLeftYIndex + 1;
+            // Normalize order (defensive if rounding flipped them)
+            if (brx < tlx) { int t = brx; brx = tlx; tlx = t; }
+            if (bry < tly) { int t = bry; bry = tly; tly = t; }
 
-        plImageOpInfo tFullInfo = {
-            .uWidth =  (uint32_t)((tBottomRightLocal.x - tTopLeftLocal.x) / ptTexture->fMetersPerPixel),
-            .uHeight = (uint32_t)((tBottomRightLocal.y - tTopLeftLocal.y) / ptTexture->fMetersPerPixel),
-            .uChannels = 4,
-            .uStride = 4
-        };
-        plImageOpData tFullData = {0};
-        gptImageOps->initialize(&tFullInfo, &tFullData);
-        gptImageOps->square(&tFullData);
+            const uint32_t tlIndex = (uint32_t)(tlx + tly * (int)uH);
+            const uint32_t brIndex = (uint32_t)(brx + bry * (int)uH);
 
-
-        plImageOpData tOriginalDataMod = {0};
-        {
-            plImageOpInfo tOriginalInfo = {
-                .uWidth = (uint32_t)iImageWidth,
-                .uHeight = (uint32_t)iImageHeight,
-                .uChannels = 4,
-                .uStride = 4
-            };
-
-            gptImageOps->initialize(&tOriginalInfo, &tOriginalDataMod); 
-            tOriginalInfo.puData = pucImageData;
-            gptImageOps->add(&tOriginalDataMod, tOriginalInfo, 0, 0);
-            gptImage->free(pucImageData);
-        }
-        
-        float fDistanceX = tTopLeft.x - tTopLeftLocal.x;
-        float fDistanceY = tTopLeft.y - tTopLeftLocal.y;
-
-        float fEffectiveMetersPerPixelX = (tBottomRightLocal.x - tTopLeftLocal.x) / tFullInfo.uWidth;
-        float fEffectiveMetersPerPixelY = (tBottomRightLocal.y - tTopLeftLocal.y) / tFullInfo.uHeight;
-
-        uint32_t uXOffsetIndex = (uint32_t)(fDistanceX / fEffectiveMetersPerPixelX);
-        uint32_t uYOffsetIndex = (uint32_t)(fDistanceY / fEffectiveMetersPerPixelY);
-
-        uint32_t uXInc = tFullInfo.uWidth / uHorizontalExtent;
-        uint32_t uYInc = tFullInfo.uHeight / uVerticalExtent;
-
-
-        plImageOpInfo tOriginalInfo2 = {
-            .uWidth = tOriginalDataMod.uWidth,
-            .uHeight = tOriginalDataMod.uHeight,
-            .uChannels = 4,
-            .uStride = 4,
-            .puData = tOriginalDataMod.puData
-        };
-        gptImageOps->add(&tFullData, tOriginalInfo2, uXOffsetIndex, uYOffsetIndex);
-
-        // if(tFlags & PL_PLANET_LOAD_FLAGS_DEBUG)
-        // {
-        //     plImageWriteInfo tWriteInfo2 = {
-        //         .iWidth = (int)tFullData.uWidth,
-        //         .iHeight = (int)tFullData.uHeight,
-        //         .iComponents = 4,
-        //         .iByteStride = (int)(tFullData.uWidth * 4)
-        //     };
-        //     gptImage->write( "hazard_prep_final.png", tFullData.puData, &tWriteInfo2);
-        // }
-
-
-        for(uint32_t i = 0; i < uHorizontalExtent; i++)
-        {
-            for(uint32_t j = 0; j < uVerticalExtent; j++)
+            if (tlIndex < uTileCount && brIndex < uTileCount)
             {
-                plImageOpData tImageData = {0};
-                gptImageOps->extract(&tFullData, i * uXInc, j * uYInc, uXInc, uYInc, &tImageData);
 
-                
+                // -----------------------------------------------------------------
+                // 6) Get local world coords of the clamped tile rectangle
+                //     (Use tile centers +/− half a tile to form inclusive bounds)
+                // -----------------------------------------------------------------
+                plVec2 tTopLeftLocal     = {0};
+                plVec2 tBottomRightLocal = {0};
 
-                plImageWriteInfo tWriteInfo = {
-                    .iWidth = (int)uXInc,
-                    .iHeight = (int)uYInc,
-                    .iComponents = 4,
-                    .iByteStride = (int)(uXInc * 4)
+                // --- Top-left tile local origin ---
+                {
+                    float lat  = pl_radiansf(ptPlanet->atTiles[tlIndex].fLatitude);
+                    float lon  = pl_radiansf(ptPlanet->atTiles[tlIndex].fLongitude);
+                    float phiL = lat;
+                    float lamL = lon;
+                    float thL  = lamL - lon0;
+                    float RR   = 2.0f * R * k0 * tanf(PL_PI_4 + 0.5f * phiL);
+
+                    float Xc = RR * sinf(thL);
+                    float Yc = RR * cosf(thL); // south polar
+
+                    tTopLeftLocal.x = Xc - 0.5f * tileSizeM;
+                    tTopLeftLocal.y = Yc - 0.5f * tileSizeM;
+                }
+
+                // --- Bottom-right tile local corner ---
+                {
+                    float lat  = pl_radiansf(ptPlanet->atTiles[brIndex].fLatitude);
+                    float lon  = pl_radiansf(ptPlanet->atTiles[brIndex].fLongitude);
+                    float phiL = lat;
+                    float lamL = lon;
+                    float thL  = lamL - lon0;
+                    float RR   = 2.0f * R * k0 * tanf(PL_PI_4 + 0.5f * phiL);
+
+                    float Xc = RR * sinf(thL);
+                    float Yc = RR * cosf(thL); // south polar
+
+                    tBottomRightLocal.x = Xc + 0.5f * tileSizeM;
+                    tBottomRightLocal.y = Yc + 0.5f * tileSizeM;
+                }
+
+                // -----------------------------------------------------------------
+                // 7) Build a full canvas covering [tl..br] tiles, and place image
+                // -----------------------------------------------------------------
+                int iImageWidth  = 0;
+                int iImageHeight = 0;
+                int _unused      = 0;
+                unsigned char* pucImageData = gptImage->load_from_file(
+                    ptPlanetTexture->pcPath, &iImageWidth, &iImageHeight, &_unused, 4);
+
+                plImageOpInit tFullInfo = {
+                    .uVirtualWidth    = (uint32_t)fmaxf(1.0f, (tBottomRightLocal.x - tTopLeftLocal.x) / ptPlanetTexture->fMetersPerPixel),
+                    .uVirtualHeight   = (uint32_t)fmaxf(1.0f, (tBottomRightLocal.y - tTopLeftLocal.y) / ptPlanetTexture->fMetersPerPixel),
+                    .uChannels = 4,
+                    .uStride   = 4
                 };
 
-                char acNameBuffer[128] = {0};
-                sprintf(acNameBuffer, "hazard_prep_%u_%u.png", i + uTopLeftXIndex, j + uTopLeftYIndex);
+                plImageOpData tFullData = (plImageOpData){0};
+                gptImageOps->initialize(&tFullInfo, &tFullData);
+                // gptImageOps->add_region(&tFullData, 0, 0, tFullInfo.uVirtualWidth, tFullInfo.uVirtualHeight, PL_IMAGE_OP_COLOR_WHITE);
 
-                abActiveTextureTiles[i + uTopLeftXIndex + (j + uTopLeftYIndex) * ptPlanet->tInfo.uHorizontalTiles] = true;
+                // If square() changes dims, we must use tFullData.uWidth/Height afterward
+                gptImageOps->square(&tFullData);
 
-                gptImage->write(acNameBuffer, tImageData.puData, &tWriteInfo);
-                gptImageOps->cleanup(&tImageData);
+                // Pixel offsets for where the image should land on the full canvas
+                const float fDistanceX = tTopLeft.x - tTopLeftLocal.x;
+                const float fDistanceY = tTopLeft.y - tTopLeftLocal.y;
+
+                const uint32_t fullW = tFullData.uVirtualWidth;
+                const uint32_t fullH = tFullData.uVirtualHeight;
+
+                const float fEffectiveMetersPerPixelX =
+                    (tBottomRightLocal.x - tTopLeftLocal.x) / (float)fullW;
+                const float fEffectiveMetersPerPixelY =
+                    (tBottomRightLocal.y - tTopLeftLocal.y) / (float)fullH;
+
+                const float fEffectiveMetersPerPixel = pl_max(fEffectiveMetersPerPixelX, fEffectiveMetersPerPixelY);
+
+                const uint32_t uXOffsetIndex =
+                    (uint32_t)fmaxf(0.0f, floorf(fDistanceX / fEffectiveMetersPerPixel));
+                const uint32_t uYOffsetIndex =
+                    (uint32_t)fmaxf(0.0f, floorf(fDistanceY / fEffectiveMetersPerPixel));
+
+                gptImageOps->add(&tFullData, uXOffsetIndex, uYOffsetIndex, (uint32_t)iImageWidth, (uint32_t)iImageHeight, pucImageData);
+                gptImageOps->square(&tFullData);
+                gptImage->free(pucImageData);
+
+                // -----------------------------------------------------------------
+                // 8) Slice canvas into per-tile images
+                // -----------------------------------------------------------------
+                const uint32_t uHorizontalExtent = (uint32_t)(brx - tlx + 1);
+                const uint32_t uVerticalExtent   = (uint32_t)(bry - tly + 1);
+
+                // Avoid zero increments if canvas is very small
+                uint32_t uXInc = (uHorizontalExtent > 0) ? (fullW / uHorizontalExtent) : 0;
+                uint32_t uYInc = (uVerticalExtent   > 0) ? (fullH / uVerticalExtent)   : 0;
+                if (uXInc == 0) uXInc = 1;
+                if (uYInc == 0) uYInc = 1;
+
+                uint32_t uInc = pl_min(uXInc, uYInc);
+
+                for (uint32_t ix = 0; ix < uHorizontalExtent; ix++)
+                {
+                    if(ix * uInc > tFullData.uActiveWidth)
+                        break;
+
+                    if(ix * uInc + uInc < tFullData.uActiveXOffset)
+                        continue;
+
+                    for (uint32_t iy = 0; iy < uVerticalExtent; iy++)
+                    {
+
+                        if(iy * uInc > tFullData.uActiveHeight)
+                            break;
+
+                        if(iy * uInc + uInc < tFullData.uActiveYOffset)
+                            continue;
+
+
+                        const uint32_t tileX = (uint32_t)(tlx + (int)ix);
+                        const uint32_t tileY = (uint32_t)(tly + (int)iy);
+
+                        char acNameBuffer[128] = {0};
+                        sprintf(acNameBuffer, "hazard_prep_%u_%u.png", tileX, tileY);
+
+                        // Mark tile active, with bounds check (defensive)
+                        const size_t flat = (size_t)tileX + (size_t)tileY * (size_t)uH;
+                        if (flat < (size_t)uTileCount)
+                            abActiveTextureTiles[flat] = true;
+
+
+
+                        int iSubXOffset = pl_max(ix * uInc, tFullData.uActiveXOffset);
+                        int iSubXEnd = pl_min(ix * uInc + uInc, tFullData.uActiveXOffset + tFullData.uActiveWidth);
+                        int iSubYOffset = pl_max(iy * uInc, tFullData.uActiveYOffset);
+                        int iSubYEnd = pl_min(iy * uInc + uInc, tFullData.uActiveYOffset + tFullData.uActiveHeight);
+                        int iFinalWidth = iSubXEnd - iSubXOffset;
+                        int iFinalHeight= iSubYEnd - iSubYOffset;
+
+                        uint8_t* puImageData = gptImageOps->extract(&tFullData, iSubXOffset, iSubYOffset, iFinalWidth, iFinalHeight, NULL);
+
+                        plImageWriteInfo tWriteInfo = {
+                            .iWidth       = (int)iFinalWidth,
+                            .iHeight      = (int)iFinalHeight,
+                            .iComponents  = 4,
+                            .iByteStride  = (int)(iFinalWidth * 4)
+                        };
+                        gptImage->write(acNameBuffer, puImageData, &tWriteInfo);
+                        gptImageOps->cleanup_extract(puImageData);
+
+                        sprintf(ptPlanet->sbtChunkFiles[flat].acPakFileName, "%s", acNameBuffer);
+
+                        plResourceHandle tTextureResource = gptResource->load_ex(
+                            ptPlanet->sbtChunkFiles[flat].acPakFileName,
+                            PL_RESOURCE_LOAD_FLAG_NO_CACHING, NULL, 0,
+                            NULL, 0); 
+                        gptResource->make_resident(tTextureResource);
+                        plTextureHandle tTexture = gptResource->get_texture(tTextureResource);
+                        ptPlanet->sbtChunkFiles[flat].uTextureIndex = pl__planet_get_bindless_texture_index(tTexture);
+                        plTexture* ptTexture = gptGfx->get_texture(gptCtx->ptDevice, tTexture);
+
+                        float fUStart = (float)iSubXOffset / (float)tFullData.uVirtualWidth;
+                        float fUEnd = (float)iSubXEnd / (float)tFullData.uVirtualWidth;
+
+                        float fVStart = (float)iSubYOffset / (float)tFullData.uVirtualHeight;
+                        float fVEnd = (float)iSubYEnd / (float)tFullData.uVirtualHeight;
+
+                        if(ix == 1 && iy == 1)
+                        {
+                            int a = 5;
+                        }
+
+                        // float fXAdditionalOffset = (float)(iSubXOffset - ix * uInc) / (float)iFinalWidth;
+                        // float fYAdditionalOffset = (float)(iSubYOffset - iy * uInc) / (float)iFinalHeight;
+
+                        for(uint32_t i = 0; i < ptPlanet->sbtChunkFiles[flat].tFile.uChunkCount; i++)
+                        {
+                            uint32_t uTopDownLevel = ptPlanet->sbtChunkFiles[flat].tFile.iTreeDepth - ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].uLevel - 1;
+
+                            // chunk width
+                            uint32_t uWidth = (uint32_t)((float)uInc / powf(2.0f, (float)uTopDownLevel));
+                            uint32_t uHeight = (uint32_t)((float)uInc / powf(2.0f, (float)uTopDownLevel));
+
+                            // final scaling factor
+                            float fXScale = (float)uWidth / (float)iFinalWidth;
+                            float fYScale = (float)uHeight / (float)iFinalHeight;
+
+                            ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].tUVScale.x = fXScale;
+                            ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].tUVScale.y = fYScale;
+
+                            // UV on parent chunk
+                            float fU = (float)ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].fX; // UV on original heightmap
+                            float fV = (float)ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].fY; // UV on original heightmap
+
+                            // convert to UV in final texture space
+                            fU = fU * (float)uInc / (float)iFinalWidth;
+                            fU = fU - (float)(iSubXOffset - ix * uInc) / (float)iFinalWidth;
+
+                            fV = fV * (float)uInc / (float)iFinalHeight;
+                            fV = fV - (float)(iSubYOffset - iy * uInc) / (float)iFinalHeight;
+
+                            // works for root level but does too much at child levels
+                            ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].tUVOffset.x = fU;
+                            ptPlanet->sbtChunkFiles[flat].tFile.atChunks[i].tUVOffset.y = fV;
+                        }
+                    }
+                }
+                gptImageOps->cleanup(&tFullData);
             }
         }
-        gptImageOps->cleanup(&tOriginalDataMod);
-        gptImageOps->cleanup(&tFullData);
-
     }
 
-    for(uint32_t k = 0; k < ptPlanet->tInfo.uTileCount; k++)
+    // ---------------------------------------------------------------------
+    // 9) Update chunk files with generated hazard textures
+    // ---------------------------------------------------------------------
+    for (uint32_t k = 0; k < uTileCount; k++)
     {
-        uint32_t i = k % ptPlanet->tInfo.uHorizontalTiles;
-        uint32_t j = (k - i) / ptPlanet->tInfo.uVerticalTiles;
-        char acNameBuffer[128] = {0};
-        sprintf(acNameBuffer, "hazard_prep_%u_%u.png", i, j);
-        const char* pcHazard = NULL;
-        if(abActiveTextureTiles[k])
-            pcHazard = acNameBuffer;
-        pl__chlod_update_chunk_file(ptPlanet, k, pcHazard);
-        // if(!(tFlags & PL_PLANET_LOAD_FLAGS_DEBUG) && abActiveTextureTiles[k])
-        // {
-        //     gptVfs->delete_file(gptVfs->register_file(acNameBuffer, true));
-        // }
+        if(!abActiveTextureTiles[k])
+        {
+            for(uint32_t i = 0; i < ptPlanet->sbtChunkFiles[k].tFile.uChunkCount; i++)
+            {
+                ptPlanet->sbtChunkFiles[k].tFile.atChunks[i].tUVScale.x = 1.0f;
+                ptPlanet->sbtChunkFiles[k].tFile.atChunks[i].tUVScale.y = 1.0f;
+            }
+        }
     }
+
     PL_FREE(abActiveTextureTiles);
-}
-
-bool
-pl__chlod_update_chunk_file(plPlanet* ptPlanet, uint32_t uIndex, const char* pcTexture)
-{
-
-    bool bTextured = pcTexture != NULL;
-    bool bPacking = false;
-    plImageOpData tImageOpData = {0};
-    if(bTextured)
-    {
-        sprintf(ptPlanet->sbtChunkFiles[uIndex].acPakFileName, "%s", pcTexture);
-        
-        bPacking = true;
-
-        // load actual data from file data
-        int iImageWidth = 0;
-        int iImageHeight = 0;
-        int _unused;
-        unsigned char* pucImageData = gptImage->load_from_file(pcTexture,  &iImageWidth, &iImageHeight, &_unused, 4);
-
-        plImageOpInfo tImageOpInfo = {
-            .uChannels = 4,
-            .uStride = 4,
-            .uWidth = (uint32_t)iImageWidth,
-            .uHeight = (uint32_t)iImageHeight
-        };
-    
-        gptImageOps->initialize(&tImageOpInfo, &tImageOpData);
-
-        plImageOpInfo tImageOpInfo0 = {
-            .uChannels = 4,
-            .uStride = 4,
-            .uWidth = (uint32_t)iImageWidth,
-            .uHeight = (uint32_t)iImageHeight,
-            .puData = pucImageData
-        };
-        gptImageOps->add(&tImageOpData, tImageOpInfo0, 0, 0);
-        gptImage->free(pucImageData);
-        gptImageOps->square(&tImageOpData);
-    }
-
-    if(pcTexture)
-    {
-        plResourceHandle tTextureResource = gptResource->load_ex(
-            ptPlanet->sbtChunkFiles[uIndex].acPakFileName,
-            PL_RESOURCE_LOAD_FLAG_NO_CACHING, NULL, 0,
-            NULL, 0); 
-        gptResource->make_resident(tTextureResource);
-        plTextureHandle tTexture = gptResource->get_texture(tTextureResource);
-        ptPlanet->sbtChunkFiles[uIndex].uTextureIndex = pl__planet_get_bindless_texture_index(tTexture);
-    }
-
-    for(uint32_t i = 0; i < ptPlanet->sbtChunkFiles[uIndex].tFile.uChunkCount; i++)
-    {
-
-        if(bPacking)
-        {
-            uint32_t uTopDownLevel = ptPlanet->sbtChunkFiles[uIndex].tFile.iTreeDepth - ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].uLevel - 1;
-
-            // plImageOpData tImageOpDataMod = {0};
-            uint32_t uWidth = (uint32_t)((float)tImageOpData.uWidth / powf(2.0f, (float)uTopDownLevel));
-            uint32_t uHeight = (uint32_t)((float)tImageOpData.uHeight / powf(2.0f, (float)uTopDownLevel));
-
-            float fXRatio = (float)ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].uX / 4096.0f; // UV on original heightmap
-            float fYRatio = (float)ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].uY / 4096.0f; // UV on original heightmap
-
-            uint32_t uXOffset = (uint32_t)((float)tImageOpData.uWidth * fXRatio);  // pixels on texture map
-            uint32_t uYOffset = (uint32_t)((float)tImageOpData.uHeight * fYRatio); // pixels on texture map
-
-
-            if (uXOffset + uWidth > tImageOpData.uWidth)    uWidth = tImageOpData.uWidth  - uXOffset;
-            if (uYOffset + uHeight > tImageOpData.uHeight)  uHeight = tImageOpData.uHeight - uYOffset;
-
-            ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].tUVOffset.x = (float)uXOffset / (float)tImageOpData.uWidth;
-            ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].tUVOffset.y = (float)uYOffset / (float)tImageOpData.uHeight;
-
-            ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].tUVScale.x = (float)uWidth / (float)tImageOpData.uWidth;
-            ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].tUVScale.y = (float)uHeight / (float)tImageOpData.uHeight;
-        }
-        else
-        {
-            ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].tUVScale.x = 1.0f;
-            ptPlanet->sbtChunkFiles[uIndex].tFile.atChunks[i].tUVScale.y = 1.0f;
-        }
-    }
-    
-    if(bPacking)
-    {
-        gptImageOps->cleanup(&tImageOpData);
-    }
-
-    return true;
 }
 
 bool
@@ -991,7 +1050,7 @@ pl_chlod_load_chunk_file(plPlanet* ptPlanet, const char* pcPath, plPlanetLoadFla
 }
 
 void
-pl_planet_load_shaders(plPlanet* ptPlanet)
+pl_planet_load_shaders(plPlanetView* ptPlanet)
 {
     if(gptGfx->is_shader_valid(gptCtx->ptDevice, ptPlanet->tShader))
     {
@@ -1057,7 +1116,7 @@ pl_planet_load_shaders(plPlanet* ptPlanet)
 }
 
 static void
-pl_planet_set_shaders(plPlanet* ptPlanet, const char* pcVertexShader, const char* pcFragmentShader)
+pl_planet_set_shaders(plPlanetView* ptPlanet, const char* pcVertexShader, const char* pcFragmentShader)
 {
     ptPlanet->pcVertexShader   = pcVertexShader   ? pcVertexShader   : "planet.vert";
     ptPlanet->pcFragmentShader = pcFragmentShader ? pcFragmentShader : "planet.frag";
@@ -1072,9 +1131,9 @@ pl_draw_sphere(plPlanetView* ptPlanet, float fLongitude, float fLatitude, float 
     
     float fRadius = (float)ptPlanet->ptPlanet->dRadius + fHeight;
 
-    float fZ = fRadius * cosf(fLatitude) * cosf(fLongitude);
-    float fY = fRadius * sinf(fLatitude);
     float fX = fRadius * cosf(fLatitude) * sinf(fLongitude);
+    float fY = fRadius * sinf(fLatitude);
+    float fZ = fRadius * cosf(fLatitude) * cosf(fLongitude);
 
     plSphere tSphere = {
         .fRadius = fSphereRadius,
@@ -1108,6 +1167,18 @@ pl_planet_set_runtime_options(plPlanet* ptPlanet, plPlanetRuntimeOptions tOption
 
 plPlanetRuntimeOptions
 pl_planet_get_runtime_options(plPlanet* ptPlanet)
+{
+    return ptPlanet->tRuntimeOptions;
+}
+
+void
+pl_planet_set_view_runtime_options(plPlanetView* ptPlanet, plPlanetViewRuntimeOptions tOptions)
+{
+    ptPlanet->tRuntimeOptions = tOptions;
+}
+
+plPlanetViewRuntimeOptions
+pl_planet_get_view_runtime_options(plPlanetView* ptPlanet)
 {
     return ptPlanet->tRuntimeOptions;
 }
@@ -1647,9 +1718,11 @@ pl__request_residency(plPlanet* ptPlanet, plPlanetChunk* ptChunk)
 }
 
 static void
-pl__render_chunk(plPlanet* ptPlanet, plCamera* ptCamera , plRenderEncoder* ptEncoder, plPlanetChunk* ptChunk, plPlanetChunkFile* ptFile, const plMat4* ptMVP)
+pl__render_chunk(plPlanetView* ptPlanetView, plCamera* ptCamera , plRenderEncoder* ptEncoder, plPlanetChunk* ptChunk, plPlanetChunkFile* ptFile, const plMat4* ptMVP)
 {
     PL_ASSERT(ptChunk != NULL);
+
+    plPlanet* ptPlanet = ptPlanetView->ptPlanet;
 
     plAABB tAABB = {
         .tMin = ptChunk->tMinBound,
@@ -1676,7 +1749,7 @@ pl__render_chunk(plPlanet* ptPlanet, plCamera* ptCamera , plRenderEncoder* ptEnc
     float fRho = fGeometricError * fK / fDistance;
 
 
-    float tauSubdivide = ptPlanet->tRuntimeOptions.fTau;
+    float tauSubdivide = ptPlanetView->tRuntimeOptions.fTau;
     float tauMerge     = tauSubdivide * 0.5f;
 
     bool bChildrenResident = pl__all_children_resident(ptChunk);
@@ -1691,17 +1764,23 @@ pl__render_chunk(plPlanet* ptPlanet, plCamera* ptCamera , plRenderEncoder* ptEnc
             pl_allocate_dynamic_data(gptGfx, ptDevice, &gptCtx->tCurrentDynamicBufferBlock);
         plGpuDynPlanetData* ptDynamic = (plGpuDynPlanetData*)tDynamicBinding.pcData;
 
-        ptDynamic->tMvp            = tMVP;
-        ptDynamic->iLevel          = (int)ptChunk->uLevel;
-        ptDynamic->tFlags          = ptPlanet->tRuntimeOptions.tFlags;
-        ptDynamic->uTextureIndex   = ptPlanet->sbtChunkFiles[ptChunk->uFileID].uTextureIndex;
-        ptDynamic->tLightDirection = ptPlanet->tRuntimeOptions.tLightDirection;
-        ptDynamic->tUVInfo.xy       = ptChunk->tUVScale;
-        ptDynamic->tUVInfo.zw       = ptChunk->tUVOffset;
+        ptDynamic->tMvp               = tMVP;
+        ptDynamic->iLevel             = (int)ptChunk->uLevel;
+        ptDynamic->tFlags             = ptPlanetView->tRuntimeOptions.tFlags;
+        ptDynamic->uTextureIndex      = ptPlanet->sbtChunkFiles[ptChunk->uFileID].uTextureIndex;
+        ptDynamic->tLightDirection    = ptPlanet->tRuntimeOptions.tLightDirection;
+        ptDynamic->tUVInfo.xy         = ptChunk->tUVScale;
+        ptDynamic->tUVInfo.zw         = ptChunk->tUVOffset;
+        ptDynamic->fHazardMapStrength = ptPlanetView->tRuntimeOptions.fHazardMapStrength;
+
+        // Generate a random number between 1 and 100
+        // Formula: (rand() % range) + min
+        // int random_int = (rand() % 100) + 1;
+        ptDynamic->iChunkID = ptChunk->uIndex + ptChunk->uFileID;
 
         plShaderHandle tShader =
-            (ptPlanet->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_WIREFRAME)
-            ? ptPlanet->tWireframeShader : ptPlanet->tShader;
+            (ptPlanetView->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_WIREFRAME)
+            ? ptPlanetView->tWireframeShader : ptPlanetView->tShader;
 
         gptGfx->bind_graphics_bind_groups(
             ptEncoder,
@@ -1745,7 +1824,7 @@ pl__render_chunk(plPlanet* ptPlanet, plCamera* ptCamera , plRenderEncoder* ptEnc
     {
         // Descend into children
         for(uint32_t i = 0; i < 4; i++)
-            pl__render_chunk(ptPlanet, ptCamera, ptEncoder, ptChunk->aptChildren[i], ptFile, ptMVP);
+            pl__render_chunk(ptPlanetView, ptCamera, ptEncoder, ptChunk->aptChildren[i], ptFile, ptMVP);
     }
 }
 
@@ -2002,21 +2081,25 @@ pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetLoadFla
     {
         float fLatitude = pl_radiansf(ptInfo->atTiles[0].fLatitude);
         float fLongitude = pl_radiansf(ptInfo->atTiles[0].fLongitude);
-        float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-        float fX = fR * sinf(fLongitude);
-        float fY = fR * cosf(fLongitude);
+
+        const float R    = (float)ptPlanet->dRadius;  // lunar radius (meters)
+        const float k0   = 1.0f;                      // scale factor
+        const float lon0 = 0.0f;                      // central meridian (radians)
+
+        // Inputs (radians)
+        float phi  = fLatitude;
+        float lam  = fLongitude;
+
+        // South-pole stereographic
+        float theta = lam - lon0;
+        float fR    = 2.0f * R * k0 * tanf(PL_PI_4 + 0.5f * phi);
+
+        // Easting / Northing (northing-positive-up; minus for south polar)
+        float fX = fR * sinf(theta);
+        float fY = fR * cosf(theta);
+
         ptPlanet->tTopLeftGlobal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
         ptPlanet->tTopLeftGlobal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
-    }
-
-    {
-        float fLatitude = pl_radiansf(ptInfo->atTiles[ptInfo->uTileCount - 1].fLatitude);
-        float fLongitude = pl_radiansf(ptInfo->atTiles[ptInfo->uTileCount - 1].fLongitude);
-        float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-        float fX = fR * sinf(fLongitude);
-        float fY = fR * cosf(fLongitude);
-        ptPlanet->tBottomRightGlobal.x = fX - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
-        ptPlanet->tBottomRightGlobal.y = fY - 0.5f * (float)ptInfo->uSize * ptInfo->fMetersPerPixel;
     }
 
     for(uint32_t k = 0; k < ptInfo->uTileCount; k++)
@@ -2199,21 +2282,23 @@ PL_EXPORT void
 pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
 {
     const plPlanetI tApi = {
-        .initialize          = pl_planet_initialize,
-        .cleanup             = pl_planet_cleanup,
-        .create_planet       = pl_create_planet,
-        .cleanup_planet      = pl_cleanup_planet,
-        .prepare             = pl_prepare_planet,
-        .reload_shaders      = pl_planet_load_shaders,
-        .set_runtime_options = pl_planet_set_runtime_options,
-        .get_runtime_options = pl_planet_get_runtime_options,
-        .set_shaders         = pl_planet_set_shaders,
-        .draw_sphere         = pl_draw_sphere,
-        .set_texture         = pl_planet_set_texture,
-        .create_view         = pl_create_planet_view,
-        .cleanup_view        = pl_cleanup_planet_view,
-        .render_view         = pl_render_to_planet_view,
-        .get_view_texture    = pl_get_planet_view_texture,
+        .initialize               = pl_planet_initialize,
+        .cleanup                  = pl_planet_cleanup,
+        .create_planet            = pl_create_planet,
+        .cleanup_planet           = pl_cleanup_planet,
+        .prepare                  = pl_prepare_planet,
+        .reload_shaders           = pl_planet_load_shaders,
+        .set_runtime_options      = pl_planet_set_runtime_options,
+        .get_runtime_options      = pl_planet_get_runtime_options,
+        .set_view_runtime_options = pl_planet_set_view_runtime_options,
+        .get_view_runtime_options = pl_planet_get_view_runtime_options,
+        .set_shaders              = pl_planet_set_shaders,
+        .draw_sphere              = pl_draw_sphere,
+        .set_texture              = pl_planet_set_texture,
+        .create_view              = pl_create_planet_view,
+        .cleanup_view             = pl_cleanup_planet_view,
+        .render_view              = pl_render_to_planet_view,
+        .get_view_texture         = pl_get_planet_view_texture,
     };
     pl_set_api(ptApiRegistry, plPlanetI, &tApi);
 

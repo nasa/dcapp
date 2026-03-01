@@ -92,8 +92,8 @@ typedef struct _plPlanetChunk
     plPlanetChunk* aptChildren[4];
 
     // chunk address (its position in the quadtree)
-    uint16_t uX;
-    uint16_t uY;
+    float fX;
+    float fY;
     uint8_t uLevel;
 
     // bounds

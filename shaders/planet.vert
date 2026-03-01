@@ -42,7 +42,7 @@ void main()
     tShaderOut.tWorldNormal = Decode(inNormal);
     tShaderOut.tUV = inUV;
 
-    vec3 atColors[8];
+    vec3 atColors[16];
     float fColorStrength = 0.1;
     atColors[0] = vec3(fColorStrength, 0.0, 0.0);
     atColors[1] = vec3(0.0, fColorStrength, 0.0);
@@ -53,11 +53,26 @@ void main()
     atColors[6] = vec3(fColorStrength, fColorStrength, fColorStrength);
     atColors[7] = vec3(fColorStrength * 4, fColorStrength, fColorStrength);
 
-    tShaderOut.tColor.rgb = atColors[tDynamicData.tData.iLevel % 8];
+    atColors[8] = vec3(fColorStrength * 3, 0.0, 0.0);
+    atColors[9] = vec3(0.0, fColorStrength * 3, 0.0);
+    atColors[10] = vec3(0.0, 0.0, fColorStrength * 3);
+    atColors[11] = vec3(fColorStrength * 3, fColorStrength * 3, 0.0);
+    atColors[12] = vec3(fColorStrength * 3, 0.0, fColorStrength * 3);
+    atColors[13] = vec3(0.0, fColorStrength, fColorStrength * 3);
+    atColors[14] = vec3(fColorStrength, fColorStrength * 3, fColorStrength * 3);
+    atColors[15] = vec3(fColorStrength * 7, fColorStrength, fColorStrength);
+
+    tShaderOut.tColor.rgb = atColors[tDynamicData.tData.iLevel % 16];
     tShaderOut.tColor.a = 1.0;
 
     if(bool(tDynamicData.tData.tFlags & PL_TERRAIN_SHADER_FLAGS_WIREFRAME))
     {
+        tShaderOut.tColor.rgb += vec3(0.3);
+    }
+
+    if(bool(tDynamicData.tData.tFlags & PL_TERRAIN_SHADER_FLAGS_SHOW_CHUNKS))
+    {
+        tShaderOut.tColor.rgb = atColors[tDynamicData.tData.iChunkID % 16];
         tShaderOut.tColor.rgb += vec3(0.3);
     }
 

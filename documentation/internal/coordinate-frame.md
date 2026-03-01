@@ -163,6 +163,50 @@ Vertices are transformed as: `v_clip = P * V * M * v_local`
 | Rotation Order | Y * X * Z (Yaw * Pitch * Roll) |
 | MVP Order | Projection * View * Model |
 
+## Planet Terrain: South-Pole Stereographic Projection
+
+The planet terrain system uses a **south-pole stereographic projection** to map geographic coordinates (latitude, longitude) to a 2D plane for tile indexing and texture placement.
+
+### Forward Projection (geographic → plane)
+
+```
+phi0 = -PI/2     (projection center: south pole)
+k0   = 1.0       (scale factor)
+lam0 = 0.0       (central meridian)
+
+rho = 2 * R * k0 * tan(PI/4 + phi/2)
+x   = rho * sin(lambda - lam0)
+y   = -rho * cos(lambda - lam0)
+```
+
+Where `phi` is latitude in radians and `lambda` is longitude in radians. This maps the south pole to the origin, with `rho` increasing toward the north pole.
+
+### Inverse Projection (plane → geographic)
+
+```
+rho = sqrt(x^2 + y^2)
+c   = 2 * atan(rho / (2 * R * k0))
+
+phi = asin(cos(c) * sin(phi0) + (y * sin(c) * cos(phi0)) / rho)
+lam = lam0 + atan2(x * sin(c), rho * cos(phi0) * cos(c) - y * sin(phi0) * sin(c))
+```
+
+This inverse is used by `dcapp-planet-chunkgen` to compute the latitude/longitude of each tile center from its position on the stereographic plane.
+
+### Texture Longitude Convention
+
+When placing textures via `set_texture()`, the extension internally transforms longitude as `-longitude + 180` before the forward projection. This means that `Longitude="180"` in the XML maps to `lambda = 0` (the central meridian) in stereographic space.
+
+### Source Files
+
+| File | Projection Usage |
+|------|-----------------|
+| `extensions/pl_planet_ext.c` | Forward projection in `pl_planet_set_texture()` |
+| `extensions/pl_planet_processor_ext.c` | Forward projection in `pl_planet_process()`, inverse in `pl__get_cartesian()` |
+| `apps/dcapp_planet_chunkgen.c` | Inverse projection in `_compute_tile_latlon()` |
+
+---
+
 ## Key Source Files
 
 | File | Purpose |

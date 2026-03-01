@@ -23,6 +23,7 @@ static void     _flush_deferred_sets(_AppData *app_data);
 static bool     _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, plPlanetTexture *out);
 static void     _init_planets(_AppData *app_data);
 static void     _update_planet_defs(_AppData *app_data);
+static void     _update_planet_views(_AppData *app_data);
 
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
@@ -535,8 +536,11 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     // reset draw batch system for new frame
     _draw_batch_reset(app_data);
 
-    // update planet definitions (shader swap, texture reload, prepare)
+    // update planet definitions (texture reload, prepare)
     _update_planet_defs(app_data);
+
+    // update planet views (per-view shader swap)
+    _update_planet_views(app_data);
 
     // draw node
     _draw_node(app_data, app_data->window, NULL, NULL, NULL);
@@ -635,7 +639,7 @@ static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry
     if (entry->mpp != DC_APP_VAL_INDEX_UNDEFINED)
         out->fMetersPerPixel = (float)dc_app_lookup_get_value(app_data->lookup, entry->mpp)->value_double;
     if (entry->lat != DC_APP_VAL_INDEX_UNDEFINED)
-        out->fLatitude = -1.0f * (float)dc_app_lookup_get_value(app_data->lookup, entry->lat)->value_double;
+        out->fLatitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lat)->value_double;
     if (entry->lon != DC_APP_VAL_INDEX_UNDEFINED)
         out->fLongitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lon)->value_double;
     return true;
@@ -759,19 +763,13 @@ static void _init_planets(_AppData *app_data) {
             if (_build_planet_texture(app_data, &def->sb_textures[0], &texture)) {
                 DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, lat=%.1f, lon=%.1f)",
                             i, texture.pcPath, texture.fMetersPerPixel, texture.fLatitude, texture.fLongitude);
-                _ext_planet->set_texture(planet, &texture);
+                _ext_planet->set_texture(planet, &texture, 0);
             }
         }
 
         // store planet
         sbpush(app_data->sb_planets, planet);
         def->index = (uint8_t)(sbcount(app_data->sb_planets) - 1); // index 0 is sentinel
-
-        // force shader mismatch on first update
-        if (def->shader_index != DC_APP_VAL_INDEX_UNDEFINED) {
-            int initial              = (int)dc_app_lookup_get_value(app_data->lookup, def->shader_index)->value_integer;
-            def->active_shader_index = initial + 1;
-        }
 
         DC_LOG_INFO("Planet", "  [%d] '%s' created (radius=%.0f, %u tiles)", i, def->name, radius, tile_count);
 
@@ -815,7 +813,40 @@ static void _init_planets(_AppData *app_data) {
         sbpush(app_data->sb_planet_views, view);
         node->planet_view.planet_view_index = (uint8_t)(sbcount(app_data->sb_planet_views) - 1); // index 0 is sentinel
 
+        // force shader mismatch so first _update_planet_views() applies the shader
+        if (node->planet_view.shader_index != DC_APP_VAL_INDEX_UNDEFINED) {
+            int initial                          = (int)dc_app_lookup_get_value(app_data->lookup, node->planet_view.shader_index)->value_integer;
+            node->planet_view.active_shader_index = initial + 1;
+        }
+
         DC_LOG_INFO("PlanetView", "  [%d] created view for '%s' (%ux%u)", i, def->name, (uint32_t)output_width, (uint32_t)output_height);
+    }
+}
+
+static void _update_planet_views(_AppData *app_data) {
+    int view_node_count = sbcount(app_data->sb_planet_view_node_indices);
+    for (int vi = 0; vi < view_node_count; vi++) {
+        _Node *vnode = _get_node(app_data, app_data->sb_planet_view_node_indices[vi]);
+        if (vnode->planet_view.shader_index == DC_APP_VAL_INDEX_UNDEFINED) continue;
+
+        _PlanetDef *def = &app_data->sb_planet_defs[vnode->planet_view.planet_def_index];
+        if (sbcount(def->sb_shaders) == 0) continue;
+
+        int desired = (int)dc_app_lookup_get_value(app_data->lookup, vnode->planet_view.shader_index)->value_integer;
+        if (desired == vnode->planet_view.active_shader_index) continue;
+
+        _PlanetShaderEntry *found = NULL;
+        for (int j = 0; j < sbcount(def->sb_shaders); j++) {
+            if (def->sb_shaders[j].index == desired) {
+                found = &def->sb_shaders[j];
+                break;
+            }
+        }
+
+        plPlanetView *view = app_data->sb_planet_views[vnode->planet_view.planet_view_index];
+        if (view)
+            _ext_planet->set_shaders(view, found ? found->vertex_path : NULL, found ? found->fragment_path : NULL);
+        vnode->planet_view.active_shader_index = desired;
     }
 }
 
@@ -829,22 +860,6 @@ static void _update_planet_defs(_AppData *app_data) {
         plPlanet *planet = app_data->sb_planets[def->index];
         if (!planet) continue;
 
-        // shader swap check
-        if (def->shader_index != DC_APP_VAL_INDEX_UNDEFINED && sbcount(def->sb_shaders) > 0) {
-            int desired_idx = (int)dc_app_lookup_get_value(app_data->lookup, def->shader_index)->value_integer;
-            if (desired_idx != def->active_shader_index) {
-                _PlanetShaderEntry *found = NULL;
-                for (int j = 0; j < sbcount(def->sb_shaders); j++) {
-                    if (def->sb_shaders[j].index == desired_idx) {
-                        found = &def->sb_shaders[j];
-                        break;
-                    }
-                }
-                _ext_planet->set_shaders(planet, found ? found->vertex_path : NULL, found ? found->fragment_path : NULL);
-                def->active_shader_index = desired_idx;
-            }
-        }
-
         // texture refresh check
         for (int t = 0; t < sbcount(def->sb_textures); t++) {
             _PlanetTextureEntry *tex = &def->sb_textures[t];
@@ -853,9 +868,9 @@ static void _update_planet_defs(_AppData *app_data) {
             if (!dc_value_is_equal(refresh_val, &tex->last_fire_refresh_value)) {
                 plPlanetTexture texture;
                 if (_build_planet_texture(app_data, tex, &texture)) {
-                    _ext_planet->set_texture(planet, &texture);
+                    _ext_planet->set_texture(planet, &texture, 0);
                 } else {
-                    _ext_planet->set_texture(planet, NULL);
+                    _ext_planet->set_texture(planet, NULL, 0);
                 }
                 tex->last_fire_refresh_value = *refresh_val;
             }

@@ -41,50 +41,29 @@ Known issues:
     clobber string data.
 
 
-2. PlanetTexture XML Support
-----------------------------
+2. PlanetTexture XML Support (DONE)
+------------------------------------
 
-Planned XML element for overlaying a texture on the planet surface:
+Implemented. <PlanetTexture> is a child of <Planet> with attributes:
+  File, MetersPerPixel, Latitude, Longitude, FireRefresh
 
-  <PlanetTexture Source="path/to/texture.png" .../>
-
-As a child of <Planet>, similar to <PlanetData>.
-
-Metadata (lat/lon center, meters per pixel) source is TBD:
-  - XML attributes directly on the element
-  - Embedded in the PNG file
-  - A separate .json file alongside the PNG
-
-Current state:
-  - Element type DC_APP_ELEM_TYPE_PLANET_TEXTURE is registered
-  - Stub handler _process_xml_node_planet_texture exists in
-    _dcapp_process_xml.c (logs Source attribute but doesn't store it)
-
-Remaining work:
-  - Add texture fields to _NodePlanet in dcapp.h
-  - Fill in the stub to parse and store all attributes
-  - Pass texture data to plPlanetInit.atTextures[0] in _init_planets
+Parsed in xml.c, stored in _PlanetTextureEntry, applied via
+plPlanetI.set_texture() at init and at runtime on FireRefresh change.
 
 
-3. Dynamic Texture Features (future)
+3. Dynamic Texture Features (DONE)
+------------------------------------
+
+All requirements implemented:
+  - Runtime texture loading via set_texture(planet, texture, slot)
+  - Texture repositioning (lat/lon/mpp) at runtime
+  - Edge-triggered reload via FireRefresh attribute
+  - Sparse hazard map support (textures can cover a subset of tiles)
+
+
+4. Per-View Shader Selection (DONE)
 -------------------------------------
 
-Requirements:
-  - Load a texture that may not exist yet at startup
-  - Reload/replace texture during runtime when file changes on disk
-  - Change texture position (lat/lon) at runtime
-  - Change resolution (meters per pixel) at runtime
-  - Texture may need to be repositioned (moved) at runtime
-
-Current limitation:
-  The planet extension bakes textures into .pak files during
-  create_planet(). There is no public API to update textures after
-  creation. The plPlanetI vtable has no set_texture or update_texture
-  function.
-
-Planned approach:
-  - Add new public API to plPlanetI (e.g. update_texture)
-  - Re-run texture splitting logic (reuse code from pl__planet_load)
-  - Re-pack affected .pak files
-  - Force-evict currently-resident textured chunks
-  - Let residency system naturally reload with new texture data
+Moved ShaderIndex from <Planet> to <PlanetView>. Each view independently
+selects its active shader from the parent planet's <PlanetShader> library.
+<PlanetShader> definitions stay on <Planet> as shared resources.
