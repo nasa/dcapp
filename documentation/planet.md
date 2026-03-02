@@ -85,7 +85,7 @@ The `.planet.json` file is what you reference from the `<PlanetData>` element in
 The top-level planet definition. It must be a direct child of `<DCAPP>` and should appear before any `<Window>` element.
 
 ```xml
-<Planet Name="Moon">
+<Planet Name="Moon" LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
     <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
@@ -99,6 +99,9 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `Name` | string | Yes | A unique name used by `<PlanetView>` elements to reference this planet |
+| `LightDirectionX` | double/var | No | X component of the light direction vector. Default -1. Can be variable-driven. |
+| `LightDirectionY` | double/var | No | Y component of the light direction vector. Default -1. Can be variable-driven. |
+| `LightDirectionZ` | double/var | No | Z component of the light direction vector. Default -1. Can be variable-driven. |
 
 **Children:** `<PlanetData>`, `<PlanetTexture>`, `<PlanetShader>`
 
@@ -171,6 +174,7 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 |-----------|---------|------|----------|-------------|
 | `Planet` | — | string | Yes | The `Name` of the `<Planet>` element to render |
 | `ShaderIndex` | — | integer/var | No | Index of the active shader from the parent `<Planet>`'s `<PlanetShader>` library. Defaults to 0 (built-in shader). Each view can independently select its shader. |
+| `Tau` | — | double/var | No | LOD error threshold controlling chunk resolution. Default 0.3. Lower values load higher-resolution chunks sooner (more aggressive). Can be variable-driven for runtime adjustment. |
 | `PositionX` | `X` | number/var | No | X position relative to parent |
 | `PositionY` | `Y` | number/var | No | Y position relative to parent |
 | `DimensionX` | `Width` | number/var | No | Viewport width |
@@ -415,7 +419,7 @@ A logic file converts the LLE camera position into XYZ/RPY coordinates so both v
 A single `<Planet>` is defined with one data source, one texture overlay, and three custom shaders. The shader definitions act as a shared library -- each view selects its own active shader via `ShaderIndex`:
 
 ```xml
-<Planet Name="Moon">
+<Planet Name="Moon" LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
     <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>

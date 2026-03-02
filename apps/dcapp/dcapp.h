@@ -553,6 +553,9 @@ typedef struct __PlanetDef {
     // shader overrides (library; per-view selection via PlanetView ShaderIndex)
     _PlanetShaderEntry *sb_shaders; // stretchy buffer
 
+    // light direction
+    _ValIndex3 light_direction;
+
     // runtime
     uint8_t index; // 1-based index into sb_planets
 } _PlanetDef;
@@ -581,6 +584,9 @@ typedef struct __NodePlanetView {
     // shader selection (per-view; indexes into parent PlanetDef's sb_shaders)
     DcAppValIndex shader_index;      // variable holding active shader index
     int           active_shader_index; // last-applied index (for change detection)
+
+    // LOD
+    DcAppValIndex tau;               // LOD error threshold (default 0.3, lower = more aggressive)
 
     // references
     uint8_t planet_def_index;  // index into sb_planet_defs (resolved at parse time)
