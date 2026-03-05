@@ -85,7 +85,7 @@ The `.planet.json` file is what you reference from the `<PlanetData>` element in
 The top-level planet definition. It must be a direct child of `<DCAPP>` and should appear before any `<Window>` element.
 
 ```xml
-<Planet Name="Moon" ShaderIndex="@ActiveShader">
+<Planet Name="Moon" LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
     <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
@@ -99,7 +99,9 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `Name` | string | Yes | A unique name used by `<PlanetView>` elements to reference this planet |
-| `ShaderIndex` | integer/variable | No | The index of the active shader. Can be a literal or a variable reference (e.g., `@ActiveShader`). Defaults to 0 (the built-in shader). |
+| `LightDirectionX` | double/var | No | X component of the light direction vector. Default -1. Can be variable-driven. |
+| `LightDirectionY` | double/var | No | Y component of the light direction vector. Default -1. Can be variable-driven. |
+| `LightDirectionZ` | double/var | No | Z component of the light direction vector. Default -1. Can be variable-driven. |
 
 **Children:** `<PlanetData>`, `<PlanetTexture>`, `<PlanetShader>`
 
@@ -163,19 +165,34 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 <PlanetView Planet="Moon" X="15" Y="200" Width="450" Height="450"
     CameraLatitude="@Latitude" CameraLongitude="@Longitude"
     CameraElevation="@Elevation" CameraHeading="@Heading"
-    CameraOrthographic="@UseOrtho"/>
+    CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"/>
 ```
 
-**Common Attributes:**
+**Attributes:**
 
-| Attribute | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `Planet` | string | Yes | The `Name` of the `<Planet>` element to render |
-| `X` | double | Yes | Horizontal position within the parent panel |
-| `Y` | double | Yes | Vertical position within the parent panel |
-| `Width` | double | Yes | Width of the viewport in pixels |
-| `Height` | double | Yes | Height of the viewport in pixels |
-| `CameraOrthographic` | integer/variable | No | Set to 1 for orthographic projection, 0 for perspective. Can be variable-driven for runtime toggling. |
+| Attribute | Aliases | Type | Required | Description |
+|-----------|---------|------|----------|-------------|
+| `Planet` | — | string | Yes | The `Name` of the `<Planet>` element to render |
+| `ShaderIndex` | — | integer/var | No | Index of the active shader from the parent `<Planet>`'s `<PlanetShader>` library. Defaults to 0 (built-in shader). Each view can independently select its shader. |
+| `Tau` | — | double/var | No | LOD error threshold controlling chunk resolution. Default 0.3. Lower values load higher-resolution chunks sooner (more aggressive). Can be variable-driven for runtime adjustment. |
+| `PositionX` | `X` | number/var | No | X position relative to parent |
+| `PositionY` | `Y` | number/var | No | Y position relative to parent |
+| `DimensionX` | `Width` | number/var | No | Viewport width |
+| `DimensionY` | `Height` | number/var | No | Viewport height |
+| `LocalAlignX` | `HorizontalAlign` | align | No | Horizontal alignment of this element |
+| `LocalAlignY` | `VerticalAlign` | align | No | Vertical alignment of this element |
+| `ParentAlignX` | — | align | No | Anchor point on parent (horizontal) |
+| `ParentAlignY` | — | align | No | Anchor point on parent (vertical) |
+| `Rotation` | `Rotate` | number/var | No | Rotation in degrees |
+| `PivotPositionX` | `PivotX` | number/var | No | Pivot point X (absolute) |
+| `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y (absolute) |
+| `PivotParentAlignX` | — | align | No | Pivot parent alignment (horizontal) |
+| `PivotParentAlignY` | — | align | No | Pivot parent alignment (vertical) |
+| `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
+| `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
+| `NegateX` | — | boolean | No | Flip the rendered image horizontally |
+| `NegateY` | — | boolean | No | Flip the rendered image vertically |
+| `CameraOrthographic` | — | integer/var | No | Set to 1 for orthographic projection, 0 for perspective. Can be variable-driven for runtime toggling. |
 
 **LLE Camera Attributes** (geographic positioning):
 
@@ -258,20 +275,24 @@ The planet renderer uses GLSL shaders (Vulkan-style, version 450) to control how
 
 ### Switching Shaders at Runtime
 
-The `ShaderIndex` attribute on `<Planet>` controls which shader is active. By binding it to a variable, you can switch shaders at runtime:
+The `ShaderIndex` attribute on `<PlanetView>` controls which shader that view uses. By binding it to a variable, you can switch shaders at runtime. The `<PlanetShader>` definitions on `<Planet>` act as a shared library of available shaders; each view independently selects from that library.
 
 ```xml
 <Variable Type="#_variable_integer_" InitialValue="0">ActiveShader</Variable>
 
-<Planet Name="Moon" ShaderIndex="@ActiveShader">
+<Planet Name="Moon">
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
     <PlanetShader Index="2" FragmentShader="shaders/planet_slope.frag"/>
     <PlanetShader Index="3" VertexShader="shaders/planet_flat.vert"
         FragmentShader="shaders/planet_elevation.frag"/>
 </Planet>
+
+<!-- Each view can use a different shader -->
+<PlanetView Planet="Moon" ... ShaderIndex="@ActiveShader"/>
+<PlanetView Planet="Moon" ... ShaderIndex="2"/>
 ```
 
-Setting `ActiveShader` to 0 uses the built-in shader. Setting it to 1, 2, or 3 activates the corresponding custom shader.
+Setting `ShaderIndex` to 0 uses the built-in shader. Setting it to 1, 2, or 3 activates the corresponding custom shader. Different views can use different variables or literal values.
 
 ### Fragment Shader Interface
 
@@ -291,7 +312,9 @@ The dynamic data uniform provides additional information:
 - `tDynamicData.tData.tLightDirection` -- Direction toward the light source
 - `tDynamicData.tData.tUVInfo` -- UV scale and offset for texture atlas lookup
 - `tDynamicData.tData.uTextureIndex` -- Bindless texture index for the overlay texture
-- `tDynamicData.tData.tFlags` -- Flags for wireframe and LOD level visualization
+- `tDynamicData.tData.tFlags` -- Flags for wireframe, LOD level, and chunk visualization
+- `tDynamicData.tData.iChunkID` -- Chunk identifier (for debug coloring)
+- `tDynamicData.tData.fHazardMapStrength` -- Hazard map overlay intensity (default 0.3)
 
 The output is a single `vec4` color:
 
@@ -393,10 +416,10 @@ A logic file converts the LLE camera position into XYZ/RPY coordinates so both v
 
 ### Planet Definition
 
-A single `<Planet>` is defined with one data source, one texture overlay, and three custom shaders:
+A single `<Planet>` is defined with one data source, one texture overlay, and three custom shaders. The shader definitions act as a shared library -- each view selects its own active shader via `ShaderIndex`:
 
 ```xml
-<Planet Name="Moon" ShaderIndex="@ActiveShader">
+<Planet Name="Moon" LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
     <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
@@ -409,20 +432,20 @@ A single `<Planet>` is defined with one data source, one texture overlay, and th
 
 ### Two PlanetViews
 
-The sample renders two side-by-side viewports of the same planet -- one using LLE camera mode and one using XYZ/RPY:
+The sample renders two side-by-side viewports of the same planet -- one using LLE camera mode and one using XYZ/RPY. Both use `ShaderIndex="@ActiveShader"` so the shader buttons affect both views, but each view could use a different variable for independent control:
 
 ```xml
 <!-- LLE Camera (left) -->
 <PlanetView Planet="Moon" X="15" Y="200" Width="450" Height="450"
     CameraLatitude="@Latitude" CameraLongitude="@Longitude"
     CameraElevation="@Elevation" CameraHeading="@Heading"
-    CameraOrthographic="@UseOrtho"/>
+    CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"/>
 
 <!-- XYZ/RPY Camera (right) -->
 <PlanetView Planet="Moon" X="535" Y="200" Width="450" Height="450"
     CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
     CameraRoll="@CamRoll" CameraPitch="@CamPitch" CameraYaw="@CamYaw"
-    CameraOrthographic="@UseOrtho"/>
+    CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"/>
 ```
 
 Because the logic file converts LLE to XYZ/RPY, both views display the same camera angle. The two viewports demonstrate that either camera mode can be used depending on your application's needs.
@@ -448,4 +471,4 @@ dcapp planet.xml
 
 - [logic.md](logic.md) -- Writing logic files for custom C/C++ behavior
 - [variables.md](variables.md) -- Declaring and using variables in dcapp XML
-- [Internal coordinate system reference](internal/coordinate-frame.md) -- Internal coordinate system reference for the planet processor
+- [Coordinate frame reference](coordinate-frame.md) -- Pilotlight coordinate system and planet terrain projection

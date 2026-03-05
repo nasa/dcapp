@@ -535,7 +535,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     // reset draw batch system for new frame
     _draw_batch_reset(app_data);
 
-    // update planet definitions (shader swap, texture reload, prepare)
+    // update planet definitions (texture reload, prepare)
     _update_planet_defs(app_data);
 
     // draw node
@@ -635,7 +635,7 @@ static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry
     if (entry->mpp != DC_APP_VAL_INDEX_UNDEFINED)
         out->fMetersPerPixel = (float)dc_app_lookup_get_value(app_data->lookup, entry->mpp)->value_double;
     if (entry->lat != DC_APP_VAL_INDEX_UNDEFINED)
-        out->fLatitude = -1.0f * (float)dc_app_lookup_get_value(app_data->lookup, entry->lat)->value_double;
+        out->fLatitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lat)->value_double;
     if (entry->lon != DC_APP_VAL_INDEX_UNDEFINED)
         out->fLongitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lon)->value_double;
     return true;
@@ -759,19 +759,13 @@ static void _init_planets(_AppData *app_data) {
             if (_build_planet_texture(app_data, &def->sb_textures[0], &texture)) {
                 DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, lat=%.1f, lon=%.1f)",
                             i, texture.pcPath, texture.fMetersPerPixel, texture.fLatitude, texture.fLongitude);
-                _ext_planet->set_texture(planet, &texture);
+                _ext_planet->set_texture(planet, &texture, 0);
             }
         }
 
         // store planet
         sbpush(app_data->sb_planets, planet);
         def->index = (uint8_t)(sbcount(app_data->sb_planets) - 1); // index 0 is sentinel
-
-        // force shader mismatch on first update
-        if (def->shader_index != DC_APP_VAL_INDEX_UNDEFINED) {
-            int initial              = (int)dc_app_lookup_get_value(app_data->lookup, def->shader_index)->value_integer;
-            def->active_shader_index = initial + 1;
-        }
 
         DC_LOG_INFO("Planet", "  [%d] '%s' created (radius=%.0f, %u tiles)", i, def->name, radius, tile_count);
 
@@ -815,6 +809,12 @@ static void _init_planets(_AppData *app_data) {
         sbpush(app_data->sb_planet_views, view);
         node->planet_view.planet_view_index = (uint8_t)(sbcount(app_data->sb_planet_views) - 1); // index 0 is sentinel
 
+        // force shader mismatch so first draw applies the shader
+        if (node->planet_view.shader_index != DC_APP_VAL_INDEX_UNDEFINED) {
+            int initial                          = (int)dc_app_lookup_get_value(app_data->lookup, node->planet_view.shader_index)->value_integer;
+            node->planet_view.active_shader_index = initial + 1;
+        }
+
         DC_LOG_INFO("PlanetView", "  [%d] created view for '%s' (%ux%u)", i, def->name, (uint32_t)output_width, (uint32_t)output_height);
     }
 }
@@ -829,22 +829,6 @@ static void _update_planet_defs(_AppData *app_data) {
         plPlanet *planet = app_data->sb_planets[def->index];
         if (!planet) continue;
 
-        // shader swap check
-        if (def->shader_index != DC_APP_VAL_INDEX_UNDEFINED && sbcount(def->sb_shaders) > 0) {
-            int desired_idx = (int)dc_app_lookup_get_value(app_data->lookup, def->shader_index)->value_integer;
-            if (desired_idx != def->active_shader_index) {
-                _PlanetShaderEntry *found = NULL;
-                for (int j = 0; j < sbcount(def->sb_shaders); j++) {
-                    if (def->sb_shaders[j].index == desired_idx) {
-                        found = &def->sb_shaders[j];
-                        break;
-                    }
-                }
-                _ext_planet->set_shaders(planet, found ? found->vertex_path : NULL, found ? found->fragment_path : NULL);
-                def->active_shader_index = desired_idx;
-            }
-        }
-
         // texture refresh check
         for (int t = 0; t < sbcount(def->sb_textures); t++) {
             _PlanetTextureEntry *tex = &def->sb_textures[t];
@@ -853,12 +837,28 @@ static void _update_planet_defs(_AppData *app_data) {
             if (!dc_value_is_equal(refresh_val, &tex->last_fire_refresh_value)) {
                 plPlanetTexture texture;
                 if (_build_planet_texture(app_data, tex, &texture)) {
-                    _ext_planet->set_texture(planet, &texture);
+                    _ext_planet->set_texture(planet, &texture, 0);
                 } else {
-                    _ext_planet->set_texture(planet, NULL);
+                    _ext_planet->set_texture(planet, NULL, 0);
                 }
                 tex->last_fire_refresh_value = *refresh_val;
             }
+        }
+
+        // light direction
+        if (def->light_direction.x != DC_APP_VAL_INDEX_UNDEFINED ||
+            def->light_direction.y != DC_APP_VAL_INDEX_UNDEFINED ||
+            def->light_direction.z != DC_APP_VAL_INDEX_UNDEFINED) {
+            plPlanetRuntimeOptions opts = _ext_planet->get_runtime_options(planet);
+            plVec3 prev = opts.tLightDirection;
+            if (def->light_direction.x != DC_APP_VAL_INDEX_UNDEFINED)
+                opts.tLightDirection.x = (float)dc_app_lookup_get_value(app_data->lookup, def->light_direction.x)->value_double;
+            if (def->light_direction.y != DC_APP_VAL_INDEX_UNDEFINED)
+                opts.tLightDirection.y = (float)dc_app_lookup_get_value(app_data->lookup, def->light_direction.y)->value_double;
+            if (def->light_direction.z != DC_APP_VAL_INDEX_UNDEFINED)
+                opts.tLightDirection.z = (float)dc_app_lookup_get_value(app_data->lookup, def->light_direction.z)->value_double;
+            if (prev.x != opts.tLightDirection.x || prev.y != opts.tLightDirection.y || prev.z != opts.tLightDirection.z)
+                _ext_planet->set_runtime_options(planet, opts);
         }
 
         // prepare planet (once per planet per frame)

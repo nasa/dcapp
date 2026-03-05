@@ -3279,12 +3279,21 @@ static _NodeIndex _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_no
     def.name          = strdup((const char *)raw_name);
     xmlFree(raw_name);
 
-    // ShaderIndex (optional — selects active PlanetShader by index at runtime)
-    def.shader_index          = DC_APP_VAL_INDEX_UNDEFINED;
-    xmlChar *raw_shader_index = xmlGetProp(xml_node, BAD_CAST "ShaderIndex");
-    if (raw_shader_index) {
-        def.shader_index = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_shader_index);
-        xmlFree(raw_shader_index);
+    // light direction
+    xmlChar *raw_ldx = xmlGetProp(xml_node, BAD_CAST "LightDirectionX");
+    if (raw_ldx) {
+        def.light_direction.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_ldx);
+        xmlFree(raw_ldx);
+    }
+    xmlChar *raw_ldy = xmlGetProp(xml_node, BAD_CAST "LightDirectionY");
+    if (raw_ldy) {
+        def.light_direction.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_ldy);
+        xmlFree(raw_ldy);
+    }
+    xmlChar *raw_ldz = xmlGetProp(xml_node, BAD_CAST "LightDirectionZ");
+    if (raw_ldz) {
+        def.light_direction.z = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_ldz);
+        xmlFree(raw_ldz);
     }
 
     // collect definition

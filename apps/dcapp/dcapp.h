@@ -550,10 +550,11 @@ typedef struct __PlanetDef {
     // texture overlays
     _PlanetTextureEntry *sb_textures; // stretchy buffer
 
-    // shader overrides (runtime swapping via ShaderIndex)
-    _PlanetShaderEntry *sb_shaders;          // stretchy buffer
-    DcAppValIndex       shader_index;        // variable holding active index
-    int                 active_shader_index; // last-applied index
+    // shader overrides (library; per-view selection via PlanetView ShaderIndex)
+    _PlanetShaderEntry *sb_shaders; // stretchy buffer
+
+    // light direction
+    _ValIndex3 light_direction;
 
     // runtime
     uint8_t index; // 1-based index into sb_planets

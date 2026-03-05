@@ -4,16 +4,21 @@
     <!-- Two identical planet views: LLE camera (left) vs XYZ/RPY camera (right) -->
     <!-- The logic file converts LLE to XYZ/RPY so both views should match -->
 
-    <!-- Slider raw values -->
-    <Variable Type="#_variable_double_" InitialValue="45">SliderLat</Variable>
-    <Variable Type="#_variable_double_" InitialValue="180">SliderLon</Variable>
-    <Variable Type="#_variable_double_" InitialValue="200">SliderEle</Variable>
+    <!-- Slider raw values (all 0-100 range, mapped to actual values via Set) -->
+    <Variable Type="#_variable_double_" InitialValue="25">SliderLat</Variable>
+    <Variable Type="#_variable_double_" InitialValue="50">SliderLon</Variable>
+    <Variable Type="#_variable_double_" InitialValue="40">SliderEle</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">SliderHdg</Variable>
+    <Variable Type="#_variable_double_" InitialValue="30">SliderTau</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0">SliderLightY</Variable>
 
-    <!-- Computed LLE camera values -->
-    <Variable Type="#_variable_double_">Latitude</Variable>
-    <Variable Type="#_variable_double_">Longitude</Variable>
-    <Variable Type="#_variable_double_">Elevation</Variable>
+    <!-- Computed values -->
+    <Variable Type="#_variable_double_" InitialValue="-45">Latitude</Variable>
+    <Variable Type="#_variable_double_" InitialValue="180">Longitude</Variable>
+    <Variable Type="#_variable_double_" InitialValue="2000000">Elevation</Variable>
     <Variable Type="#_variable_double_" InitialValue="0">Heading</Variable>
+    <Variable Type="#_variable_double_" InitialValue="0.3">Tau</Variable>
+    <Variable Type="#_variable_double_" InitialValue="-1">LightY</Variable>
 
     <!-- Computed XYZ/RPY camera values (written by logic file) -->
     <Variable Type="#_variable_double_">CamX</Variable>
@@ -28,6 +33,8 @@
     <Variable Type="#_variable_integer_">SliderLonSelected</Variable>
     <Variable Type="#_variable_integer_">SliderEleSelected</Variable>
     <Variable Type="#_variable_integer_">SliderHdgSelected</Variable>
+    <Variable Type="#_variable_integer_">SliderTauSelected</Variable>
+    <Variable Type="#_variable_integer_">SliderLightYSelected</Variable>
 
     <!-- Active shader index: 0=default, 1=elevation, 2=slope -->
     <Variable Type="#_variable_integer_" InitialValue="0">ActiveShader</Variable>
@@ -42,7 +49,7 @@
     <Logic File="logic/logic.so"/>
 
     <!-- Top-level planet definition (shared by both views) -->
-    <Planet Name="Moon" ShaderIndex="@ActiveShader">
+    <Planet Name="Moon" LightDirectionX="-1" LightDirectionY="@LightY" LightDirectionZ="-1">
         <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
         <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
             Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
@@ -55,26 +62,35 @@
         <Text ForceMono="Numeric" Size="14" FillColor="#_color_white_"/>
     </Default>
 
-    <Window X="0" Y="20" Width="1000" Height="740">
-        <Panel VirtualWidth="1000" VirtualHeight="740" BackgroundColor="#_color_charcoal_">
+    <Window X="0" Y="20" Width="1000" Height="840">
+        <Panel VirtualWidth="1000" VirtualHeight="840" BackgroundColor="#_color_charcoal_">
 
-            <!-- Compute LLE from sliders -->
+            <!-- Compute values from sliders (all sliders are 0-100) -->
             <Set Variable="Latitude">@SliderLat</Set>
+            <Set Variable="Latitude" Operator="#_set_multiply_">1.8</Set>
             <Set Variable="Latitude" Operator="#_set_subtract_">90</Set>
             <Set Variable="Longitude">@SliderLon</Set>
+            <Set Variable="Longitude" Operator="#_set_multiply_">3.6</Set>
             <Set Variable="Elevation">@SliderEle</Set>
-            <Set Variable="Elevation" Operator="#_set_multiply_">10000</Set>
+            <Set Variable="Elevation" Operator="#_set_multiply_">50000</Set>
+            <Set Variable="Heading">@SliderHdg</Set>
+            <Set Variable="Heading" Operator="#_set_multiply_">3.6</Set>
+            <Set Variable="Tau">@SliderTau</Set>
+            <Set Variable="Tau" Operator="#_set_multiply_">0.01</Set>
+            <Set Variable="LightY">@SliderLightY</Set>
+            <Set Variable="LightY" Operator="#_set_multiply_">0.02</Set>
+            <Set Variable="LightY" Operator="#_set_subtract_">1</Set>
 
             <!-- Toggle texture scale based on refresh state -->
             <If Value1="@TextureRefresh" Operator="#_if_eq_" Value2="0">
-                <Set Variable="TexMpp">1000</Set>
+                <Set Variable="TexMpp">1</Set>
             </If>
             <If Value1="@TextureRefresh" Operator="#_if_eq_" Value2="1">
                 <Set Variable="TexMpp">2000</Set>
             </If>
 
             <!-- ========== TEXTURE REFRESH ========== -->
-            <Button Type="#_button_toggle_" X="60" Y="706" Width="90" Height="22"
+            <Button Type="#_button_toggle_" X="60" Y="806" Width="90" Height="22"
                 Variable="TextureRefresh" On="1" Off="0"
                 LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <ButtonIndicatorOn>
@@ -92,7 +108,7 @@
             </Button>
 
             <!-- ========== ORTHO TOGGLE ========== -->
-            <Button Type="#_button_toggle_" X="170" Y="706" Width="90" Height="22"
+            <Button Type="#_button_toggle_" X="170" Y="806" Width="90" Height="22"
                 Variable="UseOrtho" On="1" Off="0"
                 LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <ButtonIndicatorOn>
@@ -110,11 +126,11 @@
             </Button>
 
             <!-- ========== SHADER SELECTOR ========== -->
-            <Text X="290" Y="706" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
+            <Text X="290" Y="806" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
                 Size="13" FillColor="#_color_white_">Shader:</Text>
 
             <!-- Default shader (index 0) -->
-            <Button Type="#_button_toggle_" X="370" Y="706" Width="120" Height="22"
+            <Button Type="#_button_toggle_" X="370" Y="806" Width="120" Height="22"
                 Variable="ActiveShader" On="0" Off="0"
                 LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <ButtonIndicatorOn>
@@ -132,7 +148,7 @@
             </Button>
 
             <!-- Elevation gradient shader (index 1) -->
-            <Button Type="#_button_toggle_" X="500" Y="706" Width="120" Height="22"
+            <Button Type="#_button_toggle_" X="500" Y="806" Width="120" Height="22"
                 Variable="ActiveShader" On="1" Off="1"
                 LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <ButtonIndicatorOn>
@@ -150,7 +166,7 @@
             </Button>
 
             <!-- Slope shader (index 2) -->
-            <Button Type="#_button_toggle_" X="630" Y="706" Width="120" Height="22"
+            <Button Type="#_button_toggle_" X="630" Y="806" Width="120" Height="22"
                 Variable="ActiveShader" On="2" Off="2"
                 LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <ButtonIndicatorOn>
@@ -168,7 +184,7 @@
             </Button>
 
             <!-- Flat map shader (index 3) -->
-            <Button Type="#_button_toggle_" X="760" Y="706" Width="120" Height="22"
+            <Button Type="#_button_toggle_" X="760" Y="806" Width="120" Height="22"
                 Variable="ActiveShader" On="3" Off="3"
                 LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <ButtonIndicatorOn>
@@ -186,86 +202,120 @@
             </Button>
 
             <!-- ========== PLANET VIEWS ========== -->
-            <Text X="240" Y="662" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_yellow_">LLE Camera</Text>
-            <PlanetView Planet="Moon" X="15" Y="200" Width="450" Height="450"
+            <Text X="240" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_yellow_">LLE Camera</Text>
+            <PlanetView Planet="Moon" X="15" Y="300" Width="450" Height="450"
                 CameraLatitude="@Latitude" CameraLongitude="@Longitude" CameraElevation="@Elevation"
                 CameraHeading="@Heading"
-                CameraOrthographic="@UseOrtho"/>
+                CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"
+                Tau="@Tau"/>
 
-            <Text X="760" Y="662" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">XYZ/RPY Camera</Text>
-            <PlanetView Planet="Moon" X="535" Y="200" Width="450" Height="450"
+            <Text X="760" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">XYZ/RPY Camera</Text>
+            <PlanetView Planet="Moon" X="535" Y="300" Width="450" Height="450"
                 CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
                 CameraRoll="@CamRoll" CameraPitch="@CamPitch" CameraYaw="@CamYaw"
-                CameraOrthographic="@UseOrtho"/>
+                CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"
+                Tau="@Tau"/>
 
             <!-- ========== SLIDERS (below planets) ========== -->
 
-            <!-- Latitude -->
-            <Text X="15" Y="170" LocalAlignX="#_align_left_">Lat:</Text>
-            <Text X="195" Y="170" LocalAlignX="#_align_right_">@Latitude(%.1f) deg</Text>
-            <Container X="210" Y="160" Width="775" Height="20" VirtualWidth="180">
+            <!-- Latitude: 0-100 → -90 to +90 deg -->
+            <Text X="15" Y="270" LocalAlignX="#_align_left_">Lat:</Text>
+            <Text X="195" Y="270" LocalAlignX="#_align_right_">@Latitude(%.1f) deg</Text>
+            <Container X="210" Y="260" Width="775" Height="20" VirtualWidth="100">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
                 <If Value1="@SliderLatSelected" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderLat"/>
                 </If>
                 <Set Variable="SliderLat" Operator="#_set_max_">0</Set>
-                <Set Variable="SliderLat" Operator="#_set_min_">180</Set>
+                <Set Variable="SliderLat" Operator="#_set_min_">100</Set>
                 <Button Type="#_button_momentary_" X="@SliderLat" Y="10" Width="8" Height="26" Variable="SliderLatSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                     <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
                     <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
                 </Button>
             </Container>
 
-            <!-- Longitude -->
-            <Text X="15" Y="120" LocalAlignX="#_align_left_">Lon:</Text>
-            <Text X="195" Y="120" LocalAlignX="#_align_right_">@Longitude(%.1f) deg</Text>
-            <Container X="210" Y="110" Width="775" Height="20" VirtualWidth="360">
+            <!-- Longitude: 0-100 → 0 to 360 deg -->
+            <Text X="15" Y="220" LocalAlignX="#_align_left_">Lon:</Text>
+            <Text X="195" Y="220" LocalAlignX="#_align_right_">@Longitude(%.1f) deg</Text>
+            <Container X="210" Y="210" Width="775" Height="20" VirtualWidth="100">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
                 <If Value1="@SliderLonSelected" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderLon"/>
                 </If>
                 <Set Variable="SliderLon" Operator="#_set_max_">0</Set>
-                <Set Variable="SliderLon" Operator="#_set_min_">360</Set>
+                <Set Variable="SliderLon" Operator="#_set_min_">100</Set>
                 <Button Type="#_button_momentary_" X="@SliderLon" Y="10" Width="8" Height="26" Variable="SliderLonSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                     <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
                     <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
                 </Button>
             </Container>
 
-            <!-- Elevation -->
-            <Text X="15" Y="70" LocalAlignX="#_align_left_">Ele:</Text>
-            <Text X="195" Y="70" LocalAlignX="#_align_right_">@Elevation(%.0f) m</Text>
-            <Container X="210" Y="60" Width="775" Height="20" VirtualWidth="500">
+            <!-- Elevation: 1-100 → 50,000 to 5,000,000 m -->
+            <Text X="15" Y="170" LocalAlignX="#_align_left_">Ele:</Text>
+            <Text X="195" Y="170" LocalAlignX="#_align_right_">@Elevation(%.0f) m</Text>
+            <Container X="210" Y="160" Width="775" Height="20" VirtualWidth="100">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
                 <If Value1="@SliderEleSelected" Operator="#_if_eq_" Value2="1">
                     <MouseMotion VariableX="SliderEle"/>
                 </If>
                 <Set Variable="SliderEle" Operator="#_set_max_">1</Set>
-                <Set Variable="SliderEle" Operator="#_set_min_">500</Set>
+                <Set Variable="SliderEle" Operator="#_set_min_">100</Set>
                 <Button Type="#_button_momentary_" X="@SliderEle" Y="10" Width="8" Height="26" Variable="SliderEleSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                     <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
                     <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
                 </Button>
             </Container>
 
-            <!-- Heading -->
-            <Text X="15" Y="20" LocalAlignX="#_align_left_">Hdg:</Text>
-            <Text X="195" Y="20" LocalAlignX="#_align_right_">@Heading(%.0f) deg</Text>
-            <Container X="210" Y="10" Width="775" Height="20" VirtualWidth="360">
+            <!-- Heading: 0-100 → 0 to 360 deg -->
+            <Text X="15" Y="120" LocalAlignX="#_align_left_">Hdg:</Text>
+            <Text X="195" Y="120" LocalAlignX="#_align_right_">@Heading(%.0f) deg</Text>
+            <Container X="210" Y="110" Width="775" Height="20" VirtualWidth="100">
                 <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
                 <If Value1="@SliderHdgSelected" Operator="#_if_eq_" Value2="1">
-                    <MouseMotion VariableX="Heading"/>
+                    <MouseMotion VariableX="SliderHdg"/>
                 </If>
-                <Set Variable="Heading" Operator="#_set_max_">0</Set>
-                <Set Variable="Heading" Operator="#_set_min_">360</Set>
-                <Button Type="#_button_momentary_" X="@Heading" Y="10" Width="8" Height="26" Variable="SliderHdgSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                <Set Variable="SliderHdg" Operator="#_set_max_">0</Set>
+                <Set Variable="SliderHdg" Operator="#_set_min_">100</Set>
+                <Button Type="#_button_momentary_" X="@SliderHdg" Y="10" Width="8" Height="26" Variable="SliderHdgSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- Tau: 1-100 → 0.01 to 1.00 -->
+            <Text X="15" Y="70" LocalAlignX="#_align_left_">Tau:</Text>
+            <Text X="195" Y="70" LocalAlignX="#_align_right_">@Tau(%.2f)</Text>
+            <Container X="210" Y="60" Width="775" Height="20" VirtualWidth="100">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <If Value1="@SliderTauSelected" Operator="#_if_eq_" Value2="1">
+                    <MouseMotion VariableX="SliderTau"/>
+                </If>
+                <Set Variable="SliderTau" Operator="#_set_max_">1</Set>
+                <Set Variable="SliderTau" Operator="#_set_min_">100</Set>
+                <Button Type="#_button_momentary_" X="@SliderTau" Y="10" Width="8" Height="26" Variable="SliderTauSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
+                    <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
+                    <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
+                </Button>
+            </Container>
+
+            <!-- Light Y: 0-100 → -1.0 to +1.0 -->
+            <Text X="15" Y="20" LocalAlignX="#_align_left_">Light Y:</Text>
+            <Text X="195" Y="20" LocalAlignX="#_align_right_">@LightY(%.2f)</Text>
+            <Container X="210" Y="10" Width="775" Height="20" VirtualWidth="100">
+                <Rectangle FillColor="#_color_dark_gray_" LineColor="#_color_gray_" LineWidth="1"/>
+                <If Value1="@SliderLightYSelected" Operator="#_if_eq_" Value2="1">
+                    <MouseMotion VariableX="SliderLightY"/>
+                </If>
+                <Set Variable="SliderLightY" Operator="#_set_max_">0</Set>
+                <Set Variable="SliderLightY" Operator="#_set_min_">100</Set>
+                <Button Type="#_button_momentary_" X="@SliderLightY" Y="10" Width="8" Height="26" Variable="SliderLightYSelected" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                     <ButtonIndicatorOn><Rectangle FillColor="#_color_lime_"/></ButtonIndicatorOn>
                     <ButtonIndicatorOff><Rectangle FillColor="#_color_gray_"/></ButtonIndicatorOff>
                 </Button>
             </Container>
 
             <!-- XYZ/RPY readout -->
-            <Text X="15" Y="190" LocalAlignX="#_align_left_" Size="11" FillColor="#_color_sky_blue_">XYZ: @CamX(%.0f) @CamY(%.0f) @CamZ(%.0f)    RPY: @CamRoll(%.2f) @CamPitch(%.2f) @CamYaw(%.2f)</Text>
+            <Text X="15" Y="290" LocalAlignX="#_align_left_" Size="11" FillColor="#_color_sky_blue_">XYZ: @CamX(%.0f) @CamY(%.0f) @CamZ(%.0f)    RPY: @CamRoll(%.2f) @CamPitch(%.2f) @CamYaw(%.2f)</Text>
 
         </Panel>
     </Window>

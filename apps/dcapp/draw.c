@@ -4740,7 +4740,6 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
     }
 
     // render view
-    plPlanetView    *view    = app_data->sb_planet_views[node->planet_view.planet_view_index];
     plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();
     _ext_planet->render_view(view, &camera, cmd_buf);
     _ext_starter->submit_command_buffer(cmd_buf);

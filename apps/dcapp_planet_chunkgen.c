@@ -563,18 +563,41 @@ static bool _run_gdal_translate(const char *input, const char *output, uint32_t 
 //-----------------------------------------------------------------------------
 
 static void _compute_tile_latlon(double origin_x, double origin_y, double pixel_scale, uint32_t col, uint32_t row, uint32_t tile_size, double radius, float *lat_deg, float *lon_deg) {
-    // model coordinates of tile center
+    // model coordinates of tile center (easting / northing in meters)
     double model_x = origin_x + ((double)col * tile_size + tile_size * 0.5) * pixel_scale;
     double model_y = origin_y + ((double)row * tile_size + tile_size * 0.5) * pixel_scale;
 
+    // inverse south-pole stereographic projection
+    // matches pl-terrain convention: phi0 = -PI/2, lam0 = 0, k0 = 1
+    float R    = (float)radius;
+    float k0   = 1.0f;
+    float lam0 = 0.0f;
+    float phi0 = (float)(-M_PI / 2.0); // south pole
+
     float x = (float)model_x;
     float y = (float)model_y;
-    float r = hypotf(x, y);
-    float c = 2.0f * atanf(r / (2.0f * (float)radius));
 
-    float longitude = atan2f(x, y);
-    float latitude  = (float)(M_PI / 2.0) - c;
+    float rho = hypotf(x, y);
+    float c   = 2.0f * atanf(rho / (2.0f * R * k0));
 
-    *lon_deg = longitude * (180.0f / (float)M_PI);
-    *lat_deg = latitude * (180.0f / (float)M_PI);
+    float sin_c    = sinf(c);
+    float cos_c    = cosf(c);
+    float sin_phi0 = sinf(phi0);
+    float cos_phi0 = cosf(phi0);
+
+    float phi;
+    if (rho == 0.0f) {
+        phi = phi0;
+    } else {
+        phi = asinf(cos_c * sin_phi0 + (y * sin_c * cos_phi0) / rho);
+    }
+
+    float lam = lam0 + atan2f(x * sin_c,
+                               rho * cos_phi0 * cos_c - y * sin_phi0 * sin_c);
+
+    if (lam >  (float)M_PI) lam -= 2.0f * (float)M_PI;
+    if (lam < -(float)M_PI) lam += 2.0f * (float)M_PI;
+
+    *lon_deg = lam * (180.0f / (float)M_PI);
+    *lat_deg = phi * (180.0f / (float)M_PI);
 }
