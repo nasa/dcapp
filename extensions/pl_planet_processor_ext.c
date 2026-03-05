@@ -267,6 +267,7 @@ pl__encode( plVec3 n )
 }
 
 static plVec3 pl__get_cartesian(plPlanetHeightMap*, plPlanetMapElement*);
+static plVec3 pl__get_cartesian_unmod(plPlanetHeightMap*, plPlanetMapElement*);
 static plVec2 pl__get_normal(plPlanetHeightMap*, plPlanetMapElement*);
 
 #define PL_TERRAIN_SET_PRESENT(INDEX) atPresent[INDEX >> 3] |= (uint8_t)(1u << (INDEX & 7))
@@ -297,11 +298,31 @@ pl_planet_process(plPlanetProcessInfo* ptInfo)
             .uRequestedSize  = ptInfo->uSize,
             .pcOutputFile    = ptInfo->atTiles[i].acOutputFile
         };
-        float fLatitude = pl_radiansf(ptInfo->atTiles[i].fLatitude);
-        float fLongitude = pl_radiansf(ptInfo->atTiles[i].fLongitude);
-        float fR = 2.0f * ptInfo->fRadius * tanf(PL_PI_4 - 0.5f * fLatitude);
-        tHeightMap.tCenter.x = fR * sinf(fLongitude);
-        tHeightMap.tCenter.z = fR * cosf(fLongitude);
+
+        const float R    = ptInfo->fRadius;   // lunar radius (meters)
+        const float k0   = 1.0f;       // scale factor from SRS (often 1.0f)
+        const float lon0 = 0.0f;     // central meridian (radians)
+
+        // False easting/northing from SRS if applicable; else 0
+        const float FE   = 0.0f;   // meters
+        const float FN   = 0.0f;  // meters
+
+        // Inputs (radians)
+        const float phi  = pl_radiansf(ptInfo->atTiles[i].fLatitude);
+        const float lam  = pl_radiansf(ptInfo->atTiles[i].fLongitude);
+
+        // South-pole stereographic
+        const float theta = lam - lon0;
+        const float rho   = 2.0f * R * k0 * tanf(PL_PI_4 + 0.5f * phi);
+
+        // Easting / Northing (northing-positive-up)
+        const float x = rho * sinf(theta);
+        const float y = -rho * cosf(theta);  // note the minus for south polar
+
+        // Apply false easting/northing if the dataset uses them
+        tHeightMap.tCenter.x = x + FE;
+        tHeightMap.tCenter.z = y + FN;
+
 
 
         pl__initialize_cdlod_heightmap(&tHeightMap, ptInfo, i);
@@ -337,6 +358,10 @@ pl_planet_process(plPlanetProcessInfo* ptInfo)
 
         FILE* ptDataFile = fopen(pcPath, "wb");
 
+        plVersion tExtensionVersion = plPlanetProcessorI_version;
+        fwrite(&tExtensionVersion.uMajor, 1, sizeof(int), ptDataFile);
+        fwrite(&tExtensionVersion.uMinor, 1, sizeof(int), ptDataFile);
+        fwrite(&tExtensionVersion.uPatch, 1, sizeof(int), ptDataFile);
         fwrite(&ptInfo->atTiles[i].iTreeDepth, 1, sizeof(int), ptDataFile);
         fwrite(&tHeightMap.fMaxBaseError, 1, sizeof(float), ptDataFile);
 
@@ -372,6 +397,27 @@ pl_terrain_load_chunk_file(const char* pcPath, plPlanetChunkFile* ptFile, uint32
         return false;
     }
     
+    
+    plVersion tFileVersion = {0};
+    fread(&tFileVersion.uMajor, 1, sizeof(int), ptDataFile);
+    fread(&tFileVersion.uMinor, 1, sizeof(int), ptDataFile);
+    fread(&tFileVersion.uPatch, 1, sizeof(int), ptDataFile);
+
+    plVersion tExtensionVersion = plPlanetProcessorI_version;
+    if(tFileVersion.uMajor > tExtensionVersion.uMajor)
+    {
+        printf("Chunk major version not supported");
+        fclose(ptDataFile);
+        return false;
+    }
+
+    if(tFileVersion.uMinor > tExtensionVersion.uMinor)
+    {
+        printf("Chunk minor version not supported");
+        fclose(ptDataFile);
+        return false;
+    }
+
     fread(&ptFile->iTreeDepth, 1, sizeof(int), ptDataFile);
     fread(&ptFile->fMaxBaseError, 1, sizeof(float), ptDataFile);
     fread(&ptFile->uChunkCount, 1, sizeof(uint32_t), ptDataFile);
@@ -400,14 +446,15 @@ pl__chlod_read_chunk(plPlanetChunkFile* ptFileOut, int iRecurseCount, FILE* ptDa
     int iX = 0;
     int iY = 0;
     fread(&iLevel, 1, sizeof(int), ptDataFile);
-    fread(&iX, 1, sizeof(int), ptDataFile);
-    fread(&iY, 1, sizeof(int), ptDataFile);
+    fread(&ptChunk->fX, 1, sizeof(float), ptDataFile);
+    fread(&ptChunk->fY, 1, sizeof(float), ptDataFile);
     ptChunk->uLevel = (uint8_t)iLevel;
-    ptChunk->uX = (uint16_t)iX;
-    ptChunk->uY = (uint16_t)iY;
 
     fread(&ptChunk->tMinBound, 1, sizeof(plVec3), ptDataFile);
     fread(&ptChunk->tMaxBound, 1, sizeof(plVec3), ptDataFile);
+
+    fread(&ptChunk->tMinBoundFlat, 1, sizeof(plVec3), ptDataFile);
+    fread(&ptChunk->tMaxBoundFlat, 1, sizeof(plVec3), ptDataFile);
 
     uint32_t uVertexCount = 0;
     fread(&uVertexCount, 1, sizeof(uint32_t), ptDataFile);
@@ -416,11 +463,6 @@ pl__chlod_read_chunk(plPlanetChunkFile* ptFileOut, int iRecurseCount, FILE* ptDa
     uint32_t uIndexCount = 0;
     fread(&uIndexCount, 1, sizeof(uint32_t), ptDataFile);
     fseek(ptDataFile, sizeof(uint32_t) * uIndexCount, SEEK_CUR);
-
-    if(uVertexCount == 0 || uIndexCount == 0)
-    {
-        int a = 5;
-    }
 
     if(iRecurseCount > 0)
     {
@@ -936,11 +978,14 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
     const int iCx = iStartIndexX + iHalfSize;
     const int iCz = iStartIndexY + iHalfSize;
 
+    float fXWrite = (float)iStartIndexX / ptHeightMap->iSize;
+    float fYWrite = (float)iStartIndexY / ptHeightMap->iSize;
+
     int iChunkLabel = pl__node_index(ptHeightMap, iCx, iCz);
     fwrite(&iChunkLabel, 1, sizeof(int), ptFile);
     fwrite(&iLevel,      1, sizeof(int), ptFile);
-    fwrite(&iStartIndexX, 1, sizeof(int), ptFile);
-    fwrite(&iStartIndexY, 1, sizeof(int), ptFile);
+    fwrite(&fXWrite, 1, sizeof(float), ptFile);
+    fwrite(&fYWrite, 1, sizeof(float), ptFile);
 
     // activate the 4 corners
     pl__activate_height_map_element(pl__get_elem(ptHeightMap, iStartIndexX, iStartIndexY), iLevel);
@@ -1041,7 +1086,9 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
     // ------------------------------------------------
     // Unique vertex gathering
     plVec3 tMinBounding = { .x = FLT_MAX,  .y = FLT_MAX,  .z = FLT_MAX };
+    plVec3 tMinBoundingFlat = { .x = FLT_MAX,  .y = FLT_MAX,  .z = FLT_MAX };
     plVec3 tMaxBounding = { .x = -FLT_MAX, .y = -FLT_MAX, .z = -FLT_MAX };
+    plVec3 tMaxBoundingFlat = { .x = -FLT_MAX, .y = -FLT_MAX, .z = -FLT_MAX };
 
     uint32_t uPresentCount = (uint32_t)pl_sb_size(sbtLeaves);
 
@@ -1072,12 +1119,21 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
         v->tUV.x = (float)(e->iX - iStartIndexX) / (float)(iEndIndexX - iStartIndexX);
         v->tUV.y = (float)(e->iZ - iStartIndexY) / (float)(iEndIndexY - iStartIndexY);
 
+        plVec3 tFlatPos = pl__get_cartesian_unmod(ptHeightMap, e);
+
         if(v->tPosition.x < tMinBounding.x) tMinBounding.x = v->tPosition.x;
         if(v->tPosition.x > tMaxBounding.x) tMaxBounding.x = v->tPosition.x;
         if(v->tPosition.y < tMinBounding.y) tMinBounding.y = v->tPosition.y;
         if(v->tPosition.y > tMaxBounding.y) tMaxBounding.y = v->tPosition.y;
         if(v->tPosition.z < tMinBounding.z) tMinBounding.z = v->tPosition.z;
         if(v->tPosition.z > tMaxBounding.z) tMaxBounding.z = v->tPosition.z;
+
+        if(tFlatPos.x < tMinBounding.x) tMinBounding.x = tFlatPos.x;
+        if(tFlatPos.x > tMaxBounding.x) tMaxBounding.x = tFlatPos.x;
+        if(tFlatPos.y < tMinBounding.y) tMinBounding.y = tFlatPos.y;
+        if(tFlatPos.y > tMaxBounding.y) tMaxBounding.y = tFlatPos.y;
+        if(tFlatPos.z < tMinBounding.z) tMinBounding.z = tFlatPos.z;
+        if(tFlatPos.z > tMaxBounding.z) tMaxBounding.z = tFlatPos.z;
     }
     pl_sb_free(sbuUniqueVertices);
 
@@ -1106,6 +1162,9 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
     fwrite(&tMinBounding, 1, sizeof(plVec3), ptFile);
     fwrite(&tMaxBounding, 1, sizeof(plVec3), ptFile);
 
+    fwrite(&tMinBoundingFlat, 1, sizeof(plVec3), ptFile);
+    fwrite(&tMaxBoundingFlat, 1, sizeof(plVec3), ptFile);
+
     fwrite(&uVertexCount, 1, sizeof(uint32_t), ptFile);
     fwrite(atVertexData, 1, sizeof(plPlanetVertex) * uVertexCount, ptFile);
 
@@ -1127,41 +1186,177 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
 }
 
 static plVec3
+pl__get_cartesian_unmod(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
+{
+    const float R   = ptHeightMap->fRadius;
+    const float lon0 = 0.0f;        // radians, from SRS (central_meridian)
+    const float k0   = 1.0f;          // from SRS (scale_factor), often 1.0f
+    const float FE   = ptHeightMap->tCenter.x;    // false easting (meters)
+    const float FN   = ptHeightMap->tCenter.z;    // false northing (meters)
+
+    // 1) Pixel center coordinates in image space (origin at center of raster)
+    const float N      = (float)ptHeightMap->iSize;
+    const float mpp    = ptHeightMap->fMetersPerPixel;
+
+    // Make (0,0) be the *center* of the raster:
+    const float x_img  = ( (ptElement->iX + 0.5f) - 0.5f * N ) * mpp;
+    const float z_img  = ( (ptElement->iZ + 0.5f) - 0.5f * N ) * mpp;
+
+    // If your image rows increase downward, flip to get northing-positive-up:
+    const float y_img_northing = -z_img; // now +Y points toward geographic north
+
+    // 2) Add false easting/northing (dataset offsets)
+    const float x = x_img + FE;           // easting (meters)
+    const float y = y_img_northing + FN;  // northing (meters)
+
+    // 3) Inverse South Polar Stereographic (sphere)
+    // rho distance and angular distance
+    const float rho = hypotf(x, y);
+    const float c   = 2.0f * atanf( rho / (2.0f * R * k0) );
+
+    // Latitude (phi) and Longitude (lambda)
+    float phi;
+    if (rho == 0.0f) {
+        phi = -PL_PI_2;      // exactly at south pole
+    } else {
+        // For south pole φ0 = -π/2: φ = -π/2 + c
+        phi = -PL_PI_2 + c;
+    }
+
+    // Longitude: λ = λ0 + atan2(x, -y)
+    // (minus on y is important for south polar stereographic)
+    float lam = lon0 + atan2f(x, -y);
+
+    // Optionally normalize lam to [-π, π]
+    if (lam >  PL_PI) lam -= 2.0f * PL_PI;
+    if (lam < -PL_PI) lam += 2.0f * PL_PI;
+
+    // 4) Convert to 3D (spherical)
+    plVec3 tSpherePos = {
+        R * cosf(phi) * sinf(lam),  // X
+        R * sinf(phi),              // Y (up)
+        -R * cosf(phi) * cosf(lam)   // Z (lon=0 axis)
+    };
+
+    // 5) Normal and add height (ptElement->fY is height in meters)
+    plVec3 tNormal = pl_norm_vec3(tSpherePos);
+    plVec3 tResult = {
+        tSpherePos.x,
+        tSpherePos.y,
+        tSpherePos.z
+    };
+
+    return tResult;
+
+}
+
+static plVec3
 pl__get_cartesian(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
 {
-    float fMinExtent = -(float)ptHeightMap->iSize * ptHeightMap->fMetersPerPixel * 0.5f;
-    float fExtent = (float)ptHeightMap->iSize * ptHeightMap->fMetersPerPixel;
+    // float fMinExtent = -(float)ptHeightMap->iSize * ptHeightMap->fMetersPerPixel * 0.5f;
+    // float fExtent = (float)ptHeightMap->iSize * ptHeightMap->fMetersPerPixel;
 
-    float fX = ((float)ptElement->iX * fExtent / (float)ptHeightMap->iSize) + fMinExtent;
-    float fZ = ((float)ptElement->iZ * fExtent / (float)ptHeightMap->iSize) + fMinExtent;
+    // float fX = ((float)ptElement->iX * fExtent / (float)ptHeightMap->iSize) + fMinExtent;
+    // float fZ = ((float)ptElement->iZ * fExtent / (float)ptHeightMap->iSize) + fMinExtent;
 
-    fX += ptHeightMap->tCenter.x;
-    fZ += ptHeightMap->tCenter.z;
+    // fX += ptHeightMap->tCenter.x;
+    // fZ += ptHeightMap->tCenter.z;
 
-    float fLongitude = atan2f(fX, (fZ - 0.0f));
-    float fR = hypotf(fX, fZ);
-    // float fLatitude = -PL_PI_2 + 2.0f * atanf(fR, ptHeightMap->fRadius);
+    // float fLongitude = atan2f(fX, (fZ - 0.0f));
+    // float fR = hypotf(fX, fZ);
+    // // float fLatitude = -PL_PI_2 + 2.0f * atanf(fR, ptHeightMap->fRadius);
 
-    float c = 2.0f * atanf( fR / (2.0f * ptHeightMap->fRadius) );
-    float fLatitude    = -PL_PI_2 + c;   // south hem
+    // float c = 2.0f * atanf( fR / (2.0f * ptHeightMap->fRadius) );
+    // float fLatitude    = -PL_PI_2 + c;   // south hem
     // float fLatitude    = PL_PI_2 - c;   // north hem
-    // float fLongitude    = atan2f(fZ, fX);
+    // // float fLongitude    = atan2f(fZ, fX);
 
-    // elliptical
-    plVec3 tEllipsePosition = {
-        ptHeightMap->fRadius * cosf(fLatitude) * sinf(fLongitude),
-        ptHeightMap->fRadius * sinf(fLatitude),
-        -ptHeightMap->fRadius * cosf(fLatitude) * cosf(fLongitude)
+    // // elliptical
+    // plVec3 tEllipsePosition = {
+    //     ptHeightMap->fRadius * cosf(fLatitude) * sinf(fLongitude),
+    //     ptHeightMap->fRadius * sinf(fLatitude),
+    //     ptHeightMap->fRadius * cosf(fLatitude) * cosf(fLongitude)
+    // };
+
+    // plVec3 tNormal = pl_norm_vec3(tEllipsePosition);
+
+    // plVec3 tResult = {
+    //     tEllipsePosition.x + tNormal.x * ptElement->fY,
+    //     tEllipsePosition.y + tNormal.y * ptElement->fY,
+    //     tEllipsePosition.z + tNormal.z * ptElement->fY
+    // };
+    // return tResult;
+
+
+    // Inputs:
+    // - ptElement->iX, ptElement->iZ : pixel indices (0..N-1)
+    // - ptHeightMap->iSize           : number of pixels per side (N)
+    // - ptHeightMap->fMetersPerPixel : pixel size in meters
+    // - ptHeightMap->fRadius         : lunar radius used by the dataset (meters)
+    // - params: lon0 (central meridian, radians), k0 (scale factor), FE/FN (false easting/northing, meters)
+    //
+    // IMPORTANT: Confirm these from gdalinfo. Typical: lon0=0, k0=1, FE=0, FN=0.
+
+    const float R   = ptHeightMap->fRadius;
+    const float lon0 = 0.0f;        // radians, from SRS (central_meridian)
+    const float k0   = 1.0f;          // from SRS (scale_factor), often 1.0f
+    const float FE   = ptHeightMap->tCenter.x;    // false easting (meters)
+    const float FN   = ptHeightMap->tCenter.z;    // false northing (meters)
+
+    // 1) Pixel center coordinates in image space (origin at center of raster)
+    const float N      = (float)ptHeightMap->iSize;
+    const float mpp    = ptHeightMap->fMetersPerPixel;
+
+    // Make (0,0) be the *center* of the raster:
+    const float x_img  = ( (ptElement->iX + 0.5f) - 0.5f * N ) * mpp;
+    const float z_img  = ( (ptElement->iZ + 0.5f) - 0.5f * N ) * mpp;
+
+    // If your image rows increase downward, flip to get northing-positive-up:
+    const float y_img_northing = -z_img; // now +Y points toward geographic north
+
+    // 2) Add false easting/northing (dataset offsets)
+    const float x = x_img + FE;           // easting (meters)
+    const float y = y_img_northing + FN;  // northing (meters)
+
+    // 3) Inverse South Polar Stereographic (sphere)
+    // rho distance and angular distance
+    const float rho = hypotf(x, y);
+    const float c   = 2.0f * atanf( rho / (2.0f * R * k0) );
+
+    // Latitude (phi) and Longitude (lambda)
+    float phi;
+    if (rho == 0.0f) {
+        phi = -PL_PI_2;      // exactly at south pole
+    } else {
+        // For south pole φ0 = -π/2: φ = -π/2 + c
+        phi = -PL_PI_2 + c;
+    }
+
+    // Longitude: λ = λ0 + atan2(x, -y)
+    // (minus on y is important for south polar stereographic)
+    float lam = lon0 + atan2f(x, -y);
+
+    // Optionally normalize lam to [-π, π]
+    if (lam >  PL_PI) lam -= 2.0f * PL_PI;
+    if (lam < -PL_PI) lam += 2.0f * PL_PI;
+
+    // 4) Convert to 3D (spherical)
+    plVec3 tSpherePos = {
+        R * cosf(phi) * sinf(lam),  // X
+        R * sinf(phi),              // Y (up)
+        -R * cosf(phi) * cosf(lam)   // Z (lon=0 axis)
     };
 
-    plVec3 tNormal = pl_norm_vec3(tEllipsePosition);
-
+    // 5) Normal and add height (ptElement->fY is height in meters)
+    plVec3 tNormal = pl_norm_vec3(tSpherePos);
     plVec3 tResult = {
-        tEllipsePosition.x + tNormal.x * ptElement->fY,
-        tEllipsePosition.y + tNormal.y * ptElement->fY,
-        tEllipsePosition.z + tNormal.z * ptElement->fY
+        tSpherePos.x + tNormal.x * ptElement->fY,
+        tSpherePos.y + tNormal.y * ptElement->fY,
+        tSpherePos.z + tNormal.z * ptElement->fY
     };
+
     return tResult;
+
 }
 
 static plVec2

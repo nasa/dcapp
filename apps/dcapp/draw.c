@@ -4700,6 +4700,45 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
         camera.tProjMat.col[3].w = 1.0f;
     }
 
+    // per-view updates (only when actually rendering)
+    plPlanetView *view = app_data->sb_planet_views[node->planet_view.planet_view_index];
+
+    // shader swap
+    if (node->planet_view.shader_index != DC_APP_VAL_INDEX_UNDEFINED && sbcount(def->sb_shaders) > 0) {
+        int desired = (int)dc_app_lookup_get_value(app_data->lookup, node->planet_view.shader_index)->value_integer;
+        if (desired != node->planet_view.active_shader_index) {
+            _PlanetShaderEntry *found = NULL;
+            for (int j = 0; j < sbcount(def->sb_shaders); j++) {
+                if (def->sb_shaders[j].index == desired) {
+                    found = &def->sb_shaders[j];
+                    break;
+                }
+            }
+            _ext_planet->set_shaders(view, found ? found->vertex_path : NULL, found ? found->fragment_path : NULL);
+            node->planet_view.active_shader_index = desired;
+        }
+    }
+
+    // tau
+    if (node->planet_view.tau != DC_APP_VAL_INDEX_UNDEFINED) {
+        float desired_tau = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.tau)->value_double;
+        plPlanetViewRuntimeOptions opts = _ext_planet->get_view_runtime_options(view);
+        if (opts.fTau != desired_tau) {
+            opts.fTau = desired_tau;
+            _ext_planet->set_view_runtime_options(view, opts);
+        }
+    }
+
+    // flatten
+    if (node->planet_view.flatten != DC_APP_VAL_INDEX_UNDEFINED) {
+        bool desired_flatten = dc_app_lookup_get_value(app_data->lookup, node->planet_view.flatten)->value_boolean;
+        plPlanetViewRuntimeOptions opts = _ext_planet->get_view_runtime_options(view);
+        if ((opts.tFlags & PL_PLANET_FLAGS_FLATTEN) != desired_flatten) {
+            opts.tFlags |= PL_PLANET_FLAGS_FLATTEN;
+            _ext_planet->set_view_runtime_options(view, opts);
+        }
+    }
+
     // render view
     plPlanetView    *view    = app_data->sb_planet_views[node->planet_view.planet_view_index];
     plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();

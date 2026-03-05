@@ -580,6 +580,16 @@ typedef struct __NodePlanetView {
     DcAppValIndex heading;
     DcAppValIndex orthographic;
 
+    // shader selection (per-view; indexes into parent PlanetDef's sb_shaders)
+    DcAppValIndex shader_index;      // variable holding active shader index
+    int           active_shader_index; // last-applied index (for change detection)
+
+    // LOD
+    DcAppValIndex tau;     // LOD error threshold (default 0.3, lower = more aggressive)
+
+    // flattening
+    DcAppValIndex flatten;
+
     // references
     uint8_t planet_def_index;  // index into sb_planet_defs (resolved at parse time)
     uint8_t planet_view_index; // 1-based index into sb_planet_views

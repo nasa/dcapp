@@ -21,6 +21,8 @@ PL_BEGIN_ENUM(plTerrainShaderFlags)
     PL_ENUM_ITEM(PL_TERRAIN_SHADER_FLAGS_NONE,        0)
     PL_ENUM_ITEM(PL_TERRAIN_SHADER_FLAGS_WIREFRAME,   1 << 0)
     PL_ENUM_ITEM(PL_TERRAIN_SHADER_FLAGS_SHOW_LEVELS, 1 << 1)
+    PL_ENUM_ITEM(PL_TERRAIN_SHADER_FLAGS_SHOW_CHUNKS, 1 << 3)
+    PL_ENUM_ITEM(PL_TERRAIN_SHADER_FLAGS_FLATTEN,     1 << 4)
 PL_END_ENUM
 
 //-----------------------------------------------------------------------------
@@ -33,12 +35,15 @@ PL_BEGIN_STRUCT(plGpuDynPlanetData)
     int iLevel;
     int tFlags;
     uint uTextureIndex;
-    int _iUnused0;
+    int iChunkID;
 
     vec4 tUVInfo;
 
     vec3 tLightDirection;
-    int _iUnused1;
+    float fRadius;
+
+    float fHazardMapStrength;
+    int _aiUnused[3];
 
     
 PL_END_STRUCT(plGpuDynPlanetData)

@@ -24,7 +24,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plPlanetI_version {0, 1, 0}
+#define plPlanetI_version {0, 2, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -39,13 +39,14 @@ Index of this file:
 //-----------------------------------------------------------------------------
 
 // basic types
-typedef struct _plPlanetExtInit        plPlanetExtInit;
-typedef struct _plPlanetInit           plPlanetInit;
-typedef struct _plPlanetRuntimeOptions plPlanetRuntimeOptions;
-typedef struct _plPlanet               plPlanet;
-typedef struct _plPlanetView           plPlanetView;
-typedef struct _plPlanetViewInit       plPlanetViewInit;
-typedef struct _plPlanetTexture        plPlanetTexture;
+typedef struct _plPlanetExtInit            plPlanetExtInit;
+typedef struct _plPlanetInit               plPlanetInit;
+typedef struct _plPlanetRuntimeOptions     plPlanetRuntimeOptions;
+typedef struct _plPlanetViewRuntimeOptions plPlanetViewRuntimeOptions;
+typedef struct _plPlanet                   plPlanet;
+typedef struct _plPlanetView               plPlanetView;
+typedef struct _plPlanetViewInit           plPlanetViewInit;
+typedef struct _plPlanetTexture            plPlanetTexture;
 
 // enums/flags
 typedef int plPlanetFlags;
@@ -76,7 +77,7 @@ typedef struct _plPlanetI
     plPlanet* (*create_planet) (plCommandBuffer*, plPlanetInit, plPlanetProcessInfo*);
     void      (*cleanup_planet)(plPlanet*);
 
-    void (*set_texture)(plPlanet*, plPlanetTexture*);
+    void (*set_texture)(plPlanet*, plPlanetTexture*, uint32_t index);
 
     // per frame
     void (*prepare)(plPlanet*, plCommandBuffer*);
@@ -91,10 +92,12 @@ typedef struct _plPlanetI
     void (*draw_sphere)(plPlanetView*, float longitude, float latitude, float height, float radius, uint32_t color);
 
     // debugging helpers mostly
-    void                   (*set_runtime_options)(plPlanet*, plPlanetRuntimeOptions);
-    plPlanetRuntimeOptions (*get_runtime_options)(plPlanet*);
-    void                   (*reload_shaders)     (plPlanet*);
-     void                  (*set_shaders)        (plPlanet*, const char* pcVertexShader, const char* pcFragmentShader);
+    void                       (*set_runtime_options)     (plPlanet*, plPlanetRuntimeOptions);
+    plPlanetRuntimeOptions     (*get_runtime_options)     (plPlanet*);
+    void                       (*set_view_runtime_options)(plPlanetView*, plPlanetViewRuntimeOptions);
+    plPlanetViewRuntimeOptions (*get_view_runtime_options)(plPlanetView*);
+    void                       (*reload_shaders)          (plPlanetView*);
+     void                      (*set_shaders)             (plPlanetView*, const char* pcVertexShader, const char* pcFragmentShader);
 
 } plPlanetI;
 
@@ -126,22 +129,31 @@ typedef struct _plPlanetInit
     uint32_t uVertexBufferSize;  // default: 268435456 bytes
     uint32_t uIndexBufferSize;   // default: 268435456 bytes
 
-    // shaders
-    const char* pcVertexShader;   // default: "planet.vert"
-    const char* pcFragmentShader; // default: "planet.frag"
 } plPlanetInit;
 
 typedef struct _plPlanetViewInit
 {
     uint32_t uOutputWidth;
     uint32_t uOutputHeight;
+
+    // shaders
+    const char* pcVertexShader;   // default: "planet.vert"
+    const char* pcFragmentShader; // default: "planet.frag"
 } plPlanetViewInit;
+
+typedef struct _plPlanetViewRuntimeOptions
+{
+    plPlanetFlags tFlags;
+    float         fTau;               // default 0.3
+    float         fHazardMapStrength; // default 0.3
+    float         fXCullBuffer;       // default 0.0
+    float         fYCullBuffer;       // default 0.0
+    float         fZCullBuffer;       // default 0.0
+} plPlanetViewRuntimeOptions;
 
 typedef struct _plPlanetRuntimeOptions
 {
-    plPlanetFlags tFlags;
-    float         fTau;
-    plVec3        tLightDirection;
+    plVec3 tLightDirection;
 } plPlanetRuntimeOptions;
 
 //-----------------------------------------------------------------------------
@@ -154,6 +166,8 @@ enum _plPlanetFlags
     PL_PLANET_FLAGS_WIREFRAME   = 1 << 0,
     PL_PLANET_FLAGS_SHOW_LEVELS = 1 << 1,
     PL_PLANET_FLAGS_SHOW_ORIGIN = 1 << 2,
+    PL_PLANET_FLAGS_SHOW_CHUNKS = 1 << 3,
+    PL_PLANET_FLAGS_FLATTEN     = 1 << 4,
 };
 
 enum _plPlanetLoadFlags

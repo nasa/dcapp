@@ -3727,6 +3727,27 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
         xmlFree(raw_negate_y);
     }
 
+    // shader index (optional — selects active PlanetShader by index at runtime)
+    xmlChar *raw_shader_index = xmlGetProp(xml_node, BAD_CAST "ShaderIndex");
+    if (raw_shader_index) {
+        dc_node.planet_view.shader_index = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_shader_index);
+        xmlFree(raw_shader_index);
+    }
+
+    // LOD error threshold (lower = more aggressive chunk loading, default 0.3)
+    xmlChar *raw_tau = xmlGetProp(xml_node, BAD_CAST "Tau");
+    if (raw_tau) {
+        dc_node.planet_view.tau = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_tau);
+        xmlFree(raw_tau);
+    }
+
+    // flatten to sphere
+    xmlChar *raw_flatten = xmlGetProp(xml_node, BAD_CAST "Flatten");
+    if (raw_flatten) {
+        dc_node.planet_view.flatten = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_flatten);
+        xmlFree(raw_flatten);
+    }
+
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
