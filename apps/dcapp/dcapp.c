@@ -143,6 +143,30 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     // initialize planet rendering instances
     _init_planets(app_data);
 
+    // resize staging buffer for runtime (pixelstream frames only, max 4K RGBA)
+    {
+        plDevice *device = _ext_starter->get_device();
+        _ext_gfx->destroy_buffer(device, app_data->pl_staging_buffer_handle);
+
+        app_data->pl_staging_buffer_size = (size_t)_NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT * 4;
+
+        const plBufferDesc staging_buffer_desc = {
+            .tUsage      = PL_BUFFER_USAGE_STAGING,
+            .szByteSize  = app_data->pl_staging_buffer_size,
+            .pcDebugName = "staging buffer"};
+        app_data->pl_staging_buffer_handle = _ext_gfx->create_buffer(device, &staging_buffer_desc, NULL);
+
+        plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
+        plDeviceMemoryAllocatorI *allocator = app_data->gpu_staging_uncached_allocator;
+        const plDeviceMemoryAllocation staging_buffer_allocation = allocator->allocate(
+            allocator->ptInst,
+            staging_buffer->tMemoryRequirements.uMemoryTypeBits,
+            staging_buffer->tMemoryRequirements.ulSize,
+            staging_buffer->tMemoryRequirements.ulAlignment,
+            "staging buffer memory");
+        _ext_gfx->bind_buffer_to_memory(device, app_data->pl_staging_buffer_handle, &staging_buffer_allocation);
+    }
+
     // initialize logic (link values)
     if (app_data->logic_pre_init) {
         app_data->logic_pre_init(get_variable_value_addr);

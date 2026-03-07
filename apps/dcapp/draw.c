@@ -4733,8 +4733,12 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
     if (node->planet_view.flatten != DC_APP_VAL_INDEX_UNDEFINED) {
         bool desired_flatten = dc_app_lookup_get_value(app_data->lookup, node->planet_view.flatten)->value_boolean;
         plPlanetViewRuntimeOptions opts = _ext_planet->get_view_runtime_options(view);
-        if ((opts.tFlags & PL_PLANET_FLAGS_FLATTEN) != desired_flatten) {
-            opts.tFlags |= PL_PLANET_FLAGS_FLATTEN;
+        bool current_flatten = (opts.tFlags & PL_PLANET_FLAGS_FLATTEN) != 0;
+        if (current_flatten != desired_flatten) {
+            if (desired_flatten)
+                opts.tFlags |= PL_PLANET_FLAGS_FLATTEN;
+            else
+                opts.tFlags &= ~PL_PLANET_FLAGS_FLATTEN;
             _ext_planet->set_view_runtime_options(view, opts);
         }
     }

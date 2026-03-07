@@ -73,7 +73,7 @@ static _NodeIndex    _process_xml_node_window(_AppData *app_data, xmlNodePtr xml
 // utils (definitions at bottom of file)
 static const char *_node_type_to_string(_NodeType type);
 static _NodeIndex  _register_node(_AppData *app_data, _Node *node);
-static _Texture    _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name);
+static _Texture    _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name, bool use_dedicated_allocator);
 static void        _init_stencil_pipelines(_AppData *app_data, plDevice *device, plRenderPassHandle render_pass);
 static void        _init_app_data(_AppData *app_data, _Node *window_node);
 
@@ -1717,7 +1717,7 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
             }
 
             // create texture (allocate image, buffer, bind)
-            _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath);
+            _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath, false);
 
             // set the initial pl_texture usage (this is a no-op in metal but does layout transition for vulkan)
             plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
@@ -2273,7 +2273,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
     // create + bind texture
     {
         // create device image, memory, bind
-        _Texture texture = _create_texture(app_data, _NODE_PIXELSTREAM_MAX_WIDTH, _NODE_PIXELSTREAM_MAX_HEIGHT, "pixelstream");
+        _Texture texture = _create_texture(app_data, _NODE_PIXELSTREAM_MAX_WIDTH, _NODE_PIXELSTREAM_MAX_HEIGHT, "pixelstream", true);
 
         // add texture to internal arrays
         sbpush(app_data->sb_texture_name_offsets, sbcount(app_data->sb_texture_names));
@@ -2475,7 +2475,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
 
             // set mjpeg field
             dc_node.pixelstream.mjpeg.handle        = dc_ps_mjpeg_add_server(cleaned_url, timeout);
-            dc_node.pixelstream.mjpeg.raw_jpeg_size = _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT * 4 * sizeof(float);
+            dc_node.pixelstream.mjpeg.raw_jpeg_size = _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT * 4;
             dc_node.pixelstream.mjpeg.raw_jpeg      = (unsigned char *)malloc(dc_node.pixelstream.mjpeg.raw_jpeg_size);
             break;
         }
@@ -2551,7 +2551,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
                     goto skip_test_pattern;
                 }
 
-                _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath);
+                _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath, false);
 
                 plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
                 _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
@@ -3126,7 +3126,7 @@ static _NodeIndex _process_xml_node_sphere(_AppData *app_data, xmlNodePtr xml_no
                 return _register_node(app_data, &dc_node);
             }
 
-            _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath);
+            _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath, false);
 
             plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
             _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
@@ -3753,7 +3753,7 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
     // flatten to sphere
     xmlChar *raw_flatten = xmlGetProp(xml_node, BAD_CAST "Flatten");
     if (raw_flatten) {
-        dc_node.planet_view.flatten = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_flatten);
+        dc_node.planet_view.flatten = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_flatten);
         xmlFree(raw_flatten);
     }
 
@@ -4993,7 +4993,7 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
 
     // init default staging buffer
     {
-        // set size to 10 MB
+        // large initial size for loading static images at startup
         app_data->pl_staging_buffer_size = 100 * 1048576;
 
         // description
@@ -5083,7 +5083,7 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     app_data->frame_data.active_node       = NODE_INDEX_UNDEFINED;
 }
 
-static _Texture _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name) {
+static _Texture _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name, bool use_dedicated_allocator) {
 
     // get device
     plDevice *device = _ext_starter->get_device();
@@ -5103,10 +5103,10 @@ static _Texture _create_texture(_AppData *app_data, uint32_t texture_width, uint
     plTexture      *pl_texture;
     plTextureHandle pl_texture_handle = _ext_gfx->create_texture(device, &pl_texture_desc, &pl_texture);
 
-    // choose allocator based on texture size
-    // use buddy allocator for smaller textures, dedicated for large ones
+    // choose allocator based on texture size or caller request
+    // use dedicated allocator for large textures (> 4 MB) to avoid buddy allocator waste
     plDeviceMemoryAllocatorI *allocator = app_data->gpu_local_buddy_allocator;
-    if (pl_texture->tMemoryRequirements.ulSize > _ext_gpu_allocators->get_buddy_block_size())
+    if (use_dedicated_allocator || pl_texture->tMemoryRequirements.ulSize > (4 * 1048576))
         allocator = app_data->gpu_local_dedicated_allocator;
 
     const plDeviceMemoryAllocation pl_texture_allocation = allocator->allocate(
