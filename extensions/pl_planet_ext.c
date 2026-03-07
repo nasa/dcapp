@@ -1450,7 +1450,7 @@ pl__handle_residency(plPlanet* ptPlanet, plCommandBuffer* ptCommandBuffer)
         FILE* ptDataFile = fopen(ptPlanet->sbtChunkFiles[ptChunk->uFileID].tFile.acFile, "rb");
         fseek(ptDataFile, (long)ptChunk->szFileLocation, SEEK_SET);
 
-        fseek(ptDataFile, sizeof(plVec3) * 2 + sizeof(int) * 4, SEEK_CUR);
+        fseek(ptDataFile, sizeof(plVec3) * 4 + sizeof(int) * 4, SEEK_CUR);
 
         uint32_t uVertexCount = 0;
         fread(&uVertexCount, 1, sizeof(uint32_t), ptDataFile);

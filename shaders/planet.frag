@@ -96,7 +96,7 @@ void main()
     vec3 diffuse = vec3(0.5);
     vec3 ambient = vec3(0);
     
-    vec3 w_i = -normalize(tDynamicData.tData.tLightDirection);
+    vec3 w_i = normalize(tDynamicData.tData.tLightDirection);
 
     outColor.xyz = diffuse * (max(0.0, dot(normal, w_i)) * sunlightColor + ambient);
     outColor.a = 1.0;
