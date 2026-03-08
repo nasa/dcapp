@@ -556,6 +556,9 @@ typedef struct __PlanetDef {
     // light direction
     _ValIndex3 light_direction;
 
+    // VRAM
+    uint32_t mesh_cache_size; // bytes, 0 = default (256 MB each)
+
     // runtime
     uint8_t index; // 1-based index into sb_planets
 } _PlanetDef;

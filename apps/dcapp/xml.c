@@ -3296,6 +3296,13 @@ static _NodeIndex _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_no
         xmlFree(raw_ldz);
     }
 
+    // mesh cache size (MB, split evenly between vertex and index buffers)
+    xmlChar *raw_mesh_cache = xmlGetProp(xml_node, BAD_CAST "MeshCacheSize");
+    if (raw_mesh_cache) {
+        def.mesh_cache_size = (uint32_t)(atof((const char *)raw_mesh_cache) * 1048576);
+        xmlFree(raw_mesh_cache);
+    }
+
     // collect definition
     sbpush(app_data->sb_planet_defs, def);
 

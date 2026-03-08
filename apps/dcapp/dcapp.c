@@ -23,34 +23,13 @@ static void     _flush_deferred_sets(_AppData *app_data);
 static bool     _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, plPlanetTexture *out);
 static void     _init_planets(_AppData *app_data);
 static void     _update_planet_defs(_AppData *app_data);
+static void     _load_apis(plApiRegistryI *api_registry);
 
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     if (app_data) {
-
-        // load extensions
-        _ext_windows          = pl_get_api_latest(api_registry, plWindowI);
-        _ext_draw             = pl_get_api_latest(api_registry, dcDrawI);
-        _ext_draw_backend     = pl_get_api_latest(api_registry, dcDrawBackendI);
-        _ext_starter          = pl_get_api_latest(api_registry, plStarterI);
-        _ext_profile          = pl_get_api_latest(api_registry, plProfileI);
-        _ext_memory           = pl_get_api_latest(api_registry, plMemoryI);
-        _ext_library          = pl_get_api_latest(api_registry, plLibraryI);
-        _ext_ioi              = pl_get_api_latest(api_registry, plIOI);
-        _ext_gfx              = pl_get_api_latest(api_registry, plGraphicsI);
-        _ext_gpu_allocators   = pl_get_api_latest(api_registry, plGPUAllocatorsI);
-        _ext_vfs              = pl_get_api_latest(api_registry, plVfsI);
-        _ext_shader           = pl_get_api_latest(api_registry, plShaderI);
-        _ext_planet           = pl_get_api_latest(api_registry, plPlanetI);
-        _ext_planet_processor = pl_get_api_latest(api_registry, plPlanetProcessorI);
-        _ext_camera           = pl_get_api_latest(api_registry, plCameraI);
-        _ext_image            = pl_get_api_latest(api_registry, plImageI);
-        _ext_resource         = pl_get_api_latest(api_registry, plResourceI);
-
-        // set global app data variable
+        _load_apis(api_registry);
         _global_app_data = app_data;
-
-        // return (hot reload)
         return app_data;
     }
 
@@ -67,24 +46,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     extension_registry->load("pl_planet_processor_ext", NULL, NULL, true);
     extension_registry->load("pl_planet_ext", NULL, NULL, true);
 
-    // load extensions
-    _ext_windows          = pl_get_api_latest(api_registry, plWindowI);
-    _ext_draw             = pl_get_api_latest(api_registry, dcDrawI);
-    _ext_draw_backend     = pl_get_api_latest(api_registry, dcDrawBackendI);
-    _ext_starter          = pl_get_api_latest(api_registry, plStarterI);
-    _ext_profile          = pl_get_api_latest(api_registry, plProfileI);
-    _ext_memory           = pl_get_api_latest(api_registry, plMemoryI);
-    _ext_library          = pl_get_api_latest(api_registry, plLibraryI);
-    _ext_ioi              = pl_get_api_latest(api_registry, plIOI);
-    _ext_gfx              = pl_get_api_latest(api_registry, plGraphicsI);
-    _ext_gpu_allocators   = pl_get_api_latest(api_registry, plGPUAllocatorsI);
-    _ext_vfs              = pl_get_api_latest(api_registry, plVfsI);
-    _ext_shader           = pl_get_api_latest(api_registry, plShaderI);
-    _ext_planet           = pl_get_api_latest(api_registry, plPlanetI);
-    _ext_planet_processor = pl_get_api_latest(api_registry, plPlanetProcessorI);
-    _ext_camera           = pl_get_api_latest(api_registry, plCameraI);
-    _ext_image            = pl_get_api_latest(api_registry, plImageI);
-    _ext_resource         = pl_get_api_latest(api_registry, plResourceI);
+    _load_apis(api_registry);
 
     // allocate app memory
     app_data = (_AppData *)PL_ALLOC(sizeof(_AppData));
@@ -771,6 +733,10 @@ static void _init_planets(_AppData *app_data) {
         plPlanetInit planet_init = {0};
         planet_init.dRadius      = radius;
         planet_init.tLoadFlags   = PL_PLANET_LOAD_FLAGS_NONE;
+        if (def->mesh_cache_size > 0) {
+            planet_init.uVertexBufferSize = def->mesh_cache_size / 2;
+            planet_init.uIndexBufferSize  = def->mesh_cache_size / 2;
+        }
 
         // create planet
         plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
@@ -890,6 +856,26 @@ static void _update_planet_defs(_AppData *app_data) {
         _ext_planet->prepare(planet, cmd_buf);
         _ext_starter->submit_temporary_command_buffer(cmd_buf);
     }
+}
+
+static void _load_apis(plApiRegistryI *api_registry) {
+    _ext_windows          = pl_get_api_latest(api_registry, plWindowI);
+    _ext_draw             = pl_get_api_latest(api_registry, dcDrawI);
+    _ext_draw_backend     = pl_get_api_latest(api_registry, dcDrawBackendI);
+    _ext_starter          = pl_get_api_latest(api_registry, plStarterI);
+    _ext_profile          = pl_get_api_latest(api_registry, plProfileI);
+    _ext_memory           = pl_get_api_latest(api_registry, plMemoryI);
+    _ext_library          = pl_get_api_latest(api_registry, plLibraryI);
+    _ext_ioi              = pl_get_api_latest(api_registry, plIOI);
+    _ext_gfx              = pl_get_api_latest(api_registry, plGraphicsI);
+    _ext_gpu_allocators   = pl_get_api_latest(api_registry, plGPUAllocatorsI);
+    _ext_vfs              = pl_get_api_latest(api_registry, plVfsI);
+    _ext_shader           = pl_get_api_latest(api_registry, plShaderI);
+    _ext_planet           = pl_get_api_latest(api_registry, plPlanetI);
+    _ext_planet_processor = pl_get_api_latest(api_registry, plPlanetProcessorI);
+    _ext_camera           = pl_get_api_latest(api_registry, plCameraI);
+    _ext_image            = pl_get_api_latest(api_registry, plImageI);
+    _ext_resource         = pl_get_api_latest(api_registry, plResourceI);
 }
 
 #include "draw.c"
