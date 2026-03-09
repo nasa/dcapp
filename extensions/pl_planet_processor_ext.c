@@ -1128,12 +1128,12 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
         if(v->tPosition.z < tMinBounding.z) tMinBounding.z = v->tPosition.z;
         if(v->tPosition.z > tMaxBounding.z) tMaxBounding.z = v->tPosition.z;
 
-        if(tFlatPos.x < tMinBounding.x) tMinBounding.x = tFlatPos.x;
-        if(tFlatPos.x > tMaxBounding.x) tMaxBounding.x = tFlatPos.x;
-        if(tFlatPos.y < tMinBounding.y) tMinBounding.y = tFlatPos.y;
-        if(tFlatPos.y > tMaxBounding.y) tMaxBounding.y = tFlatPos.y;
-        if(tFlatPos.z < tMinBounding.z) tMinBounding.z = tFlatPos.z;
-        if(tFlatPos.z > tMaxBounding.z) tMaxBounding.z = tFlatPos.z;
+        if(tFlatPos.x < tMinBoundingFlat.x) tMinBoundingFlat.x = tFlatPos.x;
+        if(tFlatPos.x > tMaxBoundingFlat.x) tMaxBoundingFlat.x = tFlatPos.x;
+        if(tFlatPos.y < tMinBoundingFlat.y) tMinBoundingFlat.y = tFlatPos.y;
+        if(tFlatPos.y > tMaxBoundingFlat.y) tMaxBoundingFlat.y = tFlatPos.y;
+        if(tFlatPos.z < tMinBoundingFlat.z) tMinBoundingFlat.z = tFlatPos.z;
+        if(tFlatPos.z > tMaxBoundingFlat.z) tMaxBoundingFlat.z = tFlatPos.z;
     }
     pl_sb_free(sbuUniqueVertices);
 
