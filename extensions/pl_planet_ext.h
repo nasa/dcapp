@@ -92,6 +92,7 @@ typedef struct _plPlanetI
     void (*draw_sphere)         (plPlanetView*, float longitude, float latitude, float height, float radius, uint32_t color);
     void (*draw_polygon)        (plPlanetView*, plVec3* points, uint32_t count, float line_width, uint32_t color);
     void (*draw_polygon_filled) (plPlanetView*, plVec3* points, uint32_t count, uint32_t color);
+    void (*draw_text)           (plPlanetView*, plCamera*, plVec3 position, const char* text, float size_meters, uint32_t color);
 
     // debugging helpers mostly
     void                       (*set_runtime_options)     (plPlanet*, plPlanetRuntimeOptions);

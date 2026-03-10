@@ -131,6 +131,7 @@ typedef enum __NodeType {
     NODE_TYPE_SPHERE,
     NODE_TYPE_STENCIL,
     NODE_TYPE_PLANET_ELLIPSE,
+    NODE_TYPE_PLANET_TEXT,
     NODE_TYPE_PLANET_VIEW,
     NODE_TYPE_TEXT,
     NODE_TYPE_WINDOW,
@@ -579,6 +580,24 @@ typedef struct __NodePlanetEllipse {
     uint8_t       planet_def_index;
 } _NodePlanetEllipse;
 
+typedef struct __NodePlanetText {
+    DcAppValIndex lat;
+    DcAppValIndex lon;
+    DcAppValIndex height_above_terrain;
+    DcAppValIndex size;
+    _ValIndex4    fill_color;
+    uint8_t       config_flags;
+    uint8_t       planet_def_index;
+
+    // text content (same pattern as _NodeText)
+    DcAppValIndex *sb_vals;
+    char          *sb_fillers;
+    uint8_t       *sb_filler_indices;
+    char          *sb_formats;
+    uint8_t       *sb_format_indices;
+    DcValueType   *sb_format_types;
+} _NodePlanetText;
+
 typedef struct __NodePlanetView {
 
     // general positioning of display
@@ -652,6 +671,7 @@ typedef struct __Node {
         _NodeStateEvent  state_event;
         _NodeStencil     stencil;
         _NodePlanetEllipse planet_ellipse;
+        _NodePlanetText  planet_text;
         _NodePlanetView  planet_view;
         _NodeText        text;
         _NodeWindow      window;

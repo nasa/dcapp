@@ -1162,6 +1162,84 @@ pl_draw_polygon_filled(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, 
 }
 
 void
+pl_draw_text(plPlanetView* ptView, plCamera* ptCamera, plVec3 tPosition, const char* pcText, float fSizeMeters, uint32_t uColor)
+{
+    // ray-sphere occlusion test: skip if planet blocks line of sight
+    // ray origin = camera, ray direction = text position - camera
+    float fRadius = (float)ptView->ptPlanet->dRadius;
+    plVec3 tRayOrigin = ptCamera->tPos;
+    plVec3 tRayDir = {
+        tPosition.x - tRayOrigin.x,
+        tPosition.y - tRayOrigin.y,
+        tPosition.z - tRayOrigin.z
+    };
+    float fDistance = sqrtf(tRayDir.x * tRayDir.x + tRayDir.y * tRayDir.y + tRayDir.z * tRayDir.z);
+    if(fDistance < 0.001f)
+        fDistance = 0.001f;
+
+    // solve ray-sphere intersection: |O + tD|^2 = R^2
+    // a = D·D, b = 2*O·D, c = O·O - R^2
+    float a = tRayDir.x * tRayDir.x + tRayDir.y * tRayDir.y + tRayDir.z * tRayDir.z;
+    float b = 2.0f * (tRayOrigin.x * tRayDir.x + tRayOrigin.y * tRayDir.y + tRayOrigin.z * tRayDir.z);
+    float c = tRayOrigin.x * tRayOrigin.x + tRayOrigin.y * tRayOrigin.y + tRayOrigin.z * tRayOrigin.z - fRadius * fRadius;
+    float discriminant = b * b - 4.0f * a * c;
+
+    if(discriminant > 0.0f)
+    {
+        // ray intersects sphere — check if intersection is between camera and text
+        float t = (-b - sqrtf(discriminant)) / (2.0f * a);
+        if(t > 0.0f && t < 1.0f)
+            return; // planet is blocking the view
+    }
+
+    // convert world-space size (meters) to pixel size
+    // pixel_size = world_size * viewport_height / (2 * distance * tan(fov/2))
+    float fPixelSize = fSizeMeters * (float)ptView->uOutputHeight / (2.0f * fDistance * tanf(ptCamera->fFieldOfView * 0.5f));
+
+    // clamp to reasonable range
+    if(fPixelSize < 1.0f)
+        fPixelSize = 1.0f;
+    if(fPixelSize > 500.0f)
+        fPixelSize = 500.0f;
+
+    plDrawTextOptions tOptions = {0};
+    tOptions.ptFont = gptStarter->get_default_font();
+    tOptions.fSize  = fPixelSize;
+    tOptions.uColor = uColor;
+
+    // center text by offsetting 3D position along camera right/up vectors
+    plVec2 tTextSize = gptDraw->calculate_text_size(pcText, tOptions);
+
+    // convert pixel offset to world-space offset
+    // pixels_per_meter = viewport_height / (2 * distance * tan(fov/2))
+    float fPixelsPerMeter = (float)ptView->uOutputHeight / (2.0f * fDistance * tanf(ptCamera->fFieldOfView * 0.5f));
+    float fWorldOffsetX = (tTextSize.x * 0.5f) / fPixelsPerMeter;
+    float fWorldOffsetY = (tTextSize.y * 0.5f) / fPixelsPerMeter;
+
+    // camera right vector (first row of view matrix)
+    plVec3 tRight = {
+        ptCamera->tViewMat.col[0].x,
+        ptCamera->tViewMat.col[1].x,
+        ptCamera->tViewMat.col[2].x
+    };
+
+    // camera up vector (second row of view matrix)
+    plVec3 tUp = {
+        ptCamera->tViewMat.col[0].y,
+        ptCamera->tViewMat.col[1].y,
+        ptCamera->tViewMat.col[2].y
+    };
+
+    plVec3 tCenteredPos = {
+        tPosition.x - tRight.x * fWorldOffsetX + tUp.x * fWorldOffsetY,
+        tPosition.y - tRight.y * fWorldOffsetX + tUp.y * fWorldOffsetY,
+        tPosition.z - tRight.z * fWorldOffsetX + tUp.z * fWorldOffsetY
+    };
+
+    gptDraw->add_3d_text(ptView->pt3dDrawlist, tCenteredPos, pcText, tOptions);
+}
+
+void
 pl_prepare_planet(plPlanet* ptPlanet, plCommandBuffer* ptCmdBuffer)
 {
     if(ptPlanet->tRequestQueue.ptNext)
@@ -2340,6 +2418,7 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .draw_sphere              = pl_draw_sphere,
         .draw_polygon             = pl_draw_polygon,
         .draw_polygon_filled      = pl_draw_polygon_filled,
+        .draw_text                = pl_draw_text,
         .set_texture              = pl_planet_set_texture,
         .create_view              = pl_create_planet_view,
         .cleanup_view             = pl_cleanup_planet_view,

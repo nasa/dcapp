@@ -40,6 +40,7 @@ static void _draw_node_state_if_true(_AppData *app_data, _NodeIndex node_index, 
 static void _draw_node_state_if_false(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius);
+static void _draw_node_planet_text(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius, plCamera *camera);
 static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -4448,6 +4449,84 @@ static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetV
 
 }
 
+static void _draw_node_planet_text(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius, plCamera *camera) {
+
+    // resolve position
+    float lat = node->planet_text.lat != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.lat)->value_double : 0.0f;
+    float lon = node->planet_text.lon != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.lon)->value_double : 0.0f;
+    float height = node->planet_text.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.height_above_terrain)->value_double : 0.0f;
+    float size = node->planet_text.size != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.size)->value_double : 14.0f;
+
+    // expand text (same pattern as _draw_node_text)
+    static char *sb_text = NULL;
+    sbclear(sb_text);
+    for (int ii = 0; ii < sbcount(node->planet_text.sb_vals); ii++) {
+
+        // filler
+        char *filler = &(node->planet_text.sb_fillers[node->planet_text.sb_filler_indices[ii]]);
+        sbpushn(sb_text, filler, (int)strlen(filler));
+
+        // value
+        DcValueType format_type = node->planet_text.sb_format_types[ii];
+        char       *format      = &(node->planet_text.sb_formats[node->planet_text.sb_format_indices[ii]]);
+        static char val_str[256];
+        if (node->planet_text.sb_vals[ii] == DC_APP_VAL_INDEX_UNDEFINED) {
+            val_str[0] = '\0';
+        } else {
+            DcValue *val = dc_app_lookup_get_value(app_data->lookup, node->planet_text.sb_vals[ii]);
+            switch (format_type) {
+                case DC_VALUE_TYPE_STRING:
+                    snprintf(val_str, sizeof(val_str), format, val->value_string);
+                    break;
+                case DC_VALUE_TYPE_INTEGER:
+                    snprintf(val_str, sizeof(val_str), format, val->value_integer);
+                    break;
+                case DC_VALUE_TYPE_DOUBLE:
+                    snprintf(val_str, sizeof(val_str), format, val->value_double);
+                    break;
+                case DC_VALUE_TYPE_BOOLEAN:
+                    snprintf(val_str, sizeof(val_str), format, val->value_boolean);
+                    break;
+                default:
+                    DC_LOG_WARN("PlanetText", "Unknown value type: %d", format_type);
+            }
+        }
+        sbpushn(sb_text, val_str, (int)strlen(val_str));
+    }
+
+    // ending filler
+    char *filler = &(node->planet_text.sb_fillers[node->planet_text.sb_filler_indices[sbcount(node->planet_text.sb_vals)]]);
+    sbpushn(sb_text, filler, (int)strlen(filler));
+    sbpush(sb_text, '\0');
+
+    // compute 3D position
+    float lat_rad = pl_radiansf(lat);
+    float lon_rad = pl_radiansf(lon);
+    float R = (float)planet_radius + height;
+    plVec3 pos = {
+        R * cosf(lat_rad) * sinf(lon_rad),
+        R * sinf(lat_rad),
+        R * cosf(lat_rad) * cosf(lon_rad)
+    };
+
+    // resolve color
+    float fc[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    if (node->planet_text.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
+        fc[0] = node->planet_text.fill_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.fill_color.r)->value_double : 1.0f;
+        fc[1] = node->planet_text.fill_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.fill_color.g)->value_double : 1.0f;
+        fc[2] = node->planet_text.fill_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.fill_color.b)->value_double : 1.0f;
+        fc[3] = node->planet_text.fill_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.fill_color.a)->value_double : 1.0f;
+    }
+
+    // draw 3D text (size is in meters, planet ext handles world-to-pixel conversion)
+    uint32_t color = PL_COLOR_32_RGBA(fc[0], fc[1], fc[2], fc[3]);
+    _ext_planet->draw_text(view, camera, pos, sb_text, size, color);
+}
+
 static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
     (void)node_index;
 
@@ -4841,6 +4920,8 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
             _Node *child = _get_node(app_data, child_index);
             if (child->type == NODE_TYPE_PLANET_ELLIPSE)
                 _draw_node_planet_ellipse(app_data, child, view, def->radius);
+            else if (child->type == NODE_TYPE_PLANET_TEXT)
+                _draw_node_planet_text(app_data, child, view, def->radius, &camera);
             child_index = child->next;
         }
     }

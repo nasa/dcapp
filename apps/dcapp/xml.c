@@ -51,6 +51,7 @@ static _NodeIndex    _process_xml_node_planet_shader(_AppData *app_data, xmlNode
 static _NodeIndex    _process_xml_node_planet_texture(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static void          _planet_shader_abs_to_vfs(const char *abs_path, char *vfs_out, size_t vfs_out_size);
 static _NodeIndex    _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_text(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -289,6 +290,9 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
             return _process_xml_node_planet_ellipse(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_PLANET_TEXT:
+            return _process_xml_node_planet_text(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_PLANET_VIEW:
             return _process_xml_node_planet_view(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -3596,6 +3600,193 @@ static _NodeIndex _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePt
         dc_node.planet_ellipse.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
     if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.planet_ellipse.line_color)))
         dc_node.planet_ellipse.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
+
+    return _register_node(app_data, &dc_node);
+}
+
+static _NodeIndex _process_xml_node_planet_text(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    (void)directory;
+
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW) {
+        DC_LOG_ERROR("PlanetText", "PlanetText must be a child of PlanetView");
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_PLANET_TEXT;
+    dc_node.parent = parent_node_index;
+
+    // inherit planet_def_index from parent PlanetView
+    _Node *parent = _get_node(app_data, parent_node_index);
+    dc_node.planet_text.planet_def_index = parent->planet_view.planet_def_index;
+
+    // text content (same parsing as _process_xml_node_text)
+    xmlChar *raw_text = xmlNodeGetContent(xml_node);
+    if (raw_text) {
+        char cleaned_text[DC_VALUE_STRING_BUFFER_SIZE];
+        strncpy(cleaned_text, (const char *)raw_text, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        cleaned_text[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        xmlFree(raw_text);
+        dc_utils_trim_whitespace_inplace(cleaned_text);
+
+        static char *sb_curr_filler = NULL;
+        for (size_t ii = 0; ii < strlen(cleaned_text);) {
+            if (cleaned_text[ii] == '\\') {
+                if (ii + 1 < strlen(cleaned_text)) {
+                    char next_char = cleaned_text[ii + 1];
+                    if (next_char == 'n') {
+                        sbpush(sb_curr_filler, '\n');
+                    } else if (next_char == 'r') {
+                        sbpush(sb_curr_filler, '\r');
+                    } else if (next_char == 't') {
+                        sbpush(sb_curr_filler, '\t');
+                    } else if (next_char == '\\') {
+                        sbpush(sb_curr_filler, '\\');
+                    } else if (next_char == '"') {
+                        sbpush(sb_curr_filler, '"');
+                    } else if (next_char == '\'') {
+                        sbpush(sb_curr_filler, '\'');
+                    } else if (dc_utils_char_in(next_char, "@#$%")) {
+                        sbpush(sb_curr_filler, next_char);
+                    } else {
+                        sbpush(sb_curr_filler, '\\');
+                        sbpush(sb_curr_filler, next_char);
+                    }
+                    ii += 2;
+                } else {
+                    sbpush(sb_curr_filler, cleaned_text[ii++]);
+                }
+                continue;
+            }
+
+            if (cleaned_text[ii] == '@') {
+                size_t start = ii;
+                ii++;
+
+                char var[DC_VALUE_STRING_BUFFER_SIZE] = {0};
+
+                if (ii < strlen(cleaned_text) && cleaned_text[ii] == '{') {
+                    ii++;
+                    int end = dc_utils_str_find_first(&(cleaned_text[ii]), '}');
+                    if (end == -1) {
+                        sbpushn(sb_curr_filler, &(cleaned_text[start]), (int)(ii - start));
+                        continue;
+                    }
+                    strncpy(var, &(cleaned_text[ii]), end);
+                    var[end] = '\0';
+                    ii += end + 1;
+                } else {
+                    size_t start_var = ii;
+                    while (ii < strlen(cleaned_text) && !isspace(cleaned_text[ii]) && cleaned_text[ii] != '(') {
+                        ii++;
+                    }
+                    size_t len = ii - start_var;
+                    strncpy(var, &(cleaned_text[start_var]), len);
+                    var[len] = '\0';
+                }
+
+                DcAppVarIndex   var_index = dc_app_lookup_get_var_index(app_data->lookup, var);
+                DcAppLookupVar *var_var   = dc_app_lookup_get_var(app_data->lookup, var_index);
+                if (var_var) {
+                    sbpush(dc_node.planet_text.sb_vals, var_var->value_index);
+                } else {
+                    DC_LOG_ERROR("PlanetText", "Unknown variable '%s'", var);
+                    sbpush(dc_node.planet_text.sb_vals, DC_APP_VAL_INDEX_UNDEFINED);
+                }
+
+                char format_spec[DC_VALUE_STRING_BUFFER_SIZE] = {0};
+                if (ii < strlen(cleaned_text) && cleaned_text[ii] == '(') {
+                    int close = dc_utils_str_find_first(&(cleaned_text[ii]), ')');
+                    if (close > 1) {
+                        size_t len = close - 1;
+                        strncpy(format_spec, &(cleaned_text[ii + 1]), len);
+                        format_spec[len] = '\0';
+                        ii += close + 1;
+
+                        if (dc_utils_is_format_specifier_int(format_spec)) {
+                            sbpush(dc_node.planet_text.sb_format_types, DC_VALUE_TYPE_INTEGER);
+                            sbpush(dc_node.planet_text.sb_format_indices, (uint8_t)sbcount(dc_node.planet_text.sb_formats));
+                            sbpushn(dc_node.planet_text.sb_formats, format_spec, (int)strlen(format_spec) + 1);
+                        } else if (dc_utils_is_format_specifier_double(format_spec)) {
+                            sbpush(dc_node.planet_text.sb_format_types, DC_VALUE_TYPE_DOUBLE);
+                            sbpush(dc_node.planet_text.sb_format_indices, (uint8_t)sbcount(dc_node.planet_text.sb_formats));
+                            sbpushn(dc_node.planet_text.sb_formats, format_spec, (int)strlen(format_spec) + 1);
+                        } else if (dc_utils_is_format_specifier_string(format_spec)) {
+                            sbpush(dc_node.planet_text.sb_format_types, DC_VALUE_TYPE_STRING);
+                            sbpush(dc_node.planet_text.sb_format_indices, (uint8_t)sbcount(dc_node.planet_text.sb_formats));
+                            sbpushn(dc_node.planet_text.sb_formats, format_spec, (int)strlen(format_spec) + 1);
+                        } else if (dc_utils_is_format_specifier_bool(format_spec)) {
+                            sbpush(dc_node.planet_text.sb_format_types, DC_VALUE_TYPE_BOOLEAN);
+                            sbpush(dc_node.planet_text.sb_format_indices, (uint8_t)sbcount(dc_node.planet_text.sb_formats));
+                            sbpushn(dc_node.planet_text.sb_formats, format_spec, (int)strlen(format_spec) + 1);
+                        } else {
+                            DC_LOG_ERROR("PlanetText", "Unknown format specifier: %s", format_spec);
+                            sbpush(dc_node.planet_text.sb_format_types, DC_VALUE_TYPE_STRING);
+                            sbpush(dc_node.planet_text.sb_format_indices, (uint8_t)sbcount(dc_node.planet_text.sb_formats));
+                            sbpushn(dc_node.planet_text.sb_formats, "%s", 3);
+                        }
+                    } else {
+                        sbpush(dc_node.planet_text.sb_format_types, DC_VALUE_TYPE_STRING);
+                        sbpush(dc_node.planet_text.sb_format_indices, (uint8_t)sbcount(dc_node.planet_text.sb_formats));
+                        sbpushn(dc_node.planet_text.sb_formats, "%s", 3);
+                    }
+                } else {
+                    sbpush(dc_node.planet_text.sb_format_types, DC_VALUE_TYPE_STRING);
+                    sbpush(dc_node.planet_text.sb_format_indices, (uint8_t)sbcount(dc_node.planet_text.sb_formats));
+                    sbpushn(dc_node.planet_text.sb_formats, "%s", 3);
+                }
+
+                sbpush(dc_node.planet_text.sb_filler_indices, (uint8_t)sbcount(dc_node.planet_text.sb_fillers));
+                sbpushn(dc_node.planet_text.sb_fillers, sb_curr_filler, sbcount(sb_curr_filler));
+                sbpush(dc_node.planet_text.sb_fillers, '\0');
+                sbclear(sb_curr_filler);
+
+                continue;
+            }
+
+            sbpush(sb_curr_filler, cleaned_text[ii++]);
+        }
+
+        sbpush(dc_node.planet_text.sb_filler_indices, (uint8_t)sbcount(dc_node.planet_text.sb_fillers));
+        sbpushn(dc_node.planet_text.sb_fillers, sb_curr_filler, sbcount(sb_curr_filler));
+        sbpush(dc_node.planet_text.sb_fillers, '\0');
+        sbclear(sb_curr_filler);
+    } else {
+        DC_LOG_ERROR("PlanetText", "Missing node content");
+    }
+
+    // latitude
+    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
+    if (raw_lat) {
+        dc_node.planet_text.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+        xmlFree(raw_lat);
+    }
+
+    // longitude
+    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
+    if (raw_lon) {
+        dc_node.planet_text.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+        xmlFree(raw_lon);
+    }
+
+    // height above terrain
+    xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
+    if (raw_height) {
+        dc_node.planet_text.height_above_terrain = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_height);
+        xmlFree(raw_height);
+    }
+
+    // size
+    xmlChar *raw_size = xmlGetProp(xml_node, BAD_CAST "Size");
+    if (raw_size) {
+        dc_node.planet_text.size = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_size);
+        xmlFree(raw_size);
+    }
+
+    // color
+    dc_node.planet_text.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.planet_text.fill_color)))
+        dc_node.planet_text.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
 
     return _register_node(app_data, &dc_node);
 }
