@@ -34,6 +34,9 @@ typedef struct {
     bool     has_new_data;
     uint64_t buffercount;
 
+    // reconnect
+    uint32_t stale_frames;
+
     // latest frame
     unsigned char *pixels;
     uint32_t       width;
@@ -42,14 +45,16 @@ typedef struct {
 
 } _Context;
 
-#define _MAX_SOURCES 10
+#define _MAX_SOURCES      10
+#define _STALE_THRESHOLD 300 // frames without new data before reconnect (~5s at 60fps)
 
 // static vars
 static _Context *_sb_contexts = NULL;
 
 // static functions
-static int _try_attach_shm(_Context *ctx);
-static int _read_frame(_Context *ctx);
+static int  _try_attach_shm(_Context *ctx);
+static int  _read_frame(_Context *ctx);
+static void _detach_shm(_Context *ctx);
 
 void dc_ps_shmem_init(void) {
     sbgrow(_sb_contexts, _MAX_SOURCES, sizeof(*_sb_contexts));
@@ -76,10 +81,7 @@ void dc_ps_shmem_update(void) {
 void dc_ps_shmem_cleanup(void) {
     for (int ii = 0; ii < sbcount(_sb_contexts); ii++) {
         _Context *ctx = &_sb_contexts[ii];
-
-        if (ctx->shm) {
-            shmdt(ctx->shm);
-        }
+        _detach_shm(ctx);
         free(ctx->filepath);
         free(ctx->pixels);
     }
@@ -114,15 +116,9 @@ DcPsShmemHandle dc_ps_shmem_add_source(const char *filepath) {
 
 void dc_ps_shmem_remove_source(DcPsShmemHandle handle) {
     _Context *ctx = &_sb_contexts[handle._index];
-
-    if (ctx->shm) {
-        shmdt(ctx->shm);
-        ctx->shm = NULL;
-    }
-
+    _detach_shm(ctx);
     free(ctx->pixels);
     ctx->pixels       = NULL;
-    ctx->connected    = false;
     ctx->has_new_data = false;
 }
 
@@ -198,6 +194,16 @@ static int _try_attach_shm(_Context *ctx) {
     return 0;
 }
 
+static void _detach_shm(_Context *ctx) {
+    if (ctx->shm) {
+        shmdt(ctx->shm);
+        ctx->shm = NULL;
+    }
+    ctx->connected    = false;
+    ctx->buffercount  = 0;
+    ctx->stale_frames = 0;
+}
+
 static int _read_frame(_Context *ctx) {
     uint32_t on = 1, off = 0;
 
@@ -214,9 +220,10 @@ static int _read_frame(_Context *ctx) {
 
     // Check if new frame available
     if (ctx->buffercount != ctx->shm->buffercount) {
-        ctx->buffercount = ctx->shm->buffercount;
-        ctx->width       = ctx->shm->width;
-        ctx->height      = ctx->shm->height;
+        ctx->buffercount  = ctx->shm->buffercount;
+        ctx->stale_frames = 0;
+        ctx->width        = ctx->shm->width;
+        ctx->height       = ctx->shm->height;
 
         // Read pixel data from file
         FILE *fp = fopen(ctx->filepath, "r");
@@ -229,6 +236,7 @@ static int _read_frame(_Context *ctx) {
                 if (!new_pixels) {
                     DC_LOG_ERROR("Shmem", "Failed to reallocate pixel buffer");
                     fclose(fp);
+                    memcpy(&ctx->shm->reading, &off, 4);
                     return 0;
                 }
                 ctx->pixels     = new_pixels;
@@ -240,6 +248,14 @@ static int _read_frame(_Context *ctx) {
             fclose(fp);
 
             ctx->has_new_data = true;
+        }
+    } else {
+        ctx->stale_frames++;
+        if (ctx->stale_frames >= _STALE_THRESHOLD) {
+            DC_LOG_WARN("Shmem", "Stream '%s' stale, reconnecting", ctx->filepath);
+            memcpy(&ctx->shm->reading, &off, 4);
+            _detach_shm(ctx);
+            return 0;
         }
     }
 
