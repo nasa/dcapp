@@ -295,11 +295,11 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     // cleanup draw batch system
     sbfree(app_data->sb_draw_batches);
     for (int i = 0; i < sbcount(app_data->sb_draw_list_2d_pool); i++) {
-        _ext_draw->return_2d_drawlist(app_data->sb_draw_list_2d_pool[i].draw_list);
+        _ext_dc_draw->return_2d_drawlist(app_data->sb_draw_list_2d_pool[i].draw_list);
     }
     sbfree(app_data->sb_draw_list_2d_pool);
     for (int i = 0; i < sbcount(app_data->sb_draw_list_3d_pool); i++) {
-        _ext_draw->return_3d_drawlist(app_data->sb_draw_list_3d_pool[i]);
+        _ext_dc_draw->return_3d_drawlist(app_data->sb_draw_list_3d_pool[i]);
     }
     sbfree(app_data->sb_draw_list_3d_pool);
 
@@ -308,9 +308,9 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     dc_app_config_cleanup(app_data->config);
 
     // cleanup draw backend (GPU buffers, bind group pool, font atlas, drawlists)
-    _ext_draw_backend->cleanup_font_atlas(NULL);
-    _ext_draw_backend->cleanup();
-    _ext_draw->cleanup();
+    _ext_dc_draw_backend->cleanup_font_atlas(NULL);
+    _ext_dc_draw_backend->cleanup();
+    _ext_dc_draw->cleanup();
 
     // cleanup GPU memory allocators (buddy heap, staging allocators)
     _ext_gpu_allocators->cleanup(device);
@@ -516,7 +516,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // new_frame: backend calls draw's new_frame + allocates dynamic data block
-    _ext_draw_backend->new_frame();
+    _ext_dc_draw_backend->new_frame();
 
     // reset draw batch system for new frame
     _draw_batch_reset(app_data);
@@ -556,21 +556,21 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
         for (int i = 0; i < batch_count; i++) {
             _DrawBatch *batch = &app_data->sb_draw_batches[i];
             if (batch->type == DRAW_BATCH_TYPE_2D) {
-                _ext_draw->submit_2d_layer(batch->draw_list_2d.layer);
-                _ext_draw_backend->submit_2d_drawlist(
+                _ext_dc_draw->submit_2d_layer(batch->draw_list_2d.layer);
+                _ext_dc_draw_backend->submit_2d_drawlist(
                     batch->draw_list_2d.draw_list,
                     encoder,
                     ptIO->tMainViewportSize.x,
                     ptIO->tMainViewportSize.y,
                     _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount);
             } else if (batch->type == DRAW_BATCH_TYPE_3D && batch->draw_list_3d) {
-                _ext_draw_backend->submit_3d_drawlist(
+                _ext_dc_draw_backend->submit_3d_drawlist(
                     batch->draw_list_3d,
                     encoder,
                     ptIO->tMainViewportSize.x,
                     ptIO->tMainViewportSize.y,
                     &ortho_proj,
-                    PL_DRAW_FLAG_DEPTH_TEST | PL_DRAW_FLAG_DEPTH_WRITE,
+                    DC_DRAW_FLAG_DEPTH_TEST | DC_DRAW_FLAG_DEPTH_WRITE,
                     _ext_gfx->get_swapchain_info(_ext_starter->get_swapchain()).tSampleCount);
             }
         }
@@ -860,8 +860,8 @@ static void _update_planet_defs(_AppData *app_data) {
 
 static void _load_apis(plApiRegistryI *api_registry) {
     _ext_windows          = pl_get_api_latest(api_registry, plWindowI);
-    _ext_draw             = pl_get_api_latest(api_registry, dcDrawI);
-    _ext_draw_backend     = pl_get_api_latest(api_registry, dcDrawBackendI);
+    _ext_dc_draw             = pl_get_api_latest(api_registry, dcDrawI);
+    _ext_dc_draw_backend     = pl_get_api_latest(api_registry, dcDrawBackendI);
     _ext_starter          = pl_get_api_latest(api_registry, plStarterI);
     _ext_profile          = pl_get_api_latest(api_registry, plProfileI);
     _ext_memory           = pl_get_api_latest(api_registry, plMemoryI);
@@ -872,6 +872,7 @@ static void _load_apis(plApiRegistryI *api_registry) {
     _ext_vfs              = pl_get_api_latest(api_registry, plVfsI);
     _ext_shader           = pl_get_api_latest(api_registry, plShaderI);
     _ext_planet           = pl_get_api_latest(api_registry, plPlanetI);
+    _ext_draw          = pl_get_api_latest(api_registry, plDrawI);
     _ext_planet_processor = pl_get_api_latest(api_registry, plPlanetProcessorI);
     _ext_camera           = pl_get_api_latest(api_registry, plCameraI);
     _ext_image            = pl_get_api_latest(api_registry, plImageI);

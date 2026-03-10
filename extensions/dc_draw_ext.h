@@ -35,15 +35,15 @@ Index of this file:
 // [SECTION] header mess
 //-----------------------------------------------------------------------------
 
-#ifndef PL_DRAW_EXT_H
-#define PL_DRAW_EXT_H
+#ifndef DC_DRAW_EXT_H
+#define DC_DRAW_EXT_H
 
 //-----------------------------------------------------------------------------
 // [SECTION] defines
 //-----------------------------------------------------------------------------
 
-#define PL_UNICODE_CODEPOINT_INVALID 0xFFFD // invalid Unicode code point (standard value).
-#define PL_UNICODE_CODEPOINT_MAX     0xFFFF // maximum Unicode code point supported by this build.
+#define DC_UNICODE_CODEPOINT_INVALID 0xFFFD // invalid Unicode code point (standard value).
+#define DC_UNICODE_CODEPOINT_MAX     0xFFFF // maximum Unicode code point supported by this build.
 
 //-----------------------------------------------------------------------------
 // [SECTION] apis
@@ -65,51 +65,51 @@ Index of this file:
 
 // basic types
 typedef struct _dcDrawInit    dcDrawInit;    // initialization options (reserved for future use)
-typedef struct _plFontAtlas   plFontAtlas;   // font atlas data
-typedef struct _plDrawList2D  plDrawList2D;  // drawlist data for 2D
-typedef struct _plDrawList3D  plDrawList3D;  // drawlist data for 3D
-typedef struct _plDrawLayer2D plDrawLayer2D; // opaque type for 2D draw layers
-typedef struct _plDrawCommand   plDrawCommand;   // opaque type for 2D draw layers
-typedef struct _plDrawCommand3D plDrawCommand3D; // 3D draw command
+typedef struct _dcFontAtlas   dcFontAtlas;   // font atlas data
+typedef struct _dcDrawList2D  dcDrawList2D;  // drawlist data for 2D
+typedef struct _dcDrawList3D  dcDrawList3D;  // drawlist data for 3D
+typedef struct _dcDrawLayer2D dcDrawLayer2D; // opaque type for 2D draw layers
+typedef struct _dcDrawCommand   dcDrawCommand;   // opaque type for 2D draw layers
+typedef struct _dcDrawCommand3D dcDrawCommand3D; // 3D draw command
 
 // vertex buffer types
-typedef struct _plDrawVertex          plDrawVertex;          // vertex type (LAYOUT & PADDING MATTERS)
-typedef struct _plDrawVertex3DSolid   plDrawVertex3DSolid;   // vertex type (LAYOUT & PADDING MATTERS)
-typedef struct _plDrawVertex3DLine    plDrawVertex3DLine;    // vertex type (LAYOUT & PADDING MATTERS)
-typedef struct _plDrawVertex3DTextured plDrawVertex3DTextured; // vertex type (LAYOUT & PADDING MATTERS)
-typedef struct _plDraw3DText          plDraw3DText;
+typedef struct _dcDrawVertex          dcDrawVertex;          // vertex type (LAYOUT & PADDING MATTERS)
+typedef struct _dcDrawVertex3DSolid   dcDrawVertex3DSolid;   // vertex type (LAYOUT & PADDING MATTERS)
+typedef struct _dcDrawVertex3DLine    dcDrawVertex3DLine;    // vertex type (LAYOUT & PADDING MATTERS)
+typedef struct _dcDrawVertex3DTextured dcDrawVertex3DTextured; // vertex type (LAYOUT & PADDING MATTERS)
+typedef struct _dcDraw3DText          dcDraw3DText;
 
 // primitive options
-typedef struct _plDrawLineOptions  plDrawLineOptions;  // options for lines
-typedef struct _plDrawSolidOptions plDrawSolidOptions; // options for solids
-typedef struct _plDrawTextOptions  plDrawTextOptions;  // options for text
-typedef struct _plDrawFrustumDesc  plDrawFrustumDesc;  // description for drawing frustums 
+typedef struct _dcDrawLineOptions  dcDrawLineOptions;  // options for lines
+typedef struct _dcDrawSolidOptions dcDrawSolidOptions; // options for solids
+typedef struct _dcDrawTextOptions  dcDrawTextOptions;  // options for text
+typedef struct _dcDrawFrustumDesc  dcDrawFrustumDesc;  // description for drawing frustums 
 
 // font types
-typedef struct _plFontRange      plFontRange;      // a range of characters
-typedef struct _plFont           plFont;           // a single font with a specific size and config
-typedef struct _plFontConfig     plFontConfig;     // configuration for loading a single font
-typedef struct _plFontChar       plFontChar;       // internal type
-typedef struct _plFontGlyph      plFontGlyph;      // internal type
-typedef struct _plFontCustomRect plFontCustomRect; // internal type
+typedef struct _dcFontRange      dcFontRange;      // a range of characters
+typedef struct _dcFont           dcFont;           // a single font with a specific size and config
+typedef struct _dcFontConfig     dcFontConfig;     // configuration for loading a single font
+typedef struct _dcFontChar       dcFontChar;       // internal type
+typedef struct _dcFontGlyph      dcFontGlyph;      // internal type
+typedef struct _dcFontCustomRect dcFontCustomRect; // internal type
 typedef struct _plRenderEncoder  plRenderEncoder;  // pl_graphics_ext.h
 
 // advanced callbacks (you probably shouldn't be using this, mostly for backends)
-typedef void (*plDrawCallback)(const plDrawList2D*, const plDrawCommand*);
-#define plDrawCallbackResetRenderState (plDrawCallback)(-8)
-#define plDrawCallbackSetShader        (plDrawCallback)(-9)
+typedef void (*dcDrawCallback)(const dcDrawList2D*, const dcDrawCommand*);
+#define dcDrawCallbackResetRenderState (dcDrawCallback)(-8)
+#define dcDrawCallbackSetShader        (dcDrawCallback)(-9)
 
 // 3D callbacks
-typedef void (*plDrawCallback3D)(const plDrawList3D*, const plDrawCommand3D*);
-#define plDrawCallback3DSetShader (plDrawCallback3D)(-10)
+typedef void (*dcDrawCallback3D)(const dcDrawList3D*, const dcDrawCommand3D*);
+#define dcDrawCallback3DSetShader (dcDrawCallback3D)(-10)
 
 // character types
-typedef uint16_t plUiWChar;
+typedef uint16_t dcUiWChar;
 
 // enums
-typedef int plDrawFlags;     // -> enum _plDrawFlags     // Flags:
-typedef int plDrawRectFlags; // -> enum _plDrawRectFlags // Flags:
-typedef int plDrawCommand3DType; // -> enum _plDrawCommand3DType
+typedef int dcDrawFlags;     // -> enum _dcDrawFlags     // Flags:
+typedef int dcDrawRectFlags; // -> enum _dcDrawRectFlags // Flags:
+typedef int dcDrawCommand3DType; // -> enum _dcDrawCommand3DType
 
 // backend texture type
 #ifndef plTextureID
@@ -132,110 +132,110 @@ typedef struct _dcDrawI
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fonts~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // font atlas
-    plFontAtlas* (*create_font_atlas)     (void);
-    bool         (*prepare_font_atlas)    (plFontAtlas*); // usually called by backend "build_font_atlas" func.
-    void         (*cleanup_font_atlas)    (plFontAtlas*); // usually called by backend "cleanup_font_atlas" func.
-    void         (*set_font_atlas)        (plFontAtlas*);
-    plFontAtlas* (*get_current_font_atlas)(void);
+    dcFontAtlas* (*create_font_atlas)     (void);
+    bool         (*prepare_font_atlas)    (dcFontAtlas*); // usually called by backend "build_font_atlas" func.
+    void         (*cleanup_font_atlas)    (dcFontAtlas*); // usually called by backend "cleanup_font_atlas" func.
+    void         (*set_font_atlas)        (dcFontAtlas*);
+    dcFontAtlas* (*get_current_font_atlas)(void);
 
-    plFont* (*get_first_font)          (plFontAtlas*);
-    plFont* (*add_default_font)        (plFontAtlas*);
-    plFont* (*add_font_from_file_ttf)  (plFontAtlas*, plFontConfig, const char* file);
-    plFont* (*add_font_from_memory_ttf)(plFontAtlas*, plFontConfig, void* data);
-    plVec2  (*calculate_text_size)     (const char* text, plDrawTextOptions);
-    plRect  (*calculate_text_bb)       (plVec2 p, const char* text, plDrawTextOptions);
+    dcFont* (*get_first_font)          (dcFontAtlas*);
+    dcFont* (*add_default_font)        (dcFontAtlas*);
+    dcFont* (*add_font_from_file_ttf)  (dcFontAtlas*, dcFontConfig, const char* file);
+    dcFont* (*add_font_from_memory_ttf)(dcFontAtlas*, dcFontConfig, void* data);
+    plVec2  (*calculate_text_size)     (const char* text, dcDrawTextOptions);
+    plRect  (*calculate_text_bb)       (plVec2 p, const char* text, dcDrawTextOptions);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~2D~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // drawlists
-    plDrawList2D* (*request_2d_drawlist)(void);
-    void          (*return_2d_drawlist) (plDrawList2D*);
-    void          (*prepare_2d_drawlist)(plDrawList2D*); // usually called by backend "submit_2d_drawlist" func.
+    dcDrawList2D* (*request_2d_drawlist)(void);
+    void          (*return_2d_drawlist) (dcDrawList2D*);
+    void          (*prepare_2d_drawlist)(dcDrawList2D*); // usually called by backend "submit_2d_drawlist" func.
 
     // layers
-    plDrawLayer2D* (*request_2d_layer)(plDrawList2D*);
-    void           (*return_2d_layer) (plDrawLayer2D*);
-    void           (*submit_2d_layer) (plDrawLayer2D*);
+    dcDrawLayer2D* (*request_2d_layer)(dcDrawList2D*);
+    void           (*return_2d_layer) (dcDrawLayer2D*);
+    void           (*submit_2d_layer) (dcDrawLayer2D*);
 
     // drawing (lines)
-    void (*add_line)          (plDrawLayer2D*, plVec2 p0, plVec2 p1, plDrawLineOptions);
-    void (*add_lines)         (plDrawLayer2D*, plVec2* points, uint32_t count, plDrawLineOptions);
-    void (*add_triangle)      (plDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, plDrawLineOptions);
-    void (*add_rect)          (plDrawLayer2D*, plVec2 pMin, plVec2 pMax, plDrawLineOptions);
-    void (*add_rect_rounded)  (plDrawLayer2D*, plVec2 pMin, plVec2 pMax, float radius, uint32_t segments, plDrawRectFlags, plDrawLineOptions);
-    void (*add_quad)          (plDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3, plDrawLineOptions);
-    void (*add_circle)        (plDrawLayer2D*, plVec2 p, float radius, uint32_t segments, plDrawLineOptions);
-    void (*add_polygon)       (plDrawLayer2D*, plVec2* points, uint32_t count, plDrawLineOptions);
-    void (*add_bezier_quad)   (plDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, uint32_t segments, plDrawLineOptions);
-    void (*add_bezier_cubic)  (plDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3, uint32_t segments, plDrawLineOptions);
+    void (*add_line)          (dcDrawLayer2D*, plVec2 p0, plVec2 p1, dcDrawLineOptions);
+    void (*add_lines)         (dcDrawLayer2D*, plVec2* points, uint32_t count, dcDrawLineOptions);
+    void (*add_triangle)      (dcDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, dcDrawLineOptions);
+    void (*add_rect)          (dcDrawLayer2D*, plVec2 pMin, plVec2 pMax, dcDrawLineOptions);
+    void (*add_rect_rounded)  (dcDrawLayer2D*, plVec2 pMin, plVec2 pMax, float radius, uint32_t segments, dcDrawRectFlags, dcDrawLineOptions);
+    void (*add_quad)          (dcDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3, dcDrawLineOptions);
+    void (*add_circle)        (dcDrawLayer2D*, plVec2 p, float radius, uint32_t segments, dcDrawLineOptions);
+    void (*add_polygon)       (dcDrawLayer2D*, plVec2* points, uint32_t count, dcDrawLineOptions);
+    void (*add_bezier_quad)   (dcDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, uint32_t segments, dcDrawLineOptions);
+    void (*add_bezier_cubic)  (dcDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3, uint32_t segments, dcDrawLineOptions);
 
     // drawing (solids)
-    void (*add_triangle_filled)      (plDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, plDrawSolidOptions);
-    void (*add_triangles_filled)     (plDrawLayer2D*, plVec2* points, uint32_t count, plDrawSolidOptions);
-    void (*add_rect_filled)          (plDrawLayer2D*, plVec2 minP, plVec2 maxP, plDrawSolidOptions);
-    void (*add_rect_rounded_filled)  (plDrawLayer2D*, plVec2 minP, plVec2 maxP, float radius, uint32_t segments, plDrawRectFlags, plDrawSolidOptions);
-    void (*add_quad_filled)          (plDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3, plDrawSolidOptions);
-    void (*add_circle_filled)        (plDrawLayer2D*, plVec2 p, float radius, uint32_t segments, plDrawSolidOptions);
-    void (*add_convex_polygon_filled)(plDrawLayer2D*, plVec2* points, uint32_t count, plDrawSolidOptions);
-    void (*add_image)                (plDrawLayer2D*, plTextureID, plVec2 minP, plVec2 maxP);
-    void (*add_image_ex)             (plDrawLayer2D*, plTextureID, plVec2 minP, plVec2 maxP, plVec2 minUV, plVec2 maxUV, uint32_t color);
-    void (*add_image_quad)           (plDrawLayer2D*, plTextureID, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3);
-    void (*add_image_quad_ex)        (plDrawLayer2D*, plTextureID, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3, plVec2 p0UV, plVec2 p1UV, plVec2 p2UV, plVec2 p3UV, uint32_t color);
+    void (*add_triangle_filled)      (dcDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, dcDrawSolidOptions);
+    void (*add_triangles_filled)     (dcDrawLayer2D*, plVec2* points, uint32_t count, dcDrawSolidOptions);
+    void (*add_rect_filled)          (dcDrawLayer2D*, plVec2 minP, plVec2 maxP, dcDrawSolidOptions);
+    void (*add_rect_rounded_filled)  (dcDrawLayer2D*, plVec2 minP, plVec2 maxP, float radius, uint32_t segments, dcDrawRectFlags, dcDrawSolidOptions);
+    void (*add_quad_filled)          (dcDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3, dcDrawSolidOptions);
+    void (*add_circle_filled)        (dcDrawLayer2D*, plVec2 p, float radius, uint32_t segments, dcDrawSolidOptions);
+    void (*add_convex_polygon_filled)(dcDrawLayer2D*, plVec2* points, uint32_t count, dcDrawSolidOptions);
+    void (*add_image)                (dcDrawLayer2D*, plTextureID, plVec2 minP, plVec2 maxP);
+    void (*add_image_ex)             (dcDrawLayer2D*, plTextureID, plVec2 minP, plVec2 maxP, plVec2 minUV, plVec2 maxUV, uint32_t color);
+    void (*add_image_quad)           (dcDrawLayer2D*, plTextureID, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3);
+    void (*add_image_quad_ex)        (dcDrawLayer2D*, plTextureID, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3, plVec2 p0UV, plVec2 p1UV, plVec2 p2UV, plVec2 p3UV, uint32_t color);
 
     // drawing (text)
-    void (*add_text)        (plDrawLayer2D*, plVec2 p, const char* text, plDrawTextOptions);
-    void (*add_text_clipped)(plDrawLayer2D*, plVec2 p, const char* text, plVec2 clipMin, plVec2 clipMax, plDrawTextOptions);
+    void (*add_text)        (dcDrawLayer2D*, plVec2 p, const char* text, dcDrawTextOptions);
+    void (*add_text_clipped)(dcDrawLayer2D*, plVec2 p, const char* text, plVec2 clipMin, plVec2 clipMax, dcDrawTextOptions);
 
     // clipping
-    void          (*push_clip_rect_pt)(plDrawList2D*, const plRect*, bool bAccumulate);
-    void          (*push_clip_rect)   (plDrawList2D*, plRect, bool bAccumulate);
-    void          (*pop_clip_rect)    (plDrawList2D*);
-    const plRect* (*get_clip_rect)    (plDrawList2D*);
+    void          (*push_clip_rect_pt)(dcDrawList2D*, const plRect*, bool bAccumulate);
+    void          (*push_clip_rect)   (dcDrawList2D*, plRect, bool bAccumulate);
+    void          (*pop_clip_rect)    (dcDrawList2D*);
+    const plRect* (*get_clip_rect)    (dcDrawList2D*);
 
     // advanced (you probably shouldn't be using this, mostly for backends)
-    void (*add_2d_callback)(plDrawLayer2D*, plDrawCallback, void* userData, uint32_t userDataSize);
-    void (*add_3d_callback)(plDrawList3D*,  plDrawCallback3D, void* userData, uint32_t userDataSize);
+    void (*add_2d_callback)(dcDrawLayer2D*, dcDrawCallback, void* userData, uint32_t userDataSize);
+    void (*add_3d_callback)(dcDrawList3D*,  dcDrawCallback3D, void* userData, uint32_t userDataSize);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~3D~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // drawlists
-    plDrawList3D* (*request_3d_drawlist)(void);
-    void          (*return_3d_drawlist)(plDrawList3D*);
+    dcDrawList3D* (*request_3d_drawlist)(void);
+    void          (*return_3d_drawlist)(dcDrawList3D*);
 
     // text
-    void (*add_3d_text)(plDrawList3D*, plVec3 p, const char* text, plDrawTextOptions);
+    void (*add_3d_text)(dcDrawList3D*, plVec3 p, const char* text, dcDrawTextOptions);
 
     // solid
-    void (*add_3d_triangle_filled)    (plDrawList3D*, plVec3 p0, plVec3 p1, plVec3 p2, plDrawSolidOptions);
-    void (*add_3d_circle_xz_filled)   (plDrawList3D*, plVec3 center, float radius, uint32_t segments, plDrawSolidOptions);
-    void (*add_3d_band_xz_filled)     (plDrawList3D*, plVec3 center, float innerRadius, float outerRadius, uint32_t segments, plDrawSolidOptions);
-    void (*add_3d_band_xy_filled)     (plDrawList3D*, plVec3 center, float innerRadius, float outerRadius, uint32_t segments, plDrawSolidOptions);
-    void (*add_3d_band_yz_filled)     (plDrawList3D*, plVec3 center, float innerRadius, float outerRadius, uint32_t segments, plDrawSolidOptions);
-    void (*add_3d_centered_box_filled)(plDrawList3D*, plVec3 center, float width, float height, float depth, plDrawSolidOptions);
-    void (*add_3d_plane_xz_filled)    (plDrawList3D*, plVec3 center, float width, float height, plDrawSolidOptions);
-    void (*add_3d_plane_xy_filled)    (plDrawList3D*, plVec3 center, float width, float height, plDrawSolidOptions);
-    void (*add_3d_plane_yz_filled)    (plDrawList3D*, plVec3 center, float width, float height, plDrawSolidOptions);
-    void (*add_3d_sphere_filled)      (plDrawList3D*, plSphere, uint32_t latBands, uint32_t longBands, plDrawSolidOptions);
-    void (*add_3d_cylinder_filled)    (plDrawList3D*, plCylinder, uint32_t segments, plDrawSolidOptions);
-    void (*add_3d_cone_filled)        (plDrawList3D*, plCone, uint32_t segments, plDrawSolidOptions);
+    void (*add_3d_triangle_filled)    (dcDrawList3D*, plVec3 p0, plVec3 p1, plVec3 p2, dcDrawSolidOptions);
+    void (*add_3d_circle_xz_filled)   (dcDrawList3D*, plVec3 center, float radius, uint32_t segments, dcDrawSolidOptions);
+    void (*add_3d_band_xz_filled)     (dcDrawList3D*, plVec3 center, float innerRadius, float outerRadius, uint32_t segments, dcDrawSolidOptions);
+    void (*add_3d_band_xy_filled)     (dcDrawList3D*, plVec3 center, float innerRadius, float outerRadius, uint32_t segments, dcDrawSolidOptions);
+    void (*add_3d_band_yz_filled)     (dcDrawList3D*, plVec3 center, float innerRadius, float outerRadius, uint32_t segments, dcDrawSolidOptions);
+    void (*add_3d_centered_box_filled)(dcDrawList3D*, plVec3 center, float width, float height, float depth, dcDrawSolidOptions);
+    void (*add_3d_plane_xz_filled)    (dcDrawList3D*, plVec3 center, float width, float height, dcDrawSolidOptions);
+    void (*add_3d_plane_xy_filled)    (dcDrawList3D*, plVec3 center, float width, float height, dcDrawSolidOptions);
+    void (*add_3d_plane_yz_filled)    (dcDrawList3D*, plVec3 center, float width, float height, dcDrawSolidOptions);
+    void (*add_3d_sphere_filled)      (dcDrawList3D*, plSphere, uint32_t latBands, uint32_t longBands, dcDrawSolidOptions);
+    void (*add_3d_cylinder_filled)    (dcDrawList3D*, plCylinder, uint32_t segments, dcDrawSolidOptions);
+    void (*add_3d_cone_filled)        (dcDrawList3D*, plCone, uint32_t segments, dcDrawSolidOptions);
 
     // textured
-    void (*add_3d_sphere_textured)    (plDrawList3D*, plTextureID, plSphere, const plMat4* transform, uint32_t latBands, uint32_t longBands, uint32_t color);
+    void (*add_3d_sphere_textured)    (dcDrawList3D*, plTextureID, plSphere, const plMat4* transform, uint32_t latBands, uint32_t longBands, uint32_t color);
 
     // wireframe
-    void (*add_3d_line)        (plDrawList3D*, plVec3 p0, plVec3 p1, plDrawLineOptions);
-    void (*add_3d_cross)       (plDrawList3D*, plVec3 p, float length, plDrawLineOptions);
-    void (*add_3d_transform)   (plDrawList3D*, const plMat4* transform, float length, plDrawLineOptions);
-    void (*add_3d_frustum)     (plDrawList3D*, const plMat4* transform, plDrawFrustumDesc, plDrawLineOptions);
-    void (*add_3d_centered_box)(plDrawList3D*, plVec3 center, float width, float height, float depth, plDrawLineOptions);
-    void (*add_3d_aabb)        (plDrawList3D*, plVec3 minP, plVec3 maxP, plDrawLineOptions);
-    void (*add_3d_bezier_quad) (plDrawList3D*, plVec3 p0, plVec3 p1, plVec3 p2, uint32_t segments, plDrawLineOptions);
-    void (*add_3d_bezier_cubic)(plDrawList3D*, plVec3 p0, plVec3 p1, plVec3 p2, plVec3 tP3, uint32_t segments, plDrawLineOptions);
-    void (*add_3d_circle_xz)   (plDrawList3D*, plVec3 center, float radius, uint32_t segments, plDrawLineOptions);
-    void (*add_3d_sphere)      (plDrawList3D*, plSphere, uint32_t latBands, uint32_t longBands, plDrawLineOptions);
-    void (*add_3d_capsule)     (plDrawList3D*, plCapsule, uint32_t latBands, uint32_t longBands, plDrawLineOptions);
-    void (*add_3d_cylinder)    (plDrawList3D*, plCylinder, uint32_t segments, plDrawLineOptions);
-    void (*add_3d_cone)        (plDrawList3D*, plCone, uint32_t segments, plDrawLineOptions);
+    void (*add_3d_line)        (dcDrawList3D*, plVec3 p0, plVec3 p1, dcDrawLineOptions);
+    void (*add_3d_cross)       (dcDrawList3D*, plVec3 p, float length, dcDrawLineOptions);
+    void (*add_3d_transform)   (dcDrawList3D*, const plMat4* transform, float length, dcDrawLineOptions);
+    void (*add_3d_frustum)     (dcDrawList3D*, const plMat4* transform, dcDrawFrustumDesc, dcDrawLineOptions);
+    void (*add_3d_centered_box)(dcDrawList3D*, plVec3 center, float width, float height, float depth, dcDrawLineOptions);
+    void (*add_3d_aabb)        (dcDrawList3D*, plVec3 minP, plVec3 maxP, dcDrawLineOptions);
+    void (*add_3d_bezier_quad) (dcDrawList3D*, plVec3 p0, plVec3 p1, plVec3 p2, uint32_t segments, dcDrawLineOptions);
+    void (*add_3d_bezier_cubic)(dcDrawList3D*, plVec3 p0, plVec3 p1, plVec3 p2, plVec3 tP3, uint32_t segments, dcDrawLineOptions);
+    void (*add_3d_circle_xz)   (dcDrawList3D*, plVec3 center, float radius, uint32_t segments, dcDrawLineOptions);
+    void (*add_3d_sphere)      (dcDrawList3D*, plSphere, uint32_t latBands, uint32_t longBands, dcDrawLineOptions);
+    void (*add_3d_capsule)     (dcDrawList3D*, plCapsule, uint32_t latBands, uint32_t longBands, dcDrawLineOptions);
+    void (*add_3d_cylinder)    (dcDrawList3D*, plCylinder, uint32_t segments, dcDrawLineOptions);
+    void (*add_3d_cone)        (dcDrawList3D*, plCone, uint32_t segments, dcDrawLineOptions);
 
 } dcDrawI;
 
@@ -243,37 +243,37 @@ typedef struct _dcDrawI
 // [SECTION] enums
 //-----------------------------------------------------------------------------
 
-enum _plDrawFlags
+enum _dcDrawFlags
 {
-    PL_DRAW_FLAG_NONE            = 0,
-    PL_DRAW_FLAG_DEPTH_TEST      = 1 << 0,
-    PL_DRAW_FLAG_DEPTH_WRITE     = 1 << 1,
-    PL_DRAW_FLAG_CULL_FRONT      = 1 << 2,
-    PL_DRAW_FLAG_CULL_BACK       = 1 << 3,
-    PL_DRAW_FLAG_FRONT_FACE_CW   = 1 << 4,
-    PL_DRAW_FLAG_REVERSE_Z_DEPTH = 1 << 5,
+    DC_DRAW_FLAG_NONE            = 0,
+    DC_DRAW_FLAG_DEPTH_TEST      = 1 << 0,
+    DC_DRAW_FLAG_DEPTH_WRITE     = 1 << 1,
+    DC_DRAW_FLAG_CULL_FRONT      = 1 << 2,
+    DC_DRAW_FLAG_CULL_BACK       = 1 << 3,
+    DC_DRAW_FLAG_FRONT_FACE_CW   = 1 << 4,
+    DC_DRAW_FLAG_REVERSE_Z_DEPTH = 1 << 5,
 };
 
-enum _plDrawCommand3DType
+enum _dcDrawCommand3DType
 {
-    PL_DRAW_COMMAND_3D_SOLID,
-    PL_DRAW_COMMAND_3D_LINE,
-    PL_DRAW_COMMAND_3D_TEXTURED,
+    DC_DRAW_COMMAND_3D_SOLID,
+    DC_DRAW_COMMAND_3D_LINE,
+    DC_DRAW_COMMAND_3D_TEXTURED,
 };
 
-enum _plDrawRectFlags
+enum _dcDrawRectFlags
 {
-    PL_DRAW_RECT_FLAG_NONE                       = 0, // default: PL_DRAW_RECT_FLAG_ROUND_CORNERS_All
-    PL_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_LEFT     = 1 << 0,
-    PL_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_RIGHT    = 1 << 1,
-    PL_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_LEFT  = 1 << 2,
-    PL_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_RIGHT = 1 << 4,
-    PL_DRAW_RECT_FLAG_ROUND_CORNERS_NONE         = 1 << 5,
-    PL_DRAW_RECT_FLAG_ROUND_CORNERS_TOP          = PL_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_LEFT | PL_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_RIGHT,
-    PL_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM       = PL_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_LEFT | PL_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_RIGHT,
-    PL_DRAW_RECT_FLAG_ROUND_CORNERS_LEFT         = PL_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_LEFT | PL_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_LEFT,
-    PL_DRAW_RECT_FLAG_ROUND_CORNERS_RIGHT        = PL_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_RIGHT | PL_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_RIGHT,
-    PL_DRAW_RECT_FLAG_ROUND_CORNERS_All          = PL_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_LEFT | PL_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_RIGHT | PL_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_LEFT | PL_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_RIGHT,
+    DC_DRAW_RECT_FLAG_NONE                       = 0, // default: DC_DRAW_RECT_FLAG_ROUND_CORNERS_All
+    DC_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_LEFT     = 1 << 0,
+    DC_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_RIGHT    = 1 << 1,
+    DC_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_LEFT  = 1 << 2,
+    DC_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_RIGHT = 1 << 4,
+    DC_DRAW_RECT_FLAG_ROUND_CORNERS_NONE         = 1 << 5,
+    DC_DRAW_RECT_FLAG_ROUND_CORNERS_TOP          = DC_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_LEFT | DC_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_RIGHT,
+    DC_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM       = DC_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_LEFT | DC_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_RIGHT,
+    DC_DRAW_RECT_FLAG_ROUND_CORNERS_LEFT         = DC_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_LEFT | DC_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_LEFT,
+    DC_DRAW_RECT_FLAG_ROUND_CORNERS_RIGHT        = DC_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_RIGHT | DC_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_RIGHT,
+    DC_DRAW_RECT_FLAG_ROUND_CORNERS_All          = DC_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_LEFT | DC_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_RIGHT | DC_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_LEFT | DC_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_RIGHT,
 };
 
 //-----------------------------------------------------------------------------
@@ -285,52 +285,52 @@ typedef struct _dcDrawInit
     int _iUnused;
 } dcDrawInit;
 
-typedef struct _plDrawFrustumDesc
+typedef struct _dcDrawFrustumDesc
 {
     float fYFov;
     float fAspectRatio;
     float fNearZ;
     float fFarZ;
-} plDrawFrustumDesc;
+} dcDrawFrustumDesc;
 
-typedef struct _plDrawLineOptions
+typedef struct _dcDrawLineOptions
 {
     uint32_t uColor;
     float    fThickness;
-} plDrawLineOptions;
+} dcDrawLineOptions;
 
-typedef struct _plDrawSolidOptions
+typedef struct _dcDrawSolidOptions
 {
     uint32_t uColor;
-} plDrawSolidOptions;
+} dcDrawSolidOptions;
 
-typedef struct _plDrawTextOptions
+typedef struct _dcDrawTextOptions
 {
-    plFont*     ptFont;
+    dcFont*     ptFont;
     float       fSize;      // if zero, will use loaded size
     uint32_t    uColor;
     float       fWrap;      // 0.0f, no wrap
     const char* pcTextEnd;  // if null terminated, set to NULL
     plMat3      tTransform; // default: identity
-} plDrawTextOptions;
+} dcDrawTextOptions;
 
-typedef struct _plFontRange
+typedef struct _dcFontRange
 {
     int         iFirstCodePoint;
     uint32_t    uCharCount;
 
     // [INTERNAL]
     uint32_t _uConfigIndex;
-} plFontRange;
+} dcFontRange;
 
-typedef struct _plFontConfig
+typedef struct _dcFontConfig
 {
     float              fSize;
-    const plFontRange* ptRanges;
+    const dcFontRange* ptRanges;
     uint32_t           uRangeCount;
     const int*         piIndividualChars;
     uint32_t           uIndividualCharCount;
-    plFont*            ptMergeFont;
+    dcFont*            ptMergeFont;
 
     // BITMAP ONLY
     uint32_t uVOverSampling;
@@ -342,12 +342,12 @@ typedef struct _plFontConfig
     unsigned char ucOnEdgeValue;
     
     // [INTERNAL]
-    plFontRange* _sbtRanges;
-    plFontChar* _sbtCharData;
+    dcFontRange* _sbtRanges;
+    dcFontChar* _sbtCharData;
     float       _fSdfPixelDistScale;
-} plFontConfig;
+} dcFontConfig;
 
-typedef struct _plFontGlyph
+typedef struct _dcFontGlyph
 {
     float x0;
     float y0;
@@ -360,42 +360,42 @@ typedef struct _plFontGlyph
     float fXAdvance;
     float fLeftBearing;  
     int   iSDF : 1;
-} plFontGlyph;
+} dcFontGlyph;
 
-typedef struct _plFont
+typedef struct _dcFont
 {
     float fSize; // loaded size
     
     // [INTERNAL]
     float                   _fLineSpacing;
-    plFontRange*            _sbtRanges;
+    dcFontRange*            _sbtRanges;
     uint32_t                _uCodePointCount;
     uint32_t*               _auCodePoints; // glyph index lookup based on codepoint
-    plFontGlyph*            _sbtGlyphs;     // glyphs
-    plFontConfig*           _sbtConfigs;
-    struct _plFontPrepData* _sbtPreps;
-    plFont*                 _ptNextFont;
-    plFontGlyph*            _ptFallbackGlyph;
-} plFont;
+    dcFontGlyph*            _sbtGlyphs;     // glyphs
+    dcFontConfig*           _sbtConfigs;
+    struct _dcFontPrepData* _sbtPreps;
+    dcFont*                 _ptNextFont;
+    dcFontGlyph*            _ptFallbackGlyph;
+} dcFont;
 
 //-----------------------------------------------------------------------------
 // [SECTION] structs for backends
 //-----------------------------------------------------------------------------
 
-typedef struct _plDrawVertex
+typedef struct _dcDrawVertex
 {
     float    afPos[2];
     float    afUv[2];
     uint32_t uColor;
-} plDrawVertex;
+} dcDrawVertex;
 
-typedef struct _plDrawVertex3DSolid
+typedef struct _dcDrawVertex3DSolid
 {
     float    afPos[3];
     uint32_t uColor;
-} plDrawVertex3DSolid;
+} dcDrawVertex3DSolid;
 
-typedef struct _plDrawVertex3DLine
+typedef struct _dcDrawVertex3DLine
 {
     float    afPos[3];
     float    fDirection;
@@ -403,65 +403,65 @@ typedef struct _plDrawVertex3DLine
     float    fMultiply;
     float    afPosOther[3];
     uint32_t uColor;
-} plDrawVertex3DLine;
+} dcDrawVertex3DLine;
 
-typedef struct _plDrawVertex3DTextured
+typedef struct _dcDrawVertex3DTextured
 {
     float    afPos[3];
     float    afUv[2];
     uint32_t uColor;
-} plDrawVertex3DTextured;
+} dcDrawVertex3DTextured;
 
-typedef struct _plDraw3DText
+typedef struct _dcDraw3DText
 {
-    plFont*  ptFont;
+    dcFont*  ptFont;
     float    fSize;
     plVec3   tP;
     uint32_t uColor;
     char     acText[PL_MAX_NAME_LENGTH];
     float    fWrap;
-} plDraw3DText;
+} dcDraw3DText;
 
-typedef struct _plDrawCommand3D
+typedef struct _dcDrawCommand3D
 {
-    plDrawCommand3DType eType;
+    dcDrawCommand3DType eType;
     uint32_t            uVertexOffset;
     uint32_t            uIndexOffset;
     uint32_t            uElementCount;
     plTextureID         tTextureId;      // textured commands only
-    plDrawCallback3D    tUserCallback;
+    dcDrawCallback3D    tUserCallback;
     void*               pUserCallbackData;
     uint32_t            uUserCallbackDataSize;
-} plDrawCommand3D;
+} dcDrawCommand3D;
 
-typedef struct _plDrawList3D
+typedef struct _dcDrawList3D
 {
     // solid
-    plDrawVertex3DSolid* sbtSolidVertexBuffer;
+    dcDrawVertex3DSolid* sbtSolidVertexBuffer;
     uint32_t*            sbtSolidIndexBuffer;
 
     // lines
-    plDrawVertex3DLine*  sbtLineVertexBuffer;
+    dcDrawVertex3DLine*  sbtLineVertexBuffer;
     uint32_t*            sbtLineIndexBuffer;
 
     // textured
-    plDrawVertex3DTextured* sbtTexturedVertexBuffer;
+    dcDrawVertex3DTextured* sbtTexturedVertexBuffer;
     uint32_t*               sbtTexturedIndexBuffer;
     plTextureID             tTexturedTexture;
 
     // commands
-    plDrawCommand3D* sbtDrawCommands3D;
+    dcDrawCommand3D* sbtDrawCommands3D;
 
     // text
-    plDraw3DText*  sbtTextEntries;
-    plDrawList2D*  pt2dDrawlist;
-    plDrawLayer2D* ptLayer;
+    dcDraw3DText*  sbtTextEntries;
+    dcDrawList2D*  pt2dDrawlist;
+    dcDrawLayer2D* ptLayer;
 
     // [INTERNAL]
     int iLastCommand3D;
-} plDrawList3D;
+} dcDrawList3D;
 
-typedef struct _plDrawCommand
+typedef struct _dcDrawCommand
 {
     uint32_t       uVertexOffset;
     uint32_t       uIndexOffset;
@@ -469,26 +469,26 @@ typedef struct _plDrawCommand
     plTextureID    tTextureId;
     plRect         tClip;
     bool           bSdf;
-    plDrawCallback tUserCallback;
+    dcDrawCallback tUserCallback;
     void*          pUserCallbackData;
     uint32_t       uUserCallbackDataSize;
-} plDrawCommand;
+} dcDrawCommand;
 
-typedef struct _plDrawList2D
+typedef struct _dcDrawList2D
 {
-    plDrawVertex*  sbtVertexBuffer;
+    dcDrawVertex*  sbtVertexBuffer;
     uint32_t*      sbuIndexBuffer;
     uint32_t       uIndexBufferByteSize;
-    plDrawCommand* sbtDrawCommands;
+    dcDrawCommand* sbtDrawCommands;
     
     // [INTERNAL]
-    plDrawLayer2D** _sbtSubmittedLayers;
-    plDrawLayer2D** _sbtLayerCache;
-    plDrawLayer2D** _sbtLayersCreated;
+    dcDrawLayer2D** _sbtSubmittedLayers;
+    dcDrawLayer2D** _sbtLayerCache;
+    dcDrawLayer2D** _sbtLayersCreated;
     plRect*         _sbtClipStack;
-} plDrawList2D;
+} dcDrawList2D;
 
-typedef struct _plFontAtlas
+typedef struct _dcFontAtlas
 {
 
     plVec2         tAtlasSize;
@@ -497,14 +497,14 @@ typedef struct _plFontAtlas
     void*          ptUserData;
 
     // [INTERNAL]
-    plFont*           _ptFontListHead;
-    plFontCustomRect* _sbtCustomRects;
+    dcFont*           _ptFontListHead;
+    dcFontCustomRect* _sbtCustomRects;
     unsigned char*    _pucPixelsAsAlpha8;
     plVec2            _tWhiteUv;
     int               _iGlyphPadding;
     size_t            _szPixelDataSize;
-    plFontCustomRect* _ptWhiteRect;
+    dcFontCustomRect* _ptWhiteRect;
     float             _fTotalArea;
-} plFontAtlas;
+} dcFontAtlas;
 
-#endif // PL_DRAW_EXT_H
+#endif // DC_DRAW_EXT_H

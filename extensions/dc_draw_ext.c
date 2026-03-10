@@ -51,16 +51,16 @@ Index of this file:
 // [SECTION] internal structs
 //-----------------------------------------------------------------------------
 
-typedef struct _plFontCustomRect
+typedef struct _dcFontCustomRect
 {
     uint32_t       uWidth;
     uint32_t       uHeight;
     uint32_t       uX;
     uint32_t       uY;
     unsigned char* pucBytes;
-} plFontCustomRect;
+} dcFontCustomRect;
 
-typedef struct _plFontChar
+typedef struct _dcFontChar
 {
     uint16_t x0;
     uint16_t y0;
@@ -71,19 +71,19 @@ typedef struct _plFontChar
     float    xAdv;
     float    xOff2;
     float    yOff2;
-} plFontChar;
+} dcFontChar;
 
-typedef struct _plDrawLayer2D
+typedef struct _dcDrawLayer2D
 {
-    plDrawList2D*  ptDrawlist;
-    plDrawCommand* sbtCommandBuffer;
+    dcDrawList2D*  ptDrawlist;
+    dcDrawCommand* sbtCommandBuffer;
     uint32_t*      sbuIndexBuffer;
     plVec2*        sbtPath;
     uint32_t       uVertexCount;
-    plDrawCommand* ptLastCommand;
-} plDrawLayer2D;
+    dcDrawCommand* ptLastCommand;
+} dcDrawLayer2D;
 
-typedef struct _plFontPrepData
+typedef struct _dcFontPrepData
 {
     stbtt_fontinfo    tFontInfo;
     stbtt_pack_range* ptRanges;
@@ -93,33 +93,33 @@ typedef struct _plFontPrepData
     bool              bPrepped;
     float             fAscent;
     float             fDescent;
-} plFontPrepData;
+} dcFontPrepData;
 
-typedef struct _plDrawContext
+typedef struct _dcDrawContext
 {
     // 2D resources
     plPoolAllocator tDrawlistPool2D;
-    plDrawList2D    atDrawlists2DBuffer[PL_MAX_DRAWLISTS];
-    plDrawList2D*   aptDrawlists2D[PL_MAX_DRAWLISTS];
+    dcDrawList2D    atDrawlists2DBuffer[PL_MAX_DRAWLISTS];
+    dcDrawList2D*   aptDrawlists2D[PL_MAX_DRAWLISTS];
     uint32_t        uDrawlistCount2D;
 
     // 3D resources
     plPoolAllocator tDrawlistPool3D;
-    plDrawList3D    atDrawlists3DBuffer[PL_MAX_DRAWLISTS];
-    plDrawList3D*   aptDrawlists3D[PL_MAX_DRAWLISTS];
+    dcDrawList3D    atDrawlists3DBuffer[PL_MAX_DRAWLISTS];
+    dcDrawList3D*   aptDrawlists3D[PL_MAX_DRAWLISTS];
     uint32_t        uDrawlistCount3D;
 
     // current font
-    plFontAtlas* ptAtlas;
+    dcFontAtlas* ptAtlas;
 
     plTempAllocator tTempAllocator;
-} plDrawContext;
+} dcDrawContext;
 
 //-----------------------------------------------------------------------------
 // [SECTION] global data
 //-----------------------------------------------------------------------------
 
-static plDrawContext* gptDrawCtx = NULL;
+static dcDrawContext* gptDrawCtx = NULL;
 
 static unsigned char*        ptrBarrierOutE_ = NULL;
 static unsigned char*        ptrBarrierOutB_ = NULL;
@@ -147,13 +147,13 @@ static unsigned char*        ptrDOut_ = NULL;
 // [SECTION] internal api
 //-----------------------------------------------------------------------------
 
-static void pl__prepare_draw_command  (plDrawLayer2D*, plTextureID, bool sdf);
-static void pl__prepare_3d_draw_command(plDrawList3D*, plDrawCommand3DType, plTextureID);
-static void pl__reserve_triangles   (plDrawLayer2D*, uint32_t uIndexCount, uint32_t uVertexCount);
-static void pl__add_vertex          (plDrawLayer2D*, plVec2 tPos, uint32_t uColor, plVec2 tUv);
-static void pl__add_index           (plDrawLayer2D*, uint32_t uVertexStart, uint32_t i0, uint32_t i1, uint32_t i2);
+static void pl__prepare_draw_command  (dcDrawLayer2D*, plTextureID, bool sdf);
+static void pl__prepare_3d_draw_command(dcDrawList3D*, dcDrawCommand3DType, plTextureID);
+static void pl__reserve_triangles   (dcDrawLayer2D*, uint32_t uIndexCount, uint32_t uVertexCount);
+static void pl__add_vertex          (dcDrawLayer2D*, plVec2 tPos, uint32_t uColor, plVec2 tUv);
+static void pl__add_index           (dcDrawLayer2D*, uint32_t uVertexStart, uint32_t i0, uint32_t i1, uint32_t i2);
 
-static const plFontGlyph* pl__find_glyph(plFont* ptFont, uint32_t c);
+static const dcFontGlyph* pl__find_glyph(dcFont* ptFont, uint32_t c);
 
 // math
 #define pl__add_vec2(left, right)      (plVec2){(left).x + (right).x, (left).y + (right).y}
@@ -172,10 +172,10 @@ static const plFontGlyph* pl__find_glyph(plFont* ptFont, uint32_t c);
 
 static inline void
 pl__add_3d_indexed_lines(
-    plDrawList3D* ptDrawlist, uint32_t uIndexCount, const plVec3* atPoints,
-    const uint32_t* auIndices, plDrawLineOptions tOptions)
+    dcDrawList3D* ptDrawlist, uint32_t uIndexCount, const plVec3* atPoints,
+    const uint32_t* auIndices, dcDrawLineOptions tOptions)
 {
-    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_LINE, 0);
+    pl__prepare_3d_draw_command(ptDrawlist, DC_DRAW_COMMAND_3D_LINE, 0);
     const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
 
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
@@ -195,7 +195,7 @@ pl__add_3d_indexed_lines(
         const plVec3 tP0 = atPoints[uIndex0];
         const plVec3 tP1 = atPoints[uIndex1];
 
-        plDrawVertex3DLine tNewVertex0 = {
+        dcDrawVertex3DLine tNewVertex0 = {
             {tP0.x, tP0.y, tP0.z},
             -1.0f,
             tOptions.fThickness,
@@ -204,7 +204,7 @@ pl__add_3d_indexed_lines(
             tOptions.uColor
         };
 
-        plDrawVertex3DLine tNewVertex1 = {
+        dcDrawVertex3DLine tNewVertex1 = {
             {tP1.x, tP1.y, tP1.z},
             -1.0f,
             tOptions.fThickness,
@@ -235,9 +235,9 @@ pl__add_3d_indexed_lines(
 }
 
 static inline void
-pl__add_3d_lines(plDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoints, plDrawLineOptions tOptions)
+pl__add_3d_lines(dcDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoints, dcDrawLineOptions tOptions)
 {
-    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_LINE, 0);
+    pl__prepare_3d_draw_command(ptDrawlist, DC_DRAW_COMMAND_3D_LINE, 0);
     const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
 
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
@@ -253,7 +253,7 @@ pl__add_3d_lines(plDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoin
         const plVec3 tP0 = atPoints[i * 2];
         const plVec3 tP1 = atPoints[i * 2 + 1];
 
-        plDrawVertex3DLine tNewVertex0 = {
+        dcDrawVertex3DLine tNewVertex0 = {
             {tP0.x, tP0.y, tP0.z},
             -1.0f,
             tOptions.fThickness,
@@ -262,7 +262,7 @@ pl__add_3d_lines(plDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoin
             tOptions.uColor
         };
 
-        plDrawVertex3DLine tNewVertex1 = {
+        dcDrawVertex3DLine tNewVertex1 = {
             {tP1.x, tP1.y, tP1.z},
             -1.0f,
             tOptions.fThickness,
@@ -293,9 +293,9 @@ pl__add_3d_lines(plDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoin
 }
 
 static inline void
-pl__add_3d_path(plDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoints, plDrawLineOptions tOptions)
+pl__add_3d_path(dcDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoints, dcDrawLineOptions tOptions)
 {
-    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_LINE, 0);
+    pl__prepare_3d_draw_command(ptDrawlist, DC_DRAW_COMMAND_3D_LINE, 0);
     const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
 
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
@@ -311,7 +311,7 @@ pl__add_3d_path(plDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoint
         const plVec3 tP0 = atPoints[i];
         const plVec3 tP1 = atPoints[i + 1];
 
-        plDrawVertex3DLine tNewVertex0 = {
+        dcDrawVertex3DLine tNewVertex0 = {
             {tP0.x, tP0.y, tP0.z},
             -1.0f,
             tOptions.fThickness,
@@ -320,7 +320,7 @@ pl__add_3d_path(plDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoint
             tOptions.uColor
         };
 
-        plDrawVertex3DLine tNewVertex1 = {
+        dcDrawVertex3DLine tNewVertex1 = {
             {tP1.x, tP1.y, tP1.z},
             -1.0f,
             tOptions.fThickness,
@@ -358,15 +358,15 @@ static void
 pl_initialize(const dcDrawInit* ptInit)
 {
     size_t szBufferSize = sizeof(gptDrawCtx->atDrawlists3DBuffer);
-    size_t szItems = pl_pool_allocator_init(&gptDrawCtx->tDrawlistPool3D, 0, sizeof(plDrawList3D), 0,
+    size_t szItems = pl_pool_allocator_init(&gptDrawCtx->tDrawlistPool3D, 0, sizeof(dcDrawList3D), 0,
         &szBufferSize, gptDrawCtx->atDrawlists3DBuffer);
-    pl_pool_allocator_init(&gptDrawCtx->tDrawlistPool3D, szItems, sizeof(plDrawList3D), 0,
+    pl_pool_allocator_init(&gptDrawCtx->tDrawlistPool3D, szItems, sizeof(dcDrawList3D), 0,
         &szBufferSize, gptDrawCtx->atDrawlists3DBuffer);
 
     szBufferSize = sizeof(gptDrawCtx->atDrawlists2DBuffer);
-    szItems = pl_pool_allocator_init(&gptDrawCtx->tDrawlistPool2D, 0, sizeof(plDrawList2D), 0,
+    szItems = pl_pool_allocator_init(&gptDrawCtx->tDrawlistPool2D, 0, sizeof(dcDrawList2D), 0,
         &szBufferSize, gptDrawCtx->atDrawlists2DBuffer);
-    pl_pool_allocator_init(&gptDrawCtx->tDrawlistPool2D, szItems, sizeof(plDrawList2D), 0,
+    pl_pool_allocator_init(&gptDrawCtx->tDrawlistPool2D, szItems, sizeof(dcDrawList2D), 0,
         &szBufferSize, gptDrawCtx->atDrawlists2DBuffer);
 }
 
@@ -376,7 +376,7 @@ pl_cleanup(void)
 
     for(uint32_t i = 0; i < gptDrawCtx->uDrawlistCount3D; i++)
     {
-        plDrawList3D* ptDrawlist = gptDrawCtx->aptDrawlists3D[i];
+        dcDrawList3D* ptDrawlist = gptDrawCtx->aptDrawlists3D[i];
         pl_sb_free(ptDrawlist->sbtSolidIndexBuffer);
         pl_sb_free(ptDrawlist->sbtSolidVertexBuffer);
         pl_sb_free(ptDrawlist->sbtLineVertexBuffer);
@@ -393,7 +393,7 @@ pl_cleanup(void)
     }
     for(uint32_t i = 0; i < gptDrawCtx->uDrawlistCount2D; i++)
     {
-        plDrawList2D* ptDrawlist = gptDrawCtx->aptDrawlists2D[i];
+        dcDrawList2D* ptDrawlist = gptDrawCtx->aptDrawlists2D[i];
         pl_sb_free(ptDrawlist->_sbtClipStack);
         pl_sb_free(ptDrawlist->sbtDrawCommands);
         pl_sb_free(ptDrawlist->_sbtLayerCache);
@@ -413,10 +413,10 @@ pl_cleanup(void)
     pl_temp_allocator_free(&gptDrawCtx->tTempAllocator);
 }
 
-static plDrawList2D*
+static dcDrawList2D*
 pl_request_2d_drawlist(void)
 {
-    plDrawList2D* ptDrawlist = pl_pool_allocator_alloc(&gptDrawCtx->tDrawlistPool2D);
+    dcDrawList2D* ptDrawlist = pl_pool_allocator_alloc(&gptDrawCtx->tDrawlistPool2D);
 
     if(ptDrawlist)
     {
@@ -427,10 +427,10 @@ pl_request_2d_drawlist(void)
     return ptDrawlist;
 }
 
-static plDrawLayer2D*
-pl_request_2d_layer(plDrawList2D* ptDrawlist)
+static dcDrawLayer2D*
+pl_request_2d_layer(dcDrawList2D* ptDrawlist)
 {
-   plDrawLayer2D* ptLayer = NULL;
+   dcDrawLayer2D* ptLayer = NULL;
    
    // check if ptDrawlist has any cached layers
    // which reduces allocations necessary since
@@ -442,8 +442,8 @@ pl_request_2d_layer(plDrawList2D* ptDrawlist)
 
    else // create new layer
    {
-        ptLayer = PL_ALLOC(sizeof(plDrawLayer2D));
-        memset(ptLayer, 0, sizeof(plDrawLayer2D));
+        ptLayer = PL_ALLOC(sizeof(dcDrawLayer2D));
+        memset(ptLayer, 0, sizeof(dcDrawLayer2D));
         ptLayer->ptDrawlist = ptDrawlist;
         pl_sb_push(ptDrawlist->_sbtLayersCreated, ptLayer);
    }
@@ -451,10 +451,10 @@ pl_request_2d_layer(plDrawList2D* ptDrawlist)
    return ptLayer;
 }
 
-static plDrawList3D*
+static dcDrawList3D*
 pl_request_3d_drawlist(void)
 {
-    plDrawList3D* ptDrawlist = pl_pool_allocator_alloc(&gptDrawCtx->tDrawlistPool3D);
+    dcDrawList3D* ptDrawlist = pl_pool_allocator_alloc(&gptDrawCtx->tDrawlistPool3D);
 
     if(ptDrawlist)
     {
@@ -476,7 +476,7 @@ pl_request_3d_drawlist(void)
 }
 
 static void
-pl_return_2d_drawlist(plDrawList2D* ptDrawlist)
+pl_return_2d_drawlist(dcDrawList2D* ptDrawlist)
 {
     pl_sb_free(ptDrawlist->sbtVertexBuffer);
     pl_sb_free(ptDrawlist->sbuIndexBuffer);
@@ -498,7 +498,7 @@ pl_return_2d_drawlist(plDrawList2D* ptDrawlist)
     {
         if(gptDrawCtx->aptDrawlists2D[i] != ptDrawlist) // skip returning drawlist
         {
-            plDrawList2D* ptCurrentDrawlist = gptDrawCtx->aptDrawlists2D[i];
+            dcDrawList2D* ptCurrentDrawlist = gptDrawCtx->aptDrawlists2D[i];
             gptDrawCtx->aptDrawlists2D[uCurrentIndex] = ptCurrentDrawlist;
             uCurrentIndex++;
         }
@@ -508,7 +508,7 @@ pl_return_2d_drawlist(plDrawList2D* ptDrawlist)
 }
 
 static void
-pl_return_2d_layer(plDrawLayer2D* ptLayer)
+pl_return_2d_layer(dcDrawLayer2D* ptLayer)
 {
     ptLayer->ptLastCommand = NULL;
     ptLayer->uVertexCount = 0;
@@ -519,7 +519,7 @@ pl_return_2d_layer(plDrawLayer2D* ptLayer)
 }
 
 static void
-pl_return_3d_drawlist(plDrawList3D* ptDrawlist)
+pl_return_3d_drawlist(dcDrawList3D* ptDrawlist)
 {
     pl_return_2d_layer(ptDrawlist->ptLayer);
     pl_return_2d_drawlist(ptDrawlist->pt2dDrawlist);
@@ -542,7 +542,7 @@ pl_return_3d_drawlist(plDrawList3D* ptDrawlist)
     {
         if(gptDrawCtx->aptDrawlists3D[i] != ptDrawlist) // skip returning drawlist
         {
-            plDrawList3D* ptCurrentDrawlist = gptDrawCtx->aptDrawlists3D[i];
+            dcDrawList3D* ptCurrentDrawlist = gptDrawCtx->aptDrawlists3D[i];
             gptDrawCtx->aptDrawlists3D[uCurrentIndex] = ptCurrentDrawlist;
             uCurrentIndex++;
         }
@@ -552,20 +552,20 @@ pl_return_3d_drawlist(plDrawList3D* ptDrawlist)
 }
 
 static void
-pl_prepare_2d_drawlist(plDrawList2D* ptDrawlist)
+pl_prepare_2d_drawlist(dcDrawList2D* ptDrawlist)
 {
     uint32_t uGlobalIdxBufferIndexOffset = 0u;
     const uint32_t uLayerCount = pl_sb_size(ptDrawlist->_sbtSubmittedLayers);
     for(uint32_t i = 0; i < uLayerCount; i++)
     {
-        plDrawLayer2D* ptLayer = ptDrawlist->_sbtSubmittedLayers[i];
-        plDrawCommand* ptLastCommand = NULL;
+        dcDrawLayer2D* ptLayer = ptDrawlist->_sbtSubmittedLayers[i];
+        dcDrawCommand* ptLastCommand = NULL;
 
         // attempt to merge commands
         const uint32_t uCmdCount = pl_sb_size(ptLayer->sbtCommandBuffer);
         for(uint32_t j = 0; j < uCmdCount; j++)
         {
-            plDrawCommand* ptLayerCommand = &ptLayer->sbtCommandBuffer[j];
+            dcDrawCommand* ptLayerCommand = &ptLayer->sbtCommandBuffer[j];
             bool bCreateNewCommand = true;
 
             if(ptLastCommand)
@@ -612,7 +612,7 @@ pl_prepare_2d_drawlist(plDrawList2D* ptDrawlist)
 }
 
 static void
-pl_submit_2d_layer(plDrawLayer2D* ptLayer)
+pl_submit_2d_layer(dcDrawLayer2D* ptLayer)
 {
     pl_sb_push(ptLayer->ptDrawlist->_sbtSubmittedLayers, ptLayer);
     const uint32_t uCurrentIndexCount = pl_sb_size(ptLayer->ptDrawlist->sbuIndexBuffer);
@@ -626,7 +626,7 @@ pl_submit_2d_layer(plDrawLayer2D* ptLayer)
 }
 
 static void
-pl_add_lines(plDrawLayer2D* ptLayer, plVec2* atPoints, uint32_t uCount, plDrawLineOptions tOptions)
+pl_add_lines(dcDrawLayer2D* ptLayer, plVec2* atPoints, uint32_t uCount, dcDrawLineOptions tOptions)
 {
     uint32_t uSegmentCount = uCount - 1;
     pl__prepare_draw_command(ptLayer, gptDrawCtx->ptAtlas->tTexture, false);
@@ -665,10 +665,10 @@ pl_add_lines(plDrawLayer2D* ptLayer, plVec2* atPoints, uint32_t uCount, plDrawLi
 }
 
 void
-pl_add_2d_callback(plDrawLayer2D* ptLayer, plDrawCallback tCallback, void* pUserData, uint32_t uUserDataSize)
+pl_add_2d_callback(dcDrawLayer2D* ptLayer, dcDrawCallback tCallback, void* pUserData, uint32_t uUserDataSize)
 {
 
-    plDrawCommand tNewDrawCommand =
+    dcDrawCommand tNewDrawCommand =
     {
         .tUserCallback         = tCallback,
         .uUserCallbackDataSize = uUserDataSize,
@@ -680,9 +680,9 @@ pl_add_2d_callback(plDrawLayer2D* ptLayer, plDrawCallback tCallback, void* pUser
 }
 
 static void
-pl_add_3d_callback(plDrawList3D* ptDrawlist, plDrawCallback3D tCallback, void* pUserData, uint32_t uUserDataSize)
+pl_add_3d_callback(dcDrawList3D* ptDrawlist, dcDrawCallback3D tCallback, void* pUserData, uint32_t uUserDataSize)
 {
-    plDrawCommand3D tNewDrawCommand =
+    dcDrawCommand3D tNewDrawCommand =
     {
         .tUserCallback         = tCallback,
         .uUserCallbackDataSize = uUserDataSize,
@@ -694,7 +694,7 @@ pl_add_3d_callback(plDrawList3D* ptDrawlist, plDrawCallback3D tCallback, void* p
 }
 
 static void
-pl_add_line(plDrawLayer2D* ptLayer, plVec2 p0, plVec2 p1, plDrawLineOptions tOptions)
+pl_add_line(dcDrawLayer2D* ptLayer, plVec2 p0, plVec2 p1, dcDrawLineOptions tOptions)
 {
     pl_sb_push(ptLayer->sbtPath, p0);
     pl_sb_push(ptLayer->sbtPath, p1);
@@ -702,7 +702,7 @@ pl_add_line(plDrawLayer2D* ptLayer, plVec2 p0, plVec2 p1, plDrawLineOptions tOpt
 }
 
 static void
-pl_add_text_ex(plDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plDrawTextOptions tOptions)
+pl_add_text_ex(dcDrawLayer2D* ptLayer, plVec2 p, const char* pcText, dcDrawTextOptions tOptions)
 {
 
     if(tOptions.pcTextEnd == NULL)
@@ -712,7 +712,7 @@ pl_add_text_ex(plDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plDrawTextO
             tOptions.pcTextEnd++;
     }
 
-    plFont* ptFont = tOptions.ptFont;
+    dcFont* ptFont = tOptions.ptFont;
     const float fSize = tOptions.fSize == 0.0f ? ptFont->fSize : tOptions.fSize;
     const char* pcTextEnd = tOptions.pcTextEnd;
 
@@ -747,7 +747,7 @@ pl_add_text_ex(plDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plDrawTextO
         else if(bNoTransform)
         {
 
-            const plFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
+            const dcFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
       
             float x0,y0,s0,t0; // top-left
             float x1,y1,s1,t1; // bottom-right
@@ -797,7 +797,7 @@ pl_add_text_ex(plDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plDrawTextO
         else
         {
 
-            const plFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
+            const dcFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
       
             float x0,y0,s0,t0; // top-left
             float x1,y1,s1,t1; // bottom-right
@@ -848,7 +848,7 @@ pl_add_text_ex(plDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plDrawTextO
 }
 
 static void
-pl_add_text_clipped_ex(plDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plVec2 tMin, plVec2 tMax, plDrawTextOptions tOptions)
+pl_add_text_clipped_ex(dcDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plVec2 tMin, plVec2 tMax, dcDrawTextOptions tOptions)
 {
 
     if(tOptions.pcTextEnd == NULL)
@@ -861,7 +861,7 @@ pl_add_text_clipped_ex(plDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plV
     // const plVec2 tTextSize = pl_calculate_text_size_ex(font, size, text, pcTextEnd, wrap);
     const plRect tClipRect = {tMin, tMax};
 
-    plFont* ptFont = tOptions.ptFont;
+    dcFont* ptFont = tOptions.ptFont;
     const float fSize = tOptions.fSize == 0.0f ? ptFont->fSize : tOptions.fSize;
     const char* pcTextEnd = tOptions.pcTextEnd;
 
@@ -895,7 +895,7 @@ pl_add_text_clipped_ex(plDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plV
         }
         else if(bNoTransform)
         {
-            const plFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
+            const dcFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
 
             float x0,y0,s0,t0; // top-left
             float x1,y1,s1,t1; // bottom-right
@@ -945,7 +945,7 @@ pl_add_text_clipped_ex(plDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plV
         }
         else
         {
-            const plFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
+            const dcFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
 
             float x0,y0,s0,t0; // top-left
             float x1,y1,s1,t1; // bottom-right
@@ -1001,7 +1001,7 @@ pl_add_text_clipped_ex(plDrawLayer2D* ptLayer, plVec2 p, const char* pcText, plV
 }
 
 static void
-pl_add_triangle(plDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, plDrawLineOptions tOptions)
+pl_add_triangle(dcDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, dcDrawLineOptions tOptions)
 {
     pl_sb_push(ptLayer->sbtPath, tP0);
     pl_sb_push(ptLayer->sbtPath, tP1);
@@ -1011,7 +1011,7 @@ pl_add_triangle(plDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, plDr
 }
 
 static void
-pl_add_triangle_filled(plDrawLayer2D* ptLayer, plVec2 p0, plVec2 p1, plVec2 p2, plDrawSolidOptions tOptions)
+pl_add_triangle_filled(dcDrawLayer2D* ptLayer, plVec2 p0, plVec2 p1, plVec2 p2, dcDrawSolidOptions tOptions)
 {
     pl__prepare_draw_command(ptLayer, gptDrawCtx->ptAtlas->tTexture, false);
     pl__reserve_triangles(ptLayer, 3, 3);
@@ -1025,7 +1025,7 @@ pl_add_triangle_filled(plDrawLayer2D* ptLayer, plVec2 p0, plVec2 p1, plVec2 p2, 
 }
 
 static void
-pl_add_triangles_filled(plDrawLayer2D* ptLayer, plVec2* atPoints, uint32_t uCount, plDrawSolidOptions tOptions)
+pl_add_triangles_filled(dcDrawLayer2D* ptLayer, plVec2* atPoints, uint32_t uCount, dcDrawSolidOptions tOptions)
 {
     pl__prepare_draw_command(ptLayer, gptDrawCtx->ptAtlas->tTexture, false);
     pl__reserve_triangles(ptLayer, 3 * uCount, 3 * uCount);
@@ -1041,7 +1041,7 @@ pl_add_triangles_filled(plDrawLayer2D* ptLayer, plVec2* atPoints, uint32_t uCoun
 }
 
 static void
-pl_add_rect(plDrawLayer2D* ptLayer, plVec2 tMinP, plVec2 tMaxP, plDrawLineOptions tOptions)
+pl_add_rect(dcDrawLayer2D* ptLayer, plVec2 tMinP, plVec2 tMaxP, dcDrawLineOptions tOptions)
 {
     const plVec2 fBotLeftVec  = {tMinP.x, tMaxP.y};
     const plVec2 fTopRightVec = {tMaxP.x, tMinP.y};
@@ -1055,7 +1055,7 @@ pl_add_rect(plDrawLayer2D* ptLayer, plVec2 tMinP, plVec2 tMaxP, plDrawLineOption
 }
 
 static void
-pl_add_rect_filled(plDrawLayer2D* ptLayer, plVec2 tMinP, plVec2 tMaxP, plDrawSolidOptions tOptions)
+pl_add_rect_filled(dcDrawLayer2D* ptLayer, plVec2 tMinP, plVec2 tMaxP, dcDrawSolidOptions tOptions)
 {
     pl__prepare_draw_command(ptLayer, gptDrawCtx->ptAtlas->tTexture, false);
     pl__reserve_triangles(ptLayer, 6, 4);
@@ -1075,8 +1075,8 @@ pl_add_rect_filled(plDrawLayer2D* ptLayer, plVec2 tMinP, plVec2 tMaxP, plDrawSol
 
 static void
 pl_add_rect_rounded_ex(
-    plDrawLayer2D* ptLayer, plVec2 tMinP, plVec2 tMaxP, float fRadius,
-    uint32_t uSegments, plDrawRectFlags tFlags, plDrawLineOptions tOptions)
+    dcDrawLayer2D* ptLayer, plVec2 tMinP, plVec2 tMaxP, float fRadius,
+    uint32_t uSegments, dcDrawRectFlags tFlags, dcDrawLineOptions tOptions)
 {
     // segments is the number of segments used to approximate one corner
 
@@ -1087,8 +1087,8 @@ pl_add_rect_rounded_ex(
     }
     else
     {
-        if(tFlags == PL_DRAW_RECT_FLAG_NONE)
-            tFlags = PL_DRAW_RECT_FLAG_ROUND_CORNERS_All;
+        if(tFlags == DC_DRAW_RECT_FLAG_NONE)
+            tFlags = DC_DRAW_RECT_FLAG_ROUND_CORNERS_All;
     }
 
     if(uSegments == 0)
@@ -1154,8 +1154,8 @@ pl_add_rect_rounded_ex(
 
 static void
 pl_add_rect_rounded_filled_ex(
-        plDrawLayer2D* ptLayer, plVec2 tMinP, plVec2 tMaxP, float fRadius,
-        uint32_t uSegments, plDrawRectFlags tFlags, plDrawSolidOptions tOptions)
+        dcDrawLayer2D* ptLayer, plVec2 tMinP, plVec2 tMaxP, float fRadius,
+        uint32_t uSegments, dcDrawRectFlags tFlags, dcDrawSolidOptions tOptions)
 {
     if(fRadius <= 0.0f)
     {
@@ -1164,8 +1164,8 @@ pl_add_rect_rounded_filled_ex(
     }
     else
     {
-        if(tFlags == PL_DRAW_RECT_FLAG_NONE)
-            tFlags = PL_DRAW_RECT_FLAG_ROUND_CORNERS_All;
+        if(tFlags == DC_DRAW_RECT_FLAG_NONE)
+            tFlags = DC_DRAW_RECT_FLAG_ROUND_CORNERS_All;
     }
 
     if(tMaxP.x - tMinP.x < fRadius * 2.0f)
@@ -1239,7 +1239,7 @@ pl_add_rect_rounded_filled_ex(
     float fTheta = PL_PI_2 + fIncrement;
     plVec2 tLastPoint = tOuterTopLeft0;
 
-    if(tFlags & PL_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_LEFT)
+    if(tFlags & DC_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_LEFT)
     {
         for(uint32_t i = 0; i < uSegments - 1; i++)
         {
@@ -1256,7 +1256,7 @@ pl_add_rect_rounded_filled_ex(
         pl_add_triangle_filled(ptLayer, tInnerTopLeft, tMinP, tOuterTopLeft1, tOptions);
     }
 
-    if(tFlags & PL_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_LEFT)
+    if(tFlags & DC_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_LEFT)
     {
         fTheta = PL_PI + fIncrement;
         tLastPoint = tOuterBottomLeft0;
@@ -1275,7 +1275,7 @@ pl_add_rect_rounded_filled_ex(
         pl_add_triangle_filled(ptLayer, tInnerBottomLeft, (plVec2){tMinP.x, tMaxP.y}, tOuterBottomLeft1, tOptions);
     }
 
-    if(tFlags & PL_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_RIGHT)
+    if(tFlags & DC_DRAW_RECT_FLAG_ROUND_CORNERS_BOTTOM_RIGHT)
     {
         fTheta = PL_PI + PL_PI_2 + fIncrement;
         tLastPoint = tOuterBottomRight0;
@@ -1294,7 +1294,7 @@ pl_add_rect_rounded_filled_ex(
         pl_add_triangle_filled(ptLayer, tInnerBottomRight, tMaxP, tOuterBottomRight1, tOptions);
     }
 
-    if(tFlags & PL_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_RIGHT)
+    if(tFlags & DC_DRAW_RECT_FLAG_ROUND_CORNERS_TOP_RIGHT)
     {
         fTheta = fIncrement;
         tLastPoint = tOuterTopRight0;
@@ -1315,7 +1315,7 @@ pl_add_rect_rounded_filled_ex(
 }
 
 static  void
-pl_add_quad(plDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, plVec2 tP3, plDrawLineOptions tOptions)
+pl_add_quad(dcDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, plVec2 tP3, dcDrawLineOptions tOptions)
 {
     pl_sb_push(ptLayer->sbtPath, tP0);
     pl_sb_push(ptLayer->sbtPath, tP1);
@@ -1326,7 +1326,7 @@ pl_add_quad(plDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, plVec2 t
 }
 
 static void
-pl_add_quad_filled(plDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, plVec2 tP3, plDrawSolidOptions tOptions)
+pl_add_quad_filled(dcDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, plVec2 tP3, dcDrawSolidOptions tOptions)
 {
     pl__prepare_draw_command(ptLayer, gptDrawCtx->ptAtlas->tTexture, false);
     pl__reserve_triangles(ptLayer, 6, 4);
@@ -1342,7 +1342,7 @@ pl_add_quad_filled(plDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, p
 }
 
 static void
-pl_add_circle(plDrawLayer2D* ptLayer, plVec2 tP, float fRadius, uint32_t uSegments, plDrawLineOptions tOptions)
+pl_add_circle(dcDrawLayer2D* ptLayer, plVec2 tP, float fRadius, uint32_t uSegments, dcDrawLineOptions tOptions)
 {
     if(uSegments == 0){ uSegments = 12; }
     const float fIncrement = PL_2PI / uSegments;
@@ -1357,7 +1357,7 @@ pl_add_circle(plDrawLayer2D* ptLayer, plVec2 tP, float fRadius, uint32_t uSegmen
 }
 
 static void
-pl_add_circle_filled(plDrawLayer2D* ptLayer, plVec2 tP, float fRadius, uint32_t uSegments, plDrawSolidOptions tOptions)
+pl_add_circle_filled(dcDrawLayer2D* ptLayer, plVec2 tP, float fRadius, uint32_t uSegments, dcDrawSolidOptions tOptions)
 {
     if(uSegments == 0){ uSegments = 12; }
     pl__prepare_draw_command(ptLayer, gptDrawCtx->ptAtlas->tTexture, false);
@@ -1382,7 +1382,7 @@ pl_add_circle_filled(plDrawLayer2D* ptLayer, plVec2 tP, float fRadius, uint32_t 
 }
 
 static void
-pl_add_polygon(plDrawLayer2D* ptLayer, plVec2* tPoints, uint32_t uPointsSize, plDrawLineOptions tOptions)
+pl_add_polygon(dcDrawLayer2D* ptLayer, plVec2* tPoints, uint32_t uPointsSize, dcDrawLineOptions tOptions)
 {
     for(uint32_t i = 0; i < uPointsSize; i++)
     {
@@ -1394,7 +1394,7 @@ pl_add_polygon(plDrawLayer2D* ptLayer, plVec2* tPoints, uint32_t uPointsSize, pl
 }
 
 static void
-pl_add_convex_polygon_filled(plDrawLayer2D* ptLayer, plVec2* tPoints, uint32_t uPointsSize, plDrawSolidOptions tOptions)
+pl_add_convex_polygon_filled(dcDrawLayer2D* ptLayer, plVec2* tPoints, uint32_t uPointsSize, dcDrawSolidOptions tOptions)
 {
     pl__prepare_draw_command(ptLayer, gptDrawCtx->ptAtlas->tTexture, false);
     pl__reserve_triangles(ptLayer, 3 * (uPointsSize - 2), uPointsSize);
@@ -1413,7 +1413,7 @@ pl_add_convex_polygon_filled(plDrawLayer2D* ptLayer, plVec2* tPoints, uint32_t u
 }
 
 static void
-pl_add_image_ex(plDrawLayer2D* ptLayer, plTextureID tTexture, plVec2 tPMin, plVec2 tPMax, plVec2 tUvMin, plVec2 tUvMax, uint32_t uColor)
+pl_add_image_ex(dcDrawLayer2D* ptLayer, plTextureID tTexture, plVec2 tPMin, plVec2 tPMax, plVec2 tUvMin, plVec2 tUvMax, uint32_t uColor)
 {
     pl__prepare_draw_command(ptLayer, tTexture, false);
     pl__reserve_triangles(ptLayer, 6, 4);
@@ -1432,7 +1432,7 @@ pl_add_image_ex(plDrawLayer2D* ptLayer, plTextureID tTexture, plVec2 tPMin, plVe
 }
 
 void
-pl_add_image_quad_ex(plDrawLayer2D* ptLayer, plTextureID tTexture, plVec2 tP0, plVec2 tP1, plVec2 tP2, plVec2 tP3, plVec2 tUv0, plVec2 tUv1, plVec2 tUv2, plVec2 tUv3, uint32_t uColor)
+pl_add_image_quad_ex(dcDrawLayer2D* ptLayer, plTextureID tTexture, plVec2 tP0, plVec2 tP1, plVec2 tP2, plVec2 tP3, plVec2 tUv0, plVec2 tUv1, plVec2 tUv2, plVec2 tUv3, uint32_t uColor)
 {
     pl__prepare_draw_command(ptLayer, tTexture, false);
     pl__reserve_triangles(ptLayer, 6, 4);
@@ -1449,19 +1449,19 @@ pl_add_image_quad_ex(plDrawLayer2D* ptLayer, plTextureID tTexture, plVec2 tP0, p
 }
 
 void
-pl_add_image_quad(plDrawLayer2D* ptLayer, plTextureID tTexture, plVec2 tP0, plVec2 tP1, plVec2 tP2, plVec2 tP3)
+pl_add_image_quad(dcDrawLayer2D* ptLayer, plTextureID tTexture, plVec2 tP0, plVec2 tP1, plVec2 tP2, plVec2 tP3)
 {
     pl_add_image_quad_ex(ptLayer, tTexture, tP0, tP1, tP2, tP3, (plVec2){0}, (plVec2){0.0f, 1.0f}, (plVec2){1.0f, 1.0f}, (plVec2){1.0f, 0.0f}, PL_COLOR_32_WHITE);
 }
 
 static void
-pl_add_image(plDrawLayer2D* ptLayer, plTextureID tTexture, plVec2 tPMin, plVec2 tPMax)
+pl_add_image(dcDrawLayer2D* ptLayer, plTextureID tTexture, plVec2 tPMin, plVec2 tPMax)
 {
     pl_add_image_ex(ptLayer, tTexture, tPMin, tPMax, (plVec2){0}, (plVec2){1.0f, 1.0f}, PL_COLOR_32_WHITE);
 }
 
 static void
-pl_add_bezier_quad(plDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, uint32_t uSegments, plDrawLineOptions tOptions)
+pl_add_bezier_quad(dcDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, uint32_t uSegments, dcDrawLineOptions tOptions)
 {
     // order of the bezier curve inputs are 0=start, 1=control, 2=ending
 
@@ -1494,7 +1494,7 @@ pl_add_bezier_quad(plDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, u
 }
 
 static void
-pl_add_bezier_cubic(plDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, plVec2 tP3, uint32_t uSegments, plDrawLineOptions tOptions)
+pl_add_bezier_cubic(dcDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, plVec2 tP3, uint32_t uSegments, dcDrawLineOptions tOptions)
 {
     // order of the bezier curve inputs are 0=start, 1=control 1, 2=control 2, 3=ending
     if(uSegments == 0)
@@ -1529,18 +1529,18 @@ pl_add_bezier_cubic(plDrawLayer2D* ptLayer, plVec2 tP0, plVec2 tP1, plVec2 tP2, 
     pl__submit_path(ptLayer, tOptions); 
 }
 
-static plFont*
-pl_add_font_from_memory_ttf(plFontAtlas* ptAtlas, plFontConfig tConfig, void* pData)
+static dcFont*
+pl_add_font_from_memory_ttf(dcFontAtlas* ptAtlas, dcFontConfig tConfig, void* pData)
 {
     ptAtlas->_iGlyphPadding = 1;
 
-    plFont* ptFont = NULL;
+    dcFont* ptFont = NULL;
     if(tConfig.ptMergeFont)
         ptFont = tConfig.ptMergeFont;
     else
     {
-        ptFont = PL_ALLOC(sizeof(plFont));
-        memset(ptFont, 0, sizeof(plFont));
+        ptFont = PL_ALLOC(sizeof(dcFont));
+        memset(ptFont, 0, sizeof(dcFont));
         ptFont->_fLineSpacing = 0.0f;
         ptFont->fSize = tConfig.fSize;
         ptFont->_ptNextFont = ptAtlas->_ptFontListHead;
@@ -1549,9 +1549,9 @@ pl_add_font_from_memory_ttf(plFontAtlas* ptAtlas, plFontConfig tConfig, void* pD
     const uint32_t uConfigIndex = pl_sb_size(ptFont->_sbtConfigs);
     const uint32_t uPrepIndex = uConfigIndex;
     pl_sb_add(ptFont->_sbtConfigs);
-    pl_sb_push(ptFont->_sbtPreps, (plFontPrepData){0});
+    pl_sb_push(ptFont->_sbtPreps, (dcFontPrepData){0});
 
-    plFontPrepData* ptPrep = &ptFont->_sbtPreps[uPrepIndex];
+    dcFontPrepData* ptPrep = &ptFont->_sbtPreps[uPrepIndex];
     stbtt_InitFont(&ptPrep->tFontInfo, (unsigned char*)pData, 0);
 
     // prepare stb
@@ -1587,7 +1587,7 @@ pl_add_font_from_memory_ttf(plFontAtlas* ptAtlas, plFontConfig tConfig, void* pD
     // convert individual chars to ranges
     for(uint32_t i = 0; i < tConfig.uIndividualCharCount; i++)
     {
-        plFontRange tRange = {
+        dcFontRange tRange = {
             .uCharCount      = 1,
             .iFirstCodePoint = tConfig.piIndividualChars[i],
             ._uConfigIndex   = uConfigIndex
@@ -1623,7 +1623,7 @@ pl_add_font_from_memory_ttf(plFontAtlas* ptAtlas, plFontConfig tConfig, void* pD
 
     for(uint32_t i = 0; i < pl_sb_size(tConfig._sbtRanges); i++)
     {
-        plFontRange* ptRange = &tConfig._sbtRanges[i];
+        dcFontRange* ptRange = &tConfig._sbtRanges[i];
         ptRange->_uConfigIndex = uConfigIndex;
         ptPrep->uTotalCharCount += ptRange->uCharCount;
         pl_sb_push(ptFont->_sbtRanges, *ptRange);
@@ -1636,7 +1636,7 @@ pl_add_font_from_memory_ttf(plFontAtlas* ptAtlas, plFontConfig tConfig, void* pD
 
     for(uint32_t i = 0; i < pl_sb_size(tConfig._sbtRanges); i++)
     {
-        plFontRange* ptRange = &tConfig._sbtRanges[i];
+        dcFontRange* ptRange = &tConfig._sbtRanges[i];
 
         if(ptRange->iFirstCodePoint + (int)ptRange->uCharCount > iMaxCodePoint)
             iMaxCodePoint = ptRange->iFirstCodePoint + (int)ptRange->uCharCount;
@@ -1684,7 +1684,7 @@ pl_add_font_from_memory_ttf(plFontAtlas* ptAtlas, plFontConfig tConfig, void* pD
                 tConfig._sbtCharData[uTotalCharCount + j].yOff2 = (float)(iYOff + iHeight);
                 tConfig._sbtCharData[uTotalCharCount + j].xAdv = ptPrep->fScale * (float)xAdvance;
 
-                plFontCustomRect tCustomRect = {
+                dcFontCustomRect tCustomRect = {
                     .uWidth   = (uint32_t)iWidth,
                     .uHeight  = (uint32_t)iHeight,
                     .pucBytes = pucBytes
@@ -1747,8 +1747,8 @@ pl_add_font_from_memory_ttf(plFontAtlas* ptAtlas, plFontConfig tConfig, void* pD
     return ptFont;
 }
 
-static plFont*
-pl_add_font_from_file_ttf(plFontAtlas* ptAtlas, plFontConfig tConfig, const char* pcFile)
+static dcFont*
+pl_add_font_from_file_ttf(dcFontAtlas* ptAtlas, dcFontConfig tConfig, const char* pcFile)
 {
     size_t szFileSize = gptVfs->get_file_size_str(pcFile);
     plVfsFileHandle tHandle = gptVfs->open_file(pcFile, PL_VFS_FILE_MODE_READ);
@@ -1760,14 +1760,14 @@ pl_add_font_from_file_ttf(plFontAtlas* ptAtlas, plFontConfig tConfig, const char
         gptVfs->read_file(tHandle, puData, &szFileSize);
         gptVfs->close_file(tHandle);
 
-        plFont* ptFont = pl_add_font_from_memory_ttf(ptAtlas, tConfig, puData);
+        dcFont* ptFont = pl_add_font_from_memory_ttf(ptAtlas, tConfig, puData);
         return ptFont;
     }
     return NULL;
 }
 
 static plVec2
-pl_calculate_text_size(const char* pcText, plDrawTextOptions tOptions)
+pl_calculate_text_size(const char* pcText, dcDrawTextOptions tOptions)
 {
 
     if(tOptions.pcTextEnd == NULL)
@@ -1780,7 +1780,7 @@ pl_calculate_text_size(const char* pcText, plDrawTextOptions tOptions)
     plVec2 tResult = {0};
     plVec2 tCursor = {0};
 
-    plFont* ptFont = tOptions.ptFont;
+    dcFont* ptFont = tOptions.ptFont;
     const float fSize = tOptions.fSize == 0.0f ? ptFont->fSize : tOptions.fSize;
     const char* pcTextEnd = tOptions.pcTextEnd;
 
@@ -1815,7 +1815,7 @@ pl_calculate_text_size(const char* pcText, plDrawTextOptions tOptions)
         else
         {
 
-            const plFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
+            const dcFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
 
             float x0,y0,s0,t0; // top-left
             float x1,y1,s1,t1; // bottom-right
@@ -1881,7 +1881,7 @@ pl_calculate_text_size(const char* pcText, plDrawTextOptions tOptions)
 }
 
 static plRect
-pl_calculate_text_bb(plVec2 tP, const char* pcText, plDrawTextOptions tOptions)
+pl_calculate_text_bb(plVec2 tP, const char* pcText, dcDrawTextOptions tOptions)
 {
     if(tOptions.pcTextEnd == NULL)
     {
@@ -1893,7 +1893,7 @@ pl_calculate_text_bb(plVec2 tP, const char* pcText, plDrawTextOptions tOptions)
     plVec2 tTextSize = {0};
     plVec2 tCursor = {0};
 
-    plFont* ptFont = tOptions.ptFont;
+    dcFont* ptFont = tOptions.ptFont;
     const float fSize = tOptions.fSize == 0.0f ? ptFont->fSize : tOptions.fSize;
     const char* pcTextEnd = tOptions.pcTextEnd;
 
@@ -1929,7 +1929,7 @@ pl_calculate_text_bb(plVec2 tP, const char* pcText, plDrawTextOptions tOptions)
         else
         {
 
-            const plFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
+            const dcFontGlyph* ptGlyph = pl__find_glyph(ptFont, c);
 
             float x0,y0,s0,t0; // top-left
             float x1,y1,s1,t1; // bottom-right
@@ -2016,7 +2016,7 @@ pl_calculate_text_bb(plVec2 tP, const char* pcText, plDrawTextOptions tOptions)
 }
 
 static void
-pl_push_clip_rect_pt(plDrawList2D* ptDrawlist, const plRect* ptRect, bool bAccumulate)
+pl_push_clip_rect_pt(dcDrawList2D* ptDrawlist, const plRect* ptRect, bool bAccumulate)
 {
     plRect tRect = *ptRect;
     if(bAccumulate && pl_sb_size(ptDrawlist->_sbtClipStack) > 0)
@@ -2025,7 +2025,7 @@ pl_push_clip_rect_pt(plDrawList2D* ptDrawlist, const plRect* ptRect, bool bAccum
 }
 
 static void
-pl_push_clip_rect(plDrawList2D* ptDrawlist, plRect tRect, bool bAccumulate)
+pl_push_clip_rect(dcDrawList2D* ptDrawlist, plRect tRect, bool bAccumulate)
 {
     if(bAccumulate && pl_sb_size(ptDrawlist->_sbtClipStack) > 0)
         tRect = pl_rect_clip_full(&tRect, &pl_sb_back(ptDrawlist->_sbtClipStack));
@@ -2033,43 +2033,43 @@ pl_push_clip_rect(plDrawList2D* ptDrawlist, plRect tRect, bool bAccumulate)
 }
 
 static void
-pl_pop_clip_rect(plDrawList2D* ptDrawlist)
+pl_pop_clip_rect(dcDrawList2D* ptDrawlist)
 {
     pl_sb_pop(ptDrawlist->_sbtClipStack);
 }
 
 static const plRect*
-pl_get_clip_rect(plDrawList2D* ptDrawlist)
+pl_get_clip_rect(dcDrawList2D* ptDrawlist)
 {
      if(pl_sb_size(ptDrawlist->_sbtClipStack) > 0)
         return &pl_sb_back(ptDrawlist->_sbtClipStack);
     return NULL;
 }
 
-static plFontAtlas*
+static dcFontAtlas*
 pl_create_font_atlas(void)
 {
-    plFontAtlas* ptAtlas = PL_ALLOC(sizeof(plFontAtlas));
-    memset(ptAtlas, 0, sizeof(plFontAtlas));
+    dcFontAtlas* ptAtlas = PL_ALLOC(sizeof(dcFontAtlas));
+    memset(ptAtlas, 0, sizeof(dcFontAtlas));
     return ptAtlas;
 }
 
 static void
-pl_set_font_atlas(plFontAtlas* ptAtlas)
+pl_set_font_atlas(dcFontAtlas* ptAtlas)
 {
     gptDrawCtx->ptAtlas = ptAtlas;
 }
 
-static plFontAtlas*
+static dcFontAtlas*
 pl_get_font_atlas(void)
 {
     return gptDrawCtx->ptAtlas;
 }
 
-static plFont*
-pl_get_first_font(plFontAtlas* ptAtlas)
+static dcFont*
+pl_get_first_font(dcFontAtlas* ptAtlas)
 {
-    plFont* ptFont = ptAtlas->_ptFontListHead;
+    dcFont* ptFont = ptAtlas->_ptFontListHead;
     while(ptFont)
     {
         if(ptFont->_ptNextFont)
@@ -2081,11 +2081,11 @@ pl_get_first_font(plFontAtlas* ptAtlas)
 }
 
 static bool
-pl_prepare_font_atlas(plFontAtlas* ptAtlas)
+pl_prepare_font_atlas(dcFontAtlas* ptAtlas)
 {
 
     // create our white location
-    plFontCustomRect ptWhiteRect = {
+    dcFontCustomRect ptWhiteRect = {
         .uWidth = 8u,
         .uHeight = 8u,
         .uX = 0u,
@@ -2124,16 +2124,16 @@ pl_prepare_font_atlas(plFontAtlas* ptAtlas)
     }
     
     // pack bitmap fonts
-    plFont* ptFont = ptAtlas->_ptFontListHead;
+    dcFont* ptFont = ptAtlas->_ptFontListHead;
     while(ptFont)
     {
         const uint32_t uRangeCount = pl_sb_size(ptFont->_sbtRanges);
         for(uint32_t j = 0; j < uRangeCount; j++)
         {
-            plFontRange* ptRange = &ptFont->_sbtRanges[j];
+            dcFontRange* ptRange = &ptFont->_sbtRanges[j];
             if(!ptFont->_sbtConfigs[ptRange->_uConfigIndex].bSdf)
             {
-                plFontPrepData* ptPrep = &ptFont->_sbtPreps[ptRange->_uConfigIndex];
+                dcFontPrepData* ptPrep = &ptFont->_sbtPreps[ptRange->_uConfigIndex];
                 if(!ptPrep->bPrepped)
                 {
                     stbtt_PackSetOversampling(&tSpc, ptFont->_sbtConfigs[ptRange->_uConfigIndex].uHOverSampling,
@@ -2190,7 +2190,7 @@ pl_prepare_font_atlas(plFontAtlas* ptAtlas)
         const uint32_t uConfigCount = pl_sb_size(ptFont->_sbtConfigs);
         for(uint32_t j = 0; j < uConfigCount; j++)
         {
-            plFontPrepData* ptPrep = &ptFont->_sbtPreps[j];
+            dcFontPrepData* ptPrep = &ptFont->_sbtPreps[j];
             if(!ptFont->_sbtConfigs[j].bSdf)
                 stbtt_PackFontRangesRenderIntoRects(&tSpc, &ptPrep->tFontInfo, ptPrep->ptRanges,
                     pl_sb_size(ptFont->_sbtConfigs[j]._sbtRanges), ptPrep->ptRects);
@@ -2212,7 +2212,7 @@ pl_prepare_font_atlas(plFontAtlas* ptAtlas)
         const uint32_t uConfigCount = pl_sb_size(ptFont->_sbtConfigs);
         for(uint32_t j = 0; j < uConfigCount; j++)
         {
-            plFontConfig* ptConfig = &ptFont->_sbtConfigs[j];
+            dcFontConfig* ptConfig = &ptFont->_sbtConfigs[j];
             if(ptConfig->bSdf)
             {
                 for(uint32_t i = 0u; i < pl_sb_size(ptConfig->_sbtCharData); i++)
@@ -2234,7 +2234,7 @@ pl_prepare_font_atlas(plFontAtlas* ptAtlas)
     // rasterize SDF/custom rects
     for(uint32_t r = 0; r < uCustomRectCount; r++)
     {
-        plFontCustomRect* ptCustomRect = &ptAtlas->_sbtCustomRects[r];
+        dcFontCustomRect* ptCustomRect = &ptAtlas->_sbtCustomRects[r];
         for(uint32_t i = 0; i < ptCustomRect->uHeight; i++)
         {
             for(uint32_t j = 0; j < ptCustomRect->uWidth; j++)
@@ -2260,7 +2260,7 @@ pl_prepare_font_atlas(plFontAtlas* ptAtlas)
         const uint32_t uRangeCount = pl_sb_size(ptFont->_sbtRanges);
         for(uint32_t i = 0; i < uRangeCount; i++)
         {
-            plFontRange* ptRange = &ptFont->_sbtRanges[i];
+            dcFontRange* ptRange = &ptFont->_sbtRanges[i];
             if(uConfigIndex != ptRange->_uConfigIndex)
             {
                 uCharIndex = 0;
@@ -2286,7 +2286,7 @@ pl_prepare_font_atlas(plFontAtlas* ptAtlas)
                 stbtt_GetCodepointHMetrics(&ptFont->_sbtPreps[ptRange->_uConfigIndex].tFontInfo, iCodePoint,
                     &unusedAdvanced, &iLeftSideBearing);
 
-                plFontGlyph tGlyph = {
+                dcFontGlyph tGlyph = {
                     .x0           = tQuad.x0,
                     .y0           = tQuad.y0 + ptFont->_sbtPreps[ptRange->_uConfigIndex].fAscent,
                     .x1           = tQuad.x1,
@@ -2336,12 +2336,12 @@ pl_prepare_font_atlas(plFontAtlas* ptAtlas)
 }
 
 static void
-pl_cleanup_font_atlas(plFontAtlas* ptAtlas)
+pl_cleanup_font_atlas(dcFontAtlas* ptAtlas)
 {
     if(ptAtlas == NULL)
         ptAtlas = gptDrawCtx->ptAtlas;
 
-    plFont* ptFont = ptAtlas->_ptFontListHead;
+    dcFont* ptFont = ptAtlas->_ptFontListHead;
     while(ptFont)
     {
 
@@ -2354,7 +2354,7 @@ pl_cleanup_font_atlas(plFontAtlas* ptAtlas)
             pl_sb_free(ptFont->_sbtConfigs[j]._sbtRanges);
         }
         pl_sb_free(ptFont->_sbtConfigs);
-        plFont* ptOldFont = ptFont;
+        dcFont* ptOldFont = ptFont;
         ptFont = ptFont->_ptNextFont;
         PL_FREE(ptOldFont);
     }
@@ -2376,7 +2376,7 @@ pl_new_draw_3d_frame(void)
     // reset 3d drawlists
     for(uint32_t i = 0; i < gptDrawCtx->uDrawlistCount3D; i++)
     {
-        plDrawList3D* ptDrawlist = gptDrawCtx->aptDrawlists3D[i];
+        dcDrawList3D* ptDrawlist = gptDrawCtx->aptDrawlists3D[i];
 
         pl_sb_reset(ptDrawlist->sbtSolidVertexBuffer);
         pl_sb_reset(ptDrawlist->sbtSolidIndexBuffer);
@@ -2398,7 +2398,7 @@ pl_new_draw_3d_frame(void)
     // reset 3d drawlists
     for(uint32_t i = 0; i < gptDrawCtx->uDrawlistCount2D; i++)
     {
-        plDrawList2D* ptDrawlist = gptDrawCtx->aptDrawlists2D[i];
+        dcDrawList2D* ptDrawlist = gptDrawCtx->aptDrawlists2D[i];
 
         ptDrawlist->uIndexBufferByteSize = 0;
 
@@ -2419,10 +2419,10 @@ pl_new_draw_3d_frame(void)
 
 static inline void
 pl__add_3d_triangles(
-        plDrawList3D* ptDrawlist, uint32_t uVertexCount, const plVec3* atPoints,
+        dcDrawList3D* ptDrawlist, uint32_t uVertexCount, const plVec3* atPoints,
         uint32_t uTriangleCount, const uint32_t* auIndices, uint32_t uColor)
 {
-    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_SOLID, 0);
+    pl__prepare_3d_draw_command(ptDrawlist, DC_DRAW_COMMAND_3D_SOLID, 0);
     const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
 
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtSolidVertexBuffer);
@@ -2433,7 +2433,7 @@ pl__add_3d_triangles(
 
     for(uint32_t i = 0; i < uVertexCount; i++)
     {
-        ptDrawlist->sbtSolidVertexBuffer[uVertexStart + i] = ((plDrawVertex3DSolid){ {atPoints[i].x, atPoints[i].y, atPoints[i].z}, uColor});
+        ptDrawlist->sbtSolidVertexBuffer[uVertexStart + i] = ((dcDrawVertex3DSolid){ {atPoints[i].x, atPoints[i].y, atPoints[i].z}, uColor});
     }
 
     for(uint32_t i = 0; i < uTriangleCount; i++)
@@ -2446,9 +2446,9 @@ pl__add_3d_triangles(
 }
 
 static void
-pl__add_3d_triangle_filled(plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plVec3 tP2, plDrawSolidOptions tOptions)
+pl__add_3d_triangle_filled(dcDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plVec3 tP2, dcDrawSolidOptions tOptions)
 {
-    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_SOLID, 0);
+    pl__prepare_3d_draw_command(ptDrawlist, DC_DRAW_COMMAND_3D_SOLID, 0);
     const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
 
     pl_sb_reserve(ptDrawlist->sbtSolidVertexBuffer, pl_sb_size(ptDrawlist->sbtSolidVertexBuffer) + 3);
@@ -2456,9 +2456,9 @@ pl__add_3d_triangle_filled(plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plV
 
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtSolidVertexBuffer);
 
-    pl_sb_push(ptDrawlist->sbtSolidVertexBuffer, ((plDrawVertex3DSolid){ {tP0.x, tP0.y, tP0.z}, tOptions.uColor}));
-    pl_sb_push(ptDrawlist->sbtSolidVertexBuffer, ((plDrawVertex3DSolid){ {tP1.x, tP1.y, tP1.z}, tOptions.uColor}));
-    pl_sb_push(ptDrawlist->sbtSolidVertexBuffer, ((plDrawVertex3DSolid){ {tP2.x, tP2.y, tP2.z}, tOptions.uColor}));
+    pl_sb_push(ptDrawlist->sbtSolidVertexBuffer, ((dcDrawVertex3DSolid){ {tP0.x, tP0.y, tP0.z}, tOptions.uColor}));
+    pl_sb_push(ptDrawlist->sbtSolidVertexBuffer, ((dcDrawVertex3DSolid){ {tP1.x, tP1.y, tP1.z}, tOptions.uColor}));
+    pl_sb_push(ptDrawlist->sbtSolidVertexBuffer, ((dcDrawVertex3DSolid){ {tP2.x, tP2.y, tP2.z}, tOptions.uColor}));
 
     pl_sb_push(ptDrawlist->sbtSolidIndexBuffer, uVertexStart + 0);
     pl_sb_push(ptDrawlist->sbtSolidIndexBuffer, uVertexStart + 1);
@@ -2467,9 +2467,9 @@ pl__add_3d_triangle_filled(plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plV
 }
 
 static void
-pl__add_3d_sphere_filled(plDrawList3D* ptDrawlist, plSphere tDesc, uint32_t uLatBands, uint32_t uLongBands, plDrawSolidOptions tOptions)
+pl__add_3d_sphere_filled(dcDrawList3D* ptDrawlist, plSphere tDesc, uint32_t uLatBands, uint32_t uLongBands, dcDrawSolidOptions tOptions)
 {
-    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_SOLID, 0);
+    pl__prepare_3d_draw_command(ptDrawlist, DC_DRAW_COMMAND_3D_SOLID, 0);
     const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
 
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtSolidVertexBuffer);
@@ -2496,7 +2496,7 @@ pl__add_3d_sphere_filled(plDrawList3D* ptDrawlist, plSphere tDesc, uint32_t uLat
             const float fSinPhi = sinf(fPhi);
             const float fCosPhi = cosf(fPhi);
 
-            ptDrawlist->sbtSolidVertexBuffer[uVertexStart + uCurrentPoint] = (plDrawVertex3DSolid){ 
+            ptDrawlist->sbtSolidVertexBuffer[uVertexStart + uCurrentPoint] = (dcDrawVertex3DSolid){ 
                 {
                     fCosPhi * fSinTheta * tDesc.fRadius + tDesc.tCenter.x,
                     fCosTheta * tDesc.fRadius + tDesc.tCenter.y,
@@ -2530,9 +2530,9 @@ pl__add_3d_sphere_filled(plDrawList3D* ptDrawlist, plSphere tDesc, uint32_t uLat
 }
 
 static void
-pl__add_3d_sphere_textured(plDrawList3D* ptDrawlist, plTextureID tTexture, plSphere tDesc, const plMat4* ptTransform, uint32_t uLatBands, uint32_t uLongBands, uint32_t uColor)
+pl__add_3d_sphere_textured(dcDrawList3D* ptDrawlist, plTextureID tTexture, plSphere tDesc, const plMat4* ptTransform, uint32_t uLatBands, uint32_t uLongBands, uint32_t uColor)
 {
-    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_TEXTURED, tTexture);
+    pl__prepare_3d_draw_command(ptDrawlist, DC_DRAW_COMMAND_3D_TEXTURED, tTexture);
     const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer);
 
     const uint32_t uVertexStart = pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer);
@@ -2581,7 +2581,7 @@ pl__add_3d_sphere_textured(plDrawList3D* ptDrawlist, plTextureID tTexture, plSph
             if(ptTransform)
                 tFinalPos = pl_mul_mat4_vec3(ptTransform, tLocalPos);
 
-            ptDrawlist->sbtTexturedVertexBuffer[uVertexStart + uCurrentPoint] = (plDrawVertex3DTextured){
+            ptDrawlist->sbtTexturedVertexBuffer[uVertexStart + uCurrentPoint] = (dcDrawVertex3DTextured){
                 { tFinalPos.x, tFinalPos.y, tFinalPos.z },
                 { fU, fV },
                 uColor
@@ -2613,7 +2613,7 @@ pl__add_3d_sphere_textured(plDrawList3D* ptDrawlist, plTextureID tTexture, plSph
 }
 
 static void
-pl__add_3d_circle_xz_filled(plDrawList3D* ptDrawlist, plVec3 tCenter, float fRadius, uint32_t uSegments, plDrawSolidOptions tOptions)
+pl__add_3d_circle_xz_filled(dcDrawList3D* ptDrawlist, plVec3 tCenter, float fRadius, uint32_t uSegments, dcDrawSolidOptions tOptions)
 {
     if(uSegments == 0){ uSegments = 12; }
     const float fIncrement = PL_2PI / uSegments;
@@ -2643,7 +2643,7 @@ pl__add_3d_circle_xz_filled(plDrawList3D* ptDrawlist, plVec3 tCenter, float fRad
 }
 
 static void
-pl__add_3d_centered_box_filled(plDrawList3D* ptDrawlist, plVec3 tCenter, float fWidth, float fHeight, float fDepth, plDrawSolidOptions tOptions)
+pl__add_3d_centered_box_filled(dcDrawList3D* ptDrawlist, plVec3 tCenter, float fWidth, float fHeight, float fDepth, dcDrawSolidOptions tOptions)
 {
 
     const float fHalfWidth = fWidth / 2.0f;
@@ -2685,7 +2685,7 @@ pl__add_3d_centered_box_filled(plDrawList3D* ptDrawlist, plVec3 tCenter, float f
 }
 
 static void
-pl__add_3d_plane_xz_filled(plDrawList3D* ptDrawlist, plVec3 tCenter, float fWidth, float fHeight, plDrawSolidOptions tOptions)
+pl__add_3d_plane_xz_filled(dcDrawList3D* ptDrawlist, plVec3 tCenter, float fWidth, float fHeight, dcDrawSolidOptions tOptions)
 {
 
     const float fHalfWidth = fWidth / 2.0f;
@@ -2711,7 +2711,7 @@ pl__add_3d_plane_xz_filled(plDrawList3D* ptDrawlist, plVec3 tCenter, float fWidt
 }
 
 static void
-pl__add_3d_plane_xy_filled(plDrawList3D* ptDrawlist, plVec3 tCenter, float fWidth, float fHeight, plDrawSolidOptions tOptions)
+pl__add_3d_plane_xy_filled(dcDrawList3D* ptDrawlist, plVec3 tCenter, float fWidth, float fHeight, dcDrawSolidOptions tOptions)
 {
 
     const float fHalfWidth = fWidth / 2.0f;
@@ -2737,7 +2737,7 @@ pl__add_3d_plane_xy_filled(plDrawList3D* ptDrawlist, plVec3 tCenter, float fWidt
 }
 
 static void
-pl__add_3d_plane_yz_filled(plDrawList3D* ptDrawlist, plVec3 tCenter, float fWidth, float fHeight, plDrawSolidOptions tOptions)
+pl__add_3d_plane_yz_filled(dcDrawList3D* ptDrawlist, plVec3 tCenter, float fWidth, float fHeight, dcDrawSolidOptions tOptions)
 {
     const float fHalfWidth = fWidth / 2.0f;
     const float fHalfHeight = fHeight / 2.0f;
@@ -2758,7 +2758,7 @@ pl__add_3d_plane_yz_filled(plDrawList3D* ptDrawlist, plVec3 tCenter, float fWidt
 }
 
 static void
-pl__add_3d_band_xz_filled(plDrawList3D* ptDrawlist, plVec3 tCenter, float fInnerRadius, float fOuterRadius, uint32_t uSegments, plDrawSolidOptions tOptions)
+pl__add_3d_band_xz_filled(dcDrawList3D* ptDrawlist, plVec3 tCenter, float fInnerRadius, float fOuterRadius, uint32_t uSegments, dcDrawSolidOptions tOptions)
 {
     if(uSegments == 0)
         uSegments = 12;
@@ -2801,8 +2801,8 @@ pl__add_3d_band_xz_filled(plDrawList3D* ptDrawlist, plVec3 tCenter, float fInner
 
 static void
 pl__add_3d_band_xy_filled(
-    plDrawList3D* ptDrawlist, plVec3 tCenter, float fInnerRadius,
-    float fOuterRadius, uint32_t uSegments, plDrawSolidOptions tOptions)
+    dcDrawList3D* ptDrawlist, plVec3 tCenter, float fInnerRadius,
+    float fOuterRadius, uint32_t uSegments, dcDrawSolidOptions tOptions)
 {
     if(uSegments == 0)
         uSegments = 12;
@@ -2838,8 +2838,8 @@ pl__add_3d_band_xy_filled(
 
 static void
 pl__add_3d_band_yz_filled(
-    plDrawList3D* ptDrawlist, plVec3 tCenter, float fInnerRadius,
-    float fOuterRadius, uint32_t uSegments, plDrawSolidOptions tOptions)
+    dcDrawList3D* ptDrawlist, plVec3 tCenter, float fInnerRadius,
+    float fOuterRadius, uint32_t uSegments, dcDrawSolidOptions tOptions)
 {
     if(uSegments == 0)
         uSegments = 12;
@@ -2880,7 +2880,7 @@ pl__add_3d_band_yz_filled(
 }
 
 static void
-pl__add_3d_cylinder_filled(plDrawList3D* ptDrawlist, plCylinder tDesc, uint32_t uSegments, plDrawSolidOptions tOptions)
+pl__add_3d_cylinder_filled(dcDrawList3D* ptDrawlist, plCylinder tDesc, uint32_t uSegments, dcDrawSolidOptions tOptions)
 {
 
     if(uSegments == 0)
@@ -2947,7 +2947,7 @@ pl__add_3d_cylinder_filled(plDrawList3D* ptDrawlist, plCylinder tDesc, uint32_t 
 }
 
 static void
-pl__add_3d_cone_filled(plDrawList3D* ptDrawlist, plCone tDesc, uint32_t uSegments, plDrawSolidOptions tOptions)
+pl__add_3d_cone_filled(dcDrawList3D* ptDrawlist, plCone tDesc, uint32_t uSegments, dcDrawSolidOptions tOptions)
 {
 
     if(uSegments == 0)
@@ -2999,15 +2999,15 @@ pl__add_3d_cone_filled(plDrawList3D* ptDrawlist, plCone tDesc, uint32_t uSegment
 }
 
 static void
-pl__add_3d_line(plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plDrawLineOptions tOptions)
+pl__add_3d_line(dcDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, dcDrawLineOptions tOptions)
 {
-    pl__prepare_3d_draw_command(ptDrawlist, PL_DRAW_COMMAND_3D_LINE, 0);
+    pl__prepare_3d_draw_command(ptDrawlist, DC_DRAW_COMMAND_3D_LINE, 0);
     const uint32_t uIdxBefore = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
 
     pl_sb_reserve(ptDrawlist->sbtLineVertexBuffer, pl_sb_size(ptDrawlist->sbtLineVertexBuffer) + 4);
     pl_sb_reserve(ptDrawlist->sbtLineIndexBuffer, pl_sb_size(ptDrawlist->sbtLineIndexBuffer) + 6);
 
-    plDrawVertex3DLine tNewVertex0 = {
+    dcDrawVertex3DLine tNewVertex0 = {
         {tP0.x, tP0.y, tP0.z},
         -1.0f,
         tOptions.fThickness,
@@ -3016,7 +3016,7 @@ pl__add_3d_line(plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plDrawLineOpti
         tOptions.uColor
     };
 
-    plDrawVertex3DLine tNewVertex1 = {
+    dcDrawVertex3DLine tNewVertex1 = {
         {tP1.x, tP1.y, tP1.z},
         -1.0f,
         tOptions.fThickness,
@@ -3046,9 +3046,9 @@ pl__add_3d_line(plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plDrawLineOpti
 }
 
 static void
-pl__add_3d_text(plDrawList3D* ptDrawlist, plVec3 tP, const char* pcText, plDrawTextOptions tOptions)
+pl__add_3d_text(dcDrawList3D* ptDrawlist, plVec3 tP, const char* pcText, dcDrawTextOptions tOptions)
 {
-    plDraw3DText tText = {
+    dcDraw3DText tText = {
         .fSize       = tOptions.fSize == 0.0f ? tOptions.ptFont->fSize : tOptions.fSize,
         .fWrap       = tOptions.fWrap,
         .uColor      = tOptions.uColor,
@@ -3060,7 +3060,7 @@ pl__add_3d_text(plDrawList3D* ptDrawlist, plVec3 tP, const char* pcText, plDrawT
 }
 
 static void
-pl__add_3d_cross(plDrawList3D* ptDrawlist, plVec3 tP, float fLength, plDrawLineOptions tOptions)
+pl__add_3d_cross(dcDrawList3D* ptDrawlist, plVec3 tP, float fLength, dcDrawLineOptions tOptions)
 {
     const float fHalfLength = fLength / 2.0f;
     const plVec3 aatVerticies[6] = {
@@ -3075,7 +3075,7 @@ pl__add_3d_cross(plDrawList3D* ptDrawlist, plVec3 tP, float fLength, plDrawLineO
 }
 
 static void
-pl__add_3d_transform(plDrawList3D* ptDrawlist, const plMat4* ptTransform, float fLength, plDrawLineOptions tOptions)
+pl__add_3d_transform(dcDrawList3D* ptDrawlist, const plMat4* ptTransform, float fLength, dcDrawLineOptions tOptions)
 {
 
     const plVec3 tOrigin = pl_mul_mat4_vec3(ptTransform, (plVec3){0.0f, 0.0f, 0.0f});
@@ -3092,7 +3092,7 @@ pl__add_3d_transform(plDrawList3D* ptDrawlist, const plMat4* ptTransform, float 
 }
 
 static void
-pl__add_3d_frustum(plDrawList3D* ptDrawlist, const plMat4* ptTransform, plDrawFrustumDesc tDesc, plDrawLineOptions tOptions)
+pl__add_3d_frustum(dcDrawList3D* ptDrawlist, const plMat4* ptTransform, dcDrawFrustumDesc tDesc, dcDrawLineOptions tOptions)
 {
     const float fSmallHeight = tanf(tDesc.fYFov / 2.0f) * tDesc.fNearZ;
     const float fSmallWidth  = fSmallHeight * tDesc.fAspectRatio;
@@ -3128,7 +3128,7 @@ pl__add_3d_frustum(plDrawList3D* ptDrawlist, const plMat4* ptTransform, plDrawFr
 }
 
 static void
-pl__add_3d_sphere_ex(plDrawList3D* ptDrawlist, plSphere tSphere, uint32_t uLatBands, uint32_t uLongBands, plDrawLineOptions tOptions)
+pl__add_3d_sphere_ex(dcDrawList3D* ptDrawlist, plSphere tSphere, uint32_t uLatBands, uint32_t uLongBands, dcDrawLineOptions tOptions)
 {
     if(uLatBands == 0)
         uLatBands = 16;
@@ -3188,7 +3188,7 @@ pl__add_3d_sphere_ex(plDrawList3D* ptDrawlist, plSphere tSphere, uint32_t uLatBa
 }
 
 static void
-pl__add_3d_capsule_ex(plDrawList3D* ptDrawlist, plCapsule tDesc, uint32_t uLatBands, uint32_t uLongBands, plDrawLineOptions tOptions)
+pl__add_3d_capsule_ex(dcDrawList3D* ptDrawlist, plCapsule tDesc, uint32_t uLatBands, uint32_t uLongBands, dcDrawLineOptions tOptions)
 {
     if(uLatBands == 0)
         uLatBands = 16;
@@ -3288,7 +3288,7 @@ pl__add_3d_capsule_ex(plDrawList3D* ptDrawlist, plCapsule tDesc, uint32_t uLatBa
 }
 
 static void
-pl__add_3d_cylinder(plDrawList3D* ptDrawlist, plCylinder tDesc, uint32_t uSegments, plDrawLineOptions tOptions)
+pl__add_3d_cylinder(dcDrawList3D* ptDrawlist, plCylinder tDesc, uint32_t uSegments, dcDrawLineOptions tOptions)
 {
 
     if(uSegments == 0)
@@ -3343,7 +3343,7 @@ pl__add_3d_cylinder(plDrawList3D* ptDrawlist, plCylinder tDesc, uint32_t uSegmen
 }
 
 static void
-pl__add_3d_cone_ex(plDrawList3D* ptDrawlist, plCone tDesc, uint32_t uSegments, plDrawLineOptions tOptions)
+pl__add_3d_cone_ex(dcDrawList3D* ptDrawlist, plCone tDesc, uint32_t uSegments, dcDrawLineOptions tOptions)
 {
 
     if(uSegments == 0)
@@ -3394,7 +3394,7 @@ pl__add_3d_cone_ex(plDrawList3D* ptDrawlist, plCone tDesc, uint32_t uSegments, p
 }
 
 static void
-pl__add_3d_circle_xz(plDrawList3D* ptDrawlist, plVec3 tCenter, float fRadius, uint32_t uSegments, plDrawLineOptions tOptions)
+pl__add_3d_circle_xz(dcDrawList3D* ptDrawlist, plVec3 tCenter, float fRadius, uint32_t uSegments, dcDrawLineOptions tOptions)
 {
     if(uSegments == 0){ uSegments = 12; }
     const float fIncrement = PL_2PI / uSegments;
@@ -3411,7 +3411,7 @@ pl__add_3d_circle_xz(plDrawList3D* ptDrawlist, plVec3 tCenter, float fRadius, ui
 }
 
 static void
-pl__add_3d_centered_box(plDrawList3D* ptDrawlist, plVec3 tCenter, float fWidth, float fHeight, float fDepth, plDrawLineOptions tOptions)
+pl__add_3d_centered_box(dcDrawList3D* ptDrawlist, plVec3 tCenter, float fWidth, float fHeight, float fDepth, dcDrawLineOptions tOptions)
 {
 
     const float fHalfWidth = fWidth / 2.0f;
@@ -3451,7 +3451,7 @@ pl__add_3d_centered_box(plDrawList3D* ptDrawlist, plVec3 tCenter, float fWidth, 
 }
 
 static void
-pl__add_3d_aabb(plDrawList3D* ptDrawlist, plVec3 tMin, plVec3 tMax, plDrawLineOptions tOptions)
+pl__add_3d_aabb(dcDrawList3D* ptDrawlist, plVec3 tMin, plVec3 tMax, dcDrawLineOptions tOptions)
 {
     const plVec3 atVerticies[] = {
         {  tMin.x, tMin.y, tMin.z },
@@ -3482,7 +3482,7 @@ pl__add_3d_aabb(plDrawList3D* ptDrawlist, plVec3 tMin, plVec3 tMax, plDrawLineOp
 }
 
 static void
-pl__add_3d_bezier_quad(plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plVec3 tP2, uint32_t uSegments, plDrawLineOptions tOptions)
+pl__add_3d_bezier_quad(dcDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plVec3 tP2, uint32_t uSegments, dcDrawLineOptions tOptions)
 {
 
     // order of the bezier curve inputs are 0=start, 1=control, 2=ending
@@ -3521,8 +3521,8 @@ pl__add_3d_bezier_quad(plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plVec3 
 
 static void
 pl__add_3d_bezier_cubic(
-    plDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plVec3 tP2,
-    plVec3 tP3, uint32_t uSegments, plDrawLineOptions tOptions)
+    dcDrawList3D* ptDrawlist, plVec3 tP0, plVec3 tP1, plVec3 tP2,
+    plVec3 tP3, uint32_t uSegments, dcDrawLineOptions tOptions)
 {
     // order of the bezier curve inputs are 0=start, 1=control 1, 2=control 2, 3=ending
 
@@ -3817,8 +3817,8 @@ static const char gcPtrDefaultFontCompressed[11980 + 1] =
     "GT4CPGT4CPGT4CPGT4CPGT4CPGT4CP-qekC`.9kEg^+F$kwViFJTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5KTB&5o,^<-28ZI'O?;xp"
     "O?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xpO?;xp;7q-#lLYI:xvD=#";
 
-static plFont*
-pl_add_default_font(plFontAtlas* ptAtlas)
+static dcFont*
+pl_add_default_font(dcFontAtlas* ptAtlas)
 {
 
     void* pData = NULL;
@@ -3833,12 +3833,12 @@ pl_add_default_font(plFontAtlas* ptAtlas)
 
     PL_FREE(pCompressedTTF);
 
-    static const plFontRange tRange = {
+    static const dcFontRange tRange = {
         .iFirstCodePoint = 0x0020,
         .uCharCount = 0x00FF - 0x0020
     };
 
-    plFontConfig tFontConfig = {
+    dcFontConfig tFontConfig = {
         .bSdf           = false,
         .fSize          = 13.0f,
         .uHOverSampling = 1,
@@ -3857,21 +3857,21 @@ pl_add_default_font(plFontAtlas* ptAtlas)
 //-----------------------------------------------------------------------------
 
 static void
-pl__prepare_3d_draw_command(plDrawList3D* ptDrawlist, plDrawCommand3DType eType, plTextureID tTexture)
+pl__prepare_3d_draw_command(dcDrawList3D* ptDrawlist, dcDrawCommand3DType eType, plTextureID tTexture)
 {
     if(ptDrawlist->iLastCommand3D >= 0)
     {
-        plDrawCommand3D* ptLastCmd = &ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D];
+        dcDrawCommand3D* ptLastCmd = &ptDrawlist->sbtDrawCommands3D[ptDrawlist->iLastCommand3D];
         // merge if same type (and same texture for textured)
         if(ptLastCmd->tUserCallback == NULL &&
            ptLastCmd->eType == eType &&
-           (eType != PL_DRAW_COMMAND_3D_TEXTURED || ptLastCmd->tTextureId == tTexture))
+           (eType != DC_DRAW_COMMAND_3D_TEXTURED || ptLastCmd->tTextureId == tTexture))
         {
             return;
         }
     }
 
-    plDrawCommand3D tNewCommand = {
+    dcDrawCommand3D tNewCommand = {
         .eType         = eType,
         .uElementCount = 0,
         .tTextureId    = tTexture
@@ -3879,15 +3879,15 @@ pl__prepare_3d_draw_command(plDrawList3D* ptDrawlist, plDrawCommand3DType eType,
 
     switch(eType)
     {
-        case PL_DRAW_COMMAND_3D_SOLID:
+        case DC_DRAW_COMMAND_3D_SOLID:
             tNewCommand.uVertexOffset = pl_sb_size(ptDrawlist->sbtSolidVertexBuffer);
             tNewCommand.uIndexOffset  = pl_sb_size(ptDrawlist->sbtSolidIndexBuffer);
             break;
-        case PL_DRAW_COMMAND_3D_LINE:
+        case DC_DRAW_COMMAND_3D_LINE:
             tNewCommand.uVertexOffset = pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
             tNewCommand.uIndexOffset  = pl_sb_size(ptDrawlist->sbtLineIndexBuffer);
             break;
-        case PL_DRAW_COMMAND_3D_TEXTURED:
+        case DC_DRAW_COMMAND_3D_TEXTURED:
             tNewCommand.uVertexOffset = pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer);
             tNewCommand.uIndexOffset  = pl_sb_size(ptDrawlist->sbtTexturedIndexBuffer);
             break;
@@ -3898,7 +3898,7 @@ pl__prepare_3d_draw_command(plDrawList3D* ptDrawlist, plDrawCommand3DType eType,
 }
 
 static void
-pl__prepare_draw_command(plDrawLayer2D* ptLayer, plTextureID tTextureID, bool bSdf)
+pl__prepare_draw_command(dcDrawLayer2D* ptLayer, plTextureID tTextureID, bool bSdf)
 {
     bool bCreateNewCommand = true;
 
@@ -3925,7 +3925,7 @@ pl__prepare_draw_command(plDrawLayer2D* ptLayer, plTextureID tTextureID, bool bS
     // new command needed
     if(bCreateNewCommand)
     {
-        plDrawCommand tNewdrawCommand = 
+        dcDrawCommand tNewdrawCommand = 
         {
             .uVertexOffset = pl_sb_size(ptLayer->ptDrawlist->sbtVertexBuffer),
             .uIndexOffset  = pl_sb_size(ptLayer->sbuIndexBuffer),
@@ -3942,7 +3942,7 @@ pl__prepare_draw_command(plDrawLayer2D* ptLayer, plTextureID tTextureID, bool bS
 }
 
 static void
-pl__reserve_triangles(plDrawLayer2D* ptLayer, uint32_t uIndexCount, uint32_t uVertexCount)
+pl__reserve_triangles(dcDrawLayer2D* ptLayer, uint32_t uIndexCount, uint32_t uVertexCount)
 {
     pl_sb_reserve(ptLayer->ptDrawlist->sbtVertexBuffer, pl_sb_size(ptLayer->ptDrawlist->sbtVertexBuffer) + uVertexCount);
     pl_sb_reserve(ptLayer->sbuIndexBuffer, pl_sb_size(ptLayer->sbuIndexBuffer) + uIndexCount);
@@ -3951,11 +3951,11 @@ pl__reserve_triangles(plDrawLayer2D* ptLayer, uint32_t uIndexCount, uint32_t uVe
 }
 
 static void
-pl__add_vertex(plDrawLayer2D* ptLayer, plVec2 tPos, uint32_t uColor, plVec2 tUv)
+pl__add_vertex(dcDrawLayer2D* ptLayer, plVec2 tPos, uint32_t uColor, plVec2 tUv)
 {
 
     pl_sb_push(ptLayer->ptDrawlist->sbtVertexBuffer,
-        ((plDrawVertex){
+        ((dcDrawVertex){
             .afPos[0] = tPos.x,
             .afPos[1] = tPos.y,
             .afUv[0]  = tUv.u,
@@ -3966,23 +3966,23 @@ pl__add_vertex(plDrawLayer2D* ptLayer, plVec2 tPos, uint32_t uColor, plVec2 tUv)
 }
 
 static void
-pl__add_index(plDrawLayer2D* ptLayer, uint32_t uVertexStart, uint32_t i0, uint32_t i1, uint32_t i2)
+pl__add_index(dcDrawLayer2D* ptLayer, uint32_t uVertexStart, uint32_t i0, uint32_t i1, uint32_t i2)
 {
     pl_sb_push(ptLayer->sbuIndexBuffer, uVertexStart + i0);
     pl_sb_push(ptLayer->sbuIndexBuffer, uVertexStart + i1);
     pl_sb_push(ptLayer->sbuIndexBuffer, uVertexStart + i2);
 }
 
-static const plFontGlyph*
-pl__find_glyph(plFont* ptFont, uint32_t c)
+static const dcFontGlyph*
+pl__find_glyph(dcFont* ptFont, uint32_t c)
 {
     const uint32_t uRangeCount = pl_sb_size(ptFont->_sbtRanges);
     for(uint32_t i = 0; i < uRangeCount; i++)
     {
-        const plFontRange* ptRange = &ptFont->_sbtRanges[i];
+        const dcFontRange* ptRange = &ptFont->_sbtRanges[i];
         if (c >= (uint32_t)ptRange->iFirstCodePoint && c < (uint32_t)ptRange->iFirstCodePoint + (uint32_t)ptRange->uCharCount) 
         {
-            const plFontGlyph* ptGlyph = &ptFont->_sbtGlyphs[ptFont->_auCodePoints[c]];
+            const dcFontGlyph* ptGlyph = &ptFont->_sbtGlyphs[ptFont->_auCodePoints[c]];
             return ptGlyph;
         }
     }
@@ -3990,13 +3990,13 @@ pl__find_glyph(plFont* ptFont, uint32_t c)
     if(ptFont->_ptFallbackGlyph)
         return ptFont->_ptFallbackGlyph;
 
-    const plUiWChar atFallbackCharacters[] = { (plUiWChar)PL_UNICODE_CODEPOINT_INVALID, (plUiWChar)'?', (plUiWChar)' ' };
+    const dcUiWChar atFallbackCharacters[] = { (dcUiWChar)DC_UNICODE_CODEPOINT_INVALID, (dcUiWChar)'?', (dcUiWChar)' ' };
 
     for(uint32_t j = 0; j < 3; j++)
     {
         for(uint32_t i = 0; i < uRangeCount; i++)
         {
-            const plFontRange* ptRange = &ptFont->_sbtRanges[i];
+            const dcFontRange* ptRange = &ptFont->_sbtRanges[i];
             if (atFallbackCharacters[j] >= (uint32_t)ptRange->iFirstCodePoint && atFallbackCharacters[j] < (uint32_t)ptRange->iFirstCodePoint + (uint32_t)ptRange->uCharCount) 
             {
                 ptFont->_ptFallbackGlyph = &ptFont->_sbtGlyphs[ptFont->_auCodePoints[atFallbackCharacters[j]]];
@@ -4106,12 +4106,12 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
     const plDataRegistryI* ptDataRegistry = pl_get_api_latest(ptApiRegistry, plDataRegistryI);
 
     if(bReload)
-        gptDrawCtx = ptDataRegistry->get_data("plDrawContext");
+        gptDrawCtx = ptDataRegistry->get_data("dcDrawContext");
     else  // first load
     {
-        static plDrawContext tCtx = {0};
+        static dcDrawContext tCtx = {0};
         gptDrawCtx = &tCtx;
-        ptDataRegistry->set_data("plDrawContext", gptDrawCtx);
+        ptDataRegistry->set_data("dcDrawContext", gptDrawCtx);
     }
 }
 

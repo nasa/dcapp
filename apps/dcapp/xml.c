@@ -5282,8 +5282,8 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
 
     // initialize dc_draw_ext and dc_draw_backend_ext (pl_starter doesn't do this since we use dcDrawI)
     dcDrawInit tDrawInit = {0};
-    _ext_draw->initialize(&tDrawInit);
-    _ext_draw_backend->initialize(device);
+    _ext_dc_draw->initialize(&tDrawInit);
+    _ext_dc_draw_backend->initialize(device);
 
     // initialize GPU memory allocators
     app_data->gpu_local_dedicated_allocator  = _ext_gpu_allocators->get_local_dedicated_allocator(device);
@@ -5321,16 +5321,16 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     // create font atlas
     {
         // create and set font atlas
-        plFontAtlas *font_atlas = _ext_draw->create_font_atlas();
-        _ext_draw->set_font_atlas(font_atlas);
+        dcFontAtlas *font_atlas = _ext_dc_draw->create_font_atlas();
+        _ext_dc_draw->set_font_atlas(font_atlas);
 
         // typical font range (you can also add individual characters)
-        const plFontRange font_range = {
+        const dcFontRange font_range = {
             .iFirstCodePoint = 0x0020,
             .uCharCount      = 0x00FF - 0x0020};
 
         // adding previous font but as a signed distance field (SDF)
-        plFontConfig font_config   = {};
+        dcFontConfig font_config   = {};
         font_config.bSdf           = true; // only works with ttf
         font_config.fSize          = 25.0f;
         font_config.uHOverSampling = 1;
@@ -5340,16 +5340,36 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
         font_config.uRangeCount    = 1;
         font_config.ptRanges       = &font_range;
 
-        app_data->pl_vera_sdf_font = _ext_draw->add_font_from_file_ttf(font_atlas, font_config, "../../assets/fonts/bitstream-vera-sans/Vera.ttf");
+        app_data->pl_vera_sdf_font = _ext_dc_draw->add_font_from_file_ttf(font_atlas, font_config, "../../assets/fonts/bitstream-vera-sans/Vera.ttf");
 
         // build font atlas (CPU prepare + GPU upload - backend handles prepare internally)
         plCommandBuffer *command_buffer = _ext_gfx->request_command_buffer(_ext_starter->get_current_command_pool(), "dcapp font atlas");
-        _ext_draw_backend->build_font_atlas(command_buffer, font_atlas);
+        _ext_dc_draw_backend->build_font_atlas(command_buffer, font_atlas);
         _ext_gfx->wait_on_command_buffer(command_buffer);
         _ext_gfx->return_command_buffer(command_buffer);
     }
-    // Note: don't call set_default_font - pl_starter uses pilotlight's plDrawI with its own font atlas,
-    // while dcapp uses dcDrawI with a separate font atlas. Let pl_starter create its own default font.
+    // Add dcapp's Vera.ttf SDF font to pilotlight's font atlas (used by planet text rendering)
+    {
+        plFontAtlas *pl_atlas = _ext_draw->get_current_font_atlas();
+
+        const plFontRange pl_font_range = {
+            .iFirstCodePoint = 0x0020,
+            .uCharCount      = 0x00FF - 0x0020};
+
+        plFontConfig pl_font_config = {};
+        pl_font_config.bSdf           = true;
+        pl_font_config.fSize          = 25.0f;
+        pl_font_config.uHOverSampling = 1;
+        pl_font_config.uVOverSampling = 1;
+        pl_font_config.ucOnEdgeValue  = 180;
+        pl_font_config.iSdfPadding    = 1;
+        pl_font_config.uRangeCount    = 1;
+        pl_font_config.ptRanges       = &pl_font_range;
+
+        plFont *pl_font = _ext_draw->add_font_from_file_ttf(pl_atlas, pl_font_config,
+            "../../assets/fonts/bitstream-vera-sans/Vera.ttf");
+        _ext_starter->set_default_font(pl_font);
+    }
 
     // initialize shader compiler
     plShaderOptions shader_options          = {};
@@ -5368,10 +5388,10 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     _init_stencil_pipelines(app_data, _ext_starter->get_device(), _ext_starter->get_render_pass());
 
     // register our app drawlist
-    app_data->pl_draw_list = _ext_draw->request_2d_drawlist();
+    app_data->pl_draw_list = _ext_dc_draw->request_2d_drawlist();
 
     // request layers (allows drawing out of order)
-    app_data->pl_layer = _ext_draw->request_2d_layer(app_data->pl_draw_list);
+    app_data->pl_layer = _ext_dc_draw->request_2d_layer(app_data->pl_draw_list);
 
     // initialize frame data
     app_data->frame_data.pressed_node      = NODE_INDEX_UNDEFINED;
@@ -5419,7 +5439,7 @@ static _Texture _create_texture(_AppData *app_data, uint32_t texture_width, uint
     _ext_gfx->bind_texture_to_memory(device, pl_texture_handle, &pl_texture_allocation);
 
     // create bind group
-    plBindGroupHandle pl_bind_group_handle = _ext_draw_backend->create_bind_group_for_texture(pl_texture_handle);
+    plBindGroupHandle pl_bind_group_handle = _ext_dc_draw_backend->create_bind_group_for_texture(pl_texture_handle);
 
     // create _Texture struct
     _Texture texture = {

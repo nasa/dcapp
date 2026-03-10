@@ -61,24 +61,24 @@ Index of this file:
 // [SECTION] internal structs
 //-----------------------------------------------------------------------------
 
-typedef struct _plPipelineEntry
+typedef struct _dcPipelineEntry
 {
     plRenderPassHandle tRenderPass;
     uint32_t           uMSAASampleCount;
     plShaderHandle     tRegularPipeline;
     plShaderHandle     tSecondaryPipeline;
-    plDrawFlags        tFlags;
+    dcDrawFlags        tFlags;
     uint32_t           uSubpassIndex;
-} plPipelineEntry;
+} dcPipelineEntry;
 
-typedef struct _plBufferInfo
+typedef struct _dcBufferInfo
 {
     plBufferHandle tVertexBuffer;
     uint32_t       uVertexBufferSize;
     uint32_t       uVertexBufferOffset;
-} plBufferInfo;
+} dcBufferInfo;
 
-typedef struct _plDrawBackendContext
+typedef struct _dcDrawBackendContext
 {
     plDevice*            ptDevice;
     plTempAllocator      tTempAllocator;
@@ -87,9 +87,9 @@ typedef struct _plDrawBackendContext
     plBindGroupHandle    tFontSamplerBindGroup;
     plBindGroupHandle    tNearSamplerBindGroup;
     plBindGroupHandle    tCurrentSamplerBindGroup;
-    plPipelineEntry*     sbt3dPipelineEntries;
-    plPipelineEntry*     sbt3dTexturedPipelineEntries;
-    plPipelineEntry*     sbt2dPipelineEntries;
+    dcPipelineEntry*     sbt3dPipelineEntries;
+    dcPipelineEntry*     sbt3dTexturedPipelineEntries;
+    dcPipelineEntry*     sbt2dPipelineEntries;
     plBindGroupPool*     ptBindGroupPool;
 
     // bind group layouts
@@ -101,10 +101,10 @@ typedef struct _plDrawBackendContext
     uint32_t       auIndexBufferSize[PL_MAX_FRAMES_IN_FLIGHT];
     uint32_t       auIndexBufferOffset[PL_MAX_FRAMES_IN_FLIGHT];
 
-    plBufferInfo atBufferInfo[PL_MAX_FRAMES_IN_FLIGHT];
-    plBufferInfo at3DBufferInfo[PL_MAX_FRAMES_IN_FLIGHT];
-    plBufferInfo at3DTexturedBufferInfo[PL_MAX_FRAMES_IN_FLIGHT];
-    plBufferInfo atLineBufferInfo[PL_MAX_FRAMES_IN_FLIGHT];
+    dcBufferInfo atBufferInfo[PL_MAX_FRAMES_IN_FLIGHT];
+    dcBufferInfo at3DBufferInfo[PL_MAX_FRAMES_IN_FLIGHT];
+    dcBufferInfo at3DTexturedBufferInfo[PL_MAX_FRAMES_IN_FLIGHT];
+    dcBufferInfo atLineBufferInfo[PL_MAX_FRAMES_IN_FLIGHT];
 
     // dynamic buffer system
     plDynamicDataBlock tCurrentDynamicDataBlock;
@@ -118,13 +118,13 @@ typedef struct _plDrawBackendContext
     plShaderHandle* pt3dSolidShaderOverride;
     plShaderHandle* pt3dTexturedShaderOverride;
     bool            bCustom3DShaderActive;
-} plDrawBackendContext;
+} dcDrawBackendContext;
 
 //-----------------------------------------------------------------------------
 // [SECTION] global data
 //-----------------------------------------------------------------------------
 
-static plDrawBackendContext* gptDrawBackendCtx = NULL;
+static dcDrawBackendContext* gptDrawBackendCtx = NULL;
 static uint64_t uLogChannelDrawBackend = UINT64_MAX;
 
 //-----------------------------------------------------------------------------
@@ -132,9 +132,9 @@ static uint64_t uLogChannelDrawBackend = UINT64_MAX;
 //-----------------------------------------------------------------------------
 
 static plBufferHandle         pl__create_staging_buffer(const plBufferDesc*, const char* pcName, uint32_t uIdentifier);
-static const plPipelineEntry* pl__get_3d_pipeline              (plRenderPassHandle, uint32_t uMSAASampleCount, plDrawFlags, uint32_t uSubpassIndex);
-static const plPipelineEntry* pl__get_3d_textured_pipeline     (plRenderPassHandle, uint32_t uMSAASampleCount, plDrawFlags, uint32_t uSubpassIndex);
-static const plPipelineEntry* pl__get_2d_pipeline              (plRenderPassHandle, uint32_t uMSAASampleCount, uint32_t uSubpassIndex);
+static const dcPipelineEntry* pl__get_3d_pipeline              (plRenderPassHandle, uint32_t uMSAASampleCount, dcDrawFlags, uint32_t uSubpassIndex);
+static const dcPipelineEntry* pl__get_3d_textured_pipeline     (plRenderPassHandle, uint32_t uMSAASampleCount, dcDrawFlags, uint32_t uSubpassIndex);
+static const dcPipelineEntry* pl__get_2d_pipeline              (plRenderPassHandle, uint32_t uMSAASampleCount, uint32_t uSubpassIndex);
 static plBindGroupHandle      pl_create_bind_group_for_texture(plTextureHandle);
 
 //-----------------------------------------------------------------------------
@@ -316,7 +316,7 @@ pl_new_draw_frame(void)
 }
 
 bool
-pl_build_font_atlas_backend(plCommandBuffer* ptCommandBuffer, plFontAtlas* ptAtlas)
+pl_build_font_atlas_backend(plCommandBuffer* ptCommandBuffer, dcFontAtlas* ptAtlas)
 {
 
     gptDraw->prepare_font_atlas(ptAtlas);
@@ -391,7 +391,7 @@ pl_build_font_atlas_backend(plCommandBuffer* ptCommandBuffer, plFontAtlas* ptAtl
 }
 
 void
-pl_cleanup_font_atlas_backend(plFontAtlas* ptAtlas)
+pl_cleanup_font_atlas_backend(dcFontAtlas* ptAtlas)
 {
     if(ptAtlas == NULL)
         ptAtlas = gptDraw->get_current_font_atlas();
@@ -430,13 +430,13 @@ pl__create_staging_buffer(const plBufferDesc* ptDesc, const char* pcName, uint32
     return tHandle;
 }
 
-static const plPipelineEntry*
-pl__get_3d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, plDrawFlags tFlags, uint32_t uSubpassIndex)
+static const dcPipelineEntry*
+pl__get_3d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex)
 {
     // check if pipeline exists
     for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dPipelineEntries); i++)
     {
-        const plPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dPipelineEntries[i];
+        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dPipelineEntries[i];
         if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex && ptEntry->uMSAASampleCount == uMSAASampleCount && ptEntry->tFlags == tFlags && ptEntry->uSubpassIndex == uSubpassIndex)
         {
             return ptEntry;
@@ -446,16 +446,16 @@ pl__get_3d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, p
     plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
 
     pl_sb_add(gptDrawBackendCtx->sbt3dPipelineEntries);
-    plPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dPipelineEntries) - 1];
+    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dPipelineEntries) - 1];
     ptEntry->tFlags = tFlags;
     ptEntry->tRenderPass = tRenderPass;
     ptEntry->uMSAASampleCount = uMSAASampleCount;
     ptEntry->uSubpassIndex = uSubpassIndex;
 
     uint64_t ulCullMode = PL_CULL_MODE_NONE;
-    if(tFlags & PL_DRAW_FLAG_CULL_FRONT)
+    if(tFlags & DC_DRAW_FLAG_CULL_FRONT)
         ulCullMode |= PL_CULL_MODE_CULL_FRONT;
-    if(tFlags & PL_DRAW_FLAG_CULL_BACK)
+    if(tFlags & DC_DRAW_FLAG_CULL_BACK)
         ulCullMode |= PL_CULL_MODE_CULL_BACK;
 
     {
@@ -463,8 +463,8 @@ pl__get_3d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, p
             .tFragmentShader = gptShader->load_glsl("dc_draw_3d.frag", "main", NULL, NULL),
             .tVertexShader   = gptShader->load_glsl("dc_draw_3d.vert", "main", NULL, NULL),
             .tGraphicsState = {
-                .ulDepthWriteEnabled  = tFlags & PL_DRAW_FLAG_DEPTH_WRITE ? 1 : 0,
-                .ulDepthMode          = tFlags & PL_DRAW_FLAG_DEPTH_TEST ? (tFlags & PL_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) : PL_COMPARE_MODE_ALWAYS,
+                .ulDepthWriteEnabled  = tFlags & DC_DRAW_FLAG_DEPTH_WRITE ? 1 : 0,
+                .ulDepthMode          = tFlags & DC_DRAW_FLAG_DEPTH_TEST ? (tFlags & DC_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) : PL_COMPARE_MODE_ALWAYS,
                 .ulCullMode           = ulCullMode,
                 .ulWireframe          = 0,
                 .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
@@ -508,8 +508,8 @@ pl__get_3d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, p
             .tFragmentShader = gptShader->load_glsl("dc_draw_3d.frag", "main", NULL, NULL),
             .tVertexShader   = gptShader->load_glsl("dc_draw_3d_line.vert", "main", NULL, NULL),
             .tGraphicsState = {
-                .ulDepthWriteEnabled  = tFlags & PL_DRAW_FLAG_DEPTH_WRITE,
-                .ulDepthMode          = tFlags & PL_DRAW_FLAG_DEPTH_TEST ? (tFlags & PL_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) : PL_COMPARE_MODE_ALWAYS,
+                .ulDepthWriteEnabled  = tFlags & DC_DRAW_FLAG_DEPTH_WRITE,
+                .ulDepthMode          = tFlags & DC_DRAW_FLAG_DEPTH_TEST ? (tFlags & DC_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) : PL_COMPARE_MODE_ALWAYS,
                 .ulCullMode           = ulCullMode,
                 .ulWireframe          = 0,
                 .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
@@ -552,13 +552,13 @@ pl__get_3d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, p
     return ptEntry;
 }
 
-static const plPipelineEntry*
-pl__get_3d_textured_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, plDrawFlags tFlags, uint32_t uSubpassIndex)
+static const dcPipelineEntry*
+pl__get_3d_textured_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, dcDrawFlags tFlags, uint32_t uSubpassIndex)
 {
     // check if pipeline exists
     for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt3dTexturedPipelineEntries); i++)
     {
-        const plPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedPipelineEntries[i];
+        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedPipelineEntries[i];
         if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex && ptEntry->uMSAASampleCount == uMSAASampleCount && ptEntry->tFlags == tFlags && ptEntry->uSubpassIndex == uSubpassIndex)
         {
             return ptEntry;
@@ -568,24 +568,24 @@ pl__get_3d_textured_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampl
     plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
 
     pl_sb_add(gptDrawBackendCtx->sbt3dTexturedPipelineEntries);
-    plPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dTexturedPipelineEntries) - 1];
+    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt3dTexturedPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt3dTexturedPipelineEntries) - 1];
     ptEntry->tFlags = tFlags;
     ptEntry->tRenderPass = tRenderPass;
     ptEntry->uMSAASampleCount = uMSAASampleCount;
     ptEntry->uSubpassIndex = uSubpassIndex;
 
     uint64_t ulCullMode = PL_CULL_MODE_NONE;
-    if(tFlags & PL_DRAW_FLAG_CULL_FRONT)
+    if(tFlags & DC_DRAW_FLAG_CULL_FRONT)
         ulCullMode |= PL_CULL_MODE_CULL_FRONT;
-    if(tFlags & PL_DRAW_FLAG_CULL_BACK)
+    if(tFlags & DC_DRAW_FLAG_CULL_BACK)
         ulCullMode |= PL_CULL_MODE_CULL_BACK;
 
     const plShaderDesc t3DTexturedShaderDesc = {
         .tFragmentShader = gptShader->load_glsl("dc_draw_3d_textured.frag", "main", NULL, NULL),
         .tVertexShader   = gptShader->load_glsl("dc_draw_3d_textured.vert", "main", NULL, NULL),
         .tGraphicsState = {
-            .ulDepthWriteEnabled  = tFlags & PL_DRAW_FLAG_DEPTH_WRITE ? 1 : 0,
-            .ulDepthMode          = tFlags & PL_DRAW_FLAG_DEPTH_TEST ? (tFlags & PL_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) : PL_COMPARE_MODE_ALWAYS,
+            .ulDepthWriteEnabled  = tFlags & DC_DRAW_FLAG_DEPTH_WRITE ? 1 : 0,
+            .ulDepthMode          = tFlags & DC_DRAW_FLAG_DEPTH_TEST ? (tFlags & DC_DRAW_FLAG_REVERSE_Z_DEPTH ? PL_COMPARE_MODE_GREATER : PL_COMPARE_MODE_LESS) : PL_COMPARE_MODE_ALWAYS,
             .ulCullMode           = ulCullMode,
             .ulWireframe          = 0,
             .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
@@ -639,13 +639,13 @@ pl__get_3d_textured_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampl
     return ptEntry;
 }
 
-static const plPipelineEntry*
+static const dcPipelineEntry*
 pl__get_2d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, uint32_t uSubpassIndex)
 {
     // check if pipeline exists
     for(uint32_t i = 0; i < pl_sb_size(gptDrawBackendCtx->sbt2dPipelineEntries); i++)
     {
-        const plPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dPipelineEntries[i];
+        const dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dPipelineEntries[i];
         if(ptEntry->tRenderPass.uIndex == tRenderPass.uIndex && ptEntry->uMSAASampleCount == uMSAASampleCount && ptEntry->uSubpassIndex == uSubpassIndex)
         {
             return ptEntry;
@@ -655,7 +655,7 @@ pl__get_2d_pipeline(plRenderPassHandle tRenderPass, uint32_t uMSAASampleCount, u
     plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
 
     pl_sb_add(gptDrawBackendCtx->sbt2dPipelineEntries);
-    plPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt2dPipelineEntries) - 1];
+    dcPipelineEntry* ptEntry = &gptDrawBackendCtx->sbt2dPipelineEntries[pl_sb_size(gptDrawBackendCtx->sbt2dPipelineEntries) - 1];
     ptEntry->tFlags = 0;
     ptEntry->tRenderPass = tRenderPass;
     ptEntry->uMSAASampleCount = uMSAASampleCount;
@@ -808,55 +808,55 @@ pl_create_bind_group_for_texture(plTextureHandle tTexture)
 }
 
 static void
-pl__use_nearest_sampler(const plDrawList2D* ptDrawlist, const plDrawCommand* tCmd)
+pl__use_nearest_sampler(const dcDrawList2D* ptDrawlist, const dcDrawCommand* tCmd)
 {
     gptDrawBackendCtx->tCurrentSamplerBindGroup = gptDrawBackendCtx->tNearSamplerBindGroup;
 }
 
 void
-pl_use_nearest_sampler(plDrawLayer2D* ptLayer)
+pl_use_nearest_sampler(dcDrawLayer2D* ptLayer)
 {
     gptDraw->add_2d_callback(ptLayer, pl__use_nearest_sampler, NULL, 0);
 }
 
 void
-pl_use_linear_sampler(plDrawLayer2D* ptLayer)
+pl_use_linear_sampler(dcDrawLayer2D* ptLayer)
 {
-    gptDraw->add_2d_callback(ptLayer, plDrawCallbackResetRenderState, NULL, 0);
+    gptDraw->add_2d_callback(ptLayer, dcDrawCallbackResetRenderState, NULL, 0);
 }
 
 void
-pl_set_shader(plDrawLayer2D* ptLayer, plShaderHandle* pt2dShader, plShaderHandle* ptSdfShader)
+pl_set_shader(dcDrawLayer2D* ptLayer, plShaderHandle* pt2dShader, plShaderHandle* ptSdfShader)
 {
     // allocate shader override data that persists until submit
-    plShaderOverride* ptOverride = NULL;
+    dcShaderOverride* ptOverride = NULL;
     if(pt2dShader != NULL || ptSdfShader != NULL)
     {
-        ptOverride = PL_ALLOC(sizeof(plShaderOverride));
+        ptOverride = PL_ALLOC(sizeof(dcShaderOverride));
         ptOverride->pt2dShader = pt2dShader;
         ptOverride->ptSdfShader = ptSdfShader;
     }
     // insert callback into command stream (NULL userData means reset to default)
-    gptDraw->add_2d_callback(ptLayer, plDrawCallbackSetShader, ptOverride, sizeof(plShaderOverride*));
+    gptDraw->add_2d_callback(ptLayer, dcDrawCallbackSetShader, ptOverride, sizeof(dcShaderOverride*));
 }
 
 void
-pl_set_3d_shader(plDrawList3D* ptDrawlist, plShaderHandle* ptSolidShader, plShaderHandle* ptTexturedShader)
+pl_set_3d_shader(dcDrawList3D* ptDrawlist, plShaderHandle* ptSolidShader, plShaderHandle* ptTexturedShader)
 {
     // allocate shader override data that persists until submit
-    plShaderOverride3D* ptOverride = NULL;
+    dcShaderOverride3D* ptOverride = NULL;
     if(ptSolidShader != NULL || ptTexturedShader != NULL)
     {
-        ptOverride = PL_ALLOC(sizeof(plShaderOverride3D));
+        ptOverride = PL_ALLOC(sizeof(dcShaderOverride3D));
         ptOverride->ptSolidShader = ptSolidShader;
         ptOverride->ptTexturedShader = ptTexturedShader;
     }
     // insert callback into 3D command stream (NULL userData means reset to default)
-    gptDraw->add_3d_callback(ptDrawlist, plDrawCallback3DSetShader, ptOverride, sizeof(plShaderOverride3D));
+    gptDraw->add_3d_callback(ptDrawlist, dcDrawCallback3DSetShader, ptOverride, sizeof(dcShaderOverride3D));
 }
 
 void
-pl_submit_2d_drawlist(plDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, uint32_t uMSAASampleCount)
+pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, uint32_t uMSAASampleCount)
 {
     gptGfx->set_depth_bias( ptEncoder, 0.0f, 0.0f, 0.0f);
     gptDraw->prepare_2d_drawlist(ptDrawlist);
@@ -873,9 +873,9 @@ pl_submit_2d_drawlist(plDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~vertex buffer prep~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // ensure gpu vertex buffer size is adequate
-    const uint32_t uVtxBufSzNeeded = sizeof(plDrawVertex) * pl_sb_size(ptDrawlist->sbtVertexBuffer);
+    const uint32_t uVtxBufSzNeeded = sizeof(dcDrawVertex) * pl_sb_size(ptDrawlist->sbtVertexBuffer);
 
-    plBufferInfo* ptBufferInfo = &gptDrawBackendCtx->atBufferInfo[uFrameIdx];
+    dcBufferInfo* ptBufferInfo = &gptDrawBackendCtx->atBufferInfo[uFrameIdx];
 
     // space left in vertex buffer
     const uint32_t uAvailableVertexBufferSpace = ptBufferInfo->uVertexBufferSize - ptBufferInfo->uVertexBufferOffset;
@@ -901,7 +901,7 @@ pl_submit_2d_drawlist(plDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     // vertex GPU data transfer
     plBuffer* ptVertexBuffer = gptGfx->get_buffer(ptDevice, ptBufferInfo->tVertexBuffer);
     char* pucMappedVertexBufferLocation = ptVertexBuffer->tMemoryAllocation.pHostMapped;
-    size_t tVertexCopySize = sizeof(plDrawVertex) * pl_sb_size(ptDrawlist->sbtVertexBuffer);
+    size_t tVertexCopySize = sizeof(dcDrawVertex) * pl_sb_size(ptDrawlist->sbtVertexBuffer);
     memcpy(&pucMappedVertexBufferLocation[ptBufferInfo->uVertexBufferOffset], ptDrawlist->sbtVertexBuffer, tVertexCopySize);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~index buffer prep~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -933,10 +933,10 @@ pl_submit_2d_drawlist(plDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     char* pucMappedIndexBufferLocation = ptIndexBuffer->tMemoryAllocation.pHostMapped;
     memcpy(&pucMappedIndexBufferLocation[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]], ptDrawlist->sbuIndexBuffer, uIdxBufSzNeeded);
 
-    const int32_t iVertexOffset = ptBufferInfo->uVertexBufferOffset / sizeof(plDrawVertex);
+    const int32_t iVertexOffset = ptBufferInfo->uVertexBufferOffset / sizeof(dcDrawVertex);
     const int32_t iIndexOffset = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
 
-    const plPipelineEntry* ptEntry = pl__get_2d_pipeline(gptGfx->get_encoder_render_pass(ptEncoder), uMSAASampleCount, gptGfx->get_render_encoder_subpass(ptEncoder));
+    const dcPipelineEntry* ptEntry = pl__get_2d_pipeline(gptGfx->get_encoder_render_pass(ptEncoder), uMSAASampleCount, gptGfx->get_render_encoder_subpass(ptEncoder));
 
     const plVec2 tClipScale = gptIOI->get_io()->tMainFramebufferScale;
 
@@ -957,15 +957,15 @@ pl_submit_2d_drawlist(plDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
 
     plShaderHandle tCurrentShader = ptEntry->tRegularPipeline;
 
-    typedef struct _plDrawDynamicData
+    typedef struct _dcDrawDynamicData
     {
         plVec2 uScale;
         plVec2 uTranslate;
-    } plDrawDynamicData;
+    } dcDrawDynamicData;
 
     plDynamicBinding tDynamicBinding = pl_allocate_dynamic_data(gptGfx, ptDevice, &gptDrawBackendCtx->tCurrentDynamicDataBlock);
 
-    plDrawDynamicData* ptDynamicData = (plDrawDynamicData*)tDynamicBinding.pcData;
+    dcDrawDynamicData* ptDynamicData = (dcDrawDynamicData*)tDynamicBinding.pcData;
     ptDynamicData->uScale.x = fScale[0];
     ptDynamicData->uScale.y = fScale[1];
     ptDynamicData->uTranslate.x = -1.0f;
@@ -986,21 +986,21 @@ pl_submit_2d_drawlist(plDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     const uint32_t uCmdCount = pl_sb_size(ptDrawlist->sbtDrawCommands);
     for(uint32_t i = 0u; i < uCmdCount; i++)
     {
-        plDrawCommand cmd = ptDrawlist->sbtDrawCommands[i];
+        dcDrawCommand cmd = ptDrawlist->sbtDrawCommands[i];
 
         // callback (state changes like sampler switching, shader override)
         if(cmd.tUserCallback != NULL)
         {
-            if(cmd.tUserCallback == plDrawCallbackResetRenderState)
+            if(cmd.tUserCallback == dcDrawCallbackResetRenderState)
             {
                 gptGfx->set_viewport(ptEncoder, &tViewport);
                 gptGfx->bind_vertex_buffer(ptEncoder, ptBufferInfo->tVertexBuffer);
                 gptGfx->bind_shader(ptEncoder, tCurrentShader);
                 gptDrawBackendCtx->tCurrentSamplerBindGroup = gptDrawBackendCtx->tFontSamplerBindGroup;
             }
-            else if(cmd.tUserCallback == plDrawCallbackSetShader)
+            else if(cmd.tUserCallback == dcDrawCallbackSetShader)
             {
-                plShaderOverride* ptOverride = (plShaderOverride*)cmd.pUserCallbackData;
+                dcShaderOverride* ptOverride = (dcShaderOverride*)cmd.pUserCallbackData;
                 if(ptOverride)
                 {
                     // custom shader override - store for use in draw commands
@@ -1120,14 +1120,14 @@ pl_submit_2d_drawlist(plDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
 }
 
 void
-pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, const plMat4* ptMVP, plDrawFlags tFlags, uint32_t uMSAASampleCount)
+pl_submit_3d_drawlist(dcDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, float fWidth, float fHeight, const plMat4* ptMVP, dcDrawFlags tFlags, uint32_t uMSAASampleCount)
 {
     gptGfx->push_render_debug_group(ptEncoder, "3D Draw", (plVec4){0.33f, 0.02f, 0.10f, 1.0f});
 
     plDevice* ptDevice = gptDrawBackendCtx->ptDevice;
     const uint32_t uFrameIdx = gptGfx->get_current_frame_index();
 
-    const plPipelineEntry* ptEntry = pl__get_3d_pipeline(gptGfx->get_encoder_render_pass(ptEncoder), uMSAASampleCount, tFlags, gptGfx->get_render_encoder_subpass(ptEncoder));
+    const dcPipelineEntry* ptEntry = pl__get_3d_pipeline(gptGfx->get_encoder_render_pass(ptEncoder), uMSAASampleCount, tFlags, gptGfx->get_render_encoder_subpass(ptEncoder));
 
     const float fAspectRatio = fWidth / fHeight;
 
@@ -1161,8 +1161,8 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     // solid
     if(pl_sb_size(ptDrawlist->sbtSolidVertexBuffer) > 0)
     {
-        const uint32_t uVtxBufSzNeeded = sizeof(plDrawVertex3DSolid) * pl_sb_size(ptDrawlist->sbtSolidVertexBuffer);
-        plBufferInfo* ptBufferInfo = &gptDrawBackendCtx->at3DBufferInfo[uFrameIdx];
+        const uint32_t uVtxBufSzNeeded = sizeof(dcDrawVertex3DSolid) * pl_sb_size(ptDrawlist->sbtSolidVertexBuffer);
+        dcBufferInfo* ptBufferInfo = &gptDrawBackendCtx->at3DBufferInfo[uFrameIdx];
         const uint32_t uAvailableVertexBufferSpace = ptBufferInfo->uVertexBufferSize - ptBufferInfo->uVertexBufferOffset;
         if(uVtxBufSzNeeded >= uAvailableVertexBufferSpace)
         {
@@ -1197,7 +1197,7 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
         memcpy(&((char*)ptIndexBuffer->tMemoryAllocation.pHostMapped)[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]],
             ptDrawlist->sbtSolidIndexBuffer, uIdxBufSzNeeded);
 
-        iSolidVertexBase = ptBufferInfo->uVertexBufferOffset / sizeof(plDrawVertex3DSolid);
+        iSolidVertexBase = ptBufferInfo->uVertexBufferOffset / sizeof(dcDrawVertex3DSolid);
         iSolidIndexBase  = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
         ptBufferInfo->uVertexBufferOffset += uVtxBufSzNeeded;
         gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] += uIdxBufSzNeeded;
@@ -1206,8 +1206,8 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     // lines
     if(pl_sb_size(ptDrawlist->sbtLineVertexBuffer) > 0u)
     {
-        const uint32_t uVtxBufSzNeeded = sizeof(plDrawVertex3DLine) * pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
-        plBufferInfo* ptBufferInfo = &gptDrawBackendCtx->atLineBufferInfo[uFrameIdx];
+        const uint32_t uVtxBufSzNeeded = sizeof(dcDrawVertex3DLine) * pl_sb_size(ptDrawlist->sbtLineVertexBuffer);
+        dcBufferInfo* ptBufferInfo = &gptDrawBackendCtx->atLineBufferInfo[uFrameIdx];
         const uint32_t uAvailableVertexBufferSpace = ptBufferInfo->uVertexBufferSize - ptBufferInfo->uVertexBufferOffset;
         if(uVtxBufSzNeeded >= uAvailableVertexBufferSpace)
         {
@@ -1242,20 +1242,20 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
         memcpy(&((char*)ptIndexBuffer->tMemoryAllocation.pHostMapped)[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]],
             ptDrawlist->sbtLineIndexBuffer, uIdxBufSzNeeded);
 
-        iLineVertexBase = ptBufferInfo->uVertexBufferOffset / sizeof(plDrawVertex3DLine);
+        iLineVertexBase = ptBufferInfo->uVertexBufferOffset / sizeof(dcDrawVertex3DLine);
         iLineIndexBase  = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
         ptBufferInfo->uVertexBufferOffset += uVtxBufSzNeeded;
         gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] += uIdxBufSzNeeded;
     }
 
     // textured
-    const plPipelineEntry* ptTexturedEntry = NULL;
+    const dcPipelineEntry* ptTexturedEntry = NULL;
     if(pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer) > 0u)
     {
         ptTexturedEntry = pl__get_3d_textured_pipeline(gptGfx->get_encoder_render_pass(ptEncoder), uMSAASampleCount, tFlags, gptGfx->get_render_encoder_subpass(ptEncoder));
 
-        const uint32_t uVtxBufSzNeeded = sizeof(plDrawVertex3DTextured) * pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer);
-        plBufferInfo* ptBufferInfo = &gptDrawBackendCtx->at3DTexturedBufferInfo[uFrameIdx];
+        const uint32_t uVtxBufSzNeeded = sizeof(dcDrawVertex3DTextured) * pl_sb_size(ptDrawlist->sbtTexturedVertexBuffer);
+        dcBufferInfo* ptBufferInfo = &gptDrawBackendCtx->at3DTexturedBufferInfo[uFrameIdx];
         const uint32_t uAvailableVertexBufferSpace = ptBufferInfo->uVertexBufferSize - ptBufferInfo->uVertexBufferOffset;
         if(uVtxBufSzNeeded >= uAvailableVertexBufferSpace)
         {
@@ -1290,7 +1290,7 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
         memcpy(&((char*)ptIndexBuffer->tMemoryAllocation.pHostMapped)[gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx]],
             ptDrawlist->sbtTexturedIndexBuffer, uIdxBufSzNeeded);
 
-        iTexturedVertexBase = ptBufferInfo->uVertexBufferOffset / sizeof(plDrawVertex3DTextured);
+        iTexturedVertexBase = ptBufferInfo->uVertexBufferOffset / sizeof(dcDrawVertex3DTextured);
         iTexturedIndexBase  = gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] / sizeof(uint32_t);
         ptBufferInfo->uVertexBufferOffset += uVtxBufSzNeeded;
         gptDrawBackendCtx->auIndexBufferOffset[uFrameIdx] += uIdxBufSzNeeded;
@@ -1306,15 +1306,15 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     *ptMvpDynamicData = *ptMVP;
 
     // line dynamic data (MVP + aspect)
-    typedef struct _plLineDynamiceData
+    typedef struct _dcLineDynamiceData
     {
         plMat4 tMVP;
         float fAspect;
         int   padding[3];
-    } plLineDynamiceData;
+    } dcLineDynamiceData;
 
     plDynamicBinding tLineDynamicData = pl_allocate_dynamic_data(gptGfx, gptDrawBackendCtx->ptDevice, &gptDrawBackendCtx->tCurrentDynamicDataBlock);
-    plLineDynamiceData* ptLineDynamicData = (plLineDynamiceData*)tLineDynamicData.pcData;
+    dcLineDynamiceData* ptLineDynamicData = (dcLineDynamiceData*)tLineDynamicData.pcData;
     ptLineDynamicData->tMVP = *ptMVP;
     ptLineDynamicData->fAspect = fAspectRatio;
 
@@ -1328,14 +1328,14 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
 
         for(uint32_t i = 0; i < uCmdCount; i++)
         {
-            plDrawCommand3D cmd = ptDrawlist->sbtDrawCommands3D[i];
+            dcDrawCommand3D cmd = ptDrawlist->sbtDrawCommands3D[i];
 
             // callback (shader changes)
             if(cmd.tUserCallback != NULL)
             {
-                if(cmd.tUserCallback == plDrawCallback3DSetShader)
+                if(cmd.tUserCallback == dcDrawCallback3DSetShader)
                 {
-                    plShaderOverride3D* ptOverride = (plShaderOverride3D*)cmd.pUserCallbackData;
+                    dcShaderOverride3D* ptOverride = (dcShaderOverride3D*)cmd.pUserCallbackData;
                     if(ptOverride)
                     {
                         gptDrawBackendCtx->pt3dSolidShaderOverride = ptOverride->ptSolidShader;
@@ -1357,7 +1357,7 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
             if(cmd.uElementCount == 0)
                 continue;
 
-            if(cmd.eType == PL_DRAW_COMMAND_3D_SOLID)
+            if(cmd.eType == DC_DRAW_COMMAND_3D_SOLID)
             {
                 plShaderHandle tShader = gptDrawBackendCtx->bCustom3DShaderActive && gptDrawBackendCtx->pt3dSolidShaderOverride
                     ? *gptDrawBackendCtx->pt3dSolidShaderOverride
@@ -1377,7 +1377,7 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
                 };
                 gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
             }
-            else if(cmd.eType == PL_DRAW_COMMAND_3D_LINE)
+            else if(cmd.eType == DC_DRAW_COMMAND_3D_LINE)
             {
                 plShaderHandle tShader = ptEntry->tSecondaryPipeline;
 
@@ -1395,7 +1395,7 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
                 };
                 gptGfx->draw_indexed(ptEncoder, 1, &tDrawIndex);
             }
-            else if(cmd.eType == PL_DRAW_COMMAND_3D_TEXTURED && ptTexturedEntry)
+            else if(cmd.eType == DC_DRAW_COMMAND_3D_TEXTURED && ptTexturedEntry)
             {
                 plShaderHandle tShader = gptDrawBackendCtx->bCustom3DShaderActive && gptDrawBackendCtx->pt3dTexturedShaderOverride
                     ? *gptDrawBackendCtx->pt3dTexturedShaderOverride
@@ -1481,7 +1481,7 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
     const uint32_t uTextCount = pl_sb_size(ptDrawlist->sbtTextEntries);
     for(uint32_t i = 0; i < uTextCount; i++)
     {
-        const plDraw3DText* ptText = &ptDrawlist->sbtTextEntries[i];
+        const dcDraw3DText* ptText = &ptDrawlist->sbtTextEntries[i];
         plVec4 tPos = pl_mul_mat4_vec4(ptMVP, (plVec4){.xyz = ptText->tP, .w = 1});
         tPos = pl_div_vec4_scalarf(tPos, tPos.w);
         if(!(tPos.z < 0.0f || tPos.z > 1.0f))
@@ -1491,7 +1491,7 @@ pl_submit_3d_drawlist(plDrawList3D* ptDrawlist, plRenderEncoder* ptEncoder, floa
             gptDraw->add_text(ptDrawlist->ptLayer,
                 (plVec2){roundf(tPos.x + 0.5f), roundf(tPos.y + 0.5f)},
                 ptText->acText,
-                (plDrawTextOptions){
+                (dcDrawTextOptions){
                     .fSize = ptText->fSize,
                     .ptFont = ptText->ptFont,
                     .fWrap = ptText->fWrap,
@@ -1547,14 +1547,14 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
 
     if(bReload)
     {
-        gptDrawBackendCtx = ptDataRegistry->get_data("plDrawBackendContext");
+        gptDrawBackendCtx = ptDataRegistry->get_data("dcDrawBackendContext");
         uLogChannelDrawBackend = gptLog->get_channel_id("Draw Backend");
     }
     else  // first load
     {
-        static plDrawBackendContext tCtx = {0};
+        static dcDrawBackendContext tCtx = {0};
         gptDrawBackendCtx = &tCtx;
-        ptDataRegistry->set_data("plDrawBackendContext", gptDrawBackendCtx);
+        ptDataRegistry->set_data("dcDrawBackendContext", gptDrawBackendCtx);
 
         plLogExtChannelInit tLogInit = {
             .tType       = PL_LOG_CHANNEL_TYPE_BUFFER | PL_LOG_CHANNEL_TYPE_CONSOLE,

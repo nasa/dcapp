@@ -51,8 +51,8 @@ static void _flush_deferred_sets(_AppData *app_data);
 
 // draw batch utils
 static void           _draw_batch_reset(_AppData *app_data);
-static plDrawLayer2D *_draw_batch_get_2d(_AppData *app_data);
-static plDrawList3D  *_draw_batch_get_3d(_AppData *app_data);
+static dcDrawLayer2D *_draw_batch_get_2d(_AppData *app_data);
+static dcDrawList3D  *_draw_batch_get_3d(_AppData *app_data);
 
 static void _draw_node_list(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform) {
     _NodeIndex current_node_index = node_index;
@@ -1057,7 +1057,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
         node->arc.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.a)->value_double,
     };
     uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-    _ext_draw->add_lines(_draw_batch_get_2d(app_data), points, num_arc_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+    _ext_dc_draw->add_lines(_draw_batch_get_2d(app_data), points, num_arc_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
 }
 
 static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -1403,11 +1403,11 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
                     triangle_points[tri_idx++] = points[ii + 1]; // arc point i
                     triangle_points[tri_idx++] = points[ii + 2]; // arc point i+1
                 }
-                _ext_draw->add_triangles_filled(_draw_batch_get_2d(app_data), triangle_points, num_triangles * 3, (plDrawSolidOptions){.uColor = pl_fill_color});
+                _ext_dc_draw->add_triangles_filled(_draw_batch_get_2d(app_data), triangle_points, num_triangles * 3, (dcDrawSolidOptions){.uColor = pl_fill_color});
             }
         } else if (!is_pie) {
             // Full ellipse - use convex polygon fill
-            _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+            _ext_dc_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (dcDrawSolidOptions){.uColor = pl_fill_color});
         }
     }
 
@@ -1421,7 +1421,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
             node->ellipse.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
     // mouse events
@@ -2154,7 +2154,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
     // draw (skip if texture failed to load)
     if (node->image.texture_index != TEXTURE_INDEX_UNDEFINED) {
         plBindGroupHandle bind_group_handle = app_data->sb_textures[node->image.texture_index].bind_group_handle;
-        _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3);
+        _ext_dc_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3);
     }
 
     // mouse events
@@ -2394,7 +2394,7 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
             node->line.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_lines(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_dc_draw->add_lines(_draw_batch_get_2d(app_data), points, num_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 }
 
@@ -2856,7 +2856,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
     plVec2 point3      = (plVec2){point3_vec4.x, point3_vec4.y};
 
     // draw
-    _ext_draw->add_image_quad_ex(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3, uv0, uv1, uv2, uv3, 0xFFFFFFFF);
+    _ext_dc_draw->add_image_quad_ex(_draw_batch_get_2d(app_data), bind_group_handle.uData, point0, point1, point2, point3, uv0, uv1, uv2, uv3, 0xFFFFFFFF);
 
     // mouse events
     if (node->pixelstream.config_flags & NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS) {
@@ -3127,7 +3127,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
             node->polygon.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (plDrawSolidOptions){.uColor = pl_fill_color});
+        _ext_dc_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (dcDrawSolidOptions){.uColor = pl_fill_color});
     }
 
     // draw outline
@@ -3140,7 +3140,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
             node->polygon.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
     // mouse events
@@ -3485,7 +3485,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             node->rectangle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, 4, (plDrawSolidOptions){.uColor = pl_fill_color});
+        _ext_dc_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, 4, (dcDrawSolidOptions){.uColor = pl_fill_color});
     }
 
     // draw outline
@@ -3498,7 +3498,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             node->rectangle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_draw->add_polygon(_draw_batch_get_2d(app_data), points, 4, (plDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, 4, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
     // mouse events
@@ -4278,17 +4278,17 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
         .fRadius = radius};
 
     // get a 3D draw list from the batch system
-    plDrawList3D *draw_list_3d = _draw_batch_get_3d(app_data);
+    dcDrawList3D *draw_list_3d = _draw_batch_get_3d(app_data);
 
     // draw textured or solid sphere
     if (node->sphere.texture_index != TEXTURE_INDEX_UNDEFINED) {
         // textured sphere
         _Texture   *texture    = &app_data->sb_textures[node->sphere.texture_index];
         plTextureID texture_id = texture->bind_group_handle.uData;
-        _ext_draw->add_3d_sphere_textured(draw_list_3d, texture_id, sphere_def, &sphere_transform, 32, 32, pl_fill_color);
+        _ext_dc_draw->add_3d_sphere_textured(draw_list_3d, texture_id, sphere_def, &sphere_transform, 32, 32, pl_fill_color);
     } else {
         // solid sphere
-        _ext_draw->add_3d_sphere_filled(draw_list_3d, sphere_def, 32, 32, (plDrawSolidOptions){.uColor = pl_fill_color});
+        _ext_dc_draw->add_3d_sphere_filled(draw_list_3d, sphere_def, 32, 32, (dcDrawSolidOptions){.uColor = pl_fill_color});
     }
 }
 
@@ -4932,7 +4932,7 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
     _ext_starter->submit_command_buffer(cmd_buf);
 
     plBindGroupHandle bind_group = _ext_planet->get_view_texture(view);
-    _ext_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group.uData, point0, point1, point2, point3);
+    _ext_dc_draw->add_image_quad(_draw_batch_get_2d(app_data), bind_group.uData, point0, point1, point2, point3);
 }
 
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -4991,7 +4991,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
     dc_utils_split_string_inplace(sb_text, "\n", subtext_indices, _NODE_TEXT_MAX_LINES, &num_lines);
 
     // setup text options
-    plDrawTextOptions text_options = {0};
+    dcDrawTextOptions text_options = {0};
     text_options.ptFont            = app_data->pl_vera_sdf_font;
     float fill_color[4]            = {
         node->text.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.r)->value_double,
@@ -5006,7 +5006,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
     plVec2 dimensions[_NODE_TEXT_MAX_LINES];
     plVec2 total_dimensions = {0.0f, 0.0f};
     for (int ii = 0; ii < num_lines; ii++) {
-        dimensions[ii] = _ext_draw->calculate_text_size(&sb_text[subtext_indices[ii]], text_options);
+        dimensions[ii] = _ext_dc_draw->calculate_text_size(&sb_text[subtext_indices[ii]], text_options);
 
         // overwrite the y dimension with the size
         dimensions[ii].y = text_options.fSize;
@@ -5300,18 +5300,18 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
 
         // shadow pass
         if (node->text.shadow_offset != DC_APP_VAL_INDEX_UNDEFINED) {
-            plDrawTextOptions shadow_opts = text_options;
+            dcDrawTextOptions shadow_opts = text_options;
             shadow_opts.uColor            = PL_COLOR_32_RGBA(0, 0, 0, 1);
 
             float offset = (float)dc_app_lookup_get_value(app_data->lookup, node->text.shadow_offset)->value_double;
             shadow_opts.tTransform.x13 += offset;
             shadow_opts.tTransform.x23 += offset;
 
-            _ext_draw->add_text(_draw_batch_get_2d(app_data), (plVec2){0, 0}, &sb_text[subtext_indices[ii]], shadow_opts);
+            _ext_dc_draw->add_text(_draw_batch_get_2d(app_data), (plVec2){0, 0}, &sb_text[subtext_indices[ii]], shadow_opts);
         }
 
         // draw
-        _ext_draw->add_text(_draw_batch_get_2d(app_data), (plVec2){0, 0}, &sb_text[subtext_indices[ii]], text_options);
+        _ext_dc_draw->add_text(_draw_batch_get_2d(app_data), (plVec2){0, 0}, &sb_text[subtext_indices[ii]], text_options);
     }
 }
 
@@ -5383,15 +5383,15 @@ static void _draw_batch_reset(_AppData *app_data) {
     app_data->draw_list_3d_index = 0;
 }
 
-static plDrawLayer2D *_draw_batch_get_2d(_AppData *app_data) {
+static dcDrawLayer2D *_draw_batch_get_2d(_AppData *app_data) {
     // if last batch is already 2D, return the same layer
     int count = sbcount(app_data->sb_draw_batches);
     if (count > 0 && app_data->sb_draw_batches[count - 1].type == DRAW_BATCH_TYPE_2D) {
-        plDrawLayer2D *layer = app_data->sb_draw_batches[count - 1].draw_list_2d.layer;
+        dcDrawLayer2D *layer = app_data->sb_draw_batches[count - 1].draw_list_2d.layer;
 
         // inject stencil override on phase change
         if (app_data->stencil_2d_dirty) {
-            _ext_draw_backend->set_shader(layer, app_data->active_2d_shader_override, app_data->active_sdf_shader_override);
+            _ext_dc_draw_backend->set_shader(layer, app_data->active_2d_shader_override, app_data->active_sdf_shader_override);
             app_data->stencil_2d_dirty = false;
         }
         return layer;
@@ -5400,8 +5400,8 @@ static plDrawLayer2D *_draw_batch_get_2d(_AppData *app_data) {
     // grow pool if needed - request from extension
     int pool_size = sbcount(app_data->sb_draw_list_2d_pool);
     if (app_data->draw_list_2d_index >= pool_size) {
-        plDrawList2D  *new_draw_list = _ext_draw->request_2d_drawlist();
-        plDrawLayer2D *new_layer     = _ext_draw->request_2d_layer(new_draw_list);
+        dcDrawList2D  *new_draw_list = _ext_dc_draw->request_2d_drawlist();
+        dcDrawLayer2D *new_layer     = _ext_dc_draw->request_2d_layer(new_draw_list);
         _DrawList2D    new_entry     = {.draw_list = new_draw_list, .layer = new_layer};
         sbpush(app_data->sb_draw_list_2d_pool, new_entry);
     }
@@ -5418,22 +5418,22 @@ static plDrawLayer2D *_draw_batch_get_2d(_AppData *app_data) {
 
     // inject stencil override if active (new batch after batch break)
     if (app_data->stencil_2d_dirty || app_data->active_2d_shader_override || app_data->active_sdf_shader_override) {
-        _ext_draw_backend->set_shader(draw_list_2d->layer, app_data->active_2d_shader_override, app_data->active_sdf_shader_override);
+        _ext_dc_draw_backend->set_shader(draw_list_2d->layer, app_data->active_2d_shader_override, app_data->active_sdf_shader_override);
         app_data->stencil_2d_dirty = false;
     }
 
     return draw_list_2d->layer;
 }
 
-static plDrawList3D *_draw_batch_get_3d(_AppData *app_data) {
+static dcDrawList3D *_draw_batch_get_3d(_AppData *app_data) {
     // if last batch is already 3D, return the same draw list
     int count = sbcount(app_data->sb_draw_batches);
     if (count > 0 && app_data->sb_draw_batches[count - 1].type == DRAW_BATCH_TYPE_3D) {
-        plDrawList3D *draw_list = app_data->sb_draw_batches[count - 1].draw_list_3d;
+        dcDrawList3D *draw_list = app_data->sb_draw_batches[count - 1].draw_list_3d;
 
         // inject stencil override on phase change
         if (app_data->stencil_3d_dirty) {
-            _ext_draw_backend->set_3d_shader(draw_list,
+            _ext_dc_draw_backend->set_3d_shader(draw_list,
                                              app_data->active_3d_solid_shader_override,
                                              app_data->active_3d_textured_shader_override);
             app_data->stencil_3d_dirty = false;
@@ -5444,12 +5444,12 @@ static plDrawList3D *_draw_batch_get_3d(_AppData *app_data) {
     // grow pool if needed - request from extension
     int pool_size = sbcount(app_data->sb_draw_list_3d_pool);
     if (app_data->draw_list_3d_index >= pool_size) {
-        plDrawList3D *new_list = _ext_draw->request_3d_drawlist();
+        dcDrawList3D *new_list = _ext_dc_draw->request_3d_drawlist();
         sbpush(app_data->sb_draw_list_3d_pool, new_list);
     }
 
     // get draw list from pool
-    plDrawList3D *draw_list = app_data->sb_draw_list_3d_pool[app_data->draw_list_3d_index];
+    dcDrawList3D *draw_list = app_data->sb_draw_list_3d_pool[app_data->draw_list_3d_index];
     app_data->draw_list_3d_index++;
 
     // add batch entry
@@ -5460,7 +5460,7 @@ static plDrawList3D *_draw_batch_get_3d(_AppData *app_data) {
 
     // inject stencil override if active (new batch after batch break)
     if (app_data->stencil_3d_dirty || app_data->active_3d_solid_shader_override || app_data->active_3d_textured_shader_override) {
-        _ext_draw_backend->set_3d_shader(draw_list,
+        _ext_dc_draw_backend->set_3d_shader(draw_list,
                                          app_data->active_3d_solid_shader_override,
                                          app_data->active_3d_textured_shader_override);
         app_data->stencil_3d_dirty = false;

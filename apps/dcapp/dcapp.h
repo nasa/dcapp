@@ -17,6 +17,7 @@
 #include "pl_shader_ext.h"
 #include "pl_image_ext.h"
 #include "pl_resource_ext.h"
+#include "pl_draw_ext.h"
 
 // dcapp extension includes
 #include "dc_draw_ext.h"
@@ -35,8 +36,6 @@
 
 // PL extensions
 const plWindowI          *_ext_windows          = NULL;
-const dcDrawI            *_ext_draw             = NULL;
-const dcDrawBackendI     *_ext_draw_backend     = NULL;
 const plStarterI         *_ext_starter          = NULL;
 const plProfileI         *_ext_profile          = NULL;
 const plMemoryI          *_ext_memory           = NULL;
@@ -51,6 +50,9 @@ const plShaderI          *_ext_shader           = NULL;
 const plCameraI          *_ext_camera           = NULL;
 const plImageI           *_ext_image            = NULL;
 const plResourceI        *_ext_resource         = NULL;
+const plDrawI            *_ext_draw             = NULL;
+const dcDrawI            *_ext_dc_draw          = NULL;
+const dcDrawBackendI     *_ext_dc_draw_backend  = NULL;
 
 // dcapp includes
 #include "utils/stb_sb.h"
@@ -729,15 +731,15 @@ typedef enum __DrawBatchType {
 } _DrawBatchType;
 
 typedef struct __DrawList2D {
-    plDrawList2D  *draw_list;
-    plDrawLayer2D *layer;
+    dcDrawList2D  *draw_list;
+    dcDrawLayer2D *layer;
 } _DrawList2D;
 
 typedef struct __DrawBatch {
     _DrawBatchType type;
     union {
         _DrawList2D   draw_list_2d;
-        plDrawList3D *draw_list_3d;
+        dcDrawList3D *draw_list_3d;
     };
 } _DrawBatch;
 
@@ -773,9 +775,9 @@ typedef struct __AppData {
 
     // pl things
     plWindow      *pl_window;
-    plDrawLayer2D *pl_layer;
-    plDrawList2D  *pl_draw_list;
-    plFont        *pl_vera_sdf_font;
+    dcDrawLayer2D *pl_layer;
+    dcDrawList2D  *pl_draw_list;
+    dcFont        *pl_vera_sdf_font;
 
     // GPU memory allocators
     plDeviceMemoryAllocatorI *gpu_local_dedicated_allocator;
@@ -856,7 +858,7 @@ typedef struct __AppData {
     // draw batch system
     _DrawBatch    *sb_draw_batches;      // batches for current frame (cleared each frame)
     _DrawList2D   *sb_draw_list_2d_pool; // pool of 2D draw list + layer pairs (from extension)
-    plDrawList3D **sb_draw_list_3d_pool; // pool of 3D draw list pointers (from extension)
+    dcDrawList3D **sb_draw_list_3d_pool; // pool of 3D draw list pointers (from extension)
     int            draw_list_2d_index;   // current index into 2D pool
     int            draw_list_3d_index;   // current index into 3D pool
 
