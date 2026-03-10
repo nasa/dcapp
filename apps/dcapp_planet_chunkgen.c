@@ -72,7 +72,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     // load extensions
     const plExtensionRegistryI *extension_registry = pl_get_api_latest(api_registry, plExtensionRegistryI);
     extension_registry->load("pl_unity_ext", NULL, NULL, true);
-    extension_registry->load("pl_platform_ext", NULL, NULL, false);
+    extension_registry->load("pl_platform_ext", "pl_load_platform_ext", "pl_unload_platform_ext", false);
     extension_registry->load("pl_planet_processor_ext", NULL, NULL, true);
 
     // fetch APIs

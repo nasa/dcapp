@@ -38,7 +38,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     // load required extensions
     extension_registry->load("pl_unity_ext", NULL, NULL, true);
-    extension_registry->load("pl_platform_ext", NULL, NULL, false);
+    extension_registry->load("pl_platform_ext", "pl_load_platform_ext", "pl_unload_platform_ext", false);
 
     // load dcapp extensions (separate from pilotlight's draw extensions)
     extension_registry->load("dc_draw_ext", NULL, NULL, true);
