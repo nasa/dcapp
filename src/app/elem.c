@@ -106,6 +106,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "PlanetTexture";
         case DC_APP_ELEM_TYPE_PLANET_SHADER:
             return "PlanetShader";
+        case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
+            return "PlanetEllipse";
         case DC_APP_ELEM_TYPE_PLANET_VIEW:
             return "PlanetView";
         case DC_APP_ELEM_TYPE_TEXT:
@@ -229,6 +231,8 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_PLANET_TEXTURE;
     if (strcmp(name, "PlanetShader") == 0)
         return DC_APP_ELEM_TYPE_PLANET_SHADER;
+    if (strcmp(name, "PlanetEllipse") == 0)
+        return DC_APP_ELEM_TYPE_PLANET_ELLIPSE;
     if (strcmp(name, "PlanetView") == 0)
         return DC_APP_ELEM_TYPE_PLANET_VIEW;
     if (strcmp(name, "Text") == 0)

@@ -39,6 +39,7 @@ static void _draw_node_state_mouse_hovered(_AppData *app_data, _NodeIndex node_i
 static void _draw_node_state_if_true(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_state_if_false(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius);
 static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -4357,6 +4358,96 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
     app_data->stencil_3d_dirty = true;
 }
 
+static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius) {
+
+    // resolve values
+    float lat = node->planet_ellipse.lat != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.lat)->value_double : 0.0f;
+    float lon = node->planet_ellipse.lon != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.lon)->value_double : 0.0f;
+    float radius_x = node->planet_ellipse.radius_x != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.radius_x)->value_double : 0.0f;
+    float radius_y = node->planet_ellipse.radius_y != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.radius_y)->value_double : 0.0f;
+    float rotation = node->planet_ellipse.rotation != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.rotation)->value_double : 0.0f;
+    float height = node->planet_ellipse.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.height_above_terrain)->value_double : 0.0f;
+    int segments = node->planet_ellipse.segments != DC_APP_VAL_INDEX_UNDEFINED
+        ? (int)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.segments)->value_double : 64;
+    float line_width = node->planet_ellipse.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.line_width)->value_double : 1.0f;
+
+    if (radius_x <= 0.0f && radius_y <= 0.0f) return;
+    if (segments < 3) segments = 3;
+    if (segments > _NODE_ELLIPSE_MAX_SEGMENTS) segments = _NODE_ELLIPSE_MAX_SEGMENTS;
+
+    // convert to radians
+    float lat_rad = pl_radiansf(lat);
+    float lon_rad = pl_radiansf(lon);
+    float rot_rad = pl_radiansf(rotation);
+
+    // center on sphere surface
+    float R = (float)planet_radius + height;
+    plVec3 center = {
+        R * cosf(lat_rad) * sinf(lon_rad),
+        R * sinf(lat_rad),
+        R * cosf(lat_rad) * cosf(lon_rad)
+    };
+
+    // local tangent plane (ENU)
+    plVec3 up = pl_norm_vec3(center);
+
+    // east = cross({0,1,0}, up), handle poles
+    plVec3 world_up = {0.0f, 1.0f, 0.0f};
+    plVec3 east = pl_cross_vec3(world_up, up);
+    float east_len = pl_length_vec3(east);
+    if (east_len < 1e-6f) {
+        east = (plVec3){1.0f, 0.0f, 0.0f};
+    } else {
+        east = pl_norm_vec3(east);
+    }
+    plVec3 north = pl_cross_vec3(up, east);
+
+    // generate ellipse points
+    plVec3 points[_NODE_ELLIPSE_MAX_SEGMENTS];
+    for (int i = 0; i < segments; i++) {
+        float theta = 2.0f * (float)M_PI * (float)i / (float)segments + rot_rad;
+        float ex = radius_x * cosf(theta);
+        float ey = radius_y * sinf(theta);
+        points[i] = (plVec3){
+            center.x + ex * east.x + ey * north.x,
+            center.y + ex * east.y + ey * north.y,
+            center.z + ex * east.z + ey * north.z
+        };
+    }
+
+    // draw fill
+    if (node->planet_ellipse.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
+        float fc[4] = {
+            node->planet_ellipse.fill_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.fill_color.r)->value_double : 1.0f,
+            node->planet_ellipse.fill_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.fill_color.g)->value_double : 1.0f,
+            node->planet_ellipse.fill_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.fill_color.b)->value_double : 1.0f,
+            node->planet_ellipse.fill_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.fill_color.a)->value_double : 1.0f
+        };
+        uint32_t fill_color = PL_COLOR_32_RGBA(fc[0], fc[1], fc[2], fc[3]);
+        _ext_planet->draw_polygon_filled(view, points, (uint32_t)segments, fill_color);
+    }
+
+    // draw outline
+    if (node->planet_ellipse.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
+        float lc[4] = {
+            node->planet_ellipse.line_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.line_color.r)->value_double : 1.0f,
+            node->planet_ellipse.line_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.line_color.g)->value_double : 1.0f,
+            node->planet_ellipse.line_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.line_color.b)->value_double : 1.0f,
+            node->planet_ellipse.line_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.line_color.a)->value_double : 1.0f
+        };
+        uint32_t line_color = PL_COLOR_32_RGBA(lc[0], lc[1], lc[2], lc[3]);
+        _ext_planet->draw_polygon(view, points, (uint32_t)segments, line_width, line_color);
+    }
+
+}
+
 static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
     (void)node_index;
 
@@ -4636,7 +4727,7 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
                       dc_app_lookup_get_value(app_data->lookup, node->planet_view.orthographic)->value_boolean);
 
     plCamera camera     = {0};
-    camera.tType        = PL_CAMERA_TYPE_PERSPECTIVE;
+    camera.tType        = PL_CAMERA_TYPE_PERSPECTIVE_REVERSE_Z;
     camera.fFieldOfView = 60.0f * (float)(M_PI / 180.0);
     camera.fAspectRatio = (dimension[1] > 0.0f) ? dimension[0] / dimension[1] : 1.0f;
     camera.fNearZ       = 1.0f;
@@ -4740,6 +4831,17 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
             else
                 opts.tFlags &= ~PL_PLANET_FLAGS_FLATTEN;
             _ext_planet->set_view_runtime_options(view, opts);
+        }
+    }
+
+    // draw planet overlays (PlanetEllipse, etc.) into the view's 3D draw list
+    {
+        _NodeIndex child_index = node->planet_view.child;
+        while (child_index != NODE_INDEX_UNDEFINED) {
+            _Node *child = _get_node(app_data, child_index);
+            if (child->type == NODE_TYPE_PLANET_ELLIPSE)
+                _draw_node_planet_ellipse(app_data, child, view, def->radius);
+            child_index = child->next;
         }
     }
 

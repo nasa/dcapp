@@ -207,7 +207,9 @@
                 CameraLatitude="@Latitude" CameraLongitude="@Longitude" CameraElevation="@Elevation"
                 CameraHeading="@Heading"
                 CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"
-                Tau="@Tau"/>
+                Tau="@Tau">
+                <PlanetEllipse Latitude="-45.0" Longitude="180.0" Radius="50000" HeightAboveTerrain="1000" LineColor="1.0 0.0 0.0 1.0" LineWidth="2000" FillColor="1.0 0.0 0.0 0.5"/>
+            </PlanetView>
 
             <Text X="760" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">XYZ/RPY Camera</Text>
             <PlanetView Planet="Moon" X="535" Y="300" Width="450" Height="450"

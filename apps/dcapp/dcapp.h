@@ -130,6 +130,7 @@ typedef enum __NodeType {
     NODE_TYPE_SET,
     NODE_TYPE_SPHERE,
     NODE_TYPE_STENCIL,
+    NODE_TYPE_PLANET_ELLIPSE,
     NODE_TYPE_PLANET_VIEW,
     NODE_TYPE_TEXT,
     NODE_TYPE_WINDOW,
@@ -563,6 +564,21 @@ typedef struct __PlanetDef {
     uint8_t index; // 1-based index into sb_planets
 } _PlanetDef;
 
+typedef struct __NodePlanetEllipse {
+    DcAppValIndex lat;
+    DcAppValIndex lon;
+    DcAppValIndex radius_x;
+    DcAppValIndex radius_y;
+    DcAppValIndex rotation;
+    DcAppValIndex height_above_terrain;
+    _ValIndex4    line_color;
+    DcAppValIndex line_width;
+    _ValIndex4    fill_color;
+    DcAppValIndex segments;
+    uint8_t       config_flags;
+    uint8_t       planet_def_index;
+} _NodePlanetEllipse;
+
 typedef struct __NodePlanetView {
 
     // general positioning of display
@@ -598,6 +614,9 @@ typedef struct __NodePlanetView {
     uint8_t planet_def_index;  // index into sb_planet_defs (resolved at parse time)
     uint8_t planet_view_index; // 1-based index into sb_planet_views
 
+    // children (PlanetEllipse, etc.)
+    _NodeIndex child;
+
 } _NodePlanetView;
 
 typedef struct __NodeWindow {
@@ -632,6 +651,7 @@ typedef struct __Node {
         _NodeSphere      sphere;
         _NodeStateEvent  state_event;
         _NodeStencil     stencil;
+        _NodePlanetEllipse planet_ellipse;
         _NodePlanetView  planet_view;
         _NodeText        text;
         _NodeWindow      window;

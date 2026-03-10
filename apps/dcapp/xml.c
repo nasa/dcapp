@@ -50,6 +50,7 @@ static _NodeIndex    _process_xml_node_planet_data(_AppData *app_data, xmlNodePt
 static _NodeIndex    _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_texture(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static void          _planet_shader_abs_to_vfs(const char *abs_path, char *vfs_out, size_t vfs_out_size);
+static _NodeIndex    _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -285,6 +286,9 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_PLANET_SHADER:
             return _process_xml_node_planet_shader(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
+            return _process_xml_node_planet_ellipse(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_PLANET_VIEW:
             return _process_xml_node_planet_view(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -3502,6 +3506,100 @@ static _NodeIndex _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr
     return NODE_INDEX_UNDEFINED;
 }
 
+static _NodeIndex _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    (void)directory;
+
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW) {
+        DC_LOG_ERROR("PlanetEllipse", "PlanetEllipse must be a child of PlanetView");
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_PLANET_ELLIPSE;
+    dc_node.parent = parent_node_index;
+
+    // inherit planet_def_index from parent PlanetView
+    _Node *parent = _get_node(app_data, parent_node_index);
+    dc_node.planet_ellipse.planet_def_index = parent->planet_view.planet_def_index;
+
+    // latitude
+    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
+    if (raw_lat) {
+        dc_node.planet_ellipse.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+        xmlFree(raw_lat);
+    }
+
+    // longitude
+    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
+    if (raw_lon) {
+        dc_node.planet_ellipse.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+        xmlFree(raw_lon);
+    }
+
+    // radius (shorthand for both RadiusX and RadiusY)
+    xmlChar      *raw_radius = xmlGetProp(xml_node, BAD_CAST "Radius");
+    DcAppValIndex radius_val = DC_APP_VAL_INDEX_UNDEFINED;
+    if (raw_radius) {
+        radius_val = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius);
+        xmlFree(raw_radius);
+    }
+
+    // radius x (overrides Radius if specified)
+    xmlChar *raw_radius_x = xmlGetProp(xml_node, BAD_CAST "RadiusX");
+    if (raw_radius_x) {
+        dc_node.planet_ellipse.radius_x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius_x);
+        xmlFree(raw_radius_x);
+    } else {
+        dc_node.planet_ellipse.radius_x = radius_val;
+    }
+
+    // radius y (overrides Radius if specified)
+    xmlChar *raw_radius_y = xmlGetProp(xml_node, BAD_CAST "RadiusY");
+    if (raw_radius_y) {
+        dc_node.planet_ellipse.radius_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius_y);
+        xmlFree(raw_radius_y);
+    } else {
+        dc_node.planet_ellipse.radius_y = radius_val;
+    }
+
+    // rotation
+    xmlChar *raw_rotation = xmlGetProp(xml_node, BAD_CAST "Rotation");
+    if (raw_rotation) {
+        dc_node.planet_ellipse.rotation = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_rotation);
+        xmlFree(raw_rotation);
+    }
+
+    // height above terrain
+    xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
+    if (raw_height) {
+        dc_node.planet_ellipse.height_above_terrain = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_height);
+        xmlFree(raw_height);
+    }
+
+    // segments
+    xmlChar *raw_segments = xmlGetProp(xml_node, BAD_CAST "Segments");
+    if (raw_segments) {
+        dc_node.planet_ellipse.segments = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_segments);
+        xmlFree(raw_segments);
+    }
+
+    // line width
+    xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
+    if (raw_line_width) {
+        dc_node.planet_ellipse.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
+        xmlFree(raw_line_width);
+    }
+
+    // colors
+    dc_node.planet_ellipse.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.planet_ellipse.fill_color)))
+        dc_node.planet_ellipse.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.planet_ellipse.line_color)))
+        dc_node.planet_ellipse.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
+
+    return _register_node(app_data, &dc_node);
+}
+
 static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
     (void)elem_type;
@@ -3770,7 +3868,10 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
     // collect planet view node index for post-tree initialization
     sbpush(app_data->sb_planet_view_node_indices, node_index);
 
-    // leaf element — no children
+    // process children (PlanetEllipse, etc.)
+    _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
+    _get_node(app_data, node_index)->planet_view.child = first_child_index;
+
     return node_index;
 }
 
