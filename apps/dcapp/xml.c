@@ -2276,22 +2276,109 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
     dc_node.type   = NODE_TYPE_PIXELSTREAM;
     dc_node.parent = parent_node_index;
 
-    dc_node.pixelstream.frame = NULL;
-
-    // create + bind texture
-    {
-        // create device image, memory, bind
-        _Texture texture = _create_texture(app_data, _NODE_PIXELSTREAM_MAX_WIDTH, _NODE_PIXELSTREAM_MAX_HEIGHT, "pixelstream", true);
-
-        // add texture to internal arrays
-        sbpush(app_data->sb_texture_name_offsets, sbcount(app_data->sb_texture_names));
-        sbpushn(app_data->sb_texture_names, "--dummy--", (int)strlen("--dummy--") + 1);
-        sbpush(app_data->sb_textures, texture);
-        _TextureIndex texture_index = sbcount(app_data->sb_textures) - 1;
-
-        // update structure
-        dc_node.pixelstream.texture_index = texture_index;
+    // parse type
+    DcAppPixelstreamType ps_type = 0;
+    xmlChar *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");
+    if (!raw_type) {
+        raw_type = xmlGetProp(xml_node, BAD_CAST "Protocol");
     }
+    if (raw_type) {
+        ps_type = dc_utils_string_to_integer((const char *)raw_type);
+        xmlFree(raw_type);
+    } else {
+        DC_LOG_ERROR("PixelStream", "Missing 'Type' attribute");
+    }
+
+    // get source key for deduplication (filepath for shmem, URL for mjpeg)
+    char source_key[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
+    {
+        xmlChar *raw_key = NULL;
+        if (ps_type == DC_APP_PIXELSTREAM_TYPE_SHMEM) {
+            raw_key = xmlGetProp(xml_node, BAD_CAST "SharedMemoryKey");
+            if (!raw_key) raw_key = xmlGetProp(xml_node, BAD_CAST "File");
+            if (!raw_key) raw_key = xmlGetProp(xml_node, BAD_CAST "URL");
+        } else if (ps_type == DC_APP_PIXELSTREAM_TYPE_MJPEG) {
+            raw_key = xmlGetProp(xml_node, BAD_CAST "URL");
+        }
+        if (raw_key) {
+            strncpy(source_key, (const char *)raw_key, DC_UTILS_FILEPATH_BUFFER_SIZE - 1);
+            xmlFree(raw_key);
+        }
+    }
+
+    // find or create pixelstream source
+    _PixelstreamSourceIndex source_index = _PIXELSTREAM_SOURCE_INDEX_UNDEFINED;
+    {
+        // check existing sources
+        for (int ii = 0; ii < sbcount(app_data->sb_ps_sources); ii++) {
+            const char *existing_key = &app_data->sb_ps_source_keys[app_data->sb_ps_source_key_offsets[ii]];
+            if (app_data->sb_ps_sources[ii].type == ps_type &&
+                strcmp(existing_key, source_key) == 0) {
+                source_index = ii;
+                break;
+            }
+        }
+
+        // create new source if not found
+        if (source_index == _PIXELSTREAM_SOURCE_INDEX_UNDEFINED) {
+
+            _PixelstreamSource src = {0};
+            src.type         = ps_type;
+            src.frame        = NULL;
+            src.frame_width  = 0;
+            src.frame_height = 0;
+            src.is_connected = false;
+
+            // create GPU texture
+            _Texture texture = _create_texture(app_data, _NODE_PIXELSTREAM_MAX_WIDTH, _NODE_PIXELSTREAM_MAX_HEIGHT, "pixelstream", true);
+            sbpush(app_data->sb_texture_name_offsets, sbcount(app_data->sb_texture_names));
+            sbpushn(app_data->sb_texture_names, "--dummy--", (int)strlen("--dummy--") + 1);
+            sbpush(app_data->sb_textures, texture);
+            src.texture_index = sbcount(app_data->sb_textures) - 1;
+
+            // create handle
+            switch (ps_type) {
+                case DC_APP_PIXELSTREAM_TYPE_SHMEM: {
+                    if (source_key[0] == '\0') {
+                        DC_LOG_ERROR("PixelStream", "Missing 'SharedMemoryKey' or 'File' attribute for shmem type");
+                    }
+                    src.shmem.handle = dc_ps_shmem_add_source(source_key);
+                    break;
+                }
+                case DC_APP_PIXELSTREAM_TYPE_MJPEG: {
+                    if (source_key[0] == '\0') {
+                        DC_LOG_ERROR("PixelStream", "Missing 'URL' attribute for mjpeg type");
+                    }
+                    int      timeout     = 5;
+                    xmlChar *raw_timeout = xmlGetProp(xml_node, BAD_CAST "Timeout");
+                    if (raw_timeout) {
+                        timeout = dc_utils_string_to_integer((const char *)raw_timeout);
+                        xmlFree(raw_timeout);
+                    }
+                    src.mjpeg.handle        = dc_ps_mjpeg_add_server(source_key, timeout);
+                    src.mjpeg.raw_jpeg_size = _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT * 4;
+                    src.mjpeg.raw_jpeg      = (unsigned char *)malloc(src.mjpeg.raw_jpeg_size);
+                    break;
+                }
+                default:
+                    DC_LOG_ERROR("PixelStream", "Unknown pixelstream type");
+                    break;
+            }
+
+            // store key
+            sbpush(app_data->sb_ps_source_key_offsets, sbcount(app_data->sb_ps_source_keys));
+            sbpushn(app_data->sb_ps_source_keys, source_key, (int)strlen(source_key) + 1);
+
+            // store source
+            sbpush(app_data->sb_ps_sources, src);
+            source_index = sbcount(app_data->sb_ps_sources) - 1;
+
+            DC_LOG_INFO("PixelStream", "New source [%d]: %s", source_index, source_key);
+        } else {
+            DC_LOG_INFO("PixelStream", "Reusing source [%d]: %s", source_index, source_key);
+        }
+    }
+    dc_node.pixelstream.source_index = source_index;
 
     // x position
     xmlChar *raw_x_position = xmlGetProp(xml_node, BAD_CAST "PositionX");
@@ -2422,75 +2509,6 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
 
     } else {
         DC_LOG_ERROR("PixelStream", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
-    }
-
-    // set type
-    xmlChar *raw_type = xmlGetProp(xml_node, BAD_CAST "Type");
-    if (!raw_type) {
-        raw_type = xmlGetProp(xml_node, BAD_CAST "Protocol");
-    }
-    if (raw_type) {
-        dc_node.pixelstream.type = dc_utils_string_to_integer((const char *)raw_type);
-        xmlFree(raw_type);
-    } else {
-        DC_LOG_ERROR("PixelStream", "Missing 'Type' attribute");
-    }
-
-    // iterate over type
-    switch (dc_node.pixelstream.type) {
-
-        case DC_APP_PIXELSTREAM_TYPE_SHMEM: {
-
-            // parse filepath (also used as shmem key via ftok)
-            xmlChar *raw_filepath = xmlGetProp(xml_node, BAD_CAST "File");
-            if (!raw_filepath) {
-                raw_filepath = xmlGetProp(xml_node, BAD_CAST "URL"); // fallback
-            }
-            char filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
-            if (raw_filepath) {
-                strncpy(filepath, (const char *)raw_filepath, DC_UTILS_FILEPATH_BUFFER_SIZE);
-                filepath[DC_UTILS_FILEPATH_BUFFER_SIZE - 1] = '\0';
-                xmlFree(raw_filepath);
-            } else {
-                DC_LOG_ERROR("PixelStream", "Missing 'File' attribute for shmem type");
-                filepath[0] = '\0';
-            }
-
-            // set shmem field
-            dc_node.pixelstream.shmem.handle = dc_ps_shmem_add_source(filepath);
-            break;
-        }
-
-        case DC_APP_PIXELSTREAM_TYPE_MJPEG: {
-
-            // parse URL
-            xmlChar *raw_url = xmlGetProp(xml_node, BAD_CAST "URL");
-            char     cleaned_url[2048];
-            if (raw_url) {
-                strncpy(cleaned_url, (const char *)raw_url, 2048);
-                xmlFree(raw_url);
-            } else {
-                DC_LOG_ERROR("PixelStream", "Missing 'URL' attribute");
-            }
-
-            // parse timeout
-            int      timeout     = 5;
-            xmlChar *raw_timeout = xmlGetProp(xml_node, BAD_CAST "Timeout");
-            if (raw_timeout) {
-                timeout = dc_utils_string_to_integer((const char *)raw_timeout);
-                xmlFree(raw_timeout);
-            }
-
-            // set mjpeg field
-            dc_node.pixelstream.mjpeg.handle        = dc_ps_mjpeg_add_server(cleaned_url, timeout);
-            dc_node.pixelstream.mjpeg.raw_jpeg_size = _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT * 4;
-            dc_node.pixelstream.mjpeg.raw_jpeg      = (unsigned char *)malloc(dc_node.pixelstream.mjpeg.raw_jpeg_size);
-            break;
-        }
-
-        default:
-            DC_LOG_ERROR("PixelStream", "Unknown pixelstream type");
-            break;
     }
 
     // negate x

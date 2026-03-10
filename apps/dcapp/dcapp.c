@@ -191,18 +191,6 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 sbfree(node->line.sb_vertices);
                 break;
             case NODE_TYPE_PIXELSTREAM:
-                if (node->pixelstream.type == DC_APP_PIXELSTREAM_TYPE_MJPEG) {
-                    if (node->pixelstream.frame) {
-                        _ext_image->free(node->pixelstream.frame);
-                    }
-                    if (node->pixelstream.mjpeg.raw_jpeg) {
-                        free(node->pixelstream.mjpeg.raw_jpeg);
-                    }
-                } else if (node->pixelstream.type == DC_APP_PIXELSTREAM_TYPE_SHMEM) {
-                    if (node->pixelstream.frame) {
-                        free(node->pixelstream.frame);
-                    }
-                }
                 break;
             case NODE_TYPE_POLYGON:
                 sbfree(node->polygon.sb_vertices);
@@ -291,6 +279,26 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     }
     sbfree(app_data->sb_edges);
 
+    // cleanup pixelstream sources
+    for (int i = 0; i < sbcount(app_data->sb_ps_sources); i++) {
+        _PixelstreamSource *src = &app_data->sb_ps_sources[i];
+        if (src->type == DC_APP_PIXELSTREAM_TYPE_MJPEG) {
+            if (src->frame) {
+                _ext_image->free(src->frame);
+            }
+            if (src->mjpeg.raw_jpeg) {
+                free(src->mjpeg.raw_jpeg);
+            }
+        } else if (src->type == DC_APP_PIXELSTREAM_TYPE_SHMEM) {
+            if (src->frame) {
+                free(src->frame);
+            }
+        }
+    }
+    sbfree(app_data->sb_ps_sources);
+    sbfree(app_data->sb_ps_source_keys);
+    sbfree(app_data->sb_ps_source_key_offsets);
+
     // cleanup pixelstream global contexts
     dc_ps_mjpeg_cleanup();
     dc_ps_shmem_cleanup();
@@ -349,6 +357,94 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
 
 PL_EXPORT void pl_app_resize(_AppData *app_data) {
     _ext_starter->resize();
+}
+
+static void _update_pixelstream_sources(_AppData *app_data) {
+
+    for (int ii = 0; ii < sbcount(app_data->sb_ps_sources); ii++) {
+        _PixelstreamSource *src = &app_data->sb_ps_sources[ii];
+
+        switch (src->type) {
+
+            case DC_APP_PIXELSTREAM_TYPE_MJPEG: {
+
+                src->is_connected = dc_ps_mjpeg_server_is_connected(src->mjpeg.handle);
+                if (!src->is_connected) break;
+
+                if (dc_ps_mjpeg_server_has_new_data(src->mjpeg.handle)) {
+
+                    size_t jpeg_size;
+                    dc_ps_mjpeg_get_server_data(src->mjpeg.handle, src->mjpeg.raw_jpeg, src->mjpeg.raw_jpeg_size, &jpeg_size);
+
+                    _ext_image->free(src->frame);
+
+                    int channels;
+                    src->frame = _ext_image->load(src->mjpeg.raw_jpeg, (int)jpeg_size, &src->frame_width, &src->frame_height, &channels, 4);
+
+                    if (src->frame_height * src->frame_width > _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT) {
+                        DC_LOG_WARN("PixelStream", "Max image dimensions exceeded");
+                        _ext_image->free(src->frame);
+                        src->frame = NULL;
+                        break;
+                    }
+                }
+                break;
+            }
+
+            case DC_APP_PIXELSTREAM_TYPE_SHMEM: {
+
+                src->is_connected = dc_ps_shmem_is_connected(src->shmem.handle);
+                if (!src->is_connected) break;
+
+                if (dc_ps_shmem_has_new_data(src->shmem.handle)) {
+
+                    uint32_t width  = dc_ps_shmem_get_width(src->shmem.handle);
+                    uint32_t height = dc_ps_shmem_get_height(src->shmem.handle);
+
+                    if (width * height > _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT) {
+                        DC_LOG_WARN("PixelStream", "Shmem max image dimensions exceeded");
+                        break;
+                    }
+
+                    size_t frame_size = (size_t)width * height * 4;
+                    src->frame = realloc(src->frame, frame_size);
+
+                    size_t out_size;
+                    dc_ps_shmem_get_data(src->shmem.handle, src->frame, frame_size, &out_size);
+
+                    src->frame_width  = (int)width;
+                    src->frame_height = (int)height;
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+
+        // upload to GPU if we have frame data
+        if (src->frame && src->is_connected) {
+            _Texture texture = app_data->sb_textures[src->texture_index];
+            plDevice *device = _ext_starter->get_device();
+
+            plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
+            _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
+
+            plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
+            memcpy(staging_buffer->tMemoryAllocation.pHostMapped, src->frame, src->frame_width * src->frame_height * 4);
+
+            plBufferImageCopy buffer_image_copy;
+            memset(&buffer_image_copy, 0, sizeof(plBufferImageCopy));
+            buffer_image_copy.uImageWidth    = (uint32_t)src->frame_width;
+            buffer_image_copy.uImageHeight   = (uint32_t)src->frame_height;
+            buffer_image_copy.uImageDepth    = 1;
+            buffer_image_copy.uLayerCount    = 1;
+            buffer_image_copy.szBufferOffset = 0;
+            _ext_gfx->copy_buffer_to_texture(encoder, app_data->pl_staging_buffer_handle, texture.texture_handle, 1, &buffer_image_copy);
+
+            _ext_starter->return_blit_encoder(encoder);
+        }
+    }
 }
 
 PL_EXPORT void pl_app_update(_AppData *app_data) {
@@ -513,6 +609,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     // process pixelstream data
     dc_ps_mjpeg_update();
     dc_ps_shmem_update();
+    _update_pixelstream_sources(app_data);
 
     // process logic
     if (app_data->logic_draw) {

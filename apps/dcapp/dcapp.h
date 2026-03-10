@@ -358,15 +358,32 @@ typedef struct __NodePanel {
 
 #define _NODE_PIXELSTREAM_MAX_WIDTH 3840
 #define _NODE_PIXELSTREAM_MAX_HEIGHT 2160
-typedef struct __PixelstreamMjpegData {
-    DcPsMjpegHandle handle;
-    unsigned char  *raw_jpeg;
-    size_t          raw_jpeg_size;
-} _PixelstreamMjpegData;
 
-typedef struct __PixelstreamShmemData {
-    DcPsShmemHandle handle;
-} _PixelstreamShmemData;
+// unique pixelstream source (shared across nodes with the same key)
+typedef int _PixelstreamSourceIndex;
+#define _PIXELSTREAM_SOURCE_INDEX_UNDEFINED -1
+
+typedef struct __PixelstreamSource {
+    DcAppPixelstreamType type;
+    _TextureIndex        texture_index;
+    bool                 is_connected;
+
+    // frame data (fetched once per frame by the source, not per-node)
+    unsigned char *frame;
+    int            frame_width;
+    int            frame_height;
+
+    union {
+        struct {
+            DcPsMjpegHandle handle;
+            unsigned char  *raw_jpeg;
+            size_t          raw_jpeg_size;
+        } mjpeg;
+        struct {
+            DcPsShmemHandle handle;
+        } shmem;
+    };
+} _PixelstreamSource;
 
 typedef struct __NodePixelstream {
     _ValIndex2    position;
@@ -380,21 +397,13 @@ typedef struct __NodePixelstream {
     DcAppValIndex negate_x;
     DcAppValIndex negate_y;
 
-    _TextureIndex texture_index;
     _TextureIndex test_pattern_texture_index;
 
     _NodeIndex child;
     uint32_t   state_flags;
     uint8_t    config_flags;
 
-    DcAppPixelstreamType type;
-    unsigned char       *frame;
-    int                  frame_width;
-    int                  frame_height;
-    union {
-        _PixelstreamMjpegData mjpeg;
-        _PixelstreamShmemData shmem;
-    };
+    _PixelstreamSourceIndex source_index;
 } _NodePixelstream;
 
 #define _NODE_POLYGON_MAX_POINTS 1000
@@ -861,6 +870,11 @@ typedef struct __AppData {
     dcDrawList3D **sb_draw_list_3d_pool; // pool of 3D draw list pointers (from extension)
     int            draw_list_2d_index;   // current index into 2D pool
     int            draw_list_3d_index;   // current index into 3D pool
+
+    // pixelstream sources (unique, deduplicated by source key during XML parse)
+    _PixelstreamSource *sb_ps_sources;
+    char               *sb_ps_source_keys;        // stretchy buffer of null-terminated key strings
+    int                *sb_ps_source_key_offsets;  // offset into sb_ps_source_keys for each source
 
     // planet instances
     _PlanetDef    *sb_planet_defs;              // collected during XML parse (top-level Planet definitions)

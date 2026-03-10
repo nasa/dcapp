@@ -2444,115 +2444,21 @@ static void _draw_node_panel(_AppData *app_data, _NodeIndex node_index, _Node *n
 
 static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
+    // get source (data fetching + GPU upload already done at top of frame)
+    if (node->pixelstream.source_index == _PIXELSTREAM_SOURCE_INDEX_UNDEFINED) return;
+    _PixelstreamSource *source = &app_data->sb_ps_sources[node->pixelstream.source_index];
+
     // get texture handler
-    _Texture   texture    = app_data->sb_textures[node->pixelstream.texture_index];
+    _Texture   texture    = app_data->sb_textures[source->texture_index];
     plDevice  *pl_device  = _ext_starter->get_device();
     plTexture *pl_texture = _ext_gfx->get_texture(pl_device, texture.texture_handle);
 
-    // track connection state for test pattern fallback
-    bool is_connected = false;
-
-    // switch over types to get the raw image data in the buffer
-    switch (node->pixelstream.type) {
-        case DC_APP_PIXELSTREAM_TYPE_MJPEG: {
-
-            is_connected = dc_ps_mjpeg_server_is_connected(node->pixelstream.mjpeg.handle);
-            if (!is_connected) {
-                break;
-            }
-
-            // get latest frame data here
-            if (dc_ps_mjpeg_server_has_new_data(node->pixelstream.mjpeg.handle)) {
-
-                // get raw data from server
-                size_t jpeg_size;
-                dc_ps_mjpeg_get_server_data(node->pixelstream.mjpeg.handle, node->pixelstream.mjpeg.raw_jpeg, node->pixelstream.mjpeg.raw_jpeg_size, &jpeg_size);
-
-                // free prior image data
-                _ext_image->free(node->pixelstream.frame);
-
-                // convert to raw image format
-                int channels;
-                node->pixelstream.frame = _ext_image->load(node->pixelstream.mjpeg.raw_jpeg, (int)jpeg_size, &node->pixelstream.frame_width, &node->pixelstream.frame_height, &channels, 4);
-
-                // check size
-                if (node->pixelstream.frame_height * node->pixelstream.frame_width > _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT) {
-                    DC_LOG_WARN("PixelStream", "Max image dimensions exceeded");
-                }
-            }
-            break;
-        }
-        case DC_APP_PIXELSTREAM_TYPE_SHMEM: {
-
-            is_connected = dc_ps_shmem_is_connected(node->pixelstream.shmem.handle);
-            if (!is_connected) {
-                break;
-            }
-
-            // get latest frame data
-            if (dc_ps_shmem_has_new_data(node->pixelstream.shmem.handle)) {
-
-                // get dimensions
-                uint32_t width  = dc_ps_shmem_get_width(node->pixelstream.shmem.handle);
-                uint32_t height = dc_ps_shmem_get_height(node->pixelstream.shmem.handle);
-
-                // check size
-                if (width * height > _NODE_PIXELSTREAM_MAX_WIDTH * _NODE_PIXELSTREAM_MAX_HEIGHT) {
-                    DC_LOG_WARN("PixelStream", "Shmem max image dimensions exceeded");
-                    break;
-                }
-
-                // allocate frame buffer if needed
-                size_t frame_size       = (size_t)width * height * 4;
-                node->pixelstream.frame = realloc(node->pixelstream.frame, frame_size);
-
-                // get data directly (already RGBA)
-                size_t out_size;
-                dc_ps_shmem_get_data(node->pixelstream.shmem.handle, node->pixelstream.frame, frame_size, &out_size);
-
-                node->pixelstream.frame_width  = (int)width;
-                node->pixelstream.frame_height = (int)height;
-            }
-            break;
-        }
-        default:
-            DC_LOG_ERROR("PixelStream", "Unknown type: %d", node->pixelstream.type);
-            break;
-    }
-
     // determine whether to use test pattern
-    bool use_test_pattern = !is_connected && node->pixelstream.test_pattern_texture_index != TEXTURE_INDEX_UNDEFINED;
+    bool use_test_pattern = !source->is_connected && node->pixelstream.test_pattern_texture_index != TEXTURE_INDEX_UNDEFINED;
 
     // don't draw anything if no data and no test pattern
-    if (node->pixelstream.frame == NULL && !use_test_pattern) {
+    if (source->frame == NULL && !use_test_pattern) {
         return;
-    }
-
-    // copy to GPU image (only if not using test pattern)
-    if (!use_test_pattern) {
-        // get device
-        plDevice *device = _ext_starter->get_device();
-
-        // set the initial pl_texture usage (this is a no-op in metal but does layout transition for vulkan)
-        plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
-        _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
-
-        // copy memory to mapped staging buffer
-        plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
-        memcpy(staging_buffer->tMemoryAllocation.pHostMapped, node->pixelstream.frame, node->pixelstream.frame_width * node->pixelstream.frame_height * 4);
-
-        // copy staging buffer to image
-        plBufferImageCopy buffer_image_copy;
-        memset(&buffer_image_copy, 0, sizeof(plBufferImageCopy));
-        buffer_image_copy.uImageWidth    = (uint32_t)node->pixelstream.frame_width;
-        buffer_image_copy.uImageHeight   = (uint32_t)node->pixelstream.frame_height;
-        buffer_image_copy.uImageDepth    = 1;
-        buffer_image_copy.uLayerCount    = 1;
-        buffer_image_copy.szBufferOffset = 0;
-        _ext_gfx->copy_buffer_to_texture(encoder, app_data->pl_staging_buffer_handle, texture.texture_handle, 1, &buffer_image_copy);
-
-        // return encoder
-        _ext_starter->return_blit_encoder(encoder);
     }
 
     // boolean checks
@@ -2835,9 +2741,9 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
         // streaming texture
         plVec3 pl_texture_dimensions = pl_texture->tDesc.tDimensions;
         max_uv                       = (plVec2){
-            ((float)node->pixelstream.frame_width) / pl_texture_dimensions.x,
-            ((float)node->pixelstream.frame_height) / pl_texture_dimensions.y};
-        bind_group_handle = app_data->sb_textures[node->pixelstream.texture_index].bind_group_handle;
+            ((float)source->frame_width) / pl_texture_dimensions.x,
+            ((float)source->frame_height) / pl_texture_dimensions.y};
+        bind_group_handle = app_data->sb_textures[source->texture_index].bind_group_handle;
     }
 
     plVec2 uv0 = (plVec2){min_uv.x, min_uv.y};
