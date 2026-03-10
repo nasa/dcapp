@@ -64,7 +64,7 @@ Index of this file:
 //-----------------------------------------------------------------------------
 
 // basic types
-typedef struct _plDrawInit    plDrawInit;    // initialization options (reserved for future use)
+typedef struct _dcDrawInit    dcDrawInit;    // initialization options (reserved for future use)
 typedef struct _plFontAtlas   plFontAtlas;   // font atlas data
 typedef struct _plDrawList2D  plDrawList2D;  // drawlist data for 2D
 typedef struct _plDrawList3D  plDrawList3D;  // drawlist data for 3D
@@ -120,10 +120,10 @@ typedef int plDrawCommand3DType; // -> enum _plDrawCommand3DType
 // [SECTION] public api struct
 //-----------------------------------------------------------------------------
 
-typedef struct _plDrawI
+typedef struct _dcDrawI
 {
     // init/cleanup
-    void (*initialize)(const plDrawInit*);
+    void (*initialize)(const dcDrawInit*);
     void (*cleanup)   (void); // usually called by backend "cleanup" func.
 
     // per frame
@@ -237,10 +237,7 @@ typedef struct _plDrawI
     void (*add_3d_cylinder)    (plDrawList3D*, plCylinder, uint32_t segments, plDrawLineOptions);
     void (*add_3d_cone)        (plDrawList3D*, plCone, uint32_t segments, plDrawLineOptions);
 
-} plDrawI;
-
-// Alias for API registration
-typedef plDrawI dcDrawI;
+} dcDrawI;
 
 //-----------------------------------------------------------------------------
 // [SECTION] enums
@@ -283,10 +280,10 @@ enum _plDrawRectFlags
 // [SECTION] structs
 //-----------------------------------------------------------------------------
 
-typedef struct _plDrawInit
+typedef struct _dcDrawInit
 {
     int _iUnused;
-} plDrawInit;
+} dcDrawInit;
 
 typedef struct _plDrawFrustumDesc
 {

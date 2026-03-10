@@ -35,8 +35,8 @@
 
 // PL extensions
 const plWindowI          *_ext_windows          = NULL;
-const plDrawI            *_ext_draw             = NULL;
-const plDrawBackendI     *_ext_draw_backend     = NULL;
+const dcDrawI            *_ext_draw             = NULL;
+const dcDrawBackendI     *_ext_draw_backend     = NULL;
 const plStarterI         *_ext_starter          = NULL;
 const plProfileI         *_ext_profile          = NULL;
 const plMemoryI          *_ext_memory           = NULL;

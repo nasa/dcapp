@@ -67,7 +67,7 @@ typedef struct _plShaderOverride3D
 // [SECTION] public api struct
 //-----------------------------------------------------------------------------
 
-typedef struct _plDrawBackendI
+typedef struct _dcDrawBackendI
 {
     // init/cleanup
     void (*initialize)(plDevice*);
@@ -92,9 +92,6 @@ typedef struct _plDrawBackendI
     // pass NULL for both shaders to reset to default
     void (*set_shader)   (plDrawLayer2D*, plShaderHandle* pt2dShader, plShaderHandle* ptSdfShader);
     void (*set_3d_shader)(plDrawList3D*,  plShaderHandle* ptSolidShader, plShaderHandle* ptTexturedShader);
-} plDrawBackendI;
-
-// Alias for API registration (separate from pilotlight's plDrawBackendI)
-typedef plDrawBackendI dcDrawBackendI;
+} dcDrawBackendI;
 
 #endif // PL_DRAW_BACKEND_EXT_H

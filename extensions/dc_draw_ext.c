@@ -355,7 +355,7 @@ pl__add_3d_path(plDrawList3D* ptDrawlist, uint32_t uCount, const plVec3* atPoint
 //-----------------------------------------------------------------------------
 
 static void
-pl_initialize(const plDrawInit* ptInit)
+pl_initialize(const dcDrawInit* ptInit)
 {
     size_t szBufferSize = sizeof(gptDrawCtx->atDrawlists3DBuffer);
     size_t szItems = pl_pool_allocator_init(&gptDrawCtx->tDrawlistPool3D, 0, sizeof(plDrawList3D), 0,
@@ -4014,7 +4014,7 @@ pl__find_glyph(plFont* ptFont, uint32_t c)
 PL_EXPORT void
 pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
 {
-    const plDrawI tApi = {
+    const dcDrawI tApi = {
         .initialize                 = pl_initialize,
         .cleanup                    = pl_cleanup,
         .request_3d_drawlist        = pl_request_3d_drawlist,

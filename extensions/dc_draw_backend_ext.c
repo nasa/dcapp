@@ -48,7 +48,7 @@ Index of this file:
 
     static const plGraphicsI* gptGfx    = NULL;
     static const plStatsI*    gptStats  = NULL;
-    static const plDrawI*     gptDraw   = NULL;
+    static const dcDrawI*     gptDraw   = NULL;
     static const plShaderI*   gptShader = NULL;
     static const plLogI*      gptLog    = NULL;
     static const plIOI*       gptIOI    = NULL;
@@ -1518,7 +1518,7 @@ PL_EXPORT void
 pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
 {
 
-    const plDrawBackendI tApi = {
+    const dcDrawBackendI tApi = {
         .initialize                    = pl_initialize_draw_backend,
         .cleanup                       = pl_cleanup_draw_backend,
         .new_frame                     = pl_new_draw_frame,

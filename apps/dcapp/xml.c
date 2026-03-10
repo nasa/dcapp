@@ -5281,7 +5281,7 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     plDevice *device = _ext_starter->get_device();
 
     // initialize dc_draw_ext and dc_draw_backend_ext (pl_starter doesn't do this since we use dcDrawI)
-    plDrawInit tDrawInit = {0};
+    dcDrawInit tDrawInit = {0};
     _ext_draw->initialize(&tDrawInit);
     _ext_draw_backend->initialize(device);
 
@@ -5348,7 +5348,7 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
         _ext_gfx->wait_on_command_buffer(command_buffer);
         _ext_gfx->return_command_buffer(command_buffer);
     }
-    // Note: don't call set_default_font - pl_starter uses plDrawI with its own font atlas,
+    // Note: don't call set_default_font - pl_starter uses pilotlight's plDrawI with its own font atlas,
     // while dcapp uses dcDrawI with a separate font atlas. Let pl_starter create its own default font.
 
     // initialize shader compiler
