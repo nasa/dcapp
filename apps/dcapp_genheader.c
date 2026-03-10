@@ -9,6 +9,7 @@
 #include <libxml/parser.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void _process_node_children(xmlNodePtr xml_node, DcAppLookup *lookup);
@@ -17,17 +18,42 @@ static void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup);
 int main(int argc, char **argv) {
 
     if (argc < 2) {
-        DC_LOG_ERROR("GenHeader", "Missing config file");
+        DC_LOG_ERROR("GenHeader", "Usage: dcapp-genheader <config.xml> [--preprocessed <output.xml>] [CONSTANT=value ...]");
+        return 1;
+    }
+
+    // parse --preprocessed flag (before constants)
+    const char *preprocessed_output = NULL;
+    int         const_count         = 0;
+    char      **const_args          = NULL;
+
+    for (int ii = 2; ii < argc; ii++) {
+        if (strcmp(argv[ii], "--preprocessed") == 0 && ii + 1 < argc) {
+            preprocessed_output = argv[++ii];
+        }
+    }
+
+    // collect constant args (skip --preprocessed and its value)
+    if (argc > 2) {
+        const_args = (char **)malloc(sizeof(char *) * (argc - 2));
+        for (int ii = 2; ii < argc; ii++) {
+            if (strcmp(argv[ii], "--preprocessed") == 0 && ii + 1 < argc) {
+                ii++; // skip value
+                continue;
+            }
+            const_args[const_count++] = argv[ii];
+        }
     }
 
     // create config
     DcAppConfig *config;
     const char  *config_filepath = argv[1];
-    if (argc < 3) {
-        config = dc_app_config_create(config_filepath, NULL, 0);
+    if (const_count > 0) {
+        config = dc_app_config_create(config_filepath, const_args, const_count);
     } else {
-        config = dc_app_config_create(config_filepath, &(argv[2]), argc - 2);
+        config = dc_app_config_create(config_filepath, NULL, 0);
     }
+    free(const_args);
 
     // create lookup
     DcAppLookup *lookup = dc_app_lookup_create();
@@ -38,6 +64,9 @@ int main(int argc, char **argv) {
 
     // preprocess XML file
     dc_app_config_preprocess_xml(config, lookup);
+
+    // dump preprocessed XML for debugging
+    dc_app_config_save_preprocessed(config, preprocessed_output);
 
     // process XML
     xmlNodePtr root_node = xmlDocGetRootElement(config->xml_doc);

@@ -35,6 +35,7 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
 void         dc_app_config_cleanup(DcAppConfig *config);
 void         dc_app_config_preprocess_xml(DcAppConfig *config, DcAppLookup *lookup);
 void         dc_app_config_save_to_file(DcAppConfig *config, const char *filepath);
+void         dc_app_config_save_preprocessed(DcAppConfig *config, const char *output_path);
 
 // const
 void dc_app_config_register_const_by_name(DcAppConfig *config, const char *name, const char *new_value, bool is_immutable);

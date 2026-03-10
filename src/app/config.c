@@ -1176,6 +1176,27 @@ static void _write_xml_node(FILE *f, xmlNodePtr node, int depth) {
     }
 }
 
+void dc_app_config_save_preprocessed(DcAppConfig *config, const char *output_name) {
+    char preprocessed_name[256];
+    if (output_name) {
+        const char *base = strrchr(output_name, '/');
+        base = base ? base + 1 : output_name;
+        snprintf(preprocessed_name, sizeof(preprocessed_name), "%s", base);
+    } else {
+        const char *name = strrchr(config->config_file_path, '/');
+        name = name ? name + 1 : config->config_file_path;
+        const char *dot = strrchr(name, '.');
+        if (dot) {
+            snprintf(preprocessed_name, sizeof(preprocessed_name), "%.*s.preprocessed.xml", (int)(dot - name), name);
+        } else {
+            snprintf(preprocessed_name, sizeof(preprocessed_name), "%s.preprocessed.xml", name);
+        }
+    }
+    char filepath[DC_UTILS_FILEPATH_BUFFER_SIZE];
+    dc_utils_join_paths(config->cache_dir_path, preprocessed_name, filepath, sizeof(filepath));
+    dc_app_config_save_to_file(config, filepath);
+}
+
 void dc_app_config_save_to_file(DcAppConfig *config, const char *filepath) {
     FILE *f = fopen(filepath, "w");
     if (!f) return;

@@ -61,13 +61,37 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         DC_LOG_ERROR("App", "Missing dcapp config file");
     }
 
+    // parse --preprocessed flag (before constants)
+    const char *preprocessed_output = NULL;
+    int         const_count         = 0;
+    char      **const_args          = NULL;
+
+    for (int ii = 4; ii < _ext_io->iArgc; ii++) {
+        if (strcmp(_ext_io->apArgv[ii], "--preprocessed") == 0 && ii + 1 < _ext_io->iArgc) {
+            preprocessed_output = _ext_io->apArgv[++ii];
+        }
+    }
+
+    // collect constant args (skip --preprocessed and its value)
+    if (_ext_io->iArgc > 4) {
+        const_args = (char **)malloc(sizeof(char *) * (_ext_io->iArgc - 4));
+        for (int ii = 4; ii < _ext_io->iArgc; ii++) {
+            if (strcmp(_ext_io->apArgv[ii], "--preprocessed") == 0 && ii + 1 < _ext_io->iArgc) {
+                ii++; // skip value
+                continue;
+            }
+            const_args[const_count++] = _ext_io->apArgv[ii];
+        }
+    }
+
     // create config
     const char *config_filepath = _ext_io->apArgv[3];
-    if (_ext_io->iArgc < 5) {
-        app_data->config = dc_app_config_create(config_filepath, NULL, 0);
+    if (const_count > 0) {
+        app_data->config = dc_app_config_create(config_filepath, const_args, const_count);
     } else {
-        app_data->config = dc_app_config_create(config_filepath, &(_ext_io->apArgv[4]), _ext_io->iArgc - 4);
+        app_data->config = dc_app_config_create(config_filepath, NULL, 0);
     }
+    free(const_args);
 
     // create lookup
     app_data->lookup = dc_app_lookup_create();
@@ -88,6 +112,9 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     // preprocess XML file
     dc_app_config_preprocess_xml(app_data->config, app_data->lookup);
+
+    // dump preprocessed XML for debugging
+    dc_app_config_save_preprocessed(app_data->config, preprocessed_output);
 
     // initialize pixelstream contexts
     dc_ps_mjpeg_init();

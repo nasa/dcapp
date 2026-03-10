@@ -5,7 +5,7 @@ DCAPP_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_DIR="$DCAPP_HOME/pilotlight/out"
 
 if [ $# -eq 0 ]; then
-    echo "Usage: dcapp-validate <config.xml> [CONSTANT=value ...]"
+    echo "Usage: dcapp-validate <config.xml> [--preprocessed <output.xml>] [CONSTANT=value ...]"
     exit 1
 fi
 
