@@ -191,7 +191,7 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
     pl__load_apis(ptApiRegistry);
 
     gptVfs->mount_directory("/shaders-terrain", "../../shaders", PL_VFS_MOUNT_FLAGS_NONE);
-    gptVfs->mount_directory("/assets", "../../data", PL_VFS_MOUNT_FLAGS_NONE);
+    gptVfs->mount_directory("/assets", "../../assets", PL_VFS_MOUNT_FLAGS_NONE);
     gptVfs->mount_directory("/tiles", "../../data", PL_VFS_MOUNT_FLAGS_NONE);
     gptVfs->mount_directory("/cache", "../cache", PL_VFS_MOUNT_FLAGS_NONE);
     gptVfs->mount_directory("/shaders", "../shaders", PL_VFS_MOUNT_FLAGS_NONE);

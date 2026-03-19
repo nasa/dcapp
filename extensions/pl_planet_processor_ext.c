@@ -1239,7 +1239,7 @@ pl__get_cartesian_unmod(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptEl
     };
 
     // 5) Normal and add height (ptElement->fY is height in meters)
-    plVec3 tNormal = pl_norm_vec3(tSpherePos);
+    // plVec3 tNormal = pl_norm_vec3(tSpherePos);
     plVec3 tResult = {
         tSpherePos.x,
         tSpherePos.y,

@@ -671,7 +671,7 @@ pl_render_to_planet_view(plPlanetView* ptView, plCamera* ptCamera, plCommandBuff
     if(ptView->tRuntimeOptions.tFlags & PL_PLANET_FLAGS_SHOW_ORIGIN)
     {
         const plMat4 tOrigin = pl_identity_mat4();
-        gptDraw->add_3d_transform(ptView->pt3dDrawlist, &tOrigin, ptView->ptPlanet->dRadius * 1.2f, (plDrawLineOptions){0, 10000.0f});
+        gptDraw->add_3d_transform(ptView->pt3dDrawlist, &tOrigin, (float)ptView->ptPlanet->dRadius * 1.2f, (plDrawLineOptions){0, 10000.0f});
     }
 
     gptDraw->submit_3d_drawlist(ptView->pt3dDrawlist,
