@@ -1177,8 +1177,6 @@ def process_directory(input_dir: str, format_output: bool = False) -> tuple[int,
 
 def main():
 
-    ensure_min_python(3, 9)  # (3,9 for PEP 585 built-in generics)
-
     parser = argparse.ArgumentParser(
         description='Convert legacy dcapp XML to new syntax',
         formatter_class=argparse.RawDescriptionHelpFormatter,
