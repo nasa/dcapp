@@ -18,6 +18,18 @@ import argparse
 from typing import Optional, Tuple
 from lxml import etree
 
+# ============================================================================
+# SECTION 0: PYTHON3 VERSION CHECK
+# ============================================================================
+MIN_PY = (3, 9)  # adjust as needed
+if sys.version_info < MIN_PY:
+    print(
+        f"[ERROR] Python {MIN_PY[0]}.{MIN_PY[1]}+ required, "
+        f"but found {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}\n"
+        f"Reason: this script uses features introduced in Python {MIN_PY[0]}.{MIN_PY[1]} "
+        f"(e.g., built-in generics like tuple[int, int])."
+    )
+    sys.exit(1)
 
 # ============================================================================
 # SECTION 1: ELEMENT NAME MAPPINGS
@@ -1163,8 +1175,10 @@ def process_directory(input_dir: str, format_output: bool = False) -> tuple[int,
 
     return success_count, error_count
 
-
 def main():
+
+    ensure_min_python(3, 9)  # (3,9 for PEP 585 built-in generics)
+
     parser = argparse.ArgumentParser(
         description='Convert legacy dcapp XML to new syntax',
         formatter_class=argparse.RawDescriptionHelpFormatter,
