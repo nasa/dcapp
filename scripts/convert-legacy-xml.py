@@ -290,11 +290,16 @@ def convert_button_type(elem: etree._Element) -> None:
 
 def convert_if_operator(elem: etree._Element) -> None:
     """Convert If element legacy Operation to Operator with constant."""
-    operation = elem.get('Operation')
+    attr_name = 'Operation'
+    operation = elem.get(attr_name)
+    if not operation:
+        attr_name = 'Operator'
+        operation = elem.get(attr_name)
     if operation:
         new_value = CONDITIONAL_OP_MAP.get(operation, operation)
         elem.set('Operator', new_value)
-        del elem.attrib['Operation']
+        if elem.get('Operation'):
+            del elem.attrib['Operation']
 
 
 def has_variable_reference(value: Optional[str]) -> bool:
@@ -911,6 +916,8 @@ def process_mask_element(elem: etree._Element) -> None:
             child.tag = 'StencilAdd'
         elif child.tag == 'Projection':
             child.tag = 'StencilDraw'
+        elif child.tag == 'StencilSub':
+            child.tag = 'StencilRemove'
 
 
 def process_tree(elem: etree._Element, parent: Optional[etree._Element] = None, parent_tag: Optional[str] = None) -> list:
