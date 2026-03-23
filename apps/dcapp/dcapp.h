@@ -133,6 +133,9 @@ typedef enum __NodeType {
     NODE_TYPE_SPHERE,
     NODE_TYPE_STENCIL,
     NODE_TYPE_PLANET_ELLIPSE,
+    NODE_TYPE_PLANET_LINE,
+    NODE_TYPE_PLANET_POLYGON,
+    NODE_TYPE_PLANET_SPHERE,
     NODE_TYPE_PLANET_TEXT,
     NODE_TYPE_PLANET_VIEW,
     NODE_TYPE_TEXT,
@@ -591,6 +594,54 @@ typedef struct __NodePlanetEllipse {
     uint8_t       planet_def_index;
 } _NodePlanetEllipse;
 
+// fixed point (GeoJSON, baked at parse time)
+typedef struct __PlanetVertexStatic {
+    double lon;
+    double lat;
+    double alt; // meters above surface
+    bool   has_alt;
+} _PlanetVertexStatic;
+
+// variable-bound point (XML, resolved at draw time)
+typedef struct __PlanetVertexDynamic {
+    DcAppValIndex lat;
+    DcAppValIndex lon;
+    DcAppValIndex alt;
+} _PlanetVertexDynamic;
+
+typedef struct __NodePlanetLine {
+    _PlanetVertexStatic  *sb_points_static;  // fixed points (GeoJSON)
+    _PlanetVertexDynamic *sb_points_dynamic; // variable-bound points (XML)
+    bool                  is_dynamic;
+    DcAppValIndex         height_above_terrain;
+    _ValIndex4            line_color;
+    DcAppValIndex         line_width;
+    uint8_t               config_flags;
+    uint8_t               planet_def_index;
+} _NodePlanetLine;
+
+typedef struct __NodePlanetPolygon {
+    _PlanetVertexStatic  *sb_points_static;  // fixed points (GeoJSON)
+    _PlanetVertexDynamic *sb_points_dynamic; // variable-bound points (XML)
+    bool                  is_dynamic;
+    DcAppValIndex         height_above_terrain;
+    _ValIndex4            line_color;
+    DcAppValIndex         line_width;
+    _ValIndex4            fill_color;
+    uint8_t               config_flags;
+    uint8_t               planet_def_index;
+} _NodePlanetPolygon;
+
+typedef struct __NodePlanetSphere {
+    DcAppValIndex lat;
+    DcAppValIndex lon;
+    DcAppValIndex height_above_terrain;
+    DcAppValIndex radius;
+    _ValIndex4    fill_color;
+    uint8_t       config_flags;
+    uint8_t       planet_def_index;
+} _NodePlanetSphere;
+
 typedef struct __NodePlanetText {
     DcAppValIndex lat;
     DcAppValIndex lon;
@@ -682,7 +733,10 @@ typedef struct __Node {
         _NodeStateEvent  state_event;
         _NodeStencil     stencil;
         _NodePlanetEllipse planet_ellipse;
-        _NodePlanetText  planet_text;
+        _NodePlanetLine    planet_line;
+        _NodePlanetPolygon planet_polygon;
+        _NodePlanetSphere  planet_sphere;
+        _NodePlanetText    planet_text;
         _NodePlanetView  planet_view;
         _NodeText        text;
         _NodeWindow      window;

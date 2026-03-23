@@ -209,6 +209,7 @@
                 CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"
                 Tau="@Tau">
                 <PlanetEllipse Latitude="-45.0" Longitude="180.0" Radius="50000" HeightAboveTerrain="1000" LineColor="1.0 0.0 0.0 1.0" LineWidth="2000" FillColor="1.0 0.0 0.0 0.5"/>
+                <PlanetGeoJSON File="assets/geojson_test.geojson" HeightAboveTerrain="1000" LineColor="1.0 1.0 0.0 1.0" LineWidth="2000" FillColor="1.0 1.0 0.0 0.2"/>
                 <PlanetText Latitude="-45.0" Longitude="180.0" HeightAboveTerrain="50000" Size="50000" FillColor="1.0 1.0 0.0 1.0">Lat: @Latitude(%.1f) Lon: @Longitude(%.1f)</PlanetText>
             </PlanetView>
 

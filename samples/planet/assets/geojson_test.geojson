@@ -1,0 +1,211 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Single Point (yellow sphere)"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [180.0, -45.0]
+      }
+    },
+
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MultiPoint (3 cyan spheres)",
+        "stroke": "#00ffff",
+        "stroke-opacity": 1.0
+      },
+      "geometry": {
+        "type": "MultiPoint",
+        "coordinates": [
+          [179.0, -44.0],
+          [179.5, -44.5],
+          [180.0, -44.0]
+        ]
+      }
+    },
+
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "LineString (red line)",
+        "stroke": "#ff0000",
+        "stroke-width": 3,
+        "stroke-opacity": 1.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [178.0, -44.0],
+          [178.5, -44.5],
+          [179.0, -45.0],
+          [179.5, -45.5],
+          [180.0, -46.0]
+        ]
+      }
+    },
+
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MultiLineString (2 green lines)",
+        "stroke": "#00ff00",
+        "stroke-width": 2,
+        "stroke-opacity": 1.0
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [180.5, -44.0],
+            [181.0, -44.5],
+            [181.5, -45.0]
+          ],
+          [
+            [180.5, -45.0],
+            [181.0, -45.5],
+            [181.5, -46.0]
+          ]
+        ]
+      }
+    },
+
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Polygon (blue fill, white outline)",
+        "stroke": "#ffffff",
+        "stroke-width": 2,
+        "stroke-opacity": 1.0,
+        "fill": "#0000ff",
+        "fill-opacity": 0.4
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [177.0, -46.0],
+          [178.0, -46.0],
+          [178.0, -47.0],
+          [177.0, -47.0],
+          [177.0, -46.0]
+        ]]
+      }
+    },
+
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Polygon with hole (magenta fill)",
+        "stroke": "#ff00ff",
+        "stroke-width": 2,
+        "stroke-opacity": 1.0,
+        "fill": "#ff00ff",
+        "fill-opacity": 0.3
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [179.0, -46.0],
+            [181.0, -46.0],
+            [181.0, -48.0],
+            [179.0, -48.0],
+            [179.0, -46.0]
+          ],
+          [
+            [179.5, -46.5],
+            [180.5, -46.5],
+            [180.5, -47.5],
+            [179.5, -47.5],
+            [179.5, -46.5]
+          ]
+        ]
+      }
+    },
+
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MultiPolygon (2 orange polygons)",
+        "stroke": "#ff8800",
+        "stroke-width": 2,
+        "stroke-opacity": 1.0,
+        "fill": "#ff8800",
+        "fill-opacity": 0.3
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [[
+            [182.0, -44.0],
+            [183.0, -44.0],
+            [183.0, -45.0],
+            [182.0, -45.0],
+            [182.0, -44.0]
+          ]],
+          [[
+            [182.0, -45.5],
+            [183.0, -45.5],
+            [183.0, -46.5],
+            [182.0, -46.5],
+            [182.0, -45.5]
+          ]]
+        ]
+      }
+    },
+
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "GeometryCollection (mixed)"
+      },
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          {
+            "type": "Point",
+            "coordinates": [176.0, -44.0]
+          },
+          {
+            "type": "LineString",
+            "coordinates": [
+              [175.5, -44.5],
+              [176.0, -45.0],
+              [176.5, -45.5]
+            ]
+          },
+          {
+            "type": "Polygon",
+            "coordinates": [[
+              [175.0, -46.0],
+              [176.0, -46.0],
+              [176.0, -47.0],
+              [175.0, -47.0],
+              [175.0, -46.0]
+            ]]
+          }
+        ]
+      }
+    },
+
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Feature with no style (uses XML defaults)"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [177.0, -43.0],
+          [178.0, -43.5],
+          [179.0, -43.0]
+        ]
+      }
+    }
+  ]
+}

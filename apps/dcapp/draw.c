@@ -40,6 +40,9 @@ static void _draw_node_state_if_true(_AppData *app_data, _NodeIndex node_index, 
 static void _draw_node_state_if_false(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius);
+static void _draw_node_planet_line(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius);
+static void _draw_node_planet_polygon(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius);
+static void _draw_node_planet_sphere(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius);
 static void _draw_node_planet_text(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius, plCamera *camera);
 static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -4355,6 +4358,150 @@ static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetV
 
 }
 
+static void _draw_node_planet_line(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius) {
+
+    // determine point count
+    uint32_t count = node->planet_line.is_dynamic
+        ? (uint32_t)sbcount(node->planet_line.sb_points_dynamic)
+        : (uint32_t)sbcount(node->planet_line.sb_points_static);
+    if (count < 2) return;
+
+    float height = node->planet_line.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.height_above_terrain)->value_double : 0.0f;
+    float line_width = node->planet_line.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.line_width)->value_double : 1.0f;
+
+    // resolve line color
+    float lc[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    if (node->planet_line.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
+        lc[0] = node->planet_line.line_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.line_color.r)->value_double : 1.0f;
+        lc[1] = node->planet_line.line_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.line_color.g)->value_double : 1.0f;
+        lc[2] = node->planet_line.line_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.line_color.b)->value_double : 1.0f;
+        lc[3] = node->planet_line.line_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.line_color.a)->value_double : 1.0f;
+    }
+    uint32_t line_color = PL_COLOR_32_RGBA(lc[0], lc[1], lc[2], lc[3]);
+
+    // convert to 3D
+    plVec3 *pts3d = (plVec3 *)malloc(sizeof(plVec3) * count);
+    if (!pts3d) return;
+
+    if (node->planet_line.is_dynamic) {
+        for (uint32_t p = 0; p < count; p++) {
+            _PlanetVertexDynamic *v = &node->planet_line.sb_points_dynamic[p];
+            float lat = v->lat != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->lat)->value_double : 0.0f;
+            float lon = v->lon != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->lon)->value_double : 0.0f;
+            float alt = v->alt != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->alt)->value_double : height;
+            float R = (float)planet_radius + alt;
+            float lat_rad = pl_radiansf(lat);
+            float lon_rad = pl_radiansf(lon);
+            pts3d[p] = (plVec3){ R * cosf(lat_rad) * sinf(lon_rad), R * sinf(lat_rad), R * cosf(lat_rad) * cosf(lon_rad) };
+        }
+    } else {
+        for (uint32_t p = 0; p < count; p++) {
+            _PlanetVertexStatic *pt = &node->planet_line.sb_points_static[p];
+            float pt_height = pt->has_alt ? (float)pt->alt : height;
+            float R = (float)planet_radius + pt_height;
+            float lat_rad = pl_radiansf((float)pt->lat);
+            float lon_rad = pl_radiansf((float)pt->lon);
+            pts3d[p] = (plVec3){ R * cosf(lat_rad) * sinf(lon_rad), R * sinf(lat_rad), R * cosf(lat_rad) * cosf(lon_rad) };
+        }
+    }
+
+    _ext_planet->draw_line(view, pts3d, count, line_width, line_color);
+    free(pts3d);
+}
+
+static void _draw_node_planet_polygon(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius) {
+
+    // determine point count
+    uint32_t count = node->planet_polygon.is_dynamic
+        ? (uint32_t)sbcount(node->planet_polygon.sb_points_dynamic)
+        : (uint32_t)sbcount(node->planet_polygon.sb_points_static);
+    if (count < 3) return;
+
+    float height = node->planet_polygon.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.height_above_terrain)->value_double : 0.0f;
+    float line_width = node->planet_polygon.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.line_width)->value_double : 1.0f;
+
+    // convert to 3D
+    plVec3 *pts3d = (plVec3 *)malloc(sizeof(plVec3) * count);
+    if (!pts3d) return;
+
+    if (node->planet_polygon.is_dynamic) {
+        for (uint32_t p = 0; p < count; p++) {
+            _PlanetVertexDynamic *v = &node->planet_polygon.sb_points_dynamic[p];
+            float lat = v->lat != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->lat)->value_double : 0.0f;
+            float lon = v->lon != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->lon)->value_double : 0.0f;
+            float alt = v->alt != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->alt)->value_double : height;
+            float R = (float)planet_radius + alt;
+            float lat_rad = pl_radiansf(lat);
+            float lon_rad = pl_radiansf(lon);
+            pts3d[p] = (plVec3){ R * cosf(lat_rad) * sinf(lon_rad), R * sinf(lat_rad), R * cosf(lat_rad) * cosf(lon_rad) };
+        }
+    } else {
+        for (uint32_t p = 0; p < count; p++) {
+            _PlanetVertexStatic *pt = &node->planet_polygon.sb_points_static[p];
+            float pt_height = pt->has_alt ? (float)pt->alt : height;
+            float R = (float)planet_radius + pt_height;
+            float lat_rad = pl_radiansf((float)pt->lat);
+            float lon_rad = pl_radiansf((float)pt->lon);
+            pts3d[p] = (plVec3){ R * cosf(lat_rad) * sinf(lon_rad), R * sinf(lat_rad), R * cosf(lat_rad) * cosf(lon_rad) };
+        }
+    }
+
+    // draw fill
+    if (node->planet_polygon.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
+        float fc[4] = {
+            node->planet_polygon.fill_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.fill_color.r)->value_double : 1.0f,
+            node->planet_polygon.fill_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.fill_color.g)->value_double : 1.0f,
+            node->planet_polygon.fill_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.fill_color.b)->value_double : 1.0f,
+            node->planet_polygon.fill_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.fill_color.a)->value_double : 1.0f
+        };
+        uint32_t fill_color = PL_COLOR_32_RGBA(fc[0], fc[1], fc[2], fc[3]);
+        _ext_planet->draw_polygon_filled(view, pts3d, count, fill_color);
+    }
+
+    // draw outline
+    if (node->planet_polygon.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
+        float lc[4] = {
+            node->planet_polygon.line_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.line_color.r)->value_double : 1.0f,
+            node->planet_polygon.line_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.line_color.g)->value_double : 1.0f,
+            node->planet_polygon.line_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.line_color.b)->value_double : 1.0f,
+            node->planet_polygon.line_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.line_color.a)->value_double : 1.0f
+        };
+        uint32_t line_color = PL_COLOR_32_RGBA(lc[0], lc[1], lc[2], lc[3]);
+        _ext_planet->draw_polygon(view, pts3d, count, line_width, line_color);
+    }
+
+    free(pts3d);
+}
+
+static void _draw_node_planet_sphere(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius) {
+    (void)planet_radius;
+
+    float lat = node->planet_sphere.lat != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.lat)->value_double : 0.0f;
+    float lon = node->planet_sphere.lon != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.lon)->value_double : 0.0f;
+    float height = node->planet_sphere.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.height_above_terrain)->value_double : 0.0f;
+    float radius = node->planet_sphere.radius != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.radius)->value_double : 1000.0f;
+
+    if (!(node->planet_sphere.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED)) return;
+
+    float fc[4] = {
+        node->planet_sphere.fill_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.fill_color.r)->value_double : 1.0f,
+        node->planet_sphere.fill_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.fill_color.g)->value_double : 1.0f,
+        node->planet_sphere.fill_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.fill_color.b)->value_double : 1.0f,
+        node->planet_sphere.fill_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.fill_color.a)->value_double : 1.0f
+    };
+    uint32_t fill_color = PL_COLOR_32_RGBA(fc[0], fc[1], fc[2], fc[3]);
+
+    _ext_planet->draw_sphere(view, lon, lat, height, radius, fill_color);
+}
+
 static void _draw_node_planet_text(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius, plCamera *camera) {
 
     // resolve position
@@ -4826,6 +4973,12 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
             _Node *child = _get_node(app_data, child_index);
             if (child->type == NODE_TYPE_PLANET_ELLIPSE)
                 _draw_node_planet_ellipse(app_data, child, view, def->radius);
+            else if (child->type == NODE_TYPE_PLANET_LINE)
+                _draw_node_planet_line(app_data, child, view, def->radius);
+            else if (child->type == NODE_TYPE_PLANET_POLYGON)
+                _draw_node_planet_polygon(app_data, child, view, def->radius);
+            else if (child->type == NODE_TYPE_PLANET_SPHERE)
+                _draw_node_planet_sphere(app_data, child, view, def->radius);
             else if (child->type == NODE_TYPE_PLANET_TEXT)
                 _draw_node_planet_text(app_data, child, view, def->radius, &camera);
             child_index = child->next;

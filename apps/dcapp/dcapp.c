@@ -192,6 +192,16 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 break;
             case NODE_TYPE_PIXELSTREAM:
                 break;
+            case NODE_TYPE_PLANET_LINE:
+                sbfree(node->planet_line.sb_points_static);
+                sbfree(node->planet_line.sb_points_dynamic);
+                break;
+            case NODE_TYPE_PLANET_POLYGON:
+                sbfree(node->planet_polygon.sb_points_static);
+                sbfree(node->planet_polygon.sb_points_dynamic);
+                break;
+            case NODE_TYPE_PLANET_VIEW:
+                break;
             case NODE_TYPE_POLYGON:
                 sbfree(node->polygon.sb_vertices);
                 break;
@@ -205,8 +215,6 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 sbfree(node->text.sb_formats);
                 sbfree(node->text.sb_format_indices);
                 sbfree(node->text.sb_format_types);
-                break;
-            case NODE_TYPE_PLANET_VIEW:
                 break;
             case NODE_TYPE_WINDOW:
                 if (node->window.title) {

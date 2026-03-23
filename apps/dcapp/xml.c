@@ -1,4 +1,5 @@
 #include "dcapp.h"
+#include "geojson.h"
 
 #include "utils/file.h"
 #include "utils/log.h"
@@ -47,11 +48,15 @@ static _NodeIndex    _process_xml_node_panel(_AppData *app_data, xmlNodePtr xml_
 static _NodeIndex    _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static _NodeIndex    _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static _NodeIndex    _process_xml_node_planet_texture(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-static void          _planet_shader_abs_to_vfs(const char *abs_path, char *vfs_out, size_t vfs_out_size);
 static _NodeIndex    _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_geo_json(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_line(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_polygon(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static void          _planet_shader_abs_to_vfs(const char *abs_path, char *vfs_out, size_t vfs_out_size);
+static _NodeIndex    _process_xml_node_planet_sphere(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_text(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_texture(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -282,17 +287,29 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
         case DC_APP_ELEM_TYPE_PLANET_DATA:
             return _process_xml_node_planet_data(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
-        case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
-            return _process_xml_node_planet_texture(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+        case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
+            return _process_xml_node_planet_ellipse(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_PLANET_GEO_JSON:
+            return _process_xml_node_planet_geo_json(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_PLANET_LINE:
+            return _process_xml_node_planet_line(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_PLANET_POLYGON:
+            return _process_xml_node_planet_polygon(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_PLANET_SHADER:
             return _process_xml_node_planet_shader(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
-        case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
-            return _process_xml_node_planet_ellipse(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+        case DC_APP_ELEM_TYPE_PLANET_SPHERE:
+            return _process_xml_node_planet_sphere(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_PLANET_TEXT:
             return _process_xml_node_planet_text(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
+            return _process_xml_node_planet_texture(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_PLANET_VIEW:
             return _process_xml_node_planet_view(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -3375,159 +3392,6 @@ static _NodeIndex _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr x
     return NODE_INDEX_UNDEFINED;
 }
 
-static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
-    (void)parent_node_index;
-
-    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET) {
-        DC_LOG_ERROR("PlanetTexture", "Invalid parent element type: %s", dc_app_elem_type_to_string(parent_elem_type));
-        return NODE_INDEX_UNDEFINED;
-    }
-
-    _PlanetDef *def = &app_data->sb_planet_defs[sbcount(app_data->sb_planet_defs) - 1];
-
-    if (sbcount(def->sb_textures) >= 1) {
-        DC_LOG_ERROR("PlanetTexture", "Only one <PlanetTexture> per <Planet> is currently supported (line %ld)", xmlGetLineNo(xml_node));
-        return NODE_INDEX_UNDEFINED;
-    }
-
-    _PlanetTextureEntry entry = {0};
-
-    // file path
-    xmlChar *raw_file = xmlGetProp(xml_node, BAD_CAST "File");
-    if (raw_file) {
-        char cleaned[DC_UTILS_FILEPATH_BUFFER_SIZE];
-        strncpy(cleaned, (const char *)raw_file, DC_UTILS_FILEPATH_BUFFER_SIZE - 1);
-        cleaned[DC_UTILS_FILEPATH_BUFFER_SIZE - 1] = '\0';
-        xmlFree(raw_file);
-
-        char abs_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
-        if (dc_utils_is_relative_path(cleaned)) {
-            dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
-        } else {
-            strcpy(abs_path, cleaned);
-        }
-        char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
-        _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
-        entry.source = strdup(vfs_path);
-    }
-
-    // meters per pixel
-    xmlChar *raw_mpp = xmlGetProp(xml_node, BAD_CAST "MetersPerPixel");
-    if (raw_mpp) {
-        entry.mpp = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_mpp);
-        xmlFree(raw_mpp);
-    }
-
-    // latitude
-    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
-    if (raw_lat) {
-        entry.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
-        xmlFree(raw_lat);
-    }
-
-    // longitude
-    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
-    if (raw_lon) {
-        entry.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
-        xmlFree(raw_lon);
-    }
-
-    // edge-triggered refresh
-    xmlChar *raw_fire_refresh = xmlGetProp(xml_node, BAD_CAST "FireRefresh");
-    if (raw_fire_refresh) {
-        entry.fire_refresh = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_fire_refresh);
-        xmlFree(raw_fire_refresh);
-    }
-
-    sbpush(def->sb_textures, entry);
-
-    return NODE_INDEX_UNDEFINED;
-}
-
-// Mounts the directory containing abs_path under a stable VFS mount point
-// (derived by hashing the directory), then writes the VFS path into vfs_out.
-static void _planet_shader_abs_to_vfs(const char *abs_path, char *vfs_out, size_t vfs_out_size) {
-    char dir[DC_VALUE_STRING_BUFFER_SIZE];
-    dc_utils_get_directory(abs_path, dir, sizeof(dir));
-
-    char hash[32];
-    dc_utils_string_to_hash(dir, hash, sizeof(hash));
-
-    char vfs_mount[32];
-    snprintf(vfs_mount, sizeof(vfs_mount), "/%s", hash);
-
-    // idempotent — VFS silently ignores duplicate mounts to the same virtual path
-    _ext_vfs->mount_directory(vfs_mount, dir, PL_VFS_MOUNT_FLAGS_NONE);
-
-    // extract filename (handle both / and \ separators)
-    const char *fslash   = strrchr(abs_path, '/');
-    const char *bslash   = strrchr(abs_path, '\\');
-    const char *filename = (fslash > bslash) ? fslash + 1 : (bslash ? bslash + 1 : abs_path);
-
-    snprintf(vfs_out, vfs_out_size, "%s/%s", vfs_mount, filename);
-}
-
-static _NodeIndex _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
-    (void)parent_node_index;
-
-    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET) {
-        DC_LOG_ERROR("PlanetShader", "Invalid parent element type: %s", dc_app_elem_type_to_string(parent_elem_type));
-        return NODE_INDEX_UNDEFINED;
-    }
-
-    _PlanetDef *def = &app_data->sb_planet_defs[sbcount(app_data->sb_planet_defs) - 1];
-
-    // Index (required)
-    xmlChar *raw_index = xmlGetProp(xml_node, BAD_CAST "Index");
-    if (!raw_index) {
-        DC_LOG_ERROR("PlanetShader", "Missing required 'Index' attribute");
-        return NODE_INDEX_UNDEFINED;
-    }
-    _PlanetShaderEntry entry = {0};
-    entry.index              = atoi((const char *)raw_index);
-    xmlFree(raw_index);
-
-    // VertexShader (optional)
-    xmlChar *raw_vert = xmlGetProp(xml_node, BAD_CAST "VertexShader");
-    if (raw_vert) {
-        char cleaned[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned, (const char *)raw_vert, DC_VALUE_STRING_BUFFER_SIZE - 1);
-        cleaned[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
-        xmlFree(raw_vert);
-        char abs_path[DC_VALUE_STRING_BUFFER_SIZE];
-        if (dc_utils_is_relative_path(cleaned)) {
-            dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
-        } else {
-            strncpy(abs_path, cleaned, sizeof(abs_path) - 1);
-        }
-        char vfs_path[DC_VALUE_STRING_BUFFER_SIZE];
-        _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
-        entry.vertex_path = strdup(vfs_path);
-    }
-
-    // FragmentShader (optional)
-    xmlChar *raw_frag = xmlGetProp(xml_node, BAD_CAST "FragmentShader");
-    if (raw_frag) {
-        char cleaned[DC_VALUE_STRING_BUFFER_SIZE];
-        strncpy(cleaned, (const char *)raw_frag, DC_VALUE_STRING_BUFFER_SIZE - 1);
-        cleaned[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
-        xmlFree(raw_frag);
-        char abs_path[DC_VALUE_STRING_BUFFER_SIZE];
-        if (dc_utils_is_relative_path(cleaned)) {
-            dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
-        } else {
-            strncpy(abs_path, cleaned, sizeof(abs_path) - 1);
-        }
-        char vfs_path[DC_VALUE_STRING_BUFFER_SIZE];
-        _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
-        entry.fragment_path = strdup(vfs_path);
-    }
-
-    sbpush(def->sb_shaders, entry);
-
-    return NODE_INDEX_UNDEFINED;
-}
-
 static _NodeIndex _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     (void)directory;
 
@@ -3618,6 +3482,510 @@ static _NodeIndex _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePt
         dc_node.planet_ellipse.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
     if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.planet_ellipse.line_color)))
         dc_node.planet_ellipse.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
+
+    return _register_node(app_data, &dc_node);
+}
+
+static void _create_geojson_nodes(
+    _AppData *app_data, const DcGeojsonFeature *feat,
+    _NodeIndex parent, uint8_t planet_def_index,
+    DcAppValIndex height, DcAppValIndex line_width,
+    _ValIndex4 line_color, _ValIndex4 fill_color, uint8_t flags,
+    _NodeIndex *first_index, _NodeIndex *prev_index);
+
+static void _create_geojson_nodes(
+    _AppData *app_data, const DcGeojsonFeature *feat,
+    _NodeIndex parent, uint8_t planet_def_index,
+    DcAppValIndex height, DcAppValIndex line_width,
+    _ValIndex4 line_color, _ValIndex4 fill_color, uint8_t flags,
+    _NodeIndex *first_index, _NodeIndex *prev_index)
+{
+    _Node dc_node = {};
+    dc_node.parent = parent;
+    _NodeIndex node_index;
+
+    switch (feat->type) {
+
+        case DC_GEOJSON_FEATURE_POINT: {
+            const DcGeojsonPosition *pos = &feat->geom.point.position;
+            char lat_buf[32], lon_buf[32];
+            snprintf(lat_buf, sizeof(lat_buf), "%f", pos->lat);
+            snprintf(lon_buf, sizeof(lon_buf), "%f", pos->lon);
+            dc_node.type = NODE_TYPE_PLANET_SPHERE;
+            dc_node.planet_sphere.lat                  = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, lat_buf);
+            dc_node.planet_sphere.lon                  = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, lon_buf);
+            dc_node.planet_sphere.height_above_terrain = height;
+            dc_node.planet_sphere.radius               = line_width;
+            dc_node.planet_sphere.fill_color           = line_color;
+            dc_node.planet_sphere.config_flags         = NODE_CONFIG_FLAG_FILL_ENABLED;
+            dc_node.planet_sphere.planet_def_index     = planet_def_index;
+            node_index = _register_node(app_data, &dc_node);
+            if (*first_index == NODE_INDEX_UNDEFINED) *first_index = node_index;
+            if (*prev_index != NODE_INDEX_UNDEFINED) _get_node(app_data, *prev_index)->next = node_index;
+            *prev_index = node_index;
+            break;
+        }
+
+        case DC_GEOJSON_FEATURE_MULTI_POINT:
+            for (uint32_t i = 0; i < feat->geom.multi_point.count; i++) {
+                const DcGeojsonPosition *pos = &feat->geom.multi_point.positions[i];
+                char lat_buf[32], lon_buf[32];
+                snprintf(lat_buf, sizeof(lat_buf), "%f", pos->lat);
+                snprintf(lon_buf, sizeof(lon_buf), "%f", pos->lon);
+                memset(&dc_node, 0, sizeof(_Node));
+                dc_node.parent = parent;
+                dc_node.type = NODE_TYPE_PLANET_SPHERE;
+                dc_node.planet_sphere.lat                  = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, lat_buf);
+                dc_node.planet_sphere.lon                  = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, lon_buf);
+                dc_node.planet_sphere.height_above_terrain = height;
+                dc_node.planet_sphere.radius               = line_width;
+                dc_node.planet_sphere.fill_color           = line_color;
+                dc_node.planet_sphere.config_flags         = NODE_CONFIG_FLAG_FILL_ENABLED;
+                dc_node.planet_sphere.planet_def_index     = planet_def_index;
+                node_index = _register_node(app_data, &dc_node);
+                if (*first_index == NODE_INDEX_UNDEFINED) *first_index = node_index;
+                if (*prev_index != NODE_INDEX_UNDEFINED) _get_node(app_data, *prev_index)->next = node_index;
+                *prev_index = node_index;
+            }
+            break;
+
+        case DC_GEOJSON_FEATURE_LINE_STRING: {
+            _PlanetVertexStatic *sb_pts = NULL;
+            for (uint32_t p = 0; p < feat->geom.line_string.count; p++) {
+                _PlanetVertexStatic v = { .lon = feat->geom.line_string.positions[p].lon, .lat = feat->geom.line_string.positions[p].lat, .alt = feat->geom.line_string.positions[p].alt, .has_alt = feat->geom.line_string.positions[p].has_alt };
+                sbpush(sb_pts, v);
+            }
+            dc_node.type = NODE_TYPE_PLANET_LINE;
+            dc_node.planet_line.sb_points_static     = sb_pts;
+            dc_node.planet_line.sb_points_dynamic    = NULL;
+            dc_node.planet_line.is_dynamic           = false;
+            dc_node.planet_line.height_above_terrain = height;
+            dc_node.planet_line.line_color           = line_color;
+            dc_node.planet_line.line_width           = line_width;
+            dc_node.planet_line.config_flags         = flags & NODE_CONFIG_FLAG_LINE_ENABLED ? NODE_CONFIG_FLAG_LINE_ENABLED : NODE_CONFIG_FLAG_NONE;
+            dc_node.planet_line.planet_def_index     = planet_def_index;
+            node_index = _register_node(app_data, &dc_node);
+            if (*first_index == NODE_INDEX_UNDEFINED) *first_index = node_index;
+            if (*prev_index != NODE_INDEX_UNDEFINED) _get_node(app_data, *prev_index)->next = node_index;
+            *prev_index = node_index;
+            break;
+        }
+
+        case DC_GEOJSON_FEATURE_MULTI_LINE_STRING:
+            for (uint32_t i = 0; i < feat->geom.multi_line_string.count; i++) {
+                _PlanetVertexStatic *sb_pts = NULL;
+                for (uint32_t p = 0; p < feat->geom.multi_line_string.line_strings[i].count; p++) {
+                    _PlanetVertexStatic v = { .lon = feat->geom.multi_line_string.line_strings[i].positions[p].lon, .lat = feat->geom.multi_line_string.line_strings[i].positions[p].lat, .alt = feat->geom.multi_line_string.line_strings[i].positions[p].alt, .has_alt = feat->geom.multi_line_string.line_strings[i].positions[p].has_alt };
+                    sbpush(sb_pts, v);
+                }
+                memset(&dc_node, 0, sizeof(_Node));
+                dc_node.parent = parent;
+                dc_node.type = NODE_TYPE_PLANET_LINE;
+                dc_node.planet_line.sb_points_static     = sb_pts;
+                dc_node.planet_line.sb_points_dynamic    = NULL;
+                dc_node.planet_line.is_dynamic           = false;
+                dc_node.planet_line.height_above_terrain = height;
+                dc_node.planet_line.line_color           = line_color;
+                dc_node.planet_line.line_width           = line_width;
+                dc_node.planet_line.config_flags         = flags & NODE_CONFIG_FLAG_LINE_ENABLED ? NODE_CONFIG_FLAG_LINE_ENABLED : NODE_CONFIG_FLAG_NONE;
+                dc_node.planet_line.planet_def_index     = planet_def_index;
+                node_index = _register_node(app_data, &dc_node);
+                if (*first_index == NODE_INDEX_UNDEFINED) *first_index = node_index;
+                if (*prev_index != NODE_INDEX_UNDEFINED) _get_node(app_data, *prev_index)->next = node_index;
+                *prev_index = node_index;
+            }
+            break;
+
+        case DC_GEOJSON_FEATURE_POLYGON: {
+            if (feat->geom.polygon.ring_count == 0) break;
+            const DcGeojsonCoordArray *ring = &feat->geom.polygon.rings[0];
+            _PlanetVertexStatic *sb_pts = NULL;
+            for (uint32_t p = 0; p < ring->count; p++) {
+                _PlanetVertexStatic v = { .lon = ring->positions[p].lon, .lat = ring->positions[p].lat, .alt = ring->positions[p].alt, .has_alt = ring->positions[p].has_alt };
+                sbpush(sb_pts, v);
+            }
+            dc_node.type = NODE_TYPE_PLANET_POLYGON;
+            dc_node.planet_polygon.sb_points_static     = sb_pts;
+            dc_node.planet_polygon.sb_points_dynamic    = NULL;
+            dc_node.planet_polygon.is_dynamic           = false;
+            dc_node.planet_polygon.height_above_terrain = height;
+            dc_node.planet_polygon.line_color           = line_color;
+            dc_node.planet_polygon.line_width           = line_width;
+            dc_node.planet_polygon.fill_color           = fill_color;
+            dc_node.planet_polygon.config_flags         = flags;
+            dc_node.planet_polygon.planet_def_index     = planet_def_index;
+            node_index = _register_node(app_data, &dc_node);
+            if (*first_index == NODE_INDEX_UNDEFINED) *first_index = node_index;
+            if (*prev_index != NODE_INDEX_UNDEFINED) _get_node(app_data, *prev_index)->next = node_index;
+            *prev_index = node_index;
+            break;
+        }
+
+        case DC_GEOJSON_FEATURE_MULTI_POLYGON:
+            for (uint32_t i = 0; i < feat->geom.multi_polygon.count; i++) {
+                if (feat->geom.multi_polygon.polygons[i].ring_count == 0) continue;
+                const DcGeojsonCoordArray *ring = &feat->geom.multi_polygon.polygons[i].rings[0];
+                _PlanetVertexStatic *sb_pts = NULL;
+                for (uint32_t p = 0; p < ring->count; p++) {
+                    _PlanetVertexStatic v = { .lon = ring->positions[p].lon, .lat = ring->positions[p].lat, .alt = ring->positions[p].alt, .has_alt = ring->positions[p].has_alt };
+                    sbpush(sb_pts, v);
+                }
+                memset(&dc_node, 0, sizeof(_Node));
+                dc_node.parent = parent;
+                dc_node.type = NODE_TYPE_PLANET_POLYGON;
+                dc_node.planet_polygon.sb_points_static     = sb_pts;
+                dc_node.planet_polygon.sb_points_dynamic    = NULL;
+                dc_node.planet_polygon.is_dynamic           = false;
+                dc_node.planet_polygon.height_above_terrain = height;
+                dc_node.planet_polygon.line_color           = line_color;
+                dc_node.planet_polygon.line_width           = line_width;
+                dc_node.planet_polygon.fill_color           = fill_color;
+                dc_node.planet_polygon.config_flags         = flags;
+                dc_node.planet_polygon.planet_def_index     = planet_def_index;
+                node_index = _register_node(app_data, &dc_node);
+                if (*first_index == NODE_INDEX_UNDEFINED) *first_index = node_index;
+                if (*prev_index != NODE_INDEX_UNDEFINED) _get_node(app_data, *prev_index)->next = node_index;
+                *prev_index = node_index;
+            }
+            break;
+
+        case DC_GEOJSON_FEATURE_GEOMETRY_COLLECTION:
+            for (uint32_t i = 0; i < feat->geom.geometry_collection.count; i++)
+                _create_geojson_nodes(app_data, &feat->geom.geometry_collection.features[i], parent, planet_def_index, height, line_width, line_color, fill_color, flags, first_index, prev_index);
+            break;
+
+        case DC_GEOJSON_FEATURE_UNDEFINED:
+            break;
+    }
+}
+
+static _NodeIndex _process_xml_node_planet_geo_json(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW) {
+        DC_LOG_ERROR("PlanetGeoJSON", "PlanetGeoJSON must be a child of PlanetView");
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    // file (required)
+    xmlChar *raw_filepath = xmlGetProp(xml_node, BAD_CAST "File");
+    if (!raw_filepath) {
+        DC_LOG_ERROR("PlanetGeoJSON", "Missing 'File' attribute");
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    char cleaned_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+    strncpy(cleaned_filepath, (const char *)raw_filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
+    cleaned_filepath[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+    xmlFree(raw_filepath);
+
+    char abs_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+    if (dc_utils_is_relative_path(cleaned_filepath)) {
+        dc_utils_join_paths(directory, cleaned_filepath, abs_filepath, sizeof(abs_filepath));
+    } else {
+        strcpy(abs_filepath, cleaned_filepath);
+    }
+
+    // load and parse geojson
+    DcGeojsonHandle geojson = dc_geojson_load(abs_filepath);
+    if (geojson.index == DC_GEOJSON_UNDEFINED) {
+        DC_LOG_ERROR("PlanetGeoJSON", "Failed to load GeoJSON: %s", abs_filepath);
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    uint32_t feature_count = dc_geojson_feature_count(geojson);
+    if (feature_count == 0) {
+        dc_geojson_free(geojson);
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    // parse default attributes from XML
+    _Node *parent = _get_node(app_data, parent_node_index);
+    uint8_t planet_def_index = parent->planet_view.planet_def_index;
+
+    DcAppValIndex default_height = DC_APP_VAL_INDEX_UNDEFINED;
+    xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
+    if (raw_height) {
+        default_height = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_height);
+        xmlFree(raw_height);
+    }
+
+    DcAppValIndex default_line_width = DC_APP_VAL_INDEX_UNDEFINED;
+    xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
+    if (raw_line_width) {
+        default_line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
+        xmlFree(raw_line_width);
+    }
+
+    // default colors from XML
+    _ValIndex4 default_line_color = {};
+    _ValIndex4 default_fill_color = {};
+    uint8_t    default_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &default_line_color))
+        default_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &default_fill_color))
+        default_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+
+    // create nodes for each feature, chained via .next
+    _NodeIndex first_index = NODE_INDEX_UNDEFINED;
+    _NodeIndex prev_index  = NODE_INDEX_UNDEFINED;
+
+    for (uint32_t f = 0; f < feature_count; f++) {
+        const DcGeojsonFeature *feat = dc_geojson_feature(geojson, f);
+
+        // determine per-feature style overrides
+        _ValIndex4 feat_line_color = default_line_color;
+        _ValIndex4 feat_fill_color = default_fill_color;
+        uint8_t    feat_flags      = default_flags;
+
+        if (feat->style.stroke.has_value) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%f", (double)feat->style.stroke.r);
+            feat_line_color.r = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, buf);
+            snprintf(buf, sizeof(buf), "%f", (double)feat->style.stroke.g);
+            feat_line_color.g = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, buf);
+            snprintf(buf, sizeof(buf), "%f", (double)feat->style.stroke.b);
+            feat_line_color.b = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, buf);
+            snprintf(buf, sizeof(buf), "%f", (double)feat->style.stroke.a);
+            feat_line_color.a = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, buf);
+            feat_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
+        }
+        if (feat->style.fill.has_value) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%f", (double)feat->style.fill.r);
+            feat_fill_color.r = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, buf);
+            snprintf(buf, sizeof(buf), "%f", (double)feat->style.fill.g);
+            feat_fill_color.g = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, buf);
+            snprintf(buf, sizeof(buf), "%f", (double)feat->style.fill.b);
+            feat_fill_color.b = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, buf);
+            snprintf(buf, sizeof(buf), "%f", (double)feat->style.fill.a);
+            feat_fill_color.a = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, buf);
+            feat_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+        }
+
+        DcAppValIndex feat_line_width = default_line_width;
+        if (feat->style.has_stroke_width) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%f", (double)feat->style.stroke_width);
+            feat_line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, buf);
+        }
+
+        _create_geojson_nodes(app_data, feat, parent_node_index, planet_def_index, default_height, feat_line_width, feat_line_color, feat_fill_color, feat_flags, &first_index, &prev_index);
+    }
+
+    dc_geojson_free(geojson);
+    return first_index;
+}
+
+static _NodeIndex _process_xml_node_planet_line(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW) {
+        DC_LOG_ERROR("PlanetLine", "PlanetLine must be a child of PlanetView");
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_PLANET_LINE;
+    dc_node.parent = parent_node_index;
+
+    _Node *parent = _get_node(app_data, parent_node_index);
+    dc_node.planet_line.planet_def_index = parent->planet_view.planet_def_index;
+    dc_node.planet_line.sb_points_static  = NULL;
+    dc_node.planet_line.sb_points_dynamic = NULL;
+    dc_node.planet_line.is_dynamic        = true;
+
+    xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
+    if (raw_height) {
+        dc_node.planet_line.height_above_terrain = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_height);
+        xmlFree(raw_height);
+    }
+
+    xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
+    if (raw_line_width) {
+        dc_node.planet_line.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
+        xmlFree(raw_line_width);
+    }
+
+    dc_node.planet_line.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.planet_line.line_color)))
+        dc_node.planet_line.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
+
+    _NodeIndex node_index = _register_node(app_data, &dc_node);
+
+    // process Vertex children
+    _process_xml_node_children(app_data, xml_node, node_index, DC_APP_ELEM_TYPE_PLANET_LINE, directory);
+
+    return node_index;
+}
+
+static _NodeIndex _process_xml_node_planet_polygon(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW) {
+        DC_LOG_ERROR("PlanetPolygon", "PlanetPolygon must be a child of PlanetView");
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_PLANET_POLYGON;
+    dc_node.parent = parent_node_index;
+
+    _Node *parent = _get_node(app_data, parent_node_index);
+    dc_node.planet_polygon.planet_def_index = parent->planet_view.planet_def_index;
+    dc_node.planet_polygon.sb_points_static  = NULL;
+    dc_node.planet_polygon.sb_points_dynamic = NULL;
+    dc_node.planet_polygon.is_dynamic        = true;
+
+    xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
+    if (raw_height) {
+        dc_node.planet_polygon.height_above_terrain = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_height);
+        xmlFree(raw_height);
+    }
+
+    xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
+    if (raw_line_width) {
+        dc_node.planet_polygon.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
+        xmlFree(raw_line_width);
+    }
+
+    dc_node.planet_polygon.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.planet_polygon.fill_color)))
+        dc_node.planet_polygon.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.planet_polygon.line_color)))
+        dc_node.planet_polygon.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
+
+    _NodeIndex node_index = _register_node(app_data, &dc_node);
+
+    // process Vertex children
+    _process_xml_node_children(app_data, xml_node, node_index, DC_APP_ELEM_TYPE_PLANET_POLYGON, directory);
+
+    return node_index;
+}
+
+// Mounts the directory containing abs_path under a stable VFS mount point
+// (derived by hashing the directory), then writes the VFS path into vfs_out.
+static void _planet_shader_abs_to_vfs(const char *abs_path, char *vfs_out, size_t vfs_out_size) {
+    char dir[DC_VALUE_STRING_BUFFER_SIZE];
+    dc_utils_get_directory(abs_path, dir, sizeof(dir));
+
+    char hash[32];
+    dc_utils_string_to_hash(dir, hash, sizeof(hash));
+
+    char vfs_mount[32];
+    snprintf(vfs_mount, sizeof(vfs_mount), "/%s", hash);
+
+    // idempotent — VFS silently ignores duplicate mounts to the same virtual path
+    _ext_vfs->mount_directory(vfs_mount, dir, PL_VFS_MOUNT_FLAGS_NONE);
+
+    // extract filename (handle both / and \ separators)
+    const char *fslash   = strrchr(abs_path, '/');
+    const char *bslash   = strrchr(abs_path, '\\');
+    const char *filename = (fslash > bslash) ? fslash + 1 : (bslash ? bslash + 1 : abs_path);
+
+    snprintf(vfs_out, vfs_out_size, "%s/%s", vfs_mount, filename);
+}
+
+static _NodeIndex _process_xml_node_planet_shader(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    (void)parent_node_index;
+
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET) {
+        DC_LOG_ERROR("PlanetShader", "Invalid parent element type: %s", dc_app_elem_type_to_string(parent_elem_type));
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _PlanetDef *def = &app_data->sb_planet_defs[sbcount(app_data->sb_planet_defs) - 1];
+
+    // Index (required)
+    xmlChar *raw_index = xmlGetProp(xml_node, BAD_CAST "Index");
+    if (!raw_index) {
+        DC_LOG_ERROR("PlanetShader", "Missing required 'Index' attribute");
+        return NODE_INDEX_UNDEFINED;
+    }
+    _PlanetShaderEntry entry = {0};
+    entry.index              = atoi((const char *)raw_index);
+    xmlFree(raw_index);
+
+    // VertexShader (optional)
+    xmlChar *raw_vert = xmlGetProp(xml_node, BAD_CAST "VertexShader");
+    if (raw_vert) {
+        char cleaned[DC_VALUE_STRING_BUFFER_SIZE];
+        strncpy(cleaned, (const char *)raw_vert, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        cleaned[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        xmlFree(raw_vert);
+        char abs_path[DC_VALUE_STRING_BUFFER_SIZE];
+        if (dc_utils_is_relative_path(cleaned)) {
+            dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
+        } else {
+            strncpy(abs_path, cleaned, sizeof(abs_path) - 1);
+        }
+        char vfs_path[DC_VALUE_STRING_BUFFER_SIZE];
+        _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
+        entry.vertex_path = strdup(vfs_path);
+    }
+
+    // FragmentShader (optional)
+    xmlChar *raw_frag = xmlGetProp(xml_node, BAD_CAST "FragmentShader");
+    if (raw_frag) {
+        char cleaned[DC_VALUE_STRING_BUFFER_SIZE];
+        strncpy(cleaned, (const char *)raw_frag, DC_VALUE_STRING_BUFFER_SIZE - 1);
+        cleaned[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
+        xmlFree(raw_frag);
+        char abs_path[DC_VALUE_STRING_BUFFER_SIZE];
+        if (dc_utils_is_relative_path(cleaned)) {
+            dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
+        } else {
+            strncpy(abs_path, cleaned, sizeof(abs_path) - 1);
+        }
+        char vfs_path[DC_VALUE_STRING_BUFFER_SIZE];
+        _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
+        entry.fragment_path = strdup(vfs_path);
+    }
+
+    sbpush(def->sb_shaders, entry);
+
+    return NODE_INDEX_UNDEFINED;
+}
+
+static _NodeIndex _process_xml_node_planet_sphere(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    (void)directory;
+
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW) {
+        DC_LOG_ERROR("PlanetSphere", "PlanetSphere must be a child of PlanetView");
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_PLANET_SPHERE;
+    dc_node.parent = parent_node_index;
+
+    _Node *parent = _get_node(app_data, parent_node_index);
+    dc_node.planet_sphere.planet_def_index = parent->planet_view.planet_def_index;
+
+    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
+    if (raw_lat) {
+        dc_node.planet_sphere.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+        xmlFree(raw_lat);
+    }
+
+    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
+    if (raw_lon) {
+        dc_node.planet_sphere.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+        xmlFree(raw_lon);
+    }
+
+    xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
+    if (raw_height) {
+        dc_node.planet_sphere.height_above_terrain = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_height);
+        xmlFree(raw_height);
+    }
+
+    xmlChar *raw_radius = xmlGetProp(xml_node, BAD_CAST "Radius");
+    if (raw_radius) {
+        dc_node.planet_sphere.radius = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_radius);
+        xmlFree(raw_radius);
+    }
+
+    dc_node.planet_sphere.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.planet_sphere.fill_color)))
+        dc_node.planet_sphere.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
 
     return _register_node(app_data, &dc_node);
 }
@@ -3807,6 +4175,75 @@ static _NodeIndex _process_xml_node_planet_text(_AppData *app_data, xmlNodePtr x
         dc_node.planet_text.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
 
     return _register_node(app_data, &dc_node);
+}
+
+static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    (void)parent_node_index;
+
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET) {
+        DC_LOG_ERROR("PlanetTexture", "Invalid parent element type: %s", dc_app_elem_type_to_string(parent_elem_type));
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _PlanetDef *def = &app_data->sb_planet_defs[sbcount(app_data->sb_planet_defs) - 1];
+
+    if (sbcount(def->sb_textures) >= 1) {
+        DC_LOG_ERROR("PlanetTexture", "Only one <PlanetTexture> per <Planet> is currently supported (line %ld)", xmlGetLineNo(xml_node));
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _PlanetTextureEntry entry = {0};
+
+    // file path
+    xmlChar *raw_file = xmlGetProp(xml_node, BAD_CAST "File");
+    if (raw_file) {
+        char cleaned[DC_UTILS_FILEPATH_BUFFER_SIZE];
+        strncpy(cleaned, (const char *)raw_file, DC_UTILS_FILEPATH_BUFFER_SIZE - 1);
+        cleaned[DC_UTILS_FILEPATH_BUFFER_SIZE - 1] = '\0';
+        xmlFree(raw_file);
+
+        char abs_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
+        if (dc_utils_is_relative_path(cleaned)) {
+            dc_utils_join_paths(directory, cleaned, abs_path, sizeof(abs_path));
+        } else {
+            strcpy(abs_path, cleaned);
+        }
+        char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE];
+        _planet_shader_abs_to_vfs(abs_path, vfs_path, sizeof(vfs_path));
+        entry.source = strdup(vfs_path);
+    }
+
+    // meters per pixel
+    xmlChar *raw_mpp = xmlGetProp(xml_node, BAD_CAST "MetersPerPixel");
+    if (raw_mpp) {
+        entry.mpp = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_mpp);
+        xmlFree(raw_mpp);
+    }
+
+    // latitude
+    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
+    if (raw_lat) {
+        entry.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+        xmlFree(raw_lat);
+    }
+
+    // longitude
+    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
+    if (raw_lon) {
+        entry.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+        xmlFree(raw_lon);
+    }
+
+    // edge-triggered refresh
+    xmlChar *raw_fire_refresh = xmlGetProp(xml_node, BAD_CAST "FireRefresh");
+    if (raw_fire_refresh) {
+        entry.fire_refresh = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_fire_refresh);
+        xmlFree(raw_fire_refresh);
+    }
+
+    sbpush(def->sb_textures, entry);
+
+    return NODE_INDEX_UNDEFINED;
 }
 
 static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
@@ -4734,6 +5171,39 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
             }
             break;
         }
+        case NODE_TYPE_PLANET_LINE:
+        case NODE_TYPE_PLANET_POLYGON: {
+
+            _PlanetVertexDynamic pv = {};
+            pv.lat = DC_APP_VAL_INDEX_UNDEFINED;
+            pv.lon = DC_APP_VAL_INDEX_UNDEFINED;
+            pv.alt = DC_APP_VAL_INDEX_UNDEFINED;
+
+            xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
+            if (raw_lat) {
+                pv.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+                xmlFree(raw_lat);
+            }
+
+            xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
+            if (raw_lon) {
+                pv.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+                xmlFree(raw_lon);
+            }
+
+            xmlChar *raw_alt = xmlGetProp(xml_node, BAD_CAST "Altitude");
+            if (raw_alt) {
+                pv.alt = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_alt);
+                xmlFree(raw_alt);
+            }
+
+            if (parent_node->type == NODE_TYPE_PLANET_LINE)
+                sbpush(parent_node->planet_line.sb_points_dynamic, pv);
+            else
+                sbpush(parent_node->planet_polygon.sb_points_dynamic, pv);
+
+            break;
+        }
         default:
             DC_LOG_ERROR("Vertex", "Invalid parent of type %s", _node_type_to_string(parent_node->type));
     }
@@ -4965,9 +5435,9 @@ static void _init_stencil_pipelines(_AppData *app_data, plDevice *device, plRend
         .tAlphaOp        = PL_BLEND_OP_ADD};
 
     // load shaders (pilotlight draw shaders)
-    plShaderModule vert_2d  = _ext_shader->load_glsl("draw_2d.vert", "main", NULL, NULL);
-    plShaderModule frag_2d  = _ext_shader->load_glsl("draw_2d.frag", "main", NULL, NULL);
-    plShaderModule frag_sdf = _ext_shader->load_glsl("draw_2d_sdf.frag", "main", NULL, NULL);
+    plShaderModule vert_2d  = _ext_shader->load_glsl("pl_draw_2d.vert", "main", NULL, NULL);
+    plShaderModule frag_2d  = _ext_shader->load_glsl("pl_draw_2d.frag", "main", NULL, NULL);
+    plShaderModule frag_sdf = _ext_shader->load_glsl("pl_draw_2d_sdf.frag", "main", NULL, NULL);
 
     // load stencil shaders (dcapp-specific, use discard for transparent pixels)
     plShaderModule frag_2d_stencil  = _ext_shader->load_glsl("dc_draw_2d_stencil.frag", "main", NULL, NULL);

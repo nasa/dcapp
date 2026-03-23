@@ -1154,6 +1154,14 @@ pl_draw_polygon(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, float f
 }
 
 void
+pl_draw_line(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, float fLineWidth, uint32_t uColor)
+{
+    for(uint32_t i = 0; i + 1 < uCount; i++)
+        gptDraw->add_3d_line(ptView->pt3dDrawlist, atPoints[i], atPoints[i + 1],
+            (plDrawLineOptions){.fThickness = fLineWidth, .uColor = uColor});
+}
+
+void
 pl_draw_polygon_filled(plPlanetView* ptView, plVec3* atPoints, uint32_t uCount, uint32_t uColor)
 {
     for(uint32_t i = 1; i + 1 < uCount; i++)
@@ -2418,6 +2426,7 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .draw_sphere              = pl_draw_sphere,
         .draw_polygon             = pl_draw_polygon,
         .draw_polygon_filled      = pl_draw_polygon_filled,
+        .draw_line                = pl_draw_line,
         .draw_text                = pl_draw_text,
         .set_texture              = pl_planet_set_texture,
         .create_view              = pl_create_planet_view,
