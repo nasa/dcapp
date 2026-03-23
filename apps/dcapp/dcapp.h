@@ -18,6 +18,7 @@
 #include "pl_image_ext.h"
 #include "pl_resource_ext.h"
 #include "pl_draw_ext.h"
+#include "pl_screen_log_ext.h"
 
 // dcapp extension includes
 #include "dc_draw_ext.h"
@@ -53,6 +54,7 @@ const plResourceI        *_ext_resource         = NULL;
 const plDrawI            *_ext_draw             = NULL;
 const dcDrawI            *_ext_dc_draw          = NULL;
 const dcDrawBackendI     *_ext_dc_draw_backend  = NULL;
+const plScreenLogI       *_ext_screen_log       = NULL;
 
 // dcapp includes
 #include "utils/stb_sb.h"

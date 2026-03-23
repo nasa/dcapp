@@ -55,11 +55,11 @@ if [[ "$PL_CONFIG" == "release" ]]; then
 
 # create output directory(s)
 mkdir -p "../../samples/functions/logic"
+mkdir -p "../../samples/ptz/logic"
 mkdir -p "../../samples/planet/logic"
+mkdir -p "../../samples/lissajous/logic"
 mkdir -p "../../samples/screensaver/logic"
 mkdir -p "../../samples/mask/logic"
-mkdir -p "../../samples/lissajous/logic"
-mkdir -p "../../samples/ptz/logic"
 
 # create lock file(s)
 echo LOCKING > "../../samples/screensaver/logic/lock.tmp"
@@ -87,7 +87,7 @@ PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC "
+PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
@@ -123,7 +123,7 @@ PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC "
+PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
@@ -159,7 +159,7 @@ PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC "
+PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
@@ -195,7 +195,7 @@ PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC "
+PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
@@ -231,7 +231,7 @@ PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC "
+PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
@@ -267,7 +267,7 @@ PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
 PL_INCLUDE_DIRECTORIES=""
 PL_LINK_DIRECTORIES="-L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
-PL_COMPILER_FLAGS="-fPIC "
+PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
@@ -310,11 +310,11 @@ if [[ "$PL_CONFIG" == "debug" ]]; then
 
 # create output directory(s)
 mkdir -p "../../samples/functions/logic"
+mkdir -p "../../samples/ptz/logic"
 mkdir -p "../../samples/planet/logic"
+mkdir -p "../../samples/lissajous/logic"
 mkdir -p "../../samples/screensaver/logic"
 mkdir -p "../../samples/mask/logic"
-mkdir -p "../../samples/lissajous/logic"
-mkdir -p "../../samples/ptz/logic"
 
 # create lock file(s)
 echo LOCKING > "../../samples/screensaver/logic/lock.tmp"

@@ -1014,6 +1014,7 @@ static void _load_apis(plApiRegistryI *api_registry) {
     _ext_camera           = pl_get_api_latest(api_registry, plCameraI);
     _ext_image            = pl_get_api_latest(api_registry, plImageI);
     _ext_resource         = pl_get_api_latest(api_registry, plResourceI);
+    _ext_screen_log       = pl_get_api_latest(api_registry, plScreenLogI);
 }
 
 #include "draw.c"

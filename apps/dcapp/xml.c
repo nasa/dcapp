@@ -5818,6 +5818,10 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
         .ptWindow = app_data->pl_window};
     _ext_starter->initialize(tStarterInit);
 
+    #ifdef NDEBUG
+    _ext_screen_log->set_flags(PL_SCREEN_LOG_FLAGS_HIDE_MESSAGES);
+    #endif
+
     // get device
     plDevice *device = _ext_starter->get_device();
 

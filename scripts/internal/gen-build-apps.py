@@ -103,7 +103,7 @@ with pl.project("apps"):
                     compiler_flags=["-Od", "-MDd", "-Zi"])
     pl.add_profile(compiler_filter=["msvc"],
                     configuration_filter=["release"],
-                    compiler_flags=["-O2", "-MD"])
+                    compiler_flags=["-O2", "-MD", "-DNDEBUG"])
 
     # linux or gcc only
     pl.add_profile(platform_filter=["Linux"],
@@ -114,6 +114,9 @@ with pl.project("apps"):
     pl.add_profile(compiler_filter=["gcc"],
                     configuration_filter=["debug"],
                     compiler_flags=["--debug", "-g", "-O0"])
+    pl.add_profile(compiler_filter=["gcc"],
+                    configuration_filter=["release"],
+                    compiler_flags=["-DNDEBUG"])
 
     # macos or clang only
     pl.add_profile(platform_filter=["Darwin"],
@@ -125,6 +128,9 @@ with pl.project("apps"):
     pl.add_profile(compiler_filter=["clang"],
                     configuration_filter=["debug"],
                     compiler_flags=["--debug", "-g"])
+    pl.add_profile(compiler_filter=["clang"],
+                    configuration_filter=["release"],
+                    compiler_flags=["-DNDEBUG"])
 
     #-----------------------------------------------------------------------------
     # [SECTION] dcapp extensions
