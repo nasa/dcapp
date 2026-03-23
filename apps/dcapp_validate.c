@@ -421,6 +421,8 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
+            case DC_APP_ELEM_TYPE_FUNCTION:
+            case DC_APP_ELEM_TYPE_MOUSE_MOTION:
                 return true;
             default:
                 return false;
@@ -549,6 +551,21 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         }
     }
 
+    // PlanetView can contain planet overlay elements
+    if (parent_type == DC_APP_ELEM_TYPE_PLANET_VIEW) {
+        switch (child_type) {
+            case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
+            case DC_APP_ELEM_TYPE_PLANET_GEO_JSON:
+            case DC_APP_ELEM_TYPE_PLANET_LINE:
+            case DC_APP_ELEM_TYPE_PLANET_POLYGON:
+            case DC_APP_ELEM_TYPE_PLANET_SPHERE:
+            case DC_APP_ELEM_TYPE_PLANET_TEXT:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     // Polygon can contain Vertex, drawable content, and mouse events
     if (parent_type == DC_APP_ELEM_TYPE_POLYGON) {
         switch (child_type) {
@@ -671,7 +688,6 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         case DC_APP_ELEM_TYPE_TRICK_FROM:
         case DC_APP_ELEM_TYPE_TRICK_TO:
         case DC_APP_ELEM_TYPE_VERTEX:
-        case DC_APP_ELEM_TYPE_PLANET_VIEW:
         case DC_APP_ELEM_TYPE_PLANET_DATA:
         case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
         case DC_APP_ELEM_TYPE_PLANET_SHADER:
@@ -991,12 +1007,15 @@ static const char *_valid_attrs_pixelstream[]    = {"Type", "URL", "Protocol", "
 static const char *_valid_attrs_set[]            = {"Variable", "Operator", "Defer", NULL};
 static const char *_valid_attrs_sphere[]         = {"Radius", "Image", "Roll", "Pitch", "Yaw", NULL};
 static const char *_valid_attrs_style[]          = {"Name", NULL};
-static const char *_valid_attrs_planet[]         = {"Name", "LightDirectionX", "LightDirectionY", "LightDirectionZ", NULL};
+static const char *_valid_attrs_planet[]         = {"Name", "LightDirectionX", "LightDirectionY", "LightDirectionZ", "MeshCacheSize", NULL};
 static const char *_valid_attrs_planet_view[]    = {"Planet", "ShaderIndex", "Tau", "Flatten", "PositionX", "X", "PositionY", "Y", "DimensionX", "Width", "DimensionY", "Height", "LocalAlignX", "HorizontalAlign", "LocalAlignY", "VerticalAlign", "ParentAlignX", "ParentAlignY", "Rotation", "Rotate", "PivotPositionX", "PivotX", "PivotPositionY", "PivotY", "PivotParentAlignX", "PivotParentAlignY", "PivotLocalAlignX", "PivotLocalAlignY", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", "NegateX", "NegateY", NULL};
 static const char *_valid_attrs_planet_data[]    = {"File", NULL};
 static const char *_valid_attrs_planet_texture[] = {"File", "MetersPerPixel", "Latitude", "Longitude", "FireRefresh", NULL};
 static const char *_valid_attrs_planet_shader[]  = {"Index", "VertexShader", "FragmentShader", NULL};
-static const char *_valid_attrs_text[]           = {"Size", "ShadowOffset", NULL};
+static const char *_valid_attrs_planet_overlay[] = {"Planet", "HeightAboveTerrain", "Latitude", "Longitude", "Radius", "RadiusX", "RadiusY", "Rotation", "Segments", "Size", NULL};
+static const char *_valid_attrs_planet_geojson[] = {"File", "Planet", "HeightAboveTerrain", NULL};
+static const char *_valid_attrs_rounded[]        = {"Rounded", NULL};
+static const char *_valid_attrs_text[]           = {"Size", "ShadowOffset", "Font", NULL};
 static const char *_valid_attrs_trick_io[]       = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};
 static const char *_valid_attrs_trick_variable[] = {"Name", "Units", NULL};
 static const char *_valid_attrs_edge_io[]        = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};
@@ -1149,7 +1168,8 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
                    _attr_in_list(attr_name, _valid_attrs_color) ||
-                   _attr_in_list(attr_name, _valid_attrs_line);
+                   _attr_in_list(attr_name, _valid_attrs_line) ||
+                   _attr_in_list(attr_name, _valid_attrs_rounded);
 
         case DC_APP_ELEM_TYPE_RECTANGLE:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
@@ -1159,7 +1179,8 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
                    _attr_in_list(attr_name, _valid_attrs_pivot) ||
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
                    _attr_in_list(attr_name, _valid_attrs_color) ||
-                   _attr_in_list(attr_name, _valid_attrs_line);
+                   _attr_in_list(attr_name, _valid_attrs_line) ||
+                   _attr_in_list(attr_name, _valid_attrs_rounded);
 
         case DC_APP_ELEM_TYPE_SET:
             return _attr_in_list(attr_name, _valid_attrs_set);
@@ -1199,6 +1220,20 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_PLANET_SHADER:
             return _attr_in_list(attr_name, _valid_attrs_planet_shader);
+
+        case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
+        case DC_APP_ELEM_TYPE_PLANET_LINE:
+        case DC_APP_ELEM_TYPE_PLANET_POLYGON:
+        case DC_APP_ELEM_TYPE_PLANET_SPHERE:
+        case DC_APP_ELEM_TYPE_PLANET_TEXT:
+            return _attr_in_list(attr_name, _valid_attrs_planet_overlay) ||
+                   _attr_in_list(attr_name, _valid_attrs_color) ||
+                   _attr_in_list(attr_name, _valid_attrs_line);
+
+        case DC_APP_ELEM_TYPE_PLANET_GEO_JSON:
+            return _attr_in_list(attr_name, _valid_attrs_planet_geojson) ||
+                   _attr_in_list(attr_name, _valid_attrs_color) ||
+                   _attr_in_list(attr_name, _valid_attrs_line);
 
         case DC_APP_ELEM_TYPE_TEXT:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
