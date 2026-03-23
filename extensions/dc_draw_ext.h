@@ -50,7 +50,7 @@ Index of this file:
 //-----------------------------------------------------------------------------
 
 // dcapp's custom draw API (separate from pilotlight's plDrawI)
-#define dcDrawI_version {1, 4, 0}
+#define dcDrawI_version {1, 5, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -165,7 +165,8 @@ typedef struct _dcDrawI
     void (*add_rect_rounded)  (dcDrawLayer2D*, plVec2 pMin, plVec2 pMax, float radius, uint32_t segments, dcDrawRectFlags, dcDrawLineOptions);
     void (*add_quad)          (dcDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3, dcDrawLineOptions);
     void (*add_circle)        (dcDrawLayer2D*, plVec2 p, float radius, uint32_t segments, dcDrawLineOptions);
-    void (*add_polygon)       (dcDrawLayer2D*, plVec2* points, uint32_t count, dcDrawLineOptions);
+    void (*add_polygon)               (dcDrawLayer2D*, plVec2* points, uint32_t count, dcDrawLineOptions);
+    void (*add_polygon_rounded)       (dcDrawLayer2D*, plVec2* points, uint32_t count, float radius, uint32_t segments, dcDrawLineOptions);
     void (*add_bezier_quad)   (dcDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, uint32_t segments, dcDrawLineOptions);
     void (*add_bezier_cubic)  (dcDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3, uint32_t segments, dcDrawLineOptions);
 
@@ -176,7 +177,8 @@ typedef struct _dcDrawI
     void (*add_rect_rounded_filled)  (dcDrawLayer2D*, plVec2 minP, plVec2 maxP, float radius, uint32_t segments, dcDrawRectFlags, dcDrawSolidOptions);
     void (*add_quad_filled)          (dcDrawLayer2D*, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3, dcDrawSolidOptions);
     void (*add_circle_filled)        (dcDrawLayer2D*, plVec2 p, float radius, uint32_t segments, dcDrawSolidOptions);
-    void (*add_convex_polygon_filled)(dcDrawLayer2D*, plVec2* points, uint32_t count, dcDrawSolidOptions);
+    void (*add_convex_polygon_filled)        (dcDrawLayer2D*, plVec2* points, uint32_t count, dcDrawSolidOptions);
+    void (*add_convex_polygon_rounded_filled)(dcDrawLayer2D*, plVec2* points, uint32_t count, float radius, uint32_t segments, dcDrawSolidOptions);
     void (*add_image)                (dcDrawLayer2D*, plTextureID, plVec2 minP, plVec2 maxP);
     void (*add_image_ex)             (dcDrawLayer2D*, plTextureID, plVec2 minP, plVec2 maxP, plVec2 minUV, plVec2 maxUV, uint32_t color);
     void (*add_image_quad)           (dcDrawLayer2D*, plTextureID, plVec2 p0, plVec2 p1, plVec2 p2, plVec2 p3);

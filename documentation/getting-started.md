@@ -33,10 +33,8 @@ This guide covers building and running dcapp on Linux, macOS, and Windows.
 
 ## 2. Clone and Setup
 
-The `pilotlight` submodule uses an SSH remote, so make sure you have an SSH key configured with GitHub before cloning.
-
 ```bash
-git clone --recursive git@github.com:nasa/dcapp.git
+git clone --recursive https://github.com/nasa/dcapp.git
 cd dcapp
 ```
 

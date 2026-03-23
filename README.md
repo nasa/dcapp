@@ -12,9 +12,10 @@ dcapp allows you to create interactive graphical displays using a declarative XM
 - Declarative XML syntax for rapid UI development
 - Real-time variable binding and updates
 - Interactive buttons with multiple states
-- Drawing primitives (rectangles, circles, polygons, lines, text, images)
+- Drawing primitives (rectangles, circles, polygons, lines, text, images) with optional rounded corners
+- GeoJSON overlay support for terrain views
 - Conditional rendering based on variable values
-- Integration with Trick simulation framework
+- Integration with Trick and Edge simulation frameworks
 - Extensible via C/C++ logic files
 - Cross-platform (Linux, Windows, macOS)
 
@@ -26,7 +27,7 @@ Rendering powered by [PilotLight](https://github.com/PilotLightTech/pilotlight).
 
 ```bash
 # Run a display (defaults to samples/welcome/welcome.xml)
-bin/dcapp.sh
+bin/dcapp.sh                                          # (dcapp.bat on Windows)
 
 # Run a specific display
 bin/dcapp.sh path/to/display.xml
@@ -35,13 +36,14 @@ bin/dcapp.sh path/to/display.xml
 bin/dcapp.sh path/to/display.xml DEBUG_MODE=1
 
 # Validate a display file
-bin/dcapp-validate path/to/display.xml
+bin/dcapp-validate.sh path/to/display.xml             # (dcapp-validate.bat)
 
 # Generate a C header from a display
-bin/dcapp-genheader path/to/display.xml output.h
-```
+bin/dcapp-genheader.sh path/to/display.xml output.h   # (dcapp-genheader.bat)
 
-On Windows, use the `.bat` equivalents (`bin/dcapp.bat`, `bin/dcapp-validate.bat`, `bin/dcapp-genheader.bat`).
+# Generate planet terrain chunks
+bin/dcapp-planet-chunkgen.sh path/to/planet.json out  # (dcapp-planet-chunkgen.bat)
+```
 
 ---
 

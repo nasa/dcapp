@@ -5,6 +5,83 @@ All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
 
+[2.106.0] - 2026-03-22
+--------------------
+
+### Added
+- Custom font support: Text elements accept a Font attribute with a path to a TTF file
+- Bundled Hack (MIT) and Liberation Sans (SIL OFL) fonts in assets/fonts/
+- New sample: fonts
+
+### Changed
+- Removed Font from convert-legacy-xml.py "not yet implemented" list
+
+
+[2.105.0] - 2026-03-22
+--------------------
+
+### Fixed
+- Updated README.md script names to include .sh extensions and added dcapp-planet-chunkgen
+- Updated documentation for new features and corrected script references
+- Added missing planet overlay elements to dcapp-validate
+- Fixed dcapp-validate to allow MouseMotion and Function inside True/False blocks
+- Added MeshCacheSize to Planet validator
+
+
+[2.104.0] - 2026-03-22
+--------------------
+
+### Added
+- Rounded corners for Rectangle and Polygon elements via Rounded attribute
+- Rounded polygon draw functions in dc_draw extension (add_polygon_rounded, add_convex_polygon_rounded_filled)
+- New sample: rounded
+
+### Changed
+- Updated dc_draw extension version to 1.5.0
+
+
+[2.103.0] - 2026-03-22
+--------------------
+
+### Changed
+- Moved node type definitions from dcapp.h to node.h
+- Added _ValIndex typedef (replacing _ValIndex1) for consistency with _ValIndex2/3/4
+- Replaced DcAppValIndex with _ValIndex throughout node.h for readability
+
+
+[2.102.0] - 2026-03-22
+--------------------
+
+### Added
+- PlanetGeoJSON element for rendering GeoJSON features on terrain
+- PlanetLine element for rendering line strips on terrain with geographic coordinates
+- PlanetPolygon element for rendering polygons on terrain
+- Planet overlay documentation (PlanetEllipse, PlanetSphere, PlanetText, PlanetLine, PlanetPolygon, PlanetGeoJSON)
+
+### Fixed
+- pl_json_member_by_name prefix matching bug (strncmp used strlen of stored name, causing false matches for keys like "stroke" vs "stroke-opacity")
+- Updated draw_2d shader references to use pl_ prefix (pl_draw_2d.vert, pl_draw_2d.frag, pl_draw_2d_sdf.frag)
+
+
+[2.101.0] - 2026-03-20
+--------------------
+
+### Fixed
+- Conversion script stencil handling
+
+
+[2.100.0] - 2026-03-19
+--------------------
+
+### Added
+- Terrain sandbox sample
+- Version checking for convert-legacy-xml script
+
+### Fixed
+- Terrain sandbox for Windows
+- Conversion script calling deprecated code
+
+
 [2.99.1] - 2026-03-16
 --------------------
 

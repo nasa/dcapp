@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <Window X="30" Y="30" Width="900" Height="1000">
+        <Panel VirtualWidth="900" VirtualHeight="1000" BackgroundColor="0.06 0.06 0.1">
+
+            <!-- Title -->
+            <Text X="450" Y="970" Size="28" FillColor="1 1 1" LocalAlignX="#_align_center_">Custom Font Support</Text>
+
+            <!-- ================================================================== -->
+            <!-- DEFAULT FONT: Bitstream Vera Sans -->
+            <!-- ================================================================== -->
+            <Text X="50" Y="900" Size="14" FillColor="0.5 0.7 1">Bitstream Vera Sans (default)</Text>
+            <Text X="50" Y="870" Size="24" FillColor="1 1 1">The quick brown fox jumps over the lazy dog.</Text>
+            <Text X="50" Y="840" Size="16" FillColor="0.8 0.8 0.8">ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789 !\@\#\$%</Text>
+            <Text X="50" Y="815" Size="12" FillColor="0.6 0.6 0.6">abcdefghijklmnopqrstuvwxyz {[()]} &lt;=&gt; + - * /</Text>
+
+            <Rectangle X="30" Y="790" Width="840" Height="1" FillColor="0.2 0.2 0.3"/>
+
+            <!-- ================================================================== -->
+            <!-- HACK (Monospace) -->
+            <!-- ================================================================== -->
+            <Text X="50" Y="750" Size="14" FillColor="0.5 1 0.7">Hack (monospace, MIT license)</Text>
+            <Text X="50" Y="720" Size="24" FillColor="1 1 1" Font="$dcappHome/assets/fonts/hack/Hack-Regular.ttf">The quick brown fox jumps over the lazy dog.</Text>
+            <Text X="50" Y="690" Size="16" FillColor="0.8 0.8 0.8" Font="$dcappHome/assets/fonts/hack/Hack-Regular.ttf">ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789 !\@\#\$%</Text>
+            <Text X="50" Y="665" Size="12" FillColor="0.6 0.6 0.6" Font="$dcappHome/assets/fonts/hack/Hack-Regular.ttf">abcdefghijklmnopqrstuvwxyz {[()]} &lt;=&gt; + - * /</Text>
+
+            <Rectangle X="30" Y="640" Width="840" Height="1" FillColor="0.2 0.2 0.3"/>
+
+            <!-- ================================================================== -->
+            <!-- HACK BOLD -->
+            <!-- ================================================================== -->
+            <Text X="50" Y="600" Size="14" FillColor="0.5 1 0.7">Hack Bold (monospace, MIT license)</Text>
+            <Text X="50" Y="570" Size="24" FillColor="1 1 1" Font="$dcappHome/assets/fonts/hack/Hack-Bold.ttf">The quick brown fox jumps over the lazy dog.</Text>
+            <Text X="50" Y="540" Size="16" FillColor="0.8 0.8 0.8" Font="$dcappHome/assets/fonts/hack/Hack-Bold.ttf">ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789 !\@\#\$%</Text>
+            <Text X="50" Y="515" Size="12" FillColor="0.6 0.6 0.6" Font="$dcappHome/assets/fonts/hack/Hack-Bold.ttf">abcdefghijklmnopqrstuvwxyz {[()]} &lt;=&gt; + - * /</Text>
+
+            <Rectangle X="30" Y="490" Width="840" Height="1" FillColor="0.2 0.2 0.3"/>
+
+            <!-- ================================================================== -->
+            <!-- LIBERATION SANS -->
+            <!-- ================================================================== -->
+            <Text X="50" Y="450" Size="14" FillColor="1 0.8 0.5">Liberation Sans (SIL Open Font License)</Text>
+            <Text X="50" Y="420" Size="24" FillColor="1 1 1" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Regular.ttf">The quick brown fox jumps over the lazy dog.</Text>
+            <Text X="50" Y="390" Size="16" FillColor="0.8 0.8 0.8" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Regular.ttf">ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789 !\@\#\$%</Text>
+            <Text X="50" Y="365" Size="12" FillColor="0.6 0.6 0.6" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Regular.ttf">abcdefghijklmnopqrstuvwxyz {[()]} &lt;=&gt; + - * /</Text>
+
+            <Rectangle X="30" Y="340" Width="840" Height="1" FillColor="0.2 0.2 0.3"/>
+
+            <!-- ================================================================== -->
+            <!-- LIBERATION SANS BOLD -->
+            <!-- ================================================================== -->
+            <Text X="50" Y="300" Size="14" FillColor="1 0.8 0.5">Liberation Sans Bold (SIL Open Font License)</Text>
+            <Text X="50" Y="270" Size="24" FillColor="1 1 1" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Bold.ttf">The quick brown fox jumps over the lazy dog.</Text>
+            <Text X="50" Y="240" Size="16" FillColor="0.8 0.8 0.8" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Bold.ttf">ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789 !\@\#\$%</Text>
+            <Text X="50" Y="215" Size="12" FillColor="0.6 0.6 0.6" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Bold.ttf">abcdefghijklmnopqrstuvwxyz {[()]} &lt;=&gt; + - * /</Text>
+
+        </Panel>
+    </Window>
+</DCAPP>

@@ -1412,6 +1412,134 @@ pl_add_convex_polygon_filled(dcDrawLayer2D* ptLayer, plVec2* tPoints, uint32_t u
     }
 }
 
+// helper: generate rounded polygon vertices from original polygon points
+static plVec2*
+pl__generate_rounded_polygon_points(plVec2* tPoints, uint32_t uPointsSize, float fRadius, uint32_t uSegments, uint32_t* puOutCount)
+{
+    plVec2* sbtOut = NULL;
+
+    if(fRadius <= 0.0f || uPointsSize < 3)
+    {
+        for(uint32_t i = 0; i < uPointsSize; i++)
+            pl_sb_push(sbtOut, tPoints[i]);
+        *puOutCount = uPointsSize;
+        return sbtOut;
+    }
+
+    if(uSegments < 2) uSegments = 2;
+
+    for(uint32_t i = 0; i < uPointsSize; i++)
+    {
+        plVec2 prev = tPoints[(i + uPointsSize - 1) % uPointsSize];
+        plVec2 curr = tPoints[i];
+        plVec2 next = tPoints[(i + 1) % uPointsSize];
+
+        // direction vectors from corner to adjacent vertices
+        plVec2 d1 = { prev.x - curr.x, prev.y - curr.y };
+        plVec2 d2 = { next.x - curr.x, next.y - curr.y };
+
+        float len1 = sqrtf(d1.x * d1.x + d1.y * d1.y);
+        float len2 = sqrtf(d2.x * d2.x + d2.y * d2.y);
+
+        if(len1 < 1e-6f || len2 < 1e-6f)
+        {
+            pl_sb_push(sbtOut, curr);
+            continue;
+        }
+
+        d1.x /= len1; d1.y /= len1;
+        d2.x /= len2; d2.y /= len2;
+
+        // half-angle between edges
+        float dot = d1.x * d2.x + d1.y * d2.y;
+        dot = fmaxf(-1.0f, fminf(1.0f, dot));
+        float half_angle = acosf(dot) / 2.0f;
+
+        if(half_angle < 1e-6f || half_angle > 3.14f)
+        {
+            pl_sb_push(sbtOut, curr);
+            continue;
+        }
+
+        float tan_half = tanf(half_angle);
+        if(tan_half < 1e-6f)
+        {
+            pl_sb_push(sbtOut, curr);
+            continue;
+        }
+
+        // clamp radius to half of shortest adjacent edge
+        float r = fminf(fRadius, fminf(len1, len2) * 0.5f);
+        float offset = r / tan_half;
+
+        // arc start/end points (on each edge, offset from corner)
+        plVec2 p1 = { curr.x + d1.x * offset, curr.y + d1.y * offset };
+        plVec2 p2 = { curr.x + d2.x * offset, curr.y + d2.y * offset };
+
+        // arc center
+        plVec2 bisector = { d1.x + d2.x, d1.y + d2.y };
+        float blen = sqrtf(bisector.x * bisector.x + bisector.y * bisector.y);
+        if(blen < 1e-6f)
+        {
+            pl_sb_push(sbtOut, curr);
+            continue;
+        }
+        bisector.x /= blen;
+        bisector.y /= blen;
+        float center_dist = r / sinf(half_angle);
+        plVec2 center = { curr.x + bisector.x * center_dist, curr.y + bisector.y * center_dist };
+
+        // start/end angles
+        float start_angle = atan2f(p1.y - center.y, p1.x - center.x);
+        float end_angle   = atan2f(p2.y - center.y, p2.x - center.x);
+
+        // determine winding direction via cross product
+        float cross = d1.x * d2.y - d1.y * d2.x;
+
+        // ensure arc goes the right way
+        if(cross > 0.0f)
+        {
+            // CW winding at this corner
+            if(end_angle > start_angle) end_angle -= 2.0f * PL_PI;
+        }
+        else
+        {
+            // CCW winding at this corner
+            if(end_angle < start_angle) end_angle += 2.0f * PL_PI;
+        }
+
+        // generate arc points
+        for(uint32_t s = 0; s <= uSegments; s++)
+        {
+            float t = (float)s / (float)uSegments;
+            float angle = start_angle + t * (end_angle - start_angle);
+            plVec2 pt = { center.x + r * cosf(angle), center.y + r * sinf(angle) };
+            pl_sb_push(sbtOut, pt);
+        }
+    }
+
+    *puOutCount = pl_sb_size(sbtOut);
+    return sbtOut;
+}
+
+static void
+pl_add_polygon_rounded(dcDrawLayer2D* ptLayer, plVec2* tPoints, uint32_t uPointsSize, float fRadius, uint32_t uSegments, dcDrawLineOptions tOptions)
+{
+    uint32_t uCount = 0;
+    plVec2* sbtRounded = pl__generate_rounded_polygon_points(tPoints, uPointsSize, fRadius, uSegments, &uCount);
+    pl_add_polygon(ptLayer, sbtRounded, uCount, tOptions);
+    pl_sb_free(sbtRounded);
+}
+
+static void
+pl_add_convex_polygon_rounded_filled(dcDrawLayer2D* ptLayer, plVec2* tPoints, uint32_t uPointsSize, float fRadius, uint32_t uSegments, dcDrawSolidOptions tOptions)
+{
+    uint32_t uCount = 0;
+    plVec2* sbtRounded = pl__generate_rounded_polygon_points(tPoints, uPointsSize, fRadius, uSegments, &uCount);
+    pl_add_convex_polygon_filled(ptLayer, sbtRounded, uCount, tOptions);
+    pl_sb_free(sbtRounded);
+}
+
 static void
 pl_add_image_ex(dcDrawLayer2D* ptLayer, plTextureID tTexture, plVec2 tPMin, plVec2 tPMax, plVec2 tUvMin, plVec2 tUvMax, uint32_t uColor)
 {
@@ -4085,8 +4213,10 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .add_quad_filled            = pl_add_quad_filled,
         .add_circle                 = pl_add_circle,
         .add_circle_filled          = pl_add_circle_filled,
-        .add_polygon                = pl_add_polygon,
-        .add_convex_polygon_filled  = pl_add_convex_polygon_filled,
+        .add_polygon                         = pl_add_polygon,
+        .add_polygon_rounded                 = pl_add_polygon_rounded,
+        .add_convex_polygon_filled           = pl_add_convex_polygon_filled,
+        .add_convex_polygon_rounded_filled   = pl_add_convex_polygon_rounded_filled,
         .add_image                  = pl_add_image,
         .add_image_ex               = pl_add_image_ex,
         .add_image_quad             = pl_add_image_quad,

@@ -106,9 +106,8 @@ COMMENT_OUT_ATTRIBUTES = {
     'ForceMono',        # Text - force monospace rendering
     'DisconnectAction', # TrickIO - action on disconnect
     'FullScreen',       # Window - fullscreen mode
-    'Font',             # Text - font selection
     'KeyASCII',         # Button - ASCII key binding
-    'Face',             # Text - font face
+    'Face',             # Text - font face (use Font attribute with TTF path instead)
     'Camera',           # PixelStream/Terrain - camera binding
     'ZeroTrim',         # Text - snap near-zero values to zero (use format specifier instead)
 }

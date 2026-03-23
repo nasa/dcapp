@@ -153,6 +153,7 @@ Draws a rectangle.
 | `FillColor` | — | color | No | Fill color (RGBA) |
 | `LineColor` | — | color | No | Border color (RGBA) |
 | `LineWidth` | — | number/var | No | Border width |
+| `Rounded` | — | boolean/var | No | Round corners (radius = 10% of smaller dimension) |
 
 **Children:** `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>` (mouse events)
 
@@ -318,6 +319,7 @@ Draws a filled or outlined polygon.
 | `FillColor` | — | color | No | Fill color (RGBA) |
 | `LineColor` | — | color | No | Border color (RGBA) |
 | `LineWidth` | — | number/var | No | Border width |
+| `Rounded` | — | boolean/var | No | Round corners (radius = 10% of bounding box's smaller dimension) |
 
 **Children:** `<Vertex>` elements, `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>`
 
@@ -402,6 +404,7 @@ Displays text with variable interpolation.
 | `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
 | `FillColor` | — | color | No | Text fill color |
 | `LineColor` | — | color | No | Text outline color |
+| `Font` | — | string | No | Path to a TTF font file (relative to XML directory or absolute). Defaults to Bitstream Vera Sans. |
 
 **Content:** Text string with variable interpolation
 

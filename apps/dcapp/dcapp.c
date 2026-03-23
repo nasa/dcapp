@@ -192,6 +192,16 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 break;
             case NODE_TYPE_PIXELSTREAM:
                 break;
+            case NODE_TYPE_PLANET_LINE:
+                sbfree(node->planet_line.sb_points_static);
+                sbfree(node->planet_line.sb_points_dynamic);
+                break;
+            case NODE_TYPE_PLANET_POLYGON:
+                sbfree(node->planet_polygon.sb_points_static);
+                sbfree(node->planet_polygon.sb_points_dynamic);
+                break;
+            case NODE_TYPE_PLANET_VIEW:
+                break;
             case NODE_TYPE_POLYGON:
                 sbfree(node->polygon.sb_vertices);
                 break;
@@ -205,8 +215,6 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 sbfree(node->text.sb_formats);
                 sbfree(node->text.sb_format_indices);
                 sbfree(node->text.sb_format_types);
-                break;
-            case NODE_TYPE_PLANET_VIEW:
                 break;
             case NODE_TYPE_WINDOW:
                 if (node->window.title) {
@@ -311,6 +319,11 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     sbfree(app_data->sb_textures);
     sbfree(app_data->sb_texture_names);
     sbfree(app_data->sb_texture_name_offsets);
+
+    // cleanup fonts
+    sbfree(app_data->sb_fonts);
+    sbfree(app_data->sb_font_paths);
+    sbfree(app_data->sb_font_path_offsets);
 
     // cleanup shaders
     _ext_gfx->destroy_shader(device, app_data->stencil_create_2d_shader);
@@ -1001,6 +1014,7 @@ static void _load_apis(plApiRegistryI *api_registry) {
     _ext_camera           = pl_get_api_latest(api_registry, plCameraI);
     _ext_image            = pl_get_api_latest(api_registry, plImageI);
     _ext_resource         = pl_get_api_latest(api_registry, plResourceI);
+    _ext_screen_log       = pl_get_api_latest(api_registry, plScreenLogI);
 }
 
 #include "draw.c"

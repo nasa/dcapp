@@ -1,0 +1,70 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "KSC to Bermuda ground track",
+        "stroke": "#ff0000",
+        "stroke-width": 3,
+        "stroke-opacity": 1.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-80.6041, 28.6083],
+          [-80.2000, 28.8000],
+          [-79.5000, 29.2000],
+          [-78.5000, 29.8000],
+          [-77.0000, 30.5000],
+          [-75.0000, 31.2000],
+          [-73.0000, 31.8000],
+          [-71.0000, 32.2000],
+          [-69.0000, 32.3000],
+          [-67.0000, 32.3000],
+          [-64.7890, 32.3210]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Bermuda Triangle",
+        "stroke": "#00ff00",
+        "stroke-width": 2,
+        "fill": "#00ff00",
+        "fill-opacity": 0.3
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-80.1918, 25.7617],
+          [-64.7505, 32.3078],
+          [-66.1057, 18.4655],
+          [-80.1918, 25.7617]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tracking station coverage zones"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [-80.6041, 28.6083],
+            [-80.6041, 29.1083],
+            [-80.1041, 29.1083]
+          ],
+          [
+            [-64.7890, 32.3210],
+            [-64.7890, 32.8210],
+            [-64.2890, 32.8210]
+          ]
+        ]
+      }
+    }
+  ]
+}

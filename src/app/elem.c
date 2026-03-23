@@ -102,14 +102,22 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "Planet";
         case DC_APP_ELEM_TYPE_PLANET_DATA:
             return "PlanetData";
-        case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
-            return "PlanetTexture";
-        case DC_APP_ELEM_TYPE_PLANET_SHADER:
-            return "PlanetShader";
         case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
             return "PlanetEllipse";
+        case DC_APP_ELEM_TYPE_PLANET_GEO_JSON:
+            return "PlanetGeoJSON";
+        case DC_APP_ELEM_TYPE_PLANET_LINE:
+            return "PlanetLine";
+        case DC_APP_ELEM_TYPE_PLANET_POLYGON:
+            return "PlanetPolygon";
+        case DC_APP_ELEM_TYPE_PLANET_SHADER:
+            return "PlanetShader";
+        case DC_APP_ELEM_TYPE_PLANET_SPHERE:
+            return "PlanetSphere";
         case DC_APP_ELEM_TYPE_PLANET_TEXT:
             return "PlanetText";
+        case DC_APP_ELEM_TYPE_PLANET_TEXTURE:
+            return "PlanetTexture";
         case DC_APP_ELEM_TYPE_PLANET_VIEW:
             return "PlanetView";
         case DC_APP_ELEM_TYPE_TEXT:
@@ -229,14 +237,22 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_PLANET;
     if (strcmp(name, "PlanetData") == 0)
         return DC_APP_ELEM_TYPE_PLANET_DATA;
-    if (strcmp(name, "PlanetTexture") == 0)
-        return DC_APP_ELEM_TYPE_PLANET_TEXTURE;
-    if (strcmp(name, "PlanetShader") == 0)
-        return DC_APP_ELEM_TYPE_PLANET_SHADER;
     if (strcmp(name, "PlanetEllipse") == 0)
         return DC_APP_ELEM_TYPE_PLANET_ELLIPSE;
+    if (strcmp(name, "PlanetGeoJSON") == 0)
+        return DC_APP_ELEM_TYPE_PLANET_GEO_JSON;
+    if (strcmp(name, "PlanetLine") == 0)
+        return DC_APP_ELEM_TYPE_PLANET_LINE;
+    if (strcmp(name, "PlanetPolygon") == 0)
+        return DC_APP_ELEM_TYPE_PLANET_POLYGON;
+    if (strcmp(name, "PlanetShader") == 0)
+        return DC_APP_ELEM_TYPE_PLANET_SHADER;
+    if (strcmp(name, "PlanetSphere") == 0)
+        return DC_APP_ELEM_TYPE_PLANET_SPHERE;
     if (strcmp(name, "PlanetText") == 0)
         return DC_APP_ELEM_TYPE_PLANET_TEXT;
+    if (strcmp(name, "PlanetTexture") == 0)
+        return DC_APP_ELEM_TYPE_PLANET_TEXTURE;
     if (strcmp(name, "PlanetView") == 0)
         return DC_APP_ELEM_TYPE_PLANET_VIEW;
     if (strcmp(name, "Text") == 0)

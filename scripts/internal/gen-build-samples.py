@@ -101,7 +101,7 @@ with pl.project("samples"):
     pl.add_profile(
         compiler_filter=["msvc"],
         configuration_filter=["release"],
-        compiler_flags=["-O2", "-MD"],
+        compiler_flags=["-O2", "-MD", "-DNDEBUG"],
     )
 
     # linux or gcc only
@@ -115,6 +115,11 @@ with pl.project("samples"):
         compiler_filter=["gcc"],
         configuration_filter=["debug"],
         compiler_flags=["--debug", "-g", "-O0"],
+    )
+    pl.add_profile(
+        compiler_filter=["gcc"],
+        configuration_filter=["release"],
+        compiler_flags=["-DNDEBUG"],
     )
 
     # macos or clang only
@@ -138,6 +143,11 @@ with pl.project("samples"):
         compiler_filter=["clang"],
         configuration_filter=["debug"],
         compiler_flags=["--debug", "-g"],
+    )
+    pl.add_profile(
+        compiler_filter=["clang"],
+        configuration_filter=["release"],
+        compiler_flags=["-DNDEBUG"],
     )
 
     # -----------------------------------------------------------------------------

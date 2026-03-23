@@ -269,6 +269,121 @@ When `CameraOrthographic` is set to 1, the view uses orthographic (parallel) pro
 
 ---
 
+## Planet Overlays
+
+`<PlanetView>` supports child elements that render geographic overlays on the terrain surface.
+
+### `<PlanetLine>`
+
+Draws a line strip on the terrain surface.
+
+```xml
+<PlanetLine Planet="Moon" HeightAboveTerrain="1000" LineColor="1 0 0 1" LineWidth="2000">
+    <Vertex Latitude="28.6" Longitude="-80.6"/>
+    <Vertex Latitude="32.3" Longitude="-64.8"/>
+</PlanetLine>
+```
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Planet` | string | Yes | Name of the parent `<Planet>` definition |
+| `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
+| `LineColor` | color | No | Line color (RGBA) |
+| `LineWidth` | double/var | No | Line width in meters |
+
+**Children:** `<Vertex>` elements with `Latitude` and `Longitude` attributes.
+
+### `<PlanetEllipse>`
+
+Draws an ellipse on the terrain surface at a geographic location.
+
+```xml
+<PlanetEllipse Latitude="@Lat" Longitude="@Lon" Radius="5000"
+    HeightAboveTerrain="500" FillColor="1 0 0 0.3" LineColor="1 0 0 1" LineWidth="200"/>
+```
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Latitude` | double/var | Yes | Center latitude in degrees |
+| `Longitude` | double/var | Yes | Center longitude in degrees |
+| `Radius` | double/var | No | Radius in meters (shorthand for both RadiusX and RadiusY) |
+| `RadiusX` | double/var | No | X radius in meters (overrides Radius) |
+| `RadiusY` | double/var | No | Y radius in meters (overrides Radius) |
+| `Rotation` | double/var | No | Rotation in degrees |
+| `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
+| `Segments` | integer/var | No | Number of segments for the ellipse approximation |
+| `FillColor` | color | No | Fill color (RGBA) |
+| `LineColor` | color | No | Line color (RGBA) |
+| `LineWidth` | double/var | No | Line width in meters |
+
+### `<PlanetSphere>`
+
+Draws a sphere at a geographic location on the terrain surface.
+
+```xml
+<PlanetSphere Latitude="@Lat" Longitude="@Lon" Radius="1000"
+    HeightAboveTerrain="500" FillColor="0 1 0 1"/>
+```
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Latitude` | double/var | Yes | Latitude in degrees |
+| `Longitude` | double/var | Yes | Longitude in degrees |
+| `Radius` | double/var | No | Sphere radius in meters |
+| `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
+| `FillColor` | color | No | Sphere color (RGBA) |
+
+### `<PlanetText>`
+
+Displays text at a geographic location on the terrain surface.
+
+```xml
+<PlanetText Latitude="@Lat" Longitude="@Lon" Size="5000"
+    HeightAboveTerrain="1000" FillColor="1 1 1 1">Landing Site</PlanetText>
+```
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Latitude` | double/var | Yes | Latitude in degrees |
+| `Longitude` | double/var | Yes | Longitude in degrees |
+| `Size` | double/var | No | Text size in meters |
+| `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
+| `FillColor` | color | No | Text color (RGBA) |
+
+**Content:** Text string with variable interpolation (same syntax as `<Text>`).
+
+### `<PlanetPolygon>`
+
+Draws a filled or outlined polygon on the terrain surface using geographic coordinates.
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
+| `FillColor` | color | No | Fill color (RGBA) |
+| `LineColor` | color | No | Line color (RGBA) |
+| `LineWidth` | double/var | No | Line width in meters |
+
+**Children:** `<Vertex>` elements with `Latitude` and `Longitude` attributes.
+
+### `<PlanetGeoJSON>`
+
+Loads a GeoJSON file and renders its features (points, lines, polygons) on the terrain surface. Supports [simplestyle](https://github.com/mapbox/simplestyle-spec) properties (`stroke`, `stroke-opacity`, `stroke-width`, `fill`, `fill-opacity`) from the GeoJSON file, with fallback to XML attribute defaults.
+
+```xml
+<PlanetGeoJSON File="assets/features.geojson" HeightAboveTerrain="1000"
+    LineColor="1 1 0 1" LineWidth="2000" FillColor="1 1 0 0.2"/>
+```
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `File` | string | Yes | Path to a `.geojson` file (relative to XML directory) |
+| `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
+| `LineColor` | color | No | Default line color for features without simplestyle properties |
+| `LineWidth` | double/var | No | Default line width in meters |
+| `FillColor` | color | No | Default fill color for polygon features |
+
+---
+
 ## Custom Shaders
 
 The planet renderer uses GLSL shaders (Vulkan-style, version 450) to control how terrain is drawn. Index 0 is always the built-in default shader, which renders the terrain with simple diffuse lighting. Custom shaders are assigned to index 1 and above.
