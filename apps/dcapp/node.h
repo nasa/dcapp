@@ -473,7 +473,7 @@ typedef struct __NodeText {
     _ValIndex4 line_color;
     uint8_t    config_flags;
     _ValIndex  shadow_offset;
-    // _ValIndex  font;
+    int        font_index; // 1-based index into sb_fonts (0 = default)
 
     // stretchy buffers contains values and formats
     // TODO move this to a context

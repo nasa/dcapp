@@ -216,6 +216,11 @@ typedef struct __AppData {
     DcAppLookup *lookup;
     DcAppConfig *config;
 
+    // fonts (custom TTF fonts, collected during XML parse, loaded during init)
+    char    *sb_font_paths;        // stretchy buffer of null-terminated path strings
+    int     *sb_font_path_offsets; // offset into sb_font_paths for each font
+    dcFont **sb_fonts;             // loaded font pointers (populated during init)
+
     // textures
     char     *sb_texture_names;
     int      *sb_texture_name_offsets;

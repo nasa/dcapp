@@ -320,6 +320,11 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
     sbfree(app_data->sb_texture_names);
     sbfree(app_data->sb_texture_name_offsets);
 
+    // cleanup fonts
+    sbfree(app_data->sb_fonts);
+    sbfree(app_data->sb_font_paths);
+    sbfree(app_data->sb_font_path_offsets);
+
     // cleanup shaders
     _ext_gfx->destroy_shader(device, app_data->stencil_create_2d_shader);
     _ext_gfx->destroy_shader(device, app_data->stencil_remove_2d_shader);

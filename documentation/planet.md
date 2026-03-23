@@ -269,6 +269,50 @@ When `CameraOrthographic` is set to 1, the view uses orthographic (parallel) pro
 
 ---
 
+## Planet Overlays
+
+`<PlanetView>` supports child elements that render geographic overlays on the terrain surface.
+
+### `<PlanetLine>`
+
+Draws a line strip on the terrain surface.
+
+```xml
+<PlanetLine Planet="Moon" HeightAboveTerrain="1000" LineColor="1 0 0 1" LineWidth="2000">
+    <Vertex Latitude="28.6" Longitude="-80.6"/>
+    <Vertex Latitude="32.3" Longitude="-64.8"/>
+</PlanetLine>
+```
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Planet` | string | Yes | Name of the parent `<Planet>` definition |
+| `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
+| `LineColor` | color | No | Line color (RGBA) |
+| `LineWidth` | double/var | No | Line width in meters |
+
+**Children:** `<Vertex>` elements with `Latitude` and `Longitude` attributes.
+
+### `<PlanetGeoJSON>`
+
+Loads a GeoJSON file and renders its features (points, lines, polygons) on the terrain surface. Supports [simplestyle](https://github.com/mapbox/simplestyle-spec) properties (`stroke`, `stroke-opacity`, `stroke-width`, `fill`, `fill-opacity`) from the GeoJSON file, with fallback to XML attribute defaults.
+
+```xml
+<PlanetGeoJSON File="assets/features.geojson" HeightAboveTerrain="1000"
+    LineColor="1 1 0 1" LineWidth="2000" FillColor="1 1 0 0.2"/>
+```
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `File` | string | Yes | Path to a `.geojson` file (relative to XML directory) |
+| `Planet` | string | Yes | Name of the parent `<Planet>` definition |
+| `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
+| `LineColor` | color | No | Default line color for features without simplestyle properties |
+| `LineWidth` | double/var | No | Default line width in meters |
+| `FillColor` | color | No | Default fill color for polygon features |
+
+---
+
 ## Custom Shaders
 
 The planet renderer uses GLSL shaders (Vulkan-style, version 450) to control how terrain is drawn. Index 0 is always the built-in default shader, which renders the terrain with simple diffuse lighting. Custom shaders are assigned to index 1 and above.

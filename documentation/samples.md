@@ -55,6 +55,7 @@ These samples demonstrate dcapp features using only XML, with no external depend
 | containers | Container nesting, VirtualWidth/Height | Shows how containers establish local coordinate systems with virtual dimensions |
 | environment | Environment variable display ($USER, etc.) | Reads and displays system environment variables |
 | events | MousePressed/Released/Active/Hovered on shapes | Demonstrates all mouse event types on geometric shapes |
+| fonts | Custom TTF fonts per Text element | Shows how to use the Font attribute to load different TTF fonts |
 | includes | Include element, reusable components | Shows how to split displays across multiple XML files for reuse |
 | input | Text input, radio buttons, sliders | Interactive form elements for user data entry |
 | primitives | Rectangle, Circle, Ellipse, Arc, Line, Polygon | Reference for all basic drawing primitives and their attributes |
@@ -124,7 +125,7 @@ These samples serve special purposes such as validation testing or complex visua
 
 | Requirement | Samples |
 |-------------|---------|
-| None (pure XML) | alignment, blink, button-children, buttons, colors, conditionals, containers, environment, events, includes, input, primitives, pushpop, rotation, rounded, shapes, slider, static-if, stencil, styles, welcome, adi, mona-lisa, bad-sample, scene |
+| None (pure XML) | alignment, blink, button-children, buttons, colors, conditionals, containers, environment, events, fonts, includes, input, primitives, pushpop, rotation, rounded, shapes, slider, static-if, stencil, styles, welcome, adi, mona-lisa, bad-sample, scene |
 | Build C logic (`make` in `logic/`) | functions, lissajous, mask, ptz, screensaver, planet |
 | Build + Makefile (`make` in sample dir) | metrics |
 | Running Trick simulation | trick, trick-stress |

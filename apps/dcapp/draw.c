@@ -5073,7 +5073,9 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
 
     // setup text options
     dcDrawTextOptions text_options = {0};
-    text_options.ptFont            = app_data->pl_vera_sdf_font;
+    text_options.ptFont            = (node->text.font_index > 0 && node->text.font_index < sbcount(app_data->sb_fonts) && app_data->sb_fonts[node->text.font_index])
+                                       ? app_data->sb_fonts[node->text.font_index]
+                                       : app_data->pl_vera_sdf_font;
     float fill_color[4]            = {
         node->text.fill_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.r)->value_double,
         node->text.fill_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.fill_color.g)->value_double,

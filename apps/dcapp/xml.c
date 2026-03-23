@@ -83,6 +83,28 @@ static _NodeIndex  _register_node(_AppData *app_data, _Node *node);
 static _Texture    _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name, bool use_dedicated_allocator);
 static void        _init_stencil_pipelines(_AppData *app_data, plDevice *device, plRenderPassHandle render_pass);
 static void        _init_app_data(_AppData *app_data, _Node *window_node);
+static void        _build_font_atlas(_AppData *app_data);
+
+static int _register_font(_AppData *app_data, const char *path) {
+    // reserve index 0 as undefined on first call
+    if (app_data->sb_fonts == NULL) {
+        sbpush(app_data->sb_fonts, NULL);
+        sbpush(app_data->sb_font_path_offsets, 0);
+        sbpush(app_data->sb_font_paths, '\0');
+    }
+    // check if already registered (1-based)
+    int count = sbcount(app_data->sb_font_path_offsets);
+    for (int i = 1; i < count; i++) {
+        if (strcmp(path, &app_data->sb_font_paths[app_data->sb_font_path_offsets[i]]) == 0)
+            return i;
+    }
+    // register new font (1-based)
+    sbpush(app_data->sb_font_path_offsets, sbcount(app_data->sb_font_paths));
+    sbpushn(app_data->sb_font_paths, path, (int)strlen(path));
+    sbpush(app_data->sb_font_paths, '\0');
+    sbpush(app_data->sb_fonts, NULL);
+    return sbcount(app_data->sb_font_path_offsets) - 1;
+}
 
 static DcAppVarIndex _register_anonymous_variable(_AppData *app_data, DcValueType type, const char *initial_value_str) {
     static unsigned int anon_var_counter = 0;
@@ -4541,6 +4563,20 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     _Node dc_node  = {};
     dc_node.type   = NODE_TYPE_TEXT;
     dc_node.parent = parent_node_index;
+    // font
+    xmlChar *raw_font = xmlGetProp(xml_node, BAD_CAST "Font");
+    if (raw_font) {
+        // resolve path relative to display directory
+        char font_path[1024];
+        if (((const char *)raw_font)[0] == '/') {
+            strncpy(font_path, (const char *)raw_font, sizeof(font_path) - 1);
+        } else {
+            snprintf(font_path, sizeof(font_path), "%s/%s", directory, (const char *)raw_font);
+        }
+        font_path[sizeof(font_path) - 1] = '\0';
+        dc_node.text.font_index = _register_font(app_data, font_path);
+        xmlFree(raw_font);
+    }
 
     // text
     xmlChar *raw_text = xmlNodeGetContent(xml_node);
@@ -5327,6 +5363,9 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
     // process children
     _NodeIndex first_child_index = _process_xml_node_children(app_data, xml_node, node_index, elem_type, directory);
 
+    // build font atlas (after children are processed so custom fonts are registered)
+    _build_font_atlas(app_data);
+
     // update child index
     _Node *node        = _get_node(app_data, node_index);
     node->window.child = first_child_index;
@@ -5820,20 +5859,17 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
         _ext_gfx->bind_buffer_to_memory(device, app_data->pl_staging_buffer_handle, &staging_buffer_allocation);
     }
 
-    // create font atlas
+    // create default font atlas
     {
-        // create and set font atlas
         dcFontAtlas *font_atlas = _ext_dc_draw->create_font_atlas();
         _ext_dc_draw->set_font_atlas(font_atlas);
 
-        // typical font range (you can also add individual characters)
         const dcFontRange font_range = {
             .iFirstCodePoint = 0x0020,
             .uCharCount      = 0x00FF - 0x0020};
 
-        // adding previous font but as a signed distance field (SDF)
         dcFontConfig font_config   = {};
-        font_config.bSdf           = true; // only works with ttf
+        font_config.bSdf           = true;
         font_config.fSize          = 25.0f;
         font_config.uHOverSampling = 1;
         font_config.uVOverSampling = 1;
@@ -5844,12 +5880,9 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
 
         app_data->pl_vera_sdf_font = _ext_dc_draw->add_font_from_file_ttf(font_atlas, font_config, "../../assets/fonts/bitstream-vera-sans/Vera.ttf");
 
-        // build font atlas (CPU prepare + GPU upload - backend handles prepare internally)
-        plCommandBuffer *command_buffer = _ext_gfx->request_command_buffer(_ext_starter->get_current_command_pool(), "dcapp font atlas");
-        _ext_dc_draw_backend->build_font_atlas(command_buffer, font_atlas);
-        _ext_gfx->wait_on_command_buffer(command_buffer);
-        _ext_gfx->return_command_buffer(command_buffer);
+        // NOTE: custom fonts added later in _build_font_atlas, atlas rebuilt there
     }
+
     // Add dcapp's Vera.ttf SDF font to pilotlight's font atlas (used by planet text rendering)
     {
         plFontAtlas *pl_atlas = _ext_draw->get_current_font_atlas();
@@ -5902,6 +5935,53 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     app_data->frame_data.next_hovered_node = NODE_INDEX_UNDEFINED;
     app_data->frame_data.released_node     = NODE_INDEX_UNDEFINED;
     app_data->frame_data.active_node       = NODE_INDEX_UNDEFINED;
+}
+
+static void _build_font_atlas(_AppData *app_data) {
+
+    int font_count = sbcount(app_data->sb_font_path_offsets);
+    if (font_count <= 1) {
+        // no custom fonts, just build the default atlas
+        dcFontAtlas *font_atlas = _ext_dc_draw->get_current_font_atlas();
+        plCommandBuffer *command_buffer = _ext_gfx->request_command_buffer(_ext_starter->get_current_command_pool(), "dcapp font atlas");
+        _ext_dc_draw_backend->build_font_atlas(command_buffer, font_atlas);
+        _ext_gfx->wait_on_command_buffer(command_buffer);
+        _ext_gfx->return_command_buffer(command_buffer);
+        return;
+    }
+
+    // add custom fonts to existing atlas
+    dcFontAtlas *font_atlas = _ext_dc_draw->get_current_font_atlas();
+
+    const dcFontRange font_range = {
+        .iFirstCodePoint = 0x0020,
+        .uCharCount      = 0x00FF - 0x0020};
+
+    dcFontConfig font_config   = {};
+    font_config.bSdf           = true;
+    font_config.fSize          = 25.0f;
+    font_config.uHOverSampling = 1;
+    font_config.uVOverSampling = 1;
+    font_config.ucOnEdgeValue  = 180;
+    font_config.iSdfPadding    = 1;
+    font_config.uRangeCount    = 1;
+    font_config.ptRanges       = &font_range;
+
+    for (int i = 1; i < font_count; i++) {
+        const char *path = &app_data->sb_font_paths[app_data->sb_font_path_offsets[i]];
+        app_data->sb_fonts[i] = _ext_dc_draw->add_font_from_file_ttf(font_atlas, font_config, path);
+        if (app_data->sb_fonts[i]) {
+            DC_LOG_INFO("Font", "loaded custom font: \"%s\"", path);
+        } else {
+            DC_LOG_ERROR("Font", "failed to load font: \"%s\"", path);
+        }
+    }
+
+    // rebuild atlas with all fonts
+    plCommandBuffer *command_buffer = _ext_gfx->request_command_buffer(_ext_starter->get_current_command_pool(), "dcapp font atlas");
+    _ext_dc_draw_backend->build_font_atlas(command_buffer, font_atlas);
+    _ext_gfx->wait_on_command_buffer(command_buffer);
+    _ext_gfx->return_command_buffer(command_buffer);
 }
 
 static _Texture _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name, bool use_dedicated_allocator) {
