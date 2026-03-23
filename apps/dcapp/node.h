@@ -372,6 +372,7 @@ typedef struct __NodePolygon {
     uint8_t    config_flags;
 
     _VertexData *sb_vertices;
+    _ValIndex    rounded;
 } _NodePolygon;
 
 typedef struct __NodeRectangle {
@@ -392,6 +393,7 @@ typedef struct __NodeRectangle {
     _NodeIndex child;
     uint32_t   state_flags;
     uint8_t    config_flags;
+    _ValIndex  rounded;
 } _NodeRectangle;
 
 typedef struct __NodeSet {

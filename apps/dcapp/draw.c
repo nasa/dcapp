@@ -3026,6 +3026,11 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
         points[ii] = (plVec2){point4.x, point4.y};
     }
 
+    // rounded check
+    bool is_rounded = node->polygon.rounded != DC_APP_VAL_INDEX_UNDEFINED &&
+                      dc_app_lookup_get_value(app_data->lookup, node->polygon.rounded)->value_boolean;
+    float corner_radius = is_rounded ? fminf(max_pos.x - min_pos.x, max_pos.y - min_pos.y) * 0.1f : 0.0f;
+
     // draw fill
     if (node->polygon.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
 
@@ -3036,7 +3041,10 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
             node->polygon.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_dc_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (dcDrawSolidOptions){.uColor = pl_fill_color});
+        if (is_rounded)
+            _ext_dc_draw->add_convex_polygon_rounded_filled(_draw_batch_get_2d(app_data), points, num_points, corner_radius, 8, (dcDrawSolidOptions){.uColor = pl_fill_color});
+        else
+            _ext_dc_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, num_points, (dcDrawSolidOptions){.uColor = pl_fill_color});
     }
 
     // draw outline
@@ -3049,7 +3057,10 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
             node->polygon.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        if (is_rounded)
+            _ext_dc_draw->add_polygon_rounded(_draw_batch_get_2d(app_data), points, num_points, corner_radius, 8, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        else
+            _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
     // mouse events
@@ -3384,6 +3395,11 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
         points[ii] = (plVec2){point4.x, point4.y};
     }
 
+    // rounded check
+    bool is_rounded = node->rectangle.rounded != DC_APP_VAL_INDEX_UNDEFINED &&
+                      dc_app_lookup_get_value(app_data->lookup, node->rectangle.rounded)->value_boolean;
+    float corner_radius = is_rounded ? fminf(dimension[0], dimension[1]) * 0.1f : 0.0f;
+
     // draw fill
     if (node->rectangle.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
 
@@ -3394,7 +3410,10 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             node->rectangle.fill_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.fill_color.a)->value_double,
         };
         uint32_t pl_fill_color = PL_COLOR_32_RGBA(fill_color[0], fill_color[1], fill_color[2], fill_color[3]);
-        _ext_dc_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, 4, (dcDrawSolidOptions){.uColor = pl_fill_color});
+        if (is_rounded)
+            _ext_dc_draw->add_convex_polygon_rounded_filled(_draw_batch_get_2d(app_data), points, 4, corner_radius, 8, (dcDrawSolidOptions){.uColor = pl_fill_color});
+        else
+            _ext_dc_draw->add_convex_polygon_filled(_draw_batch_get_2d(app_data), points, 4, (dcDrawSolidOptions){.uColor = pl_fill_color});
     }
 
     // draw outline
@@ -3407,7 +3426,10 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             node->rectangle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, 4, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        if (is_rounded)
+            _ext_dc_draw->add_polygon_rounded(_draw_batch_get_2d(app_data), points, 4, corner_radius, 8, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        else
+            _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, 4, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
     }
 
     // mouse events

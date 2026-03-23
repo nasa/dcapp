@@ -2747,6 +2747,13 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
         xmlFree(raw_negate_y);
     }
 
+    // rounded
+    xmlChar *raw_rounded = xmlGetProp(xml_node, BAD_CAST "Rounded");
+    if (raw_rounded) {
+        dc_node.polygon.rounded = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_rounded);
+        xmlFree(raw_rounded);
+    }
+
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
@@ -2922,6 +2929,13 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
     if (raw_negate_y) {
         dc_node.rectangle.negate_y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_negate_y);
         xmlFree(raw_negate_y);
+    }
+
+    // rounded
+    xmlChar *raw_rounded = xmlGetProp(xml_node, BAD_CAST "Rounded");
+    if (raw_rounded) {
+        dc_node.rectangle.rounded = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_rounded);
+        xmlFree(raw_rounded);
     }
 
     // register node

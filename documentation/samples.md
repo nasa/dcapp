@@ -60,6 +60,7 @@ These samples demonstrate dcapp features using only XML, with no external depend
 | primitives | Rectangle, Circle, Ellipse, Arc, Line, Polygon | Reference for all basic drawing primitives and their attributes |
 | pushpop | Set push/pop/negate operators | Demonstrates push, pop, and negate operators for variable stack manipulation |
 | rotation | Rotation, pivot points | Shows element rotation with configurable pivot points |
+| rounded | Rounded rectangles and polygons | Demonstrates the Rounded attribute on Rectangle and Polygon elements for smooth corners |
 | shapes | Arc/Ellipse variations, pie wedges | Extended shape demonstrations including arc segments and pie wedge rendering |
 | slider | MouseMotion drag, horizontal/vertical sliders | Custom slider controls built with MouseMotion for drag-based interaction |
 | static-if | Parse-time conditionals (Static="true") | Demonstrates compile-time conditionals that are resolved during XML parsing |
@@ -123,7 +124,7 @@ These samples serve special purposes such as validation testing or complex visua
 
 | Requirement | Samples |
 |-------------|---------|
-| None (pure XML) | alignment, blink, button-children, buttons, colors, conditionals, containers, environment, events, includes, input, primitives, pushpop, rotation, shapes, slider, static-if, stencil, styles, welcome, adi, mona-lisa, bad-sample, scene |
+| None (pure XML) | alignment, blink, button-children, buttons, colors, conditionals, containers, environment, events, includes, input, primitives, pushpop, rotation, rounded, shapes, slider, static-if, stencil, styles, welcome, adi, mona-lisa, bad-sample, scene |
 | Build C logic (`make` in `logic/`) | functions, lissajous, mask, ptz, screensaver, planet |
 | Build + Makefile (`make` in sample dir) | metrics |
 | Running Trick simulation | trick, trick-stress |
