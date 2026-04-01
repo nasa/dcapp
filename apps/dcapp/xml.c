@@ -4585,7 +4585,7 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
         strncpy(cleaned_text, (const char *)raw_text, DC_VALUE_STRING_BUFFER_SIZE - 1);
         cleaned_text[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
         xmlFree(raw_text);
-        dc_utils_trim_whitespace_inplace(cleaned_text);
+        // dc_utils_trim_whitespace_inplace(cleaned_text);
 
         static char *sb_curr_filler = NULL;
         for (size_t ii = 0; ii < strlen(cleaned_text);) {

@@ -640,7 +640,7 @@ static void _preprocess_xml_node(_ConfigContext *context, xmlNodePtr node, char 
                 strncpy(cleaned_value, (const char *)value, DC_VALUE_STRING_BUFFER_SIZE - 1);
                 cleaned_value[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
                 xmlFree(value);
-                dc_utils_trim_whitespace_inplace(cleaned_value);
+                // dc_utils_trim_whitespace_inplace(cleaned_value);
                 if (cleaned_value[0] == '\0') {
                     // DC_LOG_WARN("Config", "_preprocess_xml_node(): Empty content in <Constant> definition");
                 }

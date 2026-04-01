@@ -1992,6 +1992,8 @@ pl_calculate_text_size(const char* pcText, dcDrawTextOptions tOptions)
             tCursor.x += ptGlyph->fXAdvance * fScale;
         }   
     }
+    if(tCursor.x > tResult.x)
+        tResult.x = tCursor.x;
     plVec2 tTextSize = pl_sub_vec2(tResult, tOriginalPosition);
     if(bNoTransform)
         return tTextSize;
