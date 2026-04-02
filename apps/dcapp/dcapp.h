@@ -161,6 +161,17 @@ typedef struct __FrameData {
 
 } _FrameData;
 
+// multi-resolution SDF font levels
+#define FONT_LEVEL_COUNT 3
+#define FONT_LEVEL_SMALL  0
+#define FONT_LEVEL_MEDIUM 1
+#define FONT_LEVEL_LARGE  2
+static const float FONT_LEVEL_SIZES[FONT_LEVEL_COUNT] = {13.0f, 25.0f, 50.0f};
+
+typedef struct __FontLevels {
+    dcFont *levels[FONT_LEVEL_COUNT];
+} _FontLevels;
+
 // app data
 typedef struct __AppData {
 
@@ -222,6 +233,8 @@ typedef struct __AppData {
     char    *sb_font_paths;        // stretchy buffer of null-terminated path strings
     int     *sb_font_path_offsets; // offset into sb_font_paths for each font
     dcFont **sb_fonts;             // loaded font pointers (populated during init)
+
+    _FontLevels *sb_font_levels; // multi-res SDF levels, parallel to sb_fonts
 
     // textures
     char     *sb_texture_names;

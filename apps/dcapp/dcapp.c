@@ -322,6 +322,7 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
 
     // cleanup fonts
     sbfree(app_data->sb_fonts);
+    sbfree(app_data->sb_font_levels);
     sbfree(app_data->sb_font_paths);
     sbfree(app_data->sb_font_path_offsets);
 

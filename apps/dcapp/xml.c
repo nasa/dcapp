@@ -89,6 +89,7 @@ static int _register_font(_AppData *app_data, const char *path) {
     // reserve index 0 as undefined on first call
     if (app_data->sb_fonts == NULL) {
         sbpush(app_data->sb_fonts, NULL);
+        sbpush(app_data->sb_font_levels, ((_FontLevels){0}));
         sbpush(app_data->sb_font_path_offsets, 0);
         sbpush(app_data->sb_font_paths, '\0');
     }
@@ -103,6 +104,7 @@ static int _register_font(_AppData *app_data, const char *path) {
     sbpushn(app_data->sb_font_paths, path, (int)strlen(path));
     sbpush(app_data->sb_font_paths, '\0');
     sbpush(app_data->sb_fonts, NULL);
+    sbpush(app_data->sb_font_levels, ((_FontLevels){0}));
     return sbcount(app_data->sb_font_path_offsets) - 1;
 }
 
@@ -5954,26 +5956,34 @@ static void _build_font_atlas(_AppData *app_data) {
         return;
     }
 
-    // add custom fonts to existing atlas
+    // add custom fonts to existing atlas (3 SDF tiers per font)
     dcFontAtlas *font_atlas = _ext_dc_draw->get_current_font_atlas();
 
     const dcFontRange font_range = {
         .iFirstCodePoint = 0x0020,
         .uCharCount      = 0x00FF - 0x0020};
 
-    dcFontConfig font_config   = {};
-    font_config.bSdf           = true;
-    font_config.fSize          = 25.0f;
-    font_config.uHOverSampling = 1;
-    font_config.uVOverSampling = 1;
-    font_config.ucOnEdgeValue  = 180;
-    font_config.iSdfPadding    = 1;
-    font_config.uRangeCount    = 1;
-    font_config.ptRanges       = &font_range;
-
     for (int i = 1; i < font_count; i++) {
         const char *path = &app_data->sb_font_paths[app_data->sb_font_path_offsets[i]];
-        app_data->sb_fonts[i] = _ext_dc_draw->add_font_from_file_ttf(font_atlas, font_config, path);
+
+        // load each level
+        for (int t = 0; t < FONT_LEVEL_COUNT; t++) {
+            dcFontConfig font_config   = {};
+            font_config.bSdf           = true;
+            font_config.fSize          = FONT_LEVEL_SIZES[t];
+            font_config.uHOverSampling = 1;
+            font_config.uVOverSampling = 1;
+            font_config.ucOnEdgeValue  = 180;
+            font_config.iSdfPadding    = 1;
+            font_config.uRangeCount    = 1;
+            font_config.ptRanges       = &font_range;
+
+            app_data->sb_font_levels[i].levels[t] = _ext_dc_draw->add_font_from_file_ttf(font_atlas, font_config, path);
+        }
+
+        // default to medium level for sb_fonts (used by calculate_text_size, etc.)
+        app_data->sb_fonts[i] = app_data->sb_font_levels[i].levels[FONT_LEVEL_MEDIUM];
+
         if (app_data->sb_fonts[i]) {
             DC_LOG_INFO("Font", "loaded custom font: \"%s\"", path);
         } else {
