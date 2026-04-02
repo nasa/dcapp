@@ -1729,7 +1729,7 @@ pl_add_font_from_memory_ttf(dcFontAtlas* ptAtlas, dcFontConfig tConfig, void* pD
     for(uint32_t i = 0; i < pl_sb_size(tConfig._sbtRanges); i++)
     {
         uTotalCharCount += tConfig._sbtRanges[i].uCharCount;
-        uTotalCharCount += tConfig._sbtRanges[i]._uConfigIndex = uConfigIndex;
+        tConfig._sbtRanges[i]._uConfigIndex = uConfigIndex;
     }
     
     pl_sb_reserve(ptFont->_sbtGlyphs, pl_sb_size(ptFont->_sbtGlyphs) + uTotalCharCount);
@@ -1737,6 +1737,7 @@ pl_add_font_from_memory_ttf(dcFontAtlas* ptAtlas, dcFontConfig tConfig, void* pD
 
     if(tConfig.bSdf)
     {
+        tConfig._uCustomRectOffset = pl_sb_size(ptAtlas->_sbtCustomRects);
         pl_sb_reserve(ptAtlas->_sbtCustomRects, pl_sb_size(ptAtlas->_sbtCustomRects) + uTotalCharCount); // is this correct
     }
 
@@ -2338,13 +2339,13 @@ pl_prepare_font_atlas(dcFontAtlas* ptAtlas)
     ptFont = ptAtlas->_ptFontListHead;
     while(ptFont)
     {
-        uint32_t uCharDataOffset = 0;
         const uint32_t uConfigCount = pl_sb_size(ptFont->_sbtConfigs);
         for(uint32_t j = 0; j < uConfigCount; j++)
         {
             dcFontConfig* ptConfig = &ptFont->_sbtConfigs[j];
             if(ptConfig->bSdf)
             {
+                const uint32_t uCharDataOffset = ptConfig->_uCustomRectOffset;
                 for(uint32_t i = 0u; i < pl_sb_size(ptConfig->_sbtCharData); i++)
                 {
                     ptConfig->_sbtCharData[i].x0 = (uint16_t)ptRects[uCharDataOffset + i].x;
@@ -2352,7 +2353,6 @@ pl_prepare_font_atlas(dcFontAtlas* ptAtlas)
                     ptConfig->_sbtCharData[i].x1 = (uint16_t)(ptRects[uCharDataOffset + i].x + ptAtlas->_sbtCustomRects[uCharDataOffset + i].uWidth);
                     ptConfig->_sbtCharData[i].y1 = (uint16_t)(ptRects[uCharDataOffset + i].y + ptAtlas->_sbtCustomRects[uCharDataOffset + i].uHeight);
                 }
-                uCharDataOffset += pl_sb_size(ptConfig->_sbtCharData);  
             }
         }
         ptFont = ptFont->_ptNextFont;

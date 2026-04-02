@@ -347,6 +347,7 @@ typedef struct _dcFontConfig
     dcFontRange* _sbtRanges;
     dcFontChar* _sbtCharData;
     float       _fSdfPixelDistScale;
+    uint32_t    _uCustomRectOffset;
 } dcFontConfig;
 
 typedef struct _dcFontGlyph
