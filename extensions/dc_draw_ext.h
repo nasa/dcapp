@@ -299,6 +299,7 @@ typedef struct _dcDrawLineOptions
 {
     uint32_t uColor;
     float    fThickness;
+    uint8_t  uDashPattern;
 } dcDrawLineOptions;
 
 typedef struct _dcDrawSolidOptions

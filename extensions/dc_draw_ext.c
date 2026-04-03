@@ -633,6 +633,12 @@ pl_add_lines(dcDrawLayer2D* ptLayer, plVec2* atPoints, uint32_t uCount, dcDrawLi
     pl__reserve_triangles(ptLayer, 6 * uSegmentCount, 4 * uSegmentCount);
 
     const float fThickness = tOptions.fThickness / 2.0f;
+    const bool bDashed = tOptions.uDashPattern != 0 && tOptions.uDashPattern != 0xFF;
+
+    // dash encoding: UV.x = cumulative distance, UV.y = pattern (1-255) + dash length
+    // UV.y encodes both: pattern in integer part, dash length in fractional via packing
+    const float fDashLength = 20.0f;
+    float fCumulativeDistance = 0.0f;
 
     for(uint32_t i = 0; i < uSegmentCount; i++)
     {
@@ -645,7 +651,7 @@ pl_add_lines(dcDrawLayer2D* ptLayer, plVec2* atPoints, uint32_t uCount, dcDrawLi
             .y = -dx * fThickness
         };
 
-        const plVec2 atCornerPoints[4] = 
+        const plVec2 atCornerPoints[4] =
         {
             pl__subtract_vec2(atPoints[i],     tNormalVector),
             pl__subtract_vec2(atPoints[i + 1], tNormalVector),
@@ -654,14 +660,34 @@ pl_add_lines(dcDrawLayer2D* ptLayer, plVec2* atPoints, uint32_t uCount, dcDrawLi
         };
 
         const uint32_t uVertexStart = pl_sb_size(ptLayer->ptDrawlist->sbtVertexBuffer);
-        pl__add_vertex(ptLayer, atCornerPoints[0], tOptions.uColor, gptDrawCtx->ptAtlas->_tWhiteUv);
-        pl__add_vertex(ptLayer, atCornerPoints[1], tOptions.uColor, gptDrawCtx->ptAtlas->_tWhiteUv);
-        pl__add_vertex(ptLayer, atCornerPoints[2], tOptions.uColor, gptDrawCtx->ptAtlas->_tWhiteUv);
-        pl__add_vertex(ptLayer, atCornerPoints[3], tOptions.uColor, gptDrawCtx->ptAtlas->_tWhiteUv);
+
+        if(bDashed)
+        {
+            const float fdx = atPoints[i + 1].x - atPoints[i].x;
+            const float fdy = atPoints[i + 1].y - atPoints[i].y;
+            const float fSegmentLength = sqrtf(fdx * fdx + fdy * fdy);
+            const float fPatternEncoded = (float)tOptions.uDashPattern;
+            const plVec2 tUvStart = { fCumulativeDistance / fDashLength, fPatternEncoded };
+            const plVec2 tUvEnd   = { (fCumulativeDistance + fSegmentLength) / fDashLength, fPatternEncoded };
+
+            pl__add_vertex(ptLayer, atCornerPoints[0], tOptions.uColor, tUvStart);
+            pl__add_vertex(ptLayer, atCornerPoints[1], tOptions.uColor, tUvEnd);
+            pl__add_vertex(ptLayer, atCornerPoints[2], tOptions.uColor, tUvEnd);
+            pl__add_vertex(ptLayer, atCornerPoints[3], tOptions.uColor, tUvStart);
+
+            fCumulativeDistance += fSegmentLength;
+        }
+        else
+        {
+            pl__add_vertex(ptLayer, atCornerPoints[0], tOptions.uColor, gptDrawCtx->ptAtlas->_tWhiteUv);
+            pl__add_vertex(ptLayer, atCornerPoints[1], tOptions.uColor, gptDrawCtx->ptAtlas->_tWhiteUv);
+            pl__add_vertex(ptLayer, atCornerPoints[2], tOptions.uColor, gptDrawCtx->ptAtlas->_tWhiteUv);
+            pl__add_vertex(ptLayer, atCornerPoints[3], tOptions.uColor, gptDrawCtx->ptAtlas->_tWhiteUv);
+        }
 
         pl__add_index(ptLayer, uVertexStart, 0, 1, 2);
         pl__add_index(ptLayer, uVertexStart, 0, 2, 3);
-    }  
+    }
 }
 
 void

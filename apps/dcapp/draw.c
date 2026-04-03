@@ -1060,7 +1060,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
         node->arc.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.a)->value_double,
     };
     uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-    _ext_dc_draw->add_lines(_draw_batch_get_2d(app_data), points, num_arc_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+    _ext_dc_draw->add_lines(_draw_batch_get_2d(app_data), points, num_arc_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness, .uDashPattern = node->arc.line_pattern == DC_APP_VAL_INDEX_UNDEFINED ? 0 : (uint8_t)dc_app_lookup_get_value(app_data->lookup, node->arc.line_pattern)->value_integer});
 }
 
 static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -1424,7 +1424,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
             node->ellipse.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness, .uDashPattern = node->ellipse.line_pattern == DC_APP_VAL_INDEX_UNDEFINED ? 0 : (uint8_t)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_pattern)->value_integer});
     }
 
     // mouse events
@@ -2397,7 +2397,7 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
             node->line.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
-        _ext_dc_draw->add_lines(_draw_batch_get_2d(app_data), points, num_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+        _ext_dc_draw->add_lines(_draw_batch_get_2d(app_data), points, num_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness, .uDashPattern = node->line.line_pattern == DC_APP_VAL_INDEX_UNDEFINED ? 0 : (uint8_t)dc_app_lookup_get_value(app_data->lookup, node->line.line_pattern)->value_integer});
     }
 }
 
@@ -3057,10 +3057,11 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
             node->polygon.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
+        dcDrawLineOptions line_opts = {.uColor = pl_line_color, .fThickness = line_thickness, .uDashPattern = node->polygon.line_pattern == DC_APP_VAL_INDEX_UNDEFINED ? 0 : (uint8_t)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_pattern)->value_integer};
         if (is_rounded)
-            _ext_dc_draw->add_polygon_rounded(_draw_batch_get_2d(app_data), points, num_points, corner_radius, 8, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+            _ext_dc_draw->add_polygon_rounded(_draw_batch_get_2d(app_data), points, num_points, corner_radius, 8, line_opts);
         else
-            _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+            _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, num_points, line_opts);
     }
 
     // mouse events
@@ -3426,10 +3427,11 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             node->rectangle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.a)->value_double,
         };
         uint32_t pl_line_color = PL_COLOR_32_RGBA(line_color[0], line_color[1], line_color[2], line_color[3]);
+        dcDrawLineOptions line_opts = {.uColor = pl_line_color, .fThickness = line_thickness, .uDashPattern = node->rectangle.line_pattern == DC_APP_VAL_INDEX_UNDEFINED ? 0 : (uint8_t)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_pattern)->value_integer};
         if (is_rounded)
-            _ext_dc_draw->add_polygon_rounded(_draw_batch_get_2d(app_data), points, 4, corner_radius, 8, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+            _ext_dc_draw->add_polygon_rounded(_draw_batch_get_2d(app_data), points, 4, corner_radius, 8, line_opts);
         else
-            _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, 4, (dcDrawLineOptions){.uColor = pl_line_color, .fThickness = line_thickness});
+            _ext_dc_draw->add_polygon(_draw_batch_get_2d(app_data), points, 4, line_opts);
     }
 
     // mouse events

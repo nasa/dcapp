@@ -60,7 +60,7 @@ bool dc_utils_string_is_double(const char *text) {
 bool dc_utils_string_is_int(const char *text) {
     char *end = NULL;
     errno     = 0;
-    strtol(text, &end, 10);
+    strtol(text, &end, 0);
     return (end != text && *end == '\0' && errno == 0);
 }
 
@@ -144,7 +144,7 @@ double dc_utils_string_to_double(const char *text) {
 
 int dc_utils_string_to_integer(const char *text) {
     if (dc_utils_string_is_int(text)) {
-        return (int)strtol(text, NULL, 10);
+        return (int)strtol(text, NULL, 0);
     } else if (dc_utils_string_is_double(text)) {
         return (int)strtod(text, NULL);
     } else {

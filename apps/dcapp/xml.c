@@ -519,6 +519,14 @@ static _NodeIndex _process_xml_node_arc(_AppData *app_data, xmlNodePtr xml_node,
         xmlFree(raw_line_width);
     }
 
+    // line dash pattern
+    xmlChar *raw_line_pattern = xmlGetProp(xml_node, BAD_CAST "LinePattern");
+    if (raw_line_pattern) {
+        dc_node.arc.line_pattern = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_line_pattern);
+        xmlFree(raw_line_pattern);
+    }
+
+
     // line color
     _load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.arc.line_color));
 
@@ -706,6 +714,14 @@ static _NodeIndex _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_n
         dc_node.ellipse.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
         xmlFree(raw_line_width);
     }
+
+    // line dash pattern
+    xmlChar *raw_line_pattern = xmlGetProp(xml_node, BAD_CAST "LinePattern");
+    if (raw_line_pattern) {
+        dc_node.ellipse.line_pattern = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_line_pattern);
+        xmlFree(raw_line_pattern);
+    }
+
 
     // colors
     dc_node.ellipse.config_flags = NODE_CONFIG_FLAG_NONE;
@@ -2036,6 +2052,14 @@ static _NodeIndex _process_xml_node_line(_AppData *app_data, xmlNodePtr xml_node
         xmlFree(raw_line_width);
     }
 
+    // line dash pattern
+    xmlChar *raw_line_pattern = xmlGetProp(xml_node, BAD_CAST "LinePattern");
+    if (raw_line_pattern) {
+        dc_node.line.line_pattern = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_line_pattern);
+        xmlFree(raw_line_pattern);
+    }
+
+
     // colors
     dc_node.line.config_flags = NODE_CONFIG_FLAG_NONE;
     if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.line.line_color)))
@@ -2750,6 +2774,14 @@ static _NodeIndex _process_xml_node_polygon(_AppData *app_data, xmlNodePtr xml_n
         xmlFree(raw_line_width);
     }
 
+    // line dash pattern
+    xmlChar *raw_line_pattern = xmlGetProp(xml_node, BAD_CAST "LinePattern");
+    if (raw_line_pattern) {
+        dc_node.polygon.line_pattern = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_line_pattern);
+        xmlFree(raw_line_pattern);
+    }
+
+
     // colors
     dc_node.polygon.config_flags = NODE_CONFIG_FLAG_NONE;
     if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.polygon.fill_color)))
@@ -2933,6 +2965,14 @@ static _NodeIndex _process_xml_node_rectangle(_AppData *app_data, xmlNodePtr xml
         dc_node.rectangle.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
         xmlFree(raw_line_width);
     }
+
+    // line dash pattern
+    xmlChar *raw_line_pattern = xmlGetProp(xml_node, BAD_CAST "LinePattern");
+    if (raw_line_pattern) {
+        dc_node.rectangle.line_pattern = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_line_pattern);
+        xmlFree(raw_line_pattern);
+    }
+
 
     // colors
     dc_node.rectangle.config_flags = NODE_CONFIG_FLAG_NONE;

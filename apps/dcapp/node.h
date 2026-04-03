@@ -143,6 +143,7 @@ typedef struct __NodeArc {
     _ValIndex  num_segments;
     _ValIndex4 line_color;
     _ValIndex  line_width;
+    _ValIndex  line_pattern;
     _ValIndex  negate_x;
     _ValIndex  negate_y;
 } _NodeArc;
@@ -217,6 +218,7 @@ typedef struct __NodeEllipse {
     _ValIndex4 fill_color;
     _ValIndex4 line_color;
     _ValIndex  line_width;
+    _ValIndex  line_pattern;
 
     _NodeIndex child;
     uint32_t   state_flags;
@@ -287,6 +289,7 @@ typedef struct __NodeLine {
     _ValIndex  negate_y;
     _ValIndex4 line_color;
     _ValIndex  line_width;
+    _ValIndex  line_pattern;
 
     _VertexData *sb_vertices;
     uint8_t      config_flags;
@@ -366,6 +369,7 @@ typedef struct __NodePolygon {
     _ValIndex4 fill_color;
     _ValIndex4 line_color;
     _ValIndex  line_width;
+    _ValIndex  line_pattern;
 
     _NodeIndex child;
     uint32_t   state_flags;
@@ -389,6 +393,7 @@ typedef struct __NodeRectangle {
     _ValIndex4 fill_color;
     _ValIndex4 line_color;
     _ValIndex  line_width;
+    _ValIndex  line_pattern;
 
     _NodeIndex child;
     uint32_t   state_flags;
