@@ -1,4 +1,6 @@
-// forked from pilotlight (https://github.com/PilotLightTech/pilotlight)
+// SDF outline shader - single pass
+// Renders outline in vertex color, with transparent interior (fill drawn separately on top)
+// Based on technique from redblobgames.com/x/2404-distance-field-effects/
 #version 450 core
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -30,7 +32,19 @@ void main()
 {
     float fDistance = texture(sampler2D(tFontAtlas, tFontSampler), In.UV).a;
     float fSmoothWidth = fwidth(fDistance);
-    float fAlpha = smoothstep(0.5 - fSmoothWidth, 0.5 + fSmoothWidth, fDistance);
-    vec3 fRgbVec = In.Color.rgb * texture(sampler2D(tFontAtlas, tFontSampler), In.UV).rgb;
-    fColor = vec4(fRgbVec, In.Color.a * fAlpha);	
+
+    // outer edge = where outline starts, inner edge = where fill takes over
+    float fOuterEdge = 0.25;
+    float fInnerEdge = 0.5;
+
+    float fOuterAlpha = smoothstep(fOuterEdge - fSmoothWidth, fOuterEdge + fSmoothWidth, fDistance);
+    float fInnerAlpha = smoothstep(fInnerEdge - fSmoothWidth, fInnerEdge + fSmoothWidth, fDistance);
+
+    // only draw in the outline band (between outer and inner edges)
+    float fOutlineAlpha = fOuterAlpha - fInnerAlpha;
+
+    if(fOutlineAlpha <= 0.0)
+        discard;
+
+    fColor = vec4(In.Color.rgb, In.Color.a * fOutlineAlpha);
 }

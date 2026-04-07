@@ -635,8 +635,7 @@ pl_add_lines(dcDrawLayer2D* ptLayer, plVec2* atPoints, uint32_t uCount, dcDrawLi
     const float fThickness = tOptions.fThickness / 2.0f;
     const bool bDashed = tOptions.uDashPattern != 0 && tOptions.uDashPattern != 0xFF;
 
-    // dash encoding: UV.x = cumulative distance, UV.y = pattern (1-255) + dash length
-    // UV.y encodes both: pattern in integer part, dash length in fractional via packing
+    // dash encoding: UV.x = normalized distance along line, UV.y = pattern byte as float
     const float fDashLength = 20.0f;
     float fCumulativeDistance = 0.0f;
 

@@ -476,6 +476,8 @@ typedef struct __NodeText {
     _ValIndex  log;
     _ValIndex4 fill_color;
     _ValIndex4 line_color;
+    _ValIndex  bold;
+    _ValIndex  italic;
     uint8_t    config_flags;
     _ValIndex  shadow_offset;
     int        font_index; // 1-based index into sb_fonts (0 = default)

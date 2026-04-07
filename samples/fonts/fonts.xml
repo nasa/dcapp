@@ -1,58 +1,83 @@
 <?xml version="1.0"?>
 <DCAPP>
-    <Window X="30" Y="30" Width="900" Height="1000">
-        <Panel VirtualWidth="900" VirtualHeight="1000" BackgroundColor="0.06 0.06 0.1">
+    <Window X="30" Y="30" Width="1000" Height="1100">
+        <Panel VirtualWidth="1000" VirtualHeight="1100" BackgroundColor="0.06 0.06 0.1">
 
             <!-- Title -->
-            <Text X="450" Y="970" Size="28" FillColor="1 1 1" LocalAlignX="#_align_center_">Custom Font Support</Text>
+            <Text X="500" Y="1070" Size="28" FillColor="1 1 1" LocalAlignX="#_align_center_">Text Rendering</Text>
 
             <!-- ================================================================== -->
-            <!-- DEFAULT FONT: Bitstream Vera Sans -->
+            <!-- FONTS -->
             <!-- ================================================================== -->
-            <Text X="50" Y="900" Size="14" FillColor="0.5 0.7 1">Bitstream Vera Sans (default)</Text>
-            <Text X="50" Y="870" Size="24" FillColor="1 1 1">The quick brown fox jumps over the lazy dog.</Text>
-            <Text X="50" Y="840" Size="16" FillColor="0.8 0.8 0.8">ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789 !\@\#\$%</Text>
-            <Text X="50" Y="815" Size="12" FillColor="0.6 0.6 0.6">abcdefghijklmnopqrstuvwxyz {[()]} &lt;=&gt; + - * /</Text>
+            <Text X="500" Y="1020" Size="16" FillColor="0.5 0.7 1" LocalAlignX="#_align_center_">Fonts</Text>
 
-            <Rectangle X="30" Y="790" Width="840" Height="1" FillColor="0.2 0.2 0.3"/>
+            <Text X="50" Y="985" Size="12" FillColor="0.5 0.5 0.5">Bitstream Vera Sans (default)</Text>
+            <Text X="50" Y="960" Size="22" FillColor="1 1 1">The quick brown fox jumps over the lazy dog.</Text>
 
-            <!-- ================================================================== -->
-            <!-- HACK (Monospace) -->
-            <!-- ================================================================== -->
-            <Text X="50" Y="750" Size="14" FillColor="0.5 1 0.7">Hack (monospace, MIT license)</Text>
-            <Text X="50" Y="720" Size="24" FillColor="1 1 1" Font="$dcappHome/assets/fonts/hack/Hack-Regular.ttf">The quick brown fox jumps over the lazy dog.</Text>
-            <Text X="50" Y="690" Size="16" FillColor="0.8 0.8 0.8" Font="$dcappHome/assets/fonts/hack/Hack-Regular.ttf">ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789 !\@\#\$%</Text>
-            <Text X="50" Y="665" Size="12" FillColor="0.6 0.6 0.6" Font="$dcappHome/assets/fonts/hack/Hack-Regular.ttf">abcdefghijklmnopqrstuvwxyz {[()]} &lt;=&gt; + - * /</Text>
+            <Text X="50" Y="925" Size="12" FillColor="0.5 0.5 0.5">Hack (monospace)</Text>
+            <Text X="50" Y="900" Size="22" FillColor="1 1 1" Font="$dcappHome/assets/fonts/hack/Hack-Regular.ttf">The quick brown fox jumps over the lazy dog.</Text>
 
-            <Rectangle X="30" Y="640" Width="840" Height="1" FillColor="0.2 0.2 0.3"/>
+            <Text X="50" Y="865" Size="12" FillColor="0.5 0.5 0.5">Liberation Sans</Text>
+            <Text X="50" Y="840" Size="22" FillColor="1 1 1" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Regular.ttf">The quick brown fox jumps over the lazy dog.</Text>
+
+            <Rectangle X="30" Y="810" Width="940" Height="1" FillColor="0.2 0.2 0.3"/>
 
             <!-- ================================================================== -->
-            <!-- HACK BOLD -->
+            <!-- BOLD -->
             <!-- ================================================================== -->
-            <Text X="50" Y="600" Size="14" FillColor="0.5 1 0.7">Hack Bold (monospace, MIT license)</Text>
-            <Text X="50" Y="570" Size="24" FillColor="1 1 1" Font="$dcappHome/assets/fonts/hack/Hack-Bold.ttf">The quick brown fox jumps over the lazy dog.</Text>
-            <Text X="50" Y="540" Size="16" FillColor="0.8 0.8 0.8" Font="$dcappHome/assets/fonts/hack/Hack-Bold.ttf">ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789 !\@\#\$%</Text>
-            <Text X="50" Y="515" Size="12" FillColor="0.6 0.6 0.6" Font="$dcappHome/assets/fonts/hack/Hack-Bold.ttf">abcdefghijklmnopqrstuvwxyz {[()]} &lt;=&gt; + - * /</Text>
+            <Text X="500" Y="785" Size="16" FillColor="0.5 0.7 1" LocalAlignX="#_align_center_">Bold</Text>
 
-            <Rectangle X="30" Y="490" Width="840" Height="1" FillColor="0.2 0.2 0.3"/>
+            <Text X="50" Y="755" Size="22" FillColor="0.9 0.9 0.9">Normal text for comparison</Text>
+            <Text X="50" Y="725" Size="22" FillColor="0.9 0.9 0.9" Bold="true">Bold text using SDF threshold shift</Text>
+            <Text X="50" Y="695" Size="22" FillColor="0.9 0.9 0.9" Bold="true" Font="$dcappHome/assets/fonts/hack/Hack-Regular.ttf">Bold Hack monospace</Text>
+            <Text X="50" Y="665" Size="22" FillColor="0.9 0.9 0.9" Bold="true" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Regular.ttf">Bold Liberation Sans</Text>
 
-            <!-- ================================================================== -->
-            <!-- LIBERATION SANS -->
-            <!-- ================================================================== -->
-            <Text X="50" Y="450" Size="14" FillColor="1 0.8 0.5">Liberation Sans (SIL Open Font License)</Text>
-            <Text X="50" Y="420" Size="24" FillColor="1 1 1" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Regular.ttf">The quick brown fox jumps over the lazy dog.</Text>
-            <Text X="50" Y="390" Size="16" FillColor="0.8 0.8 0.8" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Regular.ttf">ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789 !\@\#\$%</Text>
-            <Text X="50" Y="365" Size="12" FillColor="0.6 0.6 0.6" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Regular.ttf">abcdefghijklmnopqrstuvwxyz {[()]} &lt;=&gt; + - * /</Text>
-
-            <Rectangle X="30" Y="340" Width="840" Height="1" FillColor="0.2 0.2 0.3"/>
+            <Rectangle X="30" Y="635" Width="940" Height="1" FillColor="0.2 0.2 0.3"/>
 
             <!-- ================================================================== -->
-            <!-- LIBERATION SANS BOLD -->
+            <!-- ITALIC -->
             <!-- ================================================================== -->
-            <Text X="50" Y="300" Size="14" FillColor="1 0.8 0.5">Liberation Sans Bold (SIL Open Font License)</Text>
-            <Text X="50" Y="270" Size="24" FillColor="1 1 1" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Bold.ttf">The quick brown fox jumps over the lazy dog.</Text>
-            <Text X="50" Y="240" Size="16" FillColor="0.8 0.8 0.8" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Bold.ttf">ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789 !\@\#\$%</Text>
-            <Text X="50" Y="215" Size="12" FillColor="0.6 0.6 0.6" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Bold.ttf">abcdefghijklmnopqrstuvwxyz {[()]} &lt;=&gt; + - * /</Text>
+            <Text X="500" Y="610" Size="16" FillColor="0.5 0.7 1" LocalAlignX="#_align_center_">Italic</Text>
+
+            <Text X="50" Y="580" Size="22" FillColor="0.9 0.9 0.9">Normal text for comparison</Text>
+            <Text X="50" Y="550" Size="22" FillColor="0.9 0.9 0.9" Italic="true">Italic text using shear transform</Text>
+            <Text X="50" Y="520" Size="22" FillColor="0.9 0.9 0.9" Bold="true" Italic="true">Bold + Italic combined</Text>
+
+            <Rectangle X="30" Y="490" Width="940" Height="1" FillColor="0.2 0.2 0.3"/>
+
+            <!-- ================================================================== -->
+            <!-- OUTLINE -->
+            <!-- ================================================================== -->
+            <Text X="500" Y="465" Size="16" FillColor="0.5 0.7 1" LocalAlignX="#_align_center_">Outline (LineColor)</Text>
+
+            <Text X="50" Y="430" Size="30" FillColor="0 0 0" LineColor="1 1 0">Black text, yellow outline</Text>
+            <Text X="50" Y="390" Size="30" FillColor="1 1 1" LineColor="1 0 0">White text, red outline</Text>
+            <Text X="50" Y="350" Size="30" FillColor="0 0 0" LineColor="0 1 0">Black text, green outline</Text>
+            <Text X="50" Y="310" Size="30" FillColor="1 1 1" LineColor="0 0.5 1">White text, blue outline</Text>
+
+            <Rectangle X="30" Y="295" Width="940" Height="1" FillColor="0.2 0.2 0.3"/>
+
+            <!-- ================================================================== -->
+            <!-- COMBINATIONS -->
+            <!-- ================================================================== -->
+            <Text X="500" Y="270" Size="16" FillColor="0.5 0.7 1" LocalAlignX="#_align_center_">Combinations</Text>
+
+            <Text X="50" Y="235" Size="30" FillColor="1 1 1" LineColor="1 0 0" Bold="true">Bold + Outline</Text>
+            <Text X="50" Y="195" Size="30" FillColor="0 0 0" LineColor="0 1 1" Italic="true">Italic + Outline</Text>
+            <Text X="50" Y="155" Size="30" FillColor="1 1 0" LineColor="1 0 1" Bold="true" Italic="true">Bold + Italic + Outline</Text>
+
+            <Rectangle X="30" Y="135" Width="940" Height="1" FillColor="0.2 0.2 0.3"/>
+
+            <!-- ================================================================== -->
+            <!-- SIZES -->
+            <!-- ================================================================== -->
+            <Text X="500" Y="110" Size="16" FillColor="0.5 0.7 1" LocalAlignX="#_align_center_">Sizes</Text>
+
+            <Text X="50" Y="80" Size="10" FillColor="0.7 0.7 0.7">Size 10</Text>
+            <Text X="160" Y="80" Size="16" FillColor="0.8 0.8 0.8">Size 16</Text>
+            <Text X="300" Y="80" Size="24" FillColor="0.9 0.9 0.9">Size 24</Text>
+            <Text X="500" Y="80" Size="36" FillColor="1 1 1">Size 36</Text>
+            <Text X="730" Y="80" Size="48" FillColor="1 1 1">48</Text>
 
         </Panel>
     </Window>

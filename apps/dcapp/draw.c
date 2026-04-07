@@ -5128,6 +5128,10 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
     bool use_pivot_position     = (node->text.pivot_position.x != DC_APP_VAL_INDEX_UNDEFINED && node->text.pivot_position.y != DC_APP_VAL_INDEX_UNDEFINED);
     bool use_pivot_parent_align = (node->text.pivot_parent_align.x != DC_APP_VAL_INDEX_UNDEFINED || node->text.pivot_parent_align.y != DC_APP_VAL_INDEX_UNDEFINED);
 
+    bool is_italic   = node->text.italic != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->text.italic)->value_boolean;
+    bool is_bold     = node->text.bold != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->text.bold)->value_boolean;
+    bool is_outlined = node->text.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED;
+
     // iterate over each string
     // TODO this has some redundant transforms.....clean this up!
     for (int ii = 0; ii < num_lines; ii++) {
@@ -5374,6 +5378,12 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
             }
         }
 
+        // italic shear
+        if (is_italic) {
+            plMat4 shear_xform = (plMat4){1, 0, 0, 0, 0.2f, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+            transform = pl_mul_mat4t(&transform, &shear_xform);
+        }
+
         // PL specific fixes
         {
             // move from top-left reference to bottom-left
@@ -5405,6 +5415,8 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
         // update text options
         text_options.tTransform = transform3;
 
+        dcDrawLayer2D *layer = _draw_batch_get_2d(app_data);
+
         // shadow pass
         if (node->text.shadow_offset != DC_APP_VAL_INDEX_UNDEFINED) {
             dcDrawTextOptions shadow_opts = text_options;
@@ -5414,11 +5426,37 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
             shadow_opts.tTransform.x13 += offset;
             shadow_opts.tTransform.x23 += offset;
 
-            _ext_dc_draw->add_text(_draw_batch_get_2d(app_data), (plVec2){0, 0}, &sb_text[subtext_indices[ii]], shadow_opts);
+            _ext_dc_draw->add_text(layer, (plVec2){0, 0}, &sb_text[subtext_indices[ii]], shadow_opts);
         }
 
-        // draw
-        _ext_dc_draw->add_text(_draw_batch_get_2d(app_data), (plVec2){0, 0}, &sb_text[subtext_indices[ii]], text_options);
+        // bold (no outline): override SDF shader for fill
+        if (is_bold && !is_outlined) {
+            _ext_dc_draw_backend->set_shader(layer, app_data->active_2d_shader_override, &app_data->bold_sdf_shader);
+        }
+
+        // draw fill
+        _ext_dc_draw->add_text(layer, (plVec2){0, 0}, &sb_text[subtext_indices[ii]], text_options);
+
+        // reset bold shader
+        if (is_bold && !is_outlined) {
+            _ext_dc_draw_backend->set_shader(layer, app_data->active_2d_shader_override, app_data->active_sdf_shader_override);
+        }
+
+        // outline pass: draw on top of fill using outline shader
+        if (is_outlined) {
+            float outline_color[4] = {
+                node->text.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.line_color.r)->value_double,
+                node->text.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.line_color.g)->value_double,
+                node->text.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.line_color.b)->value_double,
+                node->text.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.line_color.a)->value_double,
+            };
+            dcDrawTextOptions outline_opts = text_options;
+            outline_opts.uColor = PL_COLOR_32_RGBA(outline_color[0], outline_color[1], outline_color[2], outline_color[3]);
+
+            _ext_dc_draw_backend->set_shader(layer, app_data->active_2d_shader_override, &app_data->outline_sdf_shader);
+            _ext_dc_draw->add_text(layer, (plVec2){0, 0}, &sb_text[subtext_indices[ii]], outline_opts);
+            _ext_dc_draw_backend->set_shader(layer, app_data->active_2d_shader_override, app_data->active_sdf_shader_override);
+        }
     }
 }
 

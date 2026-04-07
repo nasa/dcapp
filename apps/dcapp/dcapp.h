@@ -202,6 +202,10 @@ typedef struct __AppData {
     plShaderHandle stencil_draw_sdf_shader[DC_STENCIL_MAX_DEPTH];
     plShaderHandle stencil_cleanup_sdf_shader;
 
+    // text effect SDF shaders
+    plShaderHandle bold_sdf_shader;
+    plShaderHandle outline_sdf_shader;
+
     // stencil shaders (3D solid)
     plShaderHandle stencil_create_3d_solid_shader;
     plShaderHandle stencil_remove_3d_solid_shader;

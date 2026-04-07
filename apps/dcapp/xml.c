@@ -4897,6 +4897,21 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.text.line_color)))
         dc_node.text.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
 
+
+    // bold
+    xmlChar *raw_bold = xmlGetProp(xml_node, BAD_CAST "Bold");
+    if (raw_bold) {
+        dc_node.text.bold = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_bold);
+        xmlFree(raw_bold);
+    }
+
+    // italic
+    xmlChar *raw_italic = xmlGetProp(xml_node, BAD_CAST "Italic");
+    if (raw_italic) {
+        dc_node.text.italic = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_italic);
+        xmlFree(raw_italic);
+    }
+
     // shadow offset
     xmlChar *raw_shadow_offset = xmlGetProp(xml_node, BAD_CAST "ShadowOffset");
     if (raw_shadow_offset) {
@@ -5538,6 +5553,10 @@ static void _init_stencil_pipelines(_AppData *app_data, plDevice *device, plRend
     plShaderModule frag_2d_stencil  = _ext_shader->load_glsl("dc_draw_2d_stencil.frag", "main", NULL, NULL);
     plShaderModule frag_sdf_stencil = _ext_shader->load_glsl("dc_draw_2d_sdf_stencil.frag", "main", NULL, NULL);
 
+    // load text effect SDF shaders
+    plShaderModule frag_sdf_bold    = _ext_shader->load_glsl("dc_draw_2d_sdf_bold.frag", "main", NULL, NULL);
+    plShaderModule frag_sdf_outline = _ext_shader->load_glsl("dc_draw_2d_sdf_outline.frag", "main", NULL, NULL);
+
     //-------------------------------------------------------------------------
     // 2D stencil shaders
     //-------------------------------------------------------------------------
@@ -5675,6 +5694,44 @@ static void _init_stencil_pipelines(_AppData *app_data, plDevice *device, plRend
             .tMSAASampleCount      = sample_count};
         app_data->stencil_draw_sdf_shader[i] = _ext_gfx->create_shader(device, &stencil_draw_sdf_desc);
     }
+
+    //-------------------------------------------------------------------------
+    // bold SDF shader (non-stencil, for Bold text and outline under-layer)
+    //-------------------------------------------------------------------------
+
+    const plGraphicsState bold_sdf_state = {
+        .ulDepthWriteEnabled  = 0,
+        .ulDepthMode          = PL_COMPARE_MODE_ALWAYS,
+        .ulCullMode           = PL_CULL_MODE_NONE,
+        .ulStencilMode        = PL_COMPARE_MODE_ALWAYS,
+        .ulStencilRef         = 0xff,
+        .ulStencilMask        = 0xff,
+        .ulStencilOpFail      = PL_STENCIL_OP_KEEP,
+        .ulStencilOpDepthFail = PL_STENCIL_OP_KEEP,
+        .ulStencilOpPass      = PL_STENCIL_OP_KEEP};
+    const plShaderDesc bold_sdf_desc = {
+        .tVertexShader         = vert_2d,
+        .tFragmentShader       = frag_sdf_bold,
+        .tGraphicsState        = bold_sdf_state,
+        .atVertexBufferLayouts = {vertex_layout},
+        .atBlendStates         = {alpha_blend},
+        .atBindGroupLayouts    = {sampler_layout, texture_layout},
+        .tRenderPassLayout     = render_pass_layout,
+        .uSubpassIndex         = 0,
+        .tMSAASampleCount      = sample_count};
+    app_data->bold_sdf_shader = _ext_gfx->create_shader(device, &bold_sdf_desc);
+
+    const plShaderDesc outline_sdf_desc = {
+        .tVertexShader         = vert_2d,
+        .tFragmentShader       = frag_sdf_outline,
+        .tGraphicsState        = bold_sdf_state,
+        .atVertexBufferLayouts = {vertex_layout},
+        .atBlendStates         = {alpha_blend},
+        .atBindGroupLayouts    = {sampler_layout, texture_layout},
+        .tRenderPassLayout     = render_pass_layout,
+        .uSubpassIndex         = 0,
+        .tMSAASampleCount      = sample_count};
+    app_data->outline_sdf_shader = _ext_gfx->create_shader(device, &outline_sdf_desc);
 
     //-------------------------------------------------------------------------
     // 3D solid stencil shaders

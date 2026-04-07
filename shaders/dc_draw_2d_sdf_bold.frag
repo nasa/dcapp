@@ -1,4 +1,4 @@
-// forked from pilotlight (https://github.com/PilotLightTech/pilotlight)
+// SDF bold variant - lower threshold expands glyphs outward
 #version 450 core
 #extension GL_ARB_separate_shader_objects : enable
 
@@ -30,7 +30,7 @@ void main()
 {
     float fDistance = texture(sampler2D(tFontAtlas, tFontSampler), In.UV).a;
     float fSmoothWidth = fwidth(fDistance);
-    float fAlpha = smoothstep(0.5 - fSmoothWidth, 0.5 + fSmoothWidth, fDistance);
+    float fAlpha = smoothstep(0.2 - fSmoothWidth, 0.2 + fSmoothWidth, fDistance);
     vec3 fRgbVec = In.Color.rgb * texture(sampler2D(tFontAtlas, tFontSampler), In.UV).rgb;
-    fColor = vec4(fRgbVec, In.Color.a * fAlpha);	
+    fColor = vec4(fRgbVec, In.Color.a * fAlpha);
 }
