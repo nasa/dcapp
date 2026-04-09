@@ -24,7 +24,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plPlanetI_version {0, 2, 0}
+#define plPlanetI_version {0, 3, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -150,9 +150,6 @@ typedef struct _plPlanetViewRuntimeOptions
     plPlanetFlags tFlags;
     float         fTau;               // default 0.3
     float         fHazardMapStrength; // default 0.3
-    float         fXCullBuffer;       // default 0.0
-    float         fYCullBuffer;       // default 0.0
-    float         fZCullBuffer;       // default 0.0
 } plPlanetViewRuntimeOptions;
 
 typedef struct _plPlanetRuntimeOptions

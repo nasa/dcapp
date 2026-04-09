@@ -830,8 +830,8 @@ static void _init_planets(_AppData *app_data) {
 
         // build process info
         plPlanetProcessInfo process_info = {0};
-        process_info.fRadius             = (float)radius;
-        process_info.fMetersPerPixel     = meters_per_pixel;
+        process_info.dRadius             = radius;
+        process_info.dMetersPerPixel     = meters_per_pixel;
         process_info.uSize               = (uint32_t)tile_size;
         process_info.uTileCount          = tile_count;
         process_info.uHorizontalTiles    = (uint32_t)cols;
@@ -847,11 +847,11 @@ static void _init_planets(_AppData *app_data) {
 
             plPlanetProcessTileInfo *tile = &process_info.atTiles[t];
             memset(tile, 0, sizeof(plPlanetProcessTileInfo));
-            tile->fLatitude     = pl_json_float_member(tile_obj, "lat", 0.0f);
-            tile->fLongitude    = pl_json_float_member(tile_obj, "lon", 0.0f);
-            tile->fMaxBaseError = max_base_error;
-            tile->fMaxHeight    = max_height;
-            tile->fMinHeight    = min_height;
+            tile->dLatitude     = pl_json_double_member(tile_obj, "lat", 0.0);
+            tile->dLongitude    = pl_json_double_member(tile_obj, "lon", 0.0);
+            tile->dMaxBaseError = (double)max_base_error;
+            tile->dMaxHeight    = (double)max_height;
+            tile->dMinHeight    = (double)min_height;
             tile->iTreeDepth    = tree_depth;
 
             // resolve chunk file path

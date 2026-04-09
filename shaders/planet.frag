@@ -131,6 +131,8 @@ void main()
         outColor = tShaderIn.tColor;
     }
 
+    // outColor = vec4(1);
+
     // {
 
     // fLatitude *= deg;

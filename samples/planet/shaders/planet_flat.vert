@@ -14,10 +14,24 @@ Decode( vec2 f )
     return normalize( n );
 }
 
-// input
-layout(location = 0) in vec3 inPos;
-layout(location = 1) in vec2 inNormal;
-layout(location = 2) in vec2 inUV;
+/* ------------------------------------------------------------ */
+/* Inputs                                                       */
+/* ------------------------------------------------------------ */
+
+#ifdef PL_PLANET_DOUBLE_PRECISON
+
+    layout(location = 0) in vec3 inHighPos;
+    layout(location = 1) in vec3 inLowPos;
+    layout(location = 2) in vec2 inNormal;
+    layout(location = 3) in vec2 inUV;
+
+#else
+
+    layout(location = 0) in vec3 inHighPos;
+    layout(location = 1) in vec2 inNormal;
+    layout(location = 2) in vec2 inUV;
+
+#endif
 
 // output
 layout(location = 0) out struct plShaderOut {
@@ -35,7 +49,7 @@ layout(set = 3, binding = 0) uniform PL_DYNAMIC_DATA
 void main()
 {
     // Flatten terrain to reference spheroid (keep original normals for shading)
-    vec3 flatPos = normalize(inPos) * 1737400.0;
+    vec3 flatPos = normalize(inHighPos) * 1737400.0;
 
     gl_Position = tDynamicData.tData.tMvp * vec4(flatPos, 1.0);
 

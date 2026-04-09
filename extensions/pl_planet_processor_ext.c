@@ -66,8 +66,8 @@ typedef struct _plPlanetMapElement
 {
     int16_t  iX;
     int16_t  iZ;
-    float    fY;
-    float    fError;
+    double   dY;
+    double   dError;
     uint8_t  uFrameStamp;
     int8_t   iActivationLevel;
     uint32_t uVertexBufferIndex;
@@ -96,26 +96,25 @@ typedef struct _plTrianglePrimitive
 
 typedef struct _plPlanetHeightMap
 {
-    uint32_t             uRequestedSize;
-    int                  iSize;
-    int                  iLogSize;
-    float                fSampleSpacing;
-    float                fMaxBaseError;
-    float                fMetersPerPixel;
-    float                fMaxHeight;
-    float                fMinHeight;
-    float                fRadius;
-    plVec3               tCenter;
-    plPlanetMapElement* atElements;
-    const char*          pcOutputFile;
-    plEdgeEntry*         sbtEdges;
-    plVec3               tMinBounding;
-    plVec3               tMaxBounding;
-    uint32_t             uChunkCount;
-    uint8_t              uFrameStamp;
-    plTrianglePrimitive* sbtPrimitives;
-
-    plPlanetMapElement* atHaloElements;
+    plPlanetProcessingFlags tFlags;
+    uint32_t                uRequestedSize;
+    int                     iSize;
+    int                     iLogSize;
+    double                  dMaxBaseError;
+    double                  dMetersPerPixel;
+    double                  dMaxHeight;
+    double                  dMinHeight;
+    double                  dRadius;
+    plVec3d                 tCenter;
+    plPlanetMapElement*     atElements;
+    const char*             pcOutputFile;
+    plEdgeEntry*            sbtEdges;
+    plVec3                  tMinBounding;
+    plVec3                  tMaxBounding;
+    uint32_t                uChunkCount;
+    uint8_t                 uFrameStamp;
+    plTrianglePrimitive*    sbtPrimitives;
+    plPlanetMapElement*     atHaloElements;
 
     // progress
     uint32_t uCurrentMeshChunk;
@@ -149,6 +148,18 @@ static const plVfsI*   gptVfs   = NULL;
 //-----------------------------------------------------------------------------
 // [SECTION] internal helpers (preprocessing)
 //-----------------------------------------------------------------------------
+
+static inline plVec3d
+pl__planet_to_double_vec(plVec3 tVec)
+{
+    return (plVec3d){(double)tVec.x, (double)tVec.y, (double)tVec.z};
+}
+
+static inline plVec3
+pl__planet_to_vec(plVec3d tVec)
+{
+    return (plVec3){(float)tVec.x, (float)tVec.y, (float)tVec.z};
+}
 
 static inline int
 pl__lowest_one(int x)
@@ -235,40 +246,49 @@ pl__mid_activation(plPlanetHeightMap* ptHeightMap, uint32_t uLeft, uint32_t uRig
 
 // Given the triangle, computes an error value and activation level
 // for its base vertex, and recurses to child triangles.
-static void pl__update(plPlanetHeightMap*, float base_max_error, int ax, int az, int rx, int rz, int lx, int lz);
+static void pl__update(plPlanetHeightMap*, double base_max_error, int ax, int az, int rx, int rz, int lx, int lz);
 static void pl__propagate_activation_level(plPlanetHeightMap*, int cx, int cz, int level, int target_level);
 
 // main steps
 static void pl__initialize_cdlod_heightmap(plPlanetHeightMap*, plPlanetProcessInfo*, uint32_t);
 static void pl__terrain_mesh(FILE*, plPlanetHeightMap*, int iStartIndexX, int iStartIndexY, int iLogSize, int iLevel);
 
-static inline plVec2
-pl__oct_wrap( plVec2 v )
+static inline plVec2d
+pl__oct_wrap( plVec2d v )
 {
-    plVec2 w = {
-        .x = 1.0f - fabsf( v.y ),
-        .y = 1.0f - fabsf( v.x ),
+    plVec2d w = {
+        .x = 1.0 - fabs( v.y ),
+        .y = 1.0 - fabs( v.x ),
     };
-    if (v.x < 0.0f) w.x = -w.x;
-    if (v.y < 0.0f) w.y = -w.y;
+    if (v.x < 0.0) w.x = -w.x;
+    if (v.y < 0.0) w.y = -w.y;
     return w;
 }
  
 static inline plVec2
-pl__encode( plVec3 n )
+pl__encode(plVec3d n)
 {
-    n = pl_div_vec3_scalarf(n, ( fabsf( n.x ) + fabsf( n.y ) + fabsf( n.z ) ));
-    n.xy = n.z > 0.0f ? n.xy : pl__oct_wrap( n.xy );
+    n = pl_div_vec3_scalard(n, ( fabs( n.x ) + fabs( n.y ) + fabs( n.z ) ));
+    n.xy = n.z > 0.0 ? n.xy : pl__oct_wrap( n.xy );
     // n.xy = n.xy * 0.5 + 0.5;
-    n.xy = pl_mul_vec2_scalarf(n.xy, 0.5f);
+    n.xy = pl_mul_vec2_scalard(n.xy, 0.5);
     n.x += 0.5f;
     n.y += 0.5f;
-    return n.xy;
+    return (plVec2){(float)n.x, (float)n.y};
 }
 
-static plVec3 pl__get_cartesian(plPlanetHeightMap*, plPlanetMapElement*);
-static plVec3 pl__get_cartesian_unmod(plPlanetHeightMap*, plPlanetMapElement*);
+static plVec3d pl__get_cartesian(plPlanetHeightMap*, plPlanetMapElement*);
+static plVec3d pl__get_cartesian_unmod(plPlanetHeightMap*, plPlanetMapElement*);
 static plVec2 pl__get_normal(plPlanetHeightMap*, plPlanetMapElement*);
+
+static void pl__chlod_read_chunk(plPlanetChunkFile* ptFileOut, int iRecurseCount, FILE* ptDataFile, uint32_t* puCurrentChunk);
+
+static void
+pl__planet_split_double(double dValue, float* ptHighOut, float* ptLowOut)
+{
+    *ptHighOut = (float)dValue;
+    *ptLowOut = (float)(dValue - *ptHighOut);
+}
 
 #define PL_TERRAIN_SET_PRESENT(INDEX) atPresent[INDEX >> 3] |= (uint8_t)(1u << (INDEX & 7))
 #define PL_TERRAIN_UNSET_PRESENT(INDEX) atPresent[INDEX >> 3] &= ~(uint8_t)(1u << (INDEX & 7))
@@ -288,42 +308,40 @@ pl_planet_process(plPlanetProcessInfo* ptInfo)
             continue;
 
         plPlanetHeightMap tHeightMap = {
-            .fSampleSpacing  = 1.0f,
-            .fMaxBaseError   = ptInfo->atTiles[i].fMaxBaseError,
-            .fMetersPerPixel = ptInfo->fMetersPerPixel,
-            .fMaxHeight      = ptInfo->atTiles[i].fMaxHeight,
-            .fMinHeight      = ptInfo->atTiles[i].fMinHeight,
-            .fRadius         = ptInfo->fRadius,
+            .tFlags          = ptInfo->tFlags,
+            .dMaxBaseError   = ptInfo->atTiles[i].dMaxBaseError,
+            .dMetersPerPixel = ptInfo->dMetersPerPixel,
+            .dMaxHeight      = ptInfo->atTiles[i].dMaxHeight,
+            .dMinHeight      = ptInfo->atTiles[i].dMinHeight,
+            .dRadius         = ptInfo->dRadius,
             .tCenter         = {0},
             .uRequestedSize  = ptInfo->uSize,
             .pcOutputFile    = ptInfo->atTiles[i].acOutputFile
         };
 
-        const float R    = ptInfo->fRadius;   // lunar radius (meters)
-        const float k0   = 1.0f;       // scale factor from SRS (often 1.0f)
-        const float lon0 = 0.0f;     // central meridian (radians)
+        const double R    = ptInfo->dRadius;   // lunar radius (meters)
+        const double k0   = 1.0;       // scale factor from SRS (often 1.0f)
+        const double lon0 = 0.0;     // central meridian (radians)
 
         // False easting/northing from SRS if applicable; else 0
-        const float FE   = 0.0f;   // meters
-        const float FN   = 0.0f;  // meters
+        const double FE   = 0.0;   // meters
+        const double FN   = 0.0;  // meters
 
         // Inputs (radians)
-        const float phi  = pl_radiansf(ptInfo->atTiles[i].fLatitude);
-        const float lam  = pl_radiansf(ptInfo->atTiles[i].fLongitude);
+        const double phi  = pl_radiansd(ptInfo->atTiles[i].dLatitude);
+        const double lam  = pl_radiansd(ptInfo->atTiles[i].dLongitude);
 
         // South-pole stereographic
-        const float theta = lam - lon0;
-        const float rho   = 2.0f * R * k0 * tanf(PL_PI_4 + 0.5f * phi);
+        const double theta = lam - lon0;
+        const double rho   = 2.0 * R * k0 * tan(PL_PI_4 + 0.5 * phi);
 
         // Easting / Northing (northing-positive-up)
-        const float x = rho * sinf(theta);
-        const float y = -rho * cosf(theta);  // note the minus for south polar
+        const double x = rho * sin(theta);
+        const double y = -rho * cos(theta);  // note the minus for south polar
 
         // Apply false easting/northing if the dataset uses them
         tHeightMap.tCenter.x = x + FE;
         tHeightMap.tCenter.z = y + FN;
-
-
 
         pl__initialize_cdlod_heightmap(&tHeightMap, ptInfo, i);
 
@@ -333,10 +351,10 @@ pl_planet_process(plPlanetProcessInfo* ptInfo)
         // error and activation_level values for each element.
 
         printf("updating 1\n");
-        pl__update(&tHeightMap, tHeightMap.fMaxBaseError, 0, tHeightMap.iSize-1, tHeightMap.iSize-1, tHeightMap.iSize-1, 0, 0);	// sw half of the square
+        pl__update(&tHeightMap, tHeightMap.dMaxBaseError, 0, tHeightMap.iSize-1, tHeightMap.iSize-1, tHeightMap.iSize-1, 0, 0);	// sw half of the square
 
         printf("updating 2\n");
-        pl__update(&tHeightMap, tHeightMap.fMaxBaseError, tHeightMap.iSize-1, 0, 0, 0, tHeightMap.iSize-1, tHeightMap.iSize-1);	// ne half of the square
+        pl__update(&tHeightMap, tHeightMap.dMaxBaseError, tHeightMap.iSize-1, 0, 0, 0, tHeightMap.iSize-1, tHeightMap.iSize-1);	// ne half of the square
 
         // propogate step
 
@@ -352,6 +370,7 @@ pl_planet_process(plPlanetProcessInfo* ptInfo)
         // meshing step
 
         int iRootLevel = ptInfo->atTiles[i].iTreeDepth - 1;
+        tHeightMap.uChunkCount = 0x55555555 & ((1 << (ptInfo->atTiles[i].iTreeDepth*2)) - 1);
 
         plVfsFileHandle tFileHandle = gptVfs->register_file(ptInfo->atTiles[i].acOutputFile, false);
         const char* pcPath = gptVfs->get_real_path(tFileHandle);
@@ -359,14 +378,13 @@ pl_planet_process(plPlanetProcessInfo* ptInfo)
         FILE* ptDataFile = fopen(pcPath, "wb");
 
         plVersion tExtensionVersion = plPlanetProcessorI_version;
-        fwrite(&tExtensionVersion.uMajor, 1, sizeof(int), ptDataFile);
-        fwrite(&tExtensionVersion.uMinor, 1, sizeof(int), ptDataFile);
-        fwrite(&tExtensionVersion.uPatch, 1, sizeof(int), ptDataFile);
-        fwrite(&ptInfo->atTiles[i].iTreeDepth, 1, sizeof(int), ptDataFile);
-        fwrite(&tHeightMap.fMaxBaseError, 1, sizeof(float), ptDataFile);
-
-        tHeightMap.uChunkCount = 0x55555555 & ((1 << (ptInfo->atTiles[i].iTreeDepth*2)) - 1);
-        fwrite(&tHeightMap.uChunkCount, 1, sizeof(uint32_t), ptDataFile);
+        fwrite(&tExtensionVersion.uMajor, 1, sizeof(int), ptDataFile);      // version info
+        fwrite(&tExtensionVersion.uMinor, 1, sizeof(int), ptDataFile);      // version info
+        fwrite(&tExtensionVersion.uPatch, 1, sizeof(int), ptDataFile);      // version info
+        fwrite(&ptInfo->atTiles[i].iTreeDepth, 1, sizeof(int), ptDataFile); // tree depth
+        fwrite(&tHeightMap.dMaxBaseError, 1, sizeof(double), ptDataFile);   // max error
+        fwrite(&tHeightMap.uChunkCount, 1, sizeof(uint32_t), ptDataFile);   // chunk count
+        fwrite(&ptInfo->tFlags, 1, sizeof(int), ptDataFile);                // flags
 
         printf("meshing\n");
         tHeightMap.uCurrentHeightmap = i;
@@ -379,8 +397,6 @@ pl_planet_process(plPlanetProcessInfo* ptInfo)
         fclose(ptDataFile);
     }
 }
-
-static void pl__chlod_read_chunk(plPlanetChunkFile* ptFileOut, int iRecurseCount, FILE* ptDataFile, uint32_t* puCurrentChunk);
 
 bool
 pl_terrain_load_chunk_file(const char* pcPath, plPlanetChunkFile* ptFile, uint32_t uFileID)
@@ -402,6 +418,7 @@ pl_terrain_load_chunk_file(const char* pcPath, plPlanetChunkFile* ptFile, uint32
     fread(&tFileVersion.uMajor, 1, sizeof(int), ptDataFile);
     fread(&tFileVersion.uMinor, 1, sizeof(int), ptDataFile);
     fread(&tFileVersion.uPatch, 1, sizeof(int), ptDataFile);
+    ptFile->tVersion = tFileVersion;
 
     plVersion tExtensionVersion = plPlanetProcessorI_version;
     if(tFileVersion.uMajor > tExtensionVersion.uMajor)
@@ -419,8 +436,21 @@ pl_terrain_load_chunk_file(const char* pcPath, plPlanetChunkFile* ptFile, uint32
     }
 
     fread(&ptFile->iTreeDepth, 1, sizeof(int), ptDataFile);
-    fread(&ptFile->fMaxBaseError, 1, sizeof(float), ptDataFile);
+
+    
+    if(tFileVersion.uMinor > 2) // new path
+        fread(&ptFile->dMaxBaseError, 1, sizeof(double), ptDataFile);
+    else // backwards compat
+    {
+        float fMaxBaseError = 0.0f;
+        fread(&fMaxBaseError, 1, sizeof(float), ptDataFile);
+        ptFile->dMaxBaseError = (double)fMaxBaseError;
+
+    }
     fread(&ptFile->uChunkCount, 1, sizeof(uint32_t), ptDataFile);
+
+    if(tFileVersion.uMinor > 2)  // new path
+        fread(&ptFile->tFlags, 1, sizeof(int), ptDataFile);
 
     ptFile->atChunks = PL_ALLOC(ptFile->uChunkCount * sizeof(plPlanetChunk));
     memset(ptFile->atChunks, 0, ptFile->uChunkCount * sizeof(plPlanetChunk));
@@ -450,15 +480,36 @@ pl__chlod_read_chunk(plPlanetChunkFile* ptFileOut, int iRecurseCount, FILE* ptDa
     fread(&ptChunk->fY, 1, sizeof(float), ptDataFile);
     ptChunk->uLevel = (uint8_t)iLevel;
 
-    fread(&ptChunk->tMinBound, 1, sizeof(plVec3), ptDataFile);
-    fread(&ptChunk->tMaxBound, 1, sizeof(plVec3), ptDataFile);
+    if(ptFileOut->tVersion.uMinor > 2)  // new path
+    {
+        fread(&ptChunk->tMinBound, 1, sizeof(plVec3d), ptDataFile);
+        fread(&ptChunk->tMaxBound, 1, sizeof(plVec3d), ptDataFile);
+        fread(&ptChunk->tMinBoundFlat, 1, sizeof(plVec3d), ptDataFile);
+        fread(&ptChunk->tMaxBoundFlat, 1, sizeof(plVec3d), ptDataFile);
+    }
+    else // old path
+    {
+        plVec3 tMinBound = {0};
+        plVec3 tMaxBound = {0};
+        plVec3 tMinBoundFlat = {0};
+        plVec3 tMaxBoundFlat = {0};
+        fread(&tMinBound, 1, sizeof(plVec3), ptDataFile);
+        fread(&tMaxBound, 1, sizeof(plVec3), ptDataFile);
+        fread(&tMinBoundFlat, 1, sizeof(plVec3), ptDataFile);
+        fread(&tMaxBoundFlat, 1, sizeof(plVec3), ptDataFile);
 
-    fread(&ptChunk->tMinBoundFlat, 1, sizeof(plVec3), ptDataFile);
-    fread(&ptChunk->tMaxBoundFlat, 1, sizeof(plVec3), ptDataFile);
+        ptChunk->tMinBound = pl__planet_to_double_vec(tMinBound);
+        ptChunk->tMaxBound = pl__planet_to_double_vec(tMaxBound);
+        ptChunk->tMinBoundFlat = pl__planet_to_double_vec(tMinBoundFlat);
+        ptChunk->tMaxBoundFlat = pl__planet_to_double_vec(tMaxBoundFlat);
+    }
 
     uint32_t uVertexCount = 0;
     fread(&uVertexCount, 1, sizeof(uint32_t), ptDataFile);
-    fseek(ptDataFile, sizeof(plPlanetVertex) * uVertexCount, SEEK_CUR);
+    if(ptFileOut->tFlags & PL_PLANET_PROCESSING_FLAGS_DOUBLE_PRECISION)
+        fseek(ptDataFile, sizeof(plPlanetDoubleVertex) * uVertexCount, SEEK_CUR);
+    else // old path
+        fseek(ptDataFile, sizeof(plPlanetVertex) * uVertexCount, SEEK_CUR);
 
     uint32_t uIndexCount = 0;
     fread(&uIndexCount, 1, sizeof(uint32_t), ptDataFile);
@@ -802,7 +853,7 @@ pl__initialize_cdlod_heightmap(plPlanetHeightMap* ptHeightMap, plPlanetProcessIn
     {
         for (int i = 0; i < ptHeightMap->iSize; i++)
         {
-            float fY = 0.0f;
+            double dY = 0.0;
 
             // Extract a height value from the pixel data.
             uint32_t x = i;
@@ -811,16 +862,16 @@ pl__initialize_cdlod_heightmap(plPlanetHeightMap* ptHeightMap, plPlanetProcessIn
             uint16_t r = auHeightMapData[y * ptHeightMap->iSize + x];
 
             // y = (float)r / 65355.0f;	// just using red component for now.
-            fY = (float)r / (float)UINT16_MAX;	// just using red component for now.
-            fY *= (ptHeightMap->fMaxHeight - ptHeightMap->fMinHeight);
-            fY += ptHeightMap->fMinHeight;
+            dY = (double)r / (double)UINT16_MAX;	// just using red component for now.
+            dY *= (ptHeightMap->dMaxHeight - ptHeightMap->dMinHeight);
+            dY += ptHeightMap->dMinHeight;
 
             int iElementIndex = i + ptHeightMap->iSize * j;
             ptHeightMap->atElements[iElementIndex].iActivationLevel = -1;
             ptHeightMap->atElements[iElementIndex].iX = (int16_t)i;
             ptHeightMap->atElements[iElementIndex].iZ = (int16_t)j;
             ptHeightMap->atElements[iElementIndex].uVertexBufferIndex = UINT_MAX;
-            ptHeightMap->atElements[iElementIndex].fY = fY;
+            ptHeightMap->atElements[iElementIndex].dY = dY;
             ptHeightMap->atElements[iElementIndex].uFrameStamp = 0;
         }
     }
@@ -830,16 +881,14 @@ pl__initialize_cdlod_heightmap(plPlanetHeightMap* ptHeightMap, plPlanetProcessIn
     {
         int iElementIndex = i;
         uint16_t r = auHaloHeightMapData[iElementIndex];
-
-        // y = (float)r / 65355.0f;	// just using red component for now.
-        float fY = (float)r / (float)UINT16_MAX;	// just using red component for now.
-        fY *= (ptHeightMap->fMaxHeight - ptHeightMap->fMinHeight);
-        fY += ptHeightMap->fMinHeight;
+        double dY = (double)r / (float)UINT16_MAX;	// just using red component for now.
+        dY *= (ptHeightMap->dMaxHeight - ptHeightMap->dMinHeight);
+        dY += ptHeightMap->dMinHeight;
 
         
         ptHeightMap->atHaloElements[iElementIndex].iX = (int16_t)i;
         ptHeightMap->atHaloElements[iElementIndex].iZ = -1;
-        ptHeightMap->atHaloElements[iElementIndex].fY = fY;
+        ptHeightMap->atHaloElements[iElementIndex].dY = dY;
     }
 
     // east
@@ -847,15 +896,13 @@ pl__initialize_cdlod_heightmap(plPlanetHeightMap* ptHeightMap, plPlanetProcessIn
     {
         int iElementIndex = (ptHeightMap->iSize - 1) * 1 + i;
         uint16_t r = auHaloHeightMapData[iElementIndex];
-
-        // y = (float)r / 65355.0f;	// just using red component for now.
-        float fY = (float)r / (float)UINT16_MAX;	// just using red component for now.
-        fY *= (ptHeightMap->fMaxHeight - ptHeightMap->fMinHeight);
-        fY += ptHeightMap->fMinHeight;
+        double dY = (double)r / (float)UINT16_MAX;	// just using red component for now.
+        dY *= (ptHeightMap->dMaxHeight - ptHeightMap->dMinHeight);
+        dY += ptHeightMap->dMinHeight;
 
         ptHeightMap->atHaloElements[iElementIndex].iX = (int16_t)ptHeightMap->iSize + 1;
         ptHeightMap->atHaloElements[iElementIndex].iZ = (int16_t)i;
-        ptHeightMap->atHaloElements[iElementIndex].fY = fY;
+        ptHeightMap->atHaloElements[iElementIndex].dY = dY;
     }
 
     // south
@@ -863,16 +910,14 @@ pl__initialize_cdlod_heightmap(plPlanetHeightMap* ptHeightMap, plPlanetProcessIn
     {
         int iElementIndex = (ptHeightMap->iSize - 1) * 2 + i;
         uint16_t r = auHaloHeightMapData[iElementIndex];
-
-        // y = (float)r / 65355.0f;	// just using red component for now.
-        float fY = (float)r / (float)UINT16_MAX;	// just using red component for now.
-        fY *= (ptHeightMap->fMaxHeight - ptHeightMap->fMinHeight);
-        fY += ptHeightMap->fMinHeight;
+        double dY = (double)r / (float)UINT16_MAX;	// just using red component for now.
+        dY *= (ptHeightMap->dMaxHeight - ptHeightMap->dMinHeight);
+        dY += ptHeightMap->dMinHeight;
 
         
         ptHeightMap->atHaloElements[iElementIndex].iX = (int16_t)i;
         ptHeightMap->atHaloElements[iElementIndex].iZ = (int16_t)ptHeightMap->iSize + 1;
-        ptHeightMap->atHaloElements[iElementIndex].fY = fY;
+        ptHeightMap->atHaloElements[iElementIndex].dY = dY;
     }
 
     // west
@@ -880,43 +925,37 @@ pl__initialize_cdlod_heightmap(plPlanetHeightMap* ptHeightMap, plPlanetProcessIn
     {
         int iElementIndex = (ptHeightMap->iSize - 1) * 3 + i;
         uint16_t r = auHaloHeightMapData[iElementIndex];
-
-        // y = (float)r / 65355.0f;	// just using red component for now.
-        float fY = (float)r / (float)UINT16_MAX;	// just using red component for now.
-        fY *= (ptHeightMap->fMaxHeight - ptHeightMap->fMinHeight);
-        fY += ptHeightMap->fMinHeight;
+        double dY = (double)r / (float)UINT16_MAX;	// just using red component for now.
+        dY *= (ptHeightMap->dMaxHeight - ptHeightMap->dMinHeight);
+        dY += ptHeightMap->dMinHeight;
 
         ptHeightMap->atHaloElements[iElementIndex].iX = -1;
         ptHeightMap->atHaloElements[iElementIndex].iZ = (int16_t)i;
-        ptHeightMap->atHaloElements[iElementIndex].fY = fY;
+        ptHeightMap->atHaloElements[iElementIndex].dY = dY;
     }
 
     {
         int iElementIndex = (ptHeightMap->iSize - 1) * 4 + 0;
         uint16_t r = auHaloHeightMapData[iElementIndex];
-
-        // y = (float)r / 65355.0f;	// just using red component for now.
-        float fY = (float)r / (float)UINT16_MAX;	// just using red component for now.
-        fY *= (ptHeightMap->fMaxHeight - ptHeightMap->fMinHeight);
-        fY += ptHeightMap->fMinHeight;
+        double dY = (double)r / (float)UINT16_MAX;	// just using red component for now.
+        dY *= (ptHeightMap->dMaxHeight - ptHeightMap->dMinHeight);
+        dY += ptHeightMap->dMinHeight;
 
         ptHeightMap->atHaloElements[iElementIndex].iX = (int16_t)(ptHeightMap->iSize - 1);
         ptHeightMap->atHaloElements[iElementIndex].iZ = -1;
-        ptHeightMap->atHaloElements[iElementIndex].fY = fY;
+        ptHeightMap->atHaloElements[iElementIndex].dY = dY;
     }
 
     {
         int iElementIndex = (ptHeightMap->iSize - 1) * 4 + 1;
         uint16_t r = auHaloHeightMapData[iElementIndex];
-
-        // y = (float)r / 65355.0f;	// just using red component for now.
-        float fY = (float)r / (float)UINT16_MAX;	// just using red component for now.
-        fY *= (ptHeightMap->fMaxHeight - ptHeightMap->fMinHeight);
-        fY += ptHeightMap->fMinHeight;
+        double dY = (double)r / (float)UINT16_MAX;	// just using red component for now.
+        dY *= (ptHeightMap->dMaxHeight - ptHeightMap->dMinHeight);
+        dY += ptHeightMap->dMinHeight;
 
         ptHeightMap->atHaloElements[iElementIndex].iX = -1;
         ptHeightMap->atHaloElements[iElementIndex].iZ = (int16_t)(ptHeightMap->iSize - 1);
-        ptHeightMap->atHaloElements[iElementIndex].fY = fY;
+        ptHeightMap->atHaloElements[iElementIndex].dY = dY;
     }
 
     PL_FREE(auHeightMapData);
@@ -1085,10 +1124,10 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
 
     // ------------------------------------------------
     // Unique vertex gathering
-    plVec3 tMinBounding = { .x = FLT_MAX,  .y = FLT_MAX,  .z = FLT_MAX };
-    plVec3 tMinBoundingFlat = { .x = FLT_MAX,  .y = FLT_MAX,  .z = FLT_MAX };
-    plVec3 tMaxBounding = { .x = -FLT_MAX, .y = -FLT_MAX, .z = -FLT_MAX };
-    plVec3 tMaxBoundingFlat = { .x = -FLT_MAX, .y = -FLT_MAX, .z = -FLT_MAX };
+    plVec3d tMinBounding = { .x = DBL_MAX,  .y = DBL_MAX,  .z = DBL_MAX };
+    plVec3d tMinBoundingFlat = { .x = DBL_MAX,  .y = DBL_MAX,  .z = DBL_MAX };
+    plVec3d tMaxBounding = { .x = -DBL_MAX, .y = -DBL_MAX, .z = -DBL_MAX };
+    plVec3d tMaxBoundingFlat = { .x = -DBL_MAX, .y = -DBL_MAX, .z = -DBL_MAX };
 
     uint32_t uPresentCount = (uint32_t)pl_sb_size(sbtLeaves);
 
@@ -1107,34 +1146,75 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
     }
 
     uint32_t uVertexCount = (uint32_t)pl_sb_size(sbuUniqueVertices);
-    plPlanetVertex* atVertexData = PL_ALLOC(uVertexCount * sizeof(plPlanetVertex));
 
-    for(uint32_t i = 0; i < uVertexCount; i++)
+    plPlanetVertex* atVertexData = NULL;
+    plPlanetDoubleVertex* atDoubleVertexData = NULL;
+
+    if(ptHeightMap->tFlags & PL_PLANET_PROCESSING_FLAGS_DOUBLE_PRECISION)
     {
-        plPlanetMapElement* e = &(ptHeightMap->atElements[sbuUniqueVertices[i]]);
-        plPlanetVertex* v = &atVertexData[e->uVertexBufferIndex];
+        atDoubleVertexData = PL_ALLOC(uVertexCount * sizeof(plPlanetDoubleVertex));
+        for(uint32_t i = 0; i < uVertexCount; i++)
+        {
+            plPlanetMapElement* e = &(ptHeightMap->atElements[sbuUniqueVertices[i]]);
+            plPlanetDoubleVertex* v = &atDoubleVertexData[e->uVertexBufferIndex];
 
-        v->tPosition = pl__get_cartesian(ptHeightMap, e);
-        v->tNormal   = pl__get_normal(ptHeightMap, e);
-        v->tUV.x = (float)(e->iX - iStartIndexX) / (float)(iEndIndexX - iStartIndexX);
-        v->tUV.y = (float)(e->iZ - iStartIndexY) / (float)(iEndIndexY - iStartIndexY);
+            // v->tPosition = pl__get_cartesian(ptHeightMap, e);
+            const plVec3d tPosition = pl__get_cartesian(ptHeightMap, e);
+            pl__planet_split_double(tPosition.x, &v->tPositionHigh.x, &v->tPositionLow.x);
+            pl__planet_split_double(tPosition.y, &v->tPositionHigh.y, &v->tPositionLow.y);
+            pl__planet_split_double(tPosition.z, &v->tPositionHigh.z, &v->tPositionLow.z);
+            v->tNormal   = pl__get_normal(ptHeightMap, e);
+            v->tUV.x = (float)(e->iX - iStartIndexX) / (float)(iEndIndexX - iStartIndexX);
+            v->tUV.y = (float)(e->iZ - iStartIndexY) / (float)(iEndIndexY - iStartIndexY);
 
-        plVec3 tFlatPos = pl__get_cartesian_unmod(ptHeightMap, e);
+            plVec3d tFlatPos = pl__get_cartesian_unmod(ptHeightMap, e);
 
-        if(v->tPosition.x < tMinBounding.x) tMinBounding.x = v->tPosition.x;
-        if(v->tPosition.x > tMaxBounding.x) tMaxBounding.x = v->tPosition.x;
-        if(v->tPosition.y < tMinBounding.y) tMinBounding.y = v->tPosition.y;
-        if(v->tPosition.y > tMaxBounding.y) tMaxBounding.y = v->tPosition.y;
-        if(v->tPosition.z < tMinBounding.z) tMinBounding.z = v->tPosition.z;
-        if(v->tPosition.z > tMaxBounding.z) tMaxBounding.z = v->tPosition.z;
+            if(tPosition.x < tMinBounding.x) tMinBounding.x = tPosition.x;
+            if(tPosition.x > tMaxBounding.x) tMaxBounding.x = tPosition.x;
+            if(tPosition.y < tMinBounding.y) tMinBounding.y = tPosition.y;
+            if(tPosition.y > tMaxBounding.y) tMaxBounding.y = tPosition.y;
+            if(tPosition.z < tMinBounding.z) tMinBounding.z = tPosition.z;
+            if(tPosition.z > tMaxBounding.z) tMaxBounding.z = tPosition.z;
 
-        if(tFlatPos.x < tMinBoundingFlat.x) tMinBoundingFlat.x = tFlatPos.x;
-        if(tFlatPos.x > tMaxBoundingFlat.x) tMaxBoundingFlat.x = tFlatPos.x;
-        if(tFlatPos.y < tMinBoundingFlat.y) tMinBoundingFlat.y = tFlatPos.y;
-        if(tFlatPos.y > tMaxBoundingFlat.y) tMaxBoundingFlat.y = tFlatPos.y;
-        if(tFlatPos.z < tMinBoundingFlat.z) tMinBoundingFlat.z = tFlatPos.z;
-        if(tFlatPos.z > tMaxBoundingFlat.z) tMaxBoundingFlat.z = tFlatPos.z;
+            if(tFlatPos.x < tMinBoundingFlat.x) tMinBoundingFlat.x = tFlatPos.x;
+            if(tFlatPos.x > tMaxBoundingFlat.x) tMaxBoundingFlat.x = tFlatPos.x;
+            if(tFlatPos.y < tMinBoundingFlat.y) tMinBoundingFlat.y = tFlatPos.y;
+            if(tFlatPos.y > tMaxBoundingFlat.y) tMaxBoundingFlat.y = tFlatPos.y;
+            if(tFlatPos.z < tMinBoundingFlat.z) tMinBoundingFlat.z = tFlatPos.z;
+            if(tFlatPos.z > tMaxBoundingFlat.z) tMaxBoundingFlat.z = tFlatPos.z;
+        }
     }
+    else
+    {
+        atVertexData = PL_ALLOC(uVertexCount * sizeof(plPlanetVertex));
+        for(uint32_t i = 0; i < uVertexCount; i++)
+        {
+            plPlanetMapElement* e = &(ptHeightMap->atElements[sbuUniqueVertices[i]]);
+            plPlanetVertex* v = &atVertexData[e->uVertexBufferIndex];
+
+            v->tPosition = pl__planet_to_vec(pl__get_cartesian(ptHeightMap, e));
+            v->tNormal   = pl__get_normal(ptHeightMap, e);
+            v->tUV.x = (float)(e->iX - iStartIndexX) / (float)(iEndIndexX - iStartIndexX);
+            v->tUV.y = (float)(e->iZ - iStartIndexY) / (float)(iEndIndexY - iStartIndexY);
+
+            plVec3d tFlatPos = pl__get_cartesian_unmod(ptHeightMap, e);
+
+            if(v->tPosition.x < tMinBounding.x) tMinBounding.x = v->tPosition.x;
+            if(v->tPosition.x > tMaxBounding.x) tMaxBounding.x = v->tPosition.x;
+            if(v->tPosition.y < tMinBounding.y) tMinBounding.y = v->tPosition.y;
+            if(v->tPosition.y > tMaxBounding.y) tMaxBounding.y = v->tPosition.y;
+            if(v->tPosition.z < tMinBounding.z) tMinBounding.z = v->tPosition.z;
+            if(v->tPosition.z > tMaxBounding.z) tMaxBounding.z = v->tPosition.z;
+
+            if(tFlatPos.x < tMinBoundingFlat.x) tMinBoundingFlat.x = tFlatPos.x;
+            if(tFlatPos.x > tMaxBoundingFlat.x) tMaxBoundingFlat.x = tFlatPos.x;
+            if(tFlatPos.y < tMinBoundingFlat.y) tMinBoundingFlat.y = tFlatPos.y;
+            if(tFlatPos.y > tMaxBoundingFlat.y) tMaxBoundingFlat.y = tFlatPos.y;
+            if(tFlatPos.z < tMinBoundingFlat.z) tMinBoundingFlat.z = tFlatPos.z;
+            if(tFlatPos.z > tMaxBoundingFlat.z) tMaxBoundingFlat.z = tFlatPos.z;
+        }
+    }
+
     pl_sb_free(sbuUniqueVertices);
 
     // Indices from leaves
@@ -1159,19 +1239,31 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
     pl_sb_free(sbtLeaves);
 
     // Write out
-    fwrite(&tMinBounding, 1, sizeof(plVec3), ptFile);
-    fwrite(&tMaxBounding, 1, sizeof(plVec3), ptFile);
+    fwrite(&tMinBounding, 1, sizeof(plVec3d), ptFile);
+    fwrite(&tMaxBounding, 1, sizeof(plVec3d), ptFile);
 
-    fwrite(&tMinBoundingFlat, 1, sizeof(plVec3), ptFile);
-    fwrite(&tMaxBoundingFlat, 1, sizeof(plVec3), ptFile);
+    fwrite(&tMinBoundingFlat, 1, sizeof(plVec3d), ptFile);
+    fwrite(&tMaxBoundingFlat, 1, sizeof(plVec3d), ptFile);
 
     fwrite(&uVertexCount, 1, sizeof(uint32_t), ptFile);
-    fwrite(atVertexData, 1, sizeof(plPlanetVertex) * uVertexCount, ptFile);
+
+    if(ptHeightMap->tFlags & PL_PLANET_PROCESSING_FLAGS_DOUBLE_PRECISION)
+        fwrite(atDoubleVertexData, 1, sizeof(plPlanetDoubleVertex) * uVertexCount, ptFile);
+    else
+        fwrite(atVertexData, 1, sizeof(plPlanetVertex) * uVertexCount, ptFile);
 
     fwrite(&uIndexCount, 1, sizeof(uint32_t), ptFile);
     fwrite(atIndexData,  1, sizeof(uint32_t) * uIndexCount, ptFile);
 
-    PL_FREE(atVertexData);
+    if(atVertexData)
+    {
+        PL_FREE(atVertexData);
+    }
+
+    if(atDoubleVertexData)
+    {
+        PL_FREE(atDoubleVertexData);
+    }
     PL_FREE(atIndexData);
 
     // Recurse into children chunks
@@ -1185,62 +1277,60 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
     }
 }
 
-static plVec3
+static plVec3d
 pl__get_cartesian_unmod(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
 {
-    const float R   = ptHeightMap->fRadius;
-    const float lon0 = 0.0f;        // radians, from SRS (central_meridian)
-    const float k0   = 1.0f;          // from SRS (scale_factor), often 1.0f
-    const float FE   = ptHeightMap->tCenter.x;    // false easting (meters)
-    const float FN   = ptHeightMap->tCenter.z;    // false northing (meters)
+    const double R   = ptHeightMap->dRadius;
+    const double lon0 = 0.0;        // radians, from SRS (central_meridian)
+    const double k0   = 1.0;          // from SRS (scale_factor), often 1.0f
+    const double FE   = ptHeightMap->tCenter.x;    // false easting (meters)
+    const double FN   = ptHeightMap->tCenter.z;    // false northing (meters)
 
     // 1) Pixel center coordinates in image space (origin at center of raster)
-    const float N      = (float)ptHeightMap->iSize;
-    const float mpp    = ptHeightMap->fMetersPerPixel;
+    const double N      = (double)ptHeightMap->iSize;
+    const double mpp    = ptHeightMap->dMetersPerPixel;
 
     // Make (0,0) be the *center* of the raster:
-    const float x_img  = ( (ptElement->iX + 0.5f) - 0.5f * N ) * mpp;
-    const float z_img  = ( (ptElement->iZ + 0.5f) - 0.5f * N ) * mpp;
+    const double x_img  = ( (ptElement->iX + 0.5) - 0.5 * N ) * mpp;
+    const double z_img  = ( (ptElement->iZ + 0.5) - 0.5 * N ) * mpp;
 
     // If your image rows increase downward, flip to get northing-positive-up:
-    const float y_img_northing = -z_img; // now +Y points toward geographic north
+    const double y_img_northing = -z_img; // now +Y points toward geographic north
 
     // 2) Add false easting/northing (dataset offsets)
-    const float x = x_img + FE;           // easting (meters)
-    const float y = y_img_northing + FN;  // northing (meters)
+    const double x = x_img + FE;           // easting (meters)
+    const double y = y_img_northing + FN;  // northing (meters)
 
     // 3) Inverse South Polar Stereographic (sphere)
     // rho distance and angular distance
-    const float rho = hypotf(x, y);
-    const float c   = 2.0f * atanf( rho / (2.0f * R * k0) );
+    const double rho = hypot(x, y);
+    const double c   = 2.0 * atan( rho / (2.0 * R * k0) );
 
     // Latitude (phi) and Longitude (lambda)
-    float phi;
-    if (rho == 0.0f) {
-        phi = -PL_PI_2;      // exactly at south pole
-    } else {
-        // For south pole φ0 = -π/2: φ = -π/2 + c
-        phi = -PL_PI_2 + c;
-    }
+    double phi;
+    if (rho == 0.0f) // exactly at south pole
+        phi = (double)-PL_PI_2;      
+    else // For south pole φ0 = -π/2: φ = -π/2 + c
+        phi = (double)-PL_PI_2 + c;
 
     // Longitude: λ = λ0 + atan2(x, -y)
     // (minus on y is important for south polar stereographic)
-    float lam = lon0 + atan2f(x, -y);
+    double lam = lon0 + atan2(x, -y);
 
     // Optionally normalize lam to [-π, π]
-    if (lam >  PL_PI) lam -= 2.0f * PL_PI;
-    if (lam < -PL_PI) lam += 2.0f * PL_PI;
+    if (lam > (double)PL_PI)  lam -= 2.0 * (double)PL_PI;
+    if (lam < (double)-PL_PI) lam += 2.0 * (double)PL_PI;
 
     // 4) Convert to 3D (spherical)
-    plVec3 tSpherePos = {
-        R * cosf(phi) * sinf(lam),  // X
-        R * sinf(phi),              // Y (up)
-        -R * cosf(phi) * cosf(lam)   // Z (lon=0 axis)
+    plVec3d tSpherePos = {
+        R * cos(phi) * sin(lam),  // X
+        R * sin(phi),              // Y (up)
+        -R * cos(phi) * cos(lam)   // Z (lon=0 axis)
     };
 
     // 5) Normal and add height (ptElement->fY is height in meters)
     // plVec3 tNormal = pl_norm_vec3(tSpherePos);
-    plVec3 tResult = {
+    plVec3d tResult = {
         tSpherePos.x,
         tSpherePos.y,
         tSpherePos.z
@@ -1250,7 +1340,7 @@ pl__get_cartesian_unmod(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptEl
 
 }
 
-static plVec3
+static plVec3d
 pl__get_cartesian(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
 {
     // float fMinExtent = -(float)ptHeightMap->iSize * ptHeightMap->fMetersPerPixel * 0.5f;
@@ -1297,62 +1387,60 @@ pl__get_cartesian(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
     //
     // IMPORTANT: Confirm these from gdalinfo. Typical: lon0=0, k0=1, FE=0, FN=0.
 
-    const float R   = ptHeightMap->fRadius;
-    const float lon0 = 0.0f;        // radians, from SRS (central_meridian)
-    const float k0   = 1.0f;          // from SRS (scale_factor), often 1.0f
-    const float FE   = ptHeightMap->tCenter.x;    // false easting (meters)
-    const float FN   = ptHeightMap->tCenter.z;    // false northing (meters)
+    const double R   = ptHeightMap->dRadius;
+    const double lon0 = 0.0;        // radians, from SRS (central_meridian)
+    const double k0   = 1.0;          // from SRS (scale_factor), often 1.0f
+    const double FE   = ptHeightMap->tCenter.x;    // false easting (meters)
+    const double FN   = ptHeightMap->tCenter.z;    // false northing (meters)
 
     // 1) Pixel center coordinates in image space (origin at center of raster)
-    const float N      = (float)ptHeightMap->iSize;
-    const float mpp    = ptHeightMap->fMetersPerPixel;
+    const double N      = (double)ptHeightMap->iSize;
+    const double mpp    = ptHeightMap->dMetersPerPixel;
 
     // Make (0,0) be the *center* of the raster:
-    const float x_img  = ( (ptElement->iX + 0.5f) - 0.5f * N ) * mpp;
-    const float z_img  = ( (ptElement->iZ + 0.5f) - 0.5f * N ) * mpp;
+    const double x_img  = ( (ptElement->iX + 0.5) - 0.5 * N ) * mpp;
+    const double z_img  = ( (ptElement->iZ + 0.5) - 0.5 * N ) * mpp;
 
     // If your image rows increase downward, flip to get northing-positive-up:
-    const float y_img_northing = -z_img; // now +Y points toward geographic north
+    const double y_img_northing = -z_img; // now +Y points toward geographic north
 
     // 2) Add false easting/northing (dataset offsets)
-    const float x = x_img + FE;           // easting (meters)
-    const float y = y_img_northing + FN;  // northing (meters)
+    const double x = x_img + FE;           // easting (meters)
+    const double y = y_img_northing + FN;  // northing (meters)
 
     // 3) Inverse South Polar Stereographic (sphere)
     // rho distance and angular distance
-    const float rho = hypotf(x, y);
-    const float c   = 2.0f * atanf( rho / (2.0f * R * k0) );
+    const double rho = hypot(x, y);
+    const double c   = 2.0 * atan( rho / (2.0 * R * k0) );
 
     // Latitude (phi) and Longitude (lambda)
-    float phi;
-    if (rho == 0.0f) {
-        phi = -PL_PI_2;      // exactly at south pole
-    } else {
-        // For south pole φ0 = -π/2: φ = -π/2 + c
-        phi = -PL_PI_2 + c;
-    }
+    double phi;
+    if (rho == 0.0) // exactly at south pole
+        phi = (double)-PL_PI_2;      
+    else // For south pole φ0 = -π/2: φ = -π/2 + c
+        phi = (double)-PL_PI_2 + c;
 
     // Longitude: λ = λ0 + atan2(x, -y)
     // (minus on y is important for south polar stereographic)
-    float lam = lon0 + atan2f(x, -y);
+    double lam = lon0 + atan2(x, -y);
 
     // Optionally normalize lam to [-π, π]
-    if (lam >  PL_PI) lam -= 2.0f * PL_PI;
-    if (lam < -PL_PI) lam += 2.0f * PL_PI;
+    if (lam >  (double)PL_PI) lam -= 2.0 * (double)PL_PI;
+    if (lam < (double)-PL_PI) lam += 2.0 * (double)PL_PI;
 
     // 4) Convert to 3D (spherical)
-    plVec3 tSpherePos = {
-        R * cosf(phi) * sinf(lam),  // X
-        R * sinf(phi),              // Y (up)
-        -R * cosf(phi) * cosf(lam)   // Z (lon=0 axis)
+    plVec3d tSpherePos = {
+        R * cos(phi) * sin(lam),  // X
+        R * sin(phi),              // Y (up)
+        -R * cos(phi) * cos(lam)   // Z (lon=0 axis)
     };
 
     // 5) Normal and add height (ptElement->fY is height in meters)
-    plVec3 tNormal = pl_norm_vec3(tSpherePos);
-    plVec3 tResult = {
-        tSpherePos.x + tNormal.x * ptElement->fY,
-        tSpherePos.y + tNormal.y * ptElement->fY,
-        tSpherePos.z + tNormal.z * ptElement->fY
+    plVec3d tNormal = pl_norm_vec3_d(tSpherePos);
+    plVec3d tResult = {
+        tSpherePos.x + tNormal.x * ptElement->dY,
+        tSpherePos.y + tNormal.y * ptElement->dY,
+        tSpherePos.z + tNormal.z * ptElement->dY
     };
 
     return tResult;
@@ -1400,23 +1488,23 @@ pl__get_normal(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
     // east
     eR = ptElement->iX == ptHeightMap->iSize - 1 ? &ptHeightMap->atHaloElements[1 * (ptHeightMap->iSize - 1) + hz] : &ptHeightMap->atElements[iR + ptHeightMap->iSize*ptElement->iZ];
 
-    plVec3 pL = pl__get_cartesian(ptHeightMap, eL);
-    plVec3 pR = pl__get_cartesian(ptHeightMap, eR);
-    plVec3 pD = pl__get_cartesian(ptHeightMap, eD);
-    plVec3 pU = pl__get_cartesian(ptHeightMap, eU);
+    plVec3d pL = pl__get_cartesian(ptHeightMap, eL);
+    plVec3d pR = pl__get_cartesian(ptHeightMap, eR);
+    plVec3d pD = pl__get_cartesian(ptHeightMap, eD);
+    plVec3d pU = pl__get_cartesian(ptHeightMap, eU);
 
     // Tangents are now true 3D directions along the surface sampling grid
-    plVec3 tX = pl_sub_vec3(pR, pL);
-    plVec3 tZ = pl_sub_vec3(pU, pD);
+    plVec3d tX = pl_sub_vec3_d(pR, pL);
+    plVec3d tZ = pl_sub_vec3_d(pU, pD);
 
-    plVec3 n = pl_cross_vec3(tZ, tX);   // swap order if flipped
-    n = pl_norm_vec3(n);
+    plVec3d n = pl_cross_vec3_d(tZ, tX);   // swap order if flipped
+    n = pl_norm_vec3_d(n);
 
     return pl__encode(n);
 }
 
 static void
-pl__update(plPlanetHeightMap* ptHeightMap, float fBaseMaxError, int iApexX, int iApexZ, int iRightX, int iRightZ, int iLeftX, int iLeftZ)
+pl__update(plPlanetHeightMap* ptHeightMap, double dBaseMaxError, int iApexX, int iApexZ, int iRightX, int iRightZ, int iLeftX, int iLeftZ)
 {
 	// compute the coordinates of this triangle's base vertex.
 	const int iDx = iLeftX - iRightX;
@@ -1437,18 +1525,18 @@ pl__update(plPlanetHeightMap* ptHeightMap, float fBaseMaxError, int iApexX, int 
     plPlanetMapElement* ptLeftElement = pl__get_elem(ptHeightMap, iLeftX, iLeftZ);
     plPlanetMapElement* ptRightElement = pl__get_elem(ptHeightMap, iRightX, iRightZ);
 
-    plVec3 tBaseVertex = pl__get_cartesian(ptHeightMap, ptBaseElement);
-    plVec3 tLeftVertex = pl__get_cartesian(ptHeightMap, ptLeftElement);
-    plVec3 tRightVertex = pl__get_cartesian(ptHeightMap, ptRightElement);
+    plVec3d tBaseVertex = pl__get_cartesian(ptHeightMap, ptBaseElement);
+    plVec3d tLeftVertex = pl__get_cartesian(ptHeightMap, ptLeftElement);
+    plVec3d tRightVertex = pl__get_cartesian(ptHeightMap, ptRightElement);
 
-    float fError = pl_length_vec3(tBaseVertex) - (pl_length_vec3(tLeftVertex) + pl_length_vec3(tRightVertex)) / 2.0f;
+    double dError = pl_length_vec3_d(tBaseVertex) - (pl_length_vec3_d(tLeftVertex) + pl_length_vec3_d(tRightVertex)) / 2.0;
 
-	pl__get_elem(ptHeightMap, iBaseX, iBaseZ)->fError = fError;	// Set this vert's error value.
-	if (fabs(fError) >= fBaseMaxError)
+	pl__get_elem(ptHeightMap, iBaseX, iBaseZ)->dError = dError;	// Set this vert's error value.
+	if (fabs(dError) >= dBaseMaxError)
     {
 		// Compute the mesh level above which this vertex
 		// needs to be included in LOD meshes.
-		int	iActivationLevel = (int) floor(log2(fabs(fError) / fBaseMaxError) + 0.5);
+		int	iActivationLevel = (int) floor(log2(fabs(dError) / dBaseMaxError) + 0.5);
 
 		// Force the base vert to at least this activation level.
 		plPlanetMapElement* ptElem = pl__get_elem(ptHeightMap, iBaseX, iBaseZ);
@@ -1456,8 +1544,8 @@ pl__update(plPlanetHeightMap* ptHeightMap, float fBaseMaxError, int iApexX, int 
 	}
 
 	// recurse to child triangles
-	pl__update(ptHeightMap, fBaseMaxError, iBaseX, iBaseZ, iApexX, iApexZ, iRightX, iRightZ); // base, apex, right
-	pl__update(ptHeightMap, fBaseMaxError, iBaseX, iBaseZ, iLeftX, iLeftZ, iApexX, iApexZ);	  // base, left, apex
+	pl__update(ptHeightMap, dBaseMaxError, iBaseX, iBaseZ, iApexX, iApexZ, iRightX, iRightZ); // base, apex, right
+	pl__update(ptHeightMap, dBaseMaxError, iBaseX, iBaseZ, iLeftX, iLeftZ, iApexX, iApexZ);	  // base, left, apex
 }
 
 
