@@ -4917,7 +4917,7 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
                              r * sin(lat_rad),
                              r * cos(lat_rad) * cos(lon_rad));
 
-        _ext_camera->look_at(&camera, camera.tPosDouble, (plDVec3){0, 0, 0});
+        _ext_camera->look_at(&camera, camera.tPosDouble, (plVec3d){0, 0, 0});
 
         if (node->planet_view.heading != DC_APP_VAL_INDEX_UNDEFINED) {
             float heading_deg = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.heading)->value_double;
