@@ -265,8 +265,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     }
 
     plPlanetProcessInfo planet_info = {
-        .fRadius          = (float)radius,
-        .fMetersPerPixel  = (float)meters_per_pixel,
+        .dRadius          = radius,
+        .dMetersPerPixel  = meters_per_pixel,
         .uSize            = tile_size,
         .uTileCount       = tile_count,
         .atTiles          = tiles,
@@ -279,16 +279,16 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
             uint32_t idx = col + row * cols;
 
             tiles[idx].iTreeDepth    = tree_depth;
-            tiles[idx].fMaxHeight    = (float)max_height;
-            tiles[idx].fMinHeight    = (float)min_height;
-            tiles[idx].fMaxBaseError = max_base_error;
+            tiles[idx].dMaxHeight    = max_height;
+            tiles[idx].dMinHeight    = min_height;
+            tiles[idx].dMaxBaseError = (double)max_base_error;
 
             // compute lat/lon for tile center
             float lat = 0.0f, lon = 0.0f;
             _compute_tile_latlon(origin_x, origin_y, pixel_scale,
                                  col, row, tile_size, radius, &lat, &lon);
-            tiles[idx].fLatitude  = lat;
-            tiles[idx].fLongitude = lon;
+            tiles[idx].dLatitude  = (double)lat;
+            tiles[idx].dLongitude = (double)lon;
 
             // file paths (real filesystem paths)
             snprintf(tiles[idx].acHeightMapFile, 256, "%s/%s_%u_%u.png", output_dir, prefix, col, row);
@@ -324,8 +324,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         else
             filename = tiles[i].acOutputFile;
 
-        pl_json_add_float_member(tile_obj, "lat", tiles[i].fLatitude);
-        pl_json_add_float_member(tile_obj, "lon", tiles[i].fLongitude);
+        pl_json_add_double_member(tile_obj, "lat", tiles[i].dLatitude);
+        pl_json_add_double_member(tile_obj, "lon", tiles[i].dLongitude);
         pl_json_add_string_member(tile_obj, "file", filename);
     }
 

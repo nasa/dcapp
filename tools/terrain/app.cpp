@@ -116,7 +116,6 @@ typedef struct _plAppData
 
     // 3d drawing
     plCamera tCamera0;
-    plCamera tCamera1;
 
     plPlanet* ptPlanet0;
     plPlanetView* ptPlanetView;
@@ -243,7 +242,6 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
     ptAppData->tCamera0.fPitch       = PL_PI_4;
     ptAppData->tCamera0.tType        = PL_CAMERA_TYPE_PERSPECTIVE_REVERSE_Z;
     gptCamera->update(&ptAppData->tCamera0);
-    ptAppData->tCamera1 = ptAppData->tCamera0;
 
     plResourceManagerInit tResourceManagerInit = {};
     tResourceManagerInit.ptDevice = gptStarter->get_device();
@@ -270,67 +268,67 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
     {
         plPlanetProcessTileInfo atTiles[64] = {};
         plPlanetProcessInfo tPlanetInfo = {};
-        tPlanetInfo.fRadius = 1737400.0f;
-        tPlanetInfo.fMetersPerPixel = 100.0f;
+        tPlanetInfo.tFlags = PL_PLANET_PROCESSING_FLAGS_DOUBLE_PRECISION;
+        tPlanetInfo.dRadius = 1737400.0;
+        tPlanetInfo.dMetersPerPixel = 100.0;
         tPlanetInfo.uHorizontalTiles = 8;
         tPlanetInfo.uVerticalTiles = 8;
         tPlanetInfo.uSize = 4096;
         tPlanetInfo.uTileCount = 64;
         tPlanetInfo.atTiles = atTiles;
 
-        for(uint32_t i = 0; i < 8; i++)
+        for(uint32_t i = 4; i < 5; i++)
         {
-            for(uint32_t j = 0; j < 8; j++)
+            for(uint32_t j = 4; j < 5; j++)
             {
                 uint32_t uTileIndex = i + j * 8;
                 plPlanetProcessTileInfo tInfo = {};
                 atTiles[uTileIndex].iTreeDepth      = 6;
-                atTiles[uTileIndex].fMaxHeight      = 14052.0f;
-                atTiles[uTileIndex].fMinHeight      = -18256.0f;
-                atTiles[uTileIndex].fMaxBaseError   = 15.0f;
-                float fX = -1440000.0f + (float)i * 409600.0f + 409600.0f * 0.5f;
-                float fY = -1440000.0f + (float)j * 409600.0f + 409600.0f * 0.5f;
+                atTiles[uTileIndex].dMaxHeight      = 14052.0;
+                atTiles[uTileIndex].dMinHeight      = -18256.0;
+                atTiles[uTileIndex].dMaxBaseError   = 15.0;
+                double fX = -1440000.0 + (double)i * 409600.0 + 409600.0 * 0.5;
+                double fY = -1440000.0 + (double)j * 409600.0 + 409600.0 * 0.5;
 
 
                 // Inputs: fX, fY in meters (projected), tPlanetInfo.fRadius = R
                 // SRS parameters:
-                float phi0 = -PL_PI_2;            // -90 deg
-                float lam0 = 0.0f /* central meridian in radians from SRS */;
-                float k0   = 1.0f;                // or from SRS if specified
-                float R    = tPlanetInfo.fRadius; // must match SRS
+                double phi0 = (double)-PL_PI_2;            // -90 deg
+                double lam0 = 0.0 /* central meridian in radians from SRS */;
+                double k0   = 1.0;                // or from SRS if specified
+                double R    = tPlanetInfo.dRadius; // must match SRS
 
                 // Step 1: radial distance from projection center
-                float rho = sqrtf(fX*fX + fY*fY);
+                double rho = sqrt(fX*fX + fY*fY);
 
                 // Step 2: angular distance
-                float c = 2.0f * atanf(rho / (2.0f * R * k0));
+                double c = 2.0 * atan(rho / (2.0 * R * k0));
 
                 // Step 3: latitude
                 // General stereographic inverse:
-                float sin_c = sinf(c);
-                float cos_c = cosf(c);
-                float sin_phi0 = sinf(phi0);
-                float cos_phi0 = cosf(phi0);
+                double sin_c = sin(c);
+                double cos_c = cos(c);
+                double sin_phi0 = sin(phi0);
+                double cos_phi0 = cos(phi0);
 
-                float phi; // latitude (radians)
-                if (rho == 0.0f) {
+                double phi; // latitude (radians)
+                if (rho == 0.0) {
                     phi = phi0;  // at the pole
                 } else {
-                    phi = asinf( cos_c * sin_phi0 + ( (fY * sin_c * cos_phi0) / rho ) );
+                    phi = asin( cos_c * sin_phi0 + ( (fY * sin_c * cos_phi0) / rho ) );
                 }
 
                 // Step 4: longitude
-                float lam = lam0 + atan2f( fX * sin_c,
+                double lam = lam0 + atan2( fX * sin_c,
                                         rho * cos_phi0 * cos_c - fY * sin_phi0 * sin_c );
 
                 // Normalize lon to [-π, π] if desired
-                if (lam >  PL_PI) lam -= 2.0f * PL_PI;
-                if (lam < -PL_PI) lam += 2.0f * PL_PI;
+                if (lam > (double) PL_PI) lam -= 2.0 * (double)PL_PI;
+                if (lam < (double)-PL_PI) lam += 2.0 * (double)PL_PI;
 
                 // Finally store in degrees
-                atTiles[uTileIndex].fLongitude = pl_degreesf(lam);
-                atTiles[uTileIndex].fLatitude  = pl_degreesf(phi);
-
+                atTiles[uTileIndex].dLongitude = pl_degreesd(lam);
+                atTiles[uTileIndex].dLatitude  = pl_degreesd(phi);
 
                 sprintf(atTiles[uTileIndex].acOutputFile, "/tiles/moon_%u_%u.chu", i, j);
                 sprintf(atTiles[uTileIndex].acHeightMapFile, "/tiles/moon_%u_%u.png", i, j);
@@ -403,14 +401,9 @@ pl_app_update(plAppData* ptAppData)
 
     static uint32_t uActiveCamera = 0;
 
-    plCamera* aptCamera[2] = {
-        &ptAppData->tCamera0,
-        &ptAppData->tCamera1
-    };
+    plCamera* ptCamera = &ptAppData->tCamera0;
 
-    plCamera* ptCamera = aptCamera[uActiveCamera];
-
-    static float fCameraTravelSpeed = 1000000.0f;
+    static float fCameraTravelSpeed = 100000.0f;
 
     if((!ImGui::GetIO().WantCaptureKeyboard || !ImGui::GetIO().WantCaptureMouse) && !gptUI->wants_mouse_capture())
     {
@@ -439,7 +432,7 @@ pl_app_update(plAppData* ptAppData)
 
         ptAppData->dLongitude = atan(ptCamera->tPos.x / ptCamera->tPos.z);
         ptAppData->dLatitude = asin(ptCamera->tPos.y / pl_length_vec3(ptCamera->tPos));
-        ptAppData->dHeight = pl_length_vec3(ptCamera->tPos) - 1737400.0;
+        ptAppData->dHeight = pl_length_vec3(ptCamera->tPos) - 1737400.0 * 10000.0;
 
 
         if(gptIO->is_mouse_dragging(PL_MOUSE_BUTTON_LEFT, 1.0f))
@@ -448,16 +441,6 @@ pl_app_update(plAppData* ptAppData)
             gptCamera->rotate(ptCamera,  -tMouseDelta.y * fCameraRotationSpeed,  -tMouseDelta.x * fCameraRotationSpeed);
             // gptIO->reset_mouse_drag_delta(PL_MOUSE_BUTTON_LEFT);
         }
-
-        // if(gptIO->is_key_down(PL_KEY_F)) {
-        //     ptCamera->fWidth -= fCameraTravelSpeed * ptIO->fDeltaTime ;
-        //     ptCamera->fHeight -= fCameraTravelSpeed * ptIO->fDeltaTime ;
-        // }
-        // if(gptIO->is_key_down(PL_KEY_R))
-        // {
-        //     ptCamera->fWidth += fCameraTravelSpeed * ptIO->fDeltaTime ;
-        //     ptCamera->fHeight += fCameraTravelSpeed * ptIO->fDeltaTime ;
-        // }
     }
     gptCamera->update(ptCamera);
 
@@ -539,9 +522,6 @@ pl_app_update(plAppData* ptAppData)
             gptPlanet->reload_shaders(ptAppData->ptPlanetView);
         }
 
-        gptUI->input_float("Cull X Buffer", &tOptions.fXCullBuffer, NULL, 0);
-        gptUI->input_float("Cull Y Buffer", &tOptions.fYCullBuffer, NULL, 0);
-        gptUI->input_float("Cull Z Buffer", &tOptions.fZCullBuffer, NULL, 0);
         gptUI->input_float("fLatitude", &tTexture.fLatitude, NULL, 0);
         gptUI->input_float("fLongitude", &tTexture.fLongitude, NULL, 0);
         gptUI->input_float("fMetersPerPixel", &tTexture.fMetersPerPixel, NULL, 0);
@@ -614,14 +594,14 @@ pl_app_update(plAppData* ptAppData)
 
     ptCmdBuffer = gptStarter->get_command_buffer();
     pl_begin_cpu_sample(gptProfile, 0, "terrain");
-    gptPlanet->render_view(ptAppData->ptPlanetView, aptCamera[0], ptCmdBuffer);
+    gptPlanet->render_view(ptAppData->ptPlanetView, ptCamera, ptCmdBuffer);
     pl_end_cpu_sample(gptProfile, 0);
     gptStarter->submit_command_buffer(ptCmdBuffer);
     
     if(ImGui::Begin("View 0"))
     {
         ImVec2 tContextSize = ImGui::GetContentRegionAvail();
-        gptCamera->set_aspect(aptCamera[0], tContextSize.x / tContextSize.y);
+        gptCamera->set_aspect(ptCamera, tContextSize.x / tContextSize.y);
 
         ImTextureID tTexture = gptDearImGui->get_texture_id_from_bindgroup(gptStarter->get_device(), gptPlanet->get_view_texture(ptAppData->ptPlanetView));
         ImGui::Image(tTexture, tContextSize);

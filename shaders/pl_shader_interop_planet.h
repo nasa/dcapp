@@ -30,7 +30,6 @@ PL_END_ENUM
 //-----------------------------------------------------------------------------
 
 PL_BEGIN_STRUCT(plGpuDynPlanetData)
-    mat4 tMvp;
 
     int iLevel;
     int tFlags;
@@ -43,8 +42,14 @@ PL_BEGIN_STRUCT(plGpuDynPlanetData)
     float fRadius;
 
     float fHazardMapStrength;
-    int _aiUnused[3];
+    int _aiUnused0;
+    int _aiUnused1;
+    int _aiUnused2;
 
+    vec4 tCameraPosHigh;
+    vec4 tCameraPosLow;
+
+    mat4 tCameraViewProjection;
     
 PL_END_STRUCT(plGpuDynPlanetData)
 
