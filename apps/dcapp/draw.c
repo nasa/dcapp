@@ -295,7 +295,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
                     ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->button.pivot_parent_align.y)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED};
 
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -346,7 +346,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
             node->button.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->button.local_align.y)->value_integer};
 
         // compute offsets
-        float trans_align_offsets[2];
+        float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_LEFT:
@@ -458,7 +458,7 @@ static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *
                 node->button.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->button.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -860,7 +860,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
             node->arc.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.local_align.y)->value_integer};
 
         // compute offsets
-        float trans_align_offsets[2];
+        float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_ALIGN_TYPE_LEFT:
                 trans_align_offsets[0] = 0;
@@ -1121,7 +1121,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
                     ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->ellipse.pivot_parent_align.y)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED};
 
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -1172,7 +1172,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
             node->ellipse.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->ellipse.local_align.y)->value_integer};
 
         // compute offsets
-        float trans_align_offsets[2];
+        float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_ALIGN_TYPE_LEFT:
                 trans_align_offsets[0] = 0;
@@ -1281,7 +1281,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
                 node->ellipse.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->ellipse.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_LEFT:
                     pivot_position[0] = 0;
@@ -1353,8 +1353,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
 
         // Generate arc points (start-based)
         // Wedge starts at 3 o'clock (standard math convention), rotation handled by transform matrix
-        float span_rad       = pl_radiansf(angle_span);
-        int   num_arc_points = num_segments + 1;
+        float span_rad = pl_radiansf(angle_span);
 
         for (int ii = 0; ii <= num_segments; ii++) {
             float t           = (float)ii / (float)num_segments;
@@ -1535,7 +1534,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
                     ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->container.pivot_parent_align.y)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED};
 
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -1586,7 +1585,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
             node->container.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->container.local_align.y)->value_integer};
 
         // compute offsets
-        float trans_align_offsets[2];
+        float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_LEFT:
@@ -1695,7 +1694,7 @@ static void _draw_node_container(_AppData *app_data, _NodeIndex node_index, _Nod
                 node->container.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->container.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -1923,7 +1922,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
                     ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->image.pivot_parent_align.y)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED};
 
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -1974,7 +1973,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
             node->image.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->image.local_align.y)->value_integer};
 
         // compute offsets
-        float trans_align_offsets[2];
+        float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_LEFT:
@@ -2083,7 +2082,7 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
                 node->image.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->image.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -2244,7 +2243,7 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
                     ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->line.pivot_parent_align.y)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED};
 
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -2509,7 +2508,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
                     ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.pivot_parent_align.y)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED};
 
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -2560,7 +2559,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
             node->pixelstream.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.local_align.y)->value_integer};
 
         // compute offsets
-        float trans_align_offsets[2];
+        float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_LEFT:
@@ -2669,7 +2668,7 @@ static void _draw_node_pixelstream(_AppData *app_data, _NodeIndex node_index, _N
                 node->pixelstream.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->pixelstream.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -2851,7 +2850,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
                     ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->polygon.pivot_parent_align.y)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED};
 
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -3170,7 +3169,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
                     ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->rectangle.pivot_parent_align.y)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED};
 
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -3221,7 +3220,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             node->rectangle.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->rectangle.local_align.y)->value_integer};
 
         // compute offsets
-        float trans_align_offsets[2];
+        float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_LEFT:
@@ -3330,7 +3329,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
                 node->rectangle.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->rectangle.pivot_local_align.y)->value_integer};
 
             // get pivot XY, rotation
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -3638,7 +3637,6 @@ static bool _apply_set_operation(_AppData *app_data, DcAppVarIndex var_index, Dc
                         var_value->value_double = op_value->value_double;
                     break;
                 case DC_VALUE_TYPE_BOOLEAN:
-                    break;
                 default:
                     break;
             }
@@ -3658,7 +3656,6 @@ static bool _apply_set_operation(_AppData *app_data, DcAppVarIndex var_index, Dc
                         var_value->value_double = op_value->value_double;
                     break;
                 case DC_VALUE_TYPE_BOOLEAN:
-                    break;
                 default:
                     break;
             }
@@ -3968,7 +3965,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
                     ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_parent_align.y)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED};
 
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -4018,7 +4015,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
             node->sphere.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.local_align.x)->value_integer,
             node->sphere.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.local_align.y)->value_integer};
 
-        float trans_align_offsets[2];
+        float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_ALIGN_TYPE_LEFT:
                 trans_align_offsets[0] = radius; // move right so left edge aligns
@@ -4121,7 +4118,7 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
                 node->sphere.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_local_align.x)->value_integer,
                 node->sphere.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->sphere.pivot_local_align.y)->value_integer};
 
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_LEFT:
                     pivot_position[0] = 0;
@@ -4656,7 +4653,7 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
                     ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet_view.pivot_parent_align.y)->value_integer
                     : DC_APP_ALIGN_TYPE_UNDEFINED};
 
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (parent_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -4705,7 +4702,7 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
             node->planet_view.local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet_view.local_align.x)->value_integer,
             node->planet_view.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet_view.local_align.y)->value_integer};
 
-        float trans_align_offsets[2];
+        float trans_align_offsets[2] = {0, 0};
         switch (local_aligns[0]) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_LEFT:
@@ -4808,7 +4805,7 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
                 node->planet_view.pivot_local_align.x == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet_view.pivot_local_align.x)->value_integer,
                 node->planet_view.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->planet_view.pivot_local_align.y)->value_integer};
 
-            float pivot_position[2];
+            float pivot_position[2] = {0, 0};
             switch (local_pivot_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -5168,7 +5165,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                         ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_parent_align.y)->value_integer
                         : DC_APP_ALIGN_TYPE_UNDEFINED};
 
-                float pivot_position[2];
+                float pivot_position[2] = {0, 0};
                 switch (parent_pivot_aligns[0]) {
                     case DC_APP_ALIGN_TYPE_UNDEFINED:
                     case DC_APP_ALIGN_TYPE_LEFT:
@@ -5219,7 +5216,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                 node->text.local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.local_align.y)->value_integer};
 
             // compute offsets
-            float trans_align_offsets[2];
+            float trans_align_offsets[2] = {0, 0};
             switch (local_aligns[0]) {
                 case DC_APP_ALIGN_TYPE_UNDEFINED:
                 case DC_APP_ALIGN_TYPE_LEFT:
@@ -5333,7 +5330,7 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
                     node->text.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->text.pivot_local_align.y)->value_integer};
 
                 // get pivot XY, rotation
-                float pivot_position[2];
+                float pivot_position[2] = {0, 0};
                 switch (local_pivot_aligns[0]) {
                     case DC_APP_ALIGN_TYPE_UNDEFINED:
                     case DC_APP_ALIGN_TYPE_LEFT:

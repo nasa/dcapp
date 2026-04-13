@@ -423,7 +423,12 @@ static void _update_pixelstream_sources(_AppData *app_data) {
                     }
 
                     size_t frame_size = (size_t)width * height * 4;
-                    src->frame = realloc(src->frame, frame_size);
+                    void *tmp = realloc(src->frame, frame_size);
+                    if (!tmp) {
+                        DC_LOG_ERROR("PixelStream", "realloc failed for frame buffer");
+                        break;
+                    }
+                    src->frame = tmp;
 
                     size_t out_size;
                     dc_ps_shmem_get_data(src->shmem.handle, src->frame, frame_size, &out_size);
@@ -538,9 +543,6 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
                 _TrickRxVarContext *rx_var_context = &(trick_context->sb_rx_var_contexts[jj]);
                 if (rx_var_context->dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) continue;
-                DcAppLookupVar *dc_app_var = dc_app_lookup_get_var(app_data->lookup, rx_var_context->dcapp_var_index);
-                DcValue        *value      = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
-
                 dc_trick_get_rx_var_value(trick, rx_var_context->trick_var_index, rx_buffer);
                 dc_app_lookup_set_var_to_string(app_data->lookup, rx_var_context->dcapp_var_index, rx_buffer);
             }
@@ -613,8 +615,6 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
                 _EdgeRxVarContext *rx_var_context = &(edge_context->sb_rx_var_contexts[jj]);
                 if (rx_var_context->dcapp_var_index == DC_APP_VAR_INDEX_UNDEFINED) continue;
-                DcAppLookupVar *dc_app_var = dc_app_lookup_get_var(app_data->lookup, rx_var_context->dcapp_var_index);
-                DcValue        *value      = dc_app_lookup_get_value(app_data->lookup, dc_app_var->value_index);
 
                 dc_edge_get_rx_var_value(edge, rx_var_context->edge_var_index, rx_buffer);
                 dc_app_lookup_set_var_to_string(app_data->lookup, rx_var_context->dcapp_var_index, rx_buffer);

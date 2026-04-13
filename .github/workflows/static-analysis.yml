@@ -1,0 +1,76 @@
+name: Static Analysis
+
+on:
+  push:
+    branches:
+      - master
+      - dcapp-pl
+      - feature/*
+      - fix/*
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  clang-tidy:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-tidy libxml2-dev libgdal-dev
+
+      - name: Run clang-tidy
+        run: |
+          INCLUDES="-I src -I extensions -I shaders \
+                    -I pilotlight/src -I pilotlight/libs -I pilotlight/extensions -I pilotlight/shaders \
+                    -I pilotlight/dependencies/stb \
+                    -I /usr/include/libxml2 -I /usr/include/gdal"
+
+          FILES=$(find apps/dcapp extensions src -name '*.c' 2>/dev/null)
+          FAIL=0
+          for f in $FILES; do
+            echo "=== Checking $f ==="
+            OUTPUT=$(clang-tidy --quiet "$f" -- $INCLUDES 2>&1 | \
+              grep "warning:" | \
+              grep -v "pilotlight/\|dependencies/" || true)
+            if [ -n "$OUTPUT" ]; then
+              echo "$OUTPUT"
+              FAIL=1
+            fi
+          done
+
+          if [ $FAIL -eq 1 ]; then
+            echo ""
+            echo "::warning::clang-tidy reported warnings (non-blocking)"
+          fi
+
+  clang-format:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+
+      - name: Check formatting
+        run: |
+          FILES=$(find apps/dcapp extensions src samples -name '*.c' -o -name '*.h' 2>/dev/null)
+          UNFORMATTED=0
+          for f in $FILES; do
+            if ! diff -q <(clang-format "$f") "$f" > /dev/null 2>&1; then
+              echo "::warning file=$f::File not formatted per .clang-format"
+              UNFORMATTED=1
+            fi
+          done
+          if [ $UNFORMATTED -eq 1 ]; then
+            echo ""
+            echo "::warning::clang-format would reformat one or more files (non-blocking)"
+          fi

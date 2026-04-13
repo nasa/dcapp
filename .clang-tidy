@@ -1,0 +1,30 @@
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  -bugprone-assignment-in-if-condition,
+  -bugprone-reserved-identifier,
+  -bugprone-multi-level-implicit-pointer-conversion,
+  -bugprone-implicit-widening-of-multiplication-result,
+  misc-redundant-expression,
+  misc-unused-using-decls,
+  performance-*,
+  -performance-no-int-to-ptr,
+  -performance-enum-size,
+  clang-analyzer-*,
+  -clang-analyzer-security.insecureAPI.*,
+
+# bugprone: catches real bugs (use-after-move, suspicious assignments, etc.)
+#   - disabled easily-swappable-parameters: too noisy for C APIs with multiple same-type args
+#   - disabled narrowing-conversions: too noisy with float/int mixing in graphics code
+#   - disabled assignment-in-if-condition: intentional pattern in some parsing code
+# misc-redundant-expression: catches copy-paste errors like (x == x)
+# performance: catches unnecessary copies, inefficient patterns
+#   - disabled no-int-to-ptr: too noisy with handle/index types
+# clang-analyzer: deep static analysis (null derefs, leaks, logic errors)
+#   - disabled insecureAPI: flags strcpy/sprintf which are used intentionally
+
+HeaderFilterRegex: '(apps|extensions|src)/.*'
+
+WarningsAsErrors: ''

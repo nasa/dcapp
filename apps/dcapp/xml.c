@@ -5177,7 +5177,7 @@ static _NodeIndex _process_xml_node_variable(_AppData *app_data, xmlNodePtr xml_
     // register var
     DcAppLookupVar var      = {};
     var.value_index         = dc_app_lookup_register_value(app_data->lookup, &initial_value);
-    DcAppVarIndex var_index = dc_app_lookup_register_var(app_data->lookup, name, &var);
+    dc_app_lookup_register_var(app_data->lookup, name, &var);
 
     // return
     return NODE_INDEX_UNDEFINED;

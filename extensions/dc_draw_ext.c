@@ -2254,7 +2254,7 @@ pl_prepare_font_atlas(dcFontAtlas* ptAtlas)
     ptAtlas->_fTotalArea += 64;
 
     // calculate final texture area required
-    const float fTotalAtlasAreaSqrt = (float)sqrt((float)ptAtlas->_fTotalArea) + 1.0f;
+    const float fTotalAtlasAreaSqrt = sqrtf(ptAtlas->_fTotalArea) + 1.0f;
     ptAtlas->tAtlasSize.x = 512;
     ptAtlas->tAtlasSize.y = 0;
     if(fTotalAtlasAreaSqrt >= 4096 * 0.7f)
@@ -2400,8 +2400,8 @@ pl_prepare_font_atlas(dcFontAtlas* ptAtlas)
     }
 
     // update white point uvs
-    ptAtlas->_tWhiteUv.x = (float)(ptAtlas->_ptWhiteRect->uX + ptAtlas->_ptWhiteRect->uWidth / 2) / (float)ptAtlas->tAtlasSize.x;
-    ptAtlas->_tWhiteUv.y = (float)(ptAtlas->_ptWhiteRect->uY + ptAtlas->_ptWhiteRect->uHeight / 2) / (float)ptAtlas->tAtlasSize.y;
+    ptAtlas->_tWhiteUv.x = (ptAtlas->_ptWhiteRect->uX + ptAtlas->_ptWhiteRect->uWidth / 2.0f) / (float)ptAtlas->tAtlasSize.x;
+    ptAtlas->_tWhiteUv.y = (ptAtlas->_ptWhiteRect->uY + ptAtlas->_ptWhiteRect->uHeight / 2.0f) / (float)ptAtlas->tAtlasSize.y;
 
     // add glyphs
     ptFont = ptAtlas->_ptFontListHead;
