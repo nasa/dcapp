@@ -5410,6 +5410,13 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         xmlFree(raw_active_display);
     }
 
+    // fullscreen mode
+    xmlChar *raw_fullscreen = xmlGetProp(xml_node, BAD_CAST "Fullscreen");
+    if (raw_fullscreen) {
+        dc_node.window.fullscreen = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_fullscreen);
+        xmlFree(raw_fullscreen);
+    }
+
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
@@ -5909,6 +5916,20 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     window_desc.iXPos        = (int)window_node->window.init_position.x;
     window_desc.iYPos        = (int)window_node->window.init_position.y;
     _ext_windows->create(window_desc, &(app_data->pl_window));
+
+    const DcValue* fullscreen_val = dc_app_lookup_get_value(app_data->lookup, window_node->window.fullscreen);
+    if (fullscreen_val && fullscreen_val->value_boolean) {
+        plFullScreenDesc fullscreen_desc = {};
+        fullscreen_desc.tMode = PL_FULLSCREEN_MODE_EXCLUSIVE;
+
+        const DcValue* active_display_val = dc_app_lookup_get_value(app_data->lookup, window_node->window.active_display);
+        if (active_display_val) {
+            fullscreen_desc.iMonitor = active_display_val->value_integer;
+        }
+
+        _ext_windows->set_fullscreen(app_data->pl_window, &fullscreen_desc);
+    }
+
     _ext_windows->show(app_data->pl_window);
 
     // initialize the starter API (handles alot of boilerplate)
