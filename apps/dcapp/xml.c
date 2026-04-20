@@ -5413,7 +5413,8 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
     // fullscreen mode
     xmlChar *raw_fullscreen = xmlGetProp(xml_node, BAD_CAST "Fullscreen");
     if (raw_fullscreen) {
-        dc_node.window.fullscreen = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_fullscreen);
+
+        dc_node.window.fullscreen = xmlStrcmp(raw_fullscreen, BAD_CAST "true") == 0;
         xmlFree(raw_fullscreen);
     }
 
@@ -5917,8 +5918,7 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     window_desc.iYPos        = (int)window_node->window.init_position.y;
     _ext_windows->create(window_desc, &(app_data->pl_window));
 
-    const DcValue* fullscreen_val = dc_app_lookup_get_value(app_data->lookup, window_node->window.fullscreen);
-    if (fullscreen_val && fullscreen_val->value_boolean) {
+    if (window_node->window.fullscreen) {
         plFullScreenDesc fullscreen_desc = {};
         fullscreen_desc.tMode = PL_FULLSCREEN_MODE_EXCLUSIVE;
 

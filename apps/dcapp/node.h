@@ -661,7 +661,7 @@ typedef struct __NodeWindow {
     _NodeIndex child;
     char      *title;
     _ValIndex  active_display;
-    _ValIndex  fullscreen;
+    bool       fullscreen;
 } _NodeWindow;
 
 typedef struct __Node {
