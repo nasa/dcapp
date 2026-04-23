@@ -277,9 +277,9 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
         tPlanetInfo.uTileCount = 64;
         tPlanetInfo.atTiles = atTiles;
 
-        for(uint32_t i = 4; i < 5; i++)
+        for(uint32_t i = 0; i < 8; i++)
         {
-            for(uint32_t j = 4; j < 5; j++)
+            for(uint32_t j = 0; j < 8; j++)
             {
                 uint32_t uTileIndex = i + j * 8;
                 plPlanetProcessTileInfo tInfo = {};
