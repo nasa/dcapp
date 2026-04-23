@@ -3947,7 +3947,7 @@ static void _planet_shader_abs_to_vfs(const char *abs_path, char *vfs_out, size_
     char hash[32];
     dc_utils_string_to_hash(dir, hash, sizeof(hash));
 
-    char vfs_mount[32];
+    char vfs_mount[33];
     snprintf(vfs_mount, sizeof(vfs_mount), "/%s", hash);
 
     // idempotent — VFS silently ignores duplicate mounts to the same virtual path
