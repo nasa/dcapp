@@ -1,0 +1,279 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+      - dcapp-pl
+      - feature/*
+      - fix/*
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Restore Vulkan SDK cache (Ubuntu)
+        id: cache-vulkan-ubuntu
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/vulkan-sdk
+          key: vulkan-sdk-linux-1.4.341.0
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          # X11 / XCB
+          sudo apt-get install -y libx11-dev libxkbcommon-x11-dev libx11-xcb-dev
+          sudo apt-get install -y libxcb-xfixes0-dev libxcb-cursor-dev libxcb-cursor0 libxcb-keysyms1-dev
+          # GLFW X11 deps (used by experimental pilotlight build)
+          sudo apt-get install -y libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev
+          sudo apt-get install -y libgl-dev
+          # dcapp deps
+          sudo apt-get install -y libxml2-dev libgdal-dev libcurl4-openssl-dev procps
+
+      - name: Install LunarG Vulkan SDK
+        if: steps.cache-vulkan-ubuntu.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/vulkan-sdk
+          cd $GITHUB_WORKSPACE/vulkan-sdk
+          curl -L https://sdk.lunarg.com/sdk/download/1.4.341.0/linux/vulkansdk-linux-x86_64-1.4.341.0.tar.xz -o vk.tar.xz
+          tar -xf vk.tar.xz
+          rm vk.tar.xz
+
+      - name: Save Vulkan SDK cache (Ubuntu)
+        if: always() && steps.cache-vulkan-ubuntu.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/vulkan-sdk
+          key: vulkan-sdk-linux-1.4.341.0
+
+      - name: Build (release)
+        run: |
+          export VULKAN_SDK=$GITHUB_WORKSPACE/vulkan-sdk/1.4.341.0/x86_64
+          cd scripts
+          chmod +x build.sh
+          ./build.sh -c release
+
+      - name: Clean
+        run: rm -rf pilotlight/out
+
+      - name: Build (debug)
+        run: |
+          export VULKAN_SDK=$GITHUB_WORKSPACE/vulkan-sdk/1.4.341.0/x86_64
+          cd scripts
+          ./build.sh -c debug
+
+  fedora:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+    steps:
+      - name: Install base tooling
+        run: |
+          dnf install -y git gcc gcc-c++ make wget which findutils python3 procps-ng
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Restore Vulkan SDK cache (Fedora)
+        id: cache-vulkan-fedora
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/vulkan-sdk
+          key: vulkan-sdk-linux-1.4.341.0
+
+      - name: Install system dependencies
+        run: |
+          # X11 / XCB
+          dnf install -y libX11-devel libxkbcommon-x11-devel libX11-xcb libxcb-devel
+          dnf install -y xcb-util-cursor-devel xcb-util-keysyms-devel mesa-libGL-devel
+          # GLFW X11 deps
+          dnf install -y libXcursor-devel libXrandr-devel libXinerama-devel libXi-devel
+          # dcapp deps
+          dnf install -y libxml2-devel gdal-devel libcurl-devel
+          # tools for extracting the SDK
+          dnf install -y xz tar
+
+      - name: Install LunarG Vulkan SDK
+        if: steps.cache-vulkan-fedora.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/vulkan-sdk
+          cd $GITHUB_WORKSPACE/vulkan-sdk
+          curl -L https://sdk.lunarg.com/sdk/download/1.4.341.0/linux/vulkansdk-linux-x86_64-1.4.341.0.tar.xz -o vk.tar.xz
+          tar -xf vk.tar.xz
+          rm vk.tar.xz
+
+      - name: Save Vulkan SDK cache (Fedora)
+        if: always() && steps.cache-vulkan-fedora.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/vulkan-sdk
+          key: vulkan-sdk-linux-1.4.341.0
+
+      - name: Build (release)
+        run: |
+          export VULKAN_SDK=$GITHUB_WORKSPACE/vulkan-sdk/1.4.341.0/x86_64
+          cd scripts
+          chmod +x build.sh
+          ./build.sh -c release
+
+      - name: Clean
+        run: rm -rf pilotlight/out
+
+      - name: Build (debug)
+        run: |
+          export VULKAN_SDK=$GITHUB_WORKSPACE/vulkan-sdk/1.4.341.0/x86_64
+          cd scripts
+          ./build.sh -c debug
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Restore Vulkan SDK cache (macOS)
+        id: cache-vulkan-mac
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/VulkanSDK/1.4.341.0
+          key: vulkan-sdk-macos-1.4.341.0
+
+      - name: Cache brew downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/Homebrew/downloads
+          key: brew-macos-v1
+
+      - name: Install system dependencies
+        run: brew install libxml2 gdal
+
+      - name: Install LunarG Vulkan SDK
+        if: steps.cache-vulkan-mac.outputs.cache-hit != 'true'
+        run: |
+          # newer LunarG macOS "installers" are .zip (despite .dmg extension) containing a .app bundle
+          curl -L https://sdk.lunarg.com/sdk/download/1.4.341.0/mac/vulkan-sdk.dmg -o vk.zip
+          unzip -q vk.zip
+          sudo ./vulkansdk-macOS-1.4.341.0.app/Contents/MacOS/vulkansdk-macOS-1.4.341.0 \
+            --root $HOME/VulkanSDK/1.4.341.0 --accept-licenses --default-answer --confirm-command install \
+            com.lunarg.vulkan.core com.lunarg.vulkan.usr com.lunarg.vulkan.sdl2 com.lunarg.vulkan.glm \
+            com.lunarg.vulkan.volk com.lunarg.vulkan.vma
+          rm -rf vulkansdk-macOS-1.4.341.0.app vk.zip
+
+      - name: Save Vulkan SDK cache (macOS)
+        if: always() && steps.cache-vulkan-mac.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/VulkanSDK/1.4.341.0
+          key: vulkan-sdk-macos-1.4.341.0
+
+      - name: Build (release)
+        run: |
+          export VULKAN_SDK=$HOME/VulkanSDK/1.4.341.0/macOS
+          cd scripts
+          chmod +x build.sh
+          ./build.sh -c release
+
+      - name: Clean
+        run: rm -rf pilotlight/out
+
+      - name: Build (debug)
+        run: |
+          export VULKAN_SDK=$HOME/VulkanSDK/1.4.341.0/macOS
+          cd scripts
+          ./build.sh -c debug
+
+  windows:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Restore Vulkan SDK cache (Windows)
+        id: cache-vulkan-win
+        uses: actions/cache/restore@v4
+        with:
+          path: D:/a/VulkanSDK
+          key: vulkan-sdk-windows-1.4.341.0
+
+      - name: Install Vulkan SDK
+        if: steps.cache-vulkan-win.outputs.cache-hit != 'true'
+        run: |
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.4.341.0/windows/vulkansdk-windows-X64-1.4.341.0.exe" -OutFile VulkanSDK.exe
+          ./VulkanSDK.exe --accept-licenses --default-answer --root D:/a/VulkanSDK --confirm-command install
+
+      - name: Save Vulkan SDK cache (Windows)
+        if: always() && steps.cache-vulkan-win.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: D:/a/VulkanSDK
+          key: vulkan-sdk-windows-1.4.341.0
+
+      - name: Restore vcpkg cache
+        id: cache-vcpkg
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            C:\vcpkg\installed
+            C:\vcpkg\packages
+          key: vcpkg-windows-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-windows-
+
+      - name: Install vcpkg dependencies
+        shell: cmd
+        run: |
+          vcpkg install --triplet x64-windows
+          if %ERRORLEVEL% NEQ 0 exit 1
+
+      - name: Save vcpkg cache
+        if: always() && steps.cache-vcpkg.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            C:\vcpkg\installed
+            C:\vcpkg\packages
+          key: vcpkg-windows-${{ hashFiles('vcpkg.json') }}
+
+      - name: Build (release)
+        shell: cmd
+        env:
+          VCPKG_ROOT: C:\vcpkg
+        run: |
+          set VULKAN_SDK=D:/a/VulkanSDK
+          set INCLUDE=%VCPKG_ROOT%\installed\x64-windows\include;%INCLUDE%
+          set LIB=%VCPKG_ROOT%\installed\x64-windows\lib;%LIB%
+          set PATH=%VCPKG_ROOT%\installed\x64-windows\bin;%PATH%
+          cd scripts
+          call build.bat -c release
+          if %ERRORLEVEL% NEQ 0 exit 1
+
+      - name: Clean
+        shell: cmd
+        run: rmdir /S /Q pilotlight\out
+
+      - name: Build (debug)
+        shell: cmd
+        env:
+          VCPKG_ROOT: C:\vcpkg
+        run: |
+          set VULKAN_SDK=D:/a/VulkanSDK
+          set INCLUDE=%VCPKG_ROOT%\installed\x64-windows\include;%INCLUDE%
+          set LIB=%VCPKG_ROOT%\installed\x64-windows\lib;%LIB%
+          set PATH=%VCPKG_ROOT%\installed\x64-windows\bin;%PATH%
+          cd scripts
+          call build.bat -c debug
+          if %ERRORLEVEL% NEQ 0 exit 1

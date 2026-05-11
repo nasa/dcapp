@@ -5462,8 +5462,10 @@ static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *
     // TODO move this code to only the resize() function
 
     // current dimensions
-    uint32_t dimensionX, dimensionY;
-    _ext_windows->get_size(app_data->pl_window, &dimensionX, &dimensionY);
+    plWindowAttributeValue windowAttribute = {0};
+    _ext_windows->get_attribute(app_data->pl_window, PL_WINDOW_ATTRIBUTE_SIZE,  &windowAttribute);
+    uint32_t dimensionX = windowAttribute.tuVec2.x;
+    uint32_t dimensionY = windowAttribute.tuVec2.y;
 
     // boolean checks
     bool use_virtual_dimension[2] = {

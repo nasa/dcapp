@@ -16,8 +16,8 @@ DerivePointerAlignment: false
 SortIncludes: false
 IncludeBlocks: Preserve
 IndentCaseLabels: true
-AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: true
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
 AlignTrailingComments: true
 BreakBeforeBraces: Attach
 BraceWrapping:

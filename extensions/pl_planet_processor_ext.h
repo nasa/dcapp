@@ -23,7 +23,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plPlanetProcessorI_version {0, 2, 0}
+#define plPlanetProcessorI_version {0, 3, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -43,6 +43,10 @@ typedef struct _plPlanetChunk plPlanetChunk;
 typedef struct _plPlanetProcessTileInfo plPlanetProcessTileInfo;
 typedef struct _plPlanetProcessInfo plPlanetProcessInfo;
 
+
+// enums/flags
+typedef int plPlanetProcessingFlags; // -> enum _plPlanetProcessingFlags
+
 // external
 typedef struct _plFreeListNode plFreeListNode; // pl_freelist_ext.h
 
@@ -52,10 +56,8 @@ typedef struct _plFreeListNode plFreeListNode; // pl_freelist_ext.h
 
 typedef struct _plPlanetProcessorI
 {
-    // new api
-    void (*process)(plPlanetProcessInfo*);
-
-    bool (*load_chunk_file)  (const char* path, plPlanetChunkFile* fileOut, uint32_t fileID);
+    void (*process)        (plPlanetProcessInfo*);
+    bool (*load_chunk_file)(const char* path, plPlanetChunkFile* fileOut, uint32_t fileID);
 } plPlanetProcessorI;
 
 //-----------------------------------------------------------------------------
@@ -64,12 +66,12 @@ typedef struct _plPlanetProcessorI
 
 typedef struct _plPlanetProcessTileInfo
 {
-    float       fMaxBaseError;
-    float       fMaxHeight;
-    float       fMinHeight;
+    double      dMaxBaseError;
+    double      dMaxHeight;
+    double      dMinHeight;
     int         iTreeDepth;
-    float       fLongitude;
-    float       fLatitude;
+    double      dLongitude;
+    double      dLatitude;
 
     char acHeightMapFile[256];
     char acOutputFile[256];
@@ -77,8 +79,9 @@ typedef struct _plPlanetProcessTileInfo
 
 typedef struct _plPlanetProcessInfo
 {
-    float                    fRadius;
-    float                    fMetersPerPixel;
+    plPlanetProcessingFlags  tFlags;
+    double                   dRadius;
+    double                   dMetersPerPixel;
     uint32_t                 uSize;
     uint32_t                 uTileCount;
     plPlanetProcessTileInfo* atTiles;
@@ -97,10 +100,10 @@ typedef struct _plPlanetChunk
     uint8_t uLevel;
 
     // bounds
-    plVec3 tMinBound;
-    plVec3 tMaxBound;
-    plVec3 tMinBoundFlat;
-    plVec3 tMaxBoundFlat;
+    plVec3d tMinBound;
+    plVec3d tMaxBound;
+    plVec3d tMinBoundFlat;
+    plVec3d tMaxBoundFlat;
 
     // gpu data
     uint32_t        uIndex;
@@ -123,11 +126,13 @@ typedef struct _plPlanetChunk
 
 typedef struct _plPlanetChunkFile
 {
-    int             iTreeDepth;
-    float           fMaxBaseError;
-    uint32_t        uChunkCount;
-    plPlanetChunk*  atChunks;
-    char            acFile[128];
+    plVersion               tVersion;
+    plPlanetProcessingFlags tFlags;
+    int                     iTreeDepth;
+    double                  dMaxBaseError;
+    uint32_t                uChunkCount;
+    plPlanetChunk*          atChunks;
+    char                    acFile[128];
 } plPlanetChunkFile;
 
 typedef struct _plPlanetVertex
@@ -136,5 +141,23 @@ typedef struct _plPlanetVertex
     plVec2 tNormal;
     plVec2 tUV;
 } plPlanetVertex;
+
+typedef struct _plPlanetDoubleVertex
+{
+    plVec3 tPositionHigh;
+    plVec3 tPositionLow;
+    plVec2 tNormal;
+    plVec2 tUV;
+} plPlanetDoubleVertex;
+
+//-----------------------------------------------------------------------------
+// [SECTION] enums/flags
+//-----------------------------------------------------------------------------
+
+enum _plPlanetProcessingFlags
+{
+    PL_PLANET_PROCESSING_FLAGS_NONE             = 0,
+    PL_PLANET_PROCESSING_FLAGS_DOUBLE_PRECISION = 1 << 0
+};
 
 #endif // PL_PLANET_PROCESSOR_EXT_H
