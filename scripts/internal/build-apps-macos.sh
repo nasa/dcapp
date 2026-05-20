@@ -255,7 +255,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/edge.c ../../src/geojson.c ../../src/pixelstream/mjpeg.c ../../src/pixelstream/shmem.c ../../src/sock.c ../../src/trick.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp/dcapp.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/edge.c ../../src/geojson.c ../../src/pixelstream/mjpeg.c ../../src/pixelstream/shmem.c ../../src/sock.c ../../src/trick.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp/dcapp.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -297,7 +297,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp_genheader.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp_genheader.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -340,7 +340,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp_validate.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp_validate.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -628,7 +628,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES="-ldearimguid "
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/edge.c ../../src/geojson.c ../../src/pixelstream/mjpeg.c ../../src/pixelstream/shmem.c ../../src/sock.c ../../src/trick.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp/dcapp.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/edge.c ../../src/geojson.c ../../src/pixelstream/mjpeg.c ../../src/pixelstream/shmem.c ../../src/sock.c ../../src/trick.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp/dcapp.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -670,7 +670,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp_genheader.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp_genheader.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -713,7 +713,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp_validate.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp_validate.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware

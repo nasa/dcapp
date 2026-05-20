@@ -40,7 +40,6 @@ const plWindowI          *_ext_windows          = NULL;
 const plStarterI         *_ext_starter          = NULL;
 const plProfileI         *_ext_profile          = NULL;
 const plMemoryI          *_ext_memory           = NULL;
-const plLibraryI         *_ext_library          = NULL;
 const plIOI              *_ext_ioi              = NULL;
 const plGraphicsI        *_ext_gfx              = NULL;
 const plGPUAllocatorsI   *_ext_gpu_allocators   = NULL;
@@ -57,6 +56,7 @@ const dcDrawBackendI     *_ext_dc_draw_backend  = NULL;
 const plScreenLogI       *_ext_screen_log       = NULL;
 
 // dcapp includes
+#include "utils/library.h"
 #include "utils/stb_sb.h"
 #include "app/elem.h"
 #include "app/enums.h"
@@ -250,7 +250,7 @@ typedef struct __AppData {
     _NodeIndex window;
 
     // logic
-    plSharedLibrary *logic_lib;
+    DcLibrary *logic_lib;
     void (*logic_pre_init)(_GetVariableValueAddr);
     void (*logic_init)();
     void (*logic_draw)();

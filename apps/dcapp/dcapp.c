@@ -177,6 +177,12 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
         app_data->logic_close();
     }
 
+    // unload logic shared library
+    if (app_data->logic_lib) {
+        dc_utils_library_close(app_data->logic_lib);
+        app_data->logic_lib = NULL;
+    }
+
     // get device
     plDevice *device = _ext_starter->get_device();
 
@@ -1005,7 +1011,6 @@ static void _load_apis(plApiRegistryI *api_registry) {
     _ext_starter          = pl_get_api_latest(api_registry, plStarterI);
     _ext_profile          = pl_get_api_latest(api_registry, plProfileI);
     _ext_memory           = pl_get_api_latest(api_registry, plMemoryI);
-    _ext_library          = pl_get_api_latest(api_registry, plLibraryI);
     _ext_ioi              = pl_get_api_latest(api_registry, plIOI);
     _ext_gfx              = pl_get_api_latest(api_registry, plGraphicsI);
     _ext_gpu_allocators   = pl_get_api_latest(api_registry, plGPUAllocatorsI);

@@ -215,7 +215,7 @@ xcopy /Y /I "../../vcpkg_installed/x64-windows\bin\*.dll" "../../pilotlight/out\
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG 
 @set PL_LINKER_FLAGS=-noimplib -noexp -incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib libcurl.lib 
-@set PL_SOURCES="../../src/app/config.c" "../../src/app/elem.c" "../../src/app/lookup.c" "../../src/edge.c" "../../src/geojson.c" "../../src/pixelstream/mjpeg.c" "../../src/pixelstream/shmem.c" "../../src/sock.c" "../../src/trick.c" "../../src/utils/env.c" "../../src/utils/file.c" "../../src/utils/log.c" "../../src/utils/math.c" "../../src/utils/string.c" "../../src/utils/time.c" "../../src/value.c" "../../apps/dcapp/dcapp.c" 
+@set PL_SOURCES="../../src/app/config.c" "../../src/app/elem.c" "../../src/app/lookup.c" "../../src/edge.c" "../../src/geojson.c" "../../src/pixelstream/mjpeg.c" "../../src/pixelstream/shmem.c" "../../src/sock.c" "../../src/trick.c" "../../src/utils/env.c" "../../src/utils/file.c" "../../src/utils/library.c" "../../src/utils/log.c" "../../src/utils/math.c" "../../src/utils/string.c" "../../src/utils/time.c" "../../src/value.c" "../../apps/dcapp/dcapp.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -249,7 +249,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../pilotligh
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG 
 @set PL_LINKER_FLAGS=-incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib 
-@set PL_SOURCES="../../src/app/config.c" "../../src/app/elem.c" "../../src/app/lookup.c" "../../src/utils/env.c" "../../src/utils/file.c" "../../src/utils/log.c" "../../src/utils/math.c" "../../src/utils/string.c" "../../src/utils/time.c" "../../src/value.c" "../../apps/dcapp_genheader.c" 
+@set PL_SOURCES="../../src/app/config.c" "../../src/app/elem.c" "../../src/app/lookup.c" "../../src/utils/env.c" "../../src/utils/file.c" "../../src/utils/library.c" "../../src/utils/log.c" "../../src/utils/math.c" "../../src/utils/string.c" "../../src/utils/time.c" "../../src/value.c" "../../apps/dcapp_genheader.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -285,7 +285,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../pilotligh
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG 
 @set PL_LINKER_FLAGS=-incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib 
-@set PL_SOURCES="../../src/app/config.c" "../../src/app/elem.c" "../../src/app/lookup.c" "../../src/utils/env.c" "../../src/utils/file.c" "../../src/utils/log.c" "../../src/utils/math.c" "../../src/utils/string.c" "../../src/utils/time.c" "../../src/value.c" "../../apps/dcapp_validate.c" 
+@set PL_SOURCES="../../src/app/config.c" "../../src/app/elem.c" "../../src/app/lookup.c" "../../src/utils/env.c" "../../src/utils/file.c" "../../src/utils/library.c" "../../src/utils/log.c" "../../src/utils/math.c" "../../src/utils/string.c" "../../src/utils/time.c" "../../src/value.c" "../../apps/dcapp_validate.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -532,7 +532,7 @@ xcopy /Y /I "../../vcpkg_installed/x64-windows\bin\*.dll" "../../pilotlight/out\
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-noimplib -noexp -incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=dearimguid.lib libxml2.lib libcurl.lib 
-@set PL_SOURCES="../../src/app/config.c" "../../src/app/elem.c" "../../src/app/lookup.c" "../../src/edge.c" "../../src/geojson.c" "../../src/pixelstream/mjpeg.c" "../../src/pixelstream/shmem.c" "../../src/sock.c" "../../src/trick.c" "../../src/utils/env.c" "../../src/utils/file.c" "../../src/utils/log.c" "../../src/utils/math.c" "../../src/utils/string.c" "../../src/utils/time.c" "../../src/value.c" "../../apps/dcapp/dcapp.c" 
+@set PL_SOURCES="../../src/app/config.c" "../../src/app/elem.c" "../../src/app/lookup.c" "../../src/edge.c" "../../src/geojson.c" "../../src/pixelstream/mjpeg.c" "../../src/pixelstream/shmem.c" "../../src/sock.c" "../../src/trick.c" "../../src/utils/env.c" "../../src/utils/file.c" "../../src/utils/library.c" "../../src/utils/log.c" "../../src/utils/math.c" "../../src/utils/string.c" "../../src/utils/time.c" "../../src/value.c" "../../apps/dcapp/dcapp.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -566,7 +566,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../pilotligh
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib 
-@set PL_SOURCES="../../src/app/config.c" "../../src/app/elem.c" "../../src/app/lookup.c" "../../src/utils/env.c" "../../src/utils/file.c" "../../src/utils/log.c" "../../src/utils/math.c" "../../src/utils/string.c" "../../src/utils/time.c" "../../src/value.c" "../../apps/dcapp_genheader.c" 
+@set PL_SOURCES="../../src/app/config.c" "../../src/app/elem.c" "../../src/app/lookup.c" "../../src/utils/env.c" "../../src/utils/file.c" "../../src/utils/library.c" "../../src/utils/log.c" "../../src/utils/math.c" "../../src/utils/string.c" "../../src/utils/time.c" "../../src/value.c" "../../apps/dcapp_genheader.c" 
 
 :: run compiler (and linker)
 @echo.
@@ -602,7 +602,7 @@ cl %PL_INCLUDE_DIRECTORIES% %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../pilotligh
 @set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi 
 @set PL_LINKER_FLAGS=-incremental:no -nologo -noimplib -noexp 
 @set PL_STATIC_LINK_LIBRARIES=libxml2.lib 
-@set PL_SOURCES="../../src/app/config.c" "../../src/app/elem.c" "../../src/app/lookup.c" "../../src/utils/env.c" "../../src/utils/file.c" "../../src/utils/log.c" "../../src/utils/math.c" "../../src/utils/string.c" "../../src/utils/time.c" "../../src/value.c" "../../apps/dcapp_validate.c" 
+@set PL_SOURCES="../../src/app/config.c" "../../src/app/elem.c" "../../src/app/lookup.c" "../../src/utils/env.c" "../../src/utils/file.c" "../../src/utils/library.c" "../../src/utils/log.c" "../../src/utils/math.c" "../../src/utils/string.c" "../../src/utils/time.c" "../../src/value.c" "../../apps/dcapp_validate.c" 
 
 :: run compiler (and linker)
 @echo.

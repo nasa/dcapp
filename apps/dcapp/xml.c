@@ -1651,9 +1651,9 @@ static _NodeIndex _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_
     xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
     if (raw_name) {
         if (app_data->logic_lib) {
-            dc_node.function.callback = (void (*)(void))_ext_library->load_function(app_data->logic_lib, (const char *)raw_name);
+            dc_node.function.callback = (void (*)(void))dc_utils_library_symbol(app_data->logic_lib, (const char *)raw_name);
             if (!dc_node.function.callback) {
-                DC_LOG_ERROR("Function", "Failed to load function '%s' from logic library", (const char *)raw_name);
+                DC_LOG_ERROR("Function", "Failed to load function '%s' from logic library: %s", (const char *)raw_name, dc_utils_library_last_error());
             }
         } else {
             DC_LOG_ERROR("Function", "No logic library loaded, cannot load function '%s'", (const char *)raw_name);
@@ -2112,42 +2112,32 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
             strcpy(abs_filepath, cleaned_filepath);
         }
 
-        // try loading with different platform extensions
-        // strip existing extension if present (.so, .dylib, .dll)
+        // strip any user-supplied platform extension; try each in turn
         char base_filepath[DC_VALUE_STRING_BUFFER_SIZE];
         strncpy(base_filepath, abs_filepath, DC_VALUE_STRING_BUFFER_SIZE - 1);
         base_filepath[DC_VALUE_STRING_BUFFER_SIZE - 1] = '\0';
 
         char *ext = strrchr(base_filepath, '.');
         if (ext && (strcmp(ext, ".so") == 0 || strcmp(ext, ".dylib") == 0 || strcmp(ext, ".dll") == 0)) {
-            *ext = '\0'; // strip the extension
+            *ext = '\0';
         }
 
-        // try each platform extension
         const char *extensions[] = {".so", ".dylib", ".dll"};
         char        try_filepath[DC_VALUE_STRING_BUFFER_SIZE];
-        bool        loaded = false;
 
-        for (int i = 0; i < 3 && !loaded; i++) {
+        for (int i = 0; i < 3 && !app_data->logic_lib; i++) {
             snprintf(try_filepath, sizeof(try_filepath), "%s%s", base_filepath, extensions[i]);
             if (!dc_utils_file_exists(try_filepath)) continue;
-            const plLibraryDesc logic_so_desc = {
-                .tFlags = PL_LIBRARY_FLAGS_NONE,
-                .pcName = try_filepath,
-            };
-            if (_ext_library->load(logic_so_desc, &app_data->logic_lib) == PL_LIBRARY_RESULT_SUCCESS) {
-                loaded = true;
-            }
+            app_data->logic_lib = dc_utils_library_load(try_filepath);
         }
 
-        if (!loaded) {
-            DC_LOG_ERROR("Logic", "Failed to load library: %s.so/.dylib/.dll", base_filepath);
+        if (!app_data->logic_lib) {
+            DC_LOG_ERROR("Logic", "Failed to load library '%s.so/.dylib/.dll': %s", base_filepath, dc_utils_library_last_error());
         } else {
-            // load functions (only if library loaded successfully)
-            app_data->logic_pre_init = (void (*)(_GetVariableValueAddr))_ext_library->load_function(app_data->logic_lib, "display_pre_init");
-            app_data->logic_init     = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_init");
-            app_data->logic_draw     = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_draw");
-            app_data->logic_close    = (void (*)(void))_ext_library->load_function(app_data->logic_lib, "display_close");
+            app_data->logic_pre_init = (void (*)(_GetVariableValueAddr))dc_utils_library_symbol(app_data->logic_lib, "display_pre_init");
+            app_data->logic_init     = (void (*)(void))dc_utils_library_symbol(app_data->logic_lib, "display_init");
+            app_data->logic_draw     = (void (*)(void))dc_utils_library_symbol(app_data->logic_lib, "display_draw");
+            app_data->logic_close    = (void (*)(void))dc_utils_library_symbol(app_data->logic_lib, "display_close");
         }
     } else {
         DC_LOG_ERROR("Logic", "Missing 'File' attribute");
