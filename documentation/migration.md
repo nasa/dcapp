@@ -45,6 +45,7 @@ Text color attribute:
 | Legacy | New |
 |--------|-----|
 | `Color` | `FillColor` |
+| `BackgroundColor` | `BackgroundColor` |
 
 Conditional operator attribute (inside `<If>` elements):
 
@@ -73,12 +74,12 @@ Button attributes (target variable):
 | `SwitchOn` | `TargetOn` |
 | `SwitchOff` | `TargetOff` |
 
-The following attributes have been REMOVED or handled differently:
+The following display-selection attributes are still supported:
 
 | Legacy | New |
 |--------|-----|
-| `DisplayIndex` | Removed (Panel no longer needs this) |
-| `ActiveDisplay` | Removed (Window no longer needs this) |
+| `DisplayIndex` | `DisplayIndex` |
+| `ActiveDisplay` | `ActiveDisplay` |
 
 ## Section 3: Variable Type Constants
 
@@ -619,9 +620,9 @@ Changes:
 
 Note: `FireBlink` uses the `Fire*` prefix convention for edge-triggered attributes. All `Fire*` attributes use `DcAppValIndex` and fire on value change via `dc_value_is_equal()`. See also: `FireRefresh` on `<PlanetTexture>`, `FireCall` on `<Function>`.
 
-## Section 13: Panel BackgroundColor Changes
+## Section 13: Panel BackgroundColor
 
-Legacy Panel elements had a `BackgroundColor` attribute. In the new syntax, this is converted to a Rectangle child element that inherits the Panel's dimensions.
+Legacy Panel elements had a `BackgroundColor` attribute. New dcapp supports this directly on `<Panel>`.
 
 Legacy syntax:
 
@@ -634,23 +635,24 @@ Legacy syntax:
 New syntax:
 
 ```xml
-<Panel VirtualWidth="800" VirtualHeight="600">
-    <Rectangle FillColor="0 0 0"/>
+<Panel BackgroundColor="0 0 0" VirtualWidth="800" VirtualHeight="600">
     <!-- panel content -->
 </Panel>
 ```
 
-The Rectangle is inserted as the first child so it draws behind other content. It inherits the Panel's dimensions automatically (no Width/Height needed).
+The background is drawn before panel children.
 
-## Section 14: Removed/Unsupported Attributes
+## Section 14: Legacy Attribute Status
 
-The following legacy attributes are NOT supported in new dcapp:
+The following legacy attributes either need rewrites or should be checked during migration:
 
 Text/String attributes:
 
 | Legacy | Status |
 |--------|--------|
-| `ShadowOffset` | Removed (no text shadows) |
+| `ShadowOffset` | Supported |
+| `BackgroundColor` | Supported |
+| `UpdateRate` | Supported |
 | `ForceMono` | Removed (no monospace forcing) |
 
 Window attributes:
@@ -658,13 +660,13 @@ Window attributes:
 | Legacy | Status |
 |--------|--------|
 | `ForceUpdate` | Removed (refresh rate handled differently) |
-| `ActiveDisplay` | Removed |
+| `ActiveDisplay` | Supported |
 
 Panel attributes:
 
 | Legacy | Status |
 |--------|--------|
-| `DisplayIndex` | Removed |
+| `DisplayIndex` | Supported |
 
 Set attributes:
 

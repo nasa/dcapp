@@ -223,6 +223,7 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 sbfree(node->text.sb_formats);
                 sbfree(node->text.sb_format_indices);
                 sbfree(node->text.sb_format_types);
+                sbfree(node->text.sb_cached_text);
                 break;
             case NODE_TYPE_WINDOW:
                 if (node->window.title) {

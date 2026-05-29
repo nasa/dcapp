@@ -2310,6 +2310,11 @@ static _NodeIndex _process_xml_node_panel(_AppData *app_data, xmlNodePtr xml_nod
         xmlFree(raw_display_index);
     }
 
+    // background color
+    dc_node.panel.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "BackgroundColor", &(dc_node.panel.background_color)))
+        dc_node.panel.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
+
     // register node
     _NodeIndex node_index = _register_node(app_data, &dc_node);
 
@@ -5036,10 +5041,13 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     }
 
     dc_node.text.config_flags = NODE_CONFIG_FLAG_NONE;
-    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.text.fill_color)))
+    if (_load_color_from_string(app_data, xml_node, "FillColor", &(dc_node.text.fill_color)) ||
+        _load_color_from_string(app_data, xml_node, "Color", &(dc_node.text.fill_color)))
         dc_node.text.config_flags |= NODE_CONFIG_FLAG_FILL_ENABLED;
     if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.text.line_color)))
         dc_node.text.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
+    if (_load_color_from_string(app_data, xml_node, "BackgroundColor", &(dc_node.text.background_color)))
+        dc_node.text.config_flags |= NODE_CONFIG_FLAG_BACKGROUND_ENABLED;
 
 
     // bold
@@ -5061,6 +5069,13 @@ static _NodeIndex _process_xml_node_text(_AppData *app_data, xmlNodePtr xml_node
     if (raw_shadow_offset) {
         dc_node.text.shadow_offset = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_shadow_offset);
         xmlFree(raw_shadow_offset);
+    }
+
+    // update rate
+    xmlChar *raw_update_rate = xmlGetProp(xml_node, BAD_CAST "UpdateRate");
+    if (raw_update_rate) {
+        dc_node.text.update_rate = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_update_rate);
+        xmlFree(raw_update_rate);
     }
 
     // negate x

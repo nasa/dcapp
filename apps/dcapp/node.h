@@ -124,6 +124,7 @@ typedef enum __NodeConfigFlags {
     NODE_CONFIG_FLAG_FILL_ENABLED       = 1 << 0,
     NODE_CONFIG_FLAG_LINE_ENABLED       = 1 << 1,
     NODE_CONFIG_FLAG_HAS_MOUSE_HANDLERS = 1 << 2,
+    NODE_CONFIG_FLAG_BACKGROUND_ENABLED = 1 << 3,
 } _NodeConfigFlags;
 
 typedef int      _NodeIndex;
@@ -303,7 +304,9 @@ typedef struct __NodeMouseMotion {
 typedef struct __NodePanel {
     _ValIndex2 parent_dimension;
     _ValIndex2 virtual_dimension;
+    _ValIndex4 background_color;
     _ValIndex  index;
+    uint8_t    config_flags;
     _NodeIndex child;
 } _NodePanel;
 
@@ -476,10 +479,13 @@ typedef struct __NodeText {
     _ValIndex  log;
     _ValIndex4 fill_color;
     _ValIndex4 line_color;
+    _ValIndex4 background_color;
     _ValIndex  bold;
     _ValIndex  italic;
     uint8_t    config_flags;
     _ValIndex  shadow_offset;
+    _ValIndex  update_rate;
+    double     last_update_time;
     int        font_index; // 1-based index into sb_fonts (0 = default)
 
     // stretchy buffers contains values and formats
@@ -490,6 +496,7 @@ typedef struct __NodeText {
     char        *sb_formats;
     uint8_t     *sb_format_indices;
     DcValueType *sb_format_types;
+    char        *sb_cached_text;
 } _NodeText;
 
 typedef struct {

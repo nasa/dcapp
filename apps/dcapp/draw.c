@@ -9,6 +9,10 @@
 #include "utils/string.h"
 #include "utils/time.h"
 
+#ifndef DCAPP_LINE_WIDTH_FACTOR
+#define DCAPP_LINE_WIDTH_FACTOR 2.0f
+#endif
+
 // Forward declarations
 static void _draw_node_blink(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_button(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -1052,7 +1056,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
     }
 
     // draw arc line
-    float line_thickness = node->arc.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_width)->value_double;
+    float line_thickness = (node->arc.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_width)->value_double) * DCAPP_LINE_WIDTH_FACTOR;
     float line_color[4]  = {
         node->arc.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.r)->value_double,
         node->arc.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->arc.line_color.g)->value_double,
@@ -1415,7 +1419,7 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
 
     // draw outline
     if (node->ellipse.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
-        float line_thickness = node->ellipse.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_width)->value_double;
+        float line_thickness = (node->ellipse.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_width)->value_double) * DCAPP_LINE_WIDTH_FACTOR;
         float line_color[4]  = {
             node->ellipse.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_color.r)->value_double,
             node->ellipse.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->ellipse.line_color.g)->value_double,
@@ -2388,7 +2392,7 @@ static void _draw_node_line(_AppData *app_data, _NodeIndex node_index, _Node *no
 
     // draw outline
     if (node->line.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
-        float line_thickness = node->line.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_width)->value_double;
+        float line_thickness = (node->line.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_width)->value_double) * DCAPP_LINE_WIDTH_FACTOR;
         float line_color[4]  = {
             node->line.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.r)->value_double,
             node->line.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->line.line_color.g)->value_double,
@@ -2437,6 +2441,28 @@ static void _draw_node_panel(_AppData *app_data, _NodeIndex node_index, _Node *n
 
     // parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
+
+    // draw background
+    if (node->panel.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
+        float bg[4] = {
+            node->panel.background_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->panel.background_color.r)->value_double,
+            node->panel.background_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->panel.background_color.g)->value_double,
+            node->panel.background_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->panel.background_color.b)->value_double,
+            node->panel.background_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->panel.background_color.a)->value_double,
+        };
+        uint32_t bg_color = PL_COLOR_32_RGBA(bg[0], bg[1], bg[2], bg[3]);
+
+        plVec4 p0_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, 0.0f, 0.0f, 1.0f});
+        plVec4 p1_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){virtual_dimension[0], 0.0f, 0.0f, 1.0f});
+        plVec4 p2_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){virtual_dimension[0], virtual_dimension[1], 0.0f, 1.0f});
+        plVec4 p3_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, virtual_dimension[1], 0.0f, 1.0f});
+        _ext_dc_draw->add_quad_filled(_draw_batch_get_2d(app_data),
+            (plVec2){p0_vec4.x, p0_vec4.y},
+            (plVec2){p1_vec4.x, p1_vec4.y},
+            (plVec2){p2_vec4.x, p2_vec4.y},
+            (plVec2){p3_vec4.x, p3_vec4.y},
+            (dcDrawSolidOptions){.uColor = bg_color});
+    }
 
     // draw children
     plVec2 virtual_dimensions_vec2 = (plVec2){virtual_dimension[0], virtual_dimension[1]};
@@ -3048,7 +3074,7 @@ static void _draw_node_polygon(_AppData *app_data, _NodeIndex node_index, _Node 
 
     // draw outline
     if (node->polygon.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
-        float line_thickness = node->polygon.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_width)->value_double;
+        float line_thickness = (node->polygon.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_width)->value_double) * DCAPP_LINE_WIDTH_FACTOR;
         float line_color[4]  = {
             node->polygon.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.r)->value_double,
             node->polygon.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->polygon.line_color.g)->value_double,
@@ -3418,7 +3444,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
 
     // draw outline
     if (node->rectangle.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
-        float line_thickness = node->rectangle.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_width)->value_double;
+        float line_thickness = (node->rectangle.line_width == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_width)->value_double) * DCAPP_LINE_WIDTH_FACTOR;
         float line_color[4]  = {
             node->rectangle.line_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.r)->value_double,
             node->rectangle.line_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.g)->value_double,
@@ -4332,8 +4358,8 @@ static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetV
         ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.height_above_terrain)->value_double : 0.0f;
     int segments = node->planet_ellipse.segments != DC_APP_VAL_INDEX_UNDEFINED
         ? (int)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.segments)->value_double : 64;
-    float line_width = node->planet_ellipse.line_width != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.line_width)->value_double : 1.0f;
+    float line_width = (node->planet_ellipse.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
 
     if (radius_x <= 0.0f && radius_y <= 0.0f) return;
     if (segments < 3) segments = 3;
@@ -4416,8 +4442,8 @@ static void _draw_node_planet_line(_AppData *app_data, _Node *node, plPlanetView
 
     float height = node->planet_line.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.height_above_terrain)->value_double : 0.0f;
-    float line_width = node->planet_line.line_width != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.line_width)->value_double : 1.0f;
+    float line_width = (node->planet_line.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_line.line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
 
     // resolve line color
     float lc[4] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -4472,8 +4498,8 @@ static void _draw_node_planet_polygon(_AppData *app_data, _Node *node, plPlanetV
 
     float height = node->planet_polygon.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.height_above_terrain)->value_double : 0.0f;
-    float line_width = node->planet_polygon.line_width != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.line_width)->value_double : 1.0f;
+    float line_width = (node->planet_polygon.line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_polygon.line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
 
     // convert to 3D
     plVec3 *pts3d = (plVec3 *)malloc(sizeof(plVec3) * count);
@@ -5063,53 +5089,71 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
 
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
 
-    // expand text
-    static char *sb_text = NULL;
-    sbclear(sb_text);
-    for (int ii = 0; ii < sbcount(node->text.sb_vals); ii++) {
-
-        // filler
-        char *filler = &(node->text.sb_fillers[node->text.sb_filler_indices[ii]]);
-        sbpushn(sb_text, filler, (int)strlen(filler));
-
-        // value
-        DcValueType format_type = node->text.sb_format_types[ii];
-        char       *format      = &(node->text.sb_formats[node->text.sb_format_indices[ii]]);
-        static char val_str[256]; // assume text won't be that long..
-        if (node->text.sb_vals[ii] == DC_APP_VAL_INDEX_UNDEFINED) {
-            val_str[0] = '\0'; // empty string for undefined variable
-        } else {
-            DcValue *val = dc_app_lookup_get_value(app_data->lookup, node->text.sb_vals[ii]);
-            switch (format_type) {
-                case DC_VALUE_TYPE_STRING:
-                    snprintf(val_str, sizeof(val_str), format, val->value_string);
-                    break;
-                case DC_VALUE_TYPE_INTEGER:
-                    snprintf(val_str, sizeof(val_str), format, val->value_integer);
-                    break;
-                case DC_VALUE_TYPE_DOUBLE:
-                    snprintf(val_str, sizeof(val_str), format, val->value_double);
-                    break;
-                case DC_VALUE_TYPE_BOOLEAN:
-                    snprintf(val_str, sizeof(val_str), format, val->value_boolean);
-                    break;
-                default:
-                    DC_LOG_WARN("Text", "Unknown value type: %d", format_type);
-            }
-        }
-        sbpushn(sb_text, val_str, (int)strlen(val_str));
+    // expand text, honoring legacy UpdateRate by caching variable expansion
+    bool should_update_text = true;
+    if (node->text.update_rate != DC_APP_VAL_INDEX_UNDEFINED) {
+        double current_time = dc_utils_time_get();
+        double update_rate  = dc_app_lookup_get_value(app_data->lookup, node->text.update_rate)->value_double;
+        should_update_text = node->text.sb_cached_text == NULL ||
+                             update_rate <= 0.0 ||
+                             current_time - node->text.last_update_time > update_rate;
+        if (should_update_text)
+            node->text.last_update_time = current_time;
     }
+    if (should_update_text) {
+        sbclear(node->text.sb_cached_text);
+        for (int ii = 0; ii < sbcount(node->text.sb_vals); ii++) {
 
-    // ending filler
-    char *filler = &(node->text.sb_fillers[node->text.sb_filler_indices[sbcount(node->text.sb_vals)]]);
-    sbpushn(sb_text, filler, (int)strlen(filler));
-    sbpush(sb_text, '\0');
+            // filler
+            char *filler = &(node->text.sb_fillers[node->text.sb_filler_indices[ii]]);
+            sbpushn(node->text.sb_cached_text, filler, (int)strlen(filler));
+
+            // value
+            DcValueType format_type = node->text.sb_format_types[ii];
+            char       *format      = &(node->text.sb_formats[node->text.sb_format_indices[ii]]);
+            static char val_str[256]; // assume text won't be that long..
+            if (node->text.sb_vals[ii] == DC_APP_VAL_INDEX_UNDEFINED) {
+                val_str[0] = '\0'; // empty string for undefined variable
+            } else {
+                DcValue *val = dc_app_lookup_get_value(app_data->lookup, node->text.sb_vals[ii]);
+                switch (format_type) {
+                    case DC_VALUE_TYPE_STRING:
+                        snprintf(val_str, sizeof(val_str), format, val->value_string);
+                        break;
+                    case DC_VALUE_TYPE_INTEGER:
+                        snprintf(val_str, sizeof(val_str), format, val->value_integer);
+                        break;
+                    case DC_VALUE_TYPE_DOUBLE:
+                        snprintf(val_str, sizeof(val_str), format, val->value_double);
+                        break;
+                    case DC_VALUE_TYPE_BOOLEAN:
+                        snprintf(val_str, sizeof(val_str), format, val->value_boolean);
+                        break;
+                    default:
+                        DC_LOG_WARN("Text", "Unknown value type: %d", format_type);
+                }
+            }
+            sbpushn(node->text.sb_cached_text, val_str, (int)strlen(val_str));
+        }
+
+        // ending filler
+        char *filler = &(node->text.sb_fillers[node->text.sb_filler_indices[sbcount(node->text.sb_vals)]]);
+        sbpushn(node->text.sb_cached_text, filler, (int)strlen(filler));
+        sbpush(node->text.sb_cached_text, '\0');
+    }
+    char *sb_text = node->text.sb_cached_text ? node->text.sb_cached_text : "";
 
     // log
     if (node->text.log != DC_APP_VAL_INDEX_UNDEFINED) {
         const char *label = dc_app_lookup_get_value(app_data->lookup, node->text.log)->value_string;
         printf("[%s] %s\n", label, sb_text);
     }
+
+    // split mutates delimiters, so keep the cached text intact
+    static char *sb_render_text = NULL;
+    sbclear(sb_render_text);
+    sbpushn(sb_render_text, sb_text, (int)strlen(sb_text) + 1);
+    sb_text = sb_render_text;
 
     // get text substrings per newline
     size_t subtext_indices[_NODE_TEXT_MAX_LINES];
@@ -5174,6 +5218,18 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
     bool is_italic   = node->text.italic != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->text.italic)->value_boolean;
     bool is_bold     = node->text.bold != DC_APP_VAL_INDEX_UNDEFINED && dc_app_lookup_get_value(app_data->lookup, node->text.bold)->value_boolean;
     bool is_outlined = node->text.config_flags & NODE_CONFIG_FLAG_LINE_ENABLED;
+    bool has_background = node->text.config_flags & NODE_CONFIG_FLAG_BACKGROUND_ENABLED;
+
+    uint32_t background_color = 0;
+    if (has_background) {
+        float bg[4] = {
+            node->text.background_color.r == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.background_color.r)->value_double,
+            node->text.background_color.g == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.background_color.g)->value_double,
+            node->text.background_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.background_color.b)->value_double,
+            node->text.background_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->text.background_color.a)->value_double,
+        };
+        background_color = PL_COLOR_32_RGBA(bg[0], bg[1], bg[2], bg[3]);
+    }
 
     // iterate over each string
     // TODO this has some redundant transforms.....clean this up!
@@ -5459,6 +5515,21 @@ static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *no
         text_options.tTransform = transform3;
 
         dcDrawLayer2D *layer = _draw_batch_get_2d(app_data);
+
+        // background pass
+        if (has_background) {
+            plVec4 p0 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, 0.0f, 0.0f, 1.0f});
+            plVec4 p1 = pl_mul_mat4_vec4(&transform, (plVec4){dimensions[ii].x, 0.0f, 0.0f, 1.0f});
+            plVec4 p2 = pl_mul_mat4_vec4(&transform, (plVec4){dimensions[ii].x, dimensions[ii].y, 0.0f, 1.0f});
+            plVec4 p3 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, dimensions[ii].y, 0.0f, 1.0f});
+
+            _ext_dc_draw->add_quad_filled(layer,
+                (plVec2){p0.x, p0.y},
+                (plVec2){p1.x, p1.y},
+                (plVec2){p2.x, p2.y},
+                (plVec2){p3.x, p3.y},
+                (dcDrawSolidOptions){.uColor = background_color});
+        }
 
         // shadow pass
         if (node->text.shadow_offset != DC_APP_VAL_INDEX_UNDEFINED) {

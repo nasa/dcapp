@@ -110,12 +110,13 @@ A grouping element that establishes a coordinate space for child elements.
 
 ### `<Panel>`
 
-A simpler container that only sets virtual dimensions.
+A simpler container that sets virtual dimensions and can draw an optional background.
 
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
 | `VirtualDimensionX` | `VirtualWidth` | number/var | No | Virtual coordinate width |
 | `VirtualDimensionY` | `VirtualHeight` | number/var | No | Virtual coordinate height |
+| `BackgroundColor` | — | color | No | Panel background fill color |
 
 ---
 
@@ -402,9 +403,11 @@ Displays text with variable interpolation.
 | `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
 | `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
 | `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
-| `FillColor` | — | color | No | Text fill color |
+| `FillColor` | `Color` | color | No | Text fill color |
 | `LineColor` | — | color | No | Text outline color |
+| `BackgroundColor` | — | color | No | Text background fill color |
 | `Font` | — | string | No | Path to a TTF font file (relative to XML directory or absolute). Defaults to Bitstream Vera Sans. |
+| `UpdateRate` | — | number/var | No | Minimum seconds between variable-expansion refreshes |
 
 **Content:** Text string with variable interpolation
 
