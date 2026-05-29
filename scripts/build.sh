@@ -8,6 +8,7 @@ DCAPP_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Default configuration
 CONFIG="release"
+FORCE=0
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -16,10 +17,15 @@ while [[ $# -gt 0 ]]; do
             CONFIG="$2"
             shift 2
             ;;
+        -f)
+            FORCE=1
+            shift
+            ;;
         -h|--help)
-            echo "Usage: $0 [-c <config>]"
+            echo "Usage: $0 [-c <config>] [-f]"
             echo "  -c <config>  Build configuration (debug, release)"
-            echo "               Default: debug"
+            echo "               Default: release"
+            echo "  -f           Force all build stages"
             exit 0
             ;;
         *)
@@ -38,6 +44,28 @@ else
     PL_BUILD_SCRIPT="build_linux.sh"
 fi
 
+PILOTLIGHT_CONFIG="${CONFIG}_experimental"
+PILOTLIGHT_OUT="$DCAPP_HOME/pilotlight/out"
+PILOTLIGHT_STAMP="$PILOTLIGHT_OUT/.dcapp-pilotlight-${PLATFORM}-${PILOTLIGHT_CONFIG}.stamp"
+DCAPP_STAMP="$PILOTLIGHT_OUT/.dcapp-${PLATFORM}-${CONFIG}.stamp"
+DCAPP_HEAD="$(git -C "$DCAPP_HOME" rev-parse HEAD 2>/dev/null || true)"
+PILOTLIGHT_HEAD="$(git -C "$DCAPP_HOME/pilotlight" rev-parse HEAD 2>/dev/null || true)"
+PILOTLIGHT_DIRTY=0
+if ! git -C "$DCAPP_HOME/pilotlight" diff --quiet HEAD -- 2>/dev/null; then
+    PILOTLIGHT_DIRTY=1
+fi
+
+if [[ "$FORCE" -eq 1 ||
+      ( -n "$DCAPP_HEAD" &&
+        ( ! -f "$DCAPP_STAMP" || "$(cat "$DCAPP_STAMP")" != "$DCAPP_HEAD" ) ) ]]; then
+    echo "Cleaning pilotlight outputs..."
+    rm -rf "$PILOTLIGHT_OUT" "$DCAPP_HOME/pilotlight/out-temp" "$DCAPP_HOME/pilotlight/out_temp"
+    mkdir -p "$PILOTLIGHT_OUT"
+    if [[ -n "$DCAPP_HEAD" ]]; then
+        echo "$DCAPP_HEAD" > "$DCAPP_STAMP"
+    fi
+fi
+
 echo "========================================"
 echo "DCAPP Build"
 echo "========================================"
@@ -47,9 +75,23 @@ echo "========================================"
 
 # Step 1: Build pilotlight with _experimental suffix
 echo ""
-echo "[1/3] Building pilotlight..."
-cd "$DCAPP_HOME/pilotlight/src"
-bash "$PL_BUILD_SCRIPT" -c "${CONFIG}_experimental"
+if [[ "$FORCE" -eq 1 ||
+      ! -f "$PILOTLIGHT_OUT/pilot_light" ||
+      -z "$PILOTLIGHT_HEAD" ||
+      "$PILOTLIGHT_DIRTY" -eq 1 ||
+      ! -f "$PILOTLIGHT_STAMP" ||
+      "$(cat "$PILOTLIGHT_STAMP")" != "$PILOTLIGHT_HEAD" ]]; then
+    echo "[1/3] Building pilotlight..."
+    cd "$DCAPP_HOME/pilotlight/src"
+    bash "$PL_BUILD_SCRIPT" -c "$PILOTLIGHT_CONFIG"
+
+    if [[ -n "$PILOTLIGHT_HEAD" ]]; then
+        mkdir -p "$PILOTLIGHT_OUT"
+        echo "$PILOTLIGHT_HEAD" > "$PILOTLIGHT_STAMP"
+    fi
+else
+    echo "[1/3] Skipping pilotlight; cached $PILOTLIGHT_CONFIG build is current."
+fi
 
 # Step 2: Build dcapp apps
 echo ""
