@@ -37,6 +37,12 @@ typedef enum _DcAppPixelstreamType {
     DC_APP_PIXELSTREAM_TYPE_MJPEG
 } DcAppPixelstreamType;
 
+typedef enum _DcAppPlanetCrs {
+    DC_APP_PLANET_CRS_UNDEFINED,
+    DC_APP_PLANET_CRS_GEODETIC,
+    DC_APP_PLANET_CRS_CARTESIAN,
+} DcAppPlanetCrs;
+
 typedef enum _DcAppSetType {
     DC_APP_SET_TYPE_UNDEFINED,
     DC_APP_SET_TYPE_EQUAL,

@@ -80,12 +80,41 @@ The `.planet.json` file is what you reference from the `<PlanetData>` element in
 
 ## XML Elements
 
+### Coordinate Reference Systems
+
+Planet positioning can be expressed in one of these coordinate reference systems:
+
+| Constant | Meaning |
+|----------|---------|
+| `#_planet_crs_geodetic_` | Latitude/longitude/elevation on the loaded planet body. Latitude and longitude are degrees; heights and sizes are meters. |
+| `#_planet_crs_cartesian_` | Renderer-native body-centered Cartesian coordinates in meters. |
+
+Geodetic coordinates use the convention of the loaded planet data. For the included lunar DEM, use the east-positive PDS/IAU longitude from the source map data. The current planet body model is spherical and uses the radius from `<PlanetData>`.
+
+Cartesian coordinates use dcapp's planet renderer frame:
+
+```text
+x = R * cos(latitude) * sin(longitude)
+y = R * sin(latitude)
+z = R * cos(latitude) * cos(longitude)
+```
+
+CRS inheritance follows the scene structure:
+
+- `<Planet>` provides the default CRS for child `<PlanetTexture>` elements.
+- `<PlanetView>` inherits from its `<Planet>` unless camera attributes imply a frame or `CRS` is set explicitly.
+- `<PlanetView>` children inherit from their containing `<PlanetView>`.
+- A child can override inherited CRS with its own `CRS` attribute.
+
+For `<PlanetView>`, `CRS` is inferred from camera attributes when it is omitted: `CameraLatitude`/`CameraLongitude`/`CameraElevation` selects geodetic, while `CameraX`/`CameraY`/`CameraZ` selects cartesian. Child overlays inherit the view CRS unless they set their own `CRS`.
+
 ### `<Planet>`
 
 The top-level planet definition. It must be a direct child of `<DCAPP>` and should appear before any `<Window>` element.
 
 ```xml
-<Planet Name="Moon" LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
+<Planet Name="Moon" CRS="#_planet_crs_geodetic_"
+    LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
     <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
@@ -99,6 +128,7 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `Name` | string | Yes | A unique name used by `<PlanetView>` elements to reference this planet |
+| `CRS` | enum | No | Coordinate reference system inherited by child `<PlanetTexture>` elements. Defaults to `#_planet_crs_geodetic_`. |
 | `LightDirectionX` | double/var | No | X component of the light direction vector. Default -1. Can be variable-driven. |
 | `LightDirectionY` | double/var | No | Y component of the light direction vector. Default -1. Can be variable-driven. |
 | `LightDirectionZ` | double/var | No | Z component of the light direction vector. Default -1. Can be variable-driven. |
@@ -133,9 +163,11 @@ Overlays an image onto the planet surface at a specific geographic location. Mus
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `File` | string | Yes | Path to the image file (PNG, etc.) to overlay on the terrain |
+| `CRS` | enum | No | Coordinate reference system for the texture center. Inherits from `<Planet>`. |
 | `MetersPerPixel` | double/variable | Yes | Resolution of the texture in meters per pixel. Controls how large the image appears on the surface. |
-| `Latitude` | double | Yes | Latitude of the texture's center position on the surface, in degrees |
-| `Longitude` | double | Yes | Longitude of the texture's center position on the surface, in degrees |
+| `Latitude` | double | Yes for geodetic CRS | Latitude of the texture's center position on the surface, in degrees |
+| `Longitude` | double | Yes for geodetic CRS | Longitude of the texture's center position on the surface, in degrees |
+| `X`, `Y`, `Z` | double/variable | Yes for cartesian CRS | Texture center in native body-centered Cartesian meters |
 | `FireRefresh` | integer/variable | No | Edge-triggered texture reload. When this value changes (e.g., incremented by a button), the texture is reloaded from disk. Useful for dynamically updating the overlay image at runtime. |
 
 ### `<PlanetShader>`
@@ -173,6 +205,7 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
 | `Planet` | — | string | Yes | The `Name` of the `<Planet>` element to render |
+| `CRS` | — | enum | No | Coordinate reference system for the camera and inherited child overlays. Inferred from camera attributes when omitted. |
 | `ShaderIndex` | — | integer/var | No | Index of the active shader from the parent `<Planet>`'s `<PlanetShader>` library. Defaults to 0 (built-in shader). Each view can independently select its shader. |
 | `Tau` | — | double/var | No | LOD error threshold controlling chunk resolution. Default 0.3. Lower values load higher-resolution chunks sooner (more aggressive). Can be variable-driven for runtime adjustment. |
 | `PositionX` | `X` | number/var | No | X position relative to parent |
@@ -216,6 +249,8 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 
 Use one camera mode or the other on a given `<PlanetView>` -- do not mix LLE and XYZ/RPY attributes on the same element.
 
+If `CRS` is omitted, a view with `CameraLatitude`/`CameraLongitude`/`CameraElevation` is treated as geodetic, while a view with `CameraX`/`CameraY`/`CameraZ` is treated as cartesian.
+
 ---
 
 ## Camera Modes
@@ -223,6 +258,7 @@ Use one camera mode or the other on a given `<PlanetView>` -- do not mix LLE and
 ### LLE Mode (Latitude / Longitude / Elevation)
 
 LLE mode positions the camera using geographic coordinates on the planet surface. This is the most intuitive mode for exploring terrain interactively or setting up views at known geographic locations.
+Longitude follows the loaded planet data's geodetic convention. For the included lunar DEM, use the east-positive PDS/IAU longitude from the source map data; dcapp converts that into the renderer's native Cartesian frame.
 
 ```xml
 <PlanetView Planet="Moon" X="15" Y="200" Width="450" Height="450"
@@ -278,7 +314,7 @@ When `CameraOrthographic` is set to 1, the view uses orthographic (parallel) pro
 Draws a line strip on the terrain surface.
 
 ```xml
-<PlanetLine Planet="Moon" HeightAboveTerrain="1000" LineColor="1 0 0 1" LineWidth="2000">
+<PlanetLine HeightAboveTerrain="1000" LineColor="1 0 0 1" LineWidth="2000">
     <Vertex Latitude="28.6" Longitude="-80.6"/>
     <Vertex Latitude="32.3" Longitude="-64.8"/>
 </PlanetLine>
@@ -286,12 +322,12 @@ Draws a line strip on the terrain surface.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `Planet` | string | Yes | Name of the parent `<Planet>` definition |
+| `CRS` | enum | No | Coordinate reference system for child vertices. Inherits from `<PlanetView>`. |
 | `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
 | `LineColor` | color | No | Line color (RGBA) |
 | `LineWidth` | double/var | No | Line width in meters |
 
-**Children:** `<Vertex>` elements with `Latitude` and `Longitude` attributes.
+**Children:** `<Vertex>` elements with either `Latitude`/`Longitude` or cartesian `X`/`Y`/`Z` attributes.
 
 ### `<PlanetEllipse>`
 
@@ -304,8 +340,10 @@ Draws an ellipse on the terrain surface at a geographic location.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `Latitude` | double/var | Yes | Center latitude in degrees |
-| `Longitude` | double/var | Yes | Center longitude in degrees |
+| `CRS` | enum | No | Coordinate reference system for the center. Inherits from `<PlanetView>`. |
+| `Latitude` | double/var | Yes for geodetic CRS | Center latitude in degrees |
+| `Longitude` | double/var | Yes for geodetic CRS | Center longitude in degrees |
+| `X`, `Y`, `Z` | double/var | Yes for cartesian CRS | Center in native body-centered Cartesian meters |
 | `Radius` | double/var | No | Radius in meters (shorthand for both RadiusX and RadiusY) |
 | `RadiusX` | double/var | No | X radius in meters (overrides Radius) |
 | `RadiusY` | double/var | No | Y radius in meters (overrides Radius) |
@@ -327,8 +365,10 @@ Draws a sphere at a geographic location on the terrain surface.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `Latitude` | double/var | Yes | Latitude in degrees |
-| `Longitude` | double/var | Yes | Longitude in degrees |
+| `CRS` | enum | No | Coordinate reference system for the center. Inherits from `<PlanetView>`. |
+| `Latitude` | double/var | Yes for geodetic CRS | Latitude in degrees |
+| `Longitude` | double/var | Yes for geodetic CRS | Longitude in degrees |
+| `X`, `Y`, `Z` | double/var | Yes for cartesian CRS | Center in native body-centered Cartesian meters |
 | `Radius` | double/var | No | Sphere radius in meters |
 | `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
 | `FillColor` | color | No | Sphere color (RGBA) |
@@ -344,8 +384,10 @@ Displays text at a geographic location on the terrain surface.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `Latitude` | double/var | Yes | Latitude in degrees |
-| `Longitude` | double/var | Yes | Longitude in degrees |
+| `CRS` | enum | No | Coordinate reference system for the text position. Inherits from `<PlanetView>`. |
+| `Latitude` | double/var | Yes for geodetic CRS | Latitude in degrees |
+| `Longitude` | double/var | Yes for geodetic CRS | Longitude in degrees |
+| `X`, `Y`, `Z` | double/var | Yes for cartesian CRS | Text position in native body-centered Cartesian meters |
 | `Size` | double/var | No | Text size in meters |
 | `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
 | `FillColor` | color | No | Text color (RGBA) |
@@ -354,16 +396,28 @@ Displays text at a geographic location on the terrain surface.
 
 ### `<PlanetPolygon>`
 
-Draws a filled or outlined polygon on the terrain surface using geographic coordinates.
+Draws a filled or outlined polygon on the terrain surface.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
+| `CRS` | enum | No | Coordinate reference system for child vertices. Inherits from `<PlanetView>`. |
 | `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
 | `FillColor` | color | No | Fill color (RGBA) |
 | `LineColor` | color | No | Line color (RGBA) |
 | `LineWidth` | double/var | No | Line width in meters |
 
-**Children:** `<Vertex>` elements with `Latitude` and `Longitude` attributes.
+**Children:** `<Vertex>` elements with either `Latitude`/`Longitude` or cartesian `X`/`Y`/`Z` attributes.
+
+### `<Vertex>`
+
+Defines a point inside `<PlanetLine>` or `<PlanetPolygon>`. The containing line or polygon determines the CRS unless the primitive explicitly overrides it.
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Latitude` | double/var | Yes for geodetic CRS | Vertex latitude in degrees |
+| `Longitude` | double/var | Yes for geodetic CRS | Vertex longitude in degrees |
+| `Altitude` | double/var | No | Vertex altitude in meters. If omitted, the parent primitive's `HeightAboveTerrain` is used. |
+| `X`, `Y`, `Z` | double/var | Yes for cartesian CRS | Vertex position in native body-centered Cartesian meters |
 
 ### `<PlanetGeoJSON>`
 
@@ -377,6 +431,7 @@ Loads a GeoJSON file and renders its features (points, lines, polygons) on the t
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `File` | string | Yes | Path to a `.geojson` file (relative to XML directory) |
+| `CRS` | enum | No | Only `#_planet_crs_geodetic_` is currently supported for GeoJSON |
 | `HeightAboveTerrain` | double/var | No | Height above the surface in meters |
 | `LineColor` | color | No | Default line color for features without simplestyle properties |
 | `LineWidth` | double/var | No | Default line width in meters |
@@ -534,7 +589,8 @@ A logic file converts the LLE camera position into XYZ/RPY coordinates so both v
 A single `<Planet>` is defined with one data source, one texture overlay, and three custom shaders. The shader definitions act as a shared library -- each view selects its own active shader via `ShaderIndex`:
 
 ```xml
-<Planet Name="Moon" LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
+<Planet Name="Moon" CRS="#_planet_crs_geodetic_"
+    LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
     <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
@@ -550,20 +606,28 @@ A single `<Planet>` is defined with one data source, one texture overlay, and th
 The sample renders two side-by-side viewports of the same planet -- one using LLE camera mode and one using XYZ/RPY. Both use `ShaderIndex="@ActiveShader"` so the shader buttons affect both views, but each view could use a different variable for independent control:
 
 ```xml
-<!-- LLE Camera (left) -->
-<PlanetView Planet="Moon" X="15" Y="200" Width="450" Height="450"
+<!-- Geodetic camera and overlays (left) -->
+<PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_"
+    X="15" Y="200" Width="450" Height="450"
     CameraLatitude="@Latitude" CameraLongitude="@Longitude"
     CameraElevation="@Elevation" CameraHeading="@Heading"
-    CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"/>
+    CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader">
+    <PlanetEllipse Latitude="-58.62" Longitude="-14.73"
+        Radius="115385" FillColor="0.0 1.0 1.0 0.10"/>
+</PlanetView>
 
-<!-- XYZ/RPY Camera (right) -->
-<PlanetView Planet="Moon" X="535" Y="200" Width="450" Height="450"
+<!-- Cartesian camera and overlays (right) -->
+<PlanetView Planet="Moon" CRS="#_planet_crs_cartesian_"
+    X="535" Y="200" Width="450" Height="450"
     CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
     CameraRoll="@CamRoll" CameraPitch="@CamPitch" CameraYaw="@CamYaw"
-    CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"/>
+    CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader">
+    <PlanetEllipse X="-230161.415" Y="-1484128.773" Z="875455.350"
+        Radius="115385" FillColor="0.0 1.0 1.0 0.10"/>
+</PlanetView>
 ```
 
-Because the logic file converts LLE to XYZ/RPY, both views display the same camera angle. The two viewports demonstrate that either camera mode can be used depending on your application's needs.
+Because the logic file converts LLE to XYZ/RPY, both views display the same camera angle. The two viewports demonstrate that either camera mode can be used depending on your application's needs. The sample also marks known lunar craters in both CRS forms, which is useful for verifying that geodetic and cartesian overlays land in the same place.
 
 ### Interactive Controls
 

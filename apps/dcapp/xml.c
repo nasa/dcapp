@@ -3384,11 +3384,19 @@ static _NodeIndex _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_no
 
     // planet definition (top-level resource, no drawable node)
     _PlanetDef def = {0};
+    def.crs = DC_APP_PLANET_CRS_GEODETIC;
 
     // Name
     xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
     def.name          = strdup((const char *)raw_name);
     xmlFree(raw_name);
+
+    // coordinate reference system inherited by PlanetTexture
+    xmlChar *raw_crs = xmlGetProp(xml_node, BAD_CAST "CRS");
+    if (raw_crs) {
+        def.crs = (DcAppPlanetCrs)atoi((const char *)raw_crs);
+        xmlFree(raw_crs);
+    }
 
     // light direction
     xmlChar *raw_ldx = xmlGetProp(xml_node, BAD_CAST "LightDirectionX");
@@ -3475,6 +3483,14 @@ static _NodeIndex _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePt
     // inherit planet_def_index from parent PlanetView
     _Node *parent = _get_node(app_data, parent_node_index);
     dc_node.planet_ellipse.planet_def_index = parent->planet_view.planet_def_index;
+    dc_node.planet_ellipse.crs              = parent->planet_view.crs;
+
+    // coordinate reference system
+    xmlChar *raw_crs = xmlGetProp(xml_node, BAD_CAST "CRS");
+    if (raw_crs) {
+        dc_node.planet_ellipse.crs = (DcAppPlanetCrs)atoi((const char *)raw_crs);
+        xmlFree(raw_crs);
+    }
 
     // latitude
     xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
@@ -3488,6 +3504,23 @@ static _NodeIndex _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePt
     if (raw_lon) {
         dc_node.planet_ellipse.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
         xmlFree(raw_lon);
+    }
+
+    // cartesian position
+    xmlChar *raw_x = xmlGetProp(xml_node, BAD_CAST "X");
+    if (raw_x) {
+        dc_node.planet_ellipse.xyz.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x);
+        xmlFree(raw_x);
+    }
+    xmlChar *raw_y = xmlGetProp(xml_node, BAD_CAST "Y");
+    if (raw_y) {
+        dc_node.planet_ellipse.xyz.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y);
+        xmlFree(raw_y);
+    }
+    xmlChar *raw_z = xmlGetProp(xml_node, BAD_CAST "Z");
+    if (raw_z) {
+        dc_node.planet_ellipse.xyz.z = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_z);
+        xmlFree(raw_z);
     }
 
     // radius (shorthand for both RadiusX and RadiusY)
@@ -3587,6 +3620,7 @@ static void _create_geojson_nodes(
             dc_node.planet_sphere.fill_color           = line_color;
             dc_node.planet_sphere.config_flags         = NODE_CONFIG_FLAG_FILL_ENABLED;
             dc_node.planet_sphere.planet_def_index     = planet_def_index;
+            dc_node.planet_sphere.crs                  = DC_APP_PLANET_CRS_GEODETIC;
             node_index = _register_node(app_data, &dc_node);
             if (*first_index == NODE_INDEX_UNDEFINED) *first_index = node_index;
             if (*prev_index != NODE_INDEX_UNDEFINED) _get_node(app_data, *prev_index)->next = node_index;
@@ -3610,6 +3644,7 @@ static void _create_geojson_nodes(
                 dc_node.planet_sphere.fill_color           = line_color;
                 dc_node.planet_sphere.config_flags         = NODE_CONFIG_FLAG_FILL_ENABLED;
                 dc_node.planet_sphere.planet_def_index     = planet_def_index;
+                dc_node.planet_sphere.crs                  = DC_APP_PLANET_CRS_GEODETIC;
                 node_index = _register_node(app_data, &dc_node);
                 if (*first_index == NODE_INDEX_UNDEFINED) *first_index = node_index;
                 if (*prev_index != NODE_INDEX_UNDEFINED) _get_node(app_data, *prev_index)->next = node_index;
@@ -3632,6 +3667,7 @@ static void _create_geojson_nodes(
             dc_node.planet_line.line_width           = line_width;
             dc_node.planet_line.config_flags         = flags & NODE_CONFIG_FLAG_LINE_ENABLED ? NODE_CONFIG_FLAG_LINE_ENABLED : NODE_CONFIG_FLAG_NONE;
             dc_node.planet_line.planet_def_index     = planet_def_index;
+            dc_node.planet_line.crs                  = DC_APP_PLANET_CRS_GEODETIC;
             node_index = _register_node(app_data, &dc_node);
             if (*first_index == NODE_INDEX_UNDEFINED) *first_index = node_index;
             if (*prev_index != NODE_INDEX_UNDEFINED) _get_node(app_data, *prev_index)->next = node_index;
@@ -3657,6 +3693,7 @@ static void _create_geojson_nodes(
                 dc_node.planet_line.line_width           = line_width;
                 dc_node.planet_line.config_flags         = flags & NODE_CONFIG_FLAG_LINE_ENABLED ? NODE_CONFIG_FLAG_LINE_ENABLED : NODE_CONFIG_FLAG_NONE;
                 dc_node.planet_line.planet_def_index     = planet_def_index;
+                dc_node.planet_line.crs                  = DC_APP_PLANET_CRS_GEODETIC;
                 node_index = _register_node(app_data, &dc_node);
                 if (*first_index == NODE_INDEX_UNDEFINED) *first_index = node_index;
                 if (*prev_index != NODE_INDEX_UNDEFINED) _get_node(app_data, *prev_index)->next = node_index;
@@ -3682,6 +3719,7 @@ static void _create_geojson_nodes(
             dc_node.planet_polygon.fill_color           = fill_color;
             dc_node.planet_polygon.config_flags         = flags;
             dc_node.planet_polygon.planet_def_index     = planet_def_index;
+            dc_node.planet_polygon.crs                  = DC_APP_PLANET_CRS_GEODETIC;
             node_index = _register_node(app_data, &dc_node);
             if (*first_index == NODE_INDEX_UNDEFINED) *first_index = node_index;
             if (*prev_index != NODE_INDEX_UNDEFINED) _get_node(app_data, *prev_index)->next = node_index;
@@ -3710,6 +3748,7 @@ static void _create_geojson_nodes(
                 dc_node.planet_polygon.fill_color           = fill_color;
                 dc_node.planet_polygon.config_flags         = flags;
                 dc_node.planet_polygon.planet_def_index     = planet_def_index;
+                dc_node.planet_polygon.crs                  = DC_APP_PLANET_CRS_GEODETIC;
                 node_index = _register_node(app_data, &dc_node);
                 if (*first_index == NODE_INDEX_UNDEFINED) *first_index = node_index;
                 if (*prev_index != NODE_INDEX_UNDEFINED) _get_node(app_data, *prev_index)->next = node_index;
@@ -3769,6 +3808,15 @@ static _NodeIndex _process_xml_node_planet_geo_json(_AppData *app_data, xmlNodeP
     // parse default attributes from XML
     _Node *parent = _get_node(app_data, parent_node_index);
     uint8_t planet_def_index = parent->planet_view.planet_def_index;
+
+    xmlChar *raw_crs = xmlGetProp(xml_node, BAD_CAST "CRS");
+    if (raw_crs) {
+        DcAppPlanetCrs crs = (DcAppPlanetCrs)atoi((const char *)raw_crs);
+        if (crs != DC_APP_PLANET_CRS_GEODETIC) {
+            DC_LOG_WARN("PlanetGeoJSON", "Only geodetic CRS is currently supported; using geodetic");
+        }
+        xmlFree(raw_crs);
+    }
 
     DcAppValIndex default_height = DC_APP_VAL_INDEX_UNDEFINED;
     xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
@@ -3857,9 +3905,16 @@ static _NodeIndex _process_xml_node_planet_line(_AppData *app_data, xmlNodePtr x
 
     _Node *parent = _get_node(app_data, parent_node_index);
     dc_node.planet_line.planet_def_index = parent->planet_view.planet_def_index;
+    dc_node.planet_line.crs              = parent->planet_view.crs;
     dc_node.planet_line.sb_points_static  = NULL;
     dc_node.planet_line.sb_points_dynamic = NULL;
     dc_node.planet_line.is_dynamic        = true;
+
+    xmlChar *raw_crs = xmlGetProp(xml_node, BAD_CAST "CRS");
+    if (raw_crs) {
+        dc_node.planet_line.crs = (DcAppPlanetCrs)atoi((const char *)raw_crs);
+        xmlFree(raw_crs);
+    }
 
     xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
     if (raw_height) {
@@ -3898,9 +3953,16 @@ static _NodeIndex _process_xml_node_planet_polygon(_AppData *app_data, xmlNodePt
 
     _Node *parent = _get_node(app_data, parent_node_index);
     dc_node.planet_polygon.planet_def_index = parent->planet_view.planet_def_index;
+    dc_node.planet_polygon.crs              = parent->planet_view.crs;
     dc_node.planet_polygon.sb_points_static  = NULL;
     dc_node.planet_polygon.sb_points_dynamic = NULL;
     dc_node.planet_polygon.is_dynamic        = true;
+
+    xmlChar *raw_crs = xmlGetProp(xml_node, BAD_CAST "CRS");
+    if (raw_crs) {
+        dc_node.planet_polygon.crs = (DcAppPlanetCrs)atoi((const char *)raw_crs);
+        xmlFree(raw_crs);
+    }
 
     xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
     if (raw_height) {
@@ -4026,6 +4088,13 @@ static _NodeIndex _process_xml_node_planet_sphere(_AppData *app_data, xmlNodePtr
 
     _Node *parent = _get_node(app_data, parent_node_index);
     dc_node.planet_sphere.planet_def_index = parent->planet_view.planet_def_index;
+    dc_node.planet_sphere.crs              = parent->planet_view.crs;
+
+    xmlChar *raw_crs = xmlGetProp(xml_node, BAD_CAST "CRS");
+    if (raw_crs) {
+        dc_node.planet_sphere.crs = (DcAppPlanetCrs)atoi((const char *)raw_crs);
+        xmlFree(raw_crs);
+    }
 
     xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
     if (raw_lat) {
@@ -4037,6 +4106,24 @@ static _NodeIndex _process_xml_node_planet_sphere(_AppData *app_data, xmlNodePtr
     if (raw_lon) {
         dc_node.planet_sphere.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
         xmlFree(raw_lon);
+    }
+
+    xmlChar *raw_x = xmlGetProp(xml_node, BAD_CAST "X");
+    if (raw_x) {
+        dc_node.planet_sphere.xyz.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x);
+        xmlFree(raw_x);
+    }
+
+    xmlChar *raw_y = xmlGetProp(xml_node, BAD_CAST "Y");
+    if (raw_y) {
+        dc_node.planet_sphere.xyz.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y);
+        xmlFree(raw_y);
+    }
+
+    xmlChar *raw_z = xmlGetProp(xml_node, BAD_CAST "Z");
+    if (raw_z) {
+        dc_node.planet_sphere.xyz.z = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_z);
+        xmlFree(raw_z);
     }
 
     xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
@@ -4073,6 +4160,13 @@ static _NodeIndex _process_xml_node_planet_text(_AppData *app_data, xmlNodePtr x
     // inherit planet_def_index from parent PlanetView
     _Node *parent = _get_node(app_data, parent_node_index);
     dc_node.planet_text.planet_def_index = parent->planet_view.planet_def_index;
+    dc_node.planet_text.crs              = parent->planet_view.crs;
+
+    xmlChar *raw_crs = xmlGetProp(xml_node, BAD_CAST "CRS");
+    if (raw_crs) {
+        dc_node.planet_text.crs = (DcAppPlanetCrs)atoi((const char *)raw_crs);
+        xmlFree(raw_crs);
+    }
 
     // text content (same parsing as _process_xml_node_text)
     xmlChar *raw_text = xmlNodeGetContent(xml_node);
@@ -4223,6 +4317,23 @@ static _NodeIndex _process_xml_node_planet_text(_AppData *app_data, xmlNodePtr x
         xmlFree(raw_lon);
     }
 
+    // cartesian position
+    xmlChar *raw_x = xmlGetProp(xml_node, BAD_CAST "X");
+    if (raw_x) {
+        dc_node.planet_text.xyz.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x);
+        xmlFree(raw_x);
+    }
+    xmlChar *raw_y = xmlGetProp(xml_node, BAD_CAST "Y");
+    if (raw_y) {
+        dc_node.planet_text.xyz.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y);
+        xmlFree(raw_y);
+    }
+    xmlChar *raw_z = xmlGetProp(xml_node, BAD_CAST "Z");
+    if (raw_z) {
+        dc_node.planet_text.xyz.z = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_z);
+        xmlFree(raw_z);
+    }
+
     // height above terrain
     xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
     if (raw_height) {
@@ -4261,6 +4372,14 @@ static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePt
     }
 
     _PlanetTextureEntry entry = {0};
+    entry.crs = def->crs;
+
+    // coordinate reference system
+    xmlChar *raw_crs = xmlGetProp(xml_node, BAD_CAST "CRS");
+    if (raw_crs) {
+        entry.crs = (DcAppPlanetCrs)atoi((const char *)raw_crs);
+        xmlFree(raw_crs);
+    }
 
     // file path
     xmlChar *raw_file = xmlGetProp(xml_node, BAD_CAST "File");
@@ -4302,6 +4421,23 @@ static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePt
         xmlFree(raw_lon);
     }
 
+    // cartesian center
+    xmlChar *raw_x = xmlGetProp(xml_node, BAD_CAST "X");
+    if (raw_x) {
+        entry.xyz.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x);
+        xmlFree(raw_x);
+    }
+    xmlChar *raw_y = xmlGetProp(xml_node, BAD_CAST "Y");
+    if (raw_y) {
+        entry.xyz.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y);
+        xmlFree(raw_y);
+    }
+    xmlChar *raw_z = xmlGetProp(xml_node, BAD_CAST "Z");
+    if (raw_z) {
+        entry.xyz.z = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_z);
+        xmlFree(raw_z);
+    }
+
     // edge-triggered refresh
     xmlChar *raw_fire_refresh = xmlGetProp(xml_node, BAD_CAST "FireRefresh");
     if (raw_fire_refresh) {
@@ -4339,6 +4475,18 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
             DC_LOG_ERROR("PlanetView", "Planet '%s' not found", (const char *)raw_planet);
         }
         xmlFree(raw_planet);
+    }
+    if (dc_node.planet_view.planet_def_index != UINT8_MAX)
+        dc_node.planet_view.crs = app_data->sb_planet_defs[dc_node.planet_view.planet_def_index].crs;
+    else
+        dc_node.planet_view.crs = DC_APP_PLANET_CRS_GEODETIC;
+
+    bool     has_explicit_crs = false;
+    xmlChar *raw_crs          = xmlGetProp(xml_node, BAD_CAST "CRS");
+    if (raw_crs) {
+        dc_node.planet_view.crs = (DcAppPlanetCrs)atoi((const char *)raw_crs);
+        has_explicit_crs        = true;
+        xmlFree(raw_crs);
     }
 
     // x position
@@ -4509,6 +4657,12 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
 
     if (has_lle && has_xyz) {
         DC_LOG_WARN("PlanetView", "Both LLE and XYZ/RPY specified; using XYZ/RPY");
+    }
+    if (!has_explicit_crs) {
+        if (has_xyz)
+            dc_node.planet_view.crs = DC_APP_PLANET_CRS_CARTESIAN;
+        else if (has_lle)
+            dc_node.planet_view.crs = DC_APP_PLANET_CRS_GEODETIC;
     }
 
     if (has_xyz) {
@@ -5292,6 +5446,24 @@ static _NodeIndex _process_xml_node_vertex(_AppData *app_data, xmlNodePtr xml_no
             if (raw_alt) {
                 pv.alt = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_alt);
                 xmlFree(raw_alt);
+            }
+
+            xmlChar *raw_x = xmlGetProp(xml_node, BAD_CAST "X");
+            if (raw_x) {
+                pv.xyz.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x);
+                xmlFree(raw_x);
+            }
+
+            xmlChar *raw_y = xmlGetProp(xml_node, BAD_CAST "Y");
+            if (raw_y) {
+                pv.xyz.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y);
+                xmlFree(raw_y);
+            }
+
+            xmlChar *raw_z = xmlGetProp(xml_node, BAD_CAST "Z");
+            if (raw_z) {
+                pv.xyz.z = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_z);
+                xmlFree(raw_z);
             }
 
             if (parent_node->type == NODE_TYPE_PLANET_LINE)

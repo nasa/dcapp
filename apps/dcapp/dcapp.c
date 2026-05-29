@@ -7,6 +7,8 @@
 #include "utils/file.h"
 #include "utils/log.h"
 
+#include <math.h>
+
 // static members
 // TODO hate this solution, but needed for DLL lookup
 // of variables. Clean this up later
@@ -766,10 +768,28 @@ static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry
     out->pcPath = entry->source;
     if (entry->mpp != DC_APP_VAL_INDEX_UNDEFINED)
         out->fMetersPerPixel = (float)dc_app_lookup_get_value(app_data->lookup, entry->mpp)->value_double;
-    if (entry->lat != DC_APP_VAL_INDEX_UNDEFINED)
-        out->fLatitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lat)->value_double;
-    if (entry->lon != DC_APP_VAL_INDEX_UNDEFINED)
-        out->fLongitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lon)->value_double;
+    if (entry->crs == DC_APP_PLANET_CRS_CARTESIAN) {
+        plVec3 pos = {
+            entry->xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, entry->xyz.x)->value_double : 0.0f,
+            entry->xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, entry->xyz.y)->value_double : 0.0f,
+            entry->xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, entry->xyz.z)->value_double : 0.0f
+        };
+
+        // convert cartesian texture center to the lat/lon expected by pl_planet
+        float r = sqrtf(pos.x * pos.x + pos.y * pos.y + pos.z * pos.z);
+        if (r <= 0.0f) {
+            out->fLatitude  = 0.0f;
+            out->fLongitude = 0.0f;
+        } else {
+            out->fLatitude  = pl_degreesf(asinf(pos.y / r));
+            out->fLongitude = pl_degreesf(atan2f(pos.x, pos.z));
+        }
+    } else {
+        if (entry->lat != DC_APP_VAL_INDEX_UNDEFINED)
+            out->fLatitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lat)->value_double;
+        if (entry->lon != DC_APP_VAL_INDEX_UNDEFINED)
+            out->fLongitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lon)->value_double;
+    }
     return true;
 }
 

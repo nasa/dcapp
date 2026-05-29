@@ -500,11 +500,13 @@ typedef struct {
 
 typedef struct {
     char     *source;                  // heap-allocated absolute file path
+    _ValIndex3 xyz;                    // double vars: native Cartesian center
     _ValIndex mpp;                     // double var: meters per pixel
     _ValIndex lat;                     // double var: latitude (degrees)
     _ValIndex lon;                     // double var: longitude (degrees)
     _ValIndex fire_refresh;            // var: change triggers texture reload
     DcValue   last_fire_refresh_value; // edge detection (fire on change)
+    DcAppPlanetCrs crs;
 } _PlanetTextureEntry;
 
 #define PLANET_INDEX_UNDEFINED 0
@@ -526,6 +528,9 @@ typedef struct __PlanetDef {
     // light direction
     _ValIndex3 light_direction;
 
+    // coordinate reference system inherited by PlanetTexture
+    DcAppPlanetCrs crs;
+
     // VRAM
     uint32_t mesh_cache_size; // bytes, 0 = default (256 MB each)
 
@@ -536,6 +541,7 @@ typedef struct __PlanetDef {
 typedef struct __NodePlanetEllipse {
     _ValIndex  lat;
     _ValIndex  lon;
+    _ValIndex3 xyz;
     _ValIndex  radius_x;
     _ValIndex  radius_y;
     _ValIndex  rotation;
@@ -546,6 +552,7 @@ typedef struct __NodePlanetEllipse {
     _ValIndex  segments;
     uint8_t    config_flags;
     uint8_t    planet_def_index;
+    DcAppPlanetCrs crs;
 } _NodePlanetEllipse;
 
 // fixed point (GeoJSON, baked at parse time)
@@ -561,6 +568,7 @@ typedef struct __PlanetVertexDynamic {
     _ValIndex lat;
     _ValIndex lon;
     _ValIndex alt;
+    _ValIndex3 xyz;
 } _PlanetVertexDynamic;
 
 typedef struct __NodePlanetLine {
@@ -572,6 +580,7 @@ typedef struct __NodePlanetLine {
     _ValIndex             line_width;
     uint8_t               config_flags;
     uint8_t               planet_def_index;
+    DcAppPlanetCrs        crs;
 } _NodePlanetLine;
 
 typedef struct __NodePlanetPolygon {
@@ -584,26 +593,31 @@ typedef struct __NodePlanetPolygon {
     _ValIndex4            fill_color;
     uint8_t               config_flags;
     uint8_t               planet_def_index;
+    DcAppPlanetCrs        crs;
 } _NodePlanetPolygon;
 
 typedef struct __NodePlanetSphere {
     _ValIndex  lat;
     _ValIndex  lon;
+    _ValIndex3 xyz;
     _ValIndex  height_above_terrain;
     _ValIndex  radius;
     _ValIndex4 fill_color;
     uint8_t    config_flags;
     uint8_t    planet_def_index;
+    DcAppPlanetCrs crs;
 } _NodePlanetSphere;
 
 typedef struct __NodePlanetText {
     _ValIndex  lat;
     _ValIndex  lon;
+    _ValIndex3 xyz;
     _ValIndex  height_above_terrain;
     _ValIndex  size;
     _ValIndex4 fill_color;
     uint8_t    config_flags;
     uint8_t    planet_def_index;
+    DcAppPlanetCrs crs;
 
     // text content (same pattern as _NodeText)
     _ValIndex   *sb_vals;
@@ -634,6 +648,7 @@ typedef struct __NodePlanetView {
     _ValIndex3 rpy;
     _ValIndex  heading;
     _ValIndex  orthographic;
+    DcAppPlanetCrs crs;
 
     // shader selection (per-view; indexes into parent PlanetDef's sb_shaders)
     _ValIndex shader_index;        // variable holding active shader index

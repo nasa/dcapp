@@ -1007,13 +1007,14 @@ static const char *_valid_attrs_pixelstream[]    = {"Type", "URL", "Protocol", "
 static const char *_valid_attrs_set[]            = {"Variable", "Operator", "Defer", NULL};
 static const char *_valid_attrs_sphere[]         = {"Radius", "Image", "Roll", "Pitch", "Yaw", NULL};
 static const char *_valid_attrs_style[]          = {"Name", NULL};
-static const char *_valid_attrs_planet[]         = {"Name", "LightDirectionX", "LightDirectionY", "LightDirectionZ", "MeshCacheSize", NULL};
-static const char *_valid_attrs_planet_view[]    = {"Planet", "ShaderIndex", "Tau", "Flatten", "PositionX", "X", "PositionY", "Y", "DimensionX", "Width", "DimensionY", "Height", "LocalAlignX", "HorizontalAlign", "LocalAlignY", "VerticalAlign", "ParentAlignX", "ParentAlignY", "Rotation", "Rotate", "PivotPositionX", "PivotX", "PivotPositionY", "PivotY", "PivotParentAlignX", "PivotParentAlignY", "PivotLocalAlignX", "PivotLocalAlignY", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", "NegateX", "NegateY", NULL};
+static const char *_valid_attrs_planet[]         = {"Name", "CRS", "LightDirectionX", "LightDirectionY", "LightDirectionZ", "MeshCacheSize", NULL};
+static const char *_valid_attrs_planet_view[]    = {"Planet", "CRS", "ShaderIndex", "Tau", "Flatten", "PositionX", "X", "PositionY", "Y", "DimensionX", "Width", "DimensionY", "Height", "LocalAlignX", "HorizontalAlign", "LocalAlignY", "VerticalAlign", "ParentAlignX", "ParentAlignY", "Rotation", "Rotate", "PivotPositionX", "PivotX", "PivotPositionY", "PivotY", "PivotParentAlignX", "PivotParentAlignY", "PivotLocalAlignX", "PivotLocalAlignY", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", "NegateX", "NegateY", NULL};
 static const char *_valid_attrs_planet_data[]    = {"File", NULL};
-static const char *_valid_attrs_planet_texture[] = {"File", "MetersPerPixel", "Latitude", "Longitude", "FireRefresh", NULL};
+static const char *_valid_attrs_planet_texture[] = {"File", "CRS", "MetersPerPixel", "Latitude", "Longitude", "X", "Y", "Z", "FireRefresh", NULL};
 static const char *_valid_attrs_planet_shader[]  = {"Index", "VertexShader", "FragmentShader", NULL};
-static const char *_valid_attrs_planet_overlay[] = {"Planet", "HeightAboveTerrain", "Latitude", "Longitude", "Radius", "RadiusX", "RadiusY", "Rotation", "Segments", "Size", NULL};
-static const char *_valid_attrs_planet_geojson[] = {"File", "Planet", "HeightAboveTerrain", NULL};
+static const char *_valid_attrs_planet_overlay[] = {"Planet", "CRS", "HeightAboveTerrain", "Latitude", "Longitude", "X", "Y", "Z", "Radius", "RadiusX", "RadiusY", "Rotation", "Segments", "Size", NULL};
+static const char *_valid_attrs_planet_geojson[] = {"File", "Planet", "CRS", "HeightAboveTerrain", NULL};
+static const char *_valid_attrs_planet_vertex[]  = {"Latitude", "Longitude", "Altitude", "X", "Y", "Z", NULL};
 static const char *_valid_attrs_rounded[]        = {"Rounded", NULL};
 static const char *_valid_attrs_text[]           = {"Size", "ShadowOffset", "Font", NULL};
 static const char *_valid_attrs_trick_io[]       = {"Host", "Port", "DataRate", "ConnectedVariable", NULL};
@@ -1270,7 +1271,8 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
         case DC_APP_ELEM_TYPE_VERTEX:
             return _attr_in_list(attr_name, _valid_attrs_position) ||
                    _attr_in_list(attr_name, _valid_attrs_negate) ||
-                   _attr_in_list(attr_name, _valid_attrs_align);
+                   _attr_in_list(attr_name, _valid_attrs_align) ||
+                   _attr_in_list(attr_name, _valid_attrs_planet_vertex);
 
         case DC_APP_ELEM_TYPE_WINDOW:
             return _attr_in_list(attr_name, _valid_attrs_position) ||

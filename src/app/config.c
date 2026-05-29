@@ -161,6 +161,8 @@ DcAppConfig *dc_app_config_create(const char *config_path, char **args, int arg_
     _add_const_int(&context, "_if_gte_", DC_APP_CONDITIONAL_TYPE_GTE, true);
     _add_const_int(&context, "_pixelstream_shmem_", DC_APP_PIXELSTREAM_TYPE_SHMEM, true);
     _add_const_int(&context, "_pixelstream_mjpeg_", DC_APP_PIXELSTREAM_TYPE_MJPEG, true);
+    _add_const_int(&context, "_planet_crs_geodetic_", DC_APP_PLANET_CRS_GEODETIC, true);
+    _add_const_int(&context, "_planet_crs_cartesian_", DC_APP_PLANET_CRS_CARTESIAN, true);
     _add_const_int(&context, "_set_equal_", DC_APP_SET_TYPE_EQUAL, true);
     _add_const_int(&context, "_set_add_", DC_APP_SET_TYPE_ADD, true);
     _add_const_int(&context, "_set_subtract_", DC_APP_SET_TYPE_SUBTRACT, true);

@@ -4289,6 +4289,32 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
     app_data->stencil_3d_dirty = true;
 }
 
+static plVec3 _planet_geodetic_to_cartesian(float lat, float lon, float height, double planet_radius) {
+    // convert geodetic degrees/meters to renderer-native cartesian meters
+    float lat_rad = pl_radiansf(lat);
+    float lon_rad = pl_radiansf(lon);
+    float R = (float)planet_radius + height;
+    return (plVec3){
+        R * cosf(lat_rad) * sinf(lon_rad),
+        R * sinf(lat_rad),
+        R * cosf(lat_rad) * cosf(lon_rad)
+    };
+}
+
+static void _planet_cartesian_to_geodetic(plVec3 pos, double planet_radius, float *lat, float *lon, float *height) {
+    // convert renderer-native cartesian meters back to geodetic degrees/meters
+    float r = sqrtf(pos.x * pos.x + pos.y * pos.y + pos.z * pos.z);
+    if (r <= 0.0f) {
+        *lat = 0.0f;
+        *lon = 0.0f;
+        *height = -(float)planet_radius;
+        return;
+    }
+    *lat = pl_degreesf(asinf(pos.y / r));
+    *lon = pl_degreesf(atan2f(pos.x, pos.z));
+    *height = r - (float)planet_radius;
+}
+
 static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetView *view, double planet_radius) {
 
     // resolve values
@@ -4314,17 +4340,18 @@ static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetV
     if (segments > _NODE_ELLIPSE_MAX_SEGMENTS) segments = _NODE_ELLIPSE_MAX_SEGMENTS;
 
     // convert to radians
-    float lat_rad = pl_radiansf(lat);
-    float lon_rad = pl_radiansf(lon);
     float rot_rad = pl_radiansf(rotation);
 
     // center on sphere surface
-    float R = (float)planet_radius + height;
-    plVec3 center = {
-        R * cosf(lat_rad) * sinf(lon_rad),
-        R * sinf(lat_rad),
-        R * cosf(lat_rad) * cosf(lon_rad)
-    };
+    plVec3 center = _planet_geodetic_to_cartesian(lat, lon, height, planet_radius);
+    if (node->planet_ellipse.crs == DC_APP_PLANET_CRS_CARTESIAN) {
+        // cartesian centers are already in renderer-native planet space
+        center = (plVec3){
+            node->planet_ellipse.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.xyz.x)->value_double : 0.0f,
+            node->planet_ellipse.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.xyz.y)->value_double : 0.0f,
+            node->planet_ellipse.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_ellipse.xyz.z)->value_double : 0.0f
+        };
+    }
 
     // local tangent plane (ENU)
     plVec3 up = pl_norm_vec3(center);
@@ -4412,19 +4439,22 @@ static void _draw_node_planet_line(_AppData *app_data, _Node *node, plPlanetView
             float lat = v->lat != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->lat)->value_double : 0.0f;
             float lon = v->lon != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->lon)->value_double : 0.0f;
             float alt = v->alt != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->alt)->value_double : height;
-            float R = (float)planet_radius + alt;
-            float lat_rad = pl_radiansf(lat);
-            float lon_rad = pl_radiansf(lon);
-            pts3d[p] = (plVec3){ R * cosf(lat_rad) * sinf(lon_rad), R * sinf(lat_rad), R * cosf(lat_rad) * cosf(lon_rad) };
+            if (node->planet_line.crs == DC_APP_PLANET_CRS_CARTESIAN) {
+                // cartesian vertices are already in renderer-native planet space
+                pts3d[p] = (plVec3){
+                    v->xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->xyz.x)->value_double : 0.0f,
+                    v->xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->xyz.y)->value_double : 0.0f,
+                    v->xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->xyz.z)->value_double : 0.0f
+                };
+            } else {
+                pts3d[p] = _planet_geodetic_to_cartesian(lat, lon, alt, planet_radius);
+            }
         }
     } else {
         for (uint32_t p = 0; p < count; p++) {
             _PlanetVertexStatic *pt = &node->planet_line.sb_points_static[p];
             float pt_height = pt->has_alt ? (float)pt->alt : height;
-            float R = (float)planet_radius + pt_height;
-            float lat_rad = pl_radiansf((float)pt->lat);
-            float lon_rad = pl_radiansf((float)pt->lon);
-            pts3d[p] = (plVec3){ R * cosf(lat_rad) * sinf(lon_rad), R * sinf(lat_rad), R * cosf(lat_rad) * cosf(lon_rad) };
+            pts3d[p] = _planet_geodetic_to_cartesian((float)pt->lat, (float)pt->lon, pt_height, planet_radius);
         }
     }
 
@@ -4455,19 +4485,22 @@ static void _draw_node_planet_polygon(_AppData *app_data, _Node *node, plPlanetV
             float lat = v->lat != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->lat)->value_double : 0.0f;
             float lon = v->lon != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->lon)->value_double : 0.0f;
             float alt = v->alt != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->alt)->value_double : height;
-            float R = (float)planet_radius + alt;
-            float lat_rad = pl_radiansf(lat);
-            float lon_rad = pl_radiansf(lon);
-            pts3d[p] = (plVec3){ R * cosf(lat_rad) * sinf(lon_rad), R * sinf(lat_rad), R * cosf(lat_rad) * cosf(lon_rad) };
+            if (node->planet_polygon.crs == DC_APP_PLANET_CRS_CARTESIAN) {
+                // cartesian vertices are already in renderer-native planet space
+                pts3d[p] = (plVec3){
+                    v->xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->xyz.x)->value_double : 0.0f,
+                    v->xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->xyz.y)->value_double : 0.0f,
+                    v->xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, v->xyz.z)->value_double : 0.0f
+                };
+            } else {
+                pts3d[p] = _planet_geodetic_to_cartesian(lat, lon, alt, planet_radius);
+            }
         }
     } else {
         for (uint32_t p = 0; p < count; p++) {
             _PlanetVertexStatic *pt = &node->planet_polygon.sb_points_static[p];
             float pt_height = pt->has_alt ? (float)pt->alt : height;
-            float R = (float)planet_radius + pt_height;
-            float lat_rad = pl_radiansf((float)pt->lat);
-            float lon_rad = pl_radiansf((float)pt->lon);
-            pts3d[p] = (plVec3){ R * cosf(lat_rad) * sinf(lon_rad), R * sinf(lat_rad), R * cosf(lat_rad) * cosf(lon_rad) };
+            pts3d[p] = _planet_geodetic_to_cartesian((float)pt->lat, (float)pt->lon, pt_height, planet_radius);
         }
     }
 
@@ -4519,6 +4552,16 @@ static void _draw_node_planet_sphere(_AppData *app_data, _Node *node, plPlanetVi
         node->planet_sphere.fill_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.fill_color.a)->value_double : 1.0f
     };
     uint32_t fill_color = PL_COLOR_32_RGBA(fc[0], fc[1], fc[2], fc[3]);
+
+    if (node->planet_sphere.crs == DC_APP_PLANET_CRS_CARTESIAN) {
+        // pl_planet draws spheres from lat/lon, so convert cartesian centers back
+        plVec3 pos = {
+            node->planet_sphere.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.xyz.x)->value_double : 0.0f,
+            node->planet_sphere.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.xyz.y)->value_double : 0.0f,
+            node->planet_sphere.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.xyz.z)->value_double : 0.0f
+        };
+        _planet_cartesian_to_geodetic(pos, planet_radius, &lat, &lon, &height);
+    }
 
     _ext_planet->draw_sphere(view, lon, lat, height, radius, fill_color);
 }
@@ -4578,14 +4621,15 @@ static void _draw_node_planet_text(_AppData *app_data, _Node *node, plPlanetView
     sbpush(sb_text, '\0');
 
     // compute 3D position
-    float lat_rad = pl_radiansf(lat);
-    float lon_rad = pl_radiansf(lon);
-    float R = (float)planet_radius + height;
-    plVec3 pos = {
-        R * cosf(lat_rad) * sinf(lon_rad),
-        R * sinf(lat_rad),
-        R * cosf(lat_rad) * cosf(lon_rad)
-    };
+    plVec3 pos = _planet_geodetic_to_cartesian(lat, lon, height, planet_radius);
+    if (node->planet_text.crs == DC_APP_PLANET_CRS_CARTESIAN) {
+        // cartesian text positions are already in renderer-native planet space
+        pos = (plVec3){
+            node->planet_text.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.xyz.x)->value_double : 0.0f,
+            node->planet_text.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.xyz.y)->value_double : 0.0f,
+            node->planet_text.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.xyz.z)->value_double : 0.0f
+        };
+    }
 
     // resolve color
     float fc[4] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -4888,7 +4932,8 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
     camera.fWidth       = dimension[0];
     camera.fHeight      = dimension[1];
 
-    if (use_xyz) {
+    if (node->planet_view.crs == DC_APP_PLANET_CRS_CARTESIAN && use_xyz) {
+        // cartesian camera is already expressed as position plus RPY in planet space
         double cam_x = dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.x)->value_double;
         double cam_y = dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.y)->value_double;
         double cam_z = dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.z)->value_double;
@@ -4903,7 +4948,8 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
         if (node->planet_view.rpy.roll != DC_APP_VAL_INDEX_UNDEFINED) {
             camera.fRoll = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.roll)->value_double);
         }
-    } else if (use_lle) {
+    } else if (node->planet_view.crs == DC_APP_PLANET_CRS_GEODETIC && use_lle) {
+        // geodetic camera looks from the surface point toward the planet center
         double lat_deg = dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.lat)->value_double;
         double lon_deg = dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.lon)->value_double;
         double ele     = dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.ele)->value_double;
