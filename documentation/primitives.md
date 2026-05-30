@@ -37,10 +37,11 @@ Defines the application window.
 | `DimensionY` | `Height` | number | **Yes** | Window height in pixels |
 | `VirtualDimensionX` | `VirtualWidth` | number/var | No | Virtual coordinate width (default: actual width) |
 | `VirtualDimensionY` | `VirtualHeight` | number/var | No | Virtual coordinate height (default: actual height) |
+| `FrameRateLimit` | `MaxFPS`, `MaxFrameRate` | number/var | No | Maximum frames per second; values <= 0 disable limiting |
 
 **Example:**
 ```xml
-<Window Title="Flight Display" Width="1920" Height="1080" VirtualWidth="1920" VirtualHeight="1080">
+<Window Title="Flight Display" Width="1920" Height="1080" VirtualWidth="1920" VirtualHeight="1080" FrameRateLimit="30">
     ...
 </Window>
 ```

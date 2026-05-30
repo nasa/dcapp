@@ -139,6 +139,7 @@ typedef struct __FrameData {
 
     // frame count
     unsigned long long count;
+    double             last_frame_start_time;
 
     // triggered once
     bool is_mouse_pressed;

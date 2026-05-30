@@ -6,6 +6,7 @@
 #include "utils/env.h"
 #include "utils/file.h"
 #include "utils/log.h"
+#include "utils/time.h"
 
 #include <math.h>
 
@@ -22,6 +23,7 @@ PL_EXPORT void  pl_app_resize(_AppData *app_data);
 PL_EXPORT void  pl_app_update(_AppData *app_data);
 void           *get_variable_value_addr(const char *name);
 static void     _flush_deferred_sets(_AppData *app_data);
+static void     _apply_frame_rate_limit(_AppData *app_data);
 static bool     _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, plPlanetTexture *out);
 static void     _init_planets(_AppData *app_data);
 static void     _update_planet_defs(_AppData *app_data);
@@ -478,6 +480,8 @@ static void _update_pixelstream_sources(_AppData *app_data) {
 }
 
 PL_EXPORT void pl_app_update(_AppData *app_data) {
+    _apply_frame_rate_limit(app_data);
+
     // this needs to be the first call when using the starter
     // extension. You must return if it returns false (usually a swapchain recreation).
     if (!_ext_starter->begin_frame()) {
@@ -760,6 +764,31 @@ void *get_variable_value_addr(const char *name) {
         return dc_value_get_addr(val);
     }
     return NULL;
+}
+
+static void _apply_frame_rate_limit(_AppData *app_data) {
+
+    if (!app_data || app_data->window == NODE_INDEX_UNDEFINED) return;
+
+    _Node *window_node = _get_node(app_data, app_data->window);
+    if (!window_node || window_node->type != NODE_TYPE_WINDOW || window_node->window.frame_rate_limit == DC_APP_VAL_INDEX_UNDEFINED) return;
+
+    DcValue *frame_rate_limit_value = dc_app_lookup_get_value(app_data->lookup, window_node->window.frame_rate_limit);
+    double   frame_rate_limit       = frame_rate_limit_value ? frame_rate_limit_value->value_double : 0.0;
+    if (frame_rate_limit <= 0.0) return;
+
+    double target_frame_time = 1.0 / frame_rate_limit;
+    double now               = dc_utils_time_get();
+    if (app_data->frame_data.last_frame_start_time > 0.0) {
+        double elapsed = now - app_data->frame_data.last_frame_start_time;
+        if (elapsed < target_frame_time) {
+            int sleep_ms = (int)ceil((target_frame_time - elapsed) * 1000.0);
+            if (sleep_ms > 0) {
+                dc_utils_sleep_ms(sleep_ms);
+            }
+        }
+    }
+    app_data->frame_data.last_frame_start_time = dc_utils_time_get();
 }
 
 static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, plPlanetTexture *out) {
