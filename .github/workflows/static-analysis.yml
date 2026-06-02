@@ -28,7 +28,7 @@ jobs:
         run: |
           INCLUDES="-I src -I extensions -I shaders \
                     -I pilotlight/src -I pilotlight/libs -I pilotlight/extensions -I pilotlight/shaders \
-                    -I pilotlight/dependencies/stb \
+                    -I pilotlight/thirdparty/stb \
                     -I /usr/include/libxml2 -I /usr/include/gdal"
 
           FILES=$(find apps/dcapp extensions src -name '*.c' 2>/dev/null)
@@ -37,7 +37,7 @@ jobs:
             echo "=== Checking $f ==="
             OUTPUT=$(clang-tidy --quiet "$f" -- $INCLUDES 2>&1 | \
               grep "warning:" | \
-              grep -v "pilotlight/\|dependencies/" || true)
+              grep -v "pilotlight/\|thirdparty/" || true)
             if [ -n "$OUTPUT" ]; then
               echo "$OUTPUT"
               FAIL=1
