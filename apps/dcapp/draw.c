@@ -4880,25 +4880,33 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
                       dc_app_lookup_get_value(app_data->lookup, node->planet_view.orthographic)->value_boolean);
 
     plCamera camera     = {0};
-    camera.tType        = PL_CAMERA_TYPE_PERSPECTIVE_REVERSE_Z;
-    camera.fFieldOfView = 60.0f * (float)(M_PI / 180.0);
-    camera.fAspectRatio = (dimension[1] > 0.0f) ? dimension[0] / dimension[1] : 1.0f;
-    camera.fNearZ       = 1.0f;
-    camera.fFarZ        = 100000000.0f;
-    camera.fWidth       = dimension[0];
-    camera.fHeight      = dimension[1];
+    _ext_camera->init(&camera);
+
+    plCameraPerspectiveDesc tCameraDesc = {
+        .fNearZ       = 1.0f,
+        .fFarZ        = 100000000.0f,
+        .fYFov        = 60.0f * (float)(M_PI / 180.0),
+        .fAspectRatio = (dimension[1] > 0.0f) ? dimension[0] / dimension[1] : 1.0f,
+        .eDepthMode   = PL_CAMERA_DEPTH_MODE_REVERSE_Z
+    };
+    _ext_camera->set_perspective(&camera, &tCameraDesc);
+    _ext_camera->set_position(&camera, (plVec3d){5.0, 10.0, 10.0});
+    _ext_camera->set_euler(&camera, -PL_PI_4, PL_PI + PL_PI_4, 0.0f);
+    _ext_camera->update(&camera);
+    // camera.fWidth       = dimension[0];
+    // camera.fHeight      = dimension[1];
 
     if (use_xyz) {
         double cam_x = dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.x)->value_double;
         double cam_y = dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.y)->value_double;
         double cam_z = dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.z)->value_double;
-        _ext_camera->set_pos(&camera, cam_x, cam_y, cam_z);
+        _ext_camera->set_position(&camera, (plVec3d){cam_x, cam_y, cam_z});
 
         if (node->planet_view.rpy.pitch != DC_APP_VAL_INDEX_UNDEFINED &&
             node->planet_view.rpy.yaw != DC_APP_VAL_INDEX_UNDEFINED) {
             float pitch = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.pitch)->value_double;
             float yaw   = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.yaw)->value_double;
-            _ext_camera->set_pitch_yaw(&camera, pl_radiansf(pitch), pl_radiansf(yaw));
+            _ext_camera->set_euler(&camera, pl_radiansf(pitch), pl_radiansf(yaw), 0.0f);
         }
         if (node->planet_view.rpy.roll != DC_APP_VAL_INDEX_UNDEFINED) {
             camera.fRoll = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.roll)->value_double);
@@ -4912,12 +4920,13 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
         double lon_rad = lon_deg * M_PI / 180.0;
         double r       = def->radius + ele;
 
-        _ext_camera->set_pos(&camera,
-                             r * cos(lat_rad) * sin(lon_rad),
-                             r * sin(lat_rad),
-                             r * cos(lat_rad) * cos(lon_rad));
+        _ext_camera->set_position(&camera,
+                             (plVec3d){
+                                r * cos(lat_rad) * sin(lon_rad),
+                                r * sin(lat_rad),
+                                r * cos(lat_rad) * cos(lon_rad)});
 
-        _ext_camera->look_at(&camera, camera.tPosDouble, (plVec3d){0, 0, 0});
+        _ext_camera->look_at(&camera, camera.tPosition, (plVec3d){0, 0, 0}, (plVec3){0, 1.0f, 0});
 
         if (node->planet_view.heading != DC_APP_VAL_INDEX_UNDEFINED) {
             float heading_deg = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.heading)->value_double;
@@ -4928,13 +4937,13 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
     _ext_camera->update(&camera);
 
     if (use_ortho) {
-        double cam_dist     = sqrt(camera.tPosDouble.x * camera.tPosDouble.x +
-                                   camera.tPosDouble.y * camera.tPosDouble.y +
-                                   camera.tPosDouble.z * camera.tPosDouble.z);
+        double cam_dist     = sqrt(camera.tPosition.x * camera.tPosition.x +
+                                   camera.tPosition.y * camera.tPosition.y +
+                                   camera.tPosition.z * camera.tPosition.z);
         double surface_dist = cam_dist - def->radius;
         if (surface_dist < 1.0) surface_dist = 1.0;
 
-        float half_h = (float)surface_dist * tanf(camera.fFieldOfView / 2.0f);
+        float half_h = (float)surface_dist * tanf(camera.fYFov / 2.0f);
         float half_w = half_h * camera.fAspectRatio;
 
         camera.tProjMat          = (plMat4){0};

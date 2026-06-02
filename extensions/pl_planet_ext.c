@@ -265,7 +265,7 @@ static void pl__free_chunk(plPlanet* ptPlanet, uint64_t);
 
 static void pl__free_chunk_until(plPlanet* P, uint64_t idx_bytes_needed, uint64_t vtx_bytes_needed);
 
-static plTextureHandle pl__planet_create_texture(plCommandBuffer* ptCmdBuffer, const plTextureDesc* ptDesc, const char* pcName, plTextureUsage);
+static plTextureHandle pl__planet_create_texture(plCommandBuffer* ptCmdBuffer, const plTextureDesc* ptDesc, const char* pcName);
 static plTextureHandle pl__planet_create_texture_with_data (const plTextureDesc*, const char* pcName, uint32_t uIdentifier, const void*, size_t);
 static uint32_t pl__planet_get_bindless_texture_index(plTextureHandle tTexture);
 static void pl__planet_return_bindless_texture_index(plTextureHandle tTexture);
@@ -593,7 +593,7 @@ pl_create_planet_view(plPlanet* ptPlanet, plCommandBuffer* ptCmdBuffer, plPlanet
         .tUsage      = PL_TEXTURE_USAGE_SAMPLED | PL_TEXTURE_USAGE_COLOR_ATTACHMENT,
         .pcDebugName = "view output"
     };
-    ptView->tOutputTexture = pl__planet_create_texture(ptCmdBuffer, &tOutputTextureDesc, "view output", PL_TEXTURE_USAGE_SAMPLED);
+    ptView->tOutputTexture = pl__planet_create_texture(ptCmdBuffer, &tOutputTextureDesc, "view output");
     ptView->tOutputTextureHandle = gptDraw->create_bind_group_for_texture(ptView->tOutputTexture);
 
     // depth texture
@@ -606,7 +606,7 @@ pl_create_planet_view(plPlanet* ptPlanet, plCommandBuffer* ptCmdBuffer, plPlanet
         .tUsage      = PL_TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT,
         .pcDebugName = "view depth"
     };
-    ptView->tOutputTextureDepth = pl__planet_create_texture(ptCmdBuffer, &tDepthTextureDesc, "view depth", PL_TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT);
+    ptView->tOutputTextureDepth = pl__planet_create_texture(ptCmdBuffer, &tDepthTextureDesc, "view depth");
 
     // render pass
     plRenderPassAttachments atAttachmentSets[PL_MAX_FRAMES_IN_FLIGHT] = {0};
@@ -1279,7 +1279,7 @@ pl_draw_text(plPlanetView* ptView, plCamera* ptCamera, plVec3 tPosition, const c
     // ray-sphere occlusion test: skip if planet blocks line of sight
     // ray origin = camera, ray direction = text position - camera
     float fRadius = (float)ptView->ptPlanet->dRadius;
-    plVec3 tRayOrigin = ptCamera->tPos;
+    plVec3 tRayOrigin = ptCamera->tPositionF;
     plVec3 tRayDir = {
         tPosition.x - tRayOrigin.x,
         tPosition.y - tRayOrigin.y,
@@ -1306,7 +1306,7 @@ pl_draw_text(plPlanetView* ptView, plCamera* ptCamera, plVec3 tPosition, const c
 
     // convert world-space size (meters) to pixel size
     // pixel_size = world_size * viewport_height / (2 * distance * tan(fov/2))
-    float fPixelSize = fSizeMeters * (float)ptView->uOutputHeight / (2.0f * fDistance * tanf(ptCamera->fFieldOfView * 0.5f));
+    float fPixelSize = fSizeMeters * (float)ptView->uOutputHeight / (2.0f * fDistance * tanf(ptCamera->fYFov * 0.5f));
 
     // clamp to reasonable range
     if(fPixelSize < 1.0f)
@@ -1324,7 +1324,7 @@ pl_draw_text(plPlanetView* ptView, plCamera* ptCamera, plVec3 tPosition, const c
 
     // convert pixel offset to world-space offset
     // pixels_per_meter = viewport_height / (2 * distance * tan(fov/2))
-    float fPixelsPerMeter = (float)ptView->uOutputHeight / (2.0f * fDistance * tanf(ptCamera->fFieldOfView * 0.5f));
+    float fPixelsPerMeter = (float)ptView->uOutputHeight / (2.0f * fDistance * tanf(ptCamera->fYFov * 0.5f));
     float fWorldOffsetX = (tTextSize.x * 0.5f) / fPixelsPerMeter;
     float fWorldOffsetY = (tTextSize.y * 0.5f) / fPixelsPerMeter;
 
@@ -1739,12 +1739,12 @@ pl__handle_residency(plPlanet* ptPlanet, plCommandBuffer* ptCommandBuffer)
         // NOTE: we are using the starter extension to get a blit encoder, later examples we will
         //       handle this ourselves
         plBlitEncoder* ptEncoder = gptGfx->begin_blit_pass(ptCommandBuffer);
-        gptGfx->pipeline_barrier_blit(ptEncoder, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE);
+        // gptGfx->pipeline_barrier_blit(ptEncoder, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE);
 
         gptGfx->copy_buffer(ptEncoder, gptCtx->tStagingBuffer, ptPlanet->tIndexBuffer, uIndexStageOffset, uIndexFinalOffset, idx_bytes);
         gptGfx->copy_buffer(ptEncoder, gptCtx->tStagingBuffer, ptPlanet->tVertexBuffer, uVertexStageOffset, uVertexFinalOffset, vtx_bytes);
         
-        gptGfx->pipeline_barrier_blit(ptEncoder, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ);
+        // gptGfx->pipeline_barrier_blit(ptEncoder, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ);
         gptGfx->end_blit_pass(ptEncoder);
         // gptGfx->queue_buffer_for_deletion(ptDevice, tStagingBuffer);
 
@@ -1922,8 +1922,8 @@ pl__render_chunk(plPlanetView* ptPlanetView, plCamera* ptCamera , plRenderEncode
 
     // gptDraw->add_3d_aabb(ptPlanetView->pt3dDrawlist, tAABB.tMin, tAABB.tMax, (plDrawLineOptions){.fThickness = 1000.0f, .uColor = gauColors[ptChunk->uLevel % 16]});
 
-    plVec3 tClosestPoint = gptCollision->point_closest_point_aabb(ptCamera->tPos, tAABB);
-    float fDistance = fabsf(pl_length_vec3(pl_sub_vec3(tClosestPoint, ptCamera->tPos)));
+    plVec3 tClosestPoint = gptCollision->point_closest_point_aabb(ptCamera->tPositionF, tAABB);
+    float fDistance = fabsf(pl_length_vec3(pl_sub_vec3(tClosestPoint, ptCamera->tPositionF)));
 
     pl__request_residency(ptPlanet, ptChunk);
 
@@ -1931,7 +1931,7 @@ pl__render_chunk(plPlanetView* ptPlanetView, plCamera* ptCamera , plRenderEncode
         return;
     
     float fViewportWidth = gptIOI->get_io()->tMainViewportSize.x;
-    float fHorizontalFieldOfView = 2.0f * atanf(tanf(0.5f * ptCamera->fFieldOfView) * ptCamera->fAspectRatio);
+    float fHorizontalFieldOfView = 2.0f * atanf(tanf(0.5f * ptCamera->fYFov) * ptCamera->fAspectRatio);
 
     float fK = fViewportWidth / (2.0f * tanf(0.5f * fHorizontalFieldOfView));
 
@@ -1961,10 +1961,10 @@ pl__render_chunk(plPlanetView* ptPlanetView, plCamera* ptCamera , plRenderEncode
         ptDynamic->tUVInfo.zw         = ptChunk->tUVOffset;
         ptDynamic->fHazardMapStrength = ptPlanetView->tRuntimeOptions.fHazardMapStrength;
         ptDynamic->fRadius            = (float)ptPlanet->dRadius; 
-        pl__planet_split_double(ptCamera->tPosDouble.x, &ptDynamic->tCameraPosHigh.x, &ptDynamic->tCameraPosLow.x);
-        pl__planet_split_double(ptCamera->tPosDouble.y, &ptDynamic->tCameraPosHigh.y, &ptDynamic->tCameraPosLow.y);
-        pl__planet_split_double(ptCamera->tPosDouble.z, &ptDynamic->tCameraPosHigh.z, &ptDynamic->tCameraPosLow.z);
-        ptDynamic->tCameraViewProjection = pl_mul_mat4(&ptCamera->tProjMat, &ptCamera->tViewMatDouble);
+        pl__planet_split_double(ptCamera->tPosition.x, &ptDynamic->tCameraPosHigh.x, &ptDynamic->tCameraPosLow.x);
+        pl__planet_split_double(ptCamera->tPosition.y, &ptDynamic->tCameraPosHigh.y, &ptDynamic->tCameraPosLow.y);
+        pl__planet_split_double(ptCamera->tPosition.z, &ptDynamic->tCameraPosHigh.z, &ptDynamic->tCameraPosLow.z);
+        ptDynamic->tCameraViewProjection = pl_mul_mat4(&ptCamera->tProjMat, &ptCamera->tViewMatNoTranslation);
 
 
         ptDynamic->iChunkID = ptChunk->uIndex + ptChunk->uFileID;
@@ -2024,7 +2024,7 @@ pl__render_chunk(plPlanetView* ptPlanetView, plCamera* ptCamera , plRenderEncode
 static bool
 pl__sat_visibility_test(plCamera* ptCamera, const plAABB* ptAABB)
 {
-    const float fTanFov = tanf(0.5f * ptCamera->fFieldOfView);
+    const float fTanFov = tanf(0.5f * ptCamera->fYFov);
 
     const float fZNear = ptCamera->fNearZ;
     const float fZFar = ptCamera->fFarZ;
@@ -2305,7 +2305,7 @@ pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetLoadFla
 }
 
 static plTextureHandle
-pl__planet_create_texture(plCommandBuffer* ptCmdBuffer, const plTextureDesc* ptDesc, const char* pcName, plTextureUsage tInitialUsage)
+pl__planet_create_texture(plCommandBuffer* ptCmdBuffer, const plTextureDesc* ptDesc, const char* pcName)
 {
     // for convience
    plDevice* ptDevice = gptCtx->ptDevice;
@@ -2331,11 +2331,6 @@ pl__planet_create_texture(plCommandBuffer* ptCmdBuffer, const plTextureDesc* ptD
     gptGfx->bind_texture_to_memory(ptDevice, tHandle, &tAllocation);
     pl_temp_allocator_reset(&gptCtx->tTempAllocator);
 
-
-    // set the initial texture usage (this is a no-op in metal but does layout transition for vulkan)
-    plBlitEncoder* ptBlit = gptGfx->begin_blit_pass(ptCmdBuffer);
-    gptGfx->set_texture_usage(ptBlit, tHandle, tInitialUsage, 0);
-    gptGfx->end_blit_pass(ptBlit);
     return tHandle;
 }
 
@@ -2370,7 +2365,7 @@ pl__planet_create_texture_with_data(const plTextureDesc* ptDesc, const char* pcN
     plCommandBuffer* ptCommandBuffer = gptGfx->request_command_buffer(ptCmdPool, "create texture 2");
     gptGfx->begin_command_recording(ptCommandBuffer, NULL);
     plBlitEncoder* ptBlitEncoder = gptGfx->begin_blit_pass(ptCommandBuffer);
-    gptGfx->pipeline_barrier_blit(ptBlitEncoder, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE);
+    // gptGfx->pipeline_barrier_blit(ptBlitEncoder, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE);
     gptGfx->set_texture_usage(ptBlitEncoder, tHandle, PL_TEXTURE_USAGE_SAMPLED, 0);
 
 
@@ -2410,7 +2405,7 @@ pl__planet_create_texture_with_data(const plTextureDesc* ptDesc, const char* pcN
         gptGfx->queue_buffer_for_deletion(ptDevice, tStagingBuffer);
     }
 
-    gptGfx->pipeline_barrier_blit(ptBlitEncoder, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ);
+    // gptGfx->pipeline_barrier_blit(ptBlitEncoder, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ);
     gptGfx->end_blit_pass(ptBlitEncoder);
     gptGfx->end_command_recording(ptCommandBuffer);
     gptGfx->submit_command_buffer(ptCommandBuffer, NULL);

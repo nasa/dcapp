@@ -449,7 +449,6 @@ static void _update_pixelstream_sources(_AppData *app_data) {
             plDevice *device = _ext_starter->get_device();
 
             plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
-            _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
 
             plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
             memcpy(staging_buffer->tMemoryAllocation.pHostMapped, src->frame, src->frame_width * src->frame_height * 4);

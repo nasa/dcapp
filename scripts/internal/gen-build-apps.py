@@ -82,7 +82,7 @@ with pl.project("apps"):
         pl_dir_rel + "/libs",
         pl_dir_rel + "/extensions",
         pl_dir_rel + "/shaders",
-        pl_dir_rel + "/dependencies/stb")
+        pl_dir_rel + "/thirdparty/stb")
 
     #-----------------------------------------------------------------------------
     # [SECTION] profiles

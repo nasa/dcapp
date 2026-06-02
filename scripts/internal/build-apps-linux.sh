@@ -80,7 +80,7 @@ rm -f ../../pilotlight/out/dcapp-planet-chunkgen_*.so
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
@@ -114,7 +114,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
@@ -148,7 +148,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
@@ -182,7 +182,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm "
@@ -216,7 +216,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb -I/usr/include/libxml2 "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
@@ -250,7 +250,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb -I/usr/include/libxml2 "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
@@ -285,7 +285,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb -I/usr/include/libxml2 "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
@@ -320,7 +320,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb -I/usr/include/gdal "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb -I/usr/include/gdal "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm -lgdal "
@@ -390,7 +390,7 @@ rm -f ../../pilotlight/out/dcapp-planet-chunkgen_*.so
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm "
@@ -424,7 +424,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm "
@@ -458,7 +458,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm "
@@ -492,7 +492,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm "
@@ -526,7 +526,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb -I/usr/include/libxml2 "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
@@ -560,7 +560,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb -I/usr/include/libxml2 "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
@@ -595,7 +595,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb -I/usr/include/libxml2 "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb -I/usr/include/libxml2 "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 "
@@ -630,7 +630,7 @@ echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
 PL_DEFINES=""
-PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb -I/usr/include/gdal "
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/thirdparty/stb -I/usr/include/gdal "
 PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
 PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lgdal "

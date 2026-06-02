@@ -41,8 +41,8 @@ with pl.project("game"):
         "../../pilotlight/libs",
         "../../pilotlight/shaders",
         "../../pilotlight/extensions",
-        "../../pilotlight/dependencies/imgui",
-        "../../pilotlight/dependencies/stb")
+        "../../pilotlight/thirdparty/imgui",
+        "../../pilotlight/thirdparty/stb")
     
     #-----------------------------------------------------------------------------
     # [SECTION] profiles
