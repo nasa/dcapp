@@ -737,7 +737,7 @@ void
 pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint32_t uSlot)
 {
     // ---------------------------------------------------------------------
-    // 1) Evict/unbind previous textures for all chunk files
+    // Evict/unbind previous textures for all chunk files
     // ---------------------------------------------------------------------
     for (uint32_t i = 0; i < pl_sb_size(ptPlanet->sbtChunkFiles); i++)
     {
@@ -757,7 +757,7 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
     }
 
     // ---------------------------------------------------------------------
-    // 2) Active tile mask (use tInfo counts consistently)
+    // Active tile mask (use tInfo counts consistently)
     // ---------------------------------------------------------------------
     const uint32_t uH          = ptPlanet->tInfo.uHorizontalTiles;
     const uint32_t uV          = ptPlanet->tInfo.uVerticalTiles;
@@ -768,30 +768,13 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
 
     if (ptPlanetTexture)
     {
-        // -----------------------------------------------------------------
-        // 3) Project texture center to south-pole stereographic (meters)
-        // -----------------------------------------------------------------
-        const float R    = (float)ptPlanet->dRadius;  // lunar radius (meters)
-        const float k0   = 1.0f;                      // scale factor
-        const float lon0 = 0.0f;                      // central meridian (radians)
-
-        float fLatitude  = pl_radiansf(ptPlanetTexture->fLatitude);
-        float fLongitude = pl_radiansf(-ptPlanetTexture->fLongitude + 180.0f);
-
-        // Inputs (radians)
-        float phi  = fLatitude;
-        float lam  = fLongitude;
-
-        // South-pole stereographic
-        float theta = lam - lon0;
-        float fR    = 2.0f * R * k0 * tanf(PL_PI_4 + 0.5f * phi);
-
-        // Easting / Northing (northing-positive-up; minus for south polar)
-        float fX = fR * sinf(theta);
-        float fY = fR * cosf(theta);
+        
+        // Texture center is already in projected meters
+        const float fX = (float)ptPlanetTexture->dOriginX;
+        const float fY = (float)ptPlanetTexture->dOriginY;
 
         // -----------------------------------------------------------------
-        // 4) Compute world-space bounds of the incoming image in meters
+        // Compute world-space bounds of the incoming image in meters
         // -----------------------------------------------------------------
         plImageInfo tImageInfo = (plImageInfo){0};
         gptImage->get_info_from_file(ptPlanetTexture->pcPath, &tImageInfo);
@@ -809,7 +792,7 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
         };
 
         // -----------------------------------------------------------------
-        // 5) Compute signed tile index range (BR index inclusive)
+        // Compute signed tile index range (BR index inclusive)
         // -----------------------------------------------------------------
         const float tileSizeM = (float)ptPlanet->tInfo.uSize * (float)ptPlanet->tInfo.dMetersPerPixel;
 
@@ -839,23 +822,16 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
             {
 
                 // -----------------------------------------------------------------
-                // 6) Get local world coords of the clamped tile rectangle
+                // Get local world coords of the clamped tile rectangle
                 //     (Use tile centers +/− half a tile to form inclusive bounds)
                 // -----------------------------------------------------------------
                 plVec2 tTopLeftLocal     = {0};
                 plVec2 tBottomRightLocal = {0};
 
-                // --- Top-left tile local origin ---
+                // --- Top-left tile local origin ---// --- Top-left tile 
                 {
-                    float lat  = (float)pl_radiansd(ptPlanet->atTiles[tlIndex].dLatitude);
-                    float lon  = (float)pl_radiansd(ptPlanet->atTiles[tlIndex].dLongitude);
-                    float phiL = lat;
-                    float lamL = lon;
-                    float thL  = lamL - lon0;
-                    float RR   = 2.0f * R * k0 * tanf(PL_PI_4 + 0.5f * phiL);
-
-                    float Xc = RR * sinf(thL);
-                    float Yc = RR * cosf(thL); // south polar
+                    const float Xc = (float)ptPlanet->atTiles[tlIndex].dOriginX;
+                    const float Yc = (float)ptPlanet->atTiles[tlIndex].dOriginY;
 
                     tTopLeftLocal.x = Xc - 0.5f * tileSizeM;
                     tTopLeftLocal.y = Yc - 0.5f * tileSizeM;
@@ -863,22 +839,16 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
 
                 // --- Bottom-right tile local corner ---
                 {
-                    float lat  = (float)pl_radiansd(ptPlanet->atTiles[brIndex].dLatitude);
-                    float lon  = (float)pl_radiansd(ptPlanet->atTiles[brIndex].dLongitude);
-                    float phiL = lat;
-                    float lamL = lon;
-                    float thL  = lamL - lon0;
-                    float RR   = 2.0f * R * k0 * tanf(PL_PI_4 + 0.5f * phiL);
-
-                    float Xc = RR * sinf(thL);
-                    float Yc = RR * cosf(thL); // south polar
+                    const float Xc = (float)ptPlanet->atTiles[brIndex].dOriginX;
+                    const float Yc = (float)ptPlanet->atTiles[brIndex].dOriginY;
 
                     tBottomRightLocal.x = Xc + 0.5f * tileSizeM;
                     tBottomRightLocal.y = Yc + 0.5f * tileSizeM;
                 }
 
+
                 // -----------------------------------------------------------------
-                // 7) Build a full canvas covering [tl..br] tiles, and place image
+                // Build a full canvas covering [tl..br] tiles, and place image
                 // -----------------------------------------------------------------
                 int iImageWidth  = 0;
                 int iImageHeight = 0;
@@ -924,7 +894,7 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                 gptImage->free(pucImageData);
 
                 // -----------------------------------------------------------------
-                // 8) Slice canvas into per-tile images
+                // Slice canvas into per-tile images
                 // -----------------------------------------------------------------
                 const uint32_t uHorizontalExtent = (uint32_t)(brx - tlx + 1);
                 const uint32_t uVerticalExtent   = (uint32_t)(bry - tly + 1);
@@ -1049,7 +1019,7 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
     }
 
     // ---------------------------------------------------------------------
-    // 9) Update chunk files with generated hazard textures
+    // Update chunk files with generated hazard textures
     // ---------------------------------------------------------------------
     for (uint32_t k = 0; k < uTileCount; k++)
     {
@@ -2272,24 +2242,24 @@ static bool
 pl__planet_load(plPlanet* ptPlanet, plPlanetProcessInfo* ptInfo, plPlanetLoadFlags tFlags)
 {
     {
-        float fLatitude  = (float)pl_radiansd(ptInfo->atTiles[0].dLatitude);
-        float fLongitude = (float)pl_radiansd(ptInfo->atTiles[0].dLongitude);
+        // float fLatitude  = (float)pl_radiansd(ptInfo->atTiles[0].dLatitude);
+        // float fLongitude = (float)pl_radiansd(ptInfo->atTiles[0].dLongitude);
 
-        const float R    = (float)ptPlanet->dRadius;  // lunar radius (meters)
-        const float k0   = 1.0f;                      // scale factor
-        const float lon0 = 0.0f;                      // central meridian (radians)
+        // const float R    = (float)ptPlanet->dRadius;  // lunar radius (meters)
+        // const float k0   = 1.0f;                      // scale factor
+        // const float lon0 = 0.0f;                      // central meridian (radians)
 
-        // Inputs (radians)
-        float phi  = fLatitude;
-        float lam  = fLongitude;
+        // // Inputs (radians)
+        // float phi  = fLatitude;
+        // float lam  = fLongitude;
 
-        // South-pole stereographic
-        float theta = lam - lon0;
-        float fR    = 2.0f * R * k0 * tanf(PL_PI_4 + 0.5f * phi);
+        // // South-pole stereographic
+        // float theta = lam - lon0;
+        // float fR    = 2.0f * R * k0 * tanf(PL_PI_4 + 0.5f * phi);
 
         // Easting / Northing (northing-positive-up; minus for south polar)
-        float fX = fR * sinf(theta);
-        float fY = fR * cosf(theta);
+        float fX = (float)ptInfo->atTiles[0].dOriginX; // * sinf(theta);
+        float fY = (float)ptInfo->atTiles[0].dOriginY; // * cosf(theta);
 
         ptPlanet->tTopLeftGlobal.x = fX - 0.5f * (float)ptInfo->uSize * (float)ptInfo->dMetersPerPixel;
         ptPlanet->tTopLeftGlobal.y = fY - 0.5f * (float)ptInfo->uSize * (float)ptInfo->dMetersPerPixel;

@@ -119,8 +119,8 @@ typedef struct _plPlanetTexture
 {
     const char* pcPath;
     float       fMetersPerPixel;
-    float       fLongitude;
-    float       fLatitude;
+    double      dOriginX;   // meters in projected CRS
+    double      dOriginY;
 } plPlanetTexture;
 
 typedef struct _plPlanetInit

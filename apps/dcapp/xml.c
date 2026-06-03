@@ -4299,16 +4299,16 @@ static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePt
     }
 
     // latitude
-    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
+    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "OriginX");
     if (raw_lat) {
-        entry.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+        entry.originX = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
         xmlFree(raw_lat);
     }
 
     // longitude
-    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
+    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "OriginY");
     if (raw_lon) {
-        entry.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+        entry.originY = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
         xmlFree(raw_lon);
     }
 

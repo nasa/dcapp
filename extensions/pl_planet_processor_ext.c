@@ -313,35 +313,21 @@ pl_planet_process(plPlanetProcessInfo* ptInfo)
             .dMetersPerPixel = ptInfo->dMetersPerPixel,
             .dMaxHeight      = ptInfo->atTiles[i].dMaxHeight,
             .dMinHeight      = ptInfo->atTiles[i].dMinHeight,
-            .dRadius         = ptInfo->dRadius,
+            .dRadius         = ptInfo->tGeodeticModel.sphere.dRadius,
             .tCenter         = {0},
             .uRequestedSize  = ptInfo->uSize,
             .pcOutputFile    = ptInfo->atTiles[i].acOutputFile
         };
 
-        const double R    = ptInfo->dRadius;   // lunar radius (meters)
-        const double k0   = 1.0;       // scale factor from SRS (often 1.0f)
-        const double lon0 = 0.0;     // central meridian (radians)
+        const double R    = ptInfo->tGeodeticModel.sphere.dRadius;
+        const double k0   = ptInfo->tProjection.tPolarStereo.dScaleFactor;
+        const double lon0 = ptInfo->tProjection.tPolarStereo.dLongitudeOfOrigin;
 
-        // False easting/northing from SRS if applicable; else 0
-        const double FE   = 0.0;   // meters
-        const double FN   = 0.0;  // meters
+        const double FE   = ptInfo->tProjection.tPolarStereo.dFalseEasting;
+        const double FN   = ptInfo->tProjection.tPolarStereo.dFalseNorthing;
 
-        // Inputs (radians)
-        const double phi  = pl_radiansd(ptInfo->atTiles[i].dLatitude);
-        const double lam  = pl_radiansd(ptInfo->atTiles[i].dLongitude);
-
-        // South-pole stereographic
-        const double theta = lam - lon0;
-        const double rho   = 2.0 * R * k0 * tan(PL_PI_4 + 0.5 * phi);
-
-        // Easting / Northing (northing-positive-up)
-        const double x = rho * sin(theta);
-        const double y = -rho * cos(theta);  // note the minus for south polar
-
-        // Apply false easting/northing if the dataset uses them
-        tHeightMap.tCenter.x = x + FE;
-        tHeightMap.tCenter.z = y + FN;
+        tHeightMap.tCenter.x = ptInfo->atTiles[i].dOriginX + FE;
+        tHeightMap.tCenter.z = ptInfo->atTiles[i].dOriginY + FN;
 
         pl__initialize_cdlod_heightmap(&tHeightMap, ptInfo, i);
 
