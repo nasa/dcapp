@@ -760,10 +760,10 @@ static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry
     out->pcPath = entry->source;
     if (entry->mpp != DC_APP_VAL_INDEX_UNDEFINED)
         out->fMetersPerPixel = (float)dc_app_lookup_get_value(app_data->lookup, entry->mpp)->value_double;
-    if (entry->lat != DC_APP_VAL_INDEX_UNDEFINED)
-        out->fLatitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lat)->value_double;
-    if (entry->lon != DC_APP_VAL_INDEX_UNDEFINED)
-        out->fLongitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lon)->value_double;
+    if (entry->originX != DC_APP_VAL_INDEX_UNDEFINED)
+        out->dOriginX = (float)dc_app_lookup_get_value(app_data->lookup, entry->originX)->value_double;
+    if (entry->originY != DC_APP_VAL_INDEX_UNDEFINED)
+        out->dOriginY = (float)dc_app_lookup_get_value(app_data->lookup, entry->originY)->value_double;
     return true;
 }
 
@@ -832,13 +832,20 @@ static void _init_planets(_AppData *app_data) {
 
         // build process info
         plPlanetProcessInfo process_info = {0};
-        process_info.dRadius             = radius;
-        process_info.dMetersPerPixel     = meters_per_pixel;
-        process_info.uSize               = (uint32_t)tile_size;
-        process_info.uTileCount          = tile_count;
-        process_info.uHorizontalTiles    = (uint32_t)cols;
-        process_info.uVerticalTiles      = (uint32_t)rows;
-        process_info.atTiles             = (plPlanetProcessTileInfo *)PL_ALLOC(tile_count * sizeof(plPlanetProcessTileInfo));
+        process_info.tProjection.tType = PL_PROJECTION_POLAR_STEREOGRAPHIC;
+        process_info.tProjection.tPolarStereo.dLatitudeOfOrigin = 0.0;
+        process_info.tProjection.tPolarStereo.dLongitudeOfOrigin = 0.0; // central meridian (radians)
+        process_info.tProjection.tPolarStereo.dScaleFactor = 1.0;
+        process_info.tProjection.tPolarStereo.dFalseEasting = 0.0;
+        process_info.tProjection.tPolarStereo.dFalseNorthing = 0.0;
+        process_info.tGeodeticModel.tDatum         = PL_DATUM_SPHERE;
+        process_info.tGeodeticModel.sphere.dRadius = radius;
+        process_info.dMetersPerPixel               = meters_per_pixel;
+        process_info.uSize                         = (uint32_t)tile_size;
+        process_info.uTileCount                    = tile_count;
+        process_info.uHorizontalTiles              = (uint32_t)cols;
+        process_info.uVerticalTiles                = (uint32_t)rows;
+        process_info.atTiles                       = (plPlanetProcessTileInfo *)PL_ALLOC(tile_count * sizeof(plPlanetProcessTileInfo));
 
         // get directory of the JSON file for resolving relative chunk paths
         char json_dir[DC_VALUE_STRING_BUFFER_SIZE];
@@ -849,8 +856,8 @@ static void _init_planets(_AppData *app_data) {
 
             plPlanetProcessTileInfo *tile = &process_info.atTiles[t];
             memset(tile, 0, sizeof(plPlanetProcessTileInfo));
-            tile->dLatitude     = pl_json_double_member(tile_obj, "lat", 0.0);
-            tile->dLongitude    = pl_json_double_member(tile_obj, "lon", 0.0);
+            tile->dOriginX     = pl_json_double_member(tile_obj, "originX", 0.0);
+            tile->dOriginY    = pl_json_double_member(tile_obj, "originY", 0.0);
             tile->dMaxBaseError = (double)max_base_error;
             tile->dMaxHeight    = (double)max_height;
             tile->dMinHeight    = (double)min_height;
@@ -887,8 +894,8 @@ static void _init_planets(_AppData *app_data) {
         if (sbcount(def->sb_textures) > 0) {
             plPlanetTexture texture;
             if (_build_planet_texture(app_data, &def->sb_textures[0], &texture)) {
-                DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, lat=%.1f, lon=%.1f)",
-                            i, texture.pcPath, texture.fMetersPerPixel, texture.fLatitude, texture.fLongitude);
+                DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, originX=%.1f, originY=%.1f)",
+                            i, texture.pcPath, texture.fMetersPerPixel, texture.dOriginX, texture.dOriginY);
                 _ext_planet->set_texture(planet, &texture, 0);
             }
         }

@@ -265,7 +265,22 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     }
 
     plPlanetProcessInfo planet_info = {
-        .dRadius          = radius,
+        .tProjection= {
+            .tType = PL_PROJECTION_POLAR_STEREOGRAPHIC,
+            .tPolarStereo = {
+                .dLatitudeOfOrigin = 0.0,
+                .dLongitudeOfOrigin = 0.0,
+                .dScaleFactor = 1.0,
+                .dFalseEasting = 0.0,
+                .dFalseNorthing = 0.0
+            }
+        },
+        .tGeodeticModel = {
+            .tDatum = PL_DATUM_SPHERE,
+            .sphere = {
+                .dRadius = radius
+            }
+        },
         .dMetersPerPixel  = meters_per_pixel,
         .uSize            = tile_size,
         .uTileCount       = tile_count,
@@ -284,11 +299,11 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
             tiles[idx].dMaxBaseError = (double)max_base_error;
 
             // compute lat/lon for tile center
-            float lat = 0.0f, lon = 0.0f;
-            _compute_tile_latlon(origin_x, origin_y, pixel_scale,
-                                 col, row, tile_size, radius, &lat, &lon);
-            tiles[idx].dLatitude  = (double)lat;
-            tiles[idx].dLongitude = (double)lon;
+            // float lat = 0.0f, lon = 0.0f;
+            // _compute_tile_latlon(origin_x, origin_y, pixel_scale,
+            //                      col, row, tile_size, radius, &lat, &lon);
+            tiles[idx].dOriginX  = origin_x + ((double)col * tile_size + tile_size * 0.5) * pixel_scale;
+            tiles[idx].dOriginY = origin_y + ((double)row * tile_size + tile_size * 0.5) * pixel_scale;
 
             // file paths (real filesystem paths)
             snprintf(tiles[idx].acHeightMapFile, 256, "%s/%s_%u_%u.png", output_dir, prefix, col, row);
@@ -324,8 +339,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         else
             filename = tiles[i].acOutputFile;
 
-        pl_json_add_double_member(tile_obj, "lat", tiles[i].dLatitude);
-        pl_json_add_double_member(tile_obj, "lon", tiles[i].dLongitude);
+        pl_json_add_double_member(tile_obj, "originX", tiles[i].dOriginX);
+        pl_json_add_double_member(tile_obj, "originY", tiles[i].dOriginY);
         pl_json_add_string_member(tile_obj, "file", filename);
     }
 

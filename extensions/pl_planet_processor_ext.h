@@ -38,14 +38,19 @@ Index of this file:
 //-----------------------------------------------------------------------------
 
 // basic types
-typedef struct _plPlanetChunkFile plPlanetChunkFile;
-typedef struct _plPlanetChunk plPlanetChunk;
-typedef struct _plPlanetProcessTileInfo plPlanetProcessTileInfo;
-typedef struct _plPlanetProcessInfo plPlanetProcessInfo;
+typedef struct _plPlanetChunkFile          plPlanetChunkFile;
+typedef struct _plPlanetChunk              plPlanetChunk;
+typedef struct _plPlanetProcessTileInfo    plPlanetProcessTileInfo;
+typedef struct _plPlanetProcessInfo        plPlanetProcessInfo;
+typedef struct _plPolarStereoParams        plPolarStereoParams;
+typedef struct _plTransverseMercatorParams plTransverseMercatorParams;
+typedef struct _plPlanetGeodeticModel      plPlanetGeodeticModel;
 
 
 // enums/flags
 typedef int plPlanetProcessingFlags; // -> enum _plPlanetProcessingFlags
+typedef int plPlanetProjectionType;  // -> enum _plPlanetProjectionType
+typedef int plPlanetDatumType;       // -> enum _plPlanetDatumType
 
 // external
 typedef struct _plFreeListNode plFreeListNode; // pl_freelist_ext.h
@@ -64,23 +69,73 @@ typedef struct _plPlanetProcessorI
 // [SECTION] structs
 //-----------------------------------------------------------------------------
 
+typedef struct _plPolarStereoParams
+{
+    double dLatitudeOfOrigin; // typically ±90
+    double dLongitudeOfOrigin;
+    double dScaleFactor;
+    double dFalseEasting;
+    double dFalseNorthing;
+} plPolarStereoParams;
+
+typedef struct _plTransverseMercatorParams
+{
+    double dLatitudeOfOrigin; // usually 0
+    double dCentralMeridian;
+    double dScaleFactor;
+    double dFalseEasting;
+    double dFalseNorthing;
+} plTransverseMercatorParams;
+
+typedef struct _plProjectionParams
+{
+    plPlanetProjectionType tType;
+
+    union
+    {
+        plPolarStereoParams        tPolarStereo;
+        plTransverseMercatorParams tTransverseMercator;
+    };
+} plProjectionParams;
+
+
+typedef struct _plPlanetGeodeticModel
+{
+    plPlanetDatumType tDatum;
+
+    union
+    {
+        struct
+        {
+            double dRadius; // meters
+        } sphere;
+
+        struct
+        {
+            double dSemiMajorAxis;     // meters
+            double dInverseFlattening; // usually 298.257223563
+        } ellipsoid;
+    };
+} plPlanetGeodeticModel;
+
+
 typedef struct _plPlanetProcessTileInfo
 {
     double      dMaxBaseError;
     double      dMaxHeight;
     double      dMinHeight;
     int         iTreeDepth;
-    double      dLongitude;
-    double      dLatitude;
-
-    char acHeightMapFile[256];
-    char acOutputFile[256];
+    double      dOriginX; // meters in projected CRS
+    double      dOriginY; // meters in projected CRS
+    char        acHeightMapFile[256];
+    char        acOutputFile[256];
 } plPlanetProcessTileInfo;
 
 typedef struct _plPlanetProcessInfo
 {
     plPlanetProcessingFlags  tFlags;
-    double                   dRadius;
+    plPlanetGeodeticModel    tGeodeticModel;
+    plProjectionParams       tProjection;
     double                   dMetersPerPixel;
     uint32_t                 uSize;
     uint32_t                 uTileCount;
@@ -158,6 +213,21 @@ enum _plPlanetProcessingFlags
 {
     PL_PLANET_PROCESSING_FLAGS_NONE             = 0,
     PL_PLANET_PROCESSING_FLAGS_DOUBLE_PRECISION = 1 << 0
+};
+
+enum _plPlanetDatumType
+{
+    PL_DATUM_SPHERE = 0,
+    // PL_DATUM_WGS84_ELLIPSOID
+};
+
+enum _plPlanetProjectionType
+{
+    PL_PROJECTION_POLAR_STEREOGRAPHIC,
+    // PL_PROJECTION_TRANSVERSE_MERCATOR,
+    // PL_PROJECTION_LAMBERT_CONFORMAL_CONIC,
+    // PL_PROJECTION_EQUIRECTANGULAR,
+    // PL_PROJECTION_CUSTOM
 };
 
 #endif // PL_PLANET_PROCESSOR_EXT_H

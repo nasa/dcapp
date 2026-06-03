@@ -269,7 +269,14 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
         plPlanetProcessTileInfo atTiles[64] = {};
         plPlanetProcessInfo tPlanetInfo = {};
         tPlanetInfo.tFlags = PL_PLANET_PROCESSING_FLAGS_DOUBLE_PRECISION;
-        tPlanetInfo.dRadius = 1737400.0;
+        tPlanetInfo.tGeodeticModel.tDatum = PL_DATUM_SPHERE;
+        tPlanetInfo.tGeodeticModel.sphere.dRadius = 1737400.0;
+        tPlanetInfo.tProjection.tType = PL_PROJECTION_POLAR_STEREOGRAPHIC;
+        tPlanetInfo.tProjection.tPolarStereo.dLatitudeOfOrigin = 0.0;
+        tPlanetInfo.tProjection.tPolarStereo.dLongitudeOfOrigin = 0.0; // central meridian (radians)
+        tPlanetInfo.tProjection.tPolarStereo.dScaleFactor = 1.0;
+        tPlanetInfo.tProjection.tPolarStereo.dFalseEasting = 0.0;
+        tPlanetInfo.tProjection.tPolarStereo.dFalseNorthing = 0.0;
         tPlanetInfo.dMetersPerPixel = 100.0;
         tPlanetInfo.uHorizontalTiles = 8;
         tPlanetInfo.uVerticalTiles = 8;
@@ -287,48 +294,8 @@ pl_app_load(plApiRegistryI* ptApiRegistry, plAppData* ptAppData)
                 atTiles[uTileIndex].dMaxHeight      = 14052.0;
                 atTiles[uTileIndex].dMinHeight      = -18256.0;
                 atTiles[uTileIndex].dMaxBaseError   = 15.0;
-                double fX = -1440000.0 + (double)i * 409600.0 + 409600.0 * 0.5;
-                double fY = -1440000.0 + (double)j * 409600.0 + 409600.0 * 0.5;
-
-
-                // Inputs: fX, fY in meters (projected), tPlanetInfo.fRadius = R
-                // SRS parameters:
-                double phi0 = (double)-PL_PI_2;            // -90 deg
-                double lam0 = 0.0 /* central meridian in radians from SRS */;
-                double k0   = 1.0;                // or from SRS if specified
-                double R    = tPlanetInfo.dRadius; // must match SRS
-
-                // Step 1: radial distance from projection center
-                double rho = sqrt(fX*fX + fY*fY);
-
-                // Step 2: angular distance
-                double c = 2.0 * atan(rho / (2.0 * R * k0));
-
-                // Step 3: latitude
-                // General stereographic inverse:
-                double sin_c = sin(c);
-                double cos_c = cos(c);
-                double sin_phi0 = sin(phi0);
-                double cos_phi0 = cos(phi0);
-
-                double phi; // latitude (radians)
-                if (rho == 0.0) {
-                    phi = phi0;  // at the pole
-                } else {
-                    phi = asin( cos_c * sin_phi0 + ( (fY * sin_c * cos_phi0) / rho ) );
-                }
-
-                // Step 4: longitude
-                double lam = lam0 + atan2( fX * sin_c,
-                                        rho * cos_phi0 * cos_c - fY * sin_phi0 * sin_c );
-
-                // Normalize lon to [-π, π] if desired
-                if (lam > (double) PL_PI) lam -= 2.0 * (double)PL_PI;
-                if (lam < (double)-PL_PI) lam += 2.0 * (double)PL_PI;
-
-                // Finally store in degrees
-                atTiles[uTileIndex].dLongitude = pl_degreesd(lam);
-                atTiles[uTileIndex].dLatitude  = pl_degreesd(phi);
+                atTiles[uTileIndex].dOriginX = -1440000.0 + (double)i * 409600.0 + 409600.0 * 0.5;
+                atTiles[uTileIndex].dOriginY = -1440000.0 + (double)j * 409600.0 + 409600.0 * 0.5;
 
                 sprintf(atTiles[uTileIndex].acOutputFile, "/tiles/moon_%u_%u.chu", i, j);
                 sprintf(atTiles[uTileIndex].acHeightMapFile, "/tiles/moon_%u_%u.png", i, j);
@@ -448,7 +415,7 @@ pl_app_update(plAppData* ptAppData)
         "/assets/hazard.png",
         800.0f,
         0.0f,
-        -90.0f
+        0.0f
     };
 
     static bool bShowSphere = false;
@@ -522,11 +489,17 @@ pl_app_update(plAppData* ptAppData)
             gptPlanet->reload_shaders(ptAppData->ptPlanetView);
         }
 
-        gptUI->input_float("fLatitude", &tTexture.fLatitude, NULL, 0);
-        gptUI->input_float("fLongitude", &tTexture.fLongitude, NULL, 0);
+        float fOriginX = (float)tTexture.dOriginX;
+        float fOriginY = (float)tTexture.dOriginY;
+        if(gptUI->input_float("dOriginX", &fOriginX, NULL, 0))
+        {
+            tTexture.dOriginX = (double)fOriginX;
+        }
+        if(gptUI->input_float("dOriginY", &fOriginY, NULL, 0))
+        {
+            tTexture.dOriginY = (double)fOriginY;
+        }
         gptUI->input_float("fMetersPerPixel", &tTexture.fMetersPerPixel, NULL, 0);
-        gptUI->slider_float("Latitude 2", &tTexture.fLatitude, -90.0f, 0.0f, 0);
-        gptUI->slider_float("fLongitude 2", &tTexture.fLongitude, -180.0f, 180.0f, 0);
 
         if(gptUI->button("Update Hazard"))
         {
@@ -543,8 +516,8 @@ pl_app_update(plAppData* ptAppData)
         gptUI->end_window();
     }
 
-    if(bShowSphere)
-        gptPlanet->draw_sphere(ptAppData->ptPlanetView, tTexture.fLongitude, tTexture.fLatitude, 0.0f, 5000.0f, PL_COLOR_32_RED);
+    // if(bShowSphere)
+    //     gptPlanet->draw_sphere(ptAppData->ptPlanetView, tTexture.fLongitude, tTexture.fLatitude, 0.0f, 5000.0f, PL_COLOR_32_RED);
     gptPlanet->draw_sphere(ptAppData->ptPlanetView, 0.0f, -45.0f, 0.0f, 10000.0f, PL_COLOR_32_CYAN);
     gptPlanet->draw_sphere(ptAppData->ptPlanetView, 90.0f, -45.0f, 0.0f, 10000.0f, PL_COLOR_32_WHITE);
     gptPlanet->draw_sphere(ptAppData->ptPlanetView, 180.0f, -45.0f, 0.0f, 10000.0f, PL_COLOR_32_YELLOW);
@@ -587,15 +560,15 @@ pl_app_update(plAppData* ptAppData)
 
 
     plCommandBuffer* ptCmdBuffer = gptStarter->get_temporary_command_buffer();
-    pl_begin_cpu_sample(gptProfile, 0, "prepare terrain");
+    PL_PROFILE_BEGIN_SAMPLE_API(gptProfile, 0, "prepare terrain");
     gptPlanet->prepare(ptAppData->ptPlanet0,  ptCmdBuffer);
-    pl_end_cpu_sample(gptProfile, 0);
+    PL_PROFILE_END_SAMPLE_API(gptProfile, 0);
     gptStarter->submit_temporary_command_buffer(ptCmdBuffer);
 
     ptCmdBuffer = gptStarter->get_command_buffer();
-    pl_begin_cpu_sample(gptProfile, 0, "terrain");
+    PL_PROFILE_BEGIN_SAMPLE_API(gptProfile, 0, "terrain");
     gptPlanet->render_view(ptAppData->ptPlanetView, ptCamera, ptCmdBuffer);
-    pl_end_cpu_sample(gptProfile, 0);
+    PL_PROFILE_END_SAMPLE_API(gptProfile, 0);
     gptStarter->submit_command_buffer(ptCmdBuffer);
     
     if(ImGui::Begin("View 0"))
