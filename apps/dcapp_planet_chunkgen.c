@@ -49,7 +49,6 @@ Index of this file:
 static bool  _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y, double *out_radius, double *band_scale, double *band_offset);
 static bool  _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *max_val);
 static bool  _run_gdal_translate(const char *input, const char *output, uint32_t src_x, uint32_t src_y, uint32_t w, uint32_t h, double min_h, double max_h);
-static void  _compute_tile_latlon(double origin_x, double origin_y, double pixel_scale, uint32_t col, uint32_t row, uint32_t tile_size, double radius, float *lat_deg, float *lon_deg);
 static void  _show_help(void);
 static char *_get_stem(const char *path, char *buf, size_t buf_size);
 
@@ -265,7 +264,22 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     }
 
     plPlanetProcessInfo planet_info = {
-        .dRadius          = radius,
+        .tProjection= {
+            .tType = PL_PROJECTION_POLAR_STEREOGRAPHIC,
+            .tPolarStereo = {
+                .dLatitudeOfOrigin = -90.0,
+                .dLongitudeOfOrigin = 0.0,
+                .dScaleFactor = 1.0,
+                .dFalseEasting = 0.0,
+                .dFalseNorthing = 0.0
+            }
+        },
+        .tGeodeticModel = {
+            .tDatum = PL_DATUM_SPHERE,
+            .sphere = {
+                .dRadius = radius
+            }
+        },
         .dMetersPerPixel  = meters_per_pixel,
         .uSize            = tile_size,
         .uTileCount       = tile_count,
@@ -283,12 +297,11 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
             tiles[idx].dMinHeight    = min_height;
             tiles[idx].dMaxBaseError = (double)max_base_error;
 
-            // compute lat/lon for tile center
-            float lat = 0.0f, lon = 0.0f;
-            _compute_tile_latlon(origin_x, origin_y, pixel_scale,
-                                 col, row, tile_size, radius, &lat, &lon);
-            tiles[idx].dLatitude  = (double)lat;
-            tiles[idx].dLongitude = (double)lon;
+            double tile_center_x = origin_x + ((double)col * tile_size + tile_size * 0.5) * pixel_scale;
+            double tile_center_y = origin_y + ((double)row * tile_size + tile_size * 0.5) * pixel_scale;
+
+            tiles[idx].dOriginX = tile_center_x;
+            tiles[idx].dOriginY = -tile_center_y;
 
             // file paths (real filesystem paths)
             snprintf(tiles[idx].acHeightMapFile, 256, "%s/%s_%u_%u.png", output_dir, prefix, col, row);
@@ -324,8 +337,8 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         else
             filename = tiles[i].acOutputFile;
 
-        pl_json_add_double_member(tile_obj, "lat", tiles[i].dLatitude);
-        pl_json_add_double_member(tile_obj, "lon", tiles[i].dLongitude);
+        pl_json_add_double_member(tile_obj, "originX", tiles[i].dOriginX);
+        pl_json_add_double_member(tile_obj, "originY", tiles[i].dOriginY);
         pl_json_add_string_member(tile_obj, "file", filename);
     }
 
@@ -556,48 +569,4 @@ static bool _run_gdal_translate(const char *input, const char *output, uint32_t 
 
     GDALClose(dst_ds);
     return true;
-}
-
-//-----------------------------------------------------------------------------
-// [SECTION] stereographic projection
-//-----------------------------------------------------------------------------
-
-static void _compute_tile_latlon(double origin_x, double origin_y, double pixel_scale, uint32_t col, uint32_t row, uint32_t tile_size, double radius, float *lat_deg, float *lon_deg) {
-    // model coordinates of tile center (easting / northing in meters)
-    double model_x = origin_x + ((double)col * tile_size + tile_size * 0.5) * pixel_scale;
-    double model_y = origin_y + ((double)row * tile_size + tile_size * 0.5) * pixel_scale;
-
-    // inverse south-pole stereographic projection
-    // matches pl-terrain convention: phi0 = -PI/2, lam0 = 0, k0 = 1
-    float R    = (float)radius;
-    float k0   = 1.0f;
-    float lam0 = 0.0f;
-    float phi0 = (float)(-M_PI / 2.0); // south pole
-
-    float x = (float)model_x;
-    float y = (float)model_y;
-
-    float rho = hypotf(x, y);
-    float c   = 2.0f * atanf(rho / (2.0f * R * k0));
-
-    float sin_c    = sinf(c);
-    float cos_c    = cosf(c);
-    float sin_phi0 = sinf(phi0);
-    float cos_phi0 = cosf(phi0);
-
-    float phi;
-    if (rho == 0.0f) {
-        phi = phi0;
-    } else {
-        phi = asinf(cos_c * sin_phi0 + (y * sin_c * cos_phi0) / rho);
-    }
-
-    float lam = lam0 + atan2f(x * sin_c,
-                               rho * cos_phi0 * cos_c - y * sin_phi0 * sin_c);
-
-    if (lam >  (float)M_PI) lam -= 2.0f * (float)M_PI;
-    if (lam < -(float)M_PI) lam += 2.0f * (float)M_PI;
-
-    *lon_deg = lam * (180.0f / (float)M_PI);
-    *lat_deg = phi * (180.0f / (float)M_PI);
 }

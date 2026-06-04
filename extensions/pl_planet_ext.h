@@ -24,7 +24,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plPlanetI_version {0, 3, 0}
+#define plPlanetI_version {0, 4, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -119,8 +119,8 @@ typedef struct _plPlanetTexture
 {
     const char* pcPath;
     float       fMetersPerPixel;
-    float       fLongitude;
-    float       fLatitude;
+    double      dOriginX;   // meters in projected CRS
+    double      dOriginY;
 } plPlanetTexture;
 
 typedef struct _plPlanetInit

@@ -521,10 +521,11 @@ typedef struct {
 
 typedef struct {
     char     *source;                  // heap-allocated absolute file path
+    _ValIndex2 lle;                    // double vars: geodetic center in degrees
     _ValIndex3 xyz;                    // double vars: native Cartesian center
     _ValIndex mpp;                     // double var: meters per pixel
-    _ValIndex lat;                     // double var: latitude (degrees)
-    _ValIndex lon;                     // double var: longitude (degrees)
+    _ValIndex originX;                 // double var: meters in projected CRS
+    _ValIndex originY;                 // double var: meters in projected CRS
     _ValIndex fire_refresh;            // var: change triggers texture reload
     DcValue   last_fire_refresh_value; // edge detection (fire on change)
     DcAppPlanetCrs crs;

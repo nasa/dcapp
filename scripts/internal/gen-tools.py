@@ -33,7 +33,6 @@ with pl.project("game"):
     # project wide settings
     pl.set_output_directory("../../pilotlight/out")
     pl.add_link_directories("../../pilotlight/out")
-    pl.add_link_directories("../../pilotlight/out")
     pl.add_include_directories(
         "../../extensions",
         "../../shaders",
@@ -184,7 +183,6 @@ with pl.project("game"):
 
     with pl.target("planet", pl.TargetType.DYNAMIC_LIBRARY, True):
 
-        pl.add_definitions("PL_EXPERIMENTAL")
         pl.add_source_files("../../tools/terrain/app.cpp")
         pl.set_output_binary("planet")
         pl.set_hot_reload_artifact_directory("../pilotlight/out-temp")

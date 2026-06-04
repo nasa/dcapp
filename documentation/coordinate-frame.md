@@ -191,19 +191,20 @@ phi = asin(cos(c) * sin(phi0) + (y * sin(c) * cos(phi0)) / rho)
 lam = lam0 + atan2(x * sin(c), rho * cos(phi0) * cos(c) - y * sin(phi0) * sin(c))
 ```
 
-This inverse is used by `dcapp-planet-chunkgen` to compute the latitude/longitude of each tile center from its position on the stereographic plane.
+New `dcapp-planet-chunkgen` output stores each tile center directly as projected `originX`/`originY` meters in `.planet.json`. dcapp still accepts older `.planet.json` files with tile `lat`/`lon` and converts them with the forward projection above.
 
-### Texture Longitude Convention
+### Texture Placement Convention
 
-When placing textures via `set_texture()`, the extension internally transforms longitude as `-longitude + 180` before the forward projection. This means that `Longitude="180"` in the XML maps to `lambda = 0` (the central meridian) in stereographic space.
+When placing textures from XML, dcapp converts user-facing `Latitude`/`Longitude` or cartesian `X`/`Y`/`Z` into projected `originX`/`originY` before calling the planet extension. User-facing longitude follows the renderer convention used by cameras and overlays (`lon=0` on +Z). The south-polar projection convention used by terrain metadata has `lon=0` on -Z, so dcapp maps XML/user longitude to projection longitude as `projection_lon = 180 - user_lon`. The extension receives projected meters only and does not apply an additional longitude transform.
 
 ### Source Files
 
 | File | Projection Usage |
 |------|-----------------|
-| `extensions/pl_planet_ext.c` | Forward projection in `pl_planet_set_texture()` |
-| `extensions/pl_planet_processor_ext.c` | Forward projection in `pl_planet_process()`, inverse in `pl__get_cartesian()` |
-| `apps/dcapp_planet_chunkgen.c` | Inverse projection in `_compute_tile_latlon()` |
+| `extensions/pl_planet_ext.c` | Texture placement against projected tile origins |
+| `extensions/pl_planet_processor_ext.c` | Converts projected heightmap points to Cartesian terrain vertices |
+| `apps/dcapp_planet_chunkgen.c` | Writes projected tile origins to `.planet.json` |
+| `apps/dcapp/dcapp.c` | Converts XML texture coordinates and legacy JSON tile `lat`/`lon` to projected origins |
 
 ---
 

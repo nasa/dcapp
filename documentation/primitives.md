@@ -645,7 +645,7 @@ Renders a view of a named planet. Supports two camera modes: LLE (latitude/longi
 | `CameraYaw` | — | number/var | No | Camera yaw angle (XYZ mode) |
 | `CameraOrthographic` | — | integer/var | No | 1 for orthographic projection, 0 for perspective |
 
-**Children:** None (leaf element)
+**Children:** `<PlanetEllipse>`, `<PlanetGeoJSON>`, `<PlanetText>`, and other planet overlay elements
 
 ---
 
@@ -678,10 +678,12 @@ Configures a texture overlay on the planet surface. The `File` attribute is a st
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `File` | string | No | Path to texture image file |
-| `MetersPerPixel` | number/var | No | Scale of the texture in meters per pixel |
-| `Latitude` | number/var | No | Latitude of texture center |
-| `Longitude` | number/var | No | Longitude of texture center |
-| `FireRefresh` | integer/var | No | Edge-triggered: changing this value re-reads the texture file from disk |
+| `MetersPerPixel` | number/var | No | Scale of the texture in meters per pixel; must be greater than zero |
+| `Latitude` | number/var | No | Latitude of texture center for geodetic CRS |
+| `Longitude` | number/var | No | Longitude of texture center for geodetic CRS |
+| `X`, `Y`, `Z` | number/var | No | Texture center for cartesian CRS |
+| `OriginX`, `OriginY` | number/var | No | Projected terrain-meter center override; both must be specified together |
+| `FireRefresh` | integer/var | No | Edge-triggered: changing this value re-reads the texture file, scale, and position |
 
 ---
 

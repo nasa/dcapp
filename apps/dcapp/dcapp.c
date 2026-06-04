@@ -22,7 +22,9 @@ PL_EXPORT void  pl_app_resize(_AppData *app_data);
 PL_EXPORT void  pl_app_update(_AppData *app_data);
 static void *get_variable_value_addr(void *user_data, const char *name);
 static void     _apply_frame_rate_limit(_AppData *app_data);
-static bool     _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, plPlanetTexture *out);
+static bool     _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, double radius, plPlanetTexture *out);
+static void     _planet_project_south_polar_stereographic(double radius, double lat_deg, double lon_deg, double *out_x, double *out_y);
+static void     _planet_project_user_geodetic_to_south_polar_stereographic(double radius, double lat_deg, double lon_deg, double *out_x, double *out_y);
 static void     _init_planets(_AppData *app_data);
 static void     _update_planet_defs(_AppData *app_data);
 static void     _load_apis(plApiRegistryI *api_registry);
@@ -799,36 +801,62 @@ static void _apply_frame_rate_limit(_AppData *app_data) {
     app_data->frame_data.last_frame_start_time = dc_utils_time_get();
 }
 
-static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, plPlanetTexture *out) {
+static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, double radius, plPlanetTexture *out) {
     if (!entry->source || entry->source[0] == '\0') return false;
     if (!_ext_vfs->does_file_exist(entry->source)) return false;
     memset(out, 0, sizeof(*out));
     out->pcPath = entry->source;
     if (entry->mpp != DC_APP_VAL_INDEX_UNDEFINED)
         out->fMetersPerPixel = (float)dc_app_lookup_get_value(app_data->lookup, entry->mpp)->value_double;
-    if (entry->crs == DC_APP_PLANET_CRS_CARTESIAN) {
-        plVec3 pos = {
-            entry->xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, entry->xyz.x)->value_double : 0.0f,
-            entry->xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, entry->xyz.y)->value_double : 0.0f,
-            entry->xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, entry->xyz.z)->value_double : 0.0f
-        };
-
-        // convert cartesian texture center to the lat/lon expected by pl_planet
-        float r = sqrtf(pos.x * pos.x + pos.y * pos.y + pos.z * pos.z);
-        if (r <= 0.0f) {
-            out->fLatitude  = 0.0f;
-            out->fLongitude = 0.0f;
-        } else {
-            out->fLatitude  = pl_degreesf(asinf(pos.y / r));
-            out->fLongitude = pl_degreesf(atan2f(pos.x, pos.z));
-        }
-    } else {
-        if (entry->lat != DC_APP_VAL_INDEX_UNDEFINED)
-            out->fLatitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lat)->value_double;
-        if (entry->lon != DC_APP_VAL_INDEX_UNDEFINED)
-            out->fLongitude = (float)dc_app_lookup_get_value(app_data->lookup, entry->lon)->value_double;
+    if (out->fMetersPerPixel <= 0.0f) {
+        DC_LOG_ERROR("PlanetTexture", "MetersPerPixel must be greater than zero for '%s'", entry->source);
+        return false;
     }
+
+    if (entry->originX != DC_APP_VAL_INDEX_UNDEFINED && entry->originY != DC_APP_VAL_INDEX_UNDEFINED) {
+        out->dOriginX = dc_app_lookup_get_value(app_data->lookup, entry->originX)->value_double;
+        out->dOriginY = dc_app_lookup_get_value(app_data->lookup, entry->originY)->value_double;
+    } else if (entry->originX != DC_APP_VAL_INDEX_UNDEFINED || entry->originY != DC_APP_VAL_INDEX_UNDEFINED) {
+        DC_LOG_ERROR("PlanetTexture", "OriginX and OriginY must be specified together for '%s'", entry->source);
+        return false;
+    } else if (entry->crs == DC_APP_PLANET_CRS_CARTESIAN &&
+               entry->xyz.x != DC_APP_VAL_INDEX_UNDEFINED &&
+               entry->xyz.y != DC_APP_VAL_INDEX_UNDEFINED &&
+               entry->xyz.z != DC_APP_VAL_INDEX_UNDEFINED) {
+        double x = dc_app_lookup_get_value(app_data->lookup, entry->xyz.x)->value_double;
+        double y = dc_app_lookup_get_value(app_data->lookup, entry->xyz.y)->value_double;
+        double z = dc_app_lookup_get_value(app_data->lookup, entry->xyz.z)->value_double;
+        double r = sqrt(x * x + y * y + z * z);
+        if (r <= 0.0) return false;
+
+        double lat = asin(y / r) * 180.0 / 3.14159265358979323846;
+        double lon = atan2(x, z) * 180.0 / 3.14159265358979323846;
+        _planet_project_user_geodetic_to_south_polar_stereographic(radius, lat, lon, &out->dOriginX, &out->dOriginY);
+    } else if (entry->lle.lat != DC_APP_VAL_INDEX_UNDEFINED &&
+               entry->lle.lon != DC_APP_VAL_INDEX_UNDEFINED) {
+        double lat = dc_app_lookup_get_value(app_data->lookup, entry->lle.lat)->value_double;
+        double lon = dc_app_lookup_get_value(app_data->lookup, entry->lle.lon)->value_double;
+        _planet_project_user_geodetic_to_south_polar_stereographic(radius, lat, lon, &out->dOriginX, &out->dOriginY);
+    } else {
+        DC_LOG_ERROR("PlanetTexture", "Texture center must be OriginX/OriginY, Latitude/Longitude, or complete X/Y/Z for '%s'", entry->source);
+        return false;
+    }
+
     return true;
+}
+
+static void _planet_project_south_polar_stereographic(double radius, double lat_deg, double lon_deg, double *out_x, double *out_y) {
+    const double pi      = 3.14159265358979323846;
+    double       lat_rad = lat_deg * pi / 180.0;
+    double       lon_rad = lon_deg * pi / 180.0;
+    double       rho     = 2.0 * radius * tan(pi / 4.0 + 0.5 * lat_rad);
+
+    *out_x = rho * sin(lon_rad);
+    *out_y = -rho * cos(lon_rad);
+}
+
+static void _planet_project_user_geodetic_to_south_polar_stereographic(double radius, double lat_deg, double lon_deg, double *out_x, double *out_y) {
+    _planet_project_south_polar_stereographic(radius, lat_deg, 180.0 - lon_deg, out_x, out_y);
 }
 
 static void _init_planets(_AppData *app_data) {
@@ -896,13 +924,20 @@ static void _init_planets(_AppData *app_data) {
 
         // build process info
         plPlanetProcessInfo process_info = {0};
-        process_info.dRadius             = radius;
-        process_info.dMetersPerPixel     = meters_per_pixel;
-        process_info.uSize               = (uint32_t)tile_size;
-        process_info.uTileCount          = tile_count;
-        process_info.uHorizontalTiles    = (uint32_t)cols;
-        process_info.uVerticalTiles      = (uint32_t)rows;
-        process_info.atTiles             = (plPlanetProcessTileInfo *)PL_ALLOC(tile_count * sizeof(plPlanetProcessTileInfo));
+        process_info.tProjection.tType = PL_PROJECTION_POLAR_STEREOGRAPHIC;
+        process_info.tProjection.tPolarStereo.dLatitudeOfOrigin = -90.0;
+        process_info.tProjection.tPolarStereo.dLongitudeOfOrigin = 0.0; // central meridian (radians)
+        process_info.tProjection.tPolarStereo.dScaleFactor = 1.0;
+        process_info.tProjection.tPolarStereo.dFalseEasting = 0.0;
+        process_info.tProjection.tPolarStereo.dFalseNorthing = 0.0;
+        process_info.tGeodeticModel.tDatum         = PL_DATUM_SPHERE;
+        process_info.tGeodeticModel.sphere.dRadius = radius;
+        process_info.dMetersPerPixel               = meters_per_pixel;
+        process_info.uSize                         = (uint32_t)tile_size;
+        process_info.uTileCount                    = tile_count;
+        process_info.uHorizontalTiles              = (uint32_t)cols;
+        process_info.uVerticalTiles                = (uint32_t)rows;
+        process_info.atTiles                       = (plPlanetProcessTileInfo *)PL_ALLOC(tile_count * sizeof(plPlanetProcessTileInfo));
 
         // get directory of the JSON file for resolving relative chunk paths
         char json_dir[DC_VALUE_STRING_BUFFER_SIZE];
@@ -913,8 +948,14 @@ static void _init_planets(_AppData *app_data) {
 
             plPlanetProcessTileInfo *tile = &process_info.atTiles[t];
             memset(tile, 0, sizeof(plPlanetProcessTileInfo));
-            tile->dLatitude     = pl_json_double_member(tile_obj, "lat", 0.0);
-            tile->dLongitude    = pl_json_double_member(tile_obj, "lon", 0.0);
+            if (pl_json_member_exist(tile_obj, "originX") && pl_json_member_exist(tile_obj, "originY")) {
+                tile->dOriginX = pl_json_double_member(tile_obj, "originX", 0.0);
+                tile->dOriginY = pl_json_double_member(tile_obj, "originY", 0.0);
+            } else if (pl_json_member_exist(tile_obj, "lat") && pl_json_member_exist(tile_obj, "lon")) {
+                double lat = pl_json_double_member(tile_obj, "lat", 0.0);
+                double lon = pl_json_double_member(tile_obj, "lon", 0.0);
+                _planet_project_south_polar_stereographic(radius, lat, lon, &tile->dOriginX, &tile->dOriginY);
+            }
             tile->dMaxBaseError = (double)max_base_error;
             tile->dMaxHeight    = (double)max_height;
             tile->dMinHeight    = (double)min_height;
@@ -950,9 +991,9 @@ static void _init_planets(_AppData *app_data) {
         // initial texture overlay (if source is set at parse time)
         if (sbcount(def->sb_textures) > 0) {
             plPlanetTexture texture;
-            if (_build_planet_texture(app_data, &def->sb_textures[0], &texture)) {
-                DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, lat=%.1f, lon=%.1f)",
-                            i, texture.pcPath, texture.fMetersPerPixel, texture.fLatitude, texture.fLongitude);
+            if (_build_planet_texture(app_data, &def->sb_textures[0], def->radius, &texture)) {
+                DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, originX=%.1f, originY=%.1f)",
+                            i, texture.pcPath, texture.fMetersPerPixel, texture.dOriginX, texture.dOriginY);
                 _ext_planet->set_texture(planet, &texture, 0);
             }
         }
@@ -1030,7 +1071,7 @@ static void _update_planet_defs(_AppData *app_data) {
             DcValue *refresh_val = dc_app_lookup_get_value(app_data->lookup, tex->fire_refresh);
             if (!dc_value_is_equal(refresh_val, &tex->last_fire_refresh_value)) {
                 plPlanetTexture texture;
-                if (_build_planet_texture(app_data, tex, &texture)) {
+                if (_build_planet_texture(app_data, tex, def->radius, &texture)) {
                     _ext_planet->set_texture(planet, &texture, 0);
                 } else {
                     _ext_planet->set_texture(planet, NULL, 0);

@@ -4517,18 +4517,30 @@ static _NodeIndex _process_xml_node_planet_texture(_AppData *app_data, xmlNodePt
         xmlFree(raw_mpp);
     }
 
-    // latitude
+    // geodetic center
     xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
     if (raw_lat) {
-        entry.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+        entry.lle.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
         xmlFree(raw_lat);
     }
-
-    // longitude
     xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
     if (raw_lon) {
-        entry.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+        entry.lle.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
         xmlFree(raw_lon);
+    }
+
+    // projected origin x
+    xmlChar *raw_origin_x = xmlGetProp(xml_node, BAD_CAST "OriginX");
+    if (raw_origin_x) {
+        entry.originX = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_origin_x);
+        xmlFree(raw_origin_x);
+    }
+
+    // projected origin y
+    xmlChar *raw_origin_y = xmlGetProp(xml_node, BAD_CAST "OriginY");
+    if (raw_origin_y) {
+        entry.originY = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_origin_y);
+        xmlFree(raw_origin_y);
     }
 
     // cartesian center

@@ -140,7 +140,7 @@ static const plMemoryI*  gptMemory = NULL;
 // required APIs
 static const plImageI* gptImage = NULL;
 static const plVfsI*   gptVfs   = NULL;
-    
+
 #include "pl_ds.h"
 
 // context
@@ -264,7 +264,7 @@ pl__oct_wrap( plVec2d v )
     if (v.y < 0.0) w.y = -w.y;
     return w;
 }
- 
+
 static inline plVec2
 pl__encode(plVec3d n)
 {
@@ -313,35 +313,14 @@ pl_planet_process(plPlanetProcessInfo* ptInfo)
             .dMetersPerPixel = ptInfo->dMetersPerPixel,
             .dMaxHeight      = ptInfo->atTiles[i].dMaxHeight,
             .dMinHeight      = ptInfo->atTiles[i].dMinHeight,
-            .dRadius         = ptInfo->dRadius,
+            .dRadius         = ptInfo->tGeodeticModel.sphere.dRadius,
             .tCenter         = {0},
             .uRequestedSize  = ptInfo->uSize,
             .pcOutputFile    = ptInfo->atTiles[i].acOutputFile
         };
 
-        const double R    = ptInfo->dRadius;   // lunar radius (meters)
-        const double k0   = 1.0;       // scale factor from SRS (often 1.0f)
-        const double lon0 = 0.0;     // central meridian (radians)
-
-        // False easting/northing from SRS if applicable; else 0
-        const double FE   = 0.0;   // meters
-        const double FN   = 0.0;  // meters
-
-        // Inputs (radians)
-        const double phi  = pl_radiansd(ptInfo->atTiles[i].dLatitude);
-        const double lam  = pl_radiansd(ptInfo->atTiles[i].dLongitude);
-
-        // South-pole stereographic
-        const double theta = lam - lon0;
-        const double rho   = 2.0 * R * k0 * tan(PL_PI_4 + 0.5 * phi);
-
-        // Easting / Northing (northing-positive-up)
-        const double x = rho * sin(theta);
-        const double y = -rho * cos(theta);  // note the minus for south polar
-
-        // Apply false easting/northing if the dataset uses them
-        tHeightMap.tCenter.x = x + FE;
-        tHeightMap.tCenter.z = y + FN;
+        tHeightMap.tCenter.x = ptInfo->atTiles[i].dOriginX;
+        tHeightMap.tCenter.z = ptInfo->atTiles[i].dOriginY;
 
         pl__initialize_cdlod_heightmap(&tHeightMap, ptInfo, i);
 
@@ -404,16 +383,16 @@ pl_terrain_load_chunk_file(const char* pcPath, plPlanetChunkFile* ptFile, uint32
 
     plVfsFileHandle tFileHandle = gptVfs->register_file(pcPath, true);
     pcPath = gptVfs->get_real_path(tFileHandle);
-    
+
     FILE* ptDataFile = fopen(pcPath, "rb");
     strncpy(ptFile->acFile, pcPath, 128);
-    
+
     if(ptDataFile == NULL)
     {
         return false;
     }
-    
-    
+
+
     plVersion tFileVersion = {0};
     fread(&tFileVersion.uMajor, 1, sizeof(int), ptDataFile);
     fread(&tFileVersion.uMinor, 1, sizeof(int), ptDataFile);
@@ -437,7 +416,7 @@ pl_terrain_load_chunk_file(const char* pcPath, plPlanetChunkFile* ptFile, uint32
 
     fread(&ptFile->iTreeDepth, 1, sizeof(int), ptDataFile);
 
-    
+
     if(tFileVersion.uMinor > 2) // new path
         fread(&ptFile->dMaxBaseError, 1, sizeof(double), ptDataFile);
     else // backwards compat
@@ -590,7 +569,7 @@ pl__initialize_cdlod_heightmap(plPlanetHeightMap* ptHeightMap, plPlanetProcessIn
     {
         if(atHaloTiles[uTileIndex] == 0)
             continue;
-        
+
         size_t szFileSize = gptVfs->get_file_size_str(atHaloTiles[uTileIndex]);
         plVfsFileHandle tHeightMap = gptVfs->open_file(atHaloTiles[uTileIndex], PL_VFS_FILE_MODE_READ);
         gptVfs->read_file(tHeightMap, NULL, &szFileSize);
@@ -885,7 +864,7 @@ pl__initialize_cdlod_heightmap(plPlanetHeightMap* ptHeightMap, plPlanetProcessIn
         dY *= (ptHeightMap->dMaxHeight - ptHeightMap->dMinHeight);
         dY += ptHeightMap->dMinHeight;
 
-        
+
         ptHeightMap->atHaloElements[iElementIndex].iX = (int16_t)i;
         ptHeightMap->atHaloElements[iElementIndex].iZ = -1;
         ptHeightMap->atHaloElements[iElementIndex].dY = dY;
@@ -914,7 +893,7 @@ pl__initialize_cdlod_heightmap(plPlanetHeightMap* ptHeightMap, plPlanetProcessIn
         dY *= (ptHeightMap->dMaxHeight - ptHeightMap->dMinHeight);
         dY += ptHeightMap->dMinHeight;
 
-        
+
         ptHeightMap->atHaloElements[iElementIndex].iX = (int16_t)i;
         ptHeightMap->atHaloElements[iElementIndex].iZ = (int16_t)ptHeightMap->iSize + 1;
         ptHeightMap->atHaloElements[iElementIndex].dY = dY;
@@ -1309,7 +1288,7 @@ pl__get_cartesian_unmod(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptEl
     // Latitude (phi) and Longitude (lambda)
     double phi;
     if (rho == 0.0f) // exactly at south pole
-        phi = (double)-PL_PI_2;      
+        phi = (double)-PL_PI_2;
     else // For south pole φ0 = -π/2: φ = -π/2 + c
         phi = (double)-PL_PI_2 + c;
 
@@ -1416,7 +1395,7 @@ pl__get_cartesian(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
     // Latitude (phi) and Longitude (lambda)
     double phi;
     if (rho == 0.0) // exactly at south pole
-        phi = (double)-PL_PI_2;      
+        phi = (double)-PL_PI_2;
     else // For south pole φ0 = -π/2: φ = -π/2 + c
         phi = (double)-PL_PI_2 + c;
 
@@ -1471,7 +1450,7 @@ pl__get_normal(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
         eL = &ptHeightMap->atHaloElements[3 * (ptHeightMap->iSize - 1) + hz];
     else
         eL = &ptHeightMap->atElements[iL + ptHeightMap->iSize*ptElement->iZ];
-    
+
     // north
     if(ptElement->iZ == 0 && ptElement->iX == ptHeightMap->iSize - 1)
         eD = &ptHeightMap->atHaloElements[4 * (ptHeightMap->iSize - 1) + 0];
@@ -1588,7 +1567,7 @@ pl__propagate_activation_level(plPlanetHeightMap* ptHeightMap, int cx, int cz, i
 	plPlanetMapElement* en = pl__get_elem(ptHeightMap, cx, cz - half_size);
 	plPlanetMapElement* ew = pl__get_elem(ptHeightMap, cx - half_size, cz);
 	plPlanetMapElement* es = pl__get_elem(ptHeightMap, cx, cz + half_size);
-	
+
 	if (level > 0)
     {
 		// Propagate child verts to edge verts.
