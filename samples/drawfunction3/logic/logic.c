@@ -50,7 +50,7 @@ void draw_procedural(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
     // Register the whole panel as a mouse target. The event query uses dcapp's
     // resolved topmost target, so XML and DrawFunction hit regions compete in
     // the same mouse event system.
-    dc_mouse->rect(ctx, "ripple_panel", (DcVec2){0.0f, 0.0f}, (DcVec2){900.0f, 600.0f}, (DcPlacement){0});
+    dc_mouse->rect(ctx, "ripple_panel", (DcVec2){0.0f, 0.0f}, (DcVec2){900.0f, 600.0f});
     if (dc_mouse->pressed(ctx, "ripple_panel")) {
         const DcMouse *mouse = dc_mouse->get_state(ctx);
         if (!mouse) return;

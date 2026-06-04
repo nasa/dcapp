@@ -195,16 +195,26 @@ typedef struct _DcAppDrawApi {
 } DcAppDrawApi;
 
 typedef struct _DcAppMouseApi {
-    const DcAppMouse *(*get_state)(DcAppDrawContext *ctx);
-    void (*rect)(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement);
-    void (*circle)(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius, DcAppPlacement placement);
-    void (*polygon)(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement);
+    // Basic mouse hit registration.
+    void (*rect)(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size);
+    void (*circle)(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius);
+    void (*polygon)(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position);
+
+    // Extended mouse hit registration with placement.
+    void (*rect_ex)(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement);
+    void (*circle_ex)(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius, DcAppPlacement placement);
+    void (*polygon_ex)(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement);
+
+    // Event queries.
     bool (*hovered)(DcAppDrawContext *ctx, const char *id);
     bool (*pressed)(DcAppDrawContext *ctx, const char *id);
     bool (*released)(DcAppDrawContext *ctx, const char *id);
-    bool (*down)(DcAppDrawContext *ctx, const char *id);
     bool (*active)(DcAppDrawContext *ctx, const char *id);
     bool (*clicked)(DcAppDrawContext *ctx, const char *id);
+
+    // Current mouse state in the draw context's local space.
+    bool (*down)(DcAppDrawContext *ctx);
+    const DcAppMouse *(*get_state)(DcAppDrawContext *ctx);
 } DcAppMouseApi;
 
 typedef struct _DcAppTextureApi {
@@ -293,16 +303,19 @@ void dc_app_draw_stencil_draw(DcAppDrawContext *ctx);
 void dc_app_draw_stencil_end(DcAppDrawContext *ctx);
 
 // DrawFunction mouse registration and event API
-const DcAppMouse *dc_app_mouse_get_state(DcAppDrawContext *ctx);
-void dc_app_mouse_rect(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement);
-void dc_app_mouse_circle(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius, DcAppPlacement placement);
-void dc_app_mouse_polygon(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement);
+void dc_app_mouse_rect(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size);
+void dc_app_mouse_rect_ex(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement);
+void dc_app_mouse_circle(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius);
+void dc_app_mouse_circle_ex(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius, DcAppPlacement placement);
+void dc_app_mouse_polygon(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position);
+void dc_app_mouse_polygon_ex(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement);
 bool dc_app_mouse_hovered(DcAppDrawContext *ctx, const char *id);
 bool dc_app_mouse_pressed(DcAppDrawContext *ctx, const char *id);
 bool dc_app_mouse_released(DcAppDrawContext *ctx, const char *id);
-bool dc_app_mouse_down(DcAppDrawContext *ctx, const char *id);
 bool dc_app_mouse_active(DcAppDrawContext *ctx, const char *id);
 bool dc_app_mouse_clicked(DcAppDrawContext *ctx, const char *id);
+bool dc_app_mouse_down(DcAppDrawContext *ctx);
+const DcAppMouse *dc_app_mouse_get_state(DcAppDrawContext *ctx);
 
 // stencil state helpers
 bool dc_app_draw_stencil_begin_handler(_AppData *app_data, DcAppStencilHandler *handler);

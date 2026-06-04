@@ -57,16 +57,19 @@ static const DcAppDrawApi dc_app_draw_interface = {
 };
 
 static const DcAppMouseApi dc_app_mouse_interface = {
-    .get_state = dc_app_mouse_get_state,
-    .rect     = dc_app_mouse_rect,
-    .circle   = dc_app_mouse_circle,
-    .polygon  = dc_app_mouse_polygon,
-    .hovered  = dc_app_mouse_hovered,
-    .pressed  = dc_app_mouse_pressed,
-    .released = dc_app_mouse_released,
-    .down     = dc_app_mouse_down,
-    .active   = dc_app_mouse_active,
-    .clicked  = dc_app_mouse_clicked,
+    .rect       = dc_app_mouse_rect,
+    .circle     = dc_app_mouse_circle,
+    .polygon    = dc_app_mouse_polygon,
+    .rect_ex    = dc_app_mouse_rect_ex,
+    .circle_ex  = dc_app_mouse_circle_ex,
+    .polygon_ex = dc_app_mouse_polygon_ex,
+    .hovered    = dc_app_mouse_hovered,
+    .pressed    = dc_app_mouse_pressed,
+    .released   = dc_app_mouse_released,
+    .active     = dc_app_mouse_active,
+    .clicked    = dc_app_mouse_clicked,
+    .down       = dc_app_mouse_down,
+    .get_state  = dc_app_mouse_get_state,
 };
 
 const DcAppDrawApi *dc_app_draw_api(void) {
@@ -780,7 +783,11 @@ const DcAppMouse *dc_app_mouse_get_state(DcAppDrawContext *ctx) {
     return ctx ? &ctx->mouse : NULL;
 }
 
-void dc_app_mouse_rect(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement) {
+void dc_app_mouse_rect(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size) {
+    dc_app_mouse_rect_ex(ctx, id, position, size, (DcAppPlacement){0});
+}
+
+void dc_app_mouse_rect_ex(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement) {
     uint64_t mouse_id = _mouse_id(id);
     if (mouse_id == 0) return;
 
@@ -792,7 +799,11 @@ void dc_app_mouse_rect(DcAppDrawContext *ctx, const char *id, DcAppVec2 position
     }
 }
 
-void dc_app_mouse_circle(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius, DcAppPlacement placement) {
+void dc_app_mouse_circle(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius) {
+    dc_app_mouse_circle_ex(ctx, id, center, radius, (DcAppPlacement){0});
+}
+
+void dc_app_mouse_circle_ex(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius, DcAppPlacement placement) {
     uint64_t mouse_id = _mouse_id(id);
     if (mouse_id == 0 || radius <= 0.0f) return;
 
@@ -810,7 +821,11 @@ void dc_app_mouse_circle(DcAppDrawContext *ctx, const char *id, DcAppVec2 center
     }
 }
 
-void dc_app_mouse_polygon(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement) {
+void dc_app_mouse_polygon(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position) {
+    dc_app_mouse_polygon_ex(ctx, id, points, point_count, position, (DcAppPlacement){0});
+}
+
+void dc_app_mouse_polygon_ex(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement) {
     uint64_t mouse_id = _mouse_id(id);
     if (!ctx || !ctx->_runtime || mouse_id == 0 || !points || point_count < 3) return;
 
@@ -846,13 +861,6 @@ bool dc_app_mouse_released(DcAppDrawContext *ctx, const char *id) {
     return mouse_id != 0 && _mouse_target_is_id(((_AppData *)ctx->_runtime)->frame_data.released_target, mouse_id);
 }
 
-bool dc_app_mouse_down(DcAppDrawContext *ctx, const char *id) {
-    if (!ctx || !ctx->_runtime) return false;
-    _AppData *app_data = (_AppData *)ctx->_runtime;
-    uint64_t mouse_id = _mouse_id(id);
-    return mouse_id != 0 && app_data->frame_data.is_mouse_down && _mouse_target_is_id(app_data->frame_data.active_target, mouse_id);
-}
-
 bool dc_app_mouse_active(DcAppDrawContext *ctx, const char *id) {
     if (!ctx || !ctx->_runtime) return false;
     uint64_t mouse_id = _mouse_id(id);
@@ -861,6 +869,10 @@ bool dc_app_mouse_active(DcAppDrawContext *ctx, const char *id) {
 
 bool dc_app_mouse_clicked(DcAppDrawContext *ctx, const char *id) {
     return dc_app_mouse_released(ctx, id);
+}
+
+bool dc_app_mouse_down(DcAppDrawContext *ctx) {
+    return ctx && ctx->mouse.down;
 }
 
 //-----------------------------------------------------------------------------

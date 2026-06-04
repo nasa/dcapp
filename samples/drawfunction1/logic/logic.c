@@ -101,9 +101,9 @@ void draw_mouse_circle(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
     float radius = demo_radius(t);
     const char *id = "drawfunction_sample_circle";
 
-    dc_mouse->circle(ctx, id, (DcVec2){196.0f, 88.0f}, radius, (DcPlacement){0});
+    dc_mouse->circle(ctx, id, (DcVec2){196.0f, 88.0f}, radius);
 
-    if (dc_mouse->down(ctx, id)) {
+    if (dc_mouse->active(ctx, id)) {
         dc_draw->circle_filled(ctx, (DcVec2){196.0f, 88.0f}, radius, (DcVec4){
             .r = 0.22f,
             .g = 0.80f,

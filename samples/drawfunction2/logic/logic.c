@@ -461,7 +461,7 @@ static void draw_example_31_nested_stencil(DcDrawContext *ctx, const DcDrawFuncA
 static void draw_example_32_mouse_rect(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
     (void)args;
     const char *id = "drawfunction2_mouse_rect";
-    dc_mouse->rect(ctx, id, (DcVec2){48.0f, 34.0f}, (DcVec2){124.0f, 52.0f}, (DcPlacement){0});
+    dc_mouse->rect(ctx, id, (DcVec2){48.0f, 34.0f}, (DcVec2){124.0f, 52.0f});
     DcVec4 fill = dc_mouse->hovered(ctx, id) ? color(0.72f, 0.38f, 0.24f, 0.94f) : color(0.34f, 0.22f, 0.16f, 0.88f);
     dc_draw->rounded_rect_filled(ctx, (DcVec2){48.0f, 34.0f}, (DcVec2){124.0f, 52.0f}, 8.0f, fill);
     note(ctx, "hover target");
@@ -472,7 +472,7 @@ static void draw_example_32_mouse_rect(DcDrawContext *ctx, const DcDrawFuncArgs 
 static void draw_example_33_mouse_circle(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
     (void)args;
     const char *id = "drawfunction2_mouse_circle";
-    dc_mouse->circle(ctx, id, (DcVec2){110.0f, 60.0f}, 34.0f, (DcPlacement){0});
+    dc_mouse->circle(ctx, id, (DcVec2){110.0f, 60.0f}, 34.0f);
     DcVec4 fill = dc_mouse->hovered(ctx, id) ? color(0.72f, 0.38f, 0.24f, 0.94f) : color(0.34f, 0.22f, 0.16f, 0.88f);
     dc_draw->circle_filled(ctx, (DcVec2){110.0f, 60.0f}, 34.0f, fill);
     note(ctx, "circle hit");
@@ -489,7 +489,7 @@ static void draw_example_34_mouse_polygon(DcDrawContext *ctx, const DcDrawFuncAr
         {136.0f, 88.0f},
         {52.0f, 72.0f},
     };
-    dc_mouse->polygon(ctx, id, points, 4, (DcVec2){0.0f, 0.0f}, (DcPlacement){0});
+    dc_mouse->polygon(ctx, id, points, 4, (DcVec2){0.0f, 0.0f});
     DcVec4 fill = dc_mouse->hovered(ctx, id) ? color(0.72f, 0.38f, 0.24f, 0.94f) : color(0.34f, 0.22f, 0.16f, 0.88f);
     dc_draw->polygon_filled(ctx, points, 4, fill);
     note(ctx, "polygon hit");
@@ -500,12 +500,11 @@ static void draw_example_34_mouse_polygon(DcDrawContext *ctx, const DcDrawFuncAr
 static void draw_example_35_mouse_events(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
     (void)args;
     const char *id = "drawfunction2_mouse_events";
-    dc_mouse->rect(ctx, id, (DcVec2){48.0f, 34.0f}, (DcVec2){124.0f, 52.0f}, (DcPlacement){0});
+    dc_mouse->rect(ctx, id, (DcVec2){48.0f, 34.0f}, (DcVec2){124.0f, 52.0f});
 
     bool hovered = dc_mouse->hovered(ctx, id);
     bool pressed = dc_mouse->pressed(ctx, id);
     bool released = dc_mouse->released(ctx, id);
-    bool down = dc_mouse->down(ctx, id);
     bool active = dc_mouse->active(ctx, id);
     bool clicked = dc_mouse->clicked(ctx, id);
 
@@ -520,9 +519,9 @@ static void draw_example_35_mouse_events(DcDrawContext *ctx, const DcDrawFuncArg
     } else if (clicked) {
         fill = color(0.96f, 0.72f, 0.34f, 1.0f);
         state = "clicked";
-    } else if (down || active) {
+    } else if (active) {
         fill = color(0.98f, 0.62f, 0.32f, 1.0f);
-        state = active ? "active" : "down";
+        state = "active";
     } else if (hovered) {
         fill = color(0.72f, 0.38f, 0.24f, 0.94f);
         state = "hovered";
