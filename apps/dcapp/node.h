@@ -11,6 +11,9 @@
 #include "pixelstream/shmem.h"
 #include "dc_draw_ext.h"
 
+typedef struct _DcAppDrawContext DcAppDrawContext;
+typedef struct _DcAppDrawFuncArgs DcAppDrawFuncArgs;
+
 // value index types
 typedef DcAppValIndex _ValIndex;
 
@@ -66,6 +69,7 @@ typedef enum __NodeType {
     NODE_TYPE_CONTAINER,
     NODE_TYPE_ELLIPSE,
     NODE_TYPE_CONDITIONAL,
+    NODE_TYPE_DRAW_FUNCTION,
     NODE_TYPE_FUNCTION,
     NODE_TYPE_IMAGE,
     NODE_TYPE_LINE,
@@ -423,6 +427,16 @@ typedef struct __NodeFunction {
     DcValue   last_fire_call_value;
 } _NodeFunction;
 
+typedef struct __DrawFunctionArg {
+    DcValueType type;
+    _ValIndex   value;
+} _DrawFunctionArg;
+
+typedef struct __NodeDrawFunction {
+    void (*callback)(DcAppDrawContext *, const DcAppDrawFuncArgs *);
+    _DrawFunctionArg *sb_args;
+} _NodeDrawFunction;
+
 typedef struct __NodeSphere {
     // 2D positioning (where to draw in the orthographic view)
     _ValIndex2 position;
@@ -696,6 +710,7 @@ typedef struct __Node {
         _NodeBlink         blink;
         _NodeButton        button;
         _NodeConditional   conditional;
+        _NodeDrawFunction  draw_function;
         _NodeEllipse       ellipse;
         _NodeContainer     container;
         _NodeFunction      function;

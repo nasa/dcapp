@@ -184,7 +184,7 @@ with pl.project("samples"):
                 with pl.platform("Windows"):
                     with pl.compiler("msvc"):
                         pl.set_pre_target_build_step(
-                            f"\"{genheader_rel}.exe\" {sample_xml_rel}"
+                            f"\"{genheader_rel}.exe\" {sample_xml_rel} || exit /b 1"
                         )
                         pl.add_linker_flags(
                             "-EXPORT:display_pre_init",
@@ -196,12 +196,12 @@ with pl.project("samples"):
                 # linux
                 with pl.platform("Linux"):
                     with pl.compiler("gcc"):
-                        pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel}")
+                        pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel} || exit 1")
 
                 # mac os
                 with pl.platform("Darwin"):
                     with pl.compiler("clang"):
-                        pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel}")
+                        pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel} || exit 1")
 
             # debug config
             with pl.configuration("debug"):
@@ -210,7 +210,7 @@ with pl.project("samples"):
                 with pl.platform("Windows"):
                     with pl.compiler("msvc"):
                         pl.set_pre_target_build_step(
-                            f"\"{genheader_rel}.exe\" {sample_xml_rel}"
+                            f"\"{genheader_rel}.exe\" {sample_xml_rel} || exit /b 1"
                         )
                         pl.add_linker_flags(
                             "-EXPORT:display_pre_init",
@@ -222,12 +222,12 @@ with pl.project("samples"):
                 # linux
                 with pl.platform("Linux"):
                     with pl.compiler("gcc"):
-                        pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel}")
+                        pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel} || exit 1")
 
                 # mac os
                 with pl.platform("Darwin"):
                     with pl.compiler("clang"):
-                        pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel}")
+                        pl.set_pre_target_build_step(f"{genheader_rel} {sample_xml_rel} || exit 1")
 
 # -----------------------------------------------------------------------------
 # [SECTION] generate scripts

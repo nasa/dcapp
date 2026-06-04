@@ -27,7 +27,9 @@
 #include "pl_planet_processor_ext.h"
 
 // general includes
+#include <stdbool.h>
 #include <float.h>
+#include <stdint.h>
 #include <string.h>
 
 // PL macros
@@ -67,6 +69,13 @@ const plScreenLogI       *_ext_screen_log       = NULL;
 #include "trick.h"
 #include "edge.h"
 #include <libxml/parser.h>
+
+// DrawFunction ABI types are defined in draw.h.
+typedef struct _DcAppDrawContext DcAppDrawContext;
+typedef struct _DcAppDrawFuncArgs DcAppDrawFuncArgs;
+typedef struct _DcAppDrawApi DcAppDrawApi;
+typedef struct _DcAppMouseApi DcAppMouseApi;
+typedef struct _DcAppInit DcAppInit;
 
 // dcapp node structs
 #include "node.h"
@@ -111,9 +120,6 @@ typedef struct __EdgeContext {
     bool               was_connected;       // previous connection state for disconnect detection
 } _EdgeContext;
 
-// callback used for logic file DLL loading
-typedef void *(*_GetVariableValueAddr)(const char *name);
-
 // draw batch types
 typedef enum __DrawBatchType {
     DRAW_BATCH_TYPE_UNDEFINED,
@@ -134,6 +140,47 @@ typedef struct __DrawBatch {
     };
 } _DrawBatch;
 
+// mouse targets
+typedef enum __MouseTargetType {
+    MOUSE_TARGET_TYPE_UNDEFINED,
+    MOUSE_TARGET_TYPE_NODE,
+    MOUSE_TARGET_TYPE_ID,
+} _MouseTargetType;
+
+typedef struct __MouseTarget {
+    _MouseTargetType type;
+    union {
+        _NodeIndex node;
+        uint64_t   id;
+    };
+} _MouseTarget;
+
+static inline _MouseTarget _mouse_target_undefined(void) {
+    return (_MouseTarget){0};
+}
+
+static inline _MouseTarget _mouse_target_node(_NodeIndex node) {
+    return (_MouseTarget){
+        .type = MOUSE_TARGET_TYPE_NODE,
+        .node = node,
+    };
+}
+
+static inline _MouseTarget _mouse_target_id(uint64_t id) {
+    return (_MouseTarget){
+        .type = MOUSE_TARGET_TYPE_ID,
+        .id   = id,
+    };
+}
+
+static inline bool _mouse_target_is_node(_MouseTarget target, _NodeIndex node) {
+    return target.type == MOUSE_TARGET_TYPE_NODE && target.node == node;
+}
+
+static inline bool _mouse_target_is_id(_MouseTarget target, uint64_t id) {
+    return target.type == MOUSE_TARGET_TYPE_ID && target.id == id;
+}
+
 // frame data
 typedef struct __FrameData {
 
@@ -152,13 +199,13 @@ typedef struct __FrameData {
     bool   is_mouse_position_valid;
     plVec2 mouse_position;
 
-    // node clicks
-    _NodeIndex pressed_node;
-    _NodeIndex next_pressed_node;
-    _NodeIndex hovered_node;
-    _NodeIndex next_hovered_node;
-    _NodeIndex released_node;
-    _NodeIndex active_node;
+    // mouse target state
+    _MouseTarget pressed_target;
+    _MouseTarget next_pressed_target;
+    _MouseTarget hovered_target;
+    _MouseTarget next_hovered_target;
+    _MouseTarget released_target;
+    _MouseTarget active_target;
 
 } _FrameData;
 
@@ -219,7 +266,7 @@ typedef struct __AppData {
     plShaderHandle stencil_draw_3d_textured_shader[DC_STENCIL_MAX_DEPTH];
     plShaderHandle stencil_cleanup_3d_textured_shader;
 
-    // active stencil shader overrides (injected by _draw_batch_get_*)
+    // active stencil shader overrides (injected by dc_app_draw_batch_get_*)
     plShaderHandle *active_2d_shader_override;
     plShaderHandle *active_sdf_shader_override;
     plShaderHandle *active_3d_solid_shader_override;
@@ -229,6 +276,8 @@ typedef struct __AppData {
 
     // stencil state
     int stencil_depth;
+    int stencil_phase;
+    int stencil_phase_stack[DC_STENCIL_MAX_DEPTH];
 
     // config + lookup
     DcAppLookup *lookup;
@@ -252,7 +301,7 @@ typedef struct __AppData {
 
     // logic
     DcLibrary *logic_lib;
-    void (*logic_pre_init)(_GetVariableValueAddr);
+    void (*logic_pre_init)(const DcAppInit *init);
     void (*logic_init)();
     void (*logic_draw)();
     void (*logic_close)();
@@ -297,15 +346,5 @@ static _Node *_get_node(_AppData *app_data, _NodeIndex index) {
     }
     return &(app_data->sb_nodes[index]);
 }
-
-// xml processing utils
-static bool       _load_color_from_string(_AppData *app_data, xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out);
-static _NodeIndex _process_xml_node_children(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex node_index, DcAppElemType elem_type, const char *directory);
-static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
-
-// drawing utils
-static void _draw_batch_reset(_AppData *app_data);
-static void _draw_node_list(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *node_transform);
-static void _draw_node(_AppData *app_data, _NodeIndex node_index, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 
 #endif

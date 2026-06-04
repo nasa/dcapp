@@ -10,6 +10,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
     switch (type) {
         case DC_APP_ELEM_TYPE_ARC:
             return "Arc";
+        case DC_APP_ELEM_TYPE_ARG:
+            return "Arg";
         case DC_APP_ELEM_TYPE_BLINK:
             return "Blink";
         case DC_APP_ELEM_TYPE_BUTTON:
@@ -50,6 +52,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
             return "Ellipse";
         case DC_APP_ELEM_TYPE_FALSE:
             return "False";
+        case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
+            return "DrawFunction";
         case DC_APP_ELEM_TYPE_FUNCTION:
             return "Function";
         case DC_APP_ELEM_TYPE_IF:
@@ -147,6 +151,8 @@ const char *dc_app_elem_type_to_string(DcAppElemType type) {
 DcAppElemType dc_app_string_to_elem_type(const char *name) {
     if (strcmp(name, "Arc") == 0)
         return DC_APP_ELEM_TYPE_ARC;
+    if (strcmp(name, "Arg") == 0)
+        return DC_APP_ELEM_TYPE_ARG;
     if (strcmp(name, "Blink") == 0)
         return DC_APP_ELEM_TYPE_BLINK;
     if (strcmp(name, "Button") == 0)
@@ -187,6 +193,8 @@ DcAppElemType dc_app_string_to_elem_type(const char *name) {
         return DC_APP_ELEM_TYPE_ELLIPSE;
     if (strcmp(name, "False") == 0)
         return DC_APP_ELEM_TYPE_FALSE;
+    if (strcmp(name, "DrawFunction") == 0)
+        return DC_APP_ELEM_TYPE_DRAW_FUNCTION;
     if (strcmp(name, "Function") == 0)
         return DC_APP_ELEM_TYPE_FUNCTION;
     if (strcmp(name, "If") == 0)

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <!--
+        DrawFunction 2 is a C reference gallery. XML only creates the shell;
+        logic/logic.c draws the numbered grid and each feature example.
+    -->
+    <Variable Type="#_variable_double_" InitialValue="0">PHASE</Variable>
+
+    <Logic File="logic/logic.so"/>
+
+    <Window Title="DrawFunction 2 - C API Reference" X="45" Y="45" Width="1180" Height="860" VirtualWidth="1080" VirtualHeight="760" FrameRateLimit="60">
+        <Panel VirtualWidth="1080" VirtualHeight="760" BackgroundColor="0.055 0.060 0.066 1">
+            <Text X="34" Y="724" Size="24" FillColor="0.90 0.96 1 1">DrawFunction 2: C API Reference</Text>
+            <Text X="34" Y="700" Size="11" FillColor="0.58 0.68 0.76 1">One generated grid, thirty-six focused C examples. Use the number to find the matching function in logic/logic.c.</Text>
+            <DrawFunction Name="draw_reference_grid">
+                <Arg Type="#_variable_double_" Value="@PHASE"/>
+            </DrawFunction>
+        </Panel>
+    </Window>
+</DCAPP>

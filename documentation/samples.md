@@ -20,16 +20,14 @@ dcapp samples/colors/colors.xml
 
 ### Samples That Require Building First
 
-Several samples include C logic files that must be compiled into shared libraries before running. These samples contain a `logic/` directory with source code. Build the logic library first, then run the display:
+Several samples include C logic files that must be compiled into shared libraries before running. These samples contain a `logic/` directory with source code. Build the logic libraries first, then run the display:
 
 ```bash
-cd samples/<sample_name>/logic
-make
-cd ../../..
+./scripts/build.sh -c release
 dcapp samples/<sample_name>/<sample_name>.xml
 ```
 
-The following samples require building logic files: **functions**, **lissajous**, **mask**, **planet**, **ptz**, **screensaver**.
+The following samples require building logic files: **drawfunction1**, **drawfunction2**, **drawfunction3**, **functions**, **lissajous**, **mask**, **planet**, **ptz**, **screensaver**.
 
 ### Samples That Require External Services
 
@@ -77,6 +75,9 @@ These samples include C logic files that must be compiled before running. They d
 
 | Sample | Features | Notes |
 |--------|----------|-------|
+| drawfunction1 | DrawFunction overview | Shows XML layout with small C draw functions injected for procedural details; requires building `logic/logic.c` |
+| drawfunction2 | DrawFunction C API reference | Generates a numbered C reference grid covering primitive drawing, placement, containers, stencils, text, mouse targets, and args; requires building `logic/logic.c` |
+| drawfunction3 | Procedural DrawFunction rendering | Generates a square field, signal analyzer, and mouse-click ripples from C loops/math; requires building `logic/logic.c` |
 | functions | Function element, C callbacks | Shows the Function element for invoking named C callbacks from XML; requires building `logic/logic.c` |
 | lissajous | Parametric curves via C logic | Renders Lissajous curves computed in C and displayed via dcapp variables; requires building `logic/logic.c` |
 | mask | Animated stencil mask via C logic | Combines stencil masking with C-driven animation for dynamic mask effects; requires building `logic/logic.c` |
@@ -126,7 +127,7 @@ These samples serve special purposes such as validation testing or complex visua
 | Requirement | Samples |
 |-------------|---------|
 | None (pure XML) | alignment, blink, button-children, buttons, colors, conditionals, containers, environment, events, fonts, includes, input, primitives, pushpop, rotation, rounded, shapes, slider, static-if, stencil, styles, welcome, adi, mona-lisa, bad-sample, scene |
-| Build C logic (`make` in `logic/`) | functions, lissajous, mask, ptz, screensaver, planet |
+| Build C logic (`./scripts/build.sh -c release`) | drawfunction1, drawfunction2, drawfunction3, functions, lissajous, mask, ptz, screensaver, planet |
 | Build + Makefile (`make` in sample dir) | metrics |
 | Running Trick simulation | trick, trick-stress |
 | Running Python MJPEG server | pixelstream-mjpeg |

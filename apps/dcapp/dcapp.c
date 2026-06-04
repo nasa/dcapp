@@ -1,5 +1,9 @@
 #include "dcapp.h"
 
+#include "draw.h"
+#include "draw_node.h"
+#include "xml.h"
+
 #define PL_JSON_IMPLEMENTATION
 #include "pl_json.h"
 
@@ -10,19 +14,12 @@
 
 #include <math.h>
 
-// static members
-// TODO hate this solution, but needed for DLL lookup
-// of variables. Clean this up later
-// * this is really just a copy of app_data in all the functions
-static _AppData *_global_app_data;
-
 // declarations
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data);
 PL_EXPORT void  pl_app_shutdown(_AppData *app_data);
 PL_EXPORT void  pl_app_resize(_AppData *app_data);
 PL_EXPORT void  pl_app_update(_AppData *app_data);
-void           *get_variable_value_addr(const char *name);
-static void     _flush_deferred_sets(_AppData *app_data);
+static void *get_variable_value_addr(void *user_data, const char *name);
 static void     _apply_frame_rate_limit(_AppData *app_data);
 static bool     _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, plPlanetTexture *out);
 static void     _init_planets(_AppData *app_data);
@@ -33,7 +30,6 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     if (app_data) {
         _load_apis(api_registry);
-        _global_app_data = app_data;
         return app_data;
     }
 
@@ -55,9 +51,6 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     // allocate app memory
     app_data = (_AppData *)PL_ALLOC(sizeof(_AppData));
     memset(app_data, 0, sizeof(_AppData));
-
-    // set global app data variable
-    _global_app_data = app_data;
 
     // parse input arguments
     plIO *_ext_io = _ext_ioi->get_io();
@@ -126,7 +119,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     // build dcapp node tree
     xmlNodePtr root_node = xmlDocGetRootElement(app_data->config->xml_doc);
-    _process_xml_node(app_data, root_node, NODE_INDEX_UNDEFINED, DC_APP_ELEM_TYPE_UNDEFINED, app_data->config->config_dir_path);
+    dc_app_process_xml_node(app_data, root_node, NODE_INDEX_UNDEFINED, DC_APP_ELEM_TYPE_UNDEFINED, app_data->config->config_dir_path);
 
     // initialize resource manager (needed by planet texture loading)
     plResourceManagerInit resource_init = {0};
@@ -162,7 +155,15 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     // initialize logic (link values)
     if (app_data->logic_pre_init) {
-        app_data->logic_pre_init(get_variable_value_addr);
+        DcAppInit init = {
+            .size = sizeof(init),
+            .version = 1,
+            .user_data = app_data,
+            .get_variable = get_variable_value_addr,
+            .draw = dc_app_draw_api(),
+            .mouse = dc_app_mouse_api(),
+        };
+        app_data->logic_pre_init(&init);
     }
 
     // call logic init
@@ -214,6 +215,9 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 break;
             case NODE_TYPE_POLYGON:
                 sbfree(node->polygon.sb_vertices);
+                break;
+            case NODE_TYPE_DRAW_FUNCTION:
+                sbfree(node->draw_function.sb_args);
                 break;
             case NODE_TYPE_STENCIL:
                 sbfree(node->stencil.sb_children);
@@ -665,6 +669,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 
     // get mouse position
     app_data->frame_data.mouse_position = _ext_ioi->get_mouse_pos();
+    app_data->frame_data.is_mouse_position_valid = isfinite(app_data->frame_data.mouse_position.x) && isfinite(app_data->frame_data.mouse_position.y);
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~drawing & profile API~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -672,16 +677,16 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     _ext_dc_draw_backend->new_frame();
 
     // reset draw batch system for new frame
-    _draw_batch_reset(app_data);
+    dc_app_draw_batch_reset(app_data);
 
     // update planet definitions (texture reload, prepare)
     _update_planet_defs(app_data);
 
     // draw node
-    _draw_node(app_data, app_data->window, NULL, NULL, NULL);
+    dc_app_draw_node(app_data, app_data->window, NULL, NULL, NULL);
 
     // flush deferred set operations (deferred Sets applied atomically)
-    _flush_deferred_sets(app_data);
+    dc_app_flush_deferred_sets(app_data);
 
     // reset any unpoped variable stacks
     dc_app_lookup_reset_var_stacks(app_data->lookup);
@@ -735,32 +740,34 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     _ext_starter->end_frame();
 
     // update node states
-    app_data->frame_data.pressed_node = app_data->frame_data.next_pressed_node;
-    app_data->frame_data.hovered_node = app_data->frame_data.next_hovered_node;
+    app_data->frame_data.pressed_target = app_data->frame_data.next_pressed_target;
+    app_data->frame_data.hovered_target = app_data->frame_data.next_hovered_target;
     if (app_data->frame_data.is_mouse_pressed) {
-        app_data->frame_data.active_node = app_data->frame_data.next_pressed_node;
+        app_data->frame_data.active_target = app_data->frame_data.next_pressed_target;
     }
     if (app_data->frame_data.is_mouse_released) {
-        app_data->frame_data.released_node = app_data->frame_data.active_node;
-        app_data->frame_data.active_node   = NODE_INDEX_UNDEFINED;
+        app_data->frame_data.released_target = app_data->frame_data.active_target;
+        app_data->frame_data.active_target   = _mouse_target_undefined();
     } else {
-        app_data->frame_data.released_node = NODE_INDEX_UNDEFINED;
+        app_data->frame_data.released_target = _mouse_target_undefined();
     }
-    app_data->frame_data.next_hovered_node = NODE_INDEX_UNDEFINED;
-    app_data->frame_data.next_pressed_node = NODE_INDEX_UNDEFINED;
+    app_data->frame_data.next_hovered_target = _mouse_target_undefined();
+    app_data->frame_data.next_pressed_target = _mouse_target_undefined();
 }
 
 // -- handlers for logic files --
 // * only works once all variables are registered, as pointer
 // * values could change otherwise
-void *get_variable_value_addr(const char *name) {
+static void *get_variable_value_addr(void *user_data, const char *name) {
+    _AppData *app_data = (_AppData *)user_data;
+    if (!app_data) return NULL;
 
     // get variable
-    DcAppLookupVar *var = dc_app_lookup_get_var_by_name(_global_app_data->lookup, name);
+    DcAppLookupVar *var = dc_app_lookup_get_var_by_name(app_data->lookup, name);
 
     // return value
     if (var) {
-        DcValue *val = dc_app_lookup_get_value(_global_app_data->lookup, var->value_index);
+        DcValue *val = dc_app_lookup_get_value(app_data->lookup, var->value_index);
         return dc_value_get_addr(val);
     }
     return NULL;
@@ -1076,4 +1083,5 @@ static void _load_apis(plApiRegistryI *api_registry) {
 }
 
 #include "draw.c"
+#include "draw_node.c"
 #include "xml.c"

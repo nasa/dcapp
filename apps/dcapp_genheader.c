@@ -1,5 +1,6 @@
 #include "../src/app/config.h"
 #include "../src/app/elem.h"
+#include "../src/app/enums.h"
 #include "../src/app/lookup.h"
 #include "../src/utils/env.h"
 #include "../src/utils/file.h"
@@ -14,6 +15,7 @@
 
 static void _process_node_children(xmlNodePtr xml_node, DcAppLookup *lookup);
 static void _process_node(xmlNodePtr xml_node, DcAppLookup *lookup);
+static void _write_draw_api(FILE *file);
 
 int main(int argc, char **argv) {
 
@@ -86,16 +88,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // get longest string name (padding)
-    int longest_string_size = 0;
     int var_count           = dc_app_lookup_get_var_count(lookup);
-    for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
-        DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
-        const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
-        if (strlen(var_name) > (size_t)longest_string_size) {
-            longest_string_size = (int)strlen(var_name);
-        }
-    }
 
     // file header
     fprintf(file, "%s\n", "// ********************************************* //");
@@ -103,12 +96,31 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "// ********************************************* //");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "#include <stdbool.h>");
+    fprintf(file, "%s\n", "#include <stddef.h>");
+    fprintf(file, "%s\n", "#include <stdint.h>");
     fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "#ifndef DCAPP_H");
+    fprintf(file, "%s\n", "#define DCAPP_H");
+    fprintf(file, "%s\n", "");
+
+    _write_draw_api(file);
     fprintf(file, "%s\n", "#ifndef _DCAPP_LOGIC_EXTERN_");
-    fprintf(file, "%s\n", "#define _DCAPP_LOGIC_EXTERN_");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "#ifdef __cplusplus");
+    fprintf(file, "%s\n", "extern \"C\" {");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// Runtime globals used by logic files.");
+    fprintf(file, "%s\n", "void *dc_user_data;");
+    fprintf(file, "%s\n", "DcGetVariableFn dc_get_variable_fn;");
+    fprintf(file, "%s\n", "const DcDrawApi *dc_draw;");
+    fprintf(file, "%s\n", "const DcMouseApi *dc_mouse;");
     fprintf(file, "%s\n", "");
 
     // file variable definitions
+    if (var_count > DC_APP_LOOKUP_FIRST_INDEX) {
+        fprintf(file, "%s\n", "// XML variable pointers resolved during display_pre_init().");
+    }
     for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
         DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
         const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
@@ -133,40 +145,43 @@ int main(int argc, char **argv) {
     }
     fprintf(file, "%s\n", "");
 
-    // C/C++ compatibility guard
-    fprintf(file, "%s\n", "#ifdef __cplusplus");
-    fprintf(file, "%s\n", "extern \"C\" {");
-    fprintf(file, "%s\n", "#endif");
-    fprintf(file, "%s\n", "");
-
     // file function declarations
-    fprintf(file, "%s\n", "void display_init();");
-    fprintf(file, "%s\n", "void display_draw();");
-    fprintf(file, "%s\n", "void display_close();");
+    fprintf(file, "%s\n", "// User logic entry points called by dcapp.");
+    fprintf(file, "%s\n", "void display_init(void);");
+    fprintf(file, "%s\n", "void display_draw(void);");
+    fprintf(file, "%s\n", "void display_close(void);");
     fprintf(file, "%s\n", "");
 
-    // define display_pre_init()
-    fprintf(file, "%s\n", "typedef void *(*_GetVariableValueAddr)(const char *name);");
-    fprintf(file, "%s\n", "_GetVariableValueAddr get_pointer;");
-    fprintf(file, "%s\n", "void display_pre_init(_GetVariableValueAddr get_variable_value_addr) {");
-    fprintf(file, "%s\n", "    if (get_variable_value_addr) {");
-    fprintf(file, "%s\n", "        get_pointer = get_variable_value_addr;");
+    // define dc_get_variable() and display_pre_init()
+    fprintf(file, "%s\n", "// Lookup helper for variables declared in XML.");
+    fprintf(file, "%s\n", "void *dc_get_variable(const char *name) {");
+    fprintf(file, "%s\n", "    if (!dc_get_variable_fn) return NULL;");
+    fprintf(file, "%s\n", "    return dc_get_variable_fn(dc_user_data, name);");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// Internal setup called before display_init().");
+    fprintf(file, "%s\n", "void display_pre_init(const DcInit *init) {");
+    fprintf(file, "%s\n", "    if (init && init->version >= 1 && init->size >= sizeof(DcInit)) {");
+    fprintf(file, "%s\n", "        dc_user_data = init->user_data;");
+    fprintf(file, "%s\n", "        dc_get_variable_fn = init->get_variable;");
+    fprintf(file, "%s\n", "        dc_draw = init->draw;");
+    fprintf(file, "%s\n", "        dc_mouse = init->mouse;");
     for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
         DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
         const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
         DcValue        *value    = dc_app_lookup_get_value(lookup, var->value_index);
         switch (value->type) {
             case DC_VALUE_TYPE_STRING:
-                fprintf(file, "        %-*s = (char (*)[%d])get_variable_value_addr(\"%s\");\n", longest_string_size, var_name, DC_VALUE_STRING_BUFFER_SIZE, var_name);
+                fprintf(file, "        %s = (char (*)[%d])dc_get_variable(\"%s\");\n", var_name, DC_VALUE_STRING_BUFFER_SIZE, var_name);
                 break;
             case DC_VALUE_TYPE_DOUBLE:
-                fprintf(file, "        %-*s = (double *)get_variable_value_addr(\"%s\");\n", longest_string_size, var_name, var_name);
+                fprintf(file, "        %s = (double *)dc_get_variable(\"%s\");\n", var_name, var_name);
                 break;
             case DC_VALUE_TYPE_INTEGER:
-                fprintf(file, "        %-*s = (int *)get_variable_value_addr(\"%s\");\n", longest_string_size, var_name, var_name);
+                fprintf(file, "        %s = (int *)dc_get_variable(\"%s\");\n", var_name, var_name);
                 break;
             case DC_VALUE_TYPE_BOOLEAN:
-                fprintf(file, "        %-*s = (bool *)get_variable_value_addr(\"%s\");\n", longest_string_size, var_name, var_name);
+                fprintf(file, "        %s = (bool *)dc_get_variable(\"%s\");\n", var_name, var_name);
                 break;
             default:
                 DC_LOG_ERROR("GenHeader", "Invalid variable value type %d", value->type);
@@ -187,20 +202,20 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "#else");
     fprintf(file, "%s\n", "");
 
-    // get pointer function ofr externs
+    // lookup function for externs
     fprintf(file, "%s\n", "#ifdef __cplusplus");
     fprintf(file, "%s\n", "extern \"C\" {");
     fprintf(file, "%s\n", "#endif");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "typedef void *(*_GetVariableValueAddr)(const char *name);");
-    fprintf(file, "%s\n", "extern _GetVariableValueAddr get_pointer;");
-    fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "#ifdef __cplusplus");
-    fprintf(file, "%s\n", "}");
-    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "void *dc_get_variable(const char *name);");
+    fprintf(file, "%s\n", "extern const DcDrawApi *dc_draw;");
+    fprintf(file, "%s\n", "extern const DcMouseApi *dc_mouse;");
     fprintf(file, "%s\n", "");
 
     for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
+        if (var_index == DC_APP_LOOKUP_FIRST_INDEX) {
+            fprintf(file, "%s\n", "// XML variable pointers shared from the main logic translation unit.");
+        }
         DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
         const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
         DcValue        *value    = dc_app_lookup_get_value(lookup, var->value_index);
@@ -223,13 +238,345 @@ int main(int argc, char **argv) {
         }
     }
     fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "#ifdef __cplusplus");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
 
     // file closer
+    fprintf(file, "%s\n", "#endif");
     fprintf(file, "%s\n", "#endif");
 
     // exit
     fclose(file);
     return 0;
+}
+
+static void _write_draw_api(FILE *file) {
+    fprintf(file, "%s\n", "// Alignment values used by DcPlacement.");
+    fprintf(file, "%s\n", "typedef enum _DcAlign {");
+    fprintf(file, "    DC_ALIGN_UNDEFINED = %d,\n", DC_APP_ALIGN_TYPE_UNDEFINED);
+    fprintf(file, "    DC_ALIGN_LEFT = %d,\n", DC_APP_ALIGN_TYPE_LEFT);
+    fprintf(file, "    DC_ALIGN_CENTER = %d,\n", DC_APP_ALIGN_TYPE_CENTER);
+    fprintf(file, "    DC_ALIGN_RIGHT = %d,\n", DC_APP_ALIGN_TYPE_RIGHT);
+    fprintf(file, "    DC_ALIGN_BOTTOM = %d,\n", DC_APP_ALIGN_TYPE_BOTTOM);
+    fprintf(file, "    DC_ALIGN_MIDDLE = %d,\n", DC_APP_ALIGN_TYPE_MIDDLE);
+    fprintf(file, "    DC_ALIGN_TOP = %d,\n", DC_APP_ALIGN_TYPE_TOP);
+    fprintf(file, "%s\n", "} DcAlign;");
+    fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "// Type values used by XML <Arg> entries.");
+    fprintf(file, "%s\n", "typedef enum _DcValueType {");
+    fprintf(file, "    DC_VALUE_TYPE_UNDEFINED = %d,\n", DC_VALUE_TYPE_UNDEFINED);
+    fprintf(file, "    DC_VALUE_TYPE_STRING = %d,\n", DC_VALUE_TYPE_STRING);
+    fprintf(file, "    DC_VALUE_TYPE_INTEGER = %d,\n", DC_VALUE_TYPE_INTEGER);
+    fprintf(file, "    DC_VALUE_TYPE_DOUBLE = %d,\n", DC_VALUE_TYPE_DOUBLE);
+    fprintf(file, "    DC_VALUE_TYPE_BOOLEAN = %d,\n", DC_VALUE_TYPE_BOOLEAN);
+    fprintf(file, "%s\n", "} DcValueType;");
+    fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "// Basic vector types used by the draw API.");
+    fprintf(file, "%s\n", "typedef union _DcVec2 {");
+    fprintf(file, "%s\n", "    struct { float x, y; };");
+    fprintf(file, "%s\n", "    struct { float r, g; };");
+    fprintf(file, "%s\n", "    struct { float u, v; };");
+    fprintf(file, "%s\n", "    float d[2];");
+    fprintf(file, "%s\n", "} DcVec2;");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "typedef union _DcVec3 {");
+    fprintf(file, "%s\n", "    struct { float x, y, z; };");
+    fprintf(file, "%s\n", "    struct { float r, g, b; };");
+    fprintf(file, "%s\n", "    struct { float u, v, __; };");
+    fprintf(file, "%s\n", "    struct { DcVec2 xy; float ignore0_; };");
+    fprintf(file, "%s\n", "    struct { DcVec2 rg; float ignore1_; };");
+    fprintf(file, "%s\n", "    struct { DcVec2 uv; float ignore2_; };");
+    fprintf(file, "%s\n", "    struct { float ignore3_; DcVec2 yz; };");
+    fprintf(file, "%s\n", "    struct { float ignore4_; DcVec2 gb; };");
+    fprintf(file, "%s\n", "    struct { float ignore5_; DcVec2 v__; };");
+    fprintf(file, "%s\n", "    float d[3];");
+    fprintf(file, "%s\n", "} DcVec3;");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "typedef union _DcVec4 {");
+    fprintf(file, "%s\n", "    struct {");
+    fprintf(file, "%s\n", "        union {");
+    fprintf(file, "%s\n", "            DcVec3 xyz;");
+    fprintf(file, "%s\n", "            struct { float x, y, z; };");
+    fprintf(file, "%s\n", "        };");
+    fprintf(file, "%s\n", "        float w;");
+    fprintf(file, "%s\n", "    };");
+    fprintf(file, "%s\n", "    struct {");
+    fprintf(file, "%s\n", "        union {");
+    fprintf(file, "%s\n", "            DcVec3 rgb;");
+    fprintf(file, "%s\n", "            struct { float r, g, b; };");
+    fprintf(file, "%s\n", "        };");
+    fprintf(file, "%s\n", "        float a;");
+    fprintf(file, "%s\n", "    };");
+    fprintf(file, "%s\n", "    struct {");
+    fprintf(file, "%s\n", "        DcVec2 xy;");
+    fprintf(file, "%s\n", "        float ignored0_, ignored1_;");
+    fprintf(file, "%s\n", "    };");
+    fprintf(file, "%s\n", "    struct {");
+    fprintf(file, "%s\n", "        float ignored2_;");
+    fprintf(file, "%s\n", "        DcVec2 yz;");
+    fprintf(file, "%s\n", "        float ignored3_;");
+    fprintf(file, "%s\n", "    };");
+    fprintf(file, "%s\n", "    struct {");
+    fprintf(file, "%s\n", "        float ignored4_, ignored5_;");
+    fprintf(file, "%s\n", "        DcVec2 zw;");
+    fprintf(file, "%s\n", "    };");
+    fprintf(file, "%s\n", "    float d[4];");
+    fprintf(file, "%s\n", "} DcVec4;");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// Logic-side equivalent of XML #_stencil_color_.");
+    fprintf(file, "%s\n", "static inline DcVec4 dc_stencil_color(void) {");
+    fprintf(file, "%s\n", "    DcVec4 color = {0};");
+    fprintf(file, "%s\n", "    color.a = 1.0f;");
+    fprintf(file, "%s\n", "    return color;");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// Stroke settings for outline-style drawing.");
+    fprintf(file, "%s\n", "typedef struct _DcStroke {");
+    fprintf(file, "%s\n", "    DcVec4 color;");
+    fprintf(file, "%s\n", "    float width;");
+    fprintf(file, "%s\n", "    uint8_t pattern;");
+    fprintf(file, "%s\n", "} DcStroke;");
+    fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "// Text settings for DrawFunction text rendering.");
+    fprintf(file, "%s\n", "typedef struct _DcTextStyle {");
+    fprintf(file, "%s\n", "    DcVec4 color;");
+    fprintf(file, "%s\n", "    float size;");
+    fprintf(file, "%s\n", "    float wrap;");
+    fprintf(file, "%s\n", "} DcTextStyle;");
+    fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "// Placement controls alignment, rotation, and pivot behavior.");
+    fprintf(file, "%s\n", "typedef struct _DcPlacement {");
+    fprintf(file, "%s\n", "    float rotation;");
+    fprintf(file, "%s\n", "    DcAlign parent_align_x;");
+    fprintf(file, "%s\n", "    DcAlign parent_align_y;");
+    fprintf(file, "%s\n", "    DcAlign local_align_x;");
+    fprintf(file, "%s\n", "    DcAlign local_align_y;");
+    fprintf(file, "%s\n", "    DcAlign pivot_align_x;");
+    fprintf(file, "%s\n", "    DcAlign pivot_align_y;");
+    fprintf(file, "%s\n", "    float pivot_x;");
+    fprintf(file, "%s\n", "    float pivot_y;");
+    fprintf(file, "%s\n", "} DcPlacement;");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// Convenience constructors for common placement patterns.");
+    fprintf(file, "%s\n", "static inline DcPlacement dc_place_center(void) {");
+    fprintf(file, "%s\n", "    DcPlacement placement = {0};");
+    fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_CENTER;");
+    fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_MIDDLE;");
+    fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_CENTER;");
+    fprintf(file, "%s\n", "    placement.local_align_y  = DC_ALIGN_MIDDLE;");
+    fprintf(file, "%s\n", "    return placement;");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "static inline DcPlacement dc_place_left(void) {");
+    fprintf(file, "%s\n", "    DcPlacement placement = {0};");
+    fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_LEFT;");
+    fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_MIDDLE;");
+    fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_LEFT;");
+    fprintf(file, "%s\n", "    placement.local_align_y  = DC_ALIGN_MIDDLE;");
+    fprintf(file, "%s\n", "    return placement;");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "static inline DcPlacement dc_place_right(void) {");
+    fprintf(file, "%s\n", "    DcPlacement placement = {0};");
+    fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_RIGHT;");
+    fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_MIDDLE;");
+    fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_RIGHT;");
+    fprintf(file, "%s\n", "    placement.local_align_y  = DC_ALIGN_MIDDLE;");
+    fprintf(file, "%s\n", "    return placement;");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "static inline DcPlacement dc_place_top(void) {");
+    fprintf(file, "%s\n", "    DcPlacement placement = {0};");
+    fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_CENTER;");
+    fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_TOP;");
+    fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_CENTER;");
+    fprintf(file, "%s\n", "    placement.local_align_y  = DC_ALIGN_TOP;");
+    fprintf(file, "%s\n", "    return placement;");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "static inline DcPlacement dc_place_bottom(void) {");
+    fprintf(file, "%s\n", "    DcPlacement placement = {0};");
+    fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_CENTER;");
+    fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_BOTTOM;");
+    fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_CENTER;");
+    fprintf(file, "%s\n", "    placement.local_align_y  = DC_ALIGN_BOTTOM;");
+    fprintf(file, "%s\n", "    return placement;");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "static inline DcPlacement dc_place_top_left(void) {");
+    fprintf(file, "%s\n", "    DcPlacement placement = {0};");
+    fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_LEFT;");
+    fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_TOP;");
+    fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_LEFT;");
+    fprintf(file, "%s\n", "    placement.local_align_y  = DC_ALIGN_TOP;");
+    fprintf(file, "%s\n", "    return placement;");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "static inline DcPlacement dc_place_top_right(void) {");
+    fprintf(file, "%s\n", "    DcPlacement placement = {0};");
+    fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_RIGHT;");
+    fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_TOP;");
+    fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_RIGHT;");
+    fprintf(file, "%s\n", "    placement.local_align_y  = DC_ALIGN_TOP;");
+    fprintf(file, "%s\n", "    return placement;");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "static inline DcPlacement dc_place_bottom_left(void) {");
+    fprintf(file, "%s\n", "    DcPlacement placement = {0};");
+    fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_LEFT;");
+    fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_BOTTOM;");
+    fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_LEFT;");
+    fprintf(file, "%s\n", "    placement.local_align_y  = DC_ALIGN_BOTTOM;");
+    fprintf(file, "%s\n", "    return placement;");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "static inline DcPlacement dc_place_bottom_right(void) {");
+    fprintf(file, "%s\n", "    DcPlacement placement = {0};");
+    fprintf(file, "%s\n", "    placement.parent_align_x = DC_ALIGN_RIGHT;");
+    fprintf(file, "%s\n", "    placement.parent_align_y = DC_ALIGN_BOTTOM;");
+    fprintf(file, "%s\n", "    placement.local_align_x  = DC_ALIGN_RIGHT;");
+    fprintf(file, "%s\n", "    placement.local_align_y  = DC_ALIGN_BOTTOM;");
+    fprintf(file, "%s\n", "    return placement;");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "// Mouse state in the current DrawFunction coordinate system.");
+    fprintf(file, "%s\n", "typedef struct _DcMouse {");
+    fprintf(file, "%s\n", "    float x;");
+    fprintf(file, "%s\n", "    float y;");
+    fprintf(file, "%s\n", "    bool position_valid;");
+    fprintf(file, "%s\n", "    bool pressed;");
+    fprintf(file, "%s\n", "    bool released;");
+    fprintf(file, "%s\n", "    bool down;");
+    fprintf(file, "%s\n", "} DcMouse;");
+    fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "// A resolved drawing area that can be reused as another shape's parent.");
+    fprintf(file, "%s\n", "typedef struct _DcDrawArea {");
+    fprintf(file, "%s\n", "    float position[2];");
+    fprintf(file, "%s\n", "    float dimensions[2];");
+    fprintf(file, "%s\n", "    float transform[16];");
+    fprintf(file, "%s\n", "} DcDrawArea;");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// Extended draw output. More fields can be added without changing every draw call.");
+    fprintf(file, "%s\n", "typedef struct _DcDrawResult {");
+    fprintf(file, "%s\n", "    DcDrawArea area;");
+    fprintf(file, "%s\n", "} DcDrawResult;");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// Opaque context passed into every DrawFunction callback.");
+    fprintf(file, "%s\n", "typedef struct _DcDrawContext DcDrawContext;");
+    fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "// One XML <Arg> value passed into a DrawFunction.");
+    fprintf(file, "%s\n", "typedef struct _DcDrawFuncArg {");
+    fprintf(file, "%s\n", "    DcValueType type;");
+    fprintf(file, "%s\n", "    const char *value_string;");
+    fprintf(file, "%s\n", "    int value_integer;");
+    fprintf(file, "%s\n", "    double value_double;");
+    fprintf(file, "%s\n", "    bool value_boolean;");
+    fprintf(file, "%s\n", "} DcDrawFuncArg;");
+    fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "// Full XML argument list passed into a DrawFunction.");
+    fprintf(file, "%s\n", "typedef struct _DcDrawFuncArgs {");
+    fprintf(file, "%s\n", "    uint32_t count;");
+    fprintf(file, "%s\n", "    const DcDrawFuncArg *values;");
+    fprintf(file, "%s\n", "} DcDrawFuncArgs;");
+    fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "// Primitive drawing functions available through the global dc_draw pointer.");
+    fprintf(file, "%s\n", "typedef struct _DcDrawApi {");
+    fprintf(file, "%s\n", "    // Current draw area.");
+    fprintf(file, "%s\n", "    const DcDrawArea *(*get_area)(DcDrawContext *ctx);");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "    // Basic draw functions.");
+    fprintf(file, "%s\n", "    void (*line)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcStroke stroke);");
+    fprintf(file, "%s\n", "    void (*polyline)(DcDrawContext *ctx, const DcVec2 *points, uint32_t point_count, DcStroke stroke);");
+    fprintf(file, "%s\n", "    void (*polygon)(DcDrawContext *ctx, const DcVec2 *points, uint32_t point_count, DcStroke stroke);");
+    fprintf(file, "%s\n", "    void (*polygon_filled)(DcDrawContext *ctx, const DcVec2 *points, uint32_t point_count, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*rounded_polygon)(DcDrawContext *ctx, const DcVec2 *points, uint32_t point_count, float corner_radius, DcStroke stroke);");
+    fprintf(file, "%s\n", "    void (*rounded_polygon_filled)(DcDrawContext *ctx, const DcVec2 *points, uint32_t point_count, float corner_radius, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*quad)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, DcStroke stroke);");
+    fprintf(file, "%s\n", "    void (*quad_filled)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*rounded_quad)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, float corner_radius, DcStroke stroke);");
+    fprintf(file, "%s\n", "    void (*rounded_quad_filled)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, float corner_radius, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*image)(DcDrawContext *ctx, uint32_t texture_id, DcVec2 position, DcVec2 size, DcVec4 tint);");
+    fprintf(file, "%s\n", "    void (*rect)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, DcStroke stroke);");
+    fprintf(file, "%s\n", "    void (*rect_filled)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*rounded_rect)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, float corner_radius, DcStroke stroke);");
+    fprintf(file, "%s\n", "    void (*rounded_rect_filled)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, float corner_radius, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*circle)(DcDrawContext *ctx, DcVec2 center, float radius, DcStroke stroke);");
+    fprintf(file, "%s\n", "    void (*circle_filled)(DcDrawContext *ctx, DcVec2 center, float radius, DcVec4 color);");
+    fprintf(file, "%s\n", "    DcVec2 (*text_size)(DcDrawContext *ctx, const char *text, DcTextStyle style);");
+    fprintf(file, "%s\n", "    void (*text)(DcDrawContext *ctx, DcVec2 position, const char *text, DcTextStyle style);");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "    // Extended draw functions with placement and result metadata.");
+    fprintf(file, "%s\n", "    void (*line_ex)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*polyline_ex)(DcDrawContext *ctx, const DcVec2 *points, uint32_t point_count, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*polygon_ex)(DcDrawContext *ctx, const DcVec2 *points, uint32_t point_count, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*polygon_filled_ex)(DcDrawContext *ctx, const DcVec2 *points, uint32_t point_count, DcVec4 color, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*rounded_polygon_ex)(DcDrawContext *ctx, const DcVec2 *points, uint32_t point_count, float corner_radius, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*rounded_polygon_filled_ex)(DcDrawContext *ctx, const DcVec2 *points, uint32_t point_count, float corner_radius, DcVec4 color, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*quad_ex)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*quad_filled_ex)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, DcVec4 color, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*rounded_quad_ex)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, float corner_radius, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*rounded_quad_filled_ex)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, float corner_radius, DcVec4 color, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*image_ex)(DcDrawContext *ctx, uint32_t texture_id, DcVec2 position, DcVec2 size, DcVec4 tint, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*rect_ex)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, DcStroke stroke, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*rect_filled_ex)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, DcVec4 color, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*rounded_rect_ex)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, float corner_radius, DcStroke stroke, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*rounded_rect_filled_ex)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, float corner_radius, DcVec4 color, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*circle_ex)(DcDrawContext *ctx, DcVec2 center, float radius, DcStroke stroke, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*circle_filled_ex)(DcDrawContext *ctx, DcVec2 center, float radius, DcVec4 color, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*text_ex)(DcDrawContext *ctx, DcVec2 position, const char *text, DcTextStyle style, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "    // Container helpers.");
+    fprintf(file, "%s\n", "    bool (*container_push)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, DcVec2 virtual_size);");
+    fprintf(file, "%s\n", "    bool (*container_push_ex)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, DcVec2 virtual_size, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    bool (*container_push_area)(DcDrawContext *ctx, const DcDrawArea *area);");
+    fprintf(file, "%s\n", "    void (*container_pop)(DcDrawContext *ctx);");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "    // Stencil helpers.");
+    fprintf(file, "%s\n", "    bool (*stencil_begin)(DcDrawContext *ctx);");
+    fprintf(file, "%s\n", "    void (*stencil_add)(DcDrawContext *ctx);");
+    fprintf(file, "%s\n", "    void (*stencil_remove)(DcDrawContext *ctx);");
+    fprintf(file, "%s\n", "    void (*stencil_draw)(DcDrawContext *ctx);");
+    fprintf(file, "%s\n", "    void (*stencil_end)(DcDrawContext *ctx);");
+    fprintf(file, "%s\n", "} DcDrawApi;");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// Mouse hit registration and event queries available through dc_mouse.");
+    fprintf(file, "%s\n", "typedef struct _DcMouseApi {");
+    fprintf(file, "%s\n", "    const DcMouse *(*get_state)(DcDrawContext *ctx);");
+    fprintf(file, "%s\n", "    void (*rect)(DcDrawContext *ctx, const char *id, DcVec2 position, DcVec2 size, DcPlacement placement);");
+    fprintf(file, "%s\n", "    void (*circle)(DcDrawContext *ctx, const char *id, DcVec2 center, float radius, DcPlacement placement);");
+    fprintf(file, "%s\n", "    void (*polygon)(DcDrawContext *ctx, const char *id, const DcVec2 *points, uint32_t point_count, DcVec2 position, DcPlacement placement);");
+    fprintf(file, "%s\n", "    bool (*hovered)(DcDrawContext *ctx, const char *id);");
+    fprintf(file, "%s\n", "    bool (*pressed)(DcDrawContext *ctx, const char *id);");
+    fprintf(file, "%s\n", "    bool (*released)(DcDrawContext *ctx, const char *id);");
+    fprintf(file, "%s\n", "    bool (*down)(DcDrawContext *ctx, const char *id);");
+    fprintf(file, "%s\n", "    bool (*active)(DcDrawContext *ctx, const char *id);");
+    fprintf(file, "%s\n", "    bool (*clicked)(DcDrawContext *ctx, const char *id);");
+    fprintf(file, "%s\n", "} DcMouseApi;");
+    fprintf(file, "%s\n", "");
+
+    fprintf(file, "%s\n", "// Runtime hooks filled in by dcapp before user display_init().");
+    fprintf(file, "%s\n", "typedef void *(*DcGetVariableFn)(void *user_data, const char *name);");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "typedef struct _DcInit {");
+    fprintf(file, "%s\n", "    uint32_t size;");
+    fprintf(file, "%s\n", "    uint32_t version;");
+    fprintf(file, "%s\n", "    void *user_data;");
+    fprintf(file, "%s\n", "    DcGetVariableFn get_variable;");
+    fprintf(file, "%s\n", "    const DcDrawApi *draw;");
+    fprintf(file, "%s\n", "    const DcMouseApi *mouse;");
+    fprintf(file, "%s\n", "} DcInit;");
+    fprintf(file, "%s\n", "");
 }
 
 void _process_node_children(xmlNodePtr xml_node, DcAppLookup *lookup) {

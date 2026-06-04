@@ -184,6 +184,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -215,6 +216,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -246,6 +248,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -282,6 +285,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
+            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -289,6 +293,11 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             default:
                 return false;
         }
+    }
+
+    // DrawFunction can contain positional arguments
+    if (parent_type == DC_APP_ELEM_TYPE_DRAW_FUNCTION) {
+        return child_type == DC_APP_ELEM_TYPE_ARG;
     }
 
     // Button can contain drawing elements and button state elements
@@ -308,6 +317,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PIXELSTREAM:
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
+            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -355,6 +365,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
+            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -387,6 +398,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
+            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -418,6 +430,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
+            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -451,6 +464,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
             case DC_APP_ELEM_TYPE_PLANET_VIEW:
             case DC_APP_ELEM_TYPE_BLINK:
             case DC_APP_ELEM_TYPE_BUTTON:
+            case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
             // logic elements
             case DC_APP_ELEM_TYPE_IF:
             case DC_APP_ELEM_TYPE_SET:
@@ -681,6 +695,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
     switch (parent_type) {
         case DC_APP_ELEM_TYPE_TEXT:
         case DC_APP_ELEM_TYPE_ARC:
+        case DC_APP_ELEM_TYPE_ARG:
         case DC_APP_ELEM_TYPE_SPHERE:
         case DC_APP_ELEM_TYPE_CONSTANT:
         case DC_APP_ELEM_TYPE_VARIABLE:
@@ -693,6 +708,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
         case DC_APP_ELEM_TYPE_PLANET_SHADER:
         case DC_APP_ELEM_TYPE_LOGIC:
         case DC_APP_ELEM_TYPE_FUNCTION:
+        case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
         case DC_APP_ELEM_TYPE_MOUSE_MOTION:
             return false;
         default:
@@ -729,6 +745,24 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             }
             if (content)
                 xmlFree(content);
+            break;
+        }
+
+        case DC_APP_ELEM_TYPE_ARG: {
+            xmlChar *type = xmlGetProp(node, BAD_CAST "Type");
+            if (!type) {
+                DC_LOG_ERROR("Validate", "<Arg> missing required attribute 'Type' (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            } else {
+                xmlFree(type);
+            }
+            xmlChar *value = xmlGetProp(node, BAD_CAST "Value");
+            if (!value) {
+                DC_LOG_ERROR("Validate", "<Arg> missing required attribute 'Value' (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            } else {
+                xmlFree(value);
+            }
             break;
         }
 
@@ -876,10 +910,11 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             break;
         }
 
-        case DC_APP_ELEM_TYPE_FUNCTION: {
+        case DC_APP_ELEM_TYPE_FUNCTION:
+        case DC_APP_ELEM_TYPE_DRAW_FUNCTION: {
             xmlChar *name = xmlGetProp(node, BAD_CAST "Name");
             if (!name) {
-                DC_LOG_ERROR("Validate", "<Function> missing required attribute 'Name' (line %ld)", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<%s> missing required attribute 'Name' (line %ld)", (const char *)node->name, xmlGetLineNo(node));
                 ctx->error_count++;
             } else {
                 xmlFree(name);
@@ -993,11 +1028,13 @@ static const char *_valid_attrs_color[]             = {"FillColor", "LineColor",
 static const char *_valid_attrs_line[]              = {"LineWidth", NULL};
 
 static const char *_valid_attrs_arc[]            = {"Radius", "Angle", "Segments", "LineColor", NULL};
+static const char *_valid_attrs_arg[]            = {"Type", "Value", NULL};
 static const char *_valid_attrs_blink[]          = {"FireBlink", "Frequency", "DutyCycle", "Duration", NULL};
 static const char *_valid_attrs_button[]         = {"Type", "Variable", "EnableVariable", "EnableOn", "TargetVariable", "TargetOn", "TargetOff", "On", "Off", "IndicatorVariable", "IndicatorOn", NULL};
 static const char *_valid_attrs_ellipse[]        = {"Radius", "RadiusX", "RadiusY", "Segments", "Angle", NULL};
 static const char *_valid_attrs_constant[]       = {"Name", NULL};
 static const char *_valid_attrs_function[]       = {"Name", "FireCall", NULL};
+static const char *_valid_attrs_draw_function[]  = {"Name", NULL};
 static const char *_valid_attrs_if[]             = {"Value", "Value1", "Value2", "Operator", "Static", NULL};
 static const char *_valid_attrs_image[]          = {"File", NULL};
 static const char *_valid_attrs_logic[]          = {"File", NULL};
@@ -1053,6 +1090,9 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
                    _attr_in_list(attr_name, _valid_attrs_rotation) ||
                    _attr_in_list(attr_name, _valid_attrs_line) ||
                    _attr_in_list(attr_name, _valid_attrs_arc);
+
+        case DC_APP_ELEM_TYPE_ARG:
+            return _attr_in_list(attr_name, _valid_attrs_arg);
 
         case DC_APP_ELEM_TYPE_BLINK:
             return _attr_in_list(attr_name, _valid_attrs_blink);
@@ -1111,6 +1151,9 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_FUNCTION:
             return _attr_in_list(attr_name, _valid_attrs_function);
+
+        case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
+            return _attr_in_list(attr_name, _valid_attrs_draw_function);
 
         case DC_APP_ELEM_TYPE_IF:
             return _attr_in_list(attr_name, _valid_attrs_if);
@@ -1419,6 +1462,11 @@ void _validate_attribute_values(ValidationContext *ctx, xmlNodePtr node, DcAppEl
             break;
 
         case DC_APP_ELEM_TYPE_VARIABLE:
+            _validate_enum_attr(ctx, node, "Type", 1, 4,
+                                "string(1), integer(2), double(3), boolean(4)");
+            break;
+
+        case DC_APP_ELEM_TYPE_ARG:
             _validate_enum_attr(ctx, node, "Type", 1, 4,
                                 "string(1), integer(2), double(3), boolean(4)");
             break;

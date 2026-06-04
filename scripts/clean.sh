@@ -20,5 +20,7 @@ rm -rf pilotlight/cache
 # sample artifacts
 rm -f samples/*/logic/logic.so
 rm -f samples/*/logic/logic_*.so
+rm -f samples/*/logic/liblogic.so
+rm -f samples/*/logic/liblogic.dylib
 
 popd >/dev/null

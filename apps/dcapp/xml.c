@@ -1,4 +1,7 @@
 #include "dcapp.h"
+
+#include "xml.h"
+
 #include "geojson.h"
 
 #include "utils/file.h"
@@ -11,7 +14,8 @@
 
 // Forward declarations
 static DcAppVarIndex _register_anonymous_variable(_AppData *app_data, DcValueType type, const char *initial_value_str);
-static _NodeIndex    _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static bool          _load_color_from_string(_AppData *app_data, xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out);
+_NodeIndex    dc_app_process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_arc(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_blink(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_button(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -30,6 +34,7 @@ static _NodeIndex    _process_xml_node_edge_from(_AppData *app_data, xmlNodePtr 
 static _NodeIndex    _process_xml_node_edge_io(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_edge_to(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_edge_variable(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_draw_function(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_false(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -128,7 +133,7 @@ static _NodeIndex _process_xml_node_children(_AppData *app_data, xmlNodePtr xml_
     _NodeIndex previous_child_node_index = NODE_INDEX_UNDEFINED;
     while (xml_child_node) {
 
-        _NodeIndex child_node_index = _process_xml_node(app_data, xml_child_node, node_index, elem_type, directory);
+        _NodeIndex child_node_index = dc_app_process_xml_node(app_data, xml_child_node, node_index, elem_type, directory);
 
         if (child_node_index != NODE_INDEX_UNDEFINED) {
 
@@ -170,7 +175,7 @@ static _NodeIndex _process_xml_node_children(_AppData *app_data, xmlNodePtr xml_
 
     return first_child_index;
 }
-static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+_NodeIndex dc_app_process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     char     directory_buffer[DC_UTILS_FILEPATH_BUFFER_SIZE];
     xmlChar *dir_attr = xmlGetProp(xml_node, BAD_CAST "_Directory");
     if (dir_attr) {
@@ -187,6 +192,9 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_ARC:
             return _process_xml_node_arc(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_ARG:
+            return NODE_INDEX_UNDEFINED;
 
         case DC_APP_ELEM_TYPE_BLINK:
             return _process_xml_node_blink(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -232,6 +240,9 @@ static _NodeIndex _process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _No
 
         case DC_APP_ELEM_TYPE_EDGE_VARIABLE:
             return _process_xml_node_edge_variable(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_DRAW_FUNCTION:
+            return _process_xml_node_draw_function(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_ELLIPSE:
             return _process_xml_node_ellipse(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -1646,6 +1657,7 @@ static _NodeIndex _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_
     _Node dc_node  = {};
     dc_node.type   = NODE_TYPE_FUNCTION;
     dc_node.parent = parent_node_index;
+    bool is_valid  = true;
 
     // get function name
     xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
@@ -1654,13 +1666,16 @@ static _NodeIndex _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_
             dc_node.function.callback = (void (*)(void))dc_utils_library_symbol(app_data->logic_lib, (const char *)raw_name);
             if (!dc_node.function.callback) {
                 DC_LOG_ERROR("Function", "Failed to load function '%s' from logic library: %s", (const char *)raw_name, dc_utils_library_last_error());
+                is_valid = false;
             }
         } else {
             DC_LOG_ERROR("Function", "No logic library loaded, cannot load function '%s'", (const char *)raw_name);
+            is_valid = false;
         }
         xmlFree(raw_name);
     } else {
         DC_LOG_ERROR("Function", "Missing 'Name' attribute");
+        is_valid = false;
     }
 
     // edge-triggered call
@@ -1670,7 +1685,83 @@ static _NodeIndex _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_
         xmlFree(raw_fire_call);
     }
 
+    if (!is_valid) return NODE_INDEX_UNDEFINED;
+
     // register node
+    return _register_node(app_data, &dc_node);
+}
+
+static _NodeIndex _process_xml_node_draw_function(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    DcAppElemType elem_type = dc_app_xml_node_to_elem_type(xml_node);
+    (void)elem_type;
+    (void)parent_elem_type;
+    (void)directory;
+
+    _Node dc_node = {};
+    dc_node.type = NODE_TYPE_DRAW_FUNCTION;
+    dc_node.parent = parent_node_index;
+    bool is_valid = true;
+
+    xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
+    if (raw_name) {
+        if (app_data->logic_lib) {
+            dc_node.draw_function.callback = (void (*)(DcAppDrawContext *, const DcAppDrawFuncArgs *))dc_utils_library_symbol(app_data->logic_lib, (const char *)raw_name);
+            if (!dc_node.draw_function.callback) {
+                DC_LOG_ERROR("DrawFunction", "Failed to load function '%s' from logic library: %s", (const char *)raw_name, dc_utils_library_last_error());
+                is_valid = false;
+            }
+        } else {
+            DC_LOG_ERROR("DrawFunction", "No logic library loaded, cannot load function '%s'", (const char *)raw_name);
+            is_valid = false;
+        }
+        xmlFree(raw_name);
+    } else {
+        DC_LOG_ERROR("DrawFunction", "Missing 'Name' attribute");
+        is_valid = false;
+    }
+
+    xmlNodePtr xml_child_node = xml_node->children;
+    while (xml_child_node) {
+        if (dc_app_xml_node_to_elem_type(xml_child_node) == DC_APP_ELEM_TYPE_ARG) {
+            xmlChar *raw_type = xmlGetProp(xml_child_node, BAD_CAST "Type");
+            xmlChar *raw_value = xmlGetProp(xml_child_node, BAD_CAST "Value");
+            if (!raw_type) {
+                DC_LOG_ERROR("DrawFunction", "<Arg> missing 'Type' attribute");
+                is_valid = false;
+            }
+            if (!raw_value) {
+                DC_LOG_ERROR("DrawFunction", "<Arg> missing 'Value' attribute");
+                is_valid = false;
+            }
+            if (raw_type && raw_value) {
+                DcValueType type = (DcValueType)dc_utils_string_to_integer((const char *)raw_type);
+                if (type < DC_VALUE_TYPE_STRING || type > DC_VALUE_TYPE_BOOLEAN) {
+                    DC_LOG_ERROR("DrawFunction", "<Arg> has invalid Type '%s'", (const char *)raw_type);
+                    is_valid = false;
+                } else {
+                    _DrawFunctionArg arg = {
+                        .type = type,
+                        .value = dc_app_create_and_register_typed_value_from_string(app_data->lookup, type, (const char *)raw_value),
+                    };
+                    if (arg.value == DC_APP_VAL_INDEX_UNDEFINED) {
+                        DC_LOG_ERROR("DrawFunction", "<Arg> Value '%s' could not be resolved", (const char *)raw_value);
+                        is_valid = false;
+                    } else {
+                        sbpush(dc_node.draw_function.sb_args, arg);
+                    }
+                }
+            }
+            if (raw_type) xmlFree(raw_type);
+            if (raw_value) xmlFree(raw_value);
+        }
+        xml_child_node = xml_child_node->next;
+    }
+
+    if (!is_valid) {
+        sbfree(dc_node.draw_function.sb_args);
+        return NODE_INDEX_UNDEFINED;
+    }
+
     return _register_node(app_data, &dc_node);
 }
 
@@ -2122,19 +2213,36 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
             *ext = '\0';
         }
 
-        const char *extensions[] = {".so", ".dylib", ".dll"};
+        char lib_base_filepath[DC_VALUE_STRING_BUFFER_SIZE];
+        char *slash     = strrchr(base_filepath, '/');
+        char *backslash = strrchr(base_filepath, '\\');
+        char *separator = slash;
+        if (backslash && (!separator || backslash > separator)) {
+            separator = backslash;
+        }
+        if (separator) {
+            int prefix_length = (int)(separator - base_filepath + 1);
+            snprintf(lib_base_filepath, sizeof(lib_base_filepath), "%.*slib%s", prefix_length, base_filepath, separator + 1);
+        } else {
+            snprintf(lib_base_filepath, sizeof(lib_base_filepath), "lib%s", base_filepath);
+        }
+
+        const char *base_filepaths[] = {base_filepath, lib_base_filepath};
+        const char *extensions[]     = {".so", ".dylib", ".dll"};
         char        try_filepath[DC_VALUE_STRING_BUFFER_SIZE];
 
-        for (int i = 0; i < 3 && !app_data->logic_lib; i++) {
-            snprintf(try_filepath, sizeof(try_filepath), "%s%s", base_filepath, extensions[i]);
-            if (!dc_utils_file_exists(try_filepath)) continue;
-            app_data->logic_lib = dc_utils_library_load(try_filepath);
+        for (int base_index = 0; base_index < 2 && !app_data->logic_lib; base_index++) {
+            for (int ext_index = 0; ext_index < 3 && !app_data->logic_lib; ext_index++) {
+                snprintf(try_filepath, sizeof(try_filepath), "%s%s", base_filepaths[base_index], extensions[ext_index]);
+                if (!dc_utils_file_exists(try_filepath)) continue;
+                app_data->logic_lib = dc_utils_library_load(try_filepath);
+            }
         }
 
         if (!app_data->logic_lib) {
             DC_LOG_ERROR("Logic", "Failed to load library '%s.so/.dylib/.dll': %s", base_filepath, dc_utils_library_last_error());
         } else {
-            app_data->logic_pre_init = (void (*)(_GetVariableValueAddr))dc_utils_library_symbol(app_data->logic_lib, "display_pre_init");
+            app_data->logic_pre_init = (void (*)(const DcAppInit *))dc_utils_library_symbol(app_data->logic_lib, "display_pre_init");
             app_data->logic_init     = (void (*)(void))dc_utils_library_symbol(app_data->logic_lib, "display_init");
             app_data->logic_draw     = (void (*)(void))dc_utils_library_symbol(app_data->logic_lib, "display_draw");
             app_data->logic_close    = (void (*)(void))dc_utils_library_symbol(app_data->logic_lib, "display_close");
@@ -5638,6 +5746,8 @@ static const char *_node_type_to_string(_NodeType type) {
             return "Container";
         case NODE_TYPE_CONDITIONAL:
             return "Conditional";
+        case NODE_TYPE_DRAW_FUNCTION:
+            return "DrawFunction";
         case NODE_TYPE_LINE:
             return "Line";
         case NODE_TYPE_PANEL:
@@ -6243,12 +6353,12 @@ static void _init_app_data(_AppData *app_data, _Node *window_node) {
     app_data->pl_layer = _ext_dc_draw->request_2d_layer(app_data->pl_draw_list);
 
     // initialize frame data
-    app_data->frame_data.pressed_node      = NODE_INDEX_UNDEFINED;
-    app_data->frame_data.next_pressed_node = NODE_INDEX_UNDEFINED;
-    app_data->frame_data.hovered_node      = NODE_INDEX_UNDEFINED;
-    app_data->frame_data.next_hovered_node = NODE_INDEX_UNDEFINED;
-    app_data->frame_data.released_node     = NODE_INDEX_UNDEFINED;
-    app_data->frame_data.active_node       = NODE_INDEX_UNDEFINED;
+    app_data->frame_data.pressed_target      = _mouse_target_undefined();
+    app_data->frame_data.next_pressed_target = _mouse_target_undefined();
+    app_data->frame_data.hovered_target      = _mouse_target_undefined();
+    app_data->frame_data.next_hovered_target = _mouse_target_undefined();
+    app_data->frame_data.released_target     = _mouse_target_undefined();
+    app_data->frame_data.active_target       = _mouse_target_undefined();
 }
 
 static void _build_font_atlas(_AppData *app_data) {

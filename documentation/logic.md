@@ -60,14 +60,14 @@ Create `logic/display_logic.c`:
 ```c
 #include "dcapp.h"
 
-void display_init() {
+void display_init(void) {
     // Called once after variables are linked
     *altitude = 1000.0;
     *velocity = 0.0;
     *acceleration = -9.81;
 }
 
-void display_draw() {
+void display_draw(void) {
     // Called every frame
     static double dt = 0.016; // ~60fps
     
@@ -81,7 +81,7 @@ void display_draw() {
     }
 }
 
-void display_close() {
+void display_close(void) {
     // Called when display closes
 }
 ```
@@ -111,7 +111,12 @@ dcapp myDisplay.xml
 
 When you run `dcapp-genheader`, it creates a `dcapp.h` file in the `logic/` subdirectory of your display. This file is auto-generated — **do not edit it manually**.
 
-### Header Structure
+### Header Contract
+
+The generated header contains the public DrawFunction types first, including
+`DcDrawApi`, `DcMouseApi`, `DcDrawContext`, `DcPlacement`, `DcVec2`, `DcVec4`,
+and related helper types. After that, it emits the runtime globals and XML
+variable pointers. The important ownership/linkage shape is:
 
 ```c
 // ********************************************* //
@@ -119,11 +124,35 @@ When you run `dcapp-genheader`, it creates a `dcapp.h` file in the `logic/` subd
 // ********************************************* //
 
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#ifndef DCAPP_H
+#define DCAPP_H
+
+// DrawFunction API typedefs are generated here.
+typedef struct _DcDrawApi DcDrawApi;
+typedef struct _DcMouseApi DcMouseApi;
+typedef void *(*DcGetVariableFn)(void *user_data, const char *name);
+
+typedef struct _DcInit {
+    uint32_t size;
+    uint32_t version;
+    void *user_data;
+    DcGetVariableFn get_variable;
+    const DcDrawApi *draw;
+    const DcMouseApi *mouse;
+} DcInit;
 
 #ifndef _DCAPP_LOGIC_EXTERN_
-#define _DCAPP_LOGIC_EXTERN_
 
-// Variable pointer declarations
+// Runtime globals used by logic files.
+void *dc_user_data;
+DcGetVariableFn dc_get_variable_fn;
+const DcDrawApi *dc_draw;
+const DcMouseApi *dc_mouse;
+
+// XML variable pointers resolved during display_pre_init().
 double *altitude;
 double *velocity;
 int    *frameCount;
@@ -135,19 +164,27 @@ extern "C" {
 #endif
 
 // Function declarations you must implement
-void display_init();
-void display_draw();
-void display_close();
+void display_init(void);
+void display_draw(void);
+void display_close(void);
 
 // Auto-generated initialization (do not call directly)
-typedef void *(*_GetVariableValueAddr)(const char *name);
-void display_pre_init(_GetVariableValueAddr get_variable_value_addr) {
-    if (get_variable_value_addr) {
-        altitude      = (double *)get_variable_value_addr("altitude");
-        velocity      = (double *)get_variable_value_addr("velocity");
-        frameCount    = (int *)get_variable_value_addr("frameCount");
-        statusMessage = (char (*)[256])get_variable_value_addr("statusMessage");
-        isRunning     = (bool *)get_variable_value_addr("isRunning");
+void *dc_get_variable(const char *name) {
+    if (!dc_get_variable_fn) return NULL;
+    return dc_get_variable_fn(dc_user_data, name);
+}
+
+void display_pre_init(const DcInit *init) {
+    if (init && init->version >= 1 && init->size >= sizeof(DcInit)) {
+        dc_user_data = init->user_data;
+        dc_get_variable_fn = init->get_variable;
+        dc_draw = init->draw;
+        dc_mouse = init->mouse;
+        altitude = (double *)dc_get_variable("altitude");
+        velocity = (double *)dc_get_variable("velocity");
+        frameCount = (int *)dc_get_variable("frameCount");
+        statusMessage = (char (*)[256])dc_get_variable("statusMessage");
+        isRunning = (bool *)dc_get_variable("isRunning");
     }
 }
 
@@ -157,15 +194,33 @@ void display_pre_init(_GetVariableValueAddr get_variable_value_addr) {
 
 #else
 
-// Extern declarations for additional source files
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void *dc_get_variable(const char *name);
+extern const DcDrawApi *dc_draw;
+extern const DcMouseApi *dc_mouse;
+
+// XML variable pointers shared from the main logic translation unit.
 extern double *altitude;
 extern double *velocity;
 extern int    *frameCount;
 extern char   (*statusMessage)[256];
 extern bool   *isRunning;
 
+#ifdef __cplusplus
+}
+#endif
+
+#endif
 #endif
 ```
+
+Define `_DCAPP_LOGIC_EXTERN_` before including `dcapp.h` in additional source
+files that are compiled into the same logic library. Do not define it in the
+source file that implements `display_init`, `display_draw`, and `display_close`;
+that file owns the runtime globals and XML variable pointer definitions.
 
 ### Variable Type Mapping
 
@@ -207,7 +262,7 @@ Called once after all variables have been linked. Use for:
 - Opening files or connections
 
 ```c
-void display_init() {
+void display_init(void) {
     *altitude = 10000.0;
     *velocity = 0.0;
     *isRunning = true;
@@ -223,7 +278,7 @@ Called every frame (typically 60fps). Use for:
 - State machine logic
 
 ```c
-void display_draw() {
+void display_draw(void) {
     static int frame = 0;
     frame++;
     
@@ -246,7 +301,7 @@ Called when the display closes. Use for:
 - Final cleanup
 
 ```c
-void display_close() {
+void display_close(void) {
     // Cleanup code here
 }
 ```
@@ -301,11 +356,11 @@ The generated header includes C++ compatibility guards. For C++ code:
 #include <cmath>
 #include <string>
 
-void display_init() {
+void display_init(void) {
     *altitude = 1000.0;
 }
 
-void display_draw() {
+void display_draw(void) {
     // Use C++ features
     *altitude = std::max(0.0, *altitude + *velocity * 0.016);
     
@@ -314,7 +369,7 @@ void display_draw() {
     strncpy(*statusMessage, status.c_str(), 255);
 }
 
-void display_close() {
+void display_close(void) {
 }
 ```
 
@@ -335,16 +390,16 @@ For larger projects, split your code across multiple files:
 #include "physics.h"
 #include "utils.h"
 
-void display_init() {
+void display_init(void) {
     physics_init();
 }
 
-void display_draw() {
+void display_draw(void) {
     physics_update(0.016);
     update_status();
 }
 
-void display_close() {
+void display_close(void) {
     physics_cleanup();
 }
 ```
@@ -491,7 +546,7 @@ set_target_properties(display_logic PROPERTIES
 ```c
 #include <stdio.h>
 
-void display_draw() {
+void display_draw(void) {
     static int frame = 0;
     if (frame++ % 60 == 0) {  // Print once per second
         printf("Frame %d: alt=%.2f vel=%.2f\n", 
@@ -593,14 +648,14 @@ void display_draw() {
 
 static const double DT = 0.016;  // ~60fps
 
-void display_init() {
+void display_init(void) {
     // Initial conditions set in XML, but we can override:
     // *altitude = 10000.0;
     // *velocity = 0.0;
     strcpy(*status, "READY");
 }
 
-void display_draw() {
+void display_draw(void) {
     // Only simulate if running
     if (!*simRunning) {
         return;
@@ -623,7 +678,7 @@ void display_draw() {
     }
 }
 
-void display_close() {
+void display_close(void) {
     // Nothing to clean up
 }
 ```
@@ -697,9 +752,9 @@ No parameters, no return value.
 #include "dcapp.h"
 #include <stdio.h>
 
-void display_init() {}
-void display_draw() {}
-void display_close() {}
+void display_init(void) {}
+void display_draw(void) {}
+void display_close(void) {}
 
 void on_button_click() {
     printf("Button was clicked!\n");
