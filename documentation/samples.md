@@ -51,6 +51,7 @@ These samples demonstrate dcapp features using only XML, with no external depend
 | colors | RGB sliders, color mixing | Interactive color picker using sliders to mix red, green, and blue channels |
 | conditionals | If/True/False, comparison operators | Demonstrates conditional rendering with all comparison operators |
 | containers | Container nesting, VirtualWidth/Height | Shows how containers establish local coordinate systems with virtual dimensions |
+| dashes | LinePattern on outlines | Demonstrates dashed line patterns on lines, rectangles, ellipses, polygons, and arcs |
 | environment | Environment variable display ($USER, etc.) | Reads and displays system environment variables |
 | events | MousePressed/Released/Active/Hovered on shapes | Demonstrates all mouse event types on geometric shapes |
 | fonts | Custom TTF fonts per Text element | Shows how to use the Font attribute to load different TTF fonts |
@@ -126,7 +127,7 @@ These samples serve special purposes such as validation testing or complex visua
 
 | Requirement | Samples |
 |-------------|---------|
-| None (pure XML) | alignment, blink, button-children, buttons, colors, conditionals, containers, environment, events, fonts, includes, input, primitives, pushpop, rotation, rounded, shapes, slider, static-if, stencil, styles, welcome, adi, mona-lisa, bad-sample, scene |
+| None (pure XML) | alignment, blink, button-children, buttons, colors, conditionals, containers, dashes, environment, events, fonts, includes, input, primitives, pushpop, rotation, rounded, shapes, slider, static-if, stencil, styles, welcome, adi, mona-lisa, bad-sample, scene |
 | Build C logic (`./scripts/build.sh -c release`) | drawfunction1, drawfunction2, drawfunction3, functions, lissajous, mask, ptz, screensaver, planet |
 | Build + Makefile (`make` in sample dir) | metrics |
 | Running Trick simulation | trick, trick-stress |

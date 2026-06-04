@@ -38,10 +38,11 @@ Defines the application window.
 | `VirtualDimensionX` | `VirtualWidth` | number/var | No | Virtual coordinate width (default: actual width) |
 | `VirtualDimensionY` | `VirtualHeight` | number/var | No | Virtual coordinate height (default: actual height) |
 | `FrameRateLimit` | `MaxFPS`, `MaxFrameRate` | number/var | No | Maximum frames per second; values <= 0 disable limiting |
+| `Fullscreen` | — | boolean | No | Start the window in fullscreen mode |
 
 **Example:**
 ```xml
-<Window Title="Flight Display" Width="1920" Height="1080" VirtualWidth="1920" VirtualHeight="1080" FrameRateLimit="30">
+<Window Title="Flight Display" Width="1920" Height="1080" VirtualWidth="1920" VirtualHeight="1080" FrameRateLimit="30" Fullscreen="false">
     ...
 </Window>
 ```
@@ -155,6 +156,7 @@ Draws a rectangle.
 | `FillColor` | — | color | No | Fill color (RGBA) |
 | `LineColor` | — | color | No | Border color (RGBA) |
 | `LineWidth` | — | number/var | No | Border width |
+| `LinePattern` | — | integer/var | No | 8-bit dash pattern for the outline, such as `0xFF` solid or `0xAA` dashed |
 | `Rounded` | — | boolean/var | No | Round corners (radius = 10% of smaller dimension) |
 
 **Children:** `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>` (mouse events)
@@ -194,6 +196,7 @@ Draws an arc (partial circle outline). Arc is a **line-only** element and does n
 | `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
 | `LineColor` | — | color | No | Arc line color (RGBA) |
 | `LineWidth` | — | number/var | No | Line width |
+| `LinePattern` | — | integer/var | No | 8-bit dash pattern, such as `0xFF` solid or `0xAA` dashed |
 
 **Note:** Arc starts drawing from the top (12 o'clock position) and proceeds clockwise. Use `Rotation` to change the starting position.
 
@@ -233,6 +236,7 @@ Draws a filled ellipse or pie/wedge shape.
 | `FillColor` | — | color | No | Fill color (RGBA) |
 | `LineColor` | — | color | No | Border color (RGBA) |
 | `LineWidth` | — | number/var | No | Border width |
+| `LinePattern` | — | integer/var | No | 8-bit dash pattern for the outline, such as `0xFF` solid or `0xAA` dashed |
 
 **Note:** When `Angle` is less than 360, Ellipse draws a pie/wedge shape (filled sector). The wedge starts from the top (12 o'clock position) and proceeds clockwise. Use `Rotation` to change the starting position.
 
@@ -302,6 +306,9 @@ Draws a polyline through a series of vertices.
 | `Rotation` | `Rotate` | number/var | No | Rotation in degrees |
 | `PivotPositionX` | `PivotX` | number/var | No | Pivot point X |
 | `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
+| `LineColor` | — | color | No | Line color (RGBA) |
+| `LineWidth` | — | number/var | No | Line width |
+| `LinePattern` | — | integer/var | No | 8-bit dash pattern, such as `0xFF` solid or `0xAA` dashed |
 
 **Children:** `<Vertex>` elements defining the line points
 
@@ -321,6 +328,7 @@ Draws a filled or outlined polygon.
 | `FillColor` | — | color | No | Fill color (RGBA) |
 | `LineColor` | — | color | No | Border color (RGBA) |
 | `LineWidth` | — | number/var | No | Border width |
+| `LinePattern` | — | integer/var | No | 8-bit dash pattern for the outline, such as `0xFF` solid or `0xAA` dashed |
 | `Rounded` | — | boolean/var | No | Round corners (radius = 10% of bounding box's smaller dimension) |
 
 **Children:** `<Vertex>` elements, `<MousePressed>`, `<MouseReleased>`, `<MouseActive>`, `<MouseInactive>`, `<MouseHovered>`
@@ -408,6 +416,11 @@ Displays text with variable interpolation.
 | `LineColor` | — | color | No | Text outline color |
 | `BackgroundColor` | — | color | No | Text background fill color |
 | `Font` | — | string | No | Path to a TTF font file (relative to XML directory or absolute). Defaults to Bitstream Vera Sans. |
+| `Bold` | — | boolean/var | No | Render with bold SDF styling |
+| `Italic` | — | boolean/var | No | Render with italic slant styling |
+| `ShadowOffset` | — | number/var | No | Offset for text shadow rendering |
+| `NegateX` | — | boolean/var | No | Flip text horizontally |
+| `NegateY` | — | boolean/var | No | Flip text vertically |
 | `UpdateRate` | — | number/var | No | Minimum seconds between variable-expansion refreshes |
 
 **Content:** Text string with variable interpolation
@@ -585,6 +598,44 @@ The function must have the signature `void function_name(void)`.
 ```
 
 See the [Logic Files documentation](logic.md) for details on using `<Function>` with buttons and conditionals.
+
+---
+
+### `<DrawFunction>`
+
+Calls a draw callback from the loaded logic library. Use this when a display needs
+procedural C/C++ drawing inside the normal XML scene graph.
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Name` | string | **Yes** | Name of the C draw callback to call |
+
+The function must have this signature:
+
+```c
+void function_name(DcDrawContext *ctx, const DcDrawFuncArgs *args);
+```
+
+**Children:** Optional `<Arg>` elements.
+
+### `<Arg>`
+
+Passes a typed value into a parent `<DrawFunction>`.
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `Type` | integer | **Yes** | Value type, such as `#_variable_string_`, `#_variable_integer_`, `#_variable_double_`, or `#_variable_boolean_` |
+| `Value` | string/var | **Yes** | Literal, constant, or variable-backed value passed to the draw callback |
+
+**Example:**
+```xml
+<DrawFunction Name="draw_widget">
+    <Arg Type="#_variable_string_" Value="primary"/>
+    <Arg Type="#_variable_double_" Value="@scale"/>
+</DrawFunction>
+```
+
+See the [Logic Files documentation](logic.md#drawfunction-api) for the DrawFunction C API.
 
 ---
 

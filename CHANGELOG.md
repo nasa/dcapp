@@ -5,6 +5,330 @@ All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
 
+[2.141.0] - 2026-06-04
+--------------------
+
+### Added
+- Added DrawFunction ellipse support to the generated logic API.
+- Added `dc_draw->ellipse`, `dc_draw->ellipse_filled`, `dc_mouse->ellipse`, and `dc_mouse->ellipse_ex`.
+- Updated the DrawFunction 2 sample to demonstrate ellipse drawing and mouse hit testing.
+
+
+[2.140.0] - 2026-06-04
+--------------------
+
+### Changed
+- Cleaned up the DrawFunction mouse API so basic hit targets use plain geometry inputs.
+- Moved placement-aware mouse hit registration to `_ex` functions.
+- Changed `dc_mouse->down(ctx, id)` to the ID-free `dc_mouse->down(ctx)`.
+
+### Fixed
+- Updated DrawFunction samples for the new mouse API.
+- Documented the mouse API source break in `documentation/breaking-changes.md`.
+
+
+[2.139.0] - 2026-06-04
+--------------------
+
+### Added
+- Added `.gitattributes` for repository line-ending normalization.
+
+### Fixed
+- Normalized line endings in planet extension and shader sources.
+
+
+[2.138.0] - 2026-06-04
+--------------------
+
+### Changed
+- Updated planet texture placement to use projected `OriginX` / `OriginY` metadata.
+- Updated planet chunk generation to write projected tile origins.
+- Kept compatibility with older chunk metadata that stores latitude/longitude tile origins.
+- Updated planet projection/origin documentation and sample XML.
+
+### Fixed
+- Fixed planet texture projection and origin handling.
+
+
+[2.137.0] - 2026-06-04
+--------------------
+
+### Changed
+- Updated code and generated build scripts for PilotLight API drift.
+- Removed obsolete app/xml calls that no longer matched the updated PilotLight startup flow.
+
+### Fixed
+- Fixed Windows build script drift after PilotLight API updates.
+
+
+[2.136.0] - 2026-06-04
+--------------------
+
+### Added
+- Added DrawFunction image rendering through `dc_draw->image`.
+- Added texture loading helpers exposed to logic code: `dc_load_image()` and `dc_get_texture_size()`.
+- Added shared texture helpers used by XML image/sphere rendering and DrawFunction image rendering.
+- Updated the DrawFunction 2 sample with image rendering coverage.
+
+
+[2.135.0] - 2026-06-04
+--------------------
+
+### Added
+- Added initial DrawFunction support for procedural drawing from logic files.
+- Added generated DrawFunction types and APIs to `dcapp-genheader`.
+- Added `<DrawFunction>` XML parsing with typed `<Arg>` values.
+- Added `draw.h`, `draw_node.c`, and `draw_node.h` to share drawing paths between XML nodes and DrawFunction callbacks.
+- Added DrawFunction samples: `drawfunction1`, `drawfunction2`, and `drawfunction3`.
+- Added DrawFunction documentation and roadmap notes.
+
+### Changed
+- Changed logic initialization from the old variable lookup callback ABI to `display_pre_init(const DcInit *)`.
+- Moved node drawing out of `draw.c` into `draw_node.c`.
+- Updated sample build scripts to build logic samples with generated headers.
+
+
+[2.134.0] - 2026-06-03
+--------------------
+
+### Changed
+- Updated planet CRS handling and chunk processing for projected terrain origins.
+- Updated planet extension and processor headers for the CRS update.
+- Removed generated tool entries that no longer apply to the updated planet processor flow.
+
+
+[2.133.0] - 2026-06-02
+--------------------
+
+### Fixed
+- Fixed static-analysis workflow configuration.
+
+
+[2.132.0] - 2026-06-02
+--------------------
+
+### Changed
+- Updated PilotLight to version 0.9.3.
+- Updated app, extension, tool, and sample build scripts for the new PilotLight layout and API.
+
+
+[2.131.0] - 2026-05-29
+--------------------
+
+### Added
+- Added `FrameRateLimit`, `MaxFPS`, and `MaxFrameRate` attributes to Window elements.
+- Added runtime frame pacing support in the window draw loop.
+- Updated validation and primitive documentation for frame-rate limits.
+
+
+[2.130.0] - 2026-05-29
+--------------------
+
+### Changed
+- Updated build scripts to rebuild PilotLight only when its commit changes.
+
+### Fixed
+- Fixed ImGui build issues in the top-level build scripts.
+
+
+[2.129.0] - 2026-05-29
+--------------------
+
+### Added
+- Added Panel `BackgroundColor` support.
+- Added Text `BackgroundColor` support.
+- Added `DCAPP_LINE_WIDTH_FACTOR` compatibility support for line-width scaling.
+
+### Changed
+- Updated migration and primitive documentation for legacy background-color behavior.
+
+
+[2.128.0] - 2026-05-29
+--------------------
+
+### Added
+- Added planet CRS constants for geodetic and cartesian coordinates.
+- Added `CRS` attributes for Planet, PlanetTexture, PlanetView, and planet overlay primitives.
+- Added cartesian `X`, `Y`, and `Z` support for PlanetEllipse, PlanetLine, PlanetPolygon, PlanetSphere, and PlanetText.
+- Updated planet validation, documentation, and sample XML for CRS selection.
+
+
+[2.127.0] - 2026-05-20
+--------------------
+
+### Added
+- Added a thin cross-platform shared library loader in `src/utils/library.c`.
+
+### Fixed
+- Fixed logic library loading so XML can specify `.so`, `.dylib`, `.dll`, or an extensionless path across platforms.
+- Updated app build scripts to use the new loader.
+
+
+[2.126.0] - 2026-04-23
+--------------------
+
+### Changed
+- Updated PilotLight build integration and app build scripts for the newer PilotLight version.
+
+
+[2.125.0] - 2026-04-23
+--------------------
+
+### Changed
+- Updated PilotLight submodule version.
+- Updated draw backend and terrain tool code for PilotLight API changes.
+
+
+[2.124.0] - 2026-04-20
+--------------------
+
+### Changed
+- Changed Window `Fullscreen` storage from integer to boolean.
+- Updated XML parsing so `Fullscreen="true"` enables fullscreen mode.
+
+
+[2.123.0] - 2026-04-17
+--------------------
+
+### Added
+- Added `Fullscreen` support for Window elements.
+
+
+[2.122.0] - 2026-04-16
+--------------------
+
+### Changed
+- Updated PilotLight for upcoming fullscreen support.
+- Adjusted draw code for the updated PilotLight APIs.
+
+
+[2.121.0] - 2026-04-12
+--------------------
+
+### Fixed
+- Fixed GitHub Actions build workflow issues.
+- Expanded CI build coverage and corrected workflow command behavior.
+
+
+[2.120.0] - 2026-04-12
+--------------------
+
+### Added
+- Added GitHub Actions build workflow.
+- Added GitHub Actions static-analysis workflow.
+
+### Changed
+- Updated clang-format settings for CI.
+
+
+[2.119.0] - 2026-04-12
+--------------------
+
+### Added
+- Added `.clang-tidy` static-analysis configuration.
+
+### Fixed
+- Fixed static-analysis warnings in app, draw, XML, and draw extension code.
+
+
+[2.118.0] - 2026-04-10
+--------------------
+
+### Fixed
+- Fixed the double vector struct name after the PilotLight update.
+
+
+[2.117.0] - 2026-04-10
+--------------------
+
+### Changed
+- Updated PilotLight submodule commit for macOS build fixes.
+
+
+[2.116.0] - 2026-04-10
+--------------------
+
+### Fixed
+- Fixed the double vector struct name after the PilotLight update.
+
+
+[2.115.0] - 2026-04-10
+--------------------
+
+### Changed
+- Updated PilotLight submodule commit for macOS build fixes.
+
+
+[2.114.0] - 2026-04-09
+--------------------
+
+### Added
+- Added double-precision support to planet rendering and terrain preprocessing paths.
+- Updated planet shaders, processor extension, terrain tool, and chunk generator for double support.
+
+
+[2.113.0] - 2026-04-09
+--------------------
+
+### Changed
+- Updated PilotLight submodule commit in preparation for double support.
+- Updated draw code for the matching PilotLight API.
+
+
+[2.112.0] - 2026-04-07
+--------------------
+
+### Added
+- Added Text `LineColor` outline rendering.
+- Added Text `Bold` and `Italic` styling support.
+- Added SDF bold and outline shaders.
+- Expanded the fonts sample with bold, italic, outline, and combined style examples.
+
+
+[2.111.0] - 2026-04-03
+--------------------
+
+### Added
+- Added `LinePattern` support for dashed outlines on Line, Rectangle, Ellipse, Polygon, and Arc elements.
+- Added dash-pattern support to the 2D draw extension and stencil shader path.
+- Added new sample: `dashes`.
+
+
+[2.110.0] - 2026-04-02
+--------------------
+
+### Added
+- Added separate SDF render-size tiers per custom font.
+
+### Fixed
+- Fixed custom font rendering quality across different requested text sizes.
+
+
+[2.109.0] - 2026-04-02
+--------------------
+
+### Fixed
+- Fixed custom font SDF packing and glyph rect indexing.
+- Fixed custom font atlas offsets for multiple SDF font configs.
+
+
+[2.108.0] - 2026-04-01
+--------------------
+
+### Fixed
+- Fixed text size calculation so trailing whitespace contributes to measured width.
+- Fixed Text parsing so leading and trailing whitespace in node content is preserved.
+- Fixed Constant preprocessing so significant leading and trailing whitespace is preserved.
+
+
+[2.107.0] - 2026-03-22
+--------------------
+
+### Fixed
+- Hid PilotLight screen debug logging in release builds.
+- Added `NDEBUG` to generated release build profiles for apps and samples.
+
+
 [2.106.0] - 2026-03-22
 --------------------
 

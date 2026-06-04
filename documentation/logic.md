@@ -357,6 +357,87 @@ if (strcmp(*statusMessage, "ARMED") == 0) {
 
 ---
 
+## DrawFunction API
+
+Logic libraries can also export draw callbacks and call them from XML with
+`<DrawFunction Name="...">`. A DrawFunction receives the current draw context and
+an optional typed argument list:
+
+```c
+void draw_widget(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
+    DcStroke stroke = {
+        .color = { .r = 0.2f, .g = 0.8f, .b = 1.0f, .a = 1.0f },
+        .width = 2.0f,
+        .pattern = 0xFF
+    };
+
+    dc_draw->rect_filled(ctx, (DcVec2){10, 10}, (DcVec2){160, 80},
+                         (DcVec4){ .r = 0.05f, .g = 0.07f, .b = 0.09f, .a = 1.0f });
+    dc_draw->ellipse(ctx, (DcVec2){90, 50}, (DcVec2){58, 28}, stroke);
+}
+```
+
+```xml
+<DrawFunction Name="draw_widget">
+    <Arg Type="#_variable_string_" Value="demo"/>
+</DrawFunction>
+```
+
+### Drawing
+
+Use the global `dc_draw` table for immediate-mode drawing in the current XML
+coordinate space. The API includes:
+
+- Geometry: `line`, `polyline`, `polygon`, `polygon_filled`, `quad`, `quad_filled`, and rounded polygon/quad variants.
+- Shapes: `rect`, `rect_filled`, rounded rectangle variants, `circle`, `circle_filled`, `ellipse`, and `ellipse_filled`.
+- Text and images: `text_size`, `text`, and `image`.
+- Layout/stencil helpers: `container_push`, `container_push_ex`, `container_push_area`, `container_pop`, `stencil_begin`, `stencil_add`, `stencil_remove`, `stencil_draw`, and `stencil_end`.
+
+Most draw functions also have an `_ex` variant that accepts a `DcPlacement` and
+returns a `DcDrawResult` containing the resolved draw area.
+
+### Mouse
+
+Use the global `dc_mouse` table to register hit targets and query events:
+
+```c
+dc_mouse->rect(ctx, "button", (DcVec2){10, 10}, (DcVec2){120, 40});
+if (dc_mouse->clicked(ctx, "button")) {
+    *counter += 1;
+}
+```
+
+Basic hit registration is available for `rect`, `circle`, `ellipse`, and
+`polygon`. Use the matching `_ex` function when the hit target needs placement,
+rotation, or pivot handling. Event queries include `hovered`, `pressed`,
+`released`, `active`, `clicked`, `down`, and `get_state`.
+
+### Textures
+
+Load images during `display_init()` or another setup path, then draw them from
+DrawFunction callbacks:
+
+```c
+static DcTextureId logo;
+static DcVec2 logo_size;
+
+void display_init(void) {
+    logo = dc_load_image("assets/logo.png", &logo_size);
+}
+
+void draw_logo(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
+    if (logo) {
+        dc_draw->image(ctx, logo, (DcVec2){20, 20}, logo_size,
+                       (DcVec4){ .r = 1, .g = 1, .b = 1, .a = 1 });
+    }
+}
+```
+
+`dc_get_texture_size(texture_id, &size)` can be used later if you need to query
+the dimensions again.
+
+---
+
 ## C++ Support
 
 The generated header includes C++ compatibility guards. For C++ code:

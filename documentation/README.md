@@ -28,7 +28,6 @@
 12. [Samples](samples.md) -- Feature-to-sample index, grouped by difficulty
 13. [Migration Guide](migration.md) -- Converting legacy dcapp XML/C++ to current syntax
 14. [Breaking Changes](breaking-changes.md) -- Searchable notes for source and ABI changes
-15. [DrawFunction Roadmap Notes](drawfunction-roadmap.md) -- Planned draw API coverage and context model
 
 ## Quick Element Reference
 
@@ -56,6 +55,7 @@
 | `<Set>` | Variable assignment | [primitives](primitives.md#set) |
 | `<Logic>` | C shared library loader | [logic](logic.md) |
 | `<Function>` | Call function from logic lib | [primitives](primitives.md#function) |
+| `<DrawFunction>` | Draw procedural C logic content | [primitives](primitives.md#drawfunction) |
 | `<TrickIO>` | Trick simulation connection | [integration](integration.md#trickio) |
 | `<EdgeIO>` | Edge simulation connection | [integration](integration.md#edgeio) |
 | `<PixelStream>` | Video stream display | [integration](integration.md#pixelstream) |
