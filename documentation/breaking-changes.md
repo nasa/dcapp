@@ -7,18 +7,40 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
-### Changed
-- Logic initialization ABI changed from `display_pre_init(_GetVariableValueAddr)` to `display_pre_init(const DcInit *)`.
-- Generated logic headers replaced direct variable lookup through the old `display_pre_init(_GetVariableValueAddr)` callback / generated `get_pointer` storage with `dc_get_variable("VariableName")`.
-- Draw, mouse, and texture function-table access now comes from `DcInit.draw`, `DcInit.mouse`, and `DcInit.texture`.
-- `DcInit` now includes `user_data`, variable lookup, draw, mouse, and texture API pointers. Host-side initialization currently advertises version 2.
-- Generated headers now expose `dc_texture`, `dc_load_image()`, and `dc_get_texture_size()`.
-- `dc_mouse->rect`, `dc_mouse->circle`, `dc_mouse->ellipse`, and `dc_mouse->polygon` now use plain geometry inputs without placement. Use `dc_mouse->rect_ex`, `dc_mouse->circle_ex`, `dc_mouse->ellipse_ex`, or `dc_mouse->polygon_ex` for placement-aware hit targets.
-- Changed `dc_mouse->down(ctx, id)` to the ID-free `dc_mouse->down(ctx)`. Use `dc_mouse->active(ctx, id)` for captured ID state.
+### 2026-06-04 - Logic Header Initialization ABI
 
-### Migration
+This section compares the current logic API against the public logic API that
+existed before the DrawFunction logic API work. It intentionally does not list
+short-lived intermediate header or bootstrap shapes from that implementation
+work.
+
+#### Affected Code
+- Logic shared libraries compiled against an older generated `logic/dcapp.h`.
+- User code that manually declared or called generated logic internals such as
+  `display_pre_init`, `_GetVariableValueAddr`, or `get_pointer`.
+
+#### Changed
+- The generated logic initialization hook changed from
+  `display_pre_init(_GetVariableValueAddr)` to
+  `display_pre_init(const DcInit *)`.
+- Generated logic headers replaced the old `_GetVariableValueAddr` /
+  `get_pointer` variable lookup path with `dc_get_variable("VariableName")`.
+- The generated header no longer declares `get_pointer` as the public/manual
+  variable lookup escape hatch. Manual lookups should use `dc_get_variable()`.
+
+#### Migration
 - Regenerate `logic/dcapp.h` and rebuild logic shared libraries.
 - If user code called the old generated lookup pointer directly, update it to `dc_get_variable("VariableName")`.
-- If user code manually implemented `display_pre_init`, update its signature to `void display_pre_init(const DcInit *init)` and copy `init->draw`, `init->mouse`, and `init->texture` into any user globals that need them after checking `init->size`.
-- If user code passed a `DcPlacement` to a mouse hit registration call, switch that call to the matching `_ex` function.
-- Replace `dc_mouse->down(ctx, id)` with `dc_mouse->active(ctx, id)` for target-owned hold behavior, or `dc_mouse->down(ctx)` for raw button state.
+- Remove user-maintained declarations of `_GetVariableValueAddr` and
+  `get_pointer`; those names are no longer part of the generated header
+  contract.
+- Do not implement `display_pre_init` in user logic code unless you are
+  deliberately replacing generated-header initialization. The generated
+  `logic/dcapp.h` owns that hook.
+- If custom user code really does implement `display_pre_init`, update its
+  signature to `void display_pre_init(const DcInit *init)`.
+
+#### Excluded Intermediate Changes
+- Earlier same-day DrawFunction mouse and texture helper changes are not listed
+  here because they were intermediate implementation states, not migration steps
+  from the previous public logic API.
