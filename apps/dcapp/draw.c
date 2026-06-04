@@ -42,6 +42,10 @@ static const DcAppDrawApi dc_app_draw_interface = {
     .circle_ex              = dc_app_draw_circle_ex,
     .circle_filled          = dc_app_draw_circle_filled,
     .circle_filled_ex       = dc_app_draw_circle_filled_ex,
+    .ellipse                = dc_app_draw_ellipse,
+    .ellipse_ex             = dc_app_draw_ellipse_ex,
+    .ellipse_filled         = dc_app_draw_ellipse_filled,
+    .ellipse_filled_ex      = dc_app_draw_ellipse_filled_ex,
     .text_size              = dc_app_draw_text_size,
     .text                   = dc_app_draw_text,
     .text_ex                = dc_app_draw_text_ex,
@@ -59,9 +63,11 @@ static const DcAppDrawApi dc_app_draw_interface = {
 static const DcAppMouseApi dc_app_mouse_interface = {
     .rect       = dc_app_mouse_rect,
     .circle     = dc_app_mouse_circle,
+    .ellipse    = dc_app_mouse_ellipse,
     .polygon    = dc_app_mouse_polygon,
     .rect_ex    = dc_app_mouse_rect_ex,
     .circle_ex  = dc_app_mouse_circle_ex,
+    .ellipse_ex = dc_app_mouse_ellipse_ex,
     .polygon_ex = dc_app_mouse_polygon_ex,
     .hovered    = dc_app_mouse_hovered,
     .pressed    = dc_app_mouse_pressed,
@@ -804,19 +810,27 @@ void dc_app_mouse_circle(DcAppDrawContext *ctx, const char *id, DcAppVec2 center
 }
 
 void dc_app_mouse_circle_ex(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius, DcAppPlacement placement) {
+    dc_app_mouse_ellipse_ex(ctx, id, center, (DcAppVec2){radius, radius}, placement);
+}
+
+void dc_app_mouse_ellipse(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, DcAppVec2 radius) {
+    dc_app_mouse_ellipse_ex(ctx, id, center, radius, (DcAppPlacement){0});
+}
+
+void dc_app_mouse_ellipse_ex(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, DcAppVec2 radius, DcAppPlacement placement) {
     uint64_t mouse_id = _mouse_id(id);
-    if (mouse_id == 0 || radius <= 0.0f) return;
+    if (mouse_id == 0 || radius.x <= 0.0f || radius.y <= 0.0f) return;
 
     if (placement.local_align_x == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_x = DC_APP_ALIGN_TYPE_CENTER;
     if (placement.local_align_y == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_y = DC_APP_ALIGN_TYPE_MIDDLE;
 
-    float diameter = radius * 2.0f;
+    DcAppVec2 diameter = {radius.x * 2.0f, radius.y * 2.0f};
     plVec2 mouse_local;
-    if (!_mouse_rect_local(ctx, (DcAppVec2){diameter, diameter}, center, placement, &mouse_local)) return;
+    if (!_mouse_rect_local(ctx, diameter, center, placement, &mouse_local)) return;
 
-    float dx = mouse_local.x - radius;
-    float dy = mouse_local.y - radius;
-    if (dx * dx + dy * dy <= radius * radius) {
+    float dx = mouse_local.x - radius.x;
+    float dy = mouse_local.y - radius.y;
+    if ((dx * dx) / (radius.x * radius.x) + (dy * dy) / (radius.y * radius.y) <= 1.0f) {
         _mouse_register(ctx, mouse_id);
     }
 }
@@ -945,6 +959,14 @@ void dc_app_draw_circle(DcAppDrawContext *ctx, DcAppVec2 center, float radius, D
 
 void dc_app_draw_circle_filled(DcAppDrawContext *ctx, DcAppVec2 center, float radius, DcAppVec4 color) {
     dc_app_draw_circle_filled_ex(ctx, center, radius, color, (DcAppPlacement){0}, NULL);
+}
+
+void dc_app_draw_ellipse(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppStroke stroke) {
+    dc_app_draw_ellipse_ex(ctx, center, radius, stroke, (DcAppPlacement){0}, NULL);
+}
+
+void dc_app_draw_ellipse_filled(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppVec4 color) {
+    dc_app_draw_ellipse_filled_ex(ctx, center, radius, color, (DcAppPlacement){0}, NULL);
 }
 
 void dc_app_draw_text(DcAppDrawContext *ctx, DcAppVec2 position, const char *text, DcAppTextStyle style) {
@@ -1221,7 +1243,15 @@ void dc_app_draw_rounded_rect_filled_ex(DcAppDrawContext *ctx, DcAppVec2 positio
 }
 
 void dc_app_draw_circle_ex(DcAppDrawContext *ctx, DcAppVec2 center, float radius, DcAppStroke stroke, DcAppPlacement placement, DcAppDrawResult *result) {
-    if (!ctx || radius <= 0.0f) return;
+    dc_app_draw_ellipse_ex(ctx, center, (DcAppVec2){radius, radius}, stroke, placement, result);
+}
+
+void dc_app_draw_circle_filled_ex(DcAppDrawContext *ctx, DcAppVec2 center, float radius, DcAppVec4 color, DcAppPlacement placement, DcAppDrawResult *result) {
+    dc_app_draw_ellipse_filled_ex(ctx, center, (DcAppVec2){radius, radius}, color, placement, result);
+}
+
+void dc_app_draw_ellipse_ex(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppStroke stroke, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (!ctx || radius.x <= 0.0f || radius.y <= 0.0f) return;
 
     if (placement.local_align_x == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_x = DC_APP_ALIGN_TYPE_CENTER;
     if (placement.local_align_y == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_y = DC_APP_ALIGN_TYPE_MIDDLE;
@@ -1231,14 +1261,14 @@ void dc_app_draw_circle_ex(DcAppDrawContext *ctx, DcAppVec2 center, float radius
 
     for (int i = 0; i < SEGMENTS; i++) {
         float theta = 2.0f * (float)M_PI * (float)i / (float)SEGMENTS;
-        points[i] = (DcAppVec2){radius + cosf(theta) * radius, radius + sinf(theta) * radius};
+        points[i] = (DcAppVec2){radius.x + cosf(theta) * radius.x, radius.y + sinf(theta) * radius.y};
     }
 
     dc_app_draw_polygon_ex(ctx, points, SEGMENTS, stroke, center, placement, result);
 }
 
-void dc_app_draw_circle_filled_ex(DcAppDrawContext *ctx, DcAppVec2 center, float radius, DcAppVec4 color, DcAppPlacement placement, DcAppDrawResult *result) {
-    if (!ctx || radius <= 0.0f) return;
+void dc_app_draw_ellipse_filled_ex(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppVec4 color, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (!ctx || radius.x <= 0.0f || radius.y <= 0.0f) return;
 
     if (placement.local_align_x == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_x = DC_APP_ALIGN_TYPE_CENTER;
     if (placement.local_align_y == DC_APP_ALIGN_TYPE_UNDEFINED) placement.local_align_y = DC_APP_ALIGN_TYPE_MIDDLE;
@@ -1248,7 +1278,7 @@ void dc_app_draw_circle_filled_ex(DcAppDrawContext *ctx, DcAppVec2 center, float
 
     for (int i = 0; i < SEGMENTS; i++) {
         float theta = 2.0f * (float)M_PI * (float)i / (float)SEGMENTS;
-        points[i] = (DcAppVec2){radius + cosf(theta) * radius, radius + sinf(theta) * radius};
+        points[i] = (DcAppVec2){radius.x + cosf(theta) * radius.x, radius.y + sinf(theta) * radius.y};
     }
 
     dc_app_draw_polygon_filled_ex(ctx, points, SEGMENTS, color, center, placement, result);

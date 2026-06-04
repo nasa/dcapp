@@ -157,6 +157,8 @@ typedef struct _DcAppDrawApi {
     void (*rounded_rect_filled)(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, float corner_radius, DcAppVec4 color);
     void (*circle)(DcAppDrawContext *ctx, DcAppVec2 center, float radius, DcAppStroke stroke);
     void (*circle_filled)(DcAppDrawContext *ctx, DcAppVec2 center, float radius, DcAppVec4 color);
+    void (*ellipse)(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppStroke stroke);
+    void (*ellipse_filled)(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppVec4 color);
     DcAppVec2 (*text_size)(DcAppDrawContext *ctx, const char *text, DcAppTextStyle style);
     void (*text)(DcAppDrawContext *ctx, DcAppVec2 position, const char *text, DcAppTextStyle style);
 
@@ -178,6 +180,8 @@ typedef struct _DcAppDrawApi {
     void (*rounded_rect_filled_ex)(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, float corner_radius, DcAppVec4 color, DcAppPlacement placement, DcAppDrawResult *result);
     void (*circle_ex)(DcAppDrawContext *ctx, DcAppVec2 center, float radius, DcAppStroke stroke, DcAppPlacement placement, DcAppDrawResult *result);
     void (*circle_filled_ex)(DcAppDrawContext *ctx, DcAppVec2 center, float radius, DcAppVec4 color, DcAppPlacement placement, DcAppDrawResult *result);
+    void (*ellipse_ex)(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppStroke stroke, DcAppPlacement placement, DcAppDrawResult *result);
+    void (*ellipse_filled_ex)(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppVec4 color, DcAppPlacement placement, DcAppDrawResult *result);
     void (*text_ex)(DcAppDrawContext *ctx, DcAppVec2 position, const char *text, DcAppTextStyle style, DcAppPlacement placement, DcAppDrawResult *result);
 
     // Container helpers.
@@ -198,11 +202,13 @@ typedef struct _DcAppMouseApi {
     // Basic mouse hit registration.
     void (*rect)(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size);
     void (*circle)(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius);
+    void (*ellipse)(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, DcAppVec2 radius);
     void (*polygon)(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position);
 
     // Extended mouse hit registration with placement.
     void (*rect_ex)(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement);
     void (*circle_ex)(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius, DcAppPlacement placement);
+    void (*ellipse_ex)(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, DcAppVec2 radius, DcAppPlacement placement);
     void (*polygon_ex)(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement);
 
     // Event queries.
@@ -286,6 +292,10 @@ void dc_app_draw_circle(DcAppDrawContext *ctx, DcAppVec2 center, float radius, D
 void dc_app_draw_circle_ex(DcAppDrawContext *ctx, DcAppVec2 center, float radius, DcAppStroke stroke, DcAppPlacement placement, DcAppDrawResult *result);
 void dc_app_draw_circle_filled(DcAppDrawContext *ctx, DcAppVec2 center, float radius, DcAppVec4 color);
 void dc_app_draw_circle_filled_ex(DcAppDrawContext *ctx, DcAppVec2 center, float radius, DcAppVec4 color, DcAppPlacement placement, DcAppDrawResult *result);
+void dc_app_draw_ellipse(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppStroke stroke);
+void dc_app_draw_ellipse_ex(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppStroke stroke, DcAppPlacement placement, DcAppDrawResult *result);
+void dc_app_draw_ellipse_filled(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppVec4 color);
+void dc_app_draw_ellipse_filled_ex(DcAppDrawContext *ctx, DcAppVec2 center, DcAppVec2 radius, DcAppVec4 color, DcAppPlacement placement, DcAppDrawResult *result);
 DcAppVec2 dc_app_draw_text_size(DcAppDrawContext *ctx, const char *text, DcAppTextStyle style);
 void dc_app_draw_text(DcAppDrawContext *ctx, DcAppVec2 position, const char *text, DcAppTextStyle style);
 void dc_app_draw_text_ex(DcAppDrawContext *ctx, DcAppVec2 position, const char *text, DcAppTextStyle style, DcAppPlacement placement, DcAppDrawResult *result);
@@ -307,6 +317,8 @@ void dc_app_mouse_rect(DcAppDrawContext *ctx, const char *id, DcAppVec2 position
 void dc_app_mouse_rect_ex(DcAppDrawContext *ctx, const char *id, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement);
 void dc_app_mouse_circle(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius);
 void dc_app_mouse_circle_ex(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, float radius, DcAppPlacement placement);
+void dc_app_mouse_ellipse(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, DcAppVec2 radius);
+void dc_app_mouse_ellipse_ex(DcAppDrawContext *ctx, const char *id, DcAppVec2 center, DcAppVec2 radius, DcAppPlacement placement);
 void dc_app_mouse_polygon(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position);
 void dc_app_mouse_polygon_ex(DcAppDrawContext *ctx, const char *id, const DcAppVec2 *points, uint32_t point_count, DcAppVec2 position, DcAppPlacement placement);
 bool dc_app_mouse_hovered(DcAppDrawContext *ctx, const char *id);

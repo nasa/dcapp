@@ -542,6 +542,31 @@ static void draw_example_36_args_and_state(DcDrawContext *ctx, const DcDrawFuncA
     dc_draw->text(ctx, (DcVec2){112.0f, 46.0f}, mouse && mouse->position_valid ? "mouse valid" : "mouse invalid", text_style(8.5f, color(0.58f, 0.68f, 0.76f, 1.0f)));
 }
 
+// 37: ellipse() draws the outline at center/radius_x/radius_y.
+static void draw_example_37_ellipse(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
+    (void)args;
+    dc_draw->ellipse(ctx, (DcVec2){110.0f, 60.0f}, (DcVec2){58.0f, 30.0f}, stroke(color(0.64f, 0.84f, 1.0f, 1.0f), 2.0f));
+    note(ctx, "radius vec2");
+}
+
+// 38: ellipse_filled() uses the same center/radius vector form.
+static void draw_example_38_ellipse_filled(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
+    (void)args;
+    dc_draw->ellipse_filled(ctx, (DcVec2){110.0f, 60.0f}, (DcVec2){58.0f, 30.0f}, color(0.24f, 0.48f, 0.66f, 0.88f));
+    dc_draw->ellipse(ctx, (DcVec2){110.0f, 60.0f}, (DcVec2){58.0f, 30.0f}, stroke(color(0.74f, 0.90f, 1.0f, 1.0f), 1.0f));
+    note(ctx, "filled ellipse");
+}
+
+// 39: mouse ellipse uses the same center/radius vector hit shape.
+static void draw_example_39_mouse_ellipse(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
+    (void)args;
+    const char *id = "drawfunction2_mouse_ellipse";
+    dc_mouse->ellipse(ctx, id, (DcVec2){110.0f, 60.0f}, (DcVec2){58.0f, 30.0f});
+    DcVec4 fill = dc_mouse->hovered(ctx, id) ? color(0.72f, 0.38f, 0.24f, 0.94f) : color(0.24f, 0.48f, 0.66f, 0.88f);
+    dc_draw->ellipse_filled(ctx, (DcVec2){110.0f, 60.0f}, (DcVec2){58.0f, 30.0f}, fill);
+    note(ctx, "ellipse hit");
+}
+
 // The table is the source of truth for the rendered reference grid. Adding a
 // new example means adding the draw function above and one row here.
 static const Example examples[] = {
@@ -581,6 +606,9 @@ static const Example examples[] = {
     {"34 mouse polygon", draw_example_34_mouse_polygon},
     {"35 mouse events", draw_example_35_mouse_events},
     {"36 args/state", draw_example_36_args_and_state},
+    {"37 ellipse", draw_example_37_ellipse},
+    {"38 ellipse_filled", draw_example_38_ellipse_filled},
+    {"39 mouse ellipse", draw_example_39_mouse_ellipse},
 };
 
 void display_init(void) {

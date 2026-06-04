@@ -532,6 +532,8 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    void (*rounded_rect_filled)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, float corner_radius, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*circle)(DcDrawContext *ctx, DcVec2 center, float radius, DcStroke stroke);");
     fprintf(file, "%s\n", "    void (*circle_filled)(DcDrawContext *ctx, DcVec2 center, float radius, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*ellipse)(DcDrawContext *ctx, DcVec2 center, DcVec2 radius, DcStroke stroke);");
+    fprintf(file, "%s\n", "    void (*ellipse_filled)(DcDrawContext *ctx, DcVec2 center, DcVec2 radius, DcVec4 color);");
     fprintf(file, "%s\n", "    DcVec2 (*text_size)(DcDrawContext *ctx, const char *text, DcTextStyle style);");
     fprintf(file, "%s\n", "    void (*text)(DcDrawContext *ctx, DcVec2 position, const char *text, DcTextStyle style);");
     fprintf(file, "%s\n", "");
@@ -553,6 +555,8 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    void (*rounded_rect_filled_ex)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, float corner_radius, DcVec4 color, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*circle_ex)(DcDrawContext *ctx, DcVec2 center, float radius, DcStroke stroke, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*circle_filled_ex)(DcDrawContext *ctx, DcVec2 center, float radius, DcVec4 color, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*ellipse_ex)(DcDrawContext *ctx, DcVec2 center, DcVec2 radius, DcStroke stroke, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*ellipse_filled_ex)(DcDrawContext *ctx, DcVec2 center, DcVec2 radius, DcVec4 color, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*text_ex)(DcDrawContext *ctx, DcVec2 position, const char *text, DcTextStyle style, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "    // Container helpers.");
@@ -574,11 +578,13 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    // Basic mouse hit registration.");
     fprintf(file, "%s\n", "    void (*rect)(DcDrawContext *ctx, const char *id, DcVec2 position, DcVec2 size);");
     fprintf(file, "%s\n", "    void (*circle)(DcDrawContext *ctx, const char *id, DcVec2 center, float radius);");
+    fprintf(file, "%s\n", "    void (*ellipse)(DcDrawContext *ctx, const char *id, DcVec2 center, DcVec2 radius);");
     fprintf(file, "%s\n", "    void (*polygon)(DcDrawContext *ctx, const char *id, const DcVec2 *points, uint32_t point_count, DcVec2 position);");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "    // Extended mouse hit registration with placement.");
     fprintf(file, "%s\n", "    void (*rect_ex)(DcDrawContext *ctx, const char *id, DcVec2 position, DcVec2 size, DcPlacement placement);");
     fprintf(file, "%s\n", "    void (*circle_ex)(DcDrawContext *ctx, const char *id, DcVec2 center, float radius, DcPlacement placement);");
+    fprintf(file, "%s\n", "    void (*ellipse_ex)(DcDrawContext *ctx, const char *id, DcVec2 center, DcVec2 radius, DcPlacement placement);");
     fprintf(file, "%s\n", "    void (*polygon_ex)(DcDrawContext *ctx, const char *id, const DcVec2 *points, uint32_t point_count, DcVec2 position, DcPlacement placement);");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "    // Event queries.");
