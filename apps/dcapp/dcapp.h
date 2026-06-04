@@ -75,6 +75,7 @@ typedef struct _DcAppDrawContext DcAppDrawContext;
 typedef struct _DcAppDrawFuncArgs DcAppDrawFuncArgs;
 typedef struct _DcAppDrawApi DcAppDrawApi;
 typedef struct _DcAppMouseApi DcAppMouseApi;
+typedef struct _DcAppTextureApi DcAppTextureApi;
 typedef struct _DcAppInit DcAppInit;
 
 // dcapp node structs

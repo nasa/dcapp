@@ -141,6 +141,7 @@ static uint64_t _mouse_id(const char *id);
 static bool _mouse_rect_local(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement, plVec2 *out);
 static bool _mouse_point_in_polygon(plVec2 mouse, const plVec2 *points, uint32_t point_count);
 static void _mouse_register(DcAppDrawContext *ctx, uint64_t id);
+static bool _resolve_texture_id(DcAppDrawContext *ctx, DcAppTextureId texture_id, uint32_t *out);
 static void _draw_image_uv(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 dimensions, DcAppVec2 uv0, DcAppVec2 uv1, DcAppVec2 uv2, DcAppVec2 uv3, DcAppVec2 position, DcAppPlacement placement, DcAppVec4 tint, DcAppDrawArea *out_area);
 static _DcAppContainerData *_container_data(DcAppDrawContext *ctx);
 static _DcAppStencilRecorder *_stencil_recorder(DcAppDrawContext *ctx);
@@ -906,7 +907,7 @@ void dc_app_draw_rounded_quad_filled(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppV
     dc_app_draw_rounded_quad_filled_ex(ctx, p0, p1, p2, p3, corner_radius, color, (DcAppVec2){0.0f, 0.0f}, (DcAppPlacement){0}, NULL);
 }
 
-void dc_app_draw_image(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint) {
+void dc_app_draw_image(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint) {
     dc_app_draw_image_ex(ctx, texture_id, position, size, tint, (DcAppPlacement){0}, NULL);
 }
 
@@ -1085,9 +1086,11 @@ void dc_app_draw_rounded_quad_filled_ex(DcAppDrawContext *ctx, DcAppVec2 p0, DcA
     dc_app_draw_rounded_polygon_filled_ex(ctx, points, 4, corner_radius, color, position, placement, result);
 }
 
-void dc_app_draw_image_ex(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint, DcAppPlacement placement, DcAppDrawResult *result) {
+void dc_app_draw_image_ex(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint, DcAppPlacement placement, DcAppDrawResult *result) {
     DcAppDrawArea *out_area = _draw_result_area(result);
-    _draw_image_uv(ctx, texture_id, size,
+    uint32_t bind_group_id = 0;
+    if (!_resolve_texture_id(ctx, texture_id, &bind_group_id)) return;
+    _draw_image_uv(ctx, bind_group_id, size,
                    (DcAppVec2){0.0f, 0.0f},
                    (DcAppVec2){0.0f, 1.0f},
                    (DcAppVec2){1.0f, 1.0f},
@@ -1097,16 +1100,27 @@ void dc_app_draw_image_ex(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 
 
 static void _draw_image_uv(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 dimensions, DcAppVec2 uv0, DcAppVec2 uv1, DcAppVec2 uv2, DcAppVec2 uv3, DcAppVec2 position, DcAppPlacement placement, DcAppVec4 tint, DcAppDrawArea *out_area) {
     dc_app_draw_image_quad_uv(ctx, texture_id,
-                              (DcAppVec2){0.0f, 0.0f},
                               (DcAppVec2){0.0f, dimensions.y},
-                              (DcAppVec2){dimensions.x, dimensions.y},
+                              (DcAppVec2){0.0f, 0.0f},
                               (DcAppVec2){dimensions.x, 0.0f},
+                              (DcAppVec2){dimensions.x, dimensions.y},
                               uv0, uv1, uv2, uv3, position, placement, tint, NULL);
 
     if (out_area) {
         plVec2 points[4];
         _resolve_rect_points(ctx, dimensions, position, placement, points, out_area);
     }
+}
+
+static bool _resolve_texture_id(DcAppDrawContext *ctx, DcAppTextureId texture_id, uint32_t *out) {
+    if (out) *out = 0;
+    if (!ctx || texture_id == 0 || !out) return false;
+
+    _AppData *app_data = (_AppData *)ctx->_runtime;
+    if (!app_data || texture_id >= (DcAppTextureId)sbcount(app_data->sb_textures)) return false;
+
+    *out = app_data->sb_textures[texture_id].bind_group_handle.uData;
+    return true;
 }
 
 void dc_app_draw_image_quad(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, DcAppVec2 position, DcAppPlacement placement, DcAppDrawArea *out_area) {

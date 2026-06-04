@@ -2,6 +2,7 @@
 
 #include "draw.h"
 #include "draw_node.h"
+#include "texture.h"
 #include "xml.h"
 
 #define PL_JSON_IMPLEMENTATION
@@ -157,11 +158,12 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
     if (app_data->logic_pre_init) {
         DcAppInit init = {
             .size = sizeof(init),
-            .version = 1,
+            .version = 2,
             .user_data = app_data,
             .get_variable = get_variable_value_addr,
             .draw = dc_app_draw_api(),
             .mouse = dc_app_mouse_api(),
+            .texture = dc_app_texture_api(),
         };
         app_data->logic_pre_init(&init);
     }
@@ -1084,4 +1086,5 @@ static void _load_apis(plApiRegistryI *api_registry) {
 
 #include "draw.c"
 #include "draw_node.c"
+#include "texture.c"
 #include "xml.c"

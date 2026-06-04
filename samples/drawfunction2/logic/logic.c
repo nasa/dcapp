@@ -16,6 +16,10 @@ typedef struct Example {
     ExampleFn draw;
 } Example;
 
+static DcTextureId g_image_texture;
+static DcVec2      g_image_size;
+static const char *g_image_status = "image not loaded";
+
 // The generated header exposes DcVec4 as a generic vector with rgba aliases.
 // This helper keeps the examples short while still showing that colors are just
 // normal values passed into the draw API.
@@ -271,13 +275,28 @@ static void draw_example_21_text_ex(DcDrawContext *ctx, const DcDrawFuncArgs *ar
     dc_draw->line(ctx, (DcVec2){70.0f, 60.0f}, (DcVec2){150.0f, 60.0f}, stroke(color(0.32f, 0.46f, 0.34f, 0.8f), 1.0f));
 }
 
-// 22: image()/image_ex() are part of the draw API, but this sample does not
-// have a logic-side texture lookup helper yet. The placeholder keeps the API
-// slot visible without faking a texture id.
+// 22: dc_load_image() is called once in display_init(). The returned
+// DcTextureId can then be reused by image() and image_ex() every frame.
 static void draw_example_22_image(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
-    (void)args;
-    dc_draw->rounded_rect(ctx, (DcVec2){48.0f, 34.0f}, (DcVec2){124.0f, 52.0f}, 8.0f, stroke(color(0.70f, 0.84f, 0.92f, 1.0f), 1.0f));
-    note(ctx, "image/image_ex need texture_id");
+    if (g_image_texture) {
+        DcVec2 image_size = {72.0f, 44.0f};
+        if (g_image_size.x > 0.0f && g_image_size.y > 0.0f) {
+            image_size.y = image_size.x * g_image_size.y / g_image_size.x;
+        }
+
+        DcPlacement placement = local_center();
+        placement.pivot_align_x = DC_ALIGN_CENTER;
+        placement.pivot_align_y = DC_ALIGN_MIDDLE;
+        placement.rotation      = phase_degrees(args);
+
+        dc_draw->image(ctx, g_image_texture, (DcVec2){30.0f, 38.0f}, image_size, color(1.0f, 1.0f, 1.0f, 1.0f));
+        dc_draw->image_ex(ctx, g_image_texture, (DcVec2){150.0f, 60.0f}, image_size, color(1.0f, 1.0f, 1.0f, 0.85f), placement, NULL);
+        dc_draw->text(ctx, (DcVec2){32.0f, 20.0f}, "image()", text_style(8.0f, color(0.62f, 0.74f, 0.82f, 1.0f)));
+        dc_draw->text_ex(ctx, (DcVec2){150.0f, 20.0f}, "image_ex()", text_style(8.0f, color(0.62f, 0.74f, 0.82f, 1.0f)), local_center(), NULL);
+    } else {
+        dc_draw->rounded_rect(ctx, (DcVec2){48.0f, 34.0f}, (DcVec2){124.0f, 52.0f}, 8.0f, stroke(color(0.70f, 0.84f, 0.92f, 1.0f), 1.0f));
+        note(ctx, g_image_status);
+    }
 }
 
 // 23: Placement combines local alignment, pivot alignment, and rotation. Local
@@ -566,6 +585,20 @@ static const Example examples[] = {
 };
 
 void display_init(void) {
+    if (!dc_texture) {
+        g_image_status = "texture api unavailable";
+        return;
+    }
+
+    g_image_texture = dc_load_image("../../assets/nasa.png", &g_image_size);
+    if (!g_image_texture) {
+        g_image_status = "dc_load_image failed";
+        return;
+    }
+
+    if (!dc_get_texture_size(g_image_texture, &g_image_size)) {
+        g_image_status = "texture size unavailable";
+    }
 }
 
 // PHASE is an XML variable passed to draw_reference_grid(). Incrementing it in

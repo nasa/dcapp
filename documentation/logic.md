@@ -133,6 +133,8 @@ variable pointers. The important ownership/linkage shape is:
 // DrawFunction API typedefs are generated here.
 typedef struct _DcDrawApi DcDrawApi;
 typedef struct _DcMouseApi DcMouseApi;
+typedef struct _DcTextureApi DcTextureApi;
+typedef uint32_t DcTextureId;
 typedef void *(*DcGetVariableFn)(void *user_data, const char *name);
 
 typedef struct _DcInit {
@@ -142,6 +144,7 @@ typedef struct _DcInit {
     DcGetVariableFn get_variable;
     const DcDrawApi *draw;
     const DcMouseApi *mouse;
+    const DcTextureApi *texture;
 } DcInit;
 
 #ifndef _DCAPP_LOGIC_EXTERN_
@@ -151,6 +154,7 @@ void *dc_user_data;
 DcGetVariableFn dc_get_variable_fn;
 const DcDrawApi *dc_draw;
 const DcMouseApi *dc_mouse;
+const DcTextureApi *dc_texture;
 
 // XML variable pointers resolved during display_pre_init().
 double *altitude;
@@ -174,12 +178,16 @@ void *dc_get_variable(const char *name) {
     return dc_get_variable_fn(dc_user_data, name);
 }
 
+DcTextureId dc_load_image(const char *path, DcVec2 *out_size);
+bool dc_get_texture_size(DcTextureId texture_id, DcVec2 *out_size);
+
 void display_pre_init(const DcInit *init) {
     if (init && init->version >= 1 && init->size >= sizeof(DcInit)) {
         dc_user_data = init->user_data;
         dc_get_variable_fn = init->get_variable;
         dc_draw = init->draw;
         dc_mouse = init->mouse;
+        dc_texture = init->texture;
         altitude = (double *)dc_get_variable("altitude");
         velocity = (double *)dc_get_variable("velocity");
         frameCount = (int *)dc_get_variable("frameCount");
@@ -199,8 +207,11 @@ extern "C" {
 #endif
 
 void *dc_get_variable(const char *name);
+DcTextureId dc_load_image(const char *path, DcVec2 *out_size);
+bool dc_get_texture_size(DcTextureId texture_id, DcVec2 *out_size);
 extern const DcDrawApi *dc_draw;
 extern const DcMouseApi *dc_mouse;
+extern const DcTextureApi *dc_texture;
 
 // XML variable pointers shared from the main logic translation unit.
 extern double *altitude;

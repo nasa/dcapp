@@ -1,5 +1,6 @@
 #include "dcapp.h"
 
+#include "texture.h"
 #include "xml.h"
 
 #include "geojson.h"
@@ -85,7 +86,6 @@ static _NodeIndex    _process_xml_node_window(_AppData *app_data, xmlNodePtr xml
 // utils (definitions at bottom of file)
 static const char *_node_type_to_string(_NodeType type);
 static _NodeIndex  _register_node(_AppData *app_data, _Node *node);
-static _Texture    _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name, bool use_dedicated_allocator);
 static void        _init_stencil_pipelines(_AppData *app_data, plDevice *device, plRenderPassHandle render_pass);
 static void        _init_app_data(_AppData *app_data, _Node *window_node);
 static void        _build_font_atlas(_AppData *app_data);
@@ -1873,7 +1873,7 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
             }
 
             // create texture (allocate image, buffer, bind)
-            _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath, false);
+            _Texture texture = dc_app_texture_create(app_data, image_width, image_height, canon_filepath, false);
 
             // set the initial pl_texture usage (this is a no-op in metal but does layout transition for vulkan)
             plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
@@ -2498,7 +2498,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
             src.is_connected = false;
 
             // create GPU texture
-            _Texture texture = _create_texture(app_data, _NODE_PIXELSTREAM_MAX_WIDTH, _NODE_PIXELSTREAM_MAX_HEIGHT, "pixelstream", true);
+            _Texture texture = dc_app_texture_create(app_data, _NODE_PIXELSTREAM_MAX_WIDTH, _NODE_PIXELSTREAM_MAX_HEIGHT, "pixelstream", true);
             sbpush(app_data->sb_texture_name_offsets, sbcount(app_data->sb_texture_names));
             sbpushn(app_data->sb_texture_names, "--dummy--", (int)strlen("--dummy--") + 1);
             sbpush(app_data->sb_textures, texture);
@@ -2745,7 +2745,7 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
                     goto skip_test_pattern;
                 }
 
-                _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath, false);
+                _Texture texture = dc_app_texture_create(app_data, image_width, image_height, canon_filepath, false);
 
                 plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
                 _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
@@ -3350,7 +3350,7 @@ static _NodeIndex _process_xml_node_sphere(_AppData *app_data, xmlNodePtr xml_no
                 return _register_node(app_data, &dc_node);
             }
 
-            _Texture texture = _create_texture(app_data, image_width, image_height, canon_filepath, false);
+            _Texture texture = dc_app_texture_create(app_data, image_width, image_height, canon_filepath, false);
 
             plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
             _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
@@ -6414,52 +6414,6 @@ static void _build_font_atlas(_AppData *app_data) {
     _ext_dc_draw_backend->build_font_atlas(command_buffer, font_atlas);
     _ext_gfx->wait_on_command_buffer(command_buffer);
     _ext_gfx->return_command_buffer(command_buffer);
-}
-
-static _Texture _create_texture(_AppData *app_data, uint32_t texture_width, uint32_t texture_height, const char *texture_name, bool use_dedicated_allocator) {
-
-    // get device
-    plDevice *device = _ext_starter->get_device();
-
-    // create new texture desc
-    plTextureDesc pl_texture_desc;
-    memset(&pl_texture_desc, 0, sizeof(plTextureDesc));
-    pl_texture_desc.tDimensions = (plVec3){(float)texture_width, (float)texture_height, 1.0f};
-    pl_texture_desc.tFormat     = PL_FORMAT_R8G8B8A8_UNORM;
-    pl_texture_desc.uLayers     = 1;
-    pl_texture_desc.uMips       = 1;
-    pl_texture_desc.tType       = PL_TEXTURE_TYPE_2D;
-    pl_texture_desc.tUsage      = PL_TEXTURE_USAGE_SAMPLED;
-    pl_texture_desc.pcDebugName = texture_name;
-
-    // create texture
-    plTexture      *pl_texture;
-    plTextureHandle pl_texture_handle = _ext_gfx->create_texture(device, &pl_texture_desc, &pl_texture);
-
-    // choose allocator based on texture size or caller request
-    // use dedicated allocator for large textures (> 4 MB) to avoid buddy allocator waste
-    plDeviceMemoryAllocatorI *allocator = app_data->gpu_local_buddy_allocator;
-    if (use_dedicated_allocator || pl_texture->tMemoryRequirements.ulSize > (4 * 1048576))
-        allocator = app_data->gpu_local_dedicated_allocator;
-
-    const plDeviceMemoryAllocation pl_texture_allocation = allocator->allocate(
-        allocator->ptInst,
-        pl_texture->tMemoryRequirements.uMemoryTypeBits,
-        pl_texture->tMemoryRequirements.ulSize,
-        pl_texture->tMemoryRequirements.ulAlignment,
-        texture_name);
-
-    // bind memory
-    _ext_gfx->bind_texture_to_memory(device, pl_texture_handle, &pl_texture_allocation);
-
-    // create bind group
-    plBindGroupHandle pl_bind_group_handle = _ext_dc_draw_backend->create_bind_group_for_texture(pl_texture_handle);
-
-    // create _Texture struct
-    _Texture texture = {
-        pl_texture_handle,
-        pl_bind_group_handle};
-    return texture;
 }
 
 static bool _load_color_from_string(_AppData *app_data, xmlNodePtr xml_node, const char *attr_name, _ValIndex4 *color_out) {

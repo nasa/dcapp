@@ -95,7 +95,7 @@ int dc_utils_join_paths(const char *dir, const char *rel_path, char *out, size_t
         snprintf(out, out_size, "%s%s", dir, rel_path);
     }
 
-    return true;
+    return 0;
 }
 
 bool dc_utils_is_relative_path(const char *path) {

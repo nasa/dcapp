@@ -115,6 +115,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "DcGetVariableFn dc_get_variable_fn;");
     fprintf(file, "%s\n", "const DcDrawApi *dc_draw;");
     fprintf(file, "%s\n", "const DcMouseApi *dc_mouse;");
+    fprintf(file, "%s\n", "const DcTextureApi *dc_texture;");
     fprintf(file, "%s\n", "");
 
     // file variable definitions
@@ -159,6 +160,17 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "    return dc_get_variable_fn(dc_user_data, name);");
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// Image loading helpers for use in display_init().");
+    fprintf(file, "%s\n", "DcTextureId dc_load_image(const char *path, DcVec2 *out_size) {");
+    fprintf(file, "%s\n", "    if (!dc_texture || !dc_texture->load_image) return 0;");
+    fprintf(file, "%s\n", "    return dc_texture->load_image(dc_user_data, path, out_size);");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "bool dc_get_texture_size(DcTextureId texture_id, DcVec2 *out_size) {");
+    fprintf(file, "%s\n", "    if (!dc_texture || !dc_texture->get_size) return false;");
+    fprintf(file, "%s\n", "    return dc_texture->get_size(dc_user_data, texture_id, out_size);");
+    fprintf(file, "%s\n", "}");
+    fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// Internal setup called before display_init().");
     fprintf(file, "%s\n", "void display_pre_init(const DcInit *init) {");
     fprintf(file, "%s\n", "    if (init && init->version >= 1 && init->size >= sizeof(DcInit)) {");
@@ -166,6 +178,7 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "        dc_get_variable_fn = init->get_variable;");
     fprintf(file, "%s\n", "        dc_draw = init->draw;");
     fprintf(file, "%s\n", "        dc_mouse = init->mouse;");
+    fprintf(file, "%s\n", "        dc_texture = init->texture;");
     for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
         DcAppLookupVar *var      = dc_app_lookup_get_var(lookup, var_index);
         const char     *var_name = dc_app_lookup_get_var_name(lookup, var_index);
@@ -208,8 +221,11 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "#endif");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "void *dc_get_variable(const char *name);");
+    fprintf(file, "%s\n", "DcTextureId dc_load_image(const char *path, DcVec2 *out_size);");
+    fprintf(file, "%s\n", "bool dc_get_texture_size(DcTextureId texture_id, DcVec2 *out_size);");
     fprintf(file, "%s\n", "extern const DcDrawApi *dc_draw;");
     fprintf(file, "%s\n", "extern const DcMouseApi *dc_mouse;");
+    fprintf(file, "%s\n", "extern const DcTextureApi *dc_texture;");
     fprintf(file, "%s\n", "");
 
     for (DcAppVarIndex var_index = DC_APP_LOOKUP_FIRST_INDEX; var_index < var_count; var_index++) {
@@ -472,6 +488,9 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "// Opaque context passed into every DrawFunction callback.");
     fprintf(file, "%s\n", "typedef struct _DcDrawContext DcDrawContext;");
     fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// Texture handle returned by dc_load_image() and consumed by dc_draw->image().");
+    fprintf(file, "%s\n", "typedef uint32_t DcTextureId;");
+    fprintf(file, "%s\n", "");
 
     fprintf(file, "%s\n", "// One XML <Arg> value passed into a DrawFunction.");
     fprintf(file, "%s\n", "typedef struct _DcDrawFuncArg {");
@@ -506,7 +525,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    void (*quad_filled)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*rounded_quad)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, float corner_radius, DcStroke stroke);");
     fprintf(file, "%s\n", "    void (*rounded_quad_filled)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, float corner_radius, DcVec4 color);");
-    fprintf(file, "%s\n", "    void (*image)(DcDrawContext *ctx, uint32_t texture_id, DcVec2 position, DcVec2 size, DcVec4 tint);");
+    fprintf(file, "%s\n", "    void (*image)(DcDrawContext *ctx, DcTextureId texture_id, DcVec2 position, DcVec2 size, DcVec4 tint);");
     fprintf(file, "%s\n", "    void (*rect)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, DcStroke stroke);");
     fprintf(file, "%s\n", "    void (*rect_filled)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*rounded_rect)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, float corner_radius, DcStroke stroke);");
@@ -527,7 +546,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    void (*quad_filled_ex)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, DcVec4 color, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*rounded_quad_ex)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, float corner_radius, DcStroke stroke, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*rounded_quad_filled_ex)(DcDrawContext *ctx, DcVec2 p0, DcVec2 p1, DcVec2 p2, DcVec2 p3, float corner_radius, DcVec4 color, DcVec2 position, DcPlacement placement, DcDrawResult *result);");
-    fprintf(file, "%s\n", "    void (*image_ex)(DcDrawContext *ctx, uint32_t texture_id, DcVec2 position, DcVec2 size, DcVec4 tint, DcPlacement placement, DcDrawResult *result);");
+    fprintf(file, "%s\n", "    void (*image_ex)(DcDrawContext *ctx, DcTextureId texture_id, DcVec2 position, DcVec2 size, DcVec4 tint, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*rect_ex)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, DcStroke stroke, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*rect_filled_ex)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, DcVec4 color, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*rounded_rect_ex)(DcDrawContext *ctx, DcVec2 position, DcVec2 size, float corner_radius, DcStroke stroke, DcPlacement placement, DcDrawResult *result);");
@@ -565,6 +584,13 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "} DcMouseApi;");
     fprintf(file, "%s\n", "");
 
+    fprintf(file, "%s\n", "// Init-time texture loading available through dc_load_image().");
+    fprintf(file, "%s\n", "typedef struct _DcTextureApi {");
+    fprintf(file, "%s\n", "    DcTextureId (*load_image)(void *user_data, const char *path, DcVec2 *out_size);");
+    fprintf(file, "%s\n", "    bool (*get_size)(void *user_data, DcTextureId texture_id, DcVec2 *out_size);");
+    fprintf(file, "%s\n", "} DcTextureApi;");
+    fprintf(file, "%s\n", "");
+
     fprintf(file, "%s\n", "// Runtime hooks filled in by dcapp before user display_init().");
     fprintf(file, "%s\n", "typedef void *(*DcGetVariableFn)(void *user_data, const char *name);");
     fprintf(file, "%s\n", "");
@@ -575,6 +601,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    DcGetVariableFn get_variable;");
     fprintf(file, "%s\n", "    const DcDrawApi *draw;");
     fprintf(file, "%s\n", "    const DcMouseApi *mouse;");
+    fprintf(file, "%s\n", "    const DcTextureApi *texture;");
     fprintf(file, "%s\n", "} DcInit;");
     fprintf(file, "%s\n", "");
 }

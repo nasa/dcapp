@@ -2232,14 +2232,21 @@ static void _draw_node_image(_AppData *app_data, _NodeIndex node_index, _Node *n
 
     // draw (skip if texture failed to load)
     if (node->image.texture_index != TEXTURE_INDEX_UNDEFINED) {
-        plBindGroupHandle bind_group_handle = app_data->sb_textures[node->image.texture_index].bind_group_handle;
         DcAppDrawContext ctx = dc_app_draw_context(app_data, node_index, (plVec2){0.0f, 0.0f}, (plVec2){dimension[0], dimension[1]}, &transform);
-        dc_app_draw_image_ex(&ctx, bind_group_handle.uData, (DcAppVec2){0.0f, 0.0f}, (DcAppVec2){dimension[0], dimension[1]}, (DcAppVec4){
-            .r = 1.0f,
-            .g = 1.0f,
-            .b = 1.0f,
-            .a = 1.0f,
-        }, (DcAppPlacement){0}, NULL);
+        _Texture *texture = &app_data->sb_textures[node->image.texture_index];
+        dc_app_draw_image_quad_uv(&ctx, texture->bind_group_handle.uData,
+                                  (DcAppVec2){0.0f, 0.0f},
+                                  (DcAppVec2){0.0f, dimension[1]},
+                                  (DcAppVec2){dimension[0], dimension[1]},
+                                  (DcAppVec2){dimension[0], 0.0f},
+                                  (DcAppVec2){0.0f, 0.0f},
+                                  (DcAppVec2){0.0f, 1.0f},
+                                  (DcAppVec2){1.0f, 1.0f},
+                                  (DcAppVec2){1.0f, 0.0f},
+                                  (DcAppVec2){0.0f, 0.0f},
+                                  (DcAppPlacement){0},
+                                  (DcAppVec4){1.0f, 1.0f, 1.0f, 1.0f},
+                                  NULL);
     }
 
     // mouse events

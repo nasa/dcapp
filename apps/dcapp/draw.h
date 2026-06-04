@@ -18,6 +18,8 @@
 // DrawFunction ABI mirrored in generated logic/dcapp.h
 typedef struct _DcAppDrawContext DcAppDrawContext;
 
+typedef uint32_t DcAppTextureId;
+
 typedef union _DcAppVec2 {
     struct { float x, y; };
     struct { float r, g; };
@@ -148,7 +150,7 @@ typedef struct _DcAppDrawApi {
     void (*quad_filled)(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, DcAppVec4 color);
     void (*rounded_quad)(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, float corner_radius, DcAppStroke stroke);
     void (*rounded_quad_filled)(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, float corner_radius, DcAppVec4 color);
-    void (*image)(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint);
+    void (*image)(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint);
     void (*rect)(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, DcAppStroke stroke);
     void (*rect_filled)(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, DcAppVec4 color);
     void (*rounded_rect)(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, float corner_radius, DcAppStroke stroke);
@@ -169,7 +171,7 @@ typedef struct _DcAppDrawApi {
     void (*quad_filled_ex)(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
     void (*rounded_quad_ex)(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, float corner_radius, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
     void (*rounded_quad_filled_ex)(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, float corner_radius, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
-    void (*image_ex)(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint, DcAppPlacement placement, DcAppDrawResult *result);
+    void (*image_ex)(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint, DcAppPlacement placement, DcAppDrawResult *result);
     void (*rect_ex)(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, DcAppStroke stroke, DcAppPlacement placement, DcAppDrawResult *result);
     void (*rect_filled_ex)(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, DcAppVec4 color, DcAppPlacement placement, DcAppDrawResult *result);
     void (*rounded_rect_ex)(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, float corner_radius, DcAppStroke stroke, DcAppPlacement placement, DcAppDrawResult *result);
@@ -205,6 +207,11 @@ typedef struct _DcAppMouseApi {
     bool (*clicked)(DcAppDrawContext *ctx, const char *id);
 } DcAppMouseApi;
 
+typedef struct _DcAppTextureApi {
+    DcAppTextureId (*load_image)(void *user_data, const char *path, DcAppVec2 *out_size);
+    bool (*get_size)(void *user_data, DcAppTextureId texture_id, DcAppVec2 *out_size);
+} DcAppTextureApi;
+
 typedef void *(*DcAppGetVariableFn)(void *user_data, const char *name);
 
 typedef struct _DcAppInit {
@@ -214,6 +221,7 @@ typedef struct _DcAppInit {
     DcAppGetVariableFn get_variable;
     const DcAppDrawApi *draw;
     const DcAppMouseApi *mouse;
+    const DcAppTextureApi *texture;
 } DcAppInit;
 
 typedef struct _DcAppStencilHandler {
@@ -252,8 +260,8 @@ void dc_app_draw_rounded_quad(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1,
 void dc_app_draw_rounded_quad_ex(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, float corner_radius, DcAppStroke stroke, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
 void dc_app_draw_rounded_quad_filled(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, float corner_radius, DcAppVec4 color);
 void dc_app_draw_rounded_quad_filled_ex(DcAppDrawContext *ctx, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, float corner_radius, DcAppVec4 color, DcAppVec2 position, DcAppPlacement placement, DcAppDrawResult *result);
-void dc_app_draw_image(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint);
-void dc_app_draw_image_ex(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint, DcAppPlacement placement, DcAppDrawResult *result);
+void dc_app_draw_image(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint);
+void dc_app_draw_image_ex(DcAppDrawContext *ctx, DcAppTextureId texture_id, DcAppVec2 position, DcAppVec2 size, DcAppVec4 tint, DcAppPlacement placement, DcAppDrawResult *result);
 void dc_app_draw_image_quad(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, DcAppVec2 position, DcAppPlacement placement, DcAppDrawArea *out_area);
 void dc_app_draw_image_quad_uv(DcAppDrawContext *ctx, uint32_t texture_id, DcAppVec2 p0, DcAppVec2 p1, DcAppVec2 p2, DcAppVec2 p3, DcAppVec2 uv0, DcAppVec2 uv1, DcAppVec2 uv2, DcAppVec2 uv3, DcAppVec2 position, DcAppPlacement placement, DcAppVec4 tint, DcAppDrawArea *out_area);
 void dc_app_draw_rect(DcAppDrawContext *ctx, DcAppVec2 position, DcAppVec2 size, DcAppStroke stroke);
@@ -317,5 +325,6 @@ void   dc_app_draw_planet_text(plPlanetView *view, plCamera *camera, plVec3 posi
 
 const DcAppDrawApi *dc_app_draw_api(void);
 const DcAppMouseApi *dc_app_mouse_api(void);
+const DcAppTextureApi *dc_app_texture_api(void);
 
 #endif
