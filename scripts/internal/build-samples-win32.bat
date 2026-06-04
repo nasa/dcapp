@@ -52,23 +52,25 @@
 :release
 
 :: create output directories
-@if not exist "../../samples/drawfunction3/logic" @mkdir "../../samples/drawfunction3/logic"
-
-@if not exist "../../samples/mask/logic" @mkdir "../../samples/mask/logic"
-
-@if not exist "../../samples/ptz/logic" @mkdir "../../samples/ptz/logic"
-
-@if not exist "../../samples/screensaver/logic" @mkdir "../../samples/screensaver/logic"
-
-@if not exist "../../samples/functions/logic" @mkdir "../../samples/functions/logic"
-
-@if not exist "../../samples/lissajous/logic" @mkdir "../../samples/lissajous/logic"
+@if not exist "../../samples/drawfunction4/logic" @mkdir "../../samples/drawfunction4/logic"
 
 @if not exist "../../samples/planet/logic" @mkdir "../../samples/planet/logic"
 
+@if not exist "../../samples/drawfunction1/logic" @mkdir "../../samples/drawfunction1/logic"
+
 @if not exist "../../samples/drawfunction2/logic" @mkdir "../../samples/drawfunction2/logic"
 
-@if not exist "../../samples/drawfunction1/logic" @mkdir "../../samples/drawfunction1/logic"
+@if not exist "../../samples/ptz/logic" @mkdir "../../samples/ptz/logic"
+
+@if not exist "../../samples/drawfunction3/logic" @mkdir "../../samples/drawfunction3/logic"
+
+@if not exist "../../samples/lissajous/logic" @mkdir "../../samples/lissajous/logic"
+
+@if not exist "../../samples/mask/logic" @mkdir "../../samples/mask/logic"
+
+@if not exist "../../samples/functions/logic" @mkdir "../../samples/functions/logic"
+
+@if not exist "../../samples/screensaver/logic" @mkdir "../../samples/screensaver/logic"
 
 :: create lock file(s)
 @echo LOCKING > "../../samples/screensaver/logic/lock.tmp"
@@ -79,6 +81,8 @@
 @if exist "../../samples/drawfunction2/logic/logic_*.pdb" del "..\..\samples\drawfunction2\logic\logic_*.pdb"
 @if exist "../../samples/drawfunction3/logic/logic.dll" del "..\..\samples\drawfunction3\logic\logic.dll"
 @if exist "../../samples/drawfunction3/logic/logic_*.pdb" del "..\..\samples\drawfunction3\logic\logic_*.pdb"
+@if exist "../../samples/drawfunction4/logic/logic.dll" del "..\..\samples\drawfunction4\logic\logic.dll"
+@if exist "../../samples/drawfunction4/logic/logic_*.pdb" del "..\..\samples\drawfunction4\logic\logic_*.pdb"
 @if exist "../../samples/functions/logic/logic.dll" del "..\..\samples\functions\logic\logic.dll"
 @if exist "../../samples/functions/logic/logic_*.pdb" del "..\..\samples\functions\logic\logic_*.pdb"
 @if exist "../../samples/lissajous/logic/logic.dll" del "..\..\samples\lissajous\logic\logic.dll"
@@ -190,6 +194,39 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/drawfunction3/logic/logic.
 :Exit_drawfunction3
 
 @del "..\..\samples\drawfunction3\logic\*.obj"  > nul 2> nul
+
+::~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction4 | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"../../pilotlight/out/dcapp-genheader.exe" ../../samples/drawfunction4/drawfunction4.xml || exit /b 1
+
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -O2 -MD -DNDEBUG
+@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
+@set PL_SOURCES="../../samples/drawfunction4/logic/logic.c"
+
+:: run compiler (and linker)
+@echo.
+@echo [1m[93mStep: drawfunction4[0m
+@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
+@echo [1m[36mCompiling and Linking...[0m
+cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/drawfunction4/logic/logic.dll" -Fo"../../samples/drawfunction4/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/drawfunction4/logic/logic_%random%.pdb"
+
+:: check build status
+@set PL_BUILD_STATUS=%ERRORLEVEL%
+
+:: failed
+@if %PL_BUILD_STATUS% NEQ 0 (
+    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
+    @set PL_RESULT=[1m[91mFailed.[0m
+    goto Cleanuprelease
+)
+
+:: print results
+@echo [36mResult: [0m %PL_RESULT%
+@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+:Exit_drawfunction4
+
+@del "..\..\samples\drawfunction4\logic\*.obj"  > nul 2> nul
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ functions | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -394,15 +431,16 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/screensaver/logic/logic.dl
 @echo [1m[36mCleaning...[0m
 
 :: delete obj files(s)
-@del "..\..\samples\drawfunction3\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\mask\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\ptz\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\screensaver\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\functions\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\lissajous\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\drawfunction4\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\planet\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\drawfunction2\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\drawfunction1\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\drawfunction2\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\ptz\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\drawfunction3\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\lissajous\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\mask\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\functions\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\screensaver\logic\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
 @if exist "../../samples/screensaver/logic/lock.tmp" del "..\..\samples\screensaver\logic\lock.tmp"
@@ -418,23 +456,25 @@ goto ExitLabel
 :debug
 
 :: create output directories
-@if not exist "../../samples/drawfunction3/logic" @mkdir "../../samples/drawfunction3/logic"
-
-@if not exist "../../samples/mask/logic" @mkdir "../../samples/mask/logic"
-
-@if not exist "../../samples/ptz/logic" @mkdir "../../samples/ptz/logic"
-
-@if not exist "../../samples/screensaver/logic" @mkdir "../../samples/screensaver/logic"
-
-@if not exist "../../samples/functions/logic" @mkdir "../../samples/functions/logic"
-
-@if not exist "../../samples/lissajous/logic" @mkdir "../../samples/lissajous/logic"
+@if not exist "../../samples/drawfunction4/logic" @mkdir "../../samples/drawfunction4/logic"
 
 @if not exist "../../samples/planet/logic" @mkdir "../../samples/planet/logic"
 
+@if not exist "../../samples/drawfunction1/logic" @mkdir "../../samples/drawfunction1/logic"
+
 @if not exist "../../samples/drawfunction2/logic" @mkdir "../../samples/drawfunction2/logic"
 
-@if not exist "../../samples/drawfunction1/logic" @mkdir "../../samples/drawfunction1/logic"
+@if not exist "../../samples/ptz/logic" @mkdir "../../samples/ptz/logic"
+
+@if not exist "../../samples/drawfunction3/logic" @mkdir "../../samples/drawfunction3/logic"
+
+@if not exist "../../samples/lissajous/logic" @mkdir "../../samples/lissajous/logic"
+
+@if not exist "../../samples/mask/logic" @mkdir "../../samples/mask/logic"
+
+@if not exist "../../samples/functions/logic" @mkdir "../../samples/functions/logic"
+
+@if not exist "../../samples/screensaver/logic" @mkdir "../../samples/screensaver/logic"
 
 :: create lock file(s)
 @echo LOCKING > "../../samples/screensaver/logic/lock.tmp"
@@ -445,6 +485,8 @@ goto ExitLabel
 @if exist "../../samples/drawfunction2/logic/logic_*.pdb" del "..\..\samples\drawfunction2\logic\logic_*.pdb"
 @if exist "../../samples/drawfunction3/logic/logic.dll" del "..\..\samples\drawfunction3\logic\logic.dll"
 @if exist "../../samples/drawfunction3/logic/logic_*.pdb" del "..\..\samples\drawfunction3\logic\logic_*.pdb"
+@if exist "../../samples/drawfunction4/logic/logic.dll" del "..\..\samples\drawfunction4\logic\logic.dll"
+@if exist "../../samples/drawfunction4/logic/logic_*.pdb" del "..\..\samples\drawfunction4\logic\logic_*.pdb"
 @if exist "../../samples/functions/logic/logic.dll" del "..\..\samples\functions\logic\logic.dll"
 @if exist "../../samples/functions/logic/logic_*.pdb" del "..\..\samples\functions\logic\logic_*.pdb"
 @if exist "../../samples/lissajous/logic/logic.dll" del "..\..\samples\lissajous\logic\logic.dll"
@@ -556,6 +598,39 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/drawfunction3/logic/logic.
 :Exit_drawfunction3
 
 @del "..\..\samples\drawfunction3\logic\*.obj"  > nul 2> nul
+
+::~~~~~~~~~~~~~~~~~~~~~~~~~~~~ drawfunction4 | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"../../pilotlight/out/dcapp-genheader.exe" ../../samples/drawfunction4/drawfunction4.xml || exit /b 1
+
+@set PL_COMPILER_FLAGS=-Zc:preprocessor -nologo -W4 -WX -wd4201 -wd4100 -wd4996 -wd4505 -wd4189 -wd5105 -wd4115 -Od -MDd -Zi
+@set PL_LINKER_FLAGS=-noexp -nologo -noimplib -incremental:no -EXPORT:display_pre_init -EXPORT:display_init -EXPORT:display_draw -EXPORT:display_close
+@set PL_SOURCES="../../samples/drawfunction4/logic/logic.c"
+
+:: run compiler (and linker)
+@echo.
+@echo [1m[93mStep: drawfunction4[0m
+@echo [1m[93m~~~~~~~~~~~~~~~~~~~~~~[0m
+@echo [1m[36mCompiling and Linking...[0m
+cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/drawfunction4/logic/logic.dll" -Fo"../../samples/drawfunction4/logic/" -LD -link %PL_LINKER_FLAGS% -PDB:"../../samples/drawfunction4/logic/logic_%random%.pdb"
+
+:: check build status
+@set PL_BUILD_STATUS=%ERRORLEVEL%
+
+:: failed
+@if %PL_BUILD_STATUS% NEQ 0 (
+    @echo [1m[91mCompilation Failed with error code[0m: %PL_BUILD_STATUS%
+    @set PL_RESULT=[1m[91mFailed.[0m
+    goto Cleanupdebug
+)
+
+:: print results
+@echo [36mResult: [0m %PL_RESULT%
+@echo [36m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+:Exit_drawfunction4
+
+@del "..\..\samples\drawfunction4\logic\*.obj"  > nul 2> nul
 
 ::~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ functions | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -760,15 +835,16 @@ cl %PL_COMPILER_FLAGS% %PL_SOURCES% -Fe"../../samples/screensaver/logic/logic.dl
 @echo [1m[36mCleaning...[0m
 
 :: delete obj files(s)
-@del "..\..\samples\drawfunction3\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\mask\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\ptz\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\screensaver\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\functions\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\lissajous\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\drawfunction4\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\planet\logic\*.obj"  > nul 2> nul
-@del "..\..\samples\drawfunction2\logic\*.obj"  > nul 2> nul
 @del "..\..\samples\drawfunction1\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\drawfunction2\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\ptz\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\drawfunction3\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\lissajous\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\mask\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\functions\logic\*.obj"  > nul 2> nul
+@del "..\..\samples\screensaver\logic\*.obj"  > nul 2> nul
 
 :: delete lock file(s)
 @if exist "../../samples/screensaver/logic/lock.tmp" del "..\..\samples\screensaver\logic\lock.tmp"

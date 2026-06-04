@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<DCAPP>
+    <!--
+        DrawFunction 4 demonstrates the full-logic pattern:
+        XML creates only the shell, and one C function owns the full panel.
+    -->
+    <Logic File="logic/logic.so"/>
+
+    <Window Title="DrawFunction 4 - Full Logic Panel" X="60" Y="60" Width="1000" Height="700" VirtualWidth="900" VirtualHeight="600" FrameRateLimit="60">
+        <Panel VirtualWidth="900" VirtualHeight="600">
+            <DrawFunction Name="draw_procedural"/>
+        </Panel>
+    </Window>
+</DCAPP>

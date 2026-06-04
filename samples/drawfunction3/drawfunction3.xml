@@ -1,14 +1,40 @@
 <?xml version="1.0"?>
 <DCAPP>
     <!--
-        This sample demonstrates the opposite pattern from drawfunction1:
-        XML creates only the shell, and one C function owns the full panel.
+        DrawFunction 3 demonstrates the hybrid pattern at a larger scale:
+        XML owns the stable controls, while C owns the procedural starfield.
     -->
+    <Variable Type="#_variable_integer_" InitialValue="72">StarCount</Variable>
+
     <Logic File="logic/logic.so"/>
 
-    <Window Title="DrawFunction 3 - Procedural Demo" X="60" Y="60" Width="1000" Height="700" VirtualWidth="900" VirtualHeight="600" FrameRateLimit="60">
-        <Panel VirtualWidth="900" VirtualHeight="600">
+    <Window Title="DrawFunction 3 - Procedural Starfield" X="60" Y="60" Width="1000" Height="700" VirtualWidth="900" VirtualHeight="600" FrameRateLimit="60">
+        <Panel VirtualWidth="900" VirtualHeight="600" BackgroundColor="0.035 0.042 0.052 1">
             <DrawFunction Name="draw_procedural"/>
+
+            <Rectangle X="0" Y="0" Width="900" Height="92" FillColor="0.050 0.060 0.074 0.96" LineColor="0.18 0.24 0.30" LineWidth="1"/>
+            <Text X="34" Y="58" Size="18" FillColor="0.90 0.96 1 1">DrawFunction 3: Procedural Starfield</Text>
+            <Text X="34" Y="34" Size="10" FillColor="0.56 0.67 0.76 1">XML controls the count; C creates, moves, wraps, and draws the stars.</Text>
+
+            <Rectangle X="610" Y="26" Width="54" Height="42" Rounded="8" FillColor="0.12 0.16 0.20" LineColor="0.34 0.46 0.56" LineWidth="1">
+                <MousePressed>
+                    <Set Variable="StarCount" Operator="#_set_subtract_">8</Set>
+                    <Set Variable="StarCount" Operator="#_set_max_">8</Set>
+                </MousePressed>
+            </Rectangle>
+            <Text X="637" Y="47" Size="28" FillColor="0.74 0.88 1 1" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">-</Text>
+
+            <Rectangle X="690" Y="26" Width="112" Height="42" Rounded="8" FillColor="0.075 0.090 0.110" LineColor="0.24 0.32 0.40" LineWidth="1"/>
+            <Text X="746" Y="55" Size="10" FillColor="0.56 0.67 0.76 1" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">STARS</Text>
+            <Text X="746" Y="38" Size="18" FillColor="0.95 0.98 1 1" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">@StarCount</Text>
+
+            <Rectangle X="828" Y="26" Width="54" Height="42" Rounded="8" FillColor="0.12 0.16 0.20" LineColor="0.34 0.46 0.56" LineWidth="1">
+                <MousePressed>
+                    <Set Variable="StarCount" Operator="#_set_add_">8</Set>
+                    <Set Variable="StarCount" Operator="#_set_min_">180</Set>
+                </MousePressed>
+            </Rectangle>
+            <Text X="855" Y="47" Size="26" FillColor="0.74 0.88 1 1" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">+</Text>
         </Panel>
     </Window>
 </DCAPP>

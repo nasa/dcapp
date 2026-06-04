@@ -5,6 +5,67 @@ All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
 
+[2.149.0] - 2026-06-04
+--------------------
+
+### Fixed
+- Changed `drawfunction3` stars from capped streaks to dots with occasional cross-sparkles for cleaner sample visuals.
+
+
+[2.148.0] - 2026-06-04
+--------------------
+
+### Changed
+- Replaced the `drawfunction3` bubble demo with a simpler procedural starfield controlled by XML `+` / `-` buttons.
+- Updated the `drawfunction3` sample documentation for the starfield behavior.
+
+
+[2.147.0] - 2026-06-04
+--------------------
+
+### Changed
+- Simplified the `drawfunction3` bubble collision code to use equal separation and a velocity swap along the contact normal.
+
+
+[2.146.0] - 2026-06-04
+--------------------
+
+### Changed
+- Simplified the `drawfunction3` bubble demo visuals by removing the click ripple, animated background lines, and pulse effect while keeping the mouse push behavior.
+
+
+[2.145.0] - 2026-06-04
+--------------------
+
+### Fixed
+- Aligned the `drawfunction3` bubble-count controls and centered the C-rendered annotation text inside its translucent backdrop.
+
+
+[2.144.0] - 2026-06-04
+--------------------
+
+### Added
+- Added new sample: `drawfunction4`.
+- Moved the original full-logic procedural panel demo into `drawfunction4` as the example where one C DrawFunction owns the entire panel.
+- Updated sample documentation for `drawfunction4`.
+
+
+[2.143.0] - 2026-06-04
+--------------------
+
+### Changed
+- Reworked the `drawfunction3` sample into a hybrid XML/C bubble simulation.
+- XML now owns the bubble-count controls while C generates, simulates, collides, and draws the runtime bubble field.
+- Updated the samples documentation for the new `drawfunction3` behavior.
+
+
+[2.142.0] - 2026-06-04
+--------------------
+
+### Removed
+- Removed the ellipse-specific cells from the `drawfunction2` sample to keep the reference grid at 36 examples.
+
+
 [2.141.0] - 2026-06-04
 --------------------
 
