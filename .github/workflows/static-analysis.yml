@@ -37,7 +37,7 @@ jobs:
             echo "=== Checking $f ==="
             OUTPUT=$(clang-tidy --quiet "$f" -- $INCLUDES 2>&1 | \
               grep "warning:" | \
-              grep -v "pilotlight/\|dependencies/" || true)
+              grep -v "pilotlight/\|thirdparty/" || true)
             if [ -n "$OUTPUT" ]; then
               echo "$OUTPUT"
               FAIL=1

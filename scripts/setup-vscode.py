@@ -22,7 +22,7 @@ common_includes = [
     "pilotlight/libs",
     "pilotlight/extensions",
     "pilotlight/shaders",
-    "pilotlight/dependencies/stb",
+    "pilotlight/thirdparty/stb",
 ]
 
 # platform-specific include paths

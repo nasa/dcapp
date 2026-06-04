@@ -1877,7 +1877,6 @@ static _NodeIndex _process_xml_node_image(_AppData *app_data, xmlNodePtr xml_nod
 
             // set the initial pl_texture usage (this is a no-op in metal but does layout transition for vulkan)
             plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
-            _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
 
             // copy memory to mapped staging buffer
             plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
@@ -2748,7 +2747,6 @@ static _NodeIndex _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr x
                 _Texture texture = dc_app_texture_create(app_data, image_width, image_height, canon_filepath, false);
 
                 plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
-                _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
 
                 plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
                 memcpy(staging_buffer->tMemoryAllocation.pHostMapped, image_data, image_width * image_height * 4);
@@ -3353,7 +3351,6 @@ static _NodeIndex _process_xml_node_sphere(_AppData *app_data, xmlNodePtr xml_no
             _Texture texture = dc_app_texture_create(app_data, image_width, image_height, canon_filepath, false);
 
             plBlitEncoder *encoder = _ext_starter->get_blit_encoder();
-            _ext_gfx->set_texture_usage(encoder, texture.texture_handle, PL_TEXTURE_USAGE_SAMPLED, 0);
 
             plBuffer *staging_buffer = _ext_gfx->get_buffer(device, app_data->pl_staging_buffer_handle);
             memcpy(staging_buffer->tMemoryAllocation.pHostMapped, image_data, image_width * image_height * 4);
