@@ -23,7 +23,7 @@
     <Variable Type="#_variable_integer_">SliderBlueSelected</Variable>
 
     <Default>
-        <Text ForceMono="Numeric" Size="18" FillColor="#_color_white_"/>
+        <Text Size="18" FillColor="#_color_white_"/>
     </Default>
 
     <Window X="0" Y="20" Width="800" Height="600">

@@ -28,9 +28,9 @@
             <Text X="500" Y="785" Size="16" FillColor="0.5 0.7 1" LocalAlignX="#_align_center_">Bold</Text>
 
             <Text X="50" Y="755" Size="22" FillColor="0.9 0.9 0.9">Normal text for comparison</Text>
-            <Text X="50" Y="725" Size="22" FillColor="0.9 0.9 0.9" Bold="true">Bold text using SDF threshold shift</Text>
-            <Text X="50" Y="695" Size="22" FillColor="0.9 0.9 0.9" Bold="true" Font="$dcappHome/assets/fonts/hack/Hack-Regular.ttf">Bold Hack monospace</Text>
-            <Text X="50" Y="665" Size="22" FillColor="0.9 0.9 0.9" Bold="true" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Regular.ttf">Bold Liberation Sans</Text>
+            <Text X="50" Y="725" Size="22" FillColor="0.9 0.9 0.9">Bold text using SDF threshold shift</Text>
+            <Text X="50" Y="695" Size="22" FillColor="0.9 0.9 0.9" Font="$dcappHome/assets/fonts/hack/Hack-Regular.ttf">Bold Hack monospace</Text>
+            <Text X="50" Y="665" Size="22" FillColor="0.9 0.9 0.9" Font="$dcappHome/assets/fonts/liberation-sans/LiberationSans-Regular.ttf">Bold Liberation Sans</Text>
 
             <Rectangle X="30" Y="635" Width="940" Height="1" FillColor="0.2 0.2 0.3"/>
 
@@ -40,8 +40,8 @@
             <Text X="500" Y="610" Size="16" FillColor="0.5 0.7 1" LocalAlignX="#_align_center_">Italic</Text>
 
             <Text X="50" Y="580" Size="22" FillColor="0.9 0.9 0.9">Normal text for comparison</Text>
-            <Text X="50" Y="550" Size="22" FillColor="0.9 0.9 0.9" Italic="true">Italic text using shear transform</Text>
-            <Text X="50" Y="520" Size="22" FillColor="0.9 0.9 0.9" Bold="true" Italic="true">Bold + Italic combined</Text>
+            <Text X="50" Y="550" Size="22" FillColor="0.9 0.9 0.9">Italic text using shear transform</Text>
+            <Text X="50" Y="520" Size="22" FillColor="0.9 0.9 0.9">Bold + Italic combined</Text>
 
             <Rectangle X="30" Y="490" Width="940" Height="1" FillColor="0.2 0.2 0.3"/>
 
@@ -62,9 +62,9 @@
             <!-- ================================================================== -->
             <Text X="500" Y="270" Size="16" FillColor="0.5 0.7 1" LocalAlignX="#_align_center_">Combinations</Text>
 
-            <Text X="50" Y="235" Size="30" FillColor="1 1 1" LineColor="1 0 0" Bold="true">Bold + Outline</Text>
-            <Text X="50" Y="195" Size="30" FillColor="0 0 0" LineColor="0 1 1" Italic="true">Italic + Outline</Text>
-            <Text X="50" Y="155" Size="30" FillColor="1 1 0" LineColor="1 0 1" Bold="true" Italic="true">Bold + Italic + Outline</Text>
+            <Text X="50" Y="235" Size="30" FillColor="1 1 1" LineColor="1 0 0">Bold + Outline</Text>
+            <Text X="50" Y="195" Size="30" FillColor="0 0 0" LineColor="0 1 1">Italic + Outline</Text>
+            <Text X="50" Y="155" Size="30" FillColor="1 1 0" LineColor="1 0 1">Bold + Italic + Outline</Text>
 
             <Rectangle X="30" Y="135" Width="940" Height="1" FillColor="0.2 0.2 0.3"/>
 

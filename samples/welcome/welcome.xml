@@ -377,7 +377,7 @@
                 <Rectangle X="15" Y="175" Width="4" Height="20" FillColor="#AccentCyan"/>
 
                 <!-- Animated elements -->
-                <Arc X="70" Y="100" Radius="35" Angle="@PulseAngle" Rotation="0" FillColor="#AccentCyan" Pie="true"/>
+                <Arc X="70" Y="100" Radius="35" Angle="@PulseAngle" Rotation="0" LineColor="#AccentCyan" LineWidth="4"/>
                 <Ellipse X="70" Y="100" Radius="20" FillColor="#BgMedium"/>
 
                 <Rectangle X="130" Y="60" Width="60" Height="60" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"

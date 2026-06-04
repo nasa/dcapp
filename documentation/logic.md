@@ -823,13 +823,20 @@ No parameters, no return value.
 
 <Logic File="logic/logic.so"/>
 
+<Variable Type="#_variable_integer_" InitialValue="0">buttonState</Variable>
+<Variable Type="#_variable_integer_" InitialValue="0">buttonTrigger</Variable>
+
+<Function Name="on_button_click" FireCall="@buttonTrigger"/>
+
 <Window Title="Function Demo" Width="400" Height="300">
     <Button X="100" Y="100" Width="100" Height="50"
             Variable="buttonState" On="1" Off="0" Type="#_button_momentary_">
+        <MousePressed>
+            <Set Variable="buttonTrigger" Operator="#_set_add_">1</Set>
+        </MousePressed>
         <ButtonIndicatorOn>
             <Rectangle FillColor="0.2,0.6,0.2,1" Width="100" Height="50"/>
             <Text X="50" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">Clicked!</Text>
-            <Function Name="on_button_click"/>
         </ButtonIndicatorOn>
         <ButtonIndicatorOff>
             <Rectangle FillColor="0.3,0.3,0.3,1" Width="100" Height="50"/>

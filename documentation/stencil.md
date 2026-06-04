@@ -232,4 +232,4 @@ See [migration.md](migration.md) for full details on legacy XML conversion.
 
 ## See Also
 
-- [samples.md](samples.md) -- Full list of sample projects (`samples/stencil/`, `samples/mask/`).
+- [samples.md](samples.md) -- Full list of sample projects (`samples/stencil/`).

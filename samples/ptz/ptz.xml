@@ -77,7 +77,10 @@
                 <Text Style="Button">Zoom\nIn</Text>
             </Button>
             <Button Type="#_button_momentary_" X="83">
-                <MousePressed><Set Variable="ZOOM" Operator="#_set_subtract_" MinimumValue="0.05">.05</Set></MousePressed>
+                <MousePressed>
+                    <Set Variable="ZOOM" Operator="#_set_subtract_">.05</Set>
+                    <Set Variable="ZOOM" Operator="#_set_max_">0.05</Set>
+                </MousePressed>
                 <ButtonIndicatorOn><Image File="../../assets/button-on.png"/></ButtonIndicatorOn>
                 <ButtonIndicatorOff><Image File="../../assets/button-off.png"/></ButtonIndicatorOff>
                 <Text Style="Button">Zoom\nOut</Text>

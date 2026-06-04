@@ -78,11 +78,11 @@
                 <Text X="150" Y="155" LocalAlignX="#_align_center_" Size="14" FillColor="0.4 0.8 1">Arc</Text>
 
                 <!-- Static arc (270 degree span, rotated 45 degrees) -->
-                <Arc X="75" Y="80" Radius="40" Angle="270" Rotation="45" FillColor="0.8 0.4 0.6" Pie="true"/>
+                <Arc X="75" Y="80" Radius="40" Angle="270" Rotation="45" LineColor="0.8 0.4 0.6" LineWidth="4"/>
                 <Text X="75" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Static</Text>
 
                 <!-- Animated arc (dynamic angle sweep) -->
-                <Arc X="225" Y="80" Radius="40" Angle="@ANGLE" Rotation="0" FillColor="0.4 0.8 0.6" LineColor="0.6 1 0.8" LineWidth="2" Pie="true"/>
+                <Arc X="225" Y="80" Radius="40" Angle="@ANGLE" Rotation="0" LineColor="0.6 1 0.8" LineWidth="4"/>
                 <Text X="225" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Animated</Text>
             </Container>
 

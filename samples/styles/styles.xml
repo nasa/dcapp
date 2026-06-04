@@ -29,11 +29,27 @@
             <Ellipse FillColor="0.2 0.8 0.3"/>
         </Style>
 
+        <Style Name="GreenBox">
+            <Rectangle FillColor="0.15 0.3 0.15"/>
+        </Style>
+
+        <Style Name="RedBox">
+            <Rectangle FillColor="0.3 0.15 0.15"/>
+        </Style>
+
+        <Style Name="GreenText">
+            <Text Size="10" FillColor="0.5 1 0.5"/>
+        </Style>
+
+        <Style Name="RedText">
+            <Text Size="10" FillColor="1 0.5 0.5"/>
+        </Style>
+
         <!-- Constants -->
         <Constant Name="PrimaryColor">0.2 0.5 0.8</Constant>
         <Constant Name="DangerColor">0.8 0.2 0.2</Constant>
 
-        <Panel VirtualWidth="900" VirtualHeight="700">
+        <Panel VirtualWidth="900" VirtualHeight="700" BackgroundColor="0.08 0.08 0.1">
             <!-- Background -->
             <Rectangle Width="900" Height="700" FillColor="0.08 0.08 0.1"/>
 
@@ -82,28 +98,20 @@
                 </Container>
             </Container>
 
-            <!-- Section 5: Scoped Defaults -->
-            <Text X="450" Y="350" LocalAlignX="#_align_center_" Style="Heading">Scoped Defaults</Text>
+            <!-- Section 5: Style Variants -->
+            <Text X="450" Y="350" LocalAlignX="#_align_center_" Style="Heading">Style Variants</Text>
 
             <Container X="325" Y="180" Width="250" Height="140">
                 <Rectangle Style="Card" Width="250" Height="140"/>
 
                 <Container X="20" Y="20" Width="100" Height="90">
-                    <Default>
-                        <Text Size="10" FillColor="0.5 1 0.5"/>
-                        <Rectangle FillColor="0.15 0.3 0.15"/>
-                    </Default>
-                    <Rectangle Width="100" Height="90"/>
-                    <Text X="50" Y="60" LocalAlignX="#_align_center_">Green</Text>
+                    <Rectangle Style="GreenBox" Width="100" Height="90"/>
+                    <Text X="50" Y="60" LocalAlignX="#_align_center_" Style="GreenText">Green</Text>
                 </Container>
 
                 <Container X="130" Y="20" Width="100" Height="90">
-                    <Default>
-                        <Text Size="10" FillColor="1 0.5 0.5"/>
-                        <Rectangle FillColor="0.3 0.15 0.15"/>
-                    </Default>
-                    <Rectangle Width="100" Height="90"/>
-                    <Text X="50" Y="60" LocalAlignX="#_align_center_">Red</Text>
+                    <Rectangle Style="RedBox" Width="100" Height="90"/>
+                    <Text X="50" Y="60" LocalAlignX="#_align_center_" Style="RedText">Red</Text>
                 </Container>
             </Container>
 

@@ -3,7 +3,7 @@
     <Variable Type="#_variable_double_" InitialValue="0">ROTATION</Variable>
 
     <Window Title="Include Files Demo" X="30" Y="30" Width="900" Height="700">
-        <Panel VirtualWidth="900" VirtualHeight="700">
+        <Panel VirtualWidth="900" VirtualHeight="700" BackgroundColor="0.08 0.08 0.1">
             <!-- Background -->
             <Rectangle Width="900" Height="700" FillColor="0.08 0.08 0.1"/>
 
@@ -35,7 +35,7 @@
 
             <Container X="475" Y="400" Width="400" Height="170">
                 <Rectangle Width="400" Height="170" FillColor="0.12 0.12 0.15" LineColor="0.25 0.25 0.3" LineWidth="1"/>
-                <Text X="200" Y="150" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.6 0.6">Uses #ConstantName syntax</Text>
+                <Text X="200" Y="150" LocalAlignX="#_align_center_" Size="10" FillColor="0.6 0.6 0.6">Uses named constants in included files</Text>
 
                 <Constant Name="BoxColor">0.8 0.3 0.3</Constant>
                 <Constant Name="BoxX">50</Constant>
@@ -83,7 +83,7 @@
                 <Text X="20" Y="45" Size="9" FillColor="0.6 0.6 0.6">&lt;Constant Name="Param"&gt;value&lt;/Constant&gt;</Text>
                 <Text X="20" Y="30" Size="9" FillColor="0.6 0.6 0.6">&lt;Include&gt;component.xml&lt;/Include&gt;</Text>
 
-                <Text X="20" Y="10" Size="9" FillColor="0.5 0.5 0.5">Use #ConstantName to reference constants in included files</Text>
+                <Text X="20" Y="10" Size="9" FillColor="0.5 0.5 0.5">Use hash-prefixed names to reference constants in included files</Text>
             </Container>
 
             <!-- ========== Bottom Info ========== -->

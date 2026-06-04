@@ -5,6 +5,18 @@ All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
 
+[2.150.0] - 2026-06-04
+--------------------
+
+### Changed
+- Reduced the public sample set by removing obsolete benchmark/stress fixtures and keeping `bad-sample` as a validation-only sample.
+- Removed thin or overlapping samples now covered by stronger XML, stencil, DrawFunction, or documentation examples.
+- Reworked `lissajous` into a compact DrawFunction sample instead of generated XML variables.
+- Made sample Panel backgrounds explicit so they do not depend on the renderer clear color.
+- Reorganized the sample documentation around core XML, C logic, advanced/integration, and showcase samples.
+- Removed the standalone `functions` sample after validating that the current Function element is better documented than demonstrated as a public sample.
+
+
 [2.149.0] - 2026-06-04
 --------------------
 

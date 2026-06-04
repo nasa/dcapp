@@ -59,7 +59,7 @@
     </Planet>
 
     <Default>
-        <Text ForceMono="Numeric" Size="14" FillColor="#_color_white_"/>
+        <Text Size="14" FillColor="#_color_white_"/>
     </Default>
 
     <Window X="0" Y="20" Width="1000" Height="840">

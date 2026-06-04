@@ -7,7 +7,7 @@
             <Text Size="12" FillColor="1 1 1"/>
         </Default>
 
-        <Panel VirtualWidth="1000" VirtualHeight="800">
+        <Panel VirtualWidth="1000" VirtualHeight="800" BackgroundColor="0.08 0.08 0.1">
             <!-- Background -->
             <Rectangle Width="1000" Height="800" FillColor="0.08 0.08 0.1"/>
 
@@ -77,15 +77,15 @@
                     <Text X="30" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="8" FillColor="1 1 1">Rot 15</Text>
                 </Container>
 
-                <!-- Scaled container -->
-                <Container X="180" Y="85" Width="60" Height="40" ScaleX="1.3" ScaleY="0.8"
+                <!-- Different sized container -->
+                <Container X="180" Y="85" Width="78" Height="32"
                     LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
-                    <Rectangle Width="60" Height="40" FillColor="0.3 0.5 0.8"/>
-                    <Text X="30" Y="20" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="8" FillColor="1 1 1">Scale</Text>
+                    <Rectangle Width="78" Height="32" FillColor="0.3 0.5 0.8"/>
+                    <Text X="39" Y="16" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="8" FillColor="1 1 1">Sized</Text>
                 </Container>
 
                 <Text X="70" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Rotation</Text>
-                <Text X="180" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Scale</Text>
+                <Text X="180" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.6 0.6 0.6">Size</Text>
             </Container>
 
             <!-- ========== SECTION 4: Coordinate Systems ========== -->
@@ -133,19 +133,17 @@
                 <!-- Panel with different virtual size (scaled down to fit) -->
                 <Text X="175" Y="165" LocalAlignX="#_align_center_" Size="10" FillColor="0.7 0.7 0.7">Container: 300x140, VirtualWidth/Height: 600x280</Text>
 
-                <Container X="25" Y="10" Width="300" Height="140">
-                    <Panel VirtualWidth="600" VirtualHeight="280">
-                        <!-- Background -->
-                        <Rectangle Width="600" Height="280" FillColor="0.1 0.15 0.2"/>
-                        <!-- These coordinates are in virtual space (600x280) -->
-                        <Rectangle X="50" Y="50" Width="200" Height="100" FillColor="0.8 0.3 0.3"/>
-                        <Text X="150" Y="100" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="20" FillColor="1 1 1">200x100</Text>
+                <Container X="25" Y="10" Width="300" Height="140" VirtualWidth="600" VirtualHeight="280">
+                    <!-- Background -->
+                    <Rectangle Width="600" Height="280" FillColor="0.1 0.15 0.2"/>
+                    <!-- These coordinates are in virtual space (600x280) -->
+                    <Rectangle X="50" Y="50" Width="200" Height="100" FillColor="0.8 0.3 0.3"/>
+                    <Text X="150" Y="100" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="20" FillColor="1 1 1">200x100</Text>
 
-                        <Rectangle X="350" Y="130" Width="200" Height="100" FillColor="0.3 0.8 0.3"/>
-                        <Text X="450" Y="180" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="20" FillColor="1 1 1">200x100</Text>
+                    <Rectangle X="350" Y="130" Width="200" Height="100" FillColor="0.3 0.8 0.3"/>
+                    <Text X="450" Y="180" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="20" FillColor="1 1 1">200x100</Text>
 
-                        <Text X="300" Y="260" LocalAlignX="#_align_center_" Size="16" FillColor="0.6 0.8 1">Virtual: 600x280</Text>
-                    </Panel>
+                    <Text X="300" Y="260" LocalAlignX="#_align_center_" Size="16" FillColor="0.6 0.8 1">Virtual: 600x280</Text>
                 </Container>
             </Container>
 

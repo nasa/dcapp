@@ -190,7 +190,7 @@
                 <!-- Progress bar -->
                 <Rectangle X="25" Y="45" Width="200" Height="15" FillColor="0.15 0.15 0.18" LineColor="0.3 0.3 0.35" LineWidth="1"/>
                 <If Value1="@SLIDER_VALUE" Operator="#_if_gt_" Value2="0">
-                    <Rectangle X="25" Y="45" Width="@SLIDER_VALUE" Height="15" FillColor="0.3 0.6 0.8" ScaleX="2"/>
+                    <Rectangle X="25" Y="45" Width="@SLIDER_VALUE" Height="15" FillColor="0.3 0.6 0.8"/>
                 </If>
 
                 <Text X="125" Y="25" LocalAlignX="#_align_center_" Size="9" FillColor="0.5 0.5 0.5">Range: 0 - 100</Text>

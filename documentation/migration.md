@@ -778,7 +778,7 @@ The following elements ARE now implemented (removed from this list):
 | Element | Notes |
 |---------|-------|
 | `<Function>` | Calling C functions from XML |
-| `<Mask>`/`<Stencil>` | Stencil masking (see samples/stencil, samples/mask) |
+| `<Mask>`/`<Stencil>` | Stencil masking (see samples/stencil) |
 | `<Blink>` | Blinking/flashing elements (see samples/blink) |
 | `<MouseMotion>` | Mouse drag tracking |
 

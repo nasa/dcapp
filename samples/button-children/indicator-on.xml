@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<Dummy>
-    <Ellipse X="380" Y="240" Radius="15" FillColor="0.2 0.8 0.2" LineColor="0.4 1 0.4" LineWidth="2"/>
-    <Text X="380" Y="240" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_" Size="10" FillColor="1 1 1">ON</Text>
-</Dummy>
