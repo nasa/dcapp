@@ -627,7 +627,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                             mytex->setMapImagePoint(get_element_data(subsubnode, "File"), 
                                 get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"),
                                 get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"),
-                                get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "EnableScaling"));
+                                get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "EnableScaling"),
+                                get_element_data(subsubnode, "Yaw"));
                         }
                         else if (NodeCheck(subsubnode, "MapString"))
                         {
@@ -661,7 +662,8 @@ static int process_elements(dcParent *myparent, xmlNodePtr startnode)
                             mytex->setMapImagePoint(get_element_data(subsubnode, "File"), 
                                 get_element_data(subsubnode, "Longitude"), get_element_data(subsubnode, "Latitude"),
                                 get_element_data(subsubnode, "Enabled"), get_element_data(subsubnode, "Width"),
-                                get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "EnableScaling"));
+                                get_element_data(subsubnode, "Height"), get_element_data(subsubnode, "EnableScaling"),
+                                get_element_data(subsubnode, "Yaw"));
                         }
                         else if (NodeCheck(subsubnode, "MapString"))
                         {

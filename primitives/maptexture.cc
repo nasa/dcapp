@@ -86,7 +86,7 @@ void dcMapTexture::setGhostTrail(const std::string &filename, const std::string 
 }
 
 void dcMapTexture::setMapImagePoint(const std::string &filename, const std::string &lon, const std::string &lat, 
-    const std::string &enable, const std::string &w, const std::string &h, const std::string &enableScaling)
+    const std::string &enable, const std::string &w, const std::string &h, const std::string &enableScaling, const std::string &yaw)
 {
     mapImagePoint mip;
     if (!filename.empty() && !lon.empty() && !lat.empty() && !w.empty() && !h.empty()) 
@@ -108,6 +108,9 @@ void dcMapTexture::setMapImagePoint(const std::string &filename, const std::stri
 
     if (!enableScaling.empty()) mip.enableScaling = getValue(enableScaling)->getBoolean();
     else mip.enableScaling = 0;
+
+    if (!yaw.empty()) mip.vYaw = getValue(yaw);
+    else mip.vYaw = nullptr;
 
     imagePoints.push_back(mip);
 }

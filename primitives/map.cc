@@ -471,8 +471,13 @@ void dcMap::displayPoints(void)
             mdelx = mwidth/2;
             mdely = mheight/2;
 
+            // compute yaw
+            float yaw = 0;
+            if ( mip.vYaw )
+                yaw = mip.vYaw->getDecimal();
+
             // draw image
-            container_start(mx, my, mdelx, mdely, 1, 1, 0);
+            container_start(mx, my, mdelx, mdely, 1, 1, yaw);
             draw_image(mip.textureID, mwidth, mheight);
             container_end();
         }

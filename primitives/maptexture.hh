@@ -20,6 +20,7 @@ typedef struct {
             double hRatio;
             double vRatio;
             bool enableScaling;
+            Value* vYaw;
         } mapImagePoint;
 
         typedef struct {
@@ -46,7 +47,7 @@ class dcMapTexture
         void setSizeRatio(const std::string &);
         void setGhostTrail(const std::string &, const std::string &, const std::string &);
         void setMapImagePoint(const std::string &, const std::string &, const std::string &, const std::string &, 
-            const std::string &, const std::string &, const std::string &);
+            const std::string &, const std::string &, const std::string &, const std::string &);
         void setMapStringPoint(const std::string &, const std::string &, const std::string &, const std::string &, 
             const std::string &, const std::string &);
 
