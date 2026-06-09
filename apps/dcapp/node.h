@@ -669,6 +669,7 @@ typedef struct __NodePlanetView {
     _ValIndex3 xyz;
     _ValIndex3 rpy;
     _ValIndex  heading;
+    _ValIndex  fov;
     _ValIndex  orthographic;
     DcAppPlanetCrs crs;
 

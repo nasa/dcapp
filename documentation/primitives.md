@@ -688,6 +688,7 @@ Renders a view of a named planet. Supports two camera modes: LLE (latitude/longi
 | `CameraLongitude` | — | number/var | No | Camera longitude (LLE mode) |
 | `CameraElevation` | — | number/var | No | Camera elevation in meters (LLE mode) |
 | `CameraHeading` | — | number/var | No | Camera heading (LLE mode, degrees CW from north) |
+| `CameraFOV` | — | number/var | No | Vertical camera field of view in degrees. Defaults to 60 |
 | `CameraX` | — | number/var | No | Camera X position (XYZ mode) |
 | `CameraY` | — | number/var | No | Camera Y position (XYZ mode) |
 | `CameraZ` | — | number/var | No | Camera Z position (XYZ mode) |

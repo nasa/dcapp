@@ -228,6 +228,7 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 | `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
 | `NegateX` | — | boolean | No | Flip the rendered image horizontally |
 | `NegateY` | — | boolean | No | Flip the rendered image vertically |
+| `CameraFOV` | — | number/var | No | Vertical field of view in degrees for perspective rendering and orthographic scale derivation. Defaults to 60. |
 | `CameraOrthographic` | — | integer/var | No | Set to 1 for orthographic projection, 0 for perspective. Can be variable-driven for runtime toggling. |
 
 **LLE Camera Attributes** (geographic positioning):
@@ -238,6 +239,7 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 | `CameraLongitude` | double/variable | Camera longitude in degrees |
 | `CameraElevation` | double/variable | Camera elevation above the surface in meters |
 | `CameraHeading` | double/variable | Camera heading (look direction) in degrees |
+| `CameraFOV` | double/variable | Vertical field of view in degrees. Defaults to 60. |
 
 **XYZ/RPY Camera Attributes** (Cartesian positioning):
 
@@ -249,6 +251,7 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 | `CameraRoll` | double/variable | Camera roll angle in degrees |
 | `CameraPitch` | double/variable | Camera pitch angle in degrees |
 | `CameraYaw` | double/variable | Camera yaw angle in degrees |
+| `CameraFOV` | double/variable | Vertical field of view in degrees. Defaults to 60. |
 
 Use one camera mode or the other on a given `<PlanetView>` -- do not mix LLE and XYZ/RPY attributes on the same element.
 

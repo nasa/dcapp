@@ -5020,6 +5020,12 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
     camera.fFarZ        = 100000000.0f;
     camera.fWidth       = dimension[0];
     camera.fHeight      = dimension[1];
+    if (node->planet_view.fov != DC_APP_VAL_INDEX_UNDEFINED) {
+        float fov_deg = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.fov)->value_double;
+        if (fov_deg > 0.0f && fov_deg < 180.0f) {
+            camera.fFieldOfView = pl_radiansf(fov_deg);
+        }
+    }
 
     if (node->planet_view.crs == DC_APP_PLANET_CRS_CARTESIAN && use_xyz) {
         // cartesian camera is already expressed as position plus RPY in planet space

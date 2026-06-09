@@ -4768,6 +4768,13 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
         xmlFree(raw_heading);
     }
 
+    // field of view (vertical, degrees)
+    xmlChar *raw_fov = xmlGetProp(xml_node, BAD_CAST "CameraFOV");
+    if (raw_fov) {
+        dc_node.planet_view.fov = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_fov);
+        xmlFree(raw_fov);
+    }
+
     // XYZ/RPY camera mode (raw world coordinates)
     xmlChar *raw_cam_x = xmlGetProp(xml_node, BAD_CAST "CameraX");
     xmlChar *raw_cam_y = xmlGetProp(xml_node, BAD_CAST "CameraY");
