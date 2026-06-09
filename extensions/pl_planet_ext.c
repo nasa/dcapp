@@ -743,6 +743,12 @@ pl_get_planet_view_texture(plPlanetView* ptView)
     return ptView->tOutputTextureHandle;
 }
 
+plTextureHandle
+pl_get_planet_view_output_texture(plPlanetView* ptView)
+{
+    return ptView->tOutputTexture;
+}
+
 // Helper: clamp integer to a range
 static inline int clampi(int v, int lo, int hi)
 {
@@ -2498,6 +2504,7 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .cleanup_view             = pl_cleanup_planet_view,
         .render_view              = pl_render_to_planet_view,
         .get_view_texture         = pl_get_planet_view_texture,
+        .get_view_output_texture  = pl_get_planet_view_output_texture,
     };
     pl_set_api(ptApiRegistry, plPlanetI, &tApi);
 

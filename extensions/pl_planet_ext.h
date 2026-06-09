@@ -24,7 +24,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plPlanetI_version {0, 4, 0}
+#define plPlanetI_version {0, 5, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -61,6 +61,7 @@ typedef struct _plDrawLayer2D       plDrawLayer2D;       // pl_draw_ext.h
 typedef struct _plCamera            plCamera;            // pl_camera_ext.h
 typedef struct _plCommandBuffer     plCommandBuffer;     // pl_graphics_ext.h
 typedef union  plBindGroupHandle    plBindGroupHandle;   // pl_graphics_ext.h
+typedef union  plTextureHandle      plTextureHandle;     // pl_graphics_ext.h
 
 //-----------------------------------------------------------------------------
 // [SECTION] public api
@@ -87,6 +88,7 @@ typedef struct _plPlanetI
     void              (*cleanup_view)    (plPlanetView*);
     void              (*render_view)     (plPlanetView*, plCamera*, plCommandBuffer*);
     plBindGroupHandle (*get_view_texture)(plPlanetView*);
+    plTextureHandle   (*get_view_output_texture)(plPlanetView*);
 
     // drawing
     void (*draw_sphere)         (plPlanetView*, float longitude, float latitude, float height, float radius, uint32_t color);
