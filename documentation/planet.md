@@ -102,11 +102,11 @@ z = R * cos(latitude) * cos(longitude)
 CRS inheritance follows the scene structure:
 
 - `<Planet>` provides the default CRS for child `<PlanetTexture>` elements.
-- `<PlanetView>` inherits from its `<Planet>` unless camera attributes imply a frame or `CRS` is set explicitly.
+- `<PlanetView>` must set `CRS` explicitly.
 - `<PlanetView>` children inherit from their containing `<PlanetView>`.
 - A child can override inherited CRS with its own `CRS` attribute.
 
-For `<PlanetView>`, `CRS` is inferred from camera attributes when it is omitted: `CameraLatitude`/`CameraLongitude`/`CameraElevation` selects geodetic, while `CameraX`/`CameraY`/`CameraZ` selects cartesian. Child overlays inherit the view CRS unless they set their own `CRS`.
+For `<PlanetView>`, `CRS` controls which camera attributes are valid. Geodetic views require `CameraLatitude`/`CameraLongitude`/`CameraElevation`; cartesian views require `CameraX`/`CameraY`/`CameraZ` plus `CameraRoll`/`CameraPitch`/`CameraYaw`. Child overlays inherit the view CRS unless they set their own `CRS`.
 
 ### `<Planet>`
 
@@ -208,7 +208,7 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
 | `Planet` | — | string | Yes | The `Name` of the `<Planet>` element to render |
-| `CRS` | — | enum | No | Coordinate reference system for the camera and inherited child overlays. Inferred from camera attributes when omitted. |
+| `CRS` | — | enum | Yes | Coordinate reference system for the camera and inherited child overlays. Must be `#_planet_crs_geodetic_` or `#_planet_crs_cartesian_`. |
 | `ShaderIndex` | — | integer/var | No | Index of the active shader from the parent `<Planet>`'s `<PlanetShader>` library. Defaults to 0 (built-in shader). Each view can independently select its shader. |
 | `Tau` | — | double/var | No | LOD error threshold controlling chunk resolution. Default 0.3. Lower values load higher-resolution chunks sooner (more aggressive). Can be variable-driven for runtime adjustment. |
 | `PositionX` | `X` | number/var | No | X position relative to parent |
@@ -253,9 +253,7 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 | `CameraYaw` | double/variable | Camera yaw angle in degrees |
 | `CameraFOV` | double/variable | Vertical field of view in degrees. Defaults to 60. |
 
-Use one camera mode or the other on a given `<PlanetView>` -- do not mix LLE and XYZ/RPY attributes on the same element.
-
-If `CRS` is omitted, a view with `CameraLatitude`/`CameraLongitude`/`CameraElevation` is treated as geodetic, while a view with `CameraX`/`CameraY`/`CameraZ` is treated as cartesian.
+Use one camera mode or the other on a given `<PlanetView>` -- do not mix LLE and XYZ/RPY attributes on the same element. `CRS` is required and must match the camera mode.
 
 ---
 

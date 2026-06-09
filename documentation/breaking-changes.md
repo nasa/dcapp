@@ -7,6 +7,24 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
+### 2026-06-09 - PlanetView CRS Is Required
+
+#### Affected XML
+- Displays with `<PlanetView>` elements that omitted `CRS`.
+- Displays that relied on camera attributes to infer geodetic or cartesian mode.
+
+#### Changed
+- `<PlanetView>` no longer inherits or infers CRS.
+- `CRS` is required and must be `#_planet_crs_geodetic_` or `#_planet_crs_cartesian_`.
+- Geodetic views require `CameraLatitude`, `CameraLongitude`, and `CameraElevation`.
+- Cartesian views require `CameraX`, `CameraY`, `CameraZ`, `CameraRoll`, `CameraPitch`, and `CameraYaw`.
+- Mixing geodetic and cartesian camera attributes is now invalid.
+
+#### Migration
+- Add `CRS="#_planet_crs_geodetic_"` to LLE PlanetViews.
+- Add `CRS="#_planet_crs_cartesian_"` to XYZ/RPY PlanetViews.
+- Remove mismatched camera attributes.
+
 ### 2026-06-04 - Logic Header Initialization ABI
 
 This section compares the current logic API against the public logic API that

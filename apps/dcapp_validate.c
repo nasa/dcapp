@@ -970,6 +970,74 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             } else {
                 xmlFree(planet);
             }
+            xmlChar *crs = xmlGetProp(node, BAD_CAST "CRS");
+            if (!crs) {
+                DC_LOG_ERROR("Validate", "<PlanetView> missing required attribute 'CRS' (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            }
+
+            xmlChar *lat   = xmlGetProp(node, BAD_CAST "CameraLatitude");
+            xmlChar *lon   = xmlGetProp(node, BAD_CAST "CameraLongitude");
+            xmlChar *ele   = xmlGetProp(node, BAD_CAST "CameraElevation");
+            xmlChar *hdg   = xmlGetProp(node, BAD_CAST "CameraHeading");
+            xmlChar *cam_x = xmlGetProp(node, BAD_CAST "CameraX");
+            xmlChar *cam_y = xmlGetProp(node, BAD_CAST "CameraY");
+            xmlChar *cam_z = xmlGetProp(node, BAD_CAST "CameraZ");
+            xmlChar *roll  = xmlGetProp(node, BAD_CAST "CameraRoll");
+            xmlChar *pitch = xmlGetProp(node, BAD_CAST "CameraPitch");
+            xmlChar *yaw   = xmlGetProp(node, BAD_CAST "CameraYaw");
+            bool has_lle = lat || lon || ele;
+            bool has_xyz = cam_x || cam_y || cam_z || roll || pitch || yaw;
+            bool complete_lle = lat && lon && ele;
+            bool complete_xyz = cam_x && cam_y && cam_z && roll && pitch && yaw;
+            if (has_lle && !complete_lle) {
+                DC_LOG_ERROR("Validate", "<PlanetView> incomplete geodetic camera; CameraLatitude, CameraLongitude, and CameraElevation are required together (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            }
+            if (has_xyz && !complete_xyz) {
+                DC_LOG_ERROR("Validate", "<PlanetView> incomplete cartesian camera; CameraX, CameraY, CameraZ, CameraRoll, CameraPitch, and CameraYaw are required together (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            }
+            if (has_lle && has_xyz) {
+                DC_LOG_ERROR("Validate", "<PlanetView> cannot mix geodetic and cartesian camera attributes (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            }
+            if (crs) {
+                int crs_value = atoi((const char *)crs);
+                if (crs_value == 1) {
+                    if (!has_lle) {
+                        DC_LOG_ERROR("Validate", "<PlanetView CRS geodetic> requires CameraLatitude, CameraLongitude, and CameraElevation (line %ld)", xmlGetLineNo(node));
+                        ctx->error_count++;
+                    }
+                    if (has_xyz) {
+                        DC_LOG_ERROR("Validate", "<PlanetView CRS geodetic> cannot use cartesian camera attributes (line %ld)", xmlGetLineNo(node));
+                        ctx->error_count++;
+                    }
+                } else if (crs_value == 2) {
+                    if (!has_xyz) {
+                        DC_LOG_ERROR("Validate", "<PlanetView CRS cartesian> requires CameraX, CameraY, CameraZ, CameraRoll, CameraPitch, and CameraYaw (line %ld)", xmlGetLineNo(node));
+                        ctx->error_count++;
+                    }
+                    if (has_lle || hdg) {
+                        DC_LOG_ERROR("Validate", "<PlanetView CRS cartesian> cannot use geodetic camera attributes or CameraHeading (line %ld)", xmlGetLineNo(node));
+                        ctx->error_count++;
+                    }
+                } else {
+                    DC_LOG_ERROR("Validate", "<PlanetView> invalid CRS '%s' (line %ld)", (const char *)crs, xmlGetLineNo(node));
+                    ctx->error_count++;
+                }
+            }
+            if (crs) xmlFree(crs);
+            if (lat) xmlFree(lat);
+            if (lon) xmlFree(lon);
+            if (ele) xmlFree(ele);
+            if (hdg) xmlFree(hdg);
+            if (cam_x) xmlFree(cam_x);
+            if (cam_y) xmlFree(cam_y);
+            if (cam_z) xmlFree(cam_z);
+            if (roll) xmlFree(roll);
+            if (pitch) xmlFree(pitch);
+            if (yaw) xmlFree(yaw);
             break;
         }
 

@@ -4598,17 +4598,13 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
         }
         xmlFree(raw_planet);
     }
-    if (dc_node.planet_view.planet_def_index != UINT8_MAX)
-        dc_node.planet_view.crs = app_data->sb_planet_defs[dc_node.planet_view.planet_def_index].crs;
-    else
-        dc_node.planet_view.crs = DC_APP_PLANET_CRS_GEODETIC;
-
-    bool     has_explicit_crs = false;
-    xmlChar *raw_crs          = xmlGetProp(xml_node, BAD_CAST "CRS");
+    dc_node.planet_view.crs = DC_APP_PLANET_CRS_GEODETIC;
+    xmlChar *raw_crs        = xmlGetProp(xml_node, BAD_CAST "CRS");
     if (raw_crs) {
         dc_node.planet_view.crs = (DcAppPlanetCrs)atoi((const char *)raw_crs);
-        has_explicit_crs        = true;
         xmlFree(raw_crs);
+    } else {
+        DC_LOG_ERROR("PlanetView", "CRS is required; use #_planet_crs_geodetic_ or #_planet_crs_cartesian_");
     }
 
     // x position
@@ -4784,15 +4780,8 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
     xmlChar *raw_yaw   = xmlGetProp(xml_node, BAD_CAST "CameraYaw");
     bool     has_xyz   = raw_cam_x || raw_cam_y || raw_cam_z || raw_roll || raw_pitch || raw_yaw;
 
-    if (has_lle && has_xyz) {
-        DC_LOG_WARN("PlanetView", "Both LLE and XYZ/RPY specified; using XYZ/RPY");
-    }
-    if (!has_explicit_crs) {
-        if (has_xyz)
-            dc_node.planet_view.crs = DC_APP_PLANET_CRS_CARTESIAN;
-        else if (has_lle)
-            dc_node.planet_view.crs = DC_APP_PLANET_CRS_GEODETIC;
-    }
+    if (has_lle && has_xyz)
+        DC_LOG_ERROR("PlanetView", "Cannot mix LLE and XYZ/RPY camera attributes");
 
     if (has_xyz) {
         if (raw_cam_x && raw_cam_y && raw_cam_z && raw_roll && raw_pitch && raw_yaw) {
@@ -4813,8 +4802,18 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
     if (raw_pitch) xmlFree(raw_pitch);
     if (raw_yaw) xmlFree(raw_yaw);
 
-    if (!has_lle && !has_xyz) {
-        DC_LOG_ERROR("PlanetView", "Must specify either LLE (CameraLatitude/CameraLongitude/CameraElevation) or XYZ/RPY (CameraX/CameraY/CameraZ/CameraRoll/CameraPitch/CameraYaw)");
+    if (dc_node.planet_view.crs == DC_APP_PLANET_CRS_GEODETIC) {
+        if (!has_lle)
+            DC_LOG_ERROR("PlanetView", "Geodetic CRS requires CameraLatitude, CameraLongitude, and CameraElevation");
+        if (has_xyz)
+            DC_LOG_ERROR("PlanetView", "Geodetic CRS cannot use CameraX/CameraY/CameraZ/CameraRoll/CameraPitch/CameraYaw");
+    } else if (dc_node.planet_view.crs == DC_APP_PLANET_CRS_CARTESIAN) {
+        if (!has_xyz)
+            DC_LOG_ERROR("PlanetView", "Cartesian CRS requires CameraX, CameraY, CameraZ, CameraRoll, CameraPitch, and CameraYaw");
+        if (has_lle || dc_node.planet_view.heading != DC_APP_VAL_INDEX_UNDEFINED)
+            DC_LOG_ERROR("PlanetView", "Cartesian CRS cannot use CameraLatitude/CameraLongitude/CameraElevation/CameraHeading");
+    } else {
+        DC_LOG_ERROR("PlanetView", "Unknown CRS value: %d", dc_node.planet_view.crs);
     }
 
     // orthographic projection
