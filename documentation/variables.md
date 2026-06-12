@@ -299,7 +299,7 @@ Variables can be bound to external simulation frameworks for real-time data exch
 
 ### Logic Files
 
-For complex variable manipulation beyond what XML can express, you can use external C/C++ logic files. Logic files receive direct pointers to all declared variables, allowing arbitrary computation each frame.
+For complex variable manipulation beyond what XML can express, you can use external C/C++ logic files. Logic files receive direct pointers to all declared variables, allowing arbitrary computation each render or each fixed `Window` `UpdateRate` tick.
 
 **See the [Logic Files documentation](logic.md) for details on:**
 - Setting up logic files

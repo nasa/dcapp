@@ -68,8 +68,8 @@ void display_init(void) {
 }
 
 void display_draw(void) {
-    // Called every frame
-    static double dt = 0.016; // ~60fps
+    // Called each update tick when Window UpdateRate is set
+    static double dt = 0.016; // 60 updates per second
     
     *velocity += *acceleration * dt;
     *altitude += *velocity * dt;
@@ -283,23 +283,23 @@ void display_init(void) {
 
 ### `display_draw()`
 
-Called every frame (typically 60fps). Use for:
+Called once per render by default, or at the fixed `<Window UpdateRate="...">` cadence when `UpdateRate` is set. Use for:
 - Updating variable values
 - Calculations and simulations
 - State machine logic
 
 ```c
 void display_draw(void) {
-    static int frame = 0;
-    frame++;
+    static int update_count = 0;
+    update_count++;
     
     // Update physics
     *velocity += *acceleration * 0.016;
     *altitude += *velocity * 0.016;
     
     // Update status every second
-    if (frame % 60 == 0) {
-        snprintf(*statusMessage, 256, "Running: %d seconds", frame / 60);
+    if (update_count % 60 == 0) {
+        snprintf(*statusMessage, 256, "Running: %d seconds", update_count / 60);
     }
 }
 ```
@@ -639,10 +639,10 @@ set_target_properties(display_logic PROPERTIES
 #include <stdio.h>
 
 void display_draw(void) {
-    static int frame = 0;
-    if (frame++ % 60 == 0) {  // Print once per second
-        printf("Frame %d: alt=%.2f vel=%.2f\n", 
-               frame, *altitude, *velocity);
+    static int update_count = 0;
+    if (update_count++ % 60 == 0) {  // Print once per second with UpdateRate="60"
+        printf("Update %d: alt=%.2f vel=%.2f\n",
+               update_count, *altitude, *velocity);
     }
 }
 ```

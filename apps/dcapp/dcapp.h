@@ -187,7 +187,11 @@ typedef struct __FrameData {
 
     // frame count
     unsigned long long count;
-    double             last_frame_start_time;
+
+    // fixed-rate logic updates
+    double last_logic_update_time;
+    double logic_update_accumulator;
+    double last_update_rate;
 
     // triggered once
     bool is_mouse_pressed;

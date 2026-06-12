@@ -22,11 +22,15 @@ PL_EXPORT void  pl_app_shutdown(_AppData *app_data);
 PL_EXPORT void  pl_app_resize(_AppData *app_data);
 PL_EXPORT void  pl_app_update(_AppData *app_data);
 static void *get_variable_value_addr(void *user_data, const char *name);
-static void     _apply_frame_rate_limit(_AppData *app_data);
+static double   _get_update_rate(_AppData *app_data);
+static void     _process_logic_updates(_AppData *app_data);
 static bool     _build_planet_texture(_AppData *app_data, _PlanetDef *def, _PlanetTextureEntry *entry, plPlanetTexture *out);
 static void     _init_planets(_AppData *app_data);
 static void     _update_planet_defs(_AppData *app_data);
 static void     _load_apis(plApiRegistryI *api_registry);
+
+#define DC_APP_MAX_LOGIC_FRAME_DELTA 0.25
+#define DC_APP_MAX_LOGIC_UPDATES_PER_FRAME 16
 
 PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
@@ -489,7 +493,6 @@ static void _update_pixelstream_sources(_AppData *app_data) {
 }
 
 PL_EXPORT void pl_app_update(_AppData *app_data) {
-    _apply_frame_rate_limit(app_data);
 
     // this needs to be the first call when using the starter
     // extension. You must return if it returns false (usually a swapchain recreation).
@@ -650,9 +653,7 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
     _update_pixelstream_sources(app_data);
 
     // process logic
-    if (app_data->logic_draw) {
-        app_data->logic_draw();
-    }
+    _process_logic_updates(app_data);
 
     // refresh variables
     for (int ii = DC_APP_LOOKUP_FIRST_INDEX; ii < dc_app_lookup_get_var_count(app_data->lookup); ii++) {
@@ -778,29 +779,59 @@ static void *get_variable_value_addr(void *user_data, const char *name) {
     return NULL;
 }
 
-static void _apply_frame_rate_limit(_AppData *app_data) {
+static double _get_update_rate(_AppData *app_data) {
 
-    if (!app_data || app_data->window == NODE_INDEX_UNDEFINED) return;
+    if (!app_data || app_data->window == NODE_INDEX_UNDEFINED) return 0.0;
 
     _Node *window_node = _get_node(app_data, app_data->window);
-    if (!window_node || window_node->type != NODE_TYPE_WINDOW || window_node->window.frame_rate_limit == DC_APP_VAL_INDEX_UNDEFINED) return;
+    if (!window_node || window_node->type != NODE_TYPE_WINDOW || window_node->window.update_rate == DC_APP_VAL_INDEX_UNDEFINED) return 0.0;
 
-    DcValue *frame_rate_limit_value = dc_app_lookup_get_value(app_data->lookup, window_node->window.frame_rate_limit);
-    double   frame_rate_limit       = frame_rate_limit_value ? frame_rate_limit_value->value_double : 0.0;
-    if (frame_rate_limit <= 0.0) return;
+    DcValue *update_rate_value = dc_app_lookup_get_value(app_data->lookup, window_node->window.update_rate);
+    return update_rate_value ? update_rate_value->value_double : 0.0;
+}
 
-    double target_frame_time = 1.0 / frame_rate_limit;
-    double now               = dc_utils_time_get();
-    if (app_data->frame_data.last_frame_start_time > 0.0) {
-        double elapsed = now - app_data->frame_data.last_frame_start_time;
-        if (elapsed < target_frame_time) {
-            int sleep_ms = (int)ceil((target_frame_time - elapsed) * 1000.0);
-            if (sleep_ms > 0) {
-                dc_utils_sleep_ms(sleep_ms);
-            }
-        }
+static void _process_logic_updates(_AppData *app_data) {
+
+    if (!app_data || !app_data->logic_draw) return;
+
+    double update_rate = _get_update_rate(app_data);
+    if (!isfinite(update_rate) || update_rate <= 0.0) {
+        app_data->frame_data.last_logic_update_time   = dc_utils_time_get();
+        app_data->frame_data.logic_update_accumulator = 0.0;
+        app_data->frame_data.last_update_rate         = 0.0;
+        app_data->logic_draw();
+        return;
     }
-    app_data->frame_data.last_frame_start_time = dc_utils_time_get();
+
+    double update_interval = 1.0 / update_rate;
+    double now             = dc_utils_time_get();
+
+    if (app_data->frame_data.last_logic_update_time <= 0.0 ||
+        app_data->frame_data.last_update_rate != update_rate) {
+        app_data->frame_data.last_logic_update_time   = now;
+        app_data->frame_data.logic_update_accumulator = update_interval;
+        app_data->frame_data.last_update_rate         = update_rate;
+    } else {
+        double elapsed = now - app_data->frame_data.last_logic_update_time;
+        if (elapsed > DC_APP_MAX_LOGIC_FRAME_DELTA) {
+            elapsed = DC_APP_MAX_LOGIC_FRAME_DELTA;
+        }
+        app_data->frame_data.last_logic_update_time = now;
+        app_data->frame_data.logic_update_accumulator += elapsed;
+    }
+
+    int update_count = 0;
+    while (app_data->frame_data.logic_update_accumulator >= update_interval &&
+           update_count < DC_APP_MAX_LOGIC_UPDATES_PER_FRAME) {
+        app_data->logic_draw();
+        app_data->frame_data.logic_update_accumulator -= update_interval;
+        update_count++;
+    }
+
+    if (update_count == DC_APP_MAX_LOGIC_UPDATES_PER_FRAME &&
+        app_data->frame_data.logic_update_accumulator >= update_interval) {
+        app_data->frame_data.logic_update_accumulator = 0.0;
+    }
 }
 
 static bool _build_planet_texture(_AppData *app_data, _PlanetDef *def, _PlanetTextureEntry *entry, plPlanetTexture *out) {

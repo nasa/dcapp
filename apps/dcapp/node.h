@@ -724,7 +724,7 @@ typedef struct __NodeWindow {
     _NodeIndex child;
     char      *title;
     _ValIndex  active_display;
-    _ValIndex  frame_rate_limit;
+    _ValIndex  update_rate;
     bool       fullscreen;
 } _NodeWindow;
 

@@ -9,7 +9,7 @@
 
     <Logic File="logic/logic.so"/>
 
-    <Window Title="DrawFunction 1 - Hybrid Overview" X="30" Y="30" Width="1000" Height="700" VirtualWidth="900" VirtualHeight="600" FrameRateLimit="60">
+    <Window Title="DrawFunction 1 - Hybrid Overview" X="30" Y="30" Width="1000" Height="700" VirtualWidth="900" VirtualHeight="600" UpdateRate="60">
         <Panel VirtualWidth="900" VirtualHeight="600" BackgroundColor="0.055 0.062 0.070 1">
             <Text X="44" Y="552" Size="28" FillColor="0.88 0.95 1 1">DrawFunction 1: Hybrid Overview</Text>
             <Text X="44" Y="522" Size="14" FillColor="0.50 0.62 0.72 1">Four small examples: primitive draw, logic text, mouse hits, and reusable areas.</Text>

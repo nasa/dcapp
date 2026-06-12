@@ -3,10 +3,10 @@
     <!-- C generates the curve points; XML owns only the shell and labels. -->
     <Logic File="logic/logic.so"/>
 
-    <Window Title="Lissajous Curve" X="30" Y="30" Width="800" Height="800" VirtualWidth="800" VirtualHeight="800" FrameRateLimit="60">
+    <Window Title="Lissajous Curve" X="30" Y="30" Width="800" Height="800" VirtualWidth="800" VirtualHeight="800" UpdateRate="60">
         <Panel VirtualWidth="800" VirtualHeight="800" BackgroundColor="0.05 0.05 0.08">
             <Text X="400" Y="760" LocalAlignX="#_align_center_" Size="22" FillColor="0.80 0.92 1 1">Lissajous Curve</Text>
-            <Text X="400" Y="735" LocalAlignX="#_align_center_" Size="11" FillColor="0.52 0.62 0.72 1">The polyline points are generated in logic.c every frame.</Text>
+            <Text X="400" Y="735" LocalAlignX="#_align_center_" Size="11" FillColor="0.52 0.62 0.72 1">The polyline points are generated in logic.c at a fixed update rate.</Text>
 
             <DrawFunction Name="draw_lissajous"/>
         </Panel>

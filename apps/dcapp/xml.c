@@ -5808,17 +5808,11 @@ static _NodeIndex _process_xml_node_window(_AppData *app_data, xmlNodePtr xml_no
         xmlFree(raw_y_virtual_dimension);
     }
 
-    // frame rate limit
-    xmlChar *raw_frame_rate_limit = xmlGetProp(xml_node, BAD_CAST "FrameRateLimit");
-    if (!raw_frame_rate_limit) {
-        raw_frame_rate_limit = xmlGetProp(xml_node, BAD_CAST "MaxFPS");
-    }
-    if (!raw_frame_rate_limit) {
-        raw_frame_rate_limit = xmlGetProp(xml_node, BAD_CAST "MaxFrameRate");
-    }
-    if (raw_frame_rate_limit) {
-        dc_node.window.frame_rate_limit = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_frame_rate_limit);
-        xmlFree(raw_frame_rate_limit);
+    // update rate
+    xmlChar *raw_update_rate = xmlGetProp(xml_node, BAD_CAST "UpdateRate");
+    if (raw_update_rate) {
+        dc_node.window.update_rate = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_update_rate);
+        xmlFree(raw_update_rate);
     }
 
     // active display (for Panel DisplayIndex matching)

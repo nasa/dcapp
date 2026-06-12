@@ -23,7 +23,7 @@ void display_init(void) {
 }
 
 void display_draw(void) {
-    // This logic callback runs once per frame. It advances the sample's
+    // This logic callback runs at the Window UpdateRate. It advances the sample's
     // animation clock and ages out old click ripples.
     g_time += 1.0f / 60.0f;
     for (int i = 0; i < RIPPLE_COUNT; i++) {

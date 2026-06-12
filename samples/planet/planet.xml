@@ -65,7 +65,7 @@
         <Text Size="14" FillColor="#_color_white_"/>
     </Default>
 
-    <Window X="0" Y="20" Width="1000" Height="840" FrameRateLimit="60">
+    <Window X="0" Y="20" Width="1000" Height="840" UpdateRate="60">
         <Panel VirtualWidth="1000" VirtualHeight="840" BackgroundColor="#_color_black_">
 
             <!-- Compute values from sliders (all sliders are 0-100) -->

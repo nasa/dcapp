@@ -1130,7 +1130,7 @@ static const char *_valid_attrs_edge_io[]        = {"Host", "Port", "DataRate", 
 static const char *_valid_attrs_edge_variable[]  = {"Command", NULL};
 static const char *_valid_attrs_variable[]       = {"Type", "InitialValue", NULL};
 static const char *_valid_attrs_vertex[]         = {NULL};
-static const char *_valid_attrs_window[]         = {"Title", "ActiveDisplay", "FrameRateLimit", "MaxFPS", "MaxFrameRate", NULL};
+static const char *_valid_attrs_window[]         = {"Title", "ActiveDisplay", "UpdateRate", NULL};
 
 // Check if an attribute name is in a list
 static bool _attr_in_list(const char *attr_name, const char **list) {
