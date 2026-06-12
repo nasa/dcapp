@@ -118,6 +118,8 @@ struct _DcAppDrawContext {
     void *_runtime;
     void *_container_data;
     void *_stencil_data;
+    bool _owns_stencil_data;
+    int _stencil_base_depth;
     DcAppDrawArea area;
     DcAppMouse mouse;
 };

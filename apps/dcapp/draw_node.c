@@ -811,7 +811,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
                 ? (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.pivot_parent_align.y)->value_integer
                 : DC_APP_ALIGN_TYPE_UNDEFINED};
 
-        float pivot_position[2];
+        float pivot_position[2] = {0, 0};
         switch (parent_pivot_aligns[0]) {
             case DC_APP_ALIGN_TYPE_UNDEFINED:
             case DC_APP_ALIGN_TYPE_LEFT:
@@ -974,7 +974,7 @@ static void _draw_node_arc(_AppData *app_data, _NodeIndex node_index, _Node *nod
             node->arc.pivot_local_align.y == DC_APP_VAL_INDEX_UNDEFINED ? DC_APP_ALIGN_TYPE_UNDEFINED : (DcAppAlignType)dc_app_lookup_get_value(app_data->lookup, node->arc.pivot_local_align.y)->value_integer};
 
         // get pivot XY
-        float pivot_position[2];
+        float pivot_position[2] = {0, 0};
         switch (local_pivot_aligns[0]) {
             case DC_APP_ALIGN_TYPE_LEFT:
                 pivot_position[0] = 0;
@@ -1454,7 +1454,11 @@ static void _draw_node_ellipse(_AppData *app_data, _NodeIndex node_index, _Node 
         };
         plMat4 identity = pl_identity_mat4();
         DcAppDrawContext ctx = dc_app_draw_context(app_data, node_index, (plVec2){0.0f, 0.0f}, (plVec2){diameter_x, diameter_y}, &identity);
-        dc_app_draw_polygon_ex(&ctx, points, (uint32_t)num_points, stroke, (DcAppVec2){0.0f, 0.0f}, (DcAppPlacement){0}, NULL);
+        if (is_pie && !(node->ellipse.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED)) {
+            dc_app_draw_polyline_ex(&ctx, &points[1], (uint32_t)(num_points - 1), stroke, (DcAppVec2){0.0f, 0.0f}, (DcAppPlacement){0}, NULL);
+        } else {
+            dc_app_draw_polygon_ex(&ctx, points, (uint32_t)num_points, stroke, (DcAppVec2){0.0f, 0.0f}, (DcAppPlacement){0}, NULL);
+        }
     }
 
     // mouse events
@@ -4344,21 +4348,29 @@ static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *
 
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
     int num_children = sbcount(node->stencil.sb_children);
-    DcAppStencilHandler stencil;
-    if (!dc_app_draw_stencil_begin_handler(app_data, &stencil)) return;
+    plVec2 zero = {0.0f, 0.0f};
+    plMat4 identity = pl_identity_mat4();
+    plVec2 dims = parent_dimensions ? *parent_dimensions : zero;
+    plVec2 pos  = parent_position ? *parent_position : zero;
+    plMat4 xform = parent_transform ? *parent_transform : identity;
+    DcAppDrawContext ctx = dc_app_draw_context(app_data, node_index, pos, dims, &xform);
+    void *previous_stencil_data = app_data->active_stencil_data;
+
+    if (!dc_app_draw_stencil_begin(&ctx)) return;
+    app_data->active_stencil_data = ctx._stencil_data;
 
     for (int i = 0; i < num_children; i++) {
         _StencilChild *stencil_child = &node->stencil.sb_children[i];
 
         switch (stencil_child->type) {
             case STENCIL_CHILD_TYPE_ADD:
-                dc_app_draw_set_stencil_add(app_data, &stencil);
+                dc_app_draw_stencil_add(&ctx);
                 break;
             case STENCIL_CHILD_TYPE_REMOVE:
-                dc_app_draw_set_stencil_remove(app_data, &stencil);
+                dc_app_draw_stencil_remove(&ctx);
                 break;
             case STENCIL_CHILD_TYPE_DRAW:
-                dc_app_draw_set_stencil_draw(app_data, &stencil);
+                dc_app_draw_stencil_draw(&ctx);
                 break;
             default:
                 continue;
@@ -4367,16 +4379,9 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
         dc_app_draw_node_list(app_data, stencil_child->child, parent_position, parent_dimensions, parent_transform);
     }
 
-    // cleanup: replay ADD geometry with decrement shader to restore stencil buffer
-    for (int i = 0; i < num_children; i++) {
-        _StencilChild *stencil_child = &node->stencil.sb_children[i];
-        if (stencil_child->type == STENCIL_CHILD_TYPE_ADD) {
-            dc_app_draw_set_stencil_cleanup(app_data, &stencil);
-            dc_app_draw_node_list(app_data, stencil_child->child, parent_position, parent_dimensions, parent_transform);
-        }
-    }
-
-    dc_app_draw_stencil_end_handler(app_data, &stencil);
+    dc_app_draw_stencil_end(&ctx);
+    app_data->active_stencil_data = previous_stencil_data;
+    dc_app_draw_context_cleanup(&ctx);
 }
 
 static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetView *view) {

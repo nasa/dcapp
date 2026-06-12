@@ -5,6 +5,7 @@
 #include "draw.h"
 
 #include "app/enums.h"
+#include "utils/log.h"
 
 static const DcAppDrawApi dc_app_draw_interface = {
     .get_area              = dc_app_draw_get_area,
@@ -102,6 +103,8 @@ typedef enum _DcAppDrawCommandType {
     _DC_APP_DRAW_COMMAND_IMAGE_QUAD,
     _DC_APP_DRAW_COMMAND_IMAGE_QUAD_UV,
     _DC_APP_DRAW_COMMAND_TEXT,
+    _DC_APP_DRAW_COMMAND_3D_SPHERE_FILLED,
+    _DC_APP_DRAW_COMMAND_3D_SPHERE_TEXTURED,
 } _DcAppDrawCommandType;
 
 typedef struct _DcAppDrawCommand {
@@ -119,6 +122,9 @@ typedef struct _DcAppDrawCommand {
     DcAppVec4 tint;
     char *text;
     dcDrawTextOptions text_options;
+    plSphere sphere;
+    plMat4 transform;
+    uint32_t packed_color;
 } _DcAppDrawCommand;
 
 typedef struct _DcAppStencilFrame {
@@ -157,6 +163,7 @@ static _DcAppStencilRecorder *_stencil_recorder(DcAppDrawContext *ctx);
 static dcDrawTextOptions _text_options(_AppData *app_data, DcAppTextStyle style);
 static plMat3 _text_transform(DcAppDrawContext *ctx, DcAppVec2 dimensions, DcAppVec2 position, DcAppPlacement placement);
 static void _record_stencil_add_command(DcAppDrawContext *ctx, const _DcAppDrawCommand *command);
+static void _record_stencil_add_command_data(void *stencil_data, const _DcAppDrawCommand *command);
 static void _replay_stencil_command(_AppData *app_data, const _DcAppDrawCommand *command);
 static void _free_stencil_command(_DcAppDrawCommand *command);
 
@@ -169,7 +176,9 @@ DcAppDrawContext dc_app_draw_context(_AppData *app_data, _NodeIndex node_index, 
 
     plMat4 transform = parent_transform ? *parent_transform : pl_identity_mat4();
     DcAppDrawContext ctx = {
-        ._runtime = app_data,
+        ._runtime            = app_data,
+        ._stencil_data       = app_data ? app_data->active_stencil_data : NULL,
+        ._stencil_base_depth = app_data ? app_data->stencil_depth : 0,
     };
 
     ctx.area.position[0]   = parent_position.x;
@@ -778,6 +787,7 @@ void dc_app_draw_stencil_end(DcAppDrawContext *ctx) {
         sbfree(recorder->sb_frames);
         PL_FREE(recorder);
         ctx->_stencil_data = NULL;
+        ctx->_owns_stencil_data = false;
     }
 }
 
@@ -1334,16 +1344,33 @@ plVec2 dc_app_draw_text_options_size(const char *text, dcDrawTextOptions options
 
 void dc_app_draw_text_options(_AppData *app_data, const char *text, dcDrawTextOptions options) {
     if (!app_data || !text) return;
+    _record_stencil_add_command_data(app_data->active_stencil_data, &(_DcAppDrawCommand){
+        .type         = _DC_APP_DRAW_COMMAND_TEXT,
+        .text         = (char *)text,
+        .text_options = options,
+    });
     _ext_dc_draw->add_text(dc_app_draw_batch_get_2d(app_data), (plVec2){0.0f, 0.0f}, text, options);
 }
 
 void dc_app_draw_3d_sphere_textured(_AppData *app_data, uint32_t texture_id, plSphere sphere, const plMat4 *transform, uint32_t color) {
     if (!app_data || !transform) return;
+    _record_stencil_add_command_data(app_data->active_stencil_data, &(_DcAppDrawCommand){
+        .type         = _DC_APP_DRAW_COMMAND_3D_SPHERE_TEXTURED,
+        .texture_id   = texture_id,
+        .sphere       = sphere,
+        .transform    = *transform,
+        .packed_color = color,
+    });
     _ext_dc_draw->add_3d_sphere_textured(dc_app_draw_batch_get_3d(app_data), texture_id, sphere, transform, 32, 32, color);
 }
 
 void dc_app_draw_3d_sphere_filled(_AppData *app_data, plSphere sphere, uint32_t color) {
     if (!app_data) return;
+    _record_stencil_add_command_data(app_data->active_stencil_data, &(_DcAppDrawCommand){
+        .type         = _DC_APP_DRAW_COMMAND_3D_SPHERE_FILLED,
+        .sphere       = sphere,
+        .packed_color = color,
+    });
     _ext_dc_draw->add_3d_sphere_filled(dc_app_draw_batch_get_3d(app_data), sphere, 32, 32, (dcDrawSolidOptions){.uColor = color});
 }
 
@@ -1543,14 +1570,20 @@ static _DcAppStencilRecorder *_stencil_recorder(DcAppDrawContext *ctx) {
         ctx->_stencil_data = PL_ALLOC(sizeof(_DcAppStencilRecorder));
         if (!ctx->_stencil_data) return NULL;
         memset(ctx->_stencil_data, 0, sizeof(_DcAppStencilRecorder));
+        ctx->_owns_stencil_data = true;
     }
     return (_DcAppStencilRecorder *)ctx->_stencil_data;
 }
 
 static void _record_stencil_add_command(DcAppDrawContext *ctx, const _DcAppDrawCommand *command) {
     if (!ctx || !command) return;
+    _record_stencil_add_command_data(ctx->_stencil_data, command);
+}
 
-    _DcAppStencilRecorder *recorder = (_DcAppStencilRecorder *)ctx->_stencil_data;
+static void _record_stencil_add_command_data(void *stencil_data, const _DcAppDrawCommand *command) {
+    if (!stencil_data || !command) return;
+
+    _DcAppStencilRecorder *recorder = (_DcAppStencilRecorder *)stencil_data;
     if (!recorder || recorder->is_replaying || recorder->phase != _DC_APP_STENCIL_PHASE_CREATE || sbcount(recorder->sb_frames) == 0) return;
 
     _DcAppDrawCommand copy = *command;
@@ -1576,26 +1609,30 @@ static void _record_stencil_add_command(DcAppDrawContext *ctx, const _DcAppDrawC
 static void _replay_stencil_command(_AppData *app_data, const _DcAppDrawCommand *command) {
     if (!app_data || !command) return;
 
-    dcDrawLayer2D *layer = dc_app_draw_batch_get_2d(app_data);
     switch (command->type) {
-        case _DC_APP_DRAW_COMMAND_LINES:
+        case _DC_APP_DRAW_COMMAND_LINES: {
             if (command->point_count < 2) return;
+            dcDrawLayer2D *layer = dc_app_draw_batch_get_2d(app_data);
             _ext_dc_draw->add_lines(layer, command->sb_points, command->point_count, (dcDrawLineOptions){
                 .uColor       = PL_COLOR_32_RGBA(command->stroke.color.r, command->stroke.color.g, command->stroke.color.b, command->stroke.color.a),
                 .fThickness   = command->stroke.width * DCAPP_LINE_WIDTH_FACTOR,
                 .uDashPattern = command->stroke.pattern,
             });
             break;
+        }
 
-        case _DC_APP_DRAW_COMMAND_TRIANGLES_FILLED:
+        case _DC_APP_DRAW_COMMAND_TRIANGLES_FILLED: {
             if (command->point_count < 3) return;
+            dcDrawLayer2D *layer = dc_app_draw_batch_get_2d(app_data);
             _ext_dc_draw->add_triangles_filled(layer, command->sb_points, command->point_count, (dcDrawSolidOptions){
                 .uColor = PL_COLOR_32_RGBA(command->color.r, command->color.g, command->color.b, command->color.a),
             });
             break;
+        }
 
-        case _DC_APP_DRAW_COMMAND_POLYGON:
+        case _DC_APP_DRAW_COMMAND_POLYGON: {
             if (command->point_count < 3) return;
+            dcDrawLayer2D *layer = dc_app_draw_batch_get_2d(app_data);
             if (command->corner_radius > 0.0f) {
                 _ext_dc_draw->add_polygon_rounded(layer, command->sb_points, command->point_count, command->corner_radius, 8, (dcDrawLineOptions){
                     .uColor       = PL_COLOR_32_RGBA(command->stroke.color.r, command->stroke.color.g, command->stroke.color.b, command->stroke.color.a),
@@ -1610,9 +1647,11 @@ static void _replay_stencil_command(_AppData *app_data, const _DcAppDrawCommand 
                 });
             }
             break;
+        }
 
-        case _DC_APP_DRAW_COMMAND_POLYGON_FILLED:
+        case _DC_APP_DRAW_COMMAND_POLYGON_FILLED: {
             if (command->point_count < 3) return;
+            dcDrawLayer2D *layer = dc_app_draw_batch_get_2d(app_data);
             if (command->corner_radius > 0.0f) {
                 _ext_dc_draw->add_convex_polygon_rounded_filled(layer, command->sb_points, command->point_count, command->corner_radius, 8, (dcDrawSolidOptions){
                     .uColor = PL_COLOR_32_RGBA(command->color.r, command->color.g, command->color.b, command->color.a),
@@ -1623,14 +1662,18 @@ static void _replay_stencil_command(_AppData *app_data, const _DcAppDrawCommand 
                 });
             }
             break;
+        }
 
-        case _DC_APP_DRAW_COMMAND_IMAGE_QUAD:
+        case _DC_APP_DRAW_COMMAND_IMAGE_QUAD: {
             if (command->point_count < 4) return;
+            dcDrawLayer2D *layer = dc_app_draw_batch_get_2d(app_data);
             _ext_dc_draw->add_image_quad(layer, command->texture_id, command->sb_points[0], command->sb_points[1], command->sb_points[2], command->sb_points[3]);
             break;
+        }
 
-        case _DC_APP_DRAW_COMMAND_IMAGE_QUAD_UV:
+        case _DC_APP_DRAW_COMMAND_IMAGE_QUAD_UV: {
             if (command->point_count < 4) return;
+            dcDrawLayer2D *layer = dc_app_draw_batch_get_2d(app_data);
             _ext_dc_draw->add_image_quad_ex(layer, command->texture_id,
                                             command->sb_points[0], command->sb_points[1], command->sb_points[2], command->sb_points[3],
                                             (plVec2){command->uv0.x, command->uv0.y},
@@ -1639,10 +1682,21 @@ static void _replay_stencil_command(_AppData *app_data, const _DcAppDrawCommand 
                                             (plVec2){command->uv3.x, command->uv3.y},
                                             PL_COLOR_32_RGBA(command->tint.r, command->tint.g, command->tint.b, command->tint.a));
             break;
+        }
 
-        case _DC_APP_DRAW_COMMAND_TEXT:
+        case _DC_APP_DRAW_COMMAND_TEXT: {
             if (!command->text) return;
+            dcDrawLayer2D *layer = dc_app_draw_batch_get_2d(app_data);
             _ext_dc_draw->add_text(layer, (plVec2){0.0f, 0.0f}, command->text, command->text_options);
+            break;
+        }
+
+        case _DC_APP_DRAW_COMMAND_3D_SPHERE_FILLED:
+            _ext_dc_draw->add_3d_sphere_filled(dc_app_draw_batch_get_3d(app_data), command->sphere, 32, 32, (dcDrawSolidOptions){.uColor = command->packed_color});
+            break;
+
+        case _DC_APP_DRAW_COMMAND_3D_SPHERE_TEXTURED:
+            _ext_dc_draw->add_3d_sphere_textured(dc_app_draw_batch_get_3d(app_data), command->texture_id, command->sphere, &command->transform, 32, 32, command->packed_color);
             break;
 
         default:
@@ -1668,8 +1722,9 @@ void dc_app_draw_context_cleanup(DcAppDrawContext *ctx) {
         ctx->_container_data = NULL;
     }
 
+    _AppData *app_data = (_AppData *)ctx->_runtime;
     _DcAppStencilRecorder *recorder = (_DcAppStencilRecorder *)ctx->_stencil_data;
-    while (recorder && sbcount(recorder->sb_frames) > 0) {
+    while (recorder && app_data && app_data->stencil_depth > ctx->_stencil_base_depth) {
         int frame_count = sbcount(recorder->sb_frames);
         dc_app_draw_stencil_end(ctx);
         recorder = (_DcAppStencilRecorder *)ctx->_stencil_data;
@@ -1680,7 +1735,7 @@ void dc_app_draw_context_cleanup(DcAppDrawContext *ctx) {
     }
 
     recorder = (_DcAppStencilRecorder *)ctx->_stencil_data;
-    if (recorder) {
+    if (ctx->_owns_stencil_data && recorder) {
         for (int ii = 0; ii < sbcount(recorder->sb_frames); ii++) {
             _DcAppStencilFrame *frame = &recorder->sb_frames[ii];
             for (int jj = 0; jj < sbcount(frame->sb_add_commands); jj++) {
@@ -1691,5 +1746,6 @@ void dc_app_draw_context_cleanup(DcAppDrawContext *ctx) {
         sbfree(recorder->sb_frames);
         PL_FREE(recorder);
         ctx->_stencil_data = NULL;
+        ctx->_owns_stencil_data = false;
     }
 }

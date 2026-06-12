@@ -279,6 +279,7 @@ typedef struct __AppData {
     int stencil_depth;
     int stencil_phase;
     int stencil_phase_stack[DC_STENCIL_MAX_DEPTH];
+    void *active_stencil_data;
 
     // config + lookup
     DcAppLookup *lookup;
