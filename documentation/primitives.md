@@ -698,7 +698,39 @@ Renders a view of a named planet. Supports two camera modes: LLE (latitude/longi
 | `CameraYaw` | — | number/var | Yes for cartesian CRS | Camera yaw angle (XYZ mode) |
 | `CameraOrthographic` | — | integer/var | No | 1 for orthographic projection, 0 for perspective |
 
-**Children:** `<PlanetEllipse>`, `<PlanetGeoJSON>`, `<PlanetText>`, and other planet overlay elements
+**Children:** `<PlanetBreadcrumbs>`, `<PlanetEllipse>`, `<PlanetGeoJSON>`, `<PlanetText>`, and other planet overlay elements
+
+---
+
+### `<PlanetBreadcrumbs>`
+
+Records and draws a live breadcrumb trail from input position variables. The sampled position is independent of the `<PlanetView>` camera.
+
+**Parent:** `<PlanetView>`
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `CRS` | enum | No | Coordinate reference system for the sampled position. Inherits from `<PlanetView>`. |
+| `Latitude` | number/var | Yes for geodetic CRS | Source latitude in degrees |
+| `Longitude` | number/var | Yes for geodetic CRS | Source longitude in degrees |
+| `Altitude` | number/var | No | Source altitude in meters. If omitted, `HeightAboveTerrain` is used. |
+| `X`, `Y`, `Z` | number/var | Yes for cartesian CRS | Source position in native body-centered Cartesian meters |
+| `HeightAboveTerrain` | number/var | No | Geodetic fallback height above the surface in meters |
+| `PointSpacing` | number/var | No | Minimum cartesian distance in meters between stored breadcrumb points. Defaults to 1. |
+| `MaxPoints` | integer/var | No | Maximum stored points. Defaults to 4096. |
+| `Clear` | integer/var | No | Edge-triggered: changing this value clears the stored trail |
+| `Enabled` | boolean/var | No | Enables sampling and drawing. Defaults to true. |
+| `LineColor` | color | No | Trail color (RGBA). Defaults to semi-transparent red. |
+| `LineWidth` | number/var | No | Line width in meters |
+
+Example:
+
+```xml
+<PlanetBreadcrumbs Latitude="@VehicleLat" Longitude="@VehicleLon"
+    HeightAboveTerrain="500" PointSpacing="25" MaxPoints="2000"
+    Clear="@ClearTrail" Enabled="@ShowTrail"
+    LineColor="1 0 0 0.5" LineWidth="200"/>
+```
 
 ---
 

@@ -398,6 +398,32 @@ Draws a line strip on the terrain surface.
 
 **Children:** `<Vertex>` elements with either `Latitude`/`Longitude` or cartesian `X`/`Y`/`Z` attributes.
 
+### `<PlanetBreadcrumbs>`
+
+Records and draws a live breadcrumb trail from input position variables. The trail is independent of the `<PlanetView>` camera position.
+
+```xml
+<PlanetBreadcrumbs Latitude="@VehicleLat" Longitude="@VehicleLon"
+    HeightAboveTerrain="500" PointSpacing="25" MaxPoints="2000"
+    Clear="@ClearTrail" Enabled="@ShowTrail"
+    LineColor="1 0 0 0.5" LineWidth="200"/>
+```
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `CRS` | enum | No | Coordinate reference system for the sampled position. Inherits from `<PlanetView>`. |
+| `Latitude` | double/var | Yes for geodetic CRS | Source latitude in degrees |
+| `Longitude` | double/var | Yes for geodetic CRS | Source longitude in degrees |
+| `Altitude` | double/var | No | Source altitude in meters. If omitted, `HeightAboveTerrain` is used. |
+| `X`, `Y`, `Z` | double/var | Yes for cartesian CRS | Source position in native body-centered Cartesian meters |
+| `HeightAboveTerrain` | double/var | No | Geodetic fallback height above the surface in meters |
+| `PointSpacing` | double/var | No | Minimum cartesian distance in meters between stored breadcrumb points. Defaults to 1. |
+| `MaxPoints` | integer/var | No | Maximum stored points. Defaults to 4096. |
+| `Clear` | integer/var | No | Edge-triggered: changing this value clears the stored trail |
+| `Enabled` | boolean/var | No | Enables sampling and drawing. Defaults to true. |
+| `LineColor` | color | No | Trail color (RGBA). Defaults to semi-transparent red. |
+| `LineWidth` | double/var | No | Line width in meters |
+
 ### `<PlanetEllipse>`
 
 Draws an ellipse on the terrain surface at a geographic location.

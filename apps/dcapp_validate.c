@@ -568,6 +568,7 @@ bool _is_valid_child(DcAppElemType parent_type, DcAppElemType child_type) {
     // PlanetView can contain planet overlay elements
     if (parent_type == DC_APP_ELEM_TYPE_PLANET_VIEW) {
         switch (child_type) {
+            case DC_APP_ELEM_TYPE_PLANET_BREADCRUMBS:
             case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
             case DC_APP_ELEM_TYPE_PLANET_GEO_JSON:
             case DC_APP_ELEM_TYPE_PLANET_LINE:
@@ -1118,6 +1119,7 @@ static const char *_valid_attrs_planet_data[]    = {"File", NULL};
 static const char *_valid_attrs_planet_texture[] = {"File", "CRS", "MetersPerPixel", "Latitude", "Longitude", "X", "Y", "Z", "OriginX", "OriginY", "FireRefresh", NULL};
 static const char *_valid_attrs_planet_shader[]  = {"Index", "VertexShader", "FragmentShader", NULL};
 static const char *_valid_attrs_planet_overlay[] = {"Planet", "CRS", "HeightAboveTerrain", "Latitude", "Longitude", "X", "Y", "Z", "Radius", "RadiusX", "RadiusY", "Rotation", "Segments", "Size", NULL};
+static const char *_valid_attrs_planet_breadcrumbs[] = {"Altitude", "PointSpacing", "MaxPoints", "Clear", "Enabled", NULL};
 static const char *_valid_attrs_planet_geojson[] = {"File", "Planet", "CRS", "HeightAboveTerrain", NULL};
 static const char *_valid_attrs_planet_vertex[]  = {"Latitude", "Longitude", "Altitude", "X", "Y", "Z", NULL};
 static const char *_valid_attrs_rounded[]        = {"Rounded", NULL};
@@ -1332,6 +1334,12 @@ static bool _is_valid_attr_for_elem(const char *attr_name, DcAppElemType elem_ty
 
         case DC_APP_ELEM_TYPE_PLANET_SHADER:
             return _attr_in_list(attr_name, _valid_attrs_planet_shader);
+
+        case DC_APP_ELEM_TYPE_PLANET_BREADCRUMBS:
+            return _attr_in_list(attr_name, _valid_attrs_planet_overlay) ||
+                   _attr_in_list(attr_name, _valid_attrs_planet_breadcrumbs) ||
+                   _attr_in_list(attr_name, _valid_attrs_color) ||
+                   _attr_in_list(attr_name, _valid_attrs_line);
 
         case DC_APP_ELEM_TYPE_PLANET_ELLIPSE:
         case DC_APP_ELEM_TYPE_PLANET_LINE:

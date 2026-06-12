@@ -19,6 +19,8 @@
     <Variable Type="#_variable_double_" InitialValue="0">Heading</Variable>
     <Variable Type="#_variable_double_" InitialValue="0.3">Tau</Variable>
     <Variable Type="#_variable_double_" InitialValue="-1">LightY</Variable>
+    <Variable Type="#_variable_double_" InitialValue="-65">OrbitLat</Variable>
+    <Variable Type="#_variable_double_" InitialValue="315">OrbitLon</Variable>
 
     <!-- Computed XYZ/RPY camera values (written by logic file) -->
     <Variable Type="#_variable_double_">CamX</Variable>
@@ -36,8 +38,9 @@
     <Variable Type="#_variable_integer_">SliderTauSelected</Variable>
     <Variable Type="#_variable_integer_">SliderLightYSelected</Variable>
 
-    <!-- Active shader index: 0=default, 1=elevation, 2=slope -->
-    <Variable Type="#_variable_integer_" InitialValue="0">ActiveShader</Variable>
+    <!-- Independent shader indices: 1=elevation, 2=slope -->
+    <Variable Type="#_variable_integer_" InitialValue="1">LeftShader</Variable>
+    <Variable Type="#_variable_integer_" InitialValue="2">RightShader</Variable>
 
     <!-- Orthographic projection toggle -->
     <Variable Type="#_variable_integer_" InitialValue="0">UseOrtho</Variable>
@@ -62,7 +65,7 @@
         <Text Size="14" FillColor="#_color_white_"/>
     </Default>
 
-    <Window X="0" Y="20" Width="1000" Height="840">
+    <Window X="0" Y="20" Width="1000" Height="840" FrameRateLimit="60">
         <Panel VirtualWidth="1000" VirtualHeight="840" BackgroundColor="#_color_black_">
 
             <!-- Compute values from sliders (all sliders are 0-100) -->
@@ -125,79 +128,41 @@
                 </ButtonIndicatorOff>
             </Button>
 
-            <!-- ========== SHADER SELECTOR ========== -->
+            <!-- ========== PER-VIEW SHADER TOGGLES ========== -->
             <Text X="290" Y="806" LocalAlignX="#_align_right_" LocalAlignY="#_align_middle_"
-                Size="13" FillColor="#_color_white_">Shader:</Text>
+                Size="13" FillColor="#_color_white_">Shaders:</Text>
 
-            <!-- Default shader (index 0) -->
-            <Button Type="#_button_toggle_" X="370" Y="806" Width="120" Height="22"
-                Variable="ActiveShader" On="0" Off="0"
+            <Button Type="#_button_toggle_" X="410" Y="806" Width="150" Height="22"
+                Variable="LeftShader" On="2" Off="1" IndicatorOn="2"
                 LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <ButtonIndicatorOn>
-                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
+                    <Rectangle FillColor="0.45 0.18 0.16" LineColor="0.90 0.30 0.24" LineWidth="2"/>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
                         LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="#_color_white_">Default</Text>
+                        Size="11" FillColor="#_color_white_">Left: Slope</Text>
                 </ButtonIndicatorOn>
                 <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
+                    <Rectangle FillColor="0.24 0.34 0.14" LineColor="0.70 0.82 0.28" LineWidth="2"/>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
                         LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="0.6 0.6 0.6">Default</Text>
+                        Size="11" FillColor="#_color_white_">Left: Elevation</Text>
                 </ButtonIndicatorOff>
             </Button>
 
-            <!-- Elevation gradient shader (index 1) -->
-            <Button Type="#_button_toggle_" X="500" Y="806" Width="120" Height="22"
-                Variable="ActiveShader" On="1" Off="1"
+            <Button Type="#_button_toggle_" X="590" Y="806" Width="150" Height="22"
+                Variable="RightShader" On="1" Off="2" IndicatorOn="1"
                 LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
                 <ButtonIndicatorOn>
-                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
+                    <Rectangle FillColor="0.24 0.34 0.14" LineColor="0.70 0.82 0.28" LineWidth="2"/>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
                         LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="#_color_white_">Elevation</Text>
+                        Size="11" FillColor="#_color_white_">Right: Elevation</Text>
                 </ButtonIndicatorOn>
                 <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
+                    <Rectangle FillColor="0.45 0.18 0.16" LineColor="0.90 0.30 0.24" LineWidth="2"/>
                     <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
                         LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="0.6 0.6 0.6">Elevation</Text>
-                </ButtonIndicatorOff>
-            </Button>
-
-            <!-- Slope shader (index 2) -->
-            <Button Type="#_button_toggle_" X="630" Y="806" Width="120" Height="22"
-                Variable="ActiveShader" On="2" Off="2"
-                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
-                <ButtonIndicatorOn>
-                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="#_color_white_">Slope</Text>
-                </ButtonIndicatorOn>
-                <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="0.6 0.6 0.6">Slope</Text>
-                </ButtonIndicatorOff>
-            </Button>
-
-            <!-- Flat map shader (index 3) -->
-            <Button Type="#_button_toggle_" X="760" Y="806" Width="120" Height="22"
-                Variable="ActiveShader" On="3" Off="3"
-                LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">
-                <ButtonIndicatorOn>
-                    <Rectangle FillColor="0.2 0.5 0.2" LineColor="0.3 0.8 0.3" LineWidth="2"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="#_color_white_">Flat Map</Text>
-                </ButtonIndicatorOn>
-                <ButtonIndicatorOff>
-                    <Rectangle FillColor="0.15 0.15 0.15" LineColor="0.35 0.35 0.35" LineWidth="1"/>
-                    <Text ParentAlignX="#_align_center_" ParentAlignY="#_align_middle_"
-                        LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                        Size="11" FillColor="0.6 0.6 0.6">Flat Map</Text>
+                        Size="11" FillColor="#_color_white_">Right: Slope</Text>
                 </ButtonIndicatorOff>
             </Button>
 
@@ -206,25 +171,66 @@
             <PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_" X="15" Y="300" Width="450" Height="450"
                 CameraLatitude="@Latitude" CameraLongitude="@Longitude" CameraElevation="@Elevation"
                 CameraHeading="@Heading"
-                CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"
+                CameraOrthographic="@UseOrtho" ShaderIndex="@LeftShader"
                 Tau="@Tau">
-                <PlanetEllipse Latitude="-58.62" Longitude="-14.73" Radius="115385" HeightAboveTerrain="1000" LineColor="0.0 1.0 1.0 1.0" LineWidth="3000" FillColor="0.0 1.0 1.0 0.10"/>
-                <PlanetEllipse Latitude="-89.67" Longitude="129.78" Radius="10460" HeightAboveTerrain="1000" LineColor="1.0 0.4 1.0 1.0" LineWidth="2000" FillColor="1.0 0.4 1.0 0.12"/>
-                <PlanetGeoJSON File="assets/geojson_test.geojson" HeightAboveTerrain="1000" LineColor="1.0 1.0 0.0 1.0" LineWidth="2000" FillColor="1.0 1.0 0.0 0.2"/>
-                <PlanetText Latitude="-58.62" Longitude="-14.73" HeightAboveTerrain="50000" Size="60000" FillColor="0.0 1.0 1.0 1.0">Clavius crater 230.77 km</PlanetText>
-                <PlanetText Latitude="-89.67" Longitude="129.78" HeightAboveTerrain="50000" Size="30000" FillColor="1.0 0.4 1.0 1.0">Shackleton crater 20.92 km</PlanetText>
+                <PlanetBreadcrumbs CRS="#_planet_crs_geodetic_" Latitude="@OrbitLat" Longitude="@OrbitLon"
+                    HeightAboveTerrain="50000" PointSpacing="25000" MaxPoints="512"
+                    LineColor="0.1 0.9 1.0 0.85" LineWidth="3500"/>
+                <PlanetSphere CRS="#_planet_crs_geodetic_" Latitude="@OrbitLat" Longitude="@OrbitLon"
+                    HeightAboveTerrain="50000" Radius="18000" FillColor="0.1 0.9 1.0 1.0"/>
+                <PlanetGeoJSON File="assets/geojson_test.geojson" HeightAboveTerrain="1500"
+                    LineColor="0.25 0.70 1.0 0.90" LineWidth="2200" FillColor="0.25 0.70 1.0 0.10"/>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-66.82" Longitude="-68.90" HeightAboveTerrain="85000" Size="30000"
+                    FillColor="1.0 0.92 0.62 1.0">Bailly 301 km</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-58.62" Longitude="-14.73" HeightAboveTerrain="85000" Size="30000"
+                    FillColor="1.0 0.92 0.62 1.0">Clavius 231 km</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-50.00" Longitude="-6.20" HeightAboveTerrain="85000" Size="28000"
+                    FillColor="1.0 0.92 0.62 1.0">Maginus 194 km</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-51.72" Longitude="-39.78" HeightAboveTerrain="85000" Size="28000"
+                    FillColor="1.0 0.92 0.62 1.0">Schiller 179 km</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-65.11" Longitude="-88.49" HeightAboveTerrain="85000" Size="28000"
+                    FillColor="1.0 0.92 0.62 1.0">Hausen 163 km</PlanetText>
+                <PlanetEllipse CRS="#_planet_crs_geodetic_" Latitude="-65" Longitude="315" Radius="45000" HeightAboveTerrain="2000"
+                    LineColor="0.1 0.9 1.0 1.0" LineWidth="3000" FillColor="0.1 0.9 1.0 0.12"/>
+                <PlanetEllipse CRS="#_planet_crs_geodetic_" Latitude="-65" Longitude="335" Radius="32000" HeightAboveTerrain="2000"
+                    LineColor="0.7 1.0 0.35 1.0" LineWidth="2500" FillColor="0.7 1.0 0.35 0.10"/>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-63.5" Longitude="315" HeightAboveTerrain="55000" Size="34000"
+                    FillColor="0.1 0.9 1.0 1.0">Site A</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-63.5" Longitude="335" HeightAboveTerrain="55000" Size="30000"
+                    FillColor="0.7 1.0 0.35 1.0">Site B</PlanetText>
             </PlanetView>
 
             <Text X="760" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">XYZ/RPY Camera</Text>
             <PlanetView Planet="Moon" CRS="#_planet_crs_cartesian_" X="535" Y="300" Width="450" Height="450"
                 CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
                 CameraRoll="@CamRoll" CameraPitch="@CamPitch" CameraYaw="@CamYaw"
-                CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"
+                CameraOrthographic="@UseOrtho" ShaderIndex="@RightShader"
                 Tau="@Tau">
-                <PlanetEllipse X="-230161.415" Y="-1484128.773" Z="875455.350" Radius="115385" LineColor="0.0 1.0 1.0 1.0" LineWidth="3000" FillColor="0.0 1.0 1.0 0.10"/>
-                <PlanetEllipse X="7694.606" Y="-1738371.166" Z="-6406.355" Radius="10460" LineColor="1.0 0.4 1.0 1.0" LineWidth="2000" FillColor="1.0 0.4 1.0 0.12"/>
-                <PlanetText X="-236648.937" Y="-1525961.671" Z="900131.668" Size="60000" FillColor="0.0 1.0 1.0 1.0">Clavius crater 230.77 km</PlanetText>
-                <PlanetText X="7911.493" Y="-1787370.354" Z="-6586.930" Size="30000" FillColor="1.0 0.4 1.0 1.0">Shackleton crater 20.92 km</PlanetText>
+                <PlanetBreadcrumbs CRS="#_planet_crs_geodetic_" Latitude="@OrbitLat" Longitude="@OrbitLon"
+                    HeightAboveTerrain="50000" PointSpacing="25000" MaxPoints="512"
+                    LineColor="1.0 0.75 0.18 0.85" LineWidth="3500"/>
+                <PlanetSphere CRS="#_planet_crs_geodetic_" Latitude="@OrbitLat" Longitude="@OrbitLon"
+                    HeightAboveTerrain="50000" Radius="18000" FillColor="1.0 0.75 0.18 1.0"/>
+                <PlanetGeoJSON File="assets/geojson_test.geojson" HeightAboveTerrain="1500"
+                    LineColor="0.25 0.70 1.0 0.90" LineWidth="2200" FillColor="0.25 0.70 1.0 0.10"/>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-66.82" Longitude="-68.90" HeightAboveTerrain="85000" Size="30000"
+                    FillColor="1.0 0.92 0.62 1.0">Bailly 301 km</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-58.62" Longitude="-14.73" HeightAboveTerrain="85000" Size="30000"
+                    FillColor="1.0 0.92 0.62 1.0">Clavius 231 km</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-50.00" Longitude="-6.20" HeightAboveTerrain="85000" Size="28000"
+                    FillColor="1.0 0.92 0.62 1.0">Maginus 194 km</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-51.72" Longitude="-39.78" HeightAboveTerrain="85000" Size="28000"
+                    FillColor="1.0 0.92 0.62 1.0">Schiller 179 km</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-65.11" Longitude="-88.49" HeightAboveTerrain="85000" Size="28000"
+                    FillColor="1.0 0.92 0.62 1.0">Hausen 163 km</PlanetText>
+                <PlanetEllipse CRS="#_planet_crs_geodetic_" Latitude="-65" Longitude="315" Radius="45000" HeightAboveTerrain="2000"
+                    LineColor="0.1 0.9 1.0 1.0" LineWidth="3000" FillColor="0.1 0.9 1.0 0.12"/>
+                <PlanetEllipse CRS="#_planet_crs_geodetic_" Latitude="-65" Longitude="335" Radius="32000" HeightAboveTerrain="2000"
+                    LineColor="0.7 1.0 0.35 1.0" LineWidth="2500" FillColor="0.7 1.0 0.35 0.10"/>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-63.5" Longitude="315" HeightAboveTerrain="55000" Size="34000"
+                    FillColor="0.1 0.9 1.0 1.0">Site A</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-63.5" Longitude="335" HeightAboveTerrain="55000" Size="30000"
+                    FillColor="0.7 1.0 0.35 1.0">Site B</PlanetText>
             </PlanetView>
 
             <!-- ========== SLIDERS (below planets) ========== -->

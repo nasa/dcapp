@@ -53,6 +53,7 @@ static _NodeIndex    _process_xml_node_nonelem(_AppData *app_data, xmlNodePtr xm
 static _NodeIndex    _process_xml_node_panel(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_pixelstream(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
+static _NodeIndex    _process_xml_node_planet_breadcrumbs(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
 static _NodeIndex    _process_xml_node_planet_geo_json(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory);
@@ -318,6 +319,9 @@ _NodeIndex dc_app_process_xml_node(_AppData *app_data, xmlNodePtr xml_node, _Nod
 
         case DC_APP_ELEM_TYPE_PLANET:
             return _process_xml_node_planet(app_data, xml_node, parent_node_index, parent_elem_type, directory);
+
+        case DC_APP_ELEM_TYPE_PLANET_BREADCRUMBS:
+            return _process_xml_node_planet_breadcrumbs(app_data, xml_node, parent_node_index, parent_elem_type, directory);
 
         case DC_APP_ELEM_TYPE_PLANET_DATA:
             return _process_xml_node_planet_data(app_data, xml_node, parent_node_index, parent_elem_type, directory);
@@ -3578,6 +3582,107 @@ static _NodeIndex _process_xml_node_planet_data(_AppData *app_data, xmlNodePtr x
     return NODE_INDEX_UNDEFINED;
 }
 
+static _NodeIndex _process_xml_node_planet_breadcrumbs(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
+    (void)directory;
+
+    if (parent_elem_type != DC_APP_ELEM_TYPE_PLANET_VIEW) {
+        DC_LOG_ERROR("PlanetBreadcrumbs", "PlanetBreadcrumbs must be a child of PlanetView");
+        return NODE_INDEX_UNDEFINED;
+    }
+
+    _Node dc_node  = {};
+    dc_node.type   = NODE_TYPE_PLANET_BREADCRUMBS;
+    dc_node.parent = parent_node_index;
+
+    _Node *parent = _get_node(app_data, parent_node_index);
+    dc_node.planet_breadcrumbs.planet_def_index = parent->planet_view.planet_def_index;
+    dc_node.planet_breadcrumbs.crs              = parent->planet_view.crs;
+
+    xmlChar *raw_crs = xmlGetProp(xml_node, BAD_CAST "CRS");
+    if (raw_crs) {
+        dc_node.planet_breadcrumbs.crs = (DcAppPlanetCrs)atoi((const char *)raw_crs);
+        xmlFree(raw_crs);
+    }
+
+    xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "Latitude");
+    if (raw_lat) {
+        dc_node.planet_breadcrumbs.lat = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lat);
+        xmlFree(raw_lat);
+    }
+
+    xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "Longitude");
+    if (raw_lon) {
+        dc_node.planet_breadcrumbs.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
+        xmlFree(raw_lon);
+    }
+
+    xmlChar *raw_alt = xmlGetProp(xml_node, BAD_CAST "Altitude");
+    if (raw_alt) {
+        dc_node.planet_breadcrumbs.alt = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_alt);
+        xmlFree(raw_alt);
+    }
+
+    xmlChar *raw_x = xmlGetProp(xml_node, BAD_CAST "X");
+    if (raw_x) {
+        dc_node.planet_breadcrumbs.xyz.x = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_x);
+        xmlFree(raw_x);
+    }
+
+    xmlChar *raw_y = xmlGetProp(xml_node, BAD_CAST "Y");
+    if (raw_y) {
+        dc_node.planet_breadcrumbs.xyz.y = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_y);
+        xmlFree(raw_y);
+    }
+
+    xmlChar *raw_z = xmlGetProp(xml_node, BAD_CAST "Z");
+    if (raw_z) {
+        dc_node.planet_breadcrumbs.xyz.z = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_z);
+        xmlFree(raw_z);
+    }
+
+    xmlChar *raw_height = xmlGetProp(xml_node, BAD_CAST "HeightAboveTerrain");
+    if (raw_height) {
+        dc_node.planet_breadcrumbs.height_above_terrain = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_height);
+        xmlFree(raw_height);
+    }
+
+    xmlChar *raw_spacing = xmlGetProp(xml_node, BAD_CAST "PointSpacing");
+    if (raw_spacing) {
+        dc_node.planet_breadcrumbs.point_spacing = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_spacing);
+        xmlFree(raw_spacing);
+    }
+
+    xmlChar *raw_max_points = xmlGetProp(xml_node, BAD_CAST "MaxPoints");
+    if (raw_max_points) {
+        dc_node.planet_breadcrumbs.max_points = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_max_points);
+        xmlFree(raw_max_points);
+    }
+
+    xmlChar *raw_clear = xmlGetProp(xml_node, BAD_CAST "Clear");
+    if (raw_clear) {
+        dc_node.planet_breadcrumbs.clear = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_INTEGER, (const char *)raw_clear);
+        xmlFree(raw_clear);
+    }
+
+    xmlChar *raw_enabled = xmlGetProp(xml_node, BAD_CAST "Enabled");
+    if (raw_enabled) {
+        dc_node.planet_breadcrumbs.enabled = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_BOOLEAN, (const char *)raw_enabled);
+        xmlFree(raw_enabled);
+    }
+
+    xmlChar *raw_line_width = xmlGetProp(xml_node, BAD_CAST "LineWidth");
+    if (raw_line_width) {
+        dc_node.planet_breadcrumbs.line_width = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_line_width);
+        xmlFree(raw_line_width);
+    }
+
+    dc_node.planet_breadcrumbs.config_flags = NODE_CONFIG_FLAG_NONE;
+    if (_load_color_from_string(app_data, xml_node, "LineColor", &(dc_node.planet_breadcrumbs.line_color)))
+        dc_node.planet_breadcrumbs.config_flags |= NODE_CONFIG_FLAG_LINE_ENABLED;
+
+    return _register_node(app_data, &dc_node);
+}
+
 static _NodeIndex _process_xml_node_planet_ellipse(_AppData *app_data, xmlNodePtr xml_node, _NodeIndex parent_node_index, DcAppElemType parent_elem_type, const char *directory) {
     (void)directory;
 
@@ -5775,6 +5880,8 @@ static const char *_node_type_to_string(_NodeType type) {
             return "Rectangle";
         case NODE_TYPE_SET:
             return "Set";
+        case NODE_TYPE_PLANET_BREADCRUMBS:
+            return "PlanetBreadcrumbs";
         case NODE_TYPE_PLANET_VIEW:
             return "PlanetView";
         case NODE_TYPE_TEXT:

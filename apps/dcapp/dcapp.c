@@ -206,6 +206,9 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
                 break;
             case NODE_TYPE_PIXELSTREAM:
                 break;
+            case NODE_TYPE_PLANET_BREADCRUMBS:
+                sbfree(node->planet_breadcrumbs.sb_points);
+                break;
             case NODE_TYPE_PLANET_LINE:
                 sbfree(node->planet_line.sb_points_static);
                 sbfree(node->planet_line.sb_points_dynamic);

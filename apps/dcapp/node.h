@@ -82,6 +82,7 @@ typedef enum __NodeType {
     NODE_TYPE_SET,
     NODE_TYPE_SPHERE,
     NODE_TYPE_STENCIL,
+    NODE_TYPE_PLANET_BREADCRUMBS,
     NODE_TYPE_PLANET_ELLIPSE,
     NODE_TYPE_PLANET_LINE,
     NODE_TYPE_PLANET_POLYGON,
@@ -609,6 +610,26 @@ typedef struct __NodePlanetLine {
     DcAppPlanetCrs        crs;
 } _NodePlanetLine;
 
+typedef struct __NodePlanetBreadcrumbs {
+    _ValIndex       lat;
+    _ValIndex       lon;
+    _ValIndex       alt;
+    _ValIndex3      xyz;
+    _ValIndex       height_above_terrain;
+    _ValIndex       point_spacing;
+    _ValIndex       max_points;
+    _ValIndex       clear;
+    DcValue         last_clear_value;
+    bool            clear_value_initialized;
+    _ValIndex       enabled;
+    _ValIndex4      line_color;
+    _ValIndex       line_width;
+    plVec3         *sb_points;
+    uint8_t         config_flags;
+    uint8_t         planet_def_index;
+    DcAppPlanetCrs  crs;
+} _NodePlanetBreadcrumbs;
+
 typedef struct __NodePlanetPolygon {
     _PlanetVertexStatic  *sb_points_static;  // fixed points (GeoJSON)
     _PlanetVertexDynamic *sb_points_dynamic; // variable-bound points (XML)
@@ -731,6 +752,7 @@ typedef struct __Node {
         _NodeSphere        sphere;
         _NodeStateEvent    state_event;
         _NodeStencil       stencil;
+        _NodePlanetBreadcrumbs planet_breadcrumbs;
         _NodePlanetEllipse planet_ellipse;
         _NodePlanetLine    planet_line;
         _NodePlanetPolygon planet_polygon;

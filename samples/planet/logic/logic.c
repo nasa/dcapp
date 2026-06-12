@@ -12,6 +12,15 @@ void display_init(void) {
 
 void display_draw(void) {
 
+    static double orbit_lon = 315.0;
+    orbit_lon += 0.25;
+    if (orbit_lon >= 360.0) {
+        orbit_lon -= 360.0;
+    }
+
+    *OrbitLat = -65.0;
+    *OrbitLon = orbit_lon;
+
     // read LLE values
     double lat_deg = *Latitude;
     double lon_deg = *Longitude;

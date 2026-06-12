@@ -1,5 +1,6 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <stdlib.h>
 
 #include "draw_node.h"
 
@@ -45,6 +46,7 @@ static void _draw_node_mouse_motion(_AppData *app_data, _NodeIndex node_index, _
 static void _draw_node_set(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_sphere(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
+static void _draw_node_planet_breadcrumbs(_AppData *app_data, _Node *node, plPlanetView *view);
 static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetView *view);
 static void _draw_node_planet_line(_AppData *app_data, _Node *node, plPlanetView *view);
 static void _draw_node_planet_polygon(_AppData *app_data, _Node *node, plPlanetView *view);
@@ -4384,6 +4386,102 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
     dc_app_draw_context_cleanup(&ctx);
 }
 
+static void _draw_node_planet_breadcrumbs(_AppData *app_data, _Node *node, plPlanetView *view) {
+    _NodePlanetBreadcrumbs *breadcrumbs = &node->planet_breadcrumbs;
+    _PlanetDef            *def         = &app_data->sb_planet_defs[breadcrumbs->planet_def_index];
+
+    if (breadcrumbs->clear != DC_APP_VAL_INDEX_UNDEFINED) {
+        DcValue *clear_value = dc_app_lookup_get_value(app_data->lookup, breadcrumbs->clear);
+        if (breadcrumbs->clear_value_initialized && !dc_value_is_equal(clear_value, &breadcrumbs->last_clear_value)) {
+            sbclear(breadcrumbs->sb_points);
+        }
+        breadcrumbs->last_clear_value        = *clear_value;
+        breadcrumbs->clear_value_initialized = true;
+    }
+
+    bool enabled = true;
+    if (breadcrumbs->enabled != DC_APP_VAL_INDEX_UNDEFINED) {
+        enabled = dc_app_lookup_get_value(app_data->lookup, breadcrumbs->enabled)->value_boolean;
+    }
+    if (!enabled) return;
+
+    plVec3 point = {0};
+    bool   have_point = false;
+    if (breadcrumbs->crs == DC_APP_PLANET_CRS_CARTESIAN) {
+        if (breadcrumbs->xyz.x != DC_APP_VAL_INDEX_UNDEFINED &&
+            breadcrumbs->xyz.y != DC_APP_VAL_INDEX_UNDEFINED &&
+            breadcrumbs->xyz.z != DC_APP_VAL_INDEX_UNDEFINED) {
+            point = (plVec3){
+                (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->xyz.x)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->xyz.y)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->xyz.z)->value_double
+            };
+            have_point = true;
+        }
+    } else {
+        if (breadcrumbs->lat != DC_APP_VAL_INDEX_UNDEFINED &&
+            breadcrumbs->lon != DC_APP_VAL_INDEX_UNDEFINED) {
+            float alt = 0.0f;
+            if (breadcrumbs->alt != DC_APP_VAL_INDEX_UNDEFINED) {
+                alt = (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->alt)->value_double;
+            } else if (breadcrumbs->height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED) {
+                alt = (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->height_above_terrain)->value_double;
+            }
+            plVec3 geodetic = {
+                (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->lat)->value_double,
+                (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->lon)->value_double,
+                alt
+            };
+            dc_geo_geodetic_to_cartesian(&def->geodetic_crs, &def->cartesian_crs, &geodetic, &point, 1);
+            have_point = true;
+        }
+    }
+    if (!have_point || !isfinite(point.x) || !isfinite(point.y) || !isfinite(point.z)) return;
+
+    float point_spacing = breadcrumbs->point_spacing != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->point_spacing)->value_double : 1.0f;
+    if (point_spacing < 0.0f) point_spacing = 0.0f;
+
+    int point_count = sbcount(breadcrumbs->sb_points);
+    if (point_count == 0) {
+        sbpush(breadcrumbs->sb_points, point);
+    } else {
+        plVec3 last = breadcrumbs->sb_points[point_count - 1];
+        float  dx   = point.x - last.x;
+        float  dy   = point.y - last.y;
+        float  dz   = point.z - last.z;
+        float  dist = sqrtf(dx * dx + dy * dy + dz * dz);
+        if ((point_spacing == 0.0f && dist > 0.0f) || dist >= point_spacing) {
+            sbpush(breadcrumbs->sb_points, point);
+        }
+    }
+
+    int max_points = breadcrumbs->max_points != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, breadcrumbs->max_points)->value_integer : 4096;
+    if (max_points < 2) max_points = 2;
+    point_count = sbcount(breadcrumbs->sb_points);
+    if (point_count > max_points) {
+        sbshiftn(breadcrumbs->sb_points, point_count - max_points);
+    }
+
+    point_count = sbcount(breadcrumbs->sb_points);
+    if (point_count < 2) return;
+
+    float line_width = (breadcrumbs->line_width != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->line_width)->value_double : 1.0f) * DCAPP_LINE_WIDTH_FACTOR;
+
+    float lc[4] = {1.0f, 0.0f, 0.0f, 0.5f};
+    if (breadcrumbs->config_flags & NODE_CONFIG_FLAG_LINE_ENABLED) {
+        lc[0] = breadcrumbs->line_color.r != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->line_color.r)->value_double : 1.0f;
+        lc[1] = breadcrumbs->line_color.g != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->line_color.g)->value_double : 1.0f;
+        lc[2] = breadcrumbs->line_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->line_color.b)->value_double : 1.0f;
+        lc[3] = breadcrumbs->line_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, breadcrumbs->line_color.a)->value_double : 1.0f;
+    }
+    uint32_t line_color = PL_COLOR_32_RGBA(lc[0], lc[1], lc[2], lc[3]);
+
+    dc_app_draw_planet_line(view, breadcrumbs->sb_points, (uint32_t)point_count, line_width, line_color);
+}
+
 static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetView *view) {
     _PlanetDef *def = &app_data->sb_planet_defs[node->planet_ellipse.planet_def_index];
 
@@ -5124,7 +5222,9 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
         _NodeIndex child_index = node->planet_view.child;
         while (child_index != NODE_INDEX_UNDEFINED) {
             _Node *child = _get_node(app_data, child_index);
-            if (child->type == NODE_TYPE_PLANET_ELLIPSE)
+            if (child->type == NODE_TYPE_PLANET_BREADCRUMBS)
+                _draw_node_planet_breadcrumbs(app_data, child, view);
+            else if (child->type == NODE_TYPE_PLANET_ELLIPSE)
                 _draw_node_planet_ellipse(app_data, child, view);
             else if (child->type == NODE_TYPE_PLANET_LINE)
                 _draw_node_planet_line(app_data, child, view);
