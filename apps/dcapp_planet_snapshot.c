@@ -289,12 +289,11 @@ PL_EXPORT void pl_app_update(AppData *app) {
         // Local-NED: yaw about down, pitch about right, roll about boresight.
         double lat_rad = dc_utils_degrees_to_radians(app->lat);
         double lon_rad = dc_utils_degrees_to_radians(app->lon);
-        double r = radius + app->elevation;
-        plVec3d eye = {
-            r * cos(lat_rad) * sin(lon_rad),
-            r * sin(lat_rad),
-            r * cos(lat_rad) * cos(lon_rad)
-        };
+        DcGeoCrsGeodetic geodetic_crs = dc_geo_create_crs_geodetic(radius);
+        DcGeoCrsCartesian cartesian_crs = dc_geo_create_crs_cartesian(radius);
+        plVec3d geodetic_in = {app->lat, app->lon, app->elevation};
+        plVec3d eye;
+        dc_geo_geodetic_to_cartesian_d(&geodetic_crs, &cartesian_crs, &geodetic_in, &eye, 1);
         plVec3 north, east, down, up;
         dc_geo_get_local_ned_basis(lat_rad, lon_rad, &north, &east, &down, &up);
         float yaw = pl_radiansf(app->yaw);
@@ -702,7 +701,7 @@ static bool _load_planet_data(AppData *app) {
             double lat = pl_json_double_member(tile_obj, "lat", 0.0);
             double lon = pl_json_double_member(tile_obj, "lon", 0.0);
             DcGeoCrsGeodetic geodetic_crs = dc_geo_create_crs_geodetic(radius);
-            DcGeoCrsPolarStereo polar_crs = dc_geo_create_crs_polar_stereographic(radius, 0.0, 0.0);
+            DcGeoCrsPolarStereo polar_crs = dc_geo_create_crs_polar_stereographic(radius, -90.0, 0.0);
             plVec3 geodetic_in = {(float)lat, (float)lon, 0.0f};
             plVec2 polar_out;
             dc_geo_geodetic_to_polar_stereo(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);

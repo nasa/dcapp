@@ -38,6 +38,19 @@ void dc_geo_geodetic_to_cartesian(const DcGeoCrsGeodetic *from, const DcGeoCrsCa
     }
 }
 
+void dc_geo_geodetic_to_cartesian_d(const DcGeoCrsGeodetic *from, const DcGeoCrsCartesian *to, const plVec3d *in, plVec3d *out, size_t count) {
+    (void)to;
+    double planet_radius = from->planet_radius;
+    for (size_t i = 0; i < count; i++) {
+        double lat_rad = in[i].x * M_PI / 180.0;
+        double lon_rad = in[i].y * M_PI / 180.0;
+        double r = planet_radius + in[i].z;
+        out[i].x = r * cos(lat_rad) * sin(lon_rad);
+        out[i].y = r * sin(lat_rad);
+        out[i].z = r * cos(lat_rad) * cos(lon_rad);
+    }
+}
+
 void dc_geo_cartesian_to_geodetic(const DcGeoCrsCartesian *from, const DcGeoCrsGeodetic *to, const plVec3 *in, plVec3 *out, size_t count) {
     (void)to;
     double planet_radius = from->planet_radius;
@@ -58,6 +71,26 @@ void dc_geo_cartesian_to_geodetic(const DcGeoCrsCartesian *from, const DcGeoCrsG
     }
 }
 
+void dc_geo_cartesian_to_geodetic_d(const DcGeoCrsCartesian *from, const DcGeoCrsGeodetic *to, const plVec3d *in, plVec3d *out, size_t count) {
+    (void)to;
+    double planet_radius = from->planet_radius;
+    for (size_t i = 0; i < count; i++) {
+        double x = in[i].x;
+        double y = in[i].y;
+        double z = in[i].z;
+        double r = sqrt(x * x + y * y + z * z);
+        if (r > 0.0) {
+            out[i].x = asin(y / r) * 180.0 / M_PI;
+            out[i].y = atan2(x, z) * 180.0 / M_PI;
+            out[i].z = r - planet_radius;
+        } else {
+            out[i].x = 0.0;
+            out[i].y = 0.0;
+            out[i].z = -planet_radius;
+        }
+    }
+}
+
 void dc_geo_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const DcGeoCrsPolarStereo *to, const plVec3 *in, plVec2 *out, size_t count) {
     (void)to;
     double planet_radius = from->planet_radius;
@@ -70,6 +103,18 @@ void dc_geo_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const DcGeoCr
     }
 }
 
+void dc_geo_geodetic_to_polar_stereo_d(const DcGeoCrsGeodetic *from, const DcGeoCrsPolarStereo *to, const plVec3d *in, plVec2d *out, size_t count) {
+    (void)to;
+    double planet_radius = from->planet_radius;
+    for (size_t i = 0; i < count; i++) {
+        double lat_rad = in[i].x * M_PI / 180.0;
+        double lon_rad = in[i].y * M_PI / 180.0;
+        double rho = 2.0 * planet_radius * tan(M_PI / 4.0 + 0.5 * lat_rad);
+        out[i].x = rho * sin(lon_rad);
+        out[i].y = -rho * cos(lon_rad);
+    }
+}
+
 void dc_geo_user_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const DcGeoCrsPolarStereo *to, const plVec3 *in, plVec2 *out, size_t count) {
     (void)to;
     double planet_radius = from->planet_radius;
@@ -79,6 +124,18 @@ void dc_geo_user_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const Dc
         float rho = 2.0f * (float)planet_radius * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
         out[i].x = rho * sinf(lon_rad);
         out[i].y = -rho * cosf(lon_rad);
+    }
+}
+
+void dc_geo_user_geodetic_to_polar_stereo_d(const DcGeoCrsGeodetic *from, const DcGeoCrsPolarStereo *to, const plVec3d *in, plVec2d *out, size_t count) {
+    (void)to;
+    double planet_radius = from->planet_radius;
+    for (size_t i = 0; i < count; i++) {
+        double lat_rad = in[i].x * M_PI / 180.0;
+        double lon_rad = (180.0 - in[i].y) * M_PI / 180.0;
+        double rho = 2.0 * planet_radius * tan(M_PI / 4.0 + 0.5 * lat_rad);
+        out[i].x = rho * sin(lon_rad);
+        out[i].y = -rho * cos(lon_rad);
     }
 }
 

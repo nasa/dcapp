@@ -12,6 +12,7 @@
 #include "utils/file.h"
 #include "utils/log.h"
 #include "utils/time.h"
+#include "geo.h"
 
 #include <math.h>
 
@@ -22,9 +23,7 @@ PL_EXPORT void  pl_app_resize(_AppData *app_data);
 PL_EXPORT void  pl_app_update(_AppData *app_data);
 static void *get_variable_value_addr(void *user_data, const char *name);
 static void     _apply_frame_rate_limit(_AppData *app_data);
-static bool     _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, double radius, plPlanetTexture *out);
-static void     _planet_project_south_polar_stereographic(double radius, double lat_deg, double lon_deg, double *out_x, double *out_y);
-static void     _planet_project_user_geodetic_to_south_polar_stereographic(double radius, double lat_deg, double lon_deg, double *out_x, double *out_y);
+static bool     _build_planet_texture(_AppData *app_data, _PlanetDef *def, _PlanetTextureEntry *entry, plPlanetTexture *out);
 static void     _init_planets(_AppData *app_data);
 static void     _update_planet_defs(_AppData *app_data);
 static void     _load_apis(plApiRegistryI *api_registry);
@@ -801,7 +800,7 @@ static void _apply_frame_rate_limit(_AppData *app_data) {
     app_data->frame_data.last_frame_start_time = dc_utils_time_get();
 }
 
-static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry, double radius, plPlanetTexture *out) {
+static bool _build_planet_texture(_AppData *app_data, _PlanetDef *def, _PlanetTextureEntry *entry, plPlanetTexture *out) {
     if (!entry->source || entry->source[0] == '\0') return false;
     if (!_ext_vfs->does_file_exist(entry->source)) return false;
     memset(out, 0, sizeof(*out));
@@ -823,40 +822,34 @@ static bool _build_planet_texture(_AppData *app_data, _PlanetTextureEntry *entry
                entry->xyz.x != DC_APP_VAL_INDEX_UNDEFINED &&
                entry->xyz.y != DC_APP_VAL_INDEX_UNDEFINED &&
                entry->xyz.z != DC_APP_VAL_INDEX_UNDEFINED) {
-        double x = dc_app_lookup_get_value(app_data->lookup, entry->xyz.x)->value_double;
-        double y = dc_app_lookup_get_value(app_data->lookup, entry->xyz.y)->value_double;
-        double z = dc_app_lookup_get_value(app_data->lookup, entry->xyz.z)->value_double;
-        double r = sqrt(x * x + y * y + z * z);
-        if (r <= 0.0) return false;
-
-        double lat = asin(y / r) * 180.0 / 3.14159265358979323846;
-        double lon = atan2(x, z) * 180.0 / 3.14159265358979323846;
-        _planet_project_user_geodetic_to_south_polar_stereographic(radius, lat, lon, &out->dOriginX, &out->dOriginY);
+        plVec3d cartesian_in = {
+            dc_app_lookup_get_value(app_data->lookup, entry->xyz.x)->value_double,
+            dc_app_lookup_get_value(app_data->lookup, entry->xyz.y)->value_double,
+            dc_app_lookup_get_value(app_data->lookup, entry->xyz.z)->value_double
+        };
+        plVec3d geodetic_out;
+        plVec2d polar_out;
+        dc_geo_cartesian_to_geodetic_d(&def->cartesian_crs, &def->geodetic_crs, &cartesian_in, &geodetic_out, 1);
+        dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_out, &polar_out, 1);
+        out->dOriginX = polar_out.x;
+        out->dOriginY = polar_out.y;
     } else if (entry->lle.lat != DC_APP_VAL_INDEX_UNDEFINED &&
                entry->lle.lon != DC_APP_VAL_INDEX_UNDEFINED) {
-        double lat = dc_app_lookup_get_value(app_data->lookup, entry->lle.lat)->value_double;
-        double lon = dc_app_lookup_get_value(app_data->lookup, entry->lle.lon)->value_double;
-        _planet_project_user_geodetic_to_south_polar_stereographic(radius, lat, lon, &out->dOriginX, &out->dOriginY);
+        plVec3d geodetic_in = {
+            dc_app_lookup_get_value(app_data->lookup, entry->lle.lat)->value_double,
+            dc_app_lookup_get_value(app_data->lookup, entry->lle.lon)->value_double,
+            0.0
+        };
+        plVec2d polar_out;
+        dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_in, &polar_out, 1);
+        out->dOriginX = polar_out.x;
+        out->dOriginY = polar_out.y;
     } else {
         DC_LOG_ERROR("PlanetTexture", "Texture center must be OriginX/OriginY, Latitude/Longitude, or complete X/Y/Z for '%s'", entry->source);
         return false;
     }
 
     return true;
-}
-
-static void _planet_project_south_polar_stereographic(double radius, double lat_deg, double lon_deg, double *out_x, double *out_y) {
-    const double pi      = 3.14159265358979323846;
-    double       lat_rad = lat_deg * pi / 180.0;
-    double       lon_rad = lon_deg * pi / 180.0;
-    double       rho     = 2.0 * radius * tan(pi / 4.0 + 0.5 * lat_rad);
-
-    *out_x = rho * sin(lon_rad);
-    *out_y = -rho * cos(lon_rad);
-}
-
-static void _planet_project_user_geodetic_to_south_polar_stereographic(double radius, double lat_deg, double lon_deg, double *out_x, double *out_y) {
-    _planet_project_south_polar_stereographic(radius, lat_deg, 180.0 - lon_deg, out_x, out_y);
 }
 
 static void _init_planets(_AppData *app_data) {
@@ -917,6 +910,9 @@ static void _init_planets(_AppData *app_data) {
         int    tree_depth       = pl_json_int_member(root, "tree_depth", 0);
         float  max_base_error   = pl_json_float_member(root, "max_base_error", 0.0f);
         def->radius             = radius;
+        def->geodetic_crs       = dc_geo_create_crs_geodetic(radius);
+        def->cartesian_crs      = dc_geo_create_crs_cartesian(radius);
+        def->polar_crs          = dc_geo_create_crs_polar_stereographic(radius, -90.0, 0.0);
 
         // extract tiles array
         uint32_t      tile_count = 0;
@@ -952,9 +948,15 @@ static void _init_planets(_AppData *app_data) {
                 tile->dOriginX = pl_json_double_member(tile_obj, "originX", 0.0);
                 tile->dOriginY = pl_json_double_member(tile_obj, "originY", 0.0);
             } else if (pl_json_member_exist(tile_obj, "lat") && pl_json_member_exist(tile_obj, "lon")) {
-                double lat = pl_json_double_member(tile_obj, "lat", 0.0);
-                double lon = pl_json_double_member(tile_obj, "lon", 0.0);
-                _planet_project_south_polar_stereographic(radius, lat, lon, &tile->dOriginX, &tile->dOriginY);
+                plVec3d geodetic_in = {
+                    pl_json_double_member(tile_obj, "lat", 0.0),
+                    pl_json_double_member(tile_obj, "lon", 0.0),
+                    0.0
+                };
+                plVec2d polar_out;
+                dc_geo_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_in, &polar_out, 1);
+                tile->dOriginX = polar_out.x;
+                tile->dOriginY = polar_out.y;
             }
             tile->dMaxBaseError = (double)max_base_error;
             tile->dMaxHeight    = (double)max_height;
@@ -991,7 +993,7 @@ static void _init_planets(_AppData *app_data) {
         // initial texture overlay (if source is set at parse time)
         if (sbcount(def->sb_textures) > 0) {
             plPlanetTexture texture;
-            if (_build_planet_texture(app_data, &def->sb_textures[0], def->radius, &texture)) {
+            if (_build_planet_texture(app_data, def, &def->sb_textures[0], &texture)) {
                 DC_LOG_INFO("Planet", "  [%d] texture: %s (mpp=%.1f, originX=%.1f, originY=%.1f)",
                             i, texture.pcPath, texture.fMetersPerPixel, texture.dOriginX, texture.dOriginY);
                 _ext_planet->set_texture(planet, &texture, 0);
@@ -1071,7 +1073,7 @@ static void _update_planet_defs(_AppData *app_data) {
             DcValue *refresh_val = dc_app_lookup_get_value(app_data->lookup, tex->fire_refresh);
             if (!dc_value_is_equal(refresh_val, &tex->last_fire_refresh_value)) {
                 plPlanetTexture texture;
-                if (_build_planet_texture(app_data, tex, def->radius, &texture)) {
+                if (_build_planet_texture(app_data, def, tex, &texture)) {
                     _ext_planet->set_texture(planet, &texture, 0);
                 } else {
                     _ext_planet->set_texture(planet, NULL, 0);

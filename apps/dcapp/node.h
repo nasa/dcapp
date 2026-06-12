@@ -7,6 +7,7 @@
 #include "pl_planet_ext.h"
 #include "app/lookup.h"
 #include "app/enums.h"
+#include "geo.h"
 #include "pixelstream/mjpeg.h"
 #include "pixelstream/shmem.h"
 #include "dc_draw_ext.h"
@@ -540,6 +541,9 @@ typedef struct __PlanetDef {
     // data
     char **sb_data_files; // stretchy buffer of heap-allocated file paths
     double radius;        // resolved from JSON at init
+    DcGeoCrsGeodetic geodetic_crs;
+    DcGeoCrsCartesian cartesian_crs;
+    DcGeoCrsPolarStereo polar_crs;
 
     // texture overlays
     _PlanetTextureEntry *sb_textures; // stretchy buffer
