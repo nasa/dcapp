@@ -24,7 +24,7 @@ Index of this file:
 // [SECTION] apis
 //-----------------------------------------------------------------------------
 
-#define plPlanetI_version {0, 5, 0}
+#define plPlanetI_version {0, 6, 0}
 
 //-----------------------------------------------------------------------------
 // [SECTION] includes
@@ -42,6 +42,7 @@ Index of this file:
 typedef struct _plPlanetExtInit            plPlanetExtInit;
 typedef struct _plPlanetInit               plPlanetInit;
 typedef struct _plPlanetRuntimeOptions     plPlanetRuntimeOptions;
+typedef struct _plPlanetStreamStats        plPlanetStreamStats;
 typedef struct _plPlanetViewRuntimeOptions plPlanetViewRuntimeOptions;
 typedef struct _plPlanet                   plPlanet;
 typedef struct _plPlanetView               plPlanetView;
@@ -81,7 +82,8 @@ typedef struct _plPlanetI
     void (*set_texture)(plPlanet*, plPlanetTexture*, uint32_t index);
 
     // per frame
-    void (*prepare)(plPlanet*, plCommandBuffer*);
+    void                (*prepare)         (plPlanet*, plCommandBuffer*);
+    plPlanetStreamStats (*get_stream_stats)(plPlanet*);
 
     // views (share terrain data, separate render targets)
     plPlanetView*     (*create_view)     (plPlanet*, plCommandBuffer*, plPlanetViewInit);
@@ -158,6 +160,13 @@ typedef struct _plPlanetRuntimeOptions
 {
     plVec3 tLightDirection;
 } plPlanetRuntimeOptions;
+
+typedef struct _plPlanetStreamStats
+{
+    uint32_t uPendingRequests;
+    uint32_t uResidentChunks;
+    uint32_t uTotalChunks;
+} plPlanetStreamStats;
 
 //-----------------------------------------------------------------------------
 // [SECTION] enums

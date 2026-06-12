@@ -426,6 +426,56 @@ with pl.project("apps"):
                     pl.add_include_directories("/opt/homebrew/opt/gdal/include")
                     pl.add_linker_flags("-lgdal")
 
+    # dcapp-planet-snapshot
+    with pl.target("dcapp-planet-snapshot", pl.TargetType.DYNAMIC_LIBRARY):
+
+        pl.set_output_binary("dcapp-planet-snapshot")
+
+        pl.add_source_files(
+            fwd(os.path.relpath(dcapp_home_abs + "/apps/dcapp_planet_snapshot.c", output_dir_abs)),
+            fwd(os.path.relpath(dcapp_home_abs + "/src/geo.c", output_dir_abs)),
+            fwd(os.path.relpath(dcapp_home_abs + "/src/utils/file.c", output_dir_abs)),
+            fwd(os.path.relpath(dcapp_home_abs + "/src/utils/log.c", output_dir_abs)),
+            fwd(os.path.relpath(dcapp_home_abs + "/src/utils/math.c", output_dir_abs)),
+            fwd(os.path.relpath(dcapp_home_abs + "/src/utils/string.c", output_dir_abs)),
+        )
+
+        # release config
+        with pl.configuration("release"):
+
+            # win32
+            with pl.platform("Windows"):
+                with pl.compiler("msvc"):
+                    pl.add_linker_flags("-nologo", "-noimplib", "-noexp")
+
+            # linux
+            with pl.platform("Linux"):
+                with pl.compiler("gcc"):
+                    pass
+
+            # mac os
+            with pl.platform("Darwin"):
+                with pl.compiler("clang"):
+                    pass
+
+        # debug config
+        with pl.configuration("debug"):
+
+            # win32
+            with pl.platform("Windows"):
+                with pl.compiler("msvc"):
+                    pl.add_linker_flags("-nologo", "-noimplib", "-noexp")
+
+            # linux
+            with pl.platform("Linux"):
+                with pl.compiler("gcc"):
+                    pl.add_compiler_flags("--debug", "-g")
+
+            # mac os
+            with pl.platform("Darwin"):
+                with pl.compiler("clang"):
+                    pass
+
 #-----------------------------------------------------------------------------
 # [SECTION] generate scripts
 #-----------------------------------------------------------------------------

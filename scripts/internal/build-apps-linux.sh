@@ -75,6 +75,8 @@ rm -f ../../pilotlight/out/dcapp-genheader
 rm -f ../../pilotlight/out/dcapp-validate
 rm -f ../../pilotlight/out/dcapp-planet-chunkgen.so
 rm -f ../../pilotlight/out/dcapp-planet-chunkgen_*.so
+rm -f ../../pilotlight/out/dcapp-planet-snapshot.so
+rm -f ../../pilotlight/out/dcapp-planet-snapshot_*.so
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dc_draw_ext | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -222,7 +224,7 @@ PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/edge.c ../../src/geojson.c ../../src/pixelstream/mjpeg.c ../../src/pixelstream/shmem.c ../../src/sock.c ../../src/trick.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp/dcapp.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/edge.c ../../src/geo.c ../../src/geojson.c ../../src/pixelstream/mjpeg.c ../../src/pixelstream/shmem.c ../../src/sock.c ../../src/trick.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp/dcapp.c "
 
 # run compiler (and linker)
 echo
@@ -350,6 +352,40 @@ fi
 echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
+#~~~~~~~~~~~~~~~~~~~~~~~ dcapp-planet-snapshot | release ~~~~~~~~~~~~~~~~~~~~~~~~
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb "
+PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_COMPILER_FLAGS="-fPIC -DNDEBUG "
+PL_LINKER_FLAGS="-ldl -lm "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../../apps/dcapp_planet_snapshot.c ../../src/geo.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c "
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: dcapp-planet-snapshot${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../pilotlight/out/libdcapp-planet-snapshot.so"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+    PL_BUILD_STATUS=1
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+popd >/dev/null
+exit 1
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
 # delete lock file(s)
 rm -f ../../pilotlight/out/lock.tmp
 
@@ -385,6 +421,8 @@ rm -f ../../pilotlight/out/dcapp-genheader
 rm -f ../../pilotlight/out/dcapp-validate
 rm -f ../../pilotlight/out/dcapp-planet-chunkgen.so
 rm -f ../../pilotlight/out/dcapp-planet-chunkgen_*.so
+rm -f ../../pilotlight/out/dcapp-planet-snapshot.so
+rm -f ../../pilotlight/out/dcapp-planet-snapshot_*.so
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dc_draw_ext | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -532,7 +570,7 @@ PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
 PL_LINKER_FLAGS="-ldl -lm -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES="-ldearimguid "
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/edge.c ../../src/geojson.c ../../src/pixelstream/mjpeg.c ../../src/pixelstream/shmem.c ../../src/sock.c ../../src/trick.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp/dcapp.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/edge.c ../../src/geo.c ../../src/geojson.c ../../src/pixelstream/mjpeg.c ../../src/pixelstream/shmem.c ../../src/sock.c ../../src/trick.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp/dcapp.c "
 
 # run compiler (and linker)
 echo
@@ -644,6 +682,40 @@ echo ${YELLOW}Step: dcapp-planet-chunkgen${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
 gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../pilotlight/out/libdcapp-planet-chunkgen.so"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+    PL_BUILD_STATUS=1
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+popd >/dev/null
+exit 1
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-planet-snapshot | debug ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb "
+PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu "
+PL_COMPILER_FLAGS="-fPIC --debug -g -O0 --debug -g "
+PL_LINKER_FLAGS="-ldl -lm "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../../apps/dcapp_planet_snapshot.c ../../src/geo.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c "
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: dcapp-planet-snapshot${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+gcc -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINKER_FLAGS -o "./../../pilotlight/out/libdcapp-planet-snapshot.so"
 
 # check build status
 if [ $? -ne 0 ]

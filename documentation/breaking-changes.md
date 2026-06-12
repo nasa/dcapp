@@ -7,6 +7,23 @@ Source and ABI changes that may require edits outside XML display files.
 [Unreleased]
 ------------
 
+### 2026-06-12 - Planet Extension API 0.6.0
+
+#### Affected Code
+- Plugins or tools that fetch `plPlanetI` by version or compile against the
+  `plPlanetI` function table.
+
+#### Changed
+- `plPlanetI_version` changed from `{0, 5, 0}` to `{0, 6, 0}`.
+- `plPlanetStreamStats` was added.
+- `plPlanetI.get_stream_stats(plPlanet*)` was added to expose pending request,
+  resident chunk, and total chunk counts.
+
+#### Migration
+- Rebuild consumers that compile against `plPlanetI`.
+- Consumers using strict API version checks should request `plPlanetI` version
+  `{0, 6, 0}` when they need stream statistics.
+
 ### 2026-06-09 - PlanetView CRS Is Required
 
 #### Affected XML

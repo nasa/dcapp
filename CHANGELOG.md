@@ -5,6 +5,18 @@ All notable changes to dcapp are documented in this file.
 Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
 
+[2.151.0] - 2026-06-12
+--------------------
+
+### Added
+- Added `dcapp-planet-snapshot` for rendering planet PNG snapshots directly from preprocessed planet chunk data.
+- Added `plPlanetStreamStats` and `plPlanetI.get_stream_stats()` to report planet streaming progress.
+
+### Changed
+- Moved the sample planet data download flow to `scripts/download-planet-data.*`, which writes under `data/planets/`.
+- Removed sample-local planet setup scripts in favor of the repository-level downloader.
+
+
 [2.150.0] - 2026-06-04
 --------------------
 

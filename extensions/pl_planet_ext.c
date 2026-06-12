@@ -1380,6 +1380,33 @@ pl_prepare_planet(plPlanet* ptPlanet, plCommandBuffer* ptCmdBuffer)
     }
 }
 
+plPlanetStreamStats
+pl_planet_get_stream_stats(plPlanet* ptPlanet)
+{
+    plPlanetStreamStats tStats = {0};
+    if(!ptPlanet)
+        return tStats;
+
+    for(plPlanetResidencyNode* ptRequest = ptPlanet->tRequestQueue.ptNext; ptRequest; ptRequest = ptRequest->ptNext)
+        tStats.uPendingRequests++;
+
+    const uint32_t uFileCount = pl_sb_size(ptPlanet->sbtChunkFiles);
+    for(uint32_t uFileIndex = 0; uFileIndex < uFileCount; uFileIndex++)
+    {
+        plPlanetChunkFile* ptFile = &ptPlanet->sbtChunkFiles[uFileIndex].tFile;
+        tStats.uTotalChunks += ptFile->uChunkCount;
+        if(!ptFile->atChunks)
+            continue;
+        for(uint32_t uChunkIndex = 0; uChunkIndex < ptFile->uChunkCount; uChunkIndex++)
+        {
+            if(ptFile->atChunks[uChunkIndex].ptIndexHole)
+                tStats.uResidentChunks++;
+        }
+    }
+
+    return tStats;
+}
+
 void
 pl_planet_set_runtime_options(plPlanet* ptPlanet, plPlanetRuntimeOptions tOptions)
 {
@@ -1754,12 +1781,12 @@ pl__handle_residency(plPlanet* ptPlanet, plCommandBuffer* ptCommandBuffer)
         // NOTE: we are using the starter extension to get a blit encoder, later examples we will
         //       handle this ourselves
         plBlitEncoder* ptEncoder = gptGfx->begin_blit_pass(ptCommandBuffer);
-        // gptGfx->pipeline_barrier_blit(ptEncoder, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE);
+        gptGfx->pipeline_barrier_blit(ptEncoder, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE);
 
         gptGfx->copy_buffer(ptEncoder, gptCtx->tStagingBuffer, ptPlanet->tIndexBuffer, uIndexStageOffset, uIndexFinalOffset, idx_bytes);
         gptGfx->copy_buffer(ptEncoder, gptCtx->tStagingBuffer, ptPlanet->tVertexBuffer, uVertexStageOffset, uVertexFinalOffset, vtx_bytes);
 
-        // gptGfx->pipeline_barrier_blit(ptEncoder, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ);
+        gptGfx->pipeline_barrier_blit(ptEncoder, PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_TRANSFER_WRITE, PL_PIPELINE_STAGE_VERTEX_SHADER | PL_PIPELINE_STAGE_COMPUTE_SHADER | PL_PIPELINE_STAGE_TRANSFER, PL_ACCESS_SHADER_READ | PL_ACCESS_TRANSFER_READ);
         gptGfx->end_blit_pass(ptEncoder);
         // gptGfx->queue_buffer_for_deletion(ptDevice, tStagingBuffer);
 
@@ -2488,6 +2515,7 @@ pl_load_ext(plApiRegistryI* ptApiRegistry, bool bReload)
         .create_planet            = pl_create_planet,
         .cleanup_planet           = pl_cleanup_planet,
         .prepare                  = pl_prepare_planet,
+        .get_stream_stats         = pl_planet_get_stream_stats,
         .reload_shaders           = pl_planet_load_shaders,
         .set_runtime_options      = pl_planet_set_runtime_options,
         .get_runtime_options      = pl_planet_get_runtime_options,

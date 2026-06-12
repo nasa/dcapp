@@ -42,7 +42,13 @@ bin/dcapp-validate.sh path/to/display.xml             # (dcapp-validate.bat)
 bin/dcapp-genheader.sh path/to/display.xml output.h   # (dcapp-genheader.bat)
 
 # Generate planet terrain chunks
-bin/dcapp-planet-chunkgen.sh path/to/planet.json out  # (dcapp-planet-chunkgen.bat)
+bin/dcapp-planet-chunkgen.sh path/to/LDEM.lbl out     # (dcapp-planet-chunkgen.bat)
+
+# Render a planet snapshot
+bin/dcapp-planet-snapshot.sh --planet-data data/planets/moon/LDEM_45S_100M/chunks/LDEM_45S_100M.planet.json --crs geodetic --attitude-frame local-ned --lat -58.62 --lon 345.27 --elevation 2000000 --output snapshot.png
+
+# Download the sample lunar DEM and generate planet chunks
+scripts/download-planet-data.sh                       # (download-planet-data.bat)
 ```
 
 ---

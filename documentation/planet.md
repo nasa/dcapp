@@ -27,14 +27,13 @@ The input is a GeoTIFF or PDS-compatible DEM file. For example, the included pla
 
 - **LDEM_45S_100M** -- Lunar south pole at 100 meters per pixel, available from the MIT LOLA GDR archive.
 
-The sample's `setup.sh` script downloads both the `.IMG` raster and its `.LBL` label file automatically:
+The repository-level planet data script downloads both the `.IMG` raster and its `.LBL` label file automatically:
 
 ```bash
-cd samples/planet
-./setup.sh
+scripts/download-planet-data.sh
 ```
 
-This downloads the DEM into the `cache/` directory and then runs the chunkgen tool.
+This downloads the DEM into `data/planets/moon/LDEM_45S_100M/source/` and writes generated chunks to `data/planets/moon/LDEM_45S_100M/chunks/`.
 
 ### The `dcapp-planet-chunkgen` Tool
 
@@ -78,6 +77,72 @@ The `.planet.json` file is what you reference from the `<PlanetData>` element in
 
 ---
 
+## Snapshot Utility
+
+`dcapp-planet-snapshot` renders a planet directly from preprocessed chunk data and writes a PNG. It does not use XML. `CRS` is explicit, matching `<PlanetView>` camera rules.
+
+**Geodetic camera:**
+
+```bash
+bin/dcapp-planet-snapshot.sh \
+  --planet-data data/planets/moon/LDEM_45S_100M/chunks/LDEM_45S_100M.planet.json \
+  --crs geodetic \
+  --attitude-frame local-ned \
+  --lat -58.62 --lon 345.27 --elevation 2000000 \
+  --yaw 0 --pitch 0 --roll 0 \
+  --fov 60 \
+  --output snapshot.png
+```
+
+**Cartesian camera:**
+
+```bash
+bin/dcapp-planet-snapshot.sh \
+  --planet-data data/planets/moon/LDEM_45S_100M/chunks/LDEM_45S_100M.planet.json \
+  --crs cartesian \
+  --attitude-frame cartesian-rpy \
+  --x 1000000 --y -1000000 --z 2000000 \
+  --roll 0 --pitch -30 --yaw 45 \
+  --output snapshot.png
+```
+
+**Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--planet-data FILE` | Required | Preprocessed `.planet.json` metadata |
+| `--output FILE` | Required | Output PNG |
+| `--crs geodetic|cartesian` | Required | Camera coordinate reference system |
+| `--attitude-frame local-ned|cartesian-rpy` | Required | Frame used to interpret attitude angles |
+| `--lat N --lon N --elevation N` | Required for geodetic | Geodetic camera position |
+| `--yaw DEG --pitch DEG --roll DEG` | 0 | Camera attitude in the selected attitude frame |
+| `--x N --y N --z N --roll DEG --pitch DEG --yaw DEG` | Required for cartesian | Cartesian camera pose |
+| `--width N` | 1024 | Output width |
+| `--height N` | 1024 | Output height |
+| `--fov DEG` | 60 | Vertical field of view |
+| `--vertex-shader FILE` | Built-in | Custom vertex shader |
+| `--fragment-shader FILE` | Built-in | Custom fragment shader |
+
+The snapshot utility renders until the current camera view stops queuing tile loads and the output texture has settled, then captures the stable result. Snapshot LOD tau is fixed at `0.05`.
+
+### Snapshot Position And Attitude Frames
+
+`--crs` describes how the camera position is expressed. `--attitude-frame` describes the coordinate frame used for attitude. They are separate because spacecraft position and spacecraft attitude are usually reported in different frames.
+
+For geodetic positions, use `--attitude-frame local-ned`. The local frame is built at the camera latitude/longitude:
+
+| Axis | Meaning |
+|------|---------|
+| `+N` | Local north, tangent to the planet surface |
+| `+E` | Local east, tangent to the planet surface |
+| `+D` | Local down, toward nadir |
+
+With `local-ned`, `--yaw 0 --pitch 0 --roll 0` points the camera along `+D` at nadir, with image up aligned to `+N` and image right aligned to `+E`. Positive yaw rotates the local north/east image basis about `+D`, positive pitch tilts the boresight toward the yawed image-up direction, and positive roll rotates the image about the boresight.
+
+For Cartesian positions, use `--attitude-frame cartesian-rpy`. The existing `--roll`, `--pitch`, and `--yaw` values are interpreted by the renderer in body-centered Cartesian coordinates.
+
+---
+
 ## XML Elements
 
 ### Coordinate Reference Systems
@@ -115,7 +180,7 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 ```xml
 <Planet Name="Moon" CRS="#_planet_crs_geodetic_"
     LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
-    <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
+    <PlanetData File="../../data/planets/moon/LDEM_45S_100M/chunks/LDEM_45S_100M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
@@ -140,7 +205,7 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 Specifies the preprocessed terrain data for a planet. Must be a child of `<Planet>`.
 
 ```xml
-<PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
+<PlanetData File="../../data/planets/moon/LDEM_45S_100M/chunks/LDEM_45S_100M.planet.json"/>
 ```
 
 **Attributes:**
@@ -595,7 +660,7 @@ A single `<Planet>` is defined with one data source, one texture overlay, and th
 ```xml
 <Planet Name="Moon" CRS="#_planet_crs_geodetic_"
     LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
-    <PlanetData File="../../cache/LDEM_45S_100M.planet.json"/>
+    <PlanetData File="../../data/planets/moon/LDEM_45S_100M/chunks/LDEM_45S_100M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
@@ -641,11 +706,10 @@ The sample provides sliders for latitude, longitude, elevation, and heading, alo
 
 ```bash
 # 1. Prepare the terrain data (downloads DEM, runs chunkgen)
-cd samples/planet
-./setup.sh
+scripts/download-planet-data.sh
 
 # 2. Run the display
-dcapp planet.xml
+bin/dcapp.sh samples/planet/planet.xml
 ```
 
 ---

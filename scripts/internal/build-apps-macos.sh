@@ -77,6 +77,8 @@ rm -f ../../pilotlight/out/dcapp-genheader
 rm -f ../../pilotlight/out/dcapp-validate
 rm -f ../../pilotlight/out/dcapp-planet-chunkgen.dylib
 rm -f ../../pilotlight/out/dcapp-planet-chunkgen_*.dylib
+rm -f ../../pilotlight/out/dcapp-planet-snapshot.dylib
+rm -f ../../pilotlight/out/dcapp-planet-snapshot_*.dylib
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dc_draw_ext | release ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
@@ -255,7 +257,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC -DNDEBUG "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES=""
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/edge.c ../../src/geojson.c ../../src/pixelstream/mjpeg.c ../../src/pixelstream/shmem.c ../../src/sock.c ../../src/trick.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp/dcapp.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/edge.c ../../src/geo.c ../../src/geojson.c ../../src/pixelstream/mjpeg.c ../../src/pixelstream/shmem.c ../../src/sock.c ../../src/trick.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp/dcapp.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -415,6 +417,48 @@ fi
 echo ${CYAN}Results: ${NC} ${PL_RESULT}
 echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
 
+#~~~~~~~~~~~~~~~~~~~~~~~ dcapp-planet-snapshot | release ~~~~~~~~~~~~~~~~~~~~~~~~
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb "
+PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
+PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC -DNDEBUG "
+PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../../apps/dcapp_planet_snapshot.c ../../src/geo.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c "
+PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
+
+# add flags for specific hardware
+if [[ "$ARCH" == "arm64" ]]; then
+    PL_COMPILER_FLAGS+="-arch arm64 "
+else
+    PL_COMPILER_FLAGS+="-arch x86_64 "
+fi
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: dcapp-planet-snapshot${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+clang -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINK_FRAMEWORKS $PL_LINKER_FLAGS -o "./../../pilotlight/out/libdcapp-planet-snapshot.dylib"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+    PL_BUILD_STATUS=1
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+popd >/dev/null
+exit 1
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
 # delete lock file(s)
 rm -f ../../pilotlight/out/lock.tmp
 
@@ -450,6 +494,8 @@ rm -f ../../pilotlight/out/dcapp-genheader
 rm -f ../../pilotlight/out/dcapp-validate
 rm -f ../../pilotlight/out/dcapp-planet-chunkgen.dylib
 rm -f ../../pilotlight/out/dcapp-planet-chunkgen_*.dylib
+rm -f ../../pilotlight/out/dcapp-planet-snapshot.dylib
+rm -f ../../pilotlight/out/dcapp-planet-snapshot_*.dylib
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ dc_draw_ext | debug ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PL_RESULT=${BOLD}${GREEN}Successful.${NC}
@@ -628,7 +674,7 @@ PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
 PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib -lxml2 -lcurl "
 PL_STATIC_LINK_LIBRARIES="-ldearimguid "
 PL_DYNAMIC_LINK_LIBRARIES=""
-PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/edge.c ../../src/geojson.c ../../src/pixelstream/mjpeg.c ../../src/pixelstream/shmem.c ../../src/sock.c ../../src/trick.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp/dcapp.c "
+PL_SOURCES="../../src/app/config.c ../../src/app/elem.c ../../src/app/lookup.c ../../src/edge.c ../../src/geo.c ../../src/geojson.c ../../src/pixelstream/mjpeg.c ../../src/pixelstream/shmem.c ../../src/sock.c ../../src/trick.c ../../src/utils/env.c ../../src/utils/file.c ../../src/utils/library.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c ../../src/utils/time.c ../../src/value.c ../../apps/dcapp/dcapp.c "
 PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
 
 # add flags for specific hardware
@@ -772,6 +818,48 @@ echo ${YELLOW}Step: dcapp-planet-chunkgen${NC}
 echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
 echo ${CYAN}Compiling and Linking...${NC}
 clang -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINK_FRAMEWORKS $PL_LINKER_FLAGS -o "./../../pilotlight/out/libdcapp-planet-chunkgen.dylib"
+
+# check build status
+if [ $? -ne 0 ]
+then
+    PL_RESULT=${BOLD}${RED}Failed.${NC}
+    PL_BUILD_STATUS=1
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+popd >/dev/null
+exit 1
+fi
+
+# print results
+echo ${CYAN}Results: ${NC} ${PL_RESULT}
+echo ${CYAN}~~~~~~~~~~~~~~~~~~~~~~${NC}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~ dcapp-planet-snapshot | debug ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PL_RESULT=${BOLD}${GREEN}Successful.${NC}
+PL_DEFINES=""
+PL_INCLUDE_DIRECTORIES="-I../../src -I../../extensions -I../../shaders -I../../pilotlight/src -I../../pilotlight/libs -I../../pilotlight/extensions -I../../pilotlight/shaders -I../../pilotlight/dependencies/stb "
+PL_LINK_DIRECTORIES="-L../../pilotlight/out -Wl,-rpath,../../pilotlight/out -L$(brew --prefix)/lib -Wl,-rpath,$(brew --prefix)/lib "
+PL_COMPILER_FLAGS="-fmodules -ObjC -fPIC --debug -g "
+PL_LINKER_FLAGS="-Wl,-rpath,/usr/local/lib "
+PL_STATIC_LINK_LIBRARIES=""
+PL_DYNAMIC_LINK_LIBRARIES=""
+PL_SOURCES="../../apps/dcapp_planet_snapshot.c ../../src/geo.c ../../src/utils/file.c ../../src/utils/log.c ../../src/utils/math.c ../../src/utils/string.c "
+PL_LINK_FRAMEWORKS="-framework Metal -framework MetalKit -framework Cocoa -framework IOKit -framework CoreVideo -framework QuartzCore "
+
+# add flags for specific hardware
+if [[ "$ARCH" == "arm64" ]]; then
+    PL_COMPILER_FLAGS+="-arch arm64 "
+else
+    PL_COMPILER_FLAGS+="-arch x86_64 "
+fi
+
+# run compiler (and linker)
+echo
+echo ${YELLOW}Step: dcapp-planet-snapshot${NC}
+echo ${YELLOW}~~~~~~~~~~~~~~~~~~~${NC}
+echo ${CYAN}Compiling and Linking...${NC}
+clang -shared $PL_SOURCES $PL_INCLUDE_DIRECTORIES $PL_DEFINES $PL_COMPILER_FLAGS $PL_INCLUDE_DIRECTORIES $PL_LINK_DIRECTORIES $PL_STATIC_LINK_LIBRARIES $PL_DYNAMIC_LINK_LIBRARIES $PL_LINK_FRAMEWORKS $PL_LINKER_FLAGS -o "./../../pilotlight/out/libdcapp-planet-snapshot.dylib"
 
 # check build status
 if [ $? -ne 0 ]
