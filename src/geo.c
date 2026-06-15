@@ -1,7 +1,9 @@
 #include "geo.h"
 #include <math.h>
 
+#ifndef M_PI
 #define M_PI 3.14159265358979323846
+#endif
 
 // For pl_norm_vec3 and other vector operations
 #define PL_MATH_INCLUDE_FUNCTIONS

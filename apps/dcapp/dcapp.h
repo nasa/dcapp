@@ -64,19 +64,14 @@ const plScreenLogI       *_ext_screen_log       = NULL;
 #include "app/enums.h"
 #include "app/lookup.h"
 #include "app/config.h"
+#include "logic_api.h"
 #include "pixelstream/mjpeg.h"
 #include "pixelstream/shmem.h"
 #include "trick.h"
 #include "edge.h"
 #include <libxml/parser.h>
 
-// DrawFunction ABI types are defined in draw.h.
-typedef struct _DcAppDrawContext DcAppDrawContext;
-typedef struct _DcAppDrawFuncArgs DcAppDrawFuncArgs;
-typedef struct _DcAppDrawApi DcAppDrawApi;
-typedef struct _DcAppMouseApi DcAppMouseApi;
-typedef struct _DcAppTextureApi DcAppTextureApi;
-typedef struct _DcAppInit DcAppInit;
+typedef DcAppContext _AppData;
 
 // dcapp node structs
 #include "node.h"
@@ -226,7 +221,7 @@ typedef struct __FontLevels {
 } _FontLevels;
 
 // app data
-typedef struct __AppData {
+struct __AppData {
 
     // pl things
     plWindow      *pl_window;
@@ -308,9 +303,9 @@ typedef struct __AppData {
     // logic
     DcLibrary *logic_lib;
     void (*logic_pre_init)(const DcAppInit *init);
-    void (*logic_init)();
-    void (*logic_draw)();
-    void (*logic_close)();
+    void (*logic_init)(DcAppContext *app_ctx);
+    void (*logic_draw)(DcAppContext *app_ctx);
+    void (*logic_close)(DcAppContext *app_ctx);
 
     // trick
     _TrickContext *sb_tricks;
@@ -339,11 +334,13 @@ typedef struct __AppData {
     // planet instances
     _PlanetDef    *sb_planet_defs;              // collected during XML parse (top-level Planet definitions)
     _NodeIndex    *sb_planet_view_node_indices; // collected PlanetView nodes for init
-    plPlanet     **sb_planets;                  // created planet instances (one per PlanetDef)
-    plPlanetView **sb_planet_views;             // created view instances (one per PlanetView element)
+    plPlanet     **sb_planets;                  // raw planet lookup table mirrored from planet handles
+    plPlanetView **sb_planet_views;             // raw planet view lookup table mirrored from view handles
+    DcAppPlanetHandle     *sb_planet_handles;      // shared handles for xml and logic-created planets
+    DcAppPlanetViewHandle *sb_planet_view_handles; // shared handles for xml and logic-created views
     bool           planet_ext_initialized;      // true after _ext_planet->initialize() called
 
-} _AppData;
+};
 
 // shared node utils
 static _Node *_get_node(_AppData *app_data, _NodeIndex index) {

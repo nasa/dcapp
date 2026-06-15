@@ -2,6 +2,7 @@
 
 #include "draw.h"
 #include "draw_node.h"
+#include "planet.h"
 #include "texture.h"
 #include "xml.h"
 
@@ -21,7 +22,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data);
 PL_EXPORT void  pl_app_shutdown(_AppData *app_data);
 PL_EXPORT void  pl_app_resize(_AppData *app_data);
 PL_EXPORT void  pl_app_update(_AppData *app_data);
-static void *get_variable_value_addr(void *user_data, const char *name);
+static void *get_variable_value_addr(DcAppContext *app_ctx, const char *name);
 static double   _get_update_rate(_AppData *app_data);
 static void     _process_logic_updates(_AppData *app_data);
 static bool     _build_planet_texture(_AppData *app_data, _PlanetDef *def, _PlanetTextureEntry *entry, plPlanetTexture *out);
@@ -161,21 +162,23 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     // initialize logic (link values)
     if (app_data->logic_pre_init) {
+        // exposes only dcapp-owned api tables to logic.
         DcAppInit init = {
             .size = sizeof(init),
-            .version = 2,
-            .user_data = app_data,
+            .version = 4,
+            .app_ctx = app_data,
             .get_variable = get_variable_value_addr,
             .draw = dc_app_draw_api(),
             .mouse = dc_app_mouse_api(),
             .texture = dc_app_texture_api(),
+            .planet = dc_app_planet_api(),
         };
         app_data->logic_pre_init(&init);
     }
 
     // call logic init
     if (app_data->logic_init) {
-        app_data->logic_init();
+        app_data->logic_init(app_data);
     }
 
     // return app memory
@@ -186,7 +189,7 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
 
     // call logic close
     if (app_data->logic_close) {
-        app_data->logic_close();
+        app_data->logic_close(app_data);
     }
 
     // unload logic shared library
@@ -257,22 +260,11 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
 
     // cleanup planet views, instances, and extension
     {
-        for (int i = 0; i < sbcount(app_data->sb_planet_views); i++) {
-            if (app_data->sb_planet_views[i]) {
-                _ext_planet->cleanup_view(app_data->sb_planet_views[i]);
-            }
-        }
-        for (int i = 0; i < sbcount(app_data->sb_planets); i++) {
-            if (app_data->sb_planets[i]) {
-                _ext_planet->cleanup_planet(app_data->sb_planets[i]);
-            }
-        }
+        dc_app_planet_free_wrappers(app_data);
         if (app_data->planet_ext_initialized) {
             _ext_planet->cleanup();
         }
         _ext_resource->cleanup();
-        sbfree(app_data->sb_planet_views);
-        sbfree(app_data->sb_planets);
         for (int i = 0; i < sbcount(app_data->sb_planet_defs); i++) {
             _PlanetDef *def = &app_data->sb_planet_defs[i];
             if (def->name) free(def->name);
@@ -296,19 +288,19 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
 
     // cleanup trick contexts
     for (int i = 0; i < sbcount(app_data->sb_tricks); i++) {
-        _TrickContext *ctx = &app_data->sb_tricks[i];
-        sbfree(ctx->sb_tx_var_contexts);
-        sbfree(ctx->sb_rx_var_contexts);
-        dc_trick_cleanup(ctx->trick);
+        _TrickContext *draw_ctx = &app_data->sb_tricks[i];
+        sbfree(draw_ctx->sb_tx_var_contexts);
+        sbfree(draw_ctx->sb_rx_var_contexts);
+        dc_trick_cleanup(draw_ctx->trick);
     }
     sbfree(app_data->sb_tricks);
 
     // cleanup edge contexts
     for (int i = 0; i < sbcount(app_data->sb_edges); i++) {
-        _EdgeContext *ctx = &app_data->sb_edges[i];
-        sbfree(ctx->sb_tx_var_contexts);
-        sbfree(ctx->sb_rx_var_contexts);
-        dc_edge_cleanup(ctx->edge);
+        _EdgeContext *draw_ctx = &app_data->sb_edges[i];
+        sbfree(draw_ctx->sb_tx_var_contexts);
+        sbfree(draw_ctx->sb_rx_var_contexts);
+        dc_edge_cleanup(draw_ctx->edge);
     }
     sbfree(app_data->sb_edges);
 
@@ -764,8 +756,8 @@ PL_EXPORT void pl_app_update(_AppData *app_data) {
 // -- handlers for logic files --
 // * only works once all variables are registered, as pointer
 // * values could change otherwise
-static void *get_variable_value_addr(void *user_data, const char *name) {
-    _AppData *app_data = (_AppData *)user_data;
+static void *get_variable_value_addr(DcAppContext *app_ctx, const char *name) {
+    _AppData *app_data = (_AppData *)app_ctx;
     if (!app_data) return NULL;
 
     // get variable
@@ -799,7 +791,7 @@ static void _process_logic_updates(_AppData *app_data) {
         app_data->frame_data.last_logic_update_time   = dc_utils_time_get();
         app_data->frame_data.logic_update_accumulator = 0.0;
         app_data->frame_data.last_update_rate         = 0.0;
-        app_data->logic_draw();
+        app_data->logic_draw(app_data);
         return;
     }
 
@@ -823,7 +815,7 @@ static void _process_logic_updates(_AppData *app_data) {
     int update_count = 0;
     while (app_data->frame_data.logic_update_accumulator >= update_interval &&
            update_count < DC_APP_MAX_LOGIC_UPDATES_PER_FRAME) {
-        app_data->logic_draw();
+        app_data->logic_draw(app_data);
         app_data->frame_data.logic_update_accumulator -= update_interval;
         update_count++;
     }
@@ -861,6 +853,13 @@ static bool _build_planet_texture(_AppData *app_data, _PlanetDef *def, _PlanetTe
             dc_app_lookup_get_value(app_data->lookup, entry->xyz.y)->value_double,
             dc_app_lookup_get_value(app_data->lookup, entry->xyz.z)->value_double
         };
+        double r = sqrt(cartesian_in.x * cartesian_in.x +
+                        cartesian_in.y * cartesian_in.y +
+                        cartesian_in.z * cartesian_in.z);
+        if (r <= 0.0) {
+            DC_LOG_WARN("PlanetTexture", "Skipping texture with degenerate cartesian origin for '%s'", entry->source);
+            return false;
+        }
         plVec3d geodetic_out;
         plVec2d polar_out;
         dc_geo_cartesian_to_geodetic_d(&def->cartesian_crs, &def->geodetic_crs, &cartesian_in, &geodetic_out, 1);
@@ -893,17 +892,7 @@ static void _init_planets(_AppData *app_data) {
 
     DC_LOG_INFO("Planet", "Initializing %d planet def(s), %d view(s)", def_count, view_count);
 
-    // initialize planet extension
-    plPlanetExtInit planet_ext_init = {0};
-    planet_ext_init.ptDevice        = _ext_starter->get_device();
-    _ext_planet->initialize(planet_ext_init);
-    app_data->planet_ext_initialized = true;
-
-    // reserve index 0 as sentinel (PLANET_INDEX_UNDEFINED / PLANET_VIEW_INDEX_UNDEFINED)
-    sbpush(app_data->sb_planets, NULL);
-    sbpush(app_data->sb_planet_views, NULL);
-
-    // Phase 1: create planets from definitions
+    // create planets from definitions through the shared planet subsystem.
     for (int i = 0; i < def_count; i++) {
         _PlanetDef *def = &app_data->sb_planet_defs[i];
 
@@ -913,118 +902,29 @@ static void _init_planets(_AppData *app_data) {
             continue;
         }
 
-        // use first data file
         const char *json_path = def->sb_data_files[0];
 
         DC_LOG_INFO("Planet", "  [%d] '%s' loading: %s", i, def->name, json_path);
 
-        // load JSON file
-        char *json_str = dc_utils_load_text_file(json_path);
-        if (!json_str) {
-            DC_LOG_ERROR("Planet", "  [%d] failed to load file: %s", i, json_path);
+        DcAppPlanetCreateInfo info = {
+            .data_path = json_path,
+            .mesh_cache_size = def->mesh_cache_size,
+        };
+        def->handle = dc_app_planet_create_planet_with_id(app_data, def->name, info);
+        if (!def->handle) {
+            DC_LOG_ERROR("Planet", "  [%d] '%s' failed to create", i, def->name ? def->name : "?");
             continue;
         }
 
-        // parse JSON
-        plJsonObject *root = NULL;
-        if (!pl_load_json(json_str, &root)) {
-            DC_LOG_ERROR("Planet", "  [%d] failed to parse JSON: %s", i, json_path);
-            free(json_str);
-            continue;
-        }
+        def->radius = def->handle->radius;
+        def->geodetic_crs = def->handle->geodetic_crs;
+        def->cartesian_crs = def->handle->cartesian_crs;
+        def->polar_crs = def->handle->polar_crs;
+        def->index = def->handle->index;
 
-        // extract metadata
-        double radius           = pl_json_double_member(root, "radius", 0.0);
-        float  meters_per_pixel = pl_json_float_member(root, "meters_per_pixel", 0.0f);
-        int    tile_size        = pl_json_int_member(root, "tile_size", 0);
-        int    cols             = pl_json_int_member(root, "cols", 0);
-        int    rows             = pl_json_int_member(root, "rows", 0);
-        float  min_height       = pl_json_float_member(root, "min_height", 0.0f);
-        float  max_height       = pl_json_float_member(root, "max_height", 0.0f);
-        int    tree_depth       = pl_json_int_member(root, "tree_depth", 0);
-        float  max_base_error   = pl_json_float_member(root, "max_base_error", 0.0f);
-        def->radius             = radius;
-        def->geodetic_crs       = dc_geo_create_crs_geodetic(radius);
-        def->cartesian_crs      = dc_geo_create_crs_cartesian(radius);
-        def->polar_crs          = dc_geo_create_crs_polar_stereographic(radius, -90.0, 0.0);
+        plPlanet *planet = dc_app_planet_pl(def->handle);
 
-        // extract tiles array
-        uint32_t      tile_count = 0;
-        plJsonObject *tile_array = pl_json_array_member(root, "tiles", &tile_count);
-
-        // build process info
-        plPlanetProcessInfo process_info = {0};
-        process_info.tProjection.tType = PL_PROJECTION_POLAR_STEREOGRAPHIC;
-        process_info.tProjection.tPolarStereo.dLatitudeOfOrigin = -90.0;
-        process_info.tProjection.tPolarStereo.dLongitudeOfOrigin = 0.0; // central meridian (radians)
-        process_info.tProjection.tPolarStereo.dScaleFactor = 1.0;
-        process_info.tProjection.tPolarStereo.dFalseEasting = 0.0;
-        process_info.tProjection.tPolarStereo.dFalseNorthing = 0.0;
-        process_info.tGeodeticModel.tDatum         = PL_DATUM_SPHERE;
-        process_info.tGeodeticModel.sphere.dRadius = radius;
-        process_info.dMetersPerPixel               = meters_per_pixel;
-        process_info.uSize                         = (uint32_t)tile_size;
-        process_info.uTileCount                    = tile_count;
-        process_info.uHorizontalTiles              = (uint32_t)cols;
-        process_info.uVerticalTiles                = (uint32_t)rows;
-        process_info.atTiles                       = (plPlanetProcessTileInfo *)PL_ALLOC(tile_count * sizeof(plPlanetProcessTileInfo));
-
-        // get directory of the JSON file for resolving relative chunk paths
-        char json_dir[DC_VALUE_STRING_BUFFER_SIZE];
-        dc_utils_get_directory(json_path, json_dir, sizeof(json_dir));
-
-        for (uint32_t t = 0; t < tile_count; t++) {
-            plJsonObject *tile_obj = pl_json_member_by_index(tile_array, t);
-
-            plPlanetProcessTileInfo *tile = &process_info.atTiles[t];
-            memset(tile, 0, sizeof(plPlanetProcessTileInfo));
-            if (pl_json_member_exist(tile_obj, "originX") && pl_json_member_exist(tile_obj, "originY")) {
-                tile->dOriginX = pl_json_double_member(tile_obj, "originX", 0.0);
-                tile->dOriginY = pl_json_double_member(tile_obj, "originY", 0.0);
-            } else if (pl_json_member_exist(tile_obj, "lat") && pl_json_member_exist(tile_obj, "lon")) {
-                plVec3d geodetic_in = {
-                    pl_json_double_member(tile_obj, "lat", 0.0),
-                    pl_json_double_member(tile_obj, "lon", 0.0),
-                    0.0
-                };
-                plVec2d polar_out;
-                dc_geo_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_in, &polar_out, 1);
-                tile->dOriginX = polar_out.x;
-                tile->dOriginY = polar_out.y;
-            }
-            tile->dMaxBaseError = (double)max_base_error;
-            tile->dMaxHeight    = (double)max_height;
-            tile->dMinHeight    = (double)min_height;
-            tile->iTreeDepth    = tree_depth;
-
-            // resolve chunk file path
-            char chunk_file[256] = {0};
-            pl_json_string_member(tile_obj, "file", chunk_file, sizeof(chunk_file));
-
-            char abs_chunk_path[DC_VALUE_STRING_BUFFER_SIZE];
-            if (dc_utils_is_relative_path(chunk_file)) {
-                dc_utils_join_paths(json_dir, chunk_file, abs_chunk_path, sizeof(abs_chunk_path));
-            } else {
-                strncpy(abs_chunk_path, chunk_file, sizeof(abs_chunk_path) - 1);
-            }
-            strncpy(tile->acOutputFile, abs_chunk_path, sizeof(tile->acOutputFile) - 1);
-        }
-
-        // build planet init
-        plPlanetInit planet_init = {0};
-        planet_init.dRadius      = radius;
-        planet_init.tLoadFlags   = PL_PLANET_LOAD_FLAGS_NONE;
-        if (def->mesh_cache_size > 0) {
-            planet_init.uVertexBufferSize = def->mesh_cache_size / 2;
-            planet_init.uIndexBufferSize  = def->mesh_cache_size / 2;
-        }
-
-        // create planet
-        plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
-        plPlanet        *planet  = _ext_planet->create_planet(cmd_buf, planet_init, &process_info);
-        _ext_starter->submit_temporary_command_buffer(cmd_buf);
-
-        // initial texture overlay (if source is set at parse time)
+        // apply the initial texture overlay if one was parsed.
         if (sbcount(def->sb_textures) > 0) {
             plPlanetTexture texture;
             if (_build_planet_texture(app_data, def, &def->sb_textures[0], &texture)) {
@@ -1034,19 +934,10 @@ static void _init_planets(_AppData *app_data) {
             }
         }
 
-        // store planet
-        sbpush(app_data->sb_planets, planet);
-        def->index = (uint8_t)(sbcount(app_data->sb_planets) - 1); // index 0 is sentinel
-
-        DC_LOG_INFO("Planet", "  [%d] '%s' created (radius=%.0f, %u tiles)", i, def->name, radius, tile_count);
-
-        // cleanup
-        PL_FREE(process_info.atTiles);
-        pl_unload_json(&root);
-        free(json_str);
+        DC_LOG_INFO("Planet", "  [%d] '%s' created (radius=%.0f)", i, def->name, def->radius);
     }
 
-    // Phase 2: create views from PlanetView nodes
+    // create views from planet view nodes through the shared planet subsystem.
     for (int i = 0; i < view_count; i++) {
         _NodeIndex node_index = app_data->sb_planet_view_node_indices[i];
         _Node     *node       = _get_node(app_data, node_index);
@@ -1063,24 +954,20 @@ static void _init_planets(_AppData *app_data) {
             continue;
         }
 
-        // get output dimensions from the view node (default 1024x1024)
         float output_width  = 1024.0f;
         float output_height = 1024.0f;
 
-        plPlanet *planet = app_data->sb_planets[def->index];
+        DcAppPlanetViewHandle view_handle = node->planet_view.crs == DC_APP_PLANET_CRS_CARTESIAN
+            ? dc_app_planet_create_cartesian_view(app_data, def->handle, (uint32_t)output_width, (uint32_t)output_height)
+            : dc_app_planet_create_geodetic_view(app_data, def->handle, (uint32_t)output_width, (uint32_t)output_height);
+        if (!view_handle) {
+            DC_LOG_ERROR("PlanetView", "  [%d] failed to create view for '%s'", i, def->name ? def->name : "?");
+            continue;
+        }
+        node->planet_view.handle = view_handle;
+        node->planet_view.planet_view_index = view_handle->index;
 
-        plPlanetViewInit view_init = {0};
-        view_init.uOutputWidth     = (uint32_t)output_width;
-        view_init.uOutputHeight    = (uint32_t)output_height;
-
-        plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
-        plPlanetView    *view    = _ext_planet->create_view(planet, cmd_buf, view_init);
-        _ext_starter->submit_temporary_command_buffer(cmd_buf);
-
-        sbpush(app_data->sb_planet_views, view);
-        node->planet_view.planet_view_index = (uint8_t)(sbcount(app_data->sb_planet_views) - 1); // index 0 is sentinel
-
-        // force shader mismatch so first draw applies the shader
+        // force shader mismatch so first draw applies the shader.
         if (node->planet_view.shader_index != DC_APP_VAL_INDEX_UNDEFINED) {
             int initial                          = (int)dc_app_lookup_get_value(app_data->lookup, node->planet_view.shader_index)->value_integer;
             node->planet_view.active_shader_index = initial + 1;
@@ -1092,7 +979,6 @@ static void _init_planets(_AppData *app_data) {
 
 static void _update_planet_defs(_AppData *app_data) {
     int def_count = sbcount(app_data->sb_planet_defs);
-    if (def_count == 0) return;
     for (int i = 0; i < def_count; i++) {
         _PlanetDef *def = &app_data->sb_planet_defs[i];
         if (def->index == PLANET_INDEX_UNDEFINED) continue;
@@ -1132,7 +1018,14 @@ static void _update_planet_defs(_AppData *app_data) {
                 _ext_planet->set_runtime_options(planet, opts);
         }
 
-        // prepare planet (once per planet per frame)
+    }
+
+    // prepares every shared planet once per frame.
+    for (int i = 0; i < sbcount(app_data->sb_planet_handles); i++) {
+        DcAppPlanetHandle handle = app_data->sb_planet_handles[i];
+        plPlanet *planet = dc_app_planet_pl(handle);
+        if (!planet) continue;
+
         plCommandBuffer *cmd_buf = _ext_starter->get_temporary_command_buffer();
         _ext_planet->prepare(planet, cmd_buf);
         _ext_starter->submit_temporary_command_buffer(cmd_buf);
@@ -1162,5 +1055,6 @@ static void _load_apis(plApiRegistryI *api_registry) {
 
 #include "draw.c"
 #include "draw_node.c"
+#include "planet.c"
 #include "texture.c"
 #include "xml.c"

@@ -3,9 +3,12 @@
 
 #include "dcapp.h"
 #include "draw.h"
+#include "planet.h"
 
 #include "app/enums.h"
+#include "geo.h"
 #include "utils/log.h"
+#include "utils/math.h"
 
 static const DcAppDrawApi dc_app_draw_interface = {
     .get_area              = dc_app_draw_get_area,
@@ -59,6 +62,12 @@ static const DcAppDrawApi dc_app_draw_interface = {
     .stencil_remove         = dc_app_draw_stencil_remove,
     .stencil_draw           = dc_app_draw_stencil_draw,
     .stencil_end            = dc_app_draw_stencil_end,
+    .planet_view_geodetic      = dc_app_draw_planet_view_geodetic,
+    .planet_view_cartesian     = dc_app_draw_planet_view_cartesian,
+    .planet_sphere_geodetic    = dc_app_draw_planet_sphere_geodetic,
+    .planet_sphere_cartesian   = dc_app_draw_planet_sphere_cartesian,
+    .planet_text_geodetic      = dc_app_draw_planet_text_geodetic,
+    .planet_text_cartesian     = dc_app_draw_planet_text_cartesian,
 };
 
 static const DcAppMouseApi dc_app_mouse_interface = {
@@ -144,6 +153,18 @@ typedef struct _DcAppContainerData {
     DcAppDrawArea stack[DCAPP_DRAW_CONTEXT_STACK_MAX];
 } _DcAppContainerData;
 
+struct _DcAppDrawPlanetView {
+    _AppData *app_data;
+    DcAppPlanetViewHandle view;
+    plCamera camera;
+    DcAppDrawArea area;
+};
+
+// queues planet views so they render to textures before entering the 2d draw stream.
+typedef struct _DcAppPlanetViewData {
+    DcAppDrawPlanetViewHandle *sb_views;
+} _DcAppPlanetViewData;
+
 static void _set_stencil_phase(_AppData *app_data, int depth, _DcAppStencilPhase phase);
 static void _restore_stencil_phase(_AppData *app_data, _DcAppStencilPhase phase);
 static bool _placement_is_default(DcAppPlacement placement);
@@ -166,6 +187,14 @@ static void _record_stencil_add_command(DcAppDrawContext *ctx, const _DcAppDrawC
 static void _record_stencil_add_command_data(void *stencil_data, const _DcAppDrawCommand *command);
 static void _replay_stencil_command(_AppData *app_data, const _DcAppDrawCommand *command);
 static void _free_stencil_command(_DcAppDrawCommand *command);
+static _DcAppPlanetViewData *_planet_view_data(DcAppDrawContext *ctx);
+static void _flush_planet_views(DcAppDrawContext *ctx);
+static plCamera _planet_camera_base(float fov_degrees, bool orthographic, DcAppVec2 size);
+static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
+static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3 position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
+static void     _planet_camera_apply_distance_ortho(DcAppPlanetHandle planet, plCamera *camera);
+static bool     _planet_project_text(DcAppDrawPlanetViewHandle draw_view, plVec3 position, float size_meters, DcAppVec2 *out_position, float *out_size);
+static void     _planet_draw_text_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec2 position, const char *text, float size, DcAppVec4 color);
 
 //-----------------------------------------------------------------------------
 // [SECTION] DrawFunction context helpers
@@ -1399,6 +1428,114 @@ void dc_app_draw_planet_text(plPlanetView *view, plCamera *camera, plVec3 positi
     _ext_planet->draw_text(view, camera, position, text, size, color);
 }
 
+DcAppDrawPlanetViewHandle dc_app_draw_planet_view_geodetic(DcAppDrawContext *ctx, DcAppPlanetViewHandle view, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (!ctx || !view || dc_app_planet_view_crs(view) != DC_APP_PLANET_CRS_GEODETIC) return NULL;
+
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(view);
+    // stores draw-frame camera and placement until context cleanup.
+    DcAppDrawPlanetViewHandle draw_view = (DcAppDrawPlanetViewHandle)PL_ALLOC(sizeof(*draw_view));
+    memset(draw_view, 0, sizeof(*draw_view));
+    draw_view->app_data = (_AppData *)ctx->_runtime;
+    draw_view->view = view;
+    draw_view->camera = _planet_camera_geodetic(planet, lat, lon, elevation, rpy, fov_degrees, orthographic, size);
+
+    _DcAppPlanetViewData *data = _planet_view_data(ctx);
+    if (!data) {
+        PL_FREE(draw_view);
+        return NULL;
+    }
+    sbpush(data->sb_views, draw_view);
+
+    plPlanetView *pl_view = dc_app_planet_view_pl(view);
+    if (pl_view) {
+        DcAppDrawResult image_result = {0};
+        plBindGroupHandle bind_group = _ext_planet->get_view_texture(pl_view);
+        _draw_image_uv(ctx, bind_group.uData, size,
+                       (DcAppVec2){0.0f, 0.0f},
+                       (DcAppVec2){0.0f, 1.0f},
+                       (DcAppVec2){1.0f, 1.0f},
+                       (DcAppVec2){1.0f, 0.0f},
+                       position, placement,
+                       (DcAppVec4){1.0f, 1.0f, 1.0f, 1.0f},
+                       _draw_result_area(result ? result : &image_result));
+        draw_view->area = result ? result->area : image_result.area;
+    }
+    return draw_view;
+}
+
+DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *ctx, DcAppPlanetViewHandle view, DcAppVec3 camera_position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result) {
+    if (!ctx || !view || dc_app_planet_view_crs(view) != DC_APP_PLANET_CRS_CARTESIAN) return NULL;
+
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(view);
+    // stores draw-frame camera and placement until context cleanup.
+    DcAppDrawPlanetViewHandle draw_view = (DcAppDrawPlanetViewHandle)PL_ALLOC(sizeof(*draw_view));
+    memset(draw_view, 0, sizeof(*draw_view));
+    draw_view->app_data = (_AppData *)ctx->_runtime;
+    draw_view->view = view;
+    draw_view->camera = _planet_camera_cartesian(planet, camera_position, rpy, fov_degrees, orthographic, size);
+
+    _DcAppPlanetViewData *data = _planet_view_data(ctx);
+    if (!data) {
+        PL_FREE(draw_view);
+        return NULL;
+    }
+    sbpush(data->sb_views, draw_view);
+
+    plPlanetView *pl_view = dc_app_planet_view_pl(view);
+    if (pl_view) {
+        DcAppDrawResult image_result = {0};
+        plBindGroupHandle bind_group = _ext_planet->get_view_texture(pl_view);
+        _draw_image_uv(ctx, bind_group.uData, size,
+                       (DcAppVec2){0.0f, 0.0f},
+                       (DcAppVec2){0.0f, 1.0f},
+                       (DcAppVec2){1.0f, 1.0f},
+                       (DcAppVec2){1.0f, 0.0f},
+                       position, placement,
+                       (DcAppVec4){1.0f, 1.0f, 1.0f, 1.0f},
+                       _draw_result_area(result ? result : &image_result));
+        draw_view->area = result ? result->area : image_result.area;
+    }
+    return draw_view;
+}
+
+void dc_app_draw_planet_sphere_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, double radius, DcAppVec4 color) {
+    (void)ctx;
+    if (!draw_view) return;
+    dc_app_draw_planet_sphere(dc_app_planet_view_pl(draw_view->view), (float)lon, (float)lat, (float)height, (float)radius, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
+}
+
+void dc_app_draw_planet_sphere_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 position, float radius, DcAppVec4 color) {
+    (void)ctx;
+    if (!draw_view) return;
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
+    // converts cartesian centers because pl_planet draws spheres from geodetic centers.
+    plVec3 cartesian = {position.x, position.y, position.z};
+    plVec3 geodetic;
+    dc_geo_cartesian_to_geodetic(&planet->cartesian_crs, &planet->geodetic_crs, &cartesian, &geodetic, 1);
+    dc_app_draw_planet_sphere(dc_app_planet_view_pl(draw_view->view), geodetic.y, geodetic.x, geodetic.z, radius, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
+}
+
+void dc_app_draw_planet_text_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, const char *text, float size, DcAppVec4 color) {
+    if (!ctx || !draw_view || !text) return;
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
+    // converts geodetic text positions to renderer-native cartesian coordinates.
+    plVec3d geodetic_in = {lat, lon, height};
+    plVec3d cartesian_out;
+    dc_geo_geodetic_to_cartesian_d(&planet->geodetic_crs, &planet->cartesian_crs, &geodetic_in, &cartesian_out, 1);
+    DcAppVec2 position = {0};
+    float text_size = 0.0f;
+    if (!_planet_project_text(draw_view, (plVec3){(float)cartesian_out.x, (float)cartesian_out.y, (float)cartesian_out.z}, size, &position, &text_size)) return;
+    _planet_draw_text_label(ctx, draw_view, position, text, text_size, color);
+}
+
+void dc_app_draw_planet_text_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec3 position, const char *text, float size, DcAppVec4 color) {
+    if (!ctx || !draw_view || !text) return;
+    DcAppVec2 text_position = {0};
+    float text_size = 0.0f;
+    if (!_planet_project_text(draw_view, (plVec3){position.x, position.y, position.z}, size, &text_position, &text_size)) return;
+    _planet_draw_text_label(ctx, draw_view, text_position, text, text_size, color);
+}
+
 //-----------------------------------------------------------------------------
 // [SECTION] draw batch utils
 //-----------------------------------------------------------------------------
@@ -1714,8 +1851,217 @@ static void _free_stencil_command(_DcAppDrawCommand *command) {
     }
 }
 
+static _DcAppPlanetViewData *_planet_view_data(DcAppDrawContext *ctx) {
+    if (!ctx) return NULL;
+    if (!ctx->_planet_view_data) {
+        ctx->_planet_view_data = PL_ALLOC(sizeof(_DcAppPlanetViewData));
+        memset(ctx->_planet_view_data, 0, sizeof(_DcAppPlanetViewData));
+    }
+    return (_DcAppPlanetViewData *)ctx->_planet_view_data;
+}
+
+static void _flush_planet_views(DcAppDrawContext *ctx) {
+    if (!ctx || !ctx->_planet_view_data) return;
+
+    _DcAppPlanetViewData *data = (_DcAppPlanetViewData *)ctx->_planet_view_data;
+    for (int i = 0; i < sbcount(data->sb_views); i++) {
+        DcAppDrawPlanetViewHandle draw_view = data->sb_views[i];
+        if (!draw_view) continue;
+
+        plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
+        if (!view) continue;
+
+        // renders the queued planet view into the texture drawn at call time.
+        plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();
+        _ext_planet->render_view(view, &draw_view->camera, cmd_buf);
+        _ext_starter->submit_command_buffer(cmd_buf);
+    }
+
+    for (int i = 0; i < sbcount(data->sb_views); i++) {
+        if (data->sb_views[i]) PL_FREE(data->sb_views[i]);
+    }
+    sbfree(data->sb_views);
+    PL_FREE(data);
+    ctx->_planet_view_data = NULL;
+}
+
+static plCamera _planet_camera_base(float fov_degrees, bool orthographic, DcAppVec2 size) {
+    plCamera camera = {0};
+    camera.tType        = PL_CAMERA_TYPE_PERSPECTIVE_REVERSE_Z;
+    camera.fFieldOfView = (fov_degrees > 0.0f && fov_degrees < 180.0f) ? pl_radiansf(fov_degrees) : PL_PI_3;
+    camera.fAspectRatio = (size.y > 0.0f) ? size.x / size.y : 1.0f;
+    camera.fNearZ       = 1.0f;
+    camera.fFarZ        = 100000000.0f;
+    camera.fWidth       = size.x;
+    camera.fHeight      = size.y;
+    if (orthographic) camera.tType = PL_CAMERA_TYPE_ORTHOGRAPHIC_REVERSE_Z;
+    return camera;
+}
+
+static void _planet_camera_apply_distance_ortho(DcAppPlanetHandle planet, plCamera *camera) {
+    if (!planet || !camera) return;
+
+    // derives orthographic scale from camera altitude to match xml and snapshot behavior.
+    double cam_dist = sqrt(camera->tPosDouble.x * camera->tPosDouble.x +
+                           camera->tPosDouble.y * camera->tPosDouble.y +
+                           camera->tPosDouble.z * camera->tPosDouble.z);
+    double surface_dist = cam_dist - planet->radius;
+    if (surface_dist < 1.0) surface_dist = 1.0;
+    float half_h = (float)surface_dist * tanf(camera->fFieldOfView / 2.0f);
+    float half_w = half_h * camera->fAspectRatio;
+    camera->tProjMat = (plMat4){0};
+    camera->tProjMat.col[0].x = 1.0f / half_w;
+    camera->tProjMat.col[1].y = 1.0f / half_h;
+    camera->tProjMat.col[2].z = 1.0f / (camera->fFarZ - camera->fNearZ);
+    camera->tProjMat.col[3].w = 1.0f;
+}
+
+static bool _planet_project_text(DcAppDrawPlanetViewHandle draw_view, plVec3 position, float size_meters, DcAppVec2 *out_position, float *out_size) {
+    if (out_position) *out_position = (DcAppVec2){0};
+    if (out_size) *out_size = 0.0f;
+    if (!draw_view || !out_position || !out_size || size_meters <= 0.0f) return false;
+
+    if (draw_view->view->width == 0 || draw_view->view->height == 0) return false;
+
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
+    if (planet && planet->radius > 0.0) {
+        double dx = (double)position.x - draw_view->camera.tPosDouble.x;
+        double dy = (double)position.y - draw_view->camera.tPosDouble.y;
+        double dz = (double)position.z - draw_view->camera.tPosDouble.z;
+        double a = dx * dx + dy * dy + dz * dz;
+        double b = 2.0 * (draw_view->camera.tPosDouble.x * dx +
+                          draw_view->camera.tPosDouble.y * dy +
+                          draw_view->camera.tPosDouble.z * dz);
+        double c = draw_view->camera.tPosDouble.x * draw_view->camera.tPosDouble.x +
+                   draw_view->camera.tPosDouble.y * draw_view->camera.tPosDouble.y +
+                   draw_view->camera.tPosDouble.z * draw_view->camera.tPosDouble.z -
+                   planet->radius * planet->radius;
+        double discriminant = b * b - 4.0 * a * c;
+        if (a > 0.000001 && discriminant > 0.0) {
+            double t = (-b - sqrt(discriminant)) / (2.0 * a);
+            if (t > 0.0 && t < 0.999999) return false;
+        }
+    }
+
+    plMat4 mvp = pl_mul_mat4(&draw_view->camera.tProjMat, &draw_view->camera.tViewMat);
+    plVec4 projected = pl_mul_mat4_vec4(&mvp, (plVec4){.xyz = position, .w = 1.0f});
+    if (fabsf(projected.w) <= 0.000001f) return false;
+    projected = pl_div_vec4_scalarf(projected, projected.w);
+    if (projected.z < 0.0f || projected.z > 1.0f) return false;
+
+    float output_width = (float)draw_view->view->width;
+    float output_height = (float)draw_view->view->height;
+    float pixel_x = output_width * 0.5f * (1.0f + projected.x);
+    float pixel_y = output_height * 0.5f * (1.0f + projected.y);
+    if (pixel_x < 0.0f || pixel_x > output_width || pixel_y < 0.0f || pixel_y > output_height) return false;
+
+    plVec3 ray = {
+        position.x - (float)draw_view->camera.tPosDouble.x,
+        position.y - (float)draw_view->camera.tPosDouble.y,
+        position.z - (float)draw_view->camera.tPosDouble.z,
+    };
+    float distance = sqrtf(ray.x * ray.x + ray.y * ray.y + ray.z * ray.z);
+    if (distance < 0.001f) distance = 0.001f;
+
+    float pixel_size = size_meters * output_height / (2.0f * distance * tanf(draw_view->camera.fFieldOfView * 0.5f));
+    if (pixel_size < 1.0f) pixel_size = 1.0f;
+    if (pixel_size > 500.0f) pixel_size = 500.0f;
+
+    float scale_x = draw_view->area.dimensions[0] / output_width;
+    float scale_y = draw_view->area.dimensions[1] / output_height;
+    *out_position = (DcAppVec2){pixel_x * scale_x, (output_height - pixel_y) * scale_y};
+    *out_size = pixel_size * scale_y;
+    return *out_size > 0.0f;
+}
+
+static void _planet_draw_text_label(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, DcAppVec2 position, const char *text, float size, DcAppVec4 color) {
+    if (!ctx || !draw_view || !text || size <= 0.0f) return;
+    if (draw_view->area.dimensions[0] <= 0.0f || draw_view->area.dimensions[1] <= 0.0f) return;
+
+    DcAppDrawContext text_ctx = *ctx;
+    text_ctx.area = draw_view->area;
+
+    DcAppPlacement centered = {
+        .local_align_x = DC_APP_ALIGN_TYPE_CENTER,
+        .local_align_y = DC_APP_ALIGN_TYPE_MIDDLE,
+    };
+
+    if (!dc_app_draw_stencil_begin(&text_ctx)) {
+        dc_app_draw_text_ex(&text_ctx, position, text, (DcAppTextStyle){.size = size, .color = color}, centered, NULL);
+        return;
+    }
+
+    dc_app_draw_stencil_add(&text_ctx);
+    dc_app_draw_quad_filled_ex(&text_ctx,
+                               (DcAppVec2){0.0f, 0.0f},
+                               (DcAppVec2){draw_view->area.dimensions[0], 0.0f},
+                               (DcAppVec2){draw_view->area.dimensions[0], draw_view->area.dimensions[1]},
+                               (DcAppVec2){0.0f, draw_view->area.dimensions[1]},
+                               (DcAppVec4){1.0f, 1.0f, 1.0f, 1.0f},
+                               (DcAppVec2){0.0f, 0.0f},
+                               (DcAppPlacement){0},
+                               NULL);
+
+    dc_app_draw_stencil_draw(&text_ctx);
+    dc_app_draw_text_ex(&text_ctx, position, text, (DcAppTextStyle){.size = size, .color = color}, centered, NULL);
+    dc_app_draw_stencil_end(&text_ctx);
+}
+
+static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, double lon, double elevation, DcAppVec3 rpy_degrees, float fov_degrees, bool orthographic, DcAppVec2 size) {
+    plCamera camera = _planet_camera_base(fov_degrees, orthographic, size);
+    if (!planet) return camera;
+
+    double lat_rad = dc_utils_degrees_to_radians(lat);
+    double lon_rad = dc_utils_degrees_to_radians(lon);
+    plVec3d geodetic_in = {lat, lon, elevation};
+    plVec3d eye;
+    dc_geo_geodetic_to_cartesian_d(&planet->geodetic_crs, &planet->cartesian_crs, &geodetic_in, &eye, 1);
+
+    plVec3 north, east, down, up;
+    dc_geo_get_local_ned_basis(lat_rad, lon_rad, &north, &east, &down, &up);
+    // applies local-ned attitude as yaw about down, pitch about right, and roll about boresight.
+    float yaw = pl_radiansf(rpy_degrees.yaw);
+    float pitch = pl_radiansf(rpy_degrees.pitch);
+    float roll = pl_radiansf(rpy_degrees.roll);
+    plVec3 forward = down;
+    plVec3 right = dc_geo_rotate_vector_around_axis(east, down, yaw);
+    plVec3 desired_up = dc_geo_rotate_vector_around_axis(north, down, yaw);
+    forward = dc_geo_rotate_vector_around_axis(forward, right, pitch);
+    desired_up = dc_geo_rotate_vector_around_axis(desired_up, right, pitch);
+    desired_up = dc_geo_rotate_vector_around_axis(desired_up, forward, roll);
+
+    plVec3d target = {
+        eye.x + (double)forward.x,
+        eye.y + (double)forward.y,
+        eye.z + (double)forward.z
+    };
+    _ext_camera->look_at(&camera, eye, target);
+    camera.fRoll = 0.0f;
+    _ext_camera->update(&camera);
+    camera.fRoll = dc_geo_signed_angle_around_axis(camera._tUpVec, desired_up, forward);
+    _ext_camera->update(&camera);
+
+    if (orthographic) _planet_camera_apply_distance_ortho(planet, &camera);
+
+    return camera;
+}
+
+static plCamera _planet_camera_cartesian(DcAppPlanetHandle planet, DcAppVec3 position, DcAppVec3 rpy_degrees, float fov_degrees, bool orthographic, DcAppVec2 size) {
+    plCamera camera = _planet_camera_base(fov_degrees, orthographic, size);
+    // applies cartesian attitude through pilotlight camera pitch, yaw, and roll.
+    _ext_camera->set_pos(&camera, position.x, position.y, position.z);
+    _ext_camera->set_pitch_yaw(&camera, pl_radiansf(rpy_degrees.pitch), pl_radiansf(rpy_degrees.yaw));
+    camera.fRoll = pl_radiansf(rpy_degrees.roll);
+    _ext_camera->update(&camera);
+    if (orthographic) _planet_camera_apply_distance_ortho(planet, &camera);
+    return camera;
+}
+
 void dc_app_draw_context_cleanup(DcAppDrawContext *ctx) {
     if (!ctx) return;
+
+    // flushes queued planet views after overlays have been submitted.
+    _flush_planet_views(ctx);
 
     if (ctx->_container_data) {
         PL_FREE(ctx->_container_data);

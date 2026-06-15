@@ -1334,36 +1334,7 @@ pl_draw_text(plPlanetView* ptView, plCamera* ptCamera, plVec3 tPosition, const c
     tOptions.fSize  = fPixelSize;
     tOptions.uColor = uColor;
 
-    // center text by offsetting 3D position along camera right/up vectors
-    plVec2 tTextSize = gptDraw->calculate_text_size(pcText, tOptions);
-
-    // convert pixel offset to world-space offset
-    // pixels_per_meter = viewport_height / (2 * distance * tan(fov/2))
-    float fPixelsPerMeter = (float)ptView->uOutputHeight / (2.0f * fDistance * tanf(ptCamera->fFieldOfView * 0.5f));
-    float fWorldOffsetX = (tTextSize.x * 0.5f) / fPixelsPerMeter;
-    float fWorldOffsetY = (tTextSize.y * 0.5f) / fPixelsPerMeter;
-
-    // camera right vector (first row of view matrix)
-    plVec3 tRight = {
-        ptCamera->tViewMat.col[0].x,
-        ptCamera->tViewMat.col[1].x,
-        ptCamera->tViewMat.col[2].x
-    };
-
-    // camera up vector (second row of view matrix)
-    plVec3 tUp = {
-        ptCamera->tViewMat.col[0].y,
-        ptCamera->tViewMat.col[1].y,
-        ptCamera->tViewMat.col[2].y
-    };
-
-    plVec3 tCenteredPos = {
-        tPosition.x - tRight.x * fWorldOffsetX + tUp.x * fWorldOffsetY,
-        tPosition.y - tRight.y * fWorldOffsetX + tUp.y * fWorldOffsetY,
-        tPosition.z - tRight.z * fWorldOffsetX + tUp.z * fWorldOffsetY
-    };
-
-    gptDraw->add_3d_text(ptView->pt3dDrawlist, tCenteredPos, pcText, tOptions);
+    gptDraw->add_3d_text(ptView->pt3dDrawlist, tPosition, pcText, tOptions);
 }
 
 void

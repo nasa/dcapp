@@ -18,11 +18,13 @@ static float g_time;
 static int g_next_ripple;
 static Ripple g_ripples[RIPPLE_COUNT];
 
-void display_init(void) {
+void display_init(DcAppContext *app_ctx) {
+    (void)app_ctx;
     // Static globals start zeroed, so there is nothing to initialize here.
 }
 
-void display_draw(void) {
+void display_draw(DcAppContext *app_ctx) {
+    (void)app_ctx;
     // This logic callback runs at the Window UpdateRate. It advances the sample's
     // animation clock and ages out old click ripples.
     g_time += 1.0f / 60.0f;
@@ -35,11 +37,12 @@ void display_draw(void) {
     }
 }
 
-void display_close(void) {
+void display_close(DcAppContext *app_ctx) {
+    (void)app_ctx;
     // No persistent resources to release.
 }
 
-void draw_procedural(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
+void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
     if (!dc_draw || !dc_mouse) return;
 
@@ -50,9 +53,9 @@ void draw_procedural(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
     // Register the whole panel as a mouse target. The event query uses dcapp's
     // resolved topmost target, so XML and DrawFunction hit regions compete in
     // the same mouse event system.
-    dc_mouse->rect(ctx, "ripple_panel", (DcVec2){0.0f, 0.0f}, (DcVec2){900.0f, 600.0f});
-    if (dc_mouse->pressed(ctx, "ripple_panel")) {
-        const DcMouse *mouse = dc_mouse->get_state(ctx);
+    dc_mouse->rect(draw_ctx, "ripple_panel", (DcVec2){0.0f, 0.0f}, (DcVec2){900.0f, 600.0f});
+    if (dc_mouse->pressed(draw_ctx, "ripple_panel")) {
+        const DcMouse *mouse = dc_mouse->get_state(draw_ctx);
         if (!mouse) return;
 
         g_ripples[g_next_ripple] = (Ripple){
@@ -64,7 +67,7 @@ void draw_procedural(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
         g_next_ripple = (g_next_ripple + 1) % RIPPLE_COUNT;
     }
 
-    dc_draw->rect_filled(ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){900.0f, 600.0f}, (DcVec4){
+    dc_draw->rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){900.0f, 600.0f}, (DcVec4){
         .r = 0.040f,
         .g = 0.045f,
         .b = 0.052f,
@@ -110,7 +113,7 @@ void draw_procedural(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
                 .local_align_x = DC_ALIGN_CENTER,
                 .local_align_y = DC_ALIGN_MIDDLE,
             };
-            dc_draw->rect_filled_ex(ctx, (DcVec2){cx, cy}, (DcVec2){size, size}, (DcVec4){
+            dc_draw->rect_filled_ex(draw_ctx, (DcVec2){cx, cy}, (DcVec2){size, size}, (DcVec4){
                 .r = 0.08f + v * 0.18f + hit * 0.60f,
                 .g = 0.18f + v * 0.42f + hit * 0.26f,
                 .b = 0.30f + (1.0f - v) * 0.44f + hit * 0.12f,
@@ -133,7 +136,7 @@ void draw_procedural(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
             },
             .width = 2.0f,
         };
-        dc_draw->circle(ctx, (DcVec2){g_ripples[i].x, g_ripples[i].y}, g_ripples[i].age * 260.0f, ring);
+        dc_draw->circle(draw_ctx, (DcVec2){g_ripples[i].x, g_ripples[i].y}, g_ripples[i].age * 260.0f, ring);
     }
 
     // ---------------------------------------------------------------------
@@ -142,36 +145,36 @@ void draw_procedural(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
     // The container moves the local origin to the strip. The stencil clips the
     // generated bars to the same rounded shape, which is exactly the kind of
     // thing that is awkward to express compactly in XML.
-    if (dc_draw->container_push(ctx, (DcVec2){54.0f, 24.0f}, (DcVec2){792.0f, 70.0f}, (DcVec2){792.0f, 70.0f})) {
-        dc_draw->rounded_rect_filled(ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){792.0f, 70.0f}, 7.0f, (DcVec4){
+    if (dc_draw->container_push(draw_ctx, (DcVec2){54.0f, 24.0f}, (DcVec2){792.0f, 70.0f}, (DcVec2){792.0f, 70.0f})) {
+        dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){792.0f, 70.0f}, 7.0f, (DcVec4){
             .r = 0.070f,
             .g = 0.078f,
             .b = 0.088f,
             .a = 0.96f,
         });
 
-        if (dc_draw->stencil_begin(ctx)) {
-            dc_draw->stencil_add(ctx);
-            dc_draw->rounded_rect_filled(ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){792.0f, 70.0f}, 7.0f, dc_stencil_color());
+        if (dc_draw->stencil_begin(draw_ctx)) {
+            dc_draw->stencil_add(draw_ctx);
+            dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){792.0f, 70.0f}, 7.0f, dc_stencil_color());
 
-            dc_draw->stencil_draw(ctx);
+            dc_draw->stencil_draw(draw_ctx);
             // Ninety-six bars are generated from a formula. This keeps the XML
             // tiny while still drawing a dense, data-display-like element.
             for (int i = 0; i < 96; i++) {
                 float u = (float)i / 95.0f;
                 float h = 10.0f + 36.0f * (0.5f + 0.5f * sinf(u * 28.0f + g_time * 3.0f));
                 h += 12.0f * (0.5f + 0.5f * cosf(u * 73.0f - g_time * 1.7f));
-                dc_draw->rect_filled(ctx, (DcVec2){22.0f + u * 748.0f, 12.0f}, (DcVec2){5.0f, h}, (DcVec4){
+                dc_draw->rect_filled(draw_ctx, (DcVec2){22.0f + u * 748.0f, 12.0f}, (DcVec2){5.0f, h}, (DcVec4){
                     .r = 0.25f + u * 0.55f,
                     .g = 0.82f - u * 0.25f,
                     .b = 0.90f,
                     .a = 0.90f,
                 });
             }
-            dc_draw->stencil_end(ctx);
+            dc_draw->stencil_end(draw_ctx);
         }
 
-        dc_draw->rounded_rect(ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){792.0f, 70.0f}, 7.0f, (DcStroke){
+        dc_draw->rounded_rect(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){792.0f, 70.0f}, 7.0f, (DcStroke){
             .color = {
                 .r = 0.30f,
                 .g = 0.36f,
@@ -180,6 +183,6 @@ void draw_procedural(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
             },
             .width = 1.0f,
         });
-        dc_draw->container_pop(ctx);
+        dc_draw->container_pop(draw_ctx);
     }
 }

@@ -13,7 +13,7 @@ Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 - Added `plPlanetStreamStats` and `plPlanetI.get_stream_stats()` to report planet streaming progress.
 
 ### Changed
-- Moved the sample planet data download flow to `scripts/download-planet-data.*`, which writes under `data/planets/`.
+- Moved the sample planet data download flow to `scripts/download-planet-data.*`, which writes under `data/`.
 - Removed sample-local planet setup scripts in favor of the repository-level downloader.
 
 

@@ -133,8 +133,7 @@ _TextureIndex dc_app_texture_load_image_index(_AppData *app_data, const char *pa
     return texture_index;
 }
 
-DcAppTextureId dc_app_texture_load_image(void *user_data, const char *path, DcAppVec2 *out_size) {
-    _AppData *app_data = (_AppData *)user_data;
+DcAppTextureId dc_app_texture_load_image(_AppData *app_data, const char *path, DcAppVec2 *out_size) {
     if (out_size) *out_size = (DcAppVec2){0};
 
     _TextureIndex texture_index = dc_app_texture_load_image_index(app_data, path, app_data && app_data->config ? app_data->config->config_dir_path : NULL);
@@ -144,8 +143,7 @@ DcAppTextureId dc_app_texture_load_image(void *user_data, const char *path, DcAp
     return (DcAppTextureId)texture_index;
 }
 
-bool dc_app_texture_get_size(void *user_data, DcAppTextureId texture_id, DcAppVec2 *out_size) {
-    _AppData *app_data = (_AppData *)user_data;
+bool dc_app_texture_get_size(_AppData *app_data, DcAppTextureId texture_id, DcAppVec2 *out_size) {
     if (out_size) *out_size = (DcAppVec2){0};
     if (!app_data || texture_id == 0) return false;
     return _texture_get_index_size(app_data, (_TextureIndex)texture_id, out_size);
