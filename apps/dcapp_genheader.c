@@ -147,10 +147,10 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "");
 
     // file function declarations
-    fprintf(file, "%s\n", "// lifecycle callbacks get app_ctx for app-owned resources.");
-    fprintf(file, "%s\n", "void display_init(DcAppContext *app_ctx);");
-    fprintf(file, "%s\n", "void display_draw(DcAppContext *app_ctx);");
-    fprintf(file, "%s\n", "void display_close(DcAppContext *app_ctx);");
+    fprintf(file, "%s\n", "// lifecycle callbacks get app_ctx for app-owned resources and optional user_data.");
+    fprintf(file, "%s\n", "void display_init(DcAppContext *app_ctx, void **user_data);");
+    fprintf(file, "%s\n", "void display_draw(DcAppContext *app_ctx, void *user_data);");
+    fprintf(file, "%s\n", "void display_close(DcAppContext *app_ctx, void *user_data);");
     fprintf(file, "%s\n", "");
 
     // define dc_get_variable() and display_pre_init()

@@ -1905,11 +1905,11 @@ static void _draw_node_function(_AppData *app_data, _NodeIndex node_index, _Node
     if (node->function.fire_call != DC_APP_VAL_INDEX_UNDEFINED) {
         DcValue *val = dc_app_lookup_get_value(app_data->lookup, node->function.fire_call);
         if (!dc_value_is_equal(val, &node->function.last_fire_call_value)) {
-            node->function.callback();
+            node->function.callback(app_data, app_data->logic_user_data);
             node->function.last_fire_call_value = *val;
         }
     } else {
-        node->function.callback();
+        node->function.callback(app_data, app_data->logic_user_data);
     }
 }
 
@@ -1962,10 +1962,10 @@ static void _draw_node_draw_function(_AppData *app_data, _NodeIndex node_index, 
         }
         args.count  = (uint32_t)arg_count;
         args.values = values;
-        node->draw_function.callback(&ctx, &args);
+        node->draw_function.callback(&ctx, &args, app_data->logic_user_data);
         PL_FREE(values);
     } else {
-        node->draw_function.callback(&ctx, &args);
+        node->draw_function.callback(&ctx, &args, app_data->logic_user_data);
     }
     dc_app_draw_context_cleanup(&ctx);
 }

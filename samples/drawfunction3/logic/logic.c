@@ -65,12 +65,14 @@ static void sync_star_count(void) {
     }
 }
 
-void display_init(DcAppContext *app_ctx) {
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)user_data;
     (void)app_ctx;
     sync_star_count();
 }
 
-void display_draw(DcAppContext *app_ctx) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
     (void)app_ctx;
     sync_star_count();
 
@@ -89,11 +91,13 @@ void display_draw(DcAppContext *app_ctx) {
     }
 }
 
-void display_close(DcAppContext *app_ctx) {
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
     (void)app_ctx;
 }
 
-void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
+void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
+    (void)user_data;
     (void)args;
     if (!dc_draw) return;
 

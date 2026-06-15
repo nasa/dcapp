@@ -525,7 +525,8 @@ static const Example examples[] = {
     {"36 args/state", draw_example_36_args_and_state},
 };
 
-void display_init(DcAppContext *app_ctx) {
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)user_data;
     if (!dc_texture) {
         g_image_status = "texture api unavailable";
         return;
@@ -545,20 +546,23 @@ void display_init(DcAppContext *app_ctx) {
 // PHASE is an XML variable passed to draw_reference_grid(). Incrementing it in
 // display_draw() gives the C examples a tiny bit of animation without adding a
 // separate timing API to the sample.
-void display_draw(DcAppContext *app_ctx) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
     (void)app_ctx;
     if (!PHASE) return;
     *PHASE += 1.0;
 }
 
-void display_close(DcAppContext *app_ctx) {
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
     (void)app_ctx;
 }
 
 // The grid itself is also drawn from C. Each cell is a pushed container with a
 // 220x120 virtual coordinate system, so every draw_example_## can use the same
 // local coordinates no matter where the cell appears on screen.
-void draw_reference_grid(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
+void draw_reference_grid(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
+    (void)user_data;
     if (!dc_draw || !dc_mouse) return;
 
     const int columns = 6;

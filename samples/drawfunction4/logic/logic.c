@@ -18,12 +18,14 @@ static float g_time;
 static int g_next_ripple;
 static Ripple g_ripples[RIPPLE_COUNT];
 
-void display_init(DcAppContext *app_ctx) {
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)user_data;
     (void)app_ctx;
     // Static globals start zeroed, so there is nothing to initialize here.
 }
 
-void display_draw(DcAppContext *app_ctx) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
     (void)app_ctx;
     // This logic callback runs at the Window UpdateRate. It advances the sample's
     // animation clock and ages out old click ripples.
@@ -37,12 +39,14 @@ void display_draw(DcAppContext *app_ctx) {
     }
 }
 
-void display_close(DcAppContext *app_ctx) {
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
     (void)app_ctx;
     // No persistent resources to release.
 }
 
-void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
+void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
+    (void)user_data;
     (void)args;
     if (!dc_draw || !dc_mouse) return;
 

@@ -165,7 +165,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         // exposes only dcapp-owned api tables to logic.
         DcAppInit init = {
             .size = sizeof(init),
-            .version = 4,
+            .version = 5,
             .app_ctx = app_data,
             .get_variable = get_variable_value_addr,
             .draw = dc_app_draw_api(),
@@ -178,7 +178,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
 
     // call logic init
     if (app_data->logic_init) {
-        app_data->logic_init(app_data);
+        app_data->logic_init(app_data, &app_data->logic_user_data);
     }
 
     // return app memory
@@ -189,7 +189,7 @@ PL_EXPORT void pl_app_shutdown(_AppData *app_data) {
 
     // call logic close
     if (app_data->logic_close) {
-        app_data->logic_close(app_data);
+        app_data->logic_close(app_data, app_data->logic_user_data);
     }
 
     // unload logic shared library
@@ -791,7 +791,7 @@ static void _process_logic_updates(_AppData *app_data) {
         app_data->frame_data.last_logic_update_time   = dc_utils_time_get();
         app_data->frame_data.logic_update_accumulator = 0.0;
         app_data->frame_data.last_update_rate         = 0.0;
-        app_data->logic_draw(app_data);
+        app_data->logic_draw(app_data, app_data->logic_user_data);
         return;
     }
 
@@ -815,7 +815,7 @@ static void _process_logic_updates(_AppData *app_data) {
     int update_count = 0;
     while (app_data->frame_data.logic_update_accumulator >= update_interval &&
            update_count < DC_APP_MAX_LOGIC_UPDATES_PER_FRAME) {
-        app_data->logic_draw(app_data);
+        app_data->logic_draw(app_data, app_data->logic_user_data);
         app_data->frame_data.logic_update_accumulator -= update_interval;
         update_count++;
     }

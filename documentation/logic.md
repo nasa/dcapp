@@ -60,14 +60,20 @@ Create `logic/display_logic.c`:
 ```c
 #include "dcapp.h"
 
-void display_init(void) {
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)app_ctx;
+    (void)user_data;
+
     // Called once after variables are linked
     *altitude = 1000.0;
     *velocity = 0.0;
     *acceleration = -9.81;
 }
 
-void display_draw(void) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
+
     // Called each update tick when Window UpdateRate is set
     static double dt = 0.016; // 60 updates per second
     
@@ -81,7 +87,10 @@ void display_draw(void) {
     }
 }
 
-void display_close(void) {
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
+
     // Called when display closes
 }
 ```
@@ -135,12 +144,13 @@ typedef struct _DcDrawApi DcDrawApi;
 typedef struct _DcMouseApi DcMouseApi;
 typedef struct _DcTextureApi DcTextureApi;
 typedef uint32_t DcTextureId;
-typedef void *(*DcGetVariableFn)(void *user_data, const char *name);
+typedef struct _DcAppContext DcAppContext;
+typedef void *(*DcGetVariableFn)(DcAppContext *app_ctx, const char *name);
 
 typedef struct _DcInit {
     uint32_t size;
     uint32_t version;
-    void *user_data;
+    DcAppContext *app_ctx;
     DcGetVariableFn get_variable;
     const DcDrawApi *draw;
     const DcMouseApi *mouse;
@@ -150,7 +160,6 @@ typedef struct _DcInit {
 #ifndef _DCAPP_LOGIC_EXTERN_
 
 // Runtime globals used by logic files.
-void *dc_user_data;
 DcGetVariableFn dc_get_variable_fn;
 const DcDrawApi *dc_draw;
 const DcMouseApi *dc_mouse;
@@ -168,31 +177,30 @@ extern "C" {
 #endif
 
 // Function declarations you must implement
-void display_init(void);
-void display_draw(void);
-void display_close(void);
+void display_init(DcAppContext *app_ctx, void **user_data);
+void display_draw(DcAppContext *app_ctx, void *user_data);
+void display_close(DcAppContext *app_ctx, void *user_data);
 
 // Auto-generated initialization (do not call directly)
-void *dc_get_variable(const char *name) {
+void *dc_get_variable(DcAppContext *app_ctx, const char *name) {
     if (!dc_get_variable_fn) return NULL;
-    return dc_get_variable_fn(dc_user_data, name);
+    return dc_get_variable_fn(app_ctx, name);
 }
 
-DcTextureId dc_load_image(const char *path, DcVec2 *out_size);
-bool dc_get_texture_size(DcTextureId texture_id, DcVec2 *out_size);
+DcTextureId dc_load_image(DcAppContext *app_ctx, const char *path, DcVec2 *out_size);
+bool dc_get_texture_size(DcAppContext *app_ctx, DcTextureId texture_id, DcVec2 *out_size);
 
 void display_pre_init(const DcInit *init) {
     if (init && init->version >= 1 && init->size >= sizeof(DcInit)) {
-        dc_user_data = init->user_data;
         dc_get_variable_fn = init->get_variable;
         dc_draw = init->draw;
         dc_mouse = init->mouse;
         dc_texture = init->texture;
-        altitude = (double *)dc_get_variable("altitude");
-        velocity = (double *)dc_get_variable("velocity");
-        frameCount = (int *)dc_get_variable("frameCount");
-        statusMessage = (char (*)[256])dc_get_variable("statusMessage");
-        isRunning = (bool *)dc_get_variable("isRunning");
+        altitude = (double *)dc_get_variable(init->app_ctx, "altitude");
+        velocity = (double *)dc_get_variable(init->app_ctx, "velocity");
+        frameCount = (int *)dc_get_variable(init->app_ctx, "frameCount");
+        statusMessage = (char (*)[256])dc_get_variable(init->app_ctx, "statusMessage");
+        isRunning = (bool *)dc_get_variable(init->app_ctx, "isRunning");
     }
 }
 
@@ -206,9 +214,9 @@ void display_pre_init(const DcInit *init) {
 extern "C" {
 #endif
 
-void *dc_get_variable(const char *name);
-DcTextureId dc_load_image(const char *path, DcVec2 *out_size);
-bool dc_get_texture_size(DcTextureId texture_id, DcVec2 *out_size);
+void *dc_get_variable(DcAppContext *app_ctx, const char *name);
+DcTextureId dc_load_image(DcAppContext *app_ctx, const char *path, DcVec2 *out_size);
+bool dc_get_texture_size(DcAppContext *app_ctx, DcTextureId texture_id, DcVec2 *out_size);
 extern const DcDrawApi *dc_draw;
 extern const DcMouseApi *dc_mouse;
 extern const DcTextureApi *dc_texture;
@@ -263,7 +271,9 @@ In **additional** source files that need access to variables:
 
 ## Required Functions
 
-Your logic file must implement these three functions:
+Your logic file must implement these three functions. `app_ctx` is the dcapp
+runtime context for app-owned APIs. `user_data` is optional user-owned state:
+set `*user_data` in `display_init()`, then cast and use it in later callbacks.
 
 ### `display_init()`
 
@@ -273,7 +283,10 @@ Called once after all variables have been linked. Use for:
 - Opening files or connections
 
 ```c
-void display_init(void) {
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)app_ctx;
+    (void)user_data;
+
     *altitude = 10000.0;
     *velocity = 0.0;
     *isRunning = true;
@@ -289,7 +302,10 @@ Called once per render by default, or at the fixed `<Window UpdateRate="...">` c
 - State machine logic
 
 ```c
-void display_draw(void) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
+
     static int update_count = 0;
     update_count++;
     
@@ -312,8 +328,43 @@ Called when the display closes. Use for:
 - Final cleanup
 
 ```c
-void display_close(void) {
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
+
     // Cleanup code here
+}
+```
+
+### Optional User Data
+
+Use `user_data` when your logic needs persistent state without file-scope
+globals:
+
+```c
+#include "dcapp.h"
+#include <stdlib.h>
+
+typedef struct DisplayState {
+    double elapsed;
+    int event_count;
+} DisplayState;
+
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)app_ctx;
+    *user_data = calloc(1, sizeof(DisplayState));
+}
+
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    DisplayState *state = (DisplayState *)user_data;
+    if (!state) return;
+    state->elapsed += 1.0 / 60.0;
+}
+
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    free(user_data);
 }
 ```
 
@@ -360,11 +411,14 @@ if (strcmp(*statusMessage, "ARMED") == 0) {
 ## DrawFunction API
 
 Logic libraries can also export draw callbacks and call them from XML with
-`<DrawFunction Name="...">`. A DrawFunction receives the current draw context and
-an optional typed argument list:
+`<DrawFunction Name="...">`. A DrawFunction receives the current draw context,
+an optional typed argument list, and optional user-owned state:
 
 ```c
-void draw_widget(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
+void draw_widget(DcDrawContext *ctx, const DcDrawFuncArgs *args, void *user_data) {
+    (void)user_data;
+    (void)args;
+
     DcStroke stroke = {
         .color = { .r = 0.2f, .g = 0.8f, .b = 1.0f, .a = 1.0f },
         .width = 2.0f,
@@ -421,11 +475,15 @@ DrawFunction callbacks:
 static DcTextureId logo;
 static DcVec2 logo_size;
 
-void display_init(void) {
-    logo = dc_load_image("assets/logo.png", &logo_size);
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)user_data;
+    logo = dc_load_image(app_ctx, "assets/logo.png", &logo_size);
 }
 
-void draw_logo(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
+void draw_logo(DcDrawContext *ctx, const DcDrawFuncArgs *args, void *user_data) {
+    (void)user_data;
+    (void)args;
+
     if (logo) {
         dc_draw->image(ctx, logo, (DcVec2){20, 20}, logo_size,
                        (DcVec4){ .r = 1, .g = 1, .b = 1, .a = 1 });
@@ -448,11 +506,16 @@ The generated header includes C++ compatibility guards. For C++ code:
 #include <cmath>
 #include <string>
 
-void display_init(void) {
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)app_ctx;
+    (void)user_data;
     *altitude = 1000.0;
 }
 
-void display_draw(void) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
+
     // Use C++ features
     *altitude = std::max(0.0, *altitude + *velocity * 0.016);
     
@@ -461,7 +524,9 @@ void display_draw(void) {
     strncpy(*statusMessage, status.c_str(), 255);
 }
 
-void display_close(void) {
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
 }
 ```
 
@@ -482,16 +547,22 @@ For larger projects, split your code across multiple files:
 #include "physics.h"
 #include "utils.h"
 
-void display_init(void) {
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)app_ctx;
+    (void)user_data;
     physics_init();
 }
 
-void display_draw(void) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
     physics_update(0.016);
     update_status();
 }
 
-void display_close(void) {
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
     physics_cleanup();
 }
 ```
@@ -638,7 +709,10 @@ set_target_properties(display_logic PROPERTIES
 ```c
 #include <stdio.h>
 
-void display_draw(void) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
+
     static int update_count = 0;
     if (update_count++ % 60 == 0) {  // Print once per second with UpdateRate="60"
         printf("Update %d: alt=%.2f vel=%.2f\n",
@@ -740,14 +814,20 @@ void display_draw(void) {
 
 static const double DT = 0.016;  // ~60fps
 
-void display_init(void) {
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)app_ctx;
+    (void)user_data;
+
     // Initial conditions set in XML, but we can override:
     // *altitude = 10000.0;
     // *velocity = 0.0;
     strcpy(*status, "READY");
 }
 
-void display_draw(void) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
+
     // Only simulate if running
     if (!*simRunning) {
         return;
@@ -770,7 +850,10 @@ void display_draw(void) {
     }
 }
 
-void display_close(void) {
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
+
     // Nothing to clean up
 }
 ```
@@ -794,7 +877,7 @@ The `<Function>` element allows you to call functions from your logic file direc
 <Function Name="my_function"/>
 ```
 
-When this element is rendered, it calls the function `my_function()` from your loaded logic library every frame.
+When this element is rendered, it calls the function `my_function(app_ctx, user_data)` from your loaded logic library every frame.
 
 ### Edge-Triggered Calls with `FireCall`
 
@@ -811,10 +894,11 @@ The function will be called once each time the value of `triggerVar` changes. If
 Functions called via `<Function>` must have this signature:
 
 ```c
-void my_function(void);
+void my_function(DcAppContext *app_ctx, void *user_data);
 ```
 
-No parameters, no return value.
+`app_ctx` is the dcapp runtime context. `user_data` is the pointer set through
+`display_init()`, or `NULL` if you did not set one.
 
 ### Example: Button Click Handlers
 
@@ -851,11 +935,25 @@ No parameters, no return value.
 #include "dcapp.h"
 #include <stdio.h>
 
-void display_init(void) {}
-void display_draw(void) {}
-void display_close(void) {}
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)app_ctx;
+    (void)user_data;
+}
 
-void on_button_click() {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
+}
+
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
+}
+
+void on_button_click(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
+
     printf("Button was clicked!\n");
     // Do something interesting here
 }

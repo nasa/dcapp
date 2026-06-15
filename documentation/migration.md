@@ -503,9 +503,9 @@ Also recommended: Convert TGA files to PNG for smaller file sizes.
 
 | Legacy | New |
 |--------|-----|
-| `extern "C" void DisplayInit(void)` | `void display_init(void)` |
-| `extern "C" void DisplayLogic(void)` | `void display_draw(void)` |
-| `extern "C" void DisplayClose(void)` | `void display_close(void)` |
+| `extern "C" void DisplayInit(void)` | `void display_init(DcAppContext *app_ctx, void **user_data)` |
+| `extern "C" void DisplayLogic(void)` | `void display_draw(DcAppContext *app_ctx, void *user_data)` |
+| `extern "C" void DisplayClose(void)` | `void display_close(DcAppContext *app_ctx, void *user_data)` |
 
 The `extern "C"` wrapper is no longer needed since files are now plain C.
 
@@ -542,15 +542,21 @@ New (`logic.c`):
 ```c
 #include "dcapp.h"
 
-void display_init(void) {
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)app_ctx;
+    (void)user_data;
     // initialization
 }
 
-void display_draw(void) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
     *MY_VARIABLE += 1.0;
 }
 
-void display_close(void) {
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)app_ctx;
+    (void)user_data;
     // cleanup
 }
 ```

@@ -49,7 +49,8 @@ static void update_logic_shader(void) {
     }
 }
 
-void display_init(DcAppContext *app_ctx) {
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)user_data;
     const char *display_home = getenv("dcappDisplayHome");
     if (!display_home || display_home[0] == '\0') return;
 
@@ -69,7 +70,8 @@ void display_init(DcAppContext *app_ctx) {
     }
 }
 
-void display_draw(DcAppContext *app_ctx) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
     static double orbit_lon = 315.0;
     orbit_lon += 0.25;
     if (orbit_lon >= 360.0) {
@@ -93,11 +95,13 @@ void display_draw(DcAppContext *app_ctx) {
     }
 }
 
-void display_close(DcAppContext *app_ctx) {
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
     (void)app_ctx;
 }
 
-void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
+void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
+    (void)user_data;
     (void)args;
 
     if (LogicReadout) {

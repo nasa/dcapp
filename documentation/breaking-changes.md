@@ -44,6 +44,33 @@ Source and ABI changes that may require edits outside XML display files.
 - Prefer `CameraYaw` over the legacy `CameraHeading` alias.
 - Remove mismatched camera attributes.
 
+### 2026-06-15 - Logic Callback User Data ABI
+
+#### Affected Code
+- Logic shared libraries compiled against older generated `logic/dcapp.h` files.
+- User code implementing `display_init`, `display_draw`, `display_close`,
+  `<Function>` callbacks, or `<DrawFunction>` callbacks.
+
+#### Changed
+- `display_init` now receives `DcAppContext *app_ctx` and `void **user_data`.
+  Set `*user_data` there to store app-owned logic state.
+- `display_draw`, `display_close`, `<Function>` callbacks, and
+  `<DrawFunction>` callbacks now receive the stored `void *user_data`.
+- `<Function>` callbacks also receive `DcAppContext *app_ctx`.
+- `<DrawFunction>` callbacks now receive `void *user_data` after the draw
+  context and argument list.
+
+#### Migration
+- Regenerate `logic/dcapp.h` and rebuild logic shared libraries.
+- Update lifecycle callbacks to:
+  `display_init(DcAppContext *app_ctx, void **user_data)`,
+  `display_draw(DcAppContext *app_ctx, void *user_data)`, and
+  `display_close(DcAppContext *app_ctx, void *user_data)`.
+- Update `<Function>` callbacks to
+  `void name(DcAppContext *app_ctx, void *user_data)`.
+- Update `<DrawFunction>` callbacks to
+  `void name(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data)`.
+
 ### 2026-06-04 - Logic Header Initialization ABI
 
 This section compares the current logic API against the public logic API that

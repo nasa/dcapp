@@ -4,23 +4,27 @@
 // DrawFunction 1 is a small feature tour. XML owns the cards and labels; each
 // DrawFunction owns one focused piece of C drawing.
 
-void display_init(DcAppContext *app_ctx) {
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)user_data;
     (void)app_ctx;
     // PHASE is declared in XML, so the logic file has no setup work.
 }
 
-void display_draw(DcAppContext *app_ctx) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
     (void)app_ctx;
     if (!PHASE) return;
     *PHASE += 1.2;
 }
 
-void display_close(DcAppContext *app_ctx) {
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
     (void)app_ctx;
     // No persistent resources to release.
 }
 
-void draw_simple_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
+void draw_simple_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
+    (void)user_data;
     if (!dc_draw) return;
 
     // Plain primitive drawing: fill first, outline second.
@@ -45,7 +49,8 @@ void draw_simple_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     });
 }
 
-void draw_labeled_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
+void draw_labeled_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
+    (void)user_data;
     if (!dc_draw) return;
 
     // Logic-side text: the circle returns an area, then text is centered inside
@@ -85,7 +90,8 @@ void draw_labeled_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     }
 }
 
-void draw_mouse_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
+void draw_mouse_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
+    (void)user_data;
     if (!dc_draw || !dc_mouse) return;
 
     // Mouse registration is separate from drawing, so only the primitives that
@@ -131,7 +137,8 @@ void draw_mouse_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     });
 }
 
-void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
+void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
+    (void)user_data;
     if (!dc_draw) return;
 
     // The circle returns a resolved area. Pushing it lets the following shapes

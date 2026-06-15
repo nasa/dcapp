@@ -422,7 +422,7 @@ typedef struct __DeferredSetOp {
 } _DeferredSetOp;
 
 typedef struct __NodeFunction {
-    void (*callback)(void);
+    void (*callback)(DcAppContext *, void *);
     _ValIndex fire_call;
     DcValue   last_fire_call_value;
 } _NodeFunction;
@@ -433,7 +433,7 @@ typedef struct __DrawFunctionArg {
 } _DrawFunctionArg;
 
 typedef struct __NodeDrawFunction {
-    void (*callback)(DcAppDrawContext *, const DcAppDrawFuncArgs *);
+    void (*callback)(DcAppDrawContext *, const DcAppDrawFuncArgs *, void *);
     _DrawFunctionArg *sb_args;
 } _NodeDrawFunction;
 

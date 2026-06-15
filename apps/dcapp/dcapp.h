@@ -303,9 +303,10 @@ struct __AppData {
     // logic
     DcLibrary *logic_lib;
     void (*logic_pre_init)(const DcAppInit *init);
-    void (*logic_init)(DcAppContext *app_ctx);
-    void (*logic_draw)(DcAppContext *app_ctx);
-    void (*logic_close)(DcAppContext *app_ctx);
+    void (*logic_init)(DcAppContext *app_ctx, void **user_data);
+    void (*logic_draw)(DcAppContext *app_ctx, void *user_data);
+    void (*logic_close)(DcAppContext *app_ctx, void *user_data);
+    void *logic_user_data;
     DcAppPlanetBreadcrumbsHandle *sb_planet_breadcrumbs;
 
     // trick

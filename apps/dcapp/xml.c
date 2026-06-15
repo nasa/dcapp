@@ -1667,7 +1667,7 @@ static _NodeIndex _process_xml_node_function(_AppData *app_data, xmlNodePtr xml_
     xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
     if (raw_name) {
         if (app_data->logic_lib) {
-            dc_node.function.callback = (void (*)(void))dc_utils_library_symbol(app_data->logic_lib, (const char *)raw_name);
+            dc_node.function.callback = (void (*)(DcAppContext *, void *))dc_utils_library_symbol(app_data->logic_lib, (const char *)raw_name);
             if (!dc_node.function.callback) {
                 DC_LOG_ERROR("Function", "Failed to load function '%s' from logic library: %s", (const char *)raw_name, dc_utils_library_last_error());
                 is_valid = false;
@@ -1709,7 +1709,7 @@ static _NodeIndex _process_xml_node_draw_function(_AppData *app_data, xmlNodePtr
     xmlChar *raw_name = xmlGetProp(xml_node, BAD_CAST "Name");
     if (raw_name) {
         if (app_data->logic_lib) {
-            dc_node.draw_function.callback = (void (*)(DcAppDrawContext *, const DcAppDrawFuncArgs *))dc_utils_library_symbol(app_data->logic_lib, (const char *)raw_name);
+            dc_node.draw_function.callback = (void (*)(DcAppDrawContext *, const DcAppDrawFuncArgs *, void *))dc_utils_library_symbol(app_data->logic_lib, (const char *)raw_name);
             if (!dc_node.draw_function.callback) {
                 DC_LOG_ERROR("DrawFunction", "Failed to load function '%s' from logic library: %s", (const char *)raw_name, dc_utils_library_last_error());
                 is_valid = false;
@@ -2246,9 +2246,9 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
             DC_LOG_ERROR("Logic", "Failed to load library '%s.so/.dylib/.dll': %s", base_filepath, dc_utils_library_last_error());
         } else {
             app_data->logic_pre_init = (void (*)(const DcAppInit *))dc_utils_library_symbol(app_data->logic_lib, "display_pre_init");
-            app_data->logic_init     = (void (*)(DcAppContext *))dc_utils_library_symbol(app_data->logic_lib, "display_init");
-            app_data->logic_draw     = (void (*)(DcAppContext *))dc_utils_library_symbol(app_data->logic_lib, "display_draw");
-            app_data->logic_close    = (void (*)(DcAppContext *))dc_utils_library_symbol(app_data->logic_lib, "display_close");
+            app_data->logic_init     = (void (*)(DcAppContext *, void **))dc_utils_library_symbol(app_data->logic_lib, "display_init");
+            app_data->logic_draw     = (void (*)(DcAppContext *, void *))dc_utils_library_symbol(app_data->logic_lib, "display_draw");
+            app_data->logic_close    = (void (*)(DcAppContext *, void *))dc_utils_library_symbol(app_data->logic_lib, "display_close");
         }
     } else {
         DC_LOG_ERROR("Logic", "Missing 'File' attribute");

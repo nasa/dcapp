@@ -6,20 +6,24 @@
 
 static float g_phase;
 
-void display_init(DcAppContext *app_ctx) {
+void display_init(DcAppContext *app_ctx, void **user_data) {
+    (void)user_data;
     (void)app_ctx;
 }
 
-void display_draw(DcAppContext *app_ctx) {
+void display_draw(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
     (void)app_ctx;
     g_phase += 0.025f;
 }
 
-void display_close(DcAppContext *app_ctx) {
+void display_close(DcAppContext *app_ctx, void *user_data) {
+    (void)user_data;
     (void)app_ctx;
 }
 
-void draw_lissajous(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
+void draw_lissajous(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args, void *user_data) {
+    (void)user_data;
     (void)args;
     if (!dc_draw) return;
 
