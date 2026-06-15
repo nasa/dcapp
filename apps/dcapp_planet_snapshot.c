@@ -343,7 +343,7 @@ PL_EXPORT void pl_app_update(AppData *app) {
             .uImageHeight = app->height,
             .uImageDepth = 1,
             .uLayerCount = 1,
-            .tCurrentImageUsage = PL_TEXTURE_USAGE_COLOR_ATTACHMENT,
+            .tCurrentImageUsage = PL_TEXTURE_USAGE_SAMPLED,
         };
         _ext_gfx->copy_texture_to_buffer(blit, _ext_planet->get_view_output_texture(app->view), app->readback_buffer, 1, &copy);
         _ext_gfx->end_blit_pass(blit);
