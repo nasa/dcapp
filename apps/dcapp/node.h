@@ -8,12 +8,10 @@
 #include "app/lookup.h"
 #include "app/enums.h"
 #include "geo.h"
+#include "logic_api.h"
 #include "pixelstream/mjpeg.h"
 #include "pixelstream/shmem.h"
 #include "dc_draw_ext.h"
-
-typedef struct _DcAppDrawContext DcAppDrawContext;
-typedef struct _DcAppDrawFuncArgs DcAppDrawFuncArgs;
 
 // value index types
 typedef DcAppValIndex _ValIndex;
@@ -562,6 +560,7 @@ typedef struct __PlanetDef {
 
     // runtime
     uint8_t index; // 1-based index into sb_planets
+    DcAppPlanetHandle handle; // dcapp handle for xml and logic interop
 } _PlanetDef;
 
 typedef struct __NodePlanetEllipse {
@@ -672,10 +671,10 @@ typedef struct __NodePlanetView {
     _ValIndex3 lle;
     _ValIndex3 xyz;
     _ValIndex3 rpy;
-    _ValIndex  heading;
     _ValIndex  fov;
     _ValIndex  orthographic;
     DcAppPlanetCrs crs;
+    DcAppPlanetAttitudeFrame attitude_frame;
 
     // shader selection (per-view; indexes into parent PlanetDef's sb_shaders)
     _ValIndex shader_index;        // variable holding active shader index
@@ -690,6 +689,7 @@ typedef struct __NodePlanetView {
     // references
     uint8_t planet_def_index;  // index into sb_planet_defs (resolved at parse time)
     uint8_t planet_view_index; // 1-based index into sb_planet_views
+    DcAppPlanetViewHandle handle; // dcapp handle for xml and logic interop
 
     // children (PlanetEllipse, etc.)
     _NodeIndex child;

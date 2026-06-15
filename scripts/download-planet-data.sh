@@ -3,9 +3,9 @@ set -euo pipefail
 
 DCAPP_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-DATASET_DIR="${DCAPP_PLANET_DATA_DIR:-$DCAPP_HOME/data/planets/moon/LDEM_45S_100M}"
-SOURCE_DIR="$DATASET_DIR/source"
-CHUNK_DIR="$DATASET_DIR/chunks"
+DATA_DIR="${DCAPP_PLANET_DATA_DIR:-$DCAPP_HOME/data}"
+SOURCE_DIR="$DATA_DIR"
+CHUNK_DIR="$DATA_DIR"
 
 IMG_URL="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_45S_100M.IMG"
 LBL_URL="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_45S_100M.LBL"
@@ -25,7 +25,7 @@ while [ $# -gt 0 ]; do
             echo ""
             echo "Environment:"
             echo "  DCAPP_PLANET_DATA_DIR  Override output directory"
-            echo "                         default: data/planets/moon/LDEM_45S_100M"
+            echo "                         default: data"
             echo ""
             echo "Options:"
             echo "  --force                Regenerate chunks even if the .planet.json exists"
@@ -47,9 +47,9 @@ done
 echo "========================================"
 echo "Planet Data Download"
 echo "========================================"
-echo "Dataset: $DATASET_DIR"
+echo "Data directory: $DATA_DIR"
 
-mkdir -p "$SOURCE_DIR" "$CHUNK_DIR"
+mkdir -p "$DATA_DIR"
 
 if [ ! -f "$IMG_FILE" ]; then
     echo "Downloading LDEM_45S_100M.IMG..."
@@ -68,7 +68,11 @@ fi
 if [ "$FORCE" = true ] || [ ! -f "$PLANET_JSON" ]; then
     echo ""
     echo "Running chunkgen..."
-    "$DCAPP_HOME/bin/dcapp-planet-chunkgen.sh" "$LBL_FILE" "$CHUNK_DIR" --radius 1737400 "${EXTRA_ARGS[@]}"
+    if [ ${#EXTRA_ARGS[@]} -gt 0 ]; then
+        "$DCAPP_HOME/bin/dcapp-planet-chunkgen.sh" "$LBL_FILE" "$CHUNK_DIR" --radius 1737400 "${EXTRA_ARGS[@]}"
+    else
+        "$DCAPP_HOME/bin/dcapp-planet-chunkgen.sh" "$LBL_FILE" "$CHUNK_DIR" --radius 1737400
+    fi
 else
     echo "LDEM_45S_100M.planet.json already exists, skipping chunkgen. Use --force to regenerate."
 fi

@@ -1,5 +1,6 @@
 #include "../src/app/config.h"
 #include "../src/app/elem.h"
+#include "../src/app/enums.h"
 #include "../src/app/lookup.h"
 #include "../src/utils/env.h"
 #include "../src/utils/file.h"
@@ -980,6 +981,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             xmlChar *lon   = xmlGetProp(node, BAD_CAST "CameraLongitude");
             xmlChar *ele   = xmlGetProp(node, BAD_CAST "CameraElevation");
             xmlChar *hdg   = xmlGetProp(node, BAD_CAST "CameraHeading");
+            xmlChar *attitude_frame = xmlGetProp(node, BAD_CAST "AttitudeFrame");
             xmlChar *cam_x = xmlGetProp(node, BAD_CAST "CameraX");
             xmlChar *cam_y = xmlGetProp(node, BAD_CAST "CameraY");
             xmlChar *cam_z = xmlGetProp(node, BAD_CAST "CameraZ");
@@ -987,24 +989,34 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
             xmlChar *pitch = xmlGetProp(node, BAD_CAST "CameraPitch");
             xmlChar *yaw   = xmlGetProp(node, BAD_CAST "CameraYaw");
             bool has_lle = lat || lon || ele;
-            bool has_xyz = cam_x || cam_y || cam_z || roll || pitch || yaw;
+            bool has_xyz = cam_x || cam_y || cam_z;
             bool complete_lle = lat && lon && ele;
-            bool complete_xyz = cam_x && cam_y && cam_z && roll && pitch && yaw;
+            bool complete_xyz = cam_x && cam_y && cam_z;
             if (has_lle && !complete_lle) {
                 DC_LOG_ERROR("Validate", "<PlanetView> incomplete geodetic camera; CameraLatitude, CameraLongitude, and CameraElevation are required together (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             }
             if (has_xyz && !complete_xyz) {
-                DC_LOG_ERROR("Validate", "<PlanetView> incomplete cartesian camera; CameraX, CameraY, CameraZ, CameraRoll, CameraPitch, and CameraYaw are required together (line %ld)", xmlGetLineNo(node));
+                DC_LOG_ERROR("Validate", "<PlanetView> incomplete cartesian camera; CameraX, CameraY, and CameraZ are required together (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             }
             if (has_lle && has_xyz) {
                 DC_LOG_ERROR("Validate", "<PlanetView> cannot mix geodetic and cartesian camera attributes (line %ld)", xmlGetLineNo(node));
                 ctx->error_count++;
             }
+            if (hdg && yaw) {
+                DC_LOG_ERROR("Validate", "<PlanetView> CameraHeading is a legacy alias for CameraYaw; do not specify both (line %ld)", xmlGetLineNo(node));
+                ctx->error_count++;
+            }
             if (crs) {
                 int crs_value = atoi((const char *)crs);
-                if (crs_value == 1) {
+                int attitude_frame_value = attitude_frame ? atoi((const char *)attitude_frame) :
+                    (crs_value == DC_APP_PLANET_CRS_GEODETIC ? DC_APP_PLANET_ATTITUDE_FRAME_LOCAL_NED : DC_APP_PLANET_ATTITUDE_FRAME_CARTESIAN_RPY);
+                if (hdg && crs_value == DC_APP_PLANET_CRS_CARTESIAN) {
+                    DC_LOG_ERROR("Validate", "<PlanetView CRS cartesian> cannot use legacy CameraHeading; use CameraYaw instead (line %ld)", xmlGetLineNo(node));
+                    ctx->error_count++;
+                }
+                if (crs_value == DC_APP_PLANET_CRS_GEODETIC) {
                     if (!has_lle) {
                         DC_LOG_ERROR("Validate", "<PlanetView CRS geodetic> requires CameraLatitude, CameraLongitude, and CameraElevation (line %ld)", xmlGetLineNo(node));
                         ctx->error_count++;
@@ -1013,13 +1025,21 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
                         DC_LOG_ERROR("Validate", "<PlanetView CRS geodetic> cannot use cartesian camera attributes (line %ld)", xmlGetLineNo(node));
                         ctx->error_count++;
                     }
-                } else if (crs_value == 2) {
-                    if (!has_xyz) {
-                        DC_LOG_ERROR("Validate", "<PlanetView CRS cartesian> requires CameraX, CameraY, CameraZ, CameraRoll, CameraPitch, and CameraYaw (line %ld)", xmlGetLineNo(node));
+                    if (attitude_frame_value != DC_APP_PLANET_ATTITUDE_FRAME_LOCAL_NED) {
+                        DC_LOG_ERROR("Validate", "<PlanetView CRS geodetic> requires AttitudeFrame #_planet_attitude_frame_local_ned_ (line %ld)", xmlGetLineNo(node));
                         ctx->error_count++;
                     }
-                    if (has_lle || hdg) {
-                        DC_LOG_ERROR("Validate", "<PlanetView CRS cartesian> cannot use geodetic camera attributes or CameraHeading (line %ld)", xmlGetLineNo(node));
+                } else if (crs_value == DC_APP_PLANET_CRS_CARTESIAN) {
+                    if (!has_xyz) {
+                        DC_LOG_ERROR("Validate", "<PlanetView CRS cartesian> requires CameraX, CameraY, and CameraZ (line %ld)", xmlGetLineNo(node));
+                        ctx->error_count++;
+                    }
+                    if (has_lle) {
+                        DC_LOG_ERROR("Validate", "<PlanetView CRS cartesian> cannot use geodetic camera attributes (line %ld)", xmlGetLineNo(node));
+                        ctx->error_count++;
+                    }
+                    if (attitude_frame_value != DC_APP_PLANET_ATTITUDE_FRAME_CARTESIAN_RPY) {
+                        DC_LOG_ERROR("Validate", "<PlanetView CRS cartesian> requires AttitudeFrame #_planet_attitude_frame_cartesian_rpy_ (line %ld)", xmlGetLineNo(node));
                         ctx->error_count++;
                     }
                 } else {
@@ -1028,6 +1048,7 @@ void _validate_required_attributes(ValidationContext *ctx, xmlNodePtr node, DcAp
                 }
             }
             if (crs) xmlFree(crs);
+            if (attitude_frame) xmlFree(attitude_frame);
             if (lat) xmlFree(lat);
             if (lon) xmlFree(lon);
             if (ele) xmlFree(ele);
@@ -1113,7 +1134,7 @@ static const char *_valid_attrs_set[]            = {"Variable", "Operator", "Def
 static const char *_valid_attrs_sphere[]         = {"Radius", "Image", "Roll", "Pitch", "Yaw", NULL};
 static const char *_valid_attrs_style[]          = {"Name", NULL};
 static const char *_valid_attrs_planet[]         = {"Name", "CRS", "LightDirectionX", "LightDirectionY", "LightDirectionZ", "MeshCacheSize", NULL};
-static const char *_valid_attrs_planet_view[]    = {"Planet", "CRS", "ShaderIndex", "Tau", "Flatten", "PositionX", "X", "PositionY", "Y", "DimensionX", "Width", "DimensionY", "Height", "LocalAlignX", "HorizontalAlign", "LocalAlignY", "VerticalAlign", "ParentAlignX", "ParentAlignY", "Rotation", "Rotate", "PivotPositionX", "PivotX", "PivotPositionY", "PivotY", "PivotParentAlignX", "PivotParentAlignY", "PivotLocalAlignX", "PivotLocalAlignY", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraFOV", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", "NegateX", "NegateY", NULL};
+static const char *_valid_attrs_planet_view[]    = {"Planet", "CRS", "AttitudeFrame", "ShaderIndex", "Tau", "Flatten", "PositionX", "X", "PositionY", "Y", "DimensionX", "Width", "DimensionY", "Height", "LocalAlignX", "HorizontalAlign", "LocalAlignY", "VerticalAlign", "ParentAlignX", "ParentAlignY", "Rotation", "Rotate", "PivotPositionX", "PivotX", "PivotPositionY", "PivotY", "PivotParentAlignX", "PivotParentAlignY", "PivotLocalAlignX", "PivotLocalAlignY", "CameraLatitude", "CameraLongitude", "CameraElevation", "CameraHeading", "CameraFOV", "CameraX", "CameraY", "CameraZ", "CameraRoll", "CameraPitch", "CameraYaw", "CameraOrthographic", "NegateX", "NegateY", NULL};
 static const char *_valid_attrs_planet_data[]    = {"File", NULL};
 static const char *_valid_attrs_planet_texture[] = {"File", "CRS", "MetersPerPixel", "Latitude", "Longitude", "X", "Y", "Z", "OriginX", "OriginY", "FireRefresh", NULL};
 static const char *_valid_attrs_planet_shader[]  = {"Index", "VertexShader", "FragmentShader", NULL};

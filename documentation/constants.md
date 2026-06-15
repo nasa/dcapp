@@ -419,6 +419,8 @@ Color constants use space-separated RGB values. Add alpha when using:
 | | `#_pixelstream_mjpeg_` | 2 |
 | **Planet CRS** | `#_planet_crs_geodetic_` | 1 |
 | | `#_planet_crs_cartesian_` | 2 |
+| **Planet Attitude Frame** | `#_planet_attitude_frame_local_ned_` | 1 |
+| | `#_planet_attitude_frame_cartesian_rpy_` | 2 |
 | **Stencil** | `#_stencil_color_` | 0 0 0 1 |
 
 ---

@@ -2242,9 +2242,9 @@ static _NodeIndex _process_xml_node_logic(_AppData *app_data, xmlNodePtr xml_nod
             DC_LOG_ERROR("Logic", "Failed to load library '%s.so/.dylib/.dll': %s", base_filepath, dc_utils_library_last_error());
         } else {
             app_data->logic_pre_init = (void (*)(const DcAppInit *))dc_utils_library_symbol(app_data->logic_lib, "display_pre_init");
-            app_data->logic_init     = (void (*)(void))dc_utils_library_symbol(app_data->logic_lib, "display_init");
-            app_data->logic_draw     = (void (*)(void))dc_utils_library_symbol(app_data->logic_lib, "display_draw");
-            app_data->logic_close    = (void (*)(void))dc_utils_library_symbol(app_data->logic_lib, "display_close");
+            app_data->logic_init     = (void (*)(DcAppContext *))dc_utils_library_symbol(app_data->logic_lib, "display_init");
+            app_data->logic_draw     = (void (*)(DcAppContext *))dc_utils_library_symbol(app_data->logic_lib, "display_draw");
+            app_data->logic_close    = (void (*)(DcAppContext *))dc_utils_library_symbol(app_data->logic_lib, "display_close");
         }
     } else {
         DC_LOG_ERROR("Logic", "Missing 'File' attribute");
@@ -4582,7 +4582,7 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
     dc_node.type   = NODE_TYPE_PLANET_VIEW;
     dc_node.parent = parent_node_index;
 
-    // Planet reference (required) — resolve def index at parse time
+    // resolves the planet reference at parse time.
     xmlChar *raw_planet                  = xmlGetProp(xml_node, BAD_CAST "Planet");
     dc_node.planet_view.planet_def_index = UINT8_MAX;
     if (raw_planet) {
@@ -4605,6 +4605,18 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
         xmlFree(raw_crs);
     } else {
         DC_LOG_ERROR("PlanetView", "CRS is required; use #_planet_crs_geodetic_ or #_planet_crs_cartesian_");
+    }
+
+    dc_node.planet_view.attitude_frame = DC_APP_PLANET_ATTITUDE_FRAME_UNDEFINED;
+    xmlChar *raw_attitude_frame = xmlGetProp(xml_node, BAD_CAST "AttitudeFrame");
+    if (raw_attitude_frame) {
+        dc_node.planet_view.attitude_frame = (DcAppPlanetAttitudeFrame)atoi((const char *)raw_attitude_frame);
+        xmlFree(raw_attitude_frame);
+    } else {
+        // defaults attitude frame from crs to preserve concise xml.
+        dc_node.planet_view.attitude_frame = dc_node.planet_view.crs == DC_APP_PLANET_CRS_GEODETIC
+            ? DC_APP_PLANET_ATTITUDE_FRAME_LOCAL_NED
+            : DC_APP_PLANET_ATTITUDE_FRAME_CARTESIAN_RPY;
     }
 
     // x position
@@ -4738,7 +4750,7 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
         DC_LOG_ERROR("PlanetView", "Invalid PivotParameters: must use both PivotX and PivotY, or neither");
     }
 
-    // LLE camera mode (orthogonal to surface)
+    // parses geodetic camera position.
     xmlChar *raw_lat = xmlGetProp(xml_node, BAD_CAST "CameraLatitude");
     xmlChar *raw_lon = xmlGetProp(xml_node, BAD_CAST "CameraLongitude");
     xmlChar *raw_ele = xmlGetProp(xml_node, BAD_CAST "CameraElevation");
@@ -4750,19 +4762,12 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
             dc_node.planet_view.lle.lon = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_lon);
             dc_node.planet_view.lle.ele = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_ele);
         } else {
-            DC_LOG_ERROR("PlanetView", "Incomplete LLE: must specify all of CameraLatitude, CameraLongitude, and CameraElevation");
+            DC_LOG_ERROR("PlanetView", "Incomplete geodetic camera position: must specify all of CameraLatitude, CameraLongitude, and CameraElevation");
         }
     }
     if (raw_lat) xmlFree(raw_lat);
     if (raw_lon) xmlFree(raw_lon);
     if (raw_ele) xmlFree(raw_ele);
-
-    // heading (LLE mode: azimuth from north, CW, degrees)
-    xmlChar *raw_heading = xmlGetProp(xml_node, BAD_CAST "CameraHeading");
-    if (raw_heading) {
-        dc_node.planet_view.heading = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_heading);
-        xmlFree(raw_heading);
-    }
 
     // field of view (vertical, degrees)
     xmlChar *raw_fov = xmlGetProp(xml_node, BAD_CAST "CameraFOV");
@@ -4771,47 +4776,71 @@ static _NodeIndex _process_xml_node_planet_view(_AppData *app_data, xmlNodePtr x
         xmlFree(raw_fov);
     }
 
-    // XYZ/RPY camera mode (raw world coordinates)
-    xmlChar *raw_cam_x = xmlGetProp(xml_node, BAD_CAST "CameraX");
-    xmlChar *raw_cam_y = xmlGetProp(xml_node, BAD_CAST "CameraY");
-    xmlChar *raw_cam_z = xmlGetProp(xml_node, BAD_CAST "CameraZ");
+    // parses roll pitch yaw in the selected attitude frame.
     xmlChar *raw_roll  = xmlGetProp(xml_node, BAD_CAST "CameraRoll");
     xmlChar *raw_pitch = xmlGetProp(xml_node, BAD_CAST "CameraPitch");
     xmlChar *raw_yaw   = xmlGetProp(xml_node, BAD_CAST "CameraYaw");
-    bool     has_xyz   = raw_cam_x || raw_cam_y || raw_cam_z || raw_roll || raw_pitch || raw_yaw;
+    xmlChar *raw_heading = xmlGetProp(xml_node, BAD_CAST "CameraHeading");
+
+    if (raw_heading && raw_yaw) {
+        DC_LOG_ERROR("PlanetView", "CameraHeading is a legacy alias for CameraYaw; do not specify both");
+    }
+    if (raw_roll) {
+        dc_node.planet_view.rpy.roll = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_roll);
+        xmlFree(raw_roll);
+    }
+    if (raw_pitch) {
+        dc_node.planet_view.rpy.pitch = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pitch);
+        xmlFree(raw_pitch);
+    }
+    if (raw_yaw) {
+        dc_node.planet_view.rpy.yaw = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_yaw);
+        xmlFree(raw_yaw);
+    } else if (raw_heading && dc_node.planet_view.crs == DC_APP_PLANET_CRS_GEODETIC) {
+        // treats cameraheading as a legacy alias for local-ned yaw.
+        dc_node.planet_view.rpy.yaw = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_heading);
+    } else if (raw_heading) {
+        DC_LOG_ERROR("PlanetView", "CameraHeading is only valid for geodetic PlanetView; use CameraYaw for cartesian CRS");
+    }
+    if (raw_heading) xmlFree(raw_heading);
+
+    // parses cartesian camera position.
+    xmlChar *raw_cam_x = xmlGetProp(xml_node, BAD_CAST "CameraX");
+    xmlChar *raw_cam_y = xmlGetProp(xml_node, BAD_CAST "CameraY");
+    xmlChar *raw_cam_z = xmlGetProp(xml_node, BAD_CAST "CameraZ");
+    bool     has_xyz   = raw_cam_x || raw_cam_y || raw_cam_z;
 
     if (has_lle && has_xyz)
-        DC_LOG_ERROR("PlanetView", "Cannot mix LLE and XYZ/RPY camera attributes");
+        DC_LOG_ERROR("PlanetView", "Cannot mix geodetic and cartesian camera position attributes");
 
     if (has_xyz) {
-        if (raw_cam_x && raw_cam_y && raw_cam_z && raw_roll && raw_pitch && raw_yaw) {
+        if (raw_cam_x && raw_cam_y && raw_cam_z) {
             dc_node.planet_view.xyz.x     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_x);
             dc_node.planet_view.xyz.y     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_y);
             dc_node.planet_view.xyz.z     = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_cam_z);
-            dc_node.planet_view.rpy.roll  = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_roll);
-            dc_node.planet_view.rpy.pitch = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_pitch);
-            dc_node.planet_view.rpy.yaw   = dc_app_create_and_register_typed_value_from_string(app_data->lookup, DC_VALUE_TYPE_DOUBLE, (const char *)raw_yaw);
         } else {
-            DC_LOG_ERROR("PlanetView", "Incomplete XYZ/RPY: must specify all of CameraX, CameraY, CameraZ, CameraRoll, CameraPitch, and CameraYaw");
+            DC_LOG_ERROR("PlanetView", "Incomplete cartesian camera position: must specify all of CameraX, CameraY, and CameraZ");
         }
     }
     if (raw_cam_x) xmlFree(raw_cam_x);
     if (raw_cam_y) xmlFree(raw_cam_y);
     if (raw_cam_z) xmlFree(raw_cam_z);
-    if (raw_roll) xmlFree(raw_roll);
-    if (raw_pitch) xmlFree(raw_pitch);
-    if (raw_yaw) xmlFree(raw_yaw);
 
     if (dc_node.planet_view.crs == DC_APP_PLANET_CRS_GEODETIC) {
+        // validates that the declared crs and attitude frame form a supported pair.
         if (!has_lle)
             DC_LOG_ERROR("PlanetView", "Geodetic CRS requires CameraLatitude, CameraLongitude, and CameraElevation");
         if (has_xyz)
-            DC_LOG_ERROR("PlanetView", "Geodetic CRS cannot use CameraX/CameraY/CameraZ/CameraRoll/CameraPitch/CameraYaw");
+            DC_LOG_ERROR("PlanetView", "Geodetic CRS cannot use CameraX/CameraY/CameraZ");
+        if (dc_node.planet_view.attitude_frame != DC_APP_PLANET_ATTITUDE_FRAME_LOCAL_NED)
+            DC_LOG_ERROR("PlanetView", "Geodetic CRS requires AttitudeFrame=#_planet_attitude_frame_local_ned_");
     } else if (dc_node.planet_view.crs == DC_APP_PLANET_CRS_CARTESIAN) {
         if (!has_xyz)
-            DC_LOG_ERROR("PlanetView", "Cartesian CRS requires CameraX, CameraY, CameraZ, CameraRoll, CameraPitch, and CameraYaw");
-        if (has_lle || dc_node.planet_view.heading != DC_APP_VAL_INDEX_UNDEFINED)
-            DC_LOG_ERROR("PlanetView", "Cartesian CRS cannot use CameraLatitude/CameraLongitude/CameraElevation/CameraHeading");
+            DC_LOG_ERROR("PlanetView", "Cartesian CRS requires CameraX, CameraY, and CameraZ");
+        if (has_lle)
+            DC_LOG_ERROR("PlanetView", "Cartesian CRS cannot use CameraLatitude/CameraLongitude/CameraElevation");
+        if (dc_node.planet_view.attitude_frame != DC_APP_PLANET_ATTITUDE_FRAME_CARTESIAN_RPY)
+            DC_LOG_ERROR("PlanetView", "Cartesian CRS requires AttitudeFrame=#_planet_attitude_frame_cartesian_rpy_");
     } else {
         DC_LOG_ERROR("PlanetView", "Unknown CRS value: %d", dc_node.planet_view.crs);
     }

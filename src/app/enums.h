@@ -43,6 +43,12 @@ typedef enum _DcAppPlanetCrs {
     DC_APP_PLANET_CRS_CARTESIAN,
 } DcAppPlanetCrs;
 
+typedef enum _DcAppPlanetAttitudeFrame {
+    DC_APP_PLANET_ATTITUDE_FRAME_UNDEFINED,
+    DC_APP_PLANET_ATTITUDE_FRAME_LOCAL_NED,
+    DC_APP_PLANET_ATTITUDE_FRAME_CARTESIAN_RPY,
+} DcAppPlanetAttitudeFrame;
+
 typedef enum _DcAppSetType {
     DC_APP_SET_TYPE_UNDEFINED,
     DC_APP_SET_TYPE_EQUAL,

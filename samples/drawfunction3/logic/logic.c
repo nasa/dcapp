@@ -35,36 +35,6 @@ static int clamp_count(int count) {
     return count;
 }
 
-static DcVec4 rgba(float r, float g, float b, float a) {
-    DcVec4 out = {0};
-    out.r = r;
-    out.g = g;
-    out.b = b;
-    out.a = a;
-    return out;
-}
-
-static DcStroke stroke(DcVec4 color, float width) {
-    DcStroke out = {0};
-    out.color = color;
-    out.width = width;
-    return out;
-}
-
-static DcTextStyle text_style(float size, DcVec4 color) {
-    DcTextStyle out = {0};
-    out.size = size;
-    out.color = color;
-    return out;
-}
-
-static DcPlacement local_center(void) {
-    DcPlacement placement = {0};
-    placement.local_align_x = DC_ALIGN_CENTER;
-    placement.local_align_y = DC_ALIGN_MIDDLE;
-    return placement;
-}
-
 static void init_star(int index, bool at_top) {
     Star *star = &g_stars[index];
     float depth = rand_unit();
@@ -76,11 +46,11 @@ static void init_star(int index, bool at_top) {
     star->size = 1.0f + depth * 2.4f;
 
     if (warm < 0.16f) {
-        star->color = rgba(1.0f, 0.86f, 0.58f, 0.44f + depth * 0.44f);
+        star->color = (DcVec4){ .r = 1.0f, .g = 0.86f, .b = 0.58f, .a = 0.44f + depth * 0.44f };
     } else if (warm > 0.86f) {
-        star->color = rgba(0.70f, 0.84f, 1.0f, 0.42f + depth * 0.42f);
+        star->color = (DcVec4){ .r = 0.70f, .g = 0.84f, .b = 1.0f, .a = 0.42f + depth * 0.42f };
     } else {
-        star->color = rgba(0.90f, 0.94f, 1.0f, 0.38f + depth * 0.44f);
+        star->color = (DcVec4){ .r = 0.90f, .g = 0.94f, .b = 1.0f, .a = 0.38f + depth * 0.44f };
     }
 }
 
@@ -99,11 +69,13 @@ static void sync_star_count(void) {
     }
 }
 
-void display_init(void) {
+void display_init(DcAppContext *app_ctx) {
+    (void)app_ctx;
     sync_star_count();
 }
 
-void display_draw(void) {
+void display_draw(DcAppContext *app_ctx) {
+    (void)app_ctx;
     sync_star_count();
 
     const float dt = 1.0f / 60.0f;
@@ -121,29 +93,30 @@ void display_draw(void) {
     }
 }
 
-void display_close(void) {
+void display_close(DcAppContext *app_ctx) {
+    (void)app_ctx;
 }
 
-void draw_procedural(DcDrawContext *ctx, const DcDrawFuncArgs *args) {
+void draw_procedural(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     (void)args;
     if (!dc_draw) return;
 
-    dc_draw->rect_filled(ctx, (DcVec2){0.0f, FIELD_BOTTOM}, (DcVec2){FIELD_WIDTH, FIELD_HEIGHT}, rgba(0.018f, 0.022f, 0.032f, 1.0f));
+    dc_draw->rect_filled(draw_ctx, (DcVec2){0.0f, FIELD_BOTTOM}, (DcVec2){FIELD_WIDTH, FIELD_HEIGHT}, (DcVec4){ .r = 0.018f, .g = 0.022f, .b = 0.032f, .a = 1.0f });
 
     int count = StarCount ? clamp_count(*StarCount) : 0;
     for (int i = 0; i < count; i++) {
         Star *star = &g_stars[i];
 
-        dc_draw->circle_filled(ctx, (DcVec2){star->x, star->y}, star->size, star->color);
+        dc_draw->circle_filled(draw_ctx, (DcVec2){star->x, star->y}, star->size, star->color);
         if ((i % 9) == 0) {
             float sparkle = star->size * 2.4f;
-            dc_draw->line(ctx, (DcVec2){star->x - sparkle, star->y}, (DcVec2){star->x + sparkle, star->y}, stroke(star->color, 0.8f));
-            dc_draw->line(ctx, (DcVec2){star->x, star->y - sparkle}, (DcVec2){star->x, star->y + sparkle}, stroke(star->color, 0.8f));
+            dc_draw->line(draw_ctx, (DcVec2){star->x - sparkle, star->y}, (DcVec2){star->x + sparkle, star->y}, (DcStroke){ .color = star->color, .width = 0.8f });
+            dc_draw->line(draw_ctx, (DcVec2){star->x, star->y - sparkle}, (DcVec2){star->x, star->y + sparkle}, (DcStroke){ .color = star->color, .width = 0.8f });
         }
     }
 
-    dc_draw->rounded_rect_filled(ctx, (DcVec2){22.0f, 520.0f}, (DcVec2){420.0f, 58.0f}, 8.0f, rgba(0.10f, 0.11f, 0.13f, 0.62f));
-    dc_draw->rounded_rect(ctx, (DcVec2){22.0f, 520.0f}, (DcVec2){420.0f, 58.0f}, 8.0f, stroke(rgba(0.44f, 0.50f, 0.58f, 0.28f), 1.0f));
-    dc_draw->text_ex(ctx, (DcVec2){232.0f, 557.0f}, "C-generated starfield", text_style(18.0f, rgba(0.90f, 0.94f, 1.0f, 1.0f)), local_center(), NULL);
-    dc_draw->text_ex(ctx, (DcVec2){232.0f, 535.0f}, "Each star is just position, speed, size, and color.", text_style(10.0f, rgba(0.68f, 0.76f, 0.84f, 1.0f)), local_center(), NULL);
+    dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){22.0f, 520.0f}, (DcVec2){420.0f, 58.0f}, 8.0f, (DcVec4){ .r = 0.10f, .g = 0.11f, .b = 0.13f, .a = 0.62f });
+    dc_draw->rounded_rect(draw_ctx, (DcVec2){22.0f, 520.0f}, (DcVec2){420.0f, 58.0f}, 8.0f, (DcStroke){ .color = (DcVec4){ .r = 0.44f, .g = 0.50f, .b = 0.58f, .a = 0.28f }, .width = 1.0f });
+    dc_draw->text_ex(draw_ctx, (DcVec2){232.0f, 557.0f}, "C-generated starfield", (DcTextStyle){ .size = 18.0f, .color = (DcVec4){ .r = 0.90f, .g = 0.94f, .b = 1.0f, .a = 1.0f } }, (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
+    dc_draw->text_ex(draw_ctx, (DcVec2){232.0f, 535.0f}, "Each star is just position, speed, size, and color.", (DcTextStyle){ .size = 10.0f, .color = (DcVec4){ .r = 0.68f, .g = 0.76f, .b = 0.84f, .a = 1.0f } }, (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE }, NULL);
 }

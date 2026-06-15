@@ -6,13 +6,13 @@ set "DCAPP_HOME=%CD%"
 popd
 
 if "%DCAPP_PLANET_DATA_DIR%"=="" (
-    set "DATASET_DIR=%DCAPP_HOME%\data\planets\moon\LDEM_45S_100M"
+    set "DATA_DIR=%DCAPP_HOME%\data"
 ) else (
-    set "DATASET_DIR=%DCAPP_PLANET_DATA_DIR%"
+    set "DATA_DIR=%DCAPP_PLANET_DATA_DIR%"
 )
 
-set "SOURCE_DIR=%DATASET_DIR%\source"
-set "CHUNK_DIR=%DATASET_DIR%\chunks"
+set "SOURCE_DIR=%DATA_DIR%"
+set "CHUNK_DIR=%DATA_DIR%"
 set "IMG_URL=https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_45S_100M.IMG"
 set "LBL_URL=https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_45S_100M.LBL"
 set "IMG_FILE=%SOURCE_DIR%\LDEM_45S_100M.IMG"
@@ -40,7 +40,7 @@ echo Downloads the LOLA LDEM_45S_100M lunar DEM and generates planet chunks.
 echo.
 echo Environment:
 echo   DCAPP_PLANET_DATA_DIR  Override output directory
-echo                          default: data\planets\moon\LDEM_45S_100M
+echo                          default: data
 echo.
 echo Options:
 echo   --force                Regenerate chunks even if the .planet.json exists
@@ -53,10 +53,9 @@ exit /b 0
 echo ========================================
 echo Planet Data Download
 echo ========================================
-echo Dataset: %DATASET_DIR%
+echo Data directory: %DATA_DIR%
 
-if not exist "%SOURCE_DIR%" mkdir "%SOURCE_DIR%"
-if not exist "%CHUNK_DIR%" mkdir "%CHUNK_DIR%"
+if not exist "%DATA_DIR%" mkdir "%DATA_DIR%"
 
 if not exist "%IMG_FILE%" (
     echo Downloading LDEM_45S_100M.IMG...

@@ -4,6 +4,7 @@
 #include "draw_node.h"
 
 #include "draw.h"
+#include "planet.h"
 #include "utils/log.h"
 #include "utils/math.h"
 #include "utils/string.h"
@@ -48,8 +49,8 @@ static void _draw_node_stencil(_AppData *app_data, _NodeIndex node_index, _Node 
 static void _draw_node_planet_ellipse(_AppData *app_data, _Node *node, plPlanetView *view);
 static void _draw_node_planet_line(_AppData *app_data, _Node *node, plPlanetView *view);
 static void _draw_node_planet_polygon(_AppData *app_data, _Node *node, plPlanetView *view);
-static void _draw_node_planet_sphere(_AppData *app_data, _Node *node, plPlanetView *view);
-static void _draw_node_planet_text(_AppData *app_data, _Node *node, plPlanetView *view, plCamera *camera);
+static void _draw_node_planet_sphere(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view);
+static void _draw_node_planet_text(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view);
 static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
 static void _draw_node_window(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform);
@@ -3529,6 +3530,7 @@ static void _draw_node_rectangle(_AppData *app_data, _NodeIndex node_index, _Nod
             node->rectangle.line_color.b == DC_APP_VAL_INDEX_UNDEFINED ? 0.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.b)->value_double,
             node->rectangle.line_color.a == DC_APP_VAL_INDEX_UNDEFINED ? 1.0f : (float)dc_app_lookup_get_value(app_data->lookup, node->rectangle.line_color.a)->value_double,
         };
+    // routes xml planet views through the same draw callback path as logic-created views.
     DcAppDrawContext ctx = dc_app_draw_context(app_data, node_index, (plVec2){0.0f, 0.0f}, (plVec2){dimension[0], dimension[1]}, &transform);
     if (node->rectangle.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED) {
         dc_app_draw_rounded_quad_filled_ex(&ctx, quad[0],
@@ -4608,17 +4610,15 @@ static void _draw_node_planet_polygon(_AppData *app_data, _Node *node, plPlanetV
     free(pts3d);
 }
 
-static void _draw_node_planet_sphere(_AppData *app_data, _Node *node, plPlanetView *view) {
-    _PlanetDef *def = &app_data->sb_planet_defs[node->planet_sphere.planet_def_index];
-
-    float lat = node->planet_sphere.lat != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.lat)->value_double : 0.0f;
-    float lon = node->planet_sphere.lon != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.lon)->value_double : 0.0f;
-    float height = node->planet_sphere.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.height_above_terrain)->value_double : 0.0f;
-    float radius = node->planet_sphere.radius != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.radius)->value_double : 1000.0f;
+static void _draw_node_planet_sphere(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view) {
+    double lat = node->planet_sphere.lat != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.lat)->value_double : 0.0;
+    double lon = node->planet_sphere.lon != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.lon)->value_double : 0.0;
+    double height = node->planet_sphere.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.height_above_terrain)->value_double : 0.0;
+    double radius = node->planet_sphere.radius != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.radius)->value_double : 1000.0;
 
     if (!(node->planet_sphere.config_flags & NODE_CONFIG_FLAG_FILL_ENABLED)) return;
 
@@ -4628,35 +4628,26 @@ static void _draw_node_planet_sphere(_AppData *app_data, _Node *node, plPlanetVi
         node->planet_sphere.fill_color.b != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.fill_color.b)->value_double : 1.0f,
         node->planet_sphere.fill_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.fill_color.a)->value_double : 1.0f
     };
-    uint32_t fill_color = PL_COLOR_32_RGBA(fc[0], fc[1], fc[2], fc[3]);
-
     if (node->planet_sphere.crs == DC_APP_PLANET_CRS_CARTESIAN) {
-        // pl_planet draws spheres from lat/lon, so convert cartesian centers back
-        plVec3 pos = {
+        DcAppVec3 pos = {
             node->planet_sphere.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.xyz.x)->value_double : 0.0f,
             node->planet_sphere.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.xyz.y)->value_double : 0.0f,
             node->planet_sphere.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_sphere.xyz.z)->value_double : 0.0f
         };
-        plVec3 out;
-        dc_geo_cartesian_to_geodetic(&def->cartesian_crs, &def->geodetic_crs, &pos, &out, 1);
-        lat = out.x;
-        lon = out.y;
-        height = out.z;
+        dc_app_draw_planet_sphere_cartesian(ctx, view, pos, (float)radius, (DcAppVec4){fc[0], fc[1], fc[2], fc[3]});
+    } else {
+        dc_app_draw_planet_sphere_geodetic(ctx, view, lat, lon, height, radius, (DcAppVec4){fc[0], fc[1], fc[2], fc[3]});
     }
-
-    dc_app_draw_planet_sphere(view, lon, lat, height, radius, fill_color);
 }
 
-static void _draw_node_planet_text(_AppData *app_data, _Node *node, plPlanetView *view, plCamera *camera) {
-    _PlanetDef *def = &app_data->sb_planet_defs[node->planet_text.planet_def_index];
-
+static void _draw_node_planet_text(_AppData *app_data, _Node *node, DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle view) {
     // resolve position
-    float lat = node->planet_text.lat != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.lat)->value_double : 0.0f;
-    float lon = node->planet_text.lon != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.lon)->value_double : 0.0f;
-    float height = node->planet_text.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
-        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.height_above_terrain)->value_double : 0.0f;
+    double lat = node->planet_text.lat != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, node->planet_text.lat)->value_double : 0.0;
+    double lon = node->planet_text.lon != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, node->planet_text.lon)->value_double : 0.0;
+    double height = node->planet_text.height_above_terrain != DC_APP_VAL_INDEX_UNDEFINED
+        ? dc_app_lookup_get_value(app_data->lookup, node->planet_text.height_above_terrain)->value_double : 0.0;
     float size = node->planet_text.size != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.size)->value_double : 14.0f;
 
@@ -4702,13 +4693,9 @@ static void _draw_node_planet_text(_AppData *app_data, _Node *node, plPlanetView
     sbpushn(sb_text, filler, (int)strlen(filler));
     sbpush(sb_text, '\0');
 
-    // compute 3D position
-    plVec3 pos_in = {lat, lon, height};
-    plVec3 pos;
-    dc_geo_geodetic_to_cartesian(&def->geodetic_crs, &def->cartesian_crs, &pos_in, &pos, 1);
+    DcAppVec3 pos = {0};
     if (node->planet_text.crs == DC_APP_PLANET_CRS_CARTESIAN) {
-        // cartesian text positions are already in renderer-native planet space
-        pos = (plVec3){
+        pos = (DcAppVec3){
             node->planet_text.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.xyz.x)->value_double : 0.0f,
             node->planet_text.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.xyz.y)->value_double : 0.0f,
             node->planet_text.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.xyz.z)->value_double : 0.0f
@@ -4724,9 +4711,11 @@ static void _draw_node_planet_text(_AppData *app_data, _Node *node, plPlanetView
         fc[3] = node->planet_text.fill_color.a != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_text.fill_color.a)->value_double : 1.0f;
     }
 
-    // draw 3D text (size is in meters, planet ext handles world-to-pixel conversion)
-    uint32_t color = PL_COLOR_32_RGBA(fc[0], fc[1], fc[2], fc[3]);
-    dc_app_draw_planet_text(view, camera, pos, sb_text, size, color);
+    if (node->planet_text.crs == DC_APP_PLANET_CRS_CARTESIAN) {
+        dc_app_draw_planet_text_cartesian(ctx, view, pos, sb_text, size, (DcAppVec4){fc[0], fc[1], fc[2], fc[3]});
+    } else {
+        dc_app_draw_planet_text_geodetic(ctx, view, lat, lon, height, sb_text, size, (DcAppVec4){fc[0], fc[1], fc[2], fc[3]});
+    }
 }
 
 static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {
@@ -4976,108 +4965,21 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
         }
     }
 
-    // PL specific fixes
-    {
-        plMat4 trans_pl_origin_xform = pl_mat4_translate_xyz(0, dimension[1], 0.0f);
-        plMat4 scale_invert_y_xform  = pl_mat4_scale_xyz(1.0f, -1.0f, 1.0f);
-        transform                    = pl_mul_mat4t(&transform, &trans_pl_origin_xform);
-        transform                    = pl_mul_mat4t(&transform, &scale_invert_y_xform);
-    }
-
     // parent transform
     transform = pl_mul_mat4t(parent_transform, &transform);
 
-    // compute quad points
-    plVec4 point0_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, 0.0f, 0.0f, 1.0f});
-    plVec4 point1_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){0.0f, dimension[1], 0.0f, 1.0f});
-    plVec4 point2_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){dimension[0], dimension[1], 0.0f, 1.0f});
-    plVec4 point3_vec4 = pl_mul_mat4_vec4(&transform, (plVec4){dimension[0], 0.0f, 0.0f, 1.0f});
-    plVec2 point0      = (plVec2){point0_vec4.x, point0_vec4.y};
-    plVec2 point1      = (plVec2){point1_vec4.x, point1_vec4.y};
-    plVec2 point2      = (plVec2){point2_vec4.x, point2_vec4.y};
-    plVec2 point3      = (plVec2){point3_vec4.x, point3_vec4.y};
-
-    // camera setup
-    bool use_lle   = (node->planet_view.lle.lat != DC_APP_VAL_INDEX_UNDEFINED &&
-                    node->planet_view.lle.lon != DC_APP_VAL_INDEX_UNDEFINED &&
-                    node->planet_view.lle.ele != DC_APP_VAL_INDEX_UNDEFINED);
-    bool use_xyz   = (node->planet_view.xyz.x != DC_APP_VAL_INDEX_UNDEFINED &&
-                    node->planet_view.xyz.y != DC_APP_VAL_INDEX_UNDEFINED &&
-                    node->planet_view.xyz.z != DC_APP_VAL_INDEX_UNDEFINED);
-    bool use_ortho = (node->planet_view.orthographic != DC_APP_VAL_INDEX_UNDEFINED &&
-                      dc_app_lookup_get_value(app_data->lookup, node->planet_view.orthographic)->value_boolean);
-
-    plCamera camera     = {0};
-    camera.tType        = PL_CAMERA_TYPE_PERSPECTIVE_REVERSE_Z;
-    camera.fFieldOfView = 60.0f * (float)(M_PI / 180.0);
-    camera.fAspectRatio = (dimension[1] > 0.0f) ? dimension[0] / dimension[1] : 1.0f;
-    camera.fNearZ       = 1.0f;
-    camera.fFarZ        = 100000000.0f;
-    camera.fWidth       = dimension[0];
-    camera.fHeight      = dimension[1];
-    if (node->planet_view.fov != DC_APP_VAL_INDEX_UNDEFINED) {
-        float fov_deg = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.fov)->value_double;
-        if (fov_deg > 0.0f && fov_deg < 180.0f) {
-            camera.fFieldOfView = pl_radiansf(fov_deg);
-        }
+    if (!node->planet_view.handle ||
+        node->planet_view.planet_view_index == PLANET_VIEW_INDEX_UNDEFINED ||
+        node->planet_view.planet_view_index >= sbcount(app_data->sb_planet_views)) {
+        DC_LOG_WARN("PlanetView", "Skipping planet view because it was not initialized");
+        return;
     }
 
-    if (node->planet_view.crs == DC_APP_PLANET_CRS_CARTESIAN && use_xyz) {
-        // cartesian camera is already expressed as position plus RPY in planet space
-        double cam_x = dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.x)->value_double;
-        double cam_y = dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.y)->value_double;
-        double cam_z = dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.z)->value_double;
-        _ext_camera->set_pos(&camera, cam_x, cam_y, cam_z);
-
-        if (node->planet_view.rpy.pitch != DC_APP_VAL_INDEX_UNDEFINED &&
-            node->planet_view.rpy.yaw != DC_APP_VAL_INDEX_UNDEFINED) {
-            float pitch = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.pitch)->value_double;
-            float yaw   = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.yaw)->value_double;
-            _ext_camera->set_pitch_yaw(&camera, pl_radiansf(pitch), pl_radiansf(yaw));
-        }
-        if (node->planet_view.rpy.roll != DC_APP_VAL_INDEX_UNDEFINED) {
-            camera.fRoll = pl_radiansf((float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.roll)->value_double);
-        }
-    } else if (node->planet_view.crs == DC_APP_PLANET_CRS_GEODETIC && use_lle) {
-        // geodetic camera looks from the surface point toward the planet center
-        plVec3d geodetic_in = {
-            dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.lat)->value_double,
-            dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.lon)->value_double,
-            dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.ele)->value_double
-        };
-        plVec3d cartesian_out;
-        dc_geo_geodetic_to_cartesian_d(&def->geodetic_crs, &def->cartesian_crs, &geodetic_in, &cartesian_out, 1);
-        _ext_camera->set_pos(&camera, cartesian_out.x, cartesian_out.y, cartesian_out.z);
-
-        _ext_camera->look_at(&camera, camera.tPosDouble, (plVec3d){0, 0, 0});
-
-        if (node->planet_view.heading != DC_APP_VAL_INDEX_UNDEFINED) {
-            float heading_deg = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.heading)->value_double;
-            camera.fRoll      = pl_radiansf(heading_deg);
-        }
+    plPlanetView *view = dc_app_planet_view_pl(node->planet_view.handle);
+    if (!view) {
+        DC_LOG_WARN("PlanetView", "Skipping planet view because its renderer view is unavailable");
+        return;
     }
-
-    _ext_camera->update(&camera);
-
-    if (use_ortho) {
-        double cam_dist     = sqrt(camera.tPosDouble.x * camera.tPosDouble.x +
-                                   camera.tPosDouble.y * camera.tPosDouble.y +
-                                   camera.tPosDouble.z * camera.tPosDouble.z);
-        double surface_dist = cam_dist - def->radius;
-        if (surface_dist < 1.0) surface_dist = 1.0;
-
-        float half_h = (float)surface_dist * tanf(camera.fFieldOfView / 2.0f);
-        float half_w = half_h * camera.fAspectRatio;
-
-        camera.tProjMat          = (plMat4){0};
-        camera.tProjMat.col[0].x = 1.0f / half_w;
-        camera.tProjMat.col[1].y = 1.0f / half_h;
-        camera.tProjMat.col[2].z = 1.0f / (camera.fFarZ - camera.fNearZ);
-        camera.tProjMat.col[3].w = 1.0f;
-    }
-
-    // per-view updates (only when actually rendering)
-    plPlanetView *view = app_data->sb_planet_views[node->planet_view.planet_view_index];
 
     // shader swap
     if (node->planet_view.shader_index != DC_APP_VAL_INDEX_UNDEFINED && sbcount(def->sb_shaders) > 0) {
@@ -5119,7 +5021,42 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
         }
     }
 
-    // draw planet overlays (PlanetEllipse, etc.) into the view's 3D draw list
+    float fov = node->planet_view.fov != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.fov)->value_double
+        : 60.0f;
+    DcAppVec3 rpy = {0};
+    rpy.roll = node->planet_view.rpy.roll != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.roll)->value_double
+        : 0.0f;
+    rpy.pitch = node->planet_view.rpy.pitch != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.pitch)->value_double
+        : 0.0f;
+    rpy.yaw = node->planet_view.rpy.yaw != DC_APP_VAL_INDEX_UNDEFINED
+        ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.rpy.yaw)->value_double
+        : 0.0f;
+    bool use_ortho = (node->planet_view.orthographic != DC_APP_VAL_INDEX_UNDEFINED &&
+                      dc_app_lookup_get_value(app_data->lookup, node->planet_view.orthographic)->value_boolean);
+
+    DcAppDrawContext ctx = dc_app_draw_context(app_data, node_index, (plVec2){0.0f, 0.0f}, (plVec2){dimension[0], dimension[1]}, &transform);
+    DcAppDrawPlanetViewHandle draw_view = NULL;
+    if (node->planet_view.crs == DC_APP_PLANET_CRS_GEODETIC) {
+        double lat = node->planet_view.lle.lat != DC_APP_VAL_INDEX_UNDEFINED
+            ? dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.lat)->value_double : 0.0;
+        double lon = node->planet_view.lle.lon != DC_APP_VAL_INDEX_UNDEFINED
+            ? dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.lon)->value_double : 0.0;
+        double elevation = node->planet_view.lle.ele != DC_APP_VAL_INDEX_UNDEFINED
+            ? dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.ele)->value_double : 0.0;
+        draw_view = dc_app_draw_planet_view_geodetic(&ctx, node->planet_view.handle, lat, lon, elevation, rpy, fov, use_ortho, (DcAppVec2){0.0f, 0.0f}, (DcAppVec2){dimension[0], dimension[1]}, (DcAppPlacement){0}, NULL);
+    } else if (node->planet_view.crs == DC_APP_PLANET_CRS_CARTESIAN) {
+        DcAppVec3 position = {
+            node->planet_view.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.x)->value_double : 0.0f,
+            node->planet_view.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.y)->value_double : 0.0f,
+            node->planet_view.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.z)->value_double : 0.0f
+        };
+        draw_view = dc_app_draw_planet_view_cartesian(&ctx, node->planet_view.handle, position, rpy, fov, use_ortho, (DcAppVec2){0.0f, 0.0f}, (DcAppVec2){dimension[0], dimension[1]}, (DcAppPlacement){0}, NULL);
+    }
+
+    // submits xml planet overlays before the queued planet view is rendered.
     {
         _NodeIndex child_index = node->planet_view.child;
         while (child_index != NODE_INDEX_UNDEFINED) {
@@ -5131,36 +5068,14 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
             else if (child->type == NODE_TYPE_PLANET_POLYGON)
                 _draw_node_planet_polygon(app_data, child, view);
             else if (child->type == NODE_TYPE_PLANET_SPHERE)
-                _draw_node_planet_sphere(app_data, child, view);
+                _draw_node_planet_sphere(app_data, child, &ctx, draw_view);
             else if (child->type == NODE_TYPE_PLANET_TEXT)
-                _draw_node_planet_text(app_data, child, view, &camera);
+                _draw_node_planet_text(app_data, child, &ctx, draw_view);
             child_index = child->next;
         }
     }
 
-    // render view
-    plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();
-    _ext_planet->render_view(view, &camera, cmd_buf);
-    _ext_starter->submit_command_buffer(cmd_buf);
-
-    plBindGroupHandle bind_group = _ext_planet->get_view_texture(view);
-    {
-        plMat4 identity = pl_identity_mat4();
-        DcAppVec2 quad[4] = {
-            {point0.x, point0.y},
-            {point1.x, point1.y},
-            {point2.x, point2.y},
-            {point3.x, point3.y},
-        };
-        DcAppDrawContext ctx = dc_app_draw_context(app_data, node_index, (plVec2){0.0f, 0.0f}, (plVec2){0.0f, 0.0f}, &identity);
-        dc_app_draw_image_quad(&ctx, bind_group.uData,
-                               quad[0],
-                               quad[1],
-                               quad[2],
-                               quad[3],
-                               (DcAppVec2){0.0f, 0.0f},
-                               (DcAppPlacement){0}, NULL);
-    }
+    dc_app_draw_context_cleanup(&ctx);
 }
 
 static void _draw_node_text(_AppData *app_data, _NodeIndex node_index, _Node *node, plVec2 *parent_position, plVec2 *parent_dimensions, plMat4 *parent_transform) {

@@ -664,7 +664,7 @@ Top-level resource definition for 3D planetary terrain. Defines the planet's dat
 
 ### `<PlanetView>`
 
-Renders a view of a named planet. Supports two camera modes: LLE (latitude/longitude/elevation) and XYZ/RPY (position/orientation). Multiple views can reference the same planet.
+Renders a view of a named planet. Supports geodetic camera positions with local-NED attitude and cartesian camera positions with cartesian-RPY attitude. Multiple views can reference the same planet.
 
 **Parent:** `<Window>`, `<Panel>`, `<Container>`, or any drawable parent
 
@@ -672,6 +672,7 @@ Renders a view of a named planet. Supports two camera modes: LLE (latitude/longi
 |-----------|---------|------|----------|-------------|
 | `Planet` | — | string | **Yes** | Name of the `<Planet>` definition to render |
 | `CRS` | — | enum | **Yes** | Camera coordinate reference system: `#_planet_crs_geodetic_` or `#_planet_crs_cartesian_` |
+| `AttitudeFrame` | — | enum | No | Camera attitude frame: `#_planet_attitude_frame_local_ned_` for geodetic CRS or `#_planet_attitude_frame_cartesian_rpy_` for cartesian CRS. Defaults from `CRS` if omitted |
 | `PositionX` | `X` | number/var | No | Screen X position |
 | `PositionY` | `Y` | number/var | No | Screen Y position |
 | `DimensionX` | `Width` | number/var | No | Display width |
@@ -685,17 +686,17 @@ Renders a view of a named planet. Supports two camera modes: LLE (latitude/longi
 | `PivotPositionY` | `PivotY` | number/var | No | Pivot point Y |
 | `PivotLocalAlignX` | — | align | No | Pivot alignment (horizontal) |
 | `PivotLocalAlignY` | — | align | No | Pivot alignment (vertical) |
-| `CameraLatitude` | — | number/var | Yes for geodetic CRS | Camera latitude (LLE mode) |
-| `CameraLongitude` | — | number/var | Yes for geodetic CRS | Camera longitude (LLE mode) |
-| `CameraElevation` | — | number/var | Yes for geodetic CRS | Camera elevation in meters (LLE mode) |
-| `CameraHeading` | — | number/var | No | Camera heading (LLE mode, degrees CW from north) |
+| `CameraLatitude` | — | number/var | Yes for geodetic CRS | Camera latitude |
+| `CameraLongitude` | — | number/var | Yes for geodetic CRS | Camera longitude |
+| `CameraElevation` | — | number/var | Yes for geodetic CRS | Camera elevation in meters |
+| `CameraHeading` | — | number/var | No | Legacy alias for geodetic `CameraYaw` |
 | `CameraFOV` | — | number/var | No | Vertical camera field of view in degrees. Defaults to 60 |
-| `CameraX` | — | number/var | Yes for cartesian CRS | Camera X position (XYZ mode) |
-| `CameraY` | — | number/var | Yes for cartesian CRS | Camera Y position (XYZ mode) |
-| `CameraZ` | — | number/var | Yes for cartesian CRS | Camera Z position (XYZ mode) |
-| `CameraRoll` | — | number/var | Yes for cartesian CRS | Camera roll angle (XYZ mode) |
-| `CameraPitch` | — | number/var | Yes for cartesian CRS | Camera pitch angle (XYZ mode) |
-| `CameraYaw` | — | number/var | Yes for cartesian CRS | Camera yaw angle (XYZ mode) |
+| `CameraX` | — | number/var | Yes for cartesian CRS | Camera X position in renderer-native Cartesian meters |
+| `CameraY` | — | number/var | Yes for cartesian CRS | Camera Y position in renderer-native Cartesian meters |
+| `CameraZ` | — | number/var | Yes for cartesian CRS | Camera Z position in renderer-native Cartesian meters |
+| `CameraRoll` | — | number/var | No | Camera roll angle in the selected attitude frame |
+| `CameraPitch` | — | number/var | No | Camera pitch angle in the selected attitude frame |
+| `CameraYaw` | — | number/var | No | Camera yaw angle in the selected attitude frame |
 | `CameraOrthographic` | — | integer/var | No | 1 for orthographic projection, 0 for perspective |
 
 **Children:** `<PlanetEllipse>`, `<PlanetGeoJSON>`, `<PlanetText>`, and other planet overlay elements

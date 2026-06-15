@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
 <DCAPP>
     <!-- Planet Demo -->
-    <!-- Two identical planet views: LLE camera (left) vs XYZ/RPY camera (right) -->
-    <!-- The logic file converts LLE to XYZ/RPY so both views should match -->
+    <!-- Two identical planet views: XML geodetic view (left) vs logic geodetic view (right) -->
 
     <!-- Slider raw values (all 0-100 range, mapped to actual values via Set) -->
     <Variable Type="#_variable_double_" InitialValue="17.433">SliderLat</Variable>
@@ -20,13 +19,8 @@
     <Variable Type="#_variable_double_" InitialValue="0.3">Tau</Variable>
     <Variable Type="#_variable_double_" InitialValue="-1">LightY</Variable>
 
-    <!-- Computed XYZ/RPY camera values (written by logic file) -->
-    <Variable Type="#_variable_double_">CamX</Variable>
-    <Variable Type="#_variable_double_">CamY</Variable>
-    <Variable Type="#_variable_double_">CamZ</Variable>
-    <Variable Type="#_variable_double_">CamRoll</Variable>
-    <Variable Type="#_variable_double_">CamPitch</Variable>
-    <Variable Type="#_variable_double_">CamYaw</Variable>
+    <!-- Logic-facing readout text -->
+    <Variable Type="#_variable_string_">LogicReadout</Variable>
 
     <!-- Button state variables -->
     <Variable Type="#_variable_integer_">SliderLatSelected</Variable>
@@ -50,7 +44,7 @@
 
     <!-- Top-level planet definition (shared by both views) -->
     <Planet Name="Moon" CRS="#_planet_crs_geodetic_" MeshCacheSize="128" LightDirectionX="-1" LightDirectionY="@LightY" LightDirectionZ="-1">
-        <PlanetData File="../../data/planets/moon/LDEM_45S_100M/chunks/LDEM_45S_100M.planet.json"/>
+        <PlanetData File="../../data/LDEM_45S_100M.planet.json"/>
         <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
             Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
         <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
@@ -202,30 +196,23 @@
             </Button>
 
             <!-- ========== PLANET VIEWS ========== -->
-            <Text X="240" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_yellow_">LLE Camera</Text>
-            <PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_" X="15" Y="300" Width="450" Height="450"
+            <Text X="240" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_yellow_">Geodetic Camera</Text>
+            <PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_" AttitudeFrame="#_planet_attitude_frame_local_ned_" X="15" Y="300" Width="450" Height="450"
                 CameraLatitude="@Latitude" CameraLongitude="@Longitude" CameraElevation="@Elevation"
-                CameraHeading="@Heading"
+                CameraYaw="@Heading"
                 CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"
                 Tau="@Tau">
-                <PlanetEllipse Latitude="-58.62" Longitude="-14.73" Radius="115385" HeightAboveTerrain="1000" LineColor="0.0 1.0 1.0 1.0" LineWidth="3000" FillColor="0.0 1.0 1.0 0.10"/>
-                <PlanetEllipse Latitude="-89.67" Longitude="129.78" Radius="10460" HeightAboveTerrain="1000" LineColor="1.0 0.4 1.0 1.0" LineWidth="2000" FillColor="1.0 0.4 1.0 0.12"/>
+                <PlanetSphere Latitude="-58.62" Longitude="-14.73" Radius="115385" HeightAboveTerrain="1000" FillColor="0.0 1.0 1.0 0.18"/>
+                <PlanetSphere Latitude="-89.67" Longitude="129.78" Radius="10460" HeightAboveTerrain="1000" FillColor="1.0 0.4 1.0 0.22"/>
                 <PlanetGeoJSON File="assets/geojson_test.geojson" HeightAboveTerrain="1000" LineColor="1.0 1.0 0.0 1.0" LineWidth="2000" FillColor="1.0 1.0 0.0 0.2"/>
                 <PlanetText Latitude="-58.62" Longitude="-14.73" HeightAboveTerrain="50000" Size="60000" FillColor="0.0 1.0 1.0 1.0">Clavius crater 230.77 km</PlanetText>
                 <PlanetText Latitude="-89.67" Longitude="129.78" HeightAboveTerrain="50000" Size="30000" FillColor="1.0 0.4 1.0 1.0">Shackleton crater 20.92 km</PlanetText>
             </PlanetView>
 
-            <Text X="760" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">XYZ/RPY Camera</Text>
-            <PlanetView Planet="Moon" CRS="#_planet_crs_cartesian_" X="535" Y="300" Width="450" Height="450"
-                CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
-                CameraRoll="@CamRoll" CameraPitch="@CamPitch" CameraYaw="@CamYaw"
-                CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"
-                Tau="@Tau">
-                <PlanetEllipse X="-230161.415" Y="-1484128.773" Z="875455.350" Radius="115385" LineColor="0.0 1.0 1.0 1.0" LineWidth="3000" FillColor="0.0 1.0 1.0 0.10"/>
-                <PlanetEllipse X="7694.606" Y="-1738371.166" Z="-6406.355" Radius="10460" LineColor="1.0 0.4 1.0 1.0" LineWidth="2000" FillColor="1.0 0.4 1.0 0.12"/>
-                <PlanetText X="-236648.937" Y="-1525961.671" Z="900131.668" Size="60000" FillColor="0.0 1.0 1.0 1.0">Clavius crater 230.77 km</PlanetText>
-                <PlanetText X="7911.493" Y="-1787370.354" Z="-6586.930" Size="30000" FillColor="1.0 0.4 1.0 1.0">Shackleton crater 20.92 km</PlanetText>
-            </PlanetView>
+            <Text X="760" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">Geodetic Camera (logic)</Text>
+            <Container X="535" Y="300" Width="450" Height="450" VirtualWidth="450" VirtualHeight="450">
+                <DrawFunction Name="draw_logic_planet_view"/>
+            </Container>
 
             <!-- ========== SLIDERS (below planets) ========== -->
 
@@ -325,8 +312,8 @@
                 </Button>
             </Container>
 
-            <!-- XYZ/RPY readout -->
-            <Text X="15" Y="290" LocalAlignX="#_align_left_" Size="11" FillColor="#_color_sky_blue_">XYZ: @CamX(%.0f) @CamY(%.0f) @CamZ(%.0f)    RPY: @CamRoll(%.2f) @CamPitch(%.2f) @CamYaw(%.2f)</Text>
+            <!-- Logic view readout -->
+            <Text X="15" Y="290" LocalAlignX="#_align_left_" Size="11" FillColor="#_color_sky_blue_">@LogicReadout</Text>
 
         </Panel>
     </Window>

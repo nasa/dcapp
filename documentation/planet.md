@@ -33,7 +33,7 @@ The repository-level planet data script downloads both the `.IMG` raster and its
 scripts/download-planet-data.sh
 ```
 
-This downloads the DEM into `data/planets/moon/LDEM_45S_100M/source/` and writes generated chunks to `data/planets/moon/LDEM_45S_100M/chunks/`.
+This downloads the DEM and writes generated chunks directly under `data/`.
 
 ### The `dcapp-planet-chunkgen` Tool
 
@@ -85,7 +85,7 @@ The `.planet.json` file is what you reference from the `<PlanetData>` element in
 
 ```bash
 bin/dcapp-planet-snapshot.sh \
-  --planet-data data/planets/moon/LDEM_45S_100M/chunks/LDEM_45S_100M.planet.json \
+  --planet-data data/LDEM_45S_100M.planet.json \
   --crs geodetic \
   --attitude-frame local-ned \
   --lat -58.62 --lon 345.27 --elevation 2000000 \
@@ -98,7 +98,7 @@ bin/dcapp-planet-snapshot.sh \
 
 ```bash
 bin/dcapp-planet-snapshot.sh \
-  --planet-data data/planets/moon/LDEM_45S_100M/chunks/LDEM_45S_100M.planet.json \
+  --planet-data data/LDEM_45S_100M.planet.json \
   --crs cartesian \
   --attitude-frame cartesian-rpy \
   --x 1000000 --y -1000000 --z 2000000 \
@@ -180,7 +180,7 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 ```xml
 <Planet Name="Moon" CRS="#_planet_crs_geodetic_"
     LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
-    <PlanetData File="../../data/planets/moon/LDEM_45S_100M/chunks/LDEM_45S_100M.planet.json"/>
+    <PlanetData File="../../data/LDEM_45S_100M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
@@ -205,7 +205,7 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 Specifies the preprocessed terrain data for a planet. Must be a child of `<Planet>`.
 
 ```xml
-<PlanetData File="../../data/planets/moon/LDEM_45S_100M/chunks/LDEM_45S_100M.planet.json"/>
+<PlanetData File="../../data/LDEM_45S_100M.planet.json"/>
 ```
 
 **Attributes:**
@@ -262,9 +262,10 @@ Defines a custom GLSL shader program that can be applied to the terrain. Must be
 Renders a viewport into a planet. This element is placed inside a `<Panel>`, just like any other visual element. It references a `<Planet>` by name.
 
 ```xml
-<PlanetView Planet="Moon" X="15" Y="200" Width="450" Height="450"
+<PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_" AttitudeFrame="#_planet_attitude_frame_local_ned_"
+    X="15" Y="200" Width="450" Height="450"
     CameraLatitude="@Latitude" CameraLongitude="@Longitude"
-    CameraElevation="@Elevation" CameraHeading="@Heading"
+    CameraElevation="@Elevation" CameraYaw="@Heading"
     CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"/>
 ```
 
@@ -273,7 +274,8 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
 | `Planet` | — | string | Yes | The `Name` of the `<Planet>` element to render |
-| `CRS` | — | enum | Yes | Coordinate reference system for the camera and inherited child overlays. Must be `#_planet_crs_geodetic_` or `#_planet_crs_cartesian_`. |
+| `CRS` | — | enum | Yes | Coordinate reference system for the camera position and inherited child overlays. Must be `#_planet_crs_geodetic_` or `#_planet_crs_cartesian_`. |
+| `AttitudeFrame` | — | enum | No | Frame used to interpret camera roll/pitch/yaw. Defaults to `#_planet_attitude_frame_local_ned_` for geodetic CRS and `#_planet_attitude_frame_cartesian_rpy_` for cartesian CRS. |
 | `ShaderIndex` | — | integer/var | No | Index of the active shader from the parent `<Planet>`'s `<PlanetShader>` library. Defaults to 0 (built-in shader). Each view can independently select its shader. |
 | `Tau` | — | double/var | No | LOD error threshold controlling chunk resolution. Default 0.3. Lower values load higher-resolution chunks sooner (more aggressive). Can be variable-driven for runtime adjustment. |
 | `PositionX` | `X` | number/var | No | X position relative to parent |
@@ -296,17 +298,19 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 | `CameraFOV` | — | number/var | No | Vertical field of view in degrees for perspective rendering and orthographic scale derivation. Defaults to 60. |
 | `CameraOrthographic` | — | integer/var | No | Set to 1 for orthographic projection, 0 for perspective. Can be variable-driven for runtime toggling. |
 
-**LLE Camera Attributes** (geographic positioning):
+**Geodetic Position + Local-NED Attitude**:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
 | `CameraLatitude` | double/variable | Camera latitude in degrees |
 | `CameraLongitude` | double/variable | Camera longitude in degrees |
 | `CameraElevation` | double/variable | Camera elevation above the surface in meters |
-| `CameraHeading` | double/variable | Camera heading (look direction) in degrees |
+| `CameraRoll` | double/variable | Roll in the local-NED attitude frame. Defaults to 0. |
+| `CameraPitch` | double/variable | Pitch in the local-NED attitude frame. Defaults to 0. |
+| `CameraYaw` | double/variable | Yaw in the local-NED attitude frame. Replaces the legacy `CameraHeading` alias. |
 | `CameraFOV` | double/variable | Vertical field of view in degrees. Defaults to 60. |
 
-**XYZ/RPY Camera Attributes** (Cartesian positioning):
+**Cartesian Position + Cartesian-RPY Attitude**:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -318,38 +322,40 @@ Renders a viewport into a planet. This element is placed inside a `<Panel>`, jus
 | `CameraYaw` | double/variable | Camera yaw angle in degrees |
 | `CameraFOV` | double/variable | Vertical field of view in degrees. Defaults to 60. |
 
-Use one camera mode or the other on a given `<PlanetView>` -- do not mix LLE and XYZ/RPY attributes on the same element. `CRS` is required and must match the camera mode.
+Use one position CRS and the matching attitude frame on a given `<PlanetView>`. Initially supported pairs are geodetic + local-NED and cartesian + cartesian-RPY. `CameraHeading` is accepted as a legacy alias for geodetic `CameraYaw`.
 
 ---
 
-## Camera Modes
+## Camera Frames
 
-### LLE Mode (Latitude / Longitude / Elevation)
+### Geodetic Position + Local-NED Attitude
 
-LLE mode positions the camera using geographic coordinates on the planet surface. This is the most intuitive mode for exploring terrain interactively or setting up views at known geographic locations.
+Geodetic position places the camera using latitude, longitude, and elevation. Local-NED attitude interprets roll, pitch, and yaw in the camera's local north/east/down frame. This is the most intuitive frame pair for exploring terrain interactively or setting up views at known geographic locations.
 Longitude follows the loaded planet data's geodetic convention. For the included lunar DEM, use the east-positive PDS/IAU longitude from the source map data; dcapp converts that into the renderer's native Cartesian frame.
 
 ```xml
-<PlanetView Planet="Moon" X="15" Y="200" Width="450" Height="450"
+<PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_" AttitudeFrame="#_planet_attitude_frame_local_ned_"
+    X="15" Y="200" Width="450" Height="450"
     CameraLatitude="@Latitude" CameraLongitude="@Longitude"
-    CameraElevation="@Elevation" CameraHeading="@Heading"/>
+    CameraElevation="@Elevation" CameraYaw="@Heading"/>
 ```
 
 - **Latitude/Longitude** place the camera above a specific point on the surface.
 - **Elevation** controls the height above the surface in meters. Higher values zoom out; lower values bring the camera closer to the terrain.
-- **Heading** rotates the camera's look direction around the surface normal at that location.
+- **Yaw** rotates the local north/east image basis about the local down vector. Pitch tilts away from nadir, and roll rotates around the camera boresight.
 
-Use LLE mode when:
+Use geodetic + local-NED when:
 - Building interactive terrain browsers with sliders for lat/lon/elevation
 - Positioning cameras at known geographic features (craters, landing sites)
 - Displaying overhead or oblique views of a specific region
 
-### XYZ/RPY Mode (Cartesian Position / Roll-Pitch-Yaw)
+### Cartesian Position + Cartesian-RPY Attitude
 
-XYZ/RPY mode positions the camera using body-centered Cartesian coordinates and Euler angles. This mode is typically driven by an external simulation or a logic file that computes camera state.
+Cartesian position places the camera using the renderer-native body-centered Cartesian coordinate system. Cartesian-RPY attitude applies roll, pitch, and yaw in that same cartesian camera frame. This frame pair is typically driven by an external simulation or a logic file that computes camera state.
 
 ```xml
-<PlanetView Planet="Moon" X="535" Y="200" Width="450" Height="450"
+<PlanetView Planet="Moon" CRS="#_planet_crs_cartesian_" AttitudeFrame="#_planet_attitude_frame_cartesian_rpy_"
+    X="535" Y="200" Width="450" Height="450"
     CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
     CameraRoll="@CamRoll" CameraPitch="@CamPitch" CameraYaw="@CamYaw"/>
 ```
@@ -357,7 +363,7 @@ XYZ/RPY mode positions the camera using body-centered Cartesian coordinates and 
 - **X, Y, Z** specify the camera position in the planet's body-centered coordinate frame (meters).
 - **Roll, Pitch, Yaw** specify the camera orientation as Euler angles (degrees).
 
-Use XYZ/RPY mode when:
+Use cartesian + cartesian-RPY when:
 - The camera state comes from an external simulation (e.g., a vehicle dynamics model via Trick)
 - You need precise control over orientation that does not map cleanly to heading
 - Implementing chase cameras, cockpit views, or other vehicle-relative perspectives
@@ -624,13 +630,13 @@ The sample declares slider-driven variables for interactive camera control, plus
 <Variable Type="#_variable_double_" InitialValue="180">SliderLon</Variable>
 <Variable Type="#_variable_double_" InitialValue="200">SliderEle</Variable>
 
-<!-- Computed LLE camera values -->
+<!-- Computed geodetic camera values -->
 <Variable Type="#_variable_double_">Latitude</Variable>
 <Variable Type="#_variable_double_">Longitude</Variable>
 <Variable Type="#_variable_double_">Elevation</Variable>
 <Variable Type="#_variable_double_" InitialValue="0">Heading</Variable>
 
-<!-- Computed XYZ/RPY camera values (written by logic file) -->
+<!-- Computed cartesian/RPY camera values (written by logic file) -->
 <Variable Type="#_variable_double_">CamX</Variable>
 <Variable Type="#_variable_double_">CamY</Variable>
 <Variable Type="#_variable_double_">CamZ</Variable>
@@ -647,7 +653,7 @@ The sample declares slider-driven variables for interactive camera control, plus
 
 ### Logic File
 
-A logic file converts the LLE camera position into XYZ/RPY coordinates so both views show the same scene:
+A logic file converts the geodetic camera position into cartesian/RPY coordinates so both views show the same scene:
 
 ```xml
 <Logic File="logic/logic.so"/>
@@ -660,7 +666,7 @@ A single `<Planet>` is defined with one data source, one texture overlay, and th
 ```xml
 <Planet Name="Moon" CRS="#_planet_crs_geodetic_"
     LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
-    <PlanetData File="../../data/planets/moon/LDEM_45S_100M/chunks/LDEM_45S_100M.planet.json"/>
+    <PlanetData File="../../data/LDEM_45S_100M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
@@ -672,14 +678,15 @@ A single `<Planet>` is defined with one data source, one texture overlay, and th
 
 ### Two PlanetViews
 
-The sample renders two side-by-side viewports of the same planet -- one using LLE camera mode and one using XYZ/RPY. Both use `ShaderIndex="@ActiveShader"` so the shader buttons affect both views, but each view could use a different variable for independent control:
+The sample renders two side-by-side viewports of the same planet -- one using geodetic position with local-NED attitude and one using cartesian position with cartesian-RPY attitude. Both use `ShaderIndex="@ActiveShader"` so the shader buttons affect both views, but each view could use a different variable for independent control:
 
 ```xml
 <!-- Geodetic camera and overlays (left) -->
 <PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_"
+    AttitudeFrame="#_planet_attitude_frame_local_ned_"
     X="15" Y="200" Width="450" Height="450"
     CameraLatitude="@Latitude" CameraLongitude="@Longitude"
-    CameraElevation="@Elevation" CameraHeading="@Heading"
+    CameraElevation="@Elevation" CameraYaw="@Heading"
     CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader">
     <PlanetEllipse Latitude="-58.62" Longitude="-14.73"
         Radius="115385" FillColor="0.0 1.0 1.0 0.10"/>
@@ -687,6 +694,7 @@ The sample renders two side-by-side viewports of the same planet -- one using LL
 
 <!-- Cartesian camera and overlays (right) -->
 <PlanetView Planet="Moon" CRS="#_planet_crs_cartesian_"
+    AttitudeFrame="#_planet_attitude_frame_cartesian_rpy_"
     X="535" Y="200" Width="450" Height="450"
     CameraX="@CamX" CameraY="@CamY" CameraZ="@CamZ"
     CameraRoll="@CamRoll" CameraPitch="@CamPitch" CameraYaw="@CamYaw"
@@ -696,7 +704,7 @@ The sample renders two side-by-side viewports of the same planet -- one using LL
 </PlanetView>
 ```
 
-Because the logic file converts LLE to XYZ/RPY, both views display the same camera angle. The two viewports demonstrate that either camera mode can be used depending on your application's needs. The sample also marks known lunar craters in both CRS forms, which is useful for verifying that geodetic and cartesian overlays land in the same place.
+Because the logic file converts geodetic camera state to cartesian camera state, both views display the same camera angle. The two viewports demonstrate that either supported frame pair can be used depending on your application's needs. The sample also marks known lunar craters in both CRS forms, which is useful for verifying that geodetic and cartesian overlays land in the same place.
 
 ### Interactive Controls
 

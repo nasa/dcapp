@@ -33,13 +33,15 @@ Source and ABI changes that may require edits outside XML display files.
 #### Changed
 - `<PlanetView>` no longer inherits or infers CRS.
 - `CRS` is required and must be `#_planet_crs_geodetic_` or `#_planet_crs_cartesian_`.
+- `AttitudeFrame` is now supported and defaults from `CRS` when omitted.
 - Geodetic views require `CameraLatitude`, `CameraLongitude`, and `CameraElevation`.
-- Cartesian views require `CameraX`, `CameraY`, `CameraZ`, `CameraRoll`, `CameraPitch`, and `CameraYaw`.
+- Cartesian views require `CameraX`, `CameraY`, and `CameraZ`.
 - Mixing geodetic and cartesian camera attributes is now invalid.
 
 #### Migration
-- Add `CRS="#_planet_crs_geodetic_"` to LLE PlanetViews.
-- Add `CRS="#_planet_crs_cartesian_"` to XYZ/RPY PlanetViews.
+- Add `CRS="#_planet_crs_geodetic_"` to geodetic PlanetViews. Add `AttitudeFrame="#_planet_attitude_frame_local_ned_"` if you want to be explicit.
+- Add `CRS="#_planet_crs_cartesian_"` to cartesian PlanetViews. Add `AttitudeFrame="#_planet_attitude_frame_cartesian_rpy_"` if you want to be explicit.
+- Prefer `CameraYaw` over the legacy `CameraHeading` alias.
 - Remove mismatched camera attributes.
 
 ### 2026-06-04 - Logic Header Initialization ABI
