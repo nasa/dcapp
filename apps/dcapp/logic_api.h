@@ -11,6 +11,7 @@ typedef struct _DcAppDrawContext DcAppDrawContext;
 typedef struct _DcAppPlanet *DcAppPlanetHandle;
 typedef struct _DcAppPlanetView *DcAppPlanetViewHandle;
 typedef struct _DcAppDrawPlanetView *DcAppDrawPlanetViewHandle;
+typedef struct _DcAppPlanetBreadcrumbs *DcAppPlanetBreadcrumbsHandle;
 
 typedef uint32_t DcAppTextureId;
 
@@ -34,6 +35,12 @@ typedef union _DcAppVec3 {
     struct { float ignore5_; DcAppVec2 v__; };
     float d[3];
 } DcAppVec3;
+
+typedef struct _DcAppPlanetBreadcrumbsPoints {
+    const DcAppVec3 *points;
+    uint32_t count;
+    DcAppPlanetCrs crs;
+} DcAppPlanetBreadcrumbsPoints;
 
 typedef union _DcAppVec4 {
     struct {
@@ -205,6 +212,10 @@ typedef struct _DcAppDrawApi {
     DcAppDrawPlanetViewHandle (*planet_view_cartesian)(DcAppDrawContext *draw_ctx, DcAppPlanetViewHandle view, DcAppVec3 camera_position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result);
     void (*planet_sphere_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, double radius, DcAppVec4 color);
     void (*planet_sphere_cartesian)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppVec3 position, float radius, DcAppVec4 color);
+    void (*planet_line_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color);
+    void (*planet_line_cartesian)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color);
+    void (*planet_polygon_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
+    void (*planet_polygon_cartesian)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color);
     void (*planet_text_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, const char *text, float size, DcAppVec4 color);
     void (*planet_text_cartesian)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppVec3 position, const char *text, float size, DcAppVec4 color);
 } DcAppDrawApi;
@@ -249,6 +260,12 @@ typedef struct _DcAppPlanetApi {
     bool (*set_texture_cartesian)(DcAppContext *app_ctx, DcAppPlanetHandle planet, const char *path, DcAppVec3 position, float meters_per_pixel);
     DcAppPlanetViewHandle (*create_geodetic_view)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t width, uint32_t height);
     DcAppPlanetViewHandle (*create_cartesian_view)(DcAppContext *app_ctx, DcAppPlanetHandle planet, uint32_t width, uint32_t height);
+    bool (*set_view_shaders)(DcAppPlanetViewHandle view, const char *vertex_shader, const char *fragment_shader);
+    DcAppPlanetBreadcrumbsHandle (*create_breadcrumbs)(DcAppContext *app_ctx, DcAppPlanetCrs crs, uint32_t max_points, float point_spacing);
+    void (*update_breadcrumbs_geodetic)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3 position);
+    void (*update_breadcrumbs_cartesian)(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3 position);
+    void (*clear_breadcrumbs)(DcAppPlanetBreadcrumbsHandle breadcrumbs);
+    DcAppPlanetBreadcrumbsPoints (*get_breadcrumbs_points)(DcAppPlanetBreadcrumbsHandle breadcrumbs);
 } DcAppPlanetApi;
 
 typedef void *(*DcAppGetVariableFn)(DcAppContext *app_ctx, const char *name);

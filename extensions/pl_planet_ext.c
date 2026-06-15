@@ -624,6 +624,14 @@ pl_create_planet_view(plPlanet* ptPlanet, plCommandBuffer* ptCmdBuffer, plPlanet
     };
     ptView->tOutputTextureDepth = pl__planet_create_texture(ptCmdBuffer, &tDepthTextureDesc, "view depth");
 
+    // Initialize layouts for the first render pass. The view render pass declares
+    // these as its current usages, so Vulkan needs an explicit transition out of
+    // undefined before the first submit.
+    plBlitEncoder* ptInitEncoder = gptGfx->begin_blit_pass(ptCmdBuffer);
+    gptGfx->set_texture_usage(ptInitEncoder, ptView->tOutputTexture, PL_TEXTURE_USAGE_SAMPLED, 0);
+    gptGfx->set_texture_usage(ptInitEncoder, ptView->tOutputTextureDepth, PL_TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT, 0);
+    gptGfx->end_blit_pass(ptInitEncoder);
+
     // render pass
     plRenderPassAttachments atAttachmentSets[PL_MAX_FRAMES_IN_FLIGHT] = {0};
     for(uint32_t i = 0; i < gptGfx->get_frames_in_flight(); i++)

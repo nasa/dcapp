@@ -66,6 +66,10 @@ static const DcAppDrawApi dc_app_draw_interface = {
     .planet_view_cartesian     = dc_app_draw_planet_view_cartesian,
     .planet_sphere_geodetic    = dc_app_draw_planet_sphere_geodetic,
     .planet_sphere_cartesian   = dc_app_draw_planet_sphere_cartesian,
+    .planet_line_geodetic      = dc_app_draw_planet_line_geodetic,
+    .planet_line_cartesian     = dc_app_draw_planet_line_cartesian,
+    .planet_polygon_geodetic   = dc_app_draw_planet_polygon_geodetic,
+    .planet_polygon_cartesian  = dc_app_draw_planet_polygon_cartesian,
     .planet_text_geodetic      = dc_app_draw_planet_text_geodetic,
     .planet_text_cartesian     = dc_app_draw_planet_text_cartesian,
 };
@@ -1513,6 +1517,78 @@ void dc_app_draw_planet_sphere_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetV
     plVec3 geodetic;
     dc_geo_cartesian_to_geodetic(&planet->cartesian_crs, &planet->geodetic_crs, &cartesian, &geodetic, 1);
     dc_app_draw_planet_sphere(dc_app_planet_view_pl(draw_view->view), geodetic.y, geodetic.x, geodetic.z, radius, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
+}
+
+void dc_app_draw_planet_line_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+    (void)ctx;
+    if (!draw_view || !points || point_count < 2) return;
+
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
+    if (!planet) return;
+
+    plVec3 *cartesian = (plVec3 *)PL_ALLOC(sizeof(plVec3) * point_count);
+    if (!cartesian) return;
+
+    for (uint32_t i = 0; i < point_count; i++) {
+        plVec3 geodetic = {points[i].x, points[i].y, points[i].z};
+        dc_geo_geodetic_to_cartesian(&planet->geodetic_crs, &planet->cartesian_crs, &geodetic, &cartesian[i], 1);
+    }
+
+    dc_app_draw_planet_line(dc_app_planet_view_pl(draw_view->view), cartesian, point_count, line_width, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
+    PL_FREE(cartesian);
+}
+
+void dc_app_draw_planet_line_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color) {
+    (void)ctx;
+    if (!draw_view || !points || point_count < 2) return;
+
+    plVec3 *cartesian = (plVec3 *)PL_ALLOC(sizeof(plVec3) * point_count);
+    if (!cartesian) return;
+
+    for (uint32_t i = 0; i < point_count; i++) {
+        cartesian[i] = (plVec3){points[i].x, points[i].y, points[i].z};
+    }
+
+    dc_app_draw_planet_line(dc_app_planet_view_pl(draw_view->view), cartesian, point_count, line_width, PL_COLOR_32_RGBA(color.r, color.g, color.b, color.a));
+    PL_FREE(cartesian);
+}
+
+void dc_app_draw_planet_polygon_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color) {
+    (void)ctx;
+    if (!draw_view || !points || point_count < 3) return;
+
+    DcAppPlanetHandle planet = dc_app_planet_view_planet(draw_view->view);
+    if (!planet) return;
+
+    plVec3 *cartesian = (plVec3 *)PL_ALLOC(sizeof(plVec3) * point_count);
+    if (!cartesian) return;
+
+    for (uint32_t i = 0; i < point_count; i++) {
+        plVec3 geodetic = {points[i].x, points[i].y, points[i].z};
+        dc_geo_geodetic_to_cartesian(&planet->geodetic_crs, &planet->cartesian_crs, &geodetic, &cartesian[i], 1);
+    }
+
+    plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
+    dc_app_draw_planet_polygon_filled(view, cartesian, point_count, PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a));
+    dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a));
+    PL_FREE(cartesian);
+}
+
+void dc_app_draw_planet_polygon_cartesian(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 line_color, DcAppVec4 fill_color) {
+    (void)ctx;
+    if (!draw_view || !points || point_count < 3) return;
+
+    plVec3 *cartesian = (plVec3 *)PL_ALLOC(sizeof(plVec3) * point_count);
+    if (!cartesian) return;
+
+    for (uint32_t i = 0; i < point_count; i++) {
+        cartesian[i] = (plVec3){points[i].x, points[i].y, points[i].z};
+    }
+
+    plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
+    dc_app_draw_planet_polygon_filled(view, cartesian, point_count, PL_COLOR_32_RGBA(fill_color.r, fill_color.g, fill_color.b, fill_color.a));
+    dc_app_draw_planet_polygon(view, cartesian, point_count, line_width, PL_COLOR_32_RGBA(line_color.r, line_color.g, line_color.b, line_color.a));
+    PL_FREE(cartesian);
 }
 
 void dc_app_draw_planet_text_geodetic(DcAppDrawContext *ctx, DcAppDrawPlanetViewHandle draw_view, double lat, double lon, double height, const char *text, float size, DcAppVec4 color) {

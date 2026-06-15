@@ -5,11 +5,15 @@
 #include "utils/log.h"
 #include "utils/string.h"
 
+#include <math.h>
+
 static void _planet_ensure_initialized(_AppData *app_data);
 static bool _planet_load_process_info(const char *json_path, double *out_radius, plPlanetProcessInfo *out_info);
 static void _planet_free_process_info(plPlanetProcessInfo *info);
-static bool _planet_texture_path_to_vfs(_AppData *app_data, const char *path, char *out, size_t out_size);
+static bool _planet_file_path_to_vfs(_AppData *app_data, const char *path, char *out, size_t out_size);
 static DcAppPlanetViewHandle _planet_create_view(_AppData *app_data, DcAppPlanetHandle planet, DcAppPlanetCrs crs, uint32_t width, uint32_t height);
+static void _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3 position);
+static float _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3 a, DcAppVec3 b);
 
 #define DC_APP_PLANET_MIN_MESH_CACHE_SIZE (1024u * 1024u)
 
@@ -22,6 +26,12 @@ static const DcAppPlanetApi dc_app_planet_interface = {
     .set_texture_cartesian  = dc_app_planet_set_texture_cartesian,
     .create_geodetic_view   = dc_app_planet_create_geodetic_view,
     .create_cartesian_view  = dc_app_planet_create_cartesian_view,
+    .set_view_shaders       = dc_app_planet_set_view_shaders,
+    .create_breadcrumbs     = dc_app_planet_create_breadcrumbs,
+    .update_breadcrumbs_geodetic  = dc_app_planet_update_breadcrumbs_geodetic,
+    .update_breadcrumbs_cartesian = dc_app_planet_update_breadcrumbs_cartesian,
+    .clear_breadcrumbs      = dc_app_planet_clear_breadcrumbs,
+    .get_breadcrumbs_points = dc_app_planet_get_breadcrumbs_points,
 };
 
 const DcAppPlanetApi *dc_app_planet_api(void) {
@@ -112,7 +122,7 @@ bool dc_app_planet_set_texture_geodetic(_AppData *app_data, DcAppPlanetHandle pl
     if (!app_data || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
 
     char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
-    if (!_planet_texture_path_to_vfs(app_data, path, vfs_path, sizeof(vfs_path))) return false;
+    if (!_planet_file_path_to_vfs(app_data, path, vfs_path, sizeof(vfs_path))) return false;
 
     plVec3d geodetic_in = {lat, lon, 0.0};
     plVec2d polar_out;
@@ -132,7 +142,7 @@ bool dc_app_planet_set_texture_cartesian(_AppData *app_data, DcAppPlanetHandle p
     if (!app_data || !planet || !planet->planet || meters_per_pixel <= 0.0f) return false;
 
     char vfs_path[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
-    if (!_planet_texture_path_to_vfs(app_data, path, vfs_path, sizeof(vfs_path))) return false;
+    if (!_planet_file_path_to_vfs(app_data, path, vfs_path, sizeof(vfs_path))) return false;
 
     plVec3d cartesian_in = {position.x, position.y, position.z};
     plVec3d geodetic_out;
@@ -158,8 +168,78 @@ DcAppPlanetViewHandle dc_app_planet_create_cartesian_view(_AppData *app_data, Dc
     return _planet_create_view(app_data, planet, DC_APP_PLANET_CRS_CARTESIAN, width, height);
 }
 
+bool dc_app_planet_set_view_shaders(DcAppPlanetViewHandle view, const char *vertex_shader, const char *fragment_shader) {
+    if (!view || !view->view) return false;
+
+    char vertex_vfs[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
+    char fragment_vfs[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};
+    const char *vertex_path = NULL;
+    const char *fragment_path = NULL;
+
+    if (vertex_shader && vertex_shader[0] != '\0') {
+        if (!_planet_file_path_to_vfs(view->app_data, vertex_shader, vertex_vfs, sizeof(vertex_vfs))) return false;
+        vertex_path = vertex_vfs;
+    }
+    if (fragment_shader && fragment_shader[0] != '\0') {
+        if (!_planet_file_path_to_vfs(view->app_data, fragment_shader, fragment_vfs, sizeof(fragment_vfs))) return false;
+        fragment_path = fragment_vfs;
+    }
+
+    _ext_planet->set_shaders(view->view, vertex_path, fragment_path);
+    return true;
+}
+
+DcAppPlanetBreadcrumbsHandle dc_app_planet_create_breadcrumbs(_AppData *app_data, DcAppPlanetCrs crs, uint32_t max_points, float point_spacing) {
+    if (!app_data) return NULL;
+    if (crs != DC_APP_PLANET_CRS_GEODETIC && crs != DC_APP_PLANET_CRS_CARTESIAN) return NULL;
+    if (max_points < 2) max_points = 2;
+    if (point_spacing < 0.0f) point_spacing = 0.0f;
+
+    DcAppPlanetBreadcrumbsHandle breadcrumbs = (DcAppPlanetBreadcrumbsHandle)PL_ALLOC(sizeof(*breadcrumbs));
+    if (!breadcrumbs) return NULL;
+    memset(breadcrumbs, 0, sizeof(*breadcrumbs));
+    breadcrumbs->app_data = app_data;
+    breadcrumbs->crs = crs;
+    breadcrumbs->max_points = max_points;
+    breadcrumbs->point_spacing = point_spacing;
+    sbpush(app_data->sb_planet_breadcrumbs, breadcrumbs);
+    return breadcrumbs;
+}
+
+void dc_app_planet_update_breadcrumbs_geodetic(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3 position) {
+    if (!breadcrumbs || breadcrumbs->crs != DC_APP_PLANET_CRS_GEODETIC || !planet) return;
+    _planet_update_breadcrumbs(breadcrumbs, planet, position);
+}
+
+void dc_app_planet_update_breadcrumbs_cartesian(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppVec3 position) {
+    if (!breadcrumbs || breadcrumbs->crs != DC_APP_PLANET_CRS_CARTESIAN) return;
+    _planet_update_breadcrumbs(breadcrumbs, NULL, position);
+}
+
+void dc_app_planet_clear_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs) {
+    if (!breadcrumbs) return;
+    sbclear(breadcrumbs->sb_points);
+}
+
+DcAppPlanetBreadcrumbsPoints dc_app_planet_get_breadcrumbs_points(DcAppPlanetBreadcrumbsHandle breadcrumbs) {
+    if (!breadcrumbs) return (DcAppPlanetBreadcrumbsPoints){0};
+    return (DcAppPlanetBreadcrumbsPoints){
+        .points = breadcrumbs->sb_points,
+        .count = (uint32_t)sbcount(breadcrumbs->sb_points),
+        .crs = breadcrumbs->crs,
+    };
+}
+
 void dc_app_planet_free_wrappers(_AppData *app_data) {
     if (!app_data) return;
+
+    for (int i = 0; i < sbcount(app_data->sb_planet_breadcrumbs); i++) {
+        DcAppPlanetBreadcrumbsHandle breadcrumbs = app_data->sb_planet_breadcrumbs[i];
+        if (!breadcrumbs) continue;
+        sbfree(breadcrumbs->sb_points);
+        PL_FREE(breadcrumbs);
+    }
+    sbfree(app_data->sb_planet_breadcrumbs);
 
     // cleans up every planet view created by the shared planet subsystem.
     for (int i = 0; i < sbcount(app_data->sb_planet_view_handles); i++) {
@@ -199,6 +279,40 @@ DcAppPlanetHandle dc_app_planet_view_planet(DcAppPlanetViewHandle view) {
     return view ? view->planet : NULL;
 }
 
+static void _planet_update_breadcrumbs(DcAppPlanetBreadcrumbsHandle breadcrumbs, DcAppPlanetHandle planet, DcAppVec3 position) {
+    if (!isfinite(position.x) || !isfinite(position.y) || !isfinite(position.z)) return;
+
+    int point_count = sbcount(breadcrumbs->sb_points);
+    if (point_count == 0 ||
+        _planet_breadcrumbs_distance(planet, breadcrumbs->crs, breadcrumbs->sb_points[point_count - 1], position) >= breadcrumbs->point_spacing) {
+        sbpush(breadcrumbs->sb_points, position);
+    }
+
+    point_count = sbcount(breadcrumbs->sb_points);
+    if (point_count > (int)breadcrumbs->max_points) {
+        sbshiftn(breadcrumbs->sb_points, point_count - (int)breadcrumbs->max_points);
+    }
+}
+
+static float _planet_breadcrumbs_distance(DcAppPlanetHandle planet, DcAppPlanetCrs crs, DcAppVec3 a, DcAppVec3 b) {
+    plVec3 pa = {a.x, a.y, a.z};
+    plVec3 pb = {b.x, b.y, b.z};
+
+    if (crs == DC_APP_PLANET_CRS_GEODETIC && planet) {
+        plVec3 ca = {0};
+        plVec3 cb = {0};
+        dc_geo_geodetic_to_cartesian(&planet->geodetic_crs, &planet->cartesian_crs, &pa, &ca, 1);
+        dc_geo_geodetic_to_cartesian(&planet->geodetic_crs, &planet->cartesian_crs, &pb, &cb, 1);
+        pa = ca;
+        pb = cb;
+    }
+
+    float dx = pb.x - pa.x;
+    float dy = pb.y - pa.y;
+    float dz = pb.z - pa.z;
+    return sqrtf(dx * dx + dy * dy + dz * dz);
+}
+
 static void _planet_ensure_initialized(_AppData *app_data) {
     if (!app_data || app_data->planet_ext_initialized) return;
 
@@ -212,7 +326,7 @@ static void _planet_ensure_initialized(_AppData *app_data) {
     sbpush(app_data->sb_planet_views, NULL);
 }
 
-static bool _planet_texture_path_to_vfs(_AppData *app_data, const char *path, char *out, size_t out_size) {
+static bool _planet_file_path_to_vfs(_AppData *app_data, const char *path, char *out, size_t out_size) {
     if (!app_data || !path || path[0] == '\0' || !out || out_size == 0) return false;
 
     char cleaned[DC_UTILS_FILEPATH_BUFFER_SIZE] = {0};

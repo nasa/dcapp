@@ -165,13 +165,32 @@
             <PlanetView Planet="Moon" CRS="#_planet_crs_geodetic_" AttitudeFrame="#_planet_attitude_frame_local_ned_" X="15" Y="300" Width="450" Height="450"
                 CameraLatitude="@Latitude" CameraLongitude="@Longitude" CameraElevation="@Elevation"
                 CameraYaw="@Heading"
-                CameraOrthographic="@UseOrtho" ShaderIndex="@ActiveShader"
+                CameraOrthographic="@UseOrtho" ShaderIndex="@LeftShader"
                 Tau="@Tau">
-                <PlanetSphere Latitude="-58.62" Longitude="-14.73" Radius="115385" HeightAboveTerrain="1000" FillColor="0.0 1.0 1.0 0.18"/>
-                <PlanetSphere Latitude="-89.67" Longitude="129.78" Radius="10460" HeightAboveTerrain="1000" FillColor="1.0 0.4 1.0 0.22"/>
-                <PlanetGeoJSON File="assets/geojson_test.geojson" HeightAboveTerrain="1000" LineColor="1.0 1.0 0.0 1.0" LineWidth="2000" FillColor="1.0 1.0 0.0 0.2"/>
-                <PlanetText Latitude="-58.62" Longitude="-14.73" HeightAboveTerrain="50000" Size="60000" FillColor="0.0 1.0 1.0 1.0">Clavius crater 230.77 km</PlanetText>
-                <PlanetText Latitude="-89.67" Longitude="129.78" HeightAboveTerrain="50000" Size="30000" FillColor="1.0 0.4 1.0 1.0">Shackleton crater 20.92 km</PlanetText>
+                <PlanetBreadcrumbs CRS="#_planet_crs_geodetic_" Latitude="@OrbitLat" Longitude="@OrbitLon"
+                    HeightAboveTerrain="50000" PointSpacing="25000" MaxPoints="512"
+                    LineColor="0.1 0.9 1.0 0.85" LineWidth="3500"/>
+                <PlanetSphere CRS="#_planet_crs_geodetic_" Latitude="@OrbitLat" Longitude="@OrbitLon"
+                    HeightAboveTerrain="50000" Radius="18000" FillColor="0.1 0.9 1.0 1.0"/>
+                <PlanetGeoJSON File="assets/geojson_test.geojson" HeightAboveTerrain="1500"
+                    LineColor="0.25 0.70 1.0 0.90" LineWidth="2200" FillColor="0.25 0.70 1.0 0.10"/>
+                <PlanetSphere Latitude="-66.82" Longitude="-68.90" Radius="150500" HeightAboveTerrain="1000" FillColor="1.0 0.78 0.18 0.18"/>
+                <PlanetSphere Latitude="-58.62" Longitude="-14.73" Radius="115385" HeightAboveTerrain="1000" FillColor="0.0 0.95 1.0 0.20"/>
+                <PlanetSphere Latitude="-50.00" Longitude="-6.20" Radius="97000" HeightAboveTerrain="1000" FillColor="0.45 1.0 0.25 0.18"/>
+                <PlanetSphere Latitude="-51.72" Longitude="-39.78" Radius="89500" HeightAboveTerrain="1000" FillColor="1.0 0.42 0.12 0.18"/>
+                <PlanetSphere Latitude="-65.11" Longitude="-88.49" Radius="81500" HeightAboveTerrain="1000" FillColor="0.35 0.55 1.0 0.19"/>
+                <PlanetSphere Latitude="-89.67" Longitude="129.78" Radius="10460" HeightAboveTerrain="1000" FillColor="1.0 0.25 0.95 0.23"/>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-66.82" Longitude="-68.90" HeightAboveTerrain="85000" Size="30000"
+                    FillColor="1.0 0.92 0.62 1.0">Bailly 301 km</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-58.62" Longitude="-14.73" HeightAboveTerrain="85000" Size="30000"
+                    FillColor="1.0 0.92 0.62 1.0">Clavius 231 km</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-50.00" Longitude="-6.20" HeightAboveTerrain="85000" Size="28000"
+                    FillColor="1.0 0.92 0.62 1.0">Maginus 194 km</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-51.72" Longitude="-39.78" HeightAboveTerrain="85000" Size="28000"
+                    FillColor="1.0 0.92 0.62 1.0">Schiller 179 km</PlanetText>
+                <PlanetText CRS="#_planet_crs_geodetic_" Latitude="-65.11" Longitude="-88.49" HeightAboveTerrain="85000" Size="28000"
+                    FillColor="1.0 0.92 0.62 1.0">Hausen 163 km</PlanetText>
+                <PlanetText Latitude="-89.67" Longitude="129.78" HeightAboveTerrain="50000" Size="30000" FillColor="1.0 0.4 1.0 1.0">Shackleton 21 km</PlanetText>
             </PlanetView>
 
             <Text X="760" Y="762" LocalAlignX="#_align_center_" Size="14" FillColor="#_color_sky_blue_">Geodetic Camera (logic)</Text>

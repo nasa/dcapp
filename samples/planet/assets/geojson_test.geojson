@@ -20,46 +20,6 @@
           [300.0, -66.5]
         ]]
       }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Nominal -65 degree latitude track",
-        "stroke": "#ffffff",
-        "stroke-opacity": 1.0
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [300.0, -65.0],
-          [305.0, -65.0],
-          [310.0, -65.0],
-          [315.0, -65.0],
-          [320.0, -65.0],
-          [325.0, -65.0],
-          [330.0, -65.0],
-          [335.0, -65.0],
-          [340.0, -65.0],
-          [345.0, -65.0]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Survey waypoints",
-        "stroke": "#ffffff",
-        "stroke-opacity": 1.0
-      },
-      "geometry": {
-        "type": "MultiPoint",
-        "coordinates": [
-          [305.0, -65.0],
-          [315.0, -65.0],
-          [325.0, -65.0],
-          [335.0, -65.0]
-        ]
-      }
     }
   ]
 }

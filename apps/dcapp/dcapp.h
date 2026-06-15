@@ -306,6 +306,7 @@ struct __AppData {
     void (*logic_init)(DcAppContext *app_ctx);
     void (*logic_draw)(DcAppContext *app_ctx);
     void (*logic_close)(DcAppContext *app_ctx);
+    DcAppPlanetBreadcrumbsHandle *sb_planet_breadcrumbs;
 
     // trick
     _TrickContext *sb_tricks;

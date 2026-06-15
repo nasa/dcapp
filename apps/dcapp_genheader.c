@@ -292,6 +292,14 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "} DcValueType;");
     fprintf(file, "%s\n", "");
 
+    fprintf(file, "%s\n", "// Coordinate reference systems for planet positions.");
+    fprintf(file, "%s\n", "typedef enum _DcPlanetCrs {");
+    fprintf(file, "    DC_PLANET_CRS_UNDEFINED = %d,\n", DC_APP_PLANET_CRS_UNDEFINED);
+    fprintf(file, "    DC_PLANET_CRS_GEODETIC = %d,\n", DC_APP_PLANET_CRS_GEODETIC);
+    fprintf(file, "    DC_PLANET_CRS_CARTESIAN = %d,\n", DC_APP_PLANET_CRS_CARTESIAN);
+    fprintf(file, "%s\n", "} DcPlanetCrs;");
+    fprintf(file, "%s\n", "");
+
     fprintf(file, "%s\n", "// Basic vector types used by the draw API.");
     fprintf(file, "%s\n", "typedef union _DcVec2 {");
     fprintf(file, "%s\n", "    struct { float x, y; };");
@@ -500,11 +508,18 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "typedef struct DcPlanet *DcPlanetHandle;");
     fprintf(file, "%s\n", "typedef struct DcPlanetView *DcPlanetViewHandle;");
     fprintf(file, "%s\n", "typedef struct DcDrawPlanetView *DcDrawPlanetViewHandle;");
+    fprintf(file, "%s\n", "typedef struct DcPlanetBreadcrumbs *DcPlanetBreadcrumbsHandle;");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "typedef struct _DcPlanetCreateInfo {");
     fprintf(file, "%s\n", "    const char *data_path;");
     fprintf(file, "%s\n", "    uint32_t mesh_cache_size; // bytes, 0 uses renderer default.");
     fprintf(file, "%s\n", "} DcPlanetCreateInfo;");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "typedef struct _DcPlanetBreadcrumbsPoints {");
+    fprintf(file, "%s\n", "    const DcVec3 *points;");
+    fprintf(file, "%s\n", "    uint32_t count;");
+    fprintf(file, "%s\n", "    DcPlanetCrs crs;");
+    fprintf(file, "%s\n", "} DcPlanetBreadcrumbsPoints;");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// One XML <Arg> value passed into a DrawFunction.");
     fprintf(file, "%s\n", "typedef struct _DcDrawFuncArg {");
@@ -592,6 +607,10 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    DcDrawPlanetViewHandle (*planet_view_cartesian)(DcDrawContext *draw_ctx, DcPlanetViewHandle view, DcVec3 camera_position, DcVec3 rpy, float fov_degrees, bool orthographic, DcVec2 position, DcVec2 size, DcPlacement placement, DcDrawResult *result);");
     fprintf(file, "%s\n", "    void (*planet_sphere_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, double lat, double lon, double height, double radius, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*planet_sphere_cartesian)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, DcVec3 position, float radius, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*planet_line_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, const DcVec3 *points, uint32_t point_count, float line_width, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*planet_line_cartesian)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, const DcVec3 *points, uint32_t point_count, float line_width, DcVec4 color);");
+    fprintf(file, "%s\n", "    void (*planet_polygon_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, const DcVec3 *points, uint32_t point_count, float line_width, DcVec4 line_color, DcVec4 fill_color);");
+    fprintf(file, "%s\n", "    void (*planet_polygon_cartesian)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, const DcVec3 *points, uint32_t point_count, float line_width, DcVec4 line_color, DcVec4 fill_color);");
     fprintf(file, "%s\n", "    void (*planet_text_geodetic)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, double lat, double lon, double height, const char *text, float size, DcVec4 color);");
     fprintf(file, "%s\n", "    void (*planet_text_cartesian)(DcDrawContext *draw_ctx, DcDrawPlanetViewHandle view, DcVec3 position, const char *text, float size, DcVec4 color);");
     fprintf(file, "%s\n", "} DcDrawApi;");
@@ -640,6 +659,12 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    bool (*set_texture_cartesian)(DcAppContext *app_ctx, DcPlanetHandle planet, const char *path, DcVec3 position, float meters_per_pixel);");
     fprintf(file, "%s\n", "    DcPlanetViewHandle (*create_geodetic_view)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t width, uint32_t height);");
     fprintf(file, "%s\n", "    DcPlanetViewHandle (*create_cartesian_view)(DcAppContext *app_ctx, DcPlanetHandle planet, uint32_t width, uint32_t height);");
+    fprintf(file, "%s\n", "    bool (*set_view_shaders)(DcPlanetViewHandle view, const char *vertex_shader, const char *fragment_shader);");
+    fprintf(file, "%s\n", "    DcPlanetBreadcrumbsHandle (*create_breadcrumbs)(DcAppContext *app_ctx, DcPlanetCrs crs, uint32_t max_points, float point_spacing);");
+    fprintf(file, "%s\n", "    void (*update_breadcrumbs_geodetic)(DcPlanetBreadcrumbsHandle breadcrumbs, DcPlanetHandle planet, DcVec3 position);");
+    fprintf(file, "%s\n", "    void (*update_breadcrumbs_cartesian)(DcPlanetBreadcrumbsHandle breadcrumbs, DcVec3 position);");
+    fprintf(file, "%s\n", "    void (*clear_breadcrumbs)(DcPlanetBreadcrumbsHandle breadcrumbs);");
+    fprintf(file, "%s\n", "    DcPlanetBreadcrumbsPoints (*get_breadcrumbs_points)(DcPlanetBreadcrumbsHandle breadcrumbs);");
     fprintf(file, "%s\n", "} DcPlanetApi;");
     fprintf(file, "%s\n", "");
 
