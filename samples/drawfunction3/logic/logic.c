@@ -25,10 +25,6 @@ static float rand_unit(void) {
     return (float)((g_rng >> 8) & 0x00FFFFFFu) / 16777215.0f;
 }
 
-static float rand_range(float min_value, float max_value) {
-    return min_value + (max_value - min_value) * rand_unit();
-}
-
 static int clamp_count(int count) {
     if (count < 8) return 8;
     if (count > MAX_STARS) return MAX_STARS;
@@ -40,9 +36,9 @@ static void init_star(int index, bool at_top) {
     float depth = rand_unit();
     float warm = rand_unit();
 
-    star->x = rand_range(0.0f, FIELD_WIDTH);
-    star->y = at_top ? FIELD_TOP + rand_range(0.0f, 30.0f) : rand_range(FIELD_BOTTOM, FIELD_TOP);
-    star->speed = rand_range(30.0f, 150.0f);
+    star->x = FIELD_WIDTH * rand_unit();
+    star->y = at_top ? FIELD_TOP + 30.0f * rand_unit() : FIELD_BOTTOM + FIELD_HEIGHT * rand_unit();
+    star->speed = 30.0f + 120.0f * rand_unit();
     star->size = 1.0f + depth * 2.4f;
 
     if (warm < 0.16f) {

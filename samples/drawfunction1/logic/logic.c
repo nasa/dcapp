@@ -4,18 +4,6 @@
 // DrawFunction 1 is a small feature tour. XML owns the cards and labels; each
 // DrawFunction owns one focused piece of C drawing.
 
-static float phase_radians(const DcDrawFuncArgs *args) {
-    double phase = 0.0;
-    if (args && args->count > 0) {
-        phase = args->values[0].value_double;
-    }
-    return (float)(phase * 3.14159265358979323846 / 180.0);
-}
-
-static float demo_radius(float t) {
-    return 50.0f + 4.0f * sinf(t);
-}
-
 void display_init(DcAppContext *app_ctx) {
     (void)app_ctx;
     // PHASE is declared in XML, so the logic file has no setup work.
@@ -36,8 +24,9 @@ void draw_simple_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     if (!dc_draw) return;
 
     // Plain primitive drawing: fill first, outline second.
-    float t = phase_radians(args);
-    float radius = demo_radius(t);
+    double phase = (args && args->count > 0) ? args->values[0].value_double : 0.0;
+    float t = (float)(phase * 3.14159265358979323846 / 180.0);
+    float radius = 50.0f + 4.0f * sinf(t);
 
     dc_draw->circle_filled(draw_ctx, (DcVec2){196.0f, 76.0f}, radius, (DcVec4){
         .r = 0.20f,
@@ -61,8 +50,9 @@ void draw_labeled_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
 
     // Logic-side text: the circle returns an area, then text is centered inside
     // that area without needing a separate XML Text node.
-    float t = phase_radians(args);
-    float radius = demo_radius(t);
+    double phase = (args && args->count > 0) ? args->values[0].value_double : 0.0;
+    float t = (float)(phase * 3.14159265358979323846 / 180.0);
+    float radius = 50.0f + 4.0f * sinf(t);
     DcDrawResult circle_result = {0};
 
     dc_draw->circle_filled_ex(draw_ctx, (DcVec2){196.0f, 74.0f}, radius, (DcVec4){
@@ -100,8 +90,9 @@ void draw_mouse_circle(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
 
     // Mouse registration is separate from drawing, so only the primitives that
     // care about input pay the hit-test cost.
-    float t = phase_radians(args);
-    float radius = demo_radius(t);
+    double phase = (args && args->count > 0) ? args->values[0].value_double : 0.0;
+    float t = (float)(phase * 3.14159265358979323846 / 180.0);
+    float radius = 50.0f + 4.0f * sinf(t);
     const char *id = "drawfunction_sample_circle";
 
     dc_mouse->circle(draw_ctx, id, (DcVec2){196.0f, 88.0f}, radius);
@@ -145,8 +136,9 @@ void draw_aligned_area(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
 
     // The circle returns a resolved area. Pushing it lets the following shapes
     // align to the circle's local parent dimensions.
-    float t = phase_radians(args);
-    float radius = demo_radius(t);
+    double phase = (args && args->count > 0) ? args->values[0].value_double : 0.0;
+    float t = (float)(phase * 3.14159265358979323846 / 180.0);
+    float radius = 50.0f + 4.0f * sinf(t);
     DcDrawResult circle_result = {0};
 
     dc_draw->circle_filled_ex(draw_ctx, (DcVec2){196.0f, 78.0f}, radius, (DcVec4){

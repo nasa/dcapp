@@ -20,19 +20,6 @@ static DcTextureId g_image_texture;
 static DcVec2      g_image_size;
 static const char *g_image_status = "image not loaded";
 
-// The XML passes PHASE into draw_reference_grid() as a DrawFunction argument.
-// A few cells use it to animate rotation or size, which proves args are live.
-static float phase_degrees(const DcDrawFuncArgs *args) {
-    if (!args || args->count == 0) return 0.0f;
-    return (float)args->values[0].value_double;
-}
-
-// C's trig functions use radians. The XML-side PHASE variable is easier to
-// think about as degrees, so examples convert it here when they need sine.
-static float phase_radians(const DcDrawFuncArgs *args) {
-    return phase_degrees(args) * 0.01745329251994329577f;
-}
-
 // 01: Basic line drawing. The simple draw functions take coordinates directly
 // in the current draw area; there is no placement/result metadata.
 static void draw_example_01_line(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
@@ -48,7 +35,8 @@ static void draw_example_02_line_ex(DcDrawContext *draw_ctx, const DcDrawFuncArg
     DcPlacement placement = (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE };
     placement.pivot_align_x = DC_ALIGN_CENTER;
     placement.pivot_align_y = DC_ALIGN_MIDDLE;
-    placement.rotation = phase_degrees(args) * 2.0f;
+    float phase = (args && args->count > 0) ? (float)args->values[0].value_double : 0.0f;
+    placement.rotation = phase * 2.0f;
     dc_draw->line_ex(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){96.0f, 0.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.74f, .g = 0.92f, .b = 1.0f, .a = 1.0f }, .width = 3.0f }, (DcVec2){110.0f, 58.0f}, placement, NULL);
 }
 
@@ -239,7 +227,7 @@ static void draw_example_22_image(DcDrawContext *draw_ctx, const DcDrawFuncArgs 
         DcPlacement placement = (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE };
         placement.pivot_align_x = DC_ALIGN_CENTER;
         placement.pivot_align_y = DC_ALIGN_MIDDLE;
-        placement.rotation      = phase_degrees(args);
+        placement.rotation      = (args && args->count > 0) ? (float)args->values[0].value_double : 0.0f;
 
         dc_draw->image(draw_ctx, g_image_texture, (DcVec2){30.0f, 38.0f}, image_size, (DcVec4){ .r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 1.0f });
         dc_draw->image_ex(draw_ctx, g_image_texture, (DcVec2){150.0f, 60.0f}, image_size, (DcVec4){ .r = 1.0f, .g = 1.0f, .b = 1.0f, .a = 0.85f }, placement, NULL);
@@ -258,7 +246,8 @@ static void draw_example_23_placement(DcDrawContext *draw_ctx, const DcDrawFuncA
     DcPlacement placement = (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE };
     placement.pivot_align_x = DC_ALIGN_CENTER;
     placement.pivot_align_y = DC_ALIGN_MIDDLE;
-    placement.rotation = phase_degrees(args) * 2.0f;
+    float phase = (args && args->count > 0) ? (float)args->values[0].value_double : 0.0f;
+    placement.rotation = phase * 2.0f;
     dc_draw->rect_filled_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, (DcVec2){62.0f, 22.0f}, (DcVec4){ .r = 0.86f, .g = 0.78f, .b = 0.30f, .a = 0.95f }, placement, NULL);
 }
 
@@ -310,7 +299,8 @@ static void draw_example_27_container_push_ex(DcDrawContext *draw_ctx, const DcD
     DcPlacement placement = (DcPlacement){ .local_align_x = DC_ALIGN_CENTER, .local_align_y = DC_ALIGN_MIDDLE };
     placement.pivot_align_x = DC_ALIGN_CENTER;
     placement.pivot_align_y = DC_ALIGN_MIDDLE;
-    placement.rotation = sinf(phase_radians(args)) * 10.0f;
+    float phase = (args && args->count > 0) ? (float)args->values[0].value_double : 0.0f;
+    placement.rotation = sinf(phase * 0.01745329251994329577f) * 10.0f;
     if (dc_draw->container_push_ex(draw_ctx, (DcVec2){110.0f, 60.0f}, (DcVec2){126.0f, 58.0f}, (DcVec2){126.0f, 58.0f}, placement, NULL)) {
         dc_draw->rounded_rect_filled(draw_ctx, (DcVec2){0.0f, 0.0f}, (DcVec2){126.0f, 58.0f}, 8.0f, (DcVec4){ .r = 0.26f, .g = 0.18f, .b = 0.13f, .a = 0.90f });
         dc_draw->line(draw_ctx, (DcVec2){0.0f, 29.0f}, (DcVec2){126.0f, 29.0f}, (DcStroke){ .color = (DcVec4){ .r = 1.0f, .g = 0.74f, .b = 0.42f, .a = 1.0f }, .width = 2.0f });
@@ -486,8 +476,8 @@ static void draw_example_35_mouse_events(DcDrawContext *draw_ctx, const DcDrawFu
 // 36: DrawFunction args and global mouse state are also available. PHASE comes
 // from XML, while get_state() exposes the current mouse snapshot.
 static void draw_example_36_args_and_state(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
-    float phase = phase_degrees(args);
-    float radius = 20.0f + 8.0f * (0.5f + 0.5f * sinf(phase_radians(args)));
+    float phase = (args && args->count > 0) ? (float)args->values[0].value_double : 0.0f;
+    float radius = 20.0f + 8.0f * (0.5f + 0.5f * sinf(phase * 0.01745329251994329577f));
     const DcMouse *mouse = dc_mouse->get_state(draw_ctx);
     dc_draw->circle_filled(draw_ctx, (DcVec2){70.0f, 60.0f}, radius, (DcVec4){ .r = 0.40f, .g = 0.62f, .b = 0.90f, .a = 0.90f });
     dc_draw->text(draw_ctx, (DcVec2){112.0f, 66.0f}, "Arg PHASE", (DcTextStyle){ .size = 9.0f, .color = (DcVec4){ .r = 0.88f, .g = 0.96f, .b = 1.0f, .a = 1.0f } });
