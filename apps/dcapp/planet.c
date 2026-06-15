@@ -6,9 +6,11 @@
 #include "utils/string.h"
 
 #include <math.h>
+#include <stdint.h>
+#include <string.h>
 
 static void _planet_ensure_initialized(_AppData *app_data);
-static bool _planet_load_process_info(const char *json_path, double *out_radius, plPlanetProcessInfo *out_info);
+static bool _planet_load_process_info(const char *json_path, double *out_radius, plPlanetProcessInfo *out_info, bool *out_legacy_projected_origin);
 static void _planet_free_process_info(plPlanetProcessInfo *info);
 static bool _planet_file_path_to_vfs(_AppData *app_data, const char *path, char *out, size_t out_size);
 static DcAppPlanetViewHandle _planet_create_view(_AppData *app_data, DcAppPlanetHandle planet, DcAppPlanetCrs crs, uint32_t width, uint32_t height);
@@ -61,10 +63,12 @@ DcAppPlanetHandle dc_app_planet_create_planet(_AppData *app_data, DcAppPlanetCre
 
     double radius = 0.0;
     plPlanetProcessInfo process_info = {0};
-    if (!_planet_load_process_info(info.data_path, &radius, &process_info)) {
+    bool legacy_projected_origin = false;
+    if (!_planet_load_process_info(info.data_path, &radius, &process_info, &legacy_projected_origin)) {
         _planet_free_process_info(&process_info);
         return NULL;
     }
+    plProjectionParams projection = process_info.tProjection;
 
     plPlanetInit planet_init = {0};
     planet_init.dRadius = radius;
@@ -95,7 +99,13 @@ DcAppPlanetHandle dc_app_planet_create_planet(_AppData *app_data, DcAppPlanetCre
     // stores crs helpers so xml and logic share the same conversions.
     handle->geodetic_crs = dc_geo_create_crs_geodetic(radius);
     handle->cartesian_crs = dc_geo_create_crs_cartesian(radius);
-    handle->polar_crs = dc_geo_create_crs_polar_stereographic(radius, -90.0, 0.0);
+    handle->polar_crs = dc_geo_create_crs_polar_stereographic(radius,
+        projection.tPolarStereo.dLatitudeOfOrigin,
+        projection.tPolarStereo.dLongitudeOfOrigin);
+    handle->polar_crs.scale_factor = projection.tPolarStereo.dScaleFactor;
+    handle->polar_crs.false_easting = projection.tPolarStereo.dFalseEasting;
+    handle->polar_crs.false_northing = projection.tPolarStereo.dFalseNorthing;
+    handle->legacy_projected_origin = legacy_projected_origin;
     sbpush(app_data->sb_planets, planet);
     handle->index = (uint8_t)(sbcount(app_data->sb_planets) - 1);
     sbpush(app_data->sb_planet_handles, handle);
@@ -127,6 +137,8 @@ bool dc_app_planet_set_texture_geodetic(_AppData *app_data, DcAppPlanetHandle pl
     plVec3d geodetic_in = {lat, lon, 0.0};
     plVec2d polar_out;
     dc_geo_user_geodetic_to_polar_stereo_d(&planet->geodetic_crs, &planet->polar_crs, &geodetic_in, &polar_out, 1);
+    if (planet->legacy_projected_origin)
+        polar_out.y = -polar_out.y;
 
     plPlanetTexture texture = {
         .pcPath = vfs_path,
@@ -149,6 +161,8 @@ bool dc_app_planet_set_texture_cartesian(_AppData *app_data, DcAppPlanetHandle p
     plVec2d polar_out;
     dc_geo_cartesian_to_geodetic_d(&planet->cartesian_crs, &planet->geodetic_crs, &cartesian_in, &geodetic_out, 1);
     dc_geo_user_geodetic_to_polar_stereo_d(&planet->geodetic_crs, &planet->polar_crs, &geodetic_out, &polar_out, 1);
+    if (planet->legacy_projected_origin)
+        polar_out.y = -polar_out.y;
 
     plPlanetTexture texture = {
         .pcPath = vfs_path,
@@ -402,7 +416,7 @@ static DcAppPlanetViewHandle _planet_create_view(_AppData *app_data, DcAppPlanet
     return handle;
 }
 
-static bool _planet_load_process_info(const char *json_path, double *out_radius, plPlanetProcessInfo *out_info) {
+static bool _planet_load_process_info(const char *json_path, double *out_radius, plPlanetProcessInfo *out_info, bool *out_legacy_projected_origin) {
     char *json_str = dc_utils_load_text_file(json_path);
     if (!json_str) {
         DC_LOG_ERROR("Planet", "Failed to load planet data: %s", json_path);
@@ -434,16 +448,52 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
         free(json_str);
         return false;
     }
-
-    // uses the same processed planet json format as xml planets.
-    DcGeoCrsGeodetic geodetic_crs = dc_geo_create_crs_geodetic(radius);
-    DcGeoCrsPolarStereo polar_crs = dc_geo_create_crs_polar_stereographic(radius, -90.0, 0.0);
+    uint64_t expected_tile_count = (uint64_t)cols * (uint64_t)rows;
+    if (expected_tile_count > UINT32_MAX || tile_count != (uint32_t)expected_tile_count) {
+        DC_LOG_ERROR("Planet", "Planet tile count mismatch in %s: cols=%d rows=%d tiles=%u", json_path, cols, rows, tile_count);
+        pl_unload_json(&root);
+        free(json_str);
+        return false;
+    }
 
     memset(out_info, 0, sizeof(*out_info));
     out_info->tProjection.tType = PL_PROJECTION_POLAR_STEREOGRAPHIC;
     out_info->tProjection.tPolarStereo.dLatitudeOfOrigin = -90.0;
     out_info->tProjection.tPolarStereo.dLongitudeOfOrigin = 0.0;
     out_info->tProjection.tPolarStereo.dScaleFactor = 1.0;
+    out_info->tProjection.tPolarStereo.dFalseEasting = 0.0;
+    out_info->tProjection.tPolarStereo.dFalseNorthing = 0.0;
+    plJsonObject *projection_obj = pl_json_member(root, "projection");
+    bool legacy_projected_origin = projection_obj == NULL;
+    if (out_legacy_projected_origin)
+        *out_legacy_projected_origin = legacy_projected_origin;
+    if (projection_obj) {
+        char projection_type[64] = {0};
+        pl_json_string_member(projection_obj, "type", projection_type, sizeof(projection_type));
+        if (projection_type[0] && strcmp(projection_type, "polar_stereographic") != 0) {
+            DC_LOG_ERROR("Planet", "Unsupported planet projection '%s' in %s", projection_type, json_path);
+            pl_unload_json(&root);
+            free(json_str);
+            return false;
+        }
+        out_info->tProjection.tPolarStereo.dLatitudeOfOrigin =
+            pl_json_double_member(projection_obj, "latitude_of_origin", out_info->tProjection.tPolarStereo.dLatitudeOfOrigin);
+        out_info->tProjection.tPolarStereo.dLongitudeOfOrigin =
+            pl_json_double_member(projection_obj, "longitude_of_origin", out_info->tProjection.tPolarStereo.dLongitudeOfOrigin);
+        out_info->tProjection.tPolarStereo.dScaleFactor =
+            pl_json_double_member(projection_obj, "scale_factor", out_info->tProjection.tPolarStereo.dScaleFactor);
+        out_info->tProjection.tPolarStereo.dFalseEasting =
+            pl_json_double_member(projection_obj, "false_easting", out_info->tProjection.tPolarStereo.dFalseEasting);
+        out_info->tProjection.tPolarStereo.dFalseNorthing =
+            pl_json_double_member(projection_obj, "false_northing", out_info->tProjection.tPolarStereo.dFalseNorthing);
+    }
+    if (fabs(out_info->tProjection.tPolarStereo.dLatitudeOfOrigin) < 45.0 ||
+        out_info->tProjection.tPolarStereo.dScaleFactor <= 0.0) {
+        DC_LOG_ERROR("Planet", "Invalid polar stereographic projection in %s", json_path);
+        pl_unload_json(&root);
+        free(json_str);
+        return false;
+    }
     out_info->tGeodeticModel.tDatum = PL_DATUM_SPHERE;
     out_info->tGeodeticModel.sphere.dRadius = radius;
     out_info->dMetersPerPixel = meters_per_pixel;
@@ -451,6 +501,16 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
     out_info->uTileCount = tile_count;
     out_info->uHorizontalTiles = (uint32_t)cols;
     out_info->uVerticalTiles = (uint32_t)rows;
+
+    // uses the same processed planet json format as xml planets.
+    DcGeoCrsGeodetic geodetic_crs = dc_geo_create_crs_geodetic(radius);
+    DcGeoCrsPolarStereo polar_crs = dc_geo_create_crs_polar_stereographic(
+        radius,
+        out_info->tProjection.tPolarStereo.dLatitudeOfOrigin,
+        out_info->tProjection.tPolarStereo.dLongitudeOfOrigin);
+    polar_crs.scale_factor = out_info->tProjection.tPolarStereo.dScaleFactor;
+    polar_crs.false_easting = out_info->tProjection.tPolarStereo.dFalseEasting;
+    polar_crs.false_northing = out_info->tProjection.tPolarStereo.dFalseNorthing;
     if ((size_t)tile_count > ((size_t)-1) / sizeof(plPlanetProcessTileInfo)) {
         DC_LOG_ERROR("Planet", "Planet data has too many tiles: %s", json_path);
         pl_unload_json(&root);
@@ -485,6 +545,8 @@ static bool _planet_load_process_info(const char *json_path, double *out_radius,
             };
             plVec2d polar_out;
             dc_geo_geodetic_to_polar_stereo_d(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
+            if (legacy_projected_origin)
+                polar_out.y = -polar_out.y;
             tile->dOriginX = polar_out.x;
             tile->dOriginY = polar_out.y;
         }

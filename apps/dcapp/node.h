@@ -543,6 +543,7 @@ typedef struct __PlanetDef {
     DcGeoCrsGeodetic geodetic_crs;
     DcGeoCrsCartesian cartesian_crs;
     DcGeoCrsPolarStereo polar_crs;
+    bool legacy_projected_origin;
 
     // texture overlays
     _PlanetTextureEntry *sb_textures; // stretchy buffer

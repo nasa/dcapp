@@ -662,6 +662,13 @@ static bool _load_planet_data(AppData *app) {
         free(json_text);
         return false;
     }
+    uint64_t expected_tile_count = (uint64_t)cols * (uint64_t)rows;
+    if (expected_tile_count > UINT32_MAX || tile_count != (uint32_t)expected_tile_count) {
+        fprintf(stderr, "Error: planet tile count mismatch: cols=%d rows=%d tiles=%u\n", cols, rows, tile_count);
+        pl_unload_json(&json_root);
+        free(json_text);
+        return false;
+    }
 
     // Fill the extension's process-info block from the chunk metadata.
     plPlanetProcessInfo *info = &app->process_info;
@@ -670,6 +677,37 @@ static bool _load_planet_data(AppData *app) {
     info->tProjection.tPolarStereo.dLatitudeOfOrigin = -90.0;
     info->tProjection.tPolarStereo.dLongitudeOfOrigin = 0.0;
     info->tProjection.tPolarStereo.dScaleFactor = 1.0;
+    info->tProjection.tPolarStereo.dFalseEasting = 0.0;
+    info->tProjection.tPolarStereo.dFalseNorthing = 0.0;
+    plJsonObject *projection_obj = pl_json_member(root, "projection");
+    bool legacy_projected_origin = projection_obj == NULL;
+    if (projection_obj) {
+        char projection_type[64] = {0};
+        pl_json_string_member(projection_obj, "type", projection_type, sizeof(projection_type));
+        if (projection_type[0] && strcmp(projection_type, "polar_stereographic") != 0) {
+            fprintf(stderr, "Error: unsupported planet projection '%s'\n", projection_type);
+            pl_unload_json(&json_root);
+            free(json_text);
+            return false;
+        }
+        info->tProjection.tPolarStereo.dLatitudeOfOrigin =
+            pl_json_double_member(projection_obj, "latitude_of_origin", info->tProjection.tPolarStereo.dLatitudeOfOrigin);
+        info->tProjection.tPolarStereo.dLongitudeOfOrigin =
+            pl_json_double_member(projection_obj, "longitude_of_origin", info->tProjection.tPolarStereo.dLongitudeOfOrigin);
+        info->tProjection.tPolarStereo.dScaleFactor =
+            pl_json_double_member(projection_obj, "scale_factor", info->tProjection.tPolarStereo.dScaleFactor);
+        info->tProjection.tPolarStereo.dFalseEasting =
+            pl_json_double_member(projection_obj, "false_easting", info->tProjection.tPolarStereo.dFalseEasting);
+        info->tProjection.tPolarStereo.dFalseNorthing =
+            pl_json_double_member(projection_obj, "false_northing", info->tProjection.tPolarStereo.dFalseNorthing);
+    }
+    if (fabs(info->tProjection.tPolarStereo.dLatitudeOfOrigin) < 45.0 ||
+        info->tProjection.tPolarStereo.dScaleFactor <= 0.0) {
+        fprintf(stderr, "Error: invalid polar stereographic projection in planet data\n");
+        pl_unload_json(&json_root);
+        free(json_text);
+        return false;
+    }
     info->tGeodeticModel.tDatum = PL_DATUM_SPHERE;
     info->tGeodeticModel.sphere.dRadius = radius;
     info->dMetersPerPixel = meters_per_pixel;
@@ -701,10 +739,18 @@ static bool _load_planet_data(AppData *app) {
             double lat = pl_json_double_member(tile_obj, "lat", 0.0);
             double lon = pl_json_double_member(tile_obj, "lon", 0.0);
             DcGeoCrsGeodetic geodetic_crs = dc_geo_create_crs_geodetic(radius);
-            DcGeoCrsPolarStereo polar_crs = dc_geo_create_crs_polar_stereographic(radius, -90.0, 0.0);
+            DcGeoCrsPolarStereo polar_crs = dc_geo_create_crs_polar_stereographic(
+                radius,
+                info->tProjection.tPolarStereo.dLatitudeOfOrigin,
+                info->tProjection.tPolarStereo.dLongitudeOfOrigin);
+            polar_crs.scale_factor = info->tProjection.tPolarStereo.dScaleFactor;
+            polar_crs.false_easting = info->tProjection.tPolarStereo.dFalseEasting;
+            polar_crs.false_northing = info->tProjection.tPolarStereo.dFalseNorthing;
             plVec3 geodetic_in = {(float)lat, (float)lon, 0.0f};
             plVec2 polar_out;
             dc_geo_geodetic_to_polar_stereo(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
+            if (legacy_projected_origin)
+                polar_out.y = -polar_out.y;
             tile->dOriginX = (double)polar_out.x;
             tile->dOriginY = (double)polar_out.y;
         }

@@ -22,7 +22,10 @@ DcGeoCrsPolarStereo dc_geo_create_crs_polar_stereographic(double planet_radius, 
     return (DcGeoCrsPolarStereo){
         .planet_radius = planet_radius,
         .lat_origin = lat_origin,
-        .lon_origin = lon_origin
+        .lon_origin = lon_origin,
+        .scale_factor = 1.0,
+        .false_easting = 0.0,
+        .false_northing = 0.0
     };
 }
 
@@ -94,50 +97,64 @@ void dc_geo_cartesian_to_geodetic_d(const DcGeoCrsCartesian *from, const DcGeoCr
 }
 
 void dc_geo_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const DcGeoCrsPolarStereo *to, const plVec3 *in, plVec2 *out, size_t count) {
-    (void)to;
     double planet_radius = from->planet_radius;
+    double scale_factor = to->scale_factor > 0.0 ? to->scale_factor : 1.0;
+    double lat_origin = to->lat_origin > 0.0 ? 90.0 : -90.0;
     for (size_t i = 0; i < count; i++) {
         float lat_rad = in[i].x * (float)M_PI / 180.0f;
-        float lon_rad = in[i].y * (float)M_PI / 180.0f;
-        float rho = 2.0f * (float)planet_radius * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
-        out[i].x = rho * sinf(lon_rad);
-        out[i].y = -rho * cosf(lon_rad);
+        float lon_rad = (in[i].y - (float)to->lon_origin) * (float)M_PI / 180.0f;
+        float rho = lat_origin > 0.0
+            ? 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f - 0.5f * lat_rad)
+            : 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
+        out[i].x = (float)to->false_easting + rho * sinf(lon_rad);
+        out[i].y = (float)to->false_northing + (lat_origin > 0.0 ? -rho : rho) * cosf(lon_rad);
     }
 }
 
 void dc_geo_geodetic_to_polar_stereo_d(const DcGeoCrsGeodetic *from, const DcGeoCrsPolarStereo *to, const plVec3d *in, plVec2d *out, size_t count) {
-    (void)to;
     double planet_radius = from->planet_radius;
+    double scale_factor = to->scale_factor > 0.0 ? to->scale_factor : 1.0;
+    double lat_origin = to->lat_origin > 0.0 ? 90.0 : -90.0;
     for (size_t i = 0; i < count; i++) {
         double lat_rad = in[i].x * M_PI / 180.0;
-        double lon_rad = in[i].y * M_PI / 180.0;
-        double rho = 2.0 * planet_radius * tan(M_PI / 4.0 + 0.5 * lat_rad);
-        out[i].x = rho * sin(lon_rad);
-        out[i].y = -rho * cos(lon_rad);
+        double lon_rad = (in[i].y - to->lon_origin) * M_PI / 180.0;
+        double rho = lat_origin > 0.0
+            ? 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 - 0.5 * lat_rad)
+            : 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 + 0.5 * lat_rad);
+        out[i].x = to->false_easting + rho * sin(lon_rad);
+        out[i].y = to->false_northing + (lat_origin > 0.0 ? -rho : rho) * cos(lon_rad);
     }
 }
 
 void dc_geo_user_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const DcGeoCrsPolarStereo *to, const plVec3 *in, plVec2 *out, size_t count) {
-    (void)to;
     double planet_radius = from->planet_radius;
+    double scale_factor = to->scale_factor > 0.0 ? to->scale_factor : 1.0;
+    double lat_origin = to->lat_origin > 0.0 ? 90.0 : -90.0;
     for (size_t i = 0; i < count; i++) {
         float lat_rad = in[i].x * (float)M_PI / 180.0f;
-        float lon_rad = (180.0f - in[i].y) * (float)M_PI / 180.0f;
-        float rho = 2.0f * (float)planet_radius * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
-        out[i].x = rho * sinf(lon_rad);
-        out[i].y = -rho * cosf(lon_rad);
+        float lon_deg = 180.0f - in[i].y;
+        float lon_rad = (lon_deg - (float)to->lon_origin) * (float)M_PI / 180.0f;
+        float rho = lat_origin > 0.0
+            ? 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f - 0.5f * lat_rad)
+            : 2.0f * (float)planet_radius * (float)scale_factor * tanf((float)M_PI / 4.0f + 0.5f * lat_rad);
+        out[i].x = (float)to->false_easting + rho * sinf(lon_rad);
+        out[i].y = (float)to->false_northing + (lat_origin > 0.0 ? -rho : rho) * cosf(lon_rad);
     }
 }
 
 void dc_geo_user_geodetic_to_polar_stereo_d(const DcGeoCrsGeodetic *from, const DcGeoCrsPolarStereo *to, const plVec3d *in, plVec2d *out, size_t count) {
-    (void)to;
     double planet_radius = from->planet_radius;
+    double scale_factor = to->scale_factor > 0.0 ? to->scale_factor : 1.0;
+    double lat_origin = to->lat_origin > 0.0 ? 90.0 : -90.0;
     for (size_t i = 0; i < count; i++) {
         double lat_rad = in[i].x * M_PI / 180.0;
-        double lon_rad = (180.0 - in[i].y) * M_PI / 180.0;
-        double rho = 2.0 * planet_radius * tan(M_PI / 4.0 + 0.5 * lat_rad);
-        out[i].x = rho * sin(lon_rad);
-        out[i].y = -rho * cos(lon_rad);
+        double lon_deg = 180.0 - in[i].y;
+        double lon_rad = (lon_deg - to->lon_origin) * M_PI / 180.0;
+        double rho = lat_origin > 0.0
+            ? 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 - 0.5 * lat_rad)
+            : 2.0 * planet_radius * scale_factor * tan(M_PI / 4.0 + 0.5 * lat_rad);
+        out[i].x = to->false_easting + rho * sin(lon_rad);
+        out[i].y = to->false_northing + (lat_origin > 0.0 ? -rho : rho) * cos(lon_rad);
     }
 }
 

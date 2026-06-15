@@ -19,6 +19,9 @@ typedef struct {
     double planet_radius;
     double lat_origin;
     double lon_origin;
+    double scale_factor;
+    double false_easting;
+    double false_northing;
 } DcGeoCrsPolarStereo;
 
 #ifdef __cplusplus

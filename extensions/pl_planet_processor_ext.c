@@ -105,6 +105,7 @@ typedef struct _plPlanetHeightMap
     double                  dMaxHeight;
     double                  dMinHeight;
     double                  dRadius;
+    plProjectionParams      tProjection;
     plVec3d                 tCenter;
     plPlanetMapElement*     atElements;
     const char*             pcOutputFile;
@@ -314,6 +315,7 @@ pl_planet_process(plPlanetProcessInfo* ptInfo)
             .dMaxHeight      = ptInfo->atTiles[i].dMaxHeight,
             .dMinHeight      = ptInfo->atTiles[i].dMinHeight,
             .dRadius         = ptInfo->tGeodeticModel.sphere.dRadius,
+            .tProjection     = ptInfo->tProjection,
             .tCenter         = {0},
             .uRequestedSize  = ptInfo->uSize,
             .pcOutputFile    = ptInfo->atTiles[i].acOutputFile
@@ -1210,8 +1212,8 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
         plPlanetMapElement* e2 = &(ptHeightMap->atElements[t.uLeft]);
 
         atIndexData[uCurrentIndex + 0] = e0->uVertexBufferIndex;
-        atIndexData[uCurrentIndex + 1] = e2->uVertexBufferIndex;
-        atIndexData[uCurrentIndex + 2] = e1->uVertexBufferIndex;
+        atIndexData[uCurrentIndex + 1] = e1->uVertexBufferIndex;
+        atIndexData[uCurrentIndex + 2] = e2->uVertexBufferIndex;
         uCurrentIndex += 3;
     }
 
@@ -1259,11 +1261,13 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
 static plVec3d
 pl__get_cartesian_unmod(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
 {
-    const double R   = ptHeightMap->dRadius;
-    const double lon0 = 0.0;        // radians, from SRS (central_meridian)
-    const double k0   = 1.0;          // from SRS (scale_factor), often 1.0f
-    const double FE   = ptHeightMap->tCenter.x;    // false easting (meters)
-    const double FN   = ptHeightMap->tCenter.z;    // false northing (meters)
+    const plPolarStereoParams* ps = &ptHeightMap->tProjection.tPolarStereo;
+    const double R    = ptHeightMap->dRadius;
+    const double lon0 = pl_radiansd(ps->dLongitudeOfOrigin);
+    const double k0   = ps->dScaleFactor > 0.0 ? ps->dScaleFactor : 1.0;
+    const double FE   = ps->dFalseEasting;
+    const double FN   = ps->dFalseNorthing;
+    const bool bNorth = ps->dLatitudeOfOrigin > 0.0;
 
     // 1) Pixel center coordinates in image space (origin at center of raster)
     const double N      = (double)ptHeightMap->iSize;
@@ -1276,25 +1280,24 @@ pl__get_cartesian_unmod(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptEl
     // If your image rows increase downward, flip to get northing-positive-up:
     const double y_img_northing = -z_img; // now +Y points toward geographic north
 
-    // 2) Add false easting/northing (dataset offsets)
-    const double x = x_img + FE;           // easting (meters)
-    const double y = y_img_northing + FN;  // northing (meters)
+    // 2) Add tile center to get projected coordinates, then remove false origin.
+    const double x = x_img + ptHeightMap->tCenter.x - FE;
+    const double y = y_img_northing + ptHeightMap->tCenter.z - FN;
 
-    // 3) Inverse South Polar Stereographic (sphere)
+    // 3) Inverse polar stereographic (sphere)
     // rho distance and angular distance
     const double rho = hypot(x, y);
     const double c   = 2.0 * atan( rho / (2.0 * R * k0) );
 
     // Latitude (phi) and Longitude (lambda)
     double phi;
-    if (rho == 0.0f) // exactly at south pole
-        phi = (double)-PL_PI_2;
-    else // For south pole φ0 = -π/2: φ = -π/2 + c
-        phi = (double)-PL_PI_2 + c;
+    if (rho == 0.0)
+        phi = bNorth ? (double)PL_PI_2 : (double)-PL_PI_2;
+    else
+        phi = bNorth ? (double)PL_PI_2 - c : (double)-PL_PI_2 + c;
 
-    // Longitude: λ = λ0 + atan2(x, -y)
-    // (minus on y is important for south polar stereographic)
-    double lam = lon0 + atan2(x, -y);
+    // Longitude: north uses y toward 0 deg from above, south from below.
+    double lam = lon0 + atan2(x, bNorth ? -y : y);
 
     // Optionally normalize lam to [-π, π]
     if (lam > (double)PL_PI)  lam -= 2.0 * (double)PL_PI;
@@ -1366,11 +1369,13 @@ pl__get_cartesian(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
     //
     // IMPORTANT: Confirm these from gdalinfo. Typical: lon0=0, k0=1, FE=0, FN=0.
 
-    const double R   = ptHeightMap->dRadius;
-    const double lon0 = 0.0;        // radians, from SRS (central_meridian)
-    const double k0   = 1.0;          // from SRS (scale_factor), often 1.0f
-    const double FE   = ptHeightMap->tCenter.x;    // false easting (meters)
-    const double FN   = ptHeightMap->tCenter.z;    // false northing (meters)
+    const plPolarStereoParams* ps = &ptHeightMap->tProjection.tPolarStereo;
+    const double R    = ptHeightMap->dRadius;
+    const double lon0 = pl_radiansd(ps->dLongitudeOfOrigin);
+    const double k0   = ps->dScaleFactor > 0.0 ? ps->dScaleFactor : 1.0;
+    const double FE   = ps->dFalseEasting;
+    const double FN   = ps->dFalseNorthing;
+    const bool bNorth = ps->dLatitudeOfOrigin > 0.0;
 
     // 1) Pixel center coordinates in image space (origin at center of raster)
     const double N      = (double)ptHeightMap->iSize;
@@ -1383,25 +1388,24 @@ pl__get_cartesian(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
     // If your image rows increase downward, flip to get northing-positive-up:
     const double y_img_northing = -z_img; // now +Y points toward geographic north
 
-    // 2) Add false easting/northing (dataset offsets)
-    const double x = x_img + FE;           // easting (meters)
-    const double y = y_img_northing + FN;  // northing (meters)
+    // 2) Add tile center to get projected coordinates, then remove false origin.
+    const double x = x_img + ptHeightMap->tCenter.x - FE;
+    const double y = y_img_northing + ptHeightMap->tCenter.z - FN;
 
-    // 3) Inverse South Polar Stereographic (sphere)
+    // 3) Inverse polar stereographic (sphere)
     // rho distance and angular distance
     const double rho = hypot(x, y);
     const double c   = 2.0 * atan( rho / (2.0 * R * k0) );
 
     // Latitude (phi) and Longitude (lambda)
     double phi;
-    if (rho == 0.0) // exactly at south pole
-        phi = (double)-PL_PI_2;
-    else // For south pole φ0 = -π/2: φ = -π/2 + c
-        phi = (double)-PL_PI_2 + c;
+    if (rho == 0.0)
+        phi = bNorth ? (double)PL_PI_2 : (double)-PL_PI_2;
+    else
+        phi = bNorth ? (double)PL_PI_2 - c : (double)-PL_PI_2 + c;
 
-    // Longitude: λ = λ0 + atan2(x, -y)
-    // (minus on y is important for south polar stereographic)
-    double lam = lon0 + atan2(x, -y);
+    // Longitude: north uses y toward 0 deg from above, south from below.
+    double lam = lon0 + atan2(x, bNorth ? -y : y);
 
     // Optionally normalize lam to [-π, π]
     if (lam >  (double)PL_PI) lam -= 2.0 * (double)PL_PI;
@@ -1476,7 +1480,7 @@ pl__get_normal(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
     plVec3d tX = pl_sub_vec3_d(pR, pL);
     plVec3d tZ = pl_sub_vec3_d(pU, pD);
 
-    plVec3d n = pl_cross_vec3_d(tZ, tX);   // swap order if flipped
+    plVec3d n = pl_cross_vec3_d(tX, tZ);
     n = pl_norm_vec3_d(n);
 
     return pl__encode(n);
@@ -1634,4 +1638,3 @@ pl_unload_ext(plApiRegistryI* ptApiRegistry, bool bReload)
 
 #define PL_MEMORY_IMPLEMENTATION
 #include "pl_memory.h"
-

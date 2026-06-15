@@ -14,6 +14,7 @@ struct _DcAppPlanet {
     DcGeoCrsGeodetic geodetic_crs;
     DcGeoCrsCartesian cartesian_crs;
     DcGeoCrsPolarStereo polar_crs;
+    bool legacy_projected_origin;
     uint8_t index;
 };
 

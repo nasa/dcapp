@@ -864,6 +864,8 @@ static bool _build_planet_texture(_AppData *app_data, _PlanetDef *def, _PlanetTe
         plVec2d polar_out;
         dc_geo_cartesian_to_geodetic_d(&def->cartesian_crs, &def->geodetic_crs, &cartesian_in, &geodetic_out, 1);
         dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_out, &polar_out, 1);
+        if (def->legacy_projected_origin)
+            polar_out.y = -polar_out.y;
         out->dOriginX = polar_out.x;
         out->dOriginY = polar_out.y;
     } else if (entry->lle.lat != DC_APP_VAL_INDEX_UNDEFINED &&
@@ -875,6 +877,8 @@ static bool _build_planet_texture(_AppData *app_data, _PlanetDef *def, _PlanetTe
         };
         plVec2d polar_out;
         dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_in, &polar_out, 1);
+        if (def->legacy_projected_origin)
+            polar_out.y = -polar_out.y;
         out->dOriginX = polar_out.x;
         out->dOriginY = polar_out.y;
     } else {
@@ -920,6 +924,7 @@ static void _init_planets(_AppData *app_data) {
         def->geodetic_crs = def->handle->geodetic_crs;
         def->cartesian_crs = def->handle->cartesian_crs;
         def->polar_crs = def->handle->polar_crs;
+        def->legacy_projected_origin = def->handle->legacy_projected_origin;
         def->index = def->handle->index;
 
         plPlanet *planet = dc_app_planet_pl(def->handle);

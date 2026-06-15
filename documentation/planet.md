@@ -37,7 +37,7 @@ This downloads the DEM and writes generated chunks directly under `data/`.
 
 ### The `dcapp-planet-chunkgen` Tool
 
-The `dcapp-planet-chunkgen` command preprocesses a DEM into the chunked tile format that dcapp's planet renderer expects. It reads the raster with GDAL, slices it into square tiles, normalizes elevations to 16-bit PNGs, and then processes each tile into a `.chu` chunk file with a CDLOD quadtree mesh.
+The `dcapp-planet-chunkgen` command preprocesses a DEM into the chunked tile format that dcapp's planet renderer expects. It reads the raster with GDAL, slices it into square tiles, normalizes elevations to 16-bit PNGs, and then processes each tile into a `.chu` chunk file with a CDLOD quadtree mesh. Rectangular DEM extents are supported as rectangular grids of square tiles; partial edge tiles are padded to the full tile size before processing.
 
 **Usage:**
 
@@ -70,10 +70,12 @@ bin/dcapp-planet-chunkgen.sh /path/to/LDEM_45S_100M.LBL /path/to/output_dir
 
 The tool produces:
 
-1. **`<prefix>.planet.json`** -- A metadata file recording the planet radius, meters per pixel, tile grid dimensions, elevation range, tree depth, and the list of tile files with their projected `originX`/`originY` center positions.
+1. **`<prefix>.planet.json`** -- A metadata file recording the planet radius, meters per pixel, tile grid dimensions, elevation range, tree depth, projection parameters, and the list of tile files with their projected `originX`/`originY` center positions.
 2. **`<prefix>_<col>_<row>.chu`** -- One chunk file per tile, containing the CDLOD quadtree mesh data.
 
 The `.planet.json` file is what you reference from the `<PlanetData>` element in your XML.
+
+Chunk generation supports north- and south-polar stereographic/UPS-style DEMs with non-rotated, square-pixel geotransforms. The generated metadata stores latitude of origin, central meridian, scale factor, false easting, and false northing so the baked terrain and runtime texture placement use the same projected-meter convention. GDAL band scale metadata is applied to terrain heights. Rotated/skewed geotransforms, arbitrary CRS reprojection, and ellipsoid/geoid terrain baking are intentionally rejected or deferred.
 
 ---
 
@@ -236,7 +238,7 @@ Overlays an image onto the planet surface at a specific geographic location. Mus
 | `OriginX`, `OriginY` | double/variable | Optional override | Texture center in projected terrain meters. If both are set, they override `Latitude`/`Longitude` and `X`/`Y`/`Z`. Both attributes must be provided together. |
 | `FireRefresh` | integer/variable | No | Edge-triggered texture reload. When this value changes (e.g., incremented by a button), the texture path, scale, and position are re-read. Useful for dynamically updating the overlay image at runtime. |
 
-`MetersPerPixel` must be greater than zero. Runtime texture placement uses the same south-pole stereographic projected-meter convention as the generated `.planet.json` tile origins. XML `Latitude`/`Longitude` use the same user-facing longitude convention as cameras and overlays; dcapp converts that to terrain projection longitude before calling the planet extension. New chunk metadata uses `originX`/`originY`; older metadata with per-tile `lat`/`lon` is still accepted and converted at load time.
+`MetersPerPixel` must be greater than zero. Runtime texture placement uses the same polar stereographic projected-meter convention as the generated `.planet.json` tile origins. XML `Latitude`/`Longitude` use the same user-facing longitude convention as cameras and overlays; dcapp converts that to terrain projection longitude before calling the planet extension. New chunk metadata uses `originX`/`originY`; older metadata with per-tile `lat`/`lon` is still accepted and converted at load time.
 
 ### `<PlanetShader>`
 

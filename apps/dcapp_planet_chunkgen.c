@@ -11,6 +11,7 @@
 /*
 Index of this file:
 // [SECTION] includes
+// [SECTION] structs
 // [SECTION] forward declarations
 // [SECTION] extension globals
 // [SECTION] pl_app_load
@@ -39,18 +40,37 @@ Index of this file:
 #include "../src/utils/file.h"
 #include "pl_planet_processor_ext.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #define PL_JSON_IMPLEMENTATION
 #include "pl_json.h"
+
+//-----------------------------------------------------------------------------
+// [SECTION] structs
+//-----------------------------------------------------------------------------
+
+typedef struct _DcPlanetDemInfo {
+    uint32_t width;
+    uint32_t height;
+    double gt_m[6];
+    double pixel_scale;
+    double radius;
+    double band_scale;
+    plProjectionParams projection;
+} DcPlanetDemInfo;
 
 //-----------------------------------------------------------------------------
 // [SECTION] forward declarations
 //-----------------------------------------------------------------------------
 
-static bool  _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y, double *out_radius, double *band_scale, double *band_offset);
+static bool  _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info);
 static bool  _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *max_val);
-static bool  _run_gdal_translate(const char *input, const char *output, uint32_t src_x, uint32_t src_y, uint32_t w, uint32_t h, double min_h, double max_h);
+static bool  _write_height_tile(const char *input, const char *output, uint32_t src_x, uint32_t src_y, uint32_t w, uint32_t h, uint32_t tile_size, double min_h, double max_h);
 static void  _show_help(void);
 static char *_get_stem(const char *path, char *buf, size_t buf_size);
+static void  _pixel_to_projected_meters(const DcPlanetDemInfo *info, double pixel_x, double pixel_y, double *out_x, double *out_y);
 
 //-----------------------------------------------------------------------------
 // [SECTION] extension globals
@@ -173,20 +193,16 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     printf("========================================\n");
     printf("Input: %s\n", input_dem);
 
-    uint32_t raster_w = 0, raster_h = 0;
-    double   pixel_scale = 0.0, origin_x = 0.0, origin_y = 0.0;
-
-    double dem_radius = 0.0;
-    double band_scale = 1.0, band_offset = 0.0;
-    if (!_parse_gdalinfo(input_dem, &raster_w, &raster_h, &pixel_scale, &origin_x, &origin_y, &dem_radius, &band_scale, &band_offset)) {
+    DcPlanetDemInfo dem_info = {0};
+    if (!_parse_gdalinfo(input_dem, &dem_info)) {
         io->bRunning = false;
         return NULL;
     }
 
     // use DEM radius if not overridden
     if (radius <= 0.0) {
-        if (dem_radius > 0.0) {
-            radius = dem_radius;
+        if (dem_info.radius > 0.0) {
+            radius = dem_info.radius;
             printf("Auto-detected radius: %.1f m\n", radius);
         } else {
             fprintf(stderr, "Error: could not detect radius from DEM; use --radius\n");
@@ -195,17 +211,23 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         }
     }
 
-    printf("Raster size: %u x %u\n", raster_w, raster_h);
+    printf("Raster size: %u x %u\n", dem_info.width, dem_info.height);
     printf("Radius: %.1f m\n", radius);
-    printf("Pixel scale: %.6f m\n", pixel_scale);
-    printf("Origin: (%.6f, %.6f) m\n", origin_x, origin_y);
-    if (band_scale != 1.0 || band_offset != 0.0)
-        printf("DEM band scale: %.6f  offset: %.6f\n", band_scale, band_offset);
+    printf("Pixel scale: %.6f m\n", dem_info.pixel_scale);
+    printf("Projection: %s lat0=%.3f lon0=%.3f k0=%.8f false=(%.3f, %.3f)\n",
+           "polar_stereographic",
+           dem_info.projection.tPolarStereo.dLatitudeOfOrigin,
+           dem_info.projection.tPolarStereo.dLongitudeOfOrigin,
+           dem_info.projection.tPolarStereo.dScaleFactor,
+           dem_info.projection.tPolarStereo.dFalseEasting,
+           dem_info.projection.tPolarStereo.dFalseNorthing);
+    if (dem_info.band_scale != 1.0)
+        printf("DEM band scale: %.6f\n", dem_info.band_scale);
 
     // auto-detect meters per pixel from DEM pixel scale
     if (meters_per_pixel <= 0.0) {
-        if (pixel_scale > 0.0) {
-            meters_per_pixel = pixel_scale;
+        if (dem_info.pixel_scale > 0.0) {
+            meters_per_pixel = dem_info.pixel_scale;
             printf("Auto-detected meters/pixel: %.6f\n", meters_per_pixel);
         } else {
             fprintf(stderr, "Error: could not detect pixel scale; use --meters-per-pixel\n");
@@ -223,12 +245,11 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
             return NULL;
         }
         // GDALComputeRasterStatistics returns raw pixel values;
-        // apply scale to convert to meters (offset is typically the
-        // reference radius for planetary DEMs, handled separately via fRadius)
+        // apply GDAL's band scale to convert to terrain meters.
         if (isnan(min_height))
-            min_height = detected_min * band_scale;
+            min_height = detected_min * dem_info.band_scale;
         if (isnan(max_height))
-            max_height = detected_max * band_scale;
+            max_height = detected_max * dem_info.band_scale;
     }
 
     printf("Elevation range: %.2f to %.2f m\n", min_height, max_height);
@@ -240,9 +261,15 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
 
     //---- compute tile grid ----
 
-    uint32_t cols       = (raster_w + tile_size - 1) / tile_size;
-    uint32_t rows       = (raster_h + tile_size - 1) / tile_size;
-    uint32_t tile_count = cols * rows;
+    uint32_t cols = (dem_info.width + tile_size - 1) / tile_size;
+    uint32_t rows = (dem_info.height + tile_size - 1) / tile_size;
+    uint64_t tile_count64 = (uint64_t)cols * (uint64_t)rows;
+    if (tile_count64 == 0 || tile_count64 > UINT32_MAX) {
+        fprintf(stderr, "Error: tile grid is too large: %u x %u\n", cols, rows);
+        io->bRunning = false;
+        return NULL;
+    }
+    uint32_t tile_count = (uint32_t)tile_count64;
 
     printf("Tile size: %u px\n", tile_size);
     printf("Grid: %u x %u (%u tiles)\n", cols, rows, tile_count);
@@ -264,16 +291,7 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     }
 
     plPlanetProcessInfo planet_info = {
-        .tProjection= {
-            .tType = PL_PROJECTION_POLAR_STEREOGRAPHIC,
-            .tPolarStereo = {
-                .dLatitudeOfOrigin = -90.0,
-                .dLongitudeOfOrigin = 0.0,
-                .dScaleFactor = 1.0,
-                .dFalseEasting = 0.0,
-                .dFalseNorthing = 0.0
-            }
-        },
+        .tProjection = dem_info.projection,
         .tGeodeticModel = {
             .tDatum = PL_DATUM_SPHERE,
             .sphere = {
@@ -297,11 +315,15 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
             tiles[idx].dMinHeight    = min_height;
             tiles[idx].dMaxBaseError = (double)max_base_error;
 
-            double tile_center_x = origin_x + ((double)col * tile_size + tile_size * 0.5) * pixel_scale;
-            double tile_center_y = origin_y + ((double)row * tile_size + tile_size * 0.5) * pixel_scale;
+            double tile_center_x = 0.0;
+            double tile_center_y = 0.0;
+            _pixel_to_projected_meters(&dem_info,
+                                       (double)col * tile_size + (double)tile_size * 0.5,
+                                       (double)row * tile_size + (double)tile_size * 0.5,
+                                       &tile_center_x, &tile_center_y);
 
             tiles[idx].dOriginX = tile_center_x;
-            tiles[idx].dOriginY = -tile_center_y;
+            tiles[idx].dOriginY = tile_center_y;
 
             // file paths (real filesystem paths)
             snprintf(tiles[idx].acHeightMapFile, 256, "%s/%s_%u_%u.png", output_dir, prefix, col, row);
@@ -327,6 +349,13 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
     pl_json_add_double_member(root, "max_height", max_height);
     pl_json_add_int_member(root, "tree_depth", tree_depth);
     pl_json_add_float_member(root, "max_base_error", max_base_error);
+    plJsonObject *projection_obj = pl_json_add_member(root, "projection");
+    pl_json_add_string_member(projection_obj, "type", "polar_stereographic");
+    pl_json_add_double_member(projection_obj, "latitude_of_origin", dem_info.projection.tPolarStereo.dLatitudeOfOrigin);
+    pl_json_add_double_member(projection_obj, "longitude_of_origin", dem_info.projection.tPolarStereo.dLongitudeOfOrigin);
+    pl_json_add_double_member(projection_obj, "scale_factor", dem_info.projection.tPolarStereo.dScaleFactor);
+    pl_json_add_double_member(projection_obj, "false_easting", dem_info.projection.tPolarStereo.dFalseEasting);
+    pl_json_add_double_member(projection_obj, "false_northing", dem_info.projection.tPolarStereo.dFalseNorthing);
     plJsonObject *tile_array = pl_json_add_member_array(root, "tiles", tile_count);
     for (uint32_t i = 0; i < tile_count; i++) {
         plJsonObject *tile_obj = pl_json_member_by_index(tile_array, i);
@@ -356,14 +385,18 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         printf("Metadata: %s\n", meta_path);
     } else {
         fprintf(stderr, "Error: could not write metadata: %s\n", meta_path);
+        free(json_buf);
+        free(tiles);
+        io->bRunning = false;
+        return NULL;
     }
     free(json_buf);
 
     //---- tile DEM with GDAL ----
 
     // convert meter heights back to raw DEM values for -scale
-    double raw_min_h = min_height / band_scale;
-    double raw_max_h = max_height / band_scale;
+    double raw_min_h = min_height / dem_info.band_scale;
+    double raw_max_h = max_height / dem_info.band_scale;
 
     printf("\n[Step 2/%d] Tiling DEM into %u PNGs...\n", 3, tile_count);
 
@@ -374,23 +407,26 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, void *app_data) {
         uint32_t sy  = row * tile_size;
         uint32_t w   = tile_size;
         uint32_t h   = tile_size;
-        if (sx + w > raster_w)
-            w = raster_w - sx;
-        if (sy + h > raster_h)
-            h = raster_h - sy;
+        if (sx + w > dem_info.width)
+            w = dem_info.width - sx;
+        if (sy + h > dem_info.height)
+            h = dem_info.height - sy;
 
         char tile_path[2048];
         snprintf(tile_path, sizeof(tile_path), "%s/%s_%u_%u.png", output_dir, prefix, col, row);
 
         printf("  [%u/%u] %s_%u_%u.png\n", t + 1, tile_count, prefix, col, row);
 
-        if (!_run_gdal_translate(input_dem, tile_path, sx, sy, w, h, raw_min_h, raw_max_h)) {
+        if (!_write_height_tile(input_dem, tile_path, sx, sy, w, h, tile_size, raw_min_h, raw_max_h)) {
             io->bRunning = false;
             return NULL;
         }
     }
 
     //---- process chunks ----
+
+    for (uint32_t i = 0; i < tile_count; i++)
+        remove(tiles[i].acOutputFile);
 
     printf("\n[Step 3/%d] Processing chunks...\n", 3);
 
@@ -468,45 +504,147 @@ static char *_get_stem(const char *path, char *buf, size_t buf_size) {
 // [SECTION] GDAL helpers
 //-----------------------------------------------------------------------------
 
-static bool _parse_gdalinfo(const char *dem_path, uint32_t *width, uint32_t *height, double *pixel_scale, double *origin_x, double *origin_y, double *out_radius, double *band_scale, double *band_offset) {
+static bool _almost_zero(double v) {
+    return fabs(v) < 1.0e-12;
+}
+
+static void _pixel_to_projected_meters(const DcPlanetDemInfo *info, double pixel_x, double pixel_y, double *out_x, double *out_y) {
+    *out_x = info->gt_m[0] + pixel_x * info->gt_m[1] + pixel_y * info->gt_m[2];
+    *out_y = info->gt_m[3] + pixel_x * info->gt_m[4] + pixel_y * info->gt_m[5];
+}
+
+static bool _parse_gdalinfo(const char *dem_path, DcPlanetDemInfo *info) {
+    memset(info, 0, sizeof(*info));
+    info->band_scale = 1.0;
+    info->projection.tType = PL_PROJECTION_POLAR_STEREOGRAPHIC;
+    info->projection.tPolarStereo.dLatitudeOfOrigin = -90.0;
+    info->projection.tPolarStereo.dLongitudeOfOrigin = 0.0;
+    info->projection.tPolarStereo.dScaleFactor = 1.0;
+
     GDALDatasetH ds = GDALOpen(dem_path, GA_ReadOnly);
     if (!ds) {
         fprintf(stderr, "Error: GDALOpen failed for: %s\n", dem_path);
         return false;
     }
 
-    *width  = (uint32_t)GDALGetRasterXSize(ds);
-    *height = (uint32_t)GDALGetRasterYSize(ds);
+    info->width  = (uint32_t)GDALGetRasterXSize(ds);
+    info->height = (uint32_t)GDALGetRasterYSize(ds);
+    if (info->width == 0 || info->height == 0) {
+        fprintf(stderr, "Error: DEM has invalid raster size: %u x %u\n", info->width, info->height);
+        GDALClose(ds);
+        return false;
+    }
 
     // get linear unit conversion factor (to meters)
     double               to_meters = 1.0;
     OGRSpatialReferenceH srs       = GDALGetSpatialRef(ds);
-    if (srs) {
-        to_meters = OSRGetLinearUnits(srs, NULL);
-
-        OGRErr err;
-        double semi_major = OSRGetSemiMajor(srs, &err);
-        if (err == OGRERR_NONE && semi_major > 0.0)
-            *out_radius = semi_major;
+    if (!srs) {
+        fprintf(stderr, "Error: DEM is missing spatial reference metadata; use a projected polar stereographic DEM\n");
+        GDALClose(ds);
+        return false;
     }
+
+    to_meters = OSRGetLinearUnits(srs, NULL);
+
+    OGRErr err;
+    double semi_major = OSRGetSemiMajor(srs, &err);
+    if (err == OGRERR_NONE && semi_major > 0.0)
+        info->radius = semi_major;
+
+    const char *projection_name = OSRGetAttrValue(srs, "PROJECTION", 0);
+    if (!projection_name) {
+        fprintf(stderr, "Error: DEM spatial reference is not projected polar stereographic\n");
+        GDALClose(ds);
+        return false;
+    }
+    if (strcmp(projection_name, SRS_PT_POLAR_STEREOGRAPHIC) != 0 &&
+        strcmp(projection_name, SRS_PT_STEREOGRAPHIC) != 0) {
+        fprintf(stderr, "Error: unsupported DEM projection '%s' (expected polar stereographic/UPS)\n", projection_name);
+        GDALClose(ds);
+        return false;
+    }
+
+    OGRErr proj_err = OGRERR_NONE;
+    double lat_origin = OSRGetProjParm(srs, SRS_PP_LATITUDE_OF_ORIGIN, -90.0, &proj_err);
+    OGRErr std_parallel_err = OGRERR_NONE;
+    double standard_parallel = OSRGetProjParm(srs, SRS_PP_STANDARD_PARALLEL_1, lat_origin, &std_parallel_err);
+    if (proj_err != OGRERR_NONE && std_parallel_err == OGRERR_NONE)
+        lat_origin = standard_parallel;
+    if (fabs(lat_origin) < 45.0) {
+        fprintf(stderr, "Error: polar stereographic DEM does not identify a polar latitude of origin\n");
+        GDALClose(ds);
+        return false;
+    }
+    info->projection.tPolarStereo.dLatitudeOfOrigin = lat_origin >= 0.0 ? 90.0 : -90.0;
+
+    OGRErr lon_err = OGRERR_NONE;
+    double lon_origin = OSRGetProjParm(srs, SRS_PP_CENTRAL_MERIDIAN, 0.0, &lon_err);
+    if (lon_err != OGRERR_NONE)
+        lon_origin = OSRGetProjParm(srs, SRS_PP_LONGITUDE_OF_ORIGIN, 0.0, NULL);
+    info->projection.tPolarStereo.dLongitudeOfOrigin = lon_origin;
+
+    OGRErr scale_err = OGRERR_NONE;
+    double scale_factor = OSRGetProjParm(srs, SRS_PP_SCALE_FACTOR, 1.0, &scale_err);
+    if (scale_err != OGRERR_NONE) {
+        double lat_ts = (std_parallel_err == OGRERR_NONE) ? standard_parallel : lat_origin;
+        if (fabs(lat_ts) < 45.0) {
+            fprintf(stderr, "Error: polar stereographic DEM is missing scale factor and standard parallel\n");
+            GDALClose(ds);
+            return false;
+        }
+        scale_factor = (fabs(fabs(lat_ts) - 90.0) <= 1.0e-9)
+            ? 1.0
+            : 0.5 * (1.0 + sin(fabs(lat_ts) * M_PI / 180.0));
+    }
+    if (scale_factor <= 0.0)
+        scale_factor = 1.0;
+    info->projection.tPolarStereo.dScaleFactor = scale_factor;
+    info->projection.tPolarStereo.dFalseEasting = OSRGetProjParm(srs, SRS_PP_FALSE_EASTING, 0.0, NULL) * to_meters;
+    info->projection.tPolarStereo.dFalseNorthing = OSRGetProjParm(srs, SRS_PP_FALSE_NORTHING, 0.0, NULL) * to_meters;
 
     double gt[6] = {0};
-    if (GDALGetGeoTransform(ds, gt) == CE_None) {
-        *pixel_scale = fabs(gt[1]) * to_meters;
-        *origin_x    = gt[0] * to_meters;
-        *origin_y    = (gt[3] + (double)(*height) * gt[5]) * to_meters; // lower-left Y
+    if (GDALGetGeoTransform(ds, gt) != CE_None) {
+        fprintf(stderr, "Error: DEM is missing a geotransform\n");
+        GDALClose(ds);
+        return false;
     }
+    if (!_almost_zero(gt[2]) || !_almost_zero(gt[4])) {
+        fprintf(stderr, "Error: rotated/skewed DEM geotransforms are not supported yet\n");
+        GDALClose(ds);
+        return false;
+    }
+
+    for (int i = 0; i < 6; i++)
+        info->gt_m[i] = gt[i] * to_meters;
+
+    double pixel_scale_x = fabs(info->gt_m[1]);
+    double pixel_scale_y = fabs(info->gt_m[5]);
+    if (pixel_scale_x <= 0.0 || pixel_scale_y <= 0.0) {
+        fprintf(stderr, "Error: invalid DEM pixel scale\n");
+        GDALClose(ds);
+        return false;
+    }
+    if (fabs(pixel_scale_x - pixel_scale_y) > pixel_scale_x * 1.0e-6) {
+        fprintf(stderr, "Error: non-square DEM pixels are not supported (%.9f x %.9f m)\n", pixel_scale_x, pixel_scale_y);
+        GDALClose(ds);
+        return false;
+    }
+    info->pixel_scale = pixel_scale_x;
 
     // raster band scale/offset for elevation unit conversion
     // real_value = offset + raw_pixel * scale
-    *band_scale          = 1.0;
-    *band_offset         = 0.0;
     GDALRasterBandH band = GDALGetRasterBand(ds, 1);
     if (band) {
-        int bHasScale = 0, bHasOffset = 0;
-        *band_scale  = GDALGetRasterScale(band, &bHasScale);
-        *band_offset = GDALGetRasterOffset(band, &bHasOffset);
-        if (*band_scale == 0.0) *band_scale = 1.0;
+        int bHasScale = 0;
+        double band_scale = GDALGetRasterScale(band, &bHasScale);
+        if (!bHasScale || band_scale == 0.0)
+            band_scale = 1.0;
+        if (band_scale < 0.0) {
+            fprintf(stderr, "Error: negative DEM band scales are not supported\n");
+            GDALClose(ds);
+            return false;
+        }
+        info->band_scale = band_scale;
     }
 
     GDALClose(ds);
@@ -531,39 +669,110 @@ static bool _parse_gdalinfo_mm(const char *dem_path, double *min_val, double *ma
     return true;
 }
 
-static bool _run_gdal_translate(const char *input, const char *output, uint32_t src_x, uint32_t src_y, uint32_t w, uint32_t h, double min_h, double max_h) {
+static uint16_t _scale_raw_to_u16(double value, double min_h, double max_h) {
+    if (max_h <= min_h)
+        return 0;
+    double t = (value - min_h) / (max_h - min_h);
+    if (t < 0.0) t = 0.0;
+    if (t > 1.0) t = 1.0;
+    return (uint16_t)lrint(t * 65535.0);
+}
+
+static bool _write_height_tile(const char *input, const char *output, uint32_t src_x, uint32_t src_y, uint32_t w, uint32_t h, uint32_t tile_size, double min_h, double max_h) {
+    if (tile_size == 0 || w == 0 || h == 0 ||
+        tile_size > (uint32_t)INT32_MAX || w > (uint32_t)INT32_MAX || h > (uint32_t)INT32_MAX) {
+        fprintf(stderr, "Error: tile dimensions are too large for GDALRasterIO\n");
+        return false;
+    }
+    if ((size_t)tile_size > ((size_t)-1) / (size_t)tile_size ||
+        (size_t)w > ((size_t)-1) / (size_t)h / sizeof(double)) {
+        fprintf(stderr, "Error: tile buffer size overflow\n");
+        return false;
+    }
+
     GDALDatasetH src_ds = GDALOpen(input, GA_ReadOnly);
     if (!src_ds) {
         fprintf(stderr, "Error: GDALOpen failed for: %s\n", input);
         return false;
     }
 
-    char sx_str[32], sy_str[32], w_str[32], h_str[32];
-    char min_str[64], max_str[64];
-    snprintf(sx_str, sizeof(sx_str), "%u", src_x);
-    snprintf(sy_str, sizeof(sy_str), "%u", src_y);
-    snprintf(w_str, sizeof(w_str), "%u", w);
-    snprintf(h_str, sizeof(h_str), "%u", h);
-    snprintf(min_str, sizeof(min_str), "%f", min_h);
-    snprintf(max_str, sizeof(max_str), "%f", max_h);
+    GDALRasterBandH band = GDALGetRasterBand(src_ds, 1);
+    if (!band) {
+        fprintf(stderr, "Error: DEM has no raster band\n");
+        GDALClose(src_ds);
+        return false;
+    }
 
-    char *args[] = {
-        "-r", "cubic",
-        "-of", "PNG",
-        "-srcwin", sx_str, sy_str, w_str, h_str,
-        "-ot", "UInt16",
-        "-scale", min_str, max_str, "0", "65535",
-        NULL};
+    size_t tile_pixel_count = (size_t)tile_size * (size_t)tile_size;
+    uint16_t *tile_data = (uint16_t *)calloc(tile_pixel_count, sizeof(uint16_t));
+    double *raw_data = (double *)malloc((size_t)w * (size_t)h * sizeof(double));
+    if (!tile_data || !raw_data) {
+        fprintf(stderr, "Error: failed to allocate tile buffers\n");
+        free(tile_data);
+        free(raw_data);
+        GDALClose(src_ds);
+        return false;
+    }
 
-    GDALTranslateOptions *opts   = GDALTranslateOptionsNew(args, NULL);
-    int                   bError = 0;
-    GDALDatasetH          dst_ds = GDALTranslate(output, src_ds, opts, &bError);
-    GDALTranslateOptionsFree(opts);
+    uint16_t fill_value = _scale_raw_to_u16(min_h, min_h, max_h);
+    for (size_t i = 0; i < tile_pixel_count; i++)
+        tile_data[i] = fill_value;
+
+    CPLErr read_err = GDALRasterIO(band, GF_Read, (int)src_x, (int)src_y, (int)w, (int)h,
+                                   raw_data, (int)w, (int)h, GDT_Float64, 0, 0);
+    if (read_err != CE_None) {
+        fprintf(stderr, "Error: GDALRasterIO failed for tile at (%u, %u)\n", src_x, src_y);
+        free(tile_data);
+        free(raw_data);
+        GDALClose(src_ds);
+        return false;
+    }
+
+    int has_nodata = 0;
+    double nodata = GDALGetRasterNoDataValue(band, &has_nodata);
+    for (uint32_t y = 0; y < h; y++) {
+        for (uint32_t x = 0; x < w; x++) {
+            double value = raw_data[x + y * w];
+            if ((has_nodata && value == nodata) || isnan(value))
+                value = min_h;
+            tile_data[x + y * tile_size] = _scale_raw_to_u16(value, min_h, max_h);
+        }
+    }
+    free(raw_data);
+
+    GDALDriverH mem_driver = GDALGetDriverByName("MEM");
+    GDALDriverH png_driver = GDALGetDriverByName("PNG");
+    if (!mem_driver || !png_driver) {
+        fprintf(stderr, "Error: GDAL MEM/PNG drivers are unavailable\n");
+        free(tile_data);
+        GDALClose(src_ds);
+        return false;
+    }
+
+    GDALDatasetH mem_ds = GDALCreate(mem_driver, "", (int)tile_size, (int)tile_size, 1, GDT_UInt16, NULL);
+    if (!mem_ds) {
+        fprintf(stderr, "Error: failed to create temporary tile dataset\n");
+        free(tile_data);
+        GDALClose(src_ds);
+        return false;
+    }
+
+    GDALRasterBandH out_band = GDALGetRasterBand(mem_ds, 1);
+    CPLErr write_err = GDALRasterIO(out_band, GF_Write, 0, 0, (int)tile_size, (int)tile_size,
+                                    tile_data, (int)tile_size, (int)tile_size, GDT_UInt16, 0, 0);
+    free(tile_data);
+    if (write_err != CE_None) {
+        fprintf(stderr, "Error: failed to write temporary tile dataset\n");
+        GDALClose(mem_ds);
+        GDALClose(src_ds);
+        return false;
+    }
+
+    GDALDatasetH dst_ds = GDALCreateCopy(png_driver, output, mem_ds, FALSE, NULL, NULL, NULL);
+    GDALClose(mem_ds);
     GDALClose(src_ds);
-
-    if (!dst_ds || bError) {
-        fprintf(stderr, "Error: GDALTranslate failed for tile at (%u, %u)\n", src_x, src_y);
-        if (dst_ds) GDALClose(dst_ds);
+    if (!dst_ds) {
+        fprintf(stderr, "Error: GDALCreateCopy failed for tile at (%u, %u)\n", src_x, src_y);
         return false;
     }
 
