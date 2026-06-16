@@ -47,7 +47,7 @@
 
     <!-- Top-level planet definition (shared by both views) -->
     <Planet Name="Moon" CRS="#_planet_crs_geodetic_" MeshCacheSize="128" LightDirectionX="-1" LightDirectionY="@LightY" LightDirectionZ="-1">
-        <PlanetData File="../../data/LDEM_45S_100M.planet.json"/>
+        <PlanetData File="../../data/LDEM_45S_400M.planet.json"/>
         <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
             Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
         <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>

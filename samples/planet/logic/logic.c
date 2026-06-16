@@ -55,7 +55,7 @@ void display_init(DcAppContext *app_ctx, void **user_data) {
     if (!display_home || display_home[0] == '\0') return;
 
     char data_path[4096] = {0};
-    snprintf(data_path, sizeof(data_path), "%s/../../data/LDEM_45S_100M.planet.json", display_home);
+    snprintf(data_path, sizeof(data_path), "%s/../../data/LDEM_45S_400M.planet.json", display_home);
 
     logic_planet = dc_planet->create_planet_with_id(app_ctx, "LogicMoon", (DcPlanetCreateInfo){
         .data_path = data_path,

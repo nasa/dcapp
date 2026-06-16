@@ -37,7 +37,7 @@ Before dcapp can render a planet, the raw DEM data must be preprocessed into a c
 
 The input is a GeoTIFF or PDS-compatible DEM file. For example, the included planet sample uses LOLA's south polar DEM:
 
-- **LDEM_45S_100M** -- Lunar south pole at 100 meters per pixel, available from the MIT LOLA GDR archive.
+- **LDEM_45S_400M** -- Lunar south pole at 400 meters per pixel, available from the MIT LOLA GDR archive.
 
 The repository-level planet data script downloads both the `.IMG` raster and its `.LBL` label file automatically:
 
@@ -75,7 +75,7 @@ dcapp-planet-chunkgen <input_dem> <output_dir> [options]
 A convenience wrapper script is provided at `./bin/dcapp-planet-chunkgen.sh`, which handles path resolution automatically:
 
 ```bash
-./bin/dcapp-planet-chunkgen.sh /path/to/LDEM_45S_100M.LBL /path/to/output_dir
+./bin/dcapp-planet-chunkgen.sh /path/to/LDEM_45S_400M.LBL /path/to/output_dir
 ```
 
 ### Output
@@ -99,7 +99,7 @@ Chunk generation supports north- and south-polar stereographic/UPS-style DEMs wi
 
 ```bash
 ./bin/dcapp-planet-snapshot.sh \
-  --planet-data data/LDEM_45S_100M.planet.json \
+  --planet-data data/LDEM_45S_400M.planet.json \
   --crs geodetic \
   --attitude-frame local-ned \
   --lat -58.62 --lon 345.27 --elevation 2000000 \
@@ -112,7 +112,7 @@ Chunk generation supports north- and south-polar stereographic/UPS-style DEMs wi
 
 ```bash
 ./bin/dcapp-planet-snapshot.sh \
-  --planet-data data/LDEM_45S_100M.planet.json \
+  --planet-data data/LDEM_45S_400M.planet.json \
   --crs cartesian \
   --attitude-frame cartesian-rpy \
   --x 1000000 --y -1000000 --z 2000000 \
@@ -194,7 +194,7 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 ```xml
 <Planet Name="Moon" CRS="#_planet_crs_geodetic_"
     LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
-    <PlanetData File="../../data/LDEM_45S_100M.planet.json"/>
+    <PlanetData File="../../data/LDEM_45S_400M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>
@@ -219,7 +219,7 @@ The top-level planet definition. It must be a direct child of `<DCAPP>` and shou
 Specifies the preprocessed terrain data for a planet. Must be a child of `<Planet>`.
 
 ```xml
-<PlanetData File="../../data/LDEM_45S_100M.planet.json"/>
+<PlanetData File="../../data/LDEM_45S_400M.planet.json"/>
 ```
 
 **Attributes:**
@@ -706,7 +706,7 @@ A single `<Planet>` is defined with one data source, one texture overlay, and th
 ```xml
 <Planet Name="Moon" CRS="#_planet_crs_geodetic_"
     LightDirectionX="-1" LightDirectionY="-1" LightDirectionZ="-1">
-    <PlanetData File="../../data/LDEM_45S_100M.planet.json"/>
+    <PlanetData File="../../data/LDEM_45S_400M.planet.json"/>
     <PlanetTexture File="../../assets/nasa-worm.png" MetersPerPixel="@TexMpp"
         Latitude="-90" Longitude="180" FireRefresh="@TextureRefresh"/>
     <PlanetShader Index="1" FragmentShader="shaders/planet_elevation.frag"/>

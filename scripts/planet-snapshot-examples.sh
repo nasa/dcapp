@@ -3,7 +3,7 @@ set -euo pipefail
 
 DCAPP_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SNAPSHOT="$DCAPP_HOME/bin/dcapp-planet-snapshot.sh"
-PLANET_DATA="$DCAPP_HOME/data/LDEM_45S_100M.planet.json"
+PLANET_DATA="$DCAPP_HOME/data/LDEM_45S_400M.planet.json"
 OUT_DIR="$DCAPP_HOME/data"
 EXAMPLE="${1:-}"
 

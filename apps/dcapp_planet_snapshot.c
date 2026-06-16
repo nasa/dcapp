@@ -680,6 +680,8 @@ static bool _load_planet_data(AppData *app) {
     info->tProjection.tPolarStereo.dFalseEasting = 0.0;
     info->tProjection.tPolarStereo.dFalseNorthing = 0.0;
     plJsonObject *projection_obj = pl_json_member(root, "projection");
+    // Pre-projection .planet.json files omitted this block and stored tile centers
+    // as legacy lat/lon values instead of explicit projected CRS meters.
     bool legacy_projected_origin = projection_obj == NULL;
     if (projection_obj) {
         char projection_type[64] = {0};
@@ -748,9 +750,14 @@ static bool _load_planet_data(AppData *app) {
             polar_crs.false_northing = info->tProjection.tPolarStereo.dFalseNorthing;
             plVec3 geodetic_in = {(float)lat, (float)lon, 0.0f};
             plVec2 polar_out;
-            dc_geo_geodetic_to_polar_stereo(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
-            if (legacy_projected_origin)
+            if (legacy_projected_origin) {
+                // Compatibility path for old lat/lon tile metadata. New metadata
+                // should provide originX/originY directly in projected CRS meters.
+                dc_geo_user_geodetic_to_polar_stereo(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
                 polar_out.y = -polar_out.y;
+            } else {
+                dc_geo_geodetic_to_polar_stereo(&geodetic_crs, &polar_crs, &geodetic_in, &polar_out, 1);
+            }
             tile->dOriginX = (double)polar_out.x;
             tile->dOriginY = (double)polar_out.y;
         }

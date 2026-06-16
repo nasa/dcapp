@@ -132,6 +132,8 @@ void dc_geo_user_geodetic_to_polar_stereo(const DcGeoCrsGeodetic *from, const Dc
     double lat_origin = to->lat_origin > 0.0 ? 90.0 : -90.0;
     for (size_t i = 0; i < count; i++) {
         float lat_rad = in[i].x * (float)M_PI / 180.0f;
+        // Legacy user-facing longitude shim. Old planet metadata/overlays used
+        // this mirrored longitude convention before projected CRS origins were explicit.
         float lon_deg = 180.0f - in[i].y;
         float lon_rad = (lon_deg - (float)to->lon_origin) * (float)M_PI / 180.0f;
         float rho = lat_origin > 0.0
@@ -148,6 +150,8 @@ void dc_geo_user_geodetic_to_polar_stereo_d(const DcGeoCrsGeodetic *from, const 
     double lat_origin = to->lat_origin > 0.0 ? 90.0 : -90.0;
     for (size_t i = 0; i < count; i++) {
         double lat_rad = in[i].x * M_PI / 180.0;
+        // Legacy user-facing longitude shim. Old planet metadata/overlays used
+        // this mirrored longitude convention before projected CRS origins were explicit.
         double lon_deg = 180.0 - in[i].y;
         double lon_rad = (lon_deg - to->lon_origin) * M_PI / 180.0;
         double rho = lat_origin > 0.0

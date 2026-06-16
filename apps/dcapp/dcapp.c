@@ -863,9 +863,14 @@ static bool _build_planet_texture(_AppData *app_data, _PlanetDef *def, _PlanetTe
         plVec3d geodetic_out;
         plVec2d polar_out;
         dc_geo_cartesian_to_geodetic_d(&def->cartesian_crs, &def->geodetic_crs, &cartesian_in, &geodetic_out, 1);
-        dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_out, &polar_out, 1);
-        if (def->legacy_projected_origin)
+        if (def->legacy_projected_origin) {
+            // Old planet metadata expects the historical user-longitude projection
+            // convention. New metadata uses real projected CRS meters.
+            dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_out, &polar_out, 1);
             polar_out.y = -polar_out.y;
+        } else {
+            dc_geo_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_out, &polar_out, 1);
+        }
         out->dOriginX = polar_out.x;
         out->dOriginY = polar_out.y;
     } else if (entry->lle.lat != DC_APP_VAL_INDEX_UNDEFINED &&
@@ -876,9 +881,14 @@ static bool _build_planet_texture(_AppData *app_data, _PlanetDef *def, _PlanetTe
             0.0
         };
         plVec2d polar_out;
-        dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_in, &polar_out, 1);
-        if (def->legacy_projected_origin)
+        if (def->legacy_projected_origin) {
+            // Old planet metadata expects the historical user-longitude projection
+            // convention. New metadata uses real projected CRS meters.
+            dc_geo_user_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_in, &polar_out, 1);
             polar_out.y = -polar_out.y;
+        } else {
+            dc_geo_geodetic_to_polar_stereo_d(&def->geodetic_crs, &def->polar_crs, &geodetic_in, &polar_out, 1);
+        }
         out->dOriginX = polar_out.x;
         out->dOriginY = polar_out.y;
     } else {

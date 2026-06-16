@@ -3,7 +3,7 @@ setlocal
 
 set "DCAPP_HOME=%~dp0.."
 set "SNAPSHOT=%DCAPP_HOME%\bin\dcapp-planet-snapshot.bat"
-set "PLANET_DATA=%DCAPP_HOME%\data\LDEM_45S_100M.planet.json"
+set "PLANET_DATA=%DCAPP_HOME%\data\LDEM_45S_400M.planet.json"
 set "OUT_DIR=%DCAPP_HOME%\data"
 
 if "%~1"=="1" set "EXAMPLE=1"

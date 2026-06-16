@@ -13,11 +13,11 @@ if "%DCAPP_PLANET_DATA_DIR%"=="" (
 
 set "SOURCE_DIR=%DATA_DIR%"
 set "CHUNK_DIR=%DATA_DIR%"
-set "IMG_URL=https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_45S_100M.IMG"
-set "LBL_URL=https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_45S_100M.LBL"
-set "IMG_FILE=%SOURCE_DIR%\LDEM_45S_100M.IMG"
-set "LBL_FILE=%SOURCE_DIR%\LDEM_45S_100M.LBL"
-set "PLANET_JSON=%CHUNK_DIR%\LDEM_45S_100M.planet.json"
+set "IMG_URL=https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_45S_400M.IMG"
+set "LBL_URL=https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_45S_400M.LBL"
+set "IMG_FILE=%SOURCE_DIR%\LDEM_45S_400M.IMG"
+set "LBL_FILE=%SOURCE_DIR%\LDEM_45S_400M.LBL"
+set "PLANET_JSON=%CHUNK_DIR%\LDEM_45S_400M.planet.json"
 set "FORCE=0"
 set "EXTRA_ARGS="
 
@@ -36,7 +36,7 @@ goto parse
 :help
 echo Usage: scripts\download-planet-data.bat [--force] [chunkgen options]
 echo.
-echo Downloads the LOLA LDEM_45S_100M lunar DEM and generates planet chunks.
+echo Downloads the LOLA LDEM_45S_400M lunar DEM and generates planet chunks.
 echo.
 echo Environment:
 echo   DCAPP_PLANET_DATA_DIR  Override output directory
@@ -58,24 +58,24 @@ echo Data directory: %DATA_DIR%
 if not exist "%DATA_DIR%" mkdir "%DATA_DIR%"
 
 if not exist "%IMG_FILE%" (
-    echo Downloading LDEM_45S_100M.IMG...
+    echo Downloading LDEM_45S_400M.IMG...
     curl -L -o "%IMG_FILE%" "%IMG_URL%"
     if errorlevel 1 ( echo ERROR: Failed to download IMG & exit /b 1 )
 ) else (
-    echo LDEM_45S_100M.IMG already downloaded, skipping.
+    echo LDEM_45S_400M.IMG already downloaded, skipping.
 )
 
 if not exist "%LBL_FILE%" (
-    echo Downloading LDEM_45S_100M.LBL...
+    echo Downloading LDEM_45S_400M.LBL...
     curl -L -o "%LBL_FILE%" "%LBL_URL%"
     if errorlevel 1 ( echo ERROR: Failed to download LBL & exit /b 1 )
 ) else (
-    echo LDEM_45S_100M.LBL already downloaded, skipping.
+    echo LDEM_45S_400M.LBL already downloaded, skipping.
 )
 
 if "%FORCE%"=="1" goto run_chunkgen
 if not exist "%PLANET_JSON%" goto run_chunkgen
-echo LDEM_45S_100M.planet.json already exists, skipping chunkgen. Use --force to regenerate.
+echo LDEM_45S_400M.planet.json already exists, skipping chunkgen. Use --force to regenerate.
 goto done
 
 :run_chunkgen

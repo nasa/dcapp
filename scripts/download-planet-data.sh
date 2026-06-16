@@ -7,11 +7,11 @@ DATA_DIR="${DCAPP_PLANET_DATA_DIR:-$DCAPP_HOME/data}"
 SOURCE_DIR="$DATA_DIR"
 CHUNK_DIR="$DATA_DIR"
 
-IMG_URL="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_45S_100M.IMG"
-LBL_URL="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_45S_100M.LBL"
-IMG_FILE="$SOURCE_DIR/LDEM_45S_100M.IMG"
-LBL_FILE="$SOURCE_DIR/LDEM_45S_100M.LBL"
-PLANET_JSON="$CHUNK_DIR/LDEM_45S_100M.planet.json"
+IMG_URL="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_45S_400M.IMG"
+LBL_URL="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_45S_400M.LBL"
+IMG_FILE="$SOURCE_DIR/LDEM_45S_400M.IMG"
+LBL_FILE="$SOURCE_DIR/LDEM_45S_400M.LBL"
+PLANET_JSON="$CHUNK_DIR/LDEM_45S_400M.planet.json"
 
 FORCE=false
 EXTRA_ARGS=()
@@ -21,7 +21,7 @@ while [ $# -gt 0 ]; do
         -h|--help)
             echo "Usage: ./scripts/download-planet-data.sh [--force] [chunkgen options]"
             echo ""
-            echo "Downloads the LOLA LDEM_45S_100M lunar DEM and generates planet chunks."
+            echo "Downloads the LOLA LDEM_45S_400M lunar DEM and generates planet chunks."
             echo ""
             echo "Environment:"
             echo "  DCAPP_PLANET_DATA_DIR  Override output directory"
@@ -52,17 +52,17 @@ echo "Data directory: $DATA_DIR"
 mkdir -p "$DATA_DIR"
 
 if [ ! -f "$IMG_FILE" ]; then
-    echo "Downloading LDEM_45S_100M.IMG..."
+    echo "Downloading LDEM_45S_400M.IMG..."
     curl -L -o "$IMG_FILE" "$IMG_URL"
 else
-    echo "LDEM_45S_100M.IMG already downloaded, skipping."
+    echo "LDEM_45S_400M.IMG already downloaded, skipping."
 fi
 
 if [ ! -f "$LBL_FILE" ]; then
-    echo "Downloading LDEM_45S_100M.LBL..."
+    echo "Downloading LDEM_45S_400M.LBL..."
     curl -L -o "$LBL_FILE" "$LBL_URL"
 else
-    echo "LDEM_45S_100M.LBL already downloaded, skipping."
+    echo "LDEM_45S_400M.LBL already downloaded, skipping."
 fi
 
 if [ "$FORCE" = true ] || [ ! -f "$PLANET_JSON" ]; then
@@ -74,7 +74,7 @@ if [ "$FORCE" = true ] || [ ! -f "$PLANET_JSON" ]; then
         "$DCAPP_HOME/bin/dcapp-planet-chunkgen.sh" "$LBL_FILE" "$CHUNK_DIR" --radius 1737400
     fi
 else
-    echo "LDEM_45S_100M.planet.json already exists, skipping chunkgen. Use --force to regenerate."
+    echo "LDEM_45S_400M.planet.json already exists, skipping chunkgen. Use --force to regenerate."
 fi
 
 echo ""

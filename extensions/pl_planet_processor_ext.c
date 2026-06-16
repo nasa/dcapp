@@ -1212,8 +1212,8 @@ pl__terrain_mesh(FILE* ptFile, plPlanetHeightMap* ptHeightMap, int iStartIndexX,
         plPlanetMapElement* e2 = &(ptHeightMap->atElements[t.uLeft]);
 
         atIndexData[uCurrentIndex + 0] = e0->uVertexBufferIndex;
-        atIndexData[uCurrentIndex + 1] = e1->uVertexBufferIndex;
-        atIndexData[uCurrentIndex + 2] = e2->uVertexBufferIndex;
+        atIndexData[uCurrentIndex + 1] = e2->uVertexBufferIndex;
+        atIndexData[uCurrentIndex + 2] = e1->uVertexBufferIndex;
         uCurrentIndex += 3;
     }
 
@@ -1296,8 +1296,10 @@ pl__get_cartesian_unmod(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptEl
     else
         phi = bNorth ? (double)PL_PI_2 - c : (double)-PL_PI_2 + c;
 
-    // Longitude: north uses y toward 0 deg from above, south from below.
-    double lam = lon0 + atan2(x, bNorth ? -y : y);
+    // Convert projected CRS longitude into Pilotlight's body-centered frame.
+    // GDAL polar stereographic uses +northing toward lon0 in the south and
+    // -northing toward lon0 in the north.
+    double lam = lon0 + (bNorth ? atan2(x, -y) : atan2(x, y));
 
     // Optionally normalize lam to [-π, π]
     if (lam > (double)PL_PI)  lam -= 2.0 * (double)PL_PI;
@@ -1307,7 +1309,7 @@ pl__get_cartesian_unmod(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptEl
     plVec3d tSpherePos = {
         R * cos(phi) * sin(lam),  // X
         R * sin(phi),              // Y (up)
-        -R * cos(phi) * cos(lam)   // Z (lon=0 axis)
+        R * cos(phi) * cos(lam)   // Z (lon=0 axis)
     };
 
     // 5) Normal and add height (ptElement->fY is height in meters)
@@ -1404,8 +1406,10 @@ pl__get_cartesian(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
     else
         phi = bNorth ? (double)PL_PI_2 - c : (double)-PL_PI_2 + c;
 
-    // Longitude: north uses y toward 0 deg from above, south from below.
-    double lam = lon0 + atan2(x, bNorth ? -y : y);
+    // Convert projected CRS longitude into Pilotlight's body-centered frame.
+    // GDAL polar stereographic uses +northing toward lon0 in the south and
+    // -northing toward lon0 in the north.
+    double lam = lon0 + (bNorth ? atan2(x, -y) : atan2(x, y));
 
     // Optionally normalize lam to [-π, π]
     if (lam >  (double)PL_PI) lam -= 2.0 * (double)PL_PI;
@@ -1415,7 +1419,7 @@ pl__get_cartesian(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
     plVec3d tSpherePos = {
         R * cos(phi) * sin(lam),  // X
         R * sin(phi),              // Y (up)
-        -R * cos(phi) * cos(lam)   // Z (lon=0 axis)
+        R * cos(phi) * cos(lam)   // Z (lon=0 axis)
     };
 
     // 5) Normal and add height (ptElement->fY is height in meters)
@@ -1480,7 +1484,7 @@ pl__get_normal(plPlanetHeightMap* ptHeightMap, plPlanetMapElement* ptElement)
     plVec3d tX = pl_sub_vec3_d(pR, pL);
     plVec3d tZ = pl_sub_vec3_d(pU, pD);
 
-    plVec3d n = pl_cross_vec3_d(tX, tZ);
+    plVec3d n = pl_cross_vec3_d(tZ, tX);
     n = pl_norm_vec3_d(n);
 
     return pl__encode(n);
