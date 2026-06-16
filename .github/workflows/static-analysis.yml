@@ -10,50 +10,88 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  clang-tidy:
+  c-diagnostics:
     runs-on: ubuntu-22.04
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           submodules: recursive
 
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-tidy libxml2-dev libgdal-dev
+          sudo apt-get install -y clang libxml2-dev libgdal-dev libcurl4-openssl-dev
 
-      - name: Run clang-tidy
+      - name: Check C diagnostics
         run: |
-          INCLUDES="-I src -I extensions -I shaders \
-                    -I pilotlight/src -I pilotlight/libs -I pilotlight/extensions -I pilotlight/shaders \
-                    -I pilotlight/dependencies/stb \
-                    -I /usr/include/libxml2 -I /usr/include/gdal"
+          set -euo pipefail
 
-          FILES=$(find apps/dcapp extensions src -name '*.c' 2>/dev/null)
-          FAIL=0
-          for f in $FILES; do
-            echo "=== Checking $f ==="
-            OUTPUT=$(clang-tidy --quiet "$f" -- $INCLUDES 2>&1 | \
-              grep "warning:" | \
-              grep -v "pilotlight/\|thirdparty/" || true)
-            if [ -n "$OUTPUT" ]; then
-              echo "$OUTPUT"
-              FAIL=1
-            fi
-          done
+          INCLUDES=(
+            -I apps
+            -I apps/dcapp
+            -I src
+            -I extensions
+            -I shaders
+            -I pilotlight/src
+            -I pilotlight/libs
+            -I pilotlight/extensions
+            -I pilotlight/shaders
+            -I pilotlight/dependencies/stb
+            -I pilotlight/dependencies/cgltf
+            -I pilotlight/dependencies/imgui
+            -I pilotlight/dependencies/glfw/include
+            -I /usr/include/libxml2
+            -I /usr/include/gdal
+          )
 
-          if [ $FAIL -eq 1 ]; then
-            echo ""
-            echo "::warning::clang-tidy reported warnings (non-blocking)"
+          BASE_REF="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$BASE_REF" ] || [[ "$BASE_REF" =~ ^0+$ ]] || ! git cat-file -e "$BASE_REF^{commit}" 2>/dev/null; then
+            BASE_REF="HEAD~1"
           fi
+
+          mapfile -d '' FILES < <(
+            git diff --name-only -z --diff-filter=ACMR "$BASE_REF"...HEAD |
+              while IFS= read -r -d '' f; do
+                case "$f" in
+                  apps/dcapp/dcapp.c)
+                    printf '%s\0' "$f"
+                    ;;
+                  apps/dcapp/*.c)
+                    printf '%s\0' apps/dcapp/dcapp.c
+                    ;;
+                  apps/*.c|extensions/*.c|src/*.c|src/*/*.c)
+                    printf '%s\0' "$f"
+                    ;;
+                esac
+              done |
+              sort -zu
+          )
+          if [ "${#FILES[@]}" -eq 0 ]; then
+            echo "No changed C sources to check."
+            exit 0
+          fi
+
+          for f in "${FILES[@]}"; do
+            echo "=== Checking $f ==="
+            clang -fsyntax-only -std=gnu11 -Werror "$f" "${INCLUDES[@]}"
+          done
 
   clang-format:
     runs-on: ubuntu-22.04
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install Dependencies
         run: |
@@ -62,15 +100,31 @@ jobs:
 
       - name: Check formatting
         run: |
-          FILES=$(find apps/dcapp extensions src samples -name '*.c' -o -name '*.h' 2>/dev/null)
-          UNFORMATTED=0
-          for f in $FILES; do
-            if ! diff -q <(clang-format "$f") "$f" > /dev/null 2>&1; then
-              echo "::warning file=$f::File not formatted per .clang-format"
-              UNFORMATTED=1
-            fi
-          done
-          if [ $UNFORMATTED -eq 1 ]; then
-            echo ""
-            echo "::warning::clang-format would reformat one or more files (non-blocking)"
+          set -euo pipefail
+          BASE_REF="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$BASE_REF" ] || [[ "$BASE_REF" =~ ^0+$ ]] || ! git cat-file -e "$BASE_REF^{commit}" 2>/dev/null; then
+            BASE_REF="HEAD~1"
+          fi
+
+          mapfile -d '' FILES < <(
+            git diff --name-only -z --diff-filter=ACMR "$BASE_REF"...HEAD |
+              while IFS= read -r -d '' f; do
+                case "$f" in
+                  apps/*.c|apps/*.h|apps/dcapp/*.c|apps/dcapp/*.h|extensions/*.c|extensions/*.h|src/*.c|src/*.h|src/*/*.c|src/*/*.h|samples/*.c|samples/*.h|samples/*/logic/*.c|samples/*/logic/*.h|samples/trick/sim/*.c|samples/trick/sim/*.h)
+                    printf '%s\0' "$f"
+                    ;;
+                esac
+              done |
+              sort -z
+          )
+          if [ "${#FILES[@]}" -eq 0 ]; then
+            echo "No changed C/C++ style files to check."
+            exit 0
+          fi
+
+          FORMAT_DIFF="$(git diff -U0 --no-color "$BASE_REF"...HEAD -- "${FILES[@]}" | clang-format-diff -p1 -style=file)"
+          if [ -n "$FORMAT_DIFF" ]; then
+            echo "$FORMAT_DIFF"
+            echo "::error::clang-format would reformat changed lines"
+            exit 1
           fi
