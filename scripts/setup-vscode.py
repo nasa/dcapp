@@ -15,20 +15,31 @@ vscode_dir = os.path.join(project_root, ".vscode")
 
 # include paths relative to project root (shared across all platforms)
 common_includes = [
+    "apps",
+    "apps/dcapp",
     "src",
     "extensions",
     "shaders",
+    "assets",
     "pilotlight/src",
     "pilotlight/libs",
     "pilotlight/extensions",
     "pilotlight/shaders",
-    "pilotlight/thirdparty/stb",
+    "pilotlight/dependencies/stb",
+    "pilotlight/dependencies/cgltf",
+    "pilotlight/dependencies/imgui",
+    "pilotlight/dependencies/glfw/include",
 ]
 
 # platform-specific include paths
 platform_includes = {
     "Linux":   ["/usr/include/libxml2", "/usr/include/gdal"],
-    "Darwin":  ["/opt/homebrew/opt/libxml2/include/libxml2", "/opt/homebrew/opt/gdal/include"],
+    "Darwin":  [
+        "/opt/homebrew/opt/libxml2/include/libxml2",
+        "/opt/homebrew/opt/gdal/include",
+        "/usr/local/opt/libxml2/include/libxml2",
+        "/usr/local/opt/gdal/include",
+    ],
     "Windows": [],  # vcpkg handles this
 }
 
@@ -56,6 +67,52 @@ def prompt_choice(prompt, options):
         except (ValueError, EOFError):
             pass
         print(f"  Please enter a number between 1 and {len(options)}")
+
+def existing_relative_paths(paths):
+    """Return only paths that exist relative to the project root."""
+    result = []
+    seen = set()
+    for path in paths:
+        normalized = path.replace("\\", "/").rstrip("/")
+        if normalized in seen:
+            continue
+        if os.path.exists(os.path.join(project_root, normalized)):
+            result.append(normalized)
+            seen.add(normalized)
+    return result
+
+def discover_sample_logic_includes():
+    """Find sample logic directories, even before generated headers exist."""
+    result = []
+    samples_dir = os.path.join(project_root, "samples")
+    if not os.path.isdir(samples_dir):
+        return result
+    for entry in sorted(os.listdir(samples_dir)):
+        logic_dir = os.path.join(samples_dir, entry, "logic")
+        if os.path.isdir(logic_dir):
+            result.append(f"samples/{entry}/logic")
+    return result
+
+def discover_samples():
+    """Discover samples that follow samples/<name>/<name>.xml."""
+    result = []
+    samples_dir = os.path.join(project_root, "samples")
+    if not os.path.isdir(samples_dir):
+        return result
+    for entry in sorted(os.listdir(samples_dir)):
+        if entry.startswith("."):
+            continue
+        sample_xml = os.path.join(samples_dir, entry, entry + ".xml")
+        if os.path.isfile(sample_xml):
+            result.append(entry)
+    return result
+
+def default_sample(sample_names):
+    if "welcome" in sample_names:
+        return "welcome"
+    if "primitives" in sample_names:
+        return "primitives"
+    return sample_names[0] if sample_names else ""
 
 # ------------------------------------------------------------------------------
 # detect platform
@@ -85,6 +142,10 @@ print()
 
 os.makedirs(vscode_dir, exist_ok=True)
 
+project_includes = existing_relative_paths(common_includes + discover_sample_logic_includes())
+sample_names = discover_samples()
+sample_default = default_sample(sample_names)
+
 # ------------------------------------------------------------------------------
 # generate .vscode/settings.json
 # ------------------------------------------------------------------------------
@@ -113,6 +174,9 @@ if ls_choice == "clangd":
 else:
     recommendations.append("ms-vscode.cpptools")
 
+if plat == "Darwin":
+    recommendations.append("vadimcn.vscode-lldb")
+
 extensions = {"recommendations": recommendations}
 write_json(os.path.join(vscode_dir, "extensions.json"), extensions)
 print("Wrote .vscode/extensions.json")
@@ -129,7 +193,7 @@ if ls_choice == "clangd":
     lines.append("    Add:")
 
     # include paths (absolute so clangd resolves them for files in any subdirectory)
-    for inc in common_includes:
+    for inc in project_includes:
         lines.append(f"        - -I{project_root}/{inc}")
 
     # platform-specific absolute paths
@@ -158,7 +222,7 @@ if ls_choice == "clangd":
 else:
 
     # generate .vscode/c_cpp_properties.json
-    include_paths = [f"${{workspaceFolder}}/{inc}" for inc in common_includes]
+    include_paths = [f"${{workspaceFolder}}/{inc}" for inc in project_includes]
 
     if plat == "Windows":
         include_paths.append(f"${{workspaceFolder}}/{vcpkg_include}")
@@ -194,17 +258,6 @@ else:
 # generate .vscode/launch.json
 # ------------------------------------------------------------------------------
 
-# discover samples (directories containing <name>/<name>.xml)
-samples_dir = os.path.join(project_root, "samples")
-sample_names = []
-if os.path.isdir(samples_dir):
-    for entry in sorted(os.listdir(samples_dir)):
-        if entry.startswith("."):
-            continue
-        sample_xml = os.path.join(samples_dir, entry, entry + ".xml")
-        if os.path.isfile(sample_xml):
-            sample_names.append(entry)
-
 # build platform-specific debug config
 configs = []
 
@@ -216,6 +269,7 @@ if plat == "Linux":
         "program": "${workspaceFolder}/pilotlight/out/pilot_light",
         "args": ["-a", "dcapp", "${workspaceFolder}/samples/${input:sampleName}/${input:sampleName}.xml"],
         "cwd": "${workspaceFolder}/pilotlight/out",
+        "preLaunchTask": "build debug",
         "MIMode": "gdb",
         "miDebuggerPath": "/usr/bin/gdb",
     })
@@ -227,6 +281,7 @@ elif plat == "Darwin":
         "program": "${workspaceFolder}/pilotlight/out/pilot_light",
         "args": ["-a", "dcapp", "${workspaceFolder}/samples/${input:sampleName}/${input:sampleName}.xml"],
         "cwd": "${workspaceFolder}/pilotlight/out",
+        "preLaunchTask": "build debug",
     })
 elif plat == "Windows":
     configs.append({
@@ -236,6 +291,7 @@ elif plat == "Windows":
         "program": "${workspaceFolder}\\pilotlight\\out\\pilot_light.exe",
         "args": ["-a", "dcapp", "${workspaceFolder}/samples/${input:sampleName}/${input:sampleName}.xml"],
         "cwd": "${workspaceFolder}\\pilotlight\\out",
+        "preLaunchTask": "build debug",
     })
 
 launch = {
@@ -247,13 +303,74 @@ launch = {
             "type": "pickString",
             "description": "Select a sample to run",
             "options": sample_names,
-            "default": sample_names[0] if sample_names else "functions",
+            "default": sample_default,
         }
     ],
 }
 
 write_json(os.path.join(vscode_dir, "launch.json"), launch)
 print("Wrote .vscode/launch.json")
+
+# ------------------------------------------------------------------------------
+# generate .vscode/tasks.json
+# ------------------------------------------------------------------------------
+
+if plat == "Windows":
+    build_command = "${workspaceFolder}\\scripts\\build.bat"
+    validate_command = "${workspaceFolder}\\bin\\dcapp-validate.bat"
+    genheader_command = "${workspaceFolder}\\bin\\dcapp-genheader.bat"
+else:
+    build_command = "${workspaceFolder}/scripts/build.sh"
+    validate_command = "${workspaceFolder}/bin/dcapp-validate.sh"
+    genheader_command = "${workspaceFolder}/bin/dcapp-genheader.sh"
+
+tasks = {
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": build_command,
+            "group": {"kind": "build", "isDefault": True},
+            "problemMatcher": "$gcc",
+        },
+        {
+            "label": "build debug",
+            "type": "shell",
+            "command": build_command,
+            "args": ["-c", "debug"],
+            "group": "build",
+            "problemMatcher": "$gcc",
+        },
+        {
+            "label": "validate selected sample",
+            "type": "shell",
+            "command": validate_command,
+            "args": ["${workspaceFolder}/samples/${input:sampleName}/${input:sampleName}.xml"],
+            "group": "test",
+            "problemMatcher": [],
+        },
+        {
+            "label": "generate selected sample logic header",
+            "type": "shell",
+            "command": genheader_command,
+            "args": ["${workspaceFolder}/samples/${input:sampleName}/${input:sampleName}.xml"],
+            "problemMatcher": [],
+        },
+    ],
+    "inputs": [
+        {
+            "id": "sampleName",
+            "type": "pickString",
+            "description": "Select a sample",
+            "options": sample_names,
+            "default": sample_default,
+        }
+    ],
+}
+
+write_json(os.path.join(vscode_dir, "tasks.json"), tasks)
+print("Wrote .vscode/tasks.json")
 
 # ------------------------------------------------------------------------------
 # cleanup stale files
