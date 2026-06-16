@@ -17,7 +17,7 @@ fi
 
 if [[ ! -f "$PLANET_DATA" ]]; then
     echo "Missing planet data: $PLANET_DATA"
-    echo "Run scripts/download-planet-data.sh first, then rebuild if needed."
+    echo "Run ./scripts/download-planet-data.sh first, then rebuild if needed."
     exit 1
 fi
 

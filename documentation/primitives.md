@@ -1,6 +1,8 @@
 # dcapp XML Reference
 
-A comprehensive reference for all XML elements and attributes in the dcapp display framework.
+This is the element reference for dcapp XML. Use it when you already know what
+kind of display behavior you want and need the exact element, attribute, or
+child-node shape.
 
 ---
 
@@ -16,11 +18,34 @@ A comprehensive reference for all XML elements and attributes in the dcapp displ
 
 ---
 
+## How To Choose Elements
+
+Most displays are a mix of these layers:
+
+- `Window` owns the real application window and frame/update cadence.
+- `Panel` and `Container` organize coordinate spaces so child elements can be
+  authored in useful local units instead of raw window pixels.
+- Drawing primitives such as `Rectangle`, `Ellipse`, `Line`, `Polygon`, `Text`,
+  `Image`, and `PixelStream` render visible content.
+- `Variable`, `Set`, and `If` make the XML dynamic without requiring C logic.
+- `Button` and mouse event children add interaction.
+- `Logic`, `Function`, and `DrawFunction` connect XML to C/C++ when behavior is
+  easier to express in code.
+- `Planet` and `PlanetView` are for chunked terrain and planet overlays.
+
+Prefer XML elements for stable layout, simple state, and direct bindings.
+Reach for C logic when the behavior needs algorithms, persistent private state,
+custom drawing, or integration code that would make XML hard to read.
+
+---
+
 ## Root Elements
 
 ### `<DCAPP>`
 
-The root element that wraps the entire display definition. Contains `<Window>`, `<Variable>`, `<Constant>`, `<Style>`, `<TrickIO>`, and `<Logic>` elements.
+The root element that wraps the entire display definition. Contains `<Window>`,
+`<Variable>`, `<Constant>`, `<Style>`, `<TrickIO>`, `<EdgeIO>`,
+`<PixelStream>` sources, `<Planet>`, and `<Logic>` elements.
 
 ---
 
@@ -87,6 +112,8 @@ Defines reusable styles (currently ignored at runtime).
 ### `<Container>`
 
 A grouping element that establishes a coordinate space for child elements.
+Use a container when a group of elements should move, rotate, scale to a virtual
+coordinate system, or share an interaction region.
 
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
@@ -113,6 +140,8 @@ A grouping element that establishes a coordinate space for child elements.
 ### `<Panel>`
 
 A simpler container that sets virtual dimensions and can draw an optional background.
+Use a panel when you mostly need a display area with known virtual dimensions,
+not the full transform and interaction behavior of a container.
 
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
@@ -125,6 +154,9 @@ A simpler container that sets virtual dimensions and can draw an optional backgr
 ### `<Include>`
 
 Includes content from another XML file.
+Use includes to split repeated or bulky XML into focused files. Included
+content keeps its own `_Directory` context, so relative paths inside the include
+can stay local to that file.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -384,7 +416,7 @@ Displays an image file.
 
 ### `<PixelStream>`
 
-Displays streaming video content (MJPEG or dynamic file). Standard positioning/alignment attributes apply. See [Integration — PixelStream](integration.md#pixelstream) for full details.
+Displays streaming video content. Standard positioning/alignment attributes apply. See [PixelStream](pixelstream.md) for full details.
 
 | Attribute | Aliases | Type | Required | Description |
 |-----------|---------|------|----------|-------------|
@@ -883,18 +915,16 @@ Attributes marked as `number/var` can contain:
         <!-- Engine Control Button -->
         <Button X="350" Y="500" Width="100" Height="50" 
                 Variable="engineStatus" On="ON" Off="OFF" Type="#_button_toggle_">
-            <Enabled>
-                <On>
-                    <Rectangle FillColor="0,0.6,0,1" Width="100" Height="50"/>
-                    <Text X="50" Y="25" Size="18" FillColor="1,1,1,1" 
-                          LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">ENGINE ON</Text>
-                </On>
-                <Off>
-                    <Rectangle FillColor="0.5,0,0,1" Width="100" Height="50"/>
-                    <Text X="50" Y="25" Size="18" FillColor="1,1,1,1" 
-                          LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">ENGINE OFF</Text>
-                </Off>
-            </Enabled>
+            <ButtonIndicatorOn>
+                <Rectangle FillColor="0,0.6,0,1" Width="100" Height="50"/>
+                <Text X="50" Y="25" Size="18" FillColor="1,1,1,1" 
+                      LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">ENGINE ON</Text>
+            </ButtonIndicatorOn>
+            <ButtonIndicatorOff>
+                <Rectangle FillColor="0.5,0,0,1" Width="100" Height="50"/>
+                <Text X="50" Y="25" Size="18" FillColor="1,1,1,1" 
+                      LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_">ENGINE OFF</Text>
+            </ButtonIndicatorOff>
         </Button>
         
         <!-- Altitude Warning -->

@@ -19,6 +19,18 @@ The `<Blink>` element makes its children flash on and off at a configurable rate
 
 ---
 
+## When To Use Blink
+
+Use `Blink` for attention-getting visual state: alarms, cautions, transient
+status changes, and acknowledged/unacknowledged indicators. It is a visual
+wrapper, not a timer system for application logic.
+
+For logic that should happen once after a delay or on a fixed cadence, use C
+logic or variables with `Set`/`If`. Use `Blink` when the output you need is
+specifically "show these children on and off."
+
+---
+
 ## Attributes
 
 | Attribute | Type | Default | Description |

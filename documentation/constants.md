@@ -18,6 +18,22 @@ Constants are referenced using the `#` prefix:
 
 ---
 
+## When To Use Constants
+
+Use constants for values that are chosen before the display starts:
+
+- colors, spacing, dimensions, and style tokens used in several places
+- file paths and host/port defaults
+- operator/type constants such as `#_button_toggle_` and `#_set_add_`
+- feature flags for static `If` branches
+- deployment-specific values overridden from the command line
+
+Constants are not runtime state. Once preprocessing finishes, the display sees
+the substituted value, not a live binding. Use a [variable](variables.md) when a
+value must change while the display is running.
+
+---
+
 ## Constant Syntax
 
 ### Basic Reference
@@ -95,7 +111,7 @@ Mark constants as immutable to prevent command-line overrides:
 Constants can be set or overridden from the command line when launching dcapp:
 
 ```bash
-dcapp myDisplay.xml buttonColor="1,0,0,1" serverHost="192.168.1.100"
+./bin/dcapp.sh myDisplay.xml buttonColor="1,0,0,1" serverHost="192.168.1.100"
 ```
 
 This allows the same display XML to be configured differently at runtime.
@@ -181,7 +197,7 @@ Used with the `<Set>` element's `Operator` attribute. See [Set Operators](variab
 
 ### PixelStream Type Constants
 
-See [Integration](integration.md#pixelstream) for usage details.
+See [PixelStream](pixelstream.md) for usage details.
 
 | Constant | Value | Description |
 |----------|-------|-------------|

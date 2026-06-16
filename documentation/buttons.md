@@ -19,6 +19,21 @@ The `<Button>` element creates interactive UI controls with multiple visual stat
 
 ---
 
+## When To Use Buttons
+
+Use `Button` when the display needs a control with built-in state behavior:
+
+- momentary controls that are on only while pressed
+- standard action buttons that write an on value when clicked
+- toggles that alternate between on/off values
+- visual state branches for enabled, disabled, pressed, released, on, and off
+
+Use lower-level [mouse events](mouse-events.md) instead when you only need a
+drawable region to react to hover/press/release, or when the interaction is a
+custom drag gesture such as a slider.
+
+---
+
 ## Positioning & Transformation Attributes
 
 These attributes control where and how the button is rendered.

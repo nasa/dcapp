@@ -18,6 +18,18 @@ Content outside the mask is not rendered. Content between or after `<Stencil>` b
 
 ---
 
+## When To Use Stencils
+
+Use a stencil when rectangular clipping is not enough. A stencil is the right
+tool for circular gauges, shaped camera windows, text-shaped fills, cutaways,
+and overlays that need holes.
+
+If the content only needs to stay inside a rectangular panel or container, use
+normal layout instead. Stencils add rendering state and are best reserved for
+real mask shapes.
+
+---
+
 ## Elements
 
 ### `<Stencil>`

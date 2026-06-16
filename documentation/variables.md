@@ -20,6 +20,26 @@ Variables are referenced using the `@` prefix:
 
 ---
 
+## When To Use Variables
+
+Use a variable when a value can change while the display is running or when
+multiple parts of the display need to observe the same runtime state.
+
+Good fits:
+
+- text readouts and status labels
+- positions, colors, angles, and dimensions that update over time
+- button state and slider values
+- values received from Trick, Edge, or logic code
+- values that XML `Set` or `If` elements need to modify or test
+
+Do not use a variable just to avoid typing a repeated literal. Use a
+[constant](constants.md) for parse-time configuration such as colors, spacing,
+file paths, and feature flags. Use logic `user_data` for private C/C++ state
+that should not be rendered, transmitted, or directly edited by XML.
+
+---
+
 ## Declaring Variables
 
 Variables are declared at the top of your dcapp file, before the `<Window>` element:
@@ -192,6 +212,11 @@ Note: `#_set_min_` ensures `var <= value` (clamps down), `#_set_max_` ensures `v
 
 When `Defer="true"`, the operation is collected during the draw pass and applied atomically after the entire draw completes. This matches the legacy engine's deferred execution behavior for Sets inside event handlers. Modern XML should not use `Defer` — it exists solely for legacy conversion. See the [Migration Guide](migration.md) for details.
 
+Use `Set` for simple state changes that belong in XML, such as incrementing a
+counter, clamping a slider, or changing a mode when a button is pressed. If the
+change needs complex branching, a long calculation, or private state, call a
+logic `Function` instead.
+
 ### Examples
 
 ```xml
@@ -219,13 +244,15 @@ When `Defer="true"`, the operation is collected during the draw pass and applied
 <Variable Type="#_variable_double_" InitialValue="50">volume</Variable>
 
 <Button X="100" Y="100" Width="40" Height="40">
-    <Pressed>
+    <MousePressed>
         <Set Variable="volume" Operator="#_set_add_">5</Set>
-    </Pressed>
-    <Enabled>
-        <Off><Rectangle FillColor="0.3,0.5,0.3,1" Width="40" Height="40"/></Off>
-        <On><Rectangle FillColor="0.4,0.7,0.4,1" Width="40" Height="40"/></On>
-    </Enabled>
+    </MousePressed>
+    <ButtonIndicatorOff>
+        <Rectangle FillColor="0.3,0.5,0.3,1" Width="40" Height="40"/>
+    </ButtonIndicatorOff>
+    <ButtonIndicatorOn>
+        <Rectangle FillColor="0.4,0.7,0.4,1" Width="40" Height="40"/>
+    </ButtonIndicatorOn>
 </Button>
 ```
 
@@ -293,9 +320,11 @@ See the [Constants documentation](constants.md) for the complete list.
 
 ## External Data Integration
 
-### TrickIO / EdgeIO
+### TrickIO / EdgeIO / PixelStream
 
-Variables can be bound to external simulation frameworks for real-time data exchange. See the [Integration Guide](integration.md) for TrickIO and EdgeIO setup.
+Variables can be bound to external systems for real-time data exchange. See
+[TrickIO](trick.md), [EdgeIO](edge.md), and [PixelStream](pixelstream.md) for
+the protocol-specific setup.
 
 ### Logic Files
 
@@ -348,17 +377,19 @@ For complex variable manipulation beyond what XML can express, you can use exter
         
         <!-- Decrement -->
         <Button X="20" Y="25" Width="50" Height="50">
-            <Pressed>
+            <MousePressed>
                 <Set Variable="counter" Operator="#_set_subtract_">1</Set>
-            </Pressed>
-            <Enabled>
-                <Off><Rectangle FillColor="0.5,0.2,0.2,1" Width="50" Height="50"/>
-                     <Text X="25" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                           FillColor="1,1,1,1" Size="24">−</Text></Off>
-                <On><Rectangle FillColor="0.7,0.3,0.3,1" Width="50" Height="50"/>
-                    <Text X="25" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                          FillColor="1,1,1,1" Size="24">−</Text></On>
-            </Enabled>
+            </MousePressed>
+            <ButtonIndicatorOff>
+                <Rectangle FillColor="0.5,0.2,0.2,1" Width="50" Height="50"/>
+                <Text X="25" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                      FillColor="1,1,1,1" Size="24">-</Text>
+            </ButtonIndicatorOff>
+            <ButtonIndicatorOn>
+                <Rectangle FillColor="0.7,0.3,0.3,1" Width="50" Height="50"/>
+                <Text X="25" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                      FillColor="1,1,1,1" Size="24">-</Text>
+            </ButtonIndicatorOn>
         </Button>
         
         <!-- Display -->
@@ -367,17 +398,19 @@ For complex variable manipulation beyond what XML can express, you can use exter
         
         <!-- Increment -->
         <Button X="230" Y="25" Width="50" Height="50">
-            <Pressed>
+            <MousePressed>
                 <Set Variable="counter" Operator="#_set_add_">1</Set>
-            </Pressed>
-            <Enabled>
-                <Off><Rectangle FillColor="0.2,0.5,0.2,1" Width="50" Height="50"/>
-                     <Text X="25" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                           FillColor="1,1,1,1" Size="24">+</Text></Off>
-                <On><Rectangle FillColor="0.3,0.7,0.3,1" Width="50" Height="50"/>
-                    <Text X="25" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
-                          FillColor="1,1,1,1" Size="24">+</Text></On>
-            </Enabled>
+            </MousePressed>
+            <ButtonIndicatorOff>
+                <Rectangle FillColor="0.2,0.5,0.2,1" Width="50" Height="50"/>
+                <Text X="25" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                      FillColor="1,1,1,1" Size="24">+</Text>
+            </ButtonIndicatorOff>
+            <ButtonIndicatorOn>
+                <Rectangle FillColor="0.3,0.7,0.3,1" Width="50" Height="50"/>
+                <Text X="25" Y="25" LocalAlignX="#_align_center_" LocalAlignY="#_align_middle_"
+                      FillColor="1,1,1,1" Size="24">+</Text>
+            </ButtonIndicatorOn>
         </Button>
     </Window>
 </DCAPP>

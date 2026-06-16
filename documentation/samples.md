@@ -6,13 +6,13 @@ what they teach, not by how flashy they are.
 Run a sample with:
 
 ```bash
-dcapp samples/<sample_name>/<sample_name>.xml
+./bin/dcapp.sh samples/<sample_name>/<sample_name>.xml
 ```
 
 For example:
 
 ```bash
-dcapp samples/primitives/primitives.xml
+./bin/dcapp.sh samples/primitives/primitives.xml
 ```
 
 ## Build Requirements

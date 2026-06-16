@@ -20,6 +20,24 @@ Each mouse event element acts as a conditional container: its children are rende
 
 ---
 
+## When To Use Mouse Events
+
+Use mouse event children when the clickable thing is already a drawable element
+and you need direct control over what happens on hover, press, release, active,
+or motion states.
+
+Good fits:
+
+- hover highlights on a shape or image
+- one-frame actions with `MousePressed` or `MouseReleased`
+- custom drag controls with `MouseMotion`
+- interactive regions that should not behave like on/off buttons
+
+Use [Button](buttons.md) when you want dcapp's built-in button state machine and
+indicator/target variable handling.
+
+---
+
 ## Mouse Event Elements
 
 ### `<MouseHovered>`

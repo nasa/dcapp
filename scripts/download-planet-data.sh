@@ -19,7 +19,7 @@ EXTRA_ARGS=()
 while [ $# -gt 0 ]; do
     case "$1" in
         -h|--help)
-            echo "Usage: scripts/download-planet-data.sh [--force] [chunkgen options]"
+            echo "Usage: ./scripts/download-planet-data.sh [--force] [chunkgen options]"
             echo ""
             echo "Downloads the LOLA LDEM_45S_100M lunar DEM and generates planet chunks."
             echo ""

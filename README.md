@@ -1,84 +1,64 @@
 # dcapp
 
-A lightweight XML-based framework for building real-time display applications and cockpit interfaces.
+dcapp is a PilotLight-based runtime for XML-defined real-time displays:
+instrument panels, simulation controls, cockpit-style interfaces, terrain
+views, and small custom display tools.
 
----
+XML describes the display tree. Optional C logic handles the pieces that are
+better as code: procedural drawing, state machines, calculations, IO, and
+advanced planet/terrain behavior.
 
-## Overview
+## Start Here
 
-dcapp allows you to create interactive graphical displays using a declarative XML syntax. Developed for NASA simulation environments, it provides a simple yet powerful way to build instrument panels, control interfaces, and data visualization displays.
+- [Getting Started](documentation/getting-started.md): install/build, run a
+  display, run samples, and understand the basic user-side workflow.
+- [Documentation Index](documentation/index.md): detailed topic map for XML,
+  values, primitives, buttons, mouse events, logic, Trick, Edge, PixelStream,
+  planet rendering, coordinate frames, architecture, coding style, migration,
+  and samples.
 
-**Key Features:**
-- Declarative XML syntax for rapid UI development
-- Real-time variable binding and updates
-- Interactive buttons with multiple states
-- Drawing primitives (rectangles, circles, polygons, lines, text, images) with optional rounded corners
-- GeoJSON overlay support for terrain views
-- Conditional rendering based on variable values
-- Integration with Trick and Edge simulation frameworks
-- Extensible via C/C++ logic files
-- Cross-platform (Linux, Windows, macOS)
-
-Rendering powered by [PilotLight](https://github.com/PilotLightTech/pilotlight).
-
----
-
-## Quick Start
+## Quick Run
 
 ```bash
-# Run a display (defaults to samples/welcome/welcome.xml)
-bin/dcapp.sh                                          # (dcapp.bat on Windows)
+git submodule update --init --recursive
+./scripts/build.sh
 
-# Run a specific display
-bin/dcapp.sh path/to/display.xml
+# Opens samples/welcome/welcome.xml
+./bin/dcapp.sh
 
-# Run with constants
-bin/dcapp.sh path/to/display.xml DEBUG_MODE=1
-
-# Validate a display file
-bin/dcapp-validate.sh path/to/display.xml             # (dcapp-validate.bat)
-
-# Generate a C header from a display
-bin/dcapp-genheader.sh path/to/display.xml output.h   # (dcapp-genheader.bat)
-
-# Generate planet terrain chunks
-bin/dcapp-planet-chunkgen.sh path/to/LDEM.lbl out     # (dcapp-planet-chunkgen.bat)
-
-# Render a planet snapshot
-bin/dcapp-planet-snapshot.sh --planet-data data/LDEM_45S_100M.planet.json --crs geodetic --attitude-frame local-ned --lat -58.62 --lon 345.27 --elevation 2000000 --output snapshot.png
-
-# Download the sample lunar DEM and generate planet chunks
-scripts/download-planet-data.sh                       # (download-planet-data.bat)
+# Or open a specific sample
+./bin/dcapp.sh samples/primitives/primitives.xml
 ```
 
----
+Windows wrappers use `.bat`:
 
-## Documentation
+```bat
+scripts\build.bat
+bin\dcapp.bat samples\welcome\welcome.xml
+```
 
-Full documentation index: [documentation/README.md](documentation/README.md)
+## Common Tools
 
-| Document | Description |
-|----------|-------------|
-| [Getting Started](documentation/getting-started.md) | Build instructions (Linux, macOS, Windows), first display |
-| [Variables](documentation/variables.md) | Runtime values, text interpolation, Set operators |
-| [Constants](documentation/constants.md) | Built-in and user-defined constants, color palette |
-| [Primitives](documentation/primitives.md) | All XML elements: drawing, layout, logic, terrain |
-| [Buttons](documentation/buttons.md) | Interactive controls with visual states |
-| [Mouse Events](documentation/mouse-events.md) | Mouse interaction and slider patterns |
-| [Logic Files](documentation/logic.md) | Extending displays with C/C++ code |
-| [Integration](documentation/integration.md) | TrickIO, EdgeIO, PixelStream |
-| [Planet](documentation/planet.md) | Chunked terrain rendering and custom shaders |
-| [Samples](documentation/samples.md) | Feature-to-sample index |
+| Tool | Purpose |
+|------|---------|
+| `./bin/dcapp.sh` / `bin\dcapp.bat` | Run a display. With no XML path, opens `samples/welcome/welcome.xml`. |
+| `./bin/dcapp-validate.sh` / `bin\dcapp-validate.bat` | Preprocess and validate XML. |
+| `./bin/dcapp-genheader.sh` / `bin\dcapp-genheader.bat` | Generate `logic/dcapp.h` for displays with C logic. |
+| `./bin/dcapp-planet-chunkgen.sh` / `bin\dcapp-planet-chunkgen.bat` | Convert DEM data into planet terrain chunks. |
+| `./bin/dcapp-planet-snapshot.sh` / `bin\dcapp-planet-snapshot.bat` | Render a planet PNG from chunk data without XML. |
 
----
+## Samples
+
+Start with `samples/welcome/welcome.xml`, then browse focused samples such as
+`primitives`, `styles`, `includes`, `conditionals`, `buttons`, `events`,
+`slider`, `stencil`, `drawfunction1` through `drawfunction4`, `trick`,
+`pixelstream-mjpeg`, and `planet`.
 
 ## Credits
 
-- **Mike McFarlane** — Original creator
-- **Nathan Reagan** — Maintainer
-- **Jonathan Hoffstadt** — Maintainer, creator of [PilotLight](https://github.com/PilotLightTech/pilotlight)
-
----
+- Mike McFarlane, original creator
+- Nathan Reagan, maintainer
+- Jonathan Hoffstadt, maintainer and creator of PilotLight
 
 ## License
 

@@ -3,7 +3,7 @@
 DCAPP Legacy to New XML Syntax Converter
 
 Converts legacy dcapp XML files to the new syntax based on the rules
-documented in documentation/notes.txt.
+summarized in documentation/migration.md.
 
 Usage:
     python convert-legacy-xml.py input.xml [output.xml]

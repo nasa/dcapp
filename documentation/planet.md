@@ -17,6 +17,18 @@ Multiple `<PlanetView>` elements can reference the same `<Planet>` definition, a
 
 ---
 
+## When To Use Planet Rendering
+
+Use planet rendering when the display needs real terrain geometry, camera
+movement over a spherical body, level-of-detail terrain, or geospatial overlays.
+It is designed for DEM-backed terrain views, not simple decorative globes.
+
+Use `Image` for a static map, `Sphere` for a simple textured globe, and
+`Planet`/`PlanetView` when terrain height, camera frame, streamed chunks, or
+planet overlays matter.
+
+---
+
 ## Data Preparation
 
 Before dcapp can render a planet, the raw DEM data must be preprocessed into a chunked tile cache. This is a one-time offline step.
@@ -30,7 +42,7 @@ The input is a GeoTIFF or PDS-compatible DEM file. For example, the included pla
 The repository-level planet data script downloads both the `.IMG` raster and its `.LBL` label file automatically:
 
 ```bash
-scripts/download-planet-data.sh
+./scripts/download-planet-data.sh
 ```
 
 This downloads the DEM and writes generated chunks directly under `data/`.
@@ -60,10 +72,10 @@ dcapp-planet-chunkgen <input_dem> <output_dir> [options]
 | `--keep-tiles` | Off | Keep intermediate PNG tiles (not deleted after processing) |
 | `-h`, `--help` | | Show help |
 
-A convenience wrapper script is provided at `bin/dcapp-planet-chunkgen.sh`, which handles path resolution automatically:
+A convenience wrapper script is provided at `./bin/dcapp-planet-chunkgen.sh`, which handles path resolution automatically:
 
 ```bash
-bin/dcapp-planet-chunkgen.sh /path/to/LDEM_45S_100M.LBL /path/to/output_dir
+./bin/dcapp-planet-chunkgen.sh /path/to/LDEM_45S_100M.LBL /path/to/output_dir
 ```
 
 ### Output
@@ -86,7 +98,7 @@ Chunk generation supports north- and south-polar stereographic/UPS-style DEMs wi
 **Geodetic camera:**
 
 ```bash
-bin/dcapp-planet-snapshot.sh \
+./bin/dcapp-planet-snapshot.sh \
   --planet-data data/LDEM_45S_100M.planet.json \
   --crs geodetic \
   --attitude-frame local-ned \
@@ -99,7 +111,7 @@ bin/dcapp-planet-snapshot.sh \
 **Cartesian camera:**
 
 ```bash
-bin/dcapp-planet-snapshot.sh \
+./bin/dcapp-planet-snapshot.sh \
   --planet-data data/LDEM_45S_100M.planet.json \
   --crs cartesian \
   --attitude-frame cartesian-rpy \
@@ -742,10 +754,10 @@ The sample provides sliders for latitude, longitude, elevation, and heading, alo
 
 ```bash
 # 1. Prepare the terrain data (downloads DEM, runs chunkgen)
-scripts/download-planet-data.sh
+./scripts/download-planet-data.sh
 
 # 2. Run the display
-bin/dcapp.sh samples/planet/planet.xml
+./bin/dcapp.sh samples/planet/planet.xml
 ```
 
 ---

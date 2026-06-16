@@ -1,5 +1,11 @@
 # Pilotlight Coordinate Frame
 
+This page exists because coordinate bugs are otherwise hard to diagnose. Use it
+when adding 3D drawing, planet camera behavior, shader math, or any code that
+crosses between dcapp panel coordinates and PilotLight world/camera space.
+
+For normal XML layout, use [primitives.md](primitives.md#positioning-and-alignment).
+
 ## World Space: Y-Up, Right-Handed
 
 Pilotlight uses a **Y-up, right-handed** coordinate system in world space.
