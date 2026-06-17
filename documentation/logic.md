@@ -185,7 +185,7 @@ snprintf(*STATUS_TEXT, 256, "phase %.2f", *PHASE);
 Variables can also be looked up by name:
 
 ```c
-double *phase = (double *)dc_get_variable(app_ctx, "PHASE");
+double *phase = (double *)dc_app->get_variable(app_ctx, "PHASE");
 ```
 
 ## `Function` Element
@@ -250,6 +250,7 @@ The generated header exposes these global API tables:
 
 | API | Use |
 |-----|-----|
+| `dc_app` | App-level helpers such as explicit-context variable lookup |
 | `dc_draw` | Draw lines, polygons, rectangles, rounded rectangles, circles, ellipses, text, images, containers, and stencils |
 | `dc_mouse` | Register hit targets and query hover/press/release/click/active state |
 | `dc_texture` | Load and query app-owned textures |

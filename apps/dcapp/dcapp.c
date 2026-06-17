@@ -30,6 +30,10 @@ static void     _init_planets(_AppData *app_data);
 static void     _update_planet_defs(_AppData *app_data);
 static void     _load_apis(plApiRegistryI *api_registry);
 
+static const DcAppApi dc_app_interface = {
+    .get_variable = get_variable_value_addr,
+};
+
 #define DC_APP_MAX_LOGIC_FRAME_DELTA 0.25
 #define DC_APP_MAX_LOGIC_UPDATES_PER_FRAME 16
 
@@ -165,13 +169,14 @@ PL_EXPORT void *pl_app_load(plApiRegistryI *api_registry, _AppData *app_data) {
         // exposes only dcapp-owned api tables to logic.
         DcAppInit init = {
             .size = sizeof(init),
-            .version = 5,
+            .version = 6,
             .app_ctx = app_data,
             .get_variable = get_variable_value_addr,
             .draw = dc_app_draw_api(),
             .mouse = dc_app_mouse_api(),
             .texture = dc_app_texture_api(),
             .planet = dc_app_planet_api(),
+            .app = &dc_app_interface,
         };
         app_data->logic_pre_init(&init);
     }

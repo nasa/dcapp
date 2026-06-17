@@ -215,7 +215,7 @@ static void draw_example_21_text_ex(DcDrawContext *draw_ctx, const DcDrawFuncArg
     dc_draw->line(draw_ctx, (DcVec2){70.0f, 60.0f}, (DcVec2){150.0f, 60.0f}, (DcStroke){ .color = (DcVec4){ .r = 0.32f, .g = 0.46f, .b = 0.34f, .a = 0.8f }, .width = 1.0f });
 }
 
-// 22: dc_load_image() is called once in display_init(). The returned
+// 22: dc_texture->load_image() is called once in display_init(). The returned
 // DcTextureId can then be reused by image() and image_ex() every frame.
 static void draw_example_22_image(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args) {
     if (g_image_texture) {
@@ -532,13 +532,13 @@ void display_init(DcAppContext *app_ctx, void **user_data) {
         return;
     }
 
-    g_image_texture = dc_load_image(app_ctx, "../../assets/nasa.png", &g_image_size);
+    g_image_texture = dc_texture->load_image(app_ctx, "../../assets/nasa.png", &g_image_size);
     if (!g_image_texture) {
-        g_image_status = "dc_load_image failed";
+        g_image_status = "dc_texture->load_image failed";
         return;
     }
 
-    if (!dc_get_texture_size(app_ctx, g_image_texture, &g_image_size)) {
+    if (!dc_texture->get_size(app_ctx, g_image_texture, &g_image_size)) {
         g_image_status = "texture size unavailable";
     }
 }

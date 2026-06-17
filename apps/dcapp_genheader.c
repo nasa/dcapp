@@ -102,6 +102,16 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "#ifndef DCAPP_H");
     fprintf(file, "%s\n", "#define DCAPP_H");
     fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "#ifndef DCAPP_DEPRECATED");
+    fprintf(file, "%s\n", "#if defined(__GNUC__) || defined(__clang__)");
+    fprintf(file, "%s\n", "#define DCAPP_DEPRECATED(message) __attribute__((deprecated(message)))");
+    fprintf(file, "%s\n", "#elif defined(_MSC_VER)");
+    fprintf(file, "%s\n", "#define DCAPP_DEPRECATED(message) __declspec(deprecated(message))");
+    fprintf(file, "%s\n", "#else");
+    fprintf(file, "%s\n", "#define DCAPP_DEPRECATED(message)");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "#endif");
+    fprintf(file, "%s\n", "");
 
     _write_draw_api(file);
     fprintf(file, "%s\n", "#ifndef _DCAPP_LOGIC_EXTERN_");
@@ -111,7 +121,8 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "#endif");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// api tables are filled by dcapp before display_init().");
-    fprintf(file, "%s\n", "DcGetVariableFn dc_get_variable_fn;");
+    fprintf(file, "%s\n", "DcAppContext *dc_app_ctx;");
+    fprintf(file, "%s\n", "const DcAppApi *dc_app;");
     fprintf(file, "%s\n", "const DcDrawApi *dc_draw;");
     fprintf(file, "%s\n", "const DcMouseApi *dc_mouse;");
     fprintf(file, "%s\n", "const DcTextureApi *dc_texture;");
@@ -154,27 +165,19 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "");
 
     // define dc_get_variable() and display_pre_init()
-    fprintf(file, "%s\n", "// Lookup helper for variables declared in XML.");
-    fprintf(file, "%s\n", "void *dc_get_variable(DcAppContext *app_ctx, const char *name) {");
-    fprintf(file, "%s\n", "    if (!dc_get_variable_fn) return NULL;");
-    fprintf(file, "%s\n", "    return dc_get_variable_fn(app_ctx, name);");
-    fprintf(file, "%s\n", "}");
-    fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "// image helpers load app-owned textures during lifecycle callbacks.");
-    fprintf(file, "%s\n", "DcTextureId dc_load_image(DcAppContext *app_ctx, const char *path, DcVec2 *out_size) {");
-    fprintf(file, "%s\n", "    if (!dc_texture || !dc_texture->load_image) return 0;");
-    fprintf(file, "%s\n", "    return dc_texture->load_image(app_ctx, path, out_size);");
-    fprintf(file, "%s\n", "}");
-    fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "bool dc_get_texture_size(DcAppContext *app_ctx, DcTextureId texture_id, DcVec2 *out_size) {");
-    fprintf(file, "%s\n", "    if (!dc_texture || !dc_texture->get_size) return false;");
-    fprintf(file, "%s\n", "    return dc_texture->get_size(app_ctx, texture_id, out_size);");
+    fprintf(file, "%s\n", "// Legacy lookup helper for variables declared in XML.");
+    fprintf(file, "%s\n", "// Deprecated: use generated variable pointers instead.");
+    fprintf(file, "%s\n", "DCAPP_DEPRECATED(\"use generated variable pointers instead of dc_get_variable()\")");
+    fprintf(file, "%s\n", "void *dc_get_variable(const char *name) {");
+    fprintf(file, "%s\n", "    if (!dc_app || !dc_app->get_variable) return NULL;");
+    fprintf(file, "%s\n", "    return dc_app->get_variable(dc_app_ctx, name);");
     fprintf(file, "%s\n", "}");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// Internal setup called before display_init().");
     fprintf(file, "%s\n", "void display_pre_init(const DcInit *init) {");
     fprintf(file, "%s\n", "    if (init && init->version >= 1 && init->size >= sizeof(DcInit)) {");
-    fprintf(file, "%s\n", "        dc_get_variable_fn = init->get_variable;");
+    fprintf(file, "%s\n", "        dc_app_ctx = init->app_ctx;");
+    fprintf(file, "%s\n", "        dc_app = init->app;");
     fprintf(file, "%s\n", "        dc_draw = init->draw;");
     fprintf(file, "%s\n", "        dc_mouse = init->mouse;");
     fprintf(file, "%s\n", "        dc_texture = init->texture;");
@@ -185,16 +188,16 @@ int main(int argc, char **argv) {
         DcValue        *value    = dc_app_lookup_get_value(lookup, var->value_index);
         switch (value->type) {
             case DC_VALUE_TYPE_STRING:
-                fprintf(file, "        %s = (char (*)[%d])dc_get_variable(init->app_ctx, \"%s\");\n", var_name, DC_VALUE_STRING_BUFFER_SIZE, var_name);
+                fprintf(file, "        %s = (char (*)[%d])(dc_app && dc_app->get_variable ? dc_app->get_variable(dc_app_ctx, \"%s\") : NULL);\n", var_name, DC_VALUE_STRING_BUFFER_SIZE, var_name);
                 break;
             case DC_VALUE_TYPE_DOUBLE:
-                fprintf(file, "        %s = (double *)dc_get_variable(init->app_ctx, \"%s\");\n", var_name, var_name);
+                fprintf(file, "        %s = (double *)(dc_app && dc_app->get_variable ? dc_app->get_variable(dc_app_ctx, \"%s\") : NULL);\n", var_name, var_name);
                 break;
             case DC_VALUE_TYPE_INTEGER:
-                fprintf(file, "        %s = (int *)dc_get_variable(init->app_ctx, \"%s\");\n", var_name, var_name);
+                fprintf(file, "        %s = (int *)(dc_app && dc_app->get_variable ? dc_app->get_variable(dc_app_ctx, \"%s\") : NULL);\n", var_name, var_name);
                 break;
             case DC_VALUE_TYPE_BOOLEAN:
-                fprintf(file, "        %s = (bool *)dc_get_variable(init->app_ctx, \"%s\");\n", var_name, var_name);
+                fprintf(file, "        %s = (bool *)(dc_app && dc_app->get_variable ? dc_app->get_variable(dc_app_ctx, \"%s\") : NULL);\n", var_name, var_name);
                 break;
             default:
                 DC_LOG_ERROR("GenHeader", "Invalid variable value type %d", value->type);
@@ -220,9 +223,10 @@ int main(int argc, char **argv) {
     fprintf(file, "%s\n", "extern \"C\" {");
     fprintf(file, "%s\n", "#endif");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "void *dc_get_variable(DcAppContext *app_ctx, const char *name);");
-    fprintf(file, "%s\n", "DcTextureId dc_load_image(DcAppContext *app_ctx, const char *path, DcVec2 *out_size);");
-    fprintf(file, "%s\n", "bool dc_get_texture_size(DcAppContext *app_ctx, DcTextureId texture_id, DcVec2 *out_size);");
+    fprintf(file, "%s\n", "DCAPP_DEPRECATED(\"use generated variable pointers instead of dc_get_variable()\")");
+    fprintf(file, "%s\n", "void *dc_get_variable(const char *name);");
+    fprintf(file, "%s\n", "extern DcAppContext *dc_app_ctx;");
+    fprintf(file, "%s\n", "extern const DcAppApi *dc_app;");
     fprintf(file, "%s\n", "extern const DcDrawApi *dc_draw;");
     fprintf(file, "%s\n", "extern const DcMouseApi *dc_mouse;");
     fprintf(file, "%s\n", "extern const DcTextureApi *dc_texture;");
@@ -501,7 +505,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "// draw context passed only to DrawFunction callbacks.");
     fprintf(file, "%s\n", "typedef struct _DcDrawContext DcDrawContext;");
     fprintf(file, "%s\n", "");
-    fprintf(file, "%s\n", "// Texture handle returned by dc_load_image() and consumed by dc_draw->image().");
+    fprintf(file, "%s\n", "// Texture handle returned by dc_texture->load_image() and consumed by dc_draw->image().");
     fprintf(file, "%s\n", "typedef uint32_t DcTextureId;");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "// opaque planet handles.");
@@ -668,8 +672,14 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "} DcPlanetApi;");
     fprintf(file, "%s\n", "");
 
-    fprintf(file, "%s\n", "// runtime hooks filled in by dcapp before user display_init().");
+    fprintf(file, "%s\n", "// app-level functions require an explicit app context.");
     fprintf(file, "%s\n", "typedef void *(*DcGetVariableFn)(DcAppContext *app_ctx, const char *name);");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "typedef struct _DcAppApi {");
+    fprintf(file, "%s\n", "    void *(*get_variable)(DcAppContext *app_ctx, const char *name);");
+    fprintf(file, "%s\n", "} DcAppApi;");
+    fprintf(file, "%s\n", "");
+    fprintf(file, "%s\n", "// runtime hooks filled in by dcapp before user display_init().");
     fprintf(file, "%s\n", "");
     fprintf(file, "%s\n", "typedef struct _DcInit {");
     fprintf(file, "%s\n", "    uint32_t size;");
@@ -680,6 +690,7 @@ static void _write_draw_api(FILE *file) {
     fprintf(file, "%s\n", "    const DcMouseApi *mouse;");
     fprintf(file, "%s\n", "    const DcTextureApi *texture;");
     fprintf(file, "%s\n", "    const DcPlanetApi *planet;");
+    fprintf(file, "%s\n", "    const DcAppApi *app;");
     fprintf(file, "%s\n", "} DcInit;");
     fprintf(file, "%s\n", "");
 }

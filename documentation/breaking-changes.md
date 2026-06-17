@@ -88,13 +88,13 @@ work.
   `display_pre_init(_GetVariableValueAddr)` to
   `display_pre_init(const DcInit *)`.
 - Generated logic headers replaced the old `_GetVariableValueAddr` /
-  `get_pointer` variable lookup path with `dc_get_variable("VariableName")`.
+  `get_pointer` variable lookup path with `dc_app->get_variable(app_ctx, "VariableName")`.
 - The generated header no longer declares `get_pointer` as the public/manual
-  variable lookup escape hatch. Manual lookups should use `dc_get_variable()`.
+  variable lookup escape hatch. Manual lookups should use `dc_app->get_variable()`.
 
 #### Migration
 - Regenerate `logic/dcapp.h` and rebuild logic shared libraries.
-- If user code called the old generated lookup pointer directly, update it to `dc_get_variable("VariableName")`.
+- If user code called the old generated lookup pointer directly, update it to `dc_app->get_variable(app_ctx, "VariableName")`.
 - Remove user-maintained declarations of `_GetVariableValueAddr` and
   `get_pointer`; those names are no longer part of the generated header
   contract.

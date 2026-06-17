@@ -151,7 +151,7 @@ Format based on Keep a Changelog. Uses Semantic Versioning (2.MINOR.PATCH).
 
 ### Added
 - Added DrawFunction image rendering through `dc_draw->image`.
-- Added texture loading helpers exposed to logic code: `dc_load_image()` and `dc_get_texture_size()`.
+- Added texture loading helpers exposed to logic code through `dc_texture->load_image()` and `dc_texture->get_size()`.
 - Added shared texture helpers used by XML image/sphere rendering and DrawFunction image rendering.
 - Updated the DrawFunction 2 sample with image rendering coverage.
 

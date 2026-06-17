@@ -270,6 +270,10 @@ typedef struct _DcAppPlanetApi {
 
 typedef void *(*DcAppGetVariableFn)(DcAppContext *app_ctx, const char *name);
 
+typedef struct _DcAppApi {
+    void *(*get_variable)(DcAppContext *app_ctx, const char *name);
+} DcAppApi;
+
 typedef struct _DcAppInit {
     uint32_t size;
     uint32_t version;
@@ -279,6 +283,7 @@ typedef struct _DcAppInit {
     const DcAppMouseApi *mouse;
     const DcAppTextureApi *texture;
     const DcAppPlanetApi *planet;
+    const DcAppApi *app;
 } DcAppInit;
 
 #endif
