@@ -45,14 +45,19 @@ set "PILOTLIGHT_CONFIG=%CONFIG%_experimental"
 set "PILOTLIGHT_OUT=%DCAPP_HOME%\pilotlight\out"
 set "PILOTLIGHT_STAMP=%PILOTLIGHT_OUT%\.dcapp-pilotlight-win32-%PILOTLIGHT_CONFIG%.stamp"
 set "DCAPP_STAMP=%PILOTLIGHT_OUT%\.dcapp-win32-%CONFIG%.stamp"
+set "DCAPP_BUILD_STAMP=%PILOTLIGHT_OUT%\.dcapp-build-win32-%CONFIG%.stamp"
 set "DCAPP_HEAD="
 set "PILOTLIGHT_HEAD="
+set "DCAPP_DIRTY=0"
 set "PILOTLIGHT_DIRTY=0"
 set "CLEAN_PILOTLIGHT_OUT=0"
 set "BUILD_PILOTLIGHT=0"
+set "BUILD_DCAPP=0"
 
 for /f "usebackq delims=" %%H in (`git -C "%DCAPP_HOME%" rev-parse HEAD 2^>nul`) do set "DCAPP_HEAD=%%H"
 for /f "usebackq delims=" %%H in (`git -C "%DCAPP_HOME%\pilotlight" rev-parse HEAD 2^>nul`) do set "PILOTLIGHT_HEAD=%%H"
+git -C "%DCAPP_HOME%" diff --quiet HEAD -- . ":(exclude)pilotlight" >nul 2>nul
+if errorlevel 1 set "DCAPP_DIRTY=1"
 git -C "%DCAPP_HOME%\pilotlight" diff --quiet HEAD -- >nul 2>nul
 if errorlevel 1 set "PILOTLIGHT_DIRTY=1"
 
@@ -108,22 +113,55 @@ if "%BUILD_PILOTLIGHT%"=="1" (
     echo [1/3] Skipping pilotlight; cached %PILOTLIGHT_CONFIG% build is current.
 )
 
+if "%FORCE%"=="1" set "BUILD_DCAPP=1"
+if "%BUILD_PILOTLIGHT%"=="1" set "BUILD_DCAPP=1"
+if not defined DCAPP_HEAD set "BUILD_DCAPP=1"
+if "%DCAPP_DIRTY%"=="1" set "BUILD_DCAPP=1"
+if not exist "%DCAPP_BUILD_STAMP%" set "BUILD_DCAPP=1"
+if "%BUILD_DCAPP%"=="0" set /p DCAPP_BUILD_STAMP_HEAD=<"%DCAPP_BUILD_STAMP%"
+if "%BUILD_DCAPP%"=="0" if /I not "%DCAPP_BUILD_STAMP_HEAD%"=="%DCAPP_HEAD%" set "BUILD_DCAPP=1"
+if not exist "%PILOTLIGHT_OUT%\dc_draw_ext.dll" set "BUILD_DCAPP=1"
+if not exist "%PILOTLIGHT_OUT%\dc_draw_backend_ext.dll" set "BUILD_DCAPP=1"
+if not exist "%PILOTLIGHT_OUT%\pl_planet_processor_ext.dll" set "BUILD_DCAPP=1"
+if not exist "%PILOTLIGHT_OUT%\pl_planet_ext.dll" set "BUILD_DCAPP=1"
+if not exist "%PILOTLIGHT_OUT%\dcapp.dll" set "BUILD_DCAPP=1"
+if not exist "%PILOTLIGHT_OUT%\dcapp-genheader.exe" set "BUILD_DCAPP=1"
+if not exist "%PILOTLIGHT_OUT%\dcapp-validate.exe" set "BUILD_DCAPP=1"
+if not exist "%PILOTLIGHT_OUT%\dcapp-planet-chunkgen.dll" set "BUILD_DCAPP=1"
+if not exist "%PILOTLIGHT_OUT%\dcapp-planet-snapshot.dll" set "BUILD_DCAPP=1"
+if not exist "%DCAPP_HOME%\samples\drawfunction1\logic\logic.dll" set "BUILD_DCAPP=1"
+if not exist "%DCAPP_HOME%\samples\drawfunction2\logic\logic.dll" set "BUILD_DCAPP=1"
+if not exist "%DCAPP_HOME%\samples\drawfunction3\logic\logic.dll" set "BUILD_DCAPP=1"
+if not exist "%DCAPP_HOME%\samples\drawfunction4\logic\logic.dll" set "BUILD_DCAPP=1"
+if not exist "%DCAPP_HOME%\samples\lissajous\logic\logic.dll" set "BUILD_DCAPP=1"
+if not exist "%DCAPP_HOME%\samples\planet\logic\logic.dll" set "BUILD_DCAPP=1"
+if not exist "%DCAPP_HOME%\samples\ptz\logic\logic.dll" set "BUILD_DCAPP=1"
+
 :: Step 2: Build dcapp apps
 echo.
-echo [2/3] Building dcapp apps...
-call "%DCAPP_HOME%\scripts\internal\build-apps-win32.bat" -c %CONFIG%
-if errorlevel 1 (
-    echo Apps build failed!
-    exit /b 1
+if "%BUILD_DCAPP%"=="1" (
+    echo [2/3] Building dcapp apps...
+    call "%DCAPP_HOME%\scripts\internal\build-apps-win32.bat" -c %CONFIG%
+    if errorlevel 1 (
+        echo Apps build failed!
+        exit /b 1
+    )
+) else (
+    echo [2/3] Skipping dcapp apps; cached %CONFIG% build is current.
 )
 
 :: Step 3: Build dcapp samples
 echo.
-echo [3/3] Building dcapp samples...
-call "%DCAPP_HOME%\scripts\internal\build-samples-win32.bat" -c %CONFIG%
-if errorlevel 1 (
-    echo Samples build failed!
-    exit /b 1
+if "%BUILD_DCAPP%"=="1" (
+    echo [3/3] Building dcapp samples...
+    call "%DCAPP_HOME%\scripts\internal\build-samples-win32.bat" -c %CONFIG%
+    if errorlevel 1 (
+        echo Samples build failed!
+        exit /b 1
+    )
+    if defined DCAPP_HEAD if "%DCAPP_DIRTY%"=="0" >"%DCAPP_BUILD_STAMP%" echo %DCAPP_HEAD%
+) else (
+    echo [3/3] Skipping dcapp samples; cached %CONFIG% build is current.
 )
 
 echo.
