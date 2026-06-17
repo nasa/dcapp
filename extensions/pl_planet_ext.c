@@ -43,6 +43,7 @@ Index:
 
 #include <stdio.h>
 #include <float.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include "pl.h"
 #include "pl_planet_ext.h"
@@ -992,7 +993,8 @@ pl_planet_set_texture(plPlanet* ptPlanet, plPlanetTexture* ptPlanetTexture, uint
                         const uint32_t tileY = (uint32_t)(tly + (int)iy);
 
                         char acNameBuffer[128] = {0};
-                        sprintf(acNameBuffer, "hazard_prep_%u_%u.png", tileX, tileY);
+                        snprintf(acNameBuffer, sizeof(acNameBuffer), "hazard_prep_%llx_%u_%u.png",
+                                 (unsigned long long)(uintptr_t)ptPlanet, tileX, tileY);
 
                         const size_t flat = (size_t)tileX + (size_t)tileY * (size_t)uH;
                         if (flat >= (size_t)uTileCount)
