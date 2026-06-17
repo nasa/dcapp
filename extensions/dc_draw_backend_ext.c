@@ -1017,6 +1017,7 @@ pl_submit_2d_drawlist(dcDrawList2D* ptDrawlist, plRenderEncoder* ptEncoder, floa
 
                     // free the override data
                     PL_FREE(ptOverride);
+                    ptDrawlist->sbtDrawCommands[i].pUserCallbackData = NULL;
                 }
                 else
                 {

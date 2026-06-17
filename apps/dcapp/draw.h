@@ -4,7 +4,7 @@
 #include "dcapp.h"
 
 #ifndef DCAPP_LINE_WIDTH_FACTOR
-#define DCAPP_LINE_WIDTH_FACTOR 2.0f
+#define DCAPP_LINE_WIDTH_FACTOR 1.2f
 #endif
 
 #ifndef DCAPP_DRAW_CONTEXT_STACK_MAX

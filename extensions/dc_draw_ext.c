@@ -586,8 +586,8 @@ pl_prepare_2d_drawlist(dcDrawList2D* ptDrawlist)
                     bCreateNewCommand = true;
                 }
 
-                // check for same callback (allows merging draw calls)5
-                if(ptLastCommand->tUserCallback != NULL)
+                // callbacks are command-stream state changes and must not merge
+                if(ptLayerCommand->tUserCallback != NULL || ptLastCommand->tUserCallback != NULL)
                 {
                     bCreateNewCommand = true;
                 }
@@ -602,8 +602,10 @@ pl_prepare_2d_drawlist(dcDrawList2D* ptDrawlist)
             if(bCreateNewCommand)
             {
                 ptLayerCommand->uIndexOffset = uGlobalIdxBufferIndexOffset + ptLayerCommand->uIndexOffset;
-                pl_sb_push(ptDrawlist->sbtDrawCommands, *ptLayerCommand);       
-                ptLastCommand = ptLayerCommand;
+                pl_sb_push(ptDrawlist->sbtDrawCommands, *ptLayerCommand);
+                if(ptLayerCommand->tUserCallback != NULL)
+                    ptLayerCommand->pUserCallbackData = NULL;
+                ptLastCommand = &pl_sb_top(ptDrawlist->sbtDrawCommands);
             }
             
         }    
