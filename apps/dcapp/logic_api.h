@@ -42,6 +42,26 @@ typedef struct _DcAppPlanetBreadcrumbsPoints {
     DcAppPlanetCrs crs;
 } DcAppPlanetBreadcrumbsPoints;
 
+typedef enum _DcAppPlanetViewFlags {
+    DC_APP_PLANET_VIEW_FLAGS_NONE = 0,
+    DC_APP_PLANET_VIEW_FLAGS_WIREFRAME = 1 << 0,
+    DC_APP_PLANET_VIEW_FLAGS_SHOW_LEVELS = 1 << 1,
+    DC_APP_PLANET_VIEW_FLAGS_SHOW_ORIGIN = 1 << 2,
+    DC_APP_PLANET_VIEW_FLAGS_SHOW_CHUNKS = 1 << 3,
+    DC_APP_PLANET_VIEW_FLAGS_FLATTEN = 1 << 4,
+} DcAppPlanetViewFlags;
+
+typedef struct _DcAppPlanetViewOptions {
+    int flags;
+    float tau;
+} DcAppPlanetViewOptions;
+
+static inline DcAppPlanetViewOptions dc_app_planet_view_options_default(void) {
+    return (DcAppPlanetViewOptions){
+        .tau = 0.3f,
+    };
+}
+
 typedef union _DcAppVec4 {
     struct {
         union {
@@ -208,8 +228,8 @@ typedef struct _DcAppDrawApi {
     void (*stencil_end)(DcAppDrawContext *draw_ctx);
 
     // draws planet views and overlays through dcapp handles.
-    DcAppDrawPlanetViewHandle (*planet_view_geodetic)(DcAppDrawContext *draw_ctx, DcAppPlanetViewHandle view, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result);
-    DcAppDrawPlanetViewHandle (*planet_view_cartesian)(DcAppDrawContext *draw_ctx, DcAppPlanetViewHandle view, DcAppVec3 camera_position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result);
+    DcAppDrawPlanetViewHandle (*planet_view_geodetic)(DcAppDrawContext *draw_ctx, DcAppPlanetViewHandle view, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result);
+    DcAppDrawPlanetViewHandle (*planet_view_cartesian)(DcAppDrawContext *draw_ctx, DcAppPlanetViewHandle view, DcAppVec3 camera_position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result);
     void (*planet_sphere_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, double lat, double lon, double height, double radius, DcAppVec4 color);
     void (*planet_sphere_cartesian)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, DcAppVec3 position, float radius, DcAppVec4 color);
     void (*planet_line_geodetic)(DcAppDrawContext *draw_ctx, DcAppDrawPlanetViewHandle view, const DcAppVec3 *points, uint32_t point_count, float line_width, DcAppVec4 color);

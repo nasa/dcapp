@@ -5095,29 +5095,12 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
         }
     }
 
-    // tau
-    if (node->planet_view.tau != DC_APP_VAL_INDEX_UNDEFINED) {
-        float desired_tau = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.tau)->value_double;
-        plPlanetViewRuntimeOptions opts = _ext_planet->get_view_runtime_options(view);
-        if (opts.fTau != desired_tau) {
-            opts.fTau = desired_tau;
-            _ext_planet->set_view_runtime_options(view, opts);
-        }
-    }
-
-    // flatten
-    if (node->planet_view.flatten != DC_APP_VAL_INDEX_UNDEFINED) {
-        bool desired_flatten = dc_app_lookup_get_value(app_data->lookup, node->planet_view.flatten)->value_boolean;
-        plPlanetViewRuntimeOptions opts = _ext_planet->get_view_runtime_options(view);
-        bool current_flatten = (opts.tFlags & PL_PLANET_FLAGS_FLATTEN) != 0;
-        if (current_flatten != desired_flatten) {
-            if (desired_flatten)
-                opts.tFlags |= PL_PLANET_FLAGS_FLATTEN;
-            else
-                opts.tFlags &= ~PL_PLANET_FLAGS_FLATTEN;
-            _ext_planet->set_view_runtime_options(view, opts);
-        }
-    }
+    DcAppPlanetViewOptions options = dc_app_planet_view_options_default();
+    if (node->planet_view.tau != DC_APP_VAL_INDEX_UNDEFINED)
+        options.tau = (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.tau)->value_double;
+    if (node->planet_view.flatten != DC_APP_VAL_INDEX_UNDEFINED &&
+        dc_app_lookup_get_value(app_data->lookup, node->planet_view.flatten)->value_boolean)
+        options.flags |= DC_APP_PLANET_VIEW_FLAGS_FLATTEN;
 
     float fov = node->planet_view.fov != DC_APP_VAL_INDEX_UNDEFINED
         ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.fov)->value_double
@@ -5144,14 +5127,14 @@ static void _draw_node_planet_view(_AppData *app_data, _NodeIndex node_index, _N
             ? dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.lon)->value_double : 0.0;
         double elevation = node->planet_view.lle.ele != DC_APP_VAL_INDEX_UNDEFINED
             ? dc_app_lookup_get_value(app_data->lookup, node->planet_view.lle.ele)->value_double : 0.0;
-        draw_view = dc_app_draw_planet_view_geodetic(&ctx, node->planet_view.handle, lat, lon, elevation, rpy, fov, use_ortho, (DcAppVec2){0.0f, 0.0f}, (DcAppVec2){dimension[0], dimension[1]}, (DcAppPlacement){0}, NULL);
+        draw_view = dc_app_draw_planet_view_geodetic(&ctx, node->planet_view.handle, lat, lon, elevation, rpy, fov, use_ortho, options, (DcAppVec2){0.0f, 0.0f}, (DcAppVec2){dimension[0], dimension[1]}, (DcAppPlacement){0}, NULL);
     } else if (node->planet_view.crs == DC_APP_PLANET_CRS_CARTESIAN) {
         DcAppVec3 position = {
             node->planet_view.xyz.x != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.x)->value_double : 0.0f,
             node->planet_view.xyz.y != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.y)->value_double : 0.0f,
             node->planet_view.xyz.z != DC_APP_VAL_INDEX_UNDEFINED ? (float)dc_app_lookup_get_value(app_data->lookup, node->planet_view.xyz.z)->value_double : 0.0f
         };
-        draw_view = dc_app_draw_planet_view_cartesian(&ctx, node->planet_view.handle, position, rpy, fov, use_ortho, (DcAppVec2){0.0f, 0.0f}, (DcAppVec2){dimension[0], dimension[1]}, (DcAppPlacement){0}, NULL);
+        draw_view = dc_app_draw_planet_view_cartesian(&ctx, node->planet_view.handle, position, rpy, fov, use_ortho, options, (DcAppVec2){0.0f, 0.0f}, (DcAppVec2){dimension[0], dimension[1]}, (DcAppPlacement){0}, NULL);
     }
 
     // submits xml planet overlays before the queued planet view is rendered.

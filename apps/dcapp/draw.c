@@ -161,6 +161,7 @@ struct _DcAppDrawPlanetView {
     _AppData *app_data;
     DcAppPlanetViewHandle view;
     plCamera camera;
+    DcAppPlanetViewOptions options;
     DcAppDrawArea area;
 };
 
@@ -192,6 +193,7 @@ static void _record_stencil_add_command_data(void *stencil_data, const _DcAppDra
 static void _replay_stencil_command(_AppData *app_data, const _DcAppDrawCommand *command);
 static void _free_stencil_command(_DcAppDrawCommand *command);
 static _DcAppPlanetViewData *_planet_view_data(DcAppDrawContext *ctx);
+static void _apply_planet_view_options(DcAppDrawPlanetViewHandle draw_view);
 static void _flush_planet_views(DcAppDrawContext *ctx);
 static plCamera _planet_camera_base(float fov_degrees, bool orthographic, DcAppVec2 size);
 static plCamera _planet_camera_geodetic(DcAppPlanetHandle planet, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 size);
@@ -1432,7 +1434,7 @@ void dc_app_draw_planet_text(plPlanetView *view, plCamera *camera, plVec3 positi
     _ext_planet->draw_text(view, camera, position, text, size, color);
 }
 
-DcAppDrawPlanetViewHandle dc_app_draw_planet_view_geodetic(DcAppDrawContext *ctx, DcAppPlanetViewHandle view, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result) {
+DcAppDrawPlanetViewHandle dc_app_draw_planet_view_geodetic(DcAppDrawContext *ctx, DcAppPlanetViewHandle view, double lat, double lon, double elevation, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result) {
     if (!ctx || !view || dc_app_planet_view_crs(view) != DC_APP_PLANET_CRS_GEODETIC) return NULL;
 
     DcAppPlanetHandle planet = dc_app_planet_view_planet(view);
@@ -1441,7 +1443,9 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_geodetic(DcAppDrawContext *ctx
     memset(draw_view, 0, sizeof(*draw_view));
     draw_view->app_data = (_AppData *)ctx->_runtime;
     draw_view->view = view;
+    draw_view->options = options;
     draw_view->camera = _planet_camera_geodetic(planet, lat, lon, elevation, rpy, fov_degrees, orthographic, size);
+    _apply_planet_view_options(draw_view);
 
     _DcAppPlanetViewData *data = _planet_view_data(ctx);
     if (!data) {
@@ -1467,7 +1471,7 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_geodetic(DcAppDrawContext *ctx
     return draw_view;
 }
 
-DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *ctx, DcAppPlanetViewHandle view, DcAppVec3 camera_position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result) {
+DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *ctx, DcAppPlanetViewHandle view, DcAppVec3 camera_position, DcAppVec3 rpy, float fov_degrees, bool orthographic, DcAppPlanetViewOptions options, DcAppVec2 position, DcAppVec2 size, DcAppPlacement placement, DcAppDrawResult *result) {
     if (!ctx || !view || dc_app_planet_view_crs(view) != DC_APP_PLANET_CRS_CARTESIAN) return NULL;
 
     DcAppPlanetHandle planet = dc_app_planet_view_planet(view);
@@ -1476,7 +1480,9 @@ DcAppDrawPlanetViewHandle dc_app_draw_planet_view_cartesian(DcAppDrawContext *ct
     memset(draw_view, 0, sizeof(*draw_view));
     draw_view->app_data = (_AppData *)ctx->_runtime;
     draw_view->view = view;
+    draw_view->options = options;
     draw_view->camera = _planet_camera_cartesian(planet, camera_position, rpy, fov_degrees, orthographic, size);
+    _apply_planet_view_options(draw_view);
 
     _DcAppPlanetViewData *data = _planet_view_data(ctx);
     if (!data) {
@@ -1936,6 +1942,18 @@ static _DcAppPlanetViewData *_planet_view_data(DcAppDrawContext *ctx) {
     return (_DcAppPlanetViewData *)ctx->_planet_view_data;
 }
 
+static void _apply_planet_view_options(DcAppDrawPlanetViewHandle draw_view) {
+    if (!draw_view) return;
+
+    plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
+    if (!view) return;
+
+    plPlanetViewRuntimeOptions options = _ext_planet->get_view_runtime_options(view);
+    options.tFlags = draw_view->options.flags;
+    options.fTau = draw_view->options.tau;
+    _ext_planet->set_view_runtime_options(view, options);
+}
+
 static void _flush_planet_views(DcAppDrawContext *ctx) {
     if (!ctx || !ctx->_planet_view_data) return;
 
@@ -1946,6 +1964,8 @@ static void _flush_planet_views(DcAppDrawContext *ctx) {
 
         plPlanetView *view = dc_app_planet_view_pl(draw_view->view);
         if (!view) continue;
+
+        _apply_planet_view_options(draw_view);
 
         // renders the queued planet view into the texture drawn at call time.
         plCommandBuffer *cmd_buf = _ext_starter->get_command_buffer();

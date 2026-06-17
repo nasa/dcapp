@@ -118,6 +118,8 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
     if (!logic_planet_view) return;
 
     bool use_ortho = *UseOrtho != 0;
+    DcPlanetViewOptions options = dc_planet_view_options_default();
+    if (Tau) options.tau = (float)*Tau;
 
     DcDrawPlanetViewHandle view = dc_draw->planet_view_geodetic(
         draw_ctx,
@@ -128,6 +130,7 @@ void draw_logic_planet_view(DcDrawContext *draw_ctx, const DcDrawFuncArgs *args,
         (DcVec3){.roll = 0.0f, .pitch = 0.0f, .yaw = (float)*Heading},
         60.0f,
         use_ortho,
+        options,
         (DcVec2){0.0f, 0.0f},
         size,
         dc_place_top_left(),
